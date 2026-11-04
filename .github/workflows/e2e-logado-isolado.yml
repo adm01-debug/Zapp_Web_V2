@@ -75,6 +75,12 @@ jobs:
         run: |
           set -euo pipefail
           bun install --frozen-lockfile --ignore-scripts
+      - name: Preparar ferramentas TLS antes de gerar certificados ou credenciais
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y openssl libnss3-tools
       - name: Executar bootstrap, admissão e login reais
         id: bootstrap
         shell: bash

@@ -102,7 +102,7 @@ for (const secretName of ['SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'E2E_
 test('alvo: aceita apenas a origem do gateway pertencente ao ambiente', () => assert.equal(assertLocalOrigin(ORIGIN), ORIGIN));
 for (const value of [
   undefined, 'https://tnnnlkbymytvtqngbbqh.supabase.co', 'http://localhost:5173',
-  'https://127.0.0.1:5173', 'http://127.0.0.1:5173/x', 'http://user:pass@127.0.0.1:5173',
+  'http://127.0.0.1:5173', 'https://127.0.0.1:5173/x', 'http://user:pass@127.0.0.1:5173',
   'http://127.0.0.1:5173?backend=remote', 'http://127.0.0.1:5174',
 ]) {
   test('alvo: rejeita entrada fora da origem exata ' + String(value), () => assert.throws(() => assertLocalOrigin(value)));

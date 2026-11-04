@@ -14,6 +14,7 @@ import {
 import { containerArguments, serviceConfiguration } from './stack.mjs';
 import { prepareMigration, migrationFailure } from './migrations.mjs';
 import { readPlaywrightInventory, summarizePlaywrightResult } from './results.mjs';
+import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -37,6 +38,21 @@ export function functionPolicy(source, name) {
     return declarations.length === 0 || declarations[0][1] === 'true';
   }
   return true;
+}
+
+/** Accept only the complete proof from each fixed client; raw output is private. */
+export function assertTlsClientProof(value, runtime, runId, sourceSha) {
+  const fields = ['identity', 'image', 'untrusted_rejected', 'wrong_san_rejected'];
+  const checks = object => object && Object.keys(object).length === fields.length && fields.every(key => object[key] === true);
+  const browserNames = ['chromium', 'firefox', 'webkit'];
+  if (!['node', 'bun', 'browsers', 'edge'].includes(runtime) || value?.schema !== 1 ||
+      value.run_id !== runId || value.source_sha !== sourceSha || value.origin !== TLS_ORIGIN ||
+      value.runtime !== runtime || value.probe_runner !== (runtime === 'bun' ? 'bun' : 'node') ||
+      typeof value.probe_runner_version !== 'string' || !/^v?\d+\.\d+\.\d+(?:[-+][a-zA-Z0-9.-]+)?$/.test(value.probe_runner_version) ||
+      !(runtime === 'browsers' ? value.checks && Object.keys(value.checks).length === browserNames.length &&
+        browserNames.every(name => checks(value.checks[name])) : checks(value.checks))) throw new Error('tls-' + runtime + '-proof-invalid');
+  return { runtime, probe_runner: value.probe_runner, probe_runner_version: value.probe_runner_version,
+    checks: runtime === 'browsers' ? Object.fromEntries(browserNames.map(name => [name, Object.fromEntries(fields.map(key => [key, true]))])) : Object.fromEntries(fields.map(key => [key, true])) };
 }
 
 /** Empty bind targets are prepared on the runner; all runtime writes use their
@@ -103,6 +119,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
   chmodSync(bundles, 0o755); chmodSync(bundleCache, 0o755);
   const state = { schema: 1, scope: 'bootstrap-and-login', run_id: runId, phase: 'preflight', success: false, native_e2e: false };
   const containers = [];
+  const removedContainers = new Set();
   const volumes = [];
   const mountTargets = [];
   const writable = new Set([output, bundles, bundleCache]);
@@ -171,7 +188,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     containers.push(containerName);
     const args = containerArguments({
       runId, name, image, anchorId, envFile: envFiles[name],
-      mounts: [...baseMounts(), ...mounts], args: config.args, memory: options.memory ?? '2g',
+      mounts: [...(options.withCheckout === false ? [] : baseMounts()), ...mounts], args: config.args, memory: options.memory ?? '2g',
       user: ['driver', 'vite', 'gateway'].includes(name) ? runnerUser : undefined,
     });
     const id = required(docker(args), 'start-' + name + '-failed');
@@ -200,6 +217,8 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     if (!statSync(bunPath).isFile() || !existsSync(path.join(ROOT, 'node_modules/@playwright/test/package.json'))) throw new Error('dependencies-not-installed');
     const playwrightVersion = JSON.parse(readFileSync(path.join(ROOT, 'node_modules/@playwright/test/package.json'), 'utf8')).version;
     if (playwrightVersion !== '1.64.1') throw new Error('playwright-image-version-mismatch');
+    if (ORIGIN !== TLS_ORIGIN) throw new Error('tls-origin-mismatch');
+    const tlsTools = preflightTlsTools({ directory: path.join(runRoot, 'tls-tools'), command: execute });
     mountTargets.push(...prepareMountTargets(ROOT, [
       '/work/e2e/.auth', '/work/e2e/__screenshots__', '/work/e2e/talkx-visual',
       '/work/e2e/email-navy-visual', '/work/.tmp/sidebar-topo',
@@ -217,12 +236,21 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
       imageEvidence[name] = { image, observed_digest: expected.slice(1) };
     }
     writeJson(path.join(output, 'images.json'), imageEvidence);
+    const toolsName = runId + '-tls-tools';
+    containers.push(toolsName);
+    required(docker(['run', '--rm', '--name', toolsName,
+      '--label', OWNER_LABEL + '=' + runId, '--label', PURPOSE_LABEL + '=' + PURPOSE,
+      '--network', 'none', '--user', runnerUser, '--cap-drop', 'NET_RAW', '--security-opt', 'no-new-privileges:true',
+      '--entrypoint', '/bin/sh', images.driver, '-ec',
+      'command -v install >/dev/null; command -v update-ca-certificates >/dev/null']), 'tls-driver-tools-unavailable');
+    removedContainers.add(toolsName);
     phase('compile-without-credentials');
     const names = ['auth-login'];
     const registry = { functions: {} };
     const functionConfig = readFileSync(path.join(ROOT, 'supabase/config.toml'), 'utf8');
-    for (const name of ['main', ...names]) {
-      const entry = name === 'main' ? '/work/scripts/e2e-isolated/main/index.ts' : '/work/supabase/functions/' + name + '/index.ts';
+    for (const name of ['main', ...names, 'tls-edge-probe']) {
+      const entry = name === 'main' ? '/work/scripts/e2e-isolated/main/index.ts' : name === 'tls-edge-probe' ?
+        '/work/scripts/e2e-isolated/tls-edge-probe.ts' : '/work/supabase/functions/' + name + '/index.ts';
       const containerName = runId + '-bundle-' + name;
       containers.push(containerName);
       const result = docker([
@@ -239,11 +267,12 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
       required(result, 'bundle-' + name + '-failed');
       const bytes = readFileSync(path.join(bundles, name + '.eszip'));
       if (!bytes.length) throw new Error('empty-edge-bundle');
-      if (name !== 'main') registry.functions[name] = { verify_jwt: functionPolicy(functionConfig, name), bundle_sha256: sha256(bytes) };
+      if (!['main', 'tls-edge-probe'].includes(name)) registry.functions[name] = { verify_jwt: functionPolicy(functionConfig, name), bundle_sha256: sha256(bytes) };
     }
     if (registry.functions['auth-login'].verify_jwt !== false) throw new Error('auth-login-gateway-policy-mismatch');
     writeJson(path.join(controlDir, 'functions.json'), registry, 0o444);
-    writeJson(path.join(output, 'bundles.json'), { main_sha256: sha256(readFileSync(path.join(bundles, 'main.eszip'))), ...registry });
+    writeJson(path.join(output, 'bundles.json'), { main_sha256: sha256(readFileSync(path.join(bundles, 'main.eszip'))),
+      tls_probe_sha256: sha256(readFileSync(path.join(bundles, 'tls-edge-probe.eszip'))), ...registry });
     const migrationDirectory = path.join(ROOT, 'supabase/migrations');
     const migrations = readdirSync(migrationDirectory, { withFileTypes: true })
       .filter(entry => entry.isFile() && entry.name.endsWith('.sql')).map(entry => entry.name).sort()
@@ -257,9 +286,16 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     if (migrations.some(item => trackedBlobs.get(item.evidence.name) !== item.evidence.original_git_blob)) throw new Error('migration-source-changed');
     writeJson(path.join(output, 'migration-sources.json'), migrations.map(item => item.evidence));
 
+    phase('issue-local-tls');
+    const material = createTlsMaterial({ directory: path.join(runRoot, 'tls-material'), runId, sourceSha, command: execute });
+    writable.add(material.homeDirectory);
     // The only credentials introduced below are generated for this empty stack.
     credentials = syntheticCredentials();
     services = serviceConfiguration({ credentials, runId, sourceSha });
+    Object.assign(services.driver.env, tlsEnvironment(material, 'driver'));
+    Object.assign(services.edge.env, tlsEnvironment(material, 'edge'));
+    services['tls-edge'] = { env: { ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha, ...tlsEnvironment(material, 'edge') },
+      args: ['start', '--main-service', '/bundles/tls-edge-probe.eszip'] };
     for (const [name, config] of Object.entries(services)) {
       envFiles[name] = path.join(privateDir, name + '.env');
       environmentFile(envFiles[name], config.env);
@@ -288,9 +324,33 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
       ephemeral('email-visual', '/work/e2e/email-navy-visual'),
       ephemeral('sidebar-captures', '/work/.tmp/sidebar-topo'),
     ];
-    driver = start('driver', images.driver, [runtimeMount, outputMount, authMount, ...captures], { memory: '4g' });
+    driver = start('driver', images.driver, [runtimeMount, outputMount, authMount, ...captures, ...tlsMounts(material, 'driver')], { memory: '4g' });
     const network = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'network'], 'network-proof'));
     if (network.loopback_only !== true || network.official_host_local !== true || !/^net:\[\d+\]$/.test(network.network_namespace)) throw new Error('network-proof-invalid');
+
+    phase('prove-tls-clients');
+    installDriverTlsTrust({ inspect, docker, driverName: driver.name, runId, anchorId, runnerUser, material, allowedWritableSources: writable });
+    start('gateway', images.driver, tlsMounts(material, 'gateway'));
+    const temporaryEdge = start('tls-edge', images.edge, [
+      { type: 'bind', source: bundles, target: '/bundles', readOnly: true }, ...tlsMounts(material, 'edge'),
+    ], { withCheckout: false });
+    const boot = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'tls'], 'tls-boot-proof'));
+    if (boot.schema !== 1 || boot.run_id !== runId || boot.source_sha !== sourceSha || boot.origin !== TLS_ORIGIN || boot.ready !== true) throw new Error('tls-boot-proof-invalid');
+    const tlsProof = { schema: 1, run_id: runId, source_sha: sourceSha, origin: TLS_ORIGIN,
+      ca_sha256: material.caSha256, tools: tlsTools, clients: [] };
+    for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
+      // These probes precede SQL/login; preserve their diagnostics through both
+      // existing redactors so a native TLS failure identifies its actual cause.
+      const raw = driverRun([runtime === 'bun' ? 'bun' : 'node', 'scripts/e2e-isolated/tls-probe.mjs', runtime], 'tls-' + runtime + '-gate', 240_000);
+      let value;
+      try { value = JSON.parse(raw); } catch { throw new Error('tls-' + runtime + '-invalid-json'); }
+      tlsProof.clients.push(assertTlsClientProof(value, runtime, runId, sourceSha));
+      writeJson(path.join(output, 'tls-proof.json'), tlsProof);
+    }
+    assertContainerIsolation(inspect(temporaryEdge.name), runId, anchorId, writable);
+    required(docker(['rm', '-f', '-v', temporaryEdge.name]), 'tls-probe-cleanup-failed');
+    removedContainers.add(temporaryEdge.name);
+    state.tls = { proved: true, clients: tlsProof.clients.length };
 
     phase('start-platform');
     const databaseVolume = createVolume('postgres');
@@ -311,7 +371,6 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     const storageVolume = createVolume('storage'); storageVolume.target = '/var/lib/storage';
     start('storage', images.storage, [storageVolume]);
     start('realtime', images.realtime);
-    start('gateway', images.driver);
     driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'platform'], 'platform-proof');
     if (!sqlBoolean("select to_regclass('auth.sessions') is not null and to_regclass('auth.identities') is not null and to_regclass('storage.buckets') is not null and to_regclass('storage.objects') is not null and to_regclass('realtime.messages') is not null and to_regprocedure('realtime.topic()') is not null;")) throw new Error('real-platform-schema-missing');
     required(psql("create schema if not exists supabase_migrations; create table if not exists supabase_migrations.schema_migrations(version text primary key, statements text[], name text); alter database postgres set app.settings.trusted_domains = 'localhost,127.0.0.1'; alter database postgres set app.settings.e2e_anon_key = '" + credentials.anonKey + "';"), 'local-platform-settings-failed');
@@ -330,7 +389,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     if (!sqlBoolean("select current_setting('cron.launch_active_jobs') = 'off';")) throw new Error('cron-reenabled-by-migration');
     required(psql("notify pgrst, 'reload schema';"), 'schema-cache-reload-failed');
     await pause(2_000);
-    start('edge', images.edge, [{ type: 'bind', source: bundles, target: '/bundles', readOnly: true }]);
+    start('edge', images.edge, [{ type: 'bind', source: bundles, target: '/bundles', readOnly: true }, ...tlsMounts(material, 'edge')]);
     start('vite', images.driver, [
       runtimeMount,
       ephemeral('vite-cache', '/work/node_modules/.vite'),
@@ -341,7 +400,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     driverRun(['node', 'scripts/e2e-isolated/seed-login.mjs'], 'seed-login', 240_000);
     const seed = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'seed'], 'seed-proof'));
     if (seed.network_namespace !== network.network_namespace) throw new Error('namespace-changed');
-    for (const container of containers.filter(name => !name.includes('-bundle-'))) {
+    for (const container of containers.filter(name => !name.includes('-bundle-') && !removedContainers.has(name))) {
       assertContainerIsolation(inspect(container), runId, anchorId, writable);
     }
     const proof = makeProof({ runId, sourceSha, anonKey: credentials.anonKey, networkNamespace: network.network_namespace,
@@ -375,7 +434,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
   } finally {
     cleaning = true;
     phase('cleanup');
-    for (const name of [...containers].reverse()) {
+    for (const name of [...containers].reverse().filter(name => !removedContainers.has(name))) {
       const result = docker(['inspect', name]);
       if (result.status !== 0) {
         if (!result.error && !result.signal && /No such (?:object|container)/i.test(String(result.stderr || ''))) continue;
@@ -420,7 +479,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     // Raw Playwright JSON, HTML, screenshots and traces stay on the ephemeral
     // runner. They may contain newly-issued session tokens not known to seed.
     // Only these controlled metadata files and already-redacted logs publish.
-    const metadata = ['images.json', 'bundles.json', 'migration-sources.json', 'migration-results.json', 'readiness.json', 'seed-ready.json', 'results-summary.json', 'postgres-log-summary.json'];
+    const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'migration-sources.json', 'migration-results.json', 'readiness.json', 'seed-ready.json', 'results-summary.json', 'postgres-log-summary.json'];
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     for (const entry of readdirSync(output, { withFileTypes: true })) {
       if (entry.isFile() && entry.name.endsWith('.log')) cpSync(path.join(output, entry.name), path.join(published, entry.name));

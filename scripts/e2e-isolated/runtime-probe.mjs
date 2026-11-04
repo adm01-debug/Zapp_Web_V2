@@ -10,6 +10,27 @@ assertOfficialHostIsLocal(readFileSync('/etc/hosts', 'utf8'));
 
 if (mode === 'network') {
   process.stdout.write(JSON.stringify({ network_namespace: currentNetworkNamespace(), loopback_only: true, official_host_local: true }) + '\n');
+} else if (mode === 'tls') {
+  const identity = { schema: 1, run_id: process.env.ZAPP_E2E_RUN_ID, source_sha: process.env.GITHUB_SHA, origin: ORIGIN };
+  const deadline = Date.now() + 120_000;
+  let ready = false;
+  do {
+    try {
+      const responses = await Promise.all([ORIGIN + '/__e2e/identity', 'http://127.0.0.1:9000/__e2e/ready']
+        .map(url => fetch(url, { redirect: 'error', signal: AbortSignal.timeout(5_000) })));
+      if (responses.every(response => response.ok)) {
+        const [gateway, edge] = await Promise.all(responses.map(response => response.json()));
+        if ([gateway, edge].some(value => Object.entries(identity).some(([key, expected]) => value?.[key] !== expected))) fail('tls-boot-identity');
+        ready = edge.runtime === 'edge' && edge.ready === true;
+        if (ready) break;
+      }
+    } catch (error) {
+      if (error?.message === '[e2e-isolated/tls-boot-identity]') throw error;
+    }
+    await delay(2_000);
+  } while (Date.now() < deadline);
+  if (!ready) fail('tls-boot-not-ready');
+  process.stdout.write(JSON.stringify({ ...identity, ready: true }) + '\n');
 } else if (mode === 'platform') {
   const checks = [
     { name: 'auth', url: 'http://127.0.0.1:9999/health' },
