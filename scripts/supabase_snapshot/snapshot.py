@@ -793,18 +793,32 @@ def get_db_stats(conn):
         record_error("db_stats.auth", e)
         out["auth"] = {}
     out["queues"] = q(conn, "SELECT queue_name, queue_length, newest_msg_age_sec, oldest_msg_age_sec, total_messages FROM pgmq.metrics_all() ORDER BY 1") if has_ext(conn, "pgmq") else []
-    if STAT_STATEMENTS_TOP > 0 and has_ext(conn, "pg_stat_statements"):
-        out["top_queries"] = q(conn, """
-            SELECT r.rolname AS role, calls, round(total_exec_time::numeric, 0) AS total_ms, round(mean_exec_time::numeric, 2) AS mean_ms,
-                   rows, left(regexp_replace(query, '\\s+', ' ', 'g'), 220) AS query
-            FROM pg_stat_statements s JOIN pg_roles r ON r.oid = s.userid
-            WHERE s.dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
-              AND r.rolname NOT IN ('supabase_admin','supabase_auth_admin','supabase_storage_admin','supabase_replication_admin')
-              AND query NOT ILIKE '%%pg_stat_statements%%'
-              AND query ~* '^\\s*(select|with|insert|update|delete|merge)\\b'   -- utilitários (CREATE ROLE ... PASSWORD) não são normalizados
-            ORDER BY total_exec_time DESC LIMIT %s""", (STAT_STATEMENTS_TOP,))
-        for row in out["top_queries"]:
-            row["query"] = re.sub(r"'(?:[^']|'')*'", "'?'", row["query"])  # literais que escaparam da normalização
+    if STAT_STATEMENTS_TOP > 0:
+        try:
+            extension = q(conn, """
+                SELECT n.nspname AS schema FROM pg_catalog.pg_extension e
+                JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+                WHERE e.extname = 'pg_stat_statements'""")
+            if extension:
+                # A extensão pode estar fora do search_path. Delimitar/escapar o
+                # identificador preserva schemas com aspas, espaços ou palavras SQL.
+                schema = '"' + extension[0]["schema"].replace('"', '""') + '"'
+                # TOP já é int na configuração. Sem binds, '%' no identificador
+                # não é interpretado pelo psycopg como placeholder.
+                top_queries = q(conn, f"""
+                    SELECT r.rolname AS role, calls, round(total_exec_time::numeric, 0) AS total_ms, round(mean_exec_time::numeric, 2) AS mean_ms,
+                           rows, left(regexp_replace(query, '\\s+', ' ', 'g'), 220) AS query
+                    FROM {schema}.pg_stat_statements s JOIN pg_roles r ON r.oid = s.userid
+                    WHERE s.dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
+                      AND r.rolname NOT IN ('supabase_admin','supabase_auth_admin','supabase_storage_admin','supabase_replication_admin')
+                      AND query NOT ILIKE '%pg_stat_statements%'
+                      AND query ~* '^\\s*(select|with|insert|update|delete|merge)\\b'   -- utilitários (CREATE ROLE ... PASSWORD) não são normalizados
+                    ORDER BY total_exec_time DESC LIMIT {STAT_STATEMENTS_TOP}""")
+                for row in top_queries:
+                    row["query"] = re.sub(r"'(?:[^']|'')*'", "'?'", row["query"])  # literais que escaparam da normalização
+                out["top_queries"] = top_queries
+        except Exception as e:  # noqa: BLE001
+            record_error("db_stats.top_queries", e)
     return out
 
 

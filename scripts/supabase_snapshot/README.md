@@ -60,6 +60,16 @@ mapa fechado de jobs (`scripts/ci/secrets-environments.unit.mjs`).
 
 Nunca sai: linha de tabela, dado de usuário, valor de secret/chave/senha, connection string.
 
+### Estatísticas de consultas
+
+O schema de `pg_stat_statements` é descoberto em `pg_extension`/`pg_namespace`; a consulta usa
+identificador delimitado e não depende do `search_path` (no projeto oficial, a view está em
+`extensions`). `STAT_STATEMENTS_TOP=0` ou extensão ausente apenas omitem essa coleta opcional.
+Falha no catálogo, na view ou no tratamento do resultado é registrada como `db_stats.top_queries`,
+preservando tamanho do banco, conexões, storage, filas e os agregados de auth que puderam ser lidos.
+Erro em auth permanece independente como `db_stats.auth`. Nenhuma permissão é concedida e nenhuma
+extensão é criada pelo coletor; a ausência de `top_queries` após erro não é apresentada como lista vazia.
+
 ### Como interpretar referências a funções
 
 O mapa de código ignora assinaturas de declaração/alteração de funções, diretórios históricos
@@ -139,4 +149,9 @@ além de fontes vazias, indisponíveis e recuperação, preservando a base anter
 Os casos de frescor verificam o manifest em UTC, coleta sem mudança estrutural, falha/recuperação e
 sua prioridade sobre um CHANGELOG antigo no índice; chamadas em DEFAULTs da assinatura também têm regressão.
 O adaptador Node participa da suíte existente `scripts/ci/*.unit.mjs` e executa a mesma suíte Python.
+
+A matriz de estatísticas usa somente resultados sintéticos: schemas fora do `search_path`, aspas,
+espaços, `%` e palavras SQL no identificador; extensão ausente ou coleta desligada; erros de catálogo,
+permissão, view, prazo e resultado; auth independente; recuperação e preservação das demais métricas
+no JSON/Markdown. Ela não executa SQL nem consulta permissões do banco real.
 

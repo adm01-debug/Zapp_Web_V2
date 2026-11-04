@@ -11,6 +11,7 @@ import io
 import json
 import os
 import pathlib
+import re
 import shutil
 import sys
 import tempfile
@@ -632,6 +633,188 @@ for _mask in range(8):
     _sources = tuple(source for bit, source in enumerate(("cron", "triggers", "views")) if _mask & (1 << bit))
     setattr(SnapshotCallerFreshnessTests, f"test_functions_carried_with_{'_'.join(_sources) or 'no_other_failure'}",
             source_freshness_case(_sources))
+
+
+class SnapshotDBStatsTests(SnapshotFixture):
+    """Catálogo e resultados sintéticos; nenhum driver, socket ou banco real."""
+
+    def stats(self, *, schema="extensions", auth_error=False, top=15, failure=None, empty=False):
+        snapshot = self.snapshot
+        snapshot.ERRORS.clear()
+        snapshot.STAT_STATEMENTS_TOP = top
+        calls = []
+
+        def query(_conn, sql, params=None):
+            calls.append((sql, params))
+            compact = " ".join(sql.split())
+            if "pg_extension" in compact:
+                extension = params[0] if params else "pg_stat_statements"
+                if extension == "pgmq":
+                    return [{"present": 1}]
+                if failure == "catalog":
+                    raise PermissionError("catálogo indisponível na fixture")
+                if schema is None:
+                    return []
+                if "extnamespace" in compact:
+                    return [{"schema": schema}]
+                return [{"present": 1}]  # has_ext do código anterior
+            if "total_exec_time" in compact:
+                # O backend de teste não inclui a extensão no search_path.
+                # Aceita somente um identificador SQL delimitado, não texto cru.
+                relation = re.search(
+                    r'FROM\s+("(?:""|[^"])*")\.pg_stat_statements\s+s', sql, re.I)
+                if relation is None or relation.group(1)[1:-1].replace('""', '"') != schema:
+                    raise RuntimeError('relation "pg_stat_statements" does not exist')
+                if failure == "permission":
+                    raise PermissionError("view sem permissão na fixture")
+                if failure == "missing":
+                    raise RuntimeError("view removida depois da consulta ao catálogo")
+                if failure == "timeout":
+                    raise TimeoutError("statement timeout simulado")
+                if failure == "row":
+                    return [{"query": None}]
+                return [] if empty else [{
+                    "role": "fixture_reader", "calls": 3, "total_ms": 8,
+                    "mean_ms": 2.67, "rows": 3, "query": "select 'literal-fixture'",
+                }]
+            if "pg_database_size" in compact:
+                if failure == "database":
+                    raise RuntimeError("banco indisponível na fixture")
+                return [{"s": 123456}]
+            if "pg_stat_activity" in compact:
+                return [{"usename": "fixture_reader", "state": "idle", "n": 2}]
+            if "sum(pg_total_relation_size" in compact:
+                return [{"schema": "public", "bytes": 45678}]
+            if "FROM storage.objects" in compact:
+                return [{"bucket_id": "fixture", "objects": 2, "bytes": 42}]
+            if "FROM auth." in compact:
+                if auth_error:
+                    raise PermissionError("permission denied for schema auth")
+                if "auth.identities" in compact:
+                    return [{"provider": "fixture", "users": 5}]
+                if "auth.mfa_factors" in compact:
+                    return [{"factor_type": "totp", "status": "verified", "total": 2}]
+                return [{"c": 5}]
+            if "pgmq.metrics_all()" in compact:
+                return [{"queue_name": "fixture", "queue_length": 3, "newest_msg_age_sec": 1,
+                         "oldest_msg_age_sec": 2, "total_messages": 4}]
+            raise AssertionError(f"Consulta não prevista no modelo offline: {compact[:70]}")
+
+        with mock.patch.object(snapshot, "q", side_effect=query):
+            with mock.patch.object(snapshot.urllib.request, "urlopen", side_effect=AssertionError("HTTP proibido")):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    result = snapshot.get_db_stats(OfflineConnection())
+        errors = {error["section"] for error in snapshot.ERRORS}
+        return result, calls, errors
+
+    def assert_core_metrics(self, stats, auth_error):
+        self.assertIsInstance(stats, dict, "Falha opcional não deve descartar db_stats")
+        self.assertEqual(stats["database_bytes"], 123456)
+        self.assertEqual(stats["connections"], [{"usename": "fixture_reader", "state": "idle", "n": 2}])
+        self.assertEqual(stats["schema_bytes"], [{"schema": "public", "bytes": 45678}])
+        self.assertEqual(stats["storage"], [{"bucket_id": "fixture", "objects": 2, "bytes": 42}])
+        self.assertEqual(stats["queues"][0]["queue_length"], 3)
+        self.assertEqual(bool(stats["auth"]), not auth_error)
+
+    def exercise_schema(self, schema, auth_error):
+        stats, calls, errors = self.stats(schema=schema, auth_error=auth_error)
+        self.assert_core_metrics(stats, auth_error)
+        self.assertEqual(stats["top_queries"][0]["query"], "select '?'")
+        self.assertEqual(errors, {"db_stats.auth"} if auth_error else set())
+        lookup = [(sql, params) for sql, params in calls if "extnamespace" in sql]
+        self.assertEqual(len(lookup), 1)
+        top_calls = [(sql, params) for sql, params in calls if "total_exec_time" in sql]
+        self.assertEqual(len(top_calls), 1)
+        # Sem binds, '%' no identificador não vira placeholder do psycopg.
+        self.assertIsNone(top_calls[0][1])
+        self.assertIn("LIMIT 15", top_calls[0][0])
+
+    def exercise_availability(self, present, top, auth_error):
+        stats, calls, errors = self.stats(schema="extensions" if present else None,
+                                         top=top, auth_error=auth_error)
+        self.assert_core_metrics(stats, auth_error)
+        self.assertEqual(errors, {"db_stats.auth"} if auth_error else set())
+        self.assertEqual("top_queries" in stats, present and top > 0)
+        stat_calls = [(sql, params) for sql, params in calls
+                      if "total_exec_time" in sql or "extnamespace" in sql or params == ("pg_stat_statements",)]
+        if top <= 0:
+            self.assertEqual(stat_calls, [])
+        elif present:
+            self.assertEqual(len(stat_calls), 2)
+            self.assertIn("LIMIT 1", stat_calls[-1][0])
+        else:
+            self.assertEqual(len(stat_calls), 1)
+
+    def exercise_failure(self, failure, auth_error):
+        stats, _, errors = self.stats(failure=failure, auth_error=auth_error)
+        self.assert_core_metrics(stats, auth_error)
+        self.assertNotIn("top_queries", stats)
+        expected = {"db_stats.top_queries"} | ({"db_stats.auth"} if auth_error else set())
+        self.assertEqual(errors, expected)
+
+    def exercise_recovery(self, auth_error, empty):
+        failed, _, errors = self.stats(failure="permission", auth_error=auth_error)
+        self.assert_core_metrics(failed, auth_error)
+        self.assertIn("db_stats.top_queries", errors)
+        recovered, _, errors = self.stats(empty=empty, auth_error=auth_error)
+        self.assert_core_metrics(recovered, auth_error)
+        self.assertEqual(errors, {"db_stats.auth"} if auth_error else set())
+        self.assertEqual(len(recovered["top_queries"]), 0 if empty else 1)
+        self.assertNotIn("top_queries", failed, "Recuperação não deve alterar o resultado anterior")
+
+    def test_schema_is_resolved_again_after_extension_moves(self):
+        first, _, first_errors = self.stats(schema="extensions")
+        second, _, second_errors = self.stats(schema='Stats "new"')
+        self.assert_core_metrics(first, False)
+        self.assert_core_metrics(second, False)
+        self.assertEqual(first_errors | second_errors, set())
+        self.assertEqual(first["top_queries"], second["top_queries"])
+
+    def test_partial_metrics_remain_in_rendered_json_and_markdown(self):
+        stats, _, errors = self.stats(failure="missing", auth_error=True)
+        self.assert_core_metrics(stats, True)
+        self.snapshot.render_stats({"db_stats": stats}, {}, {})
+        rendered = json.loads((self.out / "stats.json").read_text())["db"]["db_stats"]
+        self.assertEqual(rendered["database_bytes"], 123456)
+        self.assertEqual(rendered["queues"][0]["queue_name"], "fixture")
+        self.assertNotIn("top_queries", rendered)
+        self.assertTrue((self.out / "stats.md").exists())
+        self.assertEqual(errors, {"db_stats.auth", "db_stats.top_queries"})
+
+    def test_mandatory_database_failure_keeps_section_error_contract(self):
+        stats, _, errors = self.stats(failure="database")
+        self.assertIsNone(stats)
+        self.assertEqual(errors, {"db_stats"})
+
+
+def db_stats_case(method, *args):
+    def run(self):
+        getattr(self, method)(*args)
+    return run
+
+
+for _index, _schema in enumerate((
+        "extensions", "public", "analytics", "Query Metrics", 'stats"quoted',
+        "select", "stats%raw", 'stats"; DROP TABLE private; --')):
+    for _auth_error in (False, True):
+        setattr(SnapshotDBStatsTests, f"test_schema_{_index}_auth_{_auth_error}",
+                db_stats_case("exercise_schema", _schema, _auth_error))
+
+for _present in (False, True):
+    for _top in (0, -1, 1):
+        for _auth_error in (False, True):
+            setattr(SnapshotDBStatsTests, f"test_available_{_present}_top_{_top}_auth_{_auth_error}",
+                    db_stats_case("exercise_availability", _present, _top, _auth_error))
+
+for _failure in ("catalog", "permission", "missing", "timeout", "row"):
+    for _auth_error in (False, True):
+        setattr(SnapshotDBStatsTests, f"test_failure_{_failure}_auth_{_auth_error}",
+                db_stats_case("exercise_failure", _failure, _auth_error))
+
+for _auth_error in (False, True):
+    for _empty in (False, True):
+        setattr(SnapshotDBStatsTests, f"test_recovery_auth_{_auth_error}_empty_{_empty}",
+                db_stats_case("exercise_recovery", _auth_error, _empty))
 
 
 if __name__ == "__main__":
