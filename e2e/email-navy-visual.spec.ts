@@ -510,7 +510,7 @@ test('corpus extremo com texto sem quebra e muitos anexos não cria overflow glo
   expect(overflow).toBeLessThanOrEqual(2);
 });
 
-test('alto contraste e movimento reduzido mantêm o workspace acessível', async ({ page }) => {
+test('alto contraste e movimento reduzido mantêm o workspace acessível', async ({ page }, testInfo) => {
   await page.addInitScript(() => {
     localStorage.setItem('highContrast', 'true');
     localStorage.setItem('reducedMotion', 'true');
@@ -540,19 +540,71 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
     return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.3;
   });
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
-  const violations = await page.evaluate(async () => {
+  const medicao = await page.evaluate(async () => {
     const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
+    const estado = (targets: string[] = []) => {
+      const style = (element: Element | null) => {
+        if (!element) return null;
+        const computed = getComputedStyle(element);
+        return {
+          color: computed.color,
+          backgroundColor: computed.backgroundColor,
+          transitionProperty: computed.transitionProperty,
+          animationName: computed.animationName,
+        };
+      };
+      const root = document.documentElement;
+      return {
+        at: performance.now(),
+        classes: root.className,
+        themeTransitioning: root.classList.contains('theme-transitioning'),
+        activeAnimations: document.getAnimations().filter(animation => animation.playState === 'running').length,
+        inlineBackground: root.style.getPropertyValue('--background'),
+        inlineForeground: root.style.getPropertyValue('--foreground'),
+        body: style(document.body),
+        workspace: style(document.querySelector('.email-workspace')),
+        targets: targets.slice(0, 10).map(selector => {
+          let element: Element | null = null;
+          try { element = document.querySelector(selector); } catch { /* axe pode retornar seletor não CSS */ }
+          return { selector, style: style(element) };
+        }),
+      };
+    };
     // O app roda @axe-core/react em DEV sobre a MESMA instancia global `window.axe` desta
     // spec: esperar a instancia ficar livre no mesmo frame que dispara o nosso run evita o
     // "Axe is already running" intermitente, sem mexer em nenhuma assercao.
     while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
-    return (await axe.run('.email-workspace')).violations.map(item => ({
+    const antes = estado();
+    const violations = (await axe.run('.email-workspace')).violations.map(item => ({
       id: item.id,
       impact: item.impact,
       nodes: item.nodes.map(node => ({ target: node.target, failureSummary: node.failureSummary })),
     }));
+    const depois = estado(violations.flatMap(item => item.nodes.map(node => node.target[0]).filter(Boolean)));
+    return { violations, antes, depois };
   });
-  expect(violations).toEqual([]);
+  if (medicao.violations.length > 0) {
+    // Mede novamente somente na falha: a primeira leitura conserva a asserção original,
+    // enquanto a segunda mostra se o contraste ruim sobrevive ao fim da transição.
+    await page.waitForTimeout(600);
+    const aposAssentar = await page.evaluate(async () => {
+      const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
+      while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
+      const violations = (await axe.run('.email-workspace')).violations;
+      return {
+        at: performance.now(),
+        classes: document.documentElement.className,
+        bodyColor: getComputedStyle(document.body).color,
+        bodyBackground: getComputedStyle(document.body).backgroundColor,
+        violations: violations.map(item => ({ id: item.id, targets: item.nodes.map(node => node.target) })),
+      };
+    });
+    await testInfo.attach('email-contrast-state.json', {
+      body: Buffer.from(JSON.stringify({ ...medicao, aposAssentar }, null, 2)),
+      contentType: 'application/json',
+    });
+  }
+  expect(medicao.violations).toEqual([]);
 });
 
 test('workspace do Email é desmontado ao alternar entre módulos', async ({ page }, testInfo) => {
