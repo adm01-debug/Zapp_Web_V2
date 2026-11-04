@@ -117,6 +117,11 @@ def rel(p: Path, root: Path) -> str:
     return p.relative_to(root).as_posix()
 
 
+def is_archived_sql(p: Path, root: Path) -> bool:
+    """SQL de outros projetos ou substituído não descreve o estado atual."""
+    return p.suffix == ".sql" and bool({"_foreign", "_superseded"}.intersection(p.relative_to(root).parts[:-1]))
+
+
 def trunc(s: str, n: int = MAX_SNIPPET) -> str:
     s = s.strip()
     return s if len(s) <= n else s[:n].rstrip() + " …"
@@ -463,7 +468,7 @@ def extract_html_constraints(txt: str) -> list[dict]:
 
 
 def analyze_code_file(p: Path, root: Path) -> dict | None:
-    if p.suffix not in CODE_EXT:
+    if p.suffix not in CODE_EXT or is_archived_sql(p, root):
         return None
     txt = read_text(p)
     if not txt:
@@ -733,9 +738,11 @@ def new_table(src: str) -> dict:
 
 
 def parse_sql_schema(root: Path, files: list[Path]) -> dict:
-    sql_files = sorted([f for f in files if f.suffix == ".sql" and ("migration" in rel(f, root).lower() or "schema" in f.name.lower()
-                                                                     or rel(f, root).startswith(("supabase/", "db/", "sql/", "database/", "prisma/")))],
-                       key=lambda f: rel(f, root))
+    sql_files = sorted(
+        [f for f in files if f.suffix == ".sql" and not is_archived_sql(f, root)
+         and ("migration" in rel(f, root).lower() or "schema" in f.name.lower()
+              or rel(f, root).startswith(("supabase/", "db/", "sql/", "database/", "prisma/")))],
+        key=lambda f: rel(f, root))
     schema: dict = {"tables": {}, "policies": [], "triggers": [], "functions": {}, "enums": {}, "indexes": [], "cron_jobs": [],
                     "views": {}, "sources": [rel(f, root) for f in sql_files], "rls": {}, "grants": [], "raises": [],
                     "seed": [], "comments": {}, "types_file": ""}
