@@ -377,23 +377,21 @@ jobs:
           echo "build: ${{ needs.build.result }}"
           echo "security: ${{ needs.security.result }}"
           echo "workflow-lint: ${{ needs.workflow-lint.result }}"
-          if [[  "${{ needs.typecheck.result }}" == "failure" || \
-                "${{ needs.unit-tests.result }}" == "failure" || \
-                "${{ needs.node-scripts.result }}" == "failure" || \
-                "${{ needs.edge-contracts.result }}" == "failure" || \
-                "${{ needs.build.result }}" == "failure" || \
-                "${{ needs.security.result }}" == "failure" || \
-                "${{ needs.workflow-lint.result }}" == "failure" ]]; then
-            echo "❌ Um ou mais jobs obrigatórios falharam"
+          if [[ "${{ needs.typecheck.result }}" != "success" || \
+                ( "${{ needs.unit-tests.result }}" != "success" && ! ( "${{ github.event.pull_request.draft == true }}" == "true" && "${{ needs.unit-tests.result }}" == "skipped" ) ) || \
+                "${{ needs.node-scripts.result }}" != "success" || \
+                "${{ needs.edge-contracts.result }}" != "success" || \
+                ( "${{ needs.build.result }}" != "success" && ! ( "${{ github.event.pull_request.draft == true }}" == "true" && "${{ needs.build.result }}" == "skipped" ) ) || \
+                "${{ needs.security.result }}" != "success" || \
+                "${{ needs.workflow-lint.result }}" != "success" ]]; then
+            echo "❌ Um ou mais jobs obrigatórios não concluíram com sucesso"
             exit 1
           fi
-          if [[ "${{ needs.typecheck.result }}" == "cancelled" || \
-                "${{ needs.unit-tests.result }}" == "cancelled" || \
-                "${{ needs.build.result }}" == "cancelled" ]]; then
-            echo "❌ Um ou mais jobs obrigatórios foram cancelados"
-            exit 1
+          if [[ "${{ github.event.pull_request.draft == true }}" == "true" && ( "${{ needs.unit-tests.result }}" == "skipped" || "${{ needs.build.result }}" == "skipped" ) ]]; then
+            echo "ℹ️ Validação parcial de draft; consulte os resultados acima"
+          else
+            echo "✅ Todos os jobs obrigatórios passaram"
           fi
-          echo "✅ Todos os jobs obrigatórios passaram"
 
   # ===========================================
   # JOB 6: E2E Tests (Playwright)
