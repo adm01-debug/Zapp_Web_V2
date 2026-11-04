@@ -39,8 +39,10 @@ const profiles = await localRequest('/rest/v1/profiles?user_id=eq.' + userId + '
 if (!Array.isArray(profiles) || profiles.length !== 1 || !/^[0-9a-f-]{36}$/.test(profiles[0]?.id)) fail('profile-trigger-not-ready');
 await localRequest('/rest/v1/profiles?user_id=eq.' + userId, {
   method: 'PATCH', headers: { ...adminHeaders, Prefer: 'return=minimal' },
-  body: JSON.stringify({ name: 'Supervisor sintético E2E', role: 'supervisor', is_active: true }),
+  body: JSON.stringify({ name: 'Supervisor sintético E2E', is_active: true }),
 });
+// profiles.role is derived by the real user_roles sync trigger. A direct PATCH
+// would correctly trip prevent_profile_privilege_escalation without auth.uid().
 await localRequest('/rest/v1/user_roles?user_id=eq.' + userId, { method: 'DELETE', headers: adminHeaders });
 await localRequest('/rest/v1/user_roles', {
   method: 'POST', headers: { ...adminHeaders, Prefer: 'return=minimal' },
