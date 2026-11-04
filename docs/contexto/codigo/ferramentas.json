@@ -3,11 +3,11 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4179)",
+   "TypeScript (4180)",
    "SQL (1280)",
-   "Markdown (1034)",
+   "Markdown (1035)",
    "JSON (594)",
-   "JavaScript (390)",
+   "JavaScript (405)",
    "Shell (231)",
    "Python (119)",
    "YAML (28)"
@@ -669,7 +669,7 @@
   },
   {
    "arquivo": ".github/workflows/e2e-logado-isolado.yml",
-   "nome": "E2E isolado - bootstrap e login",
+   "nome": "E2E isolado - login e suíte completa",
    "gatilhos": [
     "pull_request",
     "workflow_dispatch"
@@ -678,7 +678,8 @@
    "branches": [],
    "jobs": [
     "image-metadata",
-    "bootstrap-login"
+    "bootstrap-login",
+    "full-suite"
    ],
    "permissoes": [
     "contents: read"
@@ -715,20 +716,10 @@
     "contents: read"
    ],
    "scripts_usados": [
-    "scripts/ci/e2e-teardown.mjs",
-    "scripts/ci/redigir-relatorio.mjs"
+    "scripts/e2e-isolated/run.sh"
    ],
-   "npm_scripts": [
-    "test:e2e"
-   ],
-   "secrets": [
-    "E2E_TEST_EMAIL",
-    "E2E_TEST_PASSWORD",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "VITE_SUPABASE_PUBLISHABLE_KEY",
-    "VITE_SUPABASE_URL",
-    "mjs"
-   ],
+   "npm_scripts": [],
+   "secrets": [],
    "actions": [
     "actions/cache",
     "actions/checkout",
@@ -1484,8 +1475,6 @@
   "secrets_em_workflows": [
    "CRON_SECRET",
    "DESTINO_URL",
-   "E2E_TEST_EMAIL",
-   "E2E_TEST_PASSWORD",
    "EXTERNAL_SUPABASE_SERVICE_ROLE_KEY",
    "EXTERNAL_SUPABASE_URL",
    "GITHUB_TOKEN",
@@ -1496,7 +1485,6 @@
    "SETTINGS_GUARD_TOKEN",
    "SUPABASE_ACCESS_TOKEN",
    "SUPABASE_DB_URL",
-   "SUPABASE_SERVICE_ROLE_KEY",
    "TYPES_SYNC_PR_TOKEN",
    "VERCEL_READONLY_TOKEN",
    "VITE_SUPABASE_PUBLISHABLE_KEY",
@@ -1595,16 +1583,16 @@
     "arquivos": 23
    },
    {
-    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
-    "arquivos": 21
-   },
-   {
     "host": "edge.test",
     "arquivos": 19
    },
    {
     "host": "example.invalid",
-    "arquivos": 14
+    "arquivos": 19
+   },
+   {
+    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
+    "arquivos": 18
    },
    {
     "host": "example.supabase.co",
@@ -1623,16 +1611,16 @@
     "arquivos": 12
    },
    {
+    "host": "api.resend.com",
+    "arquivos": 12
+   },
+   {
     "host": "exemplo.com",
     "arquivos": 12
    },
    {
     "host": "signed.test",
     "arquivos": 12
-   },
-   {
-    "host": "api.resend.com",
-    "arquivos": 11
    },
    {
     "host": "local.test",
@@ -1783,6 +1771,10 @@
     "arquivos": 3
    },
    {
+    "host": "external.invalid",
+    "arquivos": 3
+   },
+   {
     "host": "fonts.googleapis.com",
     "arquivos": 3
    },
@@ -1828,6 +1820,10 @@
    },
    {
     "host": "promogifts.com.br",
+    "arquivos": 3
+   },
+   {
+    "host": "proxy.invalid",
     "arquivos": 3
    },
    {
@@ -1887,10 +1883,6 @@
     "arquivos": 2
    },
    {
-    "host": "external.invalid",
-    "arquivos": 2
-   },
-   {
     "host": "facebook.com",
     "arquivos": 2
    },
@@ -1924,10 +1916,6 @@
    },
    {
     "host": "projeto-interno.supabase.co",
-    "arquivos": 2
-   },
-   {
-    "host": "proxy.invalid",
     "arquivos": 2
    },
    {
@@ -2175,6 +2163,10 @@
     "arquivos": 1
    },
    {
+    "host": "local.invalid",
+    "arquivos": 1
+   },
+   {
     "host": "locator.test",
     "arquivos": 1
    },
@@ -2196,6 +2188,10 @@
    },
    {
     "host": "oauth.google.com",
+    "arquivos": 1
+   },
+   {
+    "host": "official.invalid",
     "arquivos": 1
    },
    {
@@ -2248,6 +2244,10 @@
    },
    {
     "host": "preview-egress.example.test",
+    "arquivos": 1
+   },
+   {
+    "host": "private.invalid",
     "arquivos": 1
    },
    {
@@ -2580,15 +2580,15 @@
    },
    {
     "papel": "agent",
-    "ocorrencias": 55
+    "ocorrencias": 58
    },
    {
     "papel": "supervisor",
-    "ocorrencias": 32
+    "ocorrencias": 36
    },
    {
     "papel": "dialog",
-    "ocorrencias": 28
+    "ocorrencias": 29
    },
    {
     "papel": "user",
@@ -2604,7 +2604,7 @@
    },
    {
     "papel": "button",
-    "ocorrencias": 16
+    "ocorrencias": 17
    },
    {
     "papel": "group",
@@ -2647,6 +2647,10 @@
     "ocorrencias": 10
    },
    {
+    "papel": "anon",
+    "ocorrencias": 9
+   },
+   {
     "papel": "combobox",
     "ocorrencias": 9
    },
@@ -2660,10 +2664,6 @@
    },
    {
     "papel": "alertdialog",
-    "ocorrencias": 7
-   },
-   {
-    "papel": "anon",
     "ocorrencias": 7
    },
    {
@@ -2716,6 +2716,10 @@
    },
    {
     "papel": "navigation",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "presentation",
     "ocorrencias": 3
    },
    {
@@ -2827,11 +2831,11 @@
     "ocorrencias": 1
    },
    {
-    "papel": "postgres",
+    "papel": "positive",
     "ocorrencias": 1
    },
    {
-    "papel": "presentation",
+    "papel": "postgres",
     "ocorrencias": 1
    },
    {
@@ -2872,6 +2876,10 @@
    },
    {
     "papel": "timer",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "untrusted",
     "ocorrencias": 1
    }
   ],

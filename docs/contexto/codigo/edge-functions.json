@@ -1173,7 +1173,7 @@
    "nome": "detect-new-device",
    "entrada": "supabase/functions/detect-new-device/index.ts",
    "arquivos": 1,
-   "linhas": 360,
+   "linhas": 387,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [

@@ -7902,7 +7902,7 @@
     "PageHeader"
    ],
    "export_default": null,
-   "linhas": 170,
+   "linhas": 173,
    "dominio": "components/layout",
    "hooks_locais": [
     "useLayoutContext"

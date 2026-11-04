@@ -678,7 +678,7 @@
    "hooks_exportados": [
     "useAddressAutocomplete"
    ],
-   "linhas": 602,
+   "linhas": 608,
    "dominio": "components/inbox",
    "tabelas": [],
    "rpcs": [],
@@ -686,6 +686,7 @@
    "hooks_internos": [
     "useCallback",
     "useEffect",
+    "useMemo",
     "useReducer",
     "useRef",
     "useState"

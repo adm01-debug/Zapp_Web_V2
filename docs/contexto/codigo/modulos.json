@@ -2691,7 +2691,7 @@
    "modulo": "components/inbox",
    "arquivos": 240,
    "testes": 316,
-   "linhas": 41964,
+   "linhas": 41970,
    "itens_menu": [
     "Chat"
    ],
@@ -3442,7 +3442,7 @@
    "modulo": "components/layout",
    "arquivos": 18,
    "testes": 11,
-   "linhas": 1532,
+   "linhas": 1535,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -13565,7 +13565,7 @@
    "modulo": "lib/calls",
    "arquivos": 22,
    "testes": 16,
-   "linhas": 3167,
+   "linhas": 3174,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

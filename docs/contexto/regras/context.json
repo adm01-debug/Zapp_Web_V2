@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b88b4f1a8359af1ff1085a10c72bbc4b61baf77d",
+  "sha": "afd8c7ca30566b43cd64fe1eac8d0648fb62fce3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 15:11 UTC",
-  "files_total": 8038,
-  "code_files": 5942,
-  "code_lines": 1024812
+  "generated_at": "2026-11-04 18:03 UTC",
+  "files_total": 8055,
+  "code_files": 5958,
+  "code_lines": 1030445
  },
  "version": "1.3.2",
- "facts_hash": "a614e32f81227080",
+ "facts_hash": "5dd1505207faf340",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -227,7 +227,7 @@
    },
    {
     "file": ".github/workflows/e2e-logado-isolado.yml",
-    "name": "E2E isolado - bootstrap e login",
+    "name": "E2E isolado - login e suíte completa",
     "triggers": [
      "pull_request",
      "workflow_dispatch"
@@ -305,9 +305,9 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1859,
+   ".ts": 1860,
    ".sql": 1280,
-   ".mjs": 364,
+   ".mjs": 379,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67585,8 +67585,8 @@
   },
   {
    "module": "e2e",
-   "files": 75,
-   "lines": 16794,
+   "files": 76,
+   "lines": 17248,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -67600,8 +67600,9 @@
     "email-navy.ts: mockEmailNavy",
     "fixture-conversation.ts: FixtureConversationFailure, FixtureConversationError, pickFixtureConversationIndex, conversationItemNames, openFixtureConversation",
     "mapa-mocks.ts: SUPABASE_HOST, Registro, fixtureMapbox, json, querObjetoUnico, mockAppShell",
+    "onboarding-isolated.ts: withFreshOnboardingUser, test, gotoOnboardingContacts",
     "onboarding.ts: OVERLAY_ONBOARDING, TITULO_ONBOARDING, dispensarOnboarding",
-    "supabase-env.ts: SUPABASE_URL, SUPABASE_ANON_KEY",
+    "supabase-env.ts: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_STORAGE_KEY",
     "talkx-demo.ts: ESCRITA_NAO_PREVISTA, TalkXDemoData, FixtureVaziaError, loadDemoData, fixturesComDados, fixturesVazias",
     "dados.ts: E2E_ARQUIVOS, caminhoObjeto, locatorObjeto",
     "tema.ts: TemaE2E, CONTRASTE_MINIMO, aplicarTema, contrasteNumerico, duracaoMaximaDeTransicao",
@@ -67617,6 +67618,7 @@
    ],
    "deps": [
     "@playwright/test",
+    "\\.\\",
     "bun",
     "node:assert",
     "node:buffer",
@@ -67624,6 +67626,7 @@
     "node:crypto",
     "node:fs",
     "node:module",
+    "node:os",
     "node:path",
     "node:test",
     "node:url"
@@ -67700,6 +67703,7 @@
     "e2e/fixtures/email-navy.ts",
     "e2e/fixtures/fixture-conversation.ts",
     "e2e/fixtures/mapa-mocks.ts",
+    "e2e/fixtures/onboarding-isolated.ts",
     "e2e/fixtures/onboarding.ts",
     "e2e/fixtures/seed-files-tab.mjs",
     "e2e/fixtures/seed-talk-me.sql",
@@ -67730,8 +67734,8 @@
   },
   {
    "module": "scripts",
-   "files": 393,
-   "lines": 73943,
+   "files": 408,
+   "lines": 78568,
    "tables": [
     "a",
     "alem_do_limite",
@@ -67848,8 +67852,8 @@
     "node:assert",
     "node:child_process",
     "node:crypto",
-    "node:fs",
-    "node:http"
+    "node:events",
+    "node:fs"
    ],
    "imports_modules": [
     "(raiz)",
@@ -67944,9 +67948,9 @@
     "scripts/ci/e2e-auth-isolation.unit.mjs",
     "scripts/ci/e2e-auth-setup.unit.mjs",
     "scripts/ci/e2e-email-axe-ready.unit.mjs",
-    "scripts/ci/e2e-isolated-gateway.unit.mjs",
-    "scripts/ci/e2e-isolated-images.unit.mjs",
-    "scripts/ci/e2e-isolated-loader.unit.mjs"
+    "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
+    "scripts/ci/e2e-isolated-alert.unit.mjs",
+    "scripts/ci/e2e-isolated-fixtures.unit.mjs"
    ]
   },
   {
@@ -68060,7 +68064,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 367404,
+   "lines": 367551,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68709,7 +68713,7 @@
   {
    "module": "src/lib",
    "files": 279,
-   "lines": 38505,
+   "lines": 38560,
    "tables": [
     "contacts",
     "security_alerts"
@@ -69426,7 +69430,7 @@
   {
    "module": "supabase/functions",
    "files": 380,
-   "lines": 115252,
+   "lines": 115604,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -73592,6 +73596,7 @@
    ],
    "E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY": [
     "e2e/files-tab.spec.ts",
+    "e2e/fixtures/onboarding-isolated.ts",
     "e2e/fixtures/seed-files-tab.mjs"
    ],
    "E2E_LOCAL_SUPABASE_URL": [
@@ -73765,6 +73770,7 @@
     "e2e/fixtures/e2e-talkx.ts"
    ],
    "GITHUB_OUTPUT": [
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "scripts/ci/fila-merge.mjs",
     "scripts/ci/reuso-arvore.mjs",
     "scripts/e2e-isolated/resolve-images.mjs",
@@ -73946,7 +73952,10 @@
     "scripts/ci/branch-hygiene-workflow.unit.mjs",
     "scripts/ci/contexto-publicacao.unit.mjs",
     "scripts/ci/db-guard-confiabilidade.unit.mjs",
+    "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
     "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
+    "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "scripts/ci/e2e-isolated-workflow.unit.mjs",
     "scripts/ci/prova-orcamento-argv-secrets.unit.mjs",
     "scripts/db-audit/global-guards-regression.test.mjs",
     "scripts/db-audit/validate-destino.test.mjs",
@@ -74095,6 +74104,10 @@
     "docs/reconciliation/reproduce/transversal/local-semantic-probes.mjs",
     "docs/reconciliation/reproduce/volume/volume_offline_probe.mjs"
    ],
+   "RECORDED": [
+    "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
+    "scripts/ci/e2e-isolated-workflow.unit.mjs"
+   ],
    "REDIGIR_LOG_BASE": [
     "scripts/edge-deploy/redigir-log.mjs"
    ],
@@ -74143,6 +74156,7 @@
    ],
    "SERVICE_ROLE_KEY": [
     "e2e/email-link-contato.spec.ts",
+    "e2e/fixtures/onboarding-isolated.ts",
     "scripts/e2e-isolated/seed-login.mjs"
    ],
    "SETTINGS_GUARD_AUTOR": [
@@ -74451,12 +74465,14 @@
    ],
    "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY": [
     "e2e/files-tab.spec.ts",
+    "e2e/fixtures/supabase-env.ts",
     "e2e/inbox-sidebar-topo.spec.ts",
     "e2e/navegacao-modulos.spec.ts",
     "e2e/quick-controls-volume.spec.ts"
    ],
    "VITE_ZAPP_LOCAL_SUPABASE_URL": [
     "e2e/files-tab.spec.ts",
+    "e2e/fixtures/supabase-env.ts",
     "e2e/inbox-sidebar-topo.spec.ts",
     "e2e/navegacao-modulos.spec.ts",
     "e2e/quick-controls-volume.spec.ts"
@@ -74478,7 +74494,9 @@
     "src/styles/__tests__/mobileAreaSeguraRolagem.test.ts"
    ],
    "ZAPP_E2E_LOCAL": [
-    "e2e/email-link-contato.spec.ts"
+    "e2e/catalog.spec.ts",
+    "e2e/email-link-contato.spec.ts",
+    "e2e/fixtures/supabase-env.ts"
    ],
    "ZAPP_E2E_RUN_ID": [
     "scripts/e2e-isolated/gateway.mjs",
@@ -79955,6 +79973,14 @@
     "msg": "not-visible"
    },
    {
+    "file": "e2e/fixtures/onboarding-isolated.ts",
+    "msg": "[E2E tour/${code}]"
+   },
+   {
+    "file": "e2e/fixtures/supabase-env.ts",
+    "msg": "[e2e/isolated-fixture] configuração local incompleta ou divergente"
+   },
+   {
     "file": "e2e/fixtures/supabase-env.ts",
     "msg": "[e2e] ${name} nao encontrada em .env.production. Esse arquivo e a fonte PRIMARIA "
    },
@@ -80167,6 +80193,22 @@
     "msg": "prazo simulado"
    },
    {
+    "file": "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
+    "msg": "forbidden-"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-alert.unit.mjs",
+    "msg": "rede proibida neste teste"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
+    "msg": "controlled missing file"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
+    "msg": "unexpected file read"
+   },
+   {
     "file": "scripts/ci/e2e-isolated-images.unit.mjs",
     "msg": "unexpected mutation: "
    },
@@ -80199,8 +80241,44 @@
     "msg": "credentials read before isolation"
    },
    {
+    "file": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+    "msg": "Unexpected controlled boundary: "
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+    "msg": "diagnostic-write-failed"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+    "msg": "disk-full"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+    "msg": "must-not-read-service-role"
+   },
+   {
     "file": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
     "msg": "synthetic transport rejection"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
+    "msg": "helper must not open SQL"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
+    "msg": "synthetic EPIPE"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-seed.unit.mjs",
+    "msg": "credential read too early"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-seed.unit.mjs",
+    "msg": "sensitive-file-content"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-seed.unit.mjs",
+    "msg": "sensitive-response-content"
    },
    {
     "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
@@ -80212,19 +80290,19 @@
    },
    {
     "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
-    "msg": "Timeout 15000ms exceeded"
-   },
-   {
-    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
-    "msg": "Unacceptable TLS certificate"
-   },
-   {
-    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
     "msg": "connection refused"
    },
    {
     "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
     "msg": "context failed"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "controlled invalid JSON"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "frame unavailable"
    },
    {
     "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
@@ -80237,6 +80315,38 @@
    {
     "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
     "msg": "operation timed out"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "ISOLATION_BROWSER"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "assertion-failed-canary"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "click blocked"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "credential-getter-reached"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "not-visible"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "private-file-canary"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "synthetic-login-failure"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
+    "msg": "tour absent"
    },
    {
     "file": "scripts/ci/e2e-recovery.unit.mjs",
@@ -80827,6 +80937,46 @@
     "msg": "[e2e-isolated/unreviewed-vault-configuration] "
    },
    {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "invalid-local-media"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "local-media-empty"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "local-media-too-large"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "local-media-unavailable"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "unsupported-filter"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "unsupported-filter-column"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "unsupported-order"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "unsupported-range"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "unsupported-search"
+   },
+   {
+    "file": "scripts/e2e-isolated/providers.mjs",
+    "msg": "unsupported-select"
+   },
+   {
     "file": "scripts/e2e-isolated/resolve-images.mjs",
     "msg": "docker-"
    },
@@ -80888,6 +81038,10 @@
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "function-source-changed"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
     "msg": "image-digest-mismatch"
    },
    {
@@ -80901,6 +81055,10 @@
    {
     "file": "scripts/e2e-isolated/run.mjs",
     "msg": "invalid-function-name"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "invalid-isolated-scope"
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
@@ -80952,11 +81110,35 @@
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "provider-proof-mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
     "msg": "real-platform-schema-missing"
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
     "msg": "run-cancelled"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "suite-handler-missing"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "suite-inventory-invalid"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "suite-proof-unreadable"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "suite-result-not-clean"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "suite-seed-proof-mismatch"
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
@@ -80976,7 +81158,7 @@
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
-    "msg": "usage: run.mjs login <output-directory>"
+    "msg": "usage: run.mjs login <output-directory> | suite <group> <output-directory>"
    },
    {
     "file": "scripts/e2e-isolated/runtime-contract.mjs",
@@ -92057,6 +92239,10 @@
    {
     "file": "src/lib/calls/phone.ts",
     "text": "* REGRA DURA: a comparação é sempre da forma E.164 completa. **Nunca** casar"
+   },
+   {
+    "file": "src/lib/calls/phone.ts",
+    "text": "* O `+` declara o país; outro DDI não pode virar uma identidade brasileira. */"
    },
    {
     "file": "src/lib/calls/phone.ts",
@@ -125787,7 +125973,7 @@
    },
    {
     "file": "e2e/busca-global-paleta.spec.ts",
-    "name": "Ctrl+K abre a paleta, foca o campo e lista as telas do sistema"
+    "name": "Ctrl+K abre a paleta, foca o campo e pesquisa as telas do sistema"
    },
    {
     "file": "e2e/busca-global-paleta.spec.ts",
@@ -125816,6 +126002,14 @@
    {
     "file": "e2e/busca-global-paleta.spec.ts",
     "name": "o botão Buscar do cabeçalho abre a mesma paleta e ela navega"
+   },
+   {
+    "file": "e2e/busca-global-paleta.spec.ts",
+    "name": "o primeiro Ctrl+K logo após carregar a tela já abre a paleta"
+   },
+   {
+    "file": "e2e/busca-global-paleta.spec.ts",
+    "name": "o Ctrl+K seguinte fecha a paleta aberta (alterna)"
    },
    {
     "file": "e2e/catalog.spec.ts",
@@ -126279,7 +126473,7 @@
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
-    "name": "abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha"
+    "name": "abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha"
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
@@ -126287,11 +126481,15 @@
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
-    "name": "abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha"
+    "name": "abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha"
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
     "name": "Guarda da varredura: ruído novo REPROVA"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "mapa preserva 42 entradas e os modos Lista/Quadro em 43 percursos distintos"
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
@@ -126335,7 +126533,19 @@
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
-    "name": "par de tags aninhadas FORA da lista REPROVA; o da lista vira defeito com fixme"
+    "name": "pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>"
    },
    {
     "file": "e2e/onboarding-dispensar.spec.ts",
@@ -131872,6 +132082,14 @@
    {
     "file": "src/components/calls/__tests__/NewCallPanel.test.tsx",
     "name": "preenche o numero que o clique-para-discar deixou (T29/T57)"
+   },
+   {
+    "file": "src/components/calls/__tests__/NewCallPanel.test.tsx",
+    "name": "preserva o país estrangeiro e não disca com %s disponível"
+   },
+   {
+    "file": "src/components/calls/__tests__/NewCallPanel.test.tsx",
+    "name": "mantém Cancelar em uma sessão ativa com número estrangeiro pendente"
    },
    {
     "file": "src/components/calls/__tests__/NewCallPanel.test.tsx",
@@ -148979,6 +149197,22 @@
    },
    {
     "file": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
+    "name": "proximidade depende das coordenadas, não da identidade do objeto"
+   },
+   {
+    "file": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
+    "name": "%s: centro equivalente conserva destaque e seleção sem repetir a busca"
+   },
+   {
+    "file": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
+    "name": "novo objeto com coordenadas zero não aborta nem substitui a consulta em voo"
+   },
+   {
+    "file": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
+    "name": "$name: mudança real continua buscando e invalida o destaque da lista anterior"
+   },
+   {
+    "file": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
     "name": "E45 — sessão só nasce no primeiro request real"
    },
    {
@@ -152100,6 +152334,10 @@
    {
     "file": "src/components/layout/__tests__/PageHeader.trilha.test.tsx",
     "name": "desktop: sem breadcrumbs não quebra e só mostra o título"
+   },
+   {
+    "file": "src/components/layout/__tests__/PageHeader.trilha.test.tsx",
+    "name": "Início $origem: separadores e itens são irmãos no ol, sem li aninhado"
    },
    {
     "file": "src/components/layout/__tests__/Sidebar.test.tsx",
@@ -193218,6 +193456,22 @@
     "name": "não vincula com telefone ausente ou não normalizável"
    },
    {
+    "file": "src/lib/calls/__tests__/phone.test.ts",
+    "name": "identidade BR com país explícito"
+   },
+   {
+    "file": "src/lib/calls/__tests__/phone.test.ts",
+    "name": "não confunde %s com a identidade BR %s"
+   },
+   {
+    "file": "src/lib/calls/__tests__/phone.test.ts",
+    "name": "mantém +55 com máscara, DDD 55 local e a entrada ambígua sem +"
+   },
+   {
+    "file": "src/lib/calls/__tests__/phone.test.ts",
+    "name": "mantém incompletos sem adivinhar um número brasileiro"
+   },
+   {
     "file": "src/lib/calls/__tests__/session.test.ts",
     "name": "session — estado inicial"
    },
@@ -201820,6 +202074,34 @@
    {
     "file": "supabase/functions/detect-new-device/index.test.ts",
     "name": "buildDeviceAlertEmail preserva valores benignos"
+   },
+   {
+    "file": "supabase/functions/detect-new-device/index.test.ts",
+    "name": "handleDetectNewDevice: duas visitas concorrentes com dispositivo ${newDevice ? "
+   },
+   {
+    "file": "supabase/functions/detect-new-device/index.test.ts",
+    "name": "handleDetectNewDevice: só o código e a mensagem exatos do índice de sessão autorizam recuperação"
+   },
+   {
+    "file": "supabase/functions/detect-new-device/index.test.ts",
+    "name": "handleDetectNewDevice: recuperação recusa vencedora ${canonical}"
+   },
+   {
+    "file": "supabase/functions/detect-new-device/index.test.ts",
+    "name": "handleDetectNewDevice: erro ou zero linhas no UPDATE canônico não vira sucesso"
+   },
+   {
+    "file": "supabase/functions/detect-new-device/index.test.ts",
+    "name": "handleDetectNewDevice: retorno canônico nulo, múltiplo ou com identidade inválida é recusado"
+   },
+   {
+    "file": "supabase/functions/detect-new-device/index.test.ts",
+    "name": "handleDetectNewDevice: recuperação preserva sessão inativa, encerramento e validade"
+   },
+   {
+    "file": "supabase/functions/detect-new-device/index.test.ts",
+    "name": "handleDetectNewDevice: rate limit mantém 429 depois de recuperar inventário e criar um único alerta"
    },
    {
     "file": "supabase/functions/elevenlabs-agent-token/index.test.ts",
@@ -238729,6 +239011,7 @@
    "e2e/email-link-contato.spec.ts",
    "e2e/files-tab.spec.ts",
    "e2e/fixtures/arquivos-local/seed.ts",
+   "e2e/fixtures/onboarding-isolated.ts",
    "e2e/fixtures/seed-files-tab.mjs",
    "e2e/navegacao-modulos.spec.ts",
    "scripts/ai-context/cenarios.mjs",
@@ -238739,10 +239022,18 @@
    "scripts/ci/check-test-inventory.mjs",
    "scripts/ci/crm-integration-contract.unit.mjs",
    "scripts/ci/e2e-auth-isolation.unit.mjs",
+   "scripts/ci/e2e-isolated-fixtures.unit.mjs",
    "scripts/ci/e2e-isolated-images.unit.mjs",
+   "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
    "scripts/ci/e2e-isolated-login-seed.unit.mjs",
+   "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+   "scripts/ci/e2e-isolated-providers.unit.mjs",
    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
+   "scripts/ci/e2e-isolated-seed.unit.mjs",
+   "scripts/ci/e2e-isolated-suite.unit.mjs",
    "scripts/ci/e2e-isolated-tls.unit.mjs",
+   "scripts/ci/e2e-isolated-tour.unit.mjs",
    "scripts/ci/e2e-isolated.unit.mjs",
    "scripts/ci/e2e-teardown.mjs",
    "scripts/ci/e2e-teardown.unit.mjs",
@@ -238773,8 +239064,11 @@
    "scripts/db-audit/talkx-template-history-runtime.sql",
    "scripts/db-audit/validate-runtime-proof.mjs",
    "scripts/e2e-isolated/platform/webhooks.sql",
+   "scripts/e2e-isolated/provider-diagnostics.mjs",
+   "scripts/e2e-isolated/providers.mjs",
    "scripts/e2e-isolated/runtime-contract.mjs",
    "scripts/e2e-isolated/seed-login.mjs",
+   "scripts/e2e-isolated/seed-suite.mjs",
    "scripts/e2e-isolated/stack.mjs",
    "scripts/e2e-isolated/tls-edge-probe.ts",
    "scripts/edge-deploy/secrets-scope.mjs",
@@ -257854,7 +258148,7 @@
   },
   "e2e/busca-global-paleta.spec.ts": {
    "path": "e2e/busca-global-paleta.spec.ts",
-   "lines": 335,
+   "lines": 318,
    "is_test": true,
    "params": [
     {
@@ -257863,12 +258157,14 @@
     },
     {
      "name": "CAMPO_PALETA",
-     "value": "'Buscar módulo… (ex: tarefas, chatbot)'"
+     "value": "'Buscar comandos'"
     }
    ],
    "rule_comments": [
     "A paleta não pode estourar a largura da viewport de 390px.",
-    "* BUG (não corrigido neste cartão — só documentado): ⌘K/Ctrl+K abre apenas a busca"
+    "* BUG (não corrigido neste cartão — só documentado): ⌘K/Ctrl+K abre apenas a busca",
+    "enquanto CommandPaletteHost carrega. Um único Ctrl+K deve tornar o diálogo",
+    "seguinte deve fechar a paleta sem outra alternância no bubble."
    ],
    "temporal": [
     "await expect(page.getByPlaceholder('Buscar conversas…')).toBeVisible({ timeout: 60_000 });",
@@ -257876,23 +258172,26 @@
    ],
    "tests": [
     "Busca global (Ctrl+K) — paleta de comandos e atalhos",
-    "Ctrl+K abre a paleta, foca o campo e lista as telas do sistema",
+    "Ctrl+K abre a paleta, foca o campo e pesquisa as telas do sistema",
     "a busca filtra as telas e o Enter navega para a tela escolhida",
     "as setas movem a seleção e o Enter dispara o item destacado",
     "termo sem correspondência mostra o estado vazio",
     "Esc fecha a paleta",
     "Ctrl+/ abre a ajuda de atalhos com os atalhos principais do registry",
     "celular 390x844",
-    "o botão Buscar do cabeçalho abre a mesma paleta e ela navega"
+    "o botão Buscar do cabeçalho abre a mesma paleta e ela navega",
+    "o primeiro Ctrl+K logo após carregar a tela já abre a paleta",
+    "o Ctrl+K seguinte fecha a paleta aberta (alterna)"
    ]
   },
   "e2e/catalog.spec.ts": {
    "path": "e2e/catalog.spec.ts",
-   "lines": 311,
+   "lines": 310,
    "is_test": true,
    "env": [
     "E2E_SUPABASE_ANON_KEY",
-    "VITE_SUPABASE_PUBLISHABLE_KEY"
+    "VITE_SUPABASE_PUBLISHABLE_KEY",
+    "ZAPP_E2E_LOCAL"
    ],
    "errors": [
     "Sessão do Supabase não encontrada no localStorage — o project ",
@@ -258256,7 +258555,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "path": "e2e/email-navy-visual.spec.ts",
-   "lines": 601,
+   "lines": 712,
    "is_test": true,
    "params": [
     {
@@ -258267,6 +258566,9 @@
      "name": "PRIMEIRA_CONVERSA",
      "value": "'Preview deployment failed for departamento-pessoal-v3'"
     }
+   ],
+   "rule_comments": [
+    "O resultado atravessa uma fronteira browser → Node: reconstrói apenas o schema"
    ],
    "tests": [
     "rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis",
@@ -258559,7 +258861,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "path": "e2e/navegacao-modulos.spec.ts",
-   "lines": 1686,
+   "lines": 1792,
    "is_test": true,
    "env": [
     "E2E_TEST_EMAIL",
@@ -258568,6 +258870,7 @@
     "VITE_ZAPP_LOCAL_SUPABASE_URL"
    ],
    "errors": [
+    ")).toHaveCount(0);\n  } else if (item.id === ",
     "E2E_TEST_EMAIL/E2E_TEST_PASSWORD não estão definidas e não há sessão montada. Rode pelo ",
     "login local não concluiu (banco local do conjunto). Tela: ${visivel.slice(0, 400)}",
     "nem o shell autenticado nem a tela de login ficaram de pé (banco local do conjunto do cartão)"
@@ -258605,7 +258908,8 @@
    "rule_comments": [
     "nem regra por texto solto: endpoint novo, outro status ou outro corpo REPROVAM.",
     "* tag que CONTÉM (o React acusa \"X dentro de X\" / \"X não pode conter X\") */",
-    "4xx de validação, endpoint novo, par de tags novo) entra em `reprovam`."
+    "4xx de validação, endpoint novo, par de tags novo) entra em `reprovam`.",
+    "subtítulo não pode ser p. O React avisa \"In HTML, <div> cannot be a descendant"
    ],
    "temporal": [
     "await buscar.click({ timeout: 20_000 });",
@@ -258625,10 +258929,11 @@
    ],
    "tests": [
     "Navegação por todos os módulos (desktop)",
-    "abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha",
+    "abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha",
     "Navegação por todos os módulos (celular 390x844)",
-    "abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha",
+    "abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha",
     "Guarda da varredura: ruído novo REPROVA",
+    "mapa preserva 42 entradas e os modos Lista/Quadro em 43 percursos distintos",
     "endpoint novo (fora da lista) REPROVA mesmo com status conhecido",
     "endpoint da lista com OUTRO status REPROVA",
     "endpoint e status da lista, corpo FORA da assinatura REPROVA",
@@ -258639,7 +258944,10 @@
     "console.error sem resposta justificada REPROVA (status solto não tolera)",
     "sombra de console com URL da mensagem só casa com a resposta MEDIDA correspondente",
     "sombra sem URL na mensagem só casa com a resposta MEDIDA que a precede",
-    "par de tags aninhadas FORA da lista REPROVA; o da lista vira defeito com fixme"
+    "pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM",
+    "DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item",
+    "DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro",
+    "DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>"
    ],
    "uses_service_role": true
   },
@@ -258661,7 +258969,7 @@
   },
   "e2e/onboarding-tour.spec.ts": {
    "path": "e2e/onboarding-tour.spec.ts",
-   "lines": 133,
+   "lines": 127,
    "is_test": true,
    "params": [
     {
@@ -258676,7 +258984,7 @@
    "rule_comments": [
     "`completeOnboarding()` gravava apenas no localStorage — e, reaparecendo,",
     "* Enquanto está aberto ele DEVE bloquear: é um modal, isso é o esperado. O que",
-    "* Sem `mode: 'serial'`: uma falha num teste não pode esconder o resultado do",
+    "preserva os demais usuários e remove somente a conta cuja posse reconfirmou.",
     "* O tour não pode estar por cima depois do tempo de acomodar a checagem. */"
    ],
    "tests": [
@@ -258707,7 +259015,7 @@
   },
   "e2e/quarantine.unit.mjs": {
    "path": "e2e/quarantine.unit.mjs",
-   "lines": 117
+   "lines": 116
   },
   "e2e/quick-controls-volume.spec.ts": {
    "path": "e2e/quick-controls-volume.spec.ts",
@@ -259072,7 +259380,7 @@
   },
   "e2e/telefonia.spec.ts": {
    "path": "e2e/telefonia.spec.ts",
-   "lines": 429,
+   "lines": 438,
    "is_test": true,
    "params": [
     {
@@ -259358,7 +259666,7 @@
   },
   "e2e/fixtures/mapa-mocks.ts": {
    "path": "e2e/fixtures/mapa-mocks.ts",
-   "lines": 164,
+   "lines": 165,
    "exports": [
     "const SUPABASE_HOST",
     "type Registro",
@@ -259369,17 +259677,40 @@
     "function mockMapboxSearchbox",
     "function bloquearRedeReal"
    ],
-   "params": [
-    {
-     "name": "SUPABASE_HOST",
-     "value": "'https://tnnnlkbymytvtqngbbqh.supabase.co'"
-    }
-   ],
    "rule_comments": [
     "* Requisições que NÃO tinham mock e foram barradas pelo guarda — deve ficar vazio. */",
     "RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).",
     "A sonda de conectividade usa no-cors e deve ficar dentro da rede mockada."
    ]
+  },
+  "e2e/fixtures/onboarding-isolated.ts": {
+   "path": "e2e/fixtures/onboarding-isolated.ts",
+   "lines": 111,
+   "exports": [
+    "function withFreshOnboardingUser",
+    "const test",
+    "function gotoOnboardingContacts"
+   ],
+   "env": [
+    "E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY",
+    "SERVICE_ROLE_KEY"
+   ],
+   "errors": [
+    "[E2E tour/${code}]"
+   ],
+   "role_checks": [
+    "supervisor"
+   ],
+   "rule_comments": [
+    "Merge only this preference. The app, not the fixture, must persist true."
+   ],
+   "temporal": [
+    "await expect(page.getByRole('main', { name: 'Conteúdo principal' }).getByRole('heading', { level: 1, name: 'Contatos' })).toBeAttached({ timeout: 20_000 });",
+    "await expect(page.getByTestId('kpi-card').first()).toBeVisible({ timeout: 20_000 });",
+    "await expect(page.getByText('Carregando contatos', { exact: false })).toHaveCount(0, { timeout: 20_000 });",
+    "await expect(page.locator('#main-navigation')).toBeVisible({ timeout: 60_000 });"
+   ],
+   "uses_service_role": true
   },
   "e2e/fixtures/onboarding.ts": {
    "path": "e2e/fixtures/onboarding.ts",
@@ -259450,27 +259781,35 @@
   },
   "e2e/fixtures/supabase-env.ts": {
    "path": "e2e/fixtures/supabase-env.ts",
-   "lines": 56,
+   "lines": 76,
    "exports": [
     "const SUPABASE_URL",
-    "const SUPABASE_ANON_KEY"
+    "const SUPABASE_ANON_KEY",
+    "const SUPABASE_STORAGE_KEY"
    ],
    "env": [
     "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE",
-    "E2E_SUPABASE_URL_OVERRIDE"
+    "E2E_SUPABASE_URL_OVERRIDE",
+    "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY",
+    "VITE_ZAPP_LOCAL_SUPABASE_URL",
+    "ZAPP_E2E_LOCAL"
    ],
    "errors": [
+    "[e2e/isolated-fixture] configuração local incompleta ou divergente",
     "[e2e] ${name} nao encontrada em .env.production. Esse arquivo e a fonte PRIMARIA "
+   ],
+   "role_checks": [
+    "anon"
    ],
    "rule_comments": [
     "arquivo ausente: o erro claro sai em required()",
-    "e um teste de e2e que escreve no banco nao pode cair no projeto errado em silencio."
+    "override dedicado. Somente no modo isolado os pares app/fixture devem coincidir."
    ],
    "doc": "Fonte unica dos valores de Supabase para os testes E2E. Por que nao literais: a chave publishable estava escrita em 4 arquivos de e2e/ (contact-form-email-duplicate.spec.ts, fixtures/contacts-page.ts, fixtures/e2e-contact.ts, fixtures/e2e-talkx.ts) alem de .env.production. Aqui ela vem de UMA fonte, …"
   },
   "e2e/fixtures/talkx-demo.ts": {
    "path": "e2e/fixtures/talkx-demo.ts",
-   "lines": 296,
+   "lines": 297,
    "exports": [
     "const ESCRITA_NAO_PREVISTA",
     "type TalkXDemoData",
@@ -259523,7 +259862,7 @@
   },
   "e2e/fixtures/arquivos-local/seed.ts": {
    "path": "e2e/fixtures/arquivos-local/seed.ts",
-   "lines": 312,
+   "lines": 432,
    "errors": [
     "seed arquivos-local: ${rotulo} aponta para host não-local (${host}). Proibido.",
     "seed arquivos-local: variável ${nome} ausente (rode via env de zapp-db-local)",
@@ -259537,6 +259876,12 @@
     "seed: objeto privado acessível via rota pública — fixture inseguro",
     "seed: objeto privado baixado difere do esperado (${baixado.length} bytes vs ${esperado.length})",
     "seed: upload ${caminho} falhou (${res.status}): ${await res.text()}"
+   ],
+   "role_checks": [
+    "supabase_admin"
+   ],
+   "rule_comments": [
+    "Sincrona: EPIPE/erro de escrita não pode substituir o erro do seed."
    ],
    "temporal": [
     "body: JSON.stringify({ expiresIn: 60 }),"
@@ -260799,7 +261144,7 @@
   },
   "scripts/ci/ci-docs-baseline.unit.mjs": {
    "path": "scripts/ci/ci-docs-baseline.unit.mjs",
-   "lines": 537,
+   "lines": 543,
    "params": [
     {
      "name": "SECAO_ABERTURA",
@@ -261298,9 +261643,52 @@
     "}, { timeout: 1000 });"
    ]
   },
+  "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs": {
+   "path": "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
+   "lines": 268,
+   "errors": [
+    "forbidden-"
+   ],
+   "params": [
+    {
+     "name": "PRIMEIRA_CONVERSA",
+     "value": "\"fixture-ready\""
+    }
+   ],
+   "temporal": [
+    "async toBeVisible(...args) { operations.push('ready'); assert.equal(subject.kind, 'ready'); assert.equal(args.length, 1); assert.deepEqual(JSON.parse(JSON.strin …",
+    "if (installer) { try { vm.runInContext('(' + installer.toString() + ')()', browser, { timeout: 1000 }); } catch { /* Browser script errors are collected as miss …",
+    "let raw = vm.runInContext('(' + fn.toString() + ')()', browser, { timeout: 1000 });",
+    "vm.runInNewContext(bootConstant + '\\n' + testDeadline, { test: { setTimeout(value) { timeout = value; } } }, { timeout: 1000 });",
+    "vm.runInNewContext(compiled, { test(name, fn) { assert.equal(name, title); assert.equal(callback, undefined); callback = fn; }, expect }, { timeout: 1000 });"
+   ]
+  },
+  "scripts/ci/e2e-isolated-alert.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-alert.unit.mjs",
+   "lines": 94,
+   "errors": [
+    "rede proibida neste teste"
+   ],
+   "doc": "API de issues em memória. Executa o github-script real e o marcador versionado; não envia mensagens nem lê relatórios privados do Playwright."
+  },
+  "scripts/ci/e2e-isolated-fixtures.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
+   "lines": 132,
+   "errors": [
+    "controlled missing file",
+    "unexpected file read"
+   ],
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    }
+   ],
+   "uses_service_role": true
+  },
   "scripts/ci/e2e-isolated-gateway.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-gateway.unit.mjs",
-   "lines": 111,
+   "lines": 119,
    "params": [
     {
      "name": "RUN",
@@ -261326,6 +261714,18 @@
      "name": "DIGEST",
      "value": "'a'"
     }
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
+   "lines": 152,
+   "env": [
+    "PATH",
+    "RECORDED"
+   ],
+   "temporal": [
+    "return spawnSync('bash', ['-s'], { input: code, cwd: temp, encoding: 'utf8', timeout: 10000, env: { PATH: process.env.PATH, ...env } });"
    ],
    "uses_service_role": true
   },
@@ -261386,9 +261786,46 @@
     "new review required */\\n' + s],"
    ]
   },
+  "scripts/ci/e2e-isolated-provider-readiness.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+   "lines": 526,
+   "errors": [
+    "Unexpected controlled boundary: ",
+    "diagnostic-write-failed",
+    "disk-full",
+    "must-not-read-service-role"
+   ],
+   "temporal": [
+    "encoding: 'utf8', timeout: 2000, killSignal: 'SIGKILL', maxBuffer: 4096,",
+    "test('verifier real: corpo HTTP travado respeita os 500 ms e conserva a falha', { timeout: 5000 }, async () => {"
+   ],
+   "side_effects": [
+    "enqueue("
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-providers.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-providers.unit.mjs",
+   "lines": 171,
+   "uses_service_role": true
+  },
   "scripts/ci/e2e-isolated-results.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-results.unit.mjs",
-   "lines": 220
+   "lines": 385,
+   "params": [
+    {
+     "name": "PLATFORM_BLOB",
+     "value": "'96a821d6c8389d526a9a5d65554687412510a92a'"
+    },
+    {
+     "name": "PLATFORM_FILE",
+     "value": "'e2e/conversation.spec.ts'"
+    },
+    {
+     "name": "SOURCE_SHA",
+     "value": "'a96bbd4cbaeed5a8bad7c42af347e56960e6cac7'"
+    }
+   ]
   },
   "scripts/ci/e2e-isolated-runtime-probe.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
@@ -261405,7 +261842,10 @@
   },
   "scripts/ci/e2e-isolated-runtime.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "lines": 688,
+   "lines": 1118,
+   "env": [
+    "GITHUB_OUTPUT"
+   ],
    "params": [
     {
      "name": "SOURCE_SHA",
@@ -261418,10 +261858,90 @@
     {
      "name": "SQL",
      "value": "'select 1;\\n'"
+    },
+    {
+     "name": "FUNCTION_SOURCE",
+     "value": "'// graph fixture, never executed\\n'"
     }
    ],
    "rule_comments": [
+    "subprocess channels contain canaries and must never become a seed .log.",
+    "synthetic:must-never-publish@127.0.0.1:5173/path?token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjYW5hcnkifQ.c2VjcmV0\\n';",
+    "Capture both subprocess channels before required() throws. No registry/network",
     "A failed pre-database TLS probe must leave a useful redacted diagnostic."
+   ],
+   "temporal": [
+    "assert.deepEqual(CATALOG_EXECUTOR_OPTIONS, { timeout: 5000, killSignal: 'SIGKILL', maxBuffer: 8192 });",
+    "test('provider catalog executor: the actual Node timeout kills a child that ignores SIGTERM', { timeout: 12000 }, () => {"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
+   "lines": 346,
+   "errors": [
+    "helper must not open SQL",
+    "synthetic EPIPE"
+   ],
+   "params": [
+    {
+     "name": "CANARY",
+     "value": "'CANARY_PRIVATE_PASSWORD_59317'"
+    },
+    {
+     "name": "JWT",
+     "value": "'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjYW5hcnkifQ.c2VjcmV0'"
+    }
+   ],
+   "role_checks": [
+    "callerRole"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-seed.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-seed.unit.mjs",
+   "lines": 349,
+   "errors": [
+    "credential read too early",
+    "sensitive-file-content",
+    "sensitive-response-content"
+   ],
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-seed-test-0001'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    },
+    {
+     "name": "PROFILE",
+     "value": "'e2e65100-0000-4000-a000-000000009001'"
+    },
+    {
+     "name": "USER",
+     "value": "'e2e65100-0000-4000-a000-000000009002'"
+    },
+    {
+     "name": "FILES_OWNER",
+     "value": "'e2e65100-0000-4000-a000-000000009003'"
+    }
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-suite.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-suite.unit.mjs",
+   "lines": 106,
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-suite-contract-0001'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    }
    ],
    "uses_service_role": true
   },
@@ -261437,22 +261957,75 @@
   },
   "scripts/ci/e2e-isolated-tls.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-tls.unit.mjs",
-   "lines": 432,
+   "lines": 738,
+   "env": [
+    "PATH"
+   ],
    "errors": [
     "ECONNREFUSED",
     "Timeout 10000ms exceeded",
-    "Timeout 15000ms exceeded",
-    "Unacceptable TLS certificate",
     "connection refused",
     "context failed",
+    "controlled invalid JSON",
+    "frame unavailable",
     "invalid peer certificate: ",
     "must-not-fetch",
     "operation timed out"
    ],
+   "role_checks": [
+    "positive",
+    "spec",
+    "untrusted"
+   ],
    "temporal": [
+    "assert.deepEqual(options, { waitUntil: 'load', timeout: 15_000 });",
     "minVersion: version, maxVersion: version, timeout: 5_000 }, response => {"
    ],
    "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-tour.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-tour.unit.mjs",
+   "lines": 299,
+   "errors": [
+    "ISOLATION_BROWSER",
+    "assertion-failed-canary",
+    "click blocked",
+    "credential-getter-reached",
+    "not-visible",
+    "private-file-canary",
+    "synthetic-login-failure",
+    "tour absent"
+   ],
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-tour-test-0001'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    }
+   ],
+   "role_checks": [
+    "button",
+    "dialog"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-workflow.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-workflow.unit.mjs",
+   "lines": 223,
+   "env": [
+    "PATH",
+    "RECORDED"
+   ],
+   "temporal": [
+    "encoding: 'utf8', timeout: 10000,"
+   ]
   },
   "scripts/ci/e2e-isolated.unit.mjs": {
    "path": "scripts/ci/e2e-isolated.unit.mjs",
@@ -261474,7 +262047,7 @@
   },
   "scripts/ci/e2e-recovery.unit.mjs": {
    "path": "scripts/ci/e2e-recovery.unit.mjs",
-   "lines": 130,
+   "lines": 138,
    "errors": [
     "rede proibida neste teste"
    ],
@@ -261518,7 +262091,7 @@
   },
   "scripts/ci/e2e-teardown.unit.mjs": {
    "path": "scripts/ci/e2e-teardown.unit.mjs",
-   "lines": 156,
+   "lines": 132,
    "params": [
     {
      "name": "BASE",
@@ -261535,14 +262108,7 @@
     {
      "name": "SENTINELA_SERVICE_ROLE",
      "value": "'valor-da-chave-mestra-que-nao-pode-viajar'"
-    },
-    {
-     "name": "NOME_PASSO",
-     "value": "'E2E teardown - limpar fixture de conversation_closures'"
     }
-   ],
-   "rule_comments": [
-    "deste passo e nao pode entrar na assercao."
    ],
    "doc": "E25: prova que a limpeza da fixture do E2E logado roda com o login do usuario de TESTE (JWT dele) e nao com a chave mestra do banco. Vermelho sem a correcao: antes, o passo do .github/workflows/e2e-logado.yml era um `curl DELETE` autenticado por SUPABASE_SERVICE_ROLE_KEY, e nem `scripts/ci/e2e-teard …",
    "uses_service_role": true
@@ -262517,7 +263083,7 @@
   },
   "scripts/ci/redigir-relatorio.unit.mjs": {
    "path": "scripts/ci/redigir-relatorio.unit.mjs",
-   "lines": 260,
+   "lines": 254,
    "params": [
     {
      "name": "EMAIL",
@@ -265470,7 +266036,7 @@
   },
   "scripts/e2e-isolated/gateway.mjs": {
    "path": "scripts/e2e-isolated/gateway.mjs",
-   "lines": 118,
+   "lines": 120,
    "exports": [
     "function routeRequest",
     "function createGateway"
@@ -265518,6 +266084,64 @@
     "default defineConfig"
    ]
   },
+  "scripts/e2e-isolated/provider-diagnostics.mjs": {
+   "path": "scripts/e2e-isolated/provider-diagnostics.mjs",
+   "lines": 119,
+   "exports": [
+    "const SIGNATURES",
+    "const PHASES",
+    "function parseCatalog",
+    "function parseProviderDiagnostic",
+    "function observeSqlState",
+    "function withObservation",
+    "const CATALOG_EXECUTOR_OPTIONS",
+    "const PROVIDER_CATALOG_SQL"
+   ],
+   "params": [
+    {
+     "name": "PROVIDER_CATALOG_SQL",
+     "value": "\"BEGIN READ ONLY;\\nSET LOCAL statement_timeout = '"
+    }
+   ],
+   "doc": "Closed, observation-only metadata for the isolated provider readiness proof. This module does not execute SQL, fetch URLs, or decide whether a proof passes.",
+   "temporal": [
+    "export const CATALOG_EXECUTOR_OPTIONS = Object.freeze({ timeout: 5_000, killSignal: 'SIGKILL', maxBuffer: 8192 });"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/e2e-isolated/providers.mjs": {
+   "path": "scripts/e2e-isolated/providers.mjs",
+   "lines": 258,
+   "exports": [
+    "const CATALOG_MEDIA_URL",
+    "const PROVIDER_PNG",
+    "function createProviders",
+    "function createProviderServer"
+   ],
+   "errors": [
+    "invalid-local-media",
+    "local-media-empty",
+    "local-media-too-large",
+    "local-media-unavailable",
+    "unsupported-filter",
+    "unsupported-filter-column",
+    "unsupported-order",
+    "unsupported-range",
+    "unsupported-search",
+    "unsupported-select"
+   ],
+   "params": [
+    {
+     "name": "MAX_BODY",
+     "value": "1024"
+    },
+    {
+     "name": "MAX_MEDIA_BYTES",
+     "value": "50"
+    }
+   ],
+   "uses_service_role": true
+  },
   "scripts/e2e-isolated/resolve-images.mjs": {
    "path": "scripts/e2e-isolated/resolve-images.mjs",
    "lines": 99,
@@ -265551,24 +266175,31 @@
   },
   "scripts/e2e-isolated/results.mjs": {
    "path": "scripts/e2e-isolated/results.mjs",
-   "lines": 180,
+   "lines": 248,
    "exports": [
     "function readPlaywrightInventory",
     "function summarizePlaywrightResult"
    ],
    "errors": [
     "PLAYWRIGHT_REPORT_"
+   ],
+   "rule_comments": [
+    "The native inventory supplies the column; the complete identity must match."
    ]
   },
   "scripts/e2e-isolated/run.mjs": {
    "path": "scripts/e2e-isolated/run.mjs",
-   "lines": 511,
+   "lines": 672,
    "exports": [
+    "function parseFilesSeedDiagnostic",
     "function assertPinnedImages",
     "function functionPolicy",
+    "function discoverFunctionEntries",
+    "function assertSuiteReadiness",
     "function assertTlsClientProof",
     "function prepareMountTargets",
-    "function runLogin"
+    "function runLogin",
+    "const runSuite"
    ],
    "env": [
     "GITHUB_OUTPUT",
@@ -265583,10 +266214,12 @@
     "dependencies-not-installed",
     "empty-edge-bundle",
     "foreign-volume",
+    "function-source-changed",
     "image-digest-mismatch",
     "image-lock-review-required",
     "invalid-container-environment",
     "invalid-function-name",
+    "invalid-isolated-scope",
     "invalid-work-mount-target",
     "linux-user-required",
     "local-anon-setting-mismatch",
@@ -265599,20 +266232,46 @@
     "output-must-be-empty",
     "output-must-be-outside-checkout",
     "playwright-image-version-mismatch",
+    "provider-proof-mismatch",
     "real-platform-schema-missing",
     "run-cancelled",
+    "suite-handler-missing",
+    "suite-inventory-invalid",
+    "suite-proof-unreadable",
+    "suite-result-not-clean",
+    "suite-seed-proof-mismatch",
     "tls-boot-proof-invalid",
     "tls-origin-mismatch",
     "unexpected-migration-failure",
     "unsafe-work-mount-target",
-    "usage: run.mjs login <output-directory>"
+    "usage: run.mjs login <output-directory> | suite <group> <output-directory>"
+   ],
+   "rule_comments": [
+    "* Full-suite warmup must compile every tracked, active Edge entrypoint. */",
+    "Observation must not replace the original required() failure. */ }"
+   ],
+   "calc_fns": [
+    {
+     "name": "validSeedSqlstate",
+     "params": "value",
+     "body": "typeof value === 'string' && /^(?!00000)[0-9A-Z]{5}$/.test(value);"
+    },
+    {
+     "name": "validSeedStatus",
+     "params": "value",
+     "body": "Number.isInteger(value) && value >= 100 && value <= 599;"
+    },
+    {
+     "name": "validSeedFailure",
+     "params": "value",
+     "body": "if (!value || typeof value !== 'object' || Array.isArray(value)) return false; const required = ['stage', 'error_name']; const optional = ['code', 'sqlstate', 'http_status']; return required.every(key => Object.hasOwn(value, key)) && Object.keys(value).every(key => [...required, ...optional].includes(key)) && FILES_DIAGNOSTIC_STAGES.includes(value.stage) && FILES_DIAGNOSTIC_ERROR_NAMES.includes(value.error_name) && (!Object.hasOwn(value, 'code') || FILES_DIAGNOSTIC_ERROR_CODES.includes(value.cod …"
+    }
    ],
    "temporal": [
     "], { timeout: 210_000 });",
-    "const browserResult = docker(['exec', '-w', '/work', driver.name, ...cli], { timeout: 600_000 });",
     "const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {",
-    "cwd: ROOT, encoding: 'utf8', timeout: 120_000, maxBuffer: 64 * 1024 * 1024,",
-    "required(docker(['pull', image], { timeout: 15 * 60_000 }), 'pull-' + name + '-failed');"
+    "const result = docker(['pull', image], { timeout: 15 * 60_000 });",
+    "cwd: ROOT, encoding: 'utf8', timeout: 120_000, maxBuffer: 64 * 1024 * 1024,"
    ],
    "side_effects": [
     "notify"
@@ -265620,9 +266279,11 @@
   },
   "scripts/e2e-isolated/runtime-contract.mjs": {
    "path": "scripts/e2e-isolated/runtime-contract.mjs",
-   "lines": 148,
+   "lines": 153,
    "exports": [
     "const ORIGIN",
+    "const PROVIDER_ORIGIN",
+    "const CATALOG_SKU",
     "const OFFICIAL_HOST",
     "function assertOfficialHostIsLocal",
     "const OWNER_LABEL",
@@ -265651,6 +266312,14 @@
     {
      "name": "ORIGIN",
      "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "PROVIDER_ORIGIN",
+     "value": "'http://127.0.0.1:8081'"
+    },
+    {
+     "name": "CATALOG_SKU",
+     "value": "'E2E-LOCAL-001'"
     },
     {
      "name": "OFFICIAL_HOST",
@@ -265705,9 +266374,32 @@
    ],
    "uses_service_role": true
   },
+  "scripts/e2e-isolated/seed-suite.mjs": {
+   "path": "scripts/e2e-isolated/seed-suite.mjs",
+   "lines": 174,
+   "exports": [
+    "const SUITE_FIXTURES",
+    "function seedSuite"
+   ],
+   "role_checks": [
+    "agent",
+    "supervisor"
+   ],
+   "rule_comments": [
+    "is separate: it must use enqueue_outbound_message and message-delivery."
+   ],
+   "calc_fns": [
+    {
+     "name": "validId",
+     "params": "value",
+     "body": "typeof value === 'string' && UUID.test(value);"
+    }
+   ],
+   "uses_service_role": true
+  },
   "scripts/e2e-isolated/stack.mjs": {
    "path": "scripts/e2e-isolated/stack.mjs",
-   "lines": 132,
+   "lines": 141,
    "exports": [
     "function serviceConfiguration",
     "function containerArguments"
@@ -265738,7 +266430,7 @@
   },
   "scripts/e2e-isolated/tls-probe.mjs": {
    "path": "scripts/e2e-isolated/tls-probe.mjs",
-   "lines": 112,
+   "lines": 177,
    "exports": [
     "function certificateFailure",
     "function assertTlsClientContext",
@@ -265751,6 +266443,7 @@
    ],
    "temporal": [
     "const response = await page.goto(TLS_ORIGIN + '/__e2e/tls-probe', { waitUntil: 'load', timeout: 15_000 });",
+    "const warmup = await negative.goto(warmupUrl, { waitUntil: 'load', timeout: 15_000 });",
     "try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }"
    ]
   },
@@ -265799,6 +266492,33 @@
    ],
    "temporal": [
     "cwd, env: { PATH: process.env.PATH }, encoding: 'utf8', timeout: 60_000,"
+   ]
+  },
+  "scripts/e2e-isolated/verify-providers.mjs": {
+   "path": "scripts/e2e-isolated/verify-providers.mjs",
+   "lines": 205,
+   "exports": [
+    "function verifyProviders"
+   ],
+   "rule_comments": [
+    "the provider must successfully fetch those signed bytes before its receipt."
+   ],
+   "calc_fns": [
+    {
+     "name": "validId",
+     "params": "value",
+     "body": "typeof value === 'string' && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(value);"
+    },
+    {
+     "name": "validText",
+     "params": "value",
+     "body": "typeof value === 'string' && value.length > 0;"
+    },
+    {
+     "name": "validateEvidence",
+     "params": "value",
+     "body": "if (!owns(value, PROVIDER_ORIGIN) || value.network_namespace !== networkNamespace || !Number.isSafeInteger(value.count) || value.count < 0 || !Array.isArray(value.message_ids) || value.message_ids.length !== value.count || new Set(value.message_ids).size !== value.count || !value.message_ids.every(id => typeof id === 'string' && /^local-[a-zA-Z0-9-]{1,100}$/.test(id)) || !Array.isArray(value.media_receipts) || new Set(value.media_receipts.map(row => row.message_id)).size !== value.media_receipts …"
+    }
    ]
   },
   "scripts/e2e-isolated/main/index.ts": {
@@ -271627,7 +272347,7 @@
   },
   "src/components/calls/__tests__/NewCallPanel.test.tsx": {
    "path": "src/components/calls/__tests__/NewCallPanel.test.tsx",
-   "lines": 181,
+   "lines": 210,
    "is_test": true,
    "rule_comments": [
     "nesse numero SEM passar por `escolherContato`. O chip nao pode continuar dizendo"
@@ -271641,6 +272361,8 @@
     "disca pelo canal escolhido com autoDial quando o numero fica completo",
     "usa o canal WhatsApp quando ele esta escolhido",
     "preenche o numero que o clique-para-discar deixou (T29/T57)",
+    "preserva o país estrangeiro e não disca com %s disponível",
+    "mantém Cancelar em uma sessão ativa com número estrangeiro pendente",
     "com a linha reconectando o CTA avisa em vez de discar",
     "com capacidade negada explica o motivo e nao disca",
     "em chamada o CTA vira Cancelar e encerra",
@@ -279240,7 +279962,7 @@
   },
   "src/components/docs/__tests__/SystemFeaturesView.test.tsx": {
    "path": "src/components/docs/__tests__/SystemFeaturesView.test.tsx",
-   "lines": 83,
+   "lines": 85,
    "is_test": true,
    "tests": [
     "SystemFeaturesView — estado real do catálogo (R2-GOV-002)",
@@ -289536,7 +290258,7 @@
   },
   "src/components/inbox/location-picker/useAddressAutocomplete.ts": {
    "path": "src/components/inbox/location-picker/useAddressAutocomplete.ts",
-   "lines": 602,
+   "lines": 608,
    "exports": [
     "interface UseAddressAutocompleteOptions",
     "interface UseAddressAutocompleteResult",
@@ -289969,7 +290691,7 @@
   },
   "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx": {
    "path": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
-   "lines": 1040,
+   "lines": 1130,
    "is_test": true,
    "rule_comments": [
     "E50: a contagem de eventos é parte da prova (1× por seleção) — não pode acumular entre casos.",
@@ -289981,6 +290703,10 @@
    ],
    "tests": [
     "useAddressAutocomplete",
+    "proximidade depende das coordenadas, não da identidade do objeto",
+    "%s: centro equivalente conserva destaque e seleção sem repetir a busca",
+    "novo objeto com coordenadas zero não aborta nem substitui a consulta em voo",
+    "$name: mudança real continua buscando e invalida o destaque da lista anterior",
     "E45 — sessão só nasce no primeiro request real",
     "mesmo termo 2×: o 2º sai do cache, sem sessão nova e sem contar /suggest",
     "termo em cache com sessão vencida: 0 sessões novas (peek não renova)",
@@ -292791,7 +293517,7 @@
   },
   "src/components/layout/PageHeader.tsx": {
    "path": "src/components/layout/PageHeader.tsx",
-   "lines": 170,
+   "lines": 173,
    "exports": [
     "interface BreadcrumbItem",
     "function PageHeader"
@@ -292948,7 +293674,7 @@
   },
   "src/components/layout/__tests__/PageHeader.trilha.test.tsx": {
    "path": "src/components/layout/__tests__/PageHeader.trilha.test.tsx",
-   "lines": 50,
+   "lines": 67,
    "is_test": true,
    "tests": [
     "PageHeader — trilha própria",
@@ -292956,7 +293682,8 @@
     "mobile/zen (hidePageBreadcrumbs=false): desenha a trilha",
     "sem provider (padrão): desenha a trilha",
     "desktop: topRight continua aparecendo mesmo sem trilha",
-    "desktop: sem breadcrumbs não quebra e só mostra o título"
+    "desktop: sem breadcrumbs não quebra e só mostra o título",
+    "Início $origem: separadores e itens são irmãos no ol, sem li aninhado"
    ]
   },
   "src/components/layout/__tests__/Sidebar.test.tsx": {
@@ -345228,7 +345955,7 @@
   },
   "src/lib/calls/phone.ts": {
    "path": "src/lib/calls/phone.ts",
-   "lines": 142,
+   "lines": 149,
    "exports": [
     "const NO_PHONE_LABEL",
     "function normalizeE164BR",
@@ -345245,6 +345972,7 @@
    ],
    "rule_comments": [
     "* REGRA DURA: a comparação é sempre da forma E.164 completa. **Nunca** casar",
+    "* O `+` declara o país; outro DDI não pode virar uma identidade brasileira. */",
     "(um fixo local de DDD 55 tem 10 dígitos e NÃO pode ser confundido)"
    ],
    "doc": "Telefone — plano 2.7 / etapa 12. Reaproveita `cleanPhone` / `formatBrazilianPhone` de `src/lib/formatters.ts` e acrescenta a normalização E.164 brasileira usada para identidade de contato. Módulo TS puro: sem React, sem Supabase. REGRA DURA: a comparação é sempre da forma E.164 completa. **Nunca** c …",
@@ -346155,7 +346883,7 @@
   },
   "src/lib/calls/__tests__/phone.test.ts": {
    "path": "src/lib/calls/__tests__/phone.test.ts",
-   "lines": 207,
+   "lines": 255,
    "is_test": true,
    "params": [
     {
@@ -346193,7 +346921,11 @@
     "vincula quando UM contato casa em E.164",
     "NÃO vincula pelo final de 8 dígitos com DDD diferente",
     "não vincula quando mais de um contato casa (ambíguo)",
-    "não vincula com telefone ausente ou não normalizável"
+    "não vincula com telefone ausente ou não normalizável",
+    "identidade BR com país explícito",
+    "não confunde %s com a identidade BR %s",
+    "mantém +55 com máscara, DDD 55 local e a entrada ambígua sem +",
+    "mantém incompletos sem adivinhar um número brasileiro"
    ]
   },
   "src/lib/calls/__tests__/session.test.ts": {
@@ -362493,8 +363225,11 @@
   },
   "supabase/functions/detect-new-device/index.test.ts": {
    "path": "supabase/functions/detect-new-device/index.test.ts",
-   "lines": 374,
+   "lines": 699,
    "is_test": true,
+   "errors": [
+    "rota ou método inesperado no double de sessão: ${method} ${pathname}"
+   ],
    "params": [
     {
      "name": "USER_DETECT",
@@ -362503,6 +363238,14 @@
     {
      "name": "FINGERPRINT",
      "value": "\"fp-teste-123\""
+    },
+    {
+     "name": "SESSION_UNIQUE_MESSAGE",
+     "value": "'duplicate key value violates unique constraint \""
+    },
+    {
+     "name": "OTHER_RACE_USER",
+     "value": "\"00000000-0000-4000-8000-000000000002\""
     }
    ],
    "transition_maps": [
@@ -362530,13 +363273,20 @@
     "handleDetectNewDevice: Resend 500 só registra e segue (200 + security_alerts criado, sem log de sucesso)",
     "handleDetectNewDevice: exceção do Resend não aborta security_alerts (200 + alerta criado)",
     "buildDeviceAlertEmail escapa os campos vindos do chamador",
-    "buildDeviceAlertEmail preserva valores benignos"
+    "buildDeviceAlertEmail preserva valores benignos",
+    "handleDetectNewDevice: duas visitas concorrentes com dispositivo ${newDevice ? ",
+    "handleDetectNewDevice: só o código e a mensagem exatos do índice de sessão autorizam recuperação",
+    "handleDetectNewDevice: recuperação recusa vencedora ${canonical}",
+    "handleDetectNewDevice: erro ou zero linhas no UPDATE canônico não vira sucesso",
+    "handleDetectNewDevice: retorno canônico nulo, múltiplo ou com identidade inválida é recusado",
+    "handleDetectNewDevice: recuperação preserva sessão inativa, encerramento e validade",
+    "handleDetectNewDevice: rate limit mantém 429 depois de recuperar inventário e criar um único alerta"
    ],
    "uses_service_role": true
   },
   "supabase/functions/detect-new-device/index.ts": {
    "path": "supabase/functions/detect-new-device/index.ts",
-   "lines": 360,
+   "lines": 387,
    "exports": [
     "function decodeJwtClaims",
     "function extractAuthSessionId",
@@ -362579,6 +363329,10 @@
     {
      "table": "user_sessions",
      "op": "ref"
+    },
+    {
+     "table": "user_sessions",
+     "op": "select,update"
     }
    ],
    "table_cols": {
@@ -380241,10 +380995,77 @@
   }
  },
  "git": {
-  "sha": "b88b4f1a8359af1ff1085a10c72bbc4b61baf77d",
+  "sha": "afd8c7ca30566b43cd64fe1eac8d0648fb62fce3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "afd8c7c",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: validar a suíte logada em ambiente isolado (#2717)",
+    "files": [
+     ".github/workflows/e2e-logado-isolado.yml",
+     ".github/workflows/e2e-logado.yml",
+     "docs/ci/README.md",
+     "e2e/README.md",
+     "e2e/busca-global-paleta.spec.ts",
+     "e2e/catalog.spec.ts",
+     "e2e/email-navy-visual.spec.ts",
+     "e2e/fixtures/arquivos-local/seed.ts",
+     "e2e/fixtures/mapa-mocks.ts",
+     "e2e/fixtures/onboarding-isolated.ts",
+     "e2e/fixtures/supabase-env.ts",
+     "e2e/fixtures/talkx-demo.ts",
+     "e2e/navegacao-modulos.spec.ts",
+     "e2e/onboarding-tour.spec.ts",
+     "e2e/quarantine.unit.mjs",
+     "e2e/telefonia.spec.ts",
+     "scripts/ci/ci-docs-baseline.unit.mjs",
+     "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
+     "scripts/ci/e2e-isolated-alert.unit.mjs",
+     "scripts/ci/e2e-isolated-fixtures.unit.mjs",
+     "scripts/ci/e2e-isolated-gateway.unit.mjs",
+     "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
+     "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+     "scripts/ci/e2e-isolated-providers.unit.mjs",
+     "scripts/ci/e2e-isolated-results.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
+     "scripts/ci/e2e-isolated-seed.unit.mjs",
+     "scripts/ci/e2e-isolated-suite.unit.mjs",
+     "scripts/ci/e2e-isolated-tls.unit.mjs",
+     "scripts/ci/e2e-isolated-tour.unit.mjs",
+     "scripts/ci/e2e-isolated-workflow.unit.mjs",
+     "scripts/ci/e2e-recovery.unit.mjs",
+     "scripts/ci/e2e-teardown.unit.mjs",
+     "scripts/ci/marcador-specs.unit.mjs",
+     "scripts/ci/redigir-relatorio.unit.mjs",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/gateway.mjs",
+     "scripts/e2e-isolated/provider-diagnostics.mjs",
+     "scripts/e2e-isolated/providers.mjs",
+     "scripts/e2e-isolated/results.mjs",
+     "scripts/e2e-isolated/run.mjs",
+     "scripts/e2e-isolated/runtime-contract.mjs",
+     "scripts/e2e-isolated/runtime-skips.md",
+     "scripts/e2e-isolated/seed-suite.mjs",
+     "scripts/e2e-isolated/stack.mjs",
+     "scripts/e2e-isolated/tls-probe.mjs",
+     "scripts/e2e-isolated/verify-providers.mjs",
+     "src/components/calls/__tests__/NewCallPanel.test.tsx",
+     "src/components/docs/SystemFeaturesView.tsx",
+     "src/components/docs/__tests__/SystemFeaturesView.test.tsx",
+     "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
+     "src/components/inbox/location-picker/useAddressAutocomplete.ts",
+     "src/components/layout/PageHeader.tsx",
+     "src/components/layout/__tests__/PageHeader.trilha.test.tsx",
+     "src/lib/calls/__tests__/phone.test.ts",
+     "src/lib/calls/phone.ts",
+     "supabase/functions/detect-new-device/index.test.ts",
+     "supabase/functions/detect-new-device/index.ts"
+    ]
+   },
    {
     "sha": "b88b4f1",
     "date": "2026-11-04",
@@ -380702,18 +381523,37 @@
      "supabase/functions/connection-health-check/index.test.ts",
      "supabase/functions/connection-health-check/index.ts"
     ]
-   },
-   {
-    "sha": "f3c9b5d",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(contexto): regras manuais — pagamentos, single-tenant, perfis, retenção/LGPD, SLA (#2674)",
-    "files": [
-     "docs/contexto/regras/manual/regras.md"
-    ]
    }
   ],
   "hot_files": [
+   [
+    ".github/workflows/e2e-logado-isolado.yml",
+    3
+   ],
+   [
+    "docs/ci/README.md",
+    3
+   ],
+   [
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    3
+   ],
+   [
+    "scripts/e2e-isolated/README.md",
+    3
+   ],
+   [
+    "scripts/e2e-isolated/gateway.mjs",
+    3
+   ],
+   [
+    "scripts/e2e-isolated/run.mjs",
+    3
+   ],
+   [
+    "scripts/e2e-isolated/runtime-contract.mjs",
+    3
+   ],
    [
     ".github/workflows/db-guard.yml",
     3
@@ -380727,71 +381567,43 @@
     3
    ],
    [
-    "docs/contexto/regras/manual/regras.md",
-    3
-   ],
-   [
-    ".github/workflows/e2e-logado-isolado.yml",
+    ".github/workflows/e2e-logado.yml",
     2
    ],
    [
-    "e2e/location-picker.spec.ts",
+    "e2e/README.md",
     2
    ],
    [
-    "playwright.config.ts",
+    "e2e/email-navy-visual.spec.ts",
     2
    ],
    [
-    "scripts/ci/e2e-auth-isolation.unit.mjs",
+    "scripts/ci/ci-docs-baseline.unit.mjs",
     2
    ],
    [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "scripts/ci/e2e-isolated-gateway.unit.mjs",
     2
    ],
    [
-    "scripts/ci/e2e-isolated.unit.mjs",
+    "scripts/ci/e2e-isolated-results.unit.mjs",
     2
    ],
    [
-    "scripts/e2e-isolated/README.md",
+    "scripts/ci/e2e-isolated-tls.unit.mjs",
     2
    ],
    [
-    "scripts/e2e-isolated/admission.mjs",
+    "scripts/ci/e2e-recovery.unit.mjs",
     2
    ],
    [
-    "scripts/e2e-isolated/gateway.mjs",
+    "scripts/ci/marcador-specs.unit.mjs",
     2
    ],
    [
-    "scripts/e2e-isolated/run.mjs",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/runtime-contract.mjs",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/runtime-probe.mjs",
-    2
-   ],
-   [
-    "docs/ci/README.md",
-    2
-   ],
-   [
-    "e2e/auth-diagnostics.ts",
-    2
-   ],
-   [
-    "e2e/auth.setup.ts",
-    2
-   ],
-   [
-    "scripts/ci/e2e-auth-setup.unit.mjs",
+    "scripts/ci/redigir-relatorio.unit.mjs",
     2
    ]
   ]

@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b88b4f1a83` · branch `main` · 2026-11-04 15:11 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `afd8c7ca30` · branch `main` · 2026-11-04 18:03 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -252,7 +252,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 722 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 734 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -274,6 +274,7 @@
 - `e2e/email-link-contato.spec.ts`
 - `e2e/files-tab.spec.ts`
 - `e2e/fixtures/arquivos-local/seed.ts`
+- `e2e/fixtures/onboarding-isolated.ts`
 - `e2e/fixtures/seed-files-tab.mjs`
 - `e2e/navegacao-modulos.spec.ts`
 - `scripts/ai-context/cenarios.mjs`
@@ -284,10 +285,18 @@
 - `scripts/ci/check-test-inventory.mjs`
 - `scripts/ci/crm-integration-contract.unit.mjs`
 - `scripts/ci/e2e-auth-isolation.unit.mjs`
+- `scripts/ci/e2e-isolated-fixtures.unit.mjs`
 - `scripts/ci/e2e-isolated-images.unit.mjs`
+- `scripts/ci/e2e-isolated-legacy-workflow.unit.mjs`
 - `scripts/ci/e2e-isolated-login-seed.unit.mjs`
+- `scripts/ci/e2e-isolated-provider-readiness.unit.mjs`
+- `scripts/ci/e2e-isolated-providers.unit.mjs`
 - `scripts/ci/e2e-isolated-runtime.unit.mjs`
+- `scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs`
+- `scripts/ci/e2e-isolated-seed.unit.mjs`
+- `scripts/ci/e2e-isolated-suite.unit.mjs`
 - `scripts/ci/e2e-isolated-tls.unit.mjs`
+- `scripts/ci/e2e-isolated-tour.unit.mjs`
 - `scripts/ci/e2e-isolated.unit.mjs`
 - `scripts/ci/e2e-teardown.mjs`
 - `scripts/ci/e2e-teardown.unit.mjs`
@@ -318,8 +327,11 @@
 - `scripts/db-audit/talkx-template-history-runtime.sql`
 - `scripts/db-audit/validate-runtime-proof.mjs`
 - `scripts/e2e-isolated/platform/webhooks.sql`
+- `scripts/e2e-isolated/provider-diagnostics.mjs`
+- `scripts/e2e-isolated/providers.mjs`
 - `scripts/e2e-isolated/runtime-contract.mjs`
 - `scripts/e2e-isolated/seed-login.mjs`
+- `scripts/e2e-isolated/seed-suite.mjs`
 - `scripts/e2e-isolated/stack.mjs`
 - `scripts/e2e-isolated/tls-edge-probe.ts`
 - `scripts/edge-deploy/secrets-scope.mjs`
@@ -392,19 +404,7 @@
 - `supabase/functions/ai-conversation-analysis/index.ts`
 - `supabase/functions/ai-conversation-analysis/limite-por-usuario.test.ts`
 - `supabase/functions/ai-conversation-summary/index.ts`
-- `supabase/functions/ai-jobs-worker/index.test.ts`
-- `supabase/functions/ai-jobs-worker/index.ts`
-- `supabase/functions/ai-kb-ingest/index.test.ts`
-- `supabase/functions/ai-kb-ingest/index.ts`
-- `supabase/functions/ai-proxy/index.test.ts`
-- `supabase/functions/ai-proxy/index.ts`
-- `supabase/functions/ai-suggest-reply/index.test.ts`
-- `supabase/functions/ai-suggest-reply/index.ts`
-- `supabase/functions/ai-transcribe-audio/index.test.ts`
-- `supabase/functions/ai-transcribe-audio/index.ts`
-- `supabase/functions/ai-usage-outbox-drain/index.test.ts`
-- `supabase/functions/approve-password-reset/index.test.ts`
-- … +572 (lista completa em `context.json`)
+- … +584 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 

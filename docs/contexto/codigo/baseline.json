@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b88b4f1a8359af1ff1085a10c72bbc4b61baf77d",
+  "commit": "afd8c7ca30566b43cd64fe1eac8d0648fb62fce3",
   "branch": "main",
-  "data_commit": "2026-11-04T12:09:39-03:00",
+  "data_commit": "2026-11-04T17:59:54Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "afd8c7c",
+    "data": "2026-11-04",
+    "assunto": "fix: validar a suíte logada em ambiente isolado (#2717)"
+   },
    {
     "sha": "b88b4f1",
     "data": "2026-11-04",
@@ -126,18 +131,13 @@
     "sha": "b441a43",
     "data": "2026-11-03",
     "assunto": "chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)"
-   },
-   {
-    "sha": "2597588",
-    "data": "2026-11-03",
-    "assunto": "chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)"
    }
   ],
-  "arquivos_mudados_7d": 1274,
+  "arquivos_mudados_7d": 1296,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 1002
+    "mudancas": 1003
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -215,19 +215,19 @@
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 13
+    "mudancas": 14
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 14
+   },
+   {
+    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 13
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
-   },
-   {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 12
    },
    {
     "arquivo": "ESTADO.md",
@@ -294,14 +294,14 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
+    "arquivo": "e2e/email-navy-visual.spec.ts",
     "mudancas": 6
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 283
+    "commits": 284
    },
    {
     "autor": "dependabot[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 8
+    "commits": 7
    },
    {
     "autor": "devin-ai-integration[bot]",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8197,
-  "arquivos_codigo": 4686,
-  "linhas_codigo": 859365,
+  "arquivos_total": 8214,
+  "arquivos_codigo": 4702,
+  "linhas_codigo": 864998,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,10 +332,10 @@
   "tabelas": 216,
   "migrations": 1082,
   "cron_jobs": 25,
-  "testes": 2553,
+  "testes": 2565,
   "workflows": 20,
-  "scripts": 400,
-  "docs_md": 1034
+  "scripts": 404,
+  "docs_md": 1035
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -392,11 +392,11 @@
   },
   "e2e/busca-global-paleta.spec.ts": {
    "arquivos": 1,
-   "linhas": 335
+   "linhas": 318
   },
   "e2e/catalog.spec.ts": {
    "arquivos": 1,
-   "linhas": 311
+   "linhas": 310
   },
   "e2e/conexoes.spec.ts": {
    "arquivos": 1,
@@ -460,15 +460,15 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 601
+   "linhas": 712
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,
    "linhas": 602
   },
   "e2e/fixtures": {
-   "arquivos": 16,
-   "linhas": 2493
+   "arquivos": 17,
+   "linhas": 2746
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "arquivos": 1,
@@ -508,7 +508,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "arquivos": 1,
-   "linhas": 1686
+   "linhas": 1792
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "arquivos": 1,
@@ -516,7 +516,7 @@
   },
   "e2e/onboarding-tour.spec.ts": {
    "arquivos": 1,
-   "linhas": 133
+   "linhas": 127
   },
   "e2e/quarantine.js": {
    "arquivos": 1,
@@ -524,7 +524,7 @@
   },
   "e2e/quarantine.unit.mjs": {
    "arquivos": 1,
-   "linhas": 117
+   "linhas": 116
   },
   "e2e/quick-controls-volume.spec.ts": {
    "arquivos": 1,
@@ -576,7 +576,7 @@
   },
   "e2e/telefonia.spec.ts": {
    "arquivos": 1,
-   "linhas": 429
+   "linhas": 438
   },
   "e2e/theme-alto-contraste.spec.ts": {
    "arquivos": 1,
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 176,
-   "linhas": 33936
+   "arquivos": 187,
+   "linhas": 37495
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -623,8 +623,8 @@
    "linhas": 229
   },
   "scripts/e2e-isolated": {
-   "arquivos": 17,
-   "linhas": 2536
+   "arquivos": 21,
+   "linhas": 3602
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 367404
+   "linhas": 367551
   },
   "src/config": {
    "arquivos": 3,
@@ -732,7 +732,7 @@
   },
   "src/lib": {
    "arquivos": 279,
-   "linhas": 38505
+   "linhas": 38560
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -776,7 +776,7 @@
   },
   "supabase/functions": {
    "arquivos": 380,
-   "linhas": 115252
+   "linhas": 115604
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 423,
+  "console_log": 424,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 46,
@@ -912,7 +912,7 @@
  "todos": [
   {
    "arquivo": "e2e/onboarding-tour.spec.ts",
-   "linha": 10,
+   "linha": 12,
    "tipo": "TODO",
    "texto": "navegador/sessão nova, porque `useOnboarding`"
   },

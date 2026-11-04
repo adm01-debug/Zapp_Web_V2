@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1945)",
-   "outro (183)",
+   "outro (194)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
@@ -31,7 +31,7 @@
   "scripts": [
    "scripts/db-audit (285)",
    "scripts/ci (40)",
-   "scripts/e2e-isolated (21)"
+   "scripts/e2e-isolated (25)"
   ],
   "docs": [
    "docs (31)",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: validar a suíte logada em ambiente isolado (#2717)",
    "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)",
    "fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)",
    "chore: adicionar __pycache__/ ao .gitignore (#2703)",
-   "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)",
-   "chore: adiciona __pycache__/ ao .gitignore (#2700)"
+   "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

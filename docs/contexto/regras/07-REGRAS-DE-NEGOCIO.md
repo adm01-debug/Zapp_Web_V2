@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b88b4f1a83` · branch `main` · 2026-11-04 15:11 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `afd8c7ca30` · branch `main` · 2026-11-04 18:03 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4362,6 +4362,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | [e2e-talkx] cleanup exato do draft falhou: HTTP ${response.status()} | `e2e/fixtures/e2e-talkx.ts` |
 | ambiguous | `e2e/fixtures/fixture-conversation.ts` |
 | not-visible | `e2e/fixtures/fixture-conversation.ts` |
+| [E2E tour/${code}] | `e2e/fixtures/onboarding-isolated.ts` |
+| [e2e/isolated-fixture] configuração local incompleta ou divergente | `e2e/fixtures/supabase-env.ts` |
 | [e2e] ${name} nao encontrada em .env.production. Esse arquivo e a fonte PRIMARIA  | `e2e/fixtures/supabase-env.ts` |
 | seed arquivos-local: ${rotulo} aponta para host não-local (${host}). Proibido. | `e2e/fixtures/arquivos-local/seed.ts` |
 | seed arquivos-local: variável ${nome} ausente (rode via env de zapp-db-local) | `e2e/fixtures/arquivos-local/seed.ts` |
@@ -4415,6 +4417,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Leitura de dados sensiveis proibida | `scripts/ci/e2e-auth-setup.unit.mjs` |
 | [E2E setup/ISOLATION_PROOF] prova recusada | `scripts/ci/e2e-auth-setup.unit.mjs` |
 | prazo simulado | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| forbidden- | `scripts/ci/e2e-email-navigation-diagnostics.unit.mjs` |
+| rede proibida neste teste | `scripts/ci/e2e-isolated-alert.unit.mjs` |
+| controlled missing file | `scripts/ci/e2e-isolated-fixtures.unit.mjs` |
+| unexpected file read | `scripts/ci/e2e-isolated-fixtures.unit.mjs` |
 | unexpected mutation:  | `scripts/ci/e2e-isolated-images.unit.mjs` |
 | bad JWT | `scripts/ci/e2e-isolated-loader.unit.mjs` |
 | bad signature | `scripts/ci/e2e-isolated-loader.unit.mjs` |
@@ -4423,16 +4429,33 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | worker error | `scripts/ci/e2e-isolated-loader.unit.mjs` |
 | credentials read before gateway verification | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
 | credentials read before isolation | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
+| Unexpected controlled boundary:  | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
+| diagnostic-write-failed | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
+| disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
+| must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
+| helper must not open SQL | `scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs` |
+| synthetic EPIPE | `scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs` |
+| credential read too early | `scripts/ci/e2e-isolated-seed.unit.mjs` |
+| sensitive-file-content | `scripts/ci/e2e-isolated-seed.unit.mjs` |
+| sensitive-response-content | `scripts/ci/e2e-isolated-seed.unit.mjs` |
 | ECONNREFUSED | `scripts/ci/e2e-isolated-tls.unit.mjs` |
 | Timeout 10000ms exceeded | `scripts/ci/e2e-isolated-tls.unit.mjs` |
-| Timeout 15000ms exceeded | `scripts/ci/e2e-isolated-tls.unit.mjs` |
-| Unacceptable TLS certificate | `scripts/ci/e2e-isolated-tls.unit.mjs` |
 | connection refused | `scripts/ci/e2e-isolated-tls.unit.mjs` |
 | context failed | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| controlled invalid JSON | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| frame unavailable | `scripts/ci/e2e-isolated-tls.unit.mjs` |
 | invalid peer certificate:  | `scripts/ci/e2e-isolated-tls.unit.mjs` |
 | must-not-fetch | `scripts/ci/e2e-isolated-tls.unit.mjs` |
 | operation timed out | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| ISOLATION_BROWSER | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| assertion-failed-canary | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| click blocked | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| credential-getter-reached | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| not-visible | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| private-file-canary | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| synthetic-login-failure | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| tour absent | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | rede proibida neste teste | `scripts/ci/e2e-recovery.unit.mjs` |
 | R1_SKIP | `scripts/ci/e2e-tarefas-project.unit.mjs` |
 | RPC ${rpc} recusada (HTTP ${resposta.status}) | `scripts/ci/e2e-teardown.mjs` |
@@ -4460,30 +4483,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Entrada invalida no relatorio JSON do ESLint. | `scripts/ci/lint-ratchet.mjs` |
 | Nao foi possivel ler ${description} em ${filePath}: ${error.message} | `scripts/ci/lint-ratchet.mjs` |
 | O ESLint ou eslint.config.js mudou desde a geracao do baseline. Revise a mudanca e regenere o baseline. | `scripts/ci/lint-ratchet.mjs` |
-| O relatorio do ESLint deve ser um array JSON. | `scripts/ci/lint-ratchet.mjs` |
-| Valor ausente para ${argument}. | `scripts/ci/lint-ratchet.mjs` |
-| sem git | `scripts/ci/reconciliation-probe-provenance.unit.mjs` |
-| central directory corrompido | `scripts/ci/redigir-relatorio.mjs` |
-| local header corrompido | `scripts/ci/redigir-relatorio.mjs` |
-| metodo de compressao ${metodo} nao suportado | `scripts/ci/redigir-relatorio.mjs` |
-| zip criptografado nao suportado | `scripts/ci/redigir-relatorio.mjs` |
-| zip sem end of central directory | `scripts/ci/redigir-relatorio.mjs` |
-| zip64 nao suportado | `scripts/ci/redigir-relatorio.mjs` |
-| --workflow ausente | `scripts/ci/reuso-arvore.mjs` |
-| --workflow fora da lista de workflows com reuso | `scripts/ci/reuso-arvore.mjs` |
-| GET ${caminho} → HTTP ${r.status} | `scripts/ci/reuso-arvore.mjs` |
-| GITHUB_REPOSITORY com formato inválido | `scripts/ci/reuso-arvore.mjs` |
-| GITHUB_SHA com formato inválido | `scripts/ci/reuso-arvore.mjs` |
-| caminho de API fora de /repos em api.github.com | `scripts/ci/reuso-arvore.mjs` |
-| rota inesperada ${caminho} | `scripts/ci/reuso-arvore.unit.mjs` |
-| operador nao modelado no teste: ${JSON.stringify(operador)} | `scripts/ci/talkx-alerts-template.unit.mjs` |
-| Argumento desconhecido: ${argument} | `scripts/ci/typecheck-ratchet.mjs` |
-| Baseline de typecheck invalido ou com schema diferente de ${SCHEMA_VERSION}. | `scripts/ci/typecheck-ratchet.mjs` |
-| Nao foi possivel ler ${description} em ${filePath}: ${error.message} | `scripts/ci/typecheck-ratchet.mjs` |
-| TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro. | `scripts/ci/typecheck-ratchet.mjs` |
-| Valor ausente para ${argument}. | `scripts/ci/typecheck-ratchet.mjs` |
-| tsc -b falhou com exit ${status}: ${normalizeWhitespace(output)} | `scripts/ci/typecheck-ratchet.mjs` |
-| … +1601 linhas — lista completa em `context.json` | |
+| … +1642 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4551,7 +4551,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21052 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21076 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4568,7 +4568,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/talkx-send/index.test.ts` | 69 | personalize resolves the built-in placeholders (nome/apelido/empresa/saudacao) · personalize falls back to a bracket placeholder for an unresolved variable instead of throwing · personalize substitutes the real value when the contact has that custom field · personalize resolves multiple custom values in the same message … |
 | `src/lib/journey/__tests__/mappers.test.ts` | 66 | mapMessages · agrupa mensagens seguidas do MESMO autor em até 10 min · na virada de 10 min: exatamente 10 min agrupa, 10 min + 1 ms não agrupa · autores diferentes não entram na mesma rajada … |
 | `src/lib/journey/__tests__/periodRange.test.ts` | 64 | resolveRange — atalhos (D04) · any devolve intervalo aberto e não marca inválido · today cobre o dia inteiro do relógio do aparelho · ${preset} começa em (hoje − ${dias - 1}) 00:00 e vai até o fim de hoje … |
-| `src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx` | 58 | useAddressAutocomplete · E45 — sessão só nasce no primeiro request real · mesmo termo 2×: o 2º sai do cache, sem sessão nova e sem contar /suggest · termo em cache com sessão vencida: 0 sessões novas (peek não renova) … |
+| `src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx` | 62 | useAddressAutocomplete · proximidade depende das coordenadas, não da identidade do objeto · %s: centro equivalente conserva destaque e seleção sem repetir a busca · novo objeto com coordenadas zero não aborta nem substitui a consulta em voo … |
 | `src/hooks/__tests__/useSipClient.test.ts` | 55 | useSipClient · should start with disconnected status · should set connecting status when connect is called · should become registered when registerer fires Registered … |
 | `src/components/settings/theme/__tests__/presets.test.ts` | 54 | §1 catálogo · tem 19 presets com ids únicos · corporate é o primeiro · ordem é clássicas (10) seguidas de GX (9) … |
 | `supabase/functions/_shared/ai-usage.test.ts` | 53 | logAiUsageDetached: com EdgeRuntime.waitUntil, entrega a promessa ao runtime sem bloquear · registrarConsumoDeDiagnostico: export do ai-proxy preserva o consumo provider_test · logAiUsageDetached: sem EdgeRuntime.waitUntil, AGUARDA a promessa até o insert concluir · ai-proxy: os logs de consumo usam  … |
@@ -4623,6 +4623,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/formatters.test.ts` | 34 | formatRelativeTime · usa o sufixo e o locale pt-BR em minutos · aceita string ISO e epoch (número) · formatSmartDate … |
 | `src/lib/__tests__/mapboxGeocode.test.ts` | 34 | reverseGeocodeAddress · consulta lng,lat em pt com o token e devolve o place_name · coordenadas praticamente iguais (~1 m) e chamadas simultâneas compartilham uma consulta · estoura o timeout, aborta a requisição e devolve null … |
 | `src/lib/__tests__/zappSchemas.test.ts` | 34 | zappSchemas · contatoSchema · validates valid contact · rejects missing nome … |
+| `src/lib/calls/__tests__/phone.test.ts` | 34 | normalizeE164BR · normaliza os 10 formatos de entrada para a mesma forma E.164 · mantém fixo de 10 dígitos (assinante começando em 2–5) · recompõe o nono dígito em vários DDDs … |
 | `supabase/functions/talkx-link/index.test.ts` | 34 | mergeUtm adiciona os UTM ao destino sem query · mergeUtm não sobrescreve parâmetro existente do destino · mergeUtm preserva URL sem link e URL inválida · GET registra clique e redireciona com UTM do link … |
 | `tests/contracts/ai-capabilities.contract.test.ts` | 34 | IA-036 — BASE_CAPABILITIES: cada tipo anuncia apenas o que garante · lovable_ai: texto + tools/json/streaming · openai_compatible: texto + tools/json/streaming · google_gemini: texto + tools/json/streaming … |
 | `src/components/catalog/__tests__/ExternalProductCatalog.test.tsx` | 33 | ExternalProductCatalog — CT-15 (primitivos da tela principal) · renderiza a grade com CatalogProductCard e a paginação do Talk X · mostra o estado vazio do Talk X quando não há produtos · mostra o estado de dados indisponíveis quando a edge falha (CATALOG_UPSTREAM_ERROR) … |
@@ -4647,7 +4648,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/tasks/__tests__/kpiStripTarefas.test.tsx` | 30 | TasksKpiStrip — etapa 017 (Atrasadas) · com atrasadas: tile vermelho e subtítulo  · sem atrasadas: tile neutro e subtítulo  · TasksKpiStrip — etapa 018 (Para hoje) … |
 | `src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` | 30 | useWorkItemDraft — rascunho e patch mínimo (148/149) · o rascunho nasce dos campos do item (sem alterações pendentes) · sem item o rascunho é null e salvar é no-op · patch mínimo: alterar só o título envia SÓ o título … |
 | `src/lib/__tests__/supervisorPriority.test.ts` | 30 | computePriority (regras P1-P4) · P1: sem atendente há exatamente 30 min (fronteira) · P1: 29 min sem atendente NÃO é P1 (fronteira abaixo) · P1: com atendente, 30 min de espera não dispara a regra de  … |
-| `src/lib/calls/__tests__/phone.test.ts` | 30 | normalizeE164BR · normaliza os 10 formatos de entrada para a mesma forma E.164 · mantém fixo de 10 dígitos (assinante começando em 2–5) · recompõe o nono dígito em vários DDDs … |
 | `tests/contracts/ai-resilience-prazos-retry.contract.test.ts` | 30 | (1) classifyFailure: transitório × permanente × estado desconhecido (IA-042) · %s → transient (pode reenviar) · %s → permanent (NUNCA reenviar) · erro de REDE (sem resposta HTTP) → transient … |
 | `src/components/catalog/__tests__/ContactSelectionStep.test.tsx` | 29 | ContactSelectionStep · botão de enviar fica desabilitado sem contato selecionado · com contato selecionado, o botão habilita e mostra o nome · sem busca e sem resultados, mostra o estado vazio de  … |
 | `src/components/inbox/tabs/journey/__tests__/JourneyStatsHero.test.tsx` | 29 | JourneyStatsHero — estrutura e dados · renderiza os dois blocos com os valores do contato e do período · mantém a grade de 2 colunas no celular e 4 no desktop nos dois blocos de cartões · com dados vazios mostra traços e estados vazios, sem quebrar … |
@@ -4740,6 +4740,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/sip/__tests__/useSipConnection.test.ts` | 21 | useSipConnection · registers the incoming-invitation delegate on connect · SL-002: as opções do SessionDescriptionHandler exigem RTCP muxado e bundle (mídia só pela sessão DTLS) · T15: 403 no REGISTER vira  … |
 | `src/lib/__tests__/rlsConversationAccess.test.ts` | 21 | RLS real: contacts (schema resolvido das migrations) · o conjunto de policies bate com o manifest do schema real · SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin) · INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil) … |
 | `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts` | 21 | whatsapp-webhook: POST sem assinatura -> 401 antes de qualquer efeito (sem SUPABASE_URL configurada) · whatsapp-webhook: assinatura HMAC inválida -> 401 · whatsapp-webhook: replay — assinatura válida de OUTRO corpo -> 401 · whatsapp-webhook: sem WHATSAPP_APP_SECRET configurado -> 401 (falha fechada, mesmo com header bem formado) … |
+| `supabase/functions/detect-new-device/index.test.ts` | 21 | extractAuthSessionId extrai session_id do claim JWT · extractAuthSessionId devolve null sem claim ou com token malformado · extractAuthSessionId ignora session_id fora do claim (só o token conta) · decideSessionUpsert atualiza linha existente da mesma sessão Auth … |
+| `e2e/navegacao-modulos.spec.ts` | 20 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `src/components/calls/__tests__/CallDialog.test.tsx` | 20 | CallDialog — aceite T21: abrir o diálogo NÃO insere em  · disca pelo provider e não toca em nenhum caminho de escrita da tabela  · não disca de novo quando a chamada já existe ( · disca UMA única vez por abertura, mesmo com  … |
 | `src/components/contacts/__tests__/useContactsCRUD.test.tsx` | 20 | useContactsCRUD — edição não apaga endereço (C1) · E01 — editar só o nome preserva endereço e coordenada da linha completa · E05 — abre a edição com 1 fetch pelo id · E05 — falha do getById não perde endereço: o update não escreve os campos de endereço … |
 | `src/components/gmail/__tests__/EmailThreadView.test.tsx` | 20 | EmailThreadView · chama setSelectedThreadId com thread.id no mount · chama setSelectedThreadId(null) no unmount · exibe o subject da thread no header … |
@@ -4799,6 +4801,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/ai-endpoints-auth.contract.test.ts` | 18 | endpoints de IA — ordem entre autenticação e gasto de provedor (IA-011) · ${fn} autentica o chamador antes de chamar o provedor · o contrato não confunde import com chamada (guarda do próprio teste) · cliente do voice-agent — credencial da sessão (IA-011, regressão A1) … |
 | `tests/contracts/crm-sentiment-boundary.contract.test.ts` | 18 | sentimentForExternalCrm — mapa canônico pt-BR → domínio EN do CRM · cobre exatamente os 4 canônicos (nem a mais, nem a menos) · aceita variação de caixa/espaço do valor canônico · ausência não vira token — nunca inventa sentimento … |
 | `src/components/admin/__tests__/adminDownloadPermission.test.ts` | 17 | useAdminData - can_download no handleSaveUser · envia can_download no payload de update · envia can_download=false quando desabilitado · UserWithRole interface … |
+| `src/components/calls/__tests__/NewCallPanel.test.tsx` | 17 | NewCallPanel (T56/T59/T60) · tem o segmentado VoIP/WhatsApp como radiogroup, independente das abas do historico · lembra o canal escolhido no localStorage · desabilita a opcao sem capacidade de discar … |
 | `src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx` | 17 | CatalogAdvancedFilters — faixa de preço (slider real, E36) · sem stats, usa o teto de fallback (2000) — nunca hardcoded  · com stats.price_max, o teto vem dele (arredondado para cima) — nunca um valor fixo · inicializa o slider com priceMin/priceMax de filters, clampado ao teto real … |
 | `src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx` | 17 | InstanceSettingsDialog — aba Config · carrega as configurações da instância e reflete os valores do provedor · salvar envia o estado completo da aba com o nome da instância · recusa do provedor não finge sucesso: mostra erro … |
 | `src/components/dashboard/__tests__/DashboardCard.test.tsx` | 17 | DashboardCard · renderiza os filhos dentro do card · SectionHeader · renderiza título, subtítulo e tile no tamanho 44 … |
@@ -4832,7 +4835,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/_adv_vocabulary-consumers-gaps.test.ts` | 17 | ADVERSARIAL — defeitos de consumidor (comparação morta / ausência → valor) · $file :: $what · ADVERSARIAL — chaves de vocabulário EN fora do módulo canônico · $file :: $what … |
 | `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
 | `tests/contracts/ai-vision-modality.contract.test.ts` | 17 | IA-033 — texto puro segue o caminho de hoje (padrão por finalidade) · sem  · IA-033 — visão resolve no provedor que declara a modalidade · um candidato ativo declarando vision resolve NELE, mesmo sem is_default … |
-| `e2e/navegacao-modulos.spec.ts` | 16 | Navegação por todos os módulos (desktop) · abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `scripts/db-audit/register-migration.test.mjs` | 16 | splitStatements respects dollar-quoted function bodies (does not split on internal semicolons) · splitStatements strips line comments but preserves them inside dollar-quoted bodies · buildInsertSql picks a dollar-quote tag that does not collide with the statement body · parseMigrationFile rejects a filename that does not match the version_name.sql convention … |
 | `scripts/db-audit/talkx-e90-links-contract.test.mjs` | 16 | Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site · Talk X personalize() resolves every placeholder in a single pass over the original template · Talk X personalize() never lets a custom field with a reserved name override a built-in placeholder · Talk X custom-fields pagination orders by a stable unique key … |
 | `src/components/calls/__tests__/CallHistoryCells.test.tsx` | 16 | CallContactCell (T48) · peer_name vence os outros dois · sem peer_name cai no contact_name · sem nome nenhum mostra o telefone formatado … |
@@ -4853,8 +4855,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/tasks/__tests__/workItemBoardGroups.test.ts` | 16 | boardByDue — colunas por prazo (etapa 101 / D1) · cada item cai em UMA coluna: nada some e nada duplica · prazo com hora que JÁ passou (hoje às 9h) é Atrasada, não Para hoje (R2-MOD-058) · prazo de dia inteiro de hoje (23:59) ainda vale como Para hoje ao meio-dia … |
 | `src/lib/__tests__/emailThreadQuery.test.ts` | 16 | emailThreadQuery (OTH-005) · traduz estado, marcador, período, anexos e busca para o servidor · sem filtro nenhum não manda condição extra ao servidor · período  … |
 | `src/lib/__tests__/mapboxSession.test.ts` | 16 | mapboxSession · duas chamadas dentro de 2 min compartilham o mesmo token · inatividade maior que 2 min abre uma sessão nova · depois de um /retrieve, a próxima sessão é nova … |
-| `src/lib/__tests__/mapboxToken.test.ts` | 16 | getMapboxToken · devolve o token e reaproveita o cache na segunda chamada · chamadas simultâneas compartilham uma única invoke · force ignora o cache … |
-| `src/lib/__tests__/queryRetry.test.ts` | 16 | shouldRetryQuery — erro permanente nao repete · status HTTP 401/403/404: false ja na primeira falha · codigos Postgres 42501/42P01/42703: false · PGRST116/PGRST301: false … |
 | … +1943 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
@@ -5357,4 +5357,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
 | estático que some no mesmo prazo. Em ambos os casos `onDone` avisa o fim para | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
 | * Prazo do realce (2 pulsos), em ms. */ | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
-| … +1643 linhas — lista completa em `context.json` | |
+| … +1644 linhas — lista completa em `context.json` | |

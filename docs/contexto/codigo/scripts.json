@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 400,
+ "total": 404,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -255,9 +255,7 @@
    "linhas": 108,
    "env": [],
    "npm_scripts": [],
-   "workflows": [
-    "e2e-logado.yml"
-   ],
+   "workflows": [],
    "orfao": false
   },
   {
@@ -381,9 +379,7 @@
    "linhas": 411,
    "env": [],
    "npm_scripts": [],
-   "workflows": [
-    "e2e-logado.yml"
-   ],
+   "workflows": [],
    "orfao": false
   },
   {
@@ -3649,7 +3645,7 @@
   {
    "arquivo": "scripts/e2e-isolated/gateway.mjs",
    "descricao": null,
-   "linhas": 118,
+   "linhas": 120,
    "env": [
     "GITHUB_SHA",
     "ZAPP_E2E_RUN_ID"
@@ -3734,6 +3730,24 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/provider-diagnostics.mjs",
+   "descricao": "Closed, observation-only metadata for the isolated provider readiness proof. This module does not execute SQL, fetch URLs, or decide whether a proof passes.",
+   "linhas": 119,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/providers.mjs",
+   "descricao": null,
+   "linhas": 258,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/resolve-images.mjs",
    "descricao": null,
    "linhas": 99,
@@ -3750,7 +3764,7 @@
   {
    "arquivo": "scripts/e2e-isolated/results.mjs",
    "descricao": "Schema: Playwright v1.64.1 packages/playwright/src/reporters/json.ts. Counts describe test cases, not retry attempts or nested steps. Public output",
-   "linhas": 180,
+   "linhas": 248,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3759,7 +3773,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 511,
+   "linhas": 672,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"
@@ -3775,14 +3789,15 @@
    "env": [],
    "npm_scripts": [],
    "workflows": [
-    "e2e-logado-isolado.yml"
+    "e2e-logado-isolado.yml",
+    "e2e-logado.yml"
    ],
    "orfao": false
   },
   {
    "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
    "descricao": null,
-   "linhas": 148,
+   "linhas": 153,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3820,9 +3835,18 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/seed-suite.mjs",
+   "descricao": "These identities belong to the existing synthetic E2E fixtures. The owner is resolved from this run's real login; no hosted profile/user ID is copied.",
+   "linhas": 174,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/stack.mjs",
    "descricao": null,
-   "linhas": 132,
+   "linhas": 141,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3847,7 +3871,7 @@
   {
    "arquivo": "scripts/e2e-isolated/tls-probe.mjs",
    "descricao": null,
-   "linhas": 112,
+   "linhas": 177,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3860,6 +3884,15 @@
    "env": [
     "PATH"
    ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/verify-providers.mjs",
+   "descricao": "* Tests the real local app boundary. Only Evolution/PromoGifts are fixtures. */",
+   "linhas": 205,
+   "env": [],
    "npm_scripts": [],
    "workflows": [],
    "orfao": false
