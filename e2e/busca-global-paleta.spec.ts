@@ -175,9 +175,8 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
 
     await page.keyboard.press('Escape');
 
-    // Só o FECHAMENTO aqui: a devolução de foco ao elemento de origem é outro caso,
-    // e hoje está quebrada — ver o `test.fixme` "Esc devolve o foco ao elemento de
-    // origem", no fim do arquivo.
+    // O fechamento e a devolução de foco têm regressões separadas; o caso
+    // "Esc devolve o foco ao elemento de origem" conserva a prova do retorno.
     await expect(paleta).toHaveCount(0);
   });
 
@@ -286,21 +285,12 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
   });
 
   /**
-   * BUG (não corrigido neste cartão — só documentado): o Esc fecha a paleta, mas não
-   * DEVOLVE o foco ao elemento de origem, que é o que o pedido original cobra. MEDIDO
-   * (`zapp-e2e-local`, banco local, sessão falsa): com o campo "Buscar conversas…"
-   * focado antes de abrir, depois do Esc o foco vai para o `document.body` — nenhum
-   * elemento da página o recebe (o diálogo fechado sai da árvore e o foco cai no body).
-   *
-   * Causa: o `CommandDialog` (`src/components/ui/command.tsx:29-45`) é um Radix Dialog
-   * SEM `DialogTrigger` — a paleta abre por atalho/evento (`open-global-search`), não
-   * por um gatilho — então a restauração de foco do Radix (`onCloseAutoFocus` →
-   * `context.triggerRef.current?.focus()`) não tem gatilho para onde voltar, e o
-   * componente não guarda o elemento que estava em foco antes de abrir.
-   *
-   * Vira `test(...)` quando o Esc devolver o foco ao elemento de origem.
+   * A paleta abre sem DialogTrigger. Seu handler local conserva o foco externo
+   * anterior e o restaura no fechamento sem comando, se a origem continua válida
+   * e nenhum outro destino recebeu foco. O corpo mantém a prova pelo campo real
+   * de conversas, pelo foco no combobox aberto e pelo retorno depois de Escape.
    */
-  test.fixme('Esc devolve o foco ao elemento de origem', async ({ page }) => {
+  test('Esc devolve o foco ao elemento de origem', async ({ page }) => {
     await abrirInbox(page);
     const origem = page.getByPlaceholder('Buscar conversas…');
     await origem.click();
