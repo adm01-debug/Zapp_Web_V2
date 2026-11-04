@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useViewTransition } from '../useViewTransition';
@@ -52,6 +53,29 @@ describe('useViewTransition', () => {
     // A API é quem chama o callback quando a transição começa.
     received!();
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirma a nova view no DOM antes de concluir o callback nativo', () => {
+    let commit: (() => void) | undefined;
+    stubStartViewTransition((cb: () => void) => {
+      commit = cb;
+      return {
+        finished: { catch: vi.fn() },
+        ready: { catch: vi.fn() },
+        updateCallbackDone: { catch: vi.fn() },
+      };
+    });
+
+    const { result } = renderHook(() => {
+      const [view, setView] = useState('dashboard');
+      const { startTransition } = useViewTransition();
+      return { view, navigate: () => startTransition(() => setView('email-chat')) };
+    });
+
+    result.current.navigate();
+    expect(result.current.view).toBe('dashboard');
+    commit!();
+    expect(result.current.view).toBe('email-chat');
   });
 
   it('silencia as três promises da transição (navegação rápida aborta)', () => {
