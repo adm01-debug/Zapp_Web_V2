@@ -16,6 +16,7 @@ import { prepareMigration, migrationFailure, gitBlob } from './migrations.mjs';
 import { readPlaywrightInventory, summarizePlaywrightResult } from './results.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
+import { restoreRoutineOwnership } from './routine-ownership.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -218,7 +219,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   const writable = new Set([output, bundles, bundleCache]);
   let credentials;
   let reportReady = false;
-  let providerCatalog, providerDiagnostic;
+  let providerCatalog, providerDiagnostic, routineOwnership;
   let failure;
   let cancelled = false;
   let cleaning = false;
@@ -494,6 +495,13 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     state.migrations = { total: migrationResults.length, passed: migrationResults.filter(item => item.success).length, known_failures: migrationResults.filter(item => !item.success && item.expected).length, unexpected_failures: migrationResults.filter(item => !item.success && !item.expected).length };
     if (state.migrations.unexpected_failures) throw new Error('unexpected-migration-failure');
     if (!sqlBoolean("select current_setting('cron.launch_active_jobs') = 'off';")) throw new Error('cron-reenabled-by-migration');
+    if (fullSuite) {
+      phase('restore-versioned-routine-owners');
+      routineOwnership = restoreRoutineOwnership({ command: execute, dockerConfig, scope, group, runId, sourceSha,
+        anchorId, anchorImage: images.driver, databaseId: database.id, databaseImage: images.postgres,
+        volumeName: databaseVolume.source, networkNamespace: network.network_namespace, allowedWritableSources: writable });
+      if (!routineOwnership.confirmed) throw new Error('routine-ownership-failed');
+    }
     required(psql("notify pgrst, 'reload schema';"), 'schema-cache-reload-failed');
     await pause(2_000);
     start('edge', images.edge, [{ type: 'bind', source: bundles, target: '/bundles', readOnly: true }, ...tlsMounts(material, 'edge')]);
@@ -634,7 +642,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     // Never copy the verifier's raw file. Only the closed parsed objects enter
     // the already-redacted publication path; diagnostic I/O remains best effort.
-    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic]]) {
+    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic], ['routine-ownership.json', routineOwnership]]) {
       if (diagnostic) {
         try { writeJson(path.join(published, name), diagnostic); } catch { /* Observation cannot replace the original result. */ }
       }

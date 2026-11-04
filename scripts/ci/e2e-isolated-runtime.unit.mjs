@@ -7,10 +7,11 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertPinnedImages, functionPolicy, prepareMountTargets } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
-import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS } from '../e2e-isolated/runtime-contract.mjs';
+import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS, sha256 } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
 import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
+import { OWNERSHIP_ROUTINES, OWNERSHIP_EXECUTOR_OPTIONS, ownershipSql } from '../e2e-isolated/routine-ownership.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -205,14 +206,14 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic,
-    catalogResult, providerObservation } = typeof options === 'function' ? { manifest: options } : options;
+    catalogResult, providerObservation, ownershipResult, ownershipFault } = typeof options === 'function' ? { manifest: options } : options;
   const fullSeed = scope === 'suite' && group === 'authenticated';
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -248,6 +249,8 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   let pgReadyChecks = 0;
   const suiteStages = [];
   const catalogCalls = [];
+  const ownershipCalls = [];
+  let ownershipInspection = false;
   const bundled = [];
   let localKeyConfigured = false;
   let driverLocalAnonKey;
@@ -263,7 +266,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     calls.push({ program, args: [...args] });
     if (['openssl', 'certutil'].includes(program)) return simulatedTlsTool(program, args, options, fault);
     if (program === 'git') {
-      if (args[0] === 'rev-parse') return ok(SOURCE_SHA + '\n');
+      if (args[0] === 'rev-parse') return ok((ownershipFault === 'source' && migrationCalls ? 'b'.repeat(40) : SOURCE_SHA) + '\n');
       if (args[0] === 'diff') return fault === 'dirty-checkout' ? error() : ok();
       if (args[0] === 'ls-files') {
         if (args.at(-1) === 'supabase/functions') return ok(FUNCTIONS.filter(name => fault !== 'untracked-handler' || name !== 'message-delivery').map(name => '100644 ' + (fault === 'changed-handler' && name === 'message-delivery' ? 'b'.repeat(40) : gitBlob(FUNCTION_SOURCE)) + ' 0\tsupabase/functions/' + name + '/index.ts').join('\n'));
@@ -307,10 +310,10 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
       const name = valueAfter(argv, '--name');
       const mounts = allAfter(argv, '--mount').map(value => {
         const pieces = Object.fromEntries(value.split(',').map(part => part.includes('=') ? part.split('=') : [part, true]));
-        return { Type: pieces.type, Source: pieces.type === 'volume' ? volumes.get(pieces.src)?.Mountpoint : pieces.src, Destination: pieces.dst, RW: !pieces.readonly };
+        return { Type: pieces.type, ...(pieces.type === 'volume' ? { Name: pieces.src } : {}), Source: pieces.type === 'volume' ? volumes.get(pieces.src)?.Mountpoint : pieces.src, Destination: pieces.dst, RW: !pieces.readonly };
       });
       const labels = Object.fromEntries(allAfter(argv, '--label').map(value => value.split('=')));
-      const metadata = { Id: name + '-id', Config: { Labels: labels, User: argv.includes('--user') ? valueAfter(argv, '--user') : '' }, State: { Running: true }, HostConfig: { NetworkMode: argv.includes('--network') ? valueAfter(argv, '--network') : 'default', Privileged: false, CapAdd: [] }, NetworkSettings: { Networks: {} }, Mounts: mounts };
+      const metadata = { Id: sha256(name), Name: '/' + name, Config: { Image: argv.find(value => Object.values(lock().images).includes(value)), Env: ['PATH=/usr/lib/postgresql/bin:/usr/bin:/bin', 'PGHOSTADDR=198.51.100.1', 'PGSERVICE=foreign'], Labels: labels, User: argv.includes('--user') ? valueAfter(argv, '--user') : '' }, State: { Running: true }, HostConfig: { NetworkMode: argv.includes('--network') ? valueAfter(argv, '--network') : 'default', Privileged: false, CapAdd: [] }, NetworkSettings: { Networks: {} }, Mounts: mounts };
       if (name.endsWith('-tls-tools')) {
         assert.equal(argv.includes('--env-file'), false);
         assert.equal(valueAfter(argv, '--network'), 'none');
@@ -368,9 +371,13 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
       return ok(metadata.Id);
     }
     if (argv[0] === 'inspect') {
-      const metadata = containers.get(argv[1]);
+      const metadata = containers.get(argv[1]) ?? [...containers.values()].find(value => value.Id === argv[1]);
       if (!metadata) return error('Error: No such object: ' + argv[1]);
       const copy = structuredClone(metadata);
+      if (/^[a-f0-9]{64}$/.test(argv[1])) {
+        ownershipInspection = true;
+        if (ownershipFault === 'cid' && copy.Name.endsWith('-postgres')) copy.Id = 'f'.repeat(64);
+      }
       if (cleanupSeen && fault === 'cleanup-inspect-failure') return error('simulated daemon unavailable');
       if (browserCalls && fault === 'foreign-container-cleanup') copy.Config.Labels[OWNER_LABEL] = 'foreign';
       return ok(JSON.stringify([copy]));
@@ -384,6 +391,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
       }
       if (argv[1] === 'inspect') {
         const value = structuredClone(volumes.get(argv[2]));
+        if (ownershipInspection && !cleanupSeen && ownershipFault === 'volume') value.Labels[OWNER_LABEL] = 'foreign';
         if (browserCalls && fault === 'foreign-volume-cleanup') value.Labels[OWNER_LABEL] = 'foreign';
         return value ? ok(JSON.stringify([value])) : error('No such volume');
       }
@@ -433,9 +441,27 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         return ok(JSON.stringify(proof));
       }
       if (argv.includes('cat') && argv.at(-1) === '/etc/hosts') return ok((fault === 'postgres-hosts' ? '203.0.113.1' : '127.0.0.1') + ' ' + OFFICIAL_HOST + '\n');
+      if (argv.includes('/usr/bin/readlink')) {
+        assert.equal(ownershipInspection, true); assert.equal(migrationCalls, 1); assert.equal(seedCalls, 0);
+        assert.deepEqual(argv, ['exec', [...containers.values()].find(value => value.Name.endsWith('-postgres')).Id, '/usr/bin/readlink', '/proc/self/ns/net']);
+        return ok(ownershipFault === 'namespace' ? 'net:[9999]' : 'net:[1234]');
+      }
       if (argv.includes('pg_isready')) { pgReadyChecks++; return ok(); }
       if (argv.includes('psql')) {
         const input = String(options.input);
+        if (input.includes('CREATE TEMP TABLE e2e_owner_before')) {
+          const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
+          const database = [...containers.values()].find(value => value.Name.endsWith('-postgres'));
+          assert.equal(migrationCalls, 1); assert.equal(seedCalls, 0); assert.deepEqual(suiteStages, []);
+          assert.deepEqual(argv, ['exec', '-i', database.Id, '/usr/bin/env', '-i', 'PATH=/usr/lib/postgresql/bin:/usr/bin:/bin',
+            'LANG=C', 'LC_ALL=C', 'PGCLIENTENCODING=UTF8', 'PGPASSFILE=/dev/null', 'psql', '-X', '-w', '-h', '/var/run/postgresql',
+            '-p', '5432', '-U', 'supabase_admin', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-v', 'VERBOSITY=sqlstate', '-q', '-A', '-t']);
+          for (const [key, expected] of Object.entries(OWNERSHIP_EXECUTOR_OPTIONS)) assert.equal(options[key], expected);
+          assert.equal(input, ownershipSql(runId, SOURCE_SHA));
+          ownershipCalls.push({ afterMigrations: migrationCalls, beforeSeeds: seedCalls, target: database.Id });
+          const rows = ownershipRecords(runId);
+          return ownershipResult ? ownershipResult(rows) : ok(rows.map(row => JSON.stringify(row)).join('\n') + '\n');
+        }
         if (input.includes('pg_catalog.pg_proc')) {
           catalogCalls.push({ input, timeout: options.timeout, killSignal: options.killSignal,
             maxBuffer: options.maxBuffer, afterStages: [...suiteStages] });
@@ -600,7 +626,9 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     const file = path.join(output, 'public', name);
     return existsSync(file) ? [[name, { value: JSON.parse(readFileSync(file, 'utf8')), mode: statSync(file).mode & 0o777 }]] : [];
   }));
-  const result = { providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const ownershipFile = path.join(output, 'public', 'routine-ownership.json');
+  const ownershipMetadata = existsSync(ownershipFile) ? { value: JSON.parse(readFileSync(ownershipFile, 'utf8')), mode: statSync(ownershipFile).mode & 0o777 } : null;
+  const result = { ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -1114,4 +1142,81 @@ test('provider catalog executor: the actual Node timeout kills a child that igno
   assert.equal(result.status, null); assert.equal(result.signal, 'SIGKILL'); assert.equal(result.error?.code, 'ETIMEDOUT');
   assert.match(PROVIDER_CATALOG_SQL, /^BEGIN READ ONLY;\nSET LOCAL statement_timeout = '3s';/);
   assert.match(PROVIDER_CATALOG_SQL, /ROLLBACK;\s*$/);
+});
+
+function ownershipRecords(runId) {
+  return [
+    { schema: 1, stage: 'before', run_id: runId, source_sha: SOURCE_SHA, routines: OWNERSHIP_ROUTINES.map(entry =>
+      ({ ...entry, owner: 'supabase_admin', security_definer: true })) },
+    { schema: 1, stage: 'verified', run_id: runId, source_sha: SOURCE_SHA, routines: OWNERSHIP_ROUTINES.map(entry =>
+      ({ ...entry, owner: 'postgres', definition_preserved: true, attributes_preserved: true, acl_preserved: true, changed: true })) },
+  ];
+}
+const ownershipOutput = rows => rows.map(row => JSON.stringify(row)).join('\n') + '\n';
+
+test('ownership controller confirms only the authenticated step, before seeds and the unchanged verifier', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite' });
+  assert.equal(value.exit, 0); assert.equal(value.browserCalls, 1);
+  assert.equal(value.ownershipCalls.length, 1);
+  assert.equal(value.ownershipCalls[0].afterMigrations, 1); assert.equal(value.ownershipCalls[0].beforeSeeds, 0);
+  assert.equal(value.ownershipMetadata.mode, 0o600); assert.equal(value.ownershipMetadata.value.confirmed, true);
+  assert.equal(value.ownershipMetadata.value.verified.length, 6);
+  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+  assert.equal(value.catalogCalls.length, 1, 'the independent catalog is still observed after seeds');
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+  assert.equal(value.publicFiles.some(name => /ownership.*\.log$/.test(name)), false);
+});
+
+for (const [name, options] of [
+  ['login', {}], ['logged-out principal', { scope: 'suite', group: 'deslogado-principal' }],
+  ['logged-out secondary', { scope: 'suite', group: 'deslogado-secundario' }],
+]) test('ownership controller never executes restoration for ' + name, async t => {
+  const value = await controllerFixture(t, 'none', options);
+  assert.equal(value.exit, 0); assert.equal(value.browserCalls, 1);
+  assert.equal(value.ownershipCalls.length, 0); assert.equal(value.ownershipMetadata, null);
+});
+
+for (const ownershipFault of ['source', 'cid', 'volume', 'namespace']) test('ownership controller stops before seed and cleans up on ' + ownershipFault, async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', ownershipFault });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'routine-ownership-failed');
+  assert.equal(value.state.failed_phase, 'restore-versioned-routine-owners');
+  assert.equal(value.ownershipCalls.length, 0); assert.equal(value.seedCalls, 0);
+  assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+  assert.equal(value.ownershipMetadata.value.confirmed, false); assert.equal(value.ownershipMetadata.mode, 0o600);
+});
+
+for (const [name, ownershipResult] of [
+  ['error before commit', rows => ({ status: 1, stdout: ownershipOutput([rows[0]]), stderr: 'private-sentinel raw SQL' })],
+  ['lost reply after verified', rows => ({ status: null, signal: 'SIGKILL', error: new Error('private-sentinel'), stdout: ownershipOutput(rows), stderr: 'private-sentinel' })],
+  ['error with status zero', rows => ({ ...ok(ownershipOutput(rows)), error: new Error('private-sentinel') })],
+  ['signal with status zero', rows => ({ ...ok(ownershipOutput(rows)), signal: 'SIGTERM' })],
+  ['unconfirmed before only', rows => ok(ownershipOutput([rows[0]]))],
+  ['verified without before', rows => ok(ownershipOutput([rows[1]]))],
+  ['duplicate confirmation', rows => ok(ownershipOutput([...rows, rows[1]]))],
+  ['wrong full definition hash', rows => { rows[0].routines[5].definition_sha256 = '0'.repeat(64); return ok(ownershipOutput(rows)); }],
+  ['ACL changed', rows => { rows[1].routines[0].acl_preserved = false; return ok(ownershipOutput(rows)); }],
+  ['unexpected output field', rows => { rows[1].body = 'private-sentinel'; return ok(ownershipOutput(rows)); }],
+]) test('ownership controller cannot start seed/browser after ' + name, async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', ownershipResult });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'routine-ownership-failed');
+  assert.equal(value.state.failed_phase, 'restore-versioned-routine-owners');
+  assert.equal(value.ownershipCalls.length, 1, 'never retry an ambiguous COMMIT');
+  assert.equal(value.seedCalls, 0); assert.deepEqual(value.suiteStages, []);
+  assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+  assert.equal(value.ownershipMetadata.value.confirmed, false); assert.equal(value.ownershipMetadata.mode, 0o600);
+  assert.equal(Object.hasOwn(value.ownershipMetadata.value, 'verified'), false);
+  assert.equal(value.providerMetadata['provider-catalog.json'], undefined);
+  assert.equal(value.publicFiles.some(name => /ownership.*\.log$/.test(name)), false);
+});
+
+test('ownership success cannot override a later failure of the real verifier path', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', providerObservation: {
+    result: error('private-sentinel-provider'), raw: JSON.stringify(providerFailureMetadata),
+  } });
+  assert.equal(value.ownershipMetadata.value.confirmed, true);
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'verify-providers');
+  assert.equal(value.browserCalls, 0);
+  assert.deepEqual(value.providerMetadata['provider-diagnostic.json'].value, { available: true, ...providerFailureMetadata });
 });
