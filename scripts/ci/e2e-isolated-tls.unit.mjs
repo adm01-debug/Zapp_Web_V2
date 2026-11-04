@@ -5,6 +5,7 @@ import { createHash, X509Certificate } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, statSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import https from 'node:https';
 import vm from 'node:vm';
 import { stripTypeScriptTypes } from 'node:module';
 import { crc32, inflateSync } from 'node:zlib';
@@ -49,18 +50,31 @@ test('PNG do gate possui chunks válidos e um pixel RGBA decodificável', () => 
   assert.deepEqual([...pixels], [0, 255, 255, 255, 255]);
 });
 
-test('emissão real: CA por execução, leaf/SAN/EKU, chave da CA removida e mounts separados', () => {
+test('emissão real: CAs separadas, leaf/SAN/EKU, chaves das CAs removidas e mounts separados', () => {
   const ca = new X509Certificate(readFileSync(path.join(material.publicDirectory, 'ca.crt')));
+  const controlCa = new X509Certificate(bytes('untrusted-ca.crt'));
   const server = new X509Certificate(bytes('server.crt'));
   const wrong = new X509Certificate(bytes('wrong_san.crt'));
   const foreign = new X509Certificate(bytes('untrusted.crt'));
   assert.equal(ca.ca, true); assert.equal(server.ca, false);
   assert.equal(server.verify(ca.publicKey), true); assert.equal(wrong.verify(ca.publicKey), true);
   assert.equal(foreign.verify(ca.publicKey), false);
+  assert.equal(controlCa.ca, true); assert.equal(controlCa.verify(controlCa.publicKey), true);
+  assert.equal(controlCa.verify(ca.publicKey), false); assert.notEqual(fp(controlCa.raw), fp(ca.raw));
+  assert.equal(foreign.verify(controlCa.publicKey), true); assert.equal(foreign.verify(foreign.publicKey), false);
+  assert.equal(foreign.issuer, controlCa.subject); assert.notEqual(foreign.issuer, foreign.subject);
+  assert.equal(foreign.checkIP('127.0.0.1'), '127.0.0.1');
+  for (const leaf of [server, wrong, foreign]) {
+    assert.equal(leaf.publicKey.asymmetricKeyType, 'rsa');
+    assert.equal(leaf.publicKey.asymmetricKeyDetails.modulusLength, 2048);
+    assert.ok(leaf.keyUsage.includes('1.3.6.1.5.5.7.3.1'));
+    assert.ok(Date.parse(leaf.validTo) - Date.parse(leaf.validFrom) <= 86_400_000);
+  }
   assert.equal(server.checkIP('127.0.0.1'), '127.0.0.1'); assert.equal(wrong.checkIP('127.0.0.1'), undefined);
   assert.ok(server.keyUsage.includes('1.3.6.1.5.5.7.3.1'));
   assert.ok(Date.parse(server.validTo) - Date.parse(server.validFrom) <= 86_400_000);
   assert.equal(existsSync(path.join(material.privateDirectory, 'ca.key')), false);
+  assert.equal(existsSync(path.join(material.privateDirectory, 'untrusted-ca.key')), false);
   for (const file of ['server.key', 'wrong_san.key', 'untrusted.key']) assert.equal(statSync(path.join(material.privateDirectory, file)).mode & 0o777, 0o600);
   assert.equal(statSync(material.homeDirectory).uid, process.getuid());
   assert.equal(statSync(material.homeDirectory).mode & 0o777, 0o700);
@@ -74,6 +88,8 @@ test('emissão real: CA por execução, leaf/SAN/EKU, chave da CA removida e mou
     policies: { Certificates: { Install: [TLS_PUBLIC + '/ca.crt'] } },
   });
   assert.ok(commands.filter(call => call.program === 'certutil').every(call => call.args.includes('sql:' + path.join(material.homeDirectory, '.pki/nssdb'))));
+  assert.deepEqual(commands.filter(call => call.program === 'certutil' && call.args[0] === '-A').map(call => call.args[call.args.indexOf('-i') + 1]),
+    [path.join(material.publicDirectory, 'ca.crt')], 'only the primary CA enters NSS');
   assert.ok(commands.every(call => Object.keys(call.options.env).join() === 'PATH'));
 });
 
@@ -83,7 +99,78 @@ test('duas emissões reais não reutilizam a CA nem autorizam o leaf da outra ex
   const otherCa = new X509Certificate(readFileSync(path.join(other.publicDirectory, 'ca.crt')));
   assert.equal(new X509Certificate(bytes('server.crt')).verify(otherCa.publicKey), false);
   assert.equal(existsSync(path.join(other.privateDirectory, 'ca.key')), false);
+  assert.equal(existsSync(path.join(other.privateDirectory, 'untrusted-ca.key')), false);
 });
+
+// Actual handshakes: no fetch/browser doubles, proxy, custom name verifier or
+// ignoreHTTPSErrors. The two loopback addresses exercise the real SAN check.
+for (const [name, issuer, ip] of [['server', 'primary', '127.0.0.1'], ['untrusted', 'secondary', '127.0.0.1'], ['wrong_san', 'primary', '127.0.0.2']]) {
+  for (const trust of ['primary', 'secondary', 'empty']) for (const hostname of ['127.0.0.1', '127.0.0.2']) for (const version of ['TLSv1.2', 'TLSv1.3']) {
+    test('TLS nativo: ' + [name, trust, hostname, version].join('/'), async t => {
+      const ca = trust === 'primary' ? [readFileSync(path.join(material.publicDirectory, 'ca.crt'))]
+        : trust === 'secondary' ? [bytes('untrusted-ca.crt')] : [];
+      const certificate = bytes(name + '.crt');
+      const leaf = new X509Certificate(certificate);
+      assert.equal(leaf.verify(leaf.publicKey), false, 'each control is a signed leaf, not a self-signed substitute');
+      const server = https.createServer({ key: bytes(name + '.key'), cert: certificate, minVersion: 'TLSv1.2' }, (_req, res) => res.end('local-only'));
+      server.on('tlsClientError', () => {});
+      t.after(async () => { server.closeAllConnections(); if (server.listening) await new Promise(resolve => server.close(resolve)); });
+      await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, hostname, resolve); });
+      const observed = await new Promise(resolve => {
+        const request = https.get({ hostname, port: server.address().port, path: '/', ca, agent: false, rejectUnauthorized: true,
+          minVersion: version, maxVersion: version, timeout: 5_000 }, response => {
+          const protocol = response.socket.getProtocol(); response.resume();
+          response.once('end', () => resolve({ accepted: true, status: response.statusCode, protocol }));
+        });
+        request.on('timeout', () => request.destroy(new Error('unexpected-local-timeout')));
+        request.on('error', error => resolve({ accepted: false, error }));
+      });
+      const expected = trust === issuer && hostname === ip;
+      assert.equal(observed.accepted, expected);
+      if (expected) { assert.equal(observed.status, 200); assert.equal(observed.protocol, version); }
+      else assert.equal(certificateFailure(observed.error, trust === issuer ? 'wrong_san' : 'untrusted'), true);
+    });
+  }
+}
+
+for (const fault of ['secondary-ca-command', 'negative-leaf-command', 'primary-signed-negative', 'self-signed-negative']) {
+  test('CA de controle: ' + fault + ' bloqueia e remove todo material parcial', () => {
+    const directory = path.join(parent, fault);
+    let injected = false;
+    const command = (program, args, options) => {
+      if (program === 'certutil') return { status: 0, stdout: '' };
+      const output = args.includes('-out') ? path.basename(args[args.indexOf('-out') + 1]) : '';
+      if (fault === 'secondary-ca-command' && output === 'untrusted-ca.crt') {
+        injected = true;
+        writeFileSync(path.join(options.cwd, 'untrusted-ca.key'), 'partial-synthetic-key', { mode: 0o600 });
+        assert.equal(existsSync(path.join(options.cwd, 'ca.key')), true);
+        return { status: 1, stderr: 'controlled issuance failure' };
+      }
+      if (args[0] === 'x509' && output === 'untrusted.crt') {
+        assert.equal(existsSync(path.join(options.cwd, 'ca.key')), true);
+        assert.equal(existsSync(path.join(options.cwd, 'untrusted-ca.key')), true);
+        if (fault === 'negative-leaf-command') { injected = true; return { status: 1 }; }
+        if (fault === 'primary-signed-negative') {
+          injected = true; args = [...args];
+          args[args.indexOf('-CA') + 1] = path.join(directory, 'public', 'ca.crt');
+          args[args.indexOf('-CAkey') + 1] = path.join(options.cwd, 'ca.key');
+        }
+        if (fault === 'self-signed-negative') {
+          injected = true;
+          args = ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-sha256', '-days', '1',
+            '-keyout', path.join(options.cwd, 'untrusted.key'), '-out', path.join(options.cwd, 'untrusted.crt'),
+            '-subj', '/CN=' + runId + '-untrusted', '-addext', 'basicConstraints=critical,CA:FALSE',
+            '-addext', 'keyUsage=critical,digitalSignature,keyEncipherment', '-addext', 'extendedKeyUsage=serverAuth',
+            '-addext', 'subjectAltName=IP:127.0.0.1'];
+        }
+      }
+      return spawnSync(program, args, options);
+    };
+    assert.throws(() => createTlsMaterial({ directory, runId, sourceSha, command }), /tls-(?:tool-openssl-failed|issued-certificate-contract)/);
+    assert.equal(injected, true); assert.equal(existsSync(directory), false);
+    assert.equal(existsSync(material.directory), true, 'other run material remains untouched');
+  });
+}
 
 for (const stage of ['openssl', 'nss-create', 'nss-list']) test('preflight: falha de ' + stage + ' remove somente seu diretório novo', () => {
   const directory = path.join(parent, 'preflight-' + stage);

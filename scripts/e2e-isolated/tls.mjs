@@ -63,6 +63,7 @@ export function createTlsMaterial({ directory, runId, sourceSha, command = spawn
   const privateDirectory = path.join(directory, 'private');
   const homeDirectory = path.join(directory, 'home');
   const caKey = path.join(privateDirectory, 'ca.key');
+  const controlCaKey = path.join(privateDirectory, 'untrusted-ca.key');
   try {
     for (const sub of [publicDirectory, privateDirectory, homeDirectory]) mkdirSync(sub, { mode: sub === publicDirectory ? 0o755 : 0o700 });
     const caFile = path.join(publicDirectory, 'ca.crt');
@@ -71,7 +72,17 @@ export function createTlsMaterial({ directory, runId, sourceSha, command = spawn
       '-addext', 'basicConstraints=critical,CA:TRUE,pathlen:0',
       '-addext', 'keyUsage=critical,keyCertSign,cRLSign'], privateDirectory);
     chmodSync(caKey, 0o600); chmodSync(caFile, 0o444);
-    for (const [name, ip] of [['server', '127.0.0.1'], ['wrong_san', '127.0.0.2']]) {
+    // The negative leaf is valid, but its independent issuer is never trusted.
+    const controlCaFile = path.join(privateDirectory, 'untrusted-ca.crt');
+    tool(command, 'openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-sha256', '-days', '1',
+      '-keyout', controlCaKey, '-out', controlCaFile, '-subj', '/CN=' + runId + '-untrusted-ca',
+      '-addext', 'basicConstraints=critical,CA:TRUE,pathlen:0',
+      '-addext', 'keyUsage=critical,keyCertSign,cRLSign'], privateDirectory);
+    chmodSync(controlCaKey, 0o600); chmodSync(controlCaFile, 0o444);
+    for (const [name, ip, issuer, issuerKey] of [
+      ['server', '127.0.0.1', caFile, caKey], ['wrong_san', '127.0.0.2', caFile, caKey],
+      ['untrusted', '127.0.0.1', controlCaFile, controlCaKey],
+    ]) {
       const key = path.join(privateDirectory, name + '.key');
       const csr = path.join(privateDirectory, name + '.csr');
       const ext = path.join(privateDirectory, name + '.ext');
@@ -79,25 +90,21 @@ export function createTlsMaterial({ directory, runId, sourceSha, command = spawn
       tool(command, 'openssl', ['req', '-new', '-newkey', 'rsa:2048', '-nodes', '-sha256',
         '-keyout', key, '-out', csr, '-subj', '/CN=' + runId + '-' + name], privateDirectory);
       chmodSync(key, 0o600);
-      tool(command, 'openssl', ['x509', '-req', '-in', csr, '-CA', caFile, '-CAkey', caKey,
+      tool(command, 'openssl', ['x509', '-req', '-in', csr, '-CA', issuer, '-CAkey', issuerKey,
         '-set_serial', '0x' + randomBytes(16).toString('hex'), '-days', '1', '-sha256',
         '-extfile', ext, '-out', path.join(privateDirectory, name + '.crt')], privateDirectory);
       rmSync(csr); rmSync(ext);
     }
-    // This leaf is deliberately self-signed and never imported into any truststore.
-    tool(command, 'openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-sha256', '-days', '1',
-      '-keyout', path.join(privateDirectory, 'untrusted.key'), '-out', path.join(privateDirectory, 'untrusted.crt'),
-      '-subj', '/CN=' + runId + '-untrusted', '-addext', 'basicConstraints=critical,CA:FALSE',
-      '-addext', 'keyUsage=critical,digitalSignature,keyEncipherment', '-addext', 'extendedKeyUsage=serverAuth',
-      '-addext', 'subjectAltName=IP:127.0.0.1'], privateDirectory);
-    chmodSync(path.join(privateDirectory, 'untrusted.key'), 0o600);
-    rmSync(caKey);
+    rmSync(caKey); rmSync(controlCaKey);
     const ca = new X509Certificate(readFileSync(caFile));
+    const controlCa = new X509Certificate(readFileSync(controlCaFile));
     const server = new X509Certificate(readFileSync(path.join(privateDirectory, 'server.crt')));
     const wrong = new X509Certificate(readFileSync(path.join(privateDirectory, 'wrong_san.crt')));
     const untrusted = new X509Certificate(readFileSync(path.join(privateDirectory, 'untrusted.crt')));
-    if (!ca.ca || server.ca || wrong.ca || untrusted.ca || !server.verify(ca.publicKey) ||
+    if (!ca.ca || !controlCa.ca || !controlCa.verify(controlCa.publicKey) || controlCa.verify(ca.publicKey) ||
+        server.ca || wrong.ca || untrusted.ca || !server.verify(ca.publicKey) ||
         !wrong.verify(ca.publicKey) || untrusted.verify(ca.publicKey) ||
+        !untrusted.verify(controlCa.publicKey) || untrusted.verify(untrusted.publicKey) ||
         server.checkIP('127.0.0.1') !== '127.0.0.1' || wrong.checkIP('127.0.0.1') ||
         untrusted.checkIP('127.0.0.1') !== '127.0.0.1') fail('issued-certificate-contract');
     const manifest = {
@@ -120,6 +127,7 @@ export function createTlsMaterial({ directory, runId, sourceSha, command = spawn
     return { directory, publicDirectory, privateDirectory, homeDirectory, runId, sourceSha, caSha256: manifest.ca_sha256 };
   } finally {
     rmSync(caKey, { force: true });
+    rmSync(controlCaKey, { force: true });
     if (!complete) rmSync(directory, { recursive: true, force: true });
   }
 }

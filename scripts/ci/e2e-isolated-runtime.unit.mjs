@@ -34,7 +34,7 @@ function certificates() {
 }
 
 // Only subprocess I/O is simulated. The real TLS helper still reads and checks
-// real X509 certificates, issues run-bound manifests, and removes the CA key.
+// real X509 certificates, issues run-bound manifests, and removes both CA keys.
 function simulatedTlsTool(program, args, options, fault) {
   if (program === 'certutil') return fault === 'tls-host-nss' || (fault === 'tls-nss-import' && args.includes('-A')) ? error() : ok();
   if (args[0] === 'version') return fault === 'tls-host-openssl' ? error() : ok(fault === 'tls-host-version' ? 'OpenSSL 1.1.1' : 'OpenSSL 3.0.0 fixture');
@@ -45,7 +45,7 @@ function simulatedTlsTool(program, args, options, fault) {
   const name = path.basename(destination);
   if (args.includes('-keyout')) {
     const key = value('-keyout');
-    if (path.basename(key) === 'ca.key') writeFileSync(key, 'synthetic-unused-CA-key');
+    if (['ca.key', 'untrusted-ca.key'].includes(path.basename(key))) writeFileSync(key, 'synthetic-unused-CA-key');
     else cpSync(path.join(material.privateDirectory, path.basename(key)), key);
   }
   if (name.endsWith('.csr')) writeFileSync(destination, 'synthetic-CSR-not-parsed');

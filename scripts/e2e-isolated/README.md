@@ -59,6 +59,8 @@ A sequência executada é:
 
 A chave leaf privada é montada somente no gateway. Driver e Edge recebem apenas a CA pública; o browser não recebe credenciais de backend. Node usa `NODE_EXTRA_CA_CERTS`, Edge usa o store de sistema com `SSL_CERT_FILE`, e o driver descartável recebe a CA no store do sistema, NSS e política específica do Firefox. O HOME NSS é montado no mesmo caminho absoluto com UID:GID do runner. Nenhum passo usa bypass de validação TLS. O truststore do host não é modificado.
 
+O controle de emissor usa um leaf válido para `127.0.0.1`, assinado por uma segunda CA exclusiva da execução. Essa CA fica na área privada do gateway e nunca é importada no sistema, NSS ou Firefox; somente a CA principal é distribuída aos clientes. O emissor confere a assinatura pela segunda CA, a rejeição pela principal e que o leaf não é autoassinado. As duas chaves de CA são apagadas após a emissão e também no caminho de falha. Os controles conservam RSA 2048, SHA-256, `serverAuth` e validade de um dia; `SSL_ERROR_UNKNOWN`, timeout ou erro de rede não substituem a prova exigida pelo classificador de cada cliente.
+
 `tls-proof.json` publica somente fingerprints, versões e resultados dos clientes. O campo `runtime` identifica o cliente sondado; `probe_runner`/`probe_runner_version` identificam o processo que executou a sondagem, sem atribuir a versão Node ao Edge. Certificados, chaves, base NSS e políticas não entram nos artifacts. O controle de boot verifica identidade e prontidão; os gates seguintes é que provam o transporte.
 
 ### Escrita e credenciais
