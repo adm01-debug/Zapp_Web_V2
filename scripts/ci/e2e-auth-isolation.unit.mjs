@@ -11,6 +11,7 @@ import {
 } from '../e2e-isolated/admission.mjs';
 
 const ORIGIN = 'http://127.0.0.1:5173';
+const ORIGINS = [ORIGIN, 'https://127.0.0.1:5173'];
 const NOW = Date.parse('2026-11-04T12:00:00.000Z');
 const b64 = value => Buffer.from(JSON.stringify(value)).toString('base64url');
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -18,16 +19,16 @@ function token(now, role = 'anon', alg = 'HS256', exp = Math.floor(now / 1000) +
   const body = `${b64({ alg, typ: 'JWT' })}.${b64({ role, exp })}`;
   return `${body}.${createHmac('sha256', 'offline-admission-fixture-only').update(body).digest('base64url')}`;
 }
-function evidence(now = NOW) {
+function evidence(now = NOW, origin = ORIGIN) {
   const key = token(now);
   return {
-    baseURL: ORIGIN, now,
+    baseURL: origin, now,
     env: {
       ZAPP_E2E_PROOF: '/run/zapp-e2e/proof.json', ZAPP_E2E_RUN_ID: 'local-run-1', GITHUB_SHA: 'a'.repeat(40),
-      VITE_ZAPP_LOCAL_SUPABASE_URL: ORIGIN, VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY: key,
-      E2E_SUPABASE_URL_OVERRIDE: ORIGIN, E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE: key,
+      VITE_ZAPP_LOCAL_SUPABASE_URL: origin, VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY: key,
+      E2E_SUPABASE_URL_OVERRIDE: origin, E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE: key,
     },
-    proof: { schema: 1, run_id: 'local-run-1', source_sha: 'a'.repeat(40), origin: ORIGIN,
+    proof: { schema: 1, run_id: 'local-run-1', source_sha: 'a'.repeat(40), origin,
       network_namespace: 'net:[12345]', anon_key_sha256: hash(key),
       created_at: new Date(now - 1000).toISOString(), expires_at: new Date(now + 3_599_000).toISOString(),
       checks: { network_isolated: true, cron_disabled: true, bootstrap_complete: true, seed_ready: true } },
@@ -43,6 +44,21 @@ function replaceKey(value, key) {
 const hasCode = code => error => error instanceof IsolatedAuthError && error.code === code &&
   error.cause === undefined && !/credential-canary|password-canary/.test(error.message);
 
+for (const protocol of ['http:', 'https:']) for (const host of ['127.0.0.1', 'localhost']) {
+  for (const port of ['', ':5173', ':23794', ':54321', ':65535']) {
+    const origin = `${protocol}//${host}${port}`;
+    test(`resolver e admissão conservam a origem local ${origin}`, () => {
+      const value = evidence(NOW, origin);
+      const local = resolveLocalSupabase(value.env);
+      assert.deepEqual(local, { url: origin, anonKey: value.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY });
+      assert.equal(resolveLocalSupabase({ ...value.env, PROD: true }), null);
+      const target = validateIsolatedAuthEvidence(value);
+      assert.equal(target.origin, origin);
+      validateBrowserEvidence(target, browserObservation(target));
+    });
+  }
+}
+
 const scenarios = [];
 const add = (name, mutate, code) => scenarios.push({ name, mutate, code });
 add('preparo completo', () => {});
@@ -57,17 +73,19 @@ for (const key of ['VITE_ZAPP_LOCAL_SUPABASE_URL', 'VITE_ZAPP_LOCAL_SUPABASE_ANO
 }
 for (const field of ['baseURL', 'VITE_ZAPP_LOCAL_SUPABASE_URL', 'E2E_SUPABASE_URL_OVERRIDE']) {
   for (const [label, url] of [
-    ['remoto', 'https://example.invalid'], ['HTTPS local', 'https://127.0.0.1:5173'],
+    ['remoto', 'https://example.invalid'], ['protocolo divergente', 'https://127.0.0.1:5173'],
     ['IPv6 fora do resolver', 'http://[::1]:5173'], ['caminho', `${ORIGIN}/rest/v1`],
     ['query', `${ORIGIN}/?credential-canary=1`], ['fragmento', `${ORIGIN}/#credential-canary`],
     ['credenciais', 'http://credential-canary:password-canary@127.0.0.1:5173'],
     ['URL inválida', 'http://credential-canary@'],
   ]) add(`${field}: ${label}`, value => {
-    if (field === 'baseURL') value.baseURL = url; else value.env[field] = url;
+    const target = label === 'protocolo divergente' && value.baseURL.startsWith('https:') ? ORIGIN
+      : value.baseURL.startsWith('https:') ? url.replace(/^http:/, 'https:') : url;
+    if (field === 'baseURL') value.baseURL = target; else value.env[field] = target;
   }, 'ISOLATION_CONFIGURATION');
 }
 for (const field of ['VITE_ZAPP_LOCAL_SUPABASE_URL', 'E2E_SUPABASE_URL_OVERRIDE']) {
-  add(`${field} aponta para outro serviço local`, value => { value.env[field] = 'http://127.0.0.1:54321'; }, 'ISOLATION_CONFIGURATION');
+  add(`${field} aponta para outro serviço local`, value => { value.env[field] = value.baseURL.replace(':5173', ':54321'); }, 'ISOLATION_CONFIGURATION');
 }
 add('pares anon diferentes', value => { value.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE = token(NOW, 'authenticated'); }, 'ISOLATION_CONFIGURATION');
 add('chave não JWT', value => replaceKey(value, 'credential-canary'), 'ISOLATION_CONFIGURATION');
@@ -104,38 +122,40 @@ for (const [name, field, replacement] of [
   ['prova expirada', 'expires_at', new Date(NOW).toISOString()],
   ['prova maior que 60 minutos', 'expires_at', new Date(NOW + 3_600_001).toISOString()],
 ]) add(name, value => { value.proof[field] = replacement; }, 'ISOLATION_PROOF');
+add('protocolo da prova divergente', value => { value.proof.origin = value.baseURL.replace(/^https?:/, value.baseURL.startsWith('https:') ? 'http:' : 'https:'); }, 'ISOLATION_PROOF');
+add('porta da prova divergente', value => { value.proof.origin = value.baseURL.replace(':5173', ':54321'); }, 'ISOLATION_PROOF');
 for (const check of ['network_isolated', 'cron_disabled', 'bootstrap_complete', 'seed_ready']) {
   add(`${check} falso`, value => { value.proof.checks[check] = false; }, 'ISOLATION_PROOF');
   add(`${check} ausente`, value => { delete value.proof.checks[check]; }, 'ISOLATION_PROOF');
   add(`${check} string não é confirmação`, value => { value.proof.checks[check] = 'true'; }, 'ISOLATION_PROOF');
 }
 const unique = new Set();
-for (const { name, mutate, code } of scenarios) {
-  const value = evidence(); mutate(value);
+for (const origin of ORIGINS) for (const { name, mutate, code } of scenarios) {
+  const value = evidence(NOW, origin); mutate(value);
   assert(!unique.has(JSON.stringify(value)), `cenário duplicado: ${name}`); unique.add(JSON.stringify(value));
-  test(`admissão isolada: ${name}`, () => {
+  test(`admissão isolada ${origin}: ${name}`, () => {
     if (code) assert.throws(() => validateIsolatedAuthEvidence(value), hasCode(code));
     else {
       const result = validateIsolatedAuthEvidence(value);
-      assert.equal(result.origin, ORIGIN);
+      assert.equal(result.origin, origin);
       assert(!JSON.stringify(result).includes(value.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY));
     }
   });
 }
 
-test('a validação pura não lê email, senha ou service_role', () => {
-  const value = evidence();
+for (const origin of ORIGINS) test(`a validação pura ${origin} não lê email, senha ou service_role`, () => {
+  const value = evidence(NOW, origin);
   for (const key of ['E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD', 'SUPABASE_SERVICE_ROLE_KEY']) {
     Object.defineProperty(value.env, key, { enumerable: true, get() { throw new Error(`leitura proibida: ${key}`); } });
   }
-  assert.equal(validateIsolatedAuthEvidence(value).origin, ORIGIN);
+  assert.equal(validateIsolatedAuthEvidence(value).origin, origin);
 });
 
 function browserObservation(target) {
   return { identity: { run_id: target.run_id, source_sha: target.source_sha, origin: target.origin },
     is_local: true, effective_url: target.origin, local_url: target.origin, anon_key_sha256: target.anon_key_sha256 };
 }
-for (const [name, change] of [
+for (const origin of ORIGINS) for (const [name, change] of [
   ['modo produção', value => { value.is_local = false; }],
   ['backend efetivo oficial', value => { value.effective_url = PRODUCTION_SUPABASE_URL; }],
   ['backend local ausente', value => { value.local_url = null; }],
@@ -143,13 +163,17 @@ for (const [name, change] of [
   ['identidade de outra execução', value => { value.identity.run_id = 'other-run'; }],
   ['checkout diferente servido', value => { value.identity.source_sha = 'b'.repeat(40); }],
   ['gateway diferente', value => { value.identity.origin = 'http://127.0.0.1:54321'; }],
-]) test(`prova do browser recusa ${name}`, () => {
-  const target = validateIsolatedAuthEvidence(evidence());
+  ['protocolo diferente no frontend', value => { value.effective_url = origin.replace(/^https?:/, origin.startsWith('https:') ? 'http:' : 'https:'); }],
+  ['porta diferente no frontend', value => { value.effective_url = origin.replace(':5173', ':54321'); }],
+  ['protocolo diferente na configuração', value => { value.local_url = origin.replace(/^https?:/, origin.startsWith('https:') ? 'http:' : 'https:'); }],
+  ['protocolo diferente na identidade', value => { value.identity.origin = origin.replace(/^https?:/, origin.startsWith('https:') ? 'http:' : 'https:'); }],
+]) test(`prova do browser ${origin} recusa ${name}`, () => {
+  const target = validateIsolatedAuthEvidence(evidence(NOW, origin));
   const observation = browserObservation(target); change(observation);
   assert.throws(() => validateBrowserEvidence(target, observation), hasCode('ISOLATION_BROWSER'));
 });
 
-test('admission real usa observações do processo e callback do Vite, sem rede', async t => {
+for (const origin of ORIGINS) test(`admission real ${origin} usa observações do processo e callback do Vite, sem rede`, async t => {
   const cases = [
     ['normal', {}], ['prova ilegível', { readError: true }, 'ISOLATION_PROOF'],
     ['JSON inválido', { badJSON: true }, 'ISOLATION_PROOF'],
@@ -180,7 +204,7 @@ test('admission real usa observações do processo e callback do Vite, sem rede'
     ]) cases.push([`${lateChange} muda durante ${phase}`, { phase, lateChange }, code]);
   }
   for (const [name, scenario, code] of cases) await t.test(name, async child => {
-    const value = evidence(NOW);
+    const value = evidence(NOW, origin);
     let clock = NOW, namespaceMoved = false, interfaceAdded = false;
     child.mock.method(Date, 'now', () => clock);
     if (scenario.shortProof) value.proof.expires_at = new Date(NOW + 1000).toISOString();
@@ -214,7 +238,7 @@ test('admission real usa observações do processo e callback do Vite, sem rede'
       assert.equal(path, '/proc/self/ns/net'); return scenario.wrongNamespace || namespaceMoved ? 'net:[99999]' : value.networkNamespace;
     });
     child.mock.method(os, 'networkInterfaces', () => scenario.externalInterface || interfaceAdded ? { ...value.interfaces, eth0: [] } : value.interfaces);
-    const target = { origin: ORIGIN, run_id: value.proof.run_id, source_sha: value.proof.source_sha,
+    const target = { origin, run_id: value.proof.run_id, source_sha: value.proof.source_sha,
       anon_key_sha256: value.proof.anon_key_sha256 };
     const local = resolveLocalSupabase({ ...value.env, PROD: Boolean(scenario.prod) });
     if (scenario.wrongKey && local) local.anonKey = token(value.now, 'authenticated');
@@ -224,11 +248,11 @@ test('admission real usa observações do processo e callback do Vite, sem rede'
     if (scenario.wrongIdentity) identity.run_id = 'other-run';
     const page = {
       goto: async (url, options) => {
-        navigations++; assert.equal(url, `${ORIGIN}/__e2e/preflight`); assert.equal(options.timeout, 15_000);
+        navigations++; assert.equal(url, `${origin}/__e2e/preflight`); assert.equal(options.timeout, 15_000);
         advanceAt('goto');
         return { ok: () => !scenario.badPage };
       },
-      url: () => `${ORIGIN}/${scenario.redirected ? 'auth' : '__e2e/preflight'}`,
+      url: () => `${origin}/${scenario.redirected ? 'auth' : '__e2e/preflight'}`,
       evaluate: async callback => {
         evaluations++;
         advanceAt('evaluate');
@@ -245,8 +269,8 @@ test('admission real usa observações do processo e callback do Vite, sem rede'
       },
     };
     try {
-      if (code) await assert.rejects(assertIsolatedAuthEnvironment({ page, baseURL: ORIGIN }), hasCode(code));
-      else await assertIsolatedAuthEnvironment({ page, baseURL: ORIGIN });
+      if (code) await assert.rejects(assertIsolatedAuthEnvironment({ page, baseURL: origin }), hasCode(code));
+      else await assertIsolatedAuthEnvironment({ page, baseURL: origin });
       assert.equal(credentialReads, 0);
       if (scenario.missingConfig) assert.equal(fileReads, 0);
       if (code && code !== 'ISOLATION_BROWSER' && !scenario.phase) assert.equal(navigations, 0);

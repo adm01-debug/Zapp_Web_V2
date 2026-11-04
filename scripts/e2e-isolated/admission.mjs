@@ -25,9 +25,9 @@ function localOrigin(raw) {
   try { url = new URL(raw); } catch {
     throw new IsolatedAuthError('ISOLATION_CONFIGURATION', 'Origem local inválida.');
   }
-  requireEvidence(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname) &&
+  requireEvidence(['http:', 'https:'].includes(url.protocol) && ['localhost', '127.0.0.1'].includes(url.hostname) &&
     !url.username && !url.password && url.pathname === '/' && !url.search && !url.hash,
-  'ISOLATION_CONFIGURATION', 'O ambiente exige uma origem HTTP de loopback, sem credenciais ou caminho.');
+  'ISOLATION_CONFIGURATION', 'O ambiente exige uma origem HTTP(S) de loopback, sem credenciais ou caminho.');
   return url.origin;
 }
 

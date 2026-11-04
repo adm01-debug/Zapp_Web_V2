@@ -2,7 +2,7 @@ import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { networkInterfaces } from 'node:os';
 import { readlinkSync } from 'node:fs';
 
-export const ORIGIN = 'http://127.0.0.1:5173';
+export const ORIGIN = 'https://127.0.0.1:5173';
 export const OFFICIAL_HOST = 'tnnnlkbymytvtqngbbqh.supabase.co';
 
 export function assertOfficialHostIsLocal(hosts) {
@@ -69,11 +69,12 @@ export function assertNoProxy(env) {
 
 const BROWSER_ENV = new Set([
   'PATH', 'HOME', 'TMPDIR', 'TMP', 'TEMP', 'LANG', 'LC_ALL', 'TZ',
-  'DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'LD_LIBRARY_PATH',
+  'DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'LD_LIBRARY_PATH', 'PLAYWRIGHT_FIREFOX_POLICIES_JSON',
 ]);
 
 /** Playwright passes this complete map instead of inheriting driver credentials. */
 export function browserEnvironment(env) {
+  if (env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== undefined && env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== '/run/zapp-e2e-tls/firefox-policies.json') fail('invalid-browser-tls-policy');
   const result = {};
   for (const name of BROWSER_ENV) {
     if (typeof env[name] === 'string') result[name] = env[name];

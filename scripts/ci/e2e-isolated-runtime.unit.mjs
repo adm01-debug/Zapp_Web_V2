@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,6 +9,7 @@ import { assertPinnedImages, functionPolicy, prepareMountTargets } from '../e2e-
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
+import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -18,6 +19,39 @@ const SQL = 'select 1;\n';
 const lock = () => JSON.parse(readFileSync(path.join(MODULES, 'images.lock.json'), 'utf8'));
 const ok = stdout => ({ status: 0, stdout: stdout ?? '', stderr: '' });
 const error = stderr => ({ status: 1, stdout: '', stderr: stderr ?? 'simulated command failure' });
+const TLS_CHECKS = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
+let certificateFixture;
+let certificateRoot;
+after(() => { if (certificateRoot) rmSync(certificateRoot, { recursive: true, force: true }); });
+function certificates() {
+  if (!certificateFixture) {
+    certificateRoot = mkdtempSync(path.join(tmpdir(), 'isolated-controller-certificates-'));
+    certificateFixture = createTlsMaterial({ directory: path.join(certificateRoot, 'material'),
+      runId: 'zapp-e2e-controller-certificates', sourceSha: SOURCE_SHA,
+      command: (program, args, options) => program === 'certutil' ? ok() : spawnSync(program, args, options) });
+  }
+  return certificateFixture;
+}
+
+// Only subprocess I/O is simulated. The real TLS helper still reads and checks
+// real X509 certificates, issues run-bound manifests, and removes the CA key.
+function simulatedTlsTool(program, args, options, fault) {
+  if (program === 'certutil') return fault === 'tls-host-nss' || (fault === 'tls-nss-import' && args.includes('-A')) ? error() : ok();
+  if (args[0] === 'version') return fault === 'tls-host-openssl' ? error() : ok(fault === 'tls-host-version' ? 'OpenSSL 1.1.1' : 'OpenSSL 3.0.0 fixture');
+  if (fault === 'tls-certificate-command') return error();
+  const material = certificates();
+  const value = flag => args[args.indexOf(flag) + 1];
+  const destination = value('-out');
+  const name = path.basename(destination);
+  if (args.includes('-keyout')) {
+    const key = value('-keyout');
+    if (path.basename(key) === 'ca.key') writeFileSync(key, 'synthetic-unused-CA-key');
+    else cpSync(path.join(material.privateDirectory, path.basename(key)), key);
+  }
+  if (name.endsWith('.csr')) writeFileSync(destination, 'synthetic-CSR-not-parsed');
+  else cpSync(path.join(name === 'ca.crt' ? material.publicDirectory : material.privateDirectory, name), destination);
+  return ok();
+}
 function playwrightJson({ listed = false, failed = false } = {}) {
   return {
     config: { projects: [{ name: 'setup', repeatEach: 1 }], metadata: { sentinel: 'must-never-publish-private-config' } },
@@ -128,7 +162,7 @@ async function controllerFixture(t, fault, manifest = value => value) {
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -155,10 +189,16 @@ async function controllerFixture(t, fault, manifest = value => value) {
   let pgReadyChecks = 0;
   let localKeyConfigured = false;
   let driverLocalAnonKey;
+  const tlsStages = [];
+  let tlsInstalled = false;
+  let tlsUpdated = false;
+  let tlsBoot = false;
+  let tlsProbeRemoved = false;
   const valueAfter = (args, flag) => args[args.indexOf(flag) + 1];
   const allAfter = (args, flag) => args.flatMap((value, i) => value === flag ? [args[i + 1]] : []);
   const fakeCommand = (program, args, options) => {
     calls.push({ program, args: [...args] });
+    if (['openssl', 'certutil'].includes(program)) return simulatedTlsTool(program, args, options, fault);
     if (program === 'git') {
       if (args[0] === 'rev-parse') return ok(SOURCE_SHA + '\n');
       if (args[0] === 'diff') return fault === 'dirty-checkout' ? error() : ok();
@@ -189,17 +229,24 @@ async function controllerFixture(t, fault, manifest = value => value) {
         return { Type: pieces.type, Source: pieces.type === 'volume' ? volumes.get(pieces.src)?.Mountpoint : pieces.src, Destination: pieces.dst, RW: !pieces.readonly };
       });
       const labels = Object.fromEntries(allAfter(argv, '--label').map(value => value.split('=')));
-      const metadata = { Id: name + '-id', Config: { Labels: labels }, HostConfig: { NetworkMode: argv.includes('--network') ? valueAfter(argv, '--network') : 'default', Privileged: false, CapAdd: [] }, NetworkSettings: { Networks: {} }, Mounts: mounts };
+      const metadata = { Id: name + '-id', Config: { Labels: labels, User: argv.includes('--user') ? valueAfter(argv, '--user') : '' }, State: { Running: true }, HostConfig: { NetworkMode: argv.includes('--network') ? valueAfter(argv, '--network') : 'default', Privileged: false, CapAdd: [] }, NetworkSettings: { Networks: {} }, Mounts: mounts };
+      if (name.endsWith('-tls-tools')) {
+        assert.equal(argv.includes('--env-file'), false);
+        assert.equal(valueAfter(argv, '--network'), 'none');
+        assert.equal(mounts.length, 0);
+        assert.equal(valueAfter(argv, '--entrypoint'), '/bin/sh');
+        return fault === 'tls-image-tools' ? error() : ok();
+      }
       if (name.includes('-bundle-')) {
         assert.equal(valueAfter(argv, '--user'), process.getuid() + ':' + process.getgid(), 'compiler cache must belong to the runner');
         assert.deepEqual(allAfter(argv, '--workdir'), ['/work'], 'the checkout compiler keeps its explicit working directory');
         const privateDir = path.join(path.dirname(options.env.DOCKER_CONFIG), 'private');
         assert.equal(readdirSync(privateDir).length, 0, 'compile must precede credential generation');
         assert.equal(argv.includes('--env-file'), false);
-        if (fault === 'bundle-failure') return error();
+        if (fault === 'bundle-failure' || (fault === 'tls-probe-bundle' && name.endsWith('-tls-edge-probe'))) return error();
         const bundleMount = mounts.find(mount => mount.Destination === '/bundles');
         const filename = path.basename(valueAfter(argv, '--output'));
-        writeFileSync(path.join(bundleMount.Source, filename), fault === 'empty-bundle' ? '' : 'simulated-eszip-' + filename);
+        writeFileSync(path.join(bundleMount.Source, filename), fault === 'empty-bundle' || (fault === 'tls-probe-empty-bundle' && filename === 'tls-edge-probe.eszip') ? '' : 'simulated-eszip-' + filename);
         return ok();
       }
       const checkoutProcess = ['-anchor', '-driver', '-vite', '-gateway'].some(suffix => name.endsWith(suffix));
@@ -209,13 +256,24 @@ async function controllerFixture(t, fault, manifest = value => value) {
       }
       if (name.endsWith('-anchor')) assert.equal(valueAfter(argv, '--add-host'), OFFICIAL_HOST + ':127.0.0.1');
       else assert.equal(argv.includes('--add-host'), false, 'container network must inherit the anchor hosts file');
+      if (name.endsWith('-gateway') && fault === 'tls-gateway-start') return error();
+      if (name.endsWith('-tls-edge') && fault === 'tls-edge-start') return error();
       if (name.endsWith('-postgres') && fault === 'postgres-start') return error();
       if (name.endsWith('-anchor') && fault === 'anchor-network') metadata.HostConfig.NetworkMode = 'bridge';
       if (name.endsWith('-driver') && fault === 'driver-network') metadata.HostConfig.NetworkMode = 'host';
+      if (name.endsWith('-driver') && fault === 'tls-driver-user') metadata.Config.User = '99999:99999';
+      if (name.endsWith('-driver') && fault === 'tls-driver-stopped') metadata.State.Running = false;
+      if (name.endsWith('-driver') && fault === 'tls-driver-public-writable') metadata.Mounts.find(mount => mount.Destination === '/run/zapp-e2e-tls').RW = true;
+      if (name.endsWith('-driver') && fault === 'tls-driver-home-missing') metadata.Mounts = metadata.Mounts.filter(mount => !mount.Destination.includes('/tls-material/home'));
+      if (name.endsWith('-driver') && fault === 'tls-driver-private') metadata.Mounts.push({ Source: '/foreign/private', Destination: '/run/zapp-e2e-tls-private', RW: false });
       if (argv.includes('--env-file')) {
         const envText = readFileSync(valueAfter(argv, '--env-file'), 'utf8');
         credentialFilesSeen ||= envText.includes('E2E_TEST_PASSWORD=');
         if (name.endsWith('-driver')) driverLocalAnonKey = envText.match(/^ANON_KEY=(.+)$/m)?.[1];
+        if (name.endsWith('-tls-edge')) {
+          assert.equal(/SERVICE_ROLE|JWT_SECRET|ANON_KEY|PASSWORD/.test(envText), false, 'temporary Edge never receives application credentials');
+          assert.equal(metadata.Mounts.some(mount => mount.Destination === '/run/zapp-e2e-tls-private' || mount.Destination === '/run/zapp-e2e'), false);
+        }
         assert.equal(args.some(value => value.includes('E2E_TEST_PASSWORD=')), false, 'credentials never enter argv');
       }
       controlDir ||= mounts.find(mount => mount.Destination === '/run/zapp-e2e')?.Source;
@@ -247,6 +305,31 @@ async function controllerFixture(t, fault, manifest = value => value) {
       assert.fail('unexpected volume command');
     }
     if (argv[0] === 'exec') {
+      if (argv.includes('install') || argv.includes('update-ca-certificates')) {
+        assert.equal(valueAfter(argv, '--user'), '0:0');
+        assert.ok(argv.some(value => value.endsWith('-driver')));
+        assert.equal(migrationCalls, 0);
+        if (argv.includes('install')) { tlsInstalled = true; return fault === 'tls-ca-install' ? error() : ok(); }
+        assert.equal(tlsInstalled, true); tlsUpdated = true;
+        return fault === 'tls-ca-update' ? error() : ok();
+      }
+      if (argv.includes('scripts/e2e-isolated/tls-probe.mjs')) {
+        const runtime = argv.at(-1);
+        assert.equal(tlsUpdated, true); assert.equal(tlsBoot, true); assert.equal(migrationCalls, 0);
+        assert.equal([...containers.keys()].some(name => name.endsWith('-postgres')), false, 'TLS gates precede even database creation');
+        tlsStages.push(runtime);
+        if (fault === 'tls-' + runtime + '-exit') return error();
+        if (fault === 'tls-' + runtime + '-json') return ok('not-json');
+        const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
+        const checks = runtime === 'browsers' ? Object.fromEntries(['chromium', 'firefox', 'webkit'].map(name => [name, { ...TLS_CHECKS }])) : { ...TLS_CHECKS };
+        const proof = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, origin: 'https://127.0.0.1:5173', runtime, probe_runner: runtime === 'bun' ? 'bun' : 'node', probe_runner_version: 'v24.0.0', checks };
+        for (const field of ['run_id', 'source_sha', 'origin', 'runtime', 'schema', 'probe_runner', 'probe_runner_version']) if (fault === 'tls-' + runtime + '-' + field) proof[field] = 'foreign';
+        if (fault === 'tls-' + runtime + '-checks') delete (runtime === 'browsers' ? proof.checks.webkit : proof.checks).wrong_san_rejected;
+        if (runtime === 'browsers' && fault === 'tls-browser-extra') proof.checks.other = { ...TLS_CHECKS };
+        if (runtime === 'browsers' && fault === 'tls-browser-missing') delete proof.checks.firefox;
+        if (runtime === 'browsers' && fault === 'tls-browser-false') proof.checks.webkit.untrusted_rejected = false;
+        return ok(JSON.stringify(proof));
+      }
       if (argv.includes('cat') && argv.at(-1) === '/etc/hosts') return ok((fault === 'postgres-hosts' ? '203.0.113.1' : '127.0.0.1') + ' ' + OFFICIAL_HOST + '\n');
       if (argv.includes('pg_isready')) { pgReadyChecks++; return ok(); }
       if (argv.includes('psql')) {
@@ -274,6 +357,11 @@ async function controllerFixture(t, fault, manifest = value => value) {
       if (argv.includes('scripts/e2e-isolated/runtime-probe.mjs')) {
         const mode = argv.at(-1);
         if (mode === 'network') return ok(JSON.stringify({ network_namespace: 'net:[1234]', loopback_only: fault !== 'network-proof', official_host_local: fault !== 'driver-hosts' }));
+        if (mode === 'tls') {
+          tlsBoot = true;
+          if (fault === 'tls-boot-exit') return error();
+          return ok(JSON.stringify({ schema: 1, run_id: fault === 'tls-boot-identity' ? 'foreign' : containers.values().next().value.Config.Labels[OWNER_LABEL], source_sha: SOURCE_SHA, origin: 'https://127.0.0.1:5173', ready: true }));
+        }
         if (mode === 'platform') return fault === 'platform-health' ? error() : ok('{"services":{"auth":{"ready":true}}}');
         if (mode === 'frontend') return fault === 'frontend-readiness' ? error() : ok('{"ready":true}');
         if (mode === 'seed') return ok(JSON.stringify({ ready: true, network_namespace: fault === 'namespace-change' ? 'net:[9999]' : 'net:[1234]' }));
@@ -311,7 +399,14 @@ async function controllerFixture(t, fault, manifest = value => value) {
       assert.fail('unexpected docker exec: ' + argv.join(' '));
     }
     if (argv[0] === 'logs') { cleanupSeen = true; return ok('controlled local service log'); }
-    if (argv[0] === 'rm') { cleanupSeen = true; containers.delete(argv.at(-1)); return ok(); }
+    if (argv[0] === 'rm') {
+      const name = argv.at(-1);
+      if (name.endsWith('-tls-edge')) {
+        if (fault === 'tls-edge-remove' && !cleanupSeen) { cleanupSeen = true; return error(); }
+        tlsProbeRemoved = true;
+      } else cleanupSeen = true;
+      containers.delete(name); return ok();
+    }
     assert.fail('unexpected docker command: ' + argv.join(' '));
   };
   const { runLogin } = await import(pathToFileURL(path.join(root, 'scripts/e2e-isolated/run.mjs')).href);
@@ -328,7 +423,7 @@ async function controllerFixture(t, fault, manifest = value => value) {
     const content = readFileSync(path.join(output, 'public', name), 'utf8');
     assert.equal(/must-never-publish|private-sentinel|raw SQL must never publish/.test(content), false, 'private report/config and SQL must not publish');
   }
-  const result = { exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks };
+  const result = { exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -489,5 +584,62 @@ for (const scenario of sourceIndexScenarios) {
     }
     assert.equal(value.containers.size, 0);
     assert.equal(value.volumes.size, 0);
+  });
+}
+
+const tlsPreflightFaults = {
+  'tls-host-openssl': 'tls-tool-openssl-failed',
+  'tls-host-version': 'tls-openssl-version',
+  'tls-host-nss': 'tls-tool-certutil-failed',
+  'tls-image-tools': 'tls-driver-tools-unavailable',
+  'tls-probe-bundle': 'bundle-tls-edge-probe-failed',
+  'tls-probe-empty-bundle': 'empty-edge-bundle',
+  'tls-certificate-command': 'tls-tool-openssl-failed',
+  'tls-nss-import': 'tls-tool-certutil-failed',
+};
+const tlsBeforeSqlFaults = {
+  'tls-driver-user': 'tls-driver-user-or-state',
+  'tls-driver-stopped': 'tls-driver-user-or-state',
+  'tls-driver-public-writable': 'foreign-writable-mount',
+  'tls-driver-home-missing': 'tls-driver-mount',
+  'tls-driver-private': 'tls-private-key-in-driver',
+  'tls-ca-install': 'tls-driver-ca-install',
+  'tls-ca-update': 'tls-driver-ca-update',
+  'tls-gateway-start': 'start-gateway-failed',
+  'tls-edge-start': 'start-tls-edge-failed',
+  'tls-boot-exit': 'tls-boot-proof',
+  'tls-boot-identity': 'tls-boot-proof-invalid',
+  'tls-edge-remove': 'tls-probe-cleanup-failed',
+  'tls-browser-extra': 'tls-browsers-proof-invalid',
+  'tls-browser-missing': 'tls-browsers-proof-invalid',
+  'tls-browser-false': 'tls-browsers-proof-invalid',
+};
+for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
+  tlsBeforeSqlFaults['tls-' + runtime + '-exit'] = 'tls-' + runtime + '-gate';
+  tlsBeforeSqlFaults['tls-' + runtime + '-json'] = 'tls-' + runtime + '-invalid-json';
+  for (const field of ['run_id', 'source_sha', 'origin', 'runtime', 'checks', 'schema', 'probe_runner', 'probe_runner_version'])
+    tlsBeforeSqlFaults['tls-' + runtime + '-' + field] = 'tls-' + runtime + '-proof-invalid';
+}
+test('TLS integration: all four real command boundaries precede SQL and preserve cleanup', async t => {
+  const value = await controllerFixture(t, 'none');
+  assert.equal(value.exit, 0);
+  assert.deepEqual(value.tlsStages, ['node', 'bun', 'browsers', 'edge']);
+  assert.equal(value.tlsInstalled, true); assert.equal(value.tlsUpdated, true);
+  assert.equal(value.tlsProbeRemoved, true); assert.equal(value.containers.size, 0);
+  assert.ok(value.publicFiles.includes('tls-proof.json'));
+  const tlsLast = value.calls.findLastIndex(call => call.args.includes('scripts/e2e-isolated/tls-probe.mjs'));
+  const pgFirst = value.calls.findIndex(call => call.args[2] === 'run' && call.args.some(arg => arg.endsWith('-postgres')));
+  assert.ok(tlsLast >= 0 && pgFirst > tlsLast);
+});
+for (const [fault, expected] of Object.entries({ ...tlsPreflightFaults, ...tlsBeforeSqlFaults })) {
+  test('TLS integration: ' + fault + ' fails closed before SQL', async t => {
+    const value = await controllerFixture(t, fault);
+    assert.equal(value.exit, 1);
+    assert.equal(value.state.error, expected);
+    assert.equal(value.state.success, false);
+    assert.equal(value.migrationCalls, 0); assert.equal(value.seedCalls, 0); assert.equal(value.browserCalls, 0);
+    assert.equal(value.containers.size, 0);
+    assert.equal(value.calls.some(call => call.args[2] === 'run' && call.args.some(arg => arg.endsWith('-postgres'))), false);
+    if (Object.hasOwn(tlsPreflightFaults, fault)) assert.equal(value.credentialFilesSeen, false);
   });
 }

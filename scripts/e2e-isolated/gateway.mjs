@@ -1,7 +1,9 @@
 import http from 'node:http';
+import https from 'node:https';
 import net from 'node:net';
 import { pathToFileURL } from 'node:url';
 import { ORIGIN, publicIdentity } from './runtime-contract.mjs';
+import { readGatewayTls, serveTlsProbe, startTlsControlServers } from './tls.mjs';
 
 const PORTS = Object.freeze({ auth: 9999, rest: 3000, storage: 5000, realtime: 4000, functions: 9000, app: 5174 });
 
@@ -27,14 +29,16 @@ export function routeRequest(rawPath) {
   return { service: 'app', port: PORTS.app, path: url.pathname + url.search };
 }
 
-export function createGateway(identity, { request = http.request, connect = net.connect } = {}) {
+export function createGateway(identity, { tls, request = http.request, connect = net.connect } = {}) {
+  if (identity?.origin !== ORIGIN || !tls?.server?.cert || !tls.server.key) throw new Error('gateway-tls-required');
   const reply = (res, status, body, type = 'text/plain') => {
     res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' });
     res.end(body);
   };
   const acceptedHost = '127.0.0.1:5173';
-  const server = http.createServer((req, res) => {
+  const server = https.createServer(tls.server, (req, res) => {
     if (req.headers.host !== acceptedHost) return reply(res, 400, 'Invalid local host');
+    if (serveTlsProbe(req, res, identity)) return;
     if (req.url === '/__e2e/identity') {
       if (req.method !== 'GET') return reply(res, 405, 'Method not allowed');
       return reply(res, 200, JSON.stringify(identity), 'application/json');
@@ -49,7 +53,7 @@ export function createGateway(identity, { request = http.request, connect = net.
       ...req.headers,
       host: target.service === 'realtime' ? 'realtime-dev.supabase-realtime' : '127.0.0.1:' + target.port,
       'x-forwarded-host': acceptedHost,
-      'x-forwarded-proto': 'http',
+      'x-forwarded-proto': 'https',
       'x-forwarded-for': '127.0.0.1',
     };
     delete headers['proxy-authorization'];
@@ -95,7 +99,19 @@ export function createGateway(identity, { request = http.request, connect = net.
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const identity = publicIdentity(process.env.ZAPP_E2E_RUN_ID, process.env.GITHUB_SHA);
-  createGateway(identity).listen(5173, '127.0.0.1', () => {
-    process.stdout.write('[e2e-isolated] local gateway ready\n');
-  });
+  const tls = readGatewayTls();
+  const closeControls = await startTlsControlServers(identity, tls);
+  const gateway = createGateway(identity, { tls });
+  let closing = false;
+  const close = async () => {
+    if (closing) return;
+    closing = true;
+    gateway.closeAllConnections();
+    await Promise.all([new Promise(resolve => gateway.close(resolve)), closeControls()]);
+  };
+  process.once('SIGTERM', close); process.once('SIGINT', close);
+  try {
+    await new Promise((resolve, reject) => { gateway.once('error', reject); gateway.listen(5173, '127.0.0.1', resolve); });
+    process.stdout.write('[e2e-isolated] local HTTPS gateway ready\n');
+  } catch { await close(); throw new Error('gateway-listen-failed'); }
 }
