@@ -113,9 +113,9 @@
   {
    "arquivo": "e2e/busca-global-paleta.spec.ts",
    "tipo": "e2e",
-   "linhas": 318,
+   "linhas": 308,
    "testa": [],
-   "casos": 9
+   "casos": 10
   },
   {
    "arquivo": "e2e/catalog.spec.ts",
@@ -13369,11 +13369,12 @@
   {
    "arquivo": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
    "tipo": "unit",
-   "linhas": 142,
+   "linhas": 358,
    "testa": [
-    "src/components/ui/command-palette.tsx"
+    "src/components/ui/command-palette.tsx",
+    "src/components/ui/dialog.tsx"
    ],
-   "casos": 9
+   "casos": 17
   },
   {
    "arquivo": "src/components/ui/__tests__/command-palette.busca-antiga.test.tsx",
@@ -24141,7 +24142,7 @@
   "src/components/ui/chart.tsx": 2,
   "src/components/ui/checkbox.tsx": 1,
   "src/components/ui/command-palette.tsx": 6,
-  "src/components/ui/dialog.tsx": 4,
+  "src/components/ui/dialog.tsx": 5,
   "src/components/ui/emoji-picker.tsx": 1,
   "src/components/ui/empty-state-illustrations.tsx": 2,
   "src/components/ui/error-boundary-retry.tsx": 1,

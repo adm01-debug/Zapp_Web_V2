@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `afd8c7ca30` · branch `main` · 2026-11-04 18:03 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1681d0adbb` · branch `main` · 2026-11-04 18:36 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4551,7 +4551,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21076 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21086 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4748,6 +4748,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/__tests__/AdvancedMessageMenu.menu-avancado.test.tsx` | 20 | AdvancedMessageMenu — Status/Story só para quem pode publicar · o agente (não supervisor) não vê a opção Status/Story · enquanto os papéis carregam a opção fica escondida (não pisca para o agente) · o admin vê a opção e publicar exige confirmação de que todos os contatos verão … |
 | `src/components/inbox/__tests__/SLAIndicator.test.tsx` | 20 | SLAIndicator · renders nothing when first response given and within SLA · shows first response countdown when waiting for response · renders nothing after on-time response even if conversation stays open (sem SLA de resolução) … |
 | `src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx` | 20 | ContactActionButtons · abre o dropdown de  · abre o dropdown de  · desabilita o botão de e-mail quando o contato não tem e-mail … |
+| `src/components/ui/__tests__/command-palette.a11y.test.tsx` | 20 | CommandPalette — campo e lista anunciados (combobox/listbox) · o campo é combobox nomeado que aponta para a lista e para o item ativo · as setas mudam o aria-activedescendant e o aria-selected para o item seguinte · ao navegar com as setas, o item realçado é rolado para dentro da vista … |
 | `src/hooks/__tests__/useTextToSpeech.test.ts` | 20 | useTextToSpeech · initializes with isLoading false · initializes with isPlaying false · initializes with null currentMessageId … |
 | `src/hooks/admin/__tests__/useSupervisorQueue.test.tsx` | 20 | useSupervisorQueue — leitura e priorização · lê conversas abertas com os filtros certos, resolve nomes e ordena P1→P4 · conversas resolvidas/fechadas/deletadas não entram na fila · corta em 200 mantendo as MAIS ANTIGAS e sinaliza  … |
 | `src/hooks/chat/__tests__/useConversationHistoryTimeline.test.ts` | 20 | buildTimeline · agrupa mensagens consecutivas do mesmo remetente em <=10min numa unica rajada · nao agrupa mensagens do mesmo remetente além de 10 minutos · agrupa eventos por dia (yyyy-MM-dd) … |
@@ -4854,7 +4855,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` | 16 | realtimeUtils — normalização da mensagem · preenche status/default de status_updated_at sem sobrescrever o que veio · traduz tipo cru sem suporte para unsupported carregando o motivo · realtimeUtils — ordenação … |
 | `src/hooks/tasks/__tests__/workItemBoardGroups.test.ts` | 16 | boardByDue — colunas por prazo (etapa 101 / D1) · cada item cai em UMA coluna: nada some e nada duplica · prazo com hora que JÁ passou (hoje às 9h) é Atrasada, não Para hoje (R2-MOD-058) · prazo de dia inteiro de hoje (23:59) ainda vale como Para hoje ao meio-dia … |
 | `src/lib/__tests__/emailThreadQuery.test.ts` | 16 | emailThreadQuery (OTH-005) · traduz estado, marcador, período, anexos e busca para o servidor · sem filtro nenhum não manda condição extra ao servidor · período  … |
-| `src/lib/__tests__/mapboxSession.test.ts` | 16 | mapboxSession · duas chamadas dentro de 2 min compartilham o mesmo token · inatividade maior que 2 min abre uma sessão nova · depois de um /retrieve, a próxima sessão é nova … |
 | … +1943 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "afd8c7ca30566b43cd64fe1eac8d0648fb62fce3",
+  "sha": "1681d0adbbd9c294707bc4a489af2398a846291c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 18:03 UTC",
+  "generated_at": "2026-11-04 18:36 UTC",
   "files_total": 8055,
   "code_files": 5958,
-  "code_lines": 1030445
+  "code_lines": 1030701
  },
  "version": "1.3.2",
- "facts_hash": "5dd1505207faf340",
+ "facts_hash": "688034dc46e3a959",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67586,7 +67586,7 @@
   {
    "module": "e2e",
    "files": 76,
-   "lines": 17248,
+   "lines": 17238,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -68064,7 +68064,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 367551,
+   "lines": 367817,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -126012,6 +126012,10 @@
     "name": "o Ctrl+K seguinte fecha a paleta aberta (alterna)"
    },
    {
+    "file": "e2e/busca-global-paleta.spec.ts",
+    "name": "Esc devolve o foco ao elemento de origem"
+   },
+   {
     "file": "e2e/catalog.spec.ts",
     "name": "Catálogo — envio de produto no chat (CT-82)"
    },
@@ -167010,6 +167014,42 @@
    {
     "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
     "name": "resultados de busca sem violações"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "CommandPalette — devolução de foco sem DialogTrigger"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "devolve o foco ao ${kind} após ${close}"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "não tenta focar a origem ${reason}"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "preserva o foco de outro diálogo aberto antes do callback de saída"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "não restaura após ${branch} enquanto o destino ainda vai receber foco"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "não restaura o elemento da tela anterior quando a URL mudou"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "a limpeza do StrictMode não restaura enquanto a paleta continua aberta"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "o callback da primeira abertura não consome a origem de uma reabertura rápida"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "retorna à origem do diálogo subjacente que continua aberto"
    },
    {
     "file": "src/components/ui/__tests__/command-palette.busca-antiga.test.tsx",
@@ -258148,7 +258188,7 @@
   },
   "e2e/busca-global-paleta.spec.ts": {
    "path": "e2e/busca-global-paleta.spec.ts",
-   "lines": 318,
+   "lines": 308,
    "is_test": true,
    "params": [
     {
@@ -258181,7 +258221,8 @@
     "celular 390x844",
     "o botão Buscar do cabeçalho abre a mesma paleta e ela navega",
     "o primeiro Ctrl+K logo após carregar a tela já abre a paleta",
-    "o Ctrl+K seguinte fecha a paleta aberta (alterna)"
+    "o Ctrl+K seguinte fecha a paleta aberta (alterna)",
+    "Esc devolve o foco ao elemento de origem"
    ]
   },
   "e2e/catalog.spec.ts": {
@@ -310860,7 +310901,7 @@
   },
   "src/components/ui/command-palette.tsx": {
    "path": "src/components/ui/command-palette.tsx",
-   "lines": 316,
+   "lines": 366,
    "exports": [
     "function CommandPalette",
     "function useCommandPalette"
@@ -311526,8 +311567,15 @@
   },
   "src/components/ui/__tests__/command-palette.a11y.test.tsx": {
    "path": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
-   "lines": 142,
+   "lines": 358,
    "is_test": true,
+   "calc_fns": [
+    {
+     "name": "invalidOrigin",
+     "params": "s",
+     "body": "void][] = ["
+    }
+   ],
    "tests": [
     "CommandPalette — campo e lista anunciados (combobox/listbox)",
     "o campo é combobox nomeado que aponta para a lista e para o item ativo",
@@ -311539,7 +311587,16 @@
     "os itens da consulta também são options com o realçado marcado",
     "CommandPalette — sem violações de axe",
     "acesso rápido (busca vazia) sem violações",
-    "resultados de busca sem violações"
+    "resultados de busca sem violações",
+    "CommandPalette — devolução de foco sem DialogTrigger",
+    "devolve o foco ao ${kind} após ${close}",
+    "não tenta focar a origem ${reason}",
+    "preserva o foco de outro diálogo aberto antes do callback de saída",
+    "não restaura após ${branch} enquanto o destino ainda vai receber foco",
+    "não restaura o elemento da tela anterior quando a URL mudou",
+    "a limpeza do StrictMode não restaura enquanto a paleta continua aberta",
+    "o callback da primeira abertura não consome a origem de uma reabertura rápida",
+    "retorna à origem do diálogo subjacente que continua aberto"
    ]
   },
   "src/components/ui/__tests__/command-palette.busca-antiga.test.tsx": {
@@ -380995,10 +381052,21 @@
   }
  },
  "git": {
-  "sha": "afd8c7ca30566b43cd64fe1eac8d0648fb62fce3",
+  "sha": "1681d0adbbd9c294707bc4a489af2398a846291c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1681d0a",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: restaurar foco da paleta com regressões de integração (#2718)",
+    "files": [
+     "e2e/busca-global-paleta.spec.ts",
+     "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+     "src/components/ui/command-palette.tsx"
+    ]
+   },
    {
     "sha": "afd8c7c",
     "date": "2026-11-04",
@@ -381505,24 +381573,6 @@
     "files": [
      "docs/contexto/regras/manual/regras.md"
     ]
-   },
-   {
-    "sha": "031d5e5",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "feat(conexao): regra dos três níveis — aviso na caixa, alerta obrigatório admin/supervisor, QR só admin (#2677)",
-    "files": [
-     "src/components/connections/ConnectionCard.tsx",
-     "src/components/inbox/chat/ChatInputArea.tsx",
-     "src/components/inbox/chat/ConnectionHealthBanner.tsx",
-     "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
-     "src/hooks/inbox/useConnectionHealthBanner.ts",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts",
-     "supabase/functions/_shared/__tests__/evolution-connection-state.test.ts",
-     "supabase/functions/connection-health-check/index.test.ts",
-     "supabase/functions/connection-health-check/index.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -381567,6 +381617,10 @@
     3
    ],
    [
+    "e2e/busca-global-paleta.spec.ts",
+    2
+   ],
+   [
     ".github/workflows/e2e-logado.yml",
     2
    ],
@@ -381600,10 +381654,6 @@
    ],
    [
     "scripts/ci/marcador-specs.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/redigir-relatorio.unit.mjs",
     2
    ]
   ]

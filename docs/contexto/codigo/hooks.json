@@ -1693,7 +1693,7 @@
    "hooks_exportados": [
     "useCommandPalette"
    ],
-   "linhas": 316,
+   "linhas": 366,
    "dominio": "components/ui",
    "tabelas": [],
    "rpcs": [],
@@ -1702,6 +1702,7 @@
     "useCallback",
     "useDebounce",
     "useEffect",
+    "useLayoutEffect",
     "useMemo",
     "useRef",
     "useState"

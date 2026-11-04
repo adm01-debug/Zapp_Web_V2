@@ -12881,7 +12881,7 @@
     "CommandPalette"
    ],
    "export_default": null,
-   "linhas": 316,
+   "linhas": 366,
    "dominio": "components/ui",
    "hooks_locais": [
     "useCommandPalette",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "afd8c7ca30566b43cd64fe1eac8d0648fb62fce3",
+  "commit": "1681d0adbbd9c294707bc4a489af2398a846291c",
   "branch": "main",
-  "data_commit": "2026-11-04T17:59:54Z",
+  "data_commit": "2026-11-04T18:35:02Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1681d0a",
+    "data": "2026-11-04",
+    "assunto": "fix: restaurar foco da paleta com regressões de integração (#2718)"
+   },
    {
     "sha": "afd8c7c",
     "data": "2026-11-04",
@@ -126,18 +131,13 @@
     "sha": "94d6ca2",
     "data": "2026-11-03",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#2688)"
-   },
-   {
-    "sha": "b441a43",
-    "data": "2026-11-03",
-    "assunto": "chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)"
    }
   ],
-  "arquivos_mudados_7d": 1296,
+  "arquivos_mudados_7d": 1262,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 1003
+    "mudancas": 804
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,55 +145,55 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 348
+    "mudancas": 276
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 258
-   },
-   {
-    "pasta": "supabase/functions/_shared",
-    "mudancas": 222
+    "mudancas": 212
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
     "mudancas": 211
    },
    {
-    "pasta": "src/components/dashboard",
-    "mudancas": 196
+    "pasta": "supabase/functions/_shared",
+    "mudancas": 202
    },
    {
-    "pasta": "src/components/ui",
-    "mudancas": 182
+    "pasta": "src/components/dashboard",
+    "mudancas": 141
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 173
+    "mudancas": 136
+   },
+   {
+    "pasta": "src/components/ui",
+    "mudancas": 132
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 156
-   },
-   {
-    "pasta": "src/components/settings",
-    "mudancas": 154
-   },
-   {
-    "pasta": "src/hooks/chat",
-    "mudancas": 147
-   },
-   {
-    "pasta": "src/components/tasks",
-    "mudancas": 136
+    "mudancas": 122
    },
    {
     "pasta": "src/lib/__tests__",
-    "mudancas": 136
+    "mudancas": 122
    },
    {
-    "pasta": "src/components/catalog",
-    "mudancas": 114
+    "pasta": "src/hooks/chat",
+    "mudancas": 119
+   },
+   {
+    "pasta": "src/components/tasks",
+    "mudancas": 115
+   },
+   {
+    "pasta": "src/components/settings",
+    "mudancas": 112
+   },
+   {
+    "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
+    "mudancas": 105
    }
   ],
   "arquivos_mais_mudados_90d": [
@@ -203,26 +203,26 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 16
+    "mudancas": 15
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 16
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 14
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
     "mudancas": 14
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 14
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 13
    },
    {
@@ -238,39 +238,31 @@
     "mudancas": 11
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 11
-   },
-   {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
    },
    {
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 10
+   },
+   {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 9
+    "mudancas": 8
    },
    {
     "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
-    "mudancas": 9
+    "mudancas": 8
    },
    {
     "arquivo": ".github/workflows/db-migrate.yml",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/db-audit/known-violations.json",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "playwright.config.ts",
     "mudancas": 7
    },
    {
     "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 7
    },
    {
@@ -282,11 +274,11 @@
     "mudancas": 7
    },
    {
-    "arquivo": "supabase/functions/deno.json",
+    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
     "mudancas": 7
    },
    {
-    "arquivo": "supabase/schema-catalog.json",
+    "arquivo": "supabase/functions/deno.json",
     "mudancas": 7
    },
    {
@@ -294,8 +286,16 @@
     "mudancas": 6
    },
    {
-    "arquivo": "e2e/email-navy-visual.spec.ts",
+    "arquivo": "playwright.config.ts",
     "mudancas": 6
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 6
+   },
+   {
+    "arquivo": ".github/workflows/codeql.yml",
+    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8214,
   "arquivos_codigo": 4702,
-  "linhas_codigo": 864998,
+  "linhas_codigo": 865254,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -392,7 +392,7 @@
   },
   "e2e/busca-global-paleta.spec.ts": {
    "arquivos": 1,
-   "linhas": 318
+   "linhas": 308
   },
   "e2e/catalog.spec.ts": {
    "arquivos": 1,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 367551
+   "linhas": 367817
   },
   "src/config": {
    "arquivos": 3,

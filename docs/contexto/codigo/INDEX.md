@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `afd8c7ca30566b43cd64fe1eac8d0648fb62fce3` (2026-11-04T17:59:54Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1681d0adbbd9c294707bc4a489af2398a846291c` (2026-11-04T18:35:02Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8214 |
 | arquivos_codigo | 4702 |
-| linhas_codigo | 864998 |
+| linhas_codigo | 865254 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -384,27 +384,27 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55280 nós · 113212 arestas · 4109 comunidades · grafo do commit `afd8c7ca`
-- comunidades maiores: lucide-react (871), react (799), cn (627), utils.ts (603), DashboardView.tsx (490), ExternalProductManagement.tsx (461), ref_node_fs (422), validation.ts (386), chat.ts (379), dialog.tsx (378), inspect.ts (365), TalkXCampaignWizard.tsx (363)
+- 55282 nós · 113219 arestas · 4115 comunidades · grafo do commit `1681d0ad`
+- comunidades maiores: react (816), vitest (761), cn (750), lucide-react (663), framer-motion (643), validation.ts (473), evolution-webhook-messages.ts (454), useMyWorkItems.ts (437), @tanstack/react-query (429), inspect.ts (384), ref_node_fs (341), useTalkXSegments.ts (314)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (22)
-- CLAUDE.md (16)
-- src/integrations/supabase/types.ts (16)
-- .github/workflows/db-guard.yml (14)
+- CLAUDE.md (15)
+- src/integrations/supabase/types.ts (15)
 - docs/ci/README.md (14)
-- scripts/ci/ci-docs-baseline.unit.mjs (14)
+- .github/workflows/db-guard.yml (13)
 - .github/workflows/e2e-logado.yml (13)
+- scripts/ci/ci-docs-baseline.unit.mjs (13)
 - supabase/deployment-manifest.json (13)
 - ESTADO.md (12)
 - .github/workflows/deploy-functions.yml (11)
-- supabase/schema-manifest.json (11)
 - docs/DB-INVENTORY.md (10)
-- docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (9)
-- scripts/ci/workflow-contracts.unit.mjs (9)
-- .github/workflows/db-migrate.yml (8)
+- supabase/schema-manifest.json (10)
+- docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (8)
+- scripts/ci/workflow-contracts.unit.mjs (8)
+- .github/workflows/db-migrate.yml (7)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -498,6 +498,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-04 `1681d0a` fix: restaurar foco da paleta com regressões de integração (#2718)
 - 2026-11-04 `afd8c7c` fix: validar a suíte logada em ambiente isolado (#2717)
 - 2026-11-04 `b88b4f1` ⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)
 - 2026-11-04 `f32223d` fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)
@@ -512,7 +513,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-04 `b46f5d2` fix(ci): restaurar auditorias e fortalecer automações (#2710)
 - 2026-11-03 `451373f` fix: corrigir geração e saúde dos contextos automáticos (#2708)
 - 2026-11-03 `da9f551` chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)
-- 2026-11-03 `9b15c8b` chore: adiciona __pycache__/ ao .gitignore
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
