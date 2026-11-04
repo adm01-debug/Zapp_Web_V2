@@ -14,6 +14,13 @@ const dataModule = source => `data:text/javascript;base64,${Buffer.from(source).
 // o runner/navegador por doubles. Não inicia browser nem acessa endpoints reais.
 test('integração offline do auth.setup e playwright.config reais', async t => {
   const helper = pathToFileURL(`${ROOT}/e2e/auth-diagnostics.ts`).href;
+  const admission = dataModule(`
+    export async function assertIsolatedAuthEnvironment() {
+      const probe = globalThis.__offlineAuthProbe;
+      probe.state.admissions++;
+      if (probe.admissionError) throw new Error('[E2E setup/ISOLATION_PROOF] prova recusada');
+    }
+  `);
   const stub = dataModule(`
     const test = (name, callback) => { globalThis.__offlineAuthProbe.callback = callback; };
     test.setTimeout = () => {};
@@ -44,13 +51,14 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
     return stripTypeScriptTypes(source, { mode: 'strip' })
       .replace("from '@playwright/test'", `from '${stub}'`)
       .replace("from './auth-diagnostics'", `from '${helper}'`)
+      .replace("from '../scripts/e2e-isolated/admission.mjs'", `from '${admission}'`)
       .replace("from './e2e/auth-diagnostics'", `from '${helper}'`)
       .replaceAll('import.meta.dirname', JSON.stringify(dirname));
   }
 
   function fakePage(scenario) {
     const handlers = new Map();
-    const state = { clicks: 0, gotos: 0, fills: 0, saved: 0, waits: 0, expiredWaits: 0, timeoutBudgets: [], forbiddenReads: 0 };
+    const state = { admissions: 0, clicks: 0, gotos: 0, fills: 0, saved: 0, waits: 0, expiredWaits: 0, timeoutBudgets: [], forbiddenReads: 0 };
     const requests = [];
     const emit = (event, value) => handlers.get(event)?.(value);
     const locator = visible => ({
@@ -105,6 +113,7 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
     assert.equal(typeof callback, 'function');
     const cases = [
       ['remoto bloqueado antes de ler credenciais', { base: APP, guardSecrets: true }, 'REMOTE_FULL_SUITE_BLOCKED', 0],
+      ['prova isolada recusada antes de ler credenciais', { admissionError: true, guardSecrets: true }, 'ISOLATION_PROOF', 0],
       ['credenciais ausentes sem ação de login', { missing: true }, 'nao estao definidas', 0],
       ['CORS: falha de transporte no backend oficial', { backend: OFFICIAL, transport: true, unavailable: true }, 'CORS_ORIGIN_INCOMPATIBLE', 1],
       ['OPTIONS 200 anterior não conta como POST 200', { backend: OFFICIAL, transport: true, unavailable: true, options: 'before' }, 'CORS_ORIGIN_INCOMPATIBLE', 1],
@@ -138,6 +147,7 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
         process.env.E2E_TEST_PASSWORD = 'offline-probe-never-auth';
         if (scenario.missing) { delete process.env.E2E_TEST_EMAIL; delete process.env.E2E_TEST_PASSWORD; }
         globalThis.__offlineAuthProbe.timeout = scenario.timeout;
+        globalThis.__offlineAuthProbe.admissionError = scenario.admissionError;
         const { page, state } = fakePage(scenario);
         globalThis.__offlineAuthProbe.state = state;
         const originalEnv = process.env;
@@ -156,12 +166,13 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
           process.env = originalEnv;
         }
         assert.equal(state.clicks, clicks);
+        assert.equal(state.admissions, scenario.base ? 0 : 1);
         assert.equal(state.saved, scenario.success ? 1 : 0);
         assert.equal(state.expiredWaits, expiredWaits, 'toast reconhecido deve despertar a união de locators sem esgotar o prazo');
         assert.ok(state.timeoutBudgets.every(timeout => timeout === 120_000));
         assert.equal(state.waits, Math.max(0, clicks - 1));
         assert.equal(state.forbiddenReads, 0);
-        if (scenario.base) {
+        if (scenario.base || scenario.admissionError) {
           assert.equal(state.gotos, 0);
           assert.equal(state.fills, 0);
           assert.deepEqual(secretReads, []);
