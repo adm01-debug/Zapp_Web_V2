@@ -5,13 +5,14 @@ import { pathToFileURL } from 'node:url';
 import { ORIGIN, publicIdentity } from './runtime-contract.mjs';
 import { readGatewayTls, serveTlsProbe, startTlsControlServers } from './tls.mjs';
 
-const PORTS = Object.freeze({ auth: 9999, rest: 3000, storage: 5000, realtime: 4000, functions: 9000, app: 5174 });
+const PORTS = Object.freeze({ auth: 9999, rest: 3000, storage: 5000, realtime: 4000, functions: 9000, app: 5174, provider: 8081 });
 
 export function routeRequest(rawPath) {
   if (typeof rawPath !== 'string' || !rawPath.startsWith('/') || rawPath.startsWith('//') || /[\r\n]/.test(rawPath)) {
     throw new Error('invalid-local-path');
   }
   const url = new URL(rawPath, ORIGIN);
+  if (url.pathname === '/__e2e/catalog/product.png' && !url.search) return { service: 'provider', port: PORTS.provider, path: '/catalog/product.png' };
   const routes = [
     ['/auth/v1', 'auth', ''],
     ['/rest/v1', 'rest', ''],
@@ -49,6 +50,7 @@ export function createGateway(identity, { tls, request = http.request, connect =
     }
     let target;
     try { target = routeRequest(req.url); } catch { return reply(res, 400, 'Invalid local path'); }
+    if (target.service === 'provider' && !['GET', 'HEAD'].includes(req.method)) return reply(res, 405, 'Method not allowed');
     const headers = {
       ...req.headers,
       host: target.service === 'realtime' ? 'realtime-dev.supabase-realtime' : '127.0.0.1:' + target.port,

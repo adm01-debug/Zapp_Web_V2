@@ -7,17 +7,19 @@ import { PRODUCT_NAME } from '../src/lib/productName';
 /**
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
- * Abre CADA entrada que o papel do usuário sintético do conjunto local enxerga na
- * barra lateral — as 11 da navegação primária e 29 dos 31 itens das 5 seções
- * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e prova, módulo a
+ * Abre CADA entrada MAPEADA que o papel do usuário sintético do conjunto local enxerga na
+ * barra lateral — as 10 da navegação primária e 32 dos 34 itens mapeados das 6 seções
+ * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema e Em Desenvolvimento) — e prova, módulo a
  * módulo, que a tela monta de verdade: título do documento, tela própria do módulo
  * (nunca "Acesso restrito", nunca o esqueleto de carregamento preso, nunca tela em
  * branco) e nenhum erro de console, exceção ou resposta >= 400.
- * Dois dos 31 itens são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
+ * Dois dos 34 itens mapeados são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
  * e 'Admin' (`:121`), ambos com `roles: ADMIN_ONLY` — e o usuário do seed é
  * supervisor: eles ficam FORA da varredura e a AUSÊNCIA é conferida de propósito
  * (`conferirEntradasForaDoPapel`), para o mapa de módulos não perder linhas em
  * silêncio.
+ * Tarefas tem dois percursos, Lista e Quadro: 42 entradas únicas e 43 percursos.
+ * Meta CAPI e Calendário têm superfície de demonstração; esta prova não executa integrações externas.
  * Repete tudo no celular 390x844, pelo menu móvel. A busca global ("Buscar") entra
  * nas duas larguras.
  *
@@ -66,6 +68,8 @@ interface ItemNav {
   id: string;
   /** rótulo exato da entrada na barra lateral (o nome acessível do botão) */
   label: string;
+  /** Percurso de Tarefas: mesmo menu/título, superfícies Lista e Quadro distintas. */
+  modo?: 'Lista' | 'Quadro';
   /**
    * Entrada que a barra lateral só mostra para ADMINISTRADOR
    * (`src/services/navigation.service.ts`: `crm360` na linha 70 e `admin` na 121,
@@ -89,8 +93,8 @@ const PRIMARIOS: ItemNav[] = [
   { id: 'multiplix', label: 'Multiplix' },
   { id: 'catalog', label: 'Catálogo' },
   { id: 'voip', label: 'Telefonia' },
-  { id: 'pipeline', label: 'Quadro' },
-  { id: 'tasks', label: 'Tarefas' },
+  { id: 'tasks', label: 'Tarefas', modo: 'Quadro' },
+  { id: 'tasks', label: 'Tarefas', modo: 'Lista' },
   { id: 'achievements', label: 'Conquistas' },
   { id: 'dashboard', label: 'Dashboard' },
 ];
@@ -145,10 +149,19 @@ const SECOES: SecaoNav[] = [
       { id: 'agents', label: 'Equipe' },
       { id: 'security', label: 'Segurança' },
       { id: 'privacy', label: 'LGPD' },
+      { id: 'supervisao', label: 'Supervisão' },
       { id: 'admin', label: 'Admin', somenteAdmin: true },
+      { id: 'search-insights', label: 'Insights de Busca' },
       { id: 'themes', label: 'Skins' },
       { id: 'docs', label: 'Documentação' },
       { id: 'settings', label: 'Configurações' },
+    ],
+  },
+  {
+    label: 'Em Desenvolvimento',
+    itens: [
+      { id: 'meta-capi', label: 'Meta CAPI' },
+      { id: 'google-calendar', label: 'Calendário' },
     ],
   },
 ];
@@ -300,32 +313,10 @@ interface NinhoDeProduto {
  * duas formas — `In HTML, <div> cannot be a descendant of <p>.` (com a pilha de
  * componentes) e `<p> cannot contain a nested <div>.` — e as duas trazem os dois
  * nomes de tag; `parAninhamento` lê os DOIS formatos e só aceita o par exato
- * declarado aqui. Par novo (outra combinação de tags) REPROVA: é defeito novo, que
- * precisa de dono antes de virar tolerância.
+ * declarado aqui. As três regressões históricas agora estão ativas e a lista
+ * está vazia: qualquer recorrência ou par novo REPROVA.
  */
-const NINHOS_DE_PRODUTO: NinhoDeProduto[] = [
-  {
-    ancestral: 'button',
-    descendente: 'button',
-    onde: 'barra lateral: botão "Adicionar aos favoritos" dentro do botão do item',
-    area: 'telas',
-    fixme: 'DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item',
-  },
-  {
-    ancestral: 'li',
-    descendente: 'li',
-    onde: 'trilha de navegação do PageHeader e view do Quadro (pipeline)',
-    area: 'telas',
-    fixme: 'DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro',
-  },
-  {
-    ancestral: 'p',
-    descendente: 'div',
-    onde: 'Documentação: selo do catálogo (<div>) dentro do <p> do subtítulo',
-    area: 'telas',
-    fixme: 'DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>',
-  },
-];
+const NINHOS_DE_PRODUTO: NinhoDeProduto[] = [];
 
 interface OcorrenciaTolerada {
   /** lista de origem: lacuna do conjunto local ou defeito do produto */
@@ -847,6 +838,71 @@ function escaparRegex(texto: string): string {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Seleciona uma superfície real de Tarefas depois do clique no menu, sem retry. */
+async function abrirModoTarefas(page: Page, item: ItemNav): Promise<void> {
+  if (!item.modo) return;
+  await expect(page, 'o modo de Tarefas exige a URL canônica').toHaveURL((url) => url.searchParams.get('view') === 'tasks');
+  const principal = page.getByRole('main');
+  await expect(principal.getByRole('heading', { name: 'Tarefas', exact: true })).toBeVisible();
+  const modos = principal.getByTestId('tasks-mode');
+  await expect(modos).toBeVisible();
+  const botao = modos.getByRole('button', { name: item.modo, exact: true });
+  await botao.click();
+  await expect(botao).toHaveAttribute('aria-pressed', 'true');
+  await expect(modos).toHaveAttribute('data-mode', item.modo === 'Quadro' ? 'board' : 'list');
+  if (item.modo === 'Quadro') {
+    await expect(principal.getByTestId('board-track'), 'a superfície Quadro não montou').toBeVisible();
+  } else {
+    await expect(principal.getByTestId('board-track'), 'a Lista ainda mostra o Quadro anterior').toHaveCount(0);
+    const secoes = principal.getByRole('button', { name: /^(Atrasadas|Hoje|Amanhã|Próximas|Sem prazo|Concluídas \(7 dias\))\s*\d+$/ });
+    const conteudo = secoes.or(principal.getByTestId('tasks-empty-filter')).or(principal.getByText('Nada por aqui', { exact: true }));
+    await expect(conteudo.first(), 'a Lista não montou seções nem estado vazio').toBeVisible();
+  }
+}
+
+/** Superfícies das quatro entradas acrescentadas ao mapa; sem ações de integração. */
+async function conferirSuperficieAdicionada(page: Page, item: ItemNav): Promise<void> {
+  if (!['supervisao', 'search-insights', 'meta-capi', 'google-calendar'].includes(item.id)) return;
+  await expect(page, 'a entrada adicional exige sua URL canônica').toHaveURL((url) => url.searchParams.get('view') === item.id);
+  const principal = page.getByRole('main');
+
+  if (item.id === 'supervisao') {
+    await expect(principal.getByRole('heading', { name: 'Supervisão', exact: true })).toBeVisible();
+    const abas = principal.getByRole('tablist');
+    for (const name of ['Filas', 'Copiloto IA', 'Sala de Crise', 'Playbooks', 'Treinamento']) {
+      await expect(abas.getByRole('tab', { name, exact: true })).toBeVisible();
+    }
+    await expect(abas.getByRole('tab', { name: 'Filas', exact: true })).toHaveAttribute('aria-selected', 'true');
+  } else if (item.id === 'search-insights') {
+    await expect(principal.getByRole('heading', { name: 'Insights de Busca', exact: true })).toBeVisible();
+    await expect(principal.getByRole('combobox', { name: 'Período', exact: true })).toBeVisible();
+    await expect(principal.getByRole('button', { name: 'Atualizar insights de busca', exact: true })).toBeVisible();
+    await expect(principal.getByText('Mais buscadas', { exact: true })).toBeVisible();
+    await expect(principal.getByText('Sem resultado', { exact: true })).toBeVisible();
+    await expect(principal.getByRole('alert')).toHaveCount(0);
+  } else if (item.id === 'meta-capi') {
+    await expect(principal.getByRole('heading', { name: 'Meta Conversions API', exact: true })).toBeVisible();
+    await expect(principal.getByText('Funcionalidade em demonstração', { exact: true })).toBeVisible();
+    const configurar = principal.getByRole('button', { name: 'Configurar', exact: true });
+    await expect(configurar).toBeVisible();
+    await expect(configurar).toBeDisabled();
+    const recentes = principal.getByRole('heading', { name: 'Eventos Recentes', exact: true });
+    await expect(recentes).toBeVisible();
+    const eventos = recentes.locator('..');
+    await expect(eventos.getByText('Nenhum evento registrado', { exact: true })
+      .or(eventos.getByText('Pendente', { exact: true }))
+      .or(eventos.getByText('Enviado', { exact: true })).first()).toBeVisible();
+    await expect(principal.getByText('Não foi possível carregar os eventos', { exact: true })).toHaveCount(0);
+  } else {
+    await expect(principal.getByRole('heading', { name: 'Google Calendar', exact: true })).toBeVisible();
+    await expect(principal.getByText('Funcionalidade em demonstração', { exact: true })).toBeVisible();
+    await expect(principal.getByText('Desconectado', { exact: true })).toBeVisible();
+    const conectar = principal.getByRole('button', { name: 'Conectar Google Calendar', exact: true });
+    await expect(conectar).toBeVisible();
+    await expect(conectar).toBeDisabled();
+  }
+}
+
 async function conferirModulo(page: Page, item: ItemNav, onde: string): Promise<void> {
   await expect(page, `${onde}: título do documento do módulo`).toHaveTitle(
     new RegExp(`^${escaparRegex(item.label)} \\| ${escaparRegex(TITULO_BASE)}$`),
@@ -1186,7 +1242,7 @@ async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<vo
   }
 }
 
-// A varredura inteira (login + 40 entradas do menu + busca) passa longe do teto padrão de
+// A varredura inteira (login + 43 percursos do mapa + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
 test.describe.configure({ timeout: 15 * 60_000 });
 
@@ -1201,7 +1257,7 @@ function relatarRodada(
 ): void {
   const semProva = canceladasSemProva(trafego);
   console.warn(
-    `[COBERTURA] ${onde}: ${visitados}/${total} entradas do menu visitadas`,
+    `[COBERTURA] ${onde}: ${visitados}/${total} percursos verificados`,
   );
   console.warn(
     `[CANCELADAS] ${onde}: ${trafego.canceladas.length} canceladas, ${semProva.length} sem resposta da mesma URL`,
@@ -1251,10 +1307,10 @@ test.beforeAll(async ({ request }) => {
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    // A varredura é longa (40 entradas do menu + busca, cada uma com espera de view e de
+    // A varredura é longa (43 percursos do mapa + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
     test.setTimeout(20 * 60_000);
@@ -1271,7 +1327,8 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `desktop/${secao}` : 'desktop';
-      visitados.push(item.label);
+      const rotulo = item.modo ? item.label + '/' + item.modo : item.label;
+      visitados.push(rotulo);
       // Cada seção da barra lateral abre FECHADA: quem abre a dela é a visita do
       // primeiro item DO MAPA daquela seção — que não é necessariamente o primeiro
       // item da seção ('CRM 360°' é admin-only e saiu da varredura). Comparar com
@@ -1282,12 +1339,14 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
         await abrirSecaoDesktop(page, secao);
       }
       await clicarDesktop(page, item);
-      await conferirModulo(page, item, `${onde}/${item.label}`);
+      await abrirModoTarefas(page, item);
+      await conferirModulo(page, item, `${onde}/${rotulo}`);
+      await conferirSuperficieAdicionada(page, item);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
       lacunasDaRodada.push(...lacunas);
       defeitosDaRodada.push(...defeitos);
-      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído não justificado`).toEqual([]);
+      expect(resumir(reprovam), `${onde} — ${rotulo} produziu ruído não justificado`).toEqual([]);
       vistos = trafego.ruido.length;
     }
 
@@ -1303,7 +1362,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     defeitosDaRodada.push(...defeitos);
     expect(resumir(reprovam), 'desktop — Buscar produziu ruído não justificado').toEqual([]);
 
-    // A varredura já abriu as 5 seções da barra lateral: é agora que a ausência
+    // A varredura já abriu as 6 seções da barra lateral: é agora que a ausência
     // das entradas admin-only diz alguma coisa (com a seção fechada, o item não
     // estaria no DOM de qualquer forma).
     await conferirEntradasForaDoPapel(page, 'desktop');
@@ -1312,7 +1371,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     // da barra lateral, senão a varredura passou sem passar por tudo.
     expect(
       visitados.length,
-      'a varredura do desktop não visitou todas as entradas do menu',
+      'a varredura do desktop não visitou todos os percursos do mapa',
     ).toBe(PASSOS.length);
 
     relatarRodada('desktop', lacunasDaRodada, defeitosDaRodada, visitados.length, PASSOS.length, trafego);
@@ -1326,7 +1385,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
     test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
@@ -1347,14 +1406,17 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
 
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `celular/${secao}` : 'celular';
-      visitados.push(item.label);
+      const rotulo = item.modo ? item.label + '/' + item.modo : item.label;
+      visitados.push(rotulo);
       await clicarMobile(page, item, conferirForaDoPapelUmaVez);
-      await conferirModulo(page, item, `${onde}/${item.label}`);
+      await abrirModoTarefas(page, item);
+      await conferirModulo(page, item, `${onde}/${rotulo}`);
+      await conferirSuperficieAdicionada(page, item);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
       lacunasDaRodada.push(...lacunas);
       defeitosDaRodada.push(...defeitos);
-      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído não justificado`).toEqual([]);
+      expect(resumir(reprovam), `${onde} — ${rotulo} produziu ruído não justificado`).toEqual([]);
       vistos = trafego.ruido.length;
     }
 
@@ -1382,7 +1444,7 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
     // Prova de cobertura: idem desktop, pelo menu móvel.
     expect(
       visitados.length,
-      'a varredura do celular não visitou todas as entradas do menu',
+      'a varredura do celular não visitou todos os percursos do mapa',
     ).toBe(PASSOS.length);
 
     relatarRodada('celular', lacunasDaRodada, defeitosDaRodada, visitados.length, PASSOS.length, trafego);
@@ -1424,6 +1486,15 @@ const CORPO_SIP = '{"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}'
 const NADA_JUSTIFICADO = new Set<string>();
 
 test.describe('Guarda da varredura: ruído novo REPROVA', () => {
+  test('mapa preserva 42 entradas e os modos Lista/Quadro em 43 percursos distintos', () => {
+    expect(PASSOS).toHaveLength(43);
+    expect(new Set(PASSOS.map(({ item }) => item.id)).size).toBe(42);
+    expect(new Set(PASSOS.map(({ item }) => item.id + '/' + (item.modo ?? ''))).size).toBe(PASSOS.length);
+    const tarefas = PASSOS.filter(({ item }) => item.id === 'tasks').map(({ item }) => item);
+    expect(tarefas.map(item => item.modo).sort()).toEqual(['Lista', 'Quadro']);
+    expect(tarefas.every(item => item.label === 'Tarefas')).toBe(true);
+    expect(PASSOS.filter(({ item }) => item.modo && item.id !== 'tasks')).toEqual([]);
+  });
   test('endpoint novo (fora da lista) REPROVA mesmo com status conhecido', () => {
     const url = `${HOST_LOCAL}/functions/v1/endpoint-novo`;
     const ocorrencia = respostaSintetica(503, url);
@@ -1560,27 +1631,27 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     ).toHaveLength(1);
   });
 
-  test('par de tags aninhadas FORA da lista REPROVA; o da lista vira defeito com fixme', () => {
+  test('pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM', () => {
     const novo = consoleSintetico(
       'In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <span> table',
     );
-    const conhecido = consoleSintetico(
+    const botao = consoleSintetico(
       'In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <button> button',
     );
-    const { reprovam, defeitos } = classificar([novo, conhecido], [], NADA_JUSTIFICADO);
-    expect(resumir(reprovam), 'par de tags novo passou pela varredura').toHaveLength(1);
-    expect(defeitos).toHaveLength(1);
-    expect(defeitos[0].tolerada?.motivo, 'o defeito não aponta o test.fixme').toContain('test.fixme');
+    const item = consoleSintetico('<li> cannot contain a nested <li>.');
+    const paragrafo = consoleSintetico('In HTML, <div> cannot be a descendant of <p>.');
+    const { reprovam, defeitos } = classificar([novo, botao, item, paragrafo], [], NADA_JUSTIFICADO);
+    expect(resumir(reprovam), 'par de tags novo passou pela varredura').toHaveLength(4);
+    expect(defeitos).toHaveLength(0);
+    expect(NINHOS_DE_PRODUTO, 'regressão DOM voltou a ser tolerada').toEqual([]);
   });
 });
 
 /* -------------------------------------------------------------------------- */
-/* DEFEITOS DO PRODUTO — cada um com reprodução real, pronta para virar `test` */
+/* REGRESSÕES DO PRODUTO — DOM ativo; os dois HTTP aguardam prova própria     */
 /*                                                                             */
-/* São os defeitos das listas DEFEITOS_DE_PRODUTO e NINHOS_DE_PRODUTO, que a    */
-/* varredura acima contabiliza em `[DEFEITOS DE PRODUTO]`. Os corpos abaixo são */
-/* a reprodução de verdade: hoje eles falham (é o defeito); quando o produto for */
-/* corrigido, os donos trocam `test.fixme` por `test` e a entrada sai da lista.  */
+/* As três regressões DOM exigem montagem e não têm tolerância na varredura.   */
+/* Os dois FIXMEs HTTP e suas entradas em DEFEITOS_DE_PRODUTO são preservados. */
 /* -------------------------------------------------------------------------- */
 
 /** Ocorrências de console, na janela, cujo par de tags aninhadas é o pedido. */
@@ -1593,51 +1664,86 @@ function aninhadosNaJanela(trafego: Trafego, desde: number, ancestral: string, d
 }
 
 /**
- * DEFEITO (área de telas) — `src/components/layout/SidebarNavItem.tsx:83-92`:
- * o botão "Adicionar aos favoritos" é renderizado DENTRO do `<button>` do item da
- * barra lateral, e HTML não permite botão dentro de botão. O React avisa por
+ * REGRESSÃO (área de telas): o favorito já é irmão do botão em SidebarNavItem.
+ * O defeito histórico punha o favorito dentro do botão do item. O React avisa por
  * `console.error` ("In HTML, <button> cannot be a descendant of <button>").
  * MEDIDO em 07/10 no conjunto local, ao expandir qualquer seção da barra.
  */
-test.fixme('DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item', async ({ page }) => {
+test('DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item', async ({ page }) => {
   const trafego = observar(page);
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.addInitScript(() => { window.localStorage.setItem('zen-mode', 'false'); });
   await abrirApp(page);
-  const desde = trafego.ruido.length;
   await abrirSecaoDesktop(page, 'Vendas & CRM');
-  const erros = aninhadosNaJanela(trafego, desde, 'button', 'button');
+  await expect(page.getByRole('button', { name: 'Vendas & CRM — recolher', exact: true })).toBeVisible();
+  const grupo = page.getByRole('navigation', { name: 'Vendas & CRM', exact: true });
+  await expect(grupo).toBeVisible();
+  const carteira = grupo.getByRole('button', { name: 'Carteira', exact: true });
+  await expect(carteira).toBeVisible();
+  const linha = grupo.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Carteira', exact: true }) });
+  await expect(linha).toHaveCount(1);
+  const favorito = linha.getByRole('button', { name: /^(Adicionar aos|Remover dos) favoritos$/ });
+  await expect(favorito).toHaveCount(1);
+  await carteira.hover();
+  await expect(favorito).toBeVisible();
+  await expect(grupo.locator('button button'), 'botões da barra lateral devem ser irmãos').toHaveCount(0);
+  const erros = aninhadosNaJanela(trafego, 0, 'button', 'button');
   expect(resumir(erros), 'a barra lateral ainda aninha o botão de favoritos dentro do botão do item').toEqual([]);
 });
 
 /**
- * DEFEITO (área de telas) — `src/components/ui/breadcrumb.tsx:62`: o
- * `BreadcrumbSeparator` renderiza um `<li>` e é usado dentro do `<li>` do
- * `BreadcrumbItem` (`src/components/layout/PageHeader.tsx:103-104`), o que o React
- * recusa ("<li> cannot contain a nested <li>"). MEDIDO em 07/10 nas telas com
+ * REGRESSÃO (área de telas): BreadcrumbSeparator e BreadcrumbItem renderizam li
+ * e devem ser irmãos no ol. O aninhamento anterior era recusado pelo React
+ * ("<li> cannot contain a nested <li>"). MEDIDO em 07/10 nas telas com
  * trilha de navegação (Tarefas) e na view do Quadro (pipeline).
  */
-test.fixme('DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro', async ({ page }) => {
+test('DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro', async ({ page }) => {
   const trafego = observar(page);
+  await page.setViewportSize({ width: 390, height: 844 });
   await abrirApp(page);
-  const desde = trafego.ruido.length;
-  await clicarDesktop(page, { id: 'tasks', label: 'Tarefas' });
-  await clicarDesktop(page, { id: 'pipeline', label: 'Quadro' });
-  const erros = aninhadosNaJanela(trafego, desde, 'li', 'li');
+  for (const view of ['tasks', 'pipeline']) {
+    await page.goto(`/?view=${view}`);
+    const principal = page.getByRole('main');
+    await expect(principal.getByRole('heading', { name: 'Tarefas', exact: true })).toBeVisible();
+    if (view === 'pipeline') {
+      await expect(page).toHaveURL((url) => url.searchParams.get('view') === 'tasks');
+      await expect(principal.getByTestId('tasks-mode').getByRole('button', { name: 'Quadro', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(principal.getByTestId('board-track')).toBeVisible();
+    }
+    const trilha = principal.getByRole('navigation', { name: 'breadcrumb', exact: true });
+    await expect(trilha).toBeVisible();
+    await expect(trilha.getByRole('link', { name: 'Início', exact: true })).toBeVisible();
+    const atual = trilha.getByRole('link', { name: 'Tarefas', exact: true });
+    await expect(atual).toBeVisible();
+    await expect(atual).toHaveAttribute('aria-current', 'page');
+    await expect(trilha.locator('ol > li[role="presentation"][aria-hidden="true"]')).toHaveCount(1);
+    await expect(trilha.locator('li li'), 'separadores e itens devem ser irmãos').toHaveCount(0);
+  }
+  const erros = aninhadosNaJanela(trafego, 0, 'li', 'li');
   expect(resumir(erros), 'a trilha do PageHeader e o Quadro ainda aninham <li> dentro de <li>').toEqual([]);
 });
 
 /**
- * DEFEITO (área de telas) — `src/components/docs/SystemFeaturesView.tsx:41-49`: o
- * `<Badge>` do catálogo (que é um `<div>`) é filho do `<p>` do subtítulo; o React
- * avisa "In HTML, <div> cannot be a descendant of <p>". MEDIDO em 07/10 ao abrir
+ * REGRESSÃO (área de telas): o Badge real do catálogo é um div; seu wrapper no
+ * subtítulo não pode ser p. O React avisa "In HTML, <div> cannot be a descendant
+ * of <p>" para o defeito anterior. MEDIDO em 07/10 ao abrir
  * Sistema > Documentação.
  */
-test.fixme('DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>', async ({ page }) => {
+test('DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>', async ({ page }) => {
   const trafego = observar(page);
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.addInitScript(() => { window.localStorage.setItem('zen-mode', 'false'); });
   await abrirApp(page);
-  const desde = trafego.ruido.length;
   await abrirSecaoDesktop(page, 'Sistema');
   await clicarDesktop(page, { id: 'docs', label: 'Documentação' });
-  const erros = aninhadosNaJanela(trafego, desde, 'p', 'div');
+  const principal = page.getByRole('main');
+  await expect(principal.getByRole('heading', { name: 'Funcionalidades do Sistema', exact: true })).toBeVisible();
+  const selo = principal.getByTestId('catalog-status-badge');
+  await expect(selo).toHaveCount(1);
+  await expect(selo).toBeVisible();
+  await expect(selo).toHaveText(/^\d+ (ativas|desativadas?)$/);
+  await expect(principal.locator('p div'), 'o selo não pode ficar dentro de um parágrafo').toHaveCount(0);
+  const erros = aninhadosNaJanela(trafego, 0, 'p', 'div');
   expect(resumir(erros), 'a Documentação ainda põe o selo do catálogo (<div>) dentro de um <p>').toEqual([]);
 });
 

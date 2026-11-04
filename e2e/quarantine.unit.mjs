@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { jobOf, nestedValue, onlyStep, runOf, stepsOf, valueOf } from '../scripts/ci/workflow-test-support.mjs';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(AQUI, '..');
@@ -45,16 +46,14 @@ function gruposDaMatriz(yaml) {
   return grupos;
 }
 
-function linhaDeRun(yaml) {
-  return yaml.split('\n').find((l) => l.includes('bun run test:e2e')) ?? '';
-}
-
 test('E83: workflow tem estrategia de matriz com timeout proprio por grupo', () => {
   const content = readFileSync(WORKFLOW, 'utf8');
   assert.ok(content.includes('strategy:'), 'workflow tem strategy');
   assert.ok(content.includes('matrix:'), 'workflow tem matrix');
   assert.ok(content.includes('fail-fast: false'), 'matriz nao aborta no primeiro falho');
-  assert.ok(content.includes('timeout-minutes: 15'), 'cada job tem timeout de 15 min');
+  const job = jobOf(content, 'e2e-logado');
+  assert.equal(valueOf(job, 'timeout-minutes', 4), '${{ matrix.timeout-minutes }}');
+  assert.deepEqual([...job.matchAll(/^ {12}timeout-minutes: (\d+)$/gm)].map(match => Number(match[1])), [75, 45, 45], 'orçamento inclui bootstrap e limpeza além do browser 45/15/15');
   assert.ok(gruposDaMatriz(content).length >= 2, 'matriz define pelo menos 2 grupos de projetos');
 });
 
@@ -102,15 +101,15 @@ test('E83: projeto setup nao esta duplicado entre grupos de matriz', () => {
   assert.equal(n, 1, 'setup aparece em exatamente um grupo de matriz');
 });
 
-test('E83: comando de run usa matrix.projects sem lista hardcoded', () => {
+test('E83: controller recebe grupo e valida matrix.projects sem lista hardcoded', () => {
   const content = readFileSync(WORKFLOW, 'utf8');
-  const run = linhaDeRun(content);
-  assert.ok(
-    run.includes('matrix.projects'),
-    'step de run usa a variavel de matriz (nao lista hardcoded)',
-  );
-  assert.ok(
-    !run.includes('--project='),
-    'step de run nao lista --project= hardcoded: os projetos vivem na matriz',
-  );
+  const step = onlyStep(stepsOf(jobOf(content, 'e2e-logado')), step => valueOf(step, 'id') === 'suite', 'controller');
+  assert.equal(nestedValue(step, 'env', 'E2E_PROJECTS'), '${{ matrix.projects }}');
+  assert.equal(nestedValue(step, 'env', 'E2E_GROUP'), '${{ matrix.name }}');
+  const run = runOf(step);
+  assert.match(run, /import \{ GROUPS \} from '\.\/scripts\/e2e-isolated\/runtime-contract\.mjs'/);
+  assert.match(run, /process\.env\.E2E_PROJECTS/);
+  assert.match(run, /GROUPS\[group\]\.map/);
+  const command = run.split('\n').find(line => line.startsWith('bash scripts/e2e-isolated/run.sh '));
+  assert.equal(command, 'bash scripts/e2e-isolated/run.sh suite "$E2E_GROUP" "$E2E_OUTPUT"');
 });

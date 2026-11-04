@@ -18,8 +18,8 @@
 | DB Live Guard | [`db-live-guard.yml`](../../.github/workflows/db-live-guard.yml) | agendado (semanal, segunda) e dispatch sobre main | o contrato do banco de PRODUCAO (drift, paridade, runtime config) | issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio | issue de guardas vivos | — | — |
 | DB Migrate (production) | [`db-migrate.yml`](../../.github/workflows/db-migrate.yml) | dispatch na main, com o job gateado por environment | dry-run obrigatorio e apply com hash estrutural da migration | nada e aplicado; o dry-run precisa passar antes | operador que disparou e a issue de ops | — | — |
 | Deploy Edge Functions | [`deploy-functions.yml`](../../.github/workflows/deploy-functions.yml) | push na main (supabase/functions/**, config.toml) e dispatch manual | as Edge Functions publicadas batem com o repo | o deploy aborta antes de publicar | operador que disparou | — | — |
-| E2E isolado - bootstrap e login | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request nos arquivos do ambiente isolado e dispatch | valida digests e executa bootstrap Supabase e login real em namespace sem rede externa | lock, isolamento, plataforma, migrations, seed, login ou limpeza inválidos bloqueiam | autor e revisor via check; publica somente metadados e logs redigidos | — | — |
-| E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main | o fluxo logado (Playwright com login real) contra producao | artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro | issue de E2E e autor do push | — | — |
+| E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolhe login ou full-suite em três grupos fixos | executa login ou os 15 projetos em backend descartável, com TLS local e namespace sem saída | lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam | autor e revisor via check; publica somente metadados e logs redigidos | — | — |
+| E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main | os mesmos 15 projetos Playwright em três grupos com Supabase descartável e TLS local | preparo, testes e limpeza bloqueiam; publica só diagnóstico redigido e preserva o alerta da suíte | mesma issue de E2E; fecha somente após sucesso dos três grupos | — | — |
 | E2E Talk X (visual/launch + Auth smoke) | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
 | Inventário do estado real (semanal) | [`inventario-estado-semanal.yml`](../../.github/workflows/inventario-estado-semanal.yml) | agendado (seg 10:23 UTC) e dispatch | inventario/estado (banco, rotas, edges) regerado do banco oficial e do codigo | o job fica vermelho e o inventario nao e atualizado | PR automation/inventario-estado com o inventario novo | — | — |
 | Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na main) | abre issue quando qualquer workflow critico falha na main | a falha do workflow original fica sem issue de acompanhamento | equipe de operacao, por meio da issue criada no repositorio | — | — |
@@ -101,19 +101,19 @@
 - **Quando falha:** o deploy aborta antes de publicar
 - **Quem é avisado:** operador que disparou
 
-### E2E isolado - bootstrap e login (`e2e-logado-isolado.yml`)
+### E2E isolado - login e suíte completa (`e2e-logado-isolado.yml`)
 
-- **Gatilho:** pull_request nos arquivos do ambiente isolado e dispatch
-- **O que prova:** valida digests e executa bootstrap Supabase e login real em namespace sem rede externa
-- **Quando falha:** lock, isolamento, plataforma, migrations, seed, login ou limpeza inválidos bloqueiam
+- **Gatilho:** pull_request valida login; dispatch escolhe login ou full-suite em três grupos fixos
+- **O que prova:** executa login ou os 15 projetos em backend descartável, com TLS local e namespace sem saída
+- **Quando falha:** lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam
 - **Quem é avisado:** autor e revisor via check; publica somente metadados e logs redigidos
 
 ### E2E logado (`e2e-logado.yml`)
 
 - **Gatilho:** workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main
-- **O que prova:** o fluxo logado (Playwright com login real) contra producao
-- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
-- **Quem é avisado:** issue de E2E e autor do push
+- **O que prova:** os mesmos 15 projetos Playwright em três grupos com Supabase descartável e TLS local
+- **Quando falha:** preparo, testes e limpeza bloqueiam; publica só diagnóstico redigido e preserva o alerta da suíte
+- **Quem é avisado:** mesma issue de E2E; fecha somente após sucesso dos três grupos
 
 ### E2E Talk X (visual/launch + Auth smoke) (`e2e-talkx.yml`)
 

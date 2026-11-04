@@ -555,14 +555,125 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   expect(violations).toEqual([]);
 });
 
-test('workspace do Email é desmontado ao alternar entre módulos', async ({ page }) => {
-  await abrirEmail(page);
-  await expect(page.locator('.email-workspace')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
-  await expect(page).toHaveURL(/view=dashboard/);
-  await expect(page.locator('.email-workspace')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Email', exact: true }).click();
-  await expect(page.locator('.email-workspace')).toHaveCount(1);
+test('workspace do Email é desmontado ao alternar entre módulos', async ({ page }, testInfo) => {
+  // Diagnóstico passivo: não altera a navegação, o DOM nem o orçamento das asserções.
+  let installationFailed = false;
+  try {
+    await page.addInitScript(() => {
+      if (window.top !== window) return;
+      type Kind = 'init' | 'state' | 'click-dashboard' | 'click-email' | 'navigate-dashboard' | 'navigate-email' | 'final';
+      type Snapshot = { view: 'dashboard' | 'email-chat' | 'other' | 'unknown'; active: 'dashboard' | 'email-chat' | 'both' | 'none'; workspace_count: number; email_loading: boolean; visibility: 'visible' | 'hidden' | 'other' };
+      const records: Array<Snapshot & { kind: Kind; ms: number }> = [];
+      const started = performance.now();
+      const nativeViewTransition = typeof document.startViewTransition === 'function';
+      let dropped = 0, collectionErrors = 0, lastMs = 0, lastState = '', finished = false;
+      const error = () => { collectionErrors = Math.min(9999, collectionErrors + 1); };
+      const sample = (kind: Kind) => {
+        if (finished) return;
+        try {
+          const rawView = new URLSearchParams(window.location.search).get('view');
+          const emailActive = !!document.querySelector('nav[aria-label="Menu de navegação principal"] button[data-tour="email-chat"][aria-current="page"]');
+          const dashboardActive = !!document.querySelector('nav[aria-label="Menu de navegação principal"] button[data-tour="dashboard"][aria-current="page"]');
+          const state: Snapshot = {
+            view: rawView === null ? 'unknown' : rawView === 'email-chat' || rawView === 'dashboard' ? rawView : 'other',
+            active: emailActive && dashboardActive ? 'both' : emailActive ? 'email-chat' : dashboardActive ? 'dashboard' : 'none',
+            workspace_count: Math.min(3, document.querySelectorAll('.email-workspace').length),
+            email_loading: !!document.querySelector('section[aria-label="Carregando Email"]'),
+            visibility: document.visibilityState === 'visible' || document.visibilityState === 'hidden' ? document.visibilityState : 'other',
+          };
+          const signature = JSON.stringify(state);
+          if (kind === 'state' && signature === lastState) return;
+          const elapsed = performance.now() - started;
+          if (!Number.isFinite(elapsed)) { error(); return; }
+          lastMs = Math.min(120_000, Math.max(lastMs, Math.round(elapsed), 0));
+          lastState = signature;
+          if (records.length === 48) { records.splice(1, 1); dropped = Math.min(9999, dropped + 1); }
+          records.push({ kind, ms: lastMs, ...state });
+        } catch { error(); }
+      };
+      const onClick = (event: MouseEvent) => {
+        try {
+          if (!(event.target instanceof Element)) return;
+          const button = event.target.closest('button[data-tour]');
+          if (!button?.closest('nav[aria-label="Menu de navegação principal"]')) return;
+          const id = button.getAttribute('data-tour');
+          if (id === 'dashboard') sample('click-dashboard');
+          if (id === 'email-chat') sample('click-email');
+        } catch { error(); }
+      };
+      const onNavigate = (event: Event) => {
+        try {
+          const view = (event as CustomEvent<{ view?: unknown }>).detail?.view;
+          if (view === 'dashboard') sample('navigate-dashboard');
+          if (view === 'email-chat') sample('navigate-email');
+        } catch { error(); }
+      };
+      const onVisibility = () => sample('state');
+      const observer = new MutationObserver(() => sample('state'));
+      sample('init');
+      observer.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-current', 'aria-label'] });
+      document.addEventListener('click', onClick, true);
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('zapp:navigate', onNavigate);
+      (window as Window & { __zappEmailReturnDiagnostics?: { finish: () => unknown } }).__zappEmailReturnDiagnostics = {
+        finish: () => {
+          if (!finished) {
+            sample('final');
+            finished = true;
+            for (const cleanup of [
+              () => observer.disconnect(),
+              () => document.removeEventListener('click', onClick, true),
+              () => document.removeEventListener('visibilitychange', onVisibility),
+              () => window.removeEventListener('zapp:navigate', onNavigate),
+            ]) { try { cleanup(); } catch { error(); } }
+          }
+          return { schema: 1, status: collectionErrors ? 'partial' : 'ok', native_view_transition: nativeViewTransition, dropped, collection_errors: collectionErrors, records: records.map(record => ({ ...record })) };
+        },
+      };
+    });
+  } catch { installationFailed = true; }
+
+  try {
+    await abrirEmail(page);
+    await expect(page.locator('.email-workspace')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+    await expect(page).toHaveURL(/view=dashboard/);
+    await expect(page.locator('.email-workspace')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Email', exact: true }).click();
+    await expect(page.locator('.email-workspace')).toHaveCount(1);
+  } finally {
+    // O resultado atravessa uma fronteira browser → Node: reconstrói apenas o schema
+    // fechado. Falha na coleta/anexação nunca substitui o resultado original do teste.
+    const unavailable = (reason: 'install-failed' | 'collection-failed' | 'collector-missing' | 'invalid-payload') => ({ schema: 1, status: 'unavailable', reason });
+    let report: unknown = unavailable(installationFailed ? 'install-failed' : 'collection-failed');
+    if (!installationFailed) {
+      try {
+        const raw = await page.evaluate(() => (window as Window & { __zappEmailReturnDiagnostics?: { finish: () => unknown } }).__zappEmailReturnDiagnostics?.finish() ?? null);
+        const exact = (value: unknown, keys: string[]): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && Object.keys(value).every(key => keys.includes(key));
+        const integer = (value: unknown, maximum: number): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= maximum;
+        const enumValue = (value: unknown, values: string[]) => typeof value === 'string' && values.includes(value);
+        report = raw === null ? unavailable('collector-missing') : unavailable('invalid-payload');
+        if (exact(raw, ['schema', 'status', 'native_view_transition', 'dropped', 'collection_errors', 'records'])) {
+          const header = { schema: raw.schema, status: raw.status, native_view_transition: raw.native_view_transition, dropped: raw.dropped, collection_errors: raw.collection_errors };
+          if (header.schema === 1 && typeof header.native_view_transition === 'boolean' && integer(header.dropped, 9999) && integer(header.collection_errors, 9999) && header.status === (header.collection_errors ? 'partial' : 'ok') && Array.isArray(raw.records) && raw.records.length <= 48) {
+            const rows: Array<Record<string, unknown>> = [];
+            let valid = true, previousMs = 0;
+            for (const input of raw.records) {
+              if (!exact(input, ['kind', 'ms', 'view', 'active', 'workspace_count', 'email_loading', 'visibility'])) { valid = false; break; }
+              const row = { kind: input.kind, ms: input.ms, view: input.view, active: input.active, workspace_count: input.workspace_count, email_loading: input.email_loading, visibility: input.visibility };
+              if (!enumValue(row.kind, ['init', 'state', 'click-dashboard', 'click-email', 'navigate-dashboard', 'navigate-email', 'final']) || !integer(row.ms, 120_000) || row.ms < previousMs || !enumValue(row.view, ['dashboard', 'email-chat', 'other', 'unknown']) || !enumValue(row.active, ['dashboard', 'email-chat', 'both', 'none']) || !integer(row.workspace_count, 3) || typeof row.email_loading !== 'boolean' || !enumValue(row.visibility, ['visible', 'hidden', 'other'])) { valid = false; break; }
+              previousMs = row.ms;
+              rows.push(row);
+            }
+            if (header.status === 'ok' && (rows.length < 2 || rows[0]?.kind !== 'init' || rows.at(-1)?.kind !== 'final')) valid = false;
+            if (header.dropped > 0 && rows.length !== 48) valid = false;
+            if (valid) report = { ...header, records: rows };
+          }
+        }
+      } catch { report = unavailable('collection-failed'); }
+    }
+    try { await testInfo.attach('email-return-diagnostics.json', { body: JSON.stringify(report), contentType: 'application/json' }); } catch { /* O diagnóstico não altera o resultado da prova. */ }
+  }
 });
 
 test('consumidor Omnichannel incorpora Email sem duplicar o cabeçalho autônomo', async ({ page }) => {

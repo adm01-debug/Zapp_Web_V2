@@ -7,6 +7,58 @@ const fail = (code, cause) => { throw new Error('[e2e-isolated/tls-' + code + ']
 const hash = value => createHash('sha256').update(value).digest('hex');
 const controlUrl = name => 'https://127.0.0.1:' + TLS_CONTROLS[name] + '/__e2e/tls-control';
 
+function navigationDiagnostic(page, url, runId, sourceSha) {
+  const frame = page.mainFrame();
+  const record = { request_count: 0, request_failed_count: 0, request_finished_count: 0,
+    response_count: 0, ignored_event_count: 0, response_statuses: [], failure_error_texts: [] };
+  let resolveTerminal, terminalSeen = false;
+  const terminal = new Promise(resolve => { resolveTerminal = resolve; });
+  const finished = () => { terminalSeen = true; resolveTerminal(); };
+  const matches = request => {
+    try {
+      if (request.url() === url && request.method() === 'GET' && request.resourceType() === 'document' &&
+          request.isNavigationRequest() && request.frame() === frame) return true;
+    } catch { /* A request without a frame is not the controlled navigation. */ }
+    record.ignored_event_count++;
+    return false;
+  };
+  const safeText = value => {
+    if (typeof value !== 'string' || !value) return null;
+    const text = value.replaceAll(runId, '[run]').replaceAll(sourceSha, '[source]')
+      .replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, '[url]').replace(/[?&]\S+/g, '[query]')
+      .replace(/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi, '[id]')
+      .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[JWT REDACTED]')
+      .replace(/[\x00-\x1f\x7f]+/g, ' ').trim();
+    return text.length > 512 ? '[error-text-too-long]' : text;
+  };
+  const listeners = {
+    request: request => { if (matches(request)) record.request_count++; },
+    requestfailed: request => {
+      if (!matches(request)) return;
+      record.request_failed_count++;
+      if (record.failure_error_texts.length < 3) record.failure_error_texts.push(safeText(request.failure()?.errorText));
+      finished();
+    },
+    requestfinished: request => { if (matches(request)) { record.request_finished_count++; finished(); } },
+    response: response => {
+      if (!matches(response.request())) return;
+      record.response_count++;
+      if (record.response_statuses.length < 3) record.response_statuses.push(response.status());
+    },
+  };
+  for (const [event, listener] of Object.entries(listeners)) page.on(event, listener);
+  return {
+    record,
+    async wait() {
+      if (terminalSeen) return;
+      let timer;
+      try { await Promise.race([terminal, new Promise(resolve => { timer = setTimeout(resolve, 1_000); })]); }
+      finally { clearTimeout(timer); }
+    },
+    stop() { for (const [event, listener] of Object.entries(listeners)) page.off(event, listener); },
+  };
+}
+
 export function certificateFailure(error, kind, engine = 'node') {
   const text = [error?.code, error?.message, error?.cause?.code, error?.cause?.message].filter(Boolean).join(' ');
   if (/timed? ?out|ECONNREFUSED|ECONNRESET|ENOTFOUND|ERR_CONNECTION_REFUSED|NS_ERROR_CONNECTION_REFUSED|aborted/i.test(text)) return false;
@@ -48,7 +100,8 @@ export async function probeClient({ runId, sourceSha, fetcher = fetch }) {
 }
 
 /** The same browser env filter used by the real isolated Playwright config. */
-export async function probeBrowsers({ runId, sourceSha, env, engines, environment = browserEnvironment }) {
+export async function probeBrowsers({ runId, sourceSha, env, engines, environment = browserEnvironment,
+  diagnostic = record => process.stderr.write('[e2e-isolated/tls-navigation-diagnostic] ' + JSON.stringify(record) + '\n') }) {
   assertRunId(runId); assertSourceSha(sourceSha);
   const browserEnv = environment(env);
   if (browserEnv.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== TLS_PUBLIC + '/firefox-policies.json' ||
@@ -73,10 +126,22 @@ export async function probeBrowsers({ runId, sourceSha, env, engines, environmen
         await page.close();
         for (const kind of Object.keys(TLS_CONTROLS)) {
           const negative = await context.newPage();
-          let rejection;
-          try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }
-          catch (error) { rejection = error; }
-          finally { await negative.close(); }
+          let observation, rejection;
+          try {
+            // Establish a committed, trusted HTTPS document on this exact page
+            // before exercising a failed navigation. Each control starts fresh.
+            const warmupUrl = TLS_ORIGIN + '/__e2e/identity';
+            const warmup = await negative.goto(warmupUrl, { waitUntil: 'load', timeout: 15_000 });
+            if (warmup?.status() !== 200 || negative.url() !== warmupUrl) fail('browser-' + name + '-' + kind + '-warmup-document');
+            assertIdentity(await warmup.json(), runId, sourceSha);
+            observation = navigationDiagnostic(negative, controlUrl(kind), runId, sourceSha);
+            try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }
+            catch (error) { rejection = error; }
+            // WebKit provisional-load failure can abort goto independently of
+            // Network.loadingFailed. This bounded observation never approves TLS.
+            if (rejection && !certificateFailure(rejection, kind, name)) await observation.wait();
+            diagnostic({ engine: name, kind, ...observation.record });
+          } finally { observation?.stop(); await negative.close(); }
           if (!rejection) fail('browser-' + name + '-' + kind + '-accepted');
           if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);
         }

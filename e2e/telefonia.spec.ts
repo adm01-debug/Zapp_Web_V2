@@ -265,7 +265,16 @@ test.describe('Y11 · Telefonia', () => {
 
     // Mesmo número do teste anterior, agora com o código do país: o DDI 55 é absorvido e a
     // tela mostra a MESMA forma E.164 — e nunca "55" sobrando no DDD.
-    await digitarNaTela(page, '5511999999204');
+    const digitos = '5511999999204';
+    const progresso = [
+      '5', '55', '551', '5511', '55119', '551199', '5511999', '55119999', '551199999',
+      '+55 (55) 1199-9999', '+55 (55) 11999-9992', '+55 (11) 99999-9920', '+55 (11) 99999-9204',
+    ];
+    const visor = page.getByTestId('tel-number-display').locator('[aria-live="polite"]');
+    for (let i = 0; i < digitos.length; i++) {
+      await teclado(page).getByRole('button', { name: digitos[i], exact: true }).click();
+      await expect(visor, `visor após o dígito ${i + 1}`).toHaveText(progresso[i]);
+    }
     await expect(page.getByTestId('tel-number-display')).toContainText('+55 (11) 99999-9204');
     await expect(page.getByTestId('tel-number-incomplete')).toHaveCount(0);
   });
