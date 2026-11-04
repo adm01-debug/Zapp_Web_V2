@@ -13,9 +13,11 @@ import {
 } from './runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from './stack.mjs';
 import { prepareMigration, migrationFailure, gitBlob } from './migrations.mjs';
-import { readPlaywrightInventory, summarizePlaywrightResult } from './results.mjs';
+import { summarizePlaywrightResult } from './results.mjs';
+import { collectPlaywrightInventory } from './collection.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
+import { restoreRoutineOwnership } from './routine-ownership.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -218,7 +220,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   const writable = new Set([output, bundles, bundleCache]);
   let credentials;
   let reportReady = false;
-  let providerCatalog, providerDiagnostic;
+  let providerCatalog, providerDiagnostic, routineOwnership;
   let failure;
   let cancelled = false;
   let cleaning = false;
@@ -494,6 +496,13 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     state.migrations = { total: migrationResults.length, passed: migrationResults.filter(item => item.success).length, known_failures: migrationResults.filter(item => !item.success && item.expected).length, unexpected_failures: migrationResults.filter(item => !item.success && !item.expected).length };
     if (state.migrations.unexpected_failures) throw new Error('unexpected-migration-failure');
     if (!sqlBoolean("select current_setting('cron.launch_active_jobs') = 'off';")) throw new Error('cron-reenabled-by-migration');
+    if (fullSuite) {
+      phase('restore-versioned-routine-owners');
+      routineOwnership = restoreRoutineOwnership({ command: execute, dockerConfig, scope, group, runId, sourceSha,
+        anchorId, anchorImage: images.driver, databaseId: database.id, databaseImage: images.postgres,
+        volumeName: databaseVolume.source, networkNamespace: network.network_namespace, allowedWritableSources: writable });
+      if (!routineOwnership.confirmed) throw new Error('routine-ownership-failed');
+    }
     required(psql("notify pgrst, 'reload schema';"), 'schema-cache-reload-failed');
     await pause(2_000);
     start('edge', images.edge, [{ type: 'bind', source: bundles, target: '/bundles', readOnly: true }, ...tlsMounts(material, 'edge')]);
@@ -543,13 +552,10 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
     const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
       ...projects.flatMap(name => ['--project', name]), '--workers', '1'];
-    const inventoryJson = JSON.parse(driverRun([...cli, '--list', '--reporter=json'], scope === 'login' ? 'collect-login' : 'collect-suite', 120_000, { recordLog: false }));
-    let inventory;
-    try { inventory = readPlaywrightInventory(inventoryJson, { projects }); }
-    catch (error) { if (scope === 'suite') throw new Error('suite-inventory-invalid'); throw error; }
-    if (scope === 'login' && inventory.total !== 1) throw new Error('login-inventory-not-exact');
-    writeJson(path.join(output, 'inventory.json'), inventoryJson);
-    if (scope === 'suite') writeJson(path.join(output, 'test-inventory.json'), inventory);
+    const inventory = collectPlaywrightInventory({ output, scope, projects,
+      execute: report => docker(['exec', '-e', 'PLAYWRIGHT_JSON_OUTPUT_FILE=' + report,
+        ...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),
+    });
     phase(scope === 'login' ? 'real-browser-login' : 'real-browser-suite');
     state.native_e2e = true;
     const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });
@@ -634,7 +640,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     // Never copy the verifier's raw file. Only the closed parsed objects enter
     // the already-redacted publication path; diagnostic I/O remains best effort.
-    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic]]) {
+    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic], ['routine-ownership.json', routineOwnership]]) {
       if (diagnostic) {
         try { writeJson(path.join(published, name), diagnostic); } catch { /* Observation cannot replace the original result. */ }
       }
