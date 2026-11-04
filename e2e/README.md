@@ -352,3 +352,48 @@ mesma tabela), e nas duas formas testadas — `route.abort()` e `route.fulfill(5
 `files-query-error` não apareceu em 20 s (com `abort`, o fetch do supabase-js entra
 em retry). Medição registrada no cartão; a faixa de erro em si tem prova unitária
 em `src/components/inbox/tabs/__tests__/FilesContent.test.tsx`.
+
+## Diagnóstico do setup e limites de execução remota
+
+O setup registra somente origem do endpoint, status HTTP, ocorrência de falha de
+transporte do POST de `auth-login` e presença de marcadores específicos de recusa
+na UI. Não lê nem imprime corpo, headers, credenciais, tokens ou conteúdo do
+storageState para diagnosticar uma falha.
+
+O toast "Login temporariamente indisponível" também pode resultar de CORS/fetch;
+ele não comprova timeout, HTTP 5xx/429 nem senha incorreta. O diagnóstico distingue
+origem incompatível com a política CORS oficial, transporte sem resposta, recusa
+de autenticação, HTTP 429/5xx e resposta 2xx sem sessão/app shell confirmada.
+O título exato "Acesso bloqueado" encerra a espera como bloqueio observado pelo
+app; HTTP 403 isolado é recusa da requisição, sem atribuir senha inválida ou uma
+regra de rede específica. O setup observa apenas a presença desse título, sem
+ler o corpo da resposta nem a descrição do toast.
+Respostas tardias de uma tentativa anterior não alimentam a tentativa seguinte.
+O diagnóstico controla somente o laço interno de tentativas do setup; os retries
+do projeto Playwright (`RETRIES_LOGADOS`) permanecem como estavam.
+
+Quando `PLAYWRIGHT_BASE_URL` indica um servidor HTTPS remoto, a configuração não
+inicia Vite local. Projetos públicos continuam disponíveis. A guarda específica
+de `auth.setup.ts` recusa a suíte autenticada nesse alvo **antes** de ler/enviar
+credenciais: os testes contêm encerramento de conversas, gravação/limpeza de
+fixtures, drafts e enfileiramento de mensagens reais. Usuário dedicado e limpeza
+posterior não isolam o backend.
+
+O fluxo local preexistente foi preservado; isso não certifica isolamento, pois
+sem configuração local o app usa o Supabase oficial. Não habilitar localhost no
+CORS de produção para contornar essa pendência.
+
+Para liberar a suíte completa, preparar backend e fixtures isolados, retirar os
+endpoints oficiais fixos das specs desse escopo e bloquear egress de produção
+(inclusive `page.request`, WebSockets e workers). Login-only precisa de um
+harness próprio que impeça chamadas de negócio depois do login. Quando esse
+harness existir, conferir `version.json.buildId` contra o SHA completo do código
+testado; SHA igual sozinho não autoriza executar testes mutadores em produção.
+O aceite exige execução real no ambiente isolado: preflight verde ou spec pulada
+não bastam.
+
+Simulação offline, sem credenciais e sem endpoints reais (Node 24+):
+
+```sh
+node --test scripts/ci/e2e-auth-*.unit.mjs
+```

@@ -14,11 +14,9 @@
 # (scripts/ci/check-pr-workflow-secrets.mjs), por isso este teste nao fica no
 # ci.yml e nao bloqueia PR.
 #
-# Sem upload de relatorio: se o login falhar, o Playwright anexa um
-# error-context.md (snapshot de acessibilidade) com o valor real do campo de
-# e-mail preenchido. Como o repo e publico, um upload-artifact aqui deixaria
-# esse e-mail baixavel por qualquer conta do GitHub. Falha deste job = ver o
-# log do proprio step (app fora do ar / seletor quebrou); nao vale o risco.
+# O Playwright pode gravar e-mail/senha no error-context.md e no relatorio.
+# O log mascara o e-mail antes da execucao; o artifact so sobe depois da
+# redacao verificada dos dois segredos. Falha na redacao impede o upload.
 # ==========================================================================
 
 name: E2E logado
@@ -107,7 +105,7 @@ jobs:
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
     permissions:
       contents: read # checkout e leitura do repo
-      issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
+      issues: write # abrir/comentar o alerta em falha
     steps:
       - name: ✋ Somente executa na main
         if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
@@ -242,7 +240,7 @@ jobs:
         if: failure() && steps.redigir.outcome == 'success'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report-logado-${{ github.run_id }}
+          name: playwright-report-logado-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 3
@@ -343,6 +341,17 @@ jobs:
             });
             core.info('comentario novo: a causa mudou');
 
+  recuperar-alerta:
+    name: Recuperacao da suite logada
+    needs: e2e-logado
+    # Um grupo verde nao prova recuperacao: espera TODOS os grupos da matriz.
+    # Falha, cancelamento ou grupo pulado mantem o alerta aberto.
+    if: ${{ !cancelled() && needs.e2e-logado.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
       - name: ✅ Fechar a issue quando a suite volta
         if: success()
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

@@ -8,21 +8,23 @@
  * etapa e travando o merge de todos os chats (observado: X028 → main vermelha, PRs
  * #1478 e #1474 bloqueados).
  *
- * Correção em duas frentes:
- *   1. No PR, o check só AVISA (`continue-on-error: true`) — não derruba o job.
- *   2. No push da main, um workflow regenera o STATUS.md e abre/atualiza um PR.
+ * O CI atual resolve a corrida consultando o próprio commit (`--ref HEAD`),
+ * e voltou a bloquear divergências reais. O antigo aviso restrito a PR deixou
+ * de ser o contrato; não se deve restaurar `continue-on-error` para passar o teste.
+ * No push da main, outro workflow regenera o STATUS.md e abre/atualiza um PR.
  *      Não commita direto na main: ela é protegida, e o envio direto é recusado
  *      com `GH006: Protected branch update failed` (medido no run 37061271438,
  *      02/10/2026 — o desenho antigo só funcionava antes da branch protection).
  *
- * Vermelho-antes: este teste falha (sem `continue-on-error` e sem o workflow).
- * Verde-depois: passa com os dois artefatos no lugar.
+ * O contrato protege a referência determinística, a falha bloqueante e o PR
+ * de regeneração, preservando a origem da correção acima.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { assertBlocking, conditionOf, jobOf, onlyStep, shellCode, stepsOf } from './workflow-test-support.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -30,21 +32,15 @@ function read(rel) {
   return readFileSync(join(ROOT, rel), 'utf8');
 }
 
-/** Bloco YAML do step cujo `name` contém `marcador`. */
-function blocoStep(texto, marcador) {
-  const ini = texto.indexOf(marcador);
-  assert.ok(ini >= 0, `step "${marcador}" não encontrado`);
-  const resto = texto.slice(ini);
-  const fim = resto.indexOf('\n      - name:');
-  return fim >= 0 ? resto.slice(0, fim) : resto;
-}
-
-test.skip('placar do Talk X avisa no PR, não bloqueia (continue-on-error)', () => {
+test('placar do Talk X verifica o proprio HEAD e bloqueia divergencias', () => {
   const ci = read('.github/workflows/ci.yml');
-  const bloco = blocoStep(ci, 'placar freshness');
-  assert.match(bloco, /continue-on-error:\s*true/, 'o step do placar deve ter continue-on-error: true (aviso, não bloqueia)');
-  assert.match(bloco, /if:\s*github\.event_name\s*==\s*['"]pull_request['"]/, 'o check deve rodar só em PR');
-  assert.match(bloco, /node scripts\/talkx\/v4-status\.mjs\s+--check/, 'o check continua rodando o v4-status.mjs --check');
+  const job = jobOf(ci, 'node-scripts');
+  const step = onlyStep(stepsOf(job), (s) => /^\s*node scripts\/talkx\/v4-status\.mjs\b/m.test(shellCode(s)), 'placar Talk X');
+  assertBlocking(job, 4);
+  assertBlocking(step);
+  assert.ok(['success()', 'true'].includes(conditionOf(job, 4)), 'o job deve verificar PRs e pushes');
+  assert.ok(['success()', 'true'].includes(conditionOf(step)), 'o placar não deve ficar restrito a um evento');
+  assert.match(shellCode(step).trim(), /^node scripts\/talkx\/v4-status\.mjs\s+--check\s+--ref\s+(?:HEAD|'HEAD'|"HEAD")$/, 'verifica o commit local sem mascarar exit 1');
 });
 
 test('existe workflow de auto-regen no push da main (bot, sem loop)', () => {

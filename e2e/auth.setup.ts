@@ -1,5 +1,6 @@
 import { expect, test as setup } from '@playwright/test';
 import path from 'node:path';
+import { assertAuthenticatedTarget, diagnoseAuthFailure, isAuthLoginRequest, type AuthObservation } from './auth-diagnostics';
 
 const AUTH_FILE = path.join(import.meta.dirname, '.auth', 'user.json');
 
@@ -11,7 +12,10 @@ setup.setTimeout(180_000);
 // "chromium-authenticated" via dependsOn, nunca antes de "chromium"
 // (auth.spec.ts), que testa a tela de login deslogada e nao pode depender
 // de uma sessao ja autenticada.
-setup('authenticate', async ({ page }) => {
+setup('authenticate', async ({ page, baseURL }) => {
+  // A guarda é específica do setup mutador; projetos públicos/remotos continuam
+  // disponíveis. Ela roda antes de ler credenciais e nunca faz I/O.
+  assertAuthenticatedTarget(baseURL);
   const email = process.env.E2E_TEST_EMAIL;
   const password = process.env.E2E_TEST_PASSWORD;
 
@@ -38,9 +42,30 @@ setup('authenticate', async ({ page }) => {
     );
   }
 
+  // Observamos metadados e marcadores específicos da UI. Não ler/logar body, headers, senha,
+  // email, access token ou storageState para diagnosticar uma falha de login.
+  let observation: AuthObservation = {};
+  let currentLoginRequest: object | undefined;
+  page.on('request', request => {
+    if (request.method() === 'POST' && isAuthLoginRequest(request.url())) {
+      currentLoginRequest = request;
+      observation.backendOrigin = new URL(request.url()).origin;
+    }
+  });
+  page.on('response', response => {
+    if (response.request() === currentLoginRequest) {
+      observation.status = response.status();
+    }
+  });
+  page.on('requestfailed', request => {
+    if (request === currentLoginRequest) {
+      observation.transportFailed = true;
+    }
+  });
+
   // Sidebar da app shell (#main-navigation) so aparece apos login bem-sucedido.
   //
-  // Espera o DESFECHO: a sidebar OU a mensagem ESPECIFICA de recusa, o que vier
+  // Espera o DESFECHO: a sidebar OU a mensagem ESPECIFICA de recusa/bloqueio, o que vier
   // primeiro. A recusa chega num toast que some em poucos segundos (useAuthForm),
   // entao nao da' para esperar a sidebar por inteiro e so' depois procurar o erro.
   // Nao usar getByRole('alert') generico: o app dispara toasts alheios ao login
@@ -55,15 +80,10 @@ setup('authenticate', async ({ page }) => {
   const erroLogin = page.getByText(
     /erro ao entrar|e-?mail ou senha incorretos|conta bloqueada|invalid login|credenciais? inv[aá]lid|temporariamente indispon[ií]vel/i,
   );
-  // "Login temporariamente indisponivel" NAO e recusa de credencial: e o caminho
-  // `unavailable` do AuthService.signIn -- a edge `auth-login` nao respondeu dentro de
-  // AUTH_LOGIN_TIMEOUT_MS (30 s, src/lib/serverLogin.ts) ou devolveu 5xx/429. Medido no
-  // run 38773362900 (W06): clique as 17:00:35.7, o front desistiu as 17:00:48.4 (12,4 s),
-  // a edge so gravou o primeiro rate limit as 17:00:52.4 e o GoTrue criou a sessao as
-  // 17:00:55.9 -- a edge levou ~20 s, e a credencial estava certa. A propria tela manda
-  // "Tente novamente em instantes"; o setup faz o que o usuario faria, com teto de
-  // tentativas. Tentativa `unavailable` nao conta para o lockout (a edge so registra
-  // falha quando o GoTrue RECUSA a credencial -- R2-AUTH-021).
+  // Título do ramo networkBlocked em useAuthForm: não equivale a senha incorreta.
+  const bloqueioAcesso = page.getByText(/^acesso bloqueado$/i);
+  // O toast "indisponivel" também cobre falha de fetch/CORS. Só a resposta HTTP
+  // observada permite atribuir 5xx/429; retries não corrigem origem incompatível.
   const indisponivel = page.getByText(/temporariamente indispon[ií]vel/i);
   const TENTATIVAS = 3;
   const ESPERA_ENTRE_TENTATIVAS_MS = 5_000;
@@ -76,6 +96,8 @@ setup('authenticate', async ({ page }) => {
       await page.goto('/auth', { timeout: 15_000 });
     }
 
+    observation = {};
+    currentLoginRequest = undefined;
     // Mesmo fluxo exercitado (sem login) em e2e/auth.spec.ts: a tela de acesso nao tem
     // abas (auth.spec.ts afirma getByRole('tab') = 0); campo de e-mail, campo de senha,
     // botao "Entrar".
@@ -84,44 +106,37 @@ setup('authenticate', async ({ page }) => {
     await page.getByRole('button', { name: /^entrar$/i }).click();
 
     try {
-      await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 120_000 });
+      await expect(shell.or(erroLogin).or(bloqueioAcesso).first()).toBeVisible({ timeout: 120_000 });
     } catch {
-      const carregando = await page
-        .getByRole('status', { name: /carregando p[aá]gina/i })
-        .isVisible()
-        .catch(() => false);
+      const diagnostic = diagnoseAuthFailure(baseURL, { ...observation, timedOut: true });
       throw new Error(
-        carregando
-          ? '[E2E setup] Login aceito, mas a rota principal nao terminou de carregar em 120 s ' +
-              '(tela presa em "Carregando pagina..."). Provavel partida a frio do dev server ' +
-              'ou chunk da rota principal travado; veja o trace do Playwright.'
-          : '[E2E setup] Login nao concluiu e nao ha mensagem de recusa visivel em 120 s — ' +
-              'o app pode estar sem resposta apos o POST de autenticacao.',
+        `[E2E setup/${diagnostic.code}] ${diagnostic.message} Veja o trace do Playwright.`,
       );
     }
 
     if (await shell.isVisible().catch(() => false)) break;
 
+    observation.accessBlocked = await bloqueioAcesso.first().isVisible().catch(() => false);
     if (await indisponivel.first().isVisible().catch(() => false)) {
-      if (tentativa < TENTATIVAS) {
+      const diagnostic = diagnoseAuthFailure(baseURL, observation);
+      if (diagnostic.retryable && tentativa < TENTATIVAS) {
         console.warn(
-          `[E2E setup] tentativa ${tentativa}/${TENTATIVAS}: "Login temporariamente indisponivel" ` +
-            '(edge auth-login sem resposta em 30 s, ou 5xx/429) -- tentando de novo.',
+          `[E2E setup/${diagnostic.code}] tentativa ${tentativa}/${TENTATIVAS}: ` +
+            `${diagnostic.message} Tentando novamente.`,
         );
         continue;
       }
       throw new Error(
-        `[E2E setup] Login indisponivel em ${TENTATIVAS} tentativas: a edge auth-login nao ` +
-          'respondeu em 30 s (AUTH_LOGIN_TIMEOUT_MS) ou devolveu 5xx/429. NAO e credencial ' +
-          'errada -- verifique os logs da edge auth-login no Supabase.',
+        `[E2E setup/${diagnostic.code}] ${diagnostic.message} Tentativas realizadas: ${tentativa}.`,
       );
     }
 
-    // `last()`: o toast tem titulo ("Erro ao entrar") e descricao; a descricao diz o motivo.
-    const resposta = ((await erroLogin.last().textContent({ timeout: 2_000 }).catch(() => null)) ?? '').trim();
+    const credentialRejected = await page.getByText(
+      /e-?mail ou senha incorretos|conta bloqueada|invalid login|credenciais? inv[aá]lid/i,
+    ).first().isVisible().catch(() => false);
+    const diagnostic = diagnoseAuthFailure(baseURL, { ...observation, credentialRejected });
     throw new Error(
-      `[E2E setup] Credencial recusada — o app mostrou: "${resposta}". ` +
-        'Verifique E2E_TEST_EMAIL/E2E_TEST_PASSWORD ou se o usuario de teste esta ativo.',
+      `[E2E setup/${diagnostic.code}] ${diagnostic.message}`,
     );
   }
 

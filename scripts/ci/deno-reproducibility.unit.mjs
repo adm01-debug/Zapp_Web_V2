@@ -3,14 +3,26 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertBlocking, conditionOf, jobOf, nestedValue, onlyStep, shellCode, stepsOf, valueOf } from './workflow-test-support.mjs';
 
 const read = name => fs.readFileSync(new URL(name, import.meta.url), 'utf8');
-test.skip('Edge contract CI pins its runtime and isolated frozen lock', () => {
+test('Edge contract CI pins its runtime and isolated frozen lock', () => {
   const workflow = read('../../.github/workflows/ci.yml');
-  assert.match(workflow, /deno-version: '2\.9\.5'/);
-  assert.match(workflow, /deno test --config scripts\/ci\/deno\.json --frozen --allow-env/);
+  const job = jobOf(workflow, 'edge-contracts');
+  const steps = stepsOf(job);
+  const setup = onlyStep(steps, (s) => (valueOf(s, 'uses') ?? '').startsWith('denoland/setup-deno@'), 'runtime Deno');
+  const tests = onlyStep(steps, (s) => /^\s*deno test\b/m.test(shellCode(s)), 'testes Edge');
+  assert.equal(nestedValue(setup, 'with', 'deno-version'), '2.9.5');
+  for (const step of [setup, tests]) {
+    assert.equal(conditionOf(step), 'success()');
+    assertBlocking(step);
+  }
+  assert.equal(conditionOf(job, 4), 'success()');
+  assertBlocking(job, 4);
+  assert.ok(steps.indexOf(setup) < steps.indexOf(tests));
+  assert.match(shellCode(tests), /^\s*deno test --config scripts\/ci\/deno\.json --frozen --allow-env\b/m);
   // E49: lista hardcoded substituída por glob; verificar o glob em vez do path literal
-  assert.match(workflow, /supabase\/functions\/\*\*\/\*\.test\.ts/);
+  assert.match(shellCode(tests), /git ls-files 'supabase\/functions\/\*\*\/\*\.test\.ts'/);
   const config = JSON.parse(read('./deno.json'));
   assert.deepEqual(config.lock, { path: './deno.lock', frozen: true });
   assert.equal(config.nodeModulesDir, 'none');

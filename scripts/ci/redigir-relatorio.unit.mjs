@@ -6,6 +6,10 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
+  conditionAllows, conditionOf, jobOf, jobsOf, nestedValue, onlyStep,
+  shellCode, stepsOf, valueOf,
+} from './workflow-test-support.mjs';
+import {
   arquivosDeTexto,
   contarRestantes,
   crc32,
@@ -74,31 +78,56 @@ test('E82: diretorio ausente nao derruba o CI', () => {
   assert.deepEqual(r, { arquivos: 0, arquivosTocados: 0, ocorrencias: 0, segredos: 1 });
 });
 
-test.skip('E82: o workflow mascara o log e redige o arquivo ANTES de subir o artifact', () => {
+test('E82: o workflow mascara o log e redige o arquivo ANTES de subir o artifact', () => {
   const y = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
-  const mascara = y.indexOf('::add-mask::$E2E_TEST_EMAIL');
-  const playwright = y.indexOf('Run Playwright E2E');
-  const redige = y.indexOf('scripts/ci/redigir-relatorio.mjs');
-  const upload = y.indexOf('actions/upload-artifact');
+  const steps = stepsOf(jobOf(y, 'e2e-logado'));
+  const mascara = onlyStep(steps, (s) => /^\s*echo "::add-mask::\$E2E_TEST_EMAIL"/m.test(shellCode(s)), 'mascara no log');
+  const playwright = onlyStep(steps, (s) => /^\s*bun run test:e2e\b/m.test(shellCode(s)), 'Playwright');
+  const redige = onlyStep(steps, (s) => /^\s*node scripts\/ci\/redigir-relatorio\.mjs\b/m.test(shellCode(s)), 'redacao');
+  assert.ok(steps.indexOf(mascara) < steps.indexOf(playwright), 'mascarar antes do Playwright');
+  assert.ok(steps.indexOf(redige) > steps.indexOf(playwright), 'redigir depois da geracao do relatorio');
+  assert.match(shellCode(redige), /node scripts\/ci\/redigir-relatorio\.mjs playwright-report\s/);
+  assert.match(shellCode(redige), /--segredo-env=E2E_TEST_EMAIL\b/);
+  assert.match(shellCode(redige), /--segredo-env=E2E_TEST_PASSWORD\b/);
+  const redactorId = valueOf(redige, 'id');
+  assert.ok(redactorId, 'a guarda precisa referenciar o passo real de redacao');
+  const uploads = [...jobsOf(y)].flatMap(([id, job]) => stepsOf(job)
+    .filter((s) => (valueOf(s, 'uses') ?? '').startsWith('actions/upload-artifact@')).map((step) => ({ id, step })));
+  assert.ok(uploads.length > 0, 'o relatorio redigido continua sendo arquivado');
+  for (const { id, step } of uploads) {
+    assert.equal(id, 'e2e-logado', 'o upload precisa usar o relatorio redigido no mesmo job');
+    assert.ok(steps.indexOf(step) > steps.indexOf(redige), 'todo upload vem depois da redacao');
+    assert.match(valueOf(step, 'uses'), /^actions\/upload-artifact@[0-9a-f]{40}$/);
+    assert.equal(nestedValue(step, 'with', 'path')?.replace(/\/$/, ''), 'playwright-report');
+    assert.equal(nestedValue(step, 'with', 'retention-days'), '3');
+    assert.equal(nestedValue(step, 'with', 'if-no-files-found'), 'ignore');
+    for (const failed of [false, true]) for (const outcome of ['success', 'failure', 'skipped', 'cancelled']) {
+      const allowed = conditionAllows(conditionOf(step), {
+        'failure()': failed, 'success()': !failed, 'always()': true, 'cancelled()': false,
+        [`steps.${redactorId}.outcome`]: outcome,
+      });
+      assert.equal(allowed, failed && outcome === 'success', 'upload exige falha e redacao bem-sucedida');
+    }
+  }
+});
 
-  assert.ok(mascara > -1, 'o e-mail tem de ser mascarado no log');
-  assert.ok(mascara < playwright, 'mascarar DEPOIS do Playwright nao protege nada');
-  assert.ok(redige > playwright, 'a redacao vem depois do relatorio existir');
-  assert.ok(upload > redige, 'redigir DEPOIS do upload publicaria o arquivo com o e-mail -- o CI nao pega isso');
-  assert.match(y, /--segredo-env=E2E_TEST_EMAIL/, 'o valor chega pelo nome da variavel, nunca na linha de comando');
-  assert.match(
-    y,
-    /--segredo-env=E2E_TEST_PASSWORD/,
-    'redige TAMBEM a senha: e ela que aparece em texto claro no error-context.md',
-  );
-  assert.match(y, /retention-days: 3/, 'o plano pede 3 dias de retencao');
-  assert.match(y, /if-no-files-found: ignore/, 'sem relatorio nao e erro');
-  assert.match(
-    y,
-    /steps\.redigir\.outcome == 'success'/,
-    'se a redacao falhar, o relatorio NAO pode subir -- seria publicar as credenciais de qualquer jeito',
-  );
-  assert.match(y, /uses: actions\/upload-artifact@[0-9a-f]{40}/, 'o zizmor exige `uses` pinado por SHA');
+test('E82: nomes de artifacts nao colidem entre grupos, runs ou retentativas', () => {
+  const y = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
+  const job = jobOf(y, 'e2e-logado');
+  const groups = [...job.matchAll(/^ {10}- name: (.+)$/gm)].map((match) => match[1]);
+  const upload = onlyStep(stepsOf(job), (s) => (valueOf(s, 'uses') ?? '').startsWith('actions/upload-artifact@'), 'artifact E2E');
+  const template = nestedValue(upload, 'with', 'name');
+  const names = [];
+  for (const group of groups) for (const run of [101, 102]) for (const attempt of [1, 2]) {
+    const context = { 'matrix.name': group, 'github.run_id': run, 'github.run_attempt': attempt };
+    names.push(template.replace(/\$\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
+      assert.ok(Object.hasOwn(context, key), `contexto nao simulado: ${key}`);
+      return context[key];
+    }));
+  }
+  assert.ok(groups.length > 1);
+  assert.equal(new Set(names).size, names.length, 'upload-artifact exige nomes unicos; overwrite apagaria o diagnostico anterior');
+  assert.notEqual(nestedValue(upload, 'with', 'overwrite'), 'true');
 });
 
 test('E82: dois segredos na mesma passada -- email e senha saem os dois', () => {
