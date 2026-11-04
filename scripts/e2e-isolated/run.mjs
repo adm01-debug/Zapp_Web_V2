@@ -25,7 +25,7 @@ const FILES_DIAGNOSTIC_PREFIX = '[e2e-isolated/seed-files-volume-diagnostic] ';
 const FILES_DIAGNOSTIC_STAGES = Object.freeze([
   'db-open', 'sql-begin', 'sql-auth-user', 'sql-auth-identity', 'sql-profile-read',
   'sql-profile-create', 'sql-profile-update', 'sql-user-role', 'sql-user-settings',
-  'sql-connection', 'sql-contacts', 'sql-media', 'sql-text', 'sql-pagination',
+  'sql-connection', 'sql-contacts', 'sql-message-context', 'sql-media', 'sql-text', 'sql-pagination',
   'sql-empty-text', 'sql-commit', 'storage-upload-image', 'storage-upload-video',
   'storage-upload-audio', 'storage-upload-document', 'storage-upload-pagination',
   'auth-login', 'rls-media', 'rls-pagination', 'rls-volume-check', 'rls-pagination-check',

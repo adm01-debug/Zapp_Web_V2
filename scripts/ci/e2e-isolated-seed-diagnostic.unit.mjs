@@ -35,6 +35,7 @@ const producer = await helpers();
 
 function sqlOperation(parts) {
   const sql = parts.join('?');
+  if (sql === 'select current_user as caller_role' || sql === 'set local role service_role') return 'sql-message-context';
   for (const [text, operation] of [
     ['insert into auth.users', 'sql-auth-user'], ['insert into auth.identities', 'sql-auth-identity'],
     ['select id from profiles', 'sql-profile-read'], ['insert into profiles', 'sql-profile-create'],
@@ -50,7 +51,10 @@ function sqlOperation(parts) {
 }
 
 async function runSeed(options = {}) {
-  const observed = { operations: [], markers: [], stdout: '', stderr: '', closeCalls: 0, rejected: false, error: undefined };
+  const initialRole = options.callerRole ?? 'supabase_admin';
+  let currentRole = initialRole;
+  const observed = { operations: [], markers: [], stdout: '', stderr: '', closeCalls: 0, rejected: false, error: undefined,
+    roleCommands: [], messageRoles: [], httpRoles: [], currentRole };
   let context;
   const enter = operation => {
     observed.operations.push(operation);
@@ -58,9 +62,20 @@ async function runSeed(options = {}) {
     if (operation === options.operation && Object.hasOwn(options, 'operationError')) throw options.operationError;
   };
   const tx = async (parts, ...values) => {
+    const sql = parts.join('?');
     const operation = sqlOperation(parts);
     enter(operation);
+    if (operation === 'sql-message-context') {
+      assert.equal(values.length, 0, 'role queries must use constant SQL without interpolation');
+      observed.roleCommands.push(sql);
+      const errorKey = sql.startsWith('select ') ? 'roleReadError' : 'roleSetError';
+      if (Object.hasOwn(options, errorKey)) throw options[errorKey];
+      if (sql.startsWith('select ')) return [{ caller_role: currentRole }];
+      currentRole = 'service_role';
+      return [];
+    }
     assert.ok(values.length > 0);
+    if (['sql-media', 'sql-text', 'sql-pagination', 'sql-empty-text'].includes(operation)) observed.messageRoles.push(currentRole);
     if (operation === 'sql-profile-read') return options.profileMissing ? [] : [{ id: 'synthetic-profile' }];
     if (operation === 'sql-profile-create') return [{ id: 'synthetic-profile' }];
     return [];
@@ -68,7 +83,15 @@ async function runSeed(options = {}) {
   const SQL = url => {
     assert.equal(url, env.DB_URL);
     enter('db-open');
-    return { begin: async callback => { enter('sql-begin'); await callback(tx); enter('sql-commit'); },
+    return { begin: async callback => {
+      enter('sql-begin');
+      try { await callback(tx); enter('sql-commit'); }
+      finally {
+        // Controlled SQL boundary models SET LOCAL ending with the transaction;
+        // this does not execute PostgreSQL or prove Bun's native rollback.
+        currentRole = initialRole; observed.currentRole = currentRole;
+      }
+    },
       end: async () => { observed.closeCalls++; enter('db-close'); if (Object.hasOwn(options, 'cleanupError')) throw options.cleanupError; } };
   };
   const uploadPaths = new Map([
@@ -79,6 +102,7 @@ async function runSeed(options = {}) {
     [data.E2E_ARQUIVOS.contatoPaginacao.id + '/e2e-arquivos-pagina.png', 'storage-upload-pagination'],
   ]);
   const fetch = async (address, init = {}) => {
+    observed.httpRoles.push(currentRole);
     const url = new URL(address);
     assert.equal(url.origin, env.API_URL, 'all HTTP targets must remain synthetic loopback');
     let operation, json = {};
@@ -215,7 +239,7 @@ for (const [label, thrown] of [['null', null], ['zero', 0], ['false', false], ['
   });
 }
 
-for (const operation of ['db-open', 'sql-begin', 'sql-auth-user', 'sql-auth-identity', 'sql-profile-read', 'sql-profile-create', 'sql-profile-update', 'sql-user-role', 'sql-user-settings', 'sql-connection', 'sql-contacts', 'sql-media', 'sql-text', 'sql-pagination', 'sql-empty-text', 'sql-commit', 'storage-upload-image', 'storage-upload-video', 'storage-upload-audio', 'storage-upload-document', 'storage-upload-pagination', 'auth-login', 'rls-media', 'rls-pagination', 'storage-sign', 'storage-download', 'storage-public-check', 'stdout-summary', 'db-close']) {
+for (const operation of ['db-open', 'sql-begin', 'sql-auth-user', 'sql-auth-identity', 'sql-profile-read', 'sql-profile-create', 'sql-profile-update', 'sql-user-role', 'sql-user-settings', 'sql-connection', 'sql-contacts', 'sql-message-context', 'sql-media', 'sql-text', 'sql-pagination', 'sql-empty-text', 'sql-commit', 'storage-upload-image', 'storage-upload-video', 'storage-upload-audio', 'storage-upload-document', 'storage-upload-pagination', 'auth-login', 'rls-media', 'rls-pagination', 'storage-sign', 'storage-download', 'storage-public-check', 'stdout-summary', 'db-close']) {
   test('seed diagnostic operation/' + operation, async () => {
     const error = pgError('42601');
     const value = await runSeed({ operation, operationError: error, profileMissing: operation === 'sql-profile-create' });
@@ -275,4 +299,47 @@ test('seed diagnostic success/real seed keeps SQL, HTTP, private readback and cl
   assert.ok(value.operations.indexOf('storage-public-check') < value.operations.indexOf('stdout-summary'));
   assert.equal(value.operations.at(-1), 'db-close'); assert.equal(value.closeCalls, 1);
   assert.ok(value.markers.every(([actual, marker]) => actual === marker));
+});
+
+for (const callerRole of ['supabase_admin', 'postgres', 'service_role', 'authenticated', 'anon', 'synthetic_agent', 'SUPABASE_ADMIN', 'supabase_admin ', 'supabase_admin; set role postgres']) {
+  test('seed message context/caller ' + JSON.stringify(callerRole), async () => {
+    const value = await runSeed({ callerRole });
+    assert.equal(value.rejected, false); assert.equal(value.stderr, ''); assert.equal(value.closeCalls, 1);
+    assert.deepEqual(value.roleCommands, callerRole === 'supabase_admin'
+      ? ['select current_user as caller_role', 'set local role service_role'] : ['select current_user as caller_role']);
+    assert.ok(value.messageRoles.length > 0);
+    assert.ok(value.messageRoles.every(role => role === (callerRole === 'supabase_admin' ? 'service_role' : callerRole)));
+    assert.ok(value.operations.lastIndexOf('sql-contacts') < value.operations.indexOf('sql-message-context'));
+    assert.ok(value.operations.lastIndexOf('sql-message-context') < value.operations.indexOf('sql-media'));
+    assert.equal(value.currentRole, callerRole);
+    assert.ok(value.httpRoles.length > 0); assert.ok(value.httpRoles.every(role => role === callerRole));
+  });
+}
+for (const errorKey of ['roleReadError', 'roleSetError']) {
+  for (const [label, error] of [['postgres', pgError()], ['null', null], ['zero', 0], ['false', false], ['empty', ''], ['undefined', undefined]]) {
+    test('seed message context/' + errorKey + '/' + label, async () => {
+      const value = await runSeed({ [errorKey]: error });
+      assert.equal(value.rejected, true); assert.equal(value.error, error); assert.equal(value.closeCalls, 1);
+      assert.equal(value.diagnostic.available, true); assert.equal(value.diagnostic.failure.stage, 'sql-message-context');
+      assert.equal(value.diagnostic.failure.http_status, undefined); assert.equal(value.diagnostic.cleanup, undefined);
+      assert.equal(value.operations.includes('sql-media'), false); assert.equal(value.operations.includes('storage-upload-image'), false);
+      assert.equal(value.currentRole, 'supabase_admin'); noLeak(value.diagnostic);
+    });
+  }
+}
+for (const operation of ['sql-media', 'sql-commit']) test('seed message context/later failure ' + operation, async () => {
+  const error = pgError('23505');
+  const value = await runSeed({ operation, operationError: error });
+  assert.equal(value.rejected, true); assert.equal(value.error, error); assert.equal(value.closeCalls, 1);
+  assert.deepEqual(value.roleCommands, ['select current_user as caller_role', 'set local role service_role']);
+  assert.equal(value.currentRole, 'supabase_admin'); assert.equal(value.httpRoles.length, 0);
+  assert.equal(value.diagnostic.failure.stage, operation); noLeak(value.diagnostic);
+});
+test('seed message context/SET failure retains primary diagnosis when cleanup throws false', async () => {
+  const error = pgError();
+  const value = await runSeed({ roleSetError: error, cleanupError: false });
+  assert.equal(value.rejected, true); assert.equal(value.error, false); assert.equal(value.closeCalls, 1);
+  assert.equal(value.diagnostic.failure.stage, 'sql-message-context'); assert.equal(value.diagnostic.failure.sqlstate, '42501');
+  assert.equal(value.diagnostic.cleanup.stage, 'db-close'); assert.equal(value.diagnostic.cleanup.error_name, 'UnknownError');
+  assert.equal(value.operations.includes('sql-media'), false); assert.equal(value.httpRoles.length, 0); noLeak(value.diagnostic);
 });

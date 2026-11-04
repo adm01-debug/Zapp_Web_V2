@@ -41,7 +41,7 @@ const SEED_DIAGNOSTIC_PREFIX = '[e2e-isolated/seed-files-volume-diagnostic] ';
 const SEED_DIAGNOSTIC_STAGES = [
   'db-open', 'sql-begin', 'sql-auth-user', 'sql-auth-identity', 'sql-profile-read',
   'sql-profile-create', 'sql-profile-update', 'sql-user-role', 'sql-user-settings',
-  'sql-connection', 'sql-contacts', 'sql-media', 'sql-text', 'sql-pagination',
+  'sql-connection', 'sql-contacts', 'sql-message-context', 'sql-media', 'sql-text', 'sql-pagination',
   'sql-empty-text', 'sql-commit', 'storage-upload-image', 'storage-upload-video',
   'storage-upload-audio', 'storage-upload-document', 'storage-upload-pagination',
   'auth-login', 'rls-media', 'rls-pagination', 'rls-volume-check', 'rls-pagination-check',
@@ -295,6 +295,14 @@ async function main() {
           on conflict (id) do update
             set name = excluded.name, assigned_to = excluded.assigned_to,
                 conversation_status = 'open', deleted_at = null, updated_at = now()`;
+      }
+
+      // As guardas de mensagens reconhecem a identidade do backend. A mudança
+      // fica nesta transação e não altera os JWTs usados na prova HTTP abaixo.
+      markSeedStage('sql-message-context');
+      const [caller] = await tx`select current_user as caller_role`;
+      if (caller?.caller_role === 'supabase_admin') {
+        await tx`set local role service_role`;
       }
 
       const midias = [mensagens.imagem, mensagens.video, mensagens.audio, mensagens.documento];
