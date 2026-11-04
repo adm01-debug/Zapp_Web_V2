@@ -156,7 +156,7 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
   });
 }
 
-async function controllerFixture(t, fault, manifest = value => value) {
+async function controllerFixture(t, fault, manifest = value => value, tlsDiagnostic) {
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
@@ -189,6 +189,7 @@ async function controllerFixture(t, fault, manifest = value => value) {
   let pgReadyChecks = 0;
   let localKeyConfigured = false;
   let driverLocalAnonKey;
+  let diagnosticCredentials = {};
   const tlsStages = [];
   let tlsInstalled = false;
   let tlsUpdated = false;
@@ -269,7 +270,10 @@ async function controllerFixture(t, fault, manifest = value => value) {
       if (argv.includes('--env-file')) {
         const envText = readFileSync(valueAfter(argv, '--env-file'), 'utf8');
         credentialFilesSeen ||= envText.includes('E2E_TEST_PASSWORD=');
-        if (name.endsWith('-driver')) driverLocalAnonKey = envText.match(/^ANON_KEY=(.+)$/m)?.[1];
+        if (name.endsWith('-driver')) {
+          driverLocalAnonKey = envText.match(/^ANON_KEY=(.+)$/m)?.[1];
+          diagnosticCredentials = Object.fromEntries(envText.trim().split('\n').map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
+        }
         if (name.endsWith('-tls-edge')) {
           assert.equal(/SERVICE_ROLE|JWT_SECRET|ANON_KEY|PASSWORD/.test(envText), false, 'temporary Edge never receives application credentials');
           assert.equal(metadata.Mounts.some(mount => mount.Destination === '/run/zapp-e2e-tls-private' || mount.Destination === '/run/zapp-e2e'), false);
@@ -318,6 +322,22 @@ async function controllerFixture(t, fault, manifest = value => value) {
         assert.equal(tlsUpdated, true); assert.equal(tlsBoot, true); assert.equal(migrationCalls, 0);
         assert.equal([...containers.keys()].some(name => name.endsWith('-postgres')), false, 'TLS gates precede even database creation');
         tlsStages.push(runtime);
+        if (tlsDiagnostic?.runtime === runtime) {
+          const keys = { anon: 'ANON_KEY', service: 'SERVICE_ROLE_KEY', email: 'E2E_TEST_EMAIL', password: 'E2E_TEST_PASSWORD' };
+          const secrets = Object.values(keys).map(key => diagnosticCredentials[key]);
+          assert.ok(secrets.every(value => typeof value === 'string' && value.length > 6));
+          const genericJwt = 'eyJkaWFnbm9zdGljIn0.eyJzeW50aGV0aWMiOnRydWV9.c2lnbmF0dXJlLWZpeHR1cmU';
+          const secret = keys[tlsDiagnostic.kind] ? diagnosticCredentials[keys[tlsDiagnostic.kind]] :
+            tlsDiagnostic.kind === 'jwt-shape' ? genericJwt : secrets.join(' ');
+          const diagnostic = 'TLS_DIAGNOSTIC phase=positive engine=chromium ERR_CERT_AUTHORITY_INVALID ' + secret;
+          return { status: ['signal', 'timeout'].includes(tlsDiagnostic.kind) ? null : 1,
+            stdout: tlsDiagnostic.kind === 'stdout' ? diagnostic : '',
+            stderr: tlsDiagnostic.kind === 'stdout' ? '' : diagnostic,
+            ...(tlsDiagnostic.kind === 'signal' ? { signal: 'SIGTERM' } : {}),
+            ...(tlsDiagnostic.kind === 'timeout' ? { error: new Error('ETIMEDOUT') } : {}),
+          };
+        }
+
         if (fault === 'tls-' + runtime + '-exit') return error();
         if (fault === 'tls-' + runtime + '-json') return ok('not-json');
         const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
@@ -423,7 +443,9 @@ async function controllerFixture(t, fault, manifest = value => value) {
     const content = readFileSync(path.join(output, 'public', name), 'utf8');
     assert.equal(/must-never-publish|private-sentinel|raw SQL must never publish/.test(content), false, 'private report/config and SQL must not publish');
   }
-  const result = { exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const tlsDiagnosticLog = tlsDiagnostic && existsSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'))
+    ? readFileSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'), 'utf8') : null;
+  const result = { tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -642,4 +664,24 @@ for (const [fault, expected] of Object.entries({ ...tlsPreflightFaults, ...tlsBe
     assert.equal(value.calls.some(call => call.args[2] === 'run' && call.args.some(arg => arg.endsWith('-postgres'))), false);
     if (Object.hasOwn(tlsPreflightFaults, fault)) assert.equal(value.credentialFilesSeen, false);
   });
+}
+
+// A failed pre-database TLS probe must leave a useful redacted diagnostic.
+// Subprocess transport is controlled; controller and both redaction passes are real.
+for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
+  for (const kind of ['anon', 'service', 'email', 'password', 'jwt-shape', 'all', 'signal', 'timeout', 'stdout']) {
+    test('TLS diagnostic: ' + runtime + '/' + kind + ' preserves cause and removes credentials', async t => {
+      const value = await controllerFixture(t, 'none', value => value, { runtime, kind });
+      assert.equal(value.exit, 1); assert.equal(value.state.success, false);
+      assert.equal(value.state.error, 'tls-' + runtime + '-gate');
+      assert.equal(value.migrationCalls, 0); assert.equal(value.seedCalls, 0); assert.equal(value.browserCalls, 0);
+      assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+      assert.equal(typeof value.tlsDiagnosticLog, 'string', 'failed TLS diagnostic must survive for the real runner');
+      assert.match(value.tlsDiagnosticLog, /TLS_DIAGNOSTIC phase=positive engine=chromium ERR_CERT_AUTHORITY_INVALID/);
+      for (const key of ['ANON_KEY', 'SERVICE_ROLE_KEY', 'E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD']) {
+        assert.ok(!value.tlsDiagnosticLog.includes(value.diagnosticCredentials[key]), key + ' must be redacted');
+      }
+      assert.doesNotMatch(value.tlsDiagnosticLog, /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/);
+    });
+  }
 }

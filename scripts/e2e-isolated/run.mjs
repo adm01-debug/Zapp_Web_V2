@@ -339,7 +339,9 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     const tlsProof = { schema: 1, run_id: runId, source_sha: sourceSha, origin: TLS_ORIGIN,
       ca_sha256: material.caSha256, tools: tlsTools, clients: [] };
     for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
-      const raw = driverRun([runtime === 'bun' ? 'bun' : 'node', 'scripts/e2e-isolated/tls-probe.mjs', runtime], 'tls-' + runtime + '-gate', 240_000, { recordLog: false });
+      // These probes precede SQL/login; preserve their diagnostics through both
+      // existing redactors so a native TLS failure identifies its actual cause.
+      const raw = driverRun([runtime === 'bun' ? 'bun' : 'node', 'scripts/e2e-isolated/tls-probe.mjs', runtime], 'tls-' + runtime + '-gate', 240_000);
       let value;
       try { value = JSON.parse(raw); } catch { throw new Error('tls-' + runtime + '-invalid-json'); }
       tlsProof.clients.push(assertTlsClientProof(value, runtime, runId, sourceSha));
