@@ -119,3 +119,15 @@ entao a guarda tambem acusa quando o codigo muda e o README fica para tras.
 ```sh
 node --test scripts/ci/dashboard-readme-drift.unit.mjs
 ```
+
+## Resultado dos jobs obrigatórios
+
+`ci-gate.unit.mjs` executa o Bash real do `ci-gate` com resultados sintéticos dos
+sete jobs obrigatórios. O gate exige `success`; em PR draft, aceita somente os
+skips já previstos de `unit-tests` e `build`, indicando validação parcial.
+Falhas, cancelamentos e resultados ausentes ou inesperados continuam bloqueantes.
+O teste requer Bash, não usa rede ou secrets e já integra o glob Node da CI.
+
+```sh
+node --test scripts/ci/ci-gate.unit.mjs
+```
