@@ -6,7 +6,7 @@ import { assertIsolatedAuthEnvironment, validateIsolatedAuthEvidence, type Isola
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type LocalUser = { id?: string; email?: string; app_metadata?: Record<string, unknown> };
-const fail = (code: string): never => { throw new Error(`[E2E tour/${code}]`); };
+function fail(code: string): never { throw new Error(`[E2E tour/${code}]`); }
 
 /** A new Auth user per test/attempt; no shared supervisor preference is reset. */
 export async function withFreshOnboardingUser(

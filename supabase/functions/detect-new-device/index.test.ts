@@ -371,3 +371,292 @@ Deno.test("buildDeviceAlertEmail preserva valores benignos", () => {
     if (!html.includes(valor)) fail(`valor benigno ${valor} deveria aparecer no e-mail`);
   }
 });
+
+// ─── Corrida do inventário: handler + cliente Supabase reais, HTTP interceptado ───
+
+type SessionRaceOptions = {
+  concurrent?: boolean;
+  newDevice?: boolean;
+  insertError?: { code?: string; message: string };
+  canonical?: "missing" | "foreign-user" | "different-session";
+  patchFailure?: "error" | "zero";
+  returned?: "null" | "array" | "multiple" | "missing-id" | "empty-id" | "wrong-user" | "wrong-session";
+  inactive?: boolean;
+  rateAllowed?: boolean;
+};
+type SessionRaceResult = {
+  responses: { status: number; body: Record<string, unknown> }[];
+  sessions: Record<string, unknown>[];
+  sessionReads: number;
+  sessionInserts: number;
+  sessionPatches: Record<string, unknown>[];
+  sessionCollisions: number;
+  deviceCount: number;
+  alerts: number;
+  emails: number;
+};
+
+const SESSION_UNIQUE_MESSAGE = 'duplicate key value violates unique constraint "idx_user_sessions_auth_session_id"';
+const RACE_DEVICE_ID = "33333333-3333-4333-8333-333333333333";
+const RACE_SESSION_ID = "44444444-4444-4444-8444-444444444444";
+const OTHER_RACE_USER = "00000000-0000-4000-8000-000000000002";
+
+async function runSessionRace(options: SessionRaceOptions = {}): Promise<SessionRaceResult> {
+  let result: SessionRaceResult | undefined;
+  await withEnvDetect(ENV_OK_DETECT, async () => {
+    const originalFetch = globalThis.fetch;
+    const originalConsole = { log: console.log, warn: console.warn, error: console.error };
+    const logs: string[] = [];
+    const violations: string[] = [];
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const releaseGates: (() => void)[] = [];
+    const devices: Record<string, unknown>[] = options.newDevice ? [] : [{
+      id: RACE_DEVICE_ID, user_id: A, device_fingerprint: FINGERPRINT,
+    }];
+    const sessions: Record<string, unknown>[] = [];
+    const sessionPatches: Record<string, unknown>[] = [];
+    let deviceReads = 0, sessionReads = 0, sessionInserts = 0, sessionCollisions = 0, alerts = 0, emails = 0;
+    const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+      status, headers: { "content-type": "application/json" },
+    });
+    const dbError = (code: string | undefined, message: string, status = 409) => json({ code, message, details: null, hint: null }, status);
+    const zeroRows = () => dbError("PGRST116", "JSON object requested, multiple (or no) rows returned", 406);
+    const matches = (row: Record<string, unknown>, url: URL) => {
+      for (const [key, value] of url.searchParams) {
+        if (key === "select") continue;
+        if (!value.startsWith("eq.") || row[key] !== value.slice(3)) return false;
+      }
+      return true;
+    };
+    const project = (row: Record<string, unknown>, select: string | null) => select === "*"
+      ? { ...row }
+      : Object.fromEntries((select ?? "").split(",").filter(Boolean).map((key) => [key, row[key]]));
+    function twoReads(label: string) {
+      let count = 0, release!: () => void;
+      const gate = new Promise<void>((resolve) => { release = resolve; });
+      releaseGates.push(release);
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      return async () => {
+        count++;
+        if (count === 1) {
+          timer = setTimeout(() => { violations.push(`barreira incompleta: ${label}`); release(); }, 5_000);
+          timers.push(timer);
+        }
+        if (count === 2) { clearTimeout(timer); release(); }
+        await gate;
+      };
+    }
+    const deviceGate = twoReads("user_devices");
+    const sessionGate = twoReads("user_sessions");
+    const canonicalRow = (): Record<string, unknown> => ({
+      id: RACE_SESSION_ID,
+      user_id: options.canonical === "foreign-user" ? OTHER_RACE_USER : A,
+      auth_session_id: options.canonical === "different-session" ? S2 : S1,
+      device_id: "55555555-5555-4555-8555-555555555555",
+      ip_address: "192.0.2.99", user_agent: "previous-agent",
+      is_active: !options.inactive, expires_at: "2026-10-01T00:00:00.000Z",
+      ended_at: options.inactive ? "2026-10-01T01:00:00.000Z" : null,
+    });
+
+    // Nenhuma chamada cai no fetch original. Erros do próprio double ficam
+    // registrados e reprovam o caso, mesmo se o handler responder 500 esperado.
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      try {
+        const req = new Request(input instanceof URL ? input.href : input, init);
+        const url = new URL(req.url);
+        if (url.origin === "https://api.resend.com" && url.pathname === "/emails" && req.method === "POST") {
+          emails++;
+          return json({ id: "synthetic-email" });
+        }
+        assert(url.origin === ENV_OK_DETECT.SUPABASE_URL, "origem inesperada no double de sessão");
+        if (url.pathname === "/auth/v1/user" && req.method === "GET") {
+          // A corresponde ao sub do JWT desta fixture; não reutiliza USER_DETECT.
+          assert(req.headers.get("authorization") === `Bearer ${DETECT_AUTH_TOKEN}`, "Auth precisa receber o JWT da requisição");
+          return json({ id: A, email: "session-race@example.invalid", aud: "authenticated" });
+        }
+        if (url.pathname === "/rest/v1/rpc/consume_rate_limit" && req.method === "POST") {
+          return json([{ allowed: options.rateAllowed !== false, remaining: options.rateAllowed === false ? 0 : 4 }]);
+        }
+        if (url.pathname === "/rest/v1/security_alerts" && req.method === "POST") {
+          alerts++;
+          return new Response(null, { status: 201 });
+        }
+        if (url.pathname === "/rest/v1/user_devices") {
+          if (req.method === "GET") {
+            assert(url.searchParams.get("user_id") === `eq.${A}` && url.searchParams.get("device_fingerprint") === `eq.${FINGERPRINT}`,
+              "leitura de dispositivo precisa dos dois filtros");
+            const snapshot = devices.filter((row) => matches(row, url)).map((row) => project(row, url.searchParams.get("select")));
+            deviceReads++;
+            if (options.concurrent && options.newDevice && deviceReads <= 2) await deviceGate();
+            return json(snapshot); // GET maybeSingle recebe array do PostgREST.
+          }
+          if (req.method === "POST") {
+            const body = await req.json() as Record<string, unknown>;
+            assert(body.user_id === A && body.device_fingerprint === FINGERPRINT, "dispositivo inserido precisa pertencer ao usuário");
+            if (devices.length) return dbError("23505", 'duplicate key value violates unique constraint "user_devices_user_id_device_fingerprint_key"');
+            const row = { ...body, id: RACE_DEVICE_ID }; devices.push(row);
+            assert(req.headers.get("accept") === "application/vnd.pgrst.object+json", "POST single precisa pedir objeto");
+            return json(project(row, url.searchParams.get("select")), 201);
+          }
+          if (req.method === "PATCH") {
+            const body = await req.json() as Record<string, unknown>;
+            for (const row of devices) if (matches(row, url)) Object.assign(row, body);
+            return new Response(null, { status: 204 });
+          }
+        }
+        if (url.pathname === "/rest/v1/user_sessions") {
+          if (req.method === "GET") {
+            assert(url.searchParams.get("user_id") === `eq.${A}` && url.searchParams.get("auth_session_id") === `eq.${S1}`,
+              "leitura de sessão precisa de usuário e claim");
+            assert(url.searchParams.get("select") === "id", "leitura inicial deve projetar apenas id");
+            const snapshot = sessions.filter((row) => matches(row, url)).map((row) => project(row, "id"));
+            sessionReads++;
+            if (options.concurrent && sessionReads <= 2) await sessionGate();
+            return json(snapshot);
+          }
+          if (req.method === "POST") {
+            const body = await req.json() as Record<string, unknown>;
+            assert(body.user_id === A && body.auth_session_id === S1, "inventário novo precisa do usuário e claim verificados");
+            assert(req.headers.get("accept") === "application/vnd.pgrst.object+json", "POST single de sessão precisa pedir objeto");
+            sessionInserts++;
+            if (!options.concurrent) {
+              if (options.canonical !== "missing") sessions.push(canonicalRow());
+              const error = options.insertError ?? { code: "23505", message: SESSION_UNIQUE_MESSAGE };
+              sessionCollisions++;
+              return dbError(error.code, error.message);
+            }
+            if (sessions.some((row) => row.auth_session_id === body.auth_session_id)) {
+              sessionCollisions++;
+              return dbError("23505", SESSION_UNIQUE_MESSAGE);
+            }
+            const row = { ...body, id: RACE_SESSION_ID }; sessions.push(row);
+            return json(project(row, url.searchParams.get("select")), 201);
+          }
+          if (req.method === "PATCH") {
+            assert(url.searchParams.get("user_id") === `eq.${A}` && url.searchParams.get("auth_session_id") === `eq.${S1}`,
+              "recuperação precisa filtrar usuário e sessão Auth atuais");
+            assert(url.searchParams.get("select") === "id,user_id,auth_session_id", "recuperação precisa projetar identidade completa");
+            assert(req.headers.get("accept") === "application/vnd.pgrst.object+json", "PATCH precisa pedir um objeto singular");
+            assert(req.headers.get("prefer")?.split(",").includes("return=representation"), "PATCH precisa pedir a linha atualizada");
+            const body = await req.json() as Record<string, unknown>;
+            assert(Object.keys(body).sort().join(",") === "device_id,ip_address,last_activity_at,user_agent", "PATCH só pode alterar os quatro campos sequenciais");
+            assert(body.device_id === RACE_DEVICE_ID && typeof body.last_activity_at === "string" && Number.isFinite(Date.parse(body.last_activity_at)),
+              "PATCH precisa do dispositivo canônico e atividade válida");
+            sessionPatches.push({ ...body });
+            if (options.patchFailure === "error") return dbError("42501", "controlled update denied", 403);
+            if (options.patchFailure === "zero") sessions.length = 0;
+            const found = sessions.filter((row) => matches(row, url));
+            if (found.length !== 1) return zeroRows();
+            Object.assign(found[0], body);
+            const row = project(found[0], url.searchParams.get("select"));
+            if (options.returned === "null") return json(null);
+            if (options.returned === "array") return json([row]);
+            if (options.returned === "multiple") return json([row, { ...row, id: "66666666-6666-4666-8666-666666666666" }]);
+            if (options.returned === "missing-id") delete row.id;
+            if (options.returned === "empty-id") row.id = "";
+            if (options.returned === "wrong-user") row.user_id = OTHER_RACE_USER;
+            if (options.returned === "wrong-session") row.auth_session_id = S2;
+            return json(row);
+          }
+        }
+        throw new Error("rota ou método inesperado no double de sessão");
+      } catch (error) {
+        violations.push(error instanceof Error ? error.message : "falha do double");
+        return json({ message: "fixture contract failure" }, 599);
+      }
+    }) as typeof fetch;
+    const capture = (...values: unknown[]) => {
+      logs.push(values.map((value) => typeof value === "string" ? value : JSON.stringify(value, (_key, entry) =>
+        entry instanceof Error ? { message: entry.message } : entry)).join(" "));
+    };
+    console.log = capture; console.warn = capture; console.error = capture;
+    try {
+      const requests = Array.from({ length: options.concurrent ? 2 : 1 }, (_, index) => {
+        const request = makeDetectRequest({ device_fingerprint: FINGERPRINT, browser: "Browser", os: "OS", device_name: "Device" }, `192.0.2.${index + 10}`);
+        request.headers.set("user-agent", `session-race-agent-${index}`);
+        return handleDetectNewDevice(request);
+      });
+      const responses = await Promise.all(requests);
+      const bodies = await Promise.all(responses.map((response) => response.json() as Promise<Record<string, unknown>>));
+      assert(violations.length === 0, `double nativo inválido: ${violations.join("; ")}`);
+      for (const secret of [DETECT_AUTH_TOKEN, ENV_OK_DETECT.SUPABASE_ANON_KEY, ENV_OK_DETECT.SUPABASE_SERVICE_ROLE_KEY, ENV_OK_DETECT.RESEND_API_KEY]) {
+        assert(!logs.some((line) => line.includes(secret)), "o handler não pode registrar JWT ou chaves");
+      }
+      result = { responses: responses.map((response, index) => ({ status: response.status, body: bodies[index] })),
+        sessions, sessionReads, sessionInserts, sessionPatches, sessionCollisions, deviceCount: devices.length, alerts, emails };
+    } finally {
+      for (const timer of timers) clearTimeout(timer);
+      for (const release of releaseGates) release();
+      globalThis.fetch = originalFetch;
+      console.log = originalConsole.log; console.warn = originalConsole.warn; console.error = originalConsole.error;
+    }
+  });
+  assert(result !== undefined, "a observação de sessão precisa concluir");
+  return result;
+}
+
+for (const newDevice of [false, true]) {
+  Deno.test(`handleDetectNewDevice: duas visitas concorrentes com dispositivo ${newDevice ? "novo" : "conhecido"} convergem para uma sessão`, async () => {
+    const observed = await runSessionRace({ concurrent: true, newDevice });
+    assert(observed.responses.every((response) => response.status === 200), "ambas as visitas precisam concluir sem 500");
+    assert(observed.responses.every((response) => response.body.session_id === RACE_SESSION_ID), "ambas precisam devolver a mesma sessão canônica");
+    assert(observed.sessionReads === 2 && observed.sessionInserts === 2 && observed.sessionCollisions === 1, "a prova precisa exercer SELECTs vazios e INSERTs concorrentes");
+    assert(observed.sessions.length === 1 && observed.deviceCount === 1 && observed.sessionPatches.length === 1, "a corrida precisa convergir sem duplicar inventário");
+    assert(observed.sessions[0].user_agent === observed.sessionPatches[0].user_agent && observed.sessions[0].ip_address === observed.sessionPatches[0].ip_address,
+      "a visita recuperada precisa persistir seus próprios metadados");
+    assert(observed.alerts === (newDevice ? 1 : 0) && observed.emails === (newDevice ? 1 : 0), "a recuperação de sessão não pode repetir alerta ou email");
+    assert(observed.responses.filter((response) => response.body.is_new_device === true).length === (newDevice ? 1 : 0), "classificação do dispositivo precisa permanecer correta");
+  });
+}
+
+Deno.test("handleDetectNewDevice: só o código e a mensagem exatos do índice de sessão autorizam recuperação", async () => {
+  for (const insertError of [
+    { code: "23503", message: SESSION_UNIQUE_MESSAGE },
+    { message: SESSION_UNIQUE_MESSAGE },
+    { code: "23505", message: 'duplicate key value violates unique constraint "other_session_unique"' },
+    { code: "23505", message: 'duplicate key value violates unique constraint "idx_user_sessions_auth_session_id_copy"' },
+    { code: "23505", message: 'valor de chave duplicado viola a restrição de unicidade "idx_user_sessions_auth_session_id"' },
+  ]) {
+    const observed = await runSessionRace({ insertError });
+    assert(observed.responses[0].status === 500, "erro não reconhecido deve continuar falhando");
+    assert(observed.sessionPatches.length === 0, "erro de outro contrato não pode atualizar uma sessão existente");
+  }
+});
+
+for (const canonical of ["missing", "foreign-user", "different-session"] as const) {
+  Deno.test(`handleDetectNewDevice: recuperação recusa vencedora ${canonical}`, async () => {
+    const observed = await runSessionRace({ canonical });
+    assert(observed.responses[0].status === 500, "sem vencedora própria não existe recuperação válida");
+    assert(observed.sessionPatches.length === 1, "a prova precisa chegar ao UPDATE filtrado");
+    assert(observed.sessions.every((row) => row.user_agent === "previous-agent"), "linha alheia não pode ser alterada");
+  });
+}
+
+Deno.test("handleDetectNewDevice: erro ou zero linhas no UPDATE canônico não vira sucesso", async () => {
+  for (const patchFailure of ["error", "zero"] as const) {
+    const observed = await runSessionRace({ patchFailure });
+    assert(observed.responses[0].status === 500 && observed.sessionPatches.length === 1, "PATCH sem atualização confirmada precisa falhar");
+  }
+});
+
+Deno.test("handleDetectNewDevice: retorno canônico nulo, múltiplo ou com identidade inválida é recusado", async () => {
+  for (const returned of ["null", "array", "multiple", "missing-id", "empty-id", "wrong-user", "wrong-session"] as const) {
+    const observed = await runSessionRace({ returned });
+    assert(observed.responses[0].status === 500 && observed.sessionPatches.length === 1, "retorno não canônico não comprova a sessão recuperada");
+  }
+});
+
+Deno.test("handleDetectNewDevice: recuperação preserva sessão inativa, encerramento e validade", async () => {
+  const observed = await runSessionRace({ inactive: true });
+  assert(observed.responses[0].status === 200 && observed.responses[0].body.session_id === RACE_SESSION_ID, "a linha própria deve ser recuperada");
+  assert(observed.sessions[0].is_active === false && observed.sessions[0].ended_at === "2026-10-01T01:00:00.000Z" && observed.sessions[0].expires_at === "2026-10-01T00:00:00.000Z",
+    "recuperar uma visita não pode reativar nem prolongar a sessão");
+  assert(observed.sessions[0].user_agent === "session-race-agent-0" && observed.sessions[0].ip_address === "192.0.2.10", "os metadados da visita precisam ser atualizados");
+});
+
+Deno.test("handleDetectNewDevice: rate limit mantém 429 depois de recuperar inventário e criar um único alerta", async () => {
+  const observed = await runSessionRace({ newDevice: true, rateAllowed: false });
+  assert(observed.responses[0].status === 429, "a recuperação não pode suprimir o 429 de dispositivo novo");
+  assert(observed.sessions.length === 1 && observed.sessionPatches.length === 1 && observed.sessions[0].user_agent === "session-race-agent-0", "429 não pode pular o inventário");
+  assert(observed.alerts === 1 && observed.emails === 0, "rate limit não pode repetir alerta nem enviar email");
+});
