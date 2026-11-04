@@ -45,10 +45,8 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
   });
 
   const setCurrentView = useCallback((viewId: string) => {
-    startTransition(() => {
-      navDirectionRef.current = 'forward';
-      rawNavigateTo(viewId);
-    });
+    navDirectionRef.current = 'forward';
+    rawNavigateTo(viewId);
   }, [rawNavigateTo]);
 
   const goBack = useCallback(() => {
