@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a96bbd4cba` · branch `main` · 2026-11-04 10:08 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `46a0257333` · branch `main` · 2026-11-04 13:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4408,9 +4408,21 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Download simulado falhou: ${failDownload} | `scripts/ci/contexto-publicacao.unit.mjs` |
 | ).   assert.doesNotMatch(readme, /não mais\s+lido direto pelo dashboard/,  | `scripts/ci/dashboard-readme-drift.unit.mjs` |
 | I/O não permitido | `scripts/ci/e2e-auth-diagnostics.unit.mjs` |
+| credential-canary password-canary | `scripts/ci/e2e-auth-isolation.unit.mjs` |
+| leitura proibida: ${key} | `scripts/ci/e2e-auth-isolation.unit.mjs` |
+| password-canary | `scripts/ci/e2e-auth-isolation.unit.mjs` |
 | I/O externo proibido nesta simulação | `scripts/ci/e2e-auth-setup.unit.mjs` |
 | Leitura de dados sensiveis proibida | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| [E2E setup/ISOLATION_PROOF] prova recusada | `scripts/ci/e2e-auth-setup.unit.mjs` |
 | prazo simulado | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| unexpected mutation:  | `scripts/ci/e2e-isolated-images.unit.mjs` |
+| bad JWT | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| bad signature | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| bundle denied | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| stat denied | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| worker error | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| credentials read before gateway verification | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
+| credentials read before isolation | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
 | rede proibida neste teste | `scripts/ci/e2e-recovery.unit.mjs` |
 | RPC ${rpc} recusada (HTTP ${resposta.status}) | `scripts/ci/e2e-teardown.mjs` |
 | login do usuario de teste nao devolveu access_token | `scripts/ci/e2e-teardown.mjs` |
@@ -4463,27 +4475,15 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | tsc -b saiu com exit ${status} sem nenhum diagnostico TypeScript parseavel  | `scripts/ci/typecheck-ratchet.mjs` |
 | Target  | `scripts/ci/vercel-env-baseline.mjs` |
 | grep falhou:  | `scripts/ci/verify-crm-integration-doc.unit.mjs` |
+| DTD and entity declarations are not accepted | `scripts/db-audit/assert-deno-junit.py` |
+| duplicate test case name | `scripts/db-audit/assert-deno-junit.py` |
+| empty report | `scripts/db-audit/assert-deno-junit.py` |
+| expected test count must be positive | `scripts/db-audit/assert-deno-junit.py` |
+| test case name is missing | `scripts/db-audit/assert-deno-junit.py` |
+| tests counter disagrees with test cases | `scripts/db-audit/assert-deno-junit.py` |
+| unexpected JUnit root | `scripts/db-audit/assert-deno-junit.py` |
 | a raiz precisa ser um objeto JSON | `scripts/db-audit/check-catalog-fresh.mjs` |
-| falha ao consultar schema_migrations via psql: ${lastStderr \|\|  | `scripts/db-audit/check-migration-drift.mjs` |
-| falha ao consultar schema_migrations via psql: ${safe} | `scripts/db-audit/check-migration-drift.mjs` |
-| Canonical database identity/TLS required | `scripts/db-audit/check-runtime-config.mjs` |
-| Invalid Realtime publication baseline | `scripts/db-audit/check-runtime-config.mjs` |
-| Invalid Realtime publication table list | `scripts/db-audit/check-runtime-config.mjs` |
-| Missing or duplicate runtime sections | `scripts/db-audit/check-runtime-config.mjs` |
-| Output path required | `scripts/db-audit/check-runtime-config.mjs` |
-| diretorio inexistente:  | `scripts/db-audit/check-screen-permission-db-guards.mjs` |
-| invalid ledger aggregate | `scripts/db-audit/check-triple-parity.mjs` |
-| componente arquivoSha256 nao e SHA-256 lowercase de 64 hex | `scripts/db-audit/confirm-hash.mjs` |
-| componente commitSha nao e SHA de commit do GitHub | `scripts/db-audit/confirm-hash.mjs` |
-| componente runtimeSha256 nao e SHA-256 lowercase de 64 hex | `scripts/db-audit/confirm-hash.mjs` |
-| identidade versionada invalida ( | `scripts/db-audit/database-identity.mjs` |
-| DESTINO_URL ausente | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| TARGET_VERSIONS possui duplicatas | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| TARGET_VERSIONS possui version invalida | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| envelope de evidencia invalido | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| falha na consulta read-only: ${safeError(error?.stderr, connectionString)} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| hash da evidencia descriptografada diverge | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| … +1513 linhas — lista completa em `context.json` | |
+| … +1581 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

@@ -149,6 +149,37 @@
   "scripts/db-tests/run-all.mjs": [
    "scripts/db-tests/rpc-envelope.mjs"
   ],
+  "scripts/e2e-isolated/admission.mjs": [
+   "src/config/supabase.ts"
+  ],
+  "scripts/e2e-isolated/gateway.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
+  "scripts/e2e-isolated/main/index.ts": [
+   "scripts/e2e-isolated/main/memory-pressure.ts"
+  ],
+  "scripts/e2e-isolated/migrations.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
+  "scripts/e2e-isolated/playwright.config.ts": [
+   "playwright.config.ts",
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
+  "scripts/e2e-isolated/run.mjs": [
+   "scripts/e2e-isolated/migrations.mjs",
+   "scripts/e2e-isolated/results.mjs",
+   "scripts/e2e-isolated/runtime-contract.mjs",
+   "scripts/e2e-isolated/stack.mjs"
+  ],
+  "scripts/e2e-isolated/runtime-probe.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
+  "scripts/e2e-isolated/seed-login.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
+  "scripts/e2e-isolated/stack.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
   "scripts/edge-deploy/collect-remote.mjs": [
    "scripts/edge-deploy/manifest-lib.mjs",
    "scripts/edge-deploy/stable-inventory.mjs"

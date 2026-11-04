@@ -23,15 +23,15 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1945)",
-   "outro (169)",
+   "outro (178)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (282)",
+   "scripts/db-audit (285)",
    "scripts/ci (40)",
-   "scripts/edge-deploy (16)"
+   "scripts/e2e-isolated (18)"
   ],
   "docs": [
    "docs (31)",
@@ -42,7 +42,7 @@
  "nomenclatura": {
   "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
-  "servicos": "camelCase (76%)",
+  "servicos": "camelCase (75%)",
   "edge_functions": "kebab-case (95%)",
   "tabelas": "snake_case (92%)"
  },
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
-   "fix(ci): bloquear cancelamentos e skips indevidos no gate (#2711)",
-   "chore(db): sincronizar artefatos derivados do banco (#2698)",
-   "fix(ci): restaurar auditorias e fortalecer automações (#2710)",
-   "fix: corrigir geração e saúde dos contextos automáticos (#2708)",
-   "chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)"
+   "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)",
+   "chore: adiciona __pycache__/ ao .gitignore (#2700)",
+   "chore: sincroniza matriz de estados do Talk X (#2715)",
+   "fix: executa paridade Talk X com Deno 2.9.5 (#2714)",
+   "fix: evita padding duplicado nos carregamentos do Talk X (#2712)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

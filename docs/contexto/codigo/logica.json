@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 187,
+ "total": 189,
  "por_camada": {
   "adapters": 2,
   "config": 2,
@@ -10,7 +10,7 @@
   "integrations": 3,
   "lib": 143,
   "providers": 1,
-  "python": 7,
+  "python": 9,
   "segments": 1,
   "services": 17,
   "utils": 8
@@ -39,6 +39,33 @@
     "re",
     "sys",
     "typing"
+   ],
+   "rotas_http": 0,
+   "usado_por": 0,
+   "usado_por_modulos": [],
+   "coberto_por_testes": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "scripts/db-audit/assert-deno-junit.py",
+   "camada": "python",
+   "exports": [
+    "local_name",
+    "main",
+    "validate_report"
+   ],
+   "linhas": 88,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [
+    "__future__",
+    "argparse",
+    "json",
+    "pathlib",
+    "sys",
+    "xml"
    ],
    "rotas_http": 0,
    "usado_por": 0,
@@ -86,6 +113,35 @@
     "pathlib",
     "sys",
     "tempfile"
+   ],
+   "rotas_http": 0,
+   "usado_por": 0,
+   "usado_por_modulos": [],
+   "coberto_por_testes": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "scripts/db-audit/postgrest-internal-url.py",
+   "camada": "python",
+   "exports": [
+    "main",
+    "require",
+    "resolve",
+    "Stopped"
+   ],
+   "linhas": 121,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [
+    "__future__",
+    "argparse",
+    "ipaddress",
+    "json",
+    "pathlib",
+    "re",
+    "sys"
    ],
    "rotas_http": 0,
    "usado_por": 0,
@@ -442,7 +498,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 12,
+   "usado_por": 13,
    "usado_por_modulos": [
     "components/inbox",
     "components/team-chat",
@@ -455,7 +511,7 @@
     "integrations/supabase",
     "lib"
    ],
-   "coberto_por_testes": 18,
+   "coberto_por_testes": 19,
    "orfao": false
   },
   {

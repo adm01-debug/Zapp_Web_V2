@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 376,
+ "total": 397,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -216,7 +216,7 @@
   {
    "arquivo": "scripts/ci/check-test-inventory.mjs",
    "descricao": "E48: verifica que todo .test.ts (supabase/functions/) e .test.sh (scripts/db-audit/) tem correspondente registrado em ci.yml / db-guard.yml.",
-   "linhas": 356,
+   "linhas": 353,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -540,6 +540,15 @@
    "workflows": [
     "db-guard.yml"
    ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/assert-deno-junit.py",
+   "descricao": "Valida a contagem real de um relatório Deno JUnit, sem falhas ou ignorados.",
+   "linhas": 88,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
    "orfao": false
   },
   {
@@ -1407,6 +1416,17 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/db-audit/gmail-cas-postgrest.test.sh",
+   "descricao": "Gmail CAS — 7 casos de cursor + 1 reset HTTP com Postgres/PostgREST descartáveis. Usa os handlers/testes reais e as migrations selecionadas; respostas Gmail",
+   "linhas": 335,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/db-audit/gmail-write-blocks-restrictive.test.sh",
    "descricao": "SEC-RLS_TAREFAS_EMAIL_LIGACOES-04 (P3) — as 3 policies \"Block authenticated gmail inserts/updates/deletes\" de public.gmail_accounts (20260404174826) foram criadas",
    "linhas": 175,
@@ -1844,6 +1864,15 @@
    "arquivo": "scripts/db-audit/pg-cron-jobs-baseline.js",
    "descricao": "* Compara o estado atual dos jobs do pg_cron (cron.job) contra o baseline",
    "linhas": 90,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/postgrest-internal-url.py",
+   "descricao": "Validate filtered Docker inspect metadata for this disposable HTTP backend.",
+   "linhas": 121,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -2592,10 +2621,12 @@
   {
    "arquivo": "scripts/db-audit/talkx-engine-provider.test.sh",
    "descricao": "X034 — integração do MOTOR Talk X com provedor falso. Sobe um PostgreSQL 17 descartável, aplica as MIGRATIONS REAIS do repo que",
-   "linhas": 519,
+   "linhas": 583,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -3601,6 +3632,197 @@
    "arquivo": "scripts/docs/verificar-docs-realtime.mjs",
    "descricao": "* Verificador das páginas de documentação de Realtime/mensagem.",
    "linhas": 229,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/admission.mjs",
+   "descricao": null,
+   "linhas": 155,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/gateway.mjs",
+   "descricao": null,
+   "linhas": 102,
+   "env": [
+    "GITHUB_SHA",
+    "ZAPP_E2E_RUN_ID"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/main/index.ts",
+   "descricao": "Adaptado do main loader do Supabase (Apache-2.0); origem em README.md. Mudanças locais: registro por função, ESZIP verificado e módulos remotos desabilitados.",
+   "linhas": 439,
+   "env": [
+    "JWT_SECRET",
+    "SUPABASE_JWKS"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/main/memory-pressure.ts",
+   "descricao": null,
+   "linhas": 68,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/migrations.mjs",
+   "descricao": "Only the active migration chain was inspected. These hashes bind the review of Vault calls to exact source bytes; future changes must be reviewed again.",
+   "linhas": 80,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/platform/jwt.sql",
+   "descricao": null,
+   "linhas": 4,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/platform/realtime.sql",
+   "descricao": null,
+   "linhas": 5,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/platform/roles.sql",
+   "descricao": null,
+   "linhas": 9,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/platform/webhooks.sql",
+   "descricao": null,
+   "linhas": 213,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/playwright.config.ts",
+   "descricao": "Keep every existing project, dependency and assertion. The controller owns Vite/gateway and mounts only these ephemeral output paths as writable.",
+   "linhas": 36,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/resolve-images.mjs",
+   "descricao": null,
+   "linhas": 99,
+   "env": [
+    "GITHUB_OUTPUT",
+    "PATH"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "e2e-logado-isolado.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/results.mjs",
+   "descricao": "Schema: Playwright v1.64.1 packages/playwright/src/reporters/json.ts. Counts describe test cases, not retry attempts or nested steps. Public output",
+   "linhas": 180,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/run.mjs",
+   "descricao": null,
+   "linhas": 452,
+   "env": [
+    "GITHUB_OUTPUT",
+    "PATH"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/run.sh",
+   "descricao": null,
+   "linhas": 5,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "e2e-logado-isolado.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
+   "descricao": null,
+   "linhas": 147,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/runtime-probe.mjs",
+   "descricao": null,
+   "linhas": 67,
+   "env": [
+    "ANON_KEY",
+    "API_URL",
+    "GITHUB_SHA",
+    "ZAPP_E2E_RUN_ID"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/seed-login.mjs",
+   "descricao": "Do not print response bodies, URLs, request bodies or credentials.",
+   "linhas": 72,
+   "env": [
+    "ANON_KEY",
+    "API_URL",
+    "E2E_TEST_EMAIL",
+    "E2E_TEST_PASSWORD",
+    "GITHUB_SHA",
+    "SERVICE_ROLE_KEY",
+    "ZAPP_E2E_RUN_ID"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/stack.mjs",
+   "descricao": null,
+   "linhas": 132,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

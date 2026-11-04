@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a96bbd4cba` · branch `main` · 2026-11-04 10:08 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `46a0257333` · branch `main` · 2026-11-04 13:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -252,7 +252,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 710 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 720 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -283,9 +283,15 @@
 - `scripts/ci/check-pr-workflow-secrets.unit.mjs`
 - `scripts/ci/check-test-inventory.mjs`
 - `scripts/ci/crm-integration-contract.unit.mjs`
+- `scripts/ci/e2e-auth-isolation.unit.mjs`
+- `scripts/ci/e2e-isolated-images.unit.mjs`
+- `scripts/ci/e2e-isolated-login-seed.unit.mjs`
+- `scripts/ci/e2e-isolated-runtime.unit.mjs`
+- `scripts/ci/e2e-isolated.unit.mjs`
 - `scripts/ci/e2e-teardown.mjs`
 - `scripts/ci/e2e-teardown.unit.mjs`
 - `scripts/ci/edge-coverage-authz.unit.mjs`
+- `scripts/ci/edge-http-harness.unit.mjs`
 - `scripts/ci/message-delivery-phase1-rollout.unit.mjs`
 - `scripts/ci/secrets-environments.unit.mjs`
 - `scripts/ci/vercel-env-baseline.unit.mjs`
@@ -310,6 +316,10 @@
 - `scripts/db-audit/talkx-recovery-runtime.sql`
 - `scripts/db-audit/talkx-template-history-runtime.sql`
 - `scripts/db-audit/validate-runtime-proof.mjs`
+- `scripts/e2e-isolated/platform/webhooks.sql`
+- `scripts/e2e-isolated/runtime-contract.mjs`
+- `scripts/e2e-isolated/seed-login.mjs`
+- `scripts/e2e-isolated/stack.mjs`
 - `scripts/edge-deploy/secrets-scope.mjs`
 - `scripts/edge-deploy/secrets-scope.unit.mjs`
 - `scripts/eslint/no-secret-compare.js`
@@ -394,17 +404,7 @@
 - `supabase/functions/approve-password-reset/index.test.ts`
 - `supabase/functions/approve-password-reset/index.ts`
 - `supabase/functions/auth-login/index.test.ts`
-- `supabase/functions/auth-login/index.ts`
-- `supabase/functions/auto-close-conversations/index.ts`
-- `supabase/functions/batch-fetch-avatars/index.ts`
-- `supabase/functions/bitrix-api/index.test.ts`
-- `supabase/functions/bitrix-api/index.ts`
-- `supabase/functions/chatbot-l1/index.test.ts`
-- `supabase/functions/chatbot-l1/index.ts`
-- `supabase/functions/classify-audio-meme/index.test.ts`
-- `supabase/functions/classify-emoji/index.test.ts`
-- `supabase/functions/classify-sticker/index.test.ts`
-- … +560 (lista completa em `context.json`)
+- … +570 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 

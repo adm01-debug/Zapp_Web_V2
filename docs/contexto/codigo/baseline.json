@@ -2,11 +2,36 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a96bbd4cbaeed5a8bad7c42af347e56960e6cac7",
+  "commit": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
   "branch": "main",
-  "data_commit": "2026-11-04T10:07:16Z",
+  "data_commit": "2026-11-04T13:05:01Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "46a0257",
+    "data": "2026-11-04",
+    "assunto": "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)"
+   },
+   {
+    "sha": "4fa15ac",
+    "data": "2026-11-04",
+    "assunto": "chore: adiciona __pycache__/ ao .gitignore (#2700)"
+   },
+   {
+    "sha": "ec2e5b6",
+    "data": "2026-11-04",
+    "assunto": "chore: sincroniza matriz de estados do Talk X (#2715)"
+   },
+   {
+    "sha": "5431b96",
+    "data": "2026-11-04",
+    "assunto": "fix: executa paridade Talk X com Deno 2.9.5 (#2714)"
+   },
+   {
+    "sha": "f4e5a10",
+    "data": "2026-11-04",
+    "assunto": "fix: evita padding duplicado nos carregamentos do Talk X (#2712)"
+   },
    {
     "sha": "a96bbd4",
     "data": "2026-11-04",
@@ -106,42 +131,17 @@
     "sha": "1616721",
     "data": "2026-11-03",
     "assunto": "chore(regras): §4.2 — envio com WhatsApp caído falha (não há fila offline); estado pós #2677 (#2679)"
-   },
-   {
-    "sha": "031d5e5",
-    "data": "2026-11-03",
-    "assunto": "feat(conexao): regra dos três níveis — aviso na caixa, alerta obrigatório admin/supervisor, QR só admin (#2677)"
-   },
-   {
-    "sha": "f3c9b5d",
-    "data": "2026-11-03",
-    "assunto": "chore(contexto): regras manuais — pagamentos, single-tenant, perfis, retenção/LGPD, SLA (#2674)"
-   },
-   {
-    "sha": "1c0f516",
-    "data": "2026-11-03",
-    "assunto": "chore(contexto): regras manuais de campanhas Talk X (#2673)"
-   },
-   {
-    "sha": "639a500",
-    "data": "2026-11-03",
-    "assunto": "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)"
-   },
-   {
-    "sha": "8f2d06a",
-    "data": "2026-11-03",
-    "assunto": "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)"
    }
   ],
-  "arquivos_mudados_7d": 1273,
+  "arquivos_mudados_7d": 1312,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 1770
+    "mudancas": 1573
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 723
+    "mudancas": 652
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -149,84 +149,80 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 376
+    "mudancas": 333
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 356
-   },
-   {
-    "pasta": "src/components/ui",
-    "mudancas": 316
-   },
-   {
-    "pasta": "src/hooks/integrations",
-    "mudancas": 315
+    "mudancas": 301
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 306
+    "mudancas": 286
    },
    {
-    "pasta": "src/hooks/chat",
-    "mudancas": 267
+    "pasta": "src/hooks/integrations",
+    "mudancas": 278
    },
    {
-    "pasta": "src/components/settings",
+    "pasta": "src/components/ui",
     "mudancas": 264
    },
    {
-    "pasta": "src/components/contacts",
-    "mudancas": 262
+    "pasta": "src/hooks/chat",
+    "mudancas": 239
    },
    {
     "pasta": "src/components/tasks",
-    "mudancas": 254
+    "mudancas": 233
+   },
+   {
+    "pasta": "src/components/contacts",
+    "mudancas": 228
+   },
+   {
+    "pasta": "src/components/settings",
+    "mudancas": 224
    },
    {
     "pasta": "src/lib/__tests__",
-    "mudancas": 234
+    "mudancas": 220
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
     "mudancas": 211
    },
    {
-    "pasta": "src/components/catalog",
-    "mudancas": 210
+    "pasta": "src/components/admin",
+    "mudancas": 185
    }
   ],
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 23
+    "mudancas": 22
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 18
+    "mudancas": 17
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 18
+    "mudancas": 17
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 16
+    "mudancas": 15
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 16
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "ESTADO.md",
     "mudancas": 14
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 14
    },
    {
@@ -238,11 +234,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 13
    },
    {
-    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 12
    },
    {
@@ -250,66 +246,70 @@
     "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/db-migrate.yml",
-    "mudancas": 10
-   },
-   {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/db-audit/known-violations.json",
+    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
     "mudancas": 10
    },
    {
-    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
+    "arquivo": ".github/workflows/db-migrate.yml",
     "mudancas": 9
    },
    {
-    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
-    "mudancas": 8
+    "arquivo": "scripts/db-audit/known-violations.json",
+    "mudancas": 9
    },
    {
-    "arquivo": ".github/workflows/e2e-talkx.yml",
+    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 8
    },
    {
     "arquivo": "playwright.config.ts",
-    "mudancas": 8
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+    "mudancas": 7
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 8
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/db-audit/replay-known-failures.json",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+    "mudancas": 7
    },
    {
     "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "supabase/functions/connection-health-check/index.test.ts",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "supabase/functions/connection-health-check/index.ts",
-    "mudancas": 8
+    "mudancas": 7
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 283
-   },
-   {
-    "autor": "dependabot[bot]",
-    "commits": 8
+    "commits": 284
    },
    {
     "autor": "github-actions[bot]",
     "commits": 8
+   },
+   {
+    "autor": "dependabot[bot]",
+    "commits": 7
    },
    {
     "autor": "devin-ai-integration[bot]",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8151,
-  "arquivos_codigo": 4653,
-  "linhas_codigo": 853317,
+  "arquivos_total": 8189,
+  "arquivos_codigo": 4678,
+  "linhas_codigo": 857897,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,10 +332,10 @@
   "tabelas": 216,
   "migrations": 1082,
   "cron_jobs": 25,
-  "testes": 2539,
-  "workflows": 19,
-  "scripts": 376,
-  "docs_md": 1031
+  "testes": 2548,
+  "workflows": 20,
+  "scripts": 397,
+  "docs_md": 1034
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -384,7 +384,7 @@
   },
   "e2e/auth.setup.ts": {
    "arquivos": 1,
-   "linhas": 145
+   "linhas": 147
   },
   "e2e/auth.spec.ts": {
    "arquivos": 1,
@@ -607,12 +607,12 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 162,
-   "linhas": 30696
+   "arquivos": 171,
+   "linhas": 33002
   },
   "scripts/db-audit": {
-   "arquivos": 79,
-   "linhas": 14853
+   "arquivos": 81,
+   "linhas": 15062
   },
   "scripts/db-tests": {
    "arquivos": 3,
@@ -621,6 +621,10 @@
   "scripts/docs": {
    "arquivos": 1,
    "linhas": 229
+  },
+  "scripts/e2e-isolated": {
+   "arquivos": 14,
+   "linhas": 2063
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
@@ -899,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 420,
+  "console_log": 423,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 46,

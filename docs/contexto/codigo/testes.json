@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2539,
+ "total": 2548,
  "por_tipo": {
   "contrato": 113,
   "e2e": 72,
   "pytest": 3,
   "qa": 6,
-  "unit": 2255
+  "unit": 2264
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 169
+   "arquivos": 178
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -97,8 +97,10 @@
   {
    "arquivo": "e2e/auth.setup.ts",
    "tipo": "e2e",
-   "linhas": 145,
-   "testa": [],
+   "linhas": 147,
+   "testa": [
+    "scripts/e2e-isolated/admission.mjs"
+   ],
    "casos": 0
   },
   {
@@ -968,9 +970,19 @@
    "casos": 12
   },
   {
+   "arquivo": "scripts/ci/e2e-auth-isolation.unit.mjs",
+   "tipo": "unit",
+   "linhas": 259,
+   "testa": [
+    "scripts/e2e-isolated/admission.mjs",
+    "src/config/supabase.ts"
+   ],
+   "casos": 7
+  },
+  {
    "arquivo": "scripts/ci/e2e-auth-setup.unit.mjs",
    "tipo": "unit",
-   "linhas": 214,
+   "linhas": 225,
    "testa": [],
    "casos": 6
   },
@@ -979,6 +991,72 @@
    "tipo": "unit",
    "linhas": 327,
    "testa": [],
+   "casos": 18
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-images.unit.mjs",
+   "tipo": "unit",
+   "linhas": 105,
+   "testa": [
+    "scripts/e2e-isolated/resolve-images.mjs"
+   ],
+   "casos": 9
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-loader.unit.mjs",
+   "tipo": "unit",
+   "linhas": 214,
+   "testa": [],
+   "casos": 2
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-login-seed.unit.mjs",
+   "tipo": "unit",
+   "linhas": 187,
+   "testa": [
+    "scripts/e2e-isolated/runtime-contract.mjs"
+   ],
+   "casos": 8
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-migrations.unit.mjs",
+   "tipo": "unit",
+   "linhas": 126,
+   "testa": [
+    "scripts/e2e-isolated/migrations.mjs",
+    "scripts/e2e-isolated/runtime-contract.mjs"
+   ],
+   "casos": 11
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-results.unit.mjs",
+   "tipo": "unit",
+   "linhas": 220,
+   "testa": [
+    "scripts/e2e-isolated/results.mjs"
+   ],
+   "casos": 40
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "tipo": "unit",
+   "linhas": 494,
+   "testa": [
+    "scripts/e2e-isolated/migrations.mjs",
+    "scripts/e2e-isolated/run.mjs",
+    "scripts/e2e-isolated/runtime-contract.mjs",
+    "scripts/e2e-isolated/stack.mjs"
+   ],
+   "casos": 18
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated.unit.mjs",
+   "tipo": "unit",
+   "linhas": 164,
+   "testa": [
+    "scripts/e2e-isolated/gateway.mjs",
+    "scripts/e2e-isolated/runtime-contract.mjs"
+   ],
    "casos": 18
   },
   {
@@ -1003,6 +1081,13 @@
    "linhas": 498,
    "testa": [],
    "casos": 15
+  },
+  {
+   "arquivo": "scripts/ci/edge-http-harness.unit.mjs",
+   "tipo": "unit",
+   "linhas": 529,
+   "testa": [],
+   "casos": 14
   },
   {
    "arquivo": "scripts/ci/email-en088-medicao-docs.unit.mjs",
@@ -23143,6 +23228,14 @@
   "scripts/db-audit/storage-buckets-baseline.js": 1,
   "scripts/db-audit/verify-ledger-statements.mjs": 1,
   "scripts/db-tests/rpc-envelope.mjs": 1,
+  "scripts/e2e-isolated/admission.mjs": 2,
+  "scripts/e2e-isolated/gateway.mjs": 1,
+  "scripts/e2e-isolated/migrations.mjs": 2,
+  "scripts/e2e-isolated/resolve-images.mjs": 1,
+  "scripts/e2e-isolated/results.mjs": 1,
+  "scripts/e2e-isolated/run.mjs": 1,
+  "scripts/e2e-isolated/runtime-contract.mjs": 4,
+  "scripts/e2e-isolated/stack.mjs": 1,
   "scripts/edge-deploy/allowed-origins.json": 1,
   "scripts/edge-deploy/deploy-plan.mjs": 1,
   "scripts/edge-deploy/deployment-record.mjs": 1,
@@ -23905,7 +23998,7 @@
   "src/components/voice/VoiceSearchOverlayConnected.tsx": 1,
   "src/components/wallet/ClientWalletView.tsx": 2,
   "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx": 3,
-  "src/config/supabase.ts": 18,
+  "src/config/supabase.ts": 19,
   "src/contexts/LayoutContext.tsx": 3,
   "src/contexts/LayoutScrollContext.tsx": 1,
   "src/features/talk-me/TalkMeView.tsx": 1,

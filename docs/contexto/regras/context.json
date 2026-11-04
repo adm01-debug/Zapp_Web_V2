@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a96bbd4cbaeed5a8bad7c42af347e56960e6cac7",
+  "sha": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 10:08 UTC",
-  "files_total": 7992,
-  "code_files": 5906,
-  "code_lines": 1018567
+  "generated_at": "2026-11-04 13:06 UTC",
+  "files_total": 8030,
+  "code_files": 5934,
+  "code_lines": 1023344
  },
  "version": "1.3.2",
- "facts_hash": "bfafa6cef6f28a14",
+ "facts_hash": "72e3339b12b162ef",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -226,6 +226,14 @@
     ]
    },
    {
+    "file": ".github/workflows/e2e-logado-isolado.yml",
+    "name": "E2E isolado - bootstrap e login",
+    "triggers": [
+     "pull_request",
+     "workflow_dispatch"
+    ]
+   },
+   {
     "file": ".github/workflows/e2e-logado.yml",
     "name": "E2E logado",
     "triggers": [
@@ -297,10 +305,10 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1855,
-   ".sql": 1276,
-   ".mjs": 338,
-   ".py": 117,
+   ".ts": 1858,
+   ".sql": 1280,
+   ".mjs": 357,
+   ".py": 119,
    ".cjs": 19,
    ".js": 7,
    ".go": 2
@@ -67578,7 +67586,7 @@
   {
    "module": "e2e",
    "files": 75,
-   "lines": 16752,
+   "lines": 16754,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -67621,6 +67629,7 @@
     "node:url"
    ],
    "imports_modules": [
+    "scripts",
     "src/components",
     "src/lib",
     "supabase/functions"
@@ -67721,8 +67730,8 @@
   },
   {
    "module": "scripts",
-   "files": 357,
-   "lines": 67761,
+   "files": 385,
+   "lines": 72536,
    "tables": [
     "a",
     "alem_do_limite",
@@ -67821,6 +67830,8 @@
     "@playwright/test",
     "@supabase/supabase-js",
     "@tanstack/react-query",
+    "Authorization",
+    "[^",
     "\\.\\",
     "\\.\\.\\",
     "bun",
@@ -67829,6 +67840,8 @@
     "express",
     "fs",
     "https:",
+    "jsr:@panva",
+    "jsr:@panva\\",
     "lib",
     "lodash",
     "mapbox-gl",
@@ -67836,13 +67849,10 @@
     "node:child_process",
     "node:crypto",
     "node:fs",
-    "node:http",
-    "node:https",
-    "node:module",
-    "node:net",
-    "node:os"
+    "node:http"
    ],
    "imports_modules": [
+    "(raiz)",
     "e2e",
     "src/b",
     "src/components",
@@ -67931,12 +67941,12 @@
     "scripts/ci/docs-estado-registry-convention.unit.mjs",
     "scripts/ci/dry-run-plan.unit.mjs",
     "scripts/ci/e2e-auth-diagnostics.unit.mjs",
+    "scripts/ci/e2e-auth-isolation.unit.mjs",
     "scripts/ci/e2e-auth-setup.unit.mjs",
     "scripts/ci/e2e-email-axe-ready.unit.mjs",
-    "scripts/ci/e2e-recovery.unit.mjs",
-    "scripts/ci/e2e-teardown.mjs",
-    "scripts/ci/e2e-teardown.unit.mjs",
-    "scripts/ci/edge-coverage-authz.unit.mjs"
+    "scripts/ci/e2e-isolated-images.unit.mjs",
+    "scripts/ci/e2e-isolated-loader.unit.mjs",
+    "scripts/ci/e2e-isolated-login-seed.unit.mjs"
    ]
   },
   {
@@ -73423,11 +73433,17 @@
    "AI_CONTEXT_SCHEMA_SNAPSHOT": [
     "scripts/regras_negocio/generate.py"
    ],
+   "ANON_KEY": [
+    "scripts/e2e-isolated/runtime-probe.mjs",
+    "scripts/e2e-isolated/seed-login.mjs"
+   ],
    "ANTHROPIC_API_KEY": [
     "scripts/regras_negocio/generate.py"
    ],
    "API_URL": [
-    "e2e/email-link-contato.spec.ts"
+    "e2e/email-link-contato.spec.ts",
+    "scripts/e2e-isolated/runtime-probe.mjs",
+    "scripts/e2e-isolated/seed-login.mjs"
    ],
    "APPLY_BUNDLE": [
     "scripts/db-audit/validate-runtime-proof.mjs"
@@ -73595,13 +73611,15 @@
     "e2e/auth.setup.ts",
     "e2e/inbox-sidebar-topo.spec.ts",
     "e2e/navegacao-modulos.spec.ts",
-    "scripts/ci/e2e-auth-setup.unit.mjs"
+    "scripts/ci/e2e-auth-setup.unit.mjs",
+    "scripts/e2e-isolated/seed-login.mjs"
    ],
    "E2E_TEST_PASSWORD": [
     "e2e/auth.setup.ts",
     "e2e/inbox-sidebar-topo.spec.ts",
     "e2e/navegacao-modulos.spec.ts",
-    "scripts/ci/e2e-auth-setup.unit.mjs"
+    "scripts/ci/e2e-auth-setup.unit.mjs",
+    "scripts/e2e-isolated/seed-login.mjs"
    ],
    "ELEVENLABS_WEBHOOK_SECRET": [
     "supabase/functions/elevenlabs-webhook/index.ts"
@@ -73746,6 +73764,8 @@
    "GITHUB_OUTPUT": [
     "scripts/ci/fila-merge.mjs",
     "scripts/ci/reuso-arvore.mjs",
+    "scripts/e2e-isolated/resolve-images.mjs",
+    "scripts/e2e-isolated/run.mjs",
     "scripts/edge-deploy/secrets-scope.mjs"
    ],
    "GITHUB_REPOSITORY": [
@@ -73767,6 +73787,9 @@
    "GITHUB_SHA": [
     "scripts/ci/reuso-arvore.mjs",
     "scripts/db-audit/validate-runtime-proof.mjs",
+    "scripts/e2e-isolated/gateway.mjs",
+    "scripts/e2e-isolated/runtime-probe.mjs",
+    "scripts/e2e-isolated/seed-login.mjs",
     "vite.config.ts"
    ],
    "GITHUB_STEP_SUMMARY": [
@@ -73813,6 +73836,9 @@
    "GRANTS_SQL_PATH": [
     "scripts/db-audit/check-triple-parity.mjs"
    ],
+   "HARNESS_TEST_STATE": [
+    "scripts/ci/edge-http-harness.unit.mjs"
+   ],
    "INBOX_RESULTS_PATH": [
     "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass2/run.mjs",
     "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass3/run.mjs",
@@ -73847,6 +73873,9 @@
    ],
    "JANELA_DIAS": [
     "scripts/ci/actions-kpi.mjs"
+   ],
+   "JWT_SECRET": [
+    "scripts/e2e-isolated/main/index.ts"
    ],
    "LEDGER_EVIDENCE_OUTPUT": [
     "scripts/db-audit/export-targeted-ledger-evidence.mjs"
@@ -73915,6 +73944,8 @@
     "scripts/ci/prova-orcamento-argv-secrets.unit.mjs",
     "scripts/db-audit/global-guards-regression.test.mjs",
     "scripts/db-audit/validate-destino.test.mjs",
+    "scripts/e2e-isolated/resolve-images.mjs",
+    "scripts/e2e-isolated/run.mjs",
     "scripts/edge-deploy/api-traversal.unit.mjs",
     "scripts/edge-deploy/log-injection.unit.mjs",
     "scripts/edge-deploy/secrets-scope.unit.mjs",
@@ -74104,7 +74135,8 @@
     "scripts/ai-context/cenarios.mjs"
    ],
    "SERVICE_ROLE_KEY": [
-    "e2e/email-link-contato.spec.ts"
+    "e2e/email-link-contato.spec.ts",
+    "scripts/e2e-isolated/seed-login.mjs"
    ],
    "SETTINGS_GUARD_AUTOR": [
     "scripts/ci/github-settings-guard.mjs"
@@ -74185,6 +74217,9 @@
    ],
    "SUPABASE_DB_URL": [
     "scripts/supabase_snapshot/snapshot.py"
+   ],
+   "SUPABASE_JWKS": [
+    "scripts/e2e-isolated/main/index.ts"
    ],
    "SUPABASE_PROJECT_REF": [
     "scripts/inventario/gerar-banco.mjs",
@@ -74292,6 +74327,7 @@
     "supabase/functions/talkx-send/index.ts"
    ],
    "TALKX_ENGINE_ANON_JWT": [
+    "scripts/ci/edge-http-harness.unit.mjs",
     "supabase/functions/talkx-send/engine.integration.test.ts"
    ],
    "TALKX_ENGINE_JWT": [
@@ -74432,6 +74468,11 @@
    ],
    "ZAPP_E2E_LOCAL": [
     "e2e/email-link-contato.spec.ts"
+   ],
+   "ZAPP_E2E_RUN_ID": [
+    "scripts/e2e-isolated/gateway.mjs",
+    "scripts/e2e-isolated/runtime-probe.mjs",
+    "scripts/e2e-isolated/seed-login.mjs"
    ],
    "ZAPP_TEST_PG_PASSWORD": [
     "scripts/db-audit/psql-environment.integration.mjs"
@@ -80083,6 +80124,18 @@
     "msg": "I/O não permitido"
    },
    {
+    "file": "scripts/ci/e2e-auth-isolation.unit.mjs",
+    "msg": "credential-canary password-canary"
+   },
+   {
+    "file": "scripts/ci/e2e-auth-isolation.unit.mjs",
+    "msg": "leitura proibida: ${key}"
+   },
+   {
+    "file": "scripts/ci/e2e-auth-isolation.unit.mjs",
+    "msg": "password-canary"
+   },
+   {
     "file": "scripts/ci/e2e-auth-setup.unit.mjs",
     "msg": "I/O externo proibido nesta simulação"
    },
@@ -80092,7 +80145,43 @@
    },
    {
     "file": "scripts/ci/e2e-auth-setup.unit.mjs",
+    "msg": "[E2E setup/ISOLATION_PROOF] prova recusada"
+   },
+   {
+    "file": "scripts/ci/e2e-auth-setup.unit.mjs",
     "msg": "prazo simulado"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-images.unit.mjs",
+    "msg": "unexpected mutation: "
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-loader.unit.mjs",
+    "msg": "bad JWT"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-loader.unit.mjs",
+    "msg": "bad signature"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-loader.unit.mjs",
+    "msg": "bundle denied"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-loader.unit.mjs",
+    "msg": "stat denied"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-loader.unit.mjs",
+    "msg": "worker error"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-login-seed.unit.mjs",
+    "msg": "credentials read before gateway verification"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-login-seed.unit.mjs",
+    "msg": "credentials read before isolation"
    },
    {
     "file": "scripts/ci/e2e-recovery.unit.mjs",
@@ -80301,6 +80390,34 @@
    {
     "file": "scripts/ci/verify-crm-integration-doc.unit.mjs",
     "msg": "grep falhou: "
+   },
+   {
+    "file": "scripts/db-audit/assert-deno-junit.py",
+    "msg": "DTD and entity declarations are not accepted"
+   },
+   {
+    "file": "scripts/db-audit/assert-deno-junit.py",
+    "msg": "duplicate test case name"
+   },
+   {
+    "file": "scripts/db-audit/assert-deno-junit.py",
+    "msg": "empty report"
+   },
+   {
+    "file": "scripts/db-audit/assert-deno-junit.py",
+    "msg": "expected test count must be positive"
+   },
+   {
+    "file": "scripts/db-audit/assert-deno-junit.py",
+    "msg": "test case name is missing"
+   },
+   {
+    "file": "scripts/db-audit/assert-deno-junit.py",
+    "msg": "tests counter disagrees with test cases"
+   },
+   {
+    "file": "scripts/db-audit/assert-deno-junit.py",
+    "msg": "unexpected JUnit root"
    },
    {
     "file": "scripts/db-audit/check-catalog-fresh.mjs",
@@ -80609,6 +80726,202 @@
    {
     "file": "scripts/db-tests/run-all.mjs",
     "msg": "o arquivo devolveu zero assertiva (nenhuma linha PASS/FAIL/SKIP)"
+   },
+   {
+    "file": "scripts/e2e-isolated/admission.mjs",
+    "msg": "ISOLATION_BROWSER"
+   },
+   {
+    "file": "scripts/e2e-isolated/admission.mjs",
+    "msg": "ISOLATION_CONFIGURATION"
+   },
+   {
+    "file": "scripts/e2e-isolated/admission.mjs",
+    "msg": "ISOLATION_NETWORK"
+   },
+   {
+    "file": "scripts/e2e-isolated/admission.mjs",
+    "msg": "ISOLATION_PROOF"
+   },
+   {
+    "file": "scripts/e2e-isolated/admission.mjs",
+    "msg": "identity unavailable"
+   },
+   {
+    "file": "scripts/e2e-isolated/gateway.mjs",
+    "msg": "invalid-local-path"
+   },
+   {
+    "file": "scripts/e2e-isolated/migrations.mjs",
+    "msg": "[e2e-isolated/historical-jwt-needs-local-transform] "
+   },
+   {
+    "file": "scripts/e2e-isolated/migrations.mjs",
+    "msg": "[e2e-isolated/unreviewed-vault-configuration] "
+   },
+   {
+    "file": "scripts/e2e-isolated/resolve-images.mjs",
+    "msg": "docker-"
+   },
+   {
+    "file": "scripts/e2e-isolated/resolve-images.mjs",
+    "msg": "invalid-image-lock"
+   },
+   {
+    "file": "scripts/e2e-isolated/resolve-images.mjs",
+    "msg": "invalid-image-reference"
+   },
+   {
+    "file": "scripts/e2e-isolated/resolve-images.mjs",
+    "msg": "missing-or-ambiguous-image-digest"
+   },
+   {
+    "file": "scripts/e2e-isolated/resolve-images.mjs",
+    "msg": "nonlocal-docker-context"
+   },
+   {
+    "file": "scripts/e2e-isolated/resolve-images.mjs",
+    "msg": "usage: resolve-images.mjs <report.json>"
+   },
+   {
+    "file": "scripts/e2e-isolated/results.mjs",
+    "msg": "PLAYWRIGHT_REPORT_"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "active-migrations-missing"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "ambiguous-function-policy"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "auth-login-gateway-policy-mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "cron-not-disabled"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "cron-reenabled-by-migration"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "dependencies-not-installed"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "empty-edge-bundle"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "foreign-volume"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "image-digest-mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "image-lock-review-required"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "invalid-container-environment"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "invalid-function-name"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "invalid-work-mount-target"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "linux-user-required"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "local-anon-setting-mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "login-inventory-not-exact"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "login-result-not-clean"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "migration-source-changed"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "namespace-changed"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "network-proof-invalid"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "nonlocal-docker-context"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "output-must-be-empty"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "output-must-be-outside-checkout"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "playwright-image-version-mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "real-platform-schema-missing"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "run-cancelled"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "unexpected-migration-failure"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "unsafe-work-mount-target"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "usage: run.mjs login <output-directory>"
+   },
+   {
+    "file": "scripts/e2e-isolated/runtime-contract.mjs",
+    "msg": "[e2e-isolated/"
+   },
+   {
+    "file": "scripts/e2e-isolated/seed-login.mjs",
+    "msg": "[e2e-isolated/seed-http-"
+   },
+   {
+    "file": "scripts/e2e-isolated/main/index.ts",
+    "msg": "Function bundle hash mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/main/index.ts",
+    "msg": "Invalid isolated function registry"
+   },
+   {
+    "file": "scripts/e2e-isolated/main/memory-pressure.ts",
+    "msg": "Invalid cgroup memory value"
    },
    {
     "file": "scripts/edge-deploy/collect-remote.mjs",
@@ -238334,9 +238647,15 @@
    "scripts/ci/check-pr-workflow-secrets.unit.mjs",
    "scripts/ci/check-test-inventory.mjs",
    "scripts/ci/crm-integration-contract.unit.mjs",
+   "scripts/ci/e2e-auth-isolation.unit.mjs",
+   "scripts/ci/e2e-isolated-images.unit.mjs",
+   "scripts/ci/e2e-isolated-login-seed.unit.mjs",
+   "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "scripts/ci/e2e-isolated.unit.mjs",
    "scripts/ci/e2e-teardown.mjs",
    "scripts/ci/e2e-teardown.unit.mjs",
    "scripts/ci/edge-coverage-authz.unit.mjs",
+   "scripts/ci/edge-http-harness.unit.mjs",
    "scripts/ci/message-delivery-phase1-rollout.unit.mjs",
    "scripts/ci/secrets-environments.unit.mjs",
    "scripts/ci/vercel-env-baseline.unit.mjs",
@@ -238361,6 +238680,10 @@
    "scripts/db-audit/talkx-recovery-runtime.sql",
    "scripts/db-audit/talkx-template-history-runtime.sql",
    "scripts/db-audit/validate-runtime-proof.mjs",
+   "scripts/e2e-isolated/platform/webhooks.sql",
+   "scripts/e2e-isolated/runtime-contract.mjs",
+   "scripts/e2e-isolated/seed-login.mjs",
+   "scripts/e2e-isolated/stack.mjs",
    "scripts/edge-deploy/secrets-scope.mjs",
    "scripts/edge-deploy/secrets-scope.unit.mjs",
    "scripts/eslint/no-secret-compare.js",
@@ -257387,11 +257710,14 @@
      "name": "CANONICAL_APP",
      "value": "'https://zapp-web-v2.vercel.app'"
     }
+   ],
+   "rule_comments": [
+    "Esta é apenas a classificação inicial. O auth.setup exige em seguida a"
    ]
   },
   "e2e/auth.setup.ts": {
    "path": "e2e/auth.setup.ts",
-   "lines": 145,
+   "lines": 147,
    "env": [
     "E2E_TEST_EMAIL",
     "E2E_TEST_PASSWORD"
@@ -260277,7 +260603,7 @@
   },
   "scripts/ci/check-test-inventory.mjs": {
    "path": "scripts/ci/check-test-inventory.mjs",
-   "lines": 356,
+   "lines": 353,
    "exports": [
     "const RAIZ",
     "const ALLOWLIST_NODE",
@@ -260808,9 +261134,25 @@
     "Não é uma validação de deployment: esses cenários provam apenas que informar"
    ]
   },
+  "scripts/ci/e2e-auth-isolation.unit.mjs": {
+   "path": "scripts/ci/e2e-auth-isolation.unit.mjs",
+   "lines": 259,
+   "errors": [
+    "credential-canary password-canary",
+    "leitura proibida: ${key}",
+    "password-canary"
+   ],
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'http://127.0.0.1:5173'"
+    }
+   ],
+   "uses_service_role": true
+  },
   "scripts/ci/e2e-auth-setup.unit.mjs": {
    "path": "scripts/ci/e2e-auth-setup.unit.mjs",
-   "lines": 214,
+   "lines": 225,
    "env": [
     "E2E_TEST_",
     "E2E_TEST_EMAIL",
@@ -260820,6 +261162,7 @@
    "errors": [
     "I/O externo proibido nesta simulação",
     "Leitura de dados sensiveis proibida",
+    "[E2E setup/ISOLATION_PROOF] prova recusada",
     "prazo simulado"
    ],
    "params": [
@@ -260863,6 +261206,118 @@
     "vm.runInContext(compiled, context, { timeout: 1000 });",
     "}, { timeout: 1000 });"
    ]
+  },
+  "scripts/ci/e2e-isolated-images.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-images.unit.mjs",
+   "lines": 105,
+   "errors": [
+    "unexpected mutation: "
+   ],
+   "params": [
+    {
+     "name": "DIGEST",
+     "value": "'a'"
+    }
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-loader.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-loader.unit.mjs",
+   "lines": 214,
+   "errors": [
+    "bad JWT",
+    "bad signature",
+    "bundle denied",
+    "stat denied",
+    "worker error"
+   ]
+  },
+  "scripts/ci/e2e-isolated-login-seed.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-login-seed.unit.mjs",
+   "lines": 187,
+   "errors": [
+    "credentials read before gateway verification",
+    "credentials read before isolation"
+   ],
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-login-seed-0001'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    },
+    {
+     "name": "USER",
+     "value": "'e2e65100-0000-4000-a000-000000000001'"
+    },
+    {
+     "name": "PROFILE",
+     "value": "'e2e65100-0000-4000-a000-000000000002'"
+    }
+   ],
+   "role_checks": [
+    "state"
+   ],
+   "rule_comments": [
+    "contract, while the disposable native run must prove the actual database trigger."
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-migrations.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-migrations.unit.mjs",
+   "lines": 126,
+   "params": [
+    {
+     "name": "GMAIL_CRON",
+     "value": "'20260829110000_gmail_incremental_sync_cron.sql'"
+    }
+   ],
+   "rule_comments": [
+    "new review required */\\n' + s],"
+   ]
+  },
+  "scripts/ci/e2e-isolated-results.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-results.unit.mjs",
+   "lines": 220
+  },
+  "scripts/ci/e2e-isolated-runtime.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "lines": 494,
+   "params": [
+    {
+     "name": "SOURCE_SHA",
+     "value": "'a'"
+    },
+    {
+     "name": "MIGRATION",
+     "value": "'20260101000000_fixture.sql'"
+    },
+    {
+     "name": "SQL",
+     "value": "'select 1;\\n'"
+    }
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated.unit.mjs",
+   "lines": 164,
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-test-0123456789'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    }
+   ],
+   "temporal": [
+    "assert.equal(claims.exp - claims.iat, 4 * 60 * 60);"
+   ],
+   "uses_service_role": true
   },
   "scripts/ci/e2e-recovery.unit.mjs": {
    "path": "scripts/ci/e2e-recovery.unit.mjs",
@@ -261005,6 +261460,22 @@
    "percents": [
     "// autorização em `supabase/functions/_shared/` não pode ficar abaixo de 50%.",
     "// está hoje em ~45% e a régua é um piso contra queda, não um teto por arquivo."
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/edge-http-harness.unit.mjs": {
+   "path": "scripts/ci/edge-http-harness.unit.mjs",
+   "lines": 529,
+   "env": [
+    "HARNESS_TEST_STATE",
+    "TALKX_ENGINE_ANON_JWT"
+   ],
+   "rule_comments": [
+    "Somente doubles de processo. Python real executa extração SQL, JWT e JUnit;"
+   ],
+   "temporal": [
+    "const proc = spawnSync(BIN.bash, [path.join(f.repo, HARNESSES[kind])], { cwd: f.repo, env: f.env, encoding: 'utf8', timeout: 20000 });",
+    "const results = await Promise.all([1, 2].map(() => execute(BIN.bash, [path.join(f.repo, HARNESSES.gmail)], { cwd: f.repo, env: f.env, timeout: 20000 })));"
    ],
    "uses_service_role": true
   },
@@ -262688,6 +263159,25 @@
    ],
    "uses_service_role": true
   },
+  "scripts/db-audit/assert-deno-junit.py": {
+   "path": "scripts/db-audit/assert-deno-junit.py",
+   "lines": 88,
+   "exports": [
+    "def local_name",
+    "def validate_report",
+    "def main"
+   ],
+   "errors": [
+    "DTD and entity declarations are not accepted",
+    "duplicate test case name",
+    "empty report",
+    "expected test count must be positive",
+    "test case name is missing",
+    "tests counter disagrees with test cases",
+    "unexpected JUnit root"
+   ],
+   "doc": "!/usr/bin/env python3"
+  },
   "scripts/db-audit/catalog.sql": {
    "path": "scripts/db-audit/catalog.sql",
    "lines": 88
@@ -263905,6 +264395,17 @@
     "CLI: sai 1 quando ha drift"
    ]
   },
+  "scripts/db-audit/postgrest-internal-url.py": {
+   "path": "scripts/db-audit/postgrest-internal-url.py",
+   "lines": 121,
+   "exports": [
+    "class Stopped",
+    "def require",
+    "def resolve",
+    "def main"
+   ],
+   "doc": "!/usr/bin/env python3"
+  },
   "scripts/db-audit/psql-environment.integration.mjs": {
    "path": "scripts/db-audit/psql-environment.integration.mjs",
    "lines": 128,
@@ -264761,6 +265262,370 @@
    "path": "scripts/docs/verificar-docs-realtime.mjs",
    "lines": 229,
    "doc": "!/usr/bin/env node"
+  },
+  "scripts/e2e-isolated/admission.mjs": {
+   "path": "scripts/e2e-isolated/admission.mjs",
+   "lines": 155,
+   "exports": [
+    "class IsolatedAuthError",
+    "function validateIsolatedAuthEvidence",
+    "function validateBrowserEvidence",
+    "function assertIsolatedAuthEnvironment"
+   ],
+   "errors": [
+    "ISOLATION_BROWSER",
+    "ISOLATION_CONFIGURATION",
+    "ISOLATION_NETWORK",
+    "ISOLATION_PROOF",
+    "identity unavailable"
+   ],
+   "params": [
+    {
+     "name": "MAX_PROOF_AGE_MS",
+     "value": "60"
+    }
+   ],
+   "role_checks": [
+    "anon"
+   ],
+   "rule_comments": [
+    "o processo mudado enquanto o browser respondia. A admissão deve ser atual."
+   ],
+   "calc_fns": [
+    {
+     "name": "validateIsolatedAuthEvidence",
+     "params": "{ baseURL, env, proof, networkNamespace, interfaces, now }",
+     "body": "const target = configuration(baseURL, env, now); requireEvidence(interfaces && Object.keys(interfaces).length === 1 && Array.isArray(interfaces.lo) && interfaces.lo.length > 0 && interfaces.lo.every(item => item.internal === true && ['127.0.0.1', '::1'].includes(item.address)), 'ISOLATION_NETWORK', 'O driver deve executar no namespace sem saída, com somente loopback.'); requireEvidence(typeof networkNamespace === 'string' && /^net:\\[\\d+\\]$/.test(networkNamespace) && proof?.network_namespace === …"
+    },
+    {
+     "name": "validateBrowserEvidence",
+     "params": "target, observation",
+     "body": "requireEvidence(observation?.identity?.run_id === target.run_id && observation.identity.source_sha === target.source_sha && observation.identity.origin === target.origin && observation.is_local === true && observation.effective_url === target.origin && observation.local_url === target.origin && observation.anon_key_sha256 === target.anon_key_sha256, 'ISOLATION_BROWSER', 'O gateway ou o resolver servido pelo Vite não corresponde ao backend isolado comprovado.');"
+    }
+   ],
+   "temporal": [
+    "const MAX_PROOF_AGE_MS = 60 * 60 * 1000;",
+    "const response = await page.goto(`${target.origin}/__e2e/preflight`, { timeout: 15_000 });"
+   ]
+  },
+  "scripts/e2e-isolated/gateway.mjs": {
+   "path": "scripts/e2e-isolated/gateway.mjs",
+   "lines": 102,
+   "exports": [
+    "function routeRequest",
+    "function createGateway"
+   ],
+   "env": [
+    "GITHUB_SHA",
+    "ZAPP_E2E_RUN_ID"
+   ],
+   "errors": [
+    "invalid-local-path"
+   ]
+  },
+  "scripts/e2e-isolated/migrations.mjs": {
+   "path": "scripts/e2e-isolated/migrations.mjs",
+   "lines": 80,
+   "exports": [
+    "function gitBlob",
+    "function prepareMigration",
+    "function migrationFailure"
+   ],
+   "errors": [
+    "[e2e-isolated/historical-jwt-needs-local-transform] ",
+    "[e2e-isolated/unreviewed-vault-configuration] "
+   ],
+   "params": [
+    {
+     "name": "REVIEWED_GMAIL_CRON",
+     "value": "'20260829110000_gmail_incremental_sync_cron.sql'"
+    },
+    {
+     "name": "REVIEWED_GMAIL_CRON_BLOB",
+     "value": "'0eac1be96bcd4649db4059caad6b223f957c1ade'"
+    }
+   ],
+   "rule_comments": [
+    "of Vault calls to exact source bytes; future changes must be reviewed again."
+   ]
+  },
+  "scripts/e2e-isolated/playwright.config.ts": {
+   "path": "scripts/e2e-isolated/playwright.config.ts",
+   "lines": 36,
+   "exports": [
+    "default defineConfig"
+   ]
+  },
+  "scripts/e2e-isolated/resolve-images.mjs": {
+   "path": "scripts/e2e-isolated/resolve-images.mjs",
+   "lines": 99,
+   "exports": [
+    "function validReference",
+    "function resolveImages",
+    "function main"
+   ],
+   "env": [
+    "GITHUB_OUTPUT",
+    "PATH"
+   ],
+   "errors": [
+    "docker-",
+    "invalid-image-lock",
+    "invalid-image-reference",
+    "missing-or-ambiguous-image-digest",
+    "nonlocal-docker-context",
+    "usage: resolve-images.mjs <report.json>"
+   ],
+   "calc_fns": [
+    {
+     "name": "validReference",
+     "params": "reference",
+     "body": "return typeof reference === 'string' && /^[a-z0-9./_-]+:[A-Za-z0-9_.-]+(?:@sha256:[a-f0-9]{64})?$/.test(reference) && !/:latest(?:@|$)/.test(reference);"
+    }
+   ],
+   "temporal": [
+    "const docker = (args, timeout = 60_000) => {"
+   ]
+  },
+  "scripts/e2e-isolated/results.mjs": {
+   "path": "scripts/e2e-isolated/results.mjs",
+   "lines": 180,
+   "exports": [
+    "function readPlaywrightInventory",
+    "function summarizePlaywrightResult"
+   ],
+   "errors": [
+    "PLAYWRIGHT_REPORT_"
+   ]
+  },
+  "scripts/e2e-isolated/run.mjs": {
+   "path": "scripts/e2e-isolated/run.mjs",
+   "lines": 452,
+   "exports": [
+    "function assertPinnedImages",
+    "function functionPolicy",
+    "function prepareMountTargets",
+    "function runLogin"
+   ],
+   "env": [
+    "GITHUB_OUTPUT",
+    "PATH"
+   ],
+   "errors": [
+    "active-migrations-missing",
+    "ambiguous-function-policy",
+    "auth-login-gateway-policy-mismatch",
+    "cron-not-disabled",
+    "cron-reenabled-by-migration",
+    "dependencies-not-installed",
+    "empty-edge-bundle",
+    "foreign-volume",
+    "image-digest-mismatch",
+    "image-lock-review-required",
+    "invalid-container-environment",
+    "invalid-function-name",
+    "invalid-work-mount-target",
+    "linux-user-required",
+    "local-anon-setting-mismatch",
+    "login-inventory-not-exact",
+    "login-result-not-clean",
+    "migration-source-changed",
+    "namespace-changed",
+    "network-proof-invalid",
+    "nonlocal-docker-context",
+    "output-must-be-empty",
+    "output-must-be-outside-checkout",
+    "playwright-image-version-mismatch",
+    "real-platform-schema-missing",
+    "run-cancelled",
+    "unexpected-migration-failure",
+    "unsafe-work-mount-target",
+    "usage: run.mjs login <output-directory>"
+   ],
+   "temporal": [
+    "], { timeout: 210_000 });",
+    "const browserResult = docker(['exec', '-w', '/work', driver.name, ...cli], { timeout: 600_000 });",
+    "const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {",
+    "cwd: ROOT, encoding: 'utf8', timeout: 120_000, maxBuffer: 64 * 1024 * 1024,",
+    "required(docker(['pull', image], { timeout: 15 * 60_000 }), 'pull-' + name + '-failed');"
+   ],
+   "side_effects": [
+    "notify"
+   ]
+  },
+  "scripts/e2e-isolated/runtime-contract.mjs": {
+   "path": "scripts/e2e-isolated/runtime-contract.mjs",
+   "lines": 147,
+   "exports": [
+    "const ORIGIN",
+    "const OFFICIAL_HOST",
+    "function assertOfficialHostIsLocal",
+    "const OWNER_LABEL",
+    "const PURPOSE_LABEL",
+    "const PURPOSE",
+    "const GROUPS",
+    "function fail",
+    "function assertRunId",
+    "function assertSourceSha",
+    "function sha256",
+    "function assertLocalOrigin",
+    "function assertLoopbackOnly",
+    "function currentNetworkNamespace",
+    "function assertNoProxy",
+    "function browserEnvironment",
+    "function publicIdentity",
+    "function makeProof",
+    "function syntheticCredentials",
+    "function assertOwnedContainer",
+    "function assertContainerIsolation"
+   ],
+   "errors": [
+    "[e2e-isolated/"
+   ],
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'http://127.0.0.1:5173'"
+    },
+    {
+     "name": "OFFICIAL_HOST",
+     "value": "'tnnnlkbymytvtqngbbqh.supabase.co'"
+    },
+    {
+     "name": "OWNER_LABEL",
+     "value": "'zapp.e2e.owner'"
+    },
+    {
+     "name": "PURPOSE_LABEL",
+     "value": "'zapp.e2e.purpose'"
+    },
+    {
+     "name": "PURPOSE",
+     "value": "'isolated-auth'"
+    }
+   ],
+   "temporal": [
+    "expires_at: new Date(now + 60 * 60 * 1000).toISOString(),",
+    "role, iss: 'supabase', iat: Math.floor(now / 1000), exp: Math.floor(now / 1000) + 4 * 60 * 60,"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/e2e-isolated/runtime-probe.mjs": {
+   "path": "scripts/e2e-isolated/runtime-probe.mjs",
+   "lines": 67,
+   "env": [
+    "ANON_KEY",
+    "API_URL",
+    "GITHUB_SHA",
+    "ZAPP_E2E_RUN_ID"
+   ]
+  },
+  "scripts/e2e-isolated/seed-login.mjs": {
+   "path": "scripts/e2e-isolated/seed-login.mjs",
+   "lines": 72,
+   "env": [
+    "ANON_KEY",
+    "API_URL",
+    "E2E_TEST_EMAIL",
+    "E2E_TEST_PASSWORD",
+    "GITHUB_SHA",
+    "SERVICE_ROLE_KEY",
+    "ZAPP_E2E_RUN_ID"
+   ],
+   "errors": [
+    "[e2e-isolated/seed-http-"
+   ],
+   "role_checks": [
+    "supervisor"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/e2e-isolated/stack.mjs": {
+   "path": "scripts/e2e-isolated/stack.mjs",
+   "lines": 132,
+   "exports": [
+    "function serviceConfiguration",
+    "function containerArguments"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/e2e-isolated/main/index.ts": {
+   "path": "scripts/e2e-isolated/main/index.ts",
+   "lines": 439,
+   "exports": [
+    "enum RequestErrors",
+    "function parseJwks"
+   ],
+   "env": [
+    "JWT_SECRET",
+    "SUPABASE_JWKS"
+   ],
+   "errors": [
+    "Function bundle hash mismatch",
+    "Invalid isolated function registry"
+   ],
+   "enums": [
+    {
+     "name": "RequestErrors",
+     "values": "InvalidLegacyJWT = 'UNAUTHORIZED_LEGACY_JWT', InvalidAsymmetricJWT = 'UNAUTHORIZED_ASYMMETRIC_JWT', InvalidTokenFormat = 'UNAUTHORIZED_INVALID_JWT_FORMAT', UnsupportedTokenAlgorithm = 'UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM', MissingAuthHeader = 'UNAUTHORIZED_NO_AUTH_HEADER', NotFound = 'NOT_FOUND …"
+    }
+   ],
+   "params": [
+    {
+     "name": "MAX_WORKER_RETRIES",
+     "value": "3"
+    }
+   ],
+   "rule_comments": [
+    "resolving the \"Key for the ES256 algorithm must be of type CryptoKey\" error.",
+    "Must run before `new Request(req)` below, which takes over the body."
+   ],
+   "doc": "Adaptado do main loader do Supabase (Apache-2.0); origem em README.md. Mudanças locais: registro por função, ESZIP verificado e módulos remotos desabilitados. A licença original está em LICENSE.supabase."
+  },
+  "scripts/e2e-isolated/main/memory-pressure.ts": {
+   "path": "scripts/e2e-isolated/main/memory-pressure.ts",
+   "lines": 68,
+   "exports": [
+    "function startMemoryPressureLoop"
+   ],
+   "errors": [
+    "Invalid cgroup memory value"
+   ],
+   "params": [
+    {
+     "name": "CHECK_INTERVAL_MS",
+     "value": "1"
+    },
+    {
+     "name": "PRESSURE_THRESHOLD",
+     "value": "0.8"
+    },
+    {
+     "name": "CLEANUP_TIMEOUT_MS",
+     "value": "1"
+    },
+    {
+     "name": "RETRY_INTERVAL_MS",
+     "value": "5"
+    }
+   ]
+  },
+  "scripts/e2e-isolated/platform/jwt.sql": {
+   "path": "scripts/e2e-isolated/platform/jwt.sql",
+   "lines": 4
+  },
+  "scripts/e2e-isolated/platform/realtime.sql": {
+   "path": "scripts/e2e-isolated/platform/realtime.sql",
+   "lines": 5
+  },
+  "scripts/e2e-isolated/platform/roles.sql": {
+   "path": "scripts/e2e-isolated/platform/roles.sql",
+   "lines": 9
+  },
+  "scripts/e2e-isolated/platform/webhooks.sql": {
+   "path": "scripts/e2e-isolated/platform/webhooks.sql",
+   "lines": 213,
+   "uses_service_role": true
   },
   "scripts/edge-deploy/api-traversal.unit.mjs": {
    "path": "scripts/edge-deploy/api-traversal.unit.mjs",
@@ -379123,10 +379988,102 @@
   }
  },
  "git": {
-  "sha": "a96bbd4cbaeed5a8bad7c42af347e56960e6cac7",
+  "sha": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "46a0257",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     ".github/workflows/e2e-logado-isolado.yml",
+     "CLAUDE.md",
+     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+     "docs/ci/README.md",
+     "e2e/auth-diagnostics.ts",
+     "e2e/auth.setup.ts",
+     "scripts/ci/check-test-inventory.mjs",
+     "scripts/ci/ci-docs-baseline.unit.mjs",
+     "scripts/ci/e2e-auth-isolation.unit.mjs",
+     "scripts/ci/e2e-auth-setup.unit.mjs",
+     "scripts/ci/e2e-isolated-images.unit.mjs",
+     "scripts/ci/e2e-isolated-loader.unit.mjs",
+     "scripts/ci/e2e-isolated-login-seed.unit.mjs",
+     "scripts/ci/e2e-isolated-migrations.unit.mjs",
+     "scripts/ci/e2e-isolated-results.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/ci/e2e-isolated.unit.mjs",
+     "scripts/ci/edge-http-harness.unit.mjs",
+     "scripts/db-audit/README.md",
+     "scripts/db-audit/assert-deno-junit.py",
+     "scripts/db-audit/gmail-cas-postgrest.test.sh",
+     "scripts/db-audit/postgrest-internal-url.py",
+     "scripts/db-audit/talkx-engine-provider.test.sh",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/admission.d.mts",
+     "scripts/e2e-isolated/admission.mjs",
+     "scripts/e2e-isolated/gateway.mjs",
+     "scripts/e2e-isolated/images.lock.json",
+     "scripts/e2e-isolated/main/LICENSE.supabase",
+     "scripts/e2e-isolated/main/README.md",
+     "scripts/e2e-isolated/main/index.ts",
+     "scripts/e2e-isolated/main/memory-pressure.ts",
+     "scripts/e2e-isolated/migrations.mjs",
+     "scripts/e2e-isolated/platform/README.md",
+     "scripts/e2e-isolated/platform/jwt.sql",
+     "scripts/e2e-isolated/platform/realtime.sql",
+     "scripts/e2e-isolated/platform/roles.sql",
+     "scripts/e2e-isolated/platform/sources.json",
+     "scripts/e2e-isolated/platform/webhooks.sql",
+     "scripts/e2e-isolated/playwright.config.ts",
+     "scripts/e2e-isolated/resolve-images.mjs",
+     "scripts/e2e-isolated/results.mjs",
+     "scripts/e2e-isolated/run.mjs",
+     "scripts/e2e-isolated/run.sh",
+     "scripts/e2e-isolated/runtime-contract.mjs",
+     "scripts/e2e-isolated/runtime-probe.mjs",
+     "scripts/e2e-isolated/seed-login.mjs",
+     "scripts/e2e-isolated/stack.mjs"
+    ]
+   },
+   {
+    "sha": "4fa15ac",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "chore: adiciona __pycache__/ ao .gitignore (#2700)",
+    "files": []
+   },
+   {
+    "sha": "ec2e5b6",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "chore: sincroniza matriz de estados do Talk X (#2715)",
+    "files": [
+     "docs/talkx/ESTADOS.md"
+    ]
+   },
+   {
+    "sha": "5431b96",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: executa paridade Talk X com Deno 2.9.5 (#2714)",
+    "files": [
+     "scripts/db-audit/talkx-personalize-parity.test.mjs"
+    ]
+   },
+   {
+    "sha": "f4e5a10",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: evita padding duplicado nos carregamentos do Talk X (#2712)",
+    "files": [
+     "scripts/ui-audit/view-container-padding.unit.mjs",
+     "src/components/talkx/TalkXView.tsx"
+    ]
+   },
    {
     "sha": "a96bbd4",
     "date": "2026-11-04",
@@ -379480,117 +380437,44 @@
     "files": [
      "scripts/regras_negocio/generate.py"
     ]
-   },
-   {
-    "sha": "803055f",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "fix(contexto): índice lê a data do snapshot pelo CHANGELOG/git quando não há manifest datado (#2666)",
-    "files": [
-     "scripts/regras_negocio/indice.py"
-    ]
-   },
-   {
-    "sha": "1061a91",
-    "date": "2026-11-03",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#2669)",
-    "files": [
-     "supabase/schema-manifest.json"
-    ]
-   },
-   {
-    "sha": "d96e1e7",
-    "date": "2026-11-03",
-    "author": "dependabot[bot]",
-    "subject": "⬆️ ci: Bump the actions-misc group with 2 updates (#2620)",
-    "files": [
-     ".github/workflows/db-live-guard.yml",
-     ".github/workflows/db-migrate.yml",
-     ".github/workflows/deploy-functions.yml",
-     ".github/workflows/types-sync.yml"
-    ]
-   },
-   {
-    "sha": "f798a88",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "feat(ia): contexto unificado para agentes — um workflow (codigo + banco + regras), um índice, uma branch `contexto` (#2664)",
-    "files": [
-     ".github/workflows/contexto.yml",
-     ".github/workflows/supabase-snapshot.yml",
-     ".gitignore",
-     "AGENTS.md",
-     "CLAUDE.md",
-     "docs/ci/README.md",
-     "docs/contexto/regras/manual/README.md",
-     "docs/contexto/regras/manual/TEMPLATE-regras-de-negocio.md",
-     "package.json",
-     "scripts/ai-context/cenarios.mjs",
-     "scripts/ai-context/gerar.mjs",
-     "scripts/ai-context/gerar.unit.mjs",
-     "scripts/regras_negocio/README.md",
-     "scripts/regras_negocio/generate.py",
-     "scripts/regras_negocio/indice.py",
-     "scripts/regras_negocio/publish.sh",
-     "scripts/supabase_snapshot/README.md",
-     "scripts/supabase_snapshot/snapshot.py"
-    ]
-   },
-   {
-    "sha": "bc0c680",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "infra: snapshot do Supabase a cada 10 min para agentes de IA (scripts/supabase_snapshot + workflow) (#2662)",
-    "files": [
-     ".github/workflows/supabase-snapshot.yml",
-     "AGENTS.md",
-     "CLAUDE.md",
-     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-     "docs/ci/README.md",
-     "scripts/ci/ci-docs-baseline.unit.mjs",
-     "scripts/supabase_snapshot/README.md",
-     "scripts/supabase_snapshot/requirements.txt",
-     "scripts/supabase_snapshot/snapshot.py"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "scripts/supabase_snapshot/snapshot.py",
-    5
-   ],
    [
     "docs/contexto/regras/manual/regras.md",
     5
    ],
    [
+    ".github/workflows/db-guard.yml",
+    3
+   ],
+   [
     "supabase/schema-manifest.json",
-    4
+    3
+   ],
+   [
+    "scripts/supabase_snapshot/snapshot.py",
+    3
    ],
    [
     "docs/ci/README.md",
-    3
+    2
    ],
    [
-    "scripts/ai-context/gerar.mjs",
-    3
+    "e2e/auth-diagnostics.ts",
+    2
    ],
    [
-    "scripts/ai-context/gerar.unit.mjs",
-    3
+    "e2e/auth.setup.ts",
+    2
    ],
    [
-    "scripts/regras_negocio/generate.py",
-    3
+    "scripts/ci/e2e-auth-setup.unit.mjs",
+    2
    ],
    [
-    "scripts/regras_negocio/indice.py",
-    3
-   ],
-   [
-    "scripts/supabase_snapshot/README.md",
-    3
+    "scripts/db-audit/README.md",
+    2
    ],
    [
     ".github/workflows/ci.yml",
@@ -379601,23 +380485,19 @@
     2
    ],
    [
-    ".github/workflows/contexto.yml",
-    2
-   ],
-   [
-    ".github/workflows/db-guard.yml",
-    2
-   ],
-   [
     "scripts/ai-context/README.md",
     2
    ],
    [
-    "scripts/regras_negocio/README.md",
+    "scripts/ai-context/gerar.mjs",
     2
    ],
    [
-    ".gitignore",
+    "scripts/ai-context/gerar.unit.mjs",
+    2
+   ],
+   [
+    "scripts/regras_negocio/generate.py",
     2
    ],
    [
@@ -379633,8 +380513,12 @@
     2
    ],
    [
-    ".github/workflows/supabase-snapshot.yml",
-    2
+    ".github/workflows/e2e-logado-isolado.yml",
+    1
+   ],
+   [
+    "CLAUDE.md",
+    1
    ]
   ]
  }

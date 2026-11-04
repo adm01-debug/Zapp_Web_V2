@@ -3,14 +3,14 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4174)",
-   "SQL (1276)",
-   "Markdown (1031)",
-   "JSON (592)",
-   "JavaScript (364)",
-   "Shell (229)",
-   "Python (117)",
-   "YAML (27)"
+   "TypeScript (4178)",
+   "SQL (1280)",
+   "Markdown (1034)",
+   "JSON (594)",
+   "JavaScript (383)",
+   "Shell (231)",
+   "Python (119)",
+   "YAML (28)"
   ],
   "linguagem_principal": "TypeScript",
   "framework": "React",
@@ -399,6 +399,7 @@
     "scripts/db-audit/gen-types.test.sh",
     "scripts/db-audit/generic-migration-runtime.test.sh",
     "scripts/db-audit/gmail-accounts-sync-backoff.test.sh",
+    "scripts/db-audit/gmail-cas-postgrest.test.sh",
     "scripts/db-audit/gmail-write-blocks-restrictive.test.sh",
     "scripts/db-audit/higiene-grants-public-policies.test.sh",
     "scripts/db-audit/ia-usage-outbox-duravel.test.sh",
@@ -469,6 +470,7 @@
     "scripts/db-audit/talkx-draft-save.test.sh",
     "scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh",
     "scripts/db-audit/talkx-engine-health.test.sh",
+    "scripts/db-audit/talkx-engine-provider.test.sh",
     "scripts/db-audit/talkx-engine-tick.test.sh",
     "scripts/db-audit/talkx-escape-hatch-auth.test.sh",
     "scripts/db-audit/talkx-events-contract.test.sh",
@@ -663,6 +665,35 @@
     "actions/upload-artifact",
     "denoland/setup-deno",
     "supabase/setup-cli"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/e2e-logado-isolado.yml",
+   "nome": "E2E isolado - bootstrap e login",
+   "gatilhos": [
+    "pull_request",
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [],
+   "jobs": [
+    "image-metadata",
+    "bootstrap-login"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/e2e-isolated/resolve-images.mjs",
+    "scripts/e2e-isolated/run.sh"
+   ],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/upload-artifact",
+    "oven-sh/setup-bun"
    ]
   },
   {
@@ -1564,12 +1595,16 @@
     "arquivos": 23
    },
    {
+    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
+    "arquivos": 21
+   },
+   {
     "host": "edge.test",
     "arquivos": 19
    },
    {
-    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
-    "arquivos": 18
+    "host": "example.invalid",
+    "arquivos": 14
    },
    {
     "host": "example.supabase.co",
@@ -1585,10 +1620,6 @@
    },
    {
     "host": "api.elevenlabs.io",
-    "arquivos": 12
-   },
-   {
-    "host": "example.invalid",
     "arquivos": 12
    },
    {
@@ -1892,6 +1923,10 @@
     "arquivos": 2
    },
    {
+    "host": "proxy.invalid",
+    "arquivos": 2
+   },
+   {
     "host": "storage.invalid",
     "arquivos": 2
    },
@@ -2069,6 +2104,10 @@
    },
    {
     "host": "example.test",
+    "arquivos": 1
+   },
+   {
+    "host": "external.invalid",
     "arquivos": 1
    },
    {
@@ -2348,6 +2387,10 @@
     "arquivos": 1
    },
    {
+    "host": "untrusted.example.invalid",
+    "arquivos": 1
+   },
+   {
     "host": "va.vercel-scripts.com",
     "arquivos": 1
    },
@@ -2537,11 +2580,11 @@
    },
    {
     "papel": "agent",
-    "ocorrencias": 54
+    "ocorrencias": 55
    },
    {
     "papel": "supervisor",
-    "ocorrencias": 30
+    "ocorrencias": 32
    },
    {
     "papel": "dialog",
@@ -2609,7 +2652,7 @@
    },
    {
     "papel": "service_role",
-    "ocorrencias": 8
+    "ocorrencias": 9
    },
    {
     "papel": "system",
@@ -2617,6 +2660,10 @@
    },
    {
     "papel": "alertdialog",
+    "ocorrencias": 7
+   },
+   {
+    "papel": "anon",
     "ocorrencias": 7
    },
    {
@@ -2630,10 +2677,6 @@
    {
     "papel": "note",
     "ocorrencias": 6
-   },
-   {
-    "papel": "anon",
-    "ocorrencias": 5
    },
    {
     "papel": "log",
@@ -3148,7 +3191,7 @@
   "tabelas_sem_rls": []
  },
  "feature_flags": {
-  "total": 15,
+  "total": 16,
   "flags": [
    {
     "flag": "ENABLE_ANALYTICS",
@@ -3164,6 +3207,10 @@
    },
    {
     "flag": "ENABLE_GMAIL_INTEGRATION",
+    "arquivos": 1
+   },
+   {
+    "flag": "ENABLE_IMAGE_TRANSFORMATION",
     "arquivos": 1
    },
    {
