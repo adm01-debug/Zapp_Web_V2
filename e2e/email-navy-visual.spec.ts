@@ -143,8 +143,8 @@ test('workspace do Email não introduz violações axe', async ({ page }) => {
   await abrirEmail(page);
   await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await freezeVisualTransitions(page);
-  await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
+  await waitForAppliedTheme(page, 'dark');
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & {
       axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
@@ -152,11 +152,42 @@ test('workspace do Email não introduz violações axe', async ({ page }) => {
     // O app roda @axe-core/react em DEV sobre a MESMA instancia global `window.axe` desta
     // spec: esperar a instancia ficar livre no mesmo frame que dispara o nosso run evita o
     // "Axe is already running" intermitente, sem mexer em nenhuma assercao.
-    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
-    const result = await axe.run('.email-workspace', {
-      rules: {
-        'color-contrast': { enabled: true },
-      },
+    const result = await new Promise<AxeViolationResult>((resolve, reject) => {
+      let anterior: Element | null = null;
+      let frame = 0;
+      const limpar = () => {
+        window.clearTimeout(limite);
+        window.cancelAnimationFrame(frame);
+      };
+      const falhar = (erro: unknown) => { limpar(); reject(erro); };
+      const limite = window.setTimeout(() => {
+        falhar(new Error('Email não estabilizou para o axe em 10 s (tema, visibilidade, opacidade ou axe ocupado).'));
+      }, 10_000);
+      const verificar = () => {
+        try {
+          const vazio = document.querySelector('[data-testid="email-workspace"] [data-testid="conversation-empty-state"]');
+          const rect = vazio?.getBoundingClientRect();
+          let pronto = Boolean(vazio?.isConnected && rect && rect.width > 0 && rect.height > 0
+            && document.documentElement.classList.contains('dark')
+            && !document.documentElement.classList.contains('theme-transitioning')
+            && !document.body.classList.contains('theme-transitioning')
+            && !axe._running);
+          for (let node = vazio; pronto && node; node = node.parentElement) {
+            const css = getComputedStyle(node);
+            pronto = Number(css.opacity) === 1 && css.display !== 'none' && css.visibility === 'visible';
+          }
+          if (pronto && vazio === anterior) {
+            limpar();
+            axe.run('.email-workspace', {
+              rules: { 'color-contrast': { enabled: true } },
+            }).then(resolve, reject);
+            return;
+          }
+          anterior = pronto ? vazio : null;
+          frame = window.requestAnimationFrame(verificar);
+        } catch (erro) { falhar(erro); }
+      };
+      frame = window.requestAnimationFrame(verificar);
     });
     return result.violations.map(violation => ({
       id: violation.id,
