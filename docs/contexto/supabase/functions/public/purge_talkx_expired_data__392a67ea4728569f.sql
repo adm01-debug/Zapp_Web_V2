@@ -50,10 +50,11 @@ BEGIN
     FROM public.talkx_settings AS settings WHERE settings.key = 'retention_days_test_sends';
   SELECT (settings.value #>> '{}')::integer INTO v_days_ai
     FROM public.talkx_settings AS settings WHERE settings.key = 'retention_days_ai';
-  v_days_message := COALESCE(v_days_message, 180);
-  v_days_clicks  := COALESCE(v_days_clicks, 365);
-  v_days_test    := COALESCE(v_days_test, 90);
-  v_days_ai      := COALESCE(v_days_ai, 90);
+  -- Prazo <= 0 (setting invalido) apagaria tudo: trava em 1 dia no minimo.
+  v_days_message := GREATEST(COALESCE(v_days_message, 180), 1);
+  v_days_clicks  := GREATEST(COALESCE(v_days_clicks, 365), 1);
+  v_days_test    := GREATEST(COALESCE(v_days_test, 90), 1);
+  v_days_ai      := GREATEST(COALESCE(v_days_ai, 90), 1);
 
   -- 1) texto e snapshots de midia dos destinatarios de campanhas TERMINAIS vencidas
   WITH terminal AS (
@@ -170,11 +171,13 @@ BEGIN
     GET DIAGNOSTICS v_media = ROW_COUNT;
   END IF;
 
-  -- 6) X033: log de entrega por destinatario vencido (30 dias, prazo proprio do X033).
+  -- 6) X033: log de entrega por destinatario vencido. Antes tinha prazo FIXO de 30 dias;
+  -- desde 2026-11-03 segue retention_days_message (decisao do dono: historico de campanha
+  -- fica para sempre -- regras.md secao 7; os settings estao em 36500 dias).
   WITH vencidos AS (
     SELECT log.id
       FROM public.talkx_delivery_log AS log
-     WHERE log.created_at < v_now - interval '30 days'
+     WHERE log.created_at < v_now - make_interval(days => v_days_message)
      ORDER BY log.id
      LIMIT p_limit
   )

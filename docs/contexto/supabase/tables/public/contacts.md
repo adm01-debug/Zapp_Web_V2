@@ -98,7 +98,6 @@
 | public.chatbot_executions | chatbot_executions_contact_id_fkey | contact_id | CASCADE |
 | public.contact_custom_fields | contact_custom_fields_contact_id_fkey | contact_id | CASCADE |
 | public.contact_notes | contact_notes_contact_id_fkey | contact_id | CASCADE |
-| public.contact_purchases | contact_purchases_contact_id_fkey | contact_id | CASCADE |
 | public.conversation_analyses | conversation_analyses_contact_id_fkey | contact_id | CASCADE |
 | public.conversation_closures | conversation_closures_contact_id_fkey | contact_id | CASCADE |
 | public.conversation_events | conversation_events_contact_id_fkey | contact_id | CASCADE |
@@ -117,7 +116,6 @@
 | public.messages | messages_contact_id_fkey | contact_id | CASCADE |
 | public.meta_capi_events | meta_capi_events_contact_id_fkey | contact_id | SET NULL |
 | public.nps_surveys | nps_surveys_contact_id_fkey | contact_id | CASCADE |
-| public.payment_links | payment_links_contact_id_fkey | contact_id | SET NULL |
 | public.pinned_conversations | pinned_conversations_contact_id_fkey | contact_id | CASCADE |
 | public.queue_positions | queue_positions_contact_id_fkey | contact_id | NO ACTION |
 | public.reminders | reminders_contact_id_fkey | contact_id | SET NULL |

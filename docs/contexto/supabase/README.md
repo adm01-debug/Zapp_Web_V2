@@ -2,7 +2,7 @@
 
 Gerado automaticamente a cada 10 min pelo workflow `contexto` (job `banco`). **Não edite manualmente.**
 
-Frescor: `git log -1 --format=%cI -- docs/contexto/supabase`. Só há commit quando algo mudou; o histórico está em `CHANGELOG.md`.
+Última coleta concluída publicada: `manifest.json` → `gerado_em` (UTC), com erros e seções reaproveitadas. Última publicação: `git log -1 --format=%cI -- docs/contexto/supabase`. Mudanças estruturais estão em `CHANGELOG.md`.
 
 ## Protocolo para agentes
 
@@ -19,23 +19,36 @@ Frescor: `git log -1 --format=%cI -- docs/contexto/supabase`. Só há commit qua
 
 | categoria | quantidade |
 |---|---|
-| tabelas | 221 |
-| colunas | 2522 |
+| tabelas | 219 |
+| colunas | 2491 |
 | views | 13 |
-| functions | 481 |
-| triggers | 174 |
-| policies (RLS) | 558 |
-| índices | 774 |
+| functions | 478 |
+| triggers | 170 |
+| policies (RLS) | 550 |
+| índices | 765 |
 | tipos/enums | 10 |
 | extensões | 8 |
 | cron jobs | 0 |
 | filas pgmq | 0 |
-| migrations | 1076 |
+| migrations | 1079 |
 | buckets | 0 |
 | edge functions | n/d |
 | webhooks | 0 |
 | lints ALTA | 1 |
-| lints total | 490 |
+| lints total | 482 |
+
+## Estado das fontes do mapa de referências
+
+Cada fonte é atualizada independentemente; referências anteriores não comprovam uso atual.
+
+| fonte | estado |
+|---|---|
+| código do repo | coleta atual |
+| cron | coleta atual |
+| triggers | coleta atual |
+| views | coleta atual |
+| outras funções | coleta atual |
+
 
 
 ## Servidor
@@ -72,6 +85,7 @@ Frescor: `git log -1 --format=%cI -- docs/contexto/supabase`. Só há commit qua
 | `project-config.md` | PostgREST, Postgres, pooler, rede, SSL, branches, backups (redigido) |
 | `stats.md` / `stats.json` | métricas voláteis |
 | `snapshot.json` | tudo estrutural em JSON |
+| `manifest.json` | data UTC da coleta concluída, erros e seções reaproveitadas; usado pelo índice de contexto |
 | `CHANGELOG.md` | diff semântico a cada mudança |
 | `errors.md` | seções que falharam na última coleta |
 
@@ -79,4 +93,4 @@ Frescor: `git log -1 --format=%cI -- docs/contexto/supabase`. Só há commit qua
 
 | seção | erro |
 |---|---|
-| db_stats | permission denied for schema auth |
+| db_stats.auth | permission denied for schema auth |

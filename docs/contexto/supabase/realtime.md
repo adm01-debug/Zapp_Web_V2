@@ -28,7 +28,6 @@
 | supabase_realtime | public.multiplix_dispatches | default |
 | supabase_realtime | public.multiplix_recipients | default |
 | supabase_realtime | public.notifications | full |
-| supabase_realtime | public.payment_links | full |
 | supabase_realtime | public.queue_goals | full |
 | supabase_realtime | public.queue_members | full |
 | supabase_realtime | public.queues | full |

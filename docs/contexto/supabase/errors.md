@@ -2,4 +2,4 @@
 
 | seção | erro |
 |---|---|
-| db_stats | permission denied for schema auth |
+| db_stats.auth | permission denied for schema auth |

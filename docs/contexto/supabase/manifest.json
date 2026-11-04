@@ -1,0 +1,13 @@
+{
+  "carried": [],
+  "entrada": "README.md",
+  "erros": [
+    {
+      "error": "permission denied for schema auth",
+      "section": "db_stats.auth"
+    }
+  ],
+  "gerado_em": "2026-11-04T01:38:32Z",
+  "gerador": "scripts/supabase_snapshot/snapshot.py",
+  "produtor": "supabase-snapshot"
+}

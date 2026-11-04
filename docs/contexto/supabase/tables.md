@@ -62,7 +62,6 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.contact_identity_map](tables/public/contact_identity_map.md) | table | sim | 1 | 5 | não | Mapa LID -> JID do WhatsApp (identidade anonima vs numero) para reconciliar contatos. |
 | [public.contact_notes](tables/public/contact_notes.md) | table | sim | 4 | 10 | não |  |
 | [public.contact_protection_policy](tables/public/contact_protection_policy.md) | table | sim | 4 | 9 | não | CT-091: politica de protecao de contatos. scope_role NULL = padrao global; linha por papel sobrepoe. Só o admin altera. |
-| [public.contact_purchases](tables/public/contact_purchases.md) | table | sim | 4 | 15 | não |  |
 | [public.contacts](tables/public/contacts.md) | table | sim | 3 | 46 | sim | Contato/cliente por canal (WhatsApp, e-mail, SICOOB): identidade, atribuicao (assigned_to, queue_id), classificacao por IA e conexao de origem. Uma linha = uma conversa/thread ativa com o contato. |
 | [public.conversation_analyses](tables/public/conversation_analyses.md) | table | sim | 2 | 25 | não |  |
 | [public.conversation_closures](tables/public/conversation_closures.md) | table | sim | 2 | 9 | não |  |
@@ -140,7 +139,6 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.outbox_events](tables/public/outbox_events.md) | table | sim | 1 | 10 | não | Outbox genérica de eventos de integração (item 090). Pendente = processed_at is null; a assinatura HMAC-SHA256 do payload é verificada na Edge Function antes de gravar. |
 | [public.passkey_credentials](tables/public/passkey_credentials.md) | table | sim | 3 | 11 | não |  |
 | [public.password_reset_requests](tables/public/password_reset_requests.md) | table | sim | 5 | 13 | não |  |
-| [public.payment_links](tables/public/payment_links.md) | table | sim | 4 | 16 | sim |  |
 | [public.performance_snapshots](tables/public/performance_snapshots.md) | table | sim | 4 | 14 | não |  |
 | [public.permissions](tables/public/permissions.md) | table | sim | 2 | 5 | não |  |
 | [public.pinned_conversations](tables/public/pinned_conversations.md) | table | sim | 4 | 5 | não |  |

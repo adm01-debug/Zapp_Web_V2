@@ -1080,3 +1080,6 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261101213000 | [rls_update_with_check_explicit](migrations/20261101213000_rls_update_with_check_explicit.sql) | 8 |
 | 20261102012200 | [department_invites_restringe_escrita](migrations/20261102012200_department_invites_restringe_escrita.sql) | 8 |
 | 20261102022200 | [cron_historico_retencao_7d](migrations/20261102022200_cron_historico_retencao_7d.sql) | 1 |
+| 20261102042200 | [talkx_delivery_log_sem_prazo_fixo](migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql) | 3 |
+| 20261102052200 | [talkx_retencao_guarda_e_test_sends_90](migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql) | 3 |
+| 20261103201500 | [remove_pagamentos_e_special_agent](migrations/20261103201500_remove_pagamentos_e_special_agent.sql) | 25 |

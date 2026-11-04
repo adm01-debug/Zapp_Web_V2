@@ -48,7 +48,7 @@
 |---|---|---|---|---|---|
 | profiles_department_id_fkey | FOREIGN KEY | `FOREIGN KEY (department_id) REFERENCES departments(id)` | NO ACTION | NO ACTION | sim |
 | profiles_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
-| profiles_role_check | CHECK | `CHECK (role = ANY (ARRAY['admin'::text, 'supervisor'::text, 'agent'::text, 'special_agent'::text]))` |  |  | sim |
+| profiles_role_check | CHECK | `CHECK (role = ANY (ARRAY['admin'::text, 'supervisor'::text, 'agent'::text]))` |  |  | sim |
 | profiles_user_id_fkey | FOREIGN KEY | `FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE` | CASCADE | NO ACTION | sim |
 | profiles_user_id_key | UNIQUE | `UNIQUE (user_id)` |  |  | sim |
 
@@ -76,7 +76,6 @@
 | public.chatbot_flows | chatbot_flows_created_by_fkey | created_by | NO ACTION |
 | public.client_wallet_rules | client_wallet_rules_agent_id_fkey | agent_id | CASCADE |
 | public.contact_notes | contact_notes_author_id_fkey | author_id | CASCADE |
-| public.contact_purchases | contact_purchases_created_by_fkey | created_by | NO ACTION |
 | public.contacts | contacts_assigned_to_fkey | assigned_to | SET NULL |
 | public.conversation_analyses | conversation_analyses_analyzed_by_fkey | analyzed_by | NO ACTION |
 | public.conversation_closures | conversation_closures_closed_by_fkey | closed_by | SET NULL |
@@ -103,7 +102,6 @@
 | public.message_reactions | message_reactions_user_id_fkey | user_id | CASCADE |
 | public.messages | messages_agent_id_fkey | agent_id | SET NULL |
 | public.nps_surveys | nps_surveys_agent_id_fkey | agent_id | NO ACTION |
-| public.payment_links | payment_links_created_by_fkey | created_by | SET NULL |
 | public.performance_snapshots | performance_snapshots_profile_id_fkey | profile_id | CASCADE |
 | public.pinned_conversations | pinned_conversations_pinned_by_fkey | pinned_by | CASCADE |
 | public.playbooks | playbooks_created_by_fkey | created_by | SET NULL |

@@ -18,6 +18,6 @@ AS $function$
       SELECT 1
       FROM public.user_roles AS role_assignment
       WHERE role_assignment.user_id = _user_id
-        AND role_assignment.role = 'special_agent'
-    );
+        AND role_assignment.role = 'agent'
+    )
 $function$

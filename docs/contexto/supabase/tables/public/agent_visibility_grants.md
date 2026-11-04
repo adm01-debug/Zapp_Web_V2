@@ -58,14 +58,14 @@
 | USING | `is_admin_or_supervisor(auth.uid())` |
 | WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
 
-### `Special agents can view own grants`
+### `Agents can view own grants`
 
 | campo | valor |
 |---|---|
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(has_role(auth.uid(), 'special_agent'::app_role) AND (agent_id IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid()))))` |
+| USING | `(has_role(auth.uid(), 'agent'::app_role) AND (agent_id IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid()))))` |
 | WITH CHECK |  |
 
 

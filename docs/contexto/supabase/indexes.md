@@ -155,11 +155,6 @@ Uso e tamanho em `stats.md`.
 | public.contact_notes | idx_contact_notes_contact_id | btree | contact_id | não | sim |  |
 | public.contact_protection_policy | contact_protection_policy_pkey | btree | id | sim | sim |  |
 | public.contact_protection_policy | contact_protection_policy_scope_role_uidx | btree | scope_role | sim | sim |  |
-| public.contact_purchases | contact_purchases_pkey | btree | id | sim | sim |  |
-| public.contact_purchases | contact_purchases_source_external_id_key | btree | source, external_id | sim | sim | `(external_id IS NOT NULL)` |
-| public.contact_purchases | idx_contact_purchases_contact_id | btree | contact_id | não | sim |  |
-| public.contact_purchases | idx_contact_purchases_created_by | btree | created_by | não | sim |  |
-| public.contact_purchases | idx_contact_purchases_deal_id | btree | deal_id | não | sim |  |
 | public.contacts | contacts_phone_key | btree | phone | sim | sim |  |
 | public.contacts | contacts_pkey | btree | id | sim | sim |  |
 | public.contacts | idx_contacts_ai_projection_analysis_id | btree | ai_projection_analysis_id | não | sim |  |
@@ -467,10 +462,6 @@ Uso e tamanho em `stats.md`.
 | public.password_reset_requests | idx_password_reset_requests_status | btree | status | não | sim |  |
 | public.password_reset_requests | idx_password_reset_requests_user | btree | user_id | não | sim |  |
 | public.password_reset_requests | password_reset_requests_pkey | btree | id | sim | sim |  |
-| public.payment_links | idx_payment_links_contact_id | btree | contact_id | não | sim |  |
-| public.payment_links | idx_payment_links_created_by | btree | created_by | não | sim |  |
-| public.payment_links | idx_payment_links_deal_id | btree | deal_id | não | sim |  |
-| public.payment_links | payment_links_pkey | btree | id | sim | sim |  |
 | public.performance_snapshots | idx_performance_snapshots_created_at | btree | created_at | não | sim |  |
 | public.performance_snapshots | idx_performance_snapshots_profile | btree | profile_id | não | sim |  |
 | public.performance_snapshots | performance_snapshots_pkey | btree | id | sim | sim |  |

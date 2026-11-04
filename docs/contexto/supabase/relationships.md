@@ -54,9 +54,6 @@
 | public.contact_custom_fields | contact_id | public.contacts | id | CASCADE | NO ACTION |
 | public.contact_notes | author_id | public.profiles | id | CASCADE | NO ACTION |
 | public.contact_notes | contact_id | public.contacts | id | CASCADE | NO ACTION |
-| public.contact_purchases | contact_id | public.contacts | id | CASCADE | NO ACTION |
-| public.contact_purchases | created_by | public.profiles | id | NO ACTION | NO ACTION |
-| public.contact_purchases | deal_id | public.sales_deals | id | NO ACTION | NO ACTION |
 | public.contacts | ai_projection_analysis_id | public.conversation_analyses | id | SET NULL | NO ACTION |
 | public.contacts | assigned_to | public.profiles | id | SET NULL | NO ACTION |
 | public.contacts | channel_connection_id | public.channel_connections | id | NO ACTION | NO ACTION |
@@ -167,9 +164,6 @@
 | public.passkey_credentials | user_id | auth.users | id | CASCADE | NO ACTION |
 | public.password_reset_requests | reviewed_by | auth.users | id | NO ACTION | NO ACTION |
 | public.password_reset_requests | user_id | auth.users | id | CASCADE | NO ACTION |
-| public.payment_links | contact_id | public.contacts | id | SET NULL | NO ACTION |
-| public.payment_links | created_by | public.profiles | id | SET NULL | NO ACTION |
-| public.payment_links | deal_id | public.sales_deals | id | SET NULL | NO ACTION |
 | public.performance_snapshots | profile_id | public.profiles | id | CASCADE | NO ACTION |
 | public.pinned_conversations | contact_id | public.contacts | id | CASCADE | NO ACTION |
 | public.pinned_conversations | pinned_by | public.profiles | id | CASCADE | NO ACTION |

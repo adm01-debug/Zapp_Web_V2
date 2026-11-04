@@ -49,9 +49,7 @@
 
 | tabela | constraint | colunas | on delete |
 |---|---|---|---|
-| public.contact_purchases | contact_purchases_deal_id_fkey | deal_id | NO ACTION |
 | public.deal_activities | deal_activities_deal_id_fkey | deal_id | CASCADE |
-| public.payment_links | payment_links_deal_id_fkey | deal_id | SET NULL |
 
 
 ## Índices
