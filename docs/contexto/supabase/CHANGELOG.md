@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-04 21:15 UTC
+
+- **functions** alterado (6): `public.claim_outbound_message(p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer)`, `public.complete_outbound_message(p_message_id uuid, p_claim_token uuid, p_external_id text, p_delivery_status text)`, `public.enqueue_ai_job(p_idempotency_key text, p_kind text, p_function_name text, p_user_id uuid, p_payload jsonb, p_priority integer, p_available_at timestamp with time zone, p_expires_at timestamp with time zone, p_max_attempts integer)`, `public.enqueue_outbound_message(p_contact_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid, p_caption text)`, `public.fail_outbound_message(p_message_id uuid, p_claim_token uuid, p_retryable boolean)`, `public.get_instance_token(p_instance_id text)`
+
 ## 2026-11-04 09:34 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_07`

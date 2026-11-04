@@ -49366,6 +49366,14 @@
         "callers": {
           "code": [
             {
+              "file": "scripts/e2e-isolated/provider-diagnostics.mjs",
+              "hits": 2
+            },
+            {
+              "file": "scripts/e2e-isolated/routine-ownership.mjs",
+              "hits": 2
+            },
+            {
               "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
               "hits": 2
             },
@@ -49374,7 +49382,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -49942,6 +49950,14 @@
         "callers": {
           "code": [
             {
+              "file": "scripts/e2e-isolated/provider-diagnostics.mjs",
+              "hits": 2
+            },
+            {
+              "file": "scripts/e2e-isolated/routine-ownership.mjs",
+              "hits": 2
+            },
+            {
               "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
               "hits": 2
             },
@@ -49950,7 +49966,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -52280,6 +52296,14 @@
         "callers": {
           "code": [
             {
+              "file": "scripts/e2e-isolated/provider-diagnostics.mjs",
+              "hits": 2
+            },
+            {
+              "file": "scripts/e2e-isolated/routine-ownership.mjs",
+              "hits": 2
+            },
+            {
               "file": "supabase/functions/_shared/ai-jobs.ts",
               "hits": 1
             },
@@ -52288,7 +52312,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -52395,6 +52419,14 @@
         "callers": {
           "code": [
             {
+              "file": "scripts/e2e-isolated/provider-diagnostics.mjs",
+              "hits": 2
+            },
+            {
+              "file": "scripts/e2e-isolated/routine-ownership.mjs",
+              "hits": 2
+            },
+            {
               "file": "src/services/outbound-message.service.ts",
               "hits": 1
             },
@@ -52419,7 +52451,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 6,
+          "code_total_files": 8,
           "cron": [],
           "db": [
             "public.dispatch_scheduled_messages",
@@ -52736,6 +52768,14 @@
         "callers": {
           "code": [
             {
+              "file": "scripts/e2e-isolated/provider-diagnostics.mjs",
+              "hits": 2
+            },
+            {
+              "file": "scripts/e2e-isolated/routine-ownership.mjs",
+              "hits": 2
+            },
+            {
               "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
               "hits": 2
             },
@@ -52748,7 +52788,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 5,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -53597,6 +53637,14 @@
         "callers": {
           "code": [
             {
+              "file": "scripts/e2e-isolated/provider-diagnostics.mjs",
+              "hits": 2
+            },
+            {
+              "file": "scripts/e2e-isolated/routine-ownership.mjs",
+              "hits": 2
+            },
+            {
               "file": "supabase/functions/_shared/evolution-instance-token.ts",
               "hits": 1
             },
@@ -53621,7 +53669,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 6,
+          "code_total_files": 8,
           "cron": [],
           "db": [],
           "triggers": [],
