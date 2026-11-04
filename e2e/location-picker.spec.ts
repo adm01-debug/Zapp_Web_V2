@@ -91,6 +91,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
     // Abre a conversa do contato fixo (o único que o usuário E2E enxerga).
     await page.goto('/');
     const conversa = page.locator('[data-testid="conversation-item"]').filter({ hasText: '[E2E]' });
+    await conversa.waitFor({ state: 'visible' });
     await expect(conversa).toBeVisible();
     await conversa.click();
 
@@ -156,6 +157,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
 
     await page.goto('/');
     const conversa = page.locator('[data-testid="conversation-item"]').filter({ hasText: '[E2E]' });
+    await conversa.waitFor({ state: 'visible' });
     await expect(conversa).toBeVisible();
     await conversa.click();
 
