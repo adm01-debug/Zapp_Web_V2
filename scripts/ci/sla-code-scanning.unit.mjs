@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { assertBlocking, conditionOf, jobOf, onlyStep, permission, shellCode, stepsOf } from './workflow-test-support.mjs';
 import { avaliarSla, nivel, relatorio } from './sla-code-scanning.mjs';
 
 const AGORA = Date.parse('2026-10-15T12:00:00Z');
@@ -56,9 +57,16 @@ test('CLI: resposta que não é lista (erro de permissão) ou JSON inválido avi
   }
 });
 
-test.skip('o workflow passa os alertas pelo stdin e não tem mais Node inline', () => {
+test('o workflow passa os alertas pelo stdin e não tem mais Node inline', () => {
   const wf = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
-  assert.match(wf, /node scripts\/ci\/sla-code-scanning\.mjs < "\$ARQUIVO"/);
-  assert.doesNotMatch(wf, /NODE_EOF/);
-  assert.doesNotMatch(wf, /node --input-type=module/);
+  const job = jobOf(wf, 'audit');
+  const step = onlyStep(stepsOf(job), (s) => /^\s*node scripts\/ci\/sla-code-scanning\.mjs\b/m.test(shellCode(s)), 'SLA W83');
+  const code = shellCode(step);
+  assert.equal(permission(job, 'security-events'), 'read');
+  assert.equal(conditionOf(step), 'success()');
+  assertBlocking(job, 4);
+  assertBlocking(step);
+  assert.match(code, /node scripts\/ci\/sla-code-scanning\.mjs < "\$ARQUIVO"/);
+  assert.match(code, /gh api --paginate --slurp[^\n]*code-scanning\/alerts[^\n]*\| jq 'add'/);
+  assert.doesNotMatch(code, /\|\|\s*true|NODE_EOF|node --input-type=module/);
 });

@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
-import { ContactPurchaseHistory } from './ContactPurchaseHistory';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -434,9 +433,6 @@ export function ContactDetailPanel<T extends ContactDetail>({
 
             {/* Notes */}
             <ContactNotes contactId={contact.id} />
-
-            {/* Purchases */}
-            <ContactPurchaseHistory contactId={contact.id} />
 
             {/* CT-54 — Produtos enviados a este contato */}
             <ContactCatalogSendHistory contactId={contact.id} />

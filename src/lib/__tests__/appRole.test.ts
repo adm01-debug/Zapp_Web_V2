@@ -9,8 +9,8 @@ import { describe, it, expect } from 'vitest';
 import { APP_ROLE_VALUES, isAppRole } from '../appRole';
 
 describe('isAppRole — boundary de papel do admin', () => {
-  it('aceita exatamente os 4 papéis da V2', () => {
-    expect(APP_ROLE_VALUES).toEqual(['admin', 'supervisor', 'agent', 'special_agent']);
+  it('aceita exatamente os 3 papéis da V2', () => {
+    expect(APP_ROLE_VALUES).toEqual(['admin', 'supervisor', 'agent']);
     for (const papel of APP_ROLE_VALUES) {
       expect(isAppRole(papel)).toBe(true);
     }

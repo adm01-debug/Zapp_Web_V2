@@ -174,7 +174,7 @@
     },
     {
       "path": "src/components/connections/ConnectionCard.tsx",
-      "sha256": "d7af082e834d340da6825a8012487325de7360c30a6c29db10ffcd11d8ba40f9"
+      "sha256": "e50cb6ad8efa1d5bce67362ec368c3dbb9f8794420f29cf64b948040fae35848"
     },
     {
       "path": "src/components/connections/ConnectionsView.tsx",
@@ -215,10 +215,6 @@
     {
       "path": "src/components/contacts/ContactNotes.tsx",
       "sha256": "af3bffcdb75a0939fe00696fb58aef141f4ed5ad5d3c1e4f5488e4b83030cae7"
-    },
-    {
-      "path": "src/components/contacts/ContactPurchaseHistory.tsx",
-      "sha256": "868304b01b3459398eea72be1b82d035ab630ae523dd1b492edaa191430f37df"
     },
     {
       "path": "src/components/contacts/ContactResultsSummary.tsx",
@@ -485,10 +481,6 @@
       "sha256": "ab9ad24a3b9b7602a000c9e7200178a5307b9cf9ff4c981584cbd906d2ae905c"
     },
     {
-      "path": "src/components/inbox/ContactPurchasesPanel.tsx",
-      "sha256": "e1ae1854806239b32b9b5a104ab23029ab9a12aef99ddee355b30504ebf8704c"
-    },
-    {
       "path": "src/components/inbox/ContactTypeFilter.tsx",
       "sha256": "39af019109bcb6b4a1256d14050200dbf5bcc61758dc0c109c2ad9d1da2881bf"
     },
@@ -546,7 +538,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "1d3e721aa720845da90726ecaea6ebc95e5024a40ed0d6633a5237da00b0a137"
+      "sha256": "c579f273959d396ad321d354bde55d37432189fa42893ae435f3100178204da8"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
@@ -3025,20 +3017,6 @@
       "contextHash": "953af52cd3ac78788b0b9be443d43e89240be567b189de8442207a3f4487f770"
     },
     {
-      "file": "src/components/contacts/ContactPurchaseHistory.tsx",
-      "line": 11,
-      "column": 1,
-      "endLine": 11,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "77265a1f4118b93b54b4d5eb732622f476803c3b4434c6ea0d4b552ad1ac7aa2"
-    },
-    {
       "file": "src/components/contacts/ContactResultsSummary.tsx",
       "line": 43,
       "column": 30,
@@ -5095,20 +5073,6 @@
       "spanHash": "15ec8ed09c4660ae007d396a1564035fbf92901492278fe14daa67e6dc0ed8cf",
       "lineHash": "5152971c9684c3add7535b91fc05c625aa6ce8cf7ce4fab6d6a4c44713fe2387",
       "contextHash": "76d30704a2ef1567ece0703de2544484157abe7a4a16871230334f9cafa623bd"
-    },
-    {
-      "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "d54974336bf8bf4e774fd95738afc2c42a87a015269f5427be4df65363c09630"
     },
     {
       "file": "src/components/inbox/ContactTypeFilter.tsx",

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { usesExternalHttpsServer } from './e2e/auth-diagnostics';
 
 // E87: quarentena formal. Schema em e2e/quarantine.js; a validacao da forma e a cobranca
 // do prazo vivem em scripts/ci/check-quarantine.mjs.
@@ -56,12 +57,11 @@ export default defineConfig({
   },
   projects: [
     {
-      // auth.spec.ts exercita a tela de login deslogada (tabs, validação de
-      // formulário) e nunca deve depender do projeto "setup" — rodar só este
-      // projeto (ex: npx playwright test --project=chromium) precisa continuar
-      // funcionando mesmo sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD definidas.
+      // Casos Chromium deslogados: auth.spec.ts e tarefas-quadro.spec.ts.
+      // Tarefas usa sessão falsa e a guarda R1 exige coletor sem storageState
+      // nem setup. Ambos continuam executáveis no CI público sem credenciais.
       name: 'chromium',
-      testMatch: /auth\.spec\.ts/,
+      testMatch: [/auth\.spec\.ts/, /tarefas-quadro\.spec\.ts/],
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -131,7 +131,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-quadro\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -349,6 +349,9 @@ export default defineConfig({
     // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
     // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
     const alvo = process.env.PLAYWRIGHT_BASE_URL;
+    // Projetos públicos podem usar um deployment HTTPS explícito sem subir Vite.
+    // O setup autenticado tem sua própria guarda antes de ler credenciais.
+    if (usesExternalHttpsServer(alvo)) return undefined;
     const url = alvo ?? 'http://127.0.0.1:5173';
     const porta = new URL(url).port || '5173';
     return {

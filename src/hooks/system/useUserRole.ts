@@ -114,7 +114,6 @@ export function useUserRole() {
   const derivedRoles = useMemo(() => ({
     isAdmin: roles.includes('admin'),
     isSupervisor: roles.includes('supervisor') || roles.includes('admin'),
-    isSpecialAgent: roles.includes('special_agent'),
   }), [roles]);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);

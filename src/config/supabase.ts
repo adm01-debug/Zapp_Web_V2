@@ -8,7 +8,7 @@ export const PRODUCTION_SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co
 // hospedagem injeta essas variaveis apontando para outro projeto (ver client.ts). O desvio para o
 // banco local usa nomes dedicados e so vale quando as TRES condicoes abaixo sao verdadeiras:
 //   1. o build NAO e de producao (`bun run dev`, vitest); em `vite build` o desvio e ignorado;
-//   2. VITE_ZAPP_LOCAL_SUPABASE_URL aponta para a propria maquina (http://127.0.0.1 ou localhost);
+//   2. VITE_ZAPP_LOCAL_SUPABASE_URL aponta para a propria maquina (HTTP(S) em 127.0.0.1 ou localhost);
 //   3. VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY esta preenchida.
 // Qualquer outra combinacao cai no banco oficial. Assim uma variavel perdida nunca leva o app
 // para um terceiro projeto, e um build de producao nunca aponta para localhost.
@@ -33,7 +33,7 @@ export function resolveLocalSupabase(env: SupabaseEnv | undefined): LocalSupabas
   if (!rawUrl || !anonKey) return null;
   try {
     const parsed = new URL(rawUrl);
-    if (parsed.protocol !== 'http:' || !LOCAL_HOSTS.has(parsed.hostname)) return null;
+    if (!['http:', 'https:'].includes(parsed.protocol) || !LOCAL_HOSTS.has(parsed.hostname)) return null;
     return { url: parsed.origin, anonKey };
   } catch {
     return null;

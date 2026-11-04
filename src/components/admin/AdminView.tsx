@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
-  UserPlus, Building, Eye, Loader2,
+  UserPlus, Building, Loader2,
   AlertTriangle, CalendarClock, ChevronLeft, ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
@@ -26,9 +26,9 @@ import { VoipRamalField } from './VoipRamalField';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import { CronJobsTab } from './CronJobsTab';
 
-const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
-const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
-const roleColorMap = { admin: 'text-warning', supervisor: 'text-info', agent: 'text-muted-foreground', special_agent: 'text-accent-foreground' } as const;
+const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User } as const;
+const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente' } as const;
+const roleColorMap = { admin: 'text-warning', supervisor: 'text-info', agent: 'text-muted-foreground' } as const;
 
 // O campo "Limite de Chats" usa type=number, mas o navegador permite apagar o
 // valor: o Number.parseInt('') virava NaN e o NaN era gravado em profiles.max_chats.

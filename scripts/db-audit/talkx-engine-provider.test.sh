@@ -31,42 +31,77 @@ deno_test="$repo_root/supabase/functions/talkx-send/engine.integration.test.ts"
 
 pg_image="${TALKX_ENGINE_PROVIDER_PG_IMAGE:-postgres:17-alpine}"
 pgrst_image="${TALKX_ENGINE_PROVIDER_PGRST_IMAGE:-public.ecr.aws/supabase/postgrest:v14.5}"
-pg_name="zapp-talkx-engine-pg-$$"
-pgrst_name="zapp-talkx-engine-pgrst-$$"
-net_name="zapp-talkx-engine-net-$$"
+umask 077
+run_dir="$(mktemp -d "${TMPDIR:-/tmp}/zapp-talkx-engine.XXXXXX")"
+run_key="${run_dir##*.}"
+pg_name="zapp-talkx-engine-pg-$run_key"
+pgrst_name="zapp-talkx-engine-pgrst-$run_key"
+net_name="zapp-talkx-engine-net-$run_key"
 jwt_secret="talkx-engine-provider-test-secret-32-chars"
+completed=false
 
 cleanup() {
-  if [[ "$pg_name" =~ ^zapp-talkx-engine-pg-[0-9]+$ ]]; then
-    docker rm -f "$pg_name" >/dev/null 2>&1 || true
+  local failed=0 kind id file
+  # Os cidfiles são escritos pelo Docker apenas para os recursos criados nesta
+  # execução. Uma colisão de nome não autoriza remover o recurso preexistente.
+  for kind in pgrst pg network; do
+    file="$run_dir/$kind.id"
+    [[ -s "$file" ]] || continue
+    id="$(cat "$file")"
+    if [[ ! "$id" =~ ^[0-9a-f]{64}$ ]]; then
+      printf '[FAIL] cleanup: ID inválido de %s; estado em %s\n' "$kind" "$run_dir" >&2
+      failed=1
+    elif { [[ "$kind" == network ]] && docker network rm "$id" >/dev/null 2>&1; } ||
+         { [[ "$kind" != network ]] && docker rm -f "$id" >/dev/null 2>&1; }; then
+      rm -f "$file" || failed=1
+    else
+      printf '[FAIL] cleanup: não removi %s %s; estado em %s\n' "$kind" "$id" "$run_dir" >&2
+      failed=1
+    fi
+  done
+  if [[ "$failed" == 0 ]]; then
+    rm -rf "$run_dir" || failed=1
   fi
-  if [[ "$pgrst_name" =~ ^zapp-talkx-engine-pgrst-[0-9]+$ ]]; then
-    docker rm -f "$pgrst_name" >/dev/null 2>&1 || true
-  fi
-  if [[ "$net_name" =~ ^zapp-talkx-engine-net-[0-9]+$ ]]; then
-    docker network rm "$net_name" >/dev/null 2>&1 || true
-  fi
+  return "$failed"
 }
-trap cleanup EXIT INT TERM
+finish() {
+  local status=$?
+  trap - EXIT INT TERM
+  if ! cleanup && [[ "$status" == 0 ]]; then status=1; fi
+  if [[ "$status" == 0 && "$completed" != true ]]; then status=1; fi
+  if [[ "$status" == 0 ]]; then
+    printf '[OK] X034: 8 testes, zero ignorados; Postgres/PostgREST próprios removidos.\n'
+  fi
+  exit "$status"
+}
+trap finish EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
 
-psql_script() { docker exec -i "$pg_name" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres; }
-psql_query() { docker exec "$pg_name" psql -X -Atq -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$1"; }
+psql_script() { docker exec -i "$pg_id" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres; }
+psql_query() { docker exec "$pg_id" psql -X -Atq -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$1"; }
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 command -v deno >/dev/null 2>&1 || fail 'Deno nao esta instalado'
+command -v python3 >/dev/null 2>&1 || fail 'Python 3 nao esta instalado'
 
-docker network create "$net_name" >/dev/null
-docker run --rm -d --name "$pg_name" --network "$net_name" \
-  -e POSTGRES_PASSWORD=engine_provider_test_only "$pg_image" >/dev/null
+docker network create --internal --label "zapp.edge-harness=$run_key" "$net_name" > "$run_dir/network.id"
+docker create --cidfile "$run_dir/pg.id" --name "$pg_name" --network "$net_name" \
+  --label "zapp.edge-harness=$run_key" \
+  --add-host=tnnnlkbymytvtqngbbqh.supabase.co:127.0.0.1 \
+  -e POSTGRES_PASSWORD=engine_provider_test_only "$pg_image" \
+  postgres -c cron.launch_active_jobs=off >/dev/null
+pg_id="$(cat "$run_dir/pg.id")"
+docker start "$pg_id" >/dev/null
 
 ready=false
 for _ in $(seq 1 90); do
-  markers="$(docker logs "$pg_name" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
-  if [[ "$markers" -ge 2 ]] && docker exec "$pg_name" \
+  markers="$(docker logs "$pg_id" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
+  if [[ "$markers" -ge 2 ]] && docker exec "$pg_id" \
     psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
     ready=true
     break
@@ -74,8 +109,13 @@ for _ in $(seq 1 90); do
   sleep 1
 done
 [[ "$ready" == true ]] || fail 'PostgreSQL de teste não iniciou'
+cron_state="$(psql_query 'SHOW cron.launch_active_jobs')" || fail 'não consegui verificar o estado do cron'
+[[ "$cron_state" == off ]] || fail 'cron não está desativado'
+docker exec "$pg_id" cat /etc/hosts | grep -Eq \
+  '^127\.0\.0\.1[[:space:]]+tnnnlkbymytvtqngbbqh\.supabase\.co([[:space:]]|$)' \
+  || fail 'host oficial não foi neutralizado'
 
-pass 'PostgreSQL descartável no ar'
+pass 'PostgreSQL descartável no ar; cron off e host oficial neutralizado'
 
 # ---------------------------------------------------------------------------
 # Schema mínimo no estado ANTERIOR à cadeia: só os objetos que as migrations
@@ -360,6 +400,7 @@ chain=(
   "20261001391230_talkx_engine_tick.sql"
   "20261002381230_talkx_role_gates.sql"
   "20261002551230_talkx_limits_ritmo.sql"
+  "20261011003005_talkx_n102a_ddl.sql"
 )
 for name in "${chain[@]}"; do
   migration="$migrations_dir/$name"
@@ -402,18 +443,20 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- Campanhas: C1 = 60 destinatários; C2 morte+sweep; C3 worker; C4 suprimido;
 -- C5 limite diário (conexão própria); C6 cancelamento; C7 draft (agente).
+-- O foco é lease/entrega, sem janela de horário: opt-out explícito do DND
+-- só nestas campanhas sintéticas; a migration mantém o default real true.
 INSERT INTO public.talkx_campaigns
   (id, name, message_template, status, whatsapp_connection_id, total_recipients,
    send_interval_min, send_interval_max, typing_delay_min, typing_delay_max,
-   schedule_timezone, business_hours_only, speed_profile)
+   schedule_timezone, business_hours_only, speed_profile, respect_dnd)
 VALUES
-  ('40000000-0000-4000-8000-000000000001', 'C1 integração', 'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 60, 0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000002', 'C2 morte',      'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000003', 'C3 worker',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 2,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000004', 'C4 suprimido',  'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000005', 'C5 limite',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000006', 'C6 cancelar',   'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000007', 'C7 draft',      'Ola {{nome}}', 'draft',   '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate');
+  ('40000000-0000-4000-8000-000000000001', 'C1 integração', 'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 60, 0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000002', 'C2 morte',      'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000003', 'C3 worker',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 2,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000004', 'C4 suprimido',  'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000005', 'C5 limite',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000006', 'C6 cancelar',   'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000007', 'C7 draft',      'Ola {{nome}}', 'draft',   '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false);
 
 -- Destinatários: C1 (1..60), C2 (61), C3 (62,63), C4 (64..67), C5 (68..71), C6 (72..75), C7 (76).
 INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status, retry_after)
@@ -462,23 +505,42 @@ done
 docker image inspect "$pgrst_image" >/dev/null 2>&1 \
   || fail "registro de imagens indisponivel ($pgrst_image)"
 
-# PostgREST publicado em 127.0.0.1 (porta efêmera escolhida pelo docker).
-docker run --rm -d --name "$pgrst_name" --network "$net_name" \
-  -p 127.0.0.1::3000 \
+# PostgREST somente na rede interna; nenhum binding de porta no host.
+docker create --cidfile "$run_dir/pgrst.id" --name "$pgrst_name" --network "$net_name" \
+  --label "zapp.edge-harness=$run_key" \
   -e PGRST_DB_URI="postgres://postgres:engine_provider_test_only@$pg_name:5432/postgres" \
   -e PGRST_DB_SCHEMAS=public \
   -e PGRST_DB_ANON_ROLE=anon \
   -e PGRST_JWT_SECRET="$jwt_secret" \
   -e PGRST_SERVER_PORT=3000 \
   "$pgrst_image" >/dev/null
+pgrst_id="$(cat "$run_dir/pgrst.id")"
+docker start "$pgrst_id" >/dev/null
 
-host_port="$(docker port "$pgrst_name" 3000 | head -1 | sed -E 's/.*:([0-9]+)$/\1/')"
-[[ -n "$host_port" ]] || fail 'não consegui descobrir a porta do PostgREST'
-pgrest_url="http://127.0.0.1:$host_port"
+# Docker Engine Linux: acesso pelo IP privado da única rede interna, sem -p.
+# Filtrar inspect evita registrar Env/credenciais; o helper valida ambos os CIDs.
+container_format='{"Id":{{json .Id}},"Config":{"Labels":{{json .Config.Labels}}},"State":{"Running":{{json .State.Running}},"ExitCode":{{json .State.ExitCode}},"Error":{{json .State.Error}}},"HostConfig":{"NetworkMode":{{json .HostConfig.NetworkMode}},"PortBindings":{{json .HostConfig.PortBindings}}},"NetworkSettings":{"Networks":{{json .NetworkSettings.Networks}},"Ports":{{json .NetworkSettings.Ports}}}}'
+network_format='{"Id":{{json .Id}},"Labels":{{json .Labels}},"Name":{{json .Name}},"Internal":{{json .Internal}},"Driver":{{json .Driver}},"IPAM":{{json .IPAM}},"Containers":{{json .Containers}}}'
+network_id="$(cat "$run_dir/network.id")"
+docker inspect --format "$container_format" "$pgrst_id" > "$run_dir/pgrst.json" \
+  || fail 'não consegui inspecionar o PostgREST próprio'
+docker inspect --format "$container_format" "$pg_id" > "$run_dir/pg.json" \
+  || fail 'não consegui inspecionar o PostgreSQL próprio'
+docker network inspect --format "$network_format" "$network_id" > "$run_dir/network.json" \
+  || fail 'não consegui inspecionar a rede interna própria'
+if pgrest_url="$(python3 "$repo_root/scripts/db-audit/postgrest-internal-url.py" \
+  "$run_dir/pgrst.json" "$run_dir/pg.json" "$run_dir/network.json" \
+  "$pgrst_id" "$pg_id" "$network_id" "$run_key")"; then
+  :
+else
+  metadata_status=$?
+  if [[ "$metadata_status" == 2 ]]; then docker logs --tail 40 "$pgrst_id" >&2 || true; fi
+  fail 'PostgREST não atende ao contrato da rede interna própria'
+fi
 
 postgrest_ready=false
 for _ in $(seq 1 60); do
-  if curl -sf "$pgrest_url/" >/dev/null 2>&1; then
+  if curl --noproxy '*' -sf --connect-timeout 2 --max-time 5 "$pgrest_url/" >/dev/null 2>&1; then
     postgrest_ready=true
     break
   fi
@@ -512,7 +574,9 @@ TALKX_ENGINE_POSTGREST_URL="$pgrest_url" \
 TALKX_ENGINE_JWT="$jwt" \
 TALKX_ENGINE_ANON_JWT="$anon_jwt" \
   deno test --config "$repo_root/scripts/ci/deno.json" --frozen \
-    --allow-env --allow-read --allow-net=127.0.0.1 "$deno_test" \
+    --junit-path "$run_dir/x034.xml" \
+    --allow-env --allow-read --allow-net="127.0.0.1,${pgrest_url#http://}" "$deno_test" \
   || fail 'engine.integration.test.ts falhou'
+python3 "$repo_root/scripts/db-audit/assert-deno-junit.py" "$run_dir/x034.xml" 8
 
-printf '[OK] X034 engine.provider: motor real contra Postgres+PostgREST descartáveis com provedor falso (60 destinatários, sweep, worker, supressão, limite diário, cancelamento, agente).\n'
+completed=true

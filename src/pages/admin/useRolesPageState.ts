@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { loadRolesWithProfiles } from './loadRolesWithProfiles';
 
-type RoleType = 'admin' | 'supervisor' | 'agent' | 'special_agent';
+type RoleType = 'admin' | 'supervisor' | 'agent';
 
 export interface UserWithRole {
   id: string;
@@ -100,7 +100,6 @@ export function useRolesPageState() {
   const groupedUsers = useMemo(() => ({
     admin: filteredUsers.filter(u => u.role === 'admin'),
     supervisor: filteredUsers.filter(u => u.role === 'supervisor'),
-    special_agent: filteredUsers.filter(u => u.role === 'special_agent'),
     agent: filteredUsers.filter(u => u.role === 'agent'),
   }), [filteredUsers]);
 
