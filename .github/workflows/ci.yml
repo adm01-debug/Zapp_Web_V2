@@ -150,6 +150,9 @@ jobs:
       - name: 📖 Verificar README gerado dos workflows
         run: node scripts/ci/render-workflow-docs.mjs --check
 
+      - name: Verificar inventário de testes
+        run: node scripts/ci/check-test-inventory.mjs
+
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
