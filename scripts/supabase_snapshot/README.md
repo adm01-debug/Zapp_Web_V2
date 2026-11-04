@@ -49,12 +49,29 @@ mapa fechado de jobs (`scripts/ci/secrets-environments.unit.mjs`).
 | Supabase | `cron.job`, `pgmq` (filas), `supabase_migrations.schema_migrations` (com SQL), `storage.buckets`, `vault.secrets` (só nomes), Database Webhooks, realtime publications, foreign servers (credenciais redigidas) |
 | Lints (`lints.md`) | RLS desabilitado / sem policies, tabela sem PK, FK sem índice, SECURITY DEFINER sem `search_path`, view em `public` sem `security_invoker`, função chamável por `anon`, extensão em `public`, policy com `auth.uid()` sem `(select …)`, tabela no Realtime sem REPLICA IDENTITY FULL |
 | Relacionamentos | todas as FKs + diagrama ER Mermaid (até 120 tabelas) |
-| Quem usa cada função (`functions.md`, `snapshot.json` → `db.functions[].callers`) | arquivos do repo que a chamam (`.rpc('fn')` ou `fn(` em `src/`, `supabase/functions/`, `supabase/migrations/`, `scripts/`…), jobs do pg_cron que a executam, triggers que a disparam, outras funções que a chamam — função sem nenhum uso = candidata a morta |
+| Referências a cada função (`functions.md`, `snapshot.json` → `db.functions[].callers`) | referências estáticas (`.rpc('fn')` ou `fn(` em `src/`, `supabase/functions/`, migrations ativas, scripts operacionais…), jobs do pg_cron, triggers, outras funções e views |
 | Management API (opcional) | edge functions (versão, verify_jwt, entrypoint, URL), nomes dos secrets, auth (providers, hooks, config), PostgREST (schemas expostos, max_rows), Postgres/pooler/storage config, network/SSL, branches, PITR/backups — segredos redigidos |
 | Métricas voláteis (`stats.*`, `cron-runs.md`) | tamanho por tabela/schema, linhas e scans (aproximados), índices nunca usados, storage por bucket, auth (agregados), filas, top queries do `pg_stat_statements` (normalizadas), conexões, saúde dos serviços, últimas execuções do cron |
 | Ferramentas | `schema.sql` (pg_dump --schema-only), `types.ts` (supabase gen types) |
 
 Nunca sai: linha de tabela, dado de usuário, valor de secret/chave/senha, connection string.
+
+### Como interpretar referências a funções
+
+O mapa de código ignora assinaturas de declaração/alteração de funções, diretórios históricos
+`_foreign`/`_superseded`, testes, fixtures e stories reconhecidos por nome. Chamadas no corpo de uma
+função SQL e em migrations ativas continuam contando; pastas sobrepostas em `CODE_SCAN_DIRS` não
+duplicam as ocorrências. Os arquivos do repositório e o inventário de funções do banco são preservados.
+A busca por nome é heurística e compartilha referências entre overloads: não comprova execução e a
+ausência de referência não autoriza remover uma função. Entradas `aggregate`/`window` continuam no
+catálogo sem corpo SQL, conforme a consulta do produtor; isso não representa falha de coleta.
+
+Se a coleta de `functions` falha, os metadados/SQL e as referências entre funções (`callers.db`)
+continuam vindo do histórico. Código, cron, triggers e views atualizam suas próprias categorias quando
+a fonte foi lida; fonte reaproveitada ou indisponível preserva as referências anteriores disponíveis.
+Uma coleta bem-sucedida vazia remove referências antigas. Falha de leitura do código é registrada em
+`errors.md`; não equivale a código sem chamadas. `README.md` e `functions.md` mostram o estado de cada
+fonte do mapa, sem apresentar todo o mapa como atualizado.
 
 ### Role somente leitura (opcional — não enxerga pg_cron)
 
@@ -110,5 +127,10 @@ node --test scripts/ci/supabase-snapshot.unit.mjs
 
 Não exigem banco, rede, credenciais nem o pacote psycopg: a conexão é simulada. Verificam a preservação
 do SQL e dos metadados em coletas parciais, a ausência de arquivos anteriores e a recuperação na coleta
-saudável seguinte. O adaptador Node participa da suíte existente `scripts/ci/*.unit.mjs`.
+saudável seguinte. A matriz cobre 24 sequências: functions/migrations × histórico ausente/completo/sem
+SQL × uma/três falhas × recuperação com registros alterados/vazios. Casos adicionais verificam
+referências reais versus DDL/testes, pastas configuradas e os tipos de rotina sem corpo SQL.
+Outra matriz cobre as oito combinações de cron/triggers/views reaproveitados enquanto functions falha,
+além de fontes vazias, indisponíveis e recuperação, preservando a base anterior do changelog.
+O adaptador Node participa da suíte existente `scripts/ci/*.unit.mjs` e executa a mesma suíte Python.
 

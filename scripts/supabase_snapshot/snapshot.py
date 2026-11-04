@@ -968,11 +968,40 @@ def run_gen_types() -> str | None:
 # Quem chama cada função (código do repo, cron, triggers, outras funções)
 # --------------------------------------------------------------------------- #
 
-def scan_code_files() -> list[tuple[str, str]]:
-    """Lê uma vez os arquivos de código do repo (caminho relativo, conteúdo)."""
-    if not REPO_ROOT or not REPO_ROOT.exists():
-        return []
+def is_caller_source(path: pathlib.Path) -> bool:
+    """Histórico, testes e fixtures não demonstram uso atual pela aplicação."""
+    excluded = {"_foreign", "_superseded", "test", "tests", "__tests__", "fixtures", "__fixtures__",
+                "mocks", "__mocks__", "e2e", "cypress", "playwright"}
+    return not (any(part in excluded for part in path.parts[:-1])
+                or re.search(r"(?:^test_|_test$|(?:^|\.)(?:test|spec|unit|stories)$)", path.stem))
+
+
+def sql_without_routine_declarations(text: str) -> str:
+    """Ignora nomes em assinaturas DDL sem apagar chamadas no corpo de CREATE FUNCTION."""
+    identifier = r'(?:"(?:[^"]|"")*"|[A-Za-z_][A-Za-z0-9_$]*)'
+    qualified = rf'(?:{identifier}\s*\.\s*)?{identifier}'
+    create = re.compile(r'\bCREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE|AGGREGATE)\s+'
+                        rf'{qualified}(?=\s*\()', re.I)
+    signature = rf'{qualified}\s*\((?:[^()]|\([^()]*\))*\)'
+    metadata = re.compile(r'\b(?:(?:ALTER|DROP)\s+(?:FUNCTION|PROCEDURE|ROUTINE|AGGREGATE)\b|'
+                          r'COMMENT\s+ON\s+(?:FUNCTION|PROCEDURE|ROUTINE|AGGREGATE)\b|'
+                          r'(?:GRANT|REVOKE)\s+(?:EXECUTE|ALL(?:\s+PRIVILEGES)?)\s+ON\s+'
+                          r'(?:FUNCTION|PROCEDURE|ROUTINE)\b)\s+(?:IF\s+EXISTS\s+)?'
+                          rf'{signature}(?:\s*,\s*{signature})*', re.I)
+    text = create.sub(lambda m: " " * len(m.group()), text)
+    return metadata.sub(lambda m: " " * len(m.group()), text)
+
+
+def scan_code_files() -> list[tuple[str, str]] | None:
+    """Lê arquivos do repo elegíveis como callers (caminho relativo, conteúdo)."""
+    if not REPO_ROOT:
+        return None
+    if not REPO_ROOT.exists():
+        record_error("callers.code", "REPO_ROOT não encontrado; referências de código não atualizadas")
+        return None
     out: list[tuple[str, str]] = []
+    seen: set[pathlib.Path] = set()
+    failed = False
     skip = {"node_modules", ".git", "dist", "build", ".next", "coverage", "graphify-out"}
     for d in CODE_SCAN_DIRS:
         base = REPO_ROOT / d
@@ -981,30 +1010,34 @@ def scan_code_files() -> list[tuple[str, str]]:
         for path in base.rglob("*"):
             if len(out) >= CODE_SCAN_MAX_FILES:
                 break
-            if not path.is_file() or path.suffix not in CODE_SCAN_EXT or any(part in skip for part in path.parts):
+            relative = path.relative_to(REPO_ROOT)
+            if (relative in seen or not path.is_file() or path.suffix not in CODE_SCAN_EXT or any(part in skip for part in relative.parts)
+                    or not is_caller_source(relative)):
                 continue
             try:
                 if path.stat().st_size > 2_000_000:
                     continue
-                out.append((str(path.relative_to(REPO_ROOT)), path.read_text(encoding="utf-8", errors="ignore")))
-            except OSError:
-                continue
-    return out
+                out.append((relative.as_posix(), path.read_text(encoding="utf-8", errors="ignore")))
+                seen.add(relative)
+            except OSError as error:
+                record_error("callers.code", f"Não foi possível ler {relative.as_posix()}: {error}")
+                failed = True
+    return None if failed else out
 
 
 def rx_name_keys(names: list[str]) -> set[str]:
     return set(names)
 
 
-def build_function_callers(db: dict) -> None:
-    """Preenche f["callers"] = {"code": [...], "cron": [...], "triggers": [...], "db": [...]} em cada função."""
-    if "functions" in CARRIED:
-        # O snapshot compacto não contém os corpos SQL necessários para refazer este mapa.
-        log("callers: preservado da coleta anterior junto com a seção functions")
-        return
+def build_function_callers(db: dict) -> dict[str, str]:
+    """Atualiza cada categoria disponível e informa a origem atual/anterior das referências."""
     fns = db.get("functions") or []
     if not fns:
-        return
+        return {}
+    if "functions" in CARRIED:
+        # introspect_db reutiliza a lista anterior; não altere a base do changelog.
+        fns = [{**f} for f in fns]
+        db["functions"] = fns
     names = sorted({f["name"] for f in fns}, key=len, reverse=True)
     alt = "|".join(re.escape(n) for n in names)
     schemas = "|".join(re.escape(x) for x in sorted({f["schema"] for f in fns} | {"public"}))
@@ -1013,7 +1046,10 @@ def build_function_callers(db: dict) -> None:
     rx_code = re.compile(r"""\.rpc\(\s*['"`](?P<rpc>%s)['"`]|(?<![A-Za-z0-9_.])(?:%s)\.(?P<call>%s)\s*\(""" % (alt, schemas, alt))
     rx_sql = re.compile(r"""(?<![A-Za-z0-9_.])(?:(?:%s)\.)?(?P<call>%s)\s*\(""" % (schemas, alt), re.I)
     code_hits: dict[str, dict[str, int]] = {}
-    for rel, text in scan_code_files():
+    code_files = scan_code_files()
+    for rel, text in code_files or []:
+        if rel.endswith(".sql"):
+            text = sql_without_routine_declarations(text)
         rx = rx_sql if rel.endswith((".sql", ".py")) else rx_code
         for m in rx.finditer(text):
             n = (m.groupdict().get("rpc") or m.group("call"))
@@ -1024,10 +1060,17 @@ def build_function_callers(db: dict) -> None:
     cron_jobs = ((db.get("cron") or {}).get("jobs")) or []
     trigs = db.get("triggers") or []
     rx_name = {n: re.compile(r"(?<![A-Za-z0-9_])%s\s*\(" % re.escape(n)) for n in names}
+    unavailable = {name for name in ("cron", "triggers", "views") if name in CARRIED or db.get(name) is None}
+    states = {"code": "coleta atual" if code_files is not None else "indisponível; referências anteriores quando disponíveis"}
+    for name in ("cron", "triggers", "views"):
+        states[name] = ("coleta anterior" if name in CARRIED else
+                        "indisponível; referências anteriores quando disponíveis" if db.get(name) is None else "coleta atual")
+    states["db"] = "coleta anterior; corpos SQL não atualizados" if "functions" in CARRIED else "coleta atual"
     for f in fns:
         n = f["name"]
         code = sorted(code_hits.get(n, {}).items())
-        f["callers"] = {
+        previous = f.get("callers") or {}
+        callers = {
             "code": [{"file": rel, "hits": c} for rel, c in code[:30]],
             "code_total_files": len(code),
             "cron": [f"{j['jobid']}:{j.get('jobname') or ''}" for j in cron_jobs if rx_name[n].search(j.get("command") or "")],
@@ -1037,7 +1080,16 @@ def build_function_callers(db: dict) -> None:
                           if g["name"] != n and g.get("definition") and rx_name[n].search(g["definition"].split("\n", 1)[-1])}),
             "views": sorted({f"{v['schema']}.{v['name']}" for v in (db.get("views") or []) if rx_name[n].search(v.get("definition") or "")}),
         }
+        # O snapshot compacto não tem corpos SQL: só a categoria db depende deles.
+        for name in unavailable | ({"db"} if "functions" in CARRIED else set()):
+            if name in previous:
+                callers[name] = previous[name]
+        if code_files is None:
+            callers["code"] = previous.get("code", [])
+            callers["code_total_files"] = previous.get("code_total_files", len(callers["code"]))
+        f["callers"] = callers
     log(f"callers: código cruzado em {len(code_hits)} funções referenciadas")
+    return states
 
 
 # --------------------------------------------------------------------------- #
@@ -1104,6 +1156,15 @@ def banner(name: str) -> str:
     if any(e["section"] == name for e in ERRORS):
         return f"> ⚠️ Seção `{name}` indisponível nesta coleta e sem versão anterior (ver errors.md).\n\n"
     return ""
+
+
+def callers_status_table(states: dict[str, str] | None) -> str:
+    if not states:
+        return ""
+    labels = {"code": "código do repo", "cron": "cron", "triggers": "triggers", "views": "views", "db": "outras funções"}
+    return ("## Estado das fontes do mapa de referências\n\n"
+            "Cada fonte é atualizada independentemente; referências anteriores não comprovam uso atual.\n\n"
+            + md_table(["fonte", "estado"], [[labels.get(name, name), state] for name, state in states.items()]) + "\n")
 
 
 def render_tables(db: dict) -> None:
@@ -1218,7 +1279,7 @@ def render_relationships(db: dict) -> None:
     write(OUT / "relationships.md", "\n".join(md))
 
 
-def render_simple(db: dict, api_: dict) -> None:
+def render_simple(db: dict, api_: dict, caller_sources: dict[str, str] | None = None) -> None:
     # Views
     md = ["# Views\n", banner("views")]
     for v in db.get("views") or []:
@@ -1237,9 +1298,12 @@ def render_simple(db: dict, api_: dict) -> None:
         if f.get("definition"):
             write(OUT / rel, f["definition"].strip())
         sql_available = bool(f.get("definition")) or ("functions" in CARRIED and (OUT / rel).is_file())
-        if not sql_available:
+        # get_functions só solicita pg_get_functiondef para function/procedure.
+        expects_sql = f.get("kind") not in ("aggregate", "window")
+        if not sql_available and expects_sql:
             missing_function_sql += 1
-        label = f"[{f['schema']}.{f['name']}]({rel})" if sql_available else f"{code(f['schema'] + '.' + f['name'])} (SQL indisponível)"
+        unavailable = "SQL indisponível" if expects_sql else "SQL não coletado para este tipo"
+        label = f"[{f['schema']}.{f['name']}]({rel})" if sql_available else f"{code(f['schema'] + '.' + f['name'])} ({unavailable})"
         cl = f.get("callers") or {}
         code_refs = ", ".join(c["file"] for c in cl.get("code", [])[:6]) + (f" (+{cl['code_total_files'] - 6})" if cl.get("code_total_files", 0) > 6 else "")
         rows.append([label, code(f["args"]), code(f["returns"]), f["language"], f["kind"],
@@ -1251,10 +1315,13 @@ def render_simple(db: dict, api_: dict) -> None:
         record_error("functions.sql", f"SQL indisponível para {missing_function_sql} função(ões); arquivos anteriores ausentes e nenhum corpo SQL coletado.")
     write(OUT / "functions.md", "# Functions / Procedures\n\n" + banner("functions") +
           "Corpo completo em `functions/<schema>/<nome>__<hash>.sql`. "
+          "Entradas `aggregate` e `window` são inventariadas sem corpo SQL. "
           "Função em schema exposto com EXECUTE para anon/authenticated = endpoint RPC (`/rest/v1/rpc/<nome>`). "
           "`security definer` executa com privilégios do owner — exige `SET search_path`.\n\n"
-          "Colunas de uso: **código** = arquivos do repo que chamam (`.rpc('fn')` ou `fn(`), **cron** = jobs do pg_cron que a executam, "
-          "**triggers** = triggers que a disparam, **banco** = outras funções e views que a usam. Busca é por nome (overloads compartilham). Função sem nenhum uso = candidata a morta.\n\n"
+          "Colunas de uso: **código** = referências estáticas em arquivos do repo (`.rpc('fn')` ou `fn(`), **cron** = jobs do pg_cron que a executam, "
+          "**triggers** = triggers que a disparam, **banco** = outras funções e views que a usam. Busca é por nome (overloads compartilham). "
+          "Assinaturas DDL, histórico e arquivos de teste não demonstram uso atual no código. Ausência de referência não prova que uma função pode ser removida.\n\n"
+          + callers_status_table(caller_sources)
           + (md_table(["função", "args", "retorno", "linguagem", "tipo", "trigger fn", "security definer", "volatilidade", "config", "EXECUTE (roles API)",
                        "código", "cron", "triggers", "banco", "comentário"], rows) if db.get("functions") is not None
              else "_Coleta indisponível; nenhuma versão anterior foi encontrada._\n"))
@@ -1468,7 +1535,7 @@ def render_stats(stats: dict, api_stats: dict, db: dict) -> None:
     write(OUT / "cron-runs.md", "\n".join(md))
 
 
-def render_readme(snap: dict, api_: dict) -> None:
+def render_readme(snap: dict, api_: dict, caller_sources: dict[str, str] | None = None) -> None:
     db = snap.get("db", {}) or {}
     cron = db.get("cron") or {}
     lints = db.get("lints") or []
@@ -1496,6 +1563,7 @@ def render_readme(snap: dict, api_: dict) -> None:
         "7. **Volume/perf**: `stats.md` (tamanhos, linhas, índices sem uso, queries custosas) — aproximado, não use como contagem exata.",
         "8. `snapshot.json` = tudo estrutural em JSON para busca programática; `stats.json` = métricas brutas.\n",
         "## Resumo\n", md_table(["categoria", "quantidade"], counts),
+        callers_status_table(caller_sources),
         "\n## Servidor\n", md_table(["propriedade", "valor"], [
             ["Postgres", server.get("server_version")], ["database", server.get("database")], ["timezone", server.get("timezone")],
             ["max_connections", server.get("max_connections")], ["statement_timeout (global)", server.get("statement_timeout")],
@@ -1575,7 +1643,7 @@ def main() -> int:
         log("Banco inteiro indisponível — nada será sobrescrito.")
         return 1
 
-    build_function_callers(db)
+    caller_sources = build_function_callers(db)
     api_, api_stats = introspect_api((previous or {}).get("api"))
     schema_sql = run_pg_dump()
     types_ts = run_gen_types()
@@ -1598,7 +1666,7 @@ def main() -> int:
 
     render_tables(db)
     render_relationships(db)
-    render_simple(db, api_)
+    render_simple(db, api_, caller_sources)
     render_stats(stats, api_stats, db)
     if schema_sql is not None:
         write(OUT / "schema.sql", schema_sql)
@@ -1611,7 +1679,7 @@ def main() -> int:
     old_fp = fingerprints(previous) if previous else {}
     diff = diff_fingerprints(old_fp, new_fp) if previous else []
     update_changelog(diff, previous_existed=previous is not None)
-    render_readme(snap, api_)
+    render_readme(snap, api_, caller_sources)
     slim = json.loads(dumps(snap))
     for f in slim["db"].get("functions") or []:
         if f.get("definition"):

@@ -53,7 +53,11 @@ def migration(version="20260101000000", name="demo", statements=None):
     }
 
 
-class SnapshotSQLRecoveryTests(unittest.TestCase):
+def structural_records(records):
+    return [{k: v for k, v in row.items() if k != "callers"} for row in records] if records is not None else None
+
+
+class SnapshotFixture(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="snapshot-sql-test-")
         self.addCleanup(self.temp.cleanup)
@@ -115,6 +119,8 @@ class SnapshotSQLRecoveryTests(unittest.TestCase):
     def error_sections(self):
         return {error["section"] for error in self.metadata()["errors"]}
 
+
+class SnapshotSQLRecoveryTests(SnapshotFixture):
     def test_successful_collection_writes_full_sql_with_compact_metadata(self):
         self.assertEqual(self.collect(), 0)
         self.assertEqual(self.function_sql().read_text().strip(), function()["definition"])
@@ -124,7 +130,7 @@ class SnapshotSQLRecoveryTests(unittest.TestCase):
         self.assertEqual(metadata["db"]["migrations"][0]["statements"], 2)
         self.assertEqual(metadata["errors"], [])
 
-    def test_repeated_failures_preserve_sql_counts_hashes_and_callers(self):
+    def test_repeated_failures_preserve_sql_counts_hashes_and_db_callers(self):
         self.assertEqual(self.collect(), 0)
         original_function = self.function_sql().read_bytes()
         original_migration = self.migration_sql().read_bytes()
@@ -136,12 +142,18 @@ class SnapshotSQLRecoveryTests(unittest.TestCase):
             self.assertEqual(self.function_sql().read_bytes(), original_function)
             self.assertEqual(self.migration_sql().read_bytes(), original_migration)
             metadata = self.metadata()
-            self.assertEqual(metadata["db"]["functions"], original_metadata["functions"])
+            self.assertEqual(structural_records(metadata["db"]["functions"]), structural_records(original_metadata["functions"]))
+            self.assertEqual(metadata["db"]["functions"][0]["callers"]["db"], original_metadata["functions"][0]["callers"]["db"])
+            self.assertEqual(metadata["db"]["functions"][0]["callers"]["code"], [])
             self.assertEqual(metadata["db"]["migrations"], original_metadata["migrations"])
             self.assertEqual(set(metadata["carried"]), {"functions", "migrations"})
             self.assertEqual(self.error_sections(), {"functions", "migrations"})
             for name in ("functions", "migrations"):
                 self.assertIn("versão anterior", (self.out / f"{name}.md").read_text())
+            for name in ("functions.md", "README.md"):
+                document = (self.out / name).read_text()
+                self.assertIn("| código do repo | coleta atual |", document)
+                self.assertIn("| outras funções | coleta anterior; corpos SQL não atualizados |", document)
 
     def test_failed_functions_allow_healthy_migrations_to_update(self):
         self.collect()
@@ -214,6 +226,311 @@ class SnapshotSQLRecoveryTests(unittest.TestCase):
         for name in ("functions", "migrations"):
             self.assertIn("_nenhum_", (self.out / f"{name}.md").read_text())
             self.assertIn(f"| {name} | 0 |", (self.out / "README.md").read_text())
+
+    def test_aggregate_and_window_without_sql_remain_healthy_catalog_entries(self):
+        entries = [{**function(f"demo_{kind}"), "kind": kind, "definition": None} for kind in ("aggregate", "window")]
+        self.assertEqual(self.collect(functions=entries), 0)
+        self.assertEqual(self.error_sections(), set())
+        self.assertEqual([f["kind"] for f in self.metadata()["db"]["functions"]], ["aggregate", "window"])
+        for entry in entries:
+            self.assertFalse(self.function_sql(entry["name"]).exists())
+        document = (self.out / "functions.md").read_text()
+        self.assertIn("SQL não coletado para este tipo", document)
+        self.assertNotIn("](functions/", document)
+        self.assertEqual(self.collect(failures={"functions"}), 0)
+        self.assertEqual(self.error_sections(), {"functions"})
+        self.assertEqual(self.metadata()["carried"], ["functions"])
+        self.assertEqual(self.collect(functions=entries), 0)
+        self.assertEqual(self.error_sections(), set())
+
+
+class SnapshotFailureMatrixTests(SnapshotFixture):
+    """24 sequências: seção × histórico/SQL disponível × repetição × recuperação."""
+
+    def exercise_failure_recovery(self, section, history, attempts, recovery):
+        if history != "none":
+            self.collect(functions=[function(), function("obsolete")],
+                         migrations=[migration(), migration("20260102000000", "obsolete")])
+            previous = copy.deepcopy(self.metadata()["db"][section])
+            sql_before = {p.relative_to(self.out): p.read_bytes() for p in (self.out / section).rglob("*.sql")}
+            if history == "metadata_only":
+                shutil.rmtree(self.out / section)
+        else:
+            previous, sql_before = None, {}
+
+        self.source_files = []  # não pode apagar callers da seção que veio do histórico
+        for attempt in range(attempts):
+            changed_function = function(value=attempt + 20)
+            changed_statement = f"ALTER TABLE public.demo_table ADD COLUMN field_{attempt} integer;"
+            self.assertEqual(self.collect(failures={section}, functions=[changed_function],
+                                         migrations=[migration(statements=[changed_statement])]), 0)
+            metadata = self.metadata()
+            self.assertEqual(structural_records(metadata["db"][section]), structural_records(previous))
+            if section == "functions" and previous:
+                self.assertEqual(metadata["db"][section][0]["callers"]["db"], previous[0]["callers"]["db"])
+                self.assertEqual(metadata["db"][section][0]["callers"]["code"], [])
+            self.assertEqual(metadata["carried"], [section] if history != "none" else [])
+            self.assertIn(section, self.error_sections())
+            self.assertEqual(f"{section}.sql" in self.error_sections(), history == "metadata_only")
+            document = (self.out / f"{section}.md").read_text()
+            if history == "complete":
+                for relative, contents in sql_before.items():
+                    self.assertEqual((self.out / relative).read_bytes(), contents)
+                self.assertIn("versão anterior", document)
+                self.assertNotIn("SQL indisponível", document)
+            else:
+                self.assertFalse((self.out / section).exists())
+                self.assertNotIn(f"]({section}/", document)
+                self.assertIn("SQL indisponível" if history == "metadata_only" else "Coleta indisponível", document)
+            if history == "none":
+                self.assertIn(f"| {section} | n/d |", (self.out / "README.md").read_text())
+            else:
+                self.assertIn(f"| {section} | 2 |", (self.out / "README.md").read_text())
+                # Falha da coleta não pode transformar registros conhecidos em remoções.
+                changes = self.snapshot.diff_fingerprints(
+                    self.snapshot.fingerprints({"db": {section: structural_records(previous)}}),
+                    self.snapshot.fingerprints({"db": {section: structural_records(metadata["db"][section])}}))
+                self.assertEqual(changes, [])
+            if section == "functions":
+                self.assertEqual(self.migration_sql().read_text().strip(), changed_statement)
+            else:
+                self.assertEqual(self.function_sql().read_text().strip(), changed_function["definition"])
+
+        self.source_files = [("src/recovered.ts", "supabase.rpc('demo')")]
+        final_function = function(value=99)
+        final_statement = "ALTER TABLE public.demo_table ADD COLUMN recovered boolean;"
+        functions = [] if section == "functions" and recovery == "empty" else [final_function]
+        migrations = [] if section == "migrations" and recovery == "empty" else [migration(statements=[final_statement])]
+        self.assertEqual(self.collect(functions=functions, migrations=migrations), 0)
+        metadata = self.metadata()
+        self.assertEqual(metadata["errors"], [])
+        self.assertEqual(metadata["carried"], [])
+        self.assertFalse(self.function_sql("obsolete").exists())
+        self.assertFalse(self.migration_sql("20260102000000", "obsolete").exists())
+        document = (self.out / f"{section}.md").read_text()
+        self.assertNotIn("versão anterior", document)
+        self.assertNotIn("SQL indisponível", document)
+        if recovery == "empty":
+            self.assertEqual(metadata["db"][section], [])
+            self.assertFalse((self.out / section).exists())
+            self.assertIn("_nenhum_", document)
+        elif section == "functions":
+            self.assertEqual(self.function_sql().read_text().strip(), final_function["definition"])
+            self.assertEqual(metadata["db"][section][0]["callers"]["code"], [{"file": "src/recovered.ts", "hits": 1}])
+        else:
+            self.assertEqual(self.migration_sql().read_text().strip(), final_statement)
+            self.assertEqual(metadata["db"][section][0]["statements"], 1)
+
+
+def recovery_case(section, history, attempts, recovery):
+    def run(self):
+        self.exercise_failure_recovery(section, history, attempts, recovery)
+    return run
+
+
+for _section in ("functions", "migrations"):
+    for _history in ("none", "complete", "metadata_only"):
+        for _attempts in (1, 3):
+            for _recovery in ("changed", "empty"):
+                setattr(SnapshotFailureMatrixTests,
+                        f"test_{_section}_{_history}_{_attempts}_failures_recover_{_recovery}",
+                        recovery_case(_section, _history, _attempts, _recovery))
+
+
+class SnapshotFunctionCallerTests(SnapshotFixture):
+    def callers(self, files, *, scan_dirs=None, kind="function"):
+        root = pathlib.Path(self.temp.name) / "repo"
+        for relative, text in files.items():
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        self.snapshot.REPO_ROOT = root
+        self.snapshot.CODE_SCAN_DIRS = scan_dirs or ["."]
+        db = {"functions": [{**function(), "kind": kind}]}
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.snapshot.build_function_callers(db)
+        return db["functions"][0]["callers"]["code"]
+
+    def test_function_declaration_is_not_a_call(self):
+        declarations = {
+            "supabase/migrations/001.sql": function()["definition"],
+            "supabase/migrations/002.sql": "CREATE OR REPLACE\nFUNCTION public.demo() RETURNS integer AS $$ SELECT 2 $$ LANGUAGE sql;",
+            "supabase/migrations/003.sql": "CREATE PROCEDURE public.demo() LANGUAGE sql AS $$ SELECT 1 $$;",
+        }
+        self.assertEqual(self.callers(declarations), [])
+
+    def test_aggregate_declarations_and_metadata_are_not_calls(self):
+        statements = [
+            "CREATE AGGREGATE public.demo(integer) (SFUNC = int4pl, STYPE = integer);",
+            "DROP AGGREGATE IF EXISTS public.demo(integer);",
+            "ALTER AGGREGATE public.demo(integer) OWNER TO postgres;",
+            "COMMENT ON AGGREGATE public.demo(integer) IS 'description';",
+        ]
+        self.assertEqual(self.callers({f"supabase/migrations/{i}.sql": text for i, text in enumerate(statements)}, kind="aggregate"), [])
+
+    def test_ddl_function_signatures_are_not_calls(self):
+        statements = [
+            "DROP FUNCTION IF EXISTS public.demo();",
+            "ALTER FUNCTION public.demo() OWNER TO postgres;",
+            "COMMENT ON FUNCTION public.demo() IS 'description';",
+            "GRANT EXECUTE ON FUNCTION public.demo() TO authenticated;",
+            "REVOKE EXECUTE ON FUNCTION public.demo() FROM anon;",
+        ]
+        self.assertEqual(self.callers({f"supabase/migrations/{i}.sql": text for i, text in enumerate(statements)}), [])
+
+    def test_real_calls_inside_function_bodies_and_migrations_remain(self):
+        text = "CREATE FUNCTION public.demo() RETURNS integer AS $$ SELECT public.demo(); $$ LANGUAGE sql;\nSELECT public.demo();"
+        self.assertEqual(self.callers({"supabase/migrations/active.sql": text}),
+                         [{"file": "supabase/migrations/active.sql", "hits": 2}])
+
+    def test_ddl_like_text_does_not_hide_a_real_call_later_in_the_statement(self):
+        text = "SELECT audit_note('ALTER FUNCTION public.demo()'), public.demo();"
+        self.assertEqual(self.callers({"supabase/migrations/active.sql": text}),
+                         [{"file": "supabase/migrations/active.sql", "hits": 1}])
+
+    def test_multiple_signatures_are_ignored_but_default_argument_calls_remain(self):
+        text = ("GRANT EXECUTE ON FUNCTION public.demo(), public.demo(integer) TO authenticated;\n"
+                "CREATE FUNCTION public.other(value integer DEFAULT public.demo()) RETURNS integer AS $$ SELECT 1 $$ LANGUAGE sql;")
+        self.assertEqual(self.callers({"supabase/migrations/active.sql": text}),
+                         [{"file": "supabase/migrations/active.sql", "hits": 1}])
+
+    def test_overlapping_scan_paths_do_not_duplicate_real_calls(self):
+        self.assertEqual(self.callers({"src/hooks/useDemo.ts": "supabase.rpc('demo')"}, scan_dirs=["src", "src/hooks"]),
+                         [{"file": "src/hooks/useDemo.ts", "hits": 1}])
+
+    def test_historical_and_test_files_do_not_prove_current_usage(self):
+        excluded = [
+            "supabase/migrations/_foreign/other/old.sql", "supabase/migrations/_superseded/old.sql",
+            "src/__tests__/client.ts", "src/tests/client.ts", "src/test/client.ts", "src/__fixtures__/client.ts",
+            "src/fixtures/client.ts", "src/__mocks__/client.ts", "src/client.test.ts", "src/client.spec.ts",
+            "scripts/ci/client.unit.mjs", "scripts/test_client.py", "server/client_test.go", "src/client.stories.tsx",
+        ]
+        files = {name: "supabase.rpc('demo'); SELECT public.demo();" for name in excluded}
+        files["src/client.ts"] = "supabase.rpc('demo')"
+        self.assertEqual(self.callers(files), [{"file": "src/client.ts", "hits": 1}])
+
+    def test_similar_names_operational_scripts_and_custom_scan_paths_remain(self):
+        names = ["runtime/testimonials.ts", "runtime/customer_foreign/client.ts", "runtime/_superseded_backup/client.ts",
+                 "runtime/fixtures-page.ts", "scripts/operations/sync.ts", "supabase/migrations/_foreign.sql"]
+        files = {name: "supabase.rpc('demo')" for name in names}
+        # SQL reconhece a chamada SQL, não a sintaxe de RPC do cliente.
+        files[names[-1]] = "SELECT public.demo();"
+        files["src/not_selected.ts"] = "supabase.rpc('demo')"
+        self.assertEqual(self.callers(files, scan_dirs=["runtime", "scripts/operations", "supabase/migrations"]),
+                         [{"file": name, "hits": 1} for name in sorted(names)])
+
+
+class SnapshotCallerFreshnessTests(SnapshotFixture):
+    @staticmethod
+    def database(stage):
+        consumer = function(f"{stage}_consumer")
+        consumer["definition"] = f"CREATE FUNCTION public.{stage}_consumer() RETURNS integer AS $$ SELECT public.demo() $$ LANGUAGE sql;"
+        return {
+            "functions": [function(), consumer],
+            "cron": {"jobs": [{"jobid": stage, "jobname": stage, "command": "SELECT public.demo();"}]},
+            "triggers": [{"schema": "public", "table": "orders", "name": f"{stage}_trigger", "function": "public.demo"}],
+            "views": [{"schema": "public", "name": f"{stage}_view", "definition": "SELECT public.demo();"}],
+        }
+
+    def build(self, database, files):
+        with mock.patch.object(self.snapshot, "scan_code_files", return_value=files):
+            with contextlib.redirect_stdout(io.StringIO()):
+                return self.snapshot.build_function_callers(database)
+
+    def previous_database(self):
+        previous = self.database("old")
+        self.build(previous, [("src/old.ts", "supabase.rpc('demo')")])
+        for entry in previous["functions"]:
+            entry["definition_sha"] = self.snapshot.sha(entry["definition"])
+            entry["definition"] = None
+        return previous
+
+    def exercise_sources(self, failed_sources):
+        previous = self.previous_database()
+        previous_copy = copy.deepcopy(previous)
+        current = self.database("new")
+        # introspect_db reutiliza a lista anterior; o mapa não pode alterar esse histórico em memória.
+        current["functions"] = previous["functions"]
+        self.snapshot.CARRIED[:] = ["functions", *failed_sources]
+        for source in failed_sources:
+            current[source] = previous[source]
+        states = self.build(current, [("src/new.ts", "supabase.rpc('demo')")])
+        callers = current["functions"][0]["callers"]
+        self.assertEqual(callers["code"], [{"file": "src/new.ts", "hits": 1}])
+        self.assertEqual(callers["code_total_files"], 1)
+        self.assertEqual(callers["db"], ["public.old_consumer"])
+        expected = {"cron": ["new:new"], "triggers": ["public.orders.new_trigger"], "views": ["public.new_view"]}
+        for source in expected:
+            if source in failed_sources:
+                self.assertEqual(callers[source], previous_copy["functions"][0]["callers"][source])
+                self.assertIn("anterior", states[source])
+            else:
+                self.assertEqual(callers[source], expected[source])
+                self.assertIn("coleta atual", states[source])
+        self.assertIn("anterior", states["db"])
+        self.assertEqual(previous, previous_copy, "recalcular callers não pode reescrever a base do changelog")
+        self.assertEqual([{k: v for k, v in f.items() if k != "callers"} for f in current["functions"]],
+                         [{k: v for k, v in f.items() if k != "callers"} for f in previous_copy["functions"]])
+
+        self.snapshot.CARRIED.clear()
+        recovered = self.database("recovered")
+        states = self.build(recovered, [("src/recovered.ts", "supabase.rpc('demo')")])
+        callers = recovered["functions"][0]["callers"]
+        self.assertEqual(callers["db"], ["public.recovered_consumer"])
+        self.assertEqual(callers["cron"], ["recovered:recovered"])
+        self.assertEqual(callers["triggers"], ["public.orders.recovered_trigger"])
+        self.assertEqual(callers["views"], ["public.recovered_view"])
+        self.assertTrue(all("coleta atual" in state for state in states.values()))
+
+    def test_unavailable_sources_preserve_known_references_without_claiming_freshness(self):
+        previous = self.previous_database()
+        expected = copy.deepcopy(previous["functions"][0]["callers"])
+        current = {"functions": previous["functions"], "cron": None, "triggers": None, "views": None}
+        self.snapshot.CARRIED[:] = ["functions"]
+        states = self.build(current, None)
+        self.assertEqual(current["functions"][0]["callers"], expected)
+        for source in ("code", "cron", "triggers", "views"):
+            self.assertIn("indisponível", states[source])
+
+    def test_successful_empty_sources_remove_old_references(self):
+        previous = self.previous_database()
+        current = {"functions": previous["functions"], "cron": {"jobs": []}, "triggers": [], "views": []}
+        self.snapshot.CARRIED[:] = ["functions"]
+        states = self.build(current, [])
+        callers = current["functions"][0]["callers"]
+        for source in ("code", "cron", "triggers", "views"):
+            self.assertEqual(callers[source], [])
+            self.assertIn("coleta atual", states[source])
+        self.assertEqual(callers["code_total_files"], 0)
+        self.assertEqual(callers["db"], ["public.old_consumer"])
+
+    def test_unreadable_code_preserves_previous_code_references_and_reports_failure(self):
+        previous = self.previous_database()
+        expected = copy.deepcopy(previous["functions"][0]["callers"]["code"])
+        root = pathlib.Path(self.temp.name) / "repo"
+        (root / "src").mkdir(parents=True)
+        (root / "src/client.ts").write_text("supabase.rpc('demo')", encoding="utf-8")
+        self.snapshot.REPO_ROOT = root
+        self.snapshot.CODE_SCAN_DIRS = ["src"]
+        self.snapshot.CARRIED[:] = ["functions"]
+        with mock.patch.object(pathlib.Path, "read_text", side_effect=PermissionError("fixture ilegível")):
+            with contextlib.redirect_stdout(io.StringIO()):
+                states = self.snapshot.build_function_callers(previous)
+        self.assertEqual(previous["functions"][0]["callers"]["code"], expected)
+        self.assertIn("indisponível", states["code"])
+        self.assertTrue(any(e["section"] == "callers.code" for e in self.snapshot.ERRORS))
+
+
+def source_freshness_case(failed_sources):
+    def run(self):
+        self.exercise_sources(failed_sources)
+    return run
+
+
+for _mask in range(8):
+    _sources = tuple(source for bit, source in enumerate(("cron", "triggers", "views")) if _mask & (1 << bit))
+    setattr(SnapshotCallerFreshnessTests, f"test_functions_carried_with_{'_'.join(_sources) or 'no_other_failure'}",
+            source_freshness_case(_sources))
 
 
 if __name__ == "__main__":

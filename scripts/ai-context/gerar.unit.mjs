@@ -335,3 +335,26 @@ test('alertas respeitam srcDirs explícito quando uma pasta de ferramentas cont�
   assert.ok(alerts.rpcs_sem_definicao.includes('tools_rpc'));
   assert.ok(alerts.edges_chamadas_sem_pasta.includes('tools-edge'));
 });
+
+test('diretórios de fixtures permanecem no inventário de testes sem criar alertas de aplicação', (t) => {
+  const fixtureFiles = ['src/fixtures/calls.ts', 'src/components/__fixtures__/calls.ts',
+    'supabase/functions/send-email/fixtures/calls.ts', 'packages/demo/src/__fixtures__/calls.ts'];
+  const read = isolatedFixture(t, (dir) => {
+    const sample = `supabase.from('fixture_table').select('*'); supabase.rpc('fixture_rpc');
+supabase.functions.invoke('fixture-edge'); supabase.functions.invoke('orphan-fn');`;
+    for (const file of fixtureFiles) w(dir, file, sample);
+    w(dir, 'src/fixtures-dashboard.ts', `supabase.from('dashboard_table').select('*');
+supabase.rpc('dashboard_rpc'); supabase.functions.invoke('dashboard-edge');`);
+  });
+  const alerts = read('baseline.json').alertas;
+  assert.deepEqual(alerts.tabelas_usadas_sem_definicao, ['dashboard_table']);
+  assert.deepEqual(alerts.rpcs_sem_definicao, ['dashboard_rpc']);
+  assert.deepEqual(alerts.edges_chamadas_sem_pasta, ['dashboard-edge']);
+  const files = new Set(read('testes.json').arquivos.map((entry) => entry.arquivo));
+  for (const file of fixtureFiles) assert.ok(files.has(file), file);
+  assert.ok(!files.has('src/fixtures-dashboard.ts'));
+  const orphan = read('edge-functions.json').edges.find((edge) => edge.nome === 'orphan-fn');
+  assert.equal(orphan.orfa, true);
+  assert.deepEqual(orphan.chamada_pelo_front, []);
+  assert.deepEqual(orphan.chamada_por_edges, []);
+});
