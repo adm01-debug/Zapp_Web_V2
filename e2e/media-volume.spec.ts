@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import {
   MEDIA_VOLUME_LABEL,
   MEDIA_VOLUME_LABEL_MUTED,
@@ -6,29 +6,28 @@ import {
   SOUND_VOLUME_LABEL,
   SOUND_VOLUME_LABEL_MUTED,
 } from '../src/lib/volumeLabels';
-import { MEDIA_VOLUME_STORAGE_KEYS } from '../src/lib/mediaVolumeStore';
+import { mediaVolumeStorageKeys } from '../src/lib/mediaVolumeStore';
 import {
+  E2E_FIXTURE_CONTACT_ID,
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
 } from './fixtures/e2e-contact';
+import { SUPABASE_URL, SUPABASE_STORAGE_KEY } from './fixtures/supabase-env';
 
 // E45 — fluxo real do controle de volume das mídias de conversa.
 //
 // Roda no project `chromium-authenticated` (ver e2e/README.md): depende de
-// `setup` e da sessão salva em `e2e/.auth/user.json`. Contra produção, então
-// nada aqui cria dado além do que `ensureFixtureConversationOpen` já cria (uma
-// mensagem `[E2E fixture setup]`, removida no afterAll).
+// `setup` e da sessão salva em `e2e/.auth/user.json` no backend descartável isolado.
+// `seed-files-tab.mjs` cria o áudio canônico com JWT local e verifica Storage/RLS;
+// `ensureFixtureConversationOpen` acrescenta só o texto removido no afterAll.
 //
 // O que este spec prova, e o que ele deliberadamente NÃO prova:
 // - prova: o controle existe na sidebar, o clique abre o painel, o botão Silenciar
 //   alterna o mudo da mídia, o valor persiste no localStorage e sobrevive ao reload,
 //   e o botão de ALERTAS fica intocado (critério 3 do plano);
-// - não prova: a aplicação do volume no `<audio>` do balão. O contato de fixture
-//   do E2E não tem mensagem de áudio (e semear uma aqui seria dado de mídia
-//   inventado em produção). Essa parte é coberta por
-//   `src/components/inbox/__tests__/MediaVolume.test.tsx` (E07/E12/E44) e pelo
-//   teste do elemento em `src/lib/__tests__/mediaVolumeElement.test.ts`.
+// - prova também: metadados do áudio canônico assinado pelo fluxo real do player e
+//   seu volume inicial. Não afirma reprodução audível, play() ou transcrição.
 // S28 — o rótulo do fone passou a trazer o volume no fim ("Volume dos áudios e vídeos:
 // 80%"), como o do alto-falante; mudo continua com rótulo próprio. `LABEL_VOLUME` casa o
 // estado SEM mudo (prefixo, porque o valor muda a cada passo) e `LABEL_CONTROLE` casa os
@@ -38,7 +37,48 @@ const LABEL_MUDO = MEDIA_VOLUME_LABEL_MUTED;
 const LABEL_CONTROLE = new RegExp(`^(${MEDIA_VOLUME_LABEL}|${MEDIA_VOLUME_LABEL_MUTED})`);
 const LABEL_SLIDER = MEDIA_VOLUME_SLIDER_LABEL;
 const LABEL_ALERTA = new RegExp(`${SOUND_VOLUME_LABEL}|${SOUND_VOLUME_LABEL_MUTED}`);
-const CHAVE_VOLUME = MEDIA_VOLUME_STORAGE_KEYS.volume;
+const AUDIO_FILE = 'e2e-media-volume.ogg';
+const AUDIO_SIGNED_PATH = `/storage/v1/object/sign/whatsapp-media/${E2E_FIXTURE_CONTACT_ID}/${AUDIO_FILE}`;
+
+async function chaveVolumeDoUsuario(page: Page): Promise<string> {
+  const userId = await page.evaluate((key) => {
+    try {
+      const session = JSON.parse(window.localStorage.getItem(key) ?? 'null') as {
+        access_token?: unknown; user?: { id?: unknown };
+      } | null;
+      return typeof session?.access_token === 'string' && session.access_token &&
+        typeof session.user?.id === 'string' && session.user.id ? session.user.id : null;
+    } catch { return null; }
+  }, SUPABASE_STORAGE_KEY);
+  if (!userId) throw new Error('Sessão do projeto configurado ausente para a prova de volume');
+  return mediaVolumeStorageKeys(userId).volume;
+}
+
+async function abrirConversaDoFixture(page: Page): Promise<void> {
+  await page.getByTestId('status-chip-all').click();
+  await page.getByLabel('Buscar contato pelo nome').fill(E2E_FIXTURE_CONTACT_DISPLAY_NAME);
+  const name = page.getByText(E2E_FIXTURE_CONTACT_DISPLAY_NAME, { exact: true });
+  const item = page.getByTestId('conversation-item').filter({ has: name });
+  await expect(item).toHaveCount(1);
+  const button = item.getByRole('button').filter({ has: name });
+  await expect(button).toHaveCount(1);
+  await button.click();
+}
+
+async function volumeDoAudioCarregado(page: Page): Promise<number> {
+  const audio = page.locator(`audio[src*="${AUDIO_SIGNED_PATH}"]`);
+  if (await audio.count() !== 1) return Number.NaN;
+  return audio.evaluate((elemento, { origin, path }) => {
+    const element = elemento as HTMLAudioElement;
+    try {
+      const src = new URL(element.currentSrc);
+      if (!element.isConnected || element.readyState < 1 || element.error !== null ||
+          !Number.isFinite(element.duration) || element.duration <= 0 ||
+          src.origin !== origin || src.pathname !== path) return Number.NaN;
+      return element.volume;
+    } catch { return Number.NaN; }
+  }, { origin: new URL(SUPABASE_URL).origin, path: AUDIO_SIGNED_PATH });
+}
 
 test.describe('Volume das mídias de conversa', () => {
   test.beforeEach(async ({ page }) => {
@@ -49,8 +89,7 @@ test.describe('Volume das mídias de conversa', () => {
     await page.reload();
     // Chip "Todas": o padrão ("Em atendimento") depende de feature flag e de
     // `assigned_to` — "Todas" é o único filtro determinístico para o fixture.
-    await page.getByTestId('status-chip-all').click();
-    await page.locator('[data-testid="conversation-item"]').first().click();
+    await abrirConversaDoFixture(page);
   });
 
   test.afterAll(async ({ browser }) => {
@@ -81,7 +120,8 @@ test.describe('Volume das mídias de conversa', () => {
     // Determinismo (o teste era flaky e só passava no retry):
     // 1) o store hidrata do localStorage num efeito; ler `aria-valuenow` antes disso
     //    pega valor velho. A expectativa abaixo re-tenta até a hidratação acontecer.
-    let persistido = await page.evaluate((chave) => window.localStorage.getItem(chave), CHAVE_VOLUME);
+    const chaveVolume = await chaveVolumeDoUsuario(page);
+    let persistido = await page.evaluate((chave) => window.localStorage.getItem(chave), chaveVolume);
     const valorInicial = persistido === null ? 80 : Number(persistido);
     expect(Number.isFinite(valorInicial)).toBe(true);
     await expect(slider).toHaveAttribute('aria-valuenow', String(valorInicial));
@@ -101,12 +141,11 @@ test.describe('Volume das mídias de conversa', () => {
     await expect(slider).toHaveAttribute('aria-valuenow', String(valorEsperado));
     await expect(page.getByTestId('media-volume-value')).toHaveText(`${valorEsperado}%`);
 
-    persistido = await page.evaluate((chave) => window.localStorage.getItem(chave), CHAVE_VOLUME);
+    persistido = await page.evaluate((chave) => window.localStorage.getItem(chave), chaveVolume);
     expect(persistido).toBe(String(valorEsperado));
 
     await page.reload();
-    await page.getByTestId('status-chip-all').click();
-    await page.locator('[data-testid="conversation-item"]').first().click();
+    await abrirConversaDoFixture(page);
 
     const controleDepois = page.getByRole('button', { name: LABEL_CONTROLE });
     await controleDepois.focus();
@@ -132,8 +171,7 @@ test.describe('Volume das mídias de conversa', () => {
     expect(await alerta.getAttribute('aria-label')).toBe(rotuloAlertaAntes);
 
     await page.reload();
-    await page.getByTestId('status-chip-all').click();
-    await page.locator('[data-testid="conversation-item"]').first().click();
+    await abrirConversaDoFixture(page);
 
     await expect(page.getByRole('button', { name: LABEL_MUDO })).toBeVisible();
 
@@ -143,32 +181,19 @@ test.describe('Volume das mídias de conversa', () => {
     await expect(page.getByRole('button', { name: LABEL_VOLUME })).toBeVisible();
   });
 
-  // `test.fixme` em vez de `test.skip(true, ...)` no CORPO: o fixture não garante mensagem
-  // de áudio, então este caso quase sempre pulava no meio da execução — um "verde" que
-  // nunca assertava nada. Declarado assim, o estado é honesto (aparece como fixme no
-  // relatório) e reabilitar é trocar `fixme` por `test` quando o fixture tiver áudio.
-  // A aplicação no elemento segue coberta por src/components/inbox/__tests__/MediaVolume.test.tsx
-  // e src/lib/__tests__/mediaVolumeElement.test.ts.
-  //
-  // BLOQUEADO POR DECISÃO (2026-10-01): criar a mensagem de áudio do fixture exige gravar um
-  // objeto no bucket `whatsapp-media` E uma linha em `messages` no banco de PRODUÇÃO (tenant
-  // real) — e escrever em produção fora de migration não foi autorizado. O caminho completo
-  // (tabela/bucket/coluna) e os riscos estão em
-  // ~/evidencias/plano-volume-50/e45-e48-e2e.md. Reabilitar = `fixme` → `test` quando existir
-  // fixture de áudio (ou um contato/tenant dedicado de E2E).
-  test.fixme('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
+  // A fixture isolada garante objeto/linha únicos. A assinatura vem de useAudioPlayer;
+  // HAVE_METADATA respeita preload="metadata" sem forçar reprodução ou transcrição.
+  test('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
-    await page.evaluate((chave) => window.localStorage.setItem(chave, '40'), CHAVE_VOLUME);
+    const chaveVolume = await chaveVolumeDoUsuario(page);
+    await page.evaluate((chave) => window.localStorage.setItem(chave, '40'), chaveVolume);
     await page.reload();
-    await page.getByTestId('status-chip-all').click();
-    await page.locator('[data-testid="conversation-item"]').first().click();
-
-    const audio = page.locator('audio').first();
+    await abrirConversaDoFixture(page);
 
     // 40% → ganho perceptual (40/100)² = 0.16
     await expect
-      .poll(async () => audio.evaluate((elemento) => (elemento as HTMLAudioElement).volume), {
+      .poll(() => volumeDoAudioCarregado(page), {
         timeout: 10_000,
       })
       .toBeCloseTo(0.16, 2);
