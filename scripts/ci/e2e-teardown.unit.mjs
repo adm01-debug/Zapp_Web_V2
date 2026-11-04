@@ -12,6 +12,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { assertBlocking, jobOf, onlyStep, runOf, stepsOf } from './workflow-test-support.mjs';
 
 import { RPC_PADRAO, limparFixture, principal } from './e2e-teardown.mjs';
 
@@ -116,40 +117,15 @@ test('RPC recusada derruba o teardown', async () => {
 });
 
 // ── Contrato do workflow ─────────────────────────────────────────────────────
-// O passo do YAML e onde o defeito vivia. O teste le o arquivo de verdade e trava
-// as duas metades: a limpeza chama a RPC pelo script (com as credenciais do usuario
-// de teste) e o passo nao carrega mais a chave mestra.
-
+// O script e os testes de sua RPC continuam preservados. O workflow restaurado
+// executa agora um backend descartável: não autentica nem apaga fixtures na produção.
 const WORKFLOW = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
-const NOME_PASSO = 'E2E teardown - limpar fixture de conversation_closures';
 
-/** O bloco do passo: do `- name:` ate o proximo item da lista, sem o comentario do proximo. */
-function passoDoWorkflow(texto, nome) {
-  const linhas = texto.split('\n');
-  const inicio = linhas.findIndex((l) => /^\s*- /.test(l) && l.includes(nome));
-  assert.notEqual(inicio, -1, `passo "${nome}" nao existe no e2e-logado.yml`);
-  let fim = inicio + 1;
-  while (fim < linhas.length && !/^\s*- /.test(linhas[fim])) fim += 1;
-  // O comentario que precede o PROXIMO passo fica na mesma indentacao do item: nao e
-  // deste passo e nao pode entrar na assercao.
-  while (fim > inicio + 1 && (linhas[fim - 1].trim() === '' || linhas[fim - 1].trim().startsWith('#'))) fim -= 1;
-  return linhas.slice(inicio, fim).join('\n');
-}
-
-test('e2e-logado.yml: o teardown de conversation_closures chama a RPC com o login do usuario de teste', () => {
-  const passo = passoDoWorkflow(WORKFLOW, NOME_PASSO);
-
-  assert.match(
-    passo,
-    new RegExp(`node scripts/ci/e2e-teardown\\.mjs ${RPC_PADRAO}\\b`),
-    'a limpeza tem de passar pelo script que autentica como o usuario de teste',
-  );
-  assert.doesNotMatch(
-    passo,
-    /SUPABASE_SERVICE_ROLE_KEY/,
-    'o passo de limpeza nao pode carregar a chave mestra do banco',
-  );
-  assert.doesNotMatch(passo, /curl\b/, 'a limpeza direta por REST com a service role saiu deste passo');
-  assert.match(passo, /secrets\.E2E_TEST_EMAIL/);
-  assert.match(passo, /secrets\.E2E_TEST_PASSWORD/);
+test('e2e-logado.yml: backend descartável substitui chamadas de teardown de produção', () => {
+  const job = jobOf(WORKFLOW, 'e2e-logado');
+  const controller = onlyStep(stepsOf(job), step => /bash scripts\/e2e-isolated\/run\.sh suite\b/.test(runOf(step)), 'controller com limpeza própria');
+  assertBlocking(job, 4);
+  assertBlocking(controller);
+  assert.doesNotMatch(WORKFLOW, /node scripts\/ci\/e2e-teardown\.mjs|e2e_cleanup_conversation_closures|catalog_send_events|curl\b/);
+  assert.doesNotMatch(WORKFLOW, /secrets\.|SUPABASE_SERVICE_ROLE_KEY|E2E_TEST_EMAIL|E2E_TEST_PASSWORD/);
 });

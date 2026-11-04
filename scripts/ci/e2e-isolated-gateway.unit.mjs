@@ -86,6 +86,7 @@ for (const [url, port, target] of [
   ['/realtime/v1/api/broadcast', 4000, '/api/broadcast'],
   ['/functions/v1/auth-login', 9000, '/auth-login'],
   ['/auth', 5174, '/auth'],
+  ['/__e2e/catalog/product.png', 8081, '/catalog/product.png'],
 ]) test('HTTPS gateway forwards to the existing internal loopback service: ' + url, async t => {
   const value = await gateway(t);
   assert.equal((await value.send(url)).status, 200);
@@ -96,6 +97,13 @@ for (const [url, port, target] of [
   assert.equal(request.headers['x-forwarded-host'], '127.0.0.1:5173');
   assert.equal(request.headers.host, port === 4000 ? 'realtime-dev.supabase-realtime' : '127.0.0.1:' + port);
   assert.equal(request.headers['proxy-authorization'], undefined);
+});
+test('catalog image allows GET/HEAD only and no prefix or query proxy', async t => {
+  const value = await gateway(t);
+  assert.equal((await value.send('/__e2e/catalog/product.png', { method: 'HEAD' })).status, 200);
+  assert.equal((await value.send('/__e2e/catalog/product.png', { method: 'POST' })).status, 405);
+  assert.equal(value.forwarded.length, 1);
+  for (const url of ['/__e2e/catalog/product.png/other', '/__e2e/catalog/product.png?url=https://external.invalid', '/__e2e/catalog/other.png']) assert.equal(routeRequest(url).service, 'app');
 });
 for (const location of ['https://external.invalid/auth', 'http://127.0.0.1:5173/auth', '//external.invalid/auth']) {
   test('gateway rejects an upstream redirect out of its exact HTTPS origin: ' + location, async t => {

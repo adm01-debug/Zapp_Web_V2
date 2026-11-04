@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
+import { SUPABASE_URL, SUPABASE_STORAGE_KEY } from './supabase-env';
 
 /**
  * Backend fake do Talk X para E2E determinístico (plano V4, etapa X003).
@@ -147,7 +148,7 @@ export async function mockTalkXBackend(page: Page, tela: string) {
 
 export const FAKE_USER_ID = '00000000-0000-4000-8000-000000000001';
 const FAKE_EMAIL = 'visual@test.local';
-const AUTH_STORAGE_KEY = 'sb-tnnnlkbymytvtqngbbqh-auth-token';
+const AUTH_STORAGE_KEY = SUPABASE_STORAGE_KEY;
 const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z — nunca expira no teste
 
 function b64url(value: unknown): string {
@@ -170,7 +171,7 @@ const FAKE_SESSION = {
     aud: 'authenticated',
     exp: FAKE_EXP,
     iat: 0,
-    iss: 'https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1',
+    iss: SUPABASE_URL + '/auth/v1',
   }),
   refresh_token: 'fake-refresh-token',
   expires_at: FAKE_EXP,

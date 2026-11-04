@@ -328,8 +328,35 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
           .select()
           .single();
 
-        if (insertErr) throw insertErr;
-        sessionId = created?.id ?? null;
+        if (insertErr) {
+          // Outra visita pode inserir a mesma sessão entre o SELECT e o INSERT.
+          // Só este índice permite recuperar; outra unicidade continua sendo erro.
+          if (insertErr.code !== "23505" ||
+              insertErr.message !== 'duplicate key value violates unique constraint "idx_user_sessions_auth_session_id"') {
+            throw insertErr;
+          }
+          const { data: canonical, error: canonicalErr } = await supabaseAdmin
+            .from("user_sessions")
+            .update({
+              device_id: deviceId,
+              ip_address: clientIp,
+              user_agent: userAgent,
+              last_activity_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id)
+            .eq("auth_session_id", authSessionId)
+            .select("id,user_id,auth_session_id")
+            .single();
+
+          if (canonicalErr) throw canonicalErr;
+          if (typeof canonical?.id !== "string" || canonical.id.length === 0 ||
+              canonical.user_id !== user.id || canonical.auth_session_id !== authSessionId) {
+            throw insertErr;
+          }
+          sessionId = canonical.id;
+        } else {
+          sessionId = created?.id ?? null;
+        }
       }
     } else {
       log.warn("JWT sem claim session_id; inventário de sessão não foi criado/atualizado");

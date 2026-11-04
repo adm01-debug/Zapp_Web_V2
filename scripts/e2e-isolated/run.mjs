@@ -8,11 +8,11 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import {
-  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, assertOwnedContainer,
+  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, CATALOG_SKU, assertOwnedContainer,
   assertContainerIsolation, assertSourceSha, assertOfficialHostIsLocal, makeProof, syntheticCredentials, sha256,
 } from './runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from './stack.mjs';
-import { prepareMigration, migrationFailure } from './migrations.mjs';
+import { prepareMigration, migrationFailure, gitBlob } from './migrations.mjs';
 import { readPlaywrightInventory, summarizePlaywrightResult } from './results.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 
@@ -38,6 +38,39 @@ export function functionPolicy(source, name) {
     return declarations.length === 0 || declarations[0][1] === 'true';
   }
   return true;
+}
+
+/** Full-suite warmup must compile every tracked, active Edge entrypoint. */
+export function discoverFunctionEntries(root, tracked) {
+  const blobs = new Map(String(tracked).split('\n').flatMap(line => {
+    const match = line.match(/^100(?:644|755) ([a-f0-9]{40}) 0\tsupabase\/functions\/([a-z][a-z0-9-]*)\/index\.ts$/);
+    return match ? [[match[2], match[1]]] : [];
+  }));
+  const entries = readdirSync(path.join(root, 'supabase/functions'), { withFileTypes: true })
+    .filter(entry => entry.isDirectory() && !entry.name.startsWith('_') && existsSync(path.join(root, 'supabase/functions', entry.name, 'index.ts')))
+    .map(entry => {
+      if (!/^[a-z][a-z0-9-]*$/.test(entry.name)) throw new Error('invalid-function-name');
+      const source = readFileSync(path.join(root, 'supabase/functions', entry.name, 'index.ts'));
+      const blob = gitBlob(source);
+      if (blobs.get(entry.name) !== blob) throw new Error('function-source-changed');
+      return { name: entry.name, path: 'supabase/functions/' + entry.name + '/index.ts', git_blob: blob };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  if (['auth-login', 'message-delivery', 'promogifts-catalog'].some(name => !entries.some(entry => entry.name === name))) throw new Error('suite-handler-missing');
+  return entries;
+}
+
+export function assertSuiteReadiness(seed, provider, runId, sourceSha) {
+  const owned = value => value?.schema === 1 && value.run_id === runId && value.source_sha === sourceSha;
+  const seedFlags = ['main_contact_rls', 'files_owner_preserved', 'pagination_rls', 'talkx_connection_rls',
+    'talkx_segment_rls', 'instance_tokens_stored', 'inbox_fixture_rls', 'onboarding_persisted'];
+  if (!owned(seed) || seedFlags.some(key => seed[key] !== true) ||
+      !Number.isSafeInteger(seed.pagination_seed_count) || seed.pagination_seed_count < 51) throw new Error('suite-seed-proof-mismatch');
+  const providerFlags = ['delivery_real', 'provider_observed', 'delivery_user_rls', 'catalog_real',
+    'catalog_media_https', 'storage_upload_real', 'storage_media_https', 'http_media_rejected'];
+  const deliveries = provider?.delivery_proofs;
+  if (!owned(provider) || providerFlags.some(key => provider[key] !== true) || provider.catalog_sku !== CATALOG_SKU ||
+      !deliveries || Object.keys(deliveries).length !== 3 ||
+      !['text', 'catalog_image', 'storage_image'].every(key => deliveries[key] === true)) throw new Error('provider-proof-mismatch');
 }
 
 /** Accept only the complete proof from each fixed client; raw output is private. */
@@ -96,7 +129,12 @@ function safeCode(error) {
   return /^[a-z][a-z0-9-]{0,100}$/.test(text) ? text : 'isolated-runtime-failed';
 }
 
-export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
+export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group } = {}) {
+  if (!['login', 'suite'].includes(scope) || (scope === 'login' && group !== undefined) ||
+      (scope === 'suite' && !Object.hasOwn(GROUPS, group))) throw new Error('invalid-isolated-scope');
+  const fullSuite = scope === 'suite' && group === 'authenticated';
+  const projects = scope === 'login' ? ['setup'] : GROUPS[group];
+  const reportScope = scope === 'login' ? 'bootstrap-and-login' : fullSuite ? 'authenticated-suite' : group;
   let output = path.resolve(outputDirectory || '');
   if (!outputDirectory || output === ROOT || output.startsWith(ROOT + path.sep)) throw new Error('output-must-be-outside-checkout');
   mkdirSync(output, { recursive: true });
@@ -117,7 +155,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
   // Compilers run as this runner's UID:GID, so nested cache files remain owned
   // and removable without giving a container access to the Docker socket.
   chmodSync(bundles, 0o755); chmodSync(bundleCache, 0o755);
-  const state = { schema: 1, scope: 'bootstrap-and-login', run_id: runId, phase: 'preflight', success: false, native_e2e: false };
+  const state = { schema: 1, scope: reportScope, run_id: runId, phase: 'preflight', success: false, native_e2e: false };
   const containers = [];
   const removedContainers = new Set();
   const volumes = [];
@@ -189,7 +227,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     const args = containerArguments({
       runId, name, image, anchorId, envFile: envFiles[name],
       mounts: [...(options.withCheckout === false ? [] : baseMounts()), ...mounts], args: config.args, memory: options.memory ?? '2g',
-      user: ['driver', 'vite', 'gateway'].includes(name) ? runnerUser : undefined,
+      user: ['driver', 'vite', 'gateway', 'provider'].includes(name) ? runnerUser : undefined,
     });
     const id = required(docker(args), 'start-' + name + '-failed');
     assertContainerIsolation(inspect(containerName), runId, anchorId, writable);
@@ -200,8 +238,10 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     '-v', 'ON_ERROR_STOP=1', '-v', 'VERBOSITY=sqlstate', '-q', '-A', '-t', ...extra], { input: sql });
   const sqlBoolean = sql => required(psql(sql), 'database-readiness-query-failed') === 't';
   let driver;
+  let catalogVerified = false;
+  const inDriver = args => ['exec', '-w', '/work', ...(catalogVerified ? ['-e', 'E2E_CATALOG_PRODUCT_SKU_VERIFIED=true'] : []), driver.name, ...args];
   const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {
-    const result = docker(['exec', '-w', '/work', driver.name, ...args], { timeout });
+    const result = docker(inDriver(args), { timeout });
     if (recordLog) writeFileSync(path.join(output, code + '.log'), redacted(String(result.stdout || '') + String(result.stderr || '')), { mode: 0o600 });
     return required(result, code);
   };
@@ -229,7 +269,9 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     phase('pull-immutable-images');
     const imageEvidence = {};
     for (const [name, image] of Object.entries(images)) {
-      required(docker(['pull', image], { timeout: 15 * 60_000 }), 'pull-' + name + '-failed');
+      const result = docker(['pull', image], { timeout: 15 * 60_000 });
+      writeFileSync(path.join(output, 'pull-' + name + '.log'), redacted(String(result.stdout || '') + String(result.stderr || '')), { mode: 0o600 });
+      required(result, 'pull-' + name + '-failed');
       const digests = JSON.parse(required(docker(['image', 'inspect', image, '--format', '{{json .RepoDigests}}']), 'image-inspect-failed'));
       const expected = image.slice(image.indexOf('@sha256:'));
       if (!Array.isArray(digests) || !digests.some(value => value.endsWith(expected))) throw new Error('image-digest-mismatch');
@@ -245,7 +287,9 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
       'command -v install >/dev/null; command -v update-ca-certificates >/dev/null']), 'tls-driver-tools-unavailable');
     removedContainers.add(toolsName);
     phase('compile-without-credentials');
-    const names = ['auth-login'];
+    const entrypoints = fullSuite ? discoverFunctionEntries(ROOT, required(execute('git', ['ls-files', '-s', '--', 'supabase/functions']), 'function-source-manifest-failed')) : null;
+    const names = entrypoints ? entrypoints.map(entry => entry.name) : ['auth-login'];
+    if (entrypoints) writeJson(path.join(output, 'entrypoints.json'), entrypoints);
     const registry = { functions: {} };
     const functionConfig = readFileSync(path.join(ROOT, 'supabase/config.toml'), 'utf8');
     for (const name of ['main', ...names, 'tls-edge-probe']) {
@@ -291,11 +335,12 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     writable.add(material.homeDirectory);
     // The only credentials introduced below are generated for this empty stack.
     credentials = syntheticCredentials();
-    services = serviceConfiguration({ credentials, runId, sourceSha });
+    services = serviceConfiguration({ credentials, runId, sourceSha, fullSuite });
     Object.assign(services.driver.env, tlsEnvironment(material, 'driver'));
     Object.assign(services.edge.env, tlsEnvironment(material, 'edge'));
     services['tls-edge'] = { env: { ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha, ...tlsEnvironment(material, 'edge') },
       args: ['start', '--main-service', '/bundles/tls-edge-probe.eszip'] };
+    if (fullSuite) services.provider.env.NODE_EXTRA_CA_CERTS = TLS_PUBLIC + '/ca.crt';
     for (const [name, config] of Object.entries(services)) {
       envFiles[name] = path.join(privateDir, name + '.env');
       environmentFile(envFiles[name], config.env);
@@ -327,7 +372,6 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     driver = start('driver', images.driver, [runtimeMount, outputMount, authMount, ...captures, ...tlsMounts(material, 'driver')], { memory: '4g' });
     const network = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'network'], 'network-proof'));
     if (network.loopback_only !== true || network.official_host_local !== true || !/^net:\[\d+\]$/.test(network.network_namespace)) throw new Error('network-proof-invalid');
-
     phase('prove-tls-clients');
     installDriverTlsTrust({ inspect, docker, driverName: driver.name, runId, anchorId, runnerUser, material, allowedWritableSources: writable });
     start('gateway', images.driver, tlsMounts(material, 'gateway'));
@@ -351,6 +395,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     required(docker(['rm', '-f', '-v', temporaryEdge.name]), 'tls-probe-cleanup-failed');
     removedContainers.add(temporaryEdge.name);
     state.tls = { proved: true, clients: tlsProof.clients.length };
+    if (fullSuite) start('provider', images.driver, [{ type: 'bind', source: material.publicDirectory, target: TLS_PUBLIC, readOnly: true }]);
 
     phase('start-platform');
     const databaseVolume = createVolume('postgres');
@@ -398,6 +443,23 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'frontend'], 'frontend-proof');
     phase('seed-and-real-login-api');
     driverRun(['node', 'scripts/e2e-isolated/seed-login.mjs'], 'seed-login', 240_000);
+    if (fullSuite) {
+      phase('seed-suite-and-verify-providers');
+      // These existing seeds prove their real Storage/RLS contracts. Their raw
+      // output can include synthetic passwords or response bodies, so it is
+      // never saved to a publishable log.
+      driverRun(['bun', 'e2e/fixtures/arquivos-local/seed.ts'], 'seed-files-volume', 240_000, { recordLog: false });
+      driverRun(['node', 'e2e/fixtures/seed-files-tab.mjs'], 'seed-files-canonical', 240_000, { recordLog: false });
+      driverRun(['node', 'scripts/e2e-isolated/seed-suite.mjs'], 'seed-suite', 240_000, { recordLog: false });
+      driverRun(['node', 'scripts/e2e-isolated/verify-providers.mjs'], 'verify-providers', 240_000, { recordLog: false });
+      let suiteSeed; let provider;
+      try {
+        suiteSeed = JSON.parse(readFileSync(path.join(output, 'suite-seed-ready.json'), 'utf8'));
+        provider = JSON.parse(readFileSync(path.join(output, 'provider-ready.json'), 'utf8'));
+      } catch { throw new Error('suite-proof-unreadable'); }
+      assertSuiteReadiness(suiteSeed, provider, runId, sourceSha);
+      catalogVerified = true;
+    }
     const seed = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'seed'], 'seed-proof'));
     if (seed.network_namespace !== network.network_namespace) throw new Error('namespace-changed');
     for (const container of containers.filter(name => !name.includes('-bundle-') && !removedContainers.has(name))) {
@@ -407,23 +469,39 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
       checks: { network_isolated: true, cron_disabled: true, bootstrap_complete: true, seed_ready: true } });
     writeJson(path.join(controlDir, 'proof.json'), proof, 0o444);
     writeJson(path.join(output, 'readiness.json'), proof);
-    phase('collect-real-login-test');
-    const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts', '--project', 'setup', '--workers', '1'];
-    const inventoryJson = JSON.parse(driverRun([...cli, '--list', '--reporter=json'], 'collect-login', 120_000, { recordLog: false }));
-    const inventory = readPlaywrightInventory(inventoryJson, { projects: ['setup'] });
-    if (inventory.total !== 1) throw new Error('login-inventory-not-exact');
+    phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
+    const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
+      ...projects.flatMap(name => ['--project', name]), '--workers', '1'];
+    const inventoryJson = JSON.parse(driverRun([...cli, '--list', '--reporter=json'], scope === 'login' ? 'collect-login' : 'collect-suite', 120_000, { recordLog: false }));
+    let inventory;
+    try { inventory = readPlaywrightInventory(inventoryJson, { projects }); }
+    catch (error) { if (scope === 'suite') throw new Error('suite-inventory-invalid'); throw error; }
+    if (scope === 'login' && inventory.total !== 1) throw new Error('login-inventory-not-exact');
     writeJson(path.join(output, 'inventory.json'), inventoryJson);
-    phase('real-browser-login');
+    if (scope === 'suite') writeJson(path.join(output, 'test-inventory.json'), inventory);
+    phase(scope === 'login' ? 'real-browser-login' : 'real-browser-suite');
     state.native_e2e = true;
-    const browserResult = docker(['exec', '-w', '/work', driver.name, ...cli], { timeout: 600_000 });
-    writeFileSync(path.join(output, 'browser-login.log'), redacted(String(browserResult.stdout || '') + String(browserResult.stderr || '')), { mode: 0o600 });
+    const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });
+    writeFileSync(path.join(output, scope === 'login' ? 'browser-login.log' : 'browser-suite.log'), redacted(String(browserResult.stdout || '') + String(browserResult.stderr || '')), { mode: 0o600 });
     let report;
     try { report = JSON.parse(readFileSync(path.join(output, 'results.json'), 'utf8')); } catch { /* Summary records invalid/missing collection explicitly. */ }
-    const summary = summarizePlaywrightResult(report, { scope: 'bootstrap-and-login', expectedProjects: ['setup'], inventory });
+    const summary = summarizePlaywrightResult(report, { scope: reportScope, expectedProjects: projects, inventory,
+      ...(fullSuite ? { conversationPlatformSkips: { sourceSha, sourceBlobs: {
+        'e2e/conversation.spec.ts': gitBlob(readFileSync(path.join(ROOT, 'e2e/conversation.spec.ts'))),
+      } } } : {}),
+    });
     writeJson(path.join(output, 'results-summary.json'), summary);
-    state.login = summary.counts;
-    required(browserResult, 'browser-login-failed');
-    if (!summary.inventoryVerified || !summary.allPassed || summary.counts.total !== 1 || summary.counts.passed !== 1) throw new Error('login-result-not-clean');
+    if (scope === 'login') {
+      state.login = summary.counts;
+      required(browserResult, 'browser-login-failed');
+      if (!summary.inventoryVerified || !summary.allPassed || summary.counts.total !== 1 || summary.counts.passed !== 1) throw new Error('login-result-not-clean');
+    } else {
+      state.suite = summary.counts;
+      required(browserResult, 'browser-suite-failed');
+      const setup = summary.cases.filter(item => item.project === 'setup');
+      if (!summary.inventoryVerified || !summary.ok || summary.counts.passed === 0 ||
+          (fullSuite && (setup.length !== 1 || setup[0].outcome !== 'passed'))) throw new Error('suite-result-not-clean');
+    }
     state.success = true;
   } catch (error) {
     failure = error;
@@ -479,7 +557,9 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     // Raw Playwright JSON, HTML, screenshots and traces stay on the ephemeral
     // runner. They may contain newly-issued session tokens not known to seed.
     // Only these controlled metadata files and already-redacted logs publish.
-    const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'migration-sources.json', 'migration-results.json', 'readiness.json', 'seed-ready.json', 'results-summary.json', 'postgres-log-summary.json'];
+    const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'entrypoints.json', 'migration-sources.json', 'migration-results.json',
+      'readiness.json', 'seed-ready.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
+      'results-summary.json', 'postgres-log-summary.json'];
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     for (const entry of readdirSync(output, { withFileTypes: true })) {
       if (entry.isFile() && entry.name.endsWith('.log')) cpSync(path.join(output, entry.name), path.join(published, entry.name));
@@ -504,7 +584,10 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
   return failure ? 1 : 0;
 }
 
+export const runSuite = options => runLogin({ ...options, scope: 'suite' });
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  if (process.argv[2] !== 'login' || process.argv.length !== 4) throw new Error('usage: run.mjs login <output-directory>');
-  process.exitCode = await runLogin({ outputDirectory: process.argv[3] });
+  if (process.argv[2] === 'login' && process.argv.length === 4) process.exitCode = await runLogin({ outputDirectory: process.argv[3] });
+  else if (process.argv[2] === 'suite' && process.argv.length === 5) process.exitCode = await runSuite({ group: process.argv[3], outputDirectory: process.argv[4] });
+  else throw new Error('usage: run.mjs login <output-directory> | suite <group> <output-directory>');
 }

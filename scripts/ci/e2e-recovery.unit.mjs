@@ -3,10 +3,12 @@
 // um job unico dependente da matriz, e os cenarios avaliam seu guard real.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { GROUPS } from '../e2e-isolated/runtime-contract.mjs';
 import {
   conditionAllows, conditionOf, jobOf, jobsOf, nestedValue, onlyStep,
   scriptOf, stepsOf, valueOf,
@@ -95,10 +97,15 @@ for (const scenario of scenarios) test(`E83: ${scenario.name}`, async () => {
   } } };
   const execute = async (fn, step, group) => {
     const fixture = join(dir, group);
-    mkdirSync(join(fixture, 'test-results', `${group}-synthetic-spec`), { recursive: true });
+    const published = join(fixture, 'public');
+    mkdirSync(published, { recursive: true });
+    writeFileSync(join(published, 'results-summary.json'), JSON.stringify({ schema: 1, cases: [{
+      project: GROUPS[group]?.[0] ?? 'setup', key: createHash('sha256').update(group).digest('hex'), outcome: 'failed',
+    }] }));
     process.chdir(fixture);
     await fn(github, { repo: { owner: 'offline', repo: 'fixture' } }, { info() {} },
-      { env: { GITHUB_WORKSPACE: ROOT, TITULO: nestedValue(step, 'env', 'TITULO') } },
+      { env: { GITHUB_WORKSPACE: ROOT, TITULO: nestedValue(step, 'env', 'TITULO'),
+        PUBLIC_REPORT: published, REPORT_READY: 'true', E2E_GROUP: group } },
       () => { throw new Error('rede proibida neste teste'); });
   };
   try {
@@ -108,6 +115,7 @@ for (const scenario of scenarios) test(`E83: ${scenario.name}`, async () => {
       if (conditionAllows(conditionOf(alert), {
         'failure()': status === 'failure', 'success()': status === 'success',
         'cancelled()': status === 'cancelled', 'always()': true,
+        'steps.checkout.outcome': 'success',
       })) await execute(alertBody, alert, group);
     }
     const statuses = Object.values(scenario.statuses);

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
+import { SUPABASE_URL } from './supabase-env';
 
 /**
  * Setup comum das specs E2E do módulo Mapa (E71/E72 picker do inbox, E73 cadastro de
@@ -23,7 +24,7 @@ import type { Page, Route } from '@playwright/test';
 const FIXTURES_MAPBOX = join(import.meta.dirname, '..', '..', 'src', 'lib', '__fixtures__', 'mapbox');
 
 /** Host do projeto Supabase usado pelas fixtures do repo (mesmo de `e2e/fixtures/contacts-page.ts`). */
-export const SUPABASE_HOST = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
+export const SUPABASE_HOST = SUPABASE_URL;
 
 export type Registro = {
   /** Escritas que o app tentou fazer no backend (método + path). */
@@ -152,7 +153,7 @@ export async function mockMapboxSearchbox(
  */
 export async function bloquearRedeReal(page: Page, registro: Registro): Promise<void> {
   const barrado = () => (registro.redeBarrada ??= []);
-  await page.route(`**/tnnnlkbymytvtqngbbqh.supabase.co/**`, (route) => {
+  await page.route((url) => url.origin === SUPABASE_HOST && /^\/(?:auth|rest|storage|realtime|functions)\/v1(?:\/|$)/.test(url.pathname), (route) => {
     barrado().push(route.request().url());
     return json(route, { message: 'rede real bloqueada no E2E' }, 403);
   });
