@@ -51,15 +51,39 @@ case "${1:-}" in
       exec "$DOCKER_REAL" run "$@"
     fi
     db="$(_sanitize "$cname")"
-    mkdir -p "$STATE"
-    printf '%s' "$db" > "$STATE/$cname.db"
-    _svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" \
-      > "$STATE/$cname.roles" 2>/dev/null || true
+    if ! mkdir -p "$STATE"; then
+      printf 'docker-shim: diretório de estado indisponível; criação abortada\n' >&2
+      exit 1
+    fi
+    if ! roles_before="$(_svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" 2>/dev/null)"; then
+      printf 'docker-shim: falha ao capturar snapshot de roles; criação abortada\n' >&2
+      exit 1
+    fi
+    if ! state_tmp="$(mktemp -d "$STATE/.snapshot.XXXXXX")"; then
+      printf 'docker-shim: não foi possível preparar o snapshot de roles; criação abortada\n' >&2
+      exit 1
+    fi
+    # Só publica o marcador após persistir o snapshot completo. Uma escrita
+    # parcial não pode parecer um snapshot vazio legítimo durante o cleanup.
+    if ! printf '%s' "$db" > "$state_tmp/db" ||
+       ! printf '%s\n' "$roles_before" > "$state_tmp/roles" ||
+       ! mv -T -- "$state_tmp/roles" "$STATE/$cname.roles" ||
+       ! mv -T -- "$state_tmp/db" "$STATE/$cname.db"; then
+      rm -rf -- "$state_tmp"
+      printf 'docker-shim: falha ao persistir estado/snapshot de roles; criação abortada\n' >&2
+      exit 1
+    fi
+    rmdir -- "$state_tmp"
     # Two separate calls: psql wraps multi-statement -c in a transaction,
     # and CREATE DATABASE cannot run inside a transaction block.
     _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
-    _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null
-    printf 'shimid_%s\n' "$cname"
+    if _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null; then
+      printf 'shimid_%s\n' "$cname"
+    else
+      status=$?
+      printf 'docker-shim: falha ao criar banco; estado preservado para inspeção/limpeza\n' >&2
+      exit "$status"
+    fi
     ;;
 
   logs)
@@ -141,12 +165,20 @@ case "${1:-}" in
       exec "$DOCKER_REAL" rm "${orig[@]}"
     fi
     db="$(< "$STATE/$cname.db")"
-    old="$(< "$STATE/$cname.roles" 2>/dev/null || true)"
+    # A leitura abreviada com redirecionamento/|| não imprime o conteúdo no Bash.
+    # Snapshot vazio é válido; falha de leitura não autoriza remover roles antigos.
+    if ! old="$(cat -- "$STATE/$cname.roles" 2>/dev/null)"; then
+      printf 'docker-shim: snapshot de roles ausente ou ilegível; limpeza abortada sem remover banco ou roles\n' >&2
+      exit 1
+    fi
     # Drop database FIRST so its objects (ALTER DEFAULT PRIVILEGES grants) are
     # removed before we try to drop roles that depend on them.  If roles are
     # dropped first, service_role fails silently and leaks into the next test.
     _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
-    cur="$(_svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" 2>/dev/null || true)"
+    if ! cur="$(_svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" 2>/dev/null)"; then
+      printf 'docker-shim: falha ao listar roles atuais; limpeza de roles abortada e estado preservado\n' >&2
+      exit 1
+    fi
     while IFS= read -r role; do
       [[ -z "$role" ]] && continue
       _svc -d postgres -c "DROP ROLE IF EXISTS \"$role\";" > /dev/null 2>&1 || true

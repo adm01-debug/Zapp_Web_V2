@@ -11,12 +11,12 @@ const cases = [
   {
     name: 'TalkX',
     file: 'src/components/talkx/TalkXView.tsx',
-    expectedRoots: 4,
+    expectedRoots: 6,
   },
   {
     name: 'Multiplix',
     file: 'src/components/multiplix/MultiplixView.tsx',
-    expectedRoots: 2,
+    expectedRoots: 3,
   },
 ];
 

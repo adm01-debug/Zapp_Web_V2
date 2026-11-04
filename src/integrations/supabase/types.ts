@@ -2350,89 +2350,6 @@ export type Database = {
         }
         Relationships: []
       }
-      contact_purchases: {
-        Row: {
-          amount: number | null
-          contact_id: string
-          created_at: string
-          created_by: string | null
-          currency: string | null
-          deal_id: string | null
-          description: string | null
-          external_id: string | null
-          id: string
-          purchase_type: string | null
-          purchased_at: string | null
-          source: string | null
-          status: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          contact_id: string
-          created_at?: string
-          created_by?: string | null
-          currency?: string | null
-          deal_id?: string | null
-          description?: string | null
-          external_id?: string | null
-          id?: string
-          purchase_type?: string | null
-          purchased_at?: string | null
-          source?: string | null
-          status?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          contact_id?: string
-          created_at?: string
-          created_by?: string | null
-          currency?: string | null
-          deal_id?: string | null
-          description?: string | null
-          external_id?: string | null
-          id?: string
-          purchase_type?: string | null
-          purchased_at?: string | null
-          source?: string | null
-          status?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contact_purchases_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_purchases_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_purchases_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_purchases_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "sales_deals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       contacts: {
         Row: {
           address: string | null
@@ -6739,92 +6656,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      payment_links: {
-        Row: {
-          amount: number
-          contact_id: string | null
-          created_at: string | null
-          created_by: string | null
-          currency: string | null
-          deal_id: string | null
-          description: string | null
-          expires_at: string | null
-          external_id: string | null
-          id: string
-          paid_at: string | null
-          payment_method: string | null
-          payment_url: string | null
-          status: string | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          amount: number
-          contact_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          currency?: string | null
-          deal_id?: string | null
-          description?: string | null
-          expires_at?: string | null
-          external_id?: string | null
-          id?: string
-          paid_at?: string | null
-          payment_method?: string | null
-          payment_url?: string | null
-          status?: string | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          amount?: number
-          contact_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          currency?: string | null
-          deal_id?: string | null
-          description?: string | null
-          expires_at?: string | null
-          external_id?: string | null
-          id?: string
-          paid_at?: string | null
-          payment_method?: string | null
-          payment_url?: string | null
-          status?: string | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_links_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_links_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_links_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_links_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "sales_deals"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       performance_snapshots: {
         Row: {
@@ -14922,7 +14753,6 @@ export type Database = {
         Args: { p_contact_id: string; p_template_id: string }
         Returns: string
       }
-      talkx_attribute_purchases: { Args: { p_since?: string }; Returns: Json }
       talkx_audience_query: {
         Args: {
           p_contact_ids?: string[]
@@ -15088,10 +14918,6 @@ export type Database = {
       talkx_recipient_is_suppressed: {
         Args: { p_contact_id: string; p_phone: string }
         Returns: boolean
-      }
-      talkx_recompute_purchase_metrics: {
-        Args: { p_limit?: number }
-        Returns: number
       }
       talkx_refresh_segment_library_history: {
         Args: { p_months?: number; p_timezone?: string }

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { usesExternalHttpsServer } from './e2e/auth-diagnostics';
 
 // E87: quarentena formal. Schema em e2e/quarantine.js; a validacao da forma e a cobranca
 // do prazo vivem em scripts/ci/check-quarantine.mjs.
@@ -349,6 +350,9 @@ export default defineConfig({
     // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
     // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
     const alvo = process.env.PLAYWRIGHT_BASE_URL;
+    // Projetos públicos podem usar um deployment HTTPS explícito sem subir Vite.
+    // O setup autenticado tem sua própria guarda antes de ler credenciais.
+    if (usesExternalHttpsServer(alvo)) return undefined;
     const url = alvo ?? 'http://127.0.0.1:5173';
     const porta = new URL(url).port || '5173';
     return {

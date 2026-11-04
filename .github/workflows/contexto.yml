@@ -1,15 +1,16 @@
 # docs:
 #   gatilho: push em main que toque código, banco, scripts das automações ou docs/contexto/regras/manual/; a cada 10 min (minuto 3); dispatch
 #   prova: branch contexto com docs/contexto/{codigo,supabase,regras}/ regerados das três fontes de verdade (código em main, banco oficial, código+migrations+manual/) e docs/contexto/00-INDEX.md montado a partir dos manifests
-#   falha: o job que falhou fica vermelho e a sua pasta mantém a última versão boa na branch; os outros publicam normalmente (jobs independentes)
+#   falha: falha fatal de produtor reprova o workflow; fontes com artefato publicam e as demais mantêm a última versão; erro de download impede a publicação
 #   avisa: ninguém (a branch contexto é a prova; errors.md em supabase/ e erros_do_gerador em codigo/ listam seções com falha)
 # nao-e-bug:
 #   - sem-commit: "nada mudou" no publicar significa que nenhuma das três fontes mudou desde a última publicação
-#   - metricas: mudanças só em stats/cron-runs do snapshot são comitadas no máximo 1x por hora
+#   - metricas: métricas/manifests do banco aguardam 60 min desde a coleta publicada; commits de código não reiniciam o prazo; data ausente/inválida/futura e mudanças de saúde/estado do índice publicam sem espera
 #   - banco-pulado: sem o secret SUPABASE_DB_URL o job do banco sai verde com aviso e a pasta supabase/ fica como estava
 name: Contexto para agentes de IA (10 min)
 
-# UM workflow, TRÊS produtores independentes (um job cada, continue-on-error), UM índice, UMA branch:
+# UM workflow, TRÊS produtores independentes (um job cada), UM índice, UMA branch:
+# Falha fatal deixa o workflow vermelho; publicar ainda reúne as fontes disponíveis via !cancelled().
 #
 #   codigo/   ← scripts/ai-context/gerar.mjs   (rotas, módulos, hooks, edges, grafo, testes, convenções, baseline)
 #   supabase/ ← scripts/supabase_snapshot/     (banco OFICIAL ao vivo: tabelas, RLS, funções, triggers, cron, lints)
@@ -116,7 +117,8 @@ jobs:
     if: needs.gate.outputs.codigo == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    continue-on-error: true # falha aqui não derruba os outros produtores nem o índice
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -158,6 +160,7 @@ jobs:
           ls "$CONTEXTO_DIR/codigo"
 
       - name: Guardar para o publicar
+        id: upload
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: contexto-codigo
@@ -171,7 +174,8 @@ jobs:
     if: needs.gate.outputs.banco == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    continue-on-error: true # banco fora do ar não derruba codigo/ nem regras/
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
     env:
       SNAPSHOT_DIR: docs/contexto/supabase
       # schema.sql exigiria pg_dump 17 (o runner tem o client 16); types.ts já vem do types-sync.yml.
@@ -232,6 +236,7 @@ jobs:
 
       - name: Guardar para o publicar
         if: env.SNAPSHOT_SKIPPED != '1'
+        id: upload
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: contexto-supabase
@@ -245,7 +250,8 @@ jobs:
     if: needs.gate.outputs.regras == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    continue-on-error: true
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -260,6 +266,7 @@ jobs:
           ls "$CONTEXTO_DIR/regras"
 
       - name: Guardar para o publicar
+        id: upload
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: contexto-regras
@@ -283,13 +290,27 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Baixar o que os produtores geraram
-        continue-on-error: true # nenhum artefato = nada novo; o passo seguinte decide
+      # Com um único artefato, a action extrai diretamente em path. Cada fonte tem destino explícito.
+      - name: Baixar codigo/
+        if: needs.codigo.outputs.artifact-id != ''
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          pattern: contexto-*
-          path: ${{ runner.temp }}/art
-          merge-multiple: false
+          artifact-ids: ${{ needs.codigo.outputs.artifact-id }}
+          path: ${{ runner.temp }}/art/contexto-codigo
+
+      - name: Baixar supabase/
+        if: needs.banco.outputs.artifact-id != ''
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          artifact-ids: ${{ needs.banco.outputs.artifact-id }}
+          path: ${{ runner.temp }}/art/contexto-supabase
+
+      - name: Baixar regras/
+        if: needs.regras.outputs.artifact-id != ''
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          artifact-ids: ${{ needs.regras.outputs.artifact-id }}
+          path: ${{ runner.temp }}/art/contexto-regras
 
       - name: Montar a branch e publicar (só se algo mudou)
         env:
@@ -347,14 +368,35 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if git diff --cached --quiet; then echo "nada mudou em nenhuma das fontes."; exit 0; fi
-          STRUCTURAL=$(git diff --cached --name-only | grep -vE '(/stats\.md|/stats\.json|/cron-runs\.md|/errors\.md|/00-INDEX\.md|/manifest\.json|/baseline\.json)$' || true)
+          # Falha, recuperação e estado do índice são publicados imediatamente; só métricas aguardam.
+          STRUCTURAL=$(git diff --cached --name-only | grep -vE '(/stats\.md|/stats\.json|/cron-runs\.md|/manifest\.json|/baseline\.json)$' || true)
           if [ -z "$STRUCTURAL" ] && git rev-parse --verify -q HEAD >/dev/null; then
-            LAST=$(git log -1 --format=%ct)
+            if [ -d "$ART/contexto-supabase" ]; then
+              # HEAD contém o manifest já publicado, mesmo no checkout raso e após commits só de código.
+              LAST=$(git show "HEAD:$CONTEXTO_DIR/supabase/manifest.json" 2>/dev/null | python3 -c '
+          import json, sys
+          from datetime import datetime, timezone
+          try:
+              stamp = json.load(sys.stdin).get("gerado_em", "")
+              value = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+              timestamp = int(value.timestamp())
+              now = int(datetime.now(timezone.utc).timestamp())
+              print(timestamp if value.tzinfo is not None and 0 < timestamp <= now else 0)
+          except Exception:
+              print(0)
+          ') || LAST=0
+              if [ "$LAST" -eq 0 ]; then
+                echo "Não foi possível validar a data bancária publicada — publicando sem esperar."
+              fi
+            else
+              LAST=$(git log -1 --format=%ct)
+            fi
             AGE_MIN=$(( ( $(date +%s) - LAST ) / 60 ))
             if [ "$AGE_MIN" -lt "$VOLATILE_MIN_INTERVAL_MIN" ]; then
-              echo "Só métricas/manifests mudaram (último commit há ${AGE_MIN} min) — aguardando."; exit 0
+              echo "Só métricas/manifests mudaram (referência publicada há ${AGE_MIN} min) — aguardando."; exit 0
             fi
           fi
           git commit --quiet -m "chore(contexto): $novos fonte(s) regerada(s) @ main ${HEAD_MAIN:0:7} [skip ci]"
           git push --quiet "$REMOTE" "HEAD:refs/heads/$CONTEXTO_BRANCH"
           echo "Publicado em $CONTEXTO_BRANCH: $(git rev-parse --short HEAD) (fontes novas: $novos)"
+

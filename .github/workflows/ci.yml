@@ -122,6 +122,13 @@ jobs:
         with:
           node-version: '24'
 
+      # N217 mede cobertura via Deno a partir do runner Node; sem ele,
+      # os contratos de medicao real e reproducibilidade do relatorio sao pulados.
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
@@ -370,23 +377,21 @@ jobs:
           echo "build: ${{ needs.build.result }}"
           echo "security: ${{ needs.security.result }}"
           echo "workflow-lint: ${{ needs.workflow-lint.result }}"
-          if [[  "${{ needs.typecheck.result }}" == "failure" || \
-                "${{ needs.unit-tests.result }}" == "failure" || \
-                "${{ needs.node-scripts.result }}" == "failure" || \
-                "${{ needs.edge-contracts.result }}" == "failure" || \
-                "${{ needs.build.result }}" == "failure" || \
-                "${{ needs.security.result }}" == "failure" || \
-                "${{ needs.workflow-lint.result }}" == "failure" ]]; then
-            echo "❌ Um ou mais jobs obrigatórios falharam"
+          if [[ "${{ needs.typecheck.result }}" != "success" || \
+                ( "${{ needs.unit-tests.result }}" != "success" && ! ( "${{ github.event.pull_request.draft == true }}" == "true" && "${{ needs.unit-tests.result }}" == "skipped" ) ) || \
+                "${{ needs.node-scripts.result }}" != "success" || \
+                "${{ needs.edge-contracts.result }}" != "success" || \
+                ( "${{ needs.build.result }}" != "success" && ! ( "${{ github.event.pull_request.draft == true }}" == "true" && "${{ needs.build.result }}" == "skipped" ) ) || \
+                "${{ needs.security.result }}" != "success" || \
+                "${{ needs.workflow-lint.result }}" != "success" ]]; then
+            echo "❌ Um ou mais jobs obrigatórios não concluíram com sucesso"
             exit 1
           fi
-          if [[ "${{ needs.typecheck.result }}" == "cancelled" || \
-                "${{ needs.unit-tests.result }}" == "cancelled" || \
-                "${{ needs.build.result }}" == "cancelled" ]]; then
-            echo "❌ Um ou mais jobs obrigatórios foram cancelados"
-            exit 1
+          if [[ "${{ github.event.pull_request.draft == true }}" == "true" && ( "${{ needs.unit-tests.result }}" == "skipped" || "${{ needs.build.result }}" == "skipped" ) ]]; then
+            echo "ℹ️ Validação parcial de draft; consulte os resultados acima"
+          else
+            echo "✅ Todos os jobs obrigatórios passaram"
           fi
-          echo "✅ Todos os jobs obrigatórios passaram"
 
   # ===========================================
   # JOB 6: E2E Tests (Playwright)
