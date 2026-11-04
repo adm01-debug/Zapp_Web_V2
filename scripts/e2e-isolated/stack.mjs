@@ -112,8 +112,9 @@ export function containerArguments({ runId, name, image, anchorId, mounts = [], 
     '--label', OWNER_LABEL + '=' + runId, '--label', PURPOSE_LABEL + '=' + PURPOSE,
     '--network', anchorId ? 'container:' + anchorId : 'none',
     '--cap-drop', 'NET_RAW', '--security-opt', 'no-new-privileges:true', '--memory', memory,
-    '--workdir', '/work',
   ];
+  // Official services retain the working directory configured in their images.
+  if (['anchor', 'driver', 'vite', 'gateway'].includes(name)) result.push('--workdir', '/work');
   // Docker disallows --add-host for container: networks; descendants reuse the
   // anchor's hosts file and the controller verifies that file in driver and PG.
   if (!anchorId) result.push('--add-host', OFFICIAL_HOST + ':127.0.0.1');

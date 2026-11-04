@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertPinnedImages, functionPolicy, prepareMountTargets } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST } from '../e2e-isolated/runtime-contract.mjs';
+import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -79,6 +80,48 @@ test('mounts RO: não segue symlink para diretório alheio', t => {
   assert.throws(() => prepareMountTargets(root, ['/work/e2e/.auth']), /unsafe-work-mount-target/);
 });
 
+// Exercise the real builder across the current services, preserving image paths
+// and the remaining arguments while checkout tools alone use /work as cwd.
+const checkoutServices = ['anchor', 'driver', 'vite', 'gateway'];
+const officialServices = ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge'];
+const argumentCases = [
+  { label: 'padrão', mounts: [] },
+  { label: 'checkout readonly', mounts: [{ type: 'bind', source: '/fixture/repo', target: '/work', readOnly: true }], user: '1001:1001' },
+  { label: 'volume gravável', mounts: [{ type: 'volume', source: 'fixture-volume', target: '/var/lib/data', readOnly: false }], memory: '768m', user: '42:43' },
+  { label: 'env e argumento literais', mounts: [{ type: 'bind', source: '/fixture/path with spaces', target: '/fixture data', readOnly: true }], envFile: '/fixture/local env', extra: ['--fixture-argument=literal value'] },
+];
+for (const name of [...checkoutServices, ...officialServices]) for (const variant of argumentCases) {
+  test('workdir: ' + name + ' / ' + variant.label, () => {
+    const runId = 'zapp-e2e-workdir-fixture';
+    const services = serviceConfiguration({ runId, sourceSha: SOURCE_SHA, credentials: {
+      databasePassword: 'synthetic-database-password', jwtSecret: 'synthetic-jwt-secret',
+      anonKey: 'synthetic-anon', serviceRoleKey: 'synthetic-service', evolutionKey: 'synthetic-evolution',
+      instanceToken: 'synthetic-instance', email: 'fixture@example.invalid', password: 'synthetic-password',
+    } });
+    const images = assertPinnedImages(lock());
+    const image = officialServices.includes(name) ? images[name] : images.driver;
+    const args = [...(services[name]?.args ?? ['node', '-e', 'setInterval(() => {}, 1000)']), ...(variant.extra ?? [])];
+    const input = { runId, name, image, anchorId: name === 'anchor' ? undefined : 'fixture-anchor-id', mounts: variant.mounts, envFile: variant.envFile, args, memory: variant.memory, user: variant.user };
+    const original = structuredClone(input);
+    const actual = containerArguments(input);
+    const values = flag => actual.flatMap((value, i) => value === flag ? [actual[i + 1]] : []);
+    assert.deepEqual(values('--workdir'), checkoutServices.includes(name) ? ['/work'] : [], 'official images must keep their image WORKDIR');
+    assert.deepEqual(actual.slice(actual.indexOf(image)), [image, ...args], 'image digest and process arguments stay intact');
+    assert.deepEqual(values('--network'), [name === 'anchor' ? 'none' : 'container:fixture-anchor-id']);
+    assert.deepEqual(values('--name'), [runId + '-' + name]);
+    assert.deepEqual(values('--label'), [OWNER_LABEL + '=' + runId, PURPOSE_LABEL + '=' + PURPOSE]);
+    assert.deepEqual(values('--memory'), [variant.memory ?? '2g']);
+    assert.deepEqual(values('--user'), variant.user ? [variant.user] : []);
+    assert.deepEqual(values('--env-file'), variant.envFile ? [variant.envFile] : []);
+    assert.deepEqual(values('--mount'), variant.mounts.map(m => `type=${m.type},src=${m.source},dst=${m.target}${m.readOnly ? ',readonly' : ''}`));
+    assert.deepEqual(values('--add-host'), name === 'anchor' ? [OFFICIAL_HOST + ':127.0.0.1'] : []);
+    assert.deepEqual(values('--cap-drop'), ['NET_RAW']);
+    assert.deepEqual(values('--security-opt'), ['no-new-privileges:true']);
+    assert.equal(actual.some(value => ['--privileged', '--publish', '-p', '--network=host'].includes(value)), false);
+    assert.deepEqual(input, original, 'builder must not mutate mounts, commands or options');
+  });
+}
+
 async function controllerFixture(t, fault, manifest = value => value) {
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
@@ -149,6 +192,7 @@ async function controllerFixture(t, fault, manifest = value => value) {
       const metadata = { Id: name + '-id', Config: { Labels: labels }, HostConfig: { NetworkMode: argv.includes('--network') ? valueAfter(argv, '--network') : 'default', Privileged: false, CapAdd: [] }, NetworkSettings: { Networks: {} }, Mounts: mounts };
       if (name.includes('-bundle-')) {
         assert.equal(valueAfter(argv, '--user'), process.getuid() + ':' + process.getgid(), 'compiler cache must belong to the runner');
+        assert.deepEqual(allAfter(argv, '--workdir'), ['/work'], 'the checkout compiler keeps its explicit working directory');
         const privateDir = path.join(path.dirname(options.env.DOCKER_CONFIG), 'private');
         assert.equal(readdirSync(privateDir).length, 0, 'compile must precede credential generation');
         assert.equal(argv.includes('--env-file'), false);
@@ -158,7 +202,9 @@ async function controllerFixture(t, fault, manifest = value => value) {
         writeFileSync(path.join(bundleMount.Source, filename), fault === 'empty-bundle' ? '' : 'simulated-eszip-' + filename);
         return ok();
       }
-      if (['-anchor', '-driver', '-vite', '-gateway'].some(suffix => name.endsWith(suffix))) {
+      const checkoutProcess = ['-anchor', '-driver', '-vite', '-gateway'].some(suffix => name.endsWith(suffix));
+      assert.deepEqual(allAfter(argv, '--workdir'), checkoutProcess ? ['/work'] : [], 'the real controller must preserve official image working directories');
+      if (checkoutProcess) {
         assert.equal(valueAfter(argv, '--user'), process.getuid() + ':' + process.getgid(), 'Node/Bun bind writes must belong to the runner');
       }
       if (name.endsWith('-anchor')) assert.equal(valueAfter(argv, '--add-host'), OFFICIAL_HOST + ':127.0.0.1');
