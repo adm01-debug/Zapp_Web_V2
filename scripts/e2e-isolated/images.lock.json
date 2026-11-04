@@ -1,0 +1,16 @@
+{
+  "source": {
+    "supabase_compose_commit": "4a9b2b6860805d11b76b59ff29b8803925f2ec38",
+    "edge_runtime_commit": "d4a4f606a90e8c66864219c9b1d31ef0e3e3f626",
+    "postgres_note": "Same digest already used by scripts/db-audit/replay-local.sh; component compatibility must pass the disposable bootstrap."
+  },
+  "images": {
+    "postgres": "ghcr.io/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f",
+    "auth": "supabase/gotrue:v2.197.0",
+    "rest": "public.ecr.aws/supabase/postgrest:v14.5",
+    "storage": "supabase/storage-api:v1.81.0",
+    "realtime": "supabase/realtime:v2.143.3",
+    "edge": "supabase/edge-runtime:v1.77.4",
+    "driver": "mcr.microsoft.com/playwright:v1.64.1-noble"
+  }
+}

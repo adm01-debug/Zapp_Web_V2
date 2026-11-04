@@ -31,42 +31,77 @@ deno_test="$repo_root/supabase/functions/talkx-send/engine.integration.test.ts"
 
 pg_image="${TALKX_ENGINE_PROVIDER_PG_IMAGE:-postgres:17-alpine}"
 pgrst_image="${TALKX_ENGINE_PROVIDER_PGRST_IMAGE:-public.ecr.aws/supabase/postgrest:v14.5}"
-pg_name="zapp-talkx-engine-pg-$$"
-pgrst_name="zapp-talkx-engine-pgrst-$$"
-net_name="zapp-talkx-engine-net-$$"
+umask 077
+run_dir="$(mktemp -d "${TMPDIR:-/tmp}/zapp-talkx-engine.XXXXXX")"
+run_key="${run_dir##*.}"
+pg_name="zapp-talkx-engine-pg-$run_key"
+pgrst_name="zapp-talkx-engine-pgrst-$run_key"
+net_name="zapp-talkx-engine-net-$run_key"
 jwt_secret="talkx-engine-provider-test-secret-32-chars"
+completed=false
 
 cleanup() {
-  if [[ "$pg_name" =~ ^zapp-talkx-engine-pg-[0-9]+$ ]]; then
-    docker rm -f "$pg_name" >/dev/null 2>&1 || true
+  local failed=0 kind id file
+  # Os cidfiles são escritos pelo Docker apenas para os recursos criados nesta
+  # execução. Uma colisão de nome não autoriza remover o recurso preexistente.
+  for kind in pgrst pg network; do
+    file="$run_dir/$kind.id"
+    [[ -s "$file" ]] || continue
+    id="$(cat "$file")"
+    if [[ ! "$id" =~ ^[0-9a-f]{64}$ ]]; then
+      printf '[FAIL] cleanup: ID inválido de %s; estado em %s\n' "$kind" "$run_dir" >&2
+      failed=1
+    elif { [[ "$kind" == network ]] && docker network rm "$id" >/dev/null 2>&1; } ||
+         { [[ "$kind" != network ]] && docker rm -f "$id" >/dev/null 2>&1; }; then
+      rm -f "$file" || failed=1
+    else
+      printf '[FAIL] cleanup: não removi %s %s; estado em %s\n' "$kind" "$id" "$run_dir" >&2
+      failed=1
+    fi
+  done
+  if [[ "$failed" == 0 ]]; then
+    rm -rf "$run_dir" || failed=1
   fi
-  if [[ "$pgrst_name" =~ ^zapp-talkx-engine-pgrst-[0-9]+$ ]]; then
-    docker rm -f "$pgrst_name" >/dev/null 2>&1 || true
-  fi
-  if [[ "$net_name" =~ ^zapp-talkx-engine-net-[0-9]+$ ]]; then
-    docker network rm "$net_name" >/dev/null 2>&1 || true
-  fi
+  return "$failed"
 }
-trap cleanup EXIT INT TERM
+finish() {
+  local status=$?
+  trap - EXIT INT TERM
+  if ! cleanup && [[ "$status" == 0 ]]; then status=1; fi
+  if [[ "$status" == 0 && "$completed" != true ]]; then status=1; fi
+  if [[ "$status" == 0 ]]; then
+    printf '[OK] X034: 8 testes, zero ignorados; Postgres/PostgREST próprios removidos.\n'
+  fi
+  exit "$status"
+}
+trap finish EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
 
-psql_script() { docker exec -i "$pg_name" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres; }
-psql_query() { docker exec "$pg_name" psql -X -Atq -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$1"; }
+psql_script() { docker exec -i "$pg_id" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres; }
+psql_query() { docker exec "$pg_id" psql -X -Atq -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$1"; }
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 command -v deno >/dev/null 2>&1 || fail 'Deno nao esta instalado'
+command -v python3 >/dev/null 2>&1 || fail 'Python 3 nao esta instalado'
 
-docker network create "$net_name" >/dev/null
-docker run --rm -d --name "$pg_name" --network "$net_name" \
-  -e POSTGRES_PASSWORD=engine_provider_test_only "$pg_image" >/dev/null
+docker network create --internal --label "zapp.edge-harness=$run_key" "$net_name" > "$run_dir/network.id"
+docker create --cidfile "$run_dir/pg.id" --name "$pg_name" --network "$net_name" \
+  --label "zapp.edge-harness=$run_key" \
+  --add-host=tnnnlkbymytvtqngbbqh.supabase.co:127.0.0.1 \
+  -e POSTGRES_PASSWORD=engine_provider_test_only "$pg_image" \
+  postgres -c cron.launch_active_jobs=off >/dev/null
+pg_id="$(cat "$run_dir/pg.id")"
+docker start "$pg_id" >/dev/null
 
 ready=false
 for _ in $(seq 1 90); do
-  markers="$(docker logs "$pg_name" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
-  if [[ "$markers" -ge 2 ]] && docker exec "$pg_name" \
+  markers="$(docker logs "$pg_id" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
+  if [[ "$markers" -ge 2 ]] && docker exec "$pg_id" \
     psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
     ready=true
     break
@@ -74,8 +109,13 @@ for _ in $(seq 1 90); do
   sleep 1
 done
 [[ "$ready" == true ]] || fail 'PostgreSQL de teste não iniciou'
+cron_state="$(psql_query 'SHOW cron.launch_active_jobs')" || fail 'não consegui verificar o estado do cron'
+[[ "$cron_state" == off ]] || fail 'cron não está desativado'
+docker exec "$pg_id" cat /etc/hosts | grep -Eq \
+  '^127\.0\.0\.1[[:space:]]+tnnnlkbymytvtqngbbqh\.supabase\.co([[:space:]]|$)' \
+  || fail 'host oficial não foi neutralizado'
 
-pass 'PostgreSQL descartável no ar'
+pass 'PostgreSQL descartável no ar; cron off e host oficial neutralizado'
 
 # ---------------------------------------------------------------------------
 # Schema mínimo no estado ANTERIOR à cadeia: só os objetos que as migrations
@@ -463,7 +503,8 @@ docker image inspect "$pgrst_image" >/dev/null 2>&1 \
   || fail "registro de imagens indisponivel ($pgrst_image)"
 
 # PostgREST publicado em 127.0.0.1 (porta efêmera escolhida pelo docker).
-docker run --rm -d --name "$pgrst_name" --network "$net_name" \
+docker create --cidfile "$run_dir/pgrst.id" --name "$pgrst_name" --network "$net_name" \
+  --label "zapp.edge-harness=$run_key" \
   -p 127.0.0.1::3000 \
   -e PGRST_DB_URI="postgres://postgres:engine_provider_test_only@$pg_name:5432/postgres" \
   -e PGRST_DB_SCHEMAS=public \
@@ -471,14 +512,18 @@ docker run --rm -d --name "$pgrst_name" --network "$net_name" \
   -e PGRST_JWT_SECRET="$jwt_secret" \
   -e PGRST_SERVER_PORT=3000 \
   "$pgrst_image" >/dev/null
+pgrst_id="$(cat "$run_dir/pgrst.id")"
+docker start "$pgrst_id" >/dev/null
 
-host_port="$(docker port "$pgrst_name" 3000 | head -1 | sed -E 's/.*:([0-9]+)$/\1/')"
-[[ -n "$host_port" ]] || fail 'não consegui descobrir a porta do PostgREST'
+binding="$(docker port "$pgrst_id" 3000)"
+[[ "$binding" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]] || fail 'porta do PostgREST não é loopback'
+host_port="$((10#${BASH_REMATCH[1]}))"
+((host_port >= 1 && host_port <= 65535)) || fail 'porta do PostgREST inválida'
 pgrest_url="http://127.0.0.1:$host_port"
 
 postgrest_ready=false
 for _ in $(seq 1 60); do
-  if curl -sf "$pgrest_url/" >/dev/null 2>&1; then
+  if curl -sf --connect-timeout 2 --max-time 5 "$pgrest_url/" >/dev/null 2>&1; then
     postgrest_ready=true
     break
   fi
@@ -512,7 +557,9 @@ TALKX_ENGINE_POSTGREST_URL="$pgrest_url" \
 TALKX_ENGINE_JWT="$jwt" \
 TALKX_ENGINE_ANON_JWT="$anon_jwt" \
   deno test --config "$repo_root/scripts/ci/deno.json" --frozen \
+    --junit-path "$run_dir/x034.xml" \
     --allow-env --allow-read --allow-net=127.0.0.1 "$deno_test" \
   || fail 'engine.integration.test.ts falhou'
+python3 "$repo_root/scripts/db-audit/assert-deno-junit.py" "$run_dir/x034.xml" 8
 
-printf '[OK] X034 engine.provider: motor real contra Postgres+PostgREST descartáveis com provedor falso (60 destinatários, sweep, worker, supressão, limite diário, cancelamento, agente).\n'
+completed=true

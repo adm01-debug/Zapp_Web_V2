@@ -1,0 +1,49 @@
+# docs:
+#   gatilho: pull_request nos arquivos do ambiente isolado e dispatch
+#   prova: resolve digests OCI de imagens versionadas sem criar banco, credenciais ou navegador
+#   falha: lock pendente ou erro de metadados bloqueia explicitamente o preparo
+#   avisa: autor e revisor via check; artefato contem somente nomes e digests
+# Preparo verificável do ambiente descartável. Esta primeira etapa só resolve
+# imagens oficiais versionadas: não cria credenciais, banco, seed ou navegador.
+# Um digest pendente termina em falha explícita e publica apenas metadados.
+name: E2E isolado - preparo de imagens
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/e2e-logado-isolado.yml'
+      - 'scripts/e2e-isolated/**'
+      - 'scripts/ci/e2e-isolated*.unit.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-isolado-preparo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image-metadata:
+    name: Resolver imagens sem banco ou credenciais
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout do código da revisão
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Resolver digests e bloquear lock pendente
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/e2e-isolated/resolve-images.mjs "$RUNNER_TEMP/e2e-isolated-images/report.json"
+      - name: Publicar somente os metadados de imagens
+        if: always() && steps.resolve.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-isolated-images-${{ github.run_id }}
+          path: ${{ runner.temp }}/e2e-isolated-images/report.json
+          retention-days: 3
+          if-no-files-found: error
