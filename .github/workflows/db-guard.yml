@@ -243,6 +243,22 @@ jobs:
           SNAPSHOT_STATS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/supabase-snapshot-stats.test.sh
 
+      # Os dois harnesses usam PostgREST e recursos próprios: o shim não fornece
+      # rede/logs/readiness de containers. JWTs e provedores são só da fixture.
+      - name: Provar cursor e reset Gmail com PostgREST descartável (7 + 1)
+        env:
+          GMAIL_CAS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          GMAIL_CAS_TEST_POSTGREST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-cas-postgrest.test.sh
+
+      - name: Provar X034 com PostgREST e Evolution falso (8)
+        env:
+          TALKX_ENGINE_PROVIDER_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          TALKX_ENGINE_PROVIDER_PGRST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-provider.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — este test cria dois bancos (db_a, db_b) no
       # mesmo container e roda DDL identico em cada um. O shim mapeia um
       # container a um unico banco; -d db_a e -d db_b roteariam para o mesmo

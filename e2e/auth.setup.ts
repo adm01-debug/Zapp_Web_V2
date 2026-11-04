@@ -1,6 +1,7 @@
 import { expect, test as setup } from '@playwright/test';
 import path from 'node:path';
 import { assertAuthenticatedTarget, diagnoseAuthFailure, isAuthLoginRequest, type AuthObservation } from './auth-diagnostics';
+import { assertIsolatedAuthEnvironment } from '../scripts/e2e-isolated/admission.mjs';
 
 const AUTH_FILE = path.join(import.meta.dirname, '.auth', 'user.json');
 
@@ -13,9 +14,10 @@ setup.setTimeout(180_000);
 // (auth.spec.ts), que testa a tela de login deslogada e nao pode depender
 // de uma sessao ja autenticada.
 setup('authenticate', async ({ page, baseURL }) => {
-  // A guarda é específica do setup mutador; projetos públicos/remotos continuam
-  // disponíveis. Ela roda antes de ler credenciais e nunca faz I/O.
+  // O setup mutador exige prova do namespace, backend e fixtures descartáveis
+  // antes de ler credenciais. A primeira guarda recusa origens remotas sem I/O.
   assertAuthenticatedTarget(baseURL);
+  await assertIsolatedAuthEnvironment({ page, baseURL });
   const email = process.env.E2E_TEST_EMAIL;
   const password = process.env.E2E_TEST_PASSWORD;
 

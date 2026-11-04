@@ -110,6 +110,33 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
     await dialogo.getByRole('tab', { name: /Escolher no Mapa/ }).click();
     const combo = dialogo.getByRole('combobox');
     await combo.click();
+    // Diagnóstico E71: observar o destaque no evento real, sem serializar endereço,
+    // query, token ou IDs do DOM. Não altera teclas, seleção, timers ou assertions.
+    await combo.evaluate((input) => {
+      const phases: Array<{ phase: string; elapsedMs: number; optionCount: number; hasActiveOption: boolean; activeIndex: number; selectedIndices: number[] }> = [];
+      const started = performance.now();
+      const observe = (phase: string) => {
+        const list = input.ownerDocument.getElementById(input.getAttribute('aria-controls') ?? '');
+        const options = Array.from(list?.querySelectorAll('[role="option"]') ?? []);
+        const activeId = input.getAttribute('aria-activedescendant');
+        phases.push({
+          phase,
+          elapsedMs: Math.round(performance.now() - started),
+          optionCount: options.length,
+          hasActiveOption: Boolean(activeId),
+          activeIndex: options.findIndex((option) => Boolean(activeId) && option.id === activeId),
+          selectedIndices: options.flatMap((option, index) => option.getAttribute('aria-selected') === 'true' ? [index] : []),
+        });
+        input.setAttribute('data-e71-keyboard-diagnostics', JSON.stringify(phases));
+      };
+      for (const type of ['keydown', 'keyup'] as const) {
+        input.addEventListener(type, (event) => {
+          const key = (event as KeyboardEvent).key;
+          if (key === 'ArrowDown' || key === 'Enter') observe(`${type}:${key}`);
+        }, { capture: true });
+      }
+      observe('before-input');
+    });
     await combo.fill('avenida paulista 1000');
 
     // Lista de sugestões veio da Mapbox interceptada (role=listbox, passo 1 da etapa).
@@ -128,12 +155,25 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
 
     // Passo 2 da etapa: NÃO enviar. Fecha o diálogo pelo "Cancelar".
     await expect(dialogo.getByRole('button', { name: 'Enviar Localização' })).toBeEnabled();
+    const keyboardPhases = await combo.getAttribute('data-e71-keyboard-diagnostics');
     await dialogo.getByRole('button', { name: 'Cancelar' }).click();
     await expect(dialogo).toBeHidden();
 
     // Prova de que nada foi enviado: nenhum POST (insert) em /rest/v1/messages —
     // o único PATCH que aparece é o `is_read` do markAsRead ao abrir a conversa.
     expect(registro.writesApp.filter((w) => w.startsWith('POST /rest/v1/messages'))).toEqual([]);
+
+    // Valores fechados e contagens: o log pode sobreviver à redação de artifacts sem
+    // expor a URL inteira ou qualquer conteúdo do contato/endereço da fixture.
+    console.info('E71_KEYBOARD_DIAGNOSTIC', JSON.stringify({
+      phases: JSON.parse(keyboardPhases ?? '[]') as unknown,
+      completedPhases: ['option-visible', 'highlight-assertion', 'selection-visible', 'send-enabled', 'cancelled'],
+      endpointCounts: {
+        suggest: registro.mapbox.filter((u) => u.includes('/searchbox/v1/suggest')).length,
+        retrieve: registro.mapbox.filter((u) => u.includes('/searchbox/v1/retrieve/')).length,
+        forward: registro.mapbox.filter((u) => u.includes('/searchbox/v1/forward')).length,
+      },
+    }));
 
     // Passo 3 da etapa: a rota da Mapbox foi de fato exercitada e interceptada.
     expect(registro.mapbox.filter((u) => u.includes('/searchbox/v1/suggest')).length).toBeGreaterThan(0);

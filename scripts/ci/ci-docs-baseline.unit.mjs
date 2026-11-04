@@ -291,16 +291,16 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 19 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 20 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 19);
+  assert.equal(arquivos.length, 20);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*19 workflows\.\*\*/);
+  assert.match(readme, /\*\*20 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 19), []);
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 20), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -332,10 +332,10 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
   }
 });
 
-test('plano: inventario atual e 19 YAML com fonte gerada', async () => {
+test('plano: inventario atual e 20 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
-  assert.match(chato, /\*\*19\*\* arquivos YAML em `\.github\/workflows\/`/);
+  assert.match(chato, /\*\*20\*\* arquivos YAML em `\.github\/workflows\/`/);
   assert.ok(plano.includes('docs/ci/README.md'));
   assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);

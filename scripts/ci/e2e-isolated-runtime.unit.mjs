@@ -1,0 +1,687 @@
+import assert from 'node:assert/strict';
+import { after, test } from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { assertPinnedImages, functionPolicy, prepareMountTargets } from '../e2e-isolated/run.mjs';
+import { gitBlob } from '../e2e-isolated/migrations.mjs';
+import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST } from '../e2e-isolated/runtime-contract.mjs';
+import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
+import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
+
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
+const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
+const SOURCE_SHA = 'a'.repeat(40);
+const MIGRATION = '20260101000000_fixture.sql';
+const SQL = 'select 1;\n';
+const lock = () => JSON.parse(readFileSync(path.join(MODULES, 'images.lock.json'), 'utf8'));
+const ok = stdout => ({ status: 0, stdout: stdout ?? '', stderr: '' });
+const error = stderr => ({ status: 1, stdout: '', stderr: stderr ?? 'simulated command failure' });
+const TLS_CHECKS = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
+let certificateFixture;
+let certificateRoot;
+after(() => { if (certificateRoot) rmSync(certificateRoot, { recursive: true, force: true }); });
+function certificates() {
+  if (!certificateFixture) {
+    certificateRoot = mkdtempSync(path.join(tmpdir(), 'isolated-controller-certificates-'));
+    certificateFixture = createTlsMaterial({ directory: path.join(certificateRoot, 'material'),
+      runId: 'zapp-e2e-controller-certificates', sourceSha: SOURCE_SHA,
+      command: (program, args, options) => program === 'certutil' ? ok() : spawnSync(program, args, options) });
+  }
+  return certificateFixture;
+}
+
+// Only subprocess I/O is simulated. The real TLS helper still reads and checks
+// real X509 certificates, issues run-bound manifests, and removes both CA keys.
+function simulatedTlsTool(program, args, options, fault) {
+  if (program === 'certutil') return fault === 'tls-host-nss' || (fault === 'tls-nss-import' && args.includes('-A')) ? error() : ok();
+  if (args[0] === 'version') return fault === 'tls-host-openssl' ? error() : ok(fault === 'tls-host-version' ? 'OpenSSL 1.1.1' : 'OpenSSL 3.0.0 fixture');
+  if (fault === 'tls-certificate-command') return error();
+  const material = certificates();
+  const value = flag => args[args.indexOf(flag) + 1];
+  const destination = value('-out');
+  const name = path.basename(destination);
+  if (args.includes('-keyout')) {
+    const key = value('-keyout');
+    if (['ca.key', 'untrusted-ca.key'].includes(path.basename(key))) writeFileSync(key, 'synthetic-unused-CA-key');
+    else cpSync(path.join(material.privateDirectory, path.basename(key)), key);
+  }
+  if (name.endsWith('.csr')) writeFileSync(destination, 'synthetic-CSR-not-parsed');
+  else cpSync(path.join(name === 'ca.crt' ? material.publicDirectory : material.privateDirectory, name), destination);
+  return ok();
+}
+function playwrightJson({ listed = false, failed = false } = {}) {
+  return {
+    config: { projects: [{ name: 'setup', repeatEach: 1 }], metadata: { sentinel: 'must-never-publish-private-config' } },
+    suites: [{ title: 'auth.setup.ts', file: 'auth.setup.ts', specs: [{
+      title: 'authenticate', file: 'auth.setup.ts', line: 8, column: 1,
+      tests: [{
+        projectName: 'setup', projectId: 'setup', expectedStatus: 'passed',
+        status: listed ? 'skipped' : failed ? 'unexpected' : 'expected', annotations: [],
+        results: listed ? [] : [{ status: failed ? 'failed' : 'passed', workerIndex: 0, retry: 0, errors: failed ? [{}] : [] }],
+      }],
+    }] }],
+    errors: [], stats: { expected: listed || failed ? 0 : 1, unexpected: failed ? 1 : 0, flaky: 0, skipped: listed ? 1 : 0 },
+  };
+}
+
+for (const name of ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', 'driver']) {
+  test('bootstrap pin: a ausência do digest de ' + name + ' bloqueia o conjunto', () => {
+    const data = lock(); data.images[name] = data.images[name].split('@')[0];
+    assert.throws(() => assertPinnedImages(data), /image-lock-review-required/);
+  });
+}
+test('bootstrap pin: os sete digests nativos permanecem referências imutáveis', () => {
+  assert.equal(Object.keys(assertPinnedImages(lock())).length, 7);
+});
+for (const [source, expected] of [
+  ['[functions.auth-login]\nverify_jwt = false\n', false],
+  ['[functions.auth-login]\nverify_jwt = true\n', true],
+  ['[functions.other]\nverify_jwt = false\n', true],
+  ['[functions.auth-login]\n# verify_jwt = false\n', true],
+]) {
+  test('política Edge: parser lê declaração executável ' + JSON.stringify(source), () => {
+    assert.equal(functionPolicy(source, 'auth-login'), expected);
+  });
+}
+test('política Edge: declaração duplicada não vira falso sem-JWT', () => {
+  assert.throws(() => functionPolicy('[functions.auth-login]\nverify_jwt = false\nverify_jwt = true\n', 'auth-login'));
+});
+
+test('mounts RO: só cria alvos vazios; preserva conteúdo existente', t => {
+  const root = mkdtempSync(path.join(tmpdir(), 'isolated-mount-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(path.join(root, 'e2e'));
+  writeFileSync(path.join(root, 'e2e/kept.txt'), 'original');
+  const created = prepareMountTargets(root, ['/work/e2e/.auth', '/work/node_modules/.vite']);
+  assert.deepEqual(created.map(value => path.relative(root, value)), ['e2e/.auth', 'node_modules', 'node_modules/.vite']);
+  assert.equal(readFileSync(path.join(root, 'e2e/kept.txt'), 'utf8'), 'original');
+  assert.deepEqual(prepareMountTargets(root, ['/work/e2e/.auth']), []);
+});
+for (const target of ['/tmp/foreign', '/work/../foreign', '/work/e2e/./auth', '/work/e2e//auth']) {
+  test('mounts RO: recusa alvo ambíguo ' + target, t => {
+    const root = mkdtempSync(path.join(tmpdir(), 'isolated-mount-test-'));
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    assert.throws(() => prepareMountTargets(root, [target]));
+  });
+}
+test('mounts RO: não segue symlink para diretório alheio', t => {
+  const root = mkdtempSync(path.join(tmpdir(), 'isolated-mount-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  symlinkSync(tmpdir(), path.join(root, 'e2e'));
+  assert.throws(() => prepareMountTargets(root, ['/work/e2e/.auth']), /unsafe-work-mount-target/);
+});
+
+// Exercise the real builder across the current services, preserving image paths
+// and the remaining arguments while checkout tools alone use /work as cwd.
+const checkoutServices = ['anchor', 'driver', 'vite', 'gateway'];
+const officialServices = ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge'];
+const argumentCases = [
+  { label: 'padrão', mounts: [] },
+  { label: 'checkout readonly', mounts: [{ type: 'bind', source: '/fixture/repo', target: '/work', readOnly: true }], user: '1001:1001' },
+  { label: 'volume gravável', mounts: [{ type: 'volume', source: 'fixture-volume', target: '/var/lib/data', readOnly: false }], memory: '768m', user: '42:43' },
+  { label: 'env e argumento literais', mounts: [{ type: 'bind', source: '/fixture/path with spaces', target: '/fixture data', readOnly: true }], envFile: '/fixture/local env', extra: ['--fixture-argument=literal value'] },
+];
+for (const name of [...checkoutServices, ...officialServices]) for (const variant of argumentCases) {
+  test('workdir: ' + name + ' / ' + variant.label, () => {
+    const runId = 'zapp-e2e-workdir-fixture';
+    const services = serviceConfiguration({ runId, sourceSha: SOURCE_SHA, credentials: {
+      databasePassword: 'synthetic-database-password', jwtSecret: 'synthetic-jwt-secret',
+      anonKey: 'synthetic-anon', serviceRoleKey: 'synthetic-service', evolutionKey: 'synthetic-evolution',
+      instanceToken: 'synthetic-instance', email: 'fixture@example.invalid', password: 'synthetic-password',
+    } });
+    const images = assertPinnedImages(lock());
+    const image = officialServices.includes(name) ? images[name] : images.driver;
+    const args = [...(services[name]?.args ?? ['node', '-e', 'setInterval(() => {}, 1000)']), ...(variant.extra ?? [])];
+    const input = { runId, name, image, anchorId: name === 'anchor' ? undefined : 'fixture-anchor-id', mounts: variant.mounts, envFile: variant.envFile, args, memory: variant.memory, user: variant.user };
+    const original = structuredClone(input);
+    const actual = containerArguments(input);
+    const values = flag => actual.flatMap((value, i) => value === flag ? [actual[i + 1]] : []);
+    assert.deepEqual(values('--workdir'), checkoutServices.includes(name) ? ['/work'] : [], 'official images must keep their image WORKDIR');
+    assert.deepEqual(actual.slice(actual.indexOf(image)), [image, ...args], 'image digest and process arguments stay intact');
+    assert.deepEqual(values('--network'), [name === 'anchor' ? 'none' : 'container:fixture-anchor-id']);
+    assert.deepEqual(values('--name'), [runId + '-' + name]);
+    assert.deepEqual(values('--label'), [OWNER_LABEL + '=' + runId, PURPOSE_LABEL + '=' + PURPOSE]);
+    assert.deepEqual(values('--memory'), [variant.memory ?? '2g']);
+    assert.deepEqual(values('--user'), variant.user ? [variant.user] : []);
+    assert.deepEqual(values('--env-file'), variant.envFile ? [variant.envFile] : []);
+    assert.deepEqual(values('--mount'), variant.mounts.map(m => `type=${m.type},src=${m.source},dst=${m.target}${m.readOnly ? ',readonly' : ''}`));
+    assert.deepEqual(values('--add-host'), name === 'anchor' ? [OFFICIAL_HOST + ':127.0.0.1'] : []);
+    assert.deepEqual(values('--cap-drop'), ['NET_RAW']);
+    assert.deepEqual(values('--security-opt'), ['no-new-privileges:true']);
+    assert.equal(actual.some(value => ['--privileged', '--publish', '-p', '--network=host'].includes(value)), false);
+    assert.deepEqual(input, original, 'builder must not mutate mounts, commands or options');
+  });
+}
+
+async function controllerFixture(t, fault, manifest = value => value, tlsDiagnostic) {
+  const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
+  t.after(() => rmSync(temporary, { recursive: true, force: true }));
+  const root = path.join(temporary, 'repo');
+  const output = path.join(temporary, 'output');
+  for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
+  writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
+  writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
+  writeFileSync(path.join(root, 'supabase/config.toml'), '[functions.auth-login]\nverify_jwt = ' + (fault === 'jwt-policy' ? 'true' : 'false') + '\n');
+  let sql = SQL;
+  if (fault === 'unreviewed-vault') sql += "select vault.create_secret('synthetic-fixture-only');\n";
+  if (fault === 'historical-jwt') sql += "select 'eyJaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaa';\n";
+  writeFileSync(path.join(root, 'supabase/migrations', MIGRATION), sql);
+  writeFileSync(path.join(root, 'scripts/db-audit/replay-known-failures.json'), JSON.stringify({ esperadas: fault === 'known-migration-failure' || fault === 'known-migration-process-failure' ? { [MIGRATION]: {} } : {} }));
+  if (fault === 'pending-pin') {
+    const data = lock(); data.images.auth = data.images.auth.split('@')[0];
+    writeFileSync(path.join(root, 'scripts/e2e-isolated/images.lock.json'), JSON.stringify(data));
+  }
+  const calls = [];
+  const containers = new Map();
+  const volumes = new Map();
+  let migrationCalls = 0;
+  let seedCalls = 0;
+  let browserCalls = 0;
+  let listCalls = 0;
+  let credentialFilesSeen = false;
+  let cleanupSeen = false;
+  let controlDir;
+  let pgReadyChecks = 0;
+  let localKeyConfigured = false;
+  let driverLocalAnonKey;
+  let diagnosticCredentials = {};
+  const tlsStages = [];
+  let tlsInstalled = false;
+  let tlsUpdated = false;
+  let tlsBoot = false;
+  let tlsProbeRemoved = false;
+  const valueAfter = (args, flag) => args[args.indexOf(flag) + 1];
+  const allAfter = (args, flag) => args.flatMap((value, i) => value === flag ? [args[i + 1]] : []);
+  const fakeCommand = (program, args, options) => {
+    calls.push({ program, args: [...args] });
+    if (['openssl', 'certutil'].includes(program)) return simulatedTlsTool(program, args, options, fault);
+    if (program === 'git') {
+      if (args[0] === 'rev-parse') return ok(SOURCE_SHA + '\n');
+      if (args[0] === 'diff') return fault === 'dirty-checkout' ? error() : ok();
+      if (args[0] === 'ls-files') return ok(manifest('100644 ' + gitBlob(sql) + ' 0\tsupabase/migrations/' + MIGRATION + '\n'));
+      assert.fail('unexpected git command');
+    }
+    if (program === 'which') return ok(path.join(temporary, 'bun'));
+    if (program === 'node') {
+      assert.equal(args[0], 'scripts/ci/redigir-relatorio.mjs');
+      assert.equal(args[1], path.join(output, 'public'));
+      return fault === 'redactor-failure' ? error() : spawnSync(process.execPath, args, options);
+    }
+    assert.equal(program, 'docker', 'no other process may run in a simulated controller');
+    assert.deepEqual(args.slice(0, 2), ['--host', 'unix:///var/run/docker.sock']);
+    assert.deepEqual(Object.keys(options.env).sort(), ['DOCKER_CONFIG', 'PATH']);
+    const argv = args.slice(2);
+    if (argv[0] === 'context') return ok(JSON.stringify(fault === 'external-docker' ? 'tcp://external.invalid:2376' : 'unix:///var/run/docker.sock'));
+    if (argv[0] === 'pull') {
+      const privateDir = path.join(path.dirname(options.env.DOCKER_CONFIG), 'private');
+      assert.equal(readdirSync(privateDir).length, 0, 'pull must precede credential generation');
+      return fault === 'pull-auth' && argv[1] === lock().images.auth ? error() : ok();
+    }
+    if (argv[0] === 'image') return ok(JSON.stringify([fault === 'wrong-image-digest' ? 'registry.invalid/image@sha256:' + '0'.repeat(64) : argv[2]]));
+    if (argv[0] === 'run') {
+      const name = valueAfter(argv, '--name');
+      const mounts = allAfter(argv, '--mount').map(value => {
+        const pieces = Object.fromEntries(value.split(',').map(part => part.includes('=') ? part.split('=') : [part, true]));
+        return { Type: pieces.type, Source: pieces.type === 'volume' ? volumes.get(pieces.src)?.Mountpoint : pieces.src, Destination: pieces.dst, RW: !pieces.readonly };
+      });
+      const labels = Object.fromEntries(allAfter(argv, '--label').map(value => value.split('=')));
+      const metadata = { Id: name + '-id', Config: { Labels: labels, User: argv.includes('--user') ? valueAfter(argv, '--user') : '' }, State: { Running: true }, HostConfig: { NetworkMode: argv.includes('--network') ? valueAfter(argv, '--network') : 'default', Privileged: false, CapAdd: [] }, NetworkSettings: { Networks: {} }, Mounts: mounts };
+      if (name.endsWith('-tls-tools')) {
+        assert.equal(argv.includes('--env-file'), false);
+        assert.equal(valueAfter(argv, '--network'), 'none');
+        assert.equal(mounts.length, 0);
+        assert.equal(valueAfter(argv, '--entrypoint'), '/bin/sh');
+        return fault === 'tls-image-tools' ? error() : ok();
+      }
+      if (name.includes('-bundle-')) {
+        assert.equal(valueAfter(argv, '--user'), process.getuid() + ':' + process.getgid(), 'compiler cache must belong to the runner');
+        assert.deepEqual(allAfter(argv, '--workdir'), ['/work'], 'the checkout compiler keeps its explicit working directory');
+        const privateDir = path.join(path.dirname(options.env.DOCKER_CONFIG), 'private');
+        assert.equal(readdirSync(privateDir).length, 0, 'compile must precede credential generation');
+        assert.equal(argv.includes('--env-file'), false);
+        if (fault === 'bundle-failure' || (fault === 'tls-probe-bundle' && name.endsWith('-tls-edge-probe'))) return error();
+        const bundleMount = mounts.find(mount => mount.Destination === '/bundles');
+        const filename = path.basename(valueAfter(argv, '--output'));
+        writeFileSync(path.join(bundleMount.Source, filename), fault === 'empty-bundle' || (fault === 'tls-probe-empty-bundle' && filename === 'tls-edge-probe.eszip') ? '' : 'simulated-eszip-' + filename);
+        return ok();
+      }
+      const checkoutProcess = ['-anchor', '-driver', '-vite', '-gateway'].some(suffix => name.endsWith(suffix));
+      assert.deepEqual(allAfter(argv, '--workdir'), checkoutProcess ? ['/work'] : [], 'the real controller must preserve official image working directories');
+      if (checkoutProcess) {
+        assert.equal(valueAfter(argv, '--user'), process.getuid() + ':' + process.getgid(), 'Node/Bun bind writes must belong to the runner');
+      }
+      if (name.endsWith('-anchor')) assert.equal(valueAfter(argv, '--add-host'), OFFICIAL_HOST + ':127.0.0.1');
+      else assert.equal(argv.includes('--add-host'), false, 'container network must inherit the anchor hosts file');
+      if (name.endsWith('-gateway') && fault === 'tls-gateway-start') return error();
+      if (name.endsWith('-tls-edge') && fault === 'tls-edge-start') return error();
+      if (name.endsWith('-postgres') && fault === 'postgres-start') return error();
+      if (name.endsWith('-anchor') && fault === 'anchor-network') metadata.HostConfig.NetworkMode = 'bridge';
+      if (name.endsWith('-driver') && fault === 'driver-network') metadata.HostConfig.NetworkMode = 'host';
+      if (name.endsWith('-driver') && fault === 'tls-driver-user') metadata.Config.User = '99999:99999';
+      if (name.endsWith('-driver') && fault === 'tls-driver-stopped') metadata.State.Running = false;
+      if (name.endsWith('-driver') && fault === 'tls-driver-public-writable') metadata.Mounts.find(mount => mount.Destination === '/run/zapp-e2e-tls').RW = true;
+      if (name.endsWith('-driver') && fault === 'tls-driver-home-missing') metadata.Mounts = metadata.Mounts.filter(mount => !mount.Destination.includes('/tls-material/home'));
+      if (name.endsWith('-driver') && fault === 'tls-driver-private') metadata.Mounts.push({ Source: '/foreign/private', Destination: '/run/zapp-e2e-tls-private', RW: false });
+      if (argv.includes('--env-file')) {
+        const envText = readFileSync(valueAfter(argv, '--env-file'), 'utf8');
+        credentialFilesSeen ||= envText.includes('E2E_TEST_PASSWORD=');
+        if (name.endsWith('-driver')) {
+          driverLocalAnonKey = envText.match(/^ANON_KEY=(.+)$/m)?.[1];
+          diagnosticCredentials = Object.fromEntries(envText.trim().split('\n').map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
+        }
+        if (name.endsWith('-tls-edge')) {
+          assert.equal(/SERVICE_ROLE|JWT_SECRET|ANON_KEY|PASSWORD/.test(envText), false, 'temporary Edge never receives application credentials');
+          assert.equal(metadata.Mounts.some(mount => mount.Destination === '/run/zapp-e2e-tls-private' || mount.Destination === '/run/zapp-e2e'), false);
+        }
+        assert.equal(args.some(value => value.includes('E2E_TEST_PASSWORD=')), false, 'credentials never enter argv');
+      }
+      controlDir ||= mounts.find(mount => mount.Destination === '/run/zapp-e2e')?.Source;
+      containers.set(name, metadata);
+      if (name.endsWith('-postgres') && fault === 'cancel-after-postgres') process.emit('SIGTERM');
+      return ok(metadata.Id);
+    }
+    if (argv[0] === 'inspect') {
+      const metadata = containers.get(argv[1]);
+      if (!metadata) return error('Error: No such object: ' + argv[1]);
+      const copy = structuredClone(metadata);
+      if (cleanupSeen && fault === 'cleanup-inspect-failure') return error('simulated daemon unavailable');
+      if (browserCalls && fault === 'foreign-container-cleanup') copy.Config.Labels[OWNER_LABEL] = 'foreign';
+      return ok(JSON.stringify([copy]));
+    }
+    if (argv[0] === 'volume') {
+      if (argv[1] === 'create') {
+        const name = argv.at(-1);
+        const labels = Object.fromEntries(allAfter(argv, '--label').map(value => value.split('=')));
+        volumes.set(name, { Name: name, Mountpoint: path.join(temporary, name), Labels: labels });
+        return ok(name);
+      }
+      if (argv[1] === 'inspect') {
+        const value = structuredClone(volumes.get(argv[2]));
+        if (browserCalls && fault === 'foreign-volume-cleanup') value.Labels[OWNER_LABEL] = 'foreign';
+        return value ? ok(JSON.stringify([value])) : error('No such volume');
+      }
+      if (argv[1] === 'rm') { volumes.delete(argv[2]); return ok(); }
+      assert.fail('unexpected volume command');
+    }
+    if (argv[0] === 'exec') {
+      if (argv.includes('install') || argv.includes('update-ca-certificates')) {
+        assert.equal(valueAfter(argv, '--user'), '0:0');
+        assert.ok(argv.some(value => value.endsWith('-driver')));
+        assert.equal(migrationCalls, 0);
+        if (argv.includes('install')) { tlsInstalled = true; return fault === 'tls-ca-install' ? error() : ok(); }
+        assert.equal(tlsInstalled, true); tlsUpdated = true;
+        return fault === 'tls-ca-update' ? error() : ok();
+      }
+      if (argv.includes('scripts/e2e-isolated/tls-probe.mjs')) {
+        const runtime = argv.at(-1);
+        assert.equal(tlsUpdated, true); assert.equal(tlsBoot, true); assert.equal(migrationCalls, 0);
+        assert.equal([...containers.keys()].some(name => name.endsWith('-postgres')), false, 'TLS gates precede even database creation');
+        tlsStages.push(runtime);
+        if (tlsDiagnostic?.runtime === runtime) {
+          const keys = { anon: 'ANON_KEY', service: 'SERVICE_ROLE_KEY', email: 'E2E_TEST_EMAIL', password: 'E2E_TEST_PASSWORD' };
+          const secrets = Object.values(keys).map(key => diagnosticCredentials[key]);
+          assert.ok(secrets.every(value => typeof value === 'string' && value.length > 6));
+          const genericJwt = 'eyJkaWFnbm9zdGljIn0.eyJzeW50aGV0aWMiOnRydWV9.c2lnbmF0dXJlLWZpeHR1cmU';
+          const secret = keys[tlsDiagnostic.kind] ? diagnosticCredentials[keys[tlsDiagnostic.kind]] :
+            tlsDiagnostic.kind === 'jwt-shape' ? genericJwt : secrets.join(' ');
+          const diagnostic = 'TLS_DIAGNOSTIC phase=positive engine=chromium ERR_CERT_AUTHORITY_INVALID ' + secret;
+          return { status: ['signal', 'timeout'].includes(tlsDiagnostic.kind) ? null : 1,
+            stdout: tlsDiagnostic.kind === 'stdout' ? diagnostic : '',
+            stderr: tlsDiagnostic.kind === 'stdout' ? '' : diagnostic,
+            ...(tlsDiagnostic.kind === 'signal' ? { signal: 'SIGTERM' } : {}),
+            ...(tlsDiagnostic.kind === 'timeout' ? { error: new Error('ETIMEDOUT') } : {}),
+          };
+        }
+
+        if (fault === 'tls-' + runtime + '-exit') return error();
+        if (fault === 'tls-' + runtime + '-json') return ok('not-json');
+        const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
+        const checks = runtime === 'browsers' ? Object.fromEntries(['chromium', 'firefox', 'webkit'].map(name => [name, { ...TLS_CHECKS }])) : { ...TLS_CHECKS };
+        const proof = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, origin: 'https://127.0.0.1:5173', runtime, probe_runner: runtime === 'bun' ? 'bun' : 'node', probe_runner_version: 'v24.0.0', checks };
+        for (const field of ['run_id', 'source_sha', 'origin', 'runtime', 'schema', 'probe_runner', 'probe_runner_version']) if (fault === 'tls-' + runtime + '-' + field) proof[field] = 'foreign';
+        if (fault === 'tls-' + runtime + '-checks') delete (runtime === 'browsers' ? proof.checks.webkit : proof.checks).wrong_san_rejected;
+        if (runtime === 'browsers' && fault === 'tls-browser-extra') proof.checks.other = { ...TLS_CHECKS };
+        if (runtime === 'browsers' && fault === 'tls-browser-missing') delete proof.checks.firefox;
+        if (runtime === 'browsers' && fault === 'tls-browser-false') proof.checks.webkit.untrusted_rejected = false;
+        return ok(JSON.stringify(proof));
+      }
+      if (argv.includes('cat') && argv.at(-1) === '/etc/hosts') return ok((fault === 'postgres-hosts' ? '203.0.113.1' : '127.0.0.1') + ' ' + OFFICIAL_HOST + '\n');
+      if (argv.includes('pg_isready')) { pgReadyChecks++; return ok(); }
+      if (argv.includes('psql')) {
+        const input = String(options.input);
+        if (input.includes('alter database postgres set app.settings.e2e_anon_key')) {
+          if (fault === 'local-key-setting-write') return error('controlled setting failure');
+          const configured = input.match(/set app\.settings\.e2e_anon_key = '([^']+)'/i)?.[1];
+          assert.equal(Boolean(driverLocalAnonKey && configured === driverLocalAnonKey), true, 'setting must equal this driver synthetic anon key');
+          localKeyConfigured = true;
+          assert.equal(args.some(value => value.includes('eyJ')), false, 'local JWT must remain outside argv');
+        }
+        if (input.includes("current_setting('app.settings.e2e_anon_key', true)")) {
+          assert.equal(input.includes("= '" + driverLocalAnonKey + "'"), true, 'read-back compares the same local key');
+          return ok(localKeyConfigured && fault !== 'local-key-setting-mismatch' ? 't' : 'f');
+        }
+        if (input === sql) {
+          migrationCalls++;
+          if (fault === 'known-migration-process-failure') return { status: null, error: new Error('timeout'), stdout: '', stderr: 'sentinel-not-to-publish' };
+          return ['unexpected-migration-failure', 'known-migration-failure'].includes(fault) ? error('ERROR:  42P01\nraw SQL must never publish') : ok();
+        }
+        if (input.includes("current_setting('cron.launch_active_jobs')")) return ok((fault === 'cron-enabled' || (fault === 'cron-reenabled' && migrationCalls)) ? 'f' : 't');
+        if (input.includes("to_regclass('auth.sessions')")) return ok(fault === 'missing-platform-schema' ? 'f' : 't');
+        return ok();
+      }
+      if (argv.includes('scripts/e2e-isolated/runtime-probe.mjs')) {
+        const mode = argv.at(-1);
+        if (mode === 'network') return ok(JSON.stringify({ network_namespace: 'net:[1234]', loopback_only: fault !== 'network-proof', official_host_local: fault !== 'driver-hosts' }));
+        if (mode === 'tls') {
+          tlsBoot = true;
+          if (fault === 'tls-boot-exit') return error();
+          return ok(JSON.stringify({ schema: 1, run_id: fault === 'tls-boot-identity' ? 'foreign' : containers.values().next().value.Config.Labels[OWNER_LABEL], source_sha: SOURCE_SHA, origin: 'https://127.0.0.1:5173', ready: true }));
+        }
+        if (mode === 'platform') return fault === 'platform-health' ? error() : ok('{"services":{"auth":{"ready":true}}}');
+        if (mode === 'frontend') return fault === 'frontend-readiness' ? error() : ok('{"ready":true}');
+        if (mode === 'seed') return ok(JSON.stringify({ ready: true, network_namespace: fault === 'namespace-change' ? 'net:[9999]' : 'net:[1234]' }));
+      }
+      if (argv.includes('scripts/e2e-isolated/seed-login.mjs')) {
+        seedCalls++;
+        if (fault === 'seed-login-failure') return error('seed login rejected');
+        writeFileSync(path.join(output, 'seed-ready.json'), JSON.stringify({ run_id: containers.values().next().value.Config.Labels[OWNER_LABEL], source_sha: SOURCE_SHA, auth_login_real: true, supervisor_rls_read: true }));
+        return ok('{"seed_ready":true}');
+      }
+      if (argv.includes('node_modules/@playwright/test/cli.js')) {
+        if (argv.includes('--list')) {
+          listCalls++;
+          assert.equal(argv.includes('--reporter=json'), true);
+          assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'collection also runs after environment proof');
+          if (fault === 'collection-failure') return error();
+          const inventory = playwrightJson({ listed: true });
+          if (fault === 'collection-extra') {
+            const extra = structuredClone(inventory.suites[0].specs[0]); extra.line = 90;
+            inventory.suites[0].specs.push(extra); inventory.stats.skipped = 2;
+          }
+          return ok(JSON.stringify(inventory));
+        }
+        browserCalls++;
+        assert.equal(listCalls, 1, 'execution requires exactly one separate inventory');
+        assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'browser starts only after proof');
+        const report = playwrightJson({ failed: fault === 'browser-failure' });
+        if (fault === 'wrong-result') report.stats.expected = 0;
+        writeFileSync(path.join(output, 'results.json'), JSON.stringify(report));
+        if (fault === 'browser-failure') return error('controlled browser failure');
+        mkdirSync(path.join(output, 'playwright-report'), { recursive: true });
+        writeFileSync(path.join(output, 'playwright-report/raw.html'), 'must-never-publish-session-token');
+        return ok('1 passed');
+      }
+      assert.fail('unexpected docker exec: ' + argv.join(' '));
+    }
+    if (argv[0] === 'logs') { cleanupSeen = true; return ok('controlled local service log'); }
+    if (argv[0] === 'rm') {
+      const name = argv.at(-1);
+      if (name.endsWith('-tls-edge')) {
+        if (fault === 'tls-edge-remove' && !cleanupSeen) { cleanupSeen = true; return error(); }
+        tlsProbeRemoved = true;
+      } else cleanupSeen = true;
+      containers.delete(name); return ok();
+    }
+    assert.fail('unexpected docker command: ' + argv.join(' '));
+  };
+  const { runLogin } = await import(pathToFileURL(path.join(root, 'scripts/e2e-isolated/run.mjs')).href);
+  const realTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (callback, _delay, ...args) => realTimeout(callback, 0, ...args);
+  let exit;
+  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand }); }
+  finally { globalThis.setTimeout = realTimeout; }
+  const state = JSON.parse(readFileSync(path.join(output, 'status.json'), 'utf8'));
+  const publicFiles = readdirSync(path.join(output, 'public'), { recursive: true });
+  assert.equal(publicFiles.some(name => ['results.json', 'inventory.json'].includes(name) || /raw\.html|playwright-report/.test(name)), false, 'raw browser artifacts never publish');
+  assert.equal(JSON.stringify(publicFiles).includes('auth-state'), false);
+  for (const name of publicFiles) {
+    const content = readFileSync(path.join(output, 'public', name), 'utf8');
+    assert.equal(/must-never-publish|private-sentinel|raw SQL must never publish/.test(content), false, 'private report/config and SQL must not publish');
+  }
+  const tlsDiagnosticLog = tlsDiagnostic && existsSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'))
+    ? readFileSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'), 'utf8') : null;
+  const result = { tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  return result;
+}
+
+test('controller real: percurso completo com interfaces falsas preserva a ordem e limpa os recursos próprios', async t => {
+  const value = await controllerFixture(t, 'none');
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.success, true);
+  assert.equal(value.migrationCalls, 1);
+  assert.equal(value.seedCalls, 1);
+  assert.equal(value.browserCalls, 1);
+  assert.equal(value.listCalls, 1);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
+  assert.equal(value.state.native_e2e, true, 'records invocation, not a unit-test claim of native browser coverage');
+});
+
+const faultCodes = {
+  'pending-pin': 'image-lock-review-required', 'dirty-checkout': 'checkout-not-clean',
+  'wrong-playwright': 'playwright-image-version-mismatch', 'external-docker': 'nonlocal-docker-context',
+  'pull-auth': 'pull-auth-failed', 'wrong-image-digest': 'image-digest-mismatch',
+  'bundle-failure': 'bundle-main-failed', 'empty-bundle': 'empty-edge-bundle',
+  'jwt-policy': 'auth-login-gateway-policy-mismatch', 'unreviewed-vault': 'unreviewed-vault-configuration',
+  'historical-jwt': 'historical-jwt-needs-local-transform',
+  'anchor-network': 'unexpected-network-mode', 'driver-network': 'unexpected-network-mode',
+  'network-proof': 'network-proof-invalid', 'driver-hosts': 'network-proof-invalid',
+  'postgres-hosts': 'official-host-not-neutralized', 'postgres-start': 'start-postgres-failed',
+  'cron-enabled': 'cron-not-disabled', 'platform-health': 'platform-proof',
+  'missing-platform-schema': 'real-platform-schema-missing', 'cancel-after-postgres': 'run-cancelled',
+  'local-key-setting-write': 'local-platform-settings-failed', 'local-key-setting-mismatch': 'local-anon-setting-mismatch',
+  'unexpected-migration-failure': 'unexpected-migration-failure', 'known-migration-process-failure': 'unexpected-migration-failure',
+  'cron-reenabled': 'cron-reenabled-by-migration', 'frontend-readiness': 'frontend-proof',
+  'seed-login-failure': 'seed-login', 'namespace-change': 'namespace-changed',
+  'collection-failure': 'collect-login', 'collection-extra': 'login-inventory-not-exact',
+  'browser-failure': 'browser-login-failed', 'wrong-result': 'login-result-not-clean',
+  'redactor-failure': 'report-redaction-failed', 'cleanup-inspect-failure': 'owned-container-inspection-failed',
+  'foreign-container-cleanup': 'owned-container-cleanup-failed', 'foreign-volume-cleanup': 'owned-volume-cleanup-failed',
+};
+
+for (const fault of [
+  'pending-pin', 'dirty-checkout', 'wrong-playwright', 'external-docker', 'pull-auth',
+  'wrong-image-digest', 'bundle-failure', 'empty-bundle', 'jwt-policy',
+  'unreviewed-vault', 'historical-jwt',
+]) {
+  test('controller real: ' + fault + ' interrompe antes de criar credenciais locais/banco', async t => {
+    const value = await controllerFixture(t, fault);
+    assert.equal(value.exit, 1);
+    assert.equal(value.state.error, faultCodes[fault]);
+    assert.equal(value.state.success, false);
+    assert.equal(value.credentialFilesSeen, false);
+    assert.equal(value.migrationCalls, 0);
+    assert.equal(value.seedCalls, 0);
+    assert.equal(value.browserCalls, 0);
+  });
+}
+for (const fault of [
+  'anchor-network', 'driver-network', 'network-proof', 'driver-hosts', 'postgres-hosts', 'postgres-start', 'cron-enabled',
+  'platform-health', 'missing-platform-schema', 'cancel-after-postgres',
+  'local-key-setting-write', 'local-key-setting-mismatch',
+]) {
+  test('controller real: ' + fault + ' interrompe antes da cadeia SQL de aplicação', async t => {
+    const value = await controllerFixture(t, fault);
+    assert.equal(value.exit, 1);
+    assert.equal(value.state.error, faultCodes[fault]);
+    assert.equal(value.state.success, false);
+    assert.equal(value.migrationCalls, 0);
+    assert.equal(value.seedCalls, 0);
+    assert.equal(value.browserCalls, 0);
+    assert.equal(value.containers.size, 0);
+  });
+}
+for (const fault of ['unexpected-migration-failure', 'known-migration-process-failure', 'cron-reenabled', 'frontend-readiness']) {
+  test('controller real: ' + fault + ' não emite prova de seed/login', async t => {
+    const value = await controllerFixture(t, fault);
+    assert.equal(value.exit, 1);
+    assert.equal(value.state.error, faultCodes[fault]);
+    assert.equal(value.seedCalls, 0);
+    assert.equal(value.browserCalls, 0);
+    assert.equal(value.containers.size, 0);
+  });
+}
+test('controller real: falha já documentada no replay continua explícita no resultado', async t => {
+  const value = await controllerFixture(t, 'known-migration-failure');
+  assert.equal(value.exit, 0);
+  assert.deepEqual(value.state.migrations, { total: 1, passed: 0, known_failures: 1, unexpected_failures: 0 });
+});
+for (const fault of ['seed-login-failure', 'namespace-change', 'collection-failure', 'collection-extra']) {
+  test('controller real: ' + fault + ' impede o navegador apesar de plataforma pronta', async t => {
+    const value = await controllerFixture(t, fault);
+    assert.equal(value.exit, 1);
+    assert.equal(value.state.error, faultCodes[fault]);
+    assert.equal(value.seedCalls, 1);
+    assert.equal(value.browserCalls, 0);
+    assert.equal(value.containers.size, 0);
+  });
+}
+for (const fault of ['browser-failure', 'wrong-result', 'redactor-failure', 'cleanup-inspect-failure', 'foreign-container-cleanup', 'foreign-volume-cleanup']) {
+  test('controller real: ' + fault + ' conserva falha ao fechar a execução', async t => {
+    const value = await controllerFixture(t, fault);
+    assert.equal(value.exit, 1);
+    assert.equal(value.state.error, faultCodes[fault]);
+    assert.equal(value.state.success, false);
+    assert.equal(value.browserCalls, 1);
+    if (fault === 'browser-failure') assert.equal(value.state.login.failed, 1, 'failed Playwright exit still yields real report counts');
+    if (fault === 'foreign-container-cleanup') assert.ok(value.containers.size > 0, 'foreign-labelled containers must not be removed');
+    if (fault === 'foreign-volume-cleanup') assert.ok(value.volumes.size > 0, 'foreign-labelled volumes must not be removed');
+  });
+}
+
+
+// Native Git contains both regular modes. These scenarios exercise the real
+// controller with different git-index observations, before credential creation.
+const sourceIndexScenarios = [];
+for (const mode of ['100644', '100755']) {
+  const regular = value => value.replace(/^100644 /, mode + ' ');
+  for (const [label, wrap] of [
+    ['single active file', value => value],
+    ['archived SQL before', value => '100644 ' + 'b'.repeat(40) + ' 0\tsupabase/migrations/_superseded/old.sql\n' + value],
+    ['directory README after', value => value + '100644 ' + 'c'.repeat(40) + ' 0\tsupabase/migrations/README.md\n'],
+    ['no final linefeed', value => value.trimEnd()],
+  ]) sourceIndexScenarios.push({ label: mode + ' / ' + label, allow: true, manifest: value => wrap(regular(value)) });
+  sourceIndexScenarios.push({ label: mode + ' wrong blob', allow: false, manifest: value => regular(value).replace(gitBlob(SQL), 'f'.repeat(40)) });
+  for (const stage of ['1', '2', '3']) sourceIndexScenarios.push({ label: mode + ' unresolved stage ' + stage, allow: false, manifest: value => regular(value).replace(' 0\t', ' ' + stage + '\t') });
+}
+for (const mode of ['100600', '100664', '100666', '040000', '120000', '160000']) {
+  sourceIndexScenarios.push({ label: 'non-regular mode ' + mode, allow: false, manifest: value => value.replace(/^100644 /, mode + ' ') });
+}
+for (const [label, manifest] of [
+  ['missing record', () => ''],
+  ['missing mode', value => value.replace(/^100644 /, '')],
+  ['missing hash', value => value.replace(gitBlob(SQL), '')],
+  ['truncated hash', value => value.replace(gitBlob(SQL), 'a'.repeat(39))],
+  ['SHA256-like hash in SHA1 checkout', value => value.replace(gitBlob(SQL), 'a'.repeat(64))],
+  ['nonhex hash', value => value.replace(gitBlob(SQL), 'g'.repeat(40))],
+  ['missing stage', value => value.replace(' 0\t', '\t')],
+  ['missing field separator', value => value.replace('\t', ' ')],
+  ['different active filename', value => value.replace(MIGRATION, '20260101000001_other.sql')],
+  ['different directory', value => value.replace('supabase/migrations/', 'other/migrations/')],
+  ['archived instead of active', value => value.replace('supabase/migrations/', 'supabase/migrations/_superseded/')],
+  ['quoted instead of literal path', value => value.replace('\tsupabase/', '\t"supabase/').trimEnd() + '"\n'],
+  ['absolute instead of repository path', value => value.replace('\tsupabase/', '\t/work/supabase/')],
+  ['line suffix', value => value.trimEnd() + ' unexpected\n'],
+]) sourceIndexScenarios.push({ label, allow: false, manifest });
+
+for (const scenario of sourceIndexScenarios) {
+  test('índice Git real: ' + scenario.label, async t => {
+    const value = await controllerFixture(t, 'none', scenario.manifest);
+    assert.equal(value.exit, scenario.allow ? 0 : 1);
+    assert.equal(value.state.success, scenario.allow);
+    if (scenario.allow) {
+      assert.equal(value.migrationCalls, 1);
+      assert.equal(value.browserCalls, 1);
+    } else {
+      assert.equal(value.state.error, 'migration-source-changed');
+      assert.equal(value.credentialFilesSeen, false);
+      assert.equal(value.migrationCalls, 0);
+      assert.equal(value.seedCalls, 0);
+      assert.equal(value.browserCalls, 0);
+    }
+    assert.equal(value.containers.size, 0);
+    assert.equal(value.volumes.size, 0);
+  });
+}
+
+const tlsPreflightFaults = {
+  'tls-host-openssl': 'tls-tool-openssl-failed',
+  'tls-host-version': 'tls-openssl-version',
+  'tls-host-nss': 'tls-tool-certutil-failed',
+  'tls-image-tools': 'tls-driver-tools-unavailable',
+  'tls-probe-bundle': 'bundle-tls-edge-probe-failed',
+  'tls-probe-empty-bundle': 'empty-edge-bundle',
+  'tls-certificate-command': 'tls-tool-openssl-failed',
+  'tls-nss-import': 'tls-tool-certutil-failed',
+};
+const tlsBeforeSqlFaults = {
+  'tls-driver-user': 'tls-driver-user-or-state',
+  'tls-driver-stopped': 'tls-driver-user-or-state',
+  'tls-driver-public-writable': 'foreign-writable-mount',
+  'tls-driver-home-missing': 'tls-driver-mount',
+  'tls-driver-private': 'tls-private-key-in-driver',
+  'tls-ca-install': 'tls-driver-ca-install',
+  'tls-ca-update': 'tls-driver-ca-update',
+  'tls-gateway-start': 'start-gateway-failed',
+  'tls-edge-start': 'start-tls-edge-failed',
+  'tls-boot-exit': 'tls-boot-proof',
+  'tls-boot-identity': 'tls-boot-proof-invalid',
+  'tls-edge-remove': 'tls-probe-cleanup-failed',
+  'tls-browser-extra': 'tls-browsers-proof-invalid',
+  'tls-browser-missing': 'tls-browsers-proof-invalid',
+  'tls-browser-false': 'tls-browsers-proof-invalid',
+};
+for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
+  tlsBeforeSqlFaults['tls-' + runtime + '-exit'] = 'tls-' + runtime + '-gate';
+  tlsBeforeSqlFaults['tls-' + runtime + '-json'] = 'tls-' + runtime + '-invalid-json';
+  for (const field of ['run_id', 'source_sha', 'origin', 'runtime', 'checks', 'schema', 'probe_runner', 'probe_runner_version'])
+    tlsBeforeSqlFaults['tls-' + runtime + '-' + field] = 'tls-' + runtime + '-proof-invalid';
+}
+test('TLS integration: all four real command boundaries precede SQL and preserve cleanup', async t => {
+  const value = await controllerFixture(t, 'none');
+  assert.equal(value.exit, 0);
+  assert.deepEqual(value.tlsStages, ['node', 'bun', 'browsers', 'edge']);
+  assert.equal(value.tlsInstalled, true); assert.equal(value.tlsUpdated, true);
+  assert.equal(value.tlsProbeRemoved, true); assert.equal(value.containers.size, 0);
+  assert.ok(value.publicFiles.includes('tls-proof.json'));
+  const tlsLast = value.calls.findLastIndex(call => call.args.includes('scripts/e2e-isolated/tls-probe.mjs'));
+  const pgFirst = value.calls.findIndex(call => call.args[2] === 'run' && call.args.some(arg => arg.endsWith('-postgres')));
+  assert.ok(tlsLast >= 0 && pgFirst > tlsLast);
+});
+for (const [fault, expected] of Object.entries({ ...tlsPreflightFaults, ...tlsBeforeSqlFaults })) {
+  test('TLS integration: ' + fault + ' fails closed before SQL', async t => {
+    const value = await controllerFixture(t, fault);
+    assert.equal(value.exit, 1);
+    assert.equal(value.state.error, expected);
+    assert.equal(value.state.success, false);
+    assert.equal(value.migrationCalls, 0); assert.equal(value.seedCalls, 0); assert.equal(value.browserCalls, 0);
+    assert.equal(value.containers.size, 0);
+    assert.equal(value.calls.some(call => call.args[2] === 'run' && call.args.some(arg => arg.endsWith('-postgres'))), false);
+    if (Object.hasOwn(tlsPreflightFaults, fault)) assert.equal(value.credentialFilesSeen, false);
+  });
+}
+
+// A failed pre-database TLS probe must leave a useful redacted diagnostic.
+// Subprocess transport is controlled; controller and both redaction passes are real.
+for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
+  for (const kind of ['anon', 'service', 'email', 'password', 'jwt-shape', 'all', 'signal', 'timeout', 'stdout']) {
+    test('TLS diagnostic: ' + runtime + '/' + kind + ' preserves cause and removes credentials', async t => {
+      const value = await controllerFixture(t, 'none', value => value, { runtime, kind });
+      assert.equal(value.exit, 1); assert.equal(value.state.success, false);
+      assert.equal(value.state.error, 'tls-' + runtime + '-gate');
+      assert.equal(value.migrationCalls, 0); assert.equal(value.seedCalls, 0); assert.equal(value.browserCalls, 0);
+      assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+      assert.equal(typeof value.tlsDiagnosticLog, 'string', 'failed TLS diagnostic must survive for the real runner');
+      assert.match(value.tlsDiagnosticLog, /TLS_DIAGNOSTIC phase=positive engine=chromium ERR_CERT_AUTHORITY_INVALID/);
+      for (const key of ['ANON_KEY', 'SERVICE_ROLE_KEY', 'E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD']) {
+        assert.ok(!value.tlsDiagnosticLog.includes(value.diagnosticCredentials[key]), key + ' must be redacted');
+      }
+      assert.doesNotMatch(value.tlsDiagnosticLog, /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/);
+    });
+  }
+}
