@@ -216,10 +216,12 @@
   {
    "arquivo": "scripts/ci/check-test-inventory.mjs",
    "descricao": "E48: verifica que todo .test.ts (supabase/functions/) e .test.sh (scripts/db-audit/) tem correspondente registrado em ci.yml / db-guard.yml.",
-   "linhas": 353,
+   "linhas": 224,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "ci.yml"
+   ],
    "orfao": false
   },
   {
@@ -1045,7 +1047,9 @@
    "linhas": 450,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -1107,7 +1111,9 @@
    "linhas": 228,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -1242,7 +1248,9 @@
    "linhas": 333,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -1479,7 +1487,9 @@
    "linhas": 133,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -1607,7 +1617,9 @@
    "linhas": 421,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -1647,7 +1659,9 @@
    "linhas": 360,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -1853,7 +1867,9 @@
    "linhas": 128,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -2034,7 +2050,9 @@
    "linhas": 191,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -2425,7 +2443,9 @@
    "linhas": 342,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -2465,7 +2485,9 @@
    "linhas": 367,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -2516,7 +2538,9 @@
    "linhas": 149,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -2589,7 +2613,9 @@
    "linhas": 129,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -2827,7 +2853,9 @@
    "linhas": 385,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -2845,7 +2873,9 @@
    "linhas": 430,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -3202,7 +3232,9 @@
    "linhas": 153,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {
@@ -3220,7 +3252,9 @@
    "linhas": 267,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {

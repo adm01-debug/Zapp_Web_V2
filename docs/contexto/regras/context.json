@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "46c29a6b7efd6cd1926c85c1148af7ba61236788",
+  "sha": "c0d715f5a63a29634b98f1d34f076943b46392cc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 23:07 UTC",
+  "generated_at": "2026-11-04 23:57 UTC",
   "files_total": 8060,
   "code_files": 5963,
-  "code_lines": 1032311
+  "code_lines": 1032182
  },
  "version": "1.3.2",
- "facts_hash": "d26dbd84fd8c0820",
+ "facts_hash": "eb47c25187dbfd37",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67735,7 +67735,7 @@
   {
    "module": "scripts",
    "files": 413,
-   "lines": 79843,
+   "lines": 79714,
    "tables": [
     "a",
     "alem_do_limite",
@@ -239110,7 +239110,6 @@
    "scripts/ci/check-bundle-secrets.mjs",
    "scripts/ci/check-bundle-secrets.unit.mjs",
    "scripts/ci/check-pr-workflow-secrets.unit.mjs",
-   "scripts/ci/check-test-inventory.mjs",
    "scripts/ci/crm-integration-contract.unit.mjs",
    "scripts/ci/e2e-auth-isolation.unit.mjs",
    "scripts/ci/e2e-isolated-fixtures.unit.mjs",
@@ -261150,7 +261149,7 @@
   },
   "scripts/ci/check-test-inventory.mjs": {
    "path": "scripts/ci/check-test-inventory.mjs",
-   "lines": 353,
+   "lines": 224,
    "exports": [
     "const RAIZ",
     "const ALLOWLIST_NODE",
@@ -261168,8 +261167,7 @@
      "value": "\"supabase/functions/**/*.test.ts\""
     }
    ],
-   "doc": "!/usr/bin/env node E48: verifica que todo .test.ts (supabase/functions/) e .test.sh (scripts/db-audit/) tem correspondente registrado em ci.yml / db-guard.yml. E49: quando ci.yml usa $(git ls-files 'supabase/functions/**/*.test.ts'), a comparação individual de .test.ts é desnecessária (o glob cobre …",
-   "uses_service_role": true
+   "doc": "!/usr/bin/env node E48: verifica que todo .test.ts (supabase/functions/) e .test.sh (scripts/db-audit/) tem correspondente registrado em ci.yml / db-guard.yml. E49: quando ci.yml usa $(git ls-files 'supabase/functions/**/*.test.ts'), a comparação individual de .test.ts é desnecessária (o glob cobre …"
   },
   "scripts/ci/check-test-inventory.unit.mjs": {
    "path": "scripts/ci/check-test-inventory.unit.mjs",
@@ -381262,10 +381260,22 @@
   }
  },
  "git": {
-  "sha": "46c29a6b7efd6cd1926c85c1148af7ba61236788",
+  "sha": "c0d715f5a63a29634b98f1d34f076943b46392cc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c0d715f",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "infra: executar os 33 testes shell ausentes no DB Guard (#2724)",
+    "files": [
+     ".github/workflows/ci.yml",
+     ".github/workflows/db-guard.yml",
+     "docs/DB-INVENTORY.md",
+     "scripts/ci/check-test-inventory.mjs"
+    ]
+   },
    {
     "sha": "46c29a6",
     "date": "2026-11-04",
@@ -381788,18 +381798,13 @@
     "files": [
      "docs/contexto/regras/manual/regras.md"
     ]
-   },
-   {
-    "sha": "94d6ca2",
-    "date": "2026-11-03",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#2688)",
-    "files": [
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
+   [
+    ".github/workflows/db-guard.yml",
+    4
+   ],
    [
     "scripts/ci/e2e-isolated-runtime.unit.mjs",
     4
@@ -381811,6 +381816,14 @@
    [
     "scripts/e2e-isolated/run.mjs",
     4
+   ],
+   [
+    ".github/workflows/ci.yml",
+    3
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    3
    ],
    [
     "e2e/email-navy-visual.spec.ts",
@@ -381833,16 +381846,12 @@
     3
    ],
    [
-    ".github/workflows/db-guard.yml",
-    3
-   ],
-   [
-    "supabase/schema-manifest.json",
-    3
-   ],
-   [
     "scripts/supabase_snapshot/snapshot.py",
     3
+   ],
+   [
+    "scripts/ci/check-test-inventory.mjs",
+    2
    ],
    [
     "e2e/fixtures/arquivos-local/seed.ts",
@@ -381870,14 +381879,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-results.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-tls.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-recovery.unit.mjs",
     2
    ]
   ]
