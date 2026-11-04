@@ -10,6 +10,7 @@ import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
 import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
+import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -203,14 +204,15 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 }
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
-  const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic } = typeof options === 'function' ? { manifest: options } : options;
+  const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic,
+    catalogResult, providerObservation } = typeof options === 'function' ? { manifest: options } : options;
   const fullSeed = scope === 'suite' && group === 'authenticated';
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -245,6 +247,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   let controlDir;
   let pgReadyChecks = 0;
   const suiteStages = [];
+  const catalogCalls = [];
   const bundled = [];
   let localKeyConfigured = false;
   let driverLocalAnonKey;
@@ -433,6 +436,13 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
       if (argv.includes('pg_isready')) { pgReadyChecks++; return ok(); }
       if (argv.includes('psql')) {
         const input = String(options.input);
+        if (input.includes('pg_catalog.pg_proc')) {
+          catalogCalls.push({ input, timeout: options.timeout, killSignal: options.killSignal,
+            maxBuffer: options.maxBuffer, afterStages: [...suiteStages] });
+          if (catalogResult && Object.hasOwn(catalogResult, 'throws')) throw catalogResult.throws;
+          return catalogResult ?? ok(JSON.stringify({ schema: 1,
+            routines: SIGNATURES.map(signature => ({ signature, owner: 'postgres', security_definer: true })) }));
+        }
         if (input.includes('alter database postgres set app.settings.e2e_anon_key')) {
           if (fault === 'local-key-setting-write') return error('controlled setting failure');
           const configured = input.match(/set app\.settings\.e2e_anon_key = '([^']+)'/i)?.[1];
@@ -483,6 +493,11 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         assert.equal(seedCalls, 1);
         assert.ok(containers.has([...containers.keys()].find(key => key.endsWith('-provider'))));
         suiteStages.push(name);
+        if (name === 'provider-verification' && providerObservation) {
+          if (Object.hasOwn(providerObservation, 'raw')) writeFileSync(path.join(output, 'provider-diagnostic.json'), providerObservation.raw);
+          const result = providerObservation.result;
+          if (result.status !== 0 || result.error || result.signal) return result;
+        }
         if (name === 'files-volume' && seedDiagnostic) return seedDiagnostic;
         if (fault === name + '-failure') return error('private-sentinel-from-seed');
         const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
@@ -581,7 +596,11 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     publicMode: statSync(seedDiagnosticPublic).mode & 0o777,
   } : null;
   const reportOutput = seedDiagnostic ? readFileSync(diagnosticOutput, 'utf8') : null;
-  const result = { filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const providerMetadata = Object.fromEntries(['provider-catalog.json', 'provider-diagnostic.json'].flatMap(name => {
+    const file = path.join(output, 'public', name);
+    return existsSync(file) ? [[name, { value: JSON.parse(readFileSync(file, 'utf8')), mode: statSync(file).mode & 0o777 }]] : [];
+  }));
+  const result = { providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -984,3 +1003,115 @@ for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
     });
   }
 }
+
+// Exercise the actual controller and the final redactor. Only subprocess I/O
+// and the verifier's private file are controlled; metadata never approves SQL.
+const providerCatalogRows = owner => ({ schema: 1, routines: SIGNATURES.map(signature => ({
+  signature, owner, security_definer: owner === 'missing' ? null : true,
+})) });
+const providerCatalogResult = rows => ({ status: 0, stdout: JSON.stringify(rows), stderr: 'private-sentinel-catalog-stderr' });
+const providerCatalogCases = [
+  ['postgres', providerCatalogResult(providerCatalogRows('postgres')), true],
+  ['supabase_admin divergence', providerCatalogResult(providerCatalogRows('supabase_admin')), true],
+  ['unknown owner normalized', providerCatalogResult(providerCatalogRows('other')), true],
+  ['missing routines', providerCatalogResult(providerCatalogRows('missing')), true],
+  ['invoker instead of definer', providerCatalogResult({ schema: 1, routines: providerCatalogRows('postgres').routines.map(row => ({ ...row, security_definer: false })) }), true],
+  ['nonzero status', { ...providerCatalogResult(providerCatalogRows('postgres')), status: 1 }, false],
+  ['status zero with error', { ...providerCatalogResult(providerCatalogRows('postgres')), error: new Error('private-sentinel') }, false],
+  ['status zero with signal', { ...providerCatalogResult(providerCatalogRows('postgres')), signal: 'SIGTERM' }, false],
+  ['timeout and signal', { status: null, error: Object.assign(new Error('private-sentinel'), { code: 'ETIMEDOUT' }), signal: 'SIGKILL', stderr: 'private-sentinel' }, false],
+  ['executor throws falsy', { throws: false }, false],
+  ['invalid JSON', { status: 0, stdout: 'private-sentinel-not-json', stderr: 'private-sentinel' }, false],
+  ['unapproved raw field', providerCatalogResult({ ...providerCatalogRows('postgres'), definition: 'private-sentinel' }), false],
+];
+for (const [name, catalogResult, available] of providerCatalogCases) {
+  test('provider catalog controller: ' + name + ' does not change verifier success', async t => {
+    const value = await controllerFixture(t, 'none', { scope: 'suite', catalogResult });
+    assert.equal(value.exit, 0); assert.equal(value.state.success, true);
+    assert.equal(value.listCalls, 1); assert.equal(value.browserCalls, 1);
+    assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.equal(value.catalogCalls.length, 1);
+    assert.deepEqual(value.catalogCalls[0], { input: PROVIDER_CATALOG_SQL,
+      ...CATALOG_EXECUTOR_OPTIONS, afterStages: ['files-volume', 'files-canonical', 'suite-seed'] });
+    const published = value.providerMetadata['provider-catalog.json'];
+    assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
+    assert.equal(value.providerMetadata['provider-diagnostic.json'], undefined);
+    assert.ok(!value.publicFiles.includes('verify-providers.log'));
+    if (available) assert.deepEqual(published.value.routines, JSON.parse(catalogResult.stdout).routines);
+  });
+}
+
+const providerFailureMetadata = { schema: 1, phase: 'text-enqueue', http_status: 403, sqlstate: '42501' };
+const providerRawCases = [
+  ['valid record', JSON.stringify(providerFailureMetadata), true],
+  ['raw body field', JSON.stringify({ ...providerFailureMetadata, body: 'private-sentinel' }), false],
+  ['unknown phase', JSON.stringify({ ...providerFailureMetadata, phase: 'private-sentinel' }), false],
+  ['status as string', JSON.stringify({ ...providerFailureMetadata, http_status: '403' }), false],
+  ['malformed JSON', 'private-sentinel', false],
+  ['oversized JSON', ' '.repeat(1025) + JSON.stringify(providerFailureMetadata), false],
+  ['missing file', undefined, false],
+];
+for (const [name, raw, available] of providerRawCases) {
+  test('provider diagnostic controller: ' + name + ' preserves failure and publishes only closed metadata', async t => {
+    const value = await controllerFixture(t, 'none', { scope: 'suite', providerObservation: {
+      result: { status: 1, stdout: 'private-sentinel-provider-stdout', stderr: 'private-sentinel-provider-stderr' },
+      ...(raw !== undefined ? { raw } : {}),
+    } });
+    assert.equal(value.exit, 1); assert.equal(value.state.success, false);
+    assert.equal(value.state.error, 'verify-providers');
+    assert.equal(value.state.failed_phase, 'seed-suite-and-verify-providers');
+    assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+    assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.equal(value.catalogCalls.length, 1);
+    assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+    const published = value.providerMetadata['provider-diagnostic.json'];
+    assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
+    if (available) assert.deepEqual(published.value, { available: true, ...providerFailureMetadata });
+    else assert.deepEqual(published.value, { available: false, reason: raw === undefined ? 'diagnostic-unavailable' : 'invalid-diagnostic' });
+    assert.equal(value.providerMetadata['provider-catalog.json'].value.available, true);
+    assert.ok(!value.publicFiles.includes('verify-providers.log'));
+    assert.ok(!value.publicFiles.includes('provider-ready.json'));
+  });
+}
+
+for (const [name, fields] of [['error', { error: new Error('private-sentinel') }], ['signal', { signal: 'SIGTERM' }]]) {
+  test('provider diagnostic controller: status zero with ' + name + ' keeps the real executor failure', async t => {
+    const value = await controllerFixture(t, 'none', { scope: 'suite', providerObservation: {
+      result: { status: 0, stdout: 'private-sentinel', stderr: 'private-sentinel', ...fields },
+      raw: JSON.stringify(providerFailureMetadata),
+    } });
+    assert.equal(value.exit, 1); assert.equal(value.state.error, 'verify-providers');
+    assert.equal(value.browserCalls, 0); assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.deepEqual(value.providerMetadata['provider-diagnostic.json'].value, { available: true, ...providerFailureMetadata });
+  });
+}
+
+test('provider diagnostic controller: forged private error file does not turn a successful verifier into failure metadata', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', providerObservation: {
+    result: ok(), raw: JSON.stringify({ ...providerFailureMetadata, message: 'private-sentinel' }),
+  } });
+  assert.equal(value.exit, 0); assert.equal(value.browserCalls, 1);
+  assert.equal(value.providerMetadata['provider-diagnostic.json'], undefined);
+  assert.ok(value.publicFiles.includes('provider-ready.json'));
+  assert.ok(!value.publicFiles.includes('verify-providers.log'));
+});
+
+test('provider diagnostic controller: unavailable catalog never substitutes the verifier failure', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite',
+    catalogResult: { throws: new Error('private-sentinel-catalog') },
+    providerObservation: { result: error('private-sentinel-provider'), raw: JSON.stringify(providerFailureMetadata) },
+  });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'verify-providers');
+  assert.deepEqual(value.providerMetadata['provider-catalog.json'].value, { available: false, reason: 'query-failed' });
+  assert.deepEqual(value.providerMetadata['provider-diagnostic.json'].value, { available: true, ...providerFailureMetadata });
+  assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
+
+test('provider catalog executor: the actual Node timeout kills a child that ignores SIGTERM', { timeout: 12000 }, () => {
+  assert.deepEqual(CATALOG_EXECUTOR_OPTIONS, { timeout: 5000, killSignal: 'SIGKILL', maxBuffer: 8192 });
+  const result = spawnSync(process.execPath, ['-e', 'process.on("SIGTERM", () => {}); setInterval(() => {}, 1000);'], CATALOG_EXECUTOR_OPTIONS);
+  assert.equal(result.status, null); assert.equal(result.signal, 'SIGKILL'); assert.equal(result.error?.code, 'ETIMEDOUT');
+  assert.match(PROVIDER_CATALOG_SQL, /^BEGIN READ ONLY;\nSET LOCAL statement_timeout = '3s';/);
+  assert.match(PROVIDER_CATALOG_SQL, /ROLLBACK;\s*$/);
+});

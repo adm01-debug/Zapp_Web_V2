@@ -5,6 +5,9 @@ import { createProviders } from '../e2e-isolated/providers.mjs';
 import { verifyProviders } from '../e2e-isolated/verify-providers.mjs';
 import { ORIGIN, PROVIDER_ORIGIN, CATALOG_SKU } from '../e2e-isolated/runtime-contract.mjs';
 import { SUITE_FIXTURES } from '../e2e-isolated/seed-suite.mjs';
+import { spawnSync } from 'node:child_process';
+import { SIGNATURES, PHASES, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic,
+  observeSqlState, withObservation } from '../e2e-isolated/provider-diagnostics.mjs';
 
 const runId = 'zapp-e2e-provider-readiness', sourceSha = 'a'.repeat(40), networkNamespace = 'net:[1234]';
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII=', 'base64');
@@ -64,7 +67,7 @@ const suiteSeed = { schema: 1, run_id: runId, source_sha: sourceSha,
  * reads are real functions. Native readiness uses the actual local services. */
 function verificationFixture(fault = '') {
   let currentNamespace = networkNamespace, serial = 0, receipt = 0, lastDelivery;
-  const rows = new Map(), objects = new Map(), events = [], writes = [], credentials = [];
+  const rows = new Map(), objects = new Map(), events = [], writes = [], diagnostics = [], credentials = [];
   const env = { ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha, API_URL: ORIGIN,
     E2E_CATALOG_PRODUCT_SKU: CATALOG_SKU, NODE_EXTRA_CA_CERTS: '/run/zapp-e2e-tls/ca.crt' };
   for (const [key, value] of Object.entries({ ANON_KEY: 'anon-canary', E2E_TEST_EMAIL: 'supervisor.e2e@example.invalid', E2E_TEST_PASSWORD: 'password-canary' })) {
@@ -192,15 +195,20 @@ function verificationFixture(fault = '') {
         ...(fault === 'seed-role' && file === '/output/seed-ready.json' ? { supervisor_rls_read: false } : {}),
         ...(fault === 'seed-onboarding' && file === '/output/suite-seed-ready.json' ? { onboarding_persisted: false } : {}) });
     },
-    writeFile: (file, content, options) => { assert.equal(file, '/output/provider-ready.json'); assert.equal(options.mode, 0o600); writes.push(JSON.parse(content)); },
+    writeFile: (file, content, options) => {
+      assert.equal(options.mode, 0o600);
+      if (file === '/output/provider-diagnostic.json') { diagnostics.push(JSON.parse(content)); return; }
+      assert.equal(file, '/output/provider-ready.json'); writes.push(JSON.parse(content));
+    },
   };
-  return { options, events, writes, credentials, app, objects };
+  return { options, events, writes, diagnostics, credentials, app, objects };
 }
 
 test('readiness executa texto, catálogo HTTPS e upload privado com recibos/bytes/RLS antes de publicar', async () => {
   const fixture = verificationFixture();
   const ready = await verifyProviders(fixture.options);
   assert.equal(fixture.writes.length, 1); assert.deepEqual(fixture.writes[0], ready);
+  assert.equal(fixture.diagnostics.length, 0);
   assert.deepEqual(ready.delivery_proofs, { text: true, catalog_image: true, storage_image: true });
   for (const field of ['delivery_real', 'provider_observed', 'delivery_user_rls', 'catalog_real', 'catalog_media_https', 'storage_upload_real', 'storage_media_https', 'http_media_rejected']) assert.equal(ready[field], true);
   assert.equal(fixture.app.evidence().count, 3); assert.equal(fixture.app.evidence().media_receipts.length, 2);
@@ -213,10 +221,21 @@ const failingStages = ['gateway-identity', 'provider-identity', 'provider-eviden
   'enqueue-text', 'delivery-text', 'evidence-text', 'rls-text', 'enqueue-http-negative', 'rls-http-negative',
   'catalog-bootstrap', 'catalog-list', 'catalog-detail', 'catalog-media', 'enqueue-catalog', 'delivery-catalog',
   'evidence-catalog', 'rls-catalog', 'storage-upload', 'enqueue-storage', 'delivery-storage', 'evidence-storage', 'rls-storage'];
+const observedPhases = {
+  'gateway-identity': 'gateway-identity', 'provider-identity': 'provider-identity',
+  'provider-evidence-initial': 'provider-baseline', login: 'auth-login',
+  'enqueue-text': 'text-enqueue', 'delivery-text': 'text-delivery', 'evidence-text': 'text-evidence', 'rls-text': 'text-readback',
+  'enqueue-http-negative': 'http-negative-enqueue', 'rls-http-negative': 'http-negative-readback',
+  'catalog-bootstrap': 'catalog-bootstrap', 'catalog-list': 'catalog-list', 'catalog-detail': 'catalog-detail', 'catalog-media': 'catalog-image',
+  'enqueue-catalog': 'catalog-enqueue', 'delivery-catalog': 'catalog-delivery', 'evidence-catalog': 'catalog-evidence', 'rls-catalog': 'catalog-readback',
+  'storage-upload': 'storage-upload', 'enqueue-storage': 'storage-enqueue', 'delivery-storage': 'storage-delivery',
+  'evidence-storage': 'storage-evidence', 'rls-storage': 'storage-readback',
+};
 for (const stage of failingStages) test('readiness não publica se serviço falha em ' + stage, async () => {
   const fixture = verificationFixture('http:' + stage);
   await assert.rejects(verifyProviders(fixture.options)); assert.equal(fixture.writes.length, 0);
   assert.ok(fixture.events.includes(stage));
+  assert.deepEqual(fixture.diagnostics, [{ schema: 1, phase: observedPhases[stage], http_status: 503 }]);
 });
 
 const verificationFaults = ['seed-json', 'seed-run', 'seed-role', 'seed-onboarding', 'foreign-gateway', 'foreign-provider-namespace',
@@ -228,5 +247,279 @@ const verificationFaults = ['seed-json', 'seed-run', 'seed-role', 'seed-onboardi
 for (const fault of verificationFaults) test('readiness recusa contraprova ' + fault, async () => {
   const fixture = verificationFixture(fault);
   await assert.rejects(verifyProviders(fixture.options)); assert.equal(fixture.writes.length, 0);
+  assert.equal(fixture.diagnostics.length, 1);
+  assert.equal(parseProviderDiagnostic(JSON.stringify(fixture.diagnostics[0])).available, true);
   if (['seed-json', 'seed-run', 'seed-role', 'seed-onboarding', 'foreign-gateway', 'foreign-provider-namespace', 'evidence-count'].includes(fault)) assert.equal(fixture.credentials.length, 0);
 });
+
+// The approved observation cases now exercise the actual helper module.
+const clone = value => JSON.parse(JSON.stringify(value));
+const canary = 'CANARY_PRIVATE_VALUE_58391';
+const privateUrl = 'https://private.invalid/object?token=' + canary;
+const clean = value => {
+  const text = JSON.stringify(value);
+  for (const forbidden of [canary, privateUrl, 'internalQuery', 'password', 'message', 'definition']) {
+    // Fixed routine signatures legitimately contain the word message.
+    if (forbidden === 'message') continue;
+    assert.equal(text.includes(forbidden), false, forbidden);
+  }
+};
+const goodCatalog = () => ({ schema: 1, routines: SIGNATURES.map(signature => ({ signature, owner: 'postgres', security_definer: true })) });
+const parseRows = value => parseCatalog({ status: 0, stdout: JSON.stringify(value), stderr: privateUrl });
+
+const diagnosticCase = (name, run) => test('provider diagnostic: ' + name, run);
+diagnosticCase('catalog reports the expected postgres owners without modifying them', () => {
+  const result = parseRows(goodCatalog()); assert.equal(result.available, true); clean(result);
+});
+diagnosticCase('catalog exposes the replay divergence without approving or repairing it', () => {
+  const catalog = goodCatalog(); catalog.routines.forEach(row => { row.owner = 'supabase_admin'; });
+  const result = parseRows(catalog); assert.equal(result.available, true);
+  assert.ok(result.routines.every(row => row.owner === 'supabase_admin')); clean(result);
+});
+diagnosticCase('catalog keeps the service_role distinction', () => {
+  const catalog = goodCatalog(); catalog.routines[0].owner = 'service_role';
+  assert.equal(parseRows(catalog).routines[0].owner, 'service_role');
+});
+diagnosticCase('catalog reports an unknown owner only as other', () => {
+  const catalog = goodCatalog(); catalog.routines[0].owner = 'other';
+  const result = parseRows(catalog); assert.equal(result.routines[0].owner, 'other'); clean(result);
+});
+for (const [index, signature] of SIGNATURES.entries()) {
+  diagnosticCase('catalog missing routine ' + signature.split('(')[0], () => {
+    const catalog = goodCatalog(); catalog.routines[index] = { signature, owner: 'missing', security_definer: null };
+    const result = parseRows(catalog); assert.equal(result.available, true);
+    assert.equal(result.routines[index].owner, 'missing'); assert.equal(result.routines[index].security_definer, null);
+  });
+  diagnosticCase('catalog invoker instead of definer ' + signature.split('(')[0], () => {
+    const catalog = goodCatalog(); catalog.routines[index].security_definer = false;
+    const result = parseRows(catalog); assert.equal(result.available, true);
+    assert.equal(result.routines[index].security_definer, false);
+  });
+}
+const invalidCatalogs = [
+  ['duplicate identity', value => { value.routines[1] = clone(value.routines[0]); }],
+  ['missing catalog row', value => { value.routines.pop(); }],
+  ['extra catalog row', value => { value.routines.push(clone(value.routines[0])); }],
+  ['unknown overload', value => { value.routines[0].signature = 'public.enqueue_outbound_message(uuid)'; }],
+  ['different schema', value => { value.routines[0].signature = value.routines[0].signature.replace('public.', 'private.'); }],
+  ['raw owner rejected', value => { value.routines[0].owner = canary; }],
+  ['body field rejected', value => { value.routines[0].definition = privateUrl; }],
+  ['string definer rejected', value => { value.routines[0].security_definer = 'true'; }],
+  ['missing with definer rejected', value => { value.routines[0].owner = 'missing'; }],
+  ['present with null definer rejected', value => { value.routines[0].security_definer = null; }],
+  ['extra root field rejected', value => { value.message = canary; }],
+];
+for (const [name, mutate] of invalidCatalogs) diagnosticCase('catalog ' + name, () => {
+  const value = goodCatalog(); mutate(value); const result = parseRows(value);
+  assert.deepEqual(result, { available: false, reason: 'invalid-catalog' }); clean(result);
+});
+diagnosticCase('catalog normalizes row order without weakening cardinality', () => {
+  const value = goodCatalog(); value.routines.reverse();
+  assert.deepEqual(parseRows(value).routines.map(row => row.signature), SIGNATURES);
+});
+diagnosticCase('catalog SQL failure never exports stderr', () => {
+  const result = parseCatalog({ status: 1, stdout: JSON.stringify(goodCatalog()), stderr: privateUrl });
+  assert.deepEqual(result, { available: false, reason: 'query-failed' }); clean(result);
+});
+diagnosticCase('catalog invalid JSON is unavailable', () => {
+  const result = parseCatalog({ status: 0, stdout: canary }); assert.equal(result.available, false); clean(result);
+});
+diagnosticCase('catalog oversized bytes are unavailable before parsing', () => {
+  assert.equal(parseCatalog({ status: 0, stdout: ' '.repeat(4097) + JSON.stringify(goodCatalog()) }).available, false);
+});
+diagnosticCase('catalog permits bounded whitespace from psql', () => {
+  assert.equal(parseCatalog({ status: 0, stdout: '\n' + JSON.stringify(goodCatalog()) + '\n' }).available, true);
+});
+diagnosticCase('catalog raw object is not coerced or serialized', () => {
+  let calls = 0; const stdout = { toString() { calls++; throw new Error(canary); } };
+  assert.equal(parseCatalog({ status: 0, stdout }).available, false); assert.equal(calls, 0);
+});
+
+for (const [name, error] of [['error', new Error(canary)], ['null', null], ['zero', 0], ['false', false], ['empty', ''], ['undefined', undefined]]) {
+  diagnosticCase('failure propagation ' + name, async () => {
+    let raw, failed = false;
+    try {
+      await withObservation(async observer => { observer.phase('text-enqueue'); observer.response(403); observer.sqlstate('42501'); throw error; },
+        (text, options) => { assert.deepEqual(options, { mode: 0o600 }); raw = text; });
+    } catch (actual) { failed = true; assert.equal(actual, error); }
+    assert.equal(failed, true);
+    const result = parseProviderDiagnostic(raw);
+    assert.deepEqual(result, { available: true, schema: 1, phase: 'text-enqueue', http_status: 403, sqlstate: '42501' }); clean(result);
+  });
+}
+diagnosticCase('observer write failure preserves the primary error', async () => {
+  const original = new Error(canary); let caught;
+  try { await withObservation(async () => { throw original; }, () => { throw new Error('disk-full'); }); } catch (error) { caught = error; }
+  assert.equal(caught, original);
+});
+diagnosticCase('successful verifier emits no failure metadata', async () => {
+  let writes = 0; const ready = { ready: true };
+  const result = await withObservation(async () => ready, () => { writes++; });
+  assert.equal(result, ready); assert.equal(writes, 0);
+});
+diagnosticCase('phase boundary clears the previous HTTP and SQLSTATE', async () => {
+  let raw;
+  try { await withObservation(async observer => { observer.phase('text-enqueue'); observer.response(403); observer.sqlstate('42501'); observer.phase('storage-upload'); throw null; }, text => { raw = text; }); } catch {}
+  assert.deepEqual(parseProviderDiagnostic(raw), { available: true, schema: 1, phase: 'storage-upload' });
+});
+diagnosticCase('unknown phase cannot leak a URL or masquerade as a known operation', async () => {
+  let raw; try { await withObservation(async observer => { observer.phase(privateUrl); throw false; }, text => { raw = text; }); } catch {}
+  const result = parseProviderDiagnostic(raw); assert.equal(result.phase, 'unknown'); clean(result);
+});
+for (const [name, changes] of [
+  ['unknown phase', { phase: canary }], ['status as string', { http_status: '403' }],
+  ['status outside HTTP range', { http_status: 600 }], ['SQLSTATE lower case', { sqlstate: 'p0001' }],
+  ['SQLSTATE success code', { sqlstate: '00000' }], ['SQLSTATE not code', { sqlstate: privateUrl }],
+  ['raw error field', { message: canary }], ['extra URL field', { url: privateUrl }],
+]) diagnosticCase('public provider parser rejects ' + name, () => {
+  const result = parseProviderDiagnostic(JSON.stringify({ schema: 1, phase: 'text-enqueue', ...changes }));
+  assert.equal(result.available, false); clean(result);
+});
+
+const failedResponse = text => new Response(text, { status: 403 });
+for (const code of ['42501', '22023', 'P0001']) diagnosticCase('bounded error observation ' + code, async () => {
+  assert.equal(await observeSqlState(failedResponse(JSON.stringify({ code, message: canary, details: privateUrl }))), code);
+});
+for (const [name, body] of [
+  ['missing code', JSON.stringify({ message: canary })],
+  ['invalid JSON', '<html>' + canary + '</html>'],
+  ['array shape', JSON.stringify([{ code: '42501' }])],
+  ['invalid code', JSON.stringify({ code: privateUrl })],
+  ['success code', JSON.stringify({ code: '00000' })],
+  ['oversized body', JSON.stringify({ code: '42501', message: canary.repeat(200) })],
+]) diagnosticCase('bounded error observation omits ' + name, async () => {
+  assert.equal(await observeSqlState(failedResponse(body)), undefined);
+});
+diagnosticCase('bounded reader error leaves SQLSTATE unavailable', async () => {
+  const body = new ReadableStream({ pull(controller) { controller.error(new Error(canary)); } });
+  assert.equal(await observeSqlState(new Response(body, { status: 500 })), undefined);
+});
+diagnosticCase('bounded reader timeout cancels without waiting for the stalled body', async () => {
+  let callback, cancelled = 0, cleared = 0;
+  const body = new ReadableStream({ cancel() { cancelled++; } });
+  const pending = observeSqlState(new Response(body, { status: 500 }), {
+    setTimer(fn, ms) { assert.equal(ms, 500); callback = fn; return 7; },
+    clearTimer(id) { assert.equal(id, 7); cleared++; },
+  });
+  callback(); assert.equal(await pending, undefined); assert.equal(cancelled, 1); assert.equal(cleared, 1);
+});
+diagnosticCase('poisoned response getter cannot replace the original failure', async () => {
+  assert.equal(await observeSqlState(Object.defineProperty({}, 'body', { get() { throw new Error(canary); } })), undefined);
+});
+
+diagnosticCase('catalog proposal contains only a read-only metadata query', () => {
+  const sql = PROVIDER_CATALOG_SQL;
+  assert.match(sql, /^BEGIN READ ONLY;/); assert.match(sql, /ROLLBACK;\s*$/);
+  assert.doesNotMatch(sql, /\b(?:ALTER|GRANT|REVOKE|UPDATE|INSERT|DELETE|CREATE|DROP|CALL|DO|COPY)\b/i);
+  assert.doesNotMatch(sql, /pg_get_functiondef|prosrc|pg_authid|pg_shadow|current_setting|auth\.users|messages\s+WHERE/i);
+  for (const signature of SIGNATURES) assert.equal(sql.split("'" + signature + "'").length - 1, 1);
+});
+diagnosticCase('real infinite empty chunks terminate without starving the deadline', () => {
+  const moduleUrl = new URL('../e2e-isolated/provider-diagnostics.mjs', import.meta.url).href;
+  const script = `import { observeSqlState } from ${JSON.stringify(moduleUrl)};
+    let pulls = 0, cancelled = 0;
+    const body = new ReadableStream({ pull(c) { pulls++; c.enqueue(new Uint8Array(0)); }, cancel() { cancelled++; } });
+    const sqlstate = await observeSqlState(new Response(body, { status: 403 }));
+    console.log(JSON.stringify({ sqlstate: sqlstate ?? null, pulls, cancelled }));`;
+  const result = spawnSync(process.execPath, ['--input-type=module', '--eval', script], {
+    encoding: 'utf8', timeout: 2000, killSignal: 'SIGKILL', maxBuffer: 4096,
+  });
+  assert.equal(result.status, 0); assert.equal(result.signal, null); assert.equal(result.error, undefined);
+  const observation = JSON.parse(result.stdout);
+  assert.equal(observation.sqlstate, null); assert.equal(observation.cancelled, 1); assert.ok(observation.pulls <= 2);
+});
+diagnosticCase('empty chunk after a valid prefix is rejected without parsing a partial body', async () => {
+  const chunks = [new TextEncoder().encode('{"code":"42501"}'), new Uint8Array(0)];
+  let cancelled = 0;
+  const body = new ReadableStream({ pull(controller) { const chunk = chunks.shift(); if (chunk) controller.enqueue(chunk); else controller.close(); }, cancel() { cancelled++; } });
+  assert.equal(await observeSqlState(new Response(body, { status: 403 })), undefined);
+  // The stream may already have closed via prefetch; completion still remains bounded.
+  assert.ok(cancelled === 0 || cancelled === 1);
+});
+diagnosticCase('initial empty chunk does not fall through to a later valid body', async () => {
+  const chunks = [new Uint8Array(0), new TextEncoder().encode('{"code":"42501"}')];
+  const body = new ReadableStream({ pull(controller) { const chunk = chunks.shift(); if (chunk) controller.enqueue(chunk); else controller.close(); } });
+  assert.equal(await observeSqlState(new Response(body, { status: 403 })), undefined);
+});
+diagnosticCase('one-byte chunks make progress and preserve a valid SQLSTATE', async () => {
+  const bytes = new TextEncoder().encode('{"code":"42501","message":"ignored"}'); let offset = 0;
+  const body = new ReadableStream({ pull(controller) { if (offset < bytes.length) controller.enqueue(bytes.slice(offset, ++offset)); else controller.close(); } });
+  assert.equal(await observeSqlState(new Response(body, { status: 403 })), '42501');
+});
+for (const [name, failure] of [
+  ['executor error with status zero', { status: 0, error: new Error(canary) }],
+  ['executor signal with status zero', { status: 0, signal: 'SIGTERM' }],
+  ['executor error and signal with status zero', { status: 0, error: new Error(canary), signal: 'SIGKILL' }],
+  ['executor timeout with null status', { status: null, error: Object.assign(new Error(canary), { code: 'ETIMEDOUT' }), signal: 'SIGTERM' }],
+]) diagnosticCase('catalog rejects ' + name, () => {
+  const result = parseCatalog({ ...failure, stdout: JSON.stringify(goodCatalog()), stderr: privateUrl });
+  assert.deepEqual(result, { available: false, reason: 'query-failed' }); clean(result);
+});
+diagnosticCase('catalog accepts status zero with null executor failure fields', () => {
+  assert.equal(parseCatalog({ status: 0, error: null, signal: null, stdout: JSON.stringify(goodCatalog()) }).available, true);
+});
+
+test('verifier real: SQLSTATE observado no enqueue não altera o erro HTTP nem publica o corpo', async () => {
+  const fixture = verificationFixture(), originalFetch = fixture.options.fetcher;
+  fixture.options.fetcher = (url, options) => new URL(url).pathname === '/rest/v1/rpc/enqueue_outbound_message'
+    ? Promise.resolve(response({ code: '42501', message: privateUrl, details: canary }, 403))
+    : originalFetch(url, options);
+  await assert.rejects(verifyProviders(fixture.options), /provider-verification-http-403/);
+  assert.equal(fixture.writes.length, 0);
+  assert.deepEqual(fixture.diagnostics, [{ schema: 1, phase: 'text-enqueue', http_status: 403, sqlstate: '42501' }]);
+  clean(fixture.diagnostics);
+});
+
+test('verifier real: corpo HTTP travado respeita os 500 ms e conserva a falha', { timeout: 5000 }, async () => {
+  const fixture = verificationFixture(), originalFetch = fixture.options.fetcher;
+  let cancelled = 0;
+  fixture.options.fetcher = (url, options) => new URL(url).pathname === '/rest/v1/rpc/enqueue_outbound_message'
+    ? Promise.resolve(new Response(new ReadableStream({ cancel() { cancelled++; } }), { status: 403 }))
+    : originalFetch(url, options);
+  const started = performance.now();
+  await assert.rejects(verifyProviders(fixture.options), /provider-verification-http-403/);
+  assert.ok(performance.now() - started < 3000);
+  assert.equal(cancelled, 1); assert.equal(fixture.writes.length, 0);
+  assert.deepEqual(fixture.diagnostics, [{ schema: 1, phase: 'text-enqueue', http_status: 403 }]);
+});
+
+test('verifier real: falha de catálogo não herda o 400/22023 da contraprova HTTP bem-sucedida', async () => {
+  const fixture = verificationFixture('catalog-empty');
+  await assert.rejects(verifyProviders(fixture.options), /local-catalog-product-not-found/);
+  assert.deepEqual(fixture.diagnostics, [{ schema: 1, phase: 'catalog-list' }]);
+  assert.ok(fixture.events.includes('enqueue-http-negative'));
+  assert.ok(fixture.events.includes('rls-http-negative'));
+});
+
+for (const [name, thrown] of [['Error', new Error('original-verifier-error')], ['null', null],
+  ['false', false], ['zero', 0], ['empty', ''], ['undefined', undefined]]) {
+  test('verifier real: preserva o mesmo throw ' + name, async () => {
+    const fixture = verificationFixture(); fixture.options.newId = () => { throw thrown; };
+    let caught = false;
+    try { await verifyProviders(fixture.options); }
+    catch (actual) { caught = true; assert.equal(actual, thrown); }
+    assert.equal(caught, true); assert.equal(fixture.writes.length, 0);
+    assert.deepEqual(fixture.diagnostics, [{ schema: 1, phase: 'text-enqueue' }]);
+  });
+}
+
+test('verifier real: erro de escrita ready e de diagnóstico não substitui o erro primário', async () => {
+  const fixture = verificationFixture(), original = new Error('ready-write-failed'), attempts = [];
+  fixture.options.writeFile = (file, content, options) => {
+    attempts.push(file); assert.equal(options.mode, 0o600);
+    if (file === '/output/provider-ready.json') throw original;
+    assert.equal(file, '/output/provider-diagnostic.json');
+    assert.deepEqual(JSON.parse(content), { schema: 1, phase: 'ready-write' });
+    throw new Error('diagnostic-write-failed');
+  };
+  await assert.rejects(verifyProviders(fixture.options), value => value === original);
+  assert.deepEqual(attempts, ['/output/provider-ready.json', '/output/provider-diagnostic.json']);
+});
+
+test('verifier real: preflight reprovado não consulta credenciais nem rede', async () => {
+  const fixture = verificationFixture(); fixture.options.env.API_URL = 'https://example.invalid';
+  await assert.rejects(verifyProviders(fixture.options));
+  assert.deepEqual(fixture.diagnostics, [{ schema: 1, phase: 'preflight' }]);
+  assert.deepEqual(fixture.credentials, []); assert.deepEqual(fixture.events, []);
+});
+

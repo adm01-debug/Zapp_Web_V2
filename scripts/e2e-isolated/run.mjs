@@ -15,6 +15,7 @@ import { containerArguments, serviceConfiguration } from './stack.mjs';
 import { prepareMigration, migrationFailure, gitBlob } from './migrations.mjs';
 import { readPlaywrightInventory, summarizePlaywrightResult } from './results.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
+import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -217,6 +218,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   const writable = new Set([output, bundles, bundleCache]);
   let credentials;
   let reportReady = false;
+  let providerCatalog, providerDiagnostic;
   let failure;
   let cancelled = false;
   let cleaning = false;
@@ -288,8 +290,8 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     return { name: containerName, id };
   };
   let database;
-  const psql = (sql, extra = []) => docker(['exec', '-i', database.name, 'psql', '-X', '-U', 'supabase_admin', '-d', 'postgres',
-    '-v', 'ON_ERROR_STOP=1', '-v', 'VERBOSITY=sqlstate', '-q', '-A', '-t', ...extra], { input: sql });
+  const psql = (sql, extra = [], options = {}) => docker(['exec', '-i', database.name, 'psql', '-X', '-U', 'supabase_admin', '-d', 'postgres',
+    '-v', 'ON_ERROR_STOP=1', '-v', 'VERBOSITY=sqlstate', '-q', '-A', '-t', ...extra], { input: sql, ...options });
   const sqlBoolean = sql => required(psql(sql), 'database-readiness-query-failed') === 't';
   let driver;
   let catalogVerified = false;
@@ -511,7 +513,16 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       driverRun(['bun', 'e2e/fixtures/arquivos-local/seed.ts'], 'seed-files-volume', 240_000, { recordLog: false });
       driverRun(['node', 'e2e/fixtures/seed-files-tab.mjs'], 'seed-files-canonical', 240_000, { recordLog: false });
       driverRun(['node', 'scripts/e2e-isolated/seed-suite.mjs'], 'seed-suite', 240_000, { recordLog: false });
-      driverRun(['node', 'scripts/e2e-isolated/verify-providers.mjs'], 'verify-providers', 240_000, { recordLog: false });
+      // Catalog metadata is observational. Its failure never decides readiness.
+      try { providerCatalog = parseCatalog(psql(PROVIDER_CATALOG_SQL, [], CATALOG_EXECUTOR_OPTIONS)); }
+      catch { providerCatalog = { available: false, reason: 'query-failed' }; }
+      try {
+        driverRun(['node', 'scripts/e2e-isolated/verify-providers.mjs'], 'verify-providers', 240_000, { recordLog: false });
+      } catch (error) {
+        try { providerDiagnostic = parseProviderDiagnostic(readFileSync(path.join(output, 'provider-diagnostic.json'), 'utf8')); }
+        catch { providerDiagnostic = { available: false, reason: 'diagnostic-unavailable' }; }
+        throw error;
+      }
       let suiteSeed; let provider;
       try {
         suiteSeed = JSON.parse(readFileSync(path.join(output, 'suite-seed-ready.json'), 'utf8'));
@@ -621,6 +632,13 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
       'results-summary.json', 'postgres-log-summary.json'];
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
+    // Never copy the verifier's raw file. Only the closed parsed objects enter
+    // the already-redacted publication path; diagnostic I/O remains best effort.
+    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic]]) {
+      if (diagnostic) {
+        try { writeJson(path.join(published, name), diagnostic); } catch { /* Observation cannot replace the original result. */ }
+      }
+    }
     for (const entry of readdirSync(output, { withFileTypes: true })) {
       if (entry.isFile() && entry.name.endsWith('.log')) cpSync(path.join(output, entry.name), path.join(published, entry.name));
     }

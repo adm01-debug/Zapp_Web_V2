@@ -8,18 +8,18 @@ import { PRODUCT_NAME } from '../src/lib/productName';
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
  * Abre CADA entrada MAPEADA que o papel do usuário sintético do conjunto local enxerga na
- * barra lateral — as 10 da navegação primária e 28 dos 30 itens mapeados das 5 seções
- * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e prova, módulo a
+ * barra lateral — as 10 da navegação primária e 32 dos 34 itens mapeados das 6 seções
+ * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema e Em Desenvolvimento) — e prova, módulo a
  * módulo, que a tela monta de verdade: título do documento, tela própria do módulo
  * (nunca "Acesso restrito", nunca o esqueleto de carregamento preso, nunca tela em
  * branco) e nenhum erro de console, exceção ou resposta >= 400.
- * Dois dos 30 itens mapeados são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
+ * Dois dos 34 itens mapeados são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
  * e 'Admin' (`:121`), ambos com `roles: ADMIN_ONLY` — e o usuário do seed é
  * supervisor: eles ficam FORA da varredura e a AUSÊNCIA é conferida de propósito
  * (`conferirEntradasForaDoPapel`), para o mapa de módulos não perder linhas em
  * silêncio.
- * Tarefas tem dois percursos, Lista e Quadro: 38 entradas únicas e 39 percursos.
- * O mapa ainda não cobre Supervisão, Insights de Busca, Meta CAPI e Calendário.
+ * Tarefas tem dois percursos, Lista e Quadro: 42 entradas únicas e 43 percursos.
+ * Meta CAPI e Calendário têm superfície de demonstração; esta prova não executa integrações externas.
  * Repete tudo no celular 390x844, pelo menu móvel. A busca global ("Buscar") entra
  * nas duas larguras.
  *
@@ -149,10 +149,19 @@ const SECOES: SecaoNav[] = [
       { id: 'agents', label: 'Equipe' },
       { id: 'security', label: 'Segurança' },
       { id: 'privacy', label: 'LGPD' },
+      { id: 'supervisao', label: 'Supervisão' },
       { id: 'admin', label: 'Admin', somenteAdmin: true },
+      { id: 'search-insights', label: 'Insights de Busca' },
       { id: 'themes', label: 'Skins' },
       { id: 'docs', label: 'Documentação' },
       { id: 'settings', label: 'Configurações' },
+    ],
+  },
+  {
+    label: 'Em Desenvolvimento',
+    itens: [
+      { id: 'meta-capi', label: 'Meta CAPI' },
+      { id: 'google-calendar', label: 'Calendário' },
     ],
   },
 ];
@@ -851,6 +860,49 @@ async function abrirModoTarefas(page: Page, item: ItemNav): Promise<void> {
   }
 }
 
+/** Superfícies das quatro entradas acrescentadas ao mapa; sem ações de integração. */
+async function conferirSuperficieAdicionada(page: Page, item: ItemNav): Promise<void> {
+  if (!['supervisao', 'search-insights', 'meta-capi', 'google-calendar'].includes(item.id)) return;
+  await expect(page, 'a entrada adicional exige sua URL canônica').toHaveURL((url) => url.searchParams.get('view') === item.id);
+  const principal = page.getByRole('main');
+
+  if (item.id === 'supervisao') {
+    await expect(principal.getByRole('heading', { name: 'Supervisão', exact: true })).toBeVisible();
+    const abas = principal.getByRole('tablist');
+    for (const name of ['Filas', 'Copiloto IA', 'Sala de Crise', 'Playbooks', 'Treinamento']) {
+      await expect(abas.getByRole('tab', { name, exact: true })).toBeVisible();
+    }
+    await expect(abas.getByRole('tab', { name: 'Filas', exact: true })).toHaveAttribute('aria-selected', 'true');
+  } else if (item.id === 'search-insights') {
+    await expect(principal.getByRole('heading', { name: 'Insights de Busca', exact: true })).toBeVisible();
+    await expect(principal.getByRole('combobox', { name: 'Período', exact: true })).toBeVisible();
+    await expect(principal.getByRole('button', { name: 'Atualizar insights de busca', exact: true })).toBeVisible();
+    await expect(principal.getByText('Mais buscadas', { exact: true })).toBeVisible();
+    await expect(principal.getByText('Sem resultado', { exact: true })).toBeVisible();
+    await expect(principal.getByRole('alert')).toHaveCount(0);
+  } else if (item.id === 'meta-capi') {
+    await expect(principal.getByRole('heading', { name: 'Meta Conversions API', exact: true })).toBeVisible();
+    await expect(principal.getByText('Funcionalidade em demonstração', { exact: true })).toBeVisible();
+    const configurar = principal.getByRole('button', { name: 'Configurar', exact: true });
+    await expect(configurar).toBeVisible();
+    await expect(configurar).toBeDisabled();
+    const recentes = principal.getByRole('heading', { name: 'Eventos Recentes', exact: true });
+    await expect(recentes).toBeVisible();
+    const eventos = recentes.locator('..');
+    await expect(eventos.getByText('Nenhum evento registrado', { exact: true })
+      .or(eventos.getByText('Pendente', { exact: true }))
+      .or(eventos.getByText('Enviado', { exact: true })).first()).toBeVisible();
+    await expect(principal.getByText('Não foi possível carregar os eventos', { exact: true })).toHaveCount(0);
+  } else {
+    await expect(principal.getByRole('heading', { name: 'Google Calendar', exact: true })).toBeVisible();
+    await expect(principal.getByText('Funcionalidade em demonstração', { exact: true })).toBeVisible();
+    await expect(principal.getByText('Desconectado', { exact: true })).toBeVisible();
+    const conectar = principal.getByRole('button', { name: 'Conectar Google Calendar', exact: true });
+    await expect(conectar).toBeVisible();
+    await expect(conectar).toBeDisabled();
+  }
+}
+
 async function conferirModulo(page: Page, item: ItemNav, onde: string): Promise<void> {
   await expect(page, `${onde}: título do documento do módulo`).toHaveTitle(
     new RegExp(`^${escaparRegex(item.label)} \\| ${escaparRegex(TITULO_BASE)}$`),
@@ -1190,7 +1242,7 @@ async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<vo
   }
 }
 
-// A varredura inteira (login + 39 percursos do mapa + busca) passa longe do teto padrão de
+// A varredura inteira (login + 43 percursos do mapa + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
 test.describe.configure({ timeout: 15 * 60_000 });
 
@@ -1255,10 +1307,10 @@ test.beforeAll(async ({ request }) => {
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre as 38 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    // A varredura é longa (39 percursos do mapa + busca, cada um com espera de view e de
+    // A varredura é longa (43 percursos do mapa + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
     test.setTimeout(20 * 60_000);
@@ -1289,6 +1341,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
       await clicarDesktop(page, item);
       await abrirModoTarefas(page, item);
       await conferirModulo(page, item, `${onde}/${rotulo}`);
+      await conferirSuperficieAdicionada(page, item);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
       lacunasDaRodada.push(...lacunas);
@@ -1309,7 +1362,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     defeitosDaRodada.push(...defeitos);
     expect(resumir(reprovam), 'desktop — Buscar produziu ruído não justificado').toEqual([]);
 
-    // A varredura já abriu as 5 seções da barra lateral: é agora que a ausência
+    // A varredura já abriu as 6 seções da barra lateral: é agora que a ausência
     // das entradas admin-only diz alguma coisa (com a seção fechada, o item não
     // estaria no DOM de qualquer forma).
     await conferirEntradasForaDoPapel(page, 'desktop');
@@ -1332,7 +1385,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre as 38 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
     test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
@@ -1358,6 +1411,7 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
       await clicarMobile(page, item, conferirForaDoPapelUmaVez);
       await abrirModoTarefas(page, item);
       await conferirModulo(page, item, `${onde}/${rotulo}`);
+      await conferirSuperficieAdicionada(page, item);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
       lacunasDaRodada.push(...lacunas);
@@ -1432,9 +1486,9 @@ const CORPO_SIP = '{"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}'
 const NADA_JUSTIFICADO = new Set<string>();
 
 test.describe('Guarda da varredura: ruído novo REPROVA', () => {
-  test('mapa preserva 38 entradas e os modos Lista/Quadro em 39 percursos distintos', () => {
-    expect(PASSOS).toHaveLength(39);
-    expect(new Set(PASSOS.map(({ item }) => item.id)).size).toBe(38);
+  test('mapa preserva 42 entradas e os modos Lista/Quadro em 43 percursos distintos', () => {
+    expect(PASSOS).toHaveLength(43);
+    expect(new Set(PASSOS.map(({ item }) => item.id)).size).toBe(42);
     expect(new Set(PASSOS.map(({ item }) => item.id + '/' + (item.modo ?? ''))).size).toBe(PASSOS.length);
     const tarefas = PASSOS.filter(({ item }) => item.id === 'tasks').map(({ item }) => item);
     expect(tarefas.map(item => item.modo).sort()).toEqual(['Lista', 'Quadro']);

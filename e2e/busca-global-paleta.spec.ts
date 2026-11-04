@@ -259,21 +259,11 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
   });
 
   /**
-   * BUG (não corrigido neste cartão — só documentado): o PRIMEIRO Ctrl+K depois de a
-   * tela carregar é engolido. MEDIDO (`zapp-e2e-local`, banco local, sessão falsa):
-   * com a inbox já visível, o 1º `Ctrl+K` não abre nada e continua sem abrir 5s
-   * depois; o 2º abre normalmente.
-   *
-   * Causa: o evento `open-global-search` é despachado pelo registry EAGER
-   * (`src/hooks/ui/useGlobalKeyboardShortcuts.ts:30`), mas o listener mora no chunk
-   * LAZY do palette (`src/pages/Index.tsx:22` → `React.lazy` →
-   * `src/components/CommandPalette.tsx:77`). Enquanto o chunk não resolve, o
-   * `CustomEvent` não tem quem o escute e é descartado — não há reenvio.
-   *
-   * Vira `test(...)` quando o atalho não puder mais ser perdido (ex.: o listener subir
-   * junto do registry, ou o estado do palette viver no provider).
+   * Regressão do primeiro atalho: o provider eager mantém a intenção de abertura
+   * enquanto CommandPaletteHost carrega. Um único Ctrl+K deve tornar o diálogo
+   * visível, sem repetir o atalho.
    */
-  test.fixme('o primeiro Ctrl+K logo após carregar a tela já abre a paleta', async ({ page }) => {
+  test('o primeiro Ctrl+K logo após carregar a tela já abre a paleta', async ({ page }) => {
     await abrirInbox(page);
     await page.keyboard.press('Control+k');
 
@@ -281,21 +271,11 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
   });
 
   /**
-   * BUG (não corrigido neste cartão — só documentado): o Ctrl+K SEGUINTE, com a paleta
-   * já aberta, não a fecha. MEDIDO (`zapp-e2e-local`, banco local, sessão falsa): a
-   * paleta continua visível depois do segundo `Ctrl+K`; o atalho só ABRE.
-   *
-   * Causa: a ação `global-search` do registry SEMPRE despacha `open-global-search`
-   * (`src/hooks/ui/useGlobalKeyboardShortcuts.ts:29-31`), e o handler de CAPTURA em
-   * `window` (`:140-143`, com `event.stopPropagation()` em `:132`) impede que a tecla
-   * chegue ao listener de alternância do próprio palette
-   * (`src/components/CommandPalette.tsx:66-76`, `setOpen(o => !o)`). Na fase de captura
-   * o evento não chega nem ao `document` nem ao `window` no bubble, e o
-   * `open-global-search` do registry abre de novo.
-   *
-   * Vira `test(...)` quando o segundo Ctrl+K alternar (fechar a paleta aberta).
+   * Regressão da alternância: o provider sobrescreve global-search e alterna o
+   * estado com atualização funcional. A captura consome a tecla; o Ctrl+K
+   * seguinte deve fechar a paleta sem outra alternância no bubble.
    */
-  test.fixme('o Ctrl+K seguinte fecha a paleta aberta (alterna)', async ({ page }) => {
+  test('o Ctrl+K seguinte fecha a paleta aberta (alterna)', async ({ page }) => {
     await abrirInbox(page);
     const paleta = await porAtalho(page);
     await expect(paleta).toBeVisible();
