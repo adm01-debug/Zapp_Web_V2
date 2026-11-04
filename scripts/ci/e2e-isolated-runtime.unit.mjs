@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import fs from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -206,14 +207,14 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic,
-    catalogResult, providerObservation, ownershipResult, ownershipFault } = typeof options === 'function' ? { manifest: options } : options;
+    catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult } = typeof options === 'function' ? { manifest: options } : options;
   const fullSeed = scope === 'suite' && group === 'authenticated';
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -550,6 +551,14 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         if (argv.includes('--list')) {
           listCalls++;
           assert.equal(argv.includes('--reporter=json'), true);
+          assert.equal(options.timeout, 120_000);
+          const reportVariables = allAfter(argv, '-e').filter(value => value.startsWith('PLAYWRIGHT_JSON_OUTPUT_FILE='));
+          assert.equal(reportVariables.length, 1);
+          const containerReport = reportVariables[0].slice('PLAYWRIGHT_JSON_OUTPUT_FILE='.length);
+          assert.match(containerReport, /^\/output\/collection-[A-Za-z0-9]+\/report\.json$/);
+          const reportFile = path.join(output, containerReport.slice('/output/'.length));
+          assert.equal(existsSync(reportFile), false, 'each collection owns a fresh report');
+          assert.equal(statSync(path.dirname(reportFile)).mode & 0o777, 0o700);
           assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'collection also runs after environment proof');
           if (fault === 'collection-failure') return error();
           const inventory = scope === 'suite' ? suiteJson({ listed: true, fault, group }) : playwrightJson({ listed: true });
@@ -557,9 +566,22 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
             const extra = structuredClone(inventory.suites[0].specs[0]); extra.line = 90;
             inventory.suites[0].specs.push(extra); inventory.stats.skipped = 2;
           }
-          return ok(JSON.stringify(inventory));
+          if (collectionFile === 'parser') inventory.errors = [{ message: 'private-sentinel collection error' }];
+          if (collectionFile === 'directory') mkdirSync(reportFile);
+          else if (collectionFile !== 'missing') writeFileSync(reportFile, collectionFile === 'json' ? '{private-sentinel' : JSON.stringify(inventory));
+          if (['raw-write', 'public-write'].includes(collectionFile)) {
+            const originalWrite = fs.writeFileSync;
+            const blocked = path.join(output, collectionFile === 'raw-write' ? 'inventory.json' : 'test-inventory.json');
+            fs.writeFileSync = (file, ...args) => {
+              if (file === blocked) { fs.writeFileSync = originalWrite; throw new Error('private-sentinel write failure'); }
+              return originalWrite(file, ...args);
+            };
+            t.after(() => { fs.writeFileSync = originalWrite; });
+          }
+          return { ...ok('Listing tests:\nprivate-sentinel Node helper output\n'), ...collectionResult };
         }
         browserCalls++;
+        assert.equal(argv.some(value => value.startsWith('PLAYWRIGHT_JSON_OUTPUT_')), false, 'collection destination never reaches browser run');
         assert.equal(listCalls, 1, 'execution requires exactly one separate inventory');
         assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'browser starts only after proof');
         const report = scope === 'suite' ? suiteJson({ fault, group }) : playwrightJson({ failed: fault === 'browser-failure' });
@@ -601,6 +623,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const state = JSON.parse(readFileSync(path.join(output, 'status.json'), 'utf8'));
   const publicFiles = readdirSync(path.join(output, 'public'), { recursive: true });
   assert.equal(publicFiles.some(name => ['results.json', 'inventory.json'].includes(name) || /raw\.html|playwright-report/.test(name)), false, 'raw browser artifacts never publish');
+  assert.equal(publicFiles.some(name => name.startsWith('collection-')), false, 'private collection directory never publishes');
   assert.equal(JSON.stringify(publicFiles).includes('auth-state'), false);
   for (const name of publicFiles) {
     const content = readFileSync(path.join(output, 'public', name), 'utf8');
@@ -841,6 +864,27 @@ test('suite controller: authenticated collects exactly its nine existing project
   assert.equal(value.volumes.size, 0);
   for (const name of ['suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json']) assert.ok(value.publicFiles.includes(name));
   assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\.log|verify-providers\.log/.test(name)), 'raw seed/provider output stays private');
+});
+for (const [name, options, code] of [
+  ['missing report', { collectionFile: 'missing' }, 'collection-report-missing'],
+  ['report directory', { collectionFile: 'directory' }, 'collection-report-type'],
+  ['malformed report', { collectionFile: 'json' }, 'collection-report-json'],
+  ['collection errors', { collectionFile: 'parser' }, 'suite-inventory-invalid'],
+  ['raw inventory write', { collectionFile: 'raw-write' }, 'collection-inventory-write'],
+  ['public inventory write', { collectionFile: 'public-write' }, 'collection-public-inventory-write'],
+  ['executor error with valid report', { collectionResult: { status: 0, error: new Error('private-sentinel executor error') } }, 'collect-suite'],
+  ['signal with valid report', { collectionResult: { status: 0, signal: 'SIGTERM' } }, 'collect-suite'],
+]) test('suite collection: ' + name + ' blocks browser and preserves cleanup', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', ...options });
+  assert.equal(value.exit, 1);
+  assert.equal(value.state.success, false);
+  assert.equal(value.state.failed_phase, 'collect-real-suite');
+  assert.equal(value.state.error, code);
+  assert.equal(value.state.native_e2e, false);
+  assert.equal(value.listCalls, 1);
+  assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
 });
 for (const group of ['deslogado-principal', 'deslogado-secundario']) test('suite controller: ' + group + ' preserves its three projects without messaging seed or provider', async t => {
   const value = await controllerFixture(t, 'none', { scope: 'suite', group });

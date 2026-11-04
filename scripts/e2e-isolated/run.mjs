@@ -13,7 +13,8 @@ import {
 } from './runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from './stack.mjs';
 import { prepareMigration, migrationFailure, gitBlob } from './migrations.mjs';
-import { readPlaywrightInventory, summarizePlaywrightResult } from './results.mjs';
+import { summarizePlaywrightResult } from './results.mjs';
+import { collectPlaywrightInventory } from './collection.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
 import { restoreRoutineOwnership } from './routine-ownership.mjs';
@@ -551,13 +552,10 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
     const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
       ...projects.flatMap(name => ['--project', name]), '--workers', '1'];
-    const inventoryJson = JSON.parse(driverRun([...cli, '--list', '--reporter=json'], scope === 'login' ? 'collect-login' : 'collect-suite', 120_000, { recordLog: false }));
-    let inventory;
-    try { inventory = readPlaywrightInventory(inventoryJson, { projects }); }
-    catch (error) { if (scope === 'suite') throw new Error('suite-inventory-invalid'); throw error; }
-    if (scope === 'login' && inventory.total !== 1) throw new Error('login-inventory-not-exact');
-    writeJson(path.join(output, 'inventory.json'), inventoryJson);
-    if (scope === 'suite') writeJson(path.join(output, 'test-inventory.json'), inventory);
+    const inventory = collectPlaywrightInventory({ output, scope, projects,
+      execute: report => docker(['exec', '-e', 'PLAYWRIGHT_JSON_OUTPUT_FILE=' + report,
+        ...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),
+    });
     phase(scope === 'login' ? 'real-browser-login' : 'real-browser-suite');
     state.native_e2e = true;
     const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });
