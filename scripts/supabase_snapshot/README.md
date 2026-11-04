@@ -20,7 +20,11 @@ git show origin/contexto:docs/contexto/supabase/lints.md           # antes de me
 
 Ou por URL (sem clone): `https://raw.githubusercontent.com/adm01-debug/Zapp_Web_V2/contexto/docs/contexto/supabase/README.md`.
 
-Frescor: `git log -1 --format=%cI origin/contexto -- docs/contexto/supabase`. Seções com falha na última coleta: `errors.md`.
+Última coleta concluída publicada: `docs/contexto/supabase/manifest.json` → `gerado_em` (UTC).
+Última publicação: `git log -1 --format=%cI origin/contexto -- docs/contexto/supabase`.
+O manifest também informa `erros` e `carried`; uma coleta recente pode ser parcial. Detalhes em `errors.md`.
+Seu timestamp não entra em `snapshot.json` nem nos fingerprints: consultar um banco sem mudanças
+renova o frescor sem inventar uma alteração estrutural no `CHANGELOG.md`.
 
 Neste repo `schema.sql` e `types.ts` estão desligados (`PGDUMP=false`, `GEN_TYPES=false` no workflow):
 o runner só tem `pg_dump` 16 (banco é PG 17) e `types.ts` já vem do `types-sync.yml`.
@@ -132,5 +136,7 @@ SQL × uma/três falhas × recuperação com registros alterados/vazios. Casos a
 referências reais versus DDL/testes, pastas configuradas e os tipos de rotina sem corpo SQL.
 Outra matriz cobre as oito combinações de cron/triggers/views reaproveitados enquanto functions falha,
 além de fontes vazias, indisponíveis e recuperação, preservando a base anterior do changelog.
+Os casos de frescor verificam o manifest em UTC, coleta sem mudança estrutural, falha/recuperação e
+sua prioridade sobre um CHANGELOG antigo no índice; chamadas em DEFAULTs da assinatura também têm regressão.
 O adaptador Node participa da suíte existente `scripts/ci/*.unit.mjs` e executa a mesma suíte Python.
 

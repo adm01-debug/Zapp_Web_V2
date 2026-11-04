@@ -1060,6 +1060,8 @@ def build_function_callers(db: dict) -> dict[str, str]:
     cron_jobs = ((db.get("cron") or {}).get("jobs")) or []
     trigs = db.get("triggers") or []
     rx_name = {n: re.compile(r"(?<![A-Za-z0-9_])%s\s*\(" % re.escape(n)) for n in names}
+    # Limpa cada definição uma vez, preservando DEFAULTs, antes de cruzá-la com os nomes procurados.
+    function_sources = [(g, sql_without_routine_declarations(g["definition"])) for g in fns if g.get("definition")]
     unavailable = {name for name in ("cron", "triggers", "views") if name in CARRIED or db.get(name) is None}
     states = {"code": "coleta atual" if code_files is not None else "indisponível; referências anteriores quando disponíveis"}
     for name in ("cron", "triggers", "views"):
@@ -1075,9 +1077,9 @@ def build_function_callers(db: dict) -> dict[str, str]:
             "code_total_files": len(code),
             "cron": [f"{j['jobid']}:{j.get('jobname') or ''}" for j in cron_jobs if rx_name[n].search(j.get("command") or "")],
             "triggers": [f"{t['schema']}.{t['table']}.{t['name']}" for t in trigs if t["function"] == f"{f['schema']}.{n}"],
-            # outras funções: ignora overloads do mesmo nome e o cabeçalho CREATE FUNCTION (1ª linha)
-            "db": sorted({f"{g['schema']}.{g['name']}" for g in fns
-                          if g["name"] != n and g.get("definition") and rx_name[n].search(g["definition"].split("\n", 1)[-1])}),
+            # Ignora overloads do mesmo nome; DEFAULTs da assinatura também podem chamar funções.
+            "db": sorted({f"{g['schema']}.{g['name']}" for g, definition in function_sources
+                          if g["name"] != n and rx_name[n].search(definition)}),
             "views": sorted({f"{v['schema']}.{v['name']}" for v in (db.get("views") or []) if rx_name[n].search(v.get("definition") or "")}),
         }
         # O snapshot compacto não tem corpos SQL: só a categoria db depende deles.
@@ -1552,7 +1554,8 @@ def render_readme(snap: dict, api_: dict, caller_sources: dict[str, str] | None 
     md = [
         "# Snapshot Supabase — contexto para agentes de IA\n",
         os.environ.get("SUPABASE_SNAPSHOT_PUBLICACAO", "Gerado automaticamente a cada 10 min pelo workflow `contexto` (job `banco`). **Não edite manualmente.**") + "\n",
-        "Frescor: `git log -1 --format=%cI -- docs/contexto/supabase`. Só há commit quando algo mudou; o histórico está em `CHANGELOG.md`.\n",
+        "Última coleta concluída publicada: `manifest.json` → `gerado_em` (UTC), com erros e seções reaproveitadas. "
+        "Última publicação: `git log -1 --format=%cI -- docs/contexto/supabase`. Mudanças estruturais estão em `CHANGELOG.md`.\n",
         "## Protocolo para agentes\n",
         "1. **Tabela**: leia só `tables/<schema>/<tabela>.md` (colunas, FKs, índices, RLS, triggers, grants). ER geral em `relationships.md`.",
         "2. **Antes de mexer em RLS/functions/índices**: leia `lints.md` e `policies.md`. Não repita problemas já listados.",
@@ -1586,6 +1589,7 @@ def render_readme(snap: dict, api_: dict, caller_sources: dict[str, str] | None 
         "| `project-config.md` | PostgREST, Postgres, pooler, rede, SSL, branches, backups (redigido) |",
         "| `stats.md` / `stats.json` | métricas voláteis |",
         "| `snapshot.json` | tudo estrutural em JSON |",
+        "| `manifest.json` | data UTC da coleta concluída, erros e seções reaproveitadas; usado pelo índice de contexto |",
         "| `CHANGELOG.md` | diff semântico a cada mudança |",
         "| `errors.md` | seções que falharam na última coleta |",
     ]
@@ -1689,6 +1693,12 @@ def main() -> int:
             m["statements_sha"] = sha(m["statements"]); m["statements"] = len(m["statements"]) if isinstance(m["statements"], list) else 1
     write(prev_path, dumps(slim))
     write(OUT / ".gitattributes", "* linguist-generated=true\n*.sql linguist-generated=true\n")
+    # Frescor da coleta é independente de mudança estrutural. Só publica após concluir as saídas.
+    write(OUT / "manifest.json", dumps({
+        "produtor": "supabase-snapshot", "gerador": "scripts/supabase_snapshot/snapshot.py",
+        "gerado_em": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "entrada": "README.md", "erros": ERRORS, "carried": CARRIED,
+    }))
 
     log(f"concluído: {len(diff)} grupos de mudança, {len(ERRORS)} erros, {len(CARRIED)} seções reaproveitadas, saída em {OUT}")
     return 0

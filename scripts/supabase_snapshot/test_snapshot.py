@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import datetime as dt
 import importlib.util
 import io
 import json
@@ -519,6 +520,106 @@ class SnapshotCallerFreshnessTests(SnapshotFixture):
         self.assertEqual(previous["functions"][0]["callers"]["code"], expected)
         self.assertIn("indisponível", states["code"])
         self.assertTrue(any(e["section"] == "callers.code" for e in self.snapshot.ERRORS))
+
+    def test_database_callers_include_defaults_on_the_first_definition_line(self):
+        consumer = function("consumer")
+        consumer["definition"] = (
+            "CREATE OR REPLACE FUNCTION public.consumer(value integer DEFAULT public.demo())\n"
+            " RETURNS integer\n LANGUAGE sql\n AS $function$ SELECT value $function$;"
+        )
+        database = {"functions": [function(), consumer]}
+        self.build(database, [])
+        self.assertEqual(database["functions"][0]["callers"]["db"], ["public.consumer"])
+        self.assertEqual(database["functions"][1]["callers"]["db"], [])
+
+
+class SnapshotHeartbeatTests(SnapshotFixture):
+    def manifest(self):
+        return json.loads((self.out / "manifest.json").read_text(encoding="utf-8"))
+
+    def collect_at(self, instant, **options):
+        class FrozenDateTime(dt.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return instant.astimezone(tz) if tz is not None else instant.replace(tzinfo=None)
+        with mock.patch.object(self.snapshot.dt, "datetime", FrozenDateTime):
+            return self.collect(**options)
+
+    def unified_index(self):
+        script = pathlib.Path(__file__).resolve().parents[1] / "regras_negocio" / "indice.py"
+        spec = importlib.util.spec_from_file_location("heartbeat_index", script)
+        index = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(index)
+        arguments = [str(script), "--repo", self.temp.name, "--out", "INDEX.md", "--remote", "owner/repo",
+                     "--head", "a" * 40, "--fonte", "banco real=output"]
+        with mock.patch.object(sys, "argv", arguments):
+            with mock.patch.object(index, "git", side_effect=AssertionError("manifest/CHANGELOG dispensam fallback Git")):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    self.assertEqual(index.main(), 0)
+        return (pathlib.Path(self.temp.name) / "INDEX.md").read_text(encoding="utf-8")
+
+    def test_unchanged_collection_refreshes_utc_heartbeat_without_structural_changes(self):
+        first = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
+        second = first + dt.timedelta(minutes=10)
+        self.assertEqual(self.collect_at(first), 0)
+        original_manifest = self.manifest()
+        original_snapshot = (self.out / "snapshot.json").read_bytes()
+        original_changelog = (self.out / "CHANGELOG.md").read_bytes()
+        original_fingerprints = self.snapshot.fingerprints(self.metadata())
+        self.assertEqual(self.collect_at(second), 0)
+        current_manifest = self.manifest()
+        self.assertEqual(original_manifest["gerado_em"], "2026-01-01T00:00:00Z")
+        self.assertEqual(current_manifest["gerado_em"], "2026-01-01T00:10:00Z")
+        self.assertEqual(dt.datetime.fromisoformat(current_manifest["gerado_em"]).utcoffset(), dt.timedelta(0))
+        self.assertEqual(current_manifest["entrada"], "README.md")
+        self.assertEqual(current_manifest["gerador"], "scripts/supabase_snapshot/snapshot.py")
+        self.assertEqual(current_manifest["erros"], [])
+        self.assertEqual(current_manifest["carried"], [])
+        self.assertEqual((self.out / "snapshot.json").read_bytes(), original_snapshot)
+        self.assertEqual((self.out / "CHANGELOG.md").read_bytes(), original_changelog)
+        self.assertEqual(self.snapshot.fingerprints(self.metadata()), original_fingerprints)
+
+    def test_partial_heartbeat_includes_collection_and_render_errors(self):
+        self.collect()
+        shutil.rmtree(self.out / "functions")
+        self.assertEqual(self.collect(failures={"functions"}), 0)
+        manifest = self.manifest()
+        self.assertEqual(manifest["erros"], self.metadata()["errors"])
+        self.assertEqual({error["section"] for error in manifest["erros"]}, {"functions", "functions.sql"})
+        self.assertEqual(manifest["carried"], ["functions"])
+        self.assertIn("| parcial ·", self.unified_index())
+
+    def test_recovery_clears_heartbeat_errors_and_carried_sections(self):
+        self.collect()
+        self.collect(failures={"functions", "migrations"})
+        self.assertTrue(self.manifest()["erros"])
+        self.assertEqual(set(self.manifest()["carried"]), {"functions", "migrations"})
+        self.assertEqual(self.collect(), 0)
+        self.assertEqual(self.manifest()["erros"], [])
+        self.assertEqual(self.manifest()["carried"], [])
+
+    def test_index_prefers_current_heartbeat_to_old_structural_changelog(self):
+        self.collect()
+        (self.out / "CHANGELOG.md").write_text("# Histórico\n\n## 2000-01-01 00:00 UTC\n", encoding="utf-8")
+        document = self.unified_index()
+        self.assertIn("| ok ·", document)
+        self.assertNotIn("desatualizado", document)
+        (self.out / "manifest.json").unlink()
+        self.assertIn("| desatualizado ·", self.unified_index())
+
+    def test_unavailable_collection_does_not_renew_previous_heartbeat(self):
+        self.collect()
+        before = (self.out / "manifest.json").read_bytes()
+        with mock.patch.object(self.snapshot, "introspect_db", return_value=({"functions": None, "migrations": None}, {})):
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(self.snapshot.main(), 1)
+        self.assertEqual((self.out / "manifest.json").read_bytes(), before)
+
+    def test_interrupted_render_does_not_publish_a_completed_heartbeat(self):
+        with mock.patch.object(self.snapshot, "render_simple", side_effect=RuntimeError("falha de escrita simulada")):
+            with self.assertRaisesRegex(RuntimeError, "falha de escrita"):
+                self.collect()
+        self.assertFalse((self.out / "manifest.json").exists())
 
 
 def source_freshness_case(failed_sources):
