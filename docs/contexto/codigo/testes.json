@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2548,
+ "total": 2553,
  "por_tipo": {
   "contrato": 113,
   "e2e": 72,
   "pytest": 3,
   "qa": 6,
-  "unit": 2264
+  "unit": 2269
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 178
+   "arquivos": 183
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -381,7 +381,7 @@
   {
    "arquivo": "e2e/location-picker.spec.ts",
    "tipo": "e2e",
-   "linhas": 203,
+   "linhas": 243,
    "testa": [],
    "casos": 2
   },
@@ -972,12 +972,12 @@
   {
    "arquivo": "scripts/ci/e2e-auth-isolation.unit.mjs",
    "tipo": "unit",
-   "linhas": 259,
+   "linhas": 283,
    "testa": [
     "scripts/e2e-isolated/admission.mjs",
     "src/config/supabase.ts"
    ],
-   "casos": 7
+   "casos": 8
   },
   {
    "arquivo": "scripts/ci/e2e-auth-setup.unit.mjs",
@@ -992,6 +992,17 @@
    "linhas": 327,
    "testa": [],
    "casos": 18
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-gateway.unit.mjs",
+   "tipo": "unit",
+   "linhas": 111,
+   "testa": [
+    "scripts/e2e-isolated/gateway.mjs",
+    "scripts/e2e-isolated/runtime-contract.mjs",
+    "scripts/e2e-isolated/tls.mjs"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-images.unit.mjs",
@@ -1038,16 +1049,45 @@
    "casos": 40
   },
   {
+   "arquivo": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
+   "tipo": "unit",
+   "linhas": 62,
+   "testa": [
+    "scripts/e2e-isolated/runtime-contract.mjs"
+   ],
+   "casos": 4
+  },
+  {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
    "tipo": "unit",
-   "linhas": 494,
+   "linhas": 688,
    "testa": [
     "scripts/e2e-isolated/migrations.mjs",
     "scripts/e2e-isolated/run.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs",
-    "scripts/e2e-isolated/stack.mjs"
+    "scripts/e2e-isolated/stack.mjs",
+    "scripts/e2e-isolated/tls.mjs"
    ],
-   "casos": 18
+   "casos": 22
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
+   "tipo": "unit",
+   "linhas": 51,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 3
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-tls.unit.mjs",
+   "tipo": "unit",
+   "linhas": 432,
+   "testa": [
+    "scripts/e2e-isolated/tls-probe.mjs",
+    "scripts/e2e-isolated/tls.mjs"
+   ],
+   "casos": 30
   },
   {
    "arquivo": "scripts/ci/e2e-isolated.unit.mjs",
@@ -1067,6 +1107,15 @@
     "scripts/ci/workflow-test-support.mjs"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "scripts/ci/e2e-tarefas-project.unit.mjs",
+   "tipo": "unit",
+   "linhas": 60,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 6
   },
   {
    "arquivo": "scripts/ci/e2e-teardown.unit.mjs",
@@ -13503,11 +13552,11 @@
   {
    "arquivo": "src/config/__tests__/supabase.test.ts",
    "tipo": "unit",
-   "linhas": 67,
+   "linhas": 89,
    "testa": [
     "src/config/supabase.ts"
    ],
-   "casos": 5
+   "casos": 6
   },
   {
    "arquivo": "src/features/talk-me/__tests__/TalkMeView.test.tsx",
@@ -23210,7 +23259,7 @@
   "scripts/ci/sla-code-scanning.mjs": 1,
   "scripts/ci/typecheck-ratchet.mjs": 1,
   "scripts/ci/vercel-env-baseline.mjs": 1,
-  "scripts/ci/workflow-test-support.mjs": 10,
+  "scripts/ci/workflow-test-support.mjs": 12,
   "scripts/db-audit/check-realtime-subscriptions.mjs": 1,
   "scripts/db-audit/check-runtime-config.mjs": 1,
   "scripts/db-audit/confirm-hash.mjs": 1,
@@ -23229,13 +23278,15 @@
   "scripts/db-audit/verify-ledger-statements.mjs": 1,
   "scripts/db-tests/rpc-envelope.mjs": 1,
   "scripts/e2e-isolated/admission.mjs": 2,
-  "scripts/e2e-isolated/gateway.mjs": 1,
+  "scripts/e2e-isolated/gateway.mjs": 2,
   "scripts/e2e-isolated/migrations.mjs": 2,
   "scripts/e2e-isolated/resolve-images.mjs": 1,
   "scripts/e2e-isolated/results.mjs": 1,
   "scripts/e2e-isolated/run.mjs": 1,
-  "scripts/e2e-isolated/runtime-contract.mjs": 4,
+  "scripts/e2e-isolated/runtime-contract.mjs": 6,
   "scripts/e2e-isolated/stack.mjs": 1,
+  "scripts/e2e-isolated/tls-probe.mjs": 1,
+  "scripts/e2e-isolated/tls.mjs": 3,
   "scripts/edge-deploy/allowed-origins.json": 1,
   "scripts/edge-deploy/deploy-plan.mjs": 1,
   "scripts/edge-deploy/deployment-record.mjs": 1,

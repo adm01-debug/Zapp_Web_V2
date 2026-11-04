@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
+  "sha": "f32223dda83b86d1f94eaec0f1b4230aa259535c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 13:06 UTC",
-  "files_total": 8030,
-  "code_files": 5934,
-  "code_lines": 1023344
+  "generated_at": "2026-11-04 14:56 UTC",
+  "files_total": 8038,
+  "code_files": 5942,
+  "code_lines": 1024812
  },
  "version": "1.3.2",
- "facts_hash": "72e3339b12b162ef",
+ "facts_hash": "6821fe1f299f2423",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -305,9 +305,9 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1858,
+   ".ts": 1859,
    ".sql": 1280,
-   ".mjs": 357,
+   ".mjs": 364,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67380,7 +67380,7 @@
   {
    "module": "(raiz)",
    "files": 8,
-   "lines": 1211,
+   "lines": 1210,
    "tables": [],
    "exports": [
     "eslint.config.js: tseslint",
@@ -67586,7 +67586,7 @@
   {
    "module": "e2e",
    "files": 75,
-   "lines": 16754,
+   "lines": 16794,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -67730,8 +67730,8 @@
   },
   {
    "module": "scripts",
-   "files": 385,
-   "lines": 72536,
+   "files": 393,
+   "lines": 73943,
    "tables": [
     "a",
     "alem_do_limite",
@@ -67944,9 +67944,9 @@
     "scripts/ci/e2e-auth-isolation.unit.mjs",
     "scripts/ci/e2e-auth-setup.unit.mjs",
     "scripts/ci/e2e-email-axe-ready.unit.mjs",
+    "scripts/ci/e2e-isolated-gateway.unit.mjs",
     "scripts/ci/e2e-isolated-images.unit.mjs",
-    "scripts/ci/e2e-isolated-loader.unit.mjs",
-    "scripts/ci/e2e-isolated-login-seed.unit.mjs"
+    "scripts/ci/e2e-isolated-loader.unit.mjs"
    ]
   },
   {
@@ -68301,7 +68301,7 @@
   {
    "module": "src/config",
    "files": 3,
-   "lines": 125,
+   "lines": 147,
    "tables": [],
    "exports": [
     "service_worker.ts: SERVICE_WORKER_ENABLED, PUSH_NOTIFICATIONS_ENABLED",
@@ -73538,6 +73538,9 @@
    "DENO_ENV": [
     "supabase/functions/_shared/providers/__tests__/registry.test.ts"
    ],
+   "DENO_TLS_CA_STORE": [
+    "scripts/e2e-isolated/tls-edge-probe.ts"
+   ],
    "DESTINO_URL": [
     "scripts/db-audit/check-catalog-fresh.mjs",
     "scripts/db-audit/check-manifest-fresh.mjs",
@@ -73790,6 +73793,7 @@
     "scripts/e2e-isolated/gateway.mjs",
     "scripts/e2e-isolated/runtime-probe.mjs",
     "scripts/e2e-isolated/seed-login.mjs",
+    "scripts/e2e-isolated/tls-edge-probe.ts",
     "vite.config.ts"
    ],
    "GITHUB_STEP_SUMMARY": [
@@ -73875,7 +73879,8 @@
     "scripts/ci/actions-kpi.mjs"
    ],
    "JWT_SECRET": [
-    "scripts/e2e-isolated/main/index.ts"
+    "scripts/e2e-isolated/main/index.ts",
+    "scripts/e2e-isolated/tls-edge-probe.ts"
    ],
    "LEDGER_EVIDENCE_OUTPUT": [
     "scripts/db-audit/export-targeted-ledger-evidence.mjs"
@@ -73941,11 +73946,13 @@
     "scripts/ci/branch-hygiene-workflow.unit.mjs",
     "scripts/ci/contexto-publicacao.unit.mjs",
     "scripts/ci/db-guard-confiabilidade.unit.mjs",
+    "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
     "scripts/ci/prova-orcamento-argv-secrets.unit.mjs",
     "scripts/db-audit/global-guards-regression.test.mjs",
     "scripts/db-audit/validate-destino.test.mjs",
     "scripts/e2e-isolated/resolve-images.mjs",
     "scripts/e2e-isolated/run.mjs",
+    "scripts/e2e-isolated/tls.mjs",
     "scripts/edge-deploy/api-traversal.unit.mjs",
     "scripts/edge-deploy/log-injection.unit.mjs",
     "scripts/edge-deploy/secrets-scope.unit.mjs",
@@ -74177,6 +74184,9 @@
    "SRK": [
     "scripts/ai-context/cenarios.mjs"
    ],
+   "SSL_CERT_FILE": [
+    "scripts/e2e-isolated/tls-edge-probe.ts"
+   ],
    "STAT_STATEMENTS_TOP": [
     "scripts/supabase_snapshot/snapshot.py"
    ],
@@ -74236,6 +74246,7 @@
     "scripts/db-tests/run-all.mjs"
    ],
    "SUPABASE_SERVICE_ROLE_KEY": [
+    "scripts/e2e-isolated/tls-edge-probe.ts",
     "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts",
     "supabase/functions/_shared/__tests__/ai-auth.test.ts",
     "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
@@ -74472,7 +74483,8 @@
    "ZAPP_E2E_RUN_ID": [
     "scripts/e2e-isolated/gateway.mjs",
     "scripts/e2e-isolated/runtime-probe.mjs",
-    "scripts/e2e-isolated/seed-login.mjs"
+    "scripts/e2e-isolated/seed-login.mjs",
+    "scripts/e2e-isolated/tls-edge-probe.ts"
    ],
    "ZAPP_TEST_PG_PASSWORD": [
     "scripts/db-audit/psql-environment.integration.mjs"
@@ -75527,6 +75539,9 @@
   "external": {
    "http://127.0.0.1:9": [
     "src/test/guardaDeRede.test.ts"
+   ],
+   "https://127.0.0.1:": [
+    "scripts/e2e-isolated/tls-edge-probe.ts"
    ],
    "https://ai.gateway.lovable.dev": [
     "supabase/functions/_shared/ai-providers.ts",
@@ -80184,8 +80199,52 @@
     "msg": "credentials read before isolation"
    },
    {
+    "file": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
+    "msg": "synthetic transport rejection"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "ECONNREFUSED"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "Timeout 10000ms exceeded"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "Timeout 15000ms exceeded"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "Unacceptable TLS certificate"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "connection refused"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "context failed"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "invalid peer certificate: "
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "must-not-fetch"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-tls.unit.mjs",
+    "msg": "operation timed out"
+   },
+   {
     "file": "scripts/ci/e2e-recovery.unit.mjs",
     "msg": "rede proibida neste teste"
+   },
+   {
+    "file": "scripts/ci/e2e-tarefas-project.unit.mjs",
+    "msg": "R1_SKIP"
    },
    {
     "file": "scripts/ci/e2e-teardown.mjs",
@@ -80749,6 +80808,14 @@
    },
    {
     "file": "scripts/e2e-isolated/gateway.mjs",
+    "msg": "gateway-listen-failed"
+   },
+   {
+    "file": "scripts/e2e-isolated/gateway.mjs",
+    "msg": "gateway-tls-required"
+   },
+   {
+    "file": "scripts/e2e-isolated/gateway.mjs",
     "msg": "invalid-local-path"
    },
    {
@@ -80893,6 +80960,14 @@
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "tls-boot-proof-invalid"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "tls-origin-mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
     "msg": "unexpected-migration-failure"
    },
    {
@@ -80910,6 +80985,26 @@
    {
     "file": "scripts/e2e-isolated/seed-login.mjs",
     "msg": "[e2e-isolated/seed-http-"
+   },
+   {
+    "file": "scripts/e2e-isolated/tls-edge-probe.ts",
+    "msg": "identity"
+   },
+   {
+    "file": "scripts/e2e-isolated/tls-edge-probe.ts",
+    "msg": "invalid-tls-probe-environment"
+   },
+   {
+    "file": "scripts/e2e-isolated/tls-edge-probe.ts",
+    "msg": "negative-certificate"
+   },
+   {
+    "file": "scripts/e2e-isolated/tls-probe.mjs",
+    "msg": "[e2e-isolated/tls-"
+   },
+   {
+    "file": "scripts/e2e-isolated/tls.mjs",
+    "msg": "[e2e-isolated/tls-"
    },
    {
     "file": "scripts/e2e-isolated/main/index.ts",
@@ -87022,14 +87117,6 @@
    {
     "file": "playwright.config.ts",
     "text": "outro SO não pode ser comparada com o render do Linux do `e2e-logado.yml`."
-   },
-   {
-    "file": "playwright.config.ts",
-    "text": "auth.spec.ts exercita a tela de login deslogada (tabs, validação de"
-   },
-   {
-    "file": "playwright.config.ts",
-    "text": "formulário) e nunca deve depender do projeto \"setup\" — rodar só este"
    },
    {
     "file": "playwright.config.ts",
@@ -167484,6 +167571,10 @@
    },
    {
     "file": "src/config/__tests__/supabase.test.ts",
+    "name": "aceita HTTPS local em DEV na origem https://${host}${port}"
+   },
+   {
+    "file": "src/config/__tests__/supabase.test.ts",
     "name": "recusa URL local sem a chave, para não misturar a chave de produção com o banco local"
    },
    {
@@ -238651,6 +238742,7 @@
    "scripts/ci/e2e-isolated-images.unit.mjs",
    "scripts/ci/e2e-isolated-login-seed.unit.mjs",
    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "scripts/ci/e2e-isolated-tls.unit.mjs",
    "scripts/ci/e2e-isolated.unit.mjs",
    "scripts/ci/e2e-teardown.mjs",
    "scripts/ci/e2e-teardown.unit.mjs",
@@ -238684,6 +238776,7 @@
    "scripts/e2e-isolated/runtime-contract.mjs",
    "scripts/e2e-isolated/seed-login.mjs",
    "scripts/e2e-isolated/stack.mjs",
+   "scripts/e2e-isolated/tls-edge-probe.ts",
    "scripts/edge-deploy/secrets-scope.mjs",
    "scripts/edge-deploy/secrets-scope.unit.mjs",
    "scripts/eslint/no-secret-compare.js",
@@ -255517,7 +255610,7 @@
   },
   "playwright.config.ts": {
    "path": "playwright.config.ts",
-   "lines": 381,
+   "lines": 380,
    "exports": [
     "default defineConfig"
    ],
@@ -255532,8 +255625,6 @@
     "(E2E_TEST_EMAIL/E2E_TEST_PASSWORD) e o backend de verdade. Por isso valem 2 APENAS",
     "A regra e travada por scripts/ci/playwright-config-e81.unit.mjs.",
     "outro SO não pode ser comparada com o render do Linux do `e2e-logado.yml`.",
-    "auth.spec.ts exercita a tela de login deslogada (tabs, validação de",
-    "formulário) e nunca deve depender do projeto \"setup\" — rodar só este",
     "a propria porta e' o comportamento util. O que nao pode acontecer e'"
    ],
    "percents": [
@@ -258311,7 +258402,7 @@
   },
   "e2e/location-picker.spec.ts": {
    "path": "e2e/location-picker.spec.ts",
-   "lines": 203,
+   "lines": 243,
    "is_test": true,
    "params": [
     {
@@ -261136,7 +261227,7 @@
   },
   "scripts/ci/e2e-auth-isolation.unit.mjs": {
    "path": "scripts/ci/e2e-auth-isolation.unit.mjs",
-   "lines": 259,
+   "lines": 283,
    "errors": [
     "credential-canary password-canary",
     "leitura proibida: ${key}",
@@ -261205,6 +261296,23 @@
    "temporal": [
     "vm.runInContext(compiled, context, { timeout: 1000 });",
     "}, { timeout: 1000 });"
+   ]
+  },
+  "scripts/ci/e2e-isolated-gateway.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-gateway.unit.mjs",
+   "lines": 111,
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-gateway-native-node'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    }
+   ],
+   "rule_comments": [
+    "127.0.0.1:5173' }, { tls }), /gateway-tls-required/);"
    ]
   },
   "scripts/ci/e2e-isolated-images.unit.mjs": {
@@ -261282,9 +261390,22 @@
    "path": "scripts/ci/e2e-isolated-results.unit.mjs",
    "lines": 220
   },
+  "scripts/ci/e2e-isolated-runtime-probe.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
+   "lines": 62,
+   "errors": [
+    "synthetic transport rejection"
+   ],
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-tls-readiness-0001'"
+    }
+   ]
+  },
   "scripts/ci/e2e-isolated-runtime.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "lines": 494,
+   "lines": 688,
    "params": [
     {
      "name": "SOURCE_SHA",
@@ -261298,6 +261419,38 @@
      "name": "SQL",
      "value": "'select 1;\\n'"
     }
+   ],
+   "rule_comments": [
+    "A failed pre-database TLS probe must leave a useful redacted diagnostic."
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-tls-preparation.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
+   "lines": 51,
+   "env": [
+    "PATH"
+   ],
+   "temporal": [
+    "input: runOf(tlsStep()), cwd: temp, encoding: 'utf8', timeout: 10000,"
+   ]
+  },
+  "scripts/ci/e2e-isolated-tls.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-tls.unit.mjs",
+   "lines": 432,
+   "errors": [
+    "ECONNREFUSED",
+    "Timeout 10000ms exceeded",
+    "Timeout 15000ms exceeded",
+    "Unacceptable TLS certificate",
+    "connection refused",
+    "context failed",
+    "invalid peer certificate: ",
+    "must-not-fetch",
+    "operation timed out"
+   ],
+   "temporal": [
+    "minVersion: version, maxVersion: version, timeout: 5_000 }, response => {"
    ],
    "uses_service_role": true
   },
@@ -261329,6 +261482,13 @@
     "Executa os corpos reais de github-script com uma API somente em memoria."
    ],
    "doc": "Executa os corpos reais de github-script com uma API somente em memoria. O agendamento do Actions nao e emulado: o contrato estrutural abaixo exige um job unico dependente da matriz, e os cenarios avaliam seu guard real."
+  },
+  "scripts/ci/e2e-tarefas-project.unit.mjs": {
+   "path": "scripts/ci/e2e-tarefas-project.unit.mjs",
+   "lines": 60,
+   "errors": [
+    "R1_SKIP"
+   ]
   },
   "scripts/ci/e2e-teardown.mjs": {
    "path": "scripts/ci/e2e-teardown.mjs",
@@ -265310,7 +265470,7 @@
   },
   "scripts/e2e-isolated/gateway.mjs": {
    "path": "scripts/e2e-isolated/gateway.mjs",
-   "lines": 102,
+   "lines": 118,
    "exports": [
     "function routeRequest",
     "function createGateway"
@@ -265320,6 +265480,8 @@
     "ZAPP_E2E_RUN_ID"
    ],
    "errors": [
+    "gateway-listen-failed",
+    "gateway-tls-required",
     "invalid-local-path"
    ]
   },
@@ -265400,10 +265562,11 @@
   },
   "scripts/e2e-isolated/run.mjs": {
    "path": "scripts/e2e-isolated/run.mjs",
-   "lines": 452,
+   "lines": 511,
    "exports": [
     "function assertPinnedImages",
     "function functionPolicy",
+    "function assertTlsClientProof",
     "function prepareMountTargets",
     "function runLogin"
    ],
@@ -265438,6 +265601,8 @@
     "playwright-image-version-mismatch",
     "real-platform-schema-missing",
     "run-cancelled",
+    "tls-boot-proof-invalid",
+    "tls-origin-mismatch",
     "unexpected-migration-failure",
     "unsafe-work-mount-target",
     "usage: run.mjs login <output-directory>"
@@ -265455,7 +265620,7 @@
   },
   "scripts/e2e-isolated/runtime-contract.mjs": {
    "path": "scripts/e2e-isolated/runtime-contract.mjs",
-   "lines": 147,
+   "lines": 148,
    "exports": [
     "const ORIGIN",
     "const OFFICIAL_HOST",
@@ -265485,7 +265650,7 @@
    "params": [
     {
      "name": "ORIGIN",
-     "value": "'http://127.0.0.1:5173'"
+     "value": "'https://127.0.0.1:5173'"
     },
     {
      "name": "OFFICIAL_HOST",
@@ -265512,7 +265677,7 @@
   },
   "scripts/e2e-isolated/runtime-probe.mjs": {
    "path": "scripts/e2e-isolated/runtime-probe.mjs",
-   "lines": 67,
+   "lines": 88,
    "env": [
     "ANON_KEY",
     "API_URL",
@@ -265548,6 +265713,93 @@
     "function containerArguments"
    ],
    "uses_service_role": true
+  },
+  "scripts/e2e-isolated/tls-edge-probe.ts": {
+   "path": "scripts/e2e-isolated/tls-edge-probe.ts",
+   "lines": 39,
+   "external_urls": [
+    "https://127.0.0.1:"
+   ],
+   "env": [
+    "DENO_TLS_CA_STORE",
+    "GITHUB_SHA",
+    "JWT_SECRET",
+    "SSL_CERT_FILE",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "ZAPP_E2E_RUN_ID"
+   ],
+   "errors": [
+    "identity",
+    "invalid-tls-probe-environment",
+    "negative-certificate"
+   ],
+   "doc": "Compile as a temporary Edge main-service; never register as an app function.",
+   "uses_service_role": true
+  },
+  "scripts/e2e-isolated/tls-probe.mjs": {
+   "path": "scripts/e2e-isolated/tls-probe.mjs",
+   "lines": 112,
+   "exports": [
+    "function certificateFailure",
+    "function assertTlsClientContext",
+    "function probeClient",
+    "function probeBrowsers",
+    "function probeEdge"
+   ],
+   "errors": [
+    "[e2e-isolated/tls-"
+   ],
+   "temporal": [
+    "const response = await page.goto(TLS_ORIGIN + '/__e2e/tls-probe', { waitUntil: 'load', timeout: 15_000 });",
+    "try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }"
+   ]
+  },
+  "scripts/e2e-isolated/tls.mjs": {
+   "path": "scripts/e2e-isolated/tls.mjs",
+   "lines": 225,
+   "exports": [
+    "const TLS_ORIGIN",
+    "const TLS_PUBLIC",
+    "const TLS_PRIVATE",
+    "const TLS_CONTROLS",
+    "const TLS_PNG",
+    "function preflightTlsTools",
+    "function createTlsMaterial",
+    "function tlsMounts",
+    "function tlsEnvironment",
+    "function installDriverTlsTrust",
+    "function readGatewayTls",
+    "function serveTlsProbe",
+    "function startTlsControlServers"
+   ],
+   "env": [
+    "PATH"
+   ],
+   "errors": [
+    "[e2e-isolated/tls-"
+   ],
+   "params": [
+    {
+     "name": "TLS_ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "TLS_PUBLIC",
+     "value": "'/run/zapp-e2e-tls'"
+    },
+    {
+     "name": "TLS_PRIVATE",
+     "value": "'/run/zapp-e2e-tls-private'"
+    }
+   ],
+   "role_checks": [
+    "driver",
+    "edge",
+    "gateway"
+   ],
+   "temporal": [
+    "cwd, env: { PATH: process.env.PATH }, encoding: 'utf8', timeout: 60_000,"
+   ]
   },
   "scripts/e2e-isolated/main/index.ts": {
    "path": "scripts/e2e-isolated/main/index.ts",
@@ -311762,13 +312014,14 @@
   },
   "src/config/__tests__/supabase.test.ts": {
    "path": "src/config/__tests__/supabase.test.ts",
-   "lines": 67,
+   "lines": 89,
    "is_test": true,
    "tests": [
     "resolveLocalSupabase",
     "sem variáveis, o app fica no banco oficial",
     "aceita o banco local em 127.0.0.1 e em localhost, e devolve só a origem",
     "recusa qualquer endereço que não seja a própria máquina",
+    "aceita HTTPS local em DEV na origem https://${host}${port}",
     "recusa URL local sem a chave, para não misturar a chave de produção com o banco local",
     "em build de produção o desvio é ignorado mesmo com as variáveis presentes"
    ]
@@ -379988,10 +380241,48 @@
   }
  },
  "git": {
-  "sha": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
+  "sha": "f32223dda83b86d1f94eaec0f1b4230aa259535c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f32223d",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)",
+    "files": [
+     ".github/workflows/e2e-logado-isolado.yml",
+     "e2e/location-picker.spec.ts",
+     "e2e/tarefas-quadro.spec.ts",
+     "playwright.config.ts",
+     "scripts/ci/e2e-auth-isolation.unit.mjs",
+     "scripts/ci/e2e-isolated-gateway.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
+     "scripts/ci/e2e-isolated-tls.unit.mjs",
+     "scripts/ci/e2e-isolated.unit.mjs",
+     "scripts/ci/e2e-tarefas-project.unit.mjs",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/admission.mjs",
+     "scripts/e2e-isolated/gateway.mjs",
+     "scripts/e2e-isolated/run.mjs",
+     "scripts/e2e-isolated/runtime-contract.mjs",
+     "scripts/e2e-isolated/runtime-probe.mjs",
+     "scripts/e2e-isolated/tls-edge-probe.ts",
+     "scripts/e2e-isolated/tls-probe.mjs",
+     "scripts/e2e-isolated/tls.mjs",
+     "src/config/__tests__/supabase.test.ts",
+     "src/config/supabase.ts"
+    ]
+   },
+   {
+    "sha": "6feabdf",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "chore: adicionar __pycache__/ ao .gitignore (#2703)",
+    "files": []
+   },
    {
     "sha": "46a0257",
     "date": "2026-11-04",
@@ -380419,30 +380710,12 @@
     "files": [
      "docs/contexto/regras/manual/regras.md"
     ]
-   },
-   {
-    "sha": "639a500",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)",
-    "files": [
-     "docs/contexto/regras/manual/regras.md"
-    ]
-   },
-   {
-    "sha": "8f2d06a",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)",
-    "files": [
-     "scripts/regras_negocio/generate.py"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/contexto/regras/manual/regras.md",
-    5
+    4
    ],
    [
     ".github/workflows/db-guard.yml",
@@ -380455,6 +380728,54 @@
    [
     "scripts/supabase_snapshot/snapshot.py",
     3
+   ],
+   [
+    ".github/workflows/e2e-logado-isolado.yml",
+    2
+   ],
+   [
+    "e2e/location-picker.spec.ts",
+    2
+   ],
+   [
+    "playwright.config.ts",
+    2
+   ],
+   [
+    "scripts/ci/e2e-auth-isolation.unit.mjs",
+    2
+   ],
+   [
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    2
+   ],
+   [
+    "scripts/ci/e2e-isolated.unit.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/README.md",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/admission.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/gateway.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/run.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/runtime-contract.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/runtime-probe.mjs",
+    2
    ],
    [
     "docs/ci/README.md",
@@ -380471,54 +380792,6 @@
    [
     "scripts/ci/e2e-auth-setup.unit.mjs",
     2
-   ],
-   [
-    "scripts/db-audit/README.md",
-    2
-   ],
-   [
-    ".github/workflows/ci.yml",
-    2
-   ],
-   [
-    "scripts/db-audit/grants-baseline.json",
-    2
-   ],
-   [
-    "scripts/ai-context/README.md",
-    2
-   ],
-   [
-    "scripts/ai-context/gerar.mjs",
-    2
-   ],
-   [
-    "scripts/ai-context/gerar.unit.mjs",
-    2
-   ],
-   [
-    "scripts/regras_negocio/generate.py",
-    2
-   ],
-   [
-    "docs/DB-INVENTORY.md",
-    2
-   ],
-   [
-    "src/hooks/crm/__tests__/useVisibleAgents.test.tsx",
-    2
-   ],
-   [
-    "supabase/deployment-manifest.json",
-    2
-   ],
-   [
-    ".github/workflows/e2e-logado-isolado.yml",
-    1
-   ],
-   [
-    "CLAUDE.md",
-    1
    ]
   ]
  }

@@ -3,11 +3,11 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4178)",
+   "TypeScript (4179)",
    "SQL (1280)",
    "Markdown (1034)",
    "JSON (594)",
-   "JavaScript (383)",
+   "JavaScript (390)",
    "Shell (231)",
    "Python (119)",
    "YAML (28)"
@@ -1887,6 +1887,10 @@
     "arquivos": 2
    },
    {
+    "host": "external.invalid",
+    "arquivos": 2
+   },
+   {
     "host": "facebook.com",
     "arquivos": 2
    },
@@ -2104,10 +2108,6 @@
    },
    {
     "host": "example.test",
-    "arquivos": 1
-   },
-   {
-    "host": "external.invalid",
     "arquivos": 1
    },
    {
@@ -2635,12 +2635,12 @@
     "ocorrencias": 11
    },
    {
-    "papel": "radio",
+    "papel": "option",
     "ocorrencias": 11
    },
    {
-    "papel": "option",
-    "ocorrencias": 10
+    "papel": "radio",
+    "ocorrencias": 11
    },
    {
     "papel": "progressbar",
@@ -2787,11 +2787,23 @@
     "ocorrencias": 1
    },
    {
+    "papel": "driver",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "edge",
+    "ocorrencias": 1
+   },
+   {
     "papel": "form",
     "ocorrencias": 1
    },
    {
     "papel": "fundo",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "gateway",
     "ocorrencias": 1
    },
    {

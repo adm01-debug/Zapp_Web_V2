@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 397,
+ "total": 400,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3649,7 +3649,7 @@
   {
    "arquivo": "scripts/e2e-isolated/gateway.mjs",
    "descricao": null,
-   "linhas": 102,
+   "linhas": 118,
    "env": [
     "GITHUB_SHA",
     "ZAPP_E2E_RUN_ID"
@@ -3759,7 +3759,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 452,
+   "linhas": 511,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"
@@ -3782,7 +3782,7 @@
   {
    "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
    "descricao": null,
-   "linhas": 147,
+   "linhas": 148,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3791,7 +3791,7 @@
   {
    "arquivo": "scripts/e2e-isolated/runtime-probe.mjs",
    "descricao": null,
-   "linhas": 67,
+   "linhas": 88,
    "env": [
     "ANON_KEY",
     "API_URL",
@@ -3824,6 +3824,42 @@
    "descricao": null,
    "linhas": 132,
    "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/tls-edge-probe.ts",
+   "descricao": "Compile as a temporary Edge main-service; never register as an app function.",
+   "linhas": 39,
+   "env": [
+    "DENO_TLS_CA_STORE",
+    "GITHUB_SHA",
+    "JWT_SECRET",
+    "SSL_CERT_FILE",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "ZAPP_E2E_RUN_ID"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/tls-probe.mjs",
+   "descricao": null,
+   "linhas": 112,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/tls.mjs",
+   "descricao": null,
+   "linhas": 225,
+   "env": [
+    "PATH"
+   ],
    "npm_scripts": [],
    "workflows": [],
    "orfao": false

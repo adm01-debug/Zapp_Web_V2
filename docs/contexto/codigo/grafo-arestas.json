@@ -153,7 +153,8 @@
    "src/config/supabase.ts"
   ],
   "scripts/e2e-isolated/gateway.mjs": [
-   "scripts/e2e-isolated/runtime-contract.mjs"
+   "scripts/e2e-isolated/runtime-contract.mjs",
+   "scripts/e2e-isolated/tls.mjs"
   ],
   "scripts/e2e-isolated/main/index.ts": [
    "scripts/e2e-isolated/main/memory-pressure.ts"
@@ -169,7 +170,8 @@
    "scripts/e2e-isolated/migrations.mjs",
    "scripts/e2e-isolated/results.mjs",
    "scripts/e2e-isolated/runtime-contract.mjs",
-   "scripts/e2e-isolated/stack.mjs"
+   "scripts/e2e-isolated/stack.mjs",
+   "scripts/e2e-isolated/tls.mjs"
   ],
   "scripts/e2e-isolated/runtime-probe.mjs": [
    "scripts/e2e-isolated/runtime-contract.mjs"
@@ -178,6 +180,13 @@
    "scripts/e2e-isolated/runtime-contract.mjs"
   ],
   "scripts/e2e-isolated/stack.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
+  "scripts/e2e-isolated/tls-probe.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs",
+   "scripts/e2e-isolated/tls.mjs"
+  ],
+  "scripts/e2e-isolated/tls.mjs": [
    "scripts/e2e-isolated/runtime-contract.mjs"
   ],
   "scripts/edge-deploy/collect-remote.mjs": [

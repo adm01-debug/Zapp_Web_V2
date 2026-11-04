@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `46a0257333` · branch `main` · 2026-11-04 13:06 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f32223dda8` · branch `main` · 2026-11-04 14:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -252,7 +252,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 720 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 722 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -287,6 +287,7 @@
 - `scripts/ci/e2e-isolated-images.unit.mjs`
 - `scripts/ci/e2e-isolated-login-seed.unit.mjs`
 - `scripts/ci/e2e-isolated-runtime.unit.mjs`
+- `scripts/ci/e2e-isolated-tls.unit.mjs`
 - `scripts/ci/e2e-isolated.unit.mjs`
 - `scripts/ci/e2e-teardown.mjs`
 - `scripts/ci/e2e-teardown.unit.mjs`
@@ -320,6 +321,7 @@
 - `scripts/e2e-isolated/runtime-contract.mjs`
 - `scripts/e2e-isolated/seed-login.mjs`
 - `scripts/e2e-isolated/stack.mjs`
+- `scripts/e2e-isolated/tls-edge-probe.ts`
 - `scripts/edge-deploy/secrets-scope.mjs`
 - `scripts/edge-deploy/secrets-scope.unit.mjs`
 - `scripts/eslint/no-secret-compare.js`
@@ -402,9 +404,7 @@
 - `supabase/functions/ai-transcribe-audio/index.ts`
 - `supabase/functions/ai-usage-outbox-drain/index.test.ts`
 - `supabase/functions/approve-password-reset/index.test.ts`
-- `supabase/functions/approve-password-reset/index.ts`
-- `supabase/functions/auth-login/index.test.ts`
-- … +570 (lista completa em `context.json`)
+- … +572 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 

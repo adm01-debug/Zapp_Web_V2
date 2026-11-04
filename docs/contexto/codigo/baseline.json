@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
+  "commit": "f32223dda83b86d1f94eaec0f1b4230aa259535c",
   "branch": "main",
-  "data_commit": "2026-11-04T13:05:01Z",
+  "data_commit": "2026-11-04T11:54:47-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f32223d",
+    "data": "2026-11-04",
+    "assunto": "fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)"
+   },
+   {
+    "sha": "6feabdf",
+    "data": "2026-11-04",
+    "assunto": "chore: adicionar __pycache__/ ao .gitignore (#2703)"
+   },
    {
     "sha": "46a0257",
     "data": "2026-11-04",
@@ -121,79 +131,69 @@
     "sha": "a9aa6cf",
     "data": "2026-11-03",
     "assunto": "fix(ci): deploy-functions bloqueado — teste E57/E58 contava guardas de preflight como escrita de secrets (#2680)"
-   },
-   {
-    "sha": "c1c25d3",
-    "data": "2026-11-03",
-    "assunto": "fix: check-workflow-pins.mjs (W88) também valida o pin do shellcheck (#2659)"
-   },
-   {
-    "sha": "1616721",
-    "data": "2026-11-03",
-    "assunto": "chore(regras): §4.2 — envio com WhatsApp caído falha (não há fila offline); estado pós #2677 (#2679)"
    }
   ],
-  "arquivos_mudados_7d": 1312,
+  "arquivos_mudados_7d": 1298,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 1573
-   },
-   {
-    "pasta": "src/components/talkx",
-    "mudancas": 652
+    "mudancas": 1002
    },
    {
     "pasta": "docs/reconciliation/reaudit",
     "mudancas": 538
    },
    {
-    "pasta": "src/hooks/__tests__",
-    "mudancas": 333
+    "pasta": "src/components/talkx",
+    "mudancas": 348
    },
    {
-    "pasta": "src/components/dashboard",
-    "mudancas": 301
+    "pasta": "src/hooks/__tests__",
+    "mudancas": 258
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 286
-   },
-   {
-    "pasta": "src/hooks/integrations",
-    "mudancas": 278
-   },
-   {
-    "pasta": "src/components/ui",
-    "mudancas": 264
-   },
-   {
-    "pasta": "src/hooks/chat",
-    "mudancas": 239
-   },
-   {
-    "pasta": "src/components/tasks",
-    "mudancas": 233
-   },
-   {
-    "pasta": "src/components/contacts",
-    "mudancas": 228
-   },
-   {
-    "pasta": "src/components/settings",
-    "mudancas": 224
-   },
-   {
-    "pasta": "src/lib/__tests__",
-    "mudancas": 220
+    "mudancas": 222
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
     "mudancas": 211
    },
    {
-    "pasta": "src/components/admin",
-    "mudancas": 185
+    "pasta": "src/components/dashboard",
+    "mudancas": 196
+   },
+   {
+    "pasta": "src/components/ui",
+    "mudancas": 182
+   },
+   {
+    "pasta": "src/hooks/integrations",
+    "mudancas": 173
+   },
+   {
+    "pasta": "src/components/contacts",
+    "mudancas": 156
+   },
+   {
+    "pasta": "src/components/settings",
+    "mudancas": 154
+   },
+   {
+    "pasta": "src/hooks/chat",
+    "mudancas": 147
+   },
+   {
+    "pasta": "src/components/tasks",
+    "mudancas": 136
+   },
+   {
+    "pasta": "src/lib/__tests__",
+    "mudancas": 136
+   },
+   {
+    "pasta": "src/components/catalog",
+    "mudancas": 114
    }
   ],
   "arquivos_mais_mudados_90d": [
@@ -203,26 +203,14 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 15
-   },
-   {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 14
-   },
-   {
-    "arquivo": "ESTADO.md",
-    "mudancas": 14
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 14
    },
    {
@@ -230,15 +218,23 @@
     "mudancas": 13
    },
    {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 13
+   },
+   {
     "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 13
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 12
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "ESTADO.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 12
    },
    {
@@ -246,27 +242,27 @@
     "mudancas": 11
    },
    {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
+   },
+   {
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "mudancas": 9
    },
    {
     "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
-    "mudancas": 10
+    "mudancas": 9
    },
    {
     "arquivo": ".github/workflows/db-migrate.yml",
-    "mudancas": 9
+    "mudancas": 8
    },
    {
     "arquivo": "scripts/db-audit/known-violations.json",
-    "mudancas": 9
+    "mudancas": 8
    },
    {
     "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 8
    },
    {
@@ -278,10 +274,6 @@
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 7
-   },
-   {
     "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 7
    },
@@ -290,12 +282,20 @@
     "mudancas": 7
    },
    {
-    "arquivo": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+    "arquivo": "supabase/functions/deno.json",
     "mudancas": 7
    },
    {
-    "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 7
+   },
+   {
+    "arquivo": "AGENTS.md",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
+    "mudancas": 6
    }
   ],
   "autores_30d": [
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8189,
-  "arquivos_codigo": 4678,
-  "linhas_codigo": 857897,
+  "arquivos_total": 8197,
+  "arquivos_codigo": 4686,
+  "linhas_codigo": 859365,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,9 +332,9 @@
   "tabelas": 216,
   "migrations": 1082,
   "cron_jobs": 25,
-  "testes": 2548,
+  "testes": 2553,
   "workflows": 20,
-  "scripts": 397,
+  "scripts": 400,
   "docs_md": 1034
  },
  "por_pasta": {
@@ -484,7 +484,7 @@
   },
   "e2e/location-picker.spec.ts": {
    "arquivos": 1,
-   "linhas": 203
+   "linhas": 243
   },
   "e2e/media-volume.spec.ts": {
    "arquivos": 1,
@@ -592,7 +592,7 @@
   },
   "playwright.config.ts": {
    "arquivos": 1,
-   "linhas": 381
+   "linhas": 380
   },
   "postcss.config.js": {
    "arquivos": 1,
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 171,
-   "linhas": 33002
+   "arquivos": 176,
+   "linhas": 33936
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -623,8 +623,8 @@
    "linhas": 229
   },
   "scripts/e2e-isolated": {
-   "arquivos": 14,
-   "linhas": 2063
+   "arquivos": 17,
+   "linhas": 2536
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
@@ -704,7 +704,7 @@
   },
   "src/config": {
    "arquivos": 3,
-   "linhas": 125
+   "linhas": 147
   },
   "src/contexts": {
    "arquivos": 2,
@@ -907,7 +907,7 @@
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 46,
-  "arquivos_acima_500_linhas": 98
+  "arquivos_acima_500_linhas": 99
  },
  "todos": [
   {

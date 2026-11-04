@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `46a0257333` · branch `main` · 2026-11-04 13:06 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f32223dda8` · branch `main` · 2026-11-04 14:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4423,7 +4423,18 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | worker error | `scripts/ci/e2e-isolated-loader.unit.mjs` |
 | credentials read before gateway verification | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
 | credentials read before isolation | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
+| synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
+| ECONNREFUSED | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| Timeout 10000ms exceeded | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| Timeout 15000ms exceeded | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| Unacceptable TLS certificate | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| connection refused | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| context failed | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| invalid peer certificate:  | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| must-not-fetch | `scripts/ci/e2e-isolated-tls.unit.mjs` |
+| operation timed out | `scripts/ci/e2e-isolated-tls.unit.mjs` |
 | rede proibida neste teste | `scripts/ci/e2e-recovery.unit.mjs` |
+| R1_SKIP | `scripts/ci/e2e-tarefas-project.unit.mjs` |
 | RPC ${rpc} recusada (HTTP ${resposta.status}) | `scripts/ci/e2e-teardown.mjs` |
 | login do usuario de teste nao devolveu access_token | `scripts/ci/e2e-teardown.mjs` |
 | login do usuario de teste recusado (HTTP ${login.status}) | `scripts/ci/e2e-teardown.mjs` |
@@ -4472,18 +4483,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro. | `scripts/ci/typecheck-ratchet.mjs` |
 | Valor ausente para ${argument}. | `scripts/ci/typecheck-ratchet.mjs` |
 | tsc -b falhou com exit ${status}: ${normalizeWhitespace(output)} | `scripts/ci/typecheck-ratchet.mjs` |
-| tsc -b saiu com exit ${status} sem nenhum diagnostico TypeScript parseavel  | `scripts/ci/typecheck-ratchet.mjs` |
-| Target  | `scripts/ci/vercel-env-baseline.mjs` |
-| grep falhou:  | `scripts/ci/verify-crm-integration-doc.unit.mjs` |
-| DTD and entity declarations are not accepted | `scripts/db-audit/assert-deno-junit.py` |
-| duplicate test case name | `scripts/db-audit/assert-deno-junit.py` |
-| empty report | `scripts/db-audit/assert-deno-junit.py` |
-| expected test count must be positive | `scripts/db-audit/assert-deno-junit.py` |
-| test case name is missing | `scripts/db-audit/assert-deno-junit.py` |
-| tests counter disagrees with test cases | `scripts/db-audit/assert-deno-junit.py` |
-| unexpected JUnit root | `scripts/db-audit/assert-deno-junit.py` |
-| a raiz precisa ser um objeto JSON | `scripts/db-audit/check-catalog-fresh.mjs` |
-| … +1581 linhas — lista completa em `context.json` | |
+| … +1601 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4551,7 +4551,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21051 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21052 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5064,8 +5064,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | (E2E_TEST_EMAIL/E2E_TEST_PASSWORD) e o backend de verdade. Por isso valem 2 APENAS | `playwright.config.ts` |
 | A regra e travada por scripts/ci/playwright-config-e81.unit.mjs. | `playwright.config.ts` |
 | outro SO não pode ser comparada com o render do Linux do `e2e-logado.yml`. | `playwright.config.ts` |
-| auth.spec.ts exercita a tela de login deslogada (tabs, validação de | `playwright.config.ts` |
-| formulário) e nunca deve depender do projeto "setup" — rodar só este | `playwright.config.ts` |
 | a propria porta e' o comportamento util. O que nao pode acontecer e' | `playwright.config.ts` |
 | sem esta regra cai num chunk "dist-*" importado pelo ChatPanel. | `vite.config.ts` |
 | carga 33 e mais de 5 s com a maquina em carga 46-51 — ou seja, reprovava por PRAZO e nao | `vitest.contracts.config.ts` |
@@ -5357,4 +5355,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias. | `src/components/inbox/tabs/fileDisplay.ts` |
 | * Componente de APRESENTAÇÃO: não consulta banco nem Supabase, não guarda dado de negócio e não | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
 | 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
-| … +1645 linhas — lista completa em `context.json` | |
+| estático que some no mesmo prazo. Em ambos os casos `onDone` avisa o fim para | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
+| * Prazo do realce (2 pulsos), em ms. */ | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
+| … +1643 linhas — lista completa em `context.json` | |
