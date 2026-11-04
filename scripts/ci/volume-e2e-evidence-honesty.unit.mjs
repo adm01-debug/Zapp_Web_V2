@@ -1,24 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import vm from 'node:vm';
+import { stripTypeScriptTypes } from 'node:module';
 
-// VOL-05 (#480) — "E2E publicado comprova controles e persistência, com exceção de
-// áudio aceita". A auditoria (docs/reconciliation/FINDINGS.json, VOL-05) é explícita:
-// o run de UI do `e2e-logado` prova slider, persistência, mudo e `aria-label` do botão
-// de alertas — NÃO é prova de playback real. O caso que mede `<audio>.volume` está
-// `test.fixme` e não existe mensagem de áudio no fixture. O `required_fix` manda
-// "qualificar a evidência documental" e "manter a exceção explícita de E45"; o aceite
-// manda o fechamento continuar registrado "sem afirmar teste audível ou criação de
-// fixture" e "distinguir 38 passes/1 falha alheia do resultado específico de volume".
+// VOL-05 (#480) distingue a evidência histórica de 01/10 da preparação atual.
+// Os sete contratos documentais abaixo preservam o fechamento daquele run: 38
+// passaram/1 falhou, sem playback real nem fixture de áudio criada em produção.
+// Esse registro não é reescrito pela posterior autorização do backend descartável.
 //
-// Esta guarda trava as duas pontas para que ninguém promova o run de UI a prova de
-// audição (nem reabra o seed de áudio em produção para "fechar" o critério):
-//   - o plano não pode declarar audição comprovada — nem "à mão (E49)" no critério de
-//     aceite, nem playback real/fixture de áudio no fechamento;
-//   - o fechamento precisa manter a ressalva de audição, o estado da fixture e a
-//     distinção do run (38 passaram / 1 falhou, falha alheia ao volume);
-//   - o spec do E2E mantém a exceção ESTREITA: a asserção de `<audio>.volume` só pode
-//     viver dentro do `test.fixme`, nunca num caso que alega passar.
+// O spec atual possui áudio canônico no ambiente isolado. Sua preparação, bytes,
+// identidade por usuário, cardinalidade e metadados são exercitados pelos 50 casos
+// de e2e-media-volume-fixture.unit.mjs, no mesmo glob obrigatório de Node.
+// Estes dois guardas finais verificam a declaração ativa e o limite da evidência:
+// volume inicial/metadados não são audição, play() ou transcrição comprovados.
+// A coleta abaixo executa declarações reais do spec, sem callbacks de navegador;
+// texto em comentário/string não equivale a um teste registrado.
 
 const ler = (rel) => readFile(new URL(rel, import.meta.url), 'utf8');
 
@@ -168,26 +165,52 @@ test('VOL-05: o fechamento mantém a distinção do run (falha alheia ao resulta
   assert.match(fechamento, /nao e (de|do) volume/, 'o fechamento precisa manter que a falha NÃO é do volume');
 });
 
-// --- Spec real: a exceção de áudio tem de continuar estreita e documentada. ---
+// --- Spec atual: fixture isolada ativa, sem promovê-la a prova de playback. ---
+
+const AUDIO_TITLE = 'se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido';
+
+// Execute collection, never browser callbacks: comments and strings cannot register
+// a test. Real fixture/identity/readiness behavior remains covered by the existing
+// e2e-media-volume-fixture.unit.mjs, without running that suite a second time in CI.
+function auditDeclarations(source) {
+  const cases = [];
+  const register = kind => (title, callback) => cases.push({ kind, title, callable: typeof callback === 'function' });
+  const test = register('test');
+  test.fixme = register('fixme'); test.skip = register('skip'); test.only = register('only');
+  test.describe = (_title, callback) => callback();
+  test.beforeEach = test.afterAll = () => {};
+  const globals = { test, E2E_FIXTURE_CONTACT_ID: 'synthetic-contact',
+    MEDIA_VOLUME_LABEL: 'media', MEDIA_VOLUME_LABEL_MUTED: 'muted', MEDIA_VOLUME_SLIDER_LABEL: 'slider',
+    SOUND_VOLUME_LABEL: 'alert', SOUND_VOLUME_LABEL_MUTED: 'alert-muted' };
+  try {
+    const code = stripTypeScriptTypes(source).replace(/^import[\s\S]*?;\s*$/gm, '');
+    vm.runInNewContext(code, globals, { timeout: 1000 });
+  } catch { return ['spec-collection-failed']; }
+  const audio = cases.filter(item => item.title === AUDIO_TITLE);
+  const issues = [];
+  if (cases.length !== 3 || cases.some(item => item.kind !== 'test' || !item.callable)) issues.push('spec-cases-not-all-active');
+  if (audio.length !== 1 || audio[0].kind !== 'test' || !audio[0].callable) issues.push('audio-case-not-active-and-unique');
+  return issues;
+}
+
+function auditCurrentDisclosure(source) {
+  // These are source documentation assertions, not a claim of native playback.
+  const text = limpo(source.split('\n').filter(line => /^\s*\/\//.test(line)).map(line => line.replace(/^\s*\/\/\s?/, '')).join('\n'));
+  const issues = [];
+  if (!/backend descartavel isolado/.test(text)) issues.push('current-scope-not-isolated');
+  if (!/seed-files-tab\.mjs[^.]{0,100}audio canonico[^.]{0,100}jwt local[^.]{0,100}storage\/rls/.test(text)) issues.push('current-fixture-chain-undocumented');
+  if (!/metadados do audio canonico assinado pelo fluxo real do player/.test(text)) issues.push('current-evidence-not-metadata');
+  if (!/nao afirma reproducao audivel, play\(\) ou transcricao/.test(text)) issues.push('current-playback-limit-missing');
+  if (/(reproducao audivel|playback real|audio real)[^.]{0,80}(comprovad|validad|confirmad)/.test(text)) issues.push('current-claims-native-playback');
+  return issues;
+}
 
 const spec = await ler(SPEC_REL);
 
-test('VOL-05: a medição de <audio>.volume só existe dentro do caso test.fixme', () => {
-  const ocorrenciasFixme = spec.split('test.fixme(').length - 1;
-  assert.equal(ocorrenciasFixme, 1, 'o spec deve ter exatamente um caso test.fixme (o de áudio)');
-
-  const iFixme = spec.indexOf('test.fixme(');
-  const iVolume = spec.indexOf('HTMLAudioElement).volume');
-  assert.ok(iVolume > 0, 'o spec não mede mais <audio>.volume — a exceção de E45 sumiu sem substituto');
-  assert.ok(
-    iVolume > iFixme,
-    'a asserção de <audio>.volume saiu do test.fixme: um caso que alega passar não pode medir áudio sem fixture',
-  );
+test('VOL-05: o caso de volume do áudio está ativo e único no spec atual', () => {
+  assert.deepEqual(auditDeclarations(spec), [], 'o caso de áudio semeado precisa permanecer ativo e único');
 });
 
-test('VOL-05: o spec continua declarando o que NÃO prova e como reabilitar', () => {
-  const texto = limpo(spec);
-  assert.match(texto, /nao prova/, 'o spec precisa declarar explicitamente o que não prova');
-  assert.match(texto, /fixme/, 'o spec precisa manter o marcador fixme da exceção de E45');
-  assert.match(texto, /reabilitar/, 'o spec precisa registrar como reabilitar o caso de áudio');
+test('VOL-05: o spec atual limita a evidência a fixture isolada, metadados e volume', () => {
+  assert.deepEqual(auditCurrentDisclosure(spec), [], 'o spec perdeu a cadeia da fixture local ou passou a alegar playback real');
 });
