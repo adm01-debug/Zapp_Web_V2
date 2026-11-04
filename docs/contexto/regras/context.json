@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1681d0adbbd9c294707bc4a489af2398a846291c",
+  "sha": "5f3f7bd28914fd3b4ab1679e4ad4c064abf223f5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 18:36 UTC",
-  "files_total": 8055,
-  "code_files": 5958,
-  "code_lines": 1030701
+  "generated_at": "2026-11-04 20:31 UTC",
+  "files_total": 8060,
+  "code_files": 5963,
+  "code_lines": 1032225
  },
  "version": "1.3.2",
- "facts_hash": "688034dc46e3a959",
+ "facts_hash": "7e875d4c38939412",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -307,7 +307,7 @@
    ".tsx": 2319,
    ".ts": 1860,
    ".sql": 1280,
-   ".mjs": 379,
+   ".mjs": 384,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67586,7 +67586,7 @@
   {
    "module": "e2e",
    "files": 76,
-   "lines": 17238,
+   "lines": 17336,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -67614,7 +67614,7 @@
     "a11y-tarefas-dashboard.spec.ts: N-079 — E2E a11y: button-name e aria-progressbar-name em ?view=tasks e ?view=dashboard em 390 e 1280. Spec mockada (sessão falsa, app shell mockado, rede real bloqueada). O teste falha sem a correção (Y16: aria-label em botões e progressbar) e passa com ela (zero violações).",
     "inbox-contraste.spec.ts: E100-2 · contraste do inbox, medido no NAVEGADOR REAL. O teste de a11y do banner (`EvolutionDisconnectBanner.a11y.test.tsx`) roda em jsdom, que nao tem layout e portanto nao calcula contraste — a regra `color-contrast` fica de fora por limitacao tecnica. Resultado: o banner era testado em tudo, meno …",
     "catalog.ts: Fixtures E2E do módulo Catálogo (`?view=catalog`) — CT-81. Contato: NÃO duplicar o id. O contato fixo de produção já está versionado em `./e2e-contact` (`E2E_FIXTURE_CONTACT_ID`, `[E2E] Contato de teste`) e é reaproveitado aqui por import/re-export. Produto: o plano CT-81 citava o produto fixo `PO-1 …",
-    "seed-files-tab.mjs: !/usr/bin/env node Seed LOCAL da fixture da aba Arquivos (etapas 47/49 do PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS). POR QUE ESTE ARQUIVO EXISTE. As migrations `20261003182707_fixture_e2e_aba_arquivos_midia.sql` e `20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql` criam as LINHAS de pub …"
+    "seed-files-tab.mjs: !/usr/bin/env node"
    ],
    "deps": [
     "@playwright/test",
@@ -67734,8 +67734,8 @@
   },
   {
    "module": "scripts",
-   "files": 408,
-   "lines": 78568,
+   "files": 413,
+   "lines": 79843,
    "tables": [
     "a",
     "alem_do_limite",
@@ -67950,7 +67950,7 @@
     "scripts/ci/e2e-email-axe-ready.unit.mjs",
     "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
     "scripts/ci/e2e-isolated-alert.unit.mjs",
-    "scripts/ci/e2e-isolated-fixtures.unit.mjs"
+    "scripts/ci/e2e-isolated-collection.unit.mjs"
    ]
   },
   {
@@ -68064,7 +68064,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 367817,
+   "lines": 367968,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -73952,6 +73952,7 @@
     "scripts/ci/branch-hygiene-workflow.unit.mjs",
     "scripts/ci/contexto-publicacao.unit.mjs",
     "scripts/ci/db-guard-confiabilidade.unit.mjs",
+    "scripts/ci/e2e-isolated-collection.unit.mjs",
     "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
     "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
     "scripts/ci/e2e-isolated-tls.unit.mjs",
@@ -73960,6 +73961,7 @@
     "scripts/db-audit/global-guards-regression.test.mjs",
     "scripts/db-audit/validate-destino.test.mjs",
     "scripts/e2e-isolated/resolve-images.mjs",
+    "scripts/e2e-isolated/routine-ownership.mjs",
     "scripts/e2e-isolated/run.mjs",
     "scripts/e2e-isolated/tls.mjs",
     "scripts/edge-deploy/api-traversal.unit.mjs",
@@ -80261,6 +80263,10 @@
     "msg": "synthetic transport rejection"
    },
    {
+    "file": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "msg": "private-sentinel write failure"
+   },
+   {
     "file": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
     "msg": "helper must not open SQL"
    },
@@ -80347,6 +80353,14 @@
    {
     "file": "scripts/ci/e2e-isolated-tour.unit.mjs",
     "msg": "tour absent"
+   },
+   {
+    "file": "scripts/ci/e2e-media-volume-fixture.unit.mjs",
+    "msg": "blocked"
+   },
+   {
+    "file": "scripts/ci/e2e-media-volume-fixture.unit.mjs",
+    "msg": "seed-exit-"
    },
    {
     "file": "scripts/ci/e2e-recovery.unit.mjs",
@@ -80559,6 +80573,10 @@
    {
     "file": "scripts/ci/verify-crm-integration-doc.unit.mjs",
     "msg": "grep falhou: "
+   },
+   {
+    "file": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
+    "msg": ", SOUND_VOLUME_LABEL_MUTED: "
    },
    {
     "file": "scripts/db-audit/assert-deno-junit.py",
@@ -81005,6 +81023,10 @@
     "msg": "PLAYWRIGHT_REPORT_"
    },
    {
+    "file": "scripts/e2e-isolated/routine-ownership.mjs",
+    "msg": "routine-ownership-rejected"
+   },
+   {
     "file": "scripts/e2e-isolated/run.mjs",
     "msg": "active-migrations-missing"
    },
@@ -81074,10 +81096,6 @@
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
-    "msg": "login-inventory-not-exact"
-   },
-   {
-    "file": "scripts/e2e-isolated/run.mjs",
     "msg": "login-result-not-clean"
    },
    {
@@ -81118,15 +81136,15 @@
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "routine-ownership-failed"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
     "msg": "run-cancelled"
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
     "msg": "suite-handler-missing"
-   },
-   {
-    "file": "scripts/e2e-isolated/run.mjs",
-    "msg": "suite-inventory-invalid"
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
@@ -126416,6 +126434,10 @@
     "name": "mudo da mídia não silencia os alertas e persiste no reload"
    },
    {
+    "file": "e2e/media-volume.spec.ts",
+    "name": "se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido"
+   },
+   {
     "file": "e2e/messaging.spec.ts",
     "name": "Messaging flows"
    },
@@ -154206,6 +154228,30 @@
    {
     "file": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
     "name": "S31/D07: o painel do dial não tem violação de acessibilidade"
+   },
+   {
+    "file": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+    "name": "S15: Escape devolve foco ao gatilho após abrir por ${abertura}"
+   },
+   {
+    "file": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+    "name": "S15: Escape no dial também devolve foco sem alterar o volume"
+   },
+   {
+    "file": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+    "name": "S15: Escape após long press conserva a mesma devolução de foco"
+   },
+   {
+    "file": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+    "name": "S15: foco deliberado em outro campo fecha sem retornar ao gatilho"
+   },
+   {
+    "file": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+    "name": "S15: clique fora preserva o destino depois da desmontagem do painel"
+   },
+   {
+    "file": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+    "name": "S15: uma reabertura imediata preserva o foco do novo painel"
    },
    {
     "file": "src/components/nps/__tests__/NPSDashboard.erro.test.tsx",
@@ -239075,6 +239121,7 @@
    "scripts/ci/e2e-isolated-tls.unit.mjs",
    "scripts/ci/e2e-isolated-tour.unit.mjs",
    "scripts/ci/e2e-isolated.unit.mjs",
+   "scripts/ci/e2e-media-volume-fixture.unit.mjs",
    "scripts/ci/e2e-teardown.mjs",
    "scripts/ci/e2e-teardown.unit.mjs",
    "scripts/ci/edge-coverage-authz.unit.mjs",
@@ -258761,15 +258808,25 @@
   },
   "e2e/media-volume.spec.ts": {
    "path": "e2e/media-volume.spec.ts",
-   "lines": 177,
+   "lines": 202,
    "is_test": true,
+   "errors": [
+    "Sessão do projeto configurado ausente para a prova de volume"
+   ],
+   "params": [
+    {
+     "name": "AUDIO_FILE",
+     "value": "'e2e-media-volume.ogg'"
+    }
+   ],
    "temporal": [
     "timeout: 10_000,"
    ],
    "tests": [
     "Volume das mídias de conversa",
     "o controle da sidebar muda o volume e o valor sobrevive ao reload",
-    "mudo da mídia não silencia os alertas e persiste no reload"
+    "mudo da mídia não silencia os alertas e persiste no reload",
+    "se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido"
    ]
   },
   "e2e/messaging.spec.ts": {
@@ -259775,7 +259832,7 @@
   },
   "e2e/fixtures/seed-files-tab.mjs": {
    "path": "e2e/fixtures/seed-files-tab.mjs",
-   "lines": 222,
+   "lines": 295,
    "env": [
     "E2E_LOCAL_SUPABASE_ANON_KEY",
     "E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY",
@@ -259793,12 +259850,19 @@
     {
      "name": "FILE_2",
      "value": "'e2e-files-tab-2.png'"
+    },
+    {
+     "name": "AUDIO_FILE",
+     "value": "'e2e-media-volume.ogg'"
     }
    ],
    "rule_comments": [
     "em uso, então uma fixture local não pode reusar o host de produção."
    ],
-   "doc": "!/usr/bin/env node Seed LOCAL da fixture da aba Arquivos (etapas 47/49 do PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS). POR QUE ESTE ARQUIVO EXISTE. As migrations `20261003182707_fixture_e2e_aba_arquivos_midia.sql` e `20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql` criam as LINHAS de pub …",
+   "doc": "!/usr/bin/env node",
+   "temporal": [
+    "body: JSON.stringify({ expiresIn: 60 }),"
+   ],
    "uses_service_role": true
   },
   "e2e/fixtures/seed-talk-me.sql": {
@@ -261712,6 +261776,16 @@
    ],
    "doc": "API de issues em memória. Executa o github-script real e o marcador versionado; não envia mensagens nem lê relatórios privados do Playwright."
   },
+  "scripts/ci/e2e-isolated-collection.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-collection.unit.mjs",
+   "lines": 189,
+   "env": [
+    "PATH"
+   ],
+   "temporal": [
+    "{ encoding: 'utf8', timeout: 10_000, env: { PATH: process.env.PATH } });"
+   ]
+  },
   "scripts/ci/e2e-isolated-fixtures.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
    "lines": 132,
@@ -261868,6 +261942,40 @@
     }
    ]
   },
+  "scripts/ci/e2e-isolated-routine-ownership.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
+   "lines": 245,
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-ownership-unit'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    },
+    {
+     "name": "ANCHOR",
+     "value": "'b'"
+    },
+    {
+     "name": "DATABASE",
+     "value": "'c'"
+    },
+    {
+     "name": "IMAGE",
+     "value": "'supabase/postgres:17.6.1.159@sha256:'"
+    },
+    {
+     "name": "DRIVER",
+     "value": "'mcr.microsoft.com/playwright:v1.64.1-noble@sha256:'"
+    },
+    {
+     "name": "MOUNT",
+     "value": "'/var/lib/docker/volumes/'"
+    }
+   ]
+  },
   "scripts/ci/e2e-isolated-runtime-probe.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
    "lines": 62,
@@ -261883,9 +261991,12 @@
   },
   "scripts/ci/e2e-isolated-runtime.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "lines": 1118,
+   "lines": 1267,
    "env": [
     "GITHUB_OUTPUT"
+   ],
+   "errors": [
+    "private-sentinel write failure"
    ],
    "params": [
     {
@@ -262083,6 +262194,45 @@
    ],
    "temporal": [
     "assert.equal(claims.exp - claims.iat, 4 * 60 * 60);"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-media-volume-fixture.unit.mjs": {
+   "path": "scripts/ci/e2e-media-volume-fixture.unit.mjs",
+   "lines": 294,
+   "errors": [
+    "blocked",
+    "seed-exit-"
+   ],
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "USER",
+     "value": "'synthetic-media-user'"
+    },
+    {
+     "name": "ANON",
+     "value": "'synthetic-anon'"
+    },
+    {
+     "name": "SERVICE",
+     "value": "'synthetic-service'"
+    },
+    {
+     "name": "JWT",
+     "value": "'synthetic-user-jwt'"
+    },
+    {
+     "name": "AUDIO_FILE",
+     "value": "'e2e-media-volume.ogg'"
+    }
+   ],
+   "temporal": [
+    "assert.deepEqual(JSON.parse(init.body), { expiresIn: 60 });",
+    "assert.deepEqual(h.observed.polls, [{ options: { timeout: 10_000 }, target: 0.16, precision: 2 }]);"
    ],
    "uses_service_role": true
   },
@@ -263785,9 +263935,12 @@
   },
   "scripts/ci/volume-e2e-evidence-honesty.unit.mjs": {
    "path": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
-   "lines": 194,
+   "lines": 217,
    "exports": [
     "function auditarEvidenciaVolume"
+   ],
+   "errors": [
+    ", SOUND_VOLUME_LABEL_MUTED: "
    ],
    "params": [
     {
@@ -263800,13 +263953,16 @@
     }
    ],
    "rule_comments": [
-    "- o plano não pode declarar audição comprovada — nem \"à mão (E49)\" no critério de",
+    "Estes dois guardas finais verificam a declaração ativa e o limite da evidência:",
     "linha só — a prosa é hard-wrapped à mão e a guarda não deve quebrar quando alguém",
     "(1) O critério de aceite da audição dos alertas não pode declarar prova \"à mão",
     "(2) O fechamento não pode declarar audição/playback real comprovados.",
     "(3) O fechamento não pode declarar fixture/mensagem de áudio criada ou semeada.",
     "falha explicitamente fora do volume (o número é histórico; a REGRA é não atribuir a",
     "*run de validação:** 38 passaram, 1 falhou, e a falha não é de volume."
+   ],
+   "temporal": [
+    "vm.runInNewContext(code, globals, { timeout: 1000 });"
    ]
   },
   "scripts/ci/width-regression.unit.mjs": {
@@ -266075,6 +266231,20 @@
     "const response = await page.goto(`${target.origin}/__e2e/preflight`, { timeout: 15_000 });"
    ]
   },
+  "scripts/e2e-isolated/collection.mjs": {
+   "path": "scripts/e2e-isolated/collection.mjs",
+   "lines": 65,
+   "exports": [
+    "const MAX_COLLECTION_BYTES",
+    "function collectPlaywrightInventory"
+   ],
+   "params": [
+    {
+     "name": "MAX_COLLECTION_BYTES",
+     "value": "64"
+    }
+   ]
+  },
   "scripts/e2e-isolated/gateway.mjs": {
    "path": "scripts/e2e-isolated/gateway.mjs",
    "lines": 120,
@@ -266228,9 +266398,32 @@
     "The native inventory supplies the column; the complete identity must match."
    ]
   },
+  "scripts/e2e-isolated/routine-ownership.mjs": {
+   "path": "scripts/e2e-isolated/routine-ownership.mjs",
+   "lines": 304,
+   "exports": [
+    "const OWNERSHIP_ROUTINES",
+    "const OWNERSHIP_EXECUTOR_OPTIONS",
+    "function parseOwnershipResult",
+    "function restoreRoutineOwnership",
+    "function ownershipSql"
+   ],
+   "env": [
+    "PATH"
+   ],
+   "errors": [
+    "routine-ownership-rejected"
+   ],
+   "temporal": [
+    "export const OWNERSHIP_EXECUTOR_OPTIONS = Object.freeze({ timeout: 5_000, killSignal: 'SIGKILL', maxBuffer: 8_192 });"
+   ],
+   "side_effects": [
+    "invoke("
+   ]
+  },
   "scripts/e2e-isolated/run.mjs": {
    "path": "scripts/e2e-isolated/run.mjs",
-   "lines": 672,
+   "lines": 678,
    "exports": [
     "function parseFilesSeedDiagnostic",
     "function assertPinnedImages",
@@ -266264,7 +266457,6 @@
     "invalid-work-mount-target",
     "linux-user-required",
     "local-anon-setting-mismatch",
-    "login-inventory-not-exact",
     "login-result-not-clean",
     "migration-source-changed",
     "namespace-changed",
@@ -266275,9 +266467,9 @@
     "playwright-image-version-mismatch",
     "provider-proof-mismatch",
     "real-platform-schema-missing",
+    "routine-ownership-failed",
     "run-cancelled",
     "suite-handler-missing",
-    "suite-inventory-invalid",
     "suite-proof-unreadable",
     "suite-result-not-clean",
     "suite-seed-proof-mismatch",
@@ -266309,6 +266501,7 @@
     }
    ],
    "temporal": [
+    "...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),",
     "], { timeout: 210_000 });",
     "const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {",
     "const result = docker(['pull', image], { timeout: 15 * 60_000 });",
@@ -296203,11 +296396,15 @@
   },
   "src/components/notifications/__tests__/SoundVolumeControl.test.tsx": {
    "path": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
-   "lines": 366,
+   "lines": 517,
    "is_test": true,
+   "errors": [
+    "Content real do Popover não encontrado"
+   ],
    "rule_comments": [
     "A gravação é agrupada (~400 ms, D06/B6): avança o relógio além do prazo para provar",
-    "ele não pode alternar o mudo (regressão clássica do dedup)."
+    "ele não pode alternar o mudo (regressão clássica do dedup).",
+    "aprovar apenas o foco síncrono do hook antes do autofocus tardio do Radix."
    ],
    "tests": [
     "SoundVolumeControl — sobe e desce o volume dos alertas",
@@ -296234,7 +296431,13 @@
     "S39: mudo e volume não se misturam — desmutar devolve o último volume (nunca 0)",
     "S39: ajustar o volume com o alerta mudo não desmuta",
     "D07: o painel do dial fica em w-40 (30% mais estreito que o slider antigo)",
-    "S31/D07: o painel do dial não tem violação de acessibilidade"
+    "S31/D07: o painel do dial não tem violação de acessibilidade",
+    "S15: Escape devolve foco ao gatilho após abrir por ${abertura}",
+    "S15: Escape no dial também devolve foco sem alterar o volume",
+    "S15: Escape após long press conserva a mesma devolução de foco",
+    "S15: foco deliberado em outro campo fecha sem retornar ao gatilho",
+    "S15: clique fora preserva o destino depois da desmontagem do painel",
+    "S15: uma reabertura imediata preserva o foco do novo painel"
    ]
   },
   "src/components/nps/NPSDashboard.tsx": {
@@ -381052,10 +381255,31 @@
   }
  },
  "git": {
-  "sha": "1681d0adbbd9c294707bc4a489af2398a846291c",
+  "sha": "5f3f7bd28914fd3b4ab1679e4ad4c064abf223f5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5f3f7bd",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: validar owners, áudio e coleta do E2E isolado (#2719)",
+    "files": [
+     "e2e/fixtures/arquivos-local/seed.ts",
+     "e2e/fixtures/seed-files-tab.mjs",
+     "e2e/media-volume.spec.ts",
+     "scripts/ci/e2e-isolated-collection.unit.mjs",
+     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/ci/e2e-media-volume-fixture.unit.mjs",
+     "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/collection.mjs",
+     "scripts/e2e-isolated/routine-ownership.mjs",
+     "scripts/e2e-isolated/run.mjs",
+     "src/components/notifications/__tests__/SoundVolumeControl.test.tsx"
+    ]
+   },
    {
     "sha": "1681d0a",
     "date": "2026-11-04",
@@ -381564,18 +381788,21 @@
      "scripts/ci/check-workflow-pins.mjs",
      "scripts/ci/check-workflow-pins.unit.mjs"
     ]
-   },
-   {
-    "sha": "1616721",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(regras): §4.2 — envio com WhatsApp caído falha (não há fila offline); estado pós #2677 (#2679)",
-    "files": [
-     "docs/contexto/regras/manual/regras.md"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    4
+   ],
+   [
+    "scripts/e2e-isolated/README.md",
+    4
+   ],
+   [
+    "scripts/e2e-isolated/run.mjs",
+    4
+   ],
    [
     ".github/workflows/e2e-logado-isolado.yml",
     3
@@ -381585,19 +381812,7 @@
     3
    ],
    [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    3
-   ],
-   [
-    "scripts/e2e-isolated/README.md",
-    3
-   ],
-   [
     "scripts/e2e-isolated/gateway.mjs",
-    3
-   ],
-   [
-    "scripts/e2e-isolated/run.mjs",
     3
    ],
    [
@@ -381615,6 +381830,10 @@
    [
     "scripts/supabase_snapshot/snapshot.py",
     3
+   ],
+   [
+    "e2e/fixtures/arquivos-local/seed.ts",
+    2
    ],
    [
     "e2e/busca-global-paleta.spec.ts",
@@ -381650,10 +381869,6 @@
    ],
    [
     "scripts/ci/e2e-recovery.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/marcador-specs.unit.mjs",
     2
    ]
   ]

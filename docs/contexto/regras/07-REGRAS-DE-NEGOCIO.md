@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1681d0adbb` · branch `main` · 2026-11-04 18:36 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5f3f7bd289` · branch `main` · 2026-11-04 20:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4434,6 +4434,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
+| private-sentinel write failure | `scripts/ci/e2e-isolated-runtime.unit.mjs` |
 | helper must not open SQL | `scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs` |
 | synthetic EPIPE | `scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs` |
 | credential read too early | `scripts/ci/e2e-isolated-seed.unit.mjs` |
@@ -4456,6 +4457,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | private-file-canary | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | synthetic-login-failure | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | tour absent | `scripts/ci/e2e-isolated-tour.unit.mjs` |
+| blocked | `scripts/ci/e2e-media-volume-fixture.unit.mjs` |
+| seed-exit- | `scripts/ci/e2e-media-volume-fixture.unit.mjs` |
 | rede proibida neste teste | `scripts/ci/e2e-recovery.unit.mjs` |
 | R1_SKIP | `scripts/ci/e2e-tarefas-project.unit.mjs` |
 | RPC ${rpc} recusada (HTTP ${resposta.status}) | `scripts/ci/e2e-teardown.mjs` |
@@ -4480,10 +4483,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | ESLint falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)} | `scripts/ci/lint-ratchet.mjs` |
 | ESLint local nao encontrado. Execute a instalacao das dependencias primeiro. | `scripts/ci/lint-ratchet.mjs` |
 | ESLint nao produziu JSON valido: ${error.message} | `scripts/ci/lint-ratchet.mjs` |
-| Entrada invalida no relatorio JSON do ESLint. | `scripts/ci/lint-ratchet.mjs` |
-| Nao foi possivel ler ${description} em ${filePath}: ${error.message} | `scripts/ci/lint-ratchet.mjs` |
-| O ESLint ou eslint.config.js mudou desde a geracao do baseline. Revise a mudanca e regenere o baseline. | `scripts/ci/lint-ratchet.mjs` |
-| … +1642 linhas — lista completa em `context.json` | |
+| … +1646 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4551,7 +4551,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21086 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21093 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4641,6 +4641,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/__tests__/PlaybackSpeed.test.tsx` | 31 | AudioMessagePlayer - Playback Speed Controls · renders speed button with default 1x · speed button is visible for sent messages · speed button is visible for received messages … |
 | `src/components/inbox/__tests__/useInteractiveMessage.test.ts` | 31 | useInteractiveMessage — limites do WhatsApp · aceita 3 botões e recusa o 4º com aviso · aceita 10 seções e recusa a 11ª com aviso · aceita 10 itens numa seção e recusa o 11º com aviso … |
 | `src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx` | 31 | useLocationPicker · carrega o mapa e limpa o spinner no evento load · container que só aparece depois da troca de aba ainda cria o mapa e arma o watchdog · timeout do token vira mensagem de timeout e é reportado … |
+| `src/components/notifications/__tests__/SoundVolumeControl.test.tsx` | 31 | SoundVolumeControl — sobe e desce o volume dos alertas · com o painel aberto, sobe o volume de 5 em 5 com a roda para cima · com o painel aberto, desce o volume de 5 em 5 com a roda para baixo · com o painel FECHADO a roda não mexe no volume (B5 — rolar a sidebar não ajusta) … |
 | `src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx` | 31 | Tela 10 — configurações de agendamento (X137) · separa data e horário na parede local do fuso da campanha · o mínimo da data é hoje NO FUSO DA CAMPANHA, não hoje em UTC · salvar grava o mesmo instante e o mesmo fuso que foram lidos, com o perfil e a supressão … |
 | `src/components/gmail/__tests__/EmailComposer.test.tsx` | 30 | EmailComposer — inicialização e comportamento de envio · modo new: campo Para vazio e botão Enviar desabilitado · restaura rascunho isolado da conta e sinaliza anexos que precisam ser selecionados novamente · remove a sessão local e o draft remoto ao confirmar descarte de conteúdo restaurado … |
 | `src/components/inbox/chat/motion/__tests__/chat-motion.test.tsx` | 30 | AnimatedNumber · (1) com movimento reduzido entrega o valor final na hora, em pt-BR · (2) sem redução conta de 0 até o valor EXATO (não para em  · ShimmerSkeleton … |
@@ -4681,7 +4682,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/quarantineStore.test.ts` | 26 | subscribe / getSnapshot · chama o listener a cada mudança e para depois do unsubscribe · mantém a mesma referência de snapshot enquanto nada muda (contrato do useSyncExternalStore) · get … |
 | `src/segments/__tests__/segmentRules.test.ts` | 26 | normalizeRules · returns an empty v2 set for null input · converts numeric text to number on number fields · keeps numeric-looking text as string on text fields … |
 | `src/components/inbox/__tests__/MediaVolume.test.tsx` | 25 | volume das mídias — controle, aplicação e separação dos alertas · E38/E39: com a mídia em mudo, o alerta continua saindo no ganho de settings.soundVolume · E40: mexer no volume da mídia não cria nem altera nó WebAudio dos alertas · E38: mexer no volume da mídia não escreve nas configurações de notificação (soundVolume) … |
-| `src/components/notifications/__tests__/SoundVolumeControl.test.tsx` | 25 | SoundVolumeControl — sobe e desce o volume dos alertas · com o painel aberto, sobe o volume de 5 em 5 com a roda para cima · com o painel aberto, desce o volume de 5 em 5 com a roda para baixo · com o painel FECHADO a roda não mexe no volume (B5 — rolar a sidebar não ajusta) … |
 | `src/hooks/__tests__/useReauthentication.test.tsx` | 25 | useReauthentication · initializes with correct default state · reauthenticate succeeds with correct password · reauthenticate keeps AAL2 untouched when the session is already elevated … |
 | `src/hooks/chat/__tests__/useContactMedia.test.tsx` | 25 | useContactMedia — paginacao por keyset (etapa 41) · pede 60+1 por pagina e para no fim quando a pagina vem incompleta · pagina cheia (61 linhas) tem proxima pagina e o cursor (created_at, id) entra no 2o .or() · aceite etapa 41: 201 itens em 4 paginas de 60 e o 201o aparece no fim … |
 | `src/hooks/chat/__tests__/useFilesViewState.test.tsx` | 25 | useFilesViewState — preferencias (localStorage) · storage ausente: comeca no default decidido em D3 (grid, 4 colunas) · storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default · sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode … |

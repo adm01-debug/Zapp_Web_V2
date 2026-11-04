@@ -152,6 +152,9 @@
   "scripts/e2e-isolated/admission.mjs": [
    "src/config/supabase.ts"
   ],
+  "scripts/e2e-isolated/collection.mjs": [
+   "scripts/e2e-isolated/results.mjs"
+  ],
   "scripts/e2e-isolated/gateway.mjs": [
    "scripts/e2e-isolated/runtime-contract.mjs",
    "scripts/e2e-isolated/tls.mjs"
@@ -169,10 +172,15 @@
   "scripts/e2e-isolated/providers.mjs": [
    "scripts/e2e-isolated/runtime-contract.mjs"
   ],
+  "scripts/e2e-isolated/routine-ownership.mjs": [
+   "scripts/e2e-isolated/runtime-contract.mjs"
+  ],
   "scripts/e2e-isolated/run.mjs": [
+   "scripts/e2e-isolated/collection.mjs",
    "scripts/e2e-isolated/migrations.mjs",
    "scripts/e2e-isolated/provider-diagnostics.mjs",
    "scripts/e2e-isolated/results.mjs",
+   "scripts/e2e-isolated/routine-ownership.mjs",
    "scripts/e2e-isolated/runtime-contract.mjs",
    "scripts/e2e-isolated/stack.mjs",
    "scripts/e2e-isolated/tls.mjs"

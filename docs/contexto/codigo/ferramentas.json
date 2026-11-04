@@ -7,7 +7,7 @@
    "SQL (1280)",
    "Markdown (1035)",
    "JSON (594)",
-   "JavaScript (405)",
+   "JavaScript (410)",
    "Shell (231)",
    "Python (119)",
    "YAML (28)"
@@ -2100,6 +2100,10 @@
    },
    {
     "host": "fonts.gstatic.com",
+    "arquivos": 1
+   },
+   {
+    "host": "foreign.invalid",
     "arquivos": 1
    },
    {

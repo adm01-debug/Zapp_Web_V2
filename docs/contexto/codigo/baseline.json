@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1681d0adbbd9c294707bc4a489af2398a846291c",
+  "commit": "5f3f7bd28914fd3b4ab1679e4ad4c064abf223f5",
   "branch": "main",
-  "data_commit": "2026-11-04T18:35:02Z",
+  "data_commit": "2026-11-04T17:30:48-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5f3f7bd",
+    "data": "2026-11-04",
+    "assunto": "fix: validar owners, áudio e coleta do E2E isolado (#2719)"
+   },
    {
     "sha": "1681d0a",
     "data": "2026-11-04",
@@ -126,14 +131,9 @@
     "sha": "7a2e35e",
     "data": "2026-11-03",
     "assunto": "chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes "
-   },
-   {
-    "sha": "94d6ca2",
-    "data": "2026-11-03",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2688)"
    }
   ],
-  "arquivos_mudados_7d": 1262,
+  "arquivos_mudados_7d": 1259,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8214,
-  "arquivos_codigo": 4702,
-  "linhas_codigo": 865254,
+  "arquivos_total": 8219,
+  "arquivos_codigo": 4707,
+  "linhas_codigo": 866778,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,9 +332,9 @@
   "tabelas": 216,
   "migrations": 1082,
   "cron_jobs": 25,
-  "testes": 2565,
+  "testes": 2568,
   "workflows": 20,
-  "scripts": 404,
+  "scripts": 406,
   "docs_md": 1035
  },
  "por_pasta": {
@@ -468,7 +468,7 @@
   },
   "e2e/fixtures": {
    "arquivos": 17,
-   "linhas": 2746
+   "linhas": 2819
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "arquivos": 1,
@@ -488,7 +488,7 @@
   },
   "e2e/media-volume.spec.ts": {
    "arquivos": 1,
-   "linhas": 177
+   "linhas": 202
   },
   "e2e/messaging.spec.ts": {
    "arquivos": 1,
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 187,
-   "linhas": 37495
+   "arquivos": 190,
+   "linhas": 38395
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -623,8 +623,8 @@
    "linhas": 229
   },
   "scripts/e2e-isolated": {
-   "arquivos": 21,
-   "linhas": 3602
+   "arquivos": 23,
+   "linhas": 3977
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 367817
+   "linhas": 367968
   },
   "src/config": {
    "arquivos": 3,
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 424,
+  "console_log": 426,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 46,

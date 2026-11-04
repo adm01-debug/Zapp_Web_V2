@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2565,
+ "total": 2568,
  "por_tipo": {
   "contrato": 113,
   "e2e": 73,
   "pytest": 3,
   "qa": 6,
-  "unit": 2280
+  "unit": 2283
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 194
+   "arquivos": 197
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -348,7 +348,7 @@
   {
    "arquivo": "e2e/fixtures/seed-files-tab.mjs",
    "tipo": "e2e",
-   "linhas": 222,
+   "linhas": 295,
    "testa": [],
    "casos": 3
   },
@@ -397,12 +397,12 @@
   {
    "arquivo": "e2e/media-volume.spec.ts",
    "tipo": "e2e",
-   "linhas": 177,
+   "linhas": 202,
    "testa": [
     "src/lib/mediaVolumeStore.ts",
     "src/lib/volumeLabels.ts"
    ],
-   "casos": 5
+   "casos": 6
   },
   {
    "arquivo": "e2e/messaging.spec.ts",
@@ -1022,6 +1022,16 @@
    "casos": 2
   },
   {
+   "arquivo": "scripts/ci/e2e-isolated-collection.unit.mjs",
+   "tipo": "unit",
+   "linhas": 189,
+   "testa": [
+    "scripts/e2e-isolated/collection.mjs",
+    "scripts/e2e-isolated/results.mjs"
+   ],
+   "casos": 3
+  },
+  {
    "arquivo": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
    "tipo": "unit",
    "linhas": 132,
@@ -1118,6 +1128,16 @@
    "casos": 41
   },
   {
+   "arquivo": "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
+   "tipo": "unit",
+   "linhas": 245,
+   "testa": [
+    "scripts/e2e-isolated/routine-ownership.mjs",
+    "scripts/e2e-isolated/runtime-contract.mjs"
+   ],
+   "casos": 9
+  },
+  {
    "arquivo": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
    "tipo": "unit",
    "linhas": 62,
@@ -1129,16 +1149,17 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
    "tipo": "unit",
-   "linhas": 1118,
+   "linhas": 1267,
    "testa": [
     "scripts/e2e-isolated/migrations.mjs",
     "scripts/e2e-isolated/provider-diagnostics.mjs",
+    "scripts/e2e-isolated/routine-ownership.mjs",
     "scripts/e2e-isolated/run.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs",
     "scripts/e2e-isolated/stack.mjs",
     "scripts/e2e-isolated/tls.mjs"
    ],
-   "casos": 41
+   "casos": 50
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
@@ -1218,6 +1239,13 @@
     "scripts/e2e-isolated/runtime-contract.mjs"
    ],
    "casos": 18
+  },
+  {
+   "arquivo": "scripts/ci/e2e-media-volume-fixture.unit.mjs",
+   "tipo": "unit",
+   "linhas": 294,
+   "testa": [],
+   "casos": 8
   },
   {
    "arquivo": "scripts/ci/e2e-recovery.unit.mjs",
@@ -1779,9 +1807,9 @@
   {
    "arquivo": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
    "tipo": "unit",
-   "linhas": 194,
+   "linhas": 217,
    "testa": [],
-   "casos": 17
+   "casos": 23
   },
   {
    "arquivo": "scripts/ci/width-regression.unit.mjs",
@@ -9805,14 +9833,14 @@
   {
    "arquivo": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
    "tipo": "unit",
-   "linhas": 366,
+   "linhas": 517,
    "testa": [
     "src/components/notifications/SoundVolumeControl.tsx",
     "src/components/ui/tooltip.tsx",
     "src/hooks/ui/use-toast.ts",
     "src/lib/logger.ts"
    ],
-   "casos": 24
+   "casos": 30
   },
   {
    "arquivo": "src/components/nps/__tests__/NPSDashboard.erro.test.tsx",
@@ -23400,14 +23428,16 @@
   "scripts/db-audit/verify-ledger-statements.mjs": 1,
   "scripts/db-tests/rpc-envelope.mjs": 1,
   "scripts/e2e-isolated/admission.mjs": 4,
+  "scripts/e2e-isolated/collection.mjs": 1,
   "scripts/e2e-isolated/gateway.mjs": 2,
   "scripts/e2e-isolated/migrations.mjs": 3,
   "scripts/e2e-isolated/provider-diagnostics.mjs": 2,
   "scripts/e2e-isolated/providers.mjs": 2,
   "scripts/e2e-isolated/resolve-images.mjs": 1,
-  "scripts/e2e-isolated/results.mjs": 1,
+  "scripts/e2e-isolated/results.mjs": 2,
+  "scripts/e2e-isolated/routine-ownership.mjs": 2,
   "scripts/e2e-isolated/run.mjs": 3,
-  "scripts/e2e-isolated/runtime-contract.mjs": 14,
+  "scripts/e2e-isolated/runtime-contract.mjs": 15,
   "scripts/e2e-isolated/seed-suite.mjs": 2,
   "scripts/e2e-isolated/stack.mjs": 2,
   "scripts/e2e-isolated/tls-probe.mjs": 1,

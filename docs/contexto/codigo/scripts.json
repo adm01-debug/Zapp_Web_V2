@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 404,
+ "total": 406,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3643,6 +3643,15 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/collection.mjs",
+   "descricao": null,
+   "linhas": 65,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/gateway.mjs",
    "descricao": null,
    "linhas": 120,
@@ -3771,9 +3780,20 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/routine-ownership.mjs",
+   "descricao": "Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e. These are full SHA256 hashes of pg_get_functiondef, not the snapshot's JSON hash.",
+   "linhas": 304,
+   "env": [
+    "PATH"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 672,
+   "linhas": 678,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"

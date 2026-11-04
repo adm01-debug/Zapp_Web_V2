@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1681d0adbb` · branch `main` · 2026-11-04 18:36 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5f3f7bd289` · branch `main` · 2026-11-04 20:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -252,7 +252,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 734 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 735 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -298,6 +298,7 @@
 - `scripts/ci/e2e-isolated-tls.unit.mjs`
 - `scripts/ci/e2e-isolated-tour.unit.mjs`
 - `scripts/ci/e2e-isolated.unit.mjs`
+- `scripts/ci/e2e-media-volume-fixture.unit.mjs`
 - `scripts/ci/e2e-teardown.mjs`
 - `scripts/ci/e2e-teardown.unit.mjs`
 - `scripts/ci/edge-coverage-authz.unit.mjs`
@@ -403,8 +404,7 @@
 - `supabase/functions/ai-churn-analysis/index.ts`
 - `supabase/functions/ai-conversation-analysis/index.ts`
 - `supabase/functions/ai-conversation-analysis/limite-por-usuario.test.ts`
-- `supabase/functions/ai-conversation-summary/index.ts`
-- … +584 (lista completa em `context.json`)
+- … +585 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
