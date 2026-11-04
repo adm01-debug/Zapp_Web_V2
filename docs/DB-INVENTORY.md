@@ -230,7 +230,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `talkx_optout_keywords` | Palavras de descadastro reconhecidas pelo TalkX | ativo | `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx`, `src/hooks/integrations/__tests__/useTalkXResumeChecklist.test.tsx` … |
 | `talkx_recipients` | Destinatários da campanha TalkX (mensagem personalizada e estado) | ativo | `src/components/talkx/TalkXAnalytics.tsx`, `src/components/talkx/TalkXCampaignPaused.tsx`, `src/components/talkx/TalkXCampaignRunning.tsx` … |
 | `talkx_segment_fields` | Campos disponíveis para construção de segmentos do TalkX | parcial | `scripts/db-audit/talkx-segment-fields.test.sh` |
-| `talkx_segment_library_history` | Histórico de versões dos segmentos da biblioteca TalkX | parcial | `scripts/db-audit/talkx-segment-library-stats.test.sh`, `scripts/ci/check-test-inventory.mjs` |
+| `talkx_segment_library_history` | Histórico de versões dos segmentos da biblioteca TalkX | parcial | `scripts/db-audit/talkx-segment-library-stats.test.sh` |
 | `talkx_segment_versions` | Versões dos segmentos reutilizáveis do TalkX | roadmap | — |
 | `talkx_segments` | Segmentos de audiência reutilizáveis do TalkX | ativo | `src/components/talkx/TalkXCampaignRunning.tsx`, `src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx`, `src/components/talkx/__tests__/TalkXSegments.builder.test.tsx` … |
 | `talkx_settings` | Configurações chave-valor do TalkX | ativo | `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx`, `src/hooks/integrations/__tests__/useTalkXResumeChecklist.test.tsx` … |
