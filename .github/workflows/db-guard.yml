@@ -45,7 +45,7 @@ jobs:
   offline-contract:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     if: github.event.pull_request.draft != true
     # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
     # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
@@ -1533,6 +1533,69 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/search_path_pg_temp_is_admin_get_own_gmail.test.sh
 
+      # Estes contratos mantêm containers próprios ou exercitam o shim/harness.
+      # SKIP_DOCKER_SHIM garante PostgreSQL real e isolado por teste, sem tocar
+      # no serviço compartilhado do job. A imagem usada pelo tag é fixada por digest.
+      - name: Provar contratos shell restantes em serviços descartáveis
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: |
+          docker pull "$POSTGRES_TEST_IMAGE"
+          docker tag "$POSTGRES_TEST_IMAGE" postgres:17-alpine
+          testes=(
+            scripts/db-audit/contacts-stats-series-rpc.test.sh
+            scripts/db-audit/conversation-closures-reopen-same-day.test.sh
+            scripts/db-audit/crisis-room-snapshot.test.sh
+            scripts/db-audit/cron-remocao-vacuum-messages.test.sh
+            scripts/db-audit/docker-shim.test.sh
+            scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh
+            scripts/db-audit/ia131-audio-stt-cadeia.test.sh
+            scripts/db-audit/ia131-audio-stt-openrouter.test.sh
+            scripts/db-audit/login_gate_rpc.test.sh
+            scripts/db-audit/message-attempts-log.test.sh
+            scripts/db-audit/message-reactions-author-model.test.sh
+            scripts/db-audit/message-reactions-autoria.test.sh
+            scripts/db-audit/multiplix-completion-item-queue.test.sh
+            scripts/db-audit/pg-cron-escalonamento.test.sh
+            scripts/db-audit/reminders-migracao-identidade.test.sh
+            scripts/db-audit/replay-local-harness.test.sh
+            scripts/db-audit/talk-me-client-privileges.test.sh
+            scripts/db-audit/talkx-campaign-logs-cursor.test.sh
+            scripts/db-audit/talkx-campaign-segments-rpc.test.sh
+            scripts/db-audit/talkx-campaign-segments.test.sh
+            scripts/db-audit/talkx-campaign-window-open.test.sh
+            scripts/db-audit/talkx-contact-attributes.test.sh
+            scripts/db-audit/talkx-current-template-version.test.sh
+            scripts/db-audit/talkx-e27-replay-divergence.test.sh
+            scripts/db-audit/talkx-monitor-panel.test.sh
+            scripts/db-audit/talkx-optout.test.sh
+            scripts/db-audit/talkx-overview-stats.test.sh
+            scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh
+            scripts/db-audit/talkx-segment-library-stats.test.sh
+            scripts/db-audit/talkx-v23-draft-step.test.sh
+            scripts/db-audit/talkx-v25-owner.test.sh
+            scripts/db-audit/talkx-v26-template-version.test.sh
+            scripts/db-audit/whatsapp-media-policies-sem-curinga.test.sh
+          )
+          for teste in "${testes[@]}"; do
+            echo "::group::${teste}"
+            case "$teste" in
+              scripts/db-audit/docker-shim.test.sh|scripts/db-audit/replay-local-harness.test.sh)
+                SKIP_DOCKER_SHIM=0 bash "$teste"
+                ;;
+              scripts/db-audit/cron-remocao-vacuum-messages.test.sh)
+                bash scripts/db-audit/retry-disposable-postgres-test.sh bash "$teste" supabase/migrations/20261006202215_remover_cron_vacuum_messages_post_expurgo.sql
+                ;;
+              scripts/db-audit/pg-cron-escalonamento.test.sh)
+                bash scripts/db-audit/retry-disposable-postgres-test.sh bash "$teste" supabase/migrations/20261002541230_pg_cron_escalonar_jobs.sql
+                ;;
+              *)
+                bash scripts/db-audit/retry-disposable-postgres-test.sh bash "$teste"
+                ;;
+            esac
+            echo "::endgroup::"
+          done
+
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
   # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
@@ -1739,4 +1802,3 @@ jobs:
 
       - name: Provar talkx_n102_window_acl
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-n102-window-acl.test.sh
-
