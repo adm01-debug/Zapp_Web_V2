@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-04 09:34 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_07`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_10_31`
+
 ## 2026-11-04 01:38 UTC
 
 - **colunas** removido (31): `public.contact_purchases.amount`, `public.contact_purchases.contact_id`, `public.contact_purchases.created_at`, `public.contact_purchases.created_by`, `public.contact_purchases.currency`, `public.contact_purchases.deal_id`, `public.contact_purchases.description`, `public.contact_purchases.external_id`, `public.contact_purchases.id`, `public.contact_purchases.purchase_type`, `public.contact_purchases.purchased_at`, `public.contact_purchases.source`, `public.contact_purchases.status`, `public.contact_purchases.title`, `public.contact_purchases.updated_at`, `public.payment_links.amount`, `public.payment_links.contact_id`, `public.payment_links.created_at`, `public.payment_links.created_by`, `public.payment_links.currency`, `public.payment_links.deal_id`, `public.payment_links.description`, `public.payment_links.expires_at`, `public.payment_links.external_id`, `public.payment_links.id`, `public.payment_links.paid_at`, `public.payment_links.payment_method`, `public.payment_links.payment_url`, `public.payment_links.status`, `public.payment_links.title`, `public.payment_links.updated_at`
