@@ -20,6 +20,60 @@ const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+/** The files seed keeps raw output private; publish only this closed protocol. */
+const FILES_DIAGNOSTIC_PREFIX = '[e2e-isolated/seed-files-volume-diagnostic] ';
+const FILES_DIAGNOSTIC_STAGES = Object.freeze([
+  'db-open', 'sql-begin', 'sql-auth-user', 'sql-auth-identity', 'sql-profile-read',
+  'sql-profile-create', 'sql-profile-update', 'sql-user-role', 'sql-user-settings',
+  'sql-connection', 'sql-contacts', 'sql-media', 'sql-text', 'sql-pagination',
+  'sql-empty-text', 'sql-commit', 'storage-upload-image', 'storage-upload-video',
+  'storage-upload-audio', 'storage-upload-document', 'storage-upload-pagination',
+  'auth-login', 'rls-media', 'rls-pagination', 'rls-volume-check', 'rls-pagination-check',
+  'storage-sign', 'storage-reference-check', 'storage-download', 'storage-bytes-check',
+  'storage-public-check', 'stdout-summary', 'db-close',
+]);
+const FILES_DIAGNOSTIC_ERROR_NAMES = Object.freeze(['Error', 'TypeError', 'RangeError', 'SyntaxError',
+  'SQLError', 'PostgresError', 'AbortError', 'TimeoutError', 'UnknownError']);
+const FILES_DIAGNOSTIC_ERROR_CODES = Object.freeze([
+  'ERR_POSTGRES_SERVER_ERROR', 'ERR_POSTGRES_SYNTAX_ERROR', 'ERR_POSTGRES_CONNECTION_CLOSED', 'ERR_POSTGRES_CONNECTION_FAILED',
+  'ERR_POSTGRES_CONNECTION_REFUSED', 'ERR_POSTGRES_AUTHENTICATION_FAILED_PBKDF2',
+  'ERR_POSTGRES_INVALID_SERVER_KEY', 'ERR_POSTGRES_INVALID_SERVER_SIGNATURE',
+  'ERR_POSTGRES_INVALID_TRANSACTION_STATE', 'ERR_POSTGRES_NOT_TAGGED_CALL',
+  'ERR_POSTGRES_QUERY_CANCELLED', 'ERR_POSTGRES_TLS_NOT_AVAILABLE',
+  'ERR_POSTGRES_TLS_UPGRADE_FAILED', 'ERR_POSTGRES_UNKNOWN_AUTHENTICATION_METHOD',
+  'ERR_POSTGRES_UNSAFE_TRANSACTION', 'ERR_POSTGRES_UNSUPPORTED_AUTHENTICATION_METHOD',
+  'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND',
+]);
+const validSeedSqlstate = value => typeof value === 'string' && /^(?!00000)[0-9A-Z]{5}$/.test(value);
+const validSeedStatus = value => Number.isInteger(value) && value >= 100 && value <= 599;
+function validSeedFailure(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const required = ['stage', 'error_name'];
+  const optional = ['code', 'sqlstate', 'http_status'];
+  return required.every(key => Object.hasOwn(value, key)) &&
+    Object.keys(value).every(key => [...required, ...optional].includes(key)) &&
+    FILES_DIAGNOSTIC_STAGES.includes(value.stage) && FILES_DIAGNOSTIC_ERROR_NAMES.includes(value.error_name) &&
+    (!Object.hasOwn(value, 'code') || FILES_DIAGNOSTIC_ERROR_CODES.includes(value.code)) &&
+    (!Object.hasOwn(value, 'sqlstate') || validSeedSqlstate(value.sqlstate)) &&
+    (!Object.hasOwn(value, 'http_status') || validSeedStatus(value.http_status));
+}
+export function parseFilesSeedDiagnostic(result) {
+  if (result.status === 0 && !result.error && !result.signal) return null;
+  const unavailable = reason => ({ schema: 1, seed: 'files-volume', available: false, reason });
+  if ([result.stdout, result.stderr].some(value => value != null && typeof value !== 'string')) return unavailable('invalid');
+  const lines = ((result.stdout ?? '') + '\n' + (result.stderr ?? '')).split(/\r?\n/).filter(line => line.startsWith(FILES_DIAGNOSTIC_PREFIX));
+  if (lines.length === 0) return unavailable('missing');
+  if (lines.length !== 1) return unavailable('ambiguous');
+  if (Buffer.byteLength(lines[0], 'utf8') > 2048) return unavailable('invalid');
+  let value;
+  try { value = JSON.parse(lines[0].slice(FILES_DIAGNOSTIC_PREFIX.length)); } catch { return unavailable('invalid'); }
+  if (!value || Array.isArray(value) || typeof value !== 'object' || value.schema !== 1 ||
+      Object.keys(value).some(key => !['schema', 'failure', 'cleanup'].includes(key)) ||
+      !validSeedFailure(value.failure) || (Object.hasOwn(value, 'cleanup') && (!validSeedFailure(value.cleanup) || value.cleanup.stage !== 'db-close'))) return unavailable('invalid');
+  const copy = input => Object.fromEntries(['stage', 'error_name', 'code', 'sqlstate', 'http_status'].filter(key => Object.hasOwn(input, key)).map(key => [key, input[key]]));
+  return { schema: 1, seed: 'files-volume', available: true, failure: copy(value.failure), ...(value.cleanup ? { cleanup: copy(value.cleanup) } : {}) };
+}
+
 export function assertPinnedImages(lock) {
   const required = ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', 'driver'];
   if (!lock?.images || required.some(name => !/^[a-z0-9./_-]+:[A-Za-z0-9_.-]+@sha256:[a-f0-9]{64}$/.test(lock.images[name] ?? ''))) {
@@ -243,6 +297,12 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {
     const result = docker(inDriver(args), { timeout });
     if (recordLog) writeFileSync(path.join(output, code + '.log'), redacted(String(result.stdout || '') + String(result.stderr || '')), { mode: 0o600 });
+    if (code === 'seed-files-volume') {
+      try {
+        const diagnostic = parseFilesSeedDiagnostic(result);
+        if (diagnostic) writeJson(path.join(output, 'seed-files-volume-diagnostic.json'), diagnostic);
+      } catch { /* Observation must not replace the original required() failure. */ }
+    }
     return required(result, code);
   };
   try {
@@ -558,7 +618,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     // runner. They may contain newly-issued session tokens not known to seed.
     // Only these controlled metadata files and already-redacted logs publish.
     const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'entrypoints.json', 'migration-sources.json', 'migration-results.json',
-      'readiness.json', 'seed-ready.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
+      'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
       'results-summary.json', 'postgres-log-summary.json'];
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     for (const entry of readdirSync(output, { withFileTypes: true })) {

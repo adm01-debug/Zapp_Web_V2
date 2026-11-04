@@ -203,7 +203,7 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 }
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
-  const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic } = typeof options === 'function' ? { manifest: options } : options;
+  const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic } = typeof options === 'function' ? { manifest: options } : options;
   const fullSeed = scope === 'suite' && group === 'authenticated';
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
@@ -483,6 +483,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         assert.equal(seedCalls, 1);
         assert.ok(containers.has([...containers.keys()].find(key => key.endsWith('-provider'))));
         suiteStages.push(name);
+        if (name === 'files-volume' && seedDiagnostic) return seedDiagnostic;
         if (fault === name + '-failure') return error('private-sentinel-from-seed');
         const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
         if (name === 'suite-seed' && fault !== 'suite-proof-missing') {
@@ -544,9 +545,18 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const { runLogin } = await import(pathToFileURL(path.join(root, 'scripts/e2e-isolated/run.mjs')).href);
   const realTimeout = globalThis.setTimeout;
   globalThis.setTimeout = (callback, _delay, ...args) => realTimeout(callback, 0, ...args);
+  const originalOutput = process.env.GITHUB_OUTPUT;
+  const diagnosticOutput = path.join(temporary, 'github-output');
+  if (seedDiagnostic) process.env.GITHUB_OUTPUT = diagnosticOutput;
   let exit;
   try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, ...(scope === 'suite' ? { group } : {}) }); }
-  finally { globalThis.setTimeout = realTimeout; }
+  finally {
+    globalThis.setTimeout = realTimeout;
+    if (seedDiagnostic) {
+      if (originalOutput === undefined) delete process.env.GITHUB_OUTPUT;
+      else process.env.GITHUB_OUTPUT = originalOutput;
+    }
+  }
   const state = JSON.parse(readFileSync(path.join(output, 'status.json'), 'utf8'));
   const publicFiles = readdirSync(path.join(output, 'public'), { recursive: true });
   assert.equal(publicFiles.some(name => ['results.json', 'inventory.json'].includes(name) || /raw\.html|playwright-report/.test(name)), false, 'raw browser artifacts never publish');
@@ -562,9 +572,66 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     return existsSync(privateFile) && existsSync(publicFile) ? [[role, { private: readFileSync(privateFile, 'utf8'),
       published: readFileSync(publicFile, 'utf8'), privateMode: statSync(privateFile).mode & 0o777, publicMode: statSync(publicFile).mode & 0o777 }]] : [];
   })) : null;
-  const result = { pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const seedDiagnosticFile = path.join(output, 'seed-files-volume-diagnostic.json');
+  const seedDiagnosticPublic = path.join(output, 'public', 'seed-files-volume-diagnostic.json');
+  const filesDiagnostic = seedDiagnostic && existsSync(seedDiagnosticFile) ? {
+    private: JSON.parse(readFileSync(seedDiagnosticFile, 'utf8')),
+    published: JSON.parse(readFileSync(seedDiagnosticPublic, 'utf8')),
+    privateMode: statSync(seedDiagnosticFile).mode & 0o777,
+    publicMode: statSync(seedDiagnosticPublic).mode & 0o777,
+  } : null;
+  const reportOutput = seedDiagnostic ? readFileSync(diagnosticOutput, 'utf8') : null;
+  const result = { filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
+
+// Actual controller, metadata whitelist, cleanup and report redactor. The raw
+// subprocess channels contain canaries and must never become a seed .log.
+const filesDiagnosticPrefix = '[e2e-isolated/seed-files-volume-diagnostic] ';
+const filesDiagnosticRecord = { schema: 1, failure: { stage: 'sql-profile-update', error_name: 'PostgresError', code: 'ERR_POSTGRES_SERVER_ERROR', sqlstate: '42501' } };
+const filesDiagnosticLine = value => filesDiagnosticPrefix + JSON.stringify(value) + '\n';
+const filesDiagnosticNoise = 'private-sentinel raw SQL must never publish ' +
+  'https://synthetic:must-never-publish@127.0.0.1:5173/path?token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjYW5hcnkifQ.c2VjcmV0\n';
+const filesDiagnosticCases = [
+  ['SQL failure', { status: 1, stderr: filesDiagnosticLine(filesDiagnosticRecord) }, true],
+  ['HTTP failure', { status: 1, stderr: filesDiagnosticLine({ schema: 1, failure: { stage: 'storage-upload-image', error_name: 'Error', http_status: 403 } }) }, true],
+  ['unknown thrown value', { status: 1, stderr: filesDiagnosticLine({ schema: 1, failure: { stage: 'sql-commit', error_name: 'UnknownError' } }) }, true],
+  ['primary and cleanup', { status: 1, stderr: filesDiagnosticLine({ ...filesDiagnosticRecord, cleanup: { stage: 'db-close', error_name: 'PostgresError', code: 'ERR_POSTGRES_CONNECTION_CLOSED' } }) }, true],
+  ['missing record', { status: 1, stderr: '' }, false, 'missing'],
+  ['untrusted field', { status: 1, stderr: filesDiagnosticLine({ ...filesDiagnosticRecord, query: filesDiagnosticNoise }) }, false, 'invalid'],
+  ['ambiguous records', { status: 1, stderr: filesDiagnosticLine(filesDiagnosticRecord).repeat(2) }, false, 'ambiguous'],
+  ['signal with zero status', { status: 0, signal: 'SIGTERM', stderr: filesDiagnosticLine(filesDiagnosticRecord) }, true],
+  ['spawn error with zero status', { status: 0, error: new Error('private-sentinel'), stderr: filesDiagnosticLine(filesDiagnosticRecord) }, true],
+];
+for (const [label, subprocess, available, reason] of filesDiagnosticCases) test('seed diagnostic controller/' + label, async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', seedDiagnostic: { ...subprocess, stdout: filesDiagnosticNoise, stderr: filesDiagnosticNoise + subprocess.stderr + filesDiagnosticNoise } });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'seed-files-volume');
+  assert.equal(value.state.success, false); assert.equal(value.state.native_e2e, false);
+  assert.equal(value.state.failed_phase, 'seed-suite-and-verify-providers');
+  assert.equal(value.state.phase, 'complete'); assert.equal(value.state.cleanup_error, undefined);
+  assert.deepEqual(value.suiteStages, ['files-volume']); assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+  assert.equal(value.filesDiagnostic.private.available, available);
+  if (!available) assert.equal(value.filesDiagnostic.private.reason, reason);
+  assert.deepEqual(value.filesDiagnostic.published, value.filesDiagnostic.private);
+  assert.equal(value.filesDiagnostic.privateMode, 0o600); assert.equal(value.filesDiagnostic.publicMode, 0o600);
+  assert.equal(value.reportOutput, 'report_ready=true\n');
+  assert.ok(value.publicFiles.includes('seed-files-volume-diagnostic.json'));
+  assert.ok(!value.publicFiles.some(name => /seed-files-volume\.log|seed-files-canonical\.log|seed-suite\.log|verify-providers\.log/.test(name)));
+});
+test('seed diagnostic controller/success does not publish an error even when a line is forged', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', seedDiagnostic: { status: 0, stdout: filesDiagnosticNoise, stderr: filesDiagnosticLine(filesDiagnosticRecord) } });
+  assert.equal(value.exit, 0); assert.equal(value.state.success, true); assert.equal(value.filesDiagnostic, null);
+  assert.equal(value.reportOutput, 'report_ready=true\n');
+  assert.ok(!value.publicFiles.includes('seed-files-volume-diagnostic.json'));
+  assert.equal(value.browserCalls, 1); assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
+test('seed diagnostic controller/report redaction failure preserves the seed failure and closes upload gate', async t => {
+  const value = await controllerFixture(t, 'redactor-failure', { scope: 'suite', seedDiagnostic: { status: 1, stdout: filesDiagnosticNoise, stderr: filesDiagnosticLine(filesDiagnosticRecord) } });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'seed-files-volume'); assert.equal(value.state.success, false);
+  assert.equal(value.filesDiagnostic.published.available, true); assert.equal(value.reportOutput, 'report_ready=false\n');
+  assert.equal(value.browserCalls, 0); assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
 
 // Capture both subprocess channels before required() throws. No registry/network
 // runs here; controller, cleanup and both publication redactors remain real.
