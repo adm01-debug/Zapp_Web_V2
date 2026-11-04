@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f32223dda83b86d1f94eaec0f1b4230aa259535c",
+  "sha": "b88b4f1a8359af1ff1085a10c72bbc4b61baf77d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 14:56 UTC",
+  "generated_at": "2026-11-04 15:11 UTC",
   "files_total": 8038,
   "code_files": 5942,
   "code_lines": 1024812
  },
  "version": "1.3.2",
- "facts_hash": "6821fe1f299f2423",
+ "facts_hash": "a614e32f81227080",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -27,7 +27,7 @@
     "in": "package.json"
    },
    "@tanstack/react-query": {
-    "version": "^5.104.5",
+    "version": "^5.105.0",
     "role": "Cache/fetch de dados (TanStack Query)",
     "in": "package.json"
    },
@@ -37,7 +37,7 @@
     "in": "package.json"
    },
    "i18next": {
-    "version": "^26.5.6",
+    "version": "^26.5.12",
     "role": "i18n",
     "in": "package.json"
    },
@@ -57,7 +57,7 @@
     "in": "package.json"
    },
    "react-hook-form": {
-    "version": "^7.90.0",
+    "version": "^7.91.0",
     "role": "Forms (react-hook-form)",
     "in": "package.json"
    },
@@ -380241,10 +380241,20 @@
   }
  },
  "git": {
-  "sha": "f32223dda83b86d1f94eaec0f1b4230aa259535c",
+  "sha": "b88b4f1a8359af1ff1085a10c72bbc4b61baf77d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b88b4f1",
+    "date": "2026-11-04",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)",
+    "files": [
+     "bun.lock",
+     "package.json"
+    ]
+   },
    {
     "sha": "f32223d",
     "date": "2026-11-04",
@@ -380701,22 +380711,9 @@
     "files": [
      "docs/contexto/regras/manual/regras.md"
     ]
-   },
-   {
-    "sha": "1c0f516",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(contexto): regras manuais de campanhas Talk X (#2673)",
-    "files": [
-     "docs/contexto/regras/manual/regras.md"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "docs/contexto/regras/manual/regras.md",
-    4
-   ],
    [
     ".github/workflows/db-guard.yml",
     3
@@ -380727,6 +380724,10 @@
    ],
    [
     "scripts/supabase_snapshot/snapshot.py",
+    3
+   ],
+   [
+    "docs/contexto/regras/manual/regras.md",
     3
    ],
    [

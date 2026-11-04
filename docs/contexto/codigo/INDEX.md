@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f32223dda83b86d1f94eaec0f1b4230aa259535c` (2026-11-04T11:54:47-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b88b4f1a8359af1ff1085a10c72bbc4b61baf77d` (2026-11-04T12:09:39-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55014 nós · 112486 arestas · 4164 comunidades · grafo do commit `f32223dd`
+- 55014 nós · 112486 arestas · 4164 comunidades · grafo do commit `b88b4f1a`
 - comunidades maiores: lucide-react (907), TalkXSuppression.tsx (843), react (735), utils.ts (649), vitest (596), validation.ts (439), avatar.tsx (423), DashboardView.tsx (411), cn (406), @tanstack/react-query (375), ref_node_fs (374), ref_https (336)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -399,8 +399,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (13)
 - .github/workflows/e2e-logado.yml (12)
 - ESTADO.md (12)
-- supabase/schema-manifest.json (12)
 - .github/workflows/deploy-functions.yml (11)
+- supabase/schema-manifest.json (11)
 - docs/DB-INVENTORY.md (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (9)
 - scripts/ci/workflow-contracts.unit.mjs (9)
@@ -498,6 +498,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-04 `b88b4f1` ⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)
 - 2026-11-04 `f32223d` fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)
 - 2026-11-04 `6feabdf` chore: adicionar __pycache__/ ao .gitignore (#2703)
 - 2026-11-04 `46a0257` fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)
@@ -512,7 +513,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-03 `da9f551` chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)
 - 2026-11-03 `9b15c8b` chore: adiciona __pycache__/ ao .gitignore
 - 2026-11-03 `ded01b5` fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)
-- 2026-11-03 `bd25801` chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

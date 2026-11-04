@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f32223dda83b86d1f94eaec0f1b4230aa259535c",
+  "commit": "b88b4f1a8359af1ff1085a10c72bbc4b61baf77d",
   "branch": "main",
-  "data_commit": "2026-11-04T11:54:47-03:00",
+  "data_commit": "2026-11-04T12:09:39-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b88b4f1",
+    "data": "2026-11-04",
+    "assunto": "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)"
+   },
    {
     "sha": "f32223d",
     "data": "2026-11-04",
@@ -126,14 +131,9 @@
     "sha": "2597588",
     "data": "2026-11-03",
     "assunto": "chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)"
-   },
-   {
-    "sha": "a9aa6cf",
-    "data": "2026-11-03",
-    "assunto": "fix(ci): deploy-functions bloqueado — teste E57/E58 contava guardas de preflight como escrita de secrets (#2680)"
    }
   ],
-  "arquivos_mudados_7d": 1298,
+  "arquivos_mudados_7d": 1274,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -234,11 +234,11 @@
     "mudancas": 12
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 12
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
    },
    {
@@ -301,15 +301,15 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 284
+    "commits": 283
+   },
+   {
+    "autor": "dependabot[bot]",
+    "commits": 8
    },
    {
     "autor": "github-actions[bot]",
     "commits": 8
-   },
-   {
-    "autor": "dependabot[bot]",
-    "commits": 7
    },
    {
     "autor": "devin-ai-integration[bot]",

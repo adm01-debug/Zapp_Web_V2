@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)",
    "fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)",
    "chore: adicionar __pycache__/ ao .gitignore (#2703)",
    "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)",
-   "chore: adiciona __pycache__/ ao .gitignore (#2700)",
-   "chore: sincroniza matriz de estados do Talk X (#2715)"
+   "chore: adiciona __pycache__/ ao .gitignore (#2700)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

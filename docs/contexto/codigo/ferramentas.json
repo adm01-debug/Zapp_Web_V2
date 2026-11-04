@@ -72,17 +72,17 @@
   "dev_dependencias": 31,
   "principais": {
    "@supabase/supabase-js": "^2.117.3",
-   "@tanstack/react-query": "^5.104.5",
-   "@tanstack/react-virtual": "^3.14.22",
+   "@tanstack/react-query": "^5.105.0",
+   "@tanstack/react-virtual": "^3.14.24",
    "date-fns": "^3.6.0",
    "framer-motion": "^12.43.0",
-   "i18next": "^26.5.6",
+   "i18next": "^26.5.12",
    "next-themes": "^0.4.6",
    "react": "^19.3.1",
    "react-day-picker": "^8.10.2",
    "react-dom": "^19.3.1",
-   "react-hook-form": "^7.90.0",
-   "react-i18next": "^17.1.4",
+   "react-hook-form": "^7.91.0",
+   "react-i18next": "^17.1.9",
    "react-resizable-panels": "^2.1.9",
    "react-router-dom": "^7",
    "recharts": "^3.10.1",
@@ -1545,22 +1545,22 @@
    {
     "pacote": "@elevenlabs/react",
     "servico": "ElevenLabs",
-    "versao": "^1.19.1"
+    "versao": "^1.20.2"
    },
    {
     "pacote": "i18next",
     "servico": "i18next",
-    "versao": "^26.5.6"
+    "versao": "^26.5.12"
    },
    {
     "pacote": "react-i18next",
     "servico": "i18next",
-    "versao": "^17.1.4"
+    "versao": "^17.1.9"
    },
    {
     "pacote": "@tanstack/react-query",
     "servico": "react-query",
-    "versao": "^5.104.5"
+    "versao": "^5.105.0"
    },
    {
     "pacote": "@supabase/supabase-js",
