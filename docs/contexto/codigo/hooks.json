@@ -12199,7 +12199,7 @@
    "hooks_exportados": [
     "useViewTransition"
    ],
-   "linhas": 28,
+   "linhas": 31,
    "dominio": "hooks/ui",
    "tabelas": [],
    "rpcs": [],

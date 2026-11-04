@@ -2,11 +2,26 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f00ed02f216c4ff91cee54809f1176c8b311553e",
+  "commit": "46c29a6b7efd6cd1926c85c1148af7ba61236788",
   "branch": "main",
-  "data_commit": "2026-11-04T22:25:59Z",
+  "data_commit": "2026-11-04T23:05:47Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "46c29a6",
+    "data": "2026-11-04",
+    "assunto": "fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)"
+   },
+   {
+    "sha": "53036dd",
+    "data": "2026-11-04",
+    "assunto": "test: alinhar IA-131 OpenRouter à cadeia real de migrations (#2722)"
+   },
+   {
+    "sha": "b298c33",
+    "data": "2026-11-04",
+    "assunto": "test: alinhar auditoria E27 à migration arquivada (#2721)"
+   },
    {
     "sha": "f00ed02",
     "data": "2026-11-04",
@@ -116,24 +131,9 @@
     "sha": "a3fb2a2",
     "data": "2026-11-03",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#2695)"
-   },
-   {
-    "sha": "29ae259",
-    "data": "2026-11-03",
-    "assunto": "feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias (#2562)"
-   },
-   {
-    "sha": "1f77f79",
-    "data": "2026-11-03",
-    "assunto": "chore(auth): remove papel special_agent do front e das edges (decisão 2026-11-03) (#2692)"
-   },
-   {
-    "sha": "bd4c4bd",
-    "data": "2026-11-03",
-    "assunto": "chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)"
    }
   ],
-  "arquivos_mudados_7d": 1242,
+  "arquivos_mudados_7d": 1245,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8219,
   "arquivos_codigo": 4707,
-  "linhas_codigo": 866838,
+  "linhas_codigo": 866864,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -720,7 +720,7 @@
   },
   "src/hooks": {
    "arquivos": 980,
-   "linhas": 159207
+   "linhas": 159234
   },
   "src/i18n": {
    "arquivos": 2,
@@ -740,7 +740,7 @@
   },
   "src/pages": {
    "arquivos": 70,
-   "linhas": 10673
+   "linhas": 10672
   },
   "src/providers": {
    "arquivos": 10,

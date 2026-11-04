@@ -12828,7 +12828,7 @@
    "modulo": "hooks/ui",
    "arquivos": 33,
    "testes": 13,
-   "linhas": 3534,
+   "linhas": 3537,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -13764,7 +13764,7 @@
    "modulo": "pages",
    "arquivos": 18,
    "testes": 0,
-   "linhas": 3076,
+   "linhas": 3075,
    "itens_menu": [
     "Telemetria BD"
    ],

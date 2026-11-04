@@ -1475,8 +1475,8 @@
   },
   {
    "arquivo": "scripts/db-audit/ia131-audio-stt-openrouter.test.sh",
-   "descricao": "IA-131 / IA-AUDIO-001 — prova que a migration de audio_stt do OpenRouter acrescenta somente a modalidade nova, preserva modalidades/capacidades existentes,",
-   "linhas": 135,
+   "descricao": "IA-131 / IA-AUDIO-001 — prova o estado real da cadeia ia033 -> ia131: o JSON declara vision antes do audio_stt; text ja vem do tipo openai_compatible em",
+   "linhas": 133,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -2586,7 +2586,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
    "descricao": "#464 / CAIXA-7eb1 — Talk X E27: divergencia de replay da publicacao supabase_realtime. O E27 publicou tres tabelas do Talk X (talkx_campaign_events, talkx_segments,",
-   "linhas": 136,
+   "linhas": 129,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

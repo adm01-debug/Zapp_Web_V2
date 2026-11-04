@@ -18447,11 +18447,11 @@
   {
    "arquivo": "src/hooks/ui/__tests__/useViewTransition.test.tsx",
    "tipo": "unit",
-   "linhas": 71,
+   "linhas": 95,
    "testa": [
     "src/hooks/ui/useViewTransition.ts"
    ],
-   "casos": 3
+   "casos": 4
   },
   {
    "arquivo": "src/hooks/ui/__tests__/useVolumeRocker.test.tsx",

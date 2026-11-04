@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f00ed02f216c4ff91cee54809f1176c8b311553e` (2026-11-04T22:25:59Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `46c29a6b7efd6cd1926c85c1148af7ba61236788` (2026-11-04T23:05:47Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8219 |
 | arquivos_codigo | 4707 |
-| linhas_codigo | 866838 |
+| linhas_codigo | 866864 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55350 nós · 113390 arestas · 4072 comunidades · grafo do commit `f00ed02f`
+- 55350 nós · 113392 arestas · 4072 comunidades · grafo do commit `46c29a6b`
 - comunidades maiores: lucide-react (973), vitest (803), TalkXSuppression.tsx (747), react (618), validation.ts (566), ExternalProductManagement.tsx (532), DashboardView.tsx (445), ref_node_fs (443), evolution-webhook-messages.ts (430), cn (419), ref_node_assert (410), useAuth (398)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -498,6 +498,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-04 `46c29a6` fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)
+- 2026-11-04 `53036dd` test: alinhar IA-131 OpenRouter à cadeia real de migrations (#2722)
+- 2026-11-04 `b298c33` test: alinhar auditoria E27 à migration arquivada (#2721)
 - 2026-11-04 `f00ed02` fix: preservar contraste das threads de Email durante entrada (#2720)
 - 2026-11-04 `5f3f7bd` fix: validar owners, áudio e coleta do E2E isolado (#2719)
 - 2026-11-04 `1681d0a` fix: restaurar foco da paleta com regressões de integração (#2718)
@@ -510,9 +513,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-04 `ec2e5b6` chore: sincroniza matriz de estados do Talk X (#2715)
 - 2026-11-04 `5431b96` fix: executa paridade Talk X com Deno 2.9.5 (#2714)
 - 2026-11-04 `f4e5a10` fix: evita padding duplicado nos carregamentos do Talk X (#2712)
-- 2026-11-04 `a96bbd4` fix(ci): bloquear cancelamentos e skips indevidos no gate (#2711)
-- 2026-11-04 `93965f7` chore(db): sincronizar artefatos derivados do banco (#2698)
-- 2026-11-04 `b46f5d2` fix(ci): restaurar auditorias e fortalecer automações (#2710)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

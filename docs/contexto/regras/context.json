@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f00ed02f216c4ff91cee54809f1176c8b311553e",
+  "sha": "46c29a6b7efd6cd1926c85c1148af7ba61236788",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 22:27 UTC",
+  "generated_at": "2026-11-04 23:07 UTC",
   "files_total": 8060,
   "code_files": 5963,
-  "code_lines": 1032285
+  "code_lines": 1032311
  },
  "version": "1.3.2",
- "facts_hash": "e6ff078fbc5bd332",
+ "facts_hash": "d26dbd84fd8c0820",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68400,7 +68400,7 @@
   {
    "module": "src/hooks",
    "files": 980,
-   "lines": 159207,
+   "lines": 159234,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -68558,6 +68558,7 @@
     "node:fs",
     "node:path",
     "react",
+    "react-dom",
     "react-router-dom",
     "sip.js",
     "sonner",
@@ -68890,7 +68891,7 @@
   {
    "module": "src/pages",
    "files": 70,
-   "lines": 10673,
+   "lines": 10672,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -187556,6 +187557,10 @@
    {
     "file": "src/hooks/ui/__tests__/useViewTransition.test.tsx",
     "name": "com suporte, entrega o callback à API e não o chama por conta própria"
+   },
+   {
+    "file": "src/hooks/ui/__tests__/useViewTransition.test.tsx",
+    "name": "confirma a nova view no DOM antes de concluir o callback nativo"
    },
    {
     "file": "src/hooks/ui/__tests__/useViewTransition.test.tsx",
@@ -340162,7 +340167,7 @@
   },
   "src/hooks/ui/useViewTransition.ts": {
    "path": "src/hooks/ui/useViewTransition.ts",
-   "lines": 28,
+   "lines": 31,
    "exports": [
     "function useViewTransition"
    ],
@@ -340400,12 +340405,13 @@
   },
   "src/hooks/ui/__tests__/useViewTransition.test.tsx": {
    "path": "src/hooks/ui/__tests__/useViewTransition.test.tsx",
-   "lines": 71,
+   "lines": 95,
    "is_test": true,
    "tests": [
     "useViewTransition",
     "sem suporte à API, executa o callback direto (fallback)",
     "com suporte, entrega o callback à API e não o chama por conta própria",
+    "confirma a nova view no DOM antes de concluir o callback nativo",
     "silencia as três promises da transição (navegação rápida aborta)"
    ]
   },
@@ -348525,7 +348531,7 @@
   },
   "src/pages/Index.tsx": {
    "path": "src/pages/Index.tsx",
-   "lines": 204,
+   "lines": 203,
    "exports": [
     "default Index"
    ],
@@ -381256,10 +381262,39 @@
   }
  },
  "git": {
-  "sha": "f00ed02f216c4ff91cee54809f1176c8b311553e",
+  "sha": "46c29a6b7efd6cd1926c85c1148af7ba61236788",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "46c29a6",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)",
+    "files": [
+     "src/hooks/ui/__tests__/useViewTransition.test.tsx",
+     "src/hooks/ui/useViewTransition.ts",
+     "src/pages/Index.tsx"
+    ]
+   },
+   {
+    "sha": "53036dd",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "test: alinhar IA-131 OpenRouter à cadeia real de migrations (#2722)",
+    "files": [
+     "scripts/db-audit/ia131-audio-stt-openrouter.test.sh"
+    ]
+   },
+   {
+    "sha": "b298c33",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "test: alinhar auditoria E27 à migration arquivada (#2721)",
+    "files": [
+     "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
+    ]
+   },
    {
     "sha": "f00ed02",
     "date": "2026-11-04",
@@ -381761,33 +381796,6 @@
     "subject": "chore(db): sincronizar artefatos derivados do banco (#2688)",
     "files": [
      "supabase/schema-manifest.json"
-    ]
-   },
-   {
-    "sha": "b441a43",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)",
-    "files": [
-     "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql"
-    ]
-   },
-   {
-    "sha": "2597588",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)",
-    "files": [
-     "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql"
-    ]
-   },
-   {
-    "sha": "a9aa6cf",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "fix(ci): deploy-functions bloqueado — teste E57/E58 contava guardas de preflight como escrita de secrets (#2680)",
-    "files": [
-     "scripts/edge-deploy/secrets-scope.unit.mjs"
     ]
    }
   ],
