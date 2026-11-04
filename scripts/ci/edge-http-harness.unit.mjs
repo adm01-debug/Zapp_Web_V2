@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile, execFileSync, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
+import { createHash } from 'node:crypto';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const execute = promisify(execFile);
@@ -266,6 +267,12 @@ for (const kind of ['x034', 'gmail']) {
     assert.deepEqual(events.filter(e => e.event === 'deno').map(e => e.count), kind === 'gmail' ? [7, 1] : [8]);
     assert.deepEqual(events.filter(e => e.event === 'remove').map(e => e.kind), ['pgrst', 'pg', 'network']);
     if (kind === 'gmail') assert.equal(events.filter(e => e.event === 'teardown_check').length, 2);
+    if (kind === 'x034') {
+      const migration = fs.readFileSync(path.join(ROOT, 'supabase/migrations/20261011003005_talkx_n102a_ddl.sql'));
+      const applied = events.filter(e => e.event === 'sql' && e.sha256 === createHash('sha256').update(migration).digest('hex'));
+      assert.equal(applied.length, 1, 'DDL N-102a real aplicado uma vez');
+      assert.equal(applied[0].ordinal, 19, 'bootstrap + 17 migrations anteriores + N-102a');
+    }
   });
   for (const [name, config] of [
     ['Docker ausente', { missing: 'docker' }], ['Deno ausente', { missing: 'deno' }],
@@ -323,6 +330,23 @@ for (const kind of ['x034', 'gmail']) {
     });
   }
 }
+
+test('x034: ausência da migration N-102a reprova antes de Deno', () => {
+  const result = runHarness('x034', {}, repo => {
+    fs.unlinkSync(path.join(repo, 'supabase/migrations/20261011003005_talkx_n102a_ddl.sql'));
+  });
+  assertResult(result, false);
+  assert.equal(result.state.deno_calls, 0);
+  assert.match(result.stderr, /migration ausente na cadeia: 20261011003005_talkx_n102a_ddl\.sql/);
+});
+
+test('x034: falha SQL no DDL N-102a não chega às fixtures ou ao Deno', () => {
+  const result = runHarness('x034', { sql_failure: 19 });
+  assertResult(result, false);
+  assert.equal(result.state.sql_calls, 19);
+  assert.equal(result.state.deno_calls, 0);
+  assert.match(result.stderr, /cadeia: falhou ao aplicar 20261011003005_talkx_n102a_ddl\.sql/);
+});
 
 for (const [name, config] of [
   ['profile sem seed', { profile_empty: true }], ['profile de outra fixture', { profile_wrong: true }],

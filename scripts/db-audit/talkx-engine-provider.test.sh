@@ -400,6 +400,7 @@ chain=(
   "20261001391230_talkx_engine_tick.sql"
   "20261002381230_talkx_role_gates.sql"
   "20261002551230_talkx_limits_ritmo.sql"
+  "20261011003005_talkx_n102a_ddl.sql"
 )
 for name in "${chain[@]}"; do
   migration="$migrations_dir/$name"
@@ -442,18 +443,20 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- Campanhas: C1 = 60 destinatários; C2 morte+sweep; C3 worker; C4 suprimido;
 -- C5 limite diário (conexão própria); C6 cancelamento; C7 draft (agente).
+-- O foco é lease/entrega, sem janela de horário: opt-out explícito do DND
+-- só nestas campanhas sintéticas; a migration mantém o default real true.
 INSERT INTO public.talkx_campaigns
   (id, name, message_template, status, whatsapp_connection_id, total_recipients,
    send_interval_min, send_interval_max, typing_delay_min, typing_delay_max,
-   schedule_timezone, business_hours_only, speed_profile)
+   schedule_timezone, business_hours_only, speed_profile, respect_dnd)
 VALUES
-  ('40000000-0000-4000-8000-000000000001', 'C1 integração', 'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 60, 0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000002', 'C2 morte',      'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000003', 'C3 worker',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 2,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000004', 'C4 suprimido',  'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000005', 'C5 limite',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000006', 'C6 cancelar',   'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate'),
-  ('40000000-0000-4000-8000-000000000007', 'C7 draft',      'Ola {{nome}}', 'draft',   '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate');
+  ('40000000-0000-4000-8000-000000000001', 'C1 integração', 'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 60, 0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000002', 'C2 morte',      'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000003', 'C3 worker',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 2,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000004', 'C4 suprimido',  'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000005', 'C5 limite',     'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000006', 'C6 cancelar',   'Ola {{nome}}', 'sending', '90000000-0000-4000-8000-000000000001', 4,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false),
+  ('40000000-0000-4000-8000-000000000007', 'C7 draft',      'Ola {{nome}}', 'draft',   '90000000-0000-4000-8000-000000000001', 1,  0, 0, 0, 0, 'America/Sao_Paulo', false, 'moderate', false);
 
 -- Destinatários: C1 (1..60), C2 (61), C3 (62,63), C4 (64..67), C5 (68..71), C6 (72..75), C7 (76).
 INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status, retry_after)

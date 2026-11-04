@@ -19,6 +19,8 @@ const LOCAL_URL_CONFIGURATION = new Set([
   '20261001391230_talkx_engine_tick.sql',
   '20260929610000_multiplix_cron_window_and_limits.sql',
 ]);
+const REVIEWED_GMAIL_CRON = '20260829110000_gmail_incremental_sync_cron.sql';
+const REVIEWED_GMAIL_CRON_BLOB = '0eac1be96bcd4649db4059caad6b223f957c1ade';
 
 export function gitBlob(source) {
   const bytes = Buffer.from(source);
@@ -31,14 +33,27 @@ export function prepareMigration(name, original) {
   if (/vault\.(?:create_secret|update_secret)\s*\(/i.test(original) && REVIEWED_VAULT[name] !== originalBlob) {
     throw new Error('[e2e-isolated/unreviewed-vault-configuration] ' + name);
   }
-  // No actual JWT should enter the disposable database from history.
-  // The reviewed calls above generate random bytes, accept function arguments,
-  // document placeholders in comments, or hold the two URLs replaced below.
-  if (/eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/.test(original)) {
+  const historicalTokens = [...original.matchAll(/eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/g)];
+  const reviewedCron = name === REVIEWED_GMAIL_CRON;
+  if ((reviewedCron && originalBlob !== REVIEWED_GMAIL_CRON_BLOB) || (!reviewedCron && historicalTokens.length)) {
     throw new Error('[e2e-isolated/historical-jwt-needs-local-transform] ' + name);
   }
   let sql = original;
   const transformations = [];
+  if (reviewedCron) {
+    if (historicalTokens.length !== 1) fail('historical-cron-token-not-unique');
+    const header = "'apikey', '" + historicalTokens[0][0] + "'";
+    const priorURL = "'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/gmail-cron-sync'";
+    if (sql.split(header).length !== 2 || sql.split(priorURL).length !== 2) fail('historical-cron-target-not-unique');
+    // The local setting is populated from this run's synthetic anon key before
+    // replay. Neither the historical token nor a production URL enters the copy.
+    sql = sql.replace(header, "'apikey', current_setting('app.settings.e2e_anon_key', true)")
+      .replace(priorURL, "'" + ORIGIN + "/functions/v1/gmail-cron-sync'");
+    transformations.push(
+      { operation: 'historical-anon-key-to-local-setting', replacements: 1 },
+      { operation: 'cron-url-to-isolated-origin', replacements: 1 },
+    );
+  }
   if (LOCAL_URL_CONFIGURATION.has(name)) {
     if (REVIEWED_VAULT[name] !== originalBlob) fail('changed-external-configuration');
     let count = 0;

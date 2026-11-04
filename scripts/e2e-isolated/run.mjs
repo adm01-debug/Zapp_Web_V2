@@ -314,7 +314,8 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     start('gateway', images.driver);
     driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'platform'], 'platform-proof');
     if (!sqlBoolean("select to_regclass('auth.sessions') is not null and to_regclass('auth.identities') is not null and to_regclass('storage.buckets') is not null and to_regclass('storage.objects') is not null and to_regclass('realtime.messages') is not null and to_regprocedure('realtime.topic()') is not null;")) throw new Error('real-platform-schema-missing');
-    required(psql("create schema if not exists supabase_migrations; create table if not exists supabase_migrations.schema_migrations(version text primary key, statements text[], name text); alter database postgres set app.settings.trusted_domains = 'localhost,127.0.0.1';"), 'local-platform-settings-failed');
+    required(psql("create schema if not exists supabase_migrations; create table if not exists supabase_migrations.schema_migrations(version text primary key, statements text[], name text); alter database postgres set app.settings.trusted_domains = 'localhost,127.0.0.1'; alter database postgres set app.settings.e2e_anon_key = '" + credentials.anonKey + "';"), 'local-platform-settings-failed');
+    if (!sqlBoolean("select current_setting('app.settings.e2e_anon_key', true) = '" + credentials.anonKey + "';")) throw new Error('local-anon-setting-mismatch');
 
     phase('apply-active-migrations');
     const expected = JSON.parse(readFileSync(path.join(ROOT, 'scripts/db-audit/replay-known-failures.json'), 'utf8')).esperadas;

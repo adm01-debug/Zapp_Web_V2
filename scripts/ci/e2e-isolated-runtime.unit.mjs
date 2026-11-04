@@ -110,6 +110,8 @@ async function controllerFixture(t, fault) {
   let cleanupSeen = false;
   let controlDir;
   let pgReadyChecks = 0;
+  let localKeyConfigured = false;
+  let driverLocalAnonKey;
   const valueAfter = (args, flag) => args[args.indexOf(flag) + 1];
   const allAfter = (args, flag) => args.flatMap((value, i) => value === flag ? [args[i + 1]] : []);
   const fakeCommand = (program, args, options) => {
@@ -167,6 +169,7 @@ async function controllerFixture(t, fault) {
       if (argv.includes('--env-file')) {
         const envText = readFileSync(valueAfter(argv, '--env-file'), 'utf8');
         credentialFilesSeen ||= envText.includes('E2E_TEST_PASSWORD=');
+        if (name.endsWith('-driver')) driverLocalAnonKey = envText.match(/^ANON_KEY=(.+)$/m)?.[1];
         assert.equal(args.some(value => value.includes('E2E_TEST_PASSWORD=')), false, 'credentials never enter argv');
       }
       controlDir ||= mounts.find(mount => mount.Destination === '/run/zapp-e2e')?.Source;
@@ -202,6 +205,17 @@ async function controllerFixture(t, fault) {
       if (argv.includes('pg_isready')) { pgReadyChecks++; return ok(); }
       if (argv.includes('psql')) {
         const input = String(options.input);
+        if (input.includes('alter database postgres set app.settings.e2e_anon_key')) {
+          if (fault === 'local-key-setting-write') return error('controlled setting failure');
+          const configured = input.match(/set app\.settings\.e2e_anon_key = '([^']+)'/i)?.[1];
+          assert.equal(Boolean(driverLocalAnonKey && configured === driverLocalAnonKey), true, 'setting must equal this driver synthetic anon key');
+          localKeyConfigured = true;
+          assert.equal(args.some(value => value.includes('eyJ')), false, 'local JWT must remain outside argv');
+        }
+        if (input.includes("current_setting('app.settings.e2e_anon_key', true)")) {
+          assert.equal(input.includes("= '" + driverLocalAnonKey + "'"), true, 'read-back compares the same local key');
+          return ok(localKeyConfigured && fault !== 'local-key-setting-mismatch' ? 't' : 'f');
+        }
         if (input === sql) {
           migrationCalls++;
           if (fault === 'known-migration-process-failure') return { status: null, error: new Error('timeout'), stdout: '', stderr: 'sentinel-not-to-publish' };
@@ -297,6 +311,7 @@ const faultCodes = {
   'postgres-hosts': 'official-host-not-neutralized', 'postgres-start': 'start-postgres-failed',
   'cron-enabled': 'cron-not-disabled', 'platform-health': 'platform-proof',
   'missing-platform-schema': 'real-platform-schema-missing', 'cancel-after-postgres': 'run-cancelled',
+  'local-key-setting-write': 'local-platform-settings-failed', 'local-key-setting-mismatch': 'local-anon-setting-mismatch',
   'unexpected-migration-failure': 'unexpected-migration-failure', 'known-migration-process-failure': 'unexpected-migration-failure',
   'cron-reenabled': 'cron-reenabled-by-migration', 'frontend-readiness': 'frontend-proof',
   'seed-login-failure': 'seed-login', 'namespace-change': 'namespace-changed',
@@ -325,6 +340,7 @@ for (const fault of [
 for (const fault of [
   'anchor-network', 'driver-network', 'network-proof', 'driver-hosts', 'postgres-hosts', 'postgres-start', 'cron-enabled',
   'platform-health', 'missing-platform-schema', 'cancel-after-postgres',
+  'local-key-setting-write', 'local-key-setting-mismatch',
 ]) {
   test('controller real: ' + fault + ' interrompe antes da cadeia SQL de aplicação', async t => {
     const value = await controllerFixture(t, fault);

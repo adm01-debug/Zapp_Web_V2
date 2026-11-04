@@ -121,8 +121,11 @@ Um usuario/profile sintetico permite que os testes criem suas proprias contas.
 Depois de cada arquivo, contas residuais reprovam o harness: o DELETE no finally
 original nao verifica o status HTTP. A fixture nao e um replay completo.
 
-X034 preserva sua cadeia de 17 migrations, os oito testes e o Evolution falso
-versionado (sabor v2). Nao embaralhar ou paralelizar os testes desse arquivo.
+X034 aplica 18 migrations reais, incluindo o DDL N-102a de send_weekdays e
+respect_dnd, e preserva os oito testes e o Evolution falso versionado (sabor v2).
+As sete campanhas sinteticas usam respect_dnd=false: estes cenarios exercitam
+lease/entrega sem depender da hora ou do dia; o default real do schema continua
+true. Nao embaralhar ou paralelizar os testes desse arquivo.
 `assert-deno-junit.py` exige as contagens reais 7/1/8 e zero falhas/ignorados;
 exit zero com apenas o placeholder ignorado nao e sucesso. Cleanup usa IDs
 criados pela execucao, erros de limpeza reprovam e INT/TERM saem como 130/143.
