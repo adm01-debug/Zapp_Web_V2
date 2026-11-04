@@ -258,3 +258,80 @@ test('INDEX.md: rodapé de publicação é genérico por padrão e segue ai-cont
   assert.match(fs.readFileSync(path.join(out, 'INDEX.md'), 'utf8'), /Publicado na branch `xyz` pelo workflow `xyz.yml`\./);
   fs.rmSync(path.join(root, 'ai-context.config.json'));
 });
+
+function isolatedFixture(t, prepare) {
+  const fixtureRoot = fixture();
+  t.after(() => fs.rmSync(fixtureRoot, { recursive: true, force: true }));
+  prepare(fixtureRoot);
+  execFileSync(process.execPath, [GERADOR, '--quiet'], { cwd: fixtureRoot });
+  return (name) => JSON.parse(fs.readFileSync(path.join(fixtureRoot, 'inventario/ia', name), 'utf8'));
+}
+
+test('git: histórico preserva data, assunto e barras verticais sem executar shell', (t) => {
+  const read = isolatedFixture(t, (dir) => {
+    execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '--allow-empty', '-q', '-m', 'fix: assunto | literal'], { cwd: dir });
+  });
+  const commits = read('baseline.json').git.ultimos_commits;
+  assert.equal(commits.length, 2);
+  assert.equal(commits[0].assunto, 'fix: assunto | literal');
+  assert.match(commits[0].sha, /^[a-f0-9]{7,40}$/);
+  assert.match(commits[0].data, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(commits[1].assunto, 'feat: fixture');
+});
+
+test('banco: arquivos _foreign e _superseded não alteram a reconstrução vigente', (t) => {
+  const read = isolatedFixture(t, (dir) => {
+    w(dir, 'supabase/migrations/_foreign/singu/001_foreign.sql', `create table public.foreign_only (id int);
+select cron.schedule('archived-job', '* * * * *', $$ select net.http_post('https://x.supabase.co/functions/v1/orphan-fn') $$);`);
+    w(dir, 'supabase/migrations/_superseded/000_old.sql', `alter table public.contacts add column archived_only text;
+create table public.legacy (id int);
+create or replace function public.archived_fn() returns boolean language sql as $$ select true $$;
+create policy "archived_policy" on public.contacts for select using (true);`);
+  });
+  const banco = read('banco.json');
+  assert.equal(banco.migrations, 2);
+  assert.equal(banco.tabelas.foreign_only, undefined);
+  assert.equal(banco.tabelas.legacy, undefined);
+  assert.equal(banco.tabelas.contacts.colunas.archived_only, undefined);
+  assert.ok(!banco.tabelas.contacts.policies.some((p) => p.nome === 'archived_policy'));
+  assert.deepEqual(banco.funcoes, ['is_admin']);
+  assert.deepEqual(banco.cron_jobs.map((c) => c.nome), ['nightly']);
+  const orphan = read('edge-functions.json').edges.find((e) => e.nome === 'orphan-fn');
+  assert.equal(orphan.chamada_por_sql_ou_cron, false);
+  assert.equal(orphan.orfa, true);
+});
+
+test('alertas de aplicação ignoram testes, stories e tooling, preservando seus inventários', (t) => {
+  const read = isolatedFixture(t, (dir) => {
+    const sample = `supabase.from('ghost_table').select('*'); supabase.rpc('ghost_rpc');
+supabase.functions.invoke('ghost-edge'); supabase.functions.invoke('orphan-fn');`;
+    for (const file of ['src/__tests__/calls.test.ts', 'src/components/Demo.stories.tsx', 'supabase/functions/send-email/sample.test.ts',
+      'scripts/check.mjs', 'tools/check.mjs', '.github/scripts/check.mjs', 'docs/example.ts', 'packages/demo/scripts/check.mjs']) w(dir, file, sample);
+    w(dir, 'worker/job.ts', `supabase.from('runtime_table').select('*'); supabase.rpc('runtime_rpc');
+supabase.functions.invoke('runtime-missing'); supabase.functions.invoke('runtime-fn');`);
+    w(dir, 'supabase/functions/runtime-fn/index.ts', `Deno.serve(() => new Response('ok'));`);
+  });
+  const baseline = read('baseline.json');
+  assert.deepEqual(baseline.alertas.tabelas_usadas_sem_definicao, ['runtime_table']);
+  assert.deepEqual(baseline.alertas.rpcs_sem_definicao, ['runtime_rpc']);
+  assert.deepEqual(baseline.alertas.edges_chamadas_sem_pasta, ['runtime-missing']);
+  const edges = Object.fromEntries(read('edge-functions.json').edges.map((e) => [e.nome, e]));
+  assert.equal(edges['orphan-fn'].orfa, true);
+  assert.deepEqual(edges['orphan-fn'].chamada_pelo_front, []);
+  assert.deepEqual(edges['orphan-fn'].chamada_por_edges, []);
+  assert.equal(edges['runtime-fn'].orfa, false);
+  assert.deepEqual(edges['runtime-fn'].chamada_pelo_front, ['worker/job.ts']);
+  assert.ok(read('scripts.json').scripts.some((s) => s.arquivo === 'scripts/check.mjs'));
+  assert.ok(read('testes.json').arquivos.some((s) => s.arquivo === 'src/__tests__/calls.test.ts'));
+});
+
+test('alertas respeitam srcDirs explícito quando uma pasta de ferramentas contém a aplicação', (t) => {
+  const read = isolatedFixture(t, (dir) => {
+    w(dir, 'ai-context.config.json', JSON.stringify({ srcDirs: ['tools'] }));
+    w(dir, 'tools/app.ts', `supabase.from('tools_runtime').select('*'); supabase.rpc('tools_rpc'); supabase.functions.invoke('tools-edge');`);
+  });
+  const alerts = read('baseline.json').alertas;
+  assert.ok(alerts.tabelas_usadas_sem_definicao.includes('tools_runtime'));
+  assert.ok(alerts.rpcs_sem_definicao.includes('tools_rpc'));
+  assert.ok(alerts.edges_chamadas_sem_pasta.includes('tools-edge'));
+});

@@ -998,6 +998,10 @@ def rx_name_keys(names: list[str]) -> set[str]:
 
 def build_function_callers(db: dict) -> None:
     """Preenche f["callers"] = {"code": [...], "cron": [...], "triggers": [...], "db": [...]} em cada função."""
+    if "functions" in CARRIED:
+        # O snapshot compacto não contém os corpos SQL necessários para refazer este mapa.
+        log("callers: preservado da coleta anterior junto com a seção functions")
+        return
     fns = db.get("functions") or []
     if not fns:
         return
@@ -1095,7 +1099,11 @@ def diff_fingerprints(old: dict, new: dict) -> list[tuple[str, str, list[str]]]:
 # --------------------------------------------------------------------------- #
 
 def banner(name: str) -> str:
-    return f"> ⚠️ Seção `{name}` não pôde ser atualizada nesta coleta (ver errors.md); mostrando a versão anterior.\n\n" if name in CARRIED else ""
+    if name in CARRIED:
+        return f"> ⚠️ Seção `{name}` não pôde ser atualizada nesta coleta (ver errors.md); mostrando a versão anterior.\n\n"
+    if any(e["section"] == name for e in ERRORS):
+        return f"> ⚠️ Seção `{name}` indisponível nesta coleta e sem versão anterior (ver errors.md).\n\n"
+    return ""
 
 
 def render_tables(db: dict) -> None:
@@ -1223,25 +1231,33 @@ def render_simple(db: dict, api_: dict) -> None:
 
     # Functions
     rows = []
+    missing_function_sql = 0
     for f in db.get("functions") or []:
         rel = f"functions/{slug(f['schema'])}/{slug(f['name'] + '__' + sha(f['args']))}.sql"
+        if f.get("definition"):
+            write(OUT / rel, f["definition"].strip())
+        sql_available = bool(f.get("definition")) or ("functions" in CARRIED and (OUT / rel).is_file())
+        if not sql_available:
+            missing_function_sql += 1
+        label = f"[{f['schema']}.{f['name']}]({rel})" if sql_available else f"{code(f['schema'] + '.' + f['name'])} (SQL indisponível)"
         cl = f.get("callers") or {}
         code_refs = ", ".join(c["file"] for c in cl.get("code", [])[:6]) + (f" (+{cl['code_total_files'] - 6})" if cl.get("code_total_files", 0) > 6 else "")
-        rows.append([f"[{f['schema']}.{f['name']}]({rel})", code(f["args"]), code(f["returns"]), f["language"], f["kind"],
+        rows.append([label, code(f["args"]), code(f["returns"]), f["language"], f["kind"],
                      "trigger" if f["is_trigger_fn"] else "", f["security_definer"], f["volatility"], ", ".join(f["config"] or []),
                      f["execute_api_roles"] or ("PUBLIC" if f["execute_public"] else ""),
                      code_refs or ("—" if cl else "n/d"), cl.get("cron") or "", cl.get("triggers") or "",
                      (cl.get("db") or []) + [f"view:{v}" for v in cl.get("views") or []], f.get("comment")])
-        if f.get("definition"):
-            write(OUT / rel, f["definition"].strip())
+    if missing_function_sql:
+        record_error("functions.sql", f"SQL indisponível para {missing_function_sql} função(ões); arquivos anteriores ausentes e nenhum corpo SQL coletado.")
     write(OUT / "functions.md", "# Functions / Procedures\n\n" + banner("functions") +
           "Corpo completo em `functions/<schema>/<nome>__<hash>.sql`. "
           "Função em schema exposto com EXECUTE para anon/authenticated = endpoint RPC (`/rest/v1/rpc/<nome>`). "
           "`security definer` executa com privilégios do owner — exige `SET search_path`.\n\n"
           "Colunas de uso: **código** = arquivos do repo que chamam (`.rpc('fn')` ou `fn(`), **cron** = jobs do pg_cron que a executam, "
           "**triggers** = triggers que a disparam, **banco** = outras funções e views que a usam. Busca é por nome (overloads compartilham). Função sem nenhum uso = candidata a morta.\n\n"
-          + md_table(["função", "args", "retorno", "linguagem", "tipo", "trigger fn", "security definer", "volatilidade", "config", "EXECUTE (roles API)",
-                      "código", "cron", "triggers", "banco", "comentário"], rows))
+          + (md_table(["função", "args", "retorno", "linguagem", "tipo", "trigger fn", "security definer", "volatilidade", "config", "EXECUTE (roles API)",
+                       "código", "cron", "triggers", "banco", "comentário"], rows) if db.get("functions") is not None
+             else "_Coleta indisponível; nenhuma versão anterior foi encontrada._\n"))
 
     # Triggers
     write(OUT / "triggers.md", "# Triggers\n\n" + banner("triggers") + md_table(
@@ -1329,15 +1345,31 @@ def render_simple(db: dict, api_: dict) -> None:
 
     # Migrations
     rows = []
+    missing_migration_sql = 0
     for m in db.get("migrations") or []:
         name = slug(f"{m['version']}_{m.get('name') or ''}")
-        stmts = m.get("statements") or []
-        sql = "\n\n".join(stmts) if isinstance(stmts, list) else str(stmts)
-        write(OUT / "migrations" / f"{name}.sql", sql.strip() or "-- (sem statements registrados)")
-        rows.append([m["version"], f"[{m.get('name') or ''}](migrations/{name}.sql)", len(stmts) if isinstance(stmts, list) else 1])
+        path = OUT / "migrations" / f"{name}.sql"
+        stmts = m.get("statements")
+        if isinstance(stmts, int):
+            # Contador do snapshot compacto: o SQL integral permanece no arquivo anterior.
+            count = stmts
+        else:
+            stmts = stmts or []
+            sql = "\n\n".join(stmts) if isinstance(stmts, list) else str(stmts)
+            write(path, sql.strip() or "-- (sem statements registrados)")
+            count = len(stmts) if isinstance(stmts, list) else 1
+        if path.is_file():
+            label = f"[{m.get('name') or ''}](migrations/{name}.sql)"
+        else:
+            label = f"{m.get('name') or ''} (SQL indisponível)"
+            missing_migration_sql += 1
+        rows.append([m["version"], label, count])
+    if missing_migration_sql:
+        record_error("migrations.sql", f"SQL indisponível para {missing_migration_sql} migration(s); arquivos anteriores ausentes e nenhum SQL coletado.")
     write(OUT / "migrations.md", "# Migrations aplicadas (supabase_migrations.schema_migrations)\n\n" + banner("migrations") +
           "SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Editor **não** aparecem aqui — "
-          "compare com `schema.sql` para ver o estado real.\n\n" + md_table(["versão", "nome", "statements"], rows))
+          "compare com `schema.sql` para ver o estado real.\n\n" + (md_table(["versão", "nome", "statements"], rows)
+          if db.get("migrations") is not None else "_Coleta indisponível; nenhuma versão anterior foi encontrada._\n"))
 
     # Storage
     write(OUT / "storage.md", "# Storage\n\n" + banner("storage") + "Policies de `storage.objects`/`storage.buckets` em `policies.md`. Contagens em `stats.md`.\n\n" + md_table(
@@ -1442,10 +1474,10 @@ def render_readme(snap: dict, api_: dict) -> None:
     lints = db.get("lints") or []
     counts = [
         ["tabelas", len(db.get("tables") or [])], ["colunas", len(db.get("columns") or [])], ["views", len(db.get("views") or [])],
-        ["functions", len(db.get("functions") or [])], ["triggers", len(db.get("triggers") or [])], ["policies (RLS)", len(db.get("policies") or [])],
+        ["functions", len(db["functions"]) if db.get("functions") is not None else "n/d"], ["triggers", len(db.get("triggers") or [])], ["policies (RLS)", len(db.get("policies") or [])],
         ["índices", len(db.get("indexes") or [])], ["tipos/enums", len(db.get("types") or [])], ["extensões", len(db.get("extensions") or [])],
         ["cron jobs", len(cron.get("jobs") or [])], ["filas pgmq", len(((db.get("queues") or {}).get("queues")) or [])],
-        ["migrations", len(db.get("migrations") or [])], ["buckets", len(db.get("storage") or [])],
+        ["migrations", len(db["migrations"]) if db.get("migrations") is not None else "n/d"], ["buckets", len(db.get("storage") or [])],
         ["edge functions", len(api_.get("edge_functions") or []) if api_.get("enabled") else "n/d"], ["webhooks", len(db.get("webhooks") or [])],
         ["lints ALTA", sum(1 for l in lints if l["severity"] == "ALTA")], ["lints total", len(lints)],
     ]
@@ -1555,8 +1587,10 @@ def main() -> int:
         types_ts = (OUT / "types.ts").read_text(encoding="utf-8")
         CARRIED.append("types.ts")
 
+    preserved = {"CHANGELOG.md", "edge-functions", "snapshot.json", ".gitattributes"}
+    preserved.update(name for name in ("functions", "migrations") if name in CARRIED)
     for item in OUT.iterdir():
-        if item.name in ("CHANGELOG.md", "edge-functions", "snapshot.json", ".gitattributes"):
+        if item.name in preserved:
             continue
         shutil.rmtree(item) if item.is_dir() else item.unlink()
 
@@ -1583,7 +1617,7 @@ def main() -> int:
         if f.get("definition"):
             f["definition_sha"] = sha(f["definition"]); f["definition"] = None
     for m in slim["db"].get("migrations") or []:
-        if m.get("statements"):
+        if isinstance(m.get("statements"), (list, str)) and m["statements"]:
             m["statements_sha"] = sha(m["statements"]); m["statements"] = len(m["statements"]) if isinstance(m["statements"], list) else 1
     write(prev_path, dumps(slim))
     write(OUT / ".gitattributes", "* linguist-generated=true\n*.sql linguist-generated=true\n")

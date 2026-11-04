@@ -21,6 +21,16 @@ O que **não** é daqui (cada fato tem um dono): schema real → snapshot do ban
 - `publish.sh` — publicação genérica (push / PR / branch derivada) para uso standalone em outros repos; **neste repo não é usado**: o job `publicar` do `contexto.yml` monta a branch `contexto` e o índice.
 - Workflow: job `regras` (+ `publicar`, que monta o índice) em `.github/workflows/contexto.yml`.
 
+O índice distingue `ok`, `parcial` (falha de coleta ou reaproveitamento), `não verificável` (manifest/relatório ilegível), `desatualizado` e fonte ausente.
+Código/regras com commit igual ao HEAD continuam atuais apesar da idade da coleta; banco real e fontes sem commit confirmado seguem o limite de idade configurado.
+
+## Fontes SQL
+
+Arquivos `.sql` em diretórios chamados exatamente `_foreign` ou `_superseded` são históricos:
+continuam no inventário de arquivos, mas não entram na reconstrução do schema nem na extração
+de regras do código. Outras pastas de migrations e fontes SQL, Prisma e tipos gerados mantêm
+a seleção existente. A reconstrução é estática; só o snapshot descreve o banco em produção.
+
 ## Regras humanas
 
 `docs/contexto/regras/manual/*.md` (exceto README e TEMPLATE) entram na seção A do 07 com prioridade
@@ -36,6 +46,17 @@ python3 scripts/regras_negocio/indice.py --repo . --out docs/contexto/00-INDEX.m
 ```
 
 Ler o resultado: `git fetch origin contexto && git show origin/contexto:docs/contexto/00-INDEX.md`.
+
+## Testes de regressão
+
+```bash
+python3 scripts/regras_negocio/test_generate.py -v
+node --test scripts/ci/regras-negocio.unit.mjs
+```
+
+A suíte usa fixtures locais e cobre SQL ativo versus histórico, objetos do schema, fontes
+Prisma/tipos e a saída do perfil `regras`. O adaptador inclui a mesma suíte no CI obrigatório;
+nenhum teste acessa banco ou API de LLM.
 
 Origem e testes (430 cenários sintéticos + simulação git de 3 produtores na mesma branch): pacote
 `ai-context-sync` no Project "SCRIPTS | AUTÔNOMOS | REPOSITÓRIO".

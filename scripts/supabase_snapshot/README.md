@@ -100,3 +100,15 @@ pip install -r scripts/supabase_snapshot/requirements.txt
 export SUPABASE_DB_URL='postgresql://...'
 python scripts/supabase_snapshot/snapshot.py
 ```
+
+## Testes offline
+
+```sh
+python3 scripts/supabase_snapshot/test_snapshot.py -v
+node --test scripts/ci/supabase-snapshot.unit.mjs
+```
+
+Não exigem banco, rede, credenciais nem o pacote psycopg: a conexão é simulada. Verificam a preservação
+do SQL e dos metadados em coletas parciais, a ausência de arquivos anteriores e a recuperação na coleta
+saudável seguinte. O adaptador Node participa da suíte existente `scripts/ci/*.unit.mjs`.
+
