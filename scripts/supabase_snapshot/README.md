@@ -70,6 +70,11 @@ preservando tamanho do banco, conexões, storage, filas e os agregados de auth q
 Erro em auth permanece independente como `db_stats.auth`. Nenhuma permissão é concedida e nenhuma
 extensão é criada pelo coletor; a ausência de `top_queries` após erro não é apresentada como lista vazia.
 
+O filtro de comandos usa `\y`, limite de palavra do PostgreSQL. `\b` nesse motor significa
+backspace e descartava até `select 1`. Uma matriz de 48 strings constantes foi validada no
+PostgreSQL: 24 divergências com o filtro antigo e nenhuma com o filtro corrigido, sem ler
+linhas de clientes ou executar os comandos contidos nas strings.
+
 ### Como interpretar referências a funções
 
 O mapa de código ignora assinaturas de declaração/alteração de funções, diretórios históricos
