@@ -94,16 +94,24 @@ escolher a imagem descartavel; no CI ela usa a imagem PostgreSQL 17 pinada do jo
 
 ### Integracoes HTTP Gmail e Talk X
 
-Os harnesses HTTP precisam de Docker, Deno e Python 3 (biblioteca padrao). O DB
-Guard fornece as imagens PostgreSQL 17/PostgREST 14.5 pinadas e o Deno 2.9.5 ja
+Os harnesses HTTP precisam de Docker Engine em host Linux, Deno e Python 3
+(biblioteca padrao). O acesso direto do host a essa bridge interna nao e um
+contrato de Docker Desktop. O DB Guard fornece as imagens PostgreSQL 17/PostgREST 14.5 pinadas e o Deno 2.9.5 ja
 adotados pelo repositorio. `SKIP_DOCKER_SHIM=1` e obrigatorio nesse job: rede,
 logs, readiness e PostgREST dependem de containers reais, nao do shim SQL.
 
-Cada execucao cria uma rede interna e seus proprios containers; apenas o
-PostgREST publica porta dinamica em `127.0.0.1`. Antes das migrations, PostgreSQL
-inicia com `cron.launch_active_jobs=off`, confirmado por `SHOW`, e o host oficial
-e resolvido para loopback. JWTs, usuarios e provedores sao sinteticos; os testes
-Deno so recebem permissao de rede para `127.0.0.1`. O bootstrap pode baixar as
+Cada execucao cria uma rede interna e seus proprios containers, sem publicar
+portas no host. `postgrest-internal-url.py` cruza os dois CIDs, labels, NetworkID,
+membros e enderecos dos metadados Docker antes de aceitar o IPv4 privado do
+PostgREST na porta 3000. Rede adicional, recurso alheio ou binding de porta
+reprova antes do HTTP. O diagnostico mostra apenas Running/ExitCode/Error/Ports;
+logs limitados do PostgREST sao lidos se ele encerrou antes da readiness.
+
+Antes das migrations, PostgreSQL inicia com `cron.launch_active_jobs=off`,
+confirmado por `SHOW`, e o host oficial e resolvido para loopback. JWTs, usuarios
+e provedores sao sinteticos; Deno recebe `--allow-net=127.0.0.1,<IP-validado>:3000`:
+o IP proprio para PostgREST e loopback para os proxies/provedores dos testes.
+Curl ignora proxies do ambiente com `--noproxy '*'`. O bootstrap pode baixar
 imagens e dependencias pinadas; nenhuma credencial oficial e recebida.
 
 Gmail executa `gmail-cursor-cas-db.test.ts` (7) e `gmail-history-cas-db.test.ts`

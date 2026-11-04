@@ -502,10 +502,9 @@ done
 docker image inspect "$pgrst_image" >/dev/null 2>&1 \
   || fail "registro de imagens indisponivel ($pgrst_image)"
 
-# PostgREST publicado em 127.0.0.1 (porta efêmera escolhida pelo docker).
+# PostgREST somente na rede interna; nenhum binding de porta no host.
 docker create --cidfile "$run_dir/pgrst.id" --name "$pgrst_name" --network "$net_name" \
   --label "zapp.edge-harness=$run_key" \
-  -p 127.0.0.1::3000 \
   -e PGRST_DB_URI="postgres://postgres:engine_provider_test_only@$pg_name:5432/postgres" \
   -e PGRST_DB_SCHEMAS=public \
   -e PGRST_DB_ANON_ROLE=anon \
@@ -515,15 +514,30 @@ docker create --cidfile "$run_dir/pgrst.id" --name "$pgrst_name" --network "$net
 pgrst_id="$(cat "$run_dir/pgrst.id")"
 docker start "$pgrst_id" >/dev/null
 
-binding="$(docker port "$pgrst_id" 3000)"
-[[ "$binding" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]] || fail 'porta do PostgREST não é loopback'
-host_port="$((10#${BASH_REMATCH[1]}))"
-((host_port >= 1 && host_port <= 65535)) || fail 'porta do PostgREST inválida'
-pgrest_url="http://127.0.0.1:$host_port"
+# Docker Engine Linux: acesso pelo IP privado da única rede interna, sem -p.
+# Filtrar inspect evita registrar Env/credenciais; o helper valida ambos os CIDs.
+container_format='{"Id":{{json .Id}},"Config":{"Labels":{{json .Config.Labels}}},"State":{"Running":{{json .State.Running}},"ExitCode":{{json .State.ExitCode}},"Error":{{json .State.Error}}},"HostConfig":{"NetworkMode":{{json .HostConfig.NetworkMode}},"PortBindings":{{json .HostConfig.PortBindings}}},"NetworkSettings":{"Networks":{{json .NetworkSettings.Networks}},"Ports":{{json .NetworkSettings.Ports}}}}'
+network_format='{"Id":{{json .Id}},"Labels":{{json .Labels}},"Name":{{json .Name}},"Internal":{{json .Internal}},"Driver":{{json .Driver}},"IPAM":{{json .IPAM}},"Containers":{{json .Containers}}}'
+network_id="$(cat "$run_dir/network.id")"
+docker inspect --format "$container_format" "$pgrst_id" > "$run_dir/pgrst.json" \
+  || fail 'não consegui inspecionar o PostgREST próprio'
+docker inspect --format "$container_format" "$pg_id" > "$run_dir/pg.json" \
+  || fail 'não consegui inspecionar o PostgreSQL próprio'
+docker network inspect --format "$network_format" "$network_id" > "$run_dir/network.json" \
+  || fail 'não consegui inspecionar a rede interna própria'
+if pgrest_url="$(python3 "$repo_root/scripts/db-audit/postgrest-internal-url.py" \
+  "$run_dir/pgrst.json" "$run_dir/pg.json" "$run_dir/network.json" \
+  "$pgrst_id" "$pg_id" "$network_id" "$run_key")"; then
+  :
+else
+  metadata_status=$?
+  if [[ "$metadata_status" == 2 ]]; then docker logs --tail 40 "$pgrst_id" >&2 || true; fi
+  fail 'PostgREST não atende ao contrato da rede interna própria'
+fi
 
 postgrest_ready=false
 for _ in $(seq 1 60); do
-  if curl -sf --connect-timeout 2 --max-time 5 "$pgrest_url/" >/dev/null 2>&1; then
+  if curl --noproxy '*' -sf --connect-timeout 2 --max-time 5 "$pgrest_url/" >/dev/null 2>&1; then
     postgrest_ready=true
     break
   fi
@@ -558,7 +572,7 @@ TALKX_ENGINE_JWT="$jwt" \
 TALKX_ENGINE_ANON_JWT="$anon_jwt" \
   deno test --config "$repo_root/scripts/ci/deno.json" --frozen \
     --junit-path "$run_dir/x034.xml" \
-    --allow-env --allow-read --allow-net=127.0.0.1 "$deno_test" \
+    --allow-env --allow-read --allow-net="127.0.0.1,${pgrest_url#http://}" "$deno_test" \
   || fail 'engine.integration.test.ts falhou'
 python3 "$repo_root/scripts/db-audit/assert-deno-junit.py" "$run_dir/x034.xml" 8
 

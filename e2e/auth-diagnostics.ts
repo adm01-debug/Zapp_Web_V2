@@ -67,8 +67,8 @@ export function assertAuthenticatedTarget(baseURL: unknown): AuthTarget {
   if (target.kind === 'remote') {
     throw new AuthTargetError('REMOTE_FULL_SUITE_BLOCKED', 'A suíte autenticada grava dados e pode enfileirar mensagens reais. Exige backend/fixtures isolados e proteção de rede; a troca de URL ou um SHA publicado igual não fornece esse isolamento. Login-only requer um harness próprio. Nenhuma autenticação foi iniciada.');
   }
-  // Preserva o fluxo local preexistente. Isso NÃO certifica backend isolado:
-  // o app local usa produção por padrão, e algumas specs fixam endpoints reais.
+  // Esta é apenas a classificação inicial. O auth.setup exige em seguida a
+  // admissão do namespace e do backend realmente servido, antes do login.
   return target;
 }
 

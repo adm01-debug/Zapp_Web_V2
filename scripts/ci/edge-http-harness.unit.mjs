@@ -18,7 +18,7 @@ const HARNESSES = {
 // Somente doubles de processo. Python real executa extração SQL, JWT e JUnit;
 // PostgreSQL/PostgREST/Deno e a semântica de CAS/RLS não são simulados aqui.
 const DOUBLE = String.raw`#!PYTHON
-import base64,fcntl,hashlib,hmac,json,os,re,signal,sys,time
+import base64,copy,fcntl,hashlib,hmac,json,os,re,signal,sys,time
 from pathlib import Path
 from urllib.parse import urlsplit
 kind=Path(sys.argv[0]).name
@@ -48,8 +48,9 @@ if kind=="curl":
     url=args[-1]
     try:
         parsed=urlsplit(url)
-        assert parsed.scheme=="http" and parsed.hostname=="127.0.0.1" and parsed.port
-        target=next(item for item in state["resources"].values() if item.get("port")==parsed.port)
+        assert parsed.scheme=="http" and parsed.port==3000
+        assert args[args.index("--noproxy")+1]=="*"
+        target=next(item for item in state["resources"].values() if item.get("ip")==parsed.hostname and item["kind"]=="pgrst")
     except Exception: out(22,"invalid local endpoint")
     event("http",url=url)
     if "/profiles?" in url:
@@ -73,13 +74,14 @@ if kind=="deno":
     url=os.environ.get(prefix+"_POSTGREST_URL","")
     try:
         parsed=urlsplit(url)
-        assert parsed.scheme=="http" and parsed.hostname=="127.0.0.1" and parsed.port
-        target=next(item for item in state["resources"].values() if item.get("port")==parsed.port)
+        assert parsed.scheme=="http" and parsed.port==3000
+        target=next(item for item in state["resources"].values() if item.get("ip")==parsed.hostname and item["kind"]=="pgrst")
         assert claims(os.environ[prefix+"_JWT"],target["secret"])["role"]=="service_role"
         if not is_gmail:
             other=claims(os.environ["TALKX_ENGINE_ANON_JWT"],target["secret"])
             assert other["role"]=="authenticated" and other["sub"]=="20000000-0000-4000-8000-0000000000aa"
-        assert "--frozen" in args and "--allow-net=127.0.0.1" in args
+        assert "--frozen" in args and "--allow-net=127.0.0.1,"+parsed.hostname+":3000" in args
+        assert len([arg for arg in args if arg.startswith("--allow-net")])==1
         assert Path(args[-1]).is_file()
     except Exception: out(3,"local runtime precondition mismatch")
     event("deno",file=Path(args[-1]).name,count=count,url=url,role="service_role")
@@ -103,7 +105,8 @@ if args[:2]==["network","create"]:
     if cfg.get("network_collision"):
         state["resources"][rid]={"kind":"network","name":name,"owner":"foreign"};out(1)
     if cfg.get("network_failure"): out(1)
-    state["resources"][rid]={"kind":"network","name":name,"owner":"ours"}
+    state["network_counter"]+=1
+    state["resources"][rid]={"kind":"network","name":name,"owner":"ours","label":args[args.index("--label")+1].split("=",1)[1],"prefix":"172.23."+str(state["network_counter"])}
     event("network_create",internal="--internal" in args,id=rid)
     out(text=rid)
 if args and args[0] in {"create","run"}:
@@ -113,19 +116,23 @@ if args and args[0] in {"create","run"}:
     if cfg.get(typ+"_collision"):
         state["resources"][rid]={"kind":typ,"name":name,"owner":"foreign","network":None};out(125)
     if cfg.get(typ+"_create_failure"): out(125)
-    item={"kind":typ,"name":name,"owner":"ours","network":net}
+    _,network=resource(net)
+    item={"kind":typ,"name":name,"owner":"ours","network":net,"label":args[args.index("--label")+1].split("=",1)[1],"ip":network["prefix"]+(".3" if typ=="pgrst" else ".2"),"published":"-p" in args}
     if typ=="pgrst":
-        state["port_counter"]+=1;item["port"]=34444+state["port_counter"]
         item["secret"]=next(value.split("=",1)[1] for value in args if value.startswith("PGRST_JWT_SECRET="))
     state["resources"][rid]=item
     if "--cidfile" in args: Path(args[args.index("--cidfile")+1]).write_text(rid)
-    event("container_create",kind=typ,id=rid,host_guard="--add-host=tnnnlkbymytvtqngbbqh.supabase.co:127.0.0.1" in args,cron_off="cron.launch_active_jobs=off" in args,loopback="127.0.0.1::3000" in args)
+    event("container_create",kind=typ,id=rid,host_guard="--add-host=tnnnlkbymytvtqngbbqh.supabase.co:127.0.0.1" in args,cron_off="cron.launch_active_jobs=off" in args,published=item["published"])
     out(text=rid)
 if args and args[0]=="start":
     _,item=resource(args[-1])
     if not item: out(1)
     out(125 if cfg.get(item["kind"]+"_start_failure") else 0)
 if args and args[0]=="logs":
+    _,item=resource(args[-1])
+    if item and item["kind"]=="pgrst":
+        event("pgrst_logs",bounded=args[1:3]==["--tail","40"])
+        out(text="synthetic PostgREST exit; no credentials")
     state["logs"]+=1
     if cfg.get("logs_failure"): out(1)
     markers=cfg.get("log_markers",2)
@@ -158,9 +165,28 @@ if args and args[0]=="pull":
     if cfg.get("pull_failure") or state["pulls"]<cfg.get("pull_after",1): out(1)
     state["image_available"]=True;out()
 if args[:2]==["image","inspect"]: out(0 if state["image_available"] or cfg.get("image_cached") else 1)
+if (args and args[0]=="inspect") or args[:2]==["network","inspect"]:
+    rid,item=resource(args[-1])
+    if not item: out(1)
+    event("inspect",kind=item["kind"])
+    if cfg.get("inspect_failure")==item["kind"]: out(1)
+    if cfg.get("inspect_json")==item["kind"]: out(text="{")
+    assert "--format" in args and ".Env" not in args[args.index("--format")+1]
+    if item["kind"]=="network":
+        data={"Id":rid,"Labels":{"zapp.edge-harness":item["label"]},"Name":item["name"],"Internal":True,"Driver":"bridge","IPAM":{"Config":[{"Subnet":item["prefix"]+".0/24","Gateway":item["prefix"]+".1"}]},"Containers":{key:{"IPv4Address":member["ip"]+"/24"} for key,member in state["resources"].items() if member.get("network")==item["name"]}}
+    else:
+        netid,network=resource(item["network"])
+        bindings={"3000/tcp":[{"HostIp":"127.0.0.1","HostPort":""}]} if item["published"] else {}
+        data={"Id":rid,"Config":{"Labels":{"zapp.edge-harness":item["label"]}},"State":{"Running":True,"ExitCode":0,"Error":""},"HostConfig":{"NetworkMode":item["network"],"PortBindings":bindings},"NetworkSettings":{"Ports":{"3000/tcp" if item["kind"]=="pgrst" else "5432/tcp":None},"Networks":{item["network"]:{"NetworkID":netid,"IPAddress":item["ip"],"IPPrefixLen":24}}}}
+    mutation=cfg.get("inspect_mutation",{})
+    if mutation.get("target")==item["kind"]:
+        target=data
+        keys=[item.get("network") if key=="@network" else key for key in mutation["path"]]
+        for key in keys[:-1]: target=target[key]
+        target[keys[-1]]=copy.deepcopy(mutation["value"])
+    out(text=json.dumps(data))
 if args and args[0]=="port":
-    _,item=resource(args[1])
-    out(text=cfg.get("port","127.0.0.1:"+str(item["port"])))
+    out(1,"No public port '3000' published on the internal network")
 if (args and args[0]=="rm") or args[:2]==["network","rm"]:
     rid,item=resource(args[-1])
     if not item: out(1)
@@ -178,8 +204,8 @@ function fixture(config = {}) {
   const bin = path.join(dir, 'bin');
   fs.mkdirSync(bin, { recursive: true });
   const statePath = path.join(dir, 'state.json');
-  fs.writeFileSync(statePath, JSON.stringify({ config, resources: {}, events: [], foreign_removed: [], deno_calls: 0, sql_calls: 0, sql_ready: 0, logs: 0, http_probes: 0, port_counter: 0, pulls: 0, image_available: false }));
-  const files = [...Object.values(HARNESSES), 'scripts/db-audit/assert-deno-junit.py', 'scripts/ci/deno.json',
+  fs.writeFileSync(statePath, JSON.stringify({ config, resources: {}, events: [], foreign_removed: [], deno_calls: 0, sql_calls: 0, sql_ready: 0, logs: 0, http_probes: 0, network_counter: 0, pulls: 0, image_available: false }));
+  const files = [...Object.values(HARNESSES), 'scripts/db-audit/assert-deno-junit.py', 'scripts/db-audit/postgrest-internal-url.py', 'scripts/ci/deno.json',
     'supabase/functions/talkx-send/engine.integration.test.ts',
     'supabase/functions/_shared/__tests__/gmail-cursor-cas-db.test.ts',
     'supabase/functions/_shared/__tests__/gmail-history-cas-db.test.ts'];
@@ -229,7 +255,12 @@ for (const kind of ['x034', 'gmail']) {
     const events = result.state.events;
     assert.ok(events.some(e => e.event === 'network_create' && e.internal));
     assert.ok(events.some(e => e.event === 'container_create' && e.kind === 'pg' && e.host_guard && e.cron_off));
-    assert.ok(events.some(e => e.event === 'container_create' && e.kind === 'pgrst' && e.loopback));
+    assert.ok(events.some(e => e.event === 'container_create' && e.kind === 'pgrst' && !e.published));
+    assert.ok(events.filter(e => e.event === 'container_create').every(e => !e.published));
+    assert.deepEqual(events.filter(e => e.event === 'inspect').map(e => e.kind), ['pgrst', 'pg', 'network']);
+    assert.ok(events.findLastIndex(e => e.event === 'inspect') < events.findIndex(e => e.event === 'http'));
+    assert.match(result.stderr, /\[DIAG\] PostgREST .*"Running": true/);
+    assert.ok(!events.some(e => e.event === 'pgrst_logs'));
     assert.ok(events.findIndex(e => e.event === 'cron_guard') < events.findIndex(e => e.event === 'sql'));
     assert.ok(events.findIndex(e => e.event === 'host_guard') < events.findIndex(e => e.event === 'sql'));
     assert.deepEqual(events.filter(e => e.event === 'deno').map(e => e.count), kind === 'gmail' ? [7, 1] : [8]);
@@ -245,7 +276,8 @@ for (const kind of ['x034', 'gmail']) {
     ['falha ao iniciar PostgREST criado', { pgrst_start_failure: true }],
     ['PG ainda na primeira inicialização', { log_markers: 1 }], ['SQL não pronto', { sql_never: true }],
     ['bootstrap SQL falha', { sql_failure: 1 }], ['migration falha', { sql_failure: 5 }],
-    ['porta externa', { port: '0.0.0.0:34444' }], ['porta fora do intervalo', { port: '127.0.0.1:65536' }],
+    ['porta publicada', { inspect_mutation: { target: 'pgrst', path: ['NetworkSettings', 'Ports'], value: { '3000/tcp': [{ HostIp: '0.0.0.0', HostPort: '3000' }] } } }],
+    ['endereço externo', { inspect_mutation: { target: 'pgrst', path: ['NetworkSettings', 'Networks', '@network', 'IPAddress'], value: '8.8.8.8' } }],
     ['API nunca pronta', { http_never: true }], ['asserção Deno falha', { deno_failure: 1 }],
     ['zero testes', { report_mode: 'zero' }], ['placeholder ignorado', { report_mode: 'ignored' }],
     ['relatório ausente', { report_mode: 'missing' }], ['relatório inválido', { report_mode: 'malformed' }],
@@ -259,6 +291,23 @@ for (const kind of ['x034', 'gmail']) {
       }
     });
   }
+  for (const resource of ['pg', 'pgrst', 'network']) {
+    for (const failure of ['inspect_failure', 'inspect_json']) {
+      test(`${kind}: ${failure} de ${resource} falha antes do HTTP`, () => {
+        const result = runHarness(kind, { [failure]: resource });
+        assertResult(result, false);
+        assert.equal(result.state.deno_calls, 0);
+        assert.equal(result.state.events.filter(e => e.event === 'http').length, 0);
+      });
+    }
+  }
+  test(`${kind}: PostgREST encerrado mostra estado e logs limitados sem executar Deno`, () => {
+    const result = runHarness(kind, { inspect_mutation: { target: 'pgrst', path: ['State'], value: { Running: false, ExitCode: 1, Error: 'synthetic startup failure' } } });
+    assertResult(result, false);
+    assert.equal(result.state.deno_calls, 0);
+    assert.deepEqual(result.state.events.filter(e => e.event === 'pgrst_logs'), [{ event: 'pgrst_logs', bounded: true }]);
+    assert.match(result.stderr, /"Running": false, "ExitCode": 1/);
+  });
   for (const [signal, status] of [['SIGINT', 130], ['SIGTERM', 143]]) {
     test(`${kind}: ${signal} não vira sucesso após Deno`, () => {
       const result = runHarness(kind, { signal });
@@ -306,7 +355,7 @@ test('gmail: alteração do limite multidomínio não aplica SQL de outro domín
   assert.match(result.stderr, /limite do bloco Gmail mudou/);
 });
 
-test('gmail: duas invocações Bash simultâneas mantêm recursos e portas próprios', async () => {
+test('gmail: duas invocações Bash simultâneas mantêm recursos e IPs próprios', async () => {
   const f = fixture();
   try {
     const results = await Promise.all([1, 2].map(() => execute(BIN.bash, [path.join(f.repo, HARNESSES.gmail)], { cwd: f.repo, env: f.env, timeout: 20000 })));
@@ -354,6 +403,102 @@ for (const [name, content, expected, accepted] of REPORT_CASES) {
       if (content !== null) fs.writeFileSync(file, content);
       const proc = spawnSync(BIN.python3, [path.join(ROOT, 'scripts/db-audit/assert-deno-junit.py'), file, String(expected)], { encoding: 'utf8' });
       assert.equal(proc.status === 0, accepted, proc.stdout + proc.stderr);
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+}
+
+// Matriz anterior ao patch: metadados Docker sintéticos; executa o resolvedor
+// Python real, sem modelar a semântica de Docker/PostgreSQL/PostgREST/Deno.
+const METADATA_BASE = {"pgrst":{"Id":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","Config":{"Labels":{"zapp.edge-harness":"unit01"}},"State":{"Running":true,"ExitCode":0,"Error":""},"HostConfig":{"NetworkMode":"zapp-gmail-cas-net-unit01","PortBindings":{}},"NetworkSettings":{"Ports":{"3000/tcp":null},"Networks":{"zapp-gmail-cas-net-unit01":{"NetworkID":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","IPAddress":"172.19.0.3","IPPrefixLen":24}}}},"pg":{"Id":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","Config":{"Labels":{"zapp.edge-harness":"unit01"}},"State":{"Running":true,"ExitCode":0,"Error":""},"HostConfig":{"NetworkMode":"zapp-gmail-cas-net-unit01","PortBindings":{}},"NetworkSettings":{"Ports":{"5432/tcp":null},"Networks":{"zapp-gmail-cas-net-unit01":{"NetworkID":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","IPAddress":"172.19.0.2","IPPrefixLen":24}}}},"network":{"Id":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","Labels":{"zapp.edge-harness":"unit01"},"Name":"zapp-gmail-cas-net-unit01","Internal":true,"Driver":"bridge","IPAM":{"Config":[{"Subnet":"172.19.0.0/24","Gateway":"172.19.0.1"}]},"Containers":{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":{"IPv4Address":"172.19.0.3/24"},"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb":{"IPv4Address":"172.19.0.2/24"}}}};
+const METADATA_CASES = [
+  ["own_internal_postgrest",[],0,"http://172.19.0.3:3000"],
+  ["ports_empty",[["pgrst",["NetworkSettings","Ports"],{}]],0,"http://172.19.0.3:3000"],
+  ["ports_null",[["pgrst",["NetworkSettings","Ports"],null]],0,"http://172.19.0.3:3000"],
+  ["ports_empty_list",[["pgrst",["NetworkSettings","Ports","3000/tcp"],[]]],0,"http://172.19.0.3:3000"],
+  ["private_range_10.23.0",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"10.23.0.3"],["pg",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"10.23.0.2"],["network",["IPAM","Config"],[{"Subnet":"10.23.0.0/24","Gateway":"10.23.0.1"}]],["network",["Containers","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","IPv4Address"],"10.23.0.3/24"],["network",["Containers","bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","IPv4Address"],"10.23.0.2/24"]],0,"http://10.23.0.3:3000"],
+  ["private_range_192.168.23",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"192.168.23.3"],["pg",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"192.168.23.2"],["network",["IPAM","Config"],[{"Subnet":"192.168.23.0/24","Gateway":"192.168.23.1"}]],["network",["Containers","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","IPv4Address"],"192.168.23.3/24"],["network",["Containers","bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","IPv4Address"],"192.168.23.2/24"]],0,"http://192.168.23.3:3000"],
+  ["wrong_container_id",[["pgrst",["Id"],"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"]],1,""],
+  ["wrong_network_id",[["network",["Id"],"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"]],1,""],
+  ["wrong_container_label",[["pgrst",["Config","Labels","zapp.edge-harness"],"foreign"]],1,""],
+  ["missing_container_label",[["pgrst",["Config","Labels"],{}]],1,""],
+  ["wrong_network_label",[["network",["Labels","zapp.edge-harness"],"foreign"]],1,""],
+  ["missing_network_label",[["network",["Labels"],{}]],1,""],
+  ["external_network",[["network",["Internal"],false]],1,""],
+  ["internal_string",[["network",["Internal"],"true"]],1,""],
+  ["wrong_driver",[["network",["Driver"],"host"]],1,""],
+  ["two_attached_networks",[["pgrst",["NetworkSettings","Networks"],{"zapp-gmail-cas-net-unit01":{"NetworkID":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","IPAddress":"172.19.0.3","IPPrefixLen":24},"bridge":{}}]],1,""],
+  ["no_attached_network",[["pgrst",["NetworkSettings","Networks"],{}]],1,""],
+  ["wrong_endpoint_network",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","NetworkID"],"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"]],1,""],
+  ["wrong_network_mode",[["pgrst",["HostConfig","NetworkMode"],"host"]],1,""],
+  ["old_publish_request",[["pgrst",["HostConfig","PortBindings"],{"3000/tcp":[{"HostIp":"127.0.0.1","HostPort":""}]}]],1,""],
+  ["unexpected_published_port",[["pgrst",["NetworkSettings","Ports","3000/tcp"],[{"HostIp":"0.0.0.0","HostPort":"3000"}]]],1,""],
+  ["missing_pg_member",[["network",["Containers"],{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":{"IPv4Address":"172.19.0.3/24"}}]],1,""],
+  ["foreign_member",[["network",["Containers"],{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":{"IPv4Address":"172.19.0.3/24"},"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb":{"IPv4Address":"172.19.0.2/24"},"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd":{"IPv4Address":"172.19.0.4/24"}}]],1,""],
+  ["missing_pgrst_member",[["network",["Containers"],{"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb":{"IPv4Address":"172.19.0.2/24"}}]],1,""],
+  ["member_ip_mismatch",[["network",["Containers","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","IPv4Address"],"172.19.0.9/24"]],1,""],
+  ["member_prefix_mismatch",[["network",["Containers","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","IPv4Address"],"172.19.0.3/16"]],1,""],
+  ["endpoint_prefix_mismatch",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPPrefixLen"],16]],1,""],
+  ["missing_ipam",[["network",["IPAM","Config"],[]]],1,""],
+  ["two_ipv4_subnets",[["network",["IPAM","Config"],[{"Subnet":"172.19.0.0/24"},{"Subnet":"172.20.0.0/24"}]]],1,""],
+  ["invalid_subnet",[["network",["IPAM","Config"],[{"Subnet":"invalid"}]]],1,""],
+  ["global_subnet",[["network",["IPAM","Config"],[{"Subnet":"8.0.0.0/8"}]]],1,""],
+  ["running_exit_code",[["pgrst",["State","ExitCode"],17]],1,""],
+  ["running_string",[["pgrst",["State","Running"],"true"]],1,""],
+  ["missing_state",[["pgrst",["State"],{}]],1,""],
+  ["bad_address_8.8.8.8",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"8.8.8.8"]],1,""],
+  ["bad_address_127.0.0.1",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"127.0.0.1"]],1,""],
+  ["bad_address_169.254.1.1",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"169.254.1.1"]],1,""],
+  ["bad_address_224.0.0.1",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"224.0.0.1"]],1,""],
+  ["bad_address_0.0.0.0",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"0.0.0.0"]],1,""],
+  ["bad_address_172.20.0.3",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.20.0.3"]],1,""],
+  ["bad_address_172.19.0.0",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.19.0.0"]],1,""],
+  ["bad_address_172.19.0.255",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.19.0.255"]],1,""],
+  ["bad_address_172.19.0.1",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.19.0.1"]],1,""],
+  ["bad_address_example.invalid",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"example.invalid"]],1,""],
+  ["bad_address_172.19.0.3/path",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.19.0.3/path"]],1,""],
+  ["bad_address_::1",[["pgrst",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"::1"]],1,""],
+  ["stopped_0",[["pgrst",["State","Running"],false],["pgrst",["State","Error"],"synthetic exit"]],2,""],
+  ["stopped_1",[["pgrst",["State","Running"],false],["pgrst",["State","ExitCode"],1],["pgrst",["State","Error"],"synthetic exit"]],2,""],
+  ["stopped_137",[["pgrst",["State","Running"],false],["pgrst",["State","ExitCode"],137],["pgrst",["State","Error"],"synthetic exit"]],2,""],
+  ["wrong_pg_id",[["pg",["Id"],"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"]],1,""],
+  ["wrong_pg_label",[["pg",["Config","Labels","zapp.edge-harness"],"foreign"]],1,""],
+  ["missing_pg_label",[["pg",["Config","Labels"],{}]],1,""],
+  ["two_pg_networks",[["pg",["NetworkSettings","Networks"],{"zapp-gmail-cas-net-unit01":{"NetworkID":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","IPAddress":"172.19.0.2","IPPrefixLen":24},"bridge":{}}]],1,""],
+  ["no_pg_network",[["pg",["NetworkSettings","Networks"],{}]],1,""],
+  ["wrong_pg_network_id",[["pg",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","NetworkID"],"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"]],1,""],
+  ["wrong_pg_network_mode",[["pg",["HostConfig","NetworkMode"],"host"]],1,""],
+  ["pg_port_binding",[["pg",["HostConfig","PortBindings"],{"5432/tcp":[{"HostPort":"5432"}]}]],1,""],
+  ["pg_published_port",[["pg",["NetworkSettings","Ports","5432/tcp"],[{"HostPort":"5432"}]]],1,""],
+  ["pg_bad_port_type",[["pg",["NetworkSettings","Ports"],[]]],1,""],
+  ["pg_foreign_ip",[["pg",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.20.0.2"]],1,""],
+  ["pg_same_ip",[["pg",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.19.0.3"]],1,""],
+  ["pg_gateway_ip",[["pg",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPAddress"],"172.19.0.1"]],1,""],
+  ["pg_wrong_prefix",[["pg",["NetworkSettings","Networks","zapp-gmail-cas-net-unit01","IPPrefixLen"],16]],1,""],
+  ["pg_stopped",[["pg",["State","Running"],false]],1,""],
+  ["pg_running_string",[["pg",["State","Running"],"true"]],1,""],
+  ["pg_member_ip_mismatch",[["network",["Containers","bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","IPv4Address"],"172.19.0.9/24"]],1,""],
+  ["pg_member_prefix_mismatch",[["network",["Containers","bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","IPv4Address"],"172.19.0.2/16"]],1,""],
+];
+for (const [name, mutations, expectedExit, expectedUrl] of METADATA_CASES) {
+  test(`metadados internos reais: ${name}`, () => {
+    const data = structuredClone(METADATA_BASE);
+    for (const [resource, keys, value] of mutations) {
+      let target = data[resource];
+      for (const key of keys.slice(0, -1)) target = target[key];
+      target[keys.at(-1)] = value;
+    }
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'edge-metadata-control-'));
+    try {
+      const paths = ['pgrst', 'pg', 'network'].map(kind => {
+        const file = path.join(dir, `${kind}.json`);
+        fs.writeFileSync(file, JSON.stringify(data[kind]));
+        return file;
+      });
+      const proc = spawnSync(BIN.python3, [path.join(ROOT, 'scripts/db-audit/postgrest-internal-url.py'),
+        ...paths, METADATA_BASE.pgrst.Id, METADATA_BASE.pg.Id, METADATA_BASE.network.Id,
+        METADATA_BASE.network.Labels['zapp.edge-harness']], { encoding: 'utf8' });
+      assert.equal(proc.status, expectedExit, proc.stdout + proc.stderr);
+      assert.equal(proc.stdout.trim(), expectedUrl);
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   });
 }

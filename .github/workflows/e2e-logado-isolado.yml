@@ -1,12 +1,11 @@
 # docs:
 #   gatilho: pull_request nos arquivos do ambiente isolado e dispatch
-#   prova: resolve digests OCI de imagens versionadas sem criar banco, credenciais ou navegador
-#   falha: lock pendente ou erro de metadados bloqueia explicitamente o preparo
-#   avisa: autor e revisor via check; artefato contem somente nomes e digests
-# Preparo verificável do ambiente descartável. Esta primeira etapa só resolve
-# imagens oficiais versionadas: não cria credenciais, banco, seed ou navegador.
-# Um digest pendente termina em falha explícita e publica apenas metadados.
-name: E2E isolado - preparo de imagens
+#   prova: valida digests e executa bootstrap Supabase e login real em namespace sem rede externa
+#   falha: lock, isolamento, plataforma, migrations, seed, login ou limpeza inválidos bloqueiam
+#   avisa: autor e revisor via check; publica somente metadados e logs redigidos
+# Primeiro corte nativo: bootstrap e um teste setup. A suíte de 15 projetos
+# continua pendente até seu inventário/seed serem executados no mesmo isolamento.
+name: E2E isolado - bootstrap e login
 
 on:
   workflow_dispatch:
@@ -15,6 +14,9 @@ on:
       - '.github/workflows/e2e-logado-isolado.yml'
       - 'scripts/e2e-isolated/**'
       - 'scripts/ci/e2e-isolated*.unit.mjs'
+      - 'e2e/auth.setup.ts'
+      - 'e2e/auth-diagnostics.ts'
+      - 'playwright.config.ts'
 
 permissions:
   contents: read
@@ -45,5 +47,39 @@ jobs:
         with:
           name: e2e-isolated-images-${{ github.run_id }}
           path: ${{ runner.temp }}/e2e-isolated-images/report.json
+          retention-days: 3
+          if-no-files-found: error
+
+  bootstrap-login:
+    name: Bootstrap e login real no ambiente descartável
+    needs: image-metadata
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout do código da revisão
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Preparar Bun da versão do repositório
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+      - name: Instalar dependências antes do ambiente sem saída de rede
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile --ignore-scripts
+      - name: Executar bootstrap, admissão e login reais
+        id: bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/e2e-isolated/run.sh login "$RUNNER_TEMP/e2e-isolated-login"
+      - name: Publicar somente o diagnóstico redigido do ambiente local
+        if: always() && steps.bootstrap.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-isolated-login-${{ github.run_id }}
+          path: ${{ runner.temp }}/e2e-isolated-login/public
           retention-days: 3
           if-no-files-found: error
