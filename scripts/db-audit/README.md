@@ -27,6 +27,7 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 | `catalog-manifest.test.sh` | Docker local | Executa os dois SQLs no PostgreSQL 17, desloca OIDs e simula mutacoes estruturais |
 | `gen-types.sh` | sim | Gera `types.ts` pela CLI pinada e normaliza o EOF de forma deterministica |
 | `gen-types.test.sh` | Shell local | Simula a CLI e prova que o gerador preserva linhas internas e deixa exatamente uma quebra de linha no EOF |
+| `supabase-snapshot-stats.test.sh` | Docker local | Extrai por AST o filtro real de `top_queries`, verifica 48 entradas no PostgreSQL 17 e prova que a fronteira antiga reprova 24 |
 
 ## Uso
 
@@ -45,6 +46,9 @@ bash scripts/db-audit/catalog-manifest.test.sh
 
 # integracao descartavel da reconciliacao do ledger (nao acessa banco oficial)
 bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
+
+# contrato real do filtro de consultas do snapshot (nao acessa banco oficial)
+bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/supabase-snapshot-stats.test.sh
 
 # comparar dois bancos estruturalmente
 psql "$ORIGEM_URL"  -X -v ON_ERROR_STOP=1 -At -f scripts/db-audit/manifest.sql > /tmp/src.json
@@ -71,6 +75,16 @@ Os comparadores usam `0` para identidade + estrutura em sincronia, `1` para drif
 estrutural revisavel e `2` para JSON invalido ou identidade nao comprovada. Um job
 de sincronizacao pode propor snapshot apos `1`, mas **nunca** deve copiar arquivos
 apos `2`. URLs, project-ref em claro, usuario e senha nao aparecem nas mensagens.
+
+O contrato `supabase-snapshot-stats.test.sh` precisa de Python 3 (biblioteca padrao)
+e Docker; no DB Guard usa o PostgreSQL 17 descartavel pelo `docker-shim`. Ele nao
+importa o snapshot nem recebe credenciais de producao: extrai o literal SQL de
+`get_db_stats` por AST. As 48 strings cobrem seis verbos em seis formas e mais
+12 utilitarios/ausencias. A mesma matriz deve passar no filtro atual e reprovar
+24 casos em uma copia temporaria com a fronteira antiga. O modo `--emit-sql`
+permite inspecionar a extracao e as duas matrizes sem Docker; essa geracao sozinha
+nao valida a semantica PostgreSQL. `SNAPSHOT_STATS_TEST_POSTGRES_IMAGE` permite
+escolher a imagem descartavel; no CI ela usa a imagem PostgreSQL 17 pinada do job.
 
 ### Rollout inicial de `schema-manifest.json`
 
