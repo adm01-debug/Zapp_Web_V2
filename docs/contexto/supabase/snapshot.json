@@ -50295,13 +50295,8 @@
       {
         "args": "p_include_legacy boolean",
         "callers": {
-          "code": [
-            {
-              "file": "scripts/ci/check-test-inventory.mjs",
-              "hits": 1
-            }
-          ],
-          "code_total_files": 1,
+          "code": [],
+          "code_total_files": 0,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -94562,11 +94557,6 @@
         {
           "publication": "supabase_realtime_messages_publication",
           "schema": "realtime",
-          "table": "messages_2026_11_01"
-        },
-        {
-          "publication": "supabase_realtime_messages_publication",
-          "schema": "realtime",
           "table": "messages_2026_11_02"
         },
         {
@@ -94593,6 +94583,11 @@
           "publication": "supabase_realtime_messages_publication",
           "schema": "realtime",
           "table": "messages_2026_11_07"
+        },
+        {
+          "publication": "supabase_realtime_messages_publication",
+          "schema": "realtime",
+          "table": "messages_2026_11_08"
         }
       ]
     },

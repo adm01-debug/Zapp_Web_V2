@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b149a801d0cc62acbd34cb9c419f5183d05ebb9b` (2026-11-05T00:17:48Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `03e9568c194342bfef82291b20e78c34bae3796d` (2026-11-05T01:04:39Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8219 |
 | arquivos_codigo | 4707 |
-| linhas_codigo | 866765 |
+| linhas_codigo | 866772 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55350 nós · 113390 arestas · 4092 comunidades · grafo do commit `b149a801`
+- 55350 nós · 113390 arestas · 4092 comunidades · grafo do commit `03e9568c`
 - comunidades maiores: framer-motion (751), vitest (668), button.tsx (667), lucide-react (665), cn (570), TalkXSuppression.tsx (517), validation.ts (495), DashboardView.tsx (464), ref_node_fs (449), useMyWorkItems.ts (440), useAuth (420), getLogger (398)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -394,9 +394,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CLAUDE.md (15)
 - .github/workflows/db-guard.yml (14)
 - docs/ci/README.md (14)
-- src/integrations/supabase/types.ts (14)
 - .github/workflows/e2e-logado.yml (13)
 - scripts/ci/ci-docs-baseline.unit.mjs (13)
+- src/integrations/supabase/types.ts (13)
 - supabase/deployment-manifest.json (13)
 - ESTADO.md (12)
 - .github/workflows/deploy-functions.yml (11)
@@ -498,6 +498,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-05 `03e9568` fix: não pular preview quando Git não consegue comparar commits (#2727)
+- 2026-11-05 `dabe5ac` fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)
 - 2026-11-05 `b149a80` fix: abrir boas-vindas sem efeito de estado no Index (#2725)
 - 2026-11-04 `c0d715f` infra: executar os 33 testes shell ausentes no DB Guard (#2724)
 - 2026-11-04 `46c29a6` fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)
@@ -511,8 +513,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-04 `f32223d` fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)
 - 2026-11-04 `6feabdf` chore: adicionar __pycache__/ ao .gitignore (#2703)
 - 2026-11-04 `46a0257` fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)
-- 2026-11-04 `4fa15ac` chore: adiciona __pycache__/ ao .gitignore (#2700)
-- 2026-11-04 `ec2e5b6` chore: sincroniza matriz de estados do Talk X (#2715)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2415,9 +2415,9 @@
   {
    "arquivo": "scripts/vercel/ignore-build.unit.mjs",
    "tipo": "unit",
-   "linhas": 84,
+   "linhas": 91,
    "testa": [],
-   "casos": 5
+   "casos": 6
   },
   {
    "arquivo": "src/__tests__/a11y/icon-button-names.test.ts",

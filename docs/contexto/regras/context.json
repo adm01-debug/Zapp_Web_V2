@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b149a801d0cc62acbd34cb9c419f5183d05ebb9b",
+  "sha": "03e9568c194342bfef82291b20e78c34bae3796d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-05 00:18 UTC",
+  "generated_at": "2026-11-05 01:33 UTC",
   "files_total": 8060,
   "code_files": 5963,
-  "code_lines": 1032212
+  "code_lines": 1032219
  },
  "version": "1.3.2",
- "facts_hash": "9d242ae7eac6880e",
+ "facts_hash": "dfd9317268b9457f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67735,7 +67735,7 @@
   {
    "module": "scripts",
    "files": 413,
-   "lines": 79714,
+   "lines": 79721,
    "tables": [
     "a",
     "alem_do_limite",
@@ -268283,9 +268283,10 @@
   },
   "scripts/vercel/ignore-build.unit.mjs": {
    "path": "scripts/vercel/ignore-build.unit.mjs",
-   "lines": 84,
+   "lines": 91,
    "rule_comments": [
-    "T3: Base definido, apenas README (não-front) mudou → pula."
+    "T3: Base definido, apenas README (não-front) mudou → pula.",
+    "T5: SHA anterior ausente do checkout nao pode pular o build."
    ],
    "doc": "!/usr/bin/env node V077: Testes unitários para ignore-build.sh (sem git real). Executa: node scripts/vercel/ignore-build.unit.mjs"
   },
@@ -381270,10 +381271,29 @@
   }
  },
  "git": {
-  "sha": "b149a801d0cc62acbd34cb9c419f5183d05ebb9b",
+  "sha": "03e9568c194342bfef82291b20e78c34bae3796d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "03e9568",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: não pular preview quando Git não consegue comparar commits (#2727)",
+    "files": [
+     "scripts/vercel/ignore-build.sh",
+     "scripts/vercel/ignore-build.unit.mjs"
+    ]
+   },
+   {
+    "sha": "dabe5ac",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)",
+    "files": [
+     "scripts/db-audit/cron-remocao-vacuum-messages.test.sh"
+    ]
+   },
    {
     "sha": "b149a80",
     "date": "2026-11-04",
@@ -381735,80 +381755,6 @@
     "files": [
      "supabase/migrations/20261102012400_login_attempts_retencao_90d.sql"
     ]
-   },
-   {
-    "sha": "1f77f79",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(auth): remove papel special_agent do front e das edges (decisão 2026-11-03) (#2692)",
-    "files": [
-     "ESTADO.md",
-     "src/components/admin/AdminUsersTable.tsx",
-     "src/components/admin/AdminView.tsx",
-     "src/components/admin/VisibilityGrantsManager.tsx",
-     "src/components/admin/__tests__/AdminUsersTable.roles.test.tsx",
-     "src/components/admin/__tests__/VisibilityGrantsManager.a11y.test.tsx",
-     "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
-     "src/components/admin/useAdminData.ts",
-     "src/components/dashboard/DashboardFilters.tsx",
-     "src/components/dashboard/DashboardView.tsx",
-     "src/components/dashboard/__tests__/DashboardFilters.limpar.test.tsx",
-     "src/components/layout/RoleBadge.tsx",
-     "src/components/layout/__tests__/Sidebar.test.tsx",
-     "src/components/settings/SettingsView.tsx",
-     "src/hooks/crm/__tests__/useVisibleAgents.test.tsx",
-     "src/hooks/system/usePermissions.ts",
-     "src/hooks/system/useUserRole.ts",
-     "src/lib/__tests__/appRole.test.ts",
-     "src/lib/appRole.ts",
-     "src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx",
-     "src/pages/__tests__/ViewRouter.search-insights.test.tsx",
-     "src/pages/__tests__/ViewRouter.supervisao-gate.test.tsx",
-     "src/pages/admin/RolesPage.tsx",
-     "src/pages/admin/__tests__/RolesPage.a11y.test.tsx",
-     "src/pages/admin/__tests__/RolesPage.loadError.test.tsx",
-     "src/pages/admin/loadRolesWithProfiles.ts",
-     "src/pages/admin/useRolesPageState.ts",
-     "src/services/__tests__/navigation.service.test.ts",
-     "src/services/role.service.ts",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/create-user/index.ts",
-     "supabase/functions/invite-user/index.ts",
-     "supabase/functions/revoke-auth-sessions/index.test.ts",
-     "supabase/functions/revoke-auth-sessions/index.ts"
-    ]
-   },
-   {
-    "sha": "bd4c4bd",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/ci/eslint-baseline.json",
-     "src/components/contacts/ContactDetailPanel.tsx",
-     "src/components/contacts/ContactPurchaseHistory.tsx",
-     "src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx",
-     "src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx",
-     "src/components/contacts/__tests__/ContactDetailPanel.esc-e-rotulo.test.tsx",
-     "src/components/contacts/__tests__/ContactHealthIndicator.test.tsx",
-     "src/components/inbox/ContactPurchasesPanel.tsx",
-     "src/components/inbox/RealtimeInboxView.tsx",
-     "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
-     "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-     "src/components/inbox/chat/ConversationTabContent.tsx",
-     "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
-     "src/components/inbox/tabs/Crm360Tab.tsx",
-     "src/components/inbox/tabs/SalesViewTab.tsx",
-     "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx",
-     "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
-     "src/hooks/crm/__tests__/useContactCrm360.test.ts",
-     "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
-     "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
-     "src/hooks/crm/useContactCrm360.ts",
-     "src/hooks/crm/useContactPurchases.ts",
-     "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -381830,10 +381776,6 @@
    ],
    [
     ".github/workflows/ci.yml",
-    3
-   ],
-   [
-    "docs/DB-INVENTORY.md",
     3
    ],
    [
@@ -381862,6 +381804,10 @@
    ],
    [
     "src/pages/Index.tsx",
+    2
+   ],
+   [
+    "docs/DB-INVENTORY.md",
     2
    ],
    [

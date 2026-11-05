@@ -47,13 +47,13 @@
 | supabase_realtime | public.warroom_alerts | full |
 | supabase_realtime | public.whatsapp_connections | full |
 | supabase_realtime | public.whisper_messages | full |
-| supabase_realtime_messages_publication | realtime.messages_2026_11_01 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_02 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_03 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_04 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_05 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_06 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_07 |  |
+| supabase_realtime_messages_publication | realtime.messages_2026_11_08 |  |
 
 ## Broadcast / Presence (policies em realtime.messages)
 

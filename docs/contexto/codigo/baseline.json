@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b149a801d0cc62acbd34cb9c419f5183d05ebb9b",
+  "commit": "03e9568c194342bfef82291b20e78c34bae3796d",
   "branch": "main",
-  "data_commit": "2026-11-05T00:17:48Z",
+  "data_commit": "2026-11-05T01:04:39Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "03e9568",
+    "data": "2026-11-05",
+    "assunto": "fix: não pular preview quando Git não consegue comparar commits (#2727)"
+   },
+   {
+    "sha": "dabe5ac",
+    "data": "2026-11-05",
+    "assunto": "fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)"
+   },
    {
     "sha": "b149a80",
     "data": "2026-11-05",
@@ -121,19 +131,9 @@
     "sha": "9b15c8b",
     "data": "2026-11-03",
     "assunto": "chore: adiciona __pycache__/ ao .gitignore"
-   },
-   {
-    "sha": "ded01b5",
-    "data": "2026-11-03",
-    "assunto": "fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)"
-   },
-   {
-    "sha": "bd25801",
-    "data": "2026-11-03",
-    "assunto": "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)"
    }
   ],
-  "arquivos_mudados_7d": 1246,
+  "arquivos_mudados_7d": 1249,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -157,7 +157,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 202
+    "mudancas": 200
    },
    {
     "pasta": "src/components/dashboard",
@@ -214,15 +214,15 @@
     "mudancas": 14
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 14
-   },
-   {
     "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 13
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 13
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8219,
   "arquivos_codigo": 4707,
-  "linhas_codigo": 866765,
+  "linhas_codigo": 866772,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -684,7 +684,7 @@
   },
   "scripts/vercel": {
    "arquivos": 2,
-   "linhas": 218
+   "linhas": 225
   },
   "src/App.tsx": {
    "arquivos": 1,
