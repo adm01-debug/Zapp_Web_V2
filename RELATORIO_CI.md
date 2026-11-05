@@ -78,7 +78,13 @@ node --test scripts/ci/*.unit.mjs 2>&1 | tail -10
 
 ### 1.8 Vitest (suíte unitária)
 
-Vitest foi iniciado em background (`npx vitest run --reporter=verbose`). O processo foi encerrado pelo timeout da sessão antes de concluir (a suíte completa leva ~90s). O CI remoto rodou `🧪 Unit Tests` com sucesso no run [#42036324045](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324045) (`341d3fda`) — evidência de que a suíte passa na main.
+A suíte Vitest não é executável em single-thread no container local (cada shard leva 5–7,5 min; execução sequencial ultrapassa 20 min — `timeout 580` encerrado por SIGTERM em 3 tentativas consecutivas). Em CI, a suíte é dividida em 3 shards paralelos — todos os 3 jobs `🧪 Unit Tests` passaram em verde na CI/CD Pipeline [#42042318526](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42042318526) (`f9c495d`, 2026-11-05):
+
+| Shard | Job | Início (UTC) | Fim (UTC) | Status |
+|---|---|---|---|---------|
+| 1/3 | `🧪 Unit Tests (1/3)` | 14:10:04Z | 14:17:35Z | ✅ success |
+| 2/3 | `🧪 Unit Tests (2/3)` | 14:10:03Z | 14:16:01Z | ✅ success |
+| 3/3 | `🧪 Unit Tests (3/3)` | 14:10:03Z | 14:15:40Z | ✅ success |
 
 ---
 
@@ -94,15 +100,15 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 
 ---
 
-## 3. Estado final (2026-11-05, commit `341d3fda`)
+## 3. Estado final (2026-11-05, commit `429bdb1a`)
 
 | Workflow | Última run | Conclusão | Como resolveu |
 |---|---|---|---|
-| CI/CD Pipeline | [#42036324045](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324045) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731) |
+| CI/CD Pipeline | [#42043927728](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42043927728) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731/#2732) |
 | Auto Update PR Branches | [#42038873641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873641) | ✅ **success** | Sem mudança |
 | Contexto para agentes | [#41994814502](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41994814502) | ✅ **success** | Autorreparo (erro 500 transitório do GitHub) |
 | DB Guard | [#42036324088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324088) | ✅ **success** | Sem regressão |
-| E2E logado | [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) | ⏳ **in_progress** | Workflow reativado; dispatch na `341d3fda`; deslogado-principal ✅ · deslogado-secundario ✅ · authenticated ⏳ (ver `PENDENCIAS.md` §3) |
+| E2E logado | [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) | ❌ **failure** | Workflow reativado; dispatch na `341d3fda`; deslogado-principal ✅ · deslogado-secundario ✅ · authenticated ❌ (`browser-suite-failed`) — ver `PENDENCIAS.md` §3 |
 | Notifica falha na main | [#42038873636](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873636) | ⏭️ **skipped** | Esperado (nenhuma falha na main) |
 | Talk X placar regen | [#42036324372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324372) | ✅ **success** | Sem mudança |
 | Settings Guard | [#41857084891](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41857084891) | ✅ **success** | Sem mudança |
@@ -133,13 +139,15 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 - **Causa:** Migrations aplicadas em produção com texto diferente do arquivo, ou migrations ainda não aplicadas (DDL — AGENTS.md regra 8).
 - **Ação:** dono aplicar/reconciliar as 5 migrations listadas em `PENDENCIAS.md` §2.
 
-### 4.3 E2E logado — job authenticated
+### 4.3 E2E logado — job authenticated: browser-suite-failed
 
 - **Workflow:** `.github/workflows/e2e-logado.yml`
-- **Status:** `in_progress` no momento deste commit (run [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) em `341d3fda`)
+- **Status:** `conclusion=failure` — run [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) em `341d3fda` (13:50:04Z–14:40:27Z)
 - **Jobs confirmados:** deslogado-principal ✅ · deslogado-secundario ✅
-- **Job pendente:** authenticated (step 8 desde 13:50:28Z UTC, timeout 75 min)
-- **Ação:** aguardar conclusão; se failure, diagnosticar e corrigir.
+- **Job com falha:** `authenticated` — step 8 "Validar grupo e executar a suíte no backend descartável" falhou com `browser-suite-failed` após ~50 min (13:50:28Z–14:40:23Z); `real-browser-suite` executou ~45 min.
+- **Issue aberta:** "[e2e-logado] Suíte logada quebrada na main" (0 casos identificados no resumo público).
+- **Artefato:** `playwright-report-logado-authenticated-42039283192-1` (195 KB, expira ~2026-11-08).
+- **Ação:** dono examinar o relatório Playwright para identificar os testes que falharam — ver `PENDENCIAS.md` §3.
 
 ---
 
@@ -154,6 +162,6 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 | `node --test scripts/ci/*.unit.mjs` | ✅ 4273/4275 pass, exit 0 | ✅ sem regressão |
 | `check-claude-md-integrity` | ✅ exit 0 | ✅ sem regressão |
 | `supabase-usage-guard` | ✅ 0 violações | ✅ sem regressão |
-| Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 2 bloqueados (DDL em produção, requerem dono) + 1 e2e in_progress |
+| Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 3 bloqueados (documentados em PENDENCIAS.md §1 §2 §3) |
 
 **Nenhuma regressão introduzida nesta sessão.**
