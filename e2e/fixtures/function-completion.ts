@@ -76,7 +76,7 @@ export function observeIsolatedFunctionPosts(page: Page, name: ObservedFunction)
         // Prazo único: uma segunda chamada não reinicia os 30 s da barreira.
         for (const record of calls.values()) {
           const outcome = await Promise.race([record.completion, deadline]);
-          if (!outcome.ok) fail(outcome.code);
+          if (!outcome.ok) return fail(outcome.code);
           completed.push(outcome.call);
         }
         if (stopped) fail('observer-disposed');
@@ -174,13 +174,13 @@ export function requireSameKnownSession(results: DeviceResult[], deviceId: strin
 
 export function readBearerAccessToken(header: string | null): string {
   if (typeof header !== 'string' || !/^Bearer [A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/i.test(header)) {
-    fail('authorization');
+    return fail('authorization');
   }
   return header.slice(7);
 }
 
 export function readLoginAccessToken(body: unknown): string {
-  if (!record(body) || typeof body.access_token !== 'string' || !body.access_token) fail('login-token');
+  if (!record(body) || typeof body.access_token !== 'string' || !body.access_token) return fail('login-token');
   return body.access_token;
 }
 
