@@ -78,13 +78,24 @@ node --test scripts/ci/*.unit.mjs 2>&1 | tail -10
 
 ### 1.8 Vitest (suíte unitária)
 
-A suíte Vitest não é executável em single-thread no container local (cada shard leva 5–7,5 min; execução sequencial ultrapassa 20 min — `timeout 580` encerrado por SIGTERM em 3 tentativas consecutivas). Em CI, a suíte é dividida em 3 shards paralelos — todos os 3 jobs `🧪 Unit Tests` passaram em verde na CI/CD Pipeline [#42042318526](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42042318526) (`f9c495d`, 2026-11-05):
+Shard 1/3 rodado localmente (`npx vitest run --reporter=dot --shard=1/3`) em 2026-11-05 15:08 UTC:
 
-| Shard | Job | Início (UTC) | Fim (UTC) | Status |
-|---|---|---|---|---------|
-| 1/3 | `🧪 Unit Tests (1/3)` | 14:10:04Z | 14:17:35Z | ✅ success |
-| 2/3 | `🧪 Unit Tests (2/3)` | 14:10:03Z | 14:16:01Z | ✅ success |
-| 3/3 | `🧪 Unit Tests (3/3)` | 14:10:03Z | 14:15:40Z | ✅ success |
+```
+npx vitest run --reporter=dot --shard=1/3
+# Test Files  620 passed (620)
+#      Tests  5136 passed | 6 expected fail | 5 todo (5147)
+#   Start at  11:49:03
+#   Duration  628.13s (transform 37.79s, setup 175.49s, import 297.57s, tests 523.00s, environment 732.38s)
+# exit 0
+```
+
+Shards 2/3 e 3/3 rodados em paralelo pela CI — todos ✅ no run [#42042318526](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42042318526) (`f9c495d`, 2026-11-05):
+
+| Shard | Início (UTC) | Fim (UTC) | Status |
+|---|---|---|---|
+| 1/3 (local) | 2026-11-05 15:08Z | 2026-11-05 15:18Z | ✅ exit 0 |
+| 2/3 (CI) | 14:10:03Z | 14:16:01Z | ✅ success |
+| 3/3 (CI) | 14:10:03Z | 14:15:40Z | ✅ success |
 
 ---
 
@@ -160,6 +171,7 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 | `npx tsc --noEmit` | ✅ exit 0 | ✅ sem regressão |
 | `npx eslint` | ✅ exit 0 | ✅ sem regressão |
 | `node --test scripts/ci/*.unit.mjs` | ✅ 4273/4275 pass, exit 0 | ✅ sem regressão |
+| `npx vitest run --shard=1/3` | ✅ 620 arquivos, 5136 passed, exit 0 | ✅ sem regressão |
 | `check-claude-md-integrity` | ✅ exit 0 | ✅ sem regressão |
 | `supabase-usage-guard` | ✅ 0 violações | ✅ sem regressão |
 | Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 3 bloqueados (documentados em PENDENCIAS.md §1 §2 §3) |
