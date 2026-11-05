@@ -21,13 +21,13 @@ export function DashboardToolbar({ onRefresh, onFilter, isLoading, lastUpdated }
 
       <div className="flex items-center gap-2">
         {onFilter && (
-          <Button variant="outline" size="sm" onClick={onFilter} className="gap-2">
+          <Button variant="outline" size="sm" onClick={onFilter} className="gap-2" aria-label="Filtrar">
             <Filter className="w-4 h-4" />
             <span className="hidden sm:inline">Filtrar</span>
           </Button>
         )}
         {onRefresh && (
-          <Button variant="outline" size="sm" onClick={onRefresh} disabled={isLoading} className="gap-2">
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={isLoading} className="gap-2" aria-label="Atualizar">
             <RefreshCw className={cn('w-4 h-4', isLoading && 'animate-spin')} />
             <span className="hidden sm:inline">Atualizar</span>
           </Button>

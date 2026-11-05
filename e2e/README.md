@@ -98,6 +98,32 @@ reabre a conversa local entre os cenários e clica em "Todas", preservando o tes
 do FSM e sua restauração. `messaging.spec.ts` navega e escolhe a conversa sem
 substituir o envio por uma inserção artificial.
 
+No ramo `ZAPP_E2E_LOCAL=1`, a mesma mensagem fresca
+`[E2E fixture setup]` é criada pelo helper Node
+`scripts/e2e-isolated/fixture-access.mjs`. O guard de proveniência do banco
+recusa `sender='contact'` com JWT `authenticated`; o helper mantém essa
+proteção e usa a chave sintética `service_role` somente depois de comprovar
+origem fixa, prova do controlador, namespace, interfaces e identidade do
+gateway, e de ler o contato canônico com o JWT real do usuário. Após cada
+espera de rede, reconfirma a mesma execução, SHA e hash da chave anon. A chave
+privilegiada nunca passa por `page.evaluate`, pela página ou pelo retorno da
+função.
+
+O POST aceita somente os quatro campos fixos da mensagem de texto e exige
+uma única linha coerente. Em seguida, o helper lê o ID recém-criado com
+anon + JWT do usuário: privilégio de preparo não substitui a prova de RLS.
+Esse texto mantém o comportamento de `conversation`, `reactions`,
+`inbox-contact-sidebar` e `media-volume`; a mensagem canônica de áudio e o
+fluxo de envio real continuam independentes. As rotinas de limpeza e o ramo
+legado mantêm seu comportamento. Se o POST for aceito e a leitura seguinte
+falhar, o preparo reprova e pode deixar uma linha no banco descartável;
+não há promessa de rollback. A conclusão dos testes nativos depende de uma
+nova execução autenticada e de seu resumo estrito.
+
+`assertIsolatedFixtureEnvironment({ baseURL, anonKey })` reutiliza a mesma
+admissão Node para outros preparos: retorna `Promise<void>`, não navega a
+página, não lê a service key e não expõe um mutador genérico.
+
 Antes de liberar os specs, a prontidão prova `enqueue_outbound_message` →
 `message-delivery` → provider local → linha real de `messages` visível com RLS.
 Texto, imagem do catálogo e mídia privada do Storage precisam completar o fluxo.

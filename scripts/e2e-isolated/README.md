@@ -102,6 +102,28 @@ A coleta define `PLAYWRIGHT_JSON_OUTPUT_FILE` somente no seu processo, em um sub
 
 Falhas de preparo, ausência, tipo, tamanho, leitura, JSON e gravação recebem códigos fechados `collection-report-*`, `collection-inventory-write` ou `collection-public-inventory-write`; falhas de processo e inventário conservam os gates bloqueantes. O JSON bruto permanece privado e somente o inventário sanitizado existente entra no artifact. Os contratos locais verificam o helper e o controller com fronteiras controladas; a execução Docker/Playwright real continua necessária para obter o inventário autenticado e seus resultados.
 
+### Diagnóstico fechado do processo do navegador
+
+`browser-result-diagnostic.json` (schema 1) separa três evidências: término do processo, leitura de `results.json` e decodificação JSON. O controller lê o arquivo uma vez e, quando a leitura termina, tenta decodificá-lo uma vez. Falhas continuam entregando `undefined` ao resumo existente; não há nova leitura, espera ou retry para aproveitar um relatório tardio.
+
+| Campo | Valores publicados |
+|---|---|
+| `process.status` | Inteiro de 0 a 255, `null` ou `"unknown"` |
+| `process.signal` | `null`, sinal da lista fechada ou `"unknown"` |
+| `process.error` | `"none"`, `"present"` ou `"unknown"` |
+| `process.error_code` | `null`, `ETIMEDOUT`, `ENOBUFS`, `ENOENT`, `EACCES` ou `"unknown"` |
+| `report.read` | `"ok"`, `"missing"`, `"failed"` ou `"unknown"` |
+| `report.read_error_code` | `null`, `ENOENT`, `EACCES`, `EPERM`, `EISDIR`, `EIO`, `EMFILE`, `ENFILE` ou `"unknown"` |
+| `report.parse` | `"decoded"`, `"invalid"`, `"not-attempted"` ou `"unknown"` |
+
+Os sinais permitidos são `SIGTERM`, `SIGKILL`, `SIGINT`, `SIGHUP`, `SIGABRT`, `SIGSEGV`, `SIGBUS`, `SIGILL`, `SIGFPE`, `SIGQUIT`, `SIGPIPE` e `SIGTRAP`. Valores fora desses domínios viram `unknown`. A observação usa descritores de dados com travessia limitada; getters, proxies e conversões de objetos não são executados para classificar os campos.
+
+`decoded` afirma somente que o JSON pôde ser decodificado: `null`, `{}` ou outro formato incompatível continuam reprovados pelo parser Playwright. Saída zero com erro ou sinal continua reprovada pelo gate de processo. Inventário, contagens, política de skips e critérios de aprovação permanecem no resumo e nos gates existentes. Um intervalo próximo do timeout configurado, sozinho, não prova `ETIMEDOUT`; esse código só é publicado quando observado no resultado do processo.
+
+A captura fica em memória antes dos gates. A publicação usa o laço protegido dos diagnósticos reconstruídos, em modo 0600, e passa pelo redator obrigatório. Uma falha de gravação desse diagnóstico não substitui a falha original nem transforma sucesso em falha. A ausência do arquivo pode significar que o navegador não chegou a iniciar ou que a publicação falhou; ela não significa aprovação. O gate `report_ready` continua bloqueando upload quando o redator falha.
+
+O schema não contém duração, stdout/stderr, mensagem, stack, cause, caminho, URL, corpo do relatório ou campos privados. Os objetos publicados têm protótipo nulo e são congelados. Os contratos locais exercitam helpers e controller reais com processos controlados; eles não substituem a execução Docker/Playwright nativa.
+
 O grupo autenticado compila todos os entrypoints Edge ativos e versionados antes de criar credenciais, verificando seus blobs. Não basta compilar `auth-login`. O provider de Evolution GO e do catálogo externo opera apenas em `127.0.0.1:8081`, no namespace fechado; seus dados e recibos são sintéticos. Auth, PostgREST, Storage, Realtime, RPCs e handlers da aplicação continuam reais. A fronteira do catálogo aceita somente as consultas documentadas da fixture e recusa formas desconhecidas; não é um substituto geral de PostgreSQL ou busca textual.
 
 Depois do login real, o controller executa os seeds existentes de Arquivos, o seed de suíte e o verificador de providers. O seed conserva os proprietários de Arquivos, prepara paginação, conversa principal, inbox e Talk X e verifica leituras com o JWT do usuário. A preferência de onboarding do supervisor compartilhado e do usuário de Arquivos precisa ser realmente `true`; o Tour usa usuário novo por teste, preferência comprovada `false`, sessão vazia e limpeza por posse, sem redefinir preferências compartilhadas.
