@@ -3,6 +3,14 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { PRODUCT_NAME } from '../src/lib/productName';
+import { assertIsolatedFixtureEnvironment } from '../scripts/e2e-isolated/fixture-access.mjs';
+import {
+  observeIsolatedFunctionPosts, requireSipNotConfigured, requireDeviceResult,
+  readIsolatedSessionIdentity, requireSessionAbsent, requireCanonicalSession,
+  requireOwnedDevice, requireSameKnownSession, readBearerAccessToken,
+  readLoginAccessToken, requireSyntheticUser, requireFreshAuthSession,
+  type SessionIdentity,
+} from './fixtures/function-completion';
 
 /**
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
@@ -276,24 +284,7 @@ interface DefeitoDeProduto {
  * no relatório da rodada com módulo, sintoma, área e o nome do fixme — e a varredura
  * REPROVA se o status ou o corpo não forem exatamente os medidos aqui.
  */
-const DEFEITOS_DE_PRODUTO: DefeitoDeProduto[] = [
-  {
-    sintoma: 'motor SIP chama get-sip-password sem credencial utilizável e recebe 401',
-    area: 'chamadas',
-    fixme: 'DEFEITO: o motor SIP chama get-sip-password sem credencial utilizável (401)',
-    caminho: '/functions/v1/get-sip-password',
-    status: 401,
-    corpos: ['"error":"Invalid or expired token"', '"code":"UNAUTHORIZED_NO_AUTH_HEADER"'],
-  },
-  {
-    sintoma: 'detect-new-device devolve 500 quando o app chama duas vezes em paralelo (StrictMode)',
-    area: 'login/segurança',
-    fixme: 'DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes em paralelo',
-    caminho: '/functions/v1/detect-new-device',
-    status: 500,
-    corpos: ['"error":"Internal server error"'],
-  },
-];
+const DEFEITOS_DE_PRODUTO: DefeitoDeProduto[] = [];
 
 interface NinhoDeProduto {
   /** tag que CONTÉM (o React acusa "X dentro de X" / "X não pode conter X") */
@@ -1631,6 +1622,22 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     ).toHaveLength(1);
   });
 
+  test('SIP 401 e Device 500 históricos REPROVAM sem tolerância de defeito', () => {
+    const regressions: Array<[string, number, string]> = [
+      [SIP_URL, 401, '{"error":"Invalid or expired token"}'],
+      [SIP_URL, 401, '{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}'],
+      [HOST_LOCAL + '/functions/v1/detect-new-device', 500, '{"error":"Internal server error"}'],
+    ];
+    for (const [url, status, body] of regressions) {
+      const { reprovam, defeitos } = classificar(
+        [respostaSintetica(status, url)], [medidaSintetica(url, status, body)], NADA_JUSTIFICADO,
+      );
+      expect(resumir(reprovam), 'regressão HTTP voltou a ser tolerada').toHaveLength(1);
+      expect(defeitos).toHaveLength(0);
+    }
+    expect(DEFEITOS_DE_PRODUTO).toEqual([]);
+  });
+
   test('pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM', () => {
     const novo = consoleSintetico(
       'In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <span> table',
@@ -1648,10 +1655,10 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
 });
 
 /* -------------------------------------------------------------------------- */
-/* REGRESSÕES DO PRODUTO — DOM ativo; os dois HTTP aguardam prova própria     */
+/* REGRESSÕES DO PRODUTO — DOM e HTTP exigem execução e conclusão reais      */
 /*                                                                             */
-/* As três regressões DOM exigem montagem e não têm tolerância na varredura.   */
-/* Os dois FIXMEs HTTP e suas entradas em DEFEITOS_DE_PRODUTO são preservados. */
+/* SIP aceita somente a lacuna exata 503; Device prova boot e sessão concorrente. */
+/* 401 SIP e 500 Device não têm mais tolerância na varredura.                 */
 /* -------------------------------------------------------------------------- */
 
 /** Ocorrências de console, na janela, cujo par de tags aninhadas é o pedido. */
@@ -1747,45 +1754,152 @@ test('DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p
   expect(resumir(erros), 'a Documentação ainda põe o selo do catálogo (<div>) dentro de um <p>').toEqual([]);
 });
 
-/**
- * DEFEITO (área de chamadas) — `src/hooks/communication/useSipClient.ts:80-89`: na
- * transição de aba para líder, o hook chama `connectWithStoredCredentials` (que faz
- * `POST /functions/v1/get-sip-password`) antes de haver credencial utilizável, e a
- * função responde 401 (`supabase/functions/get-sip-password/index.ts:34` sem
- * `Authorization`, `:41` com claims inválidas/expiradas).
- * MEDIDO em 07/10: 401 `{"error":"Invalid or expired token"}` (e, em rodada
- * anterior, 401 `{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}`) no arranque da sessão.
- * A causa raiz (chamada cedo demais X credencial do conjunto local) é da área de
- * chamadas: este fixme é a reprodução, não o veredito.
- */
-test.fixme('DEFEITO: o motor SIP chama get-sip-password sem credencial utilizável (401)', async ({ page }) => {
-  const falhas: string[] = [];
-  page.on('response', (response) => {
-    if (response.url().includes('/functions/v1/get-sip-password') && response.status() >= 400) {
-      falhas.push(`${response.status()} ${response.url()}`);
+interface IsolatedHttpEnvironment { baseURL: string; anonKey: string }
+
+/** A admissão precede entrar(), a leitura do JWT e qualquer novo login. */
+async function isolatedHttpEnvironment(): Promise<IsolatedHttpEnvironment> {
+  const environment = {
+    baseURL: process.env.E2E_SUPABASE_URL_OVERRIDE?.trim() ?? '',
+    anonKey: process.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE?.trim() ?? '',
+  };
+  await assertIsolatedFixtureEnvironment(environment);
+  return environment;
+}
+
+async function isolatedJson(
+  request: APIRequestContext, environment: IsolatedHttpEnvironment, path: string,
+  options: { method?: 'GET' | 'POST'; token?: string; data?: Record<string, unknown> } = {},
+): Promise<unknown> {
+  await assertIsolatedFixtureEnvironment(environment);
+  return startedIsolatedJson(request, environment, path, options);
+}
+
+/** Chamada interna: só usada logo após a admissão simples ou da dupla. */
+async function startedIsolatedJson(
+  request: APIRequestContext, environment: IsolatedHttpEnvironment, path: string,
+  options: { method?: 'GET' | 'POST'; token?: string; data?: Record<string, unknown> } = {},
+): Promise<unknown> {
+  if (!path.startsWith('/') || path.startsWith('//')) throw new Error('[e2e-http/local-path]');
+  let response;
+  try {
+    response = await request.fetch(environment.baseURL + path, {
+      method: options.method ?? 'GET',
+      headers: {
+        apikey: environment.anonKey,
+        ...(options.token ? { Authorization: 'Bearer ' + options.token } : {}),
+      },
+      ...(options.data ? { data: options.data } : {}),
+      maxRedirects: 0,
+      failOnStatusCode: false,
+    });
+  } catch { throw new Error('[e2e-http/local-request]'); }
+  try {
+    if (response.status() !== 200) throw new Error('[e2e-http/local-status]');
+    try { return await response.json(); }
+    catch { throw new Error('[e2e-http/local-json]'); }
+  } finally {
+    await response.dispose().catch(() => undefined);
+  }
+}
+
+const sessionPath = (identity: SessionIdentity) =>
+  '/rest/v1/user_sessions?user_id=eq.' + identity.userId + '&auth_session_id=eq.' + identity.authSessionId +
+  '&select=id,user_id,auth_session_id,device_id,is_active';
+
+async function completedDeviceBoot(page: Page, environment: IsolatedHttpEnvironment) {
+  await assertIsolatedFixtureEnvironment(environment);
+  const observation = observeIsolatedFunctionPosts(page, 'detect-new-device');
+  try {
+    await abrirApp(page);
+    await expect(page.getByRole('main'), 'o app precisa montar para observar o boot real').toBeVisible();
+    const calls = await observation.completed();
+    const results = calls.map((call) => requireDeviceResult(call.status, call.body));
+    const first = results[0];
+    if (results.some((result) => result.device_id !== first.device_id || result.session_id !== first.session_id)) {
+      throw new Error('[e2e-http/boot-identity]');
     }
-  });
-  await abrirApp(page);
-  await expect(page.getByRole('main'), 'a tela inicial não montou para observar o arranque').toBeVisible();
-  expect(resumir(falhas.map((texto) => ({ tipo: 'resposta', texto }))), 'o motor SIP ainda chama a função sem credencial').toEqual([]);
-});
+    return { call: calls[0], result: first };
+  } finally {
+    observation.dispose();
+  }
+}
 
 /**
- * DEFEITO (área de login/segurança) — `src/hooks/ui/useDeviceDetection.ts:116`:
- * no arranque o app dispara DUAS chamadas para `/functions/v1/detect-new-device`
- * (StrictMode); uma responde 200 e a outra estoura no INSERT e devolve 500
- * `{"error":"Internal server error"}` — log do runtime: "New device detected" →
- * "Error [object Object]" → 500. MEDIDO em 07/10, com o usuário do seed local; o
- * certo é tratar a corrida, não devolver 500.
+ * O boot é uma prova própria. A integração abaixo provoca DUAS chamadas para
+ * uma sessão Auth nova, usando dispositivo já conhecido para não disputar a
+ * cota de alertas por minuto. Isso prova identidade e concorrência da sessão;
+ * o interleaving do INSERT de dispositivo continua nos testes reais do handler.
  */
-test.fixme('DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes em paralelo', async ({ page }) => {
-  const falhas: string[] = [];
-  page.on('response', (response) => {
-    if (response.url().includes('/functions/v1/detect-new-device') && response.status() >= 400) {
-      falhas.push(`${response.status()} ${response.url()}`);
-    }
+async function verifyConcurrentDeviceSession(page: Page, request: APIRequestContext): Promise<void> {
+  const environment = await isolatedHttpEnvironment();
+  const boot = await completedDeviceBoot(page, environment);
+  await assertIsolatedFixtureEnvironment(environment);
+  const bootToken = readBearerAccessToken(await boot.call.request.headerValue('authorization'));
+  const previous = readIsolatedSessionIdentity(bootToken);
+  const email = process.env.E2E_TEST_EMAIL ?? '';
+  const user = await isolatedJson(request, environment, '/auth/v1/user', { token: bootToken });
+  requireSyntheticUser(user, previous, email);
+  const knownRows = await isolatedJson(request, environment,
+    '/rest/v1/user_devices?id=eq.' + boot.result.device_id + '&user_id=eq.' + previous.userId +
+    '&select=id,user_id,device_fingerprint', { token: bootToken });
+  const fingerprint = requireOwnedDevice(knownRows, previous, boot.result);
+  requireCanonicalSession(await isolatedJson(request, environment, sessionPath(previous), { token: bootToken }),
+    previous, boot.result);
+
+  await assertIsolatedFixtureEnvironment(environment);
+  const password = process.env.E2E_TEST_PASSWORD;
+  if (!email.endsWith('@example.invalid') || !password) throw new Error('[e2e-http/synthetic-login]');
+  const login = await isolatedJson(request, environment, '/functions/v1/auth-login', {
+    method: 'POST', data: { email, password, mode: 'login', userAgent: 'isolated-session-concurrency' },
   });
-  await abrirApp(page);
-  await expect(page.getByRole('main'), 'a tela inicial não montou para observar o arranque').toBeVisible();
-  expect(resumir(falhas.map((texto) => ({ tipo: 'resposta', texto }))), 'detect-new-device ainda devolve 500 na corrida').toEqual([]);
+  const token = readLoginAccessToken(login);
+  const fresh = readIsolatedSessionIdentity(token);
+  requireFreshAuthSession(fresh, previous);
+  requireSyntheticUser(await isolatedJson(request, environment, '/auth/v1/user', { token }), fresh, email);
+  requireSessionAbsent(await isolatedJson(request, environment, sessionPath(fresh), { token }));
+  const data = { device_fingerprint: fingerprint, browser: 'Isolated E2E', os: 'Isolated E2E',
+    device_name: 'Synthetic concurrent session' };
+  // As duas chamadas começam antes de await. APIResponse.json() só resolve
+  // depois do corpo; não basta observar headers ou ausência imediata de erro.
+  await assertIsolatedFixtureEnvironment(environment);
+  const requests = [
+    startedIsolatedJson(request, environment, '/functions/v1/detect-new-device', { method: 'POST', token, data }),
+    startedIsolatedJson(request, environment, '/functions/v1/detect-new-device', { method: 'POST', token, data }),
+  ];
+  const outcomes = await Promise.allSettled(requests);
+  if (outcomes.some((outcome) => outcome.status !== 'fulfilled')) throw new Error('[e2e-http/concurrent-request]');
+  const results = outcomes.map((outcome) => {
+    if (outcome.status !== 'fulfilled') throw new Error('[e2e-http/concurrent-request]');
+    return requireDeviceResult(200, outcome.value);
+  });
+  const canonical = requireSameKnownSession(results, boot.result.device_id);
+  requireCanonicalSession(await isolatedJson(request, environment, sessionPath(fresh), { token }), fresh, canonical);
+}
+
+/**
+ * Abrir Telefonia monta o gatilho real claimLeadership(). O provider já montou
+ * useSipClient; uma chamada antecipada pelo tick também é observada. Não há
+ * chamada manual da função, mudança de lock ou segredo SIP no teste.
+ */
+test('o motor SIP conclui o provisionamento autenticado ao abrir Telefonia no ambiente isolado', async ({ page }) => {
+  await isolatedHttpEnvironment();
+  const observation = observeIsolatedFunctionPosts(page, 'get-sip-password');
+  try {
+    await abrirApp(page);
+    await expect(page.getByRole('main'), 'o app precisa montar antes de abrir Telefonia').toBeVisible();
+    await clicarDesktop(page, { id: 'voip', label: 'Telefonia' });
+    const calls = await observation.completed();
+    calls.forEach(requireSipNotConfigured);
+  } finally {
+    observation.dispose();
+  }
+});
+
+test('detect-new-device conclui o aviso real de boot com uma sessão identificada', async ({ page }) => {
+  const environment = await isolatedHttpEnvironment();
+  await completedDeviceBoot(page, environment);
+});
+
+test('detect-new-device preserva uma linha canônica em duas chamadas concorrentes de uma sessão Auth nova', async ({ page, request }) => {
+  await verifyConcurrentDeviceSession(page, request);
 });
