@@ -126,6 +126,9 @@ export function syntheticCredentials(now = Date.now()) {
     evolutionKey: 'e2e-local-' + randomBytes(24).toString('hex'),
     instanceToken: 'e2e-instance-' + randomBytes(24).toString('hex'),
     catalogKey: 'e2e-catalog-' + randomBytes(24).toString('hex'),
+    qrEmail: 'qr.admin.e2e@example.invalid',
+    qrPassword: randomBytes(24).toString('base64url') + '!Aa1',
+    qrInstanceToken: 'e2e-instance-qr-' + randomBytes(24).toString('hex'),
   };
 }
 

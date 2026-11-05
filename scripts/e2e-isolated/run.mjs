@@ -19,6 +19,7 @@ import { collectPlaywrightInventory } from './collection.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
 import { restoreRoutineOwnership } from './routine-ownership.mjs';
+import { QR_SEED_PATH, validateQrSeedProof } from './qr-contract.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -592,6 +593,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       driverRun(['bun', 'e2e/fixtures/arquivos-local/seed.ts'], 'seed-files-volume', 240_000, { recordLog: false });
       driverRun(['node', 'e2e/fixtures/seed-files-tab.mjs'], 'seed-files-canonical', 240_000, { recordLog: false });
       driverRun(['node', 'scripts/e2e-isolated/seed-suite.mjs'], 'seed-suite', 240_000, { recordLog: false });
+      driverRun(['node', 'scripts/e2e-isolated/seed-qr.mjs'], 'seed-qr', 240_000, { recordLog: false });
       // Catalog metadata is observational. Its failure never decides readiness.
       try { providerCatalog = parseCatalog(psql(PROVIDER_CATALOG_SQL, [], CATALOG_EXECUTOR_OPTIONS)); }
       catch { providerCatalog = { available: false, reason: 'query-failed' }; }
@@ -608,6 +610,11 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
         provider = JSON.parse(readFileSync(path.join(output, 'provider-ready.json'), 'utf8'));
       } catch { throw new Error('suite-proof-unreadable'); }
       assertSuiteReadiness(suiteSeed, provider, runId, sourceSha);
+      let qrSeed;
+      try { qrSeed = JSON.parse(readFileSync(path.join(output, path.basename(QR_SEED_PATH)), 'utf8')); }
+      catch { throw new Error('qr-seed-proof-unreadable'); }
+      validateQrSeedProof(qrSeed, { runId, sourceSha, networkNamespace: network.network_namespace,
+        anonHash: sha256(credentials.anonKey) });
       catalogVerified = true;
     }
     const seed = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'seed'], 'seed-proof'));

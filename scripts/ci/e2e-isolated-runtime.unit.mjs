@@ -14,6 +14,7 @@ import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.
 import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
 import { OWNERSHIP_ROUTINES, OWNERSHIP_EXECUTOR_OPTIONS, ownershipSql } from '../e2e-isolated/routine-ownership.mjs';
+import { QR_FIXTURE, QR_SEED_FLAGS } from '../e2e-isolated/qr-contract.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -215,7 +216,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs', 'qr-contract.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -514,6 +515,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         'e2e/fixtures/arquivos-local/seed.ts': 'files-volume',
         'e2e/fixtures/seed-files-tab.mjs': 'files-canonical',
         'scripts/e2e-isolated/seed-suite.mjs': 'suite-seed',
+        'scripts/e2e-isolated/seed-qr.mjs': 'qr-seed',
         'scripts/e2e-isolated/verify-providers.mjs': 'provider-verification',
       };
       for (const [file, name] of Object.entries(suiteCommands)) {
@@ -535,6 +537,15 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
           if (fault.startsWith('suite-proof-')) data[fault.slice('suite-proof-'.length)] = false;
           writeFileSync(path.join(output, 'suite-seed-ready.json'), JSON.stringify(data));
         }
+        if (name === 'qr-seed' && fault !== 'qr-proof-missing') {
+          const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, origin: 'https://127.0.0.1:5173',
+            network_namespace: 'net:[1234]', anon_key_sha256: sha256(driverLocalAnonKey),
+            user_id: 'e2e71190-7005-4509-a000-000000000001', profile_id: 'e2e71190-7005-4509-a000-000000000002',
+            connection_id: QR_FIXTURE.id, instance_id: QR_FIXTURE.instance,
+            ...Object.fromEntries(QR_SEED_FLAGS.map(key => [key, true])) };
+          if (fault.startsWith('qr-proof-')) data[fault.slice('qr-proof-'.length)] = false;
+          writeFileSync(path.join(output, 'qr-seed-ready.json'), JSON.stringify(data));
+        }
         if (name === 'provider-verification' && fault !== 'provider-proof-missing') {
           const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, ...Object.fromEntries(PROVIDER_FLAGS.map(key => [key, true])), catalog_sku: 'E2E-LOCAL-001', delivery_proofs: { text: true, catalog_image: true, storage_image: true } };
           if (fault.startsWith('provider-proof-')) data[fault.slice('provider-proof-'.length)] = false;
@@ -548,7 +559,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         if (scope === 'suite') {
           assert.deepEqual(allAfter(argv, '--project'), GROUPS[group]);
           assert.equal(argv.includes('E2E_CATALOG_PRODUCT_SKU_VERIFIED=true'), fullSeed);
-          assert.deepEqual(suiteStages, fullSeed ? ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification'] : []);
+          assert.deepEqual(suiteStages, fullSeed ? ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification'] : []);
         }
         if (argv.includes('--list')) {
           listCalls++;
@@ -610,6 +621,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         if (fault === 'browser-failure' || fault === 'suite-browser-failure') return error('controlled browser failure');
         mkdirSync(path.join(output, 'playwright-report'), { recursive: true });
         writeFileSync(path.join(output, 'playwright-report/raw.html'), 'must-never-publish-session-token');
+        if (fault === 'qr-redaction') return ok('QR_REDACTION_PROBE ' + diagnosticCredentials.E2E_QR_TEST_PASSWORD + ' ' + diagnosticCredentials.E2E_QR_INSTANCE_TOKEN);
         return ok('1 passed');
       }
       assert.fail('unexpected docker exec: ' + argv.join(' '));
@@ -649,7 +661,11 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   for (const name of publicFiles) {
     const content = readFileSync(path.join(output, 'public', name), 'utf8');
     assert.equal(/must-never-publish|private-sentinel|raw SQL must never publish/.test(content), false, 'private report/config and SQL must not publish');
+    for (const key of ['E2E_QR_TEST_PASSWORD', 'E2E_QR_INSTANCE_TOKEN']) {
+      if (diagnosticCredentials[key]) assert.equal(content.includes(diagnosticCredentials[key]), false, key + ' must not publish');
+    }
   }
+  const qrRedaction = fault === 'qr-redaction' ? readFileSync(path.join(output, 'public', 'browser-suite.log'), 'utf8') : null;
   const tlsDiagnosticLog = tlsDiagnostic && existsSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'))
     ? readFileSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'), 'utf8') : null;
   const pullLogs = pullDiagnostic ? Object.fromEntries(Object.keys(assertPinnedImages(lock())).flatMap(role => {
@@ -676,7 +692,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const browserMetadata = existsSync(browserFile) ? { value: JSON.parse(readFileSync(browserFile, 'utf8')), mode: statSync(browserFile).mode & 0o777 } : null;
   const browserSummaryFile = path.join(output, 'results-summary.json');
   const browserSummary = browserObservation && existsSync(browserSummaryFile) ? JSON.parse(readFileSync(browserSummaryFile, 'utf8')) : null;
-  const result = { browserMetadata, browserSummary, browserReadCalls, ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const result = { qrRedaction, browserMetadata, browserSummary, browserReadCalls, ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -712,7 +728,7 @@ for (const [label, subprocess, available, reason] of filesDiagnosticCases) test(
   assert.equal(value.filesDiagnostic.privateMode, 0o600); assert.equal(value.filesDiagnostic.publicMode, 0o600);
   assert.equal(value.reportOutput, 'report_ready=true\n');
   assert.ok(value.publicFiles.includes('seed-files-volume-diagnostic.json'));
-  assert.ok(!value.publicFiles.some(name => /seed-files-volume\.log|seed-files-canonical\.log|seed-suite\.log|verify-providers\.log/.test(name)));
+  assert.ok(!value.publicFiles.some(name => /seed-files-volume\.log|seed-files-canonical\.log|seed-suite\.log|seed-qr\.log|verify-providers\.log/.test(name)));
 });
 test('seed diagnostic controller/success does not publish an error even when a line is forged', async t => {
   const value = await controllerFixture(t, 'none', { scope: 'suite', seedDiagnostic: { status: 0, stdout: filesDiagnosticNoise, stderr: filesDiagnosticLine(filesDiagnosticRecord) } });
@@ -884,11 +900,11 @@ test('suite controller: authenticated collects exactly its nine existing project
   assert.equal(value.browserCalls, 1);
   assert.equal(value.listCalls, 1);
   assert.deepEqual(value.bundled, ['main.eszip', ...FUNCTIONS.map(name => name + '.eszip'), 'tls-edge-probe.eszip']);
-  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification']);
   assert.equal(value.containers.size, 0);
   assert.equal(value.volumes.size, 0);
   for (const name of ['suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json']) assert.ok(value.publicFiles.includes(name));
-  assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\.log|verify-providers\.log/.test(name)), 'raw seed/provider output stays private');
+  assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\.log|seed-qr\.log|verify-providers\.log/.test(name)), 'raw seed/provider output stays private');
 });
 for (const [name, options, code] of [
   ['missing report', { collectionFile: 'missing' }, 'collection-report-missing'],
@@ -935,6 +951,16 @@ test('suite controller: only the two source-bound platform skips are distinct fr
   assert.equal(value.state.suite.known_runtime_skip, 2);
   assert.equal(value.state.suite.skipped_runtime, 0);
 });
+test('suite controller: QR password and scoped provider token are redacted from browser output', async t => {
+  const value = await controllerFixture(t, 'qr-redaction', { scope: 'suite' });
+  assert.equal(value.exit, 0); assert.match(value.qrRedaction, /QR_REDACTION_PROBE/);
+  for (const key of ['E2E_QR_TEST_PASSWORD', 'E2E_QR_INSTANCE_TOKEN']) {
+    assert.ok(value.diagnosticCredentials[key]?.length >= 24);
+    assert.equal(value.qrRedaction.includes(value.diagnosticCredentials[key]), false);
+  }
+  assert.equal(value.publicFiles.includes('qr-seed-ready.json'), false, 'QR admin readiness remains private');
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
 const suiteFaults = {
   'untracked-handler': 'function-source-changed',
   'changed-handler': 'function-source-changed',
@@ -943,9 +969,13 @@ const suiteFaults = {
   'files-volume-failure': 'seed-files-volume',
   'files-canonical-failure': 'seed-files-canonical',
   'suite-seed-failure': 'seed-suite',
+  'qr-seed-failure': 'seed-qr',
   'provider-verification-failure': 'verify-providers',
   'suite-proof-missing': 'suite-proof-unreadable',
   'provider-proof-missing': 'suite-proof-unreadable',
+  'qr-proof-missing': 'qr-seed-proof-unreadable',
+  ...Object.fromEntries([...QR_SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'origin', 'network_namespace',
+    'anon_key_sha256', 'user_id', 'profile_id', 'connection_id', 'instance_id'].map(key => ['qr-proof-' + key, 'qr-seed-proof'])),
   ...Object.fromEntries([...SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'pagination_seed_count'].map(key => ['suite-proof-' + key, 'suite-seed-proof-mismatch'])),
   ...Object.fromEntries([...PROVIDER_FLAGS, 'schema', 'run_id', 'source_sha', 'catalog_sku', 'delivery_proofs', 'delivery_proofs.text', 'delivery_proofs.catalog_image', 'delivery_proofs.storage_image', 'delivery_proofs-extra'].map(key => ['provider-proof-' + key, 'provider-proof-mismatch'])),
   ...Object.fromEntries(GROUPS.authenticated.map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),
@@ -1129,7 +1159,7 @@ for (const [name, catalogResult, available] of providerCatalogCases) {
     assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
     assert.equal(value.catalogCalls.length, 1);
     assert.deepEqual(value.catalogCalls[0], { input: PROVIDER_CATALOG_SQL,
-      ...CATALOG_EXECUTOR_OPTIONS, afterStages: ['files-volume', 'files-canonical', 'suite-seed'] });
+      ...CATALOG_EXECUTOR_OPTIONS, afterStages: ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed'] });
     const published = value.providerMetadata['provider-catalog.json'];
     assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
     assert.equal(value.providerMetadata['provider-diagnostic.json'], undefined);
@@ -1160,7 +1190,7 @@ for (const [name, raw, available] of providerRawCases) {
     assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
     assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
     assert.equal(value.catalogCalls.length, 1);
-    assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+    assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification']);
     const published = value.providerMetadata['provider-diagnostic.json'];
     assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
     if (available) assert.deepEqual(published.value, { available: true, ...providerFailureMetadata });
@@ -1230,7 +1260,7 @@ test('ownership controller confirms only the authenticated step, before seeds an
   assert.equal(value.ownershipCalls[0].afterMigrations, 1); assert.equal(value.ownershipCalls[0].beforeSeeds, 0);
   assert.equal(value.ownershipMetadata.mode, 0o600); assert.equal(value.ownershipMetadata.value.confirmed, true);
   assert.equal(value.ownershipMetadata.value.verified.length, 6);
-  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification']);
   assert.equal(value.catalogCalls.length, 1, 'the independent catalog is still observed after seeds');
   assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
   assert.equal(value.publicFiles.some(name => /ownership.*\.log$/.test(name)), false);

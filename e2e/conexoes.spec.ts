@@ -1,4 +1,6 @@
-import { test, expect, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test, qrRequestAction } from './fixtures/isolated-qr';
+import { QR_FIXTURE, assertQrImage } from '../scripts/e2e-isolated/qr-contract.mjs';
 
 import { gotoConexoes } from './fixtures/conexoes';
 
@@ -32,9 +34,9 @@ async function mockConnectionCreationFlag(page: Page, enabled: boolean) {
  * Conexões — esboço de e2e (a V2 não tinha NENHUM).
  *
  * Cobre a navegação e os estados honestos da tela contra o banco do conjunto
- * local (R1). O passo de QR fica como `test.fixme`: o fluxo exige o provedor
- * Evolution (resposta real de QR), que não existe no ambiente local — sem ele
- * um teste “verde” de QR estaria fingindo.
+ * local (R1). O QR usa admin e conexão próprios do stack descartável. A Edge,
+ * o Vault e a persistência são reais; só o provedor externo e o QR são sintéticos,
+ * com payload inofensivo que não permite pareamento de um aparelho.
  */
 test.describe('Conexões — tela e estados honestos', () => {
   test('mostra os cartões de estatística e a ação de nova conexão', async ({ page }) => {
@@ -91,9 +93,63 @@ test.describe('Conexões — tela e estados honestos', () => {
     expect(config.writeAttempts).toEqual([]);
   });
 
-  test.fixme('abrir o QR de uma conexão desconectada', async () => {
-    // Exige o provedor Evolution (QR real) e uma conexão desconectada no banco
-    // local. Sem o serviço no ambiente local o passo não roda — deixado
-    // explícito para não fingir cobertura (regra R1).
+  test('abrir o QR de uma conexão desconectada', async ({ qrAdmin }) => {
+    test.setTimeout(60000); // Inclui o polling real e a janela de cancelamento de dois ciclos.
+    const { page, access, token, operations } = qrAdmin;
+    const config = await mockConnectionCreationFlag(page, false);
+    const before = await access.evidence();
+    await gotoConexoes(page);
+    const main = page.getByRole('main', { name: 'Conteúdo principal' });
+    const card = main.getByTestId('connection-card').filter({ hasText: QR_FIXTURE.name });
+    await expect(card).toHaveCount(1);
+    await expect(card.getByText(QR_FIXTURE.name, { exact: true })).toBeVisible();
+    await expect(card.getByText('Desconectado', { exact: true })).toBeVisible();
+    const [connected] = await Promise.all([
+      page.waitForResponse(response => qrRequestAction(response.request()) === 'connect'),
+      card.getByRole('button', { name: 'Conectar', exact: true }).click(),
+    ]);
+    expect(connected.status()).toBe(200);
+    const result = await connected.json();
+    expect(result.error).not.toBe(true);
+    expect(result.status).toBe('qr_pending');
+    expect(result.data?.Name).toBe(QR_FIXTURE.instance);
+    expect(result.qrcode?.code).toBe(QR_FIXTURE.payload);
+    assertQrImage(result.qrcode?.base64);
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Escanear QR Code - ' + QR_FIXTURE.name, exact: true })).toBeVisible();
+    const image = dialog.getByRole('img', { name: 'QR Code', exact: true });
+    await expect(image).toBeVisible();
+    assertQrImage(await image.getAttribute('src'));
+    await expect.poll(() => image.evaluate((node, width) => {
+      const image = node as HTMLImageElement;
+      return image.complete && image.naturalWidth === width && image.naturalHeight === width;
+    }, QR_FIXTURE.imageWidth)).toBe(true);
+    await expect(dialog.getByText('Aguardando conexão...', { exact: true })).toBeVisible();
+    await expect(dialog.getByText('WhatsApp Conectado!', { exact: true })).toHaveCount(0);
+    await access.assertPending(token);
+    const polled = await page.waitForResponse(response => qrRequestAction(response.request()) === 'status');
+    expect(polled.status()).toBe(200);
+    const status = await polled.json();
+    expect(status.error).not.toBe(true);
+    expect(status.state).toBe('close');
+    expect(status.status).toBe('disconnected');
+    await access.assertPending(token);
+    await expect(image).toBeVisible();
+    await expect(dialog.getByText('Aguardando conexão...', { exact: true })).toBeVisible();
+    const after = await access.evidence();
+    expect(after.generation).toBe(before.generation + 1);
+    expect(after.connects).toBe(before.connects + 1);
+    expect(after.qr_reads - before.qr_reads).toBeGreaterThanOrEqual(2);
+    expect(after.status_reads).toBeGreaterThan(before.status_reads);
+    expect(after.delivered).toBe(0);
+    await qrAdmin.closeDialog();
+    const closed = operations.snapshot();
+    // Positive cancellation check: observe more than two real 3 s intervals.
+    await page.waitForTimeout(6500);
+    expect(operations.snapshot()).toEqual(closed);
+    expect(closed.after_close).toBe(0);
+    expect(closed.pending).toBe(0);
+    await expect(dialog).toBeHidden();
+    expect(config.writeAttempts).toEqual([]);
   });
 });
