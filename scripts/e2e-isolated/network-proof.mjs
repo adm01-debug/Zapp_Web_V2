@@ -182,10 +182,10 @@ export class NativeRuntime {
     return commandOutput(await runCommand('docker',['--host','unix:///var/run/docker.sock',...args],{
       env:{PATH:this.env.PATH,DOCKER_CONFIG:this.dockerConfig},cwd:this.root,timeout,signal:cleanup?undefined:this.abort.signal}));
   }
-  async prepare(){
+  async prepare(scope='network-proof'){
     const e=this.env;
     if(process.platform!=='linux'||process.arch!=='x64'||typeof process.getuid!=='function'||e.GITHUB_EVENT_NAME!=='workflow_dispatch'||
-       requestScope(e.GITHUB_EVENT_NAME,e.ZAPP_PROOF_SCOPE,e.ZAPP_PROOF_SHA)!=='network-proof'||e.ZAPP_PROOF_SHA!==this.id.source_sha||
+       !['network-proof','network-proof-contexts'].includes(scope)||requestScope(e.GITHUB_EVENT_NAME,e.ZAPP_PROOF_SCOPE,e.ZAPP_PROOF_SHA)!==scope||e.ZAPP_PROOF_SHA!==this.id.source_sha||
        e.GITHUB_SHA!==this.id.source_sha)fail('native-invocation');
     if((await this.cmd('git',['rev-parse','HEAD'])).trim()!==this.id.source_sha||(await this.cmd('git',['status','--porcelain','--untracked-files=no'])).trim())fail('checkout-state');
     const pkg=parseJson(readFileSync(path.join(this.root,'node_modules/@playwright/test/package.json'),'utf8'));

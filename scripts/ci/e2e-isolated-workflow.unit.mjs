@@ -46,10 +46,10 @@ function assertRequest(env, expected) {
   assert.deepEqual(values, expected ?? {});
 }
 
-for (const scope of ['', 'login', 'full-suite', 'network-proof', 'NETWORK-PROOF', ' network-proof', 'network-proof ', 'network-proof\n', 'LOGIN', 'suite', 'authenticated', ' full-suite', 'full-suite ', 'login\n', '$(id)', '../suite']) {
+for (const scope of ['', 'login', 'full-suite', 'network-proof', 'network-proof-contexts', 'NETWORK-PROOF-CONTEXTS', ' network-proof-contexts', 'network-proof-contexts ', 'network-proof-contexts\n', 'NETWORK-PROOF', ' network-proof', 'network-proof ', 'network-proof\n', 'LOGIN', 'suite', 'authenticated', ' full-suite', 'full-suite ', 'login\n', '$(id)', '../suite']) {
   for (const event of ['pull_request', 'workflow_dispatch']) {
     test(`admissão real: ${event}, scope ${JSON.stringify(scope)}`, () => {
-      const accepted = event === 'pull_request' || ['', 'login', 'full-suite', 'network-proof'].includes(scope);
+      const accepted = event === 'pull_request' || ['', 'login', 'full-suite', 'network-proof', 'network-proof-contexts'].includes(scope);
       assertRequest({ EVENT_NAME: event, REQUEST_SCOPE: scope, CHECKOUT_SHA: sha }, accepted ? {
         scope: event === 'pull_request' ? 'login' : scope || 'login', sha,
       } : undefined);
@@ -101,7 +101,7 @@ for (const [group, projects] of [
 }
 
 for (const event of ['pull_request', 'workflow_dispatch', 'push']) {
-  for (const scope of ['login', 'full-suite', 'network-proof', 'unexpected']) {
+  for (const scope of ['login', 'full-suite', 'network-proof', 'network-proof-contexts', 'unexpected']) {
     for (const status of ['success', 'failure', 'cancelled', 'skipped']) {
       test(`grafo de jobs: ${event}/${scope}/${status}`, () => {
         const context = {
@@ -114,7 +114,7 @@ for (const event of ['pull_request', 'workflow_dispatch', 'push']) {
         const networkAllowed = eligible && conditionAllows(conditionOf(network, 4), context);
         assert.equal(loginAllowed, ['pull_request', 'workflow_dispatch'].includes(event) && status === 'success' && scope === 'login');
         assert.equal(suiteAllowed, event === 'workflow_dispatch' && status === 'success' && scope === 'full-suite');
-        assert.equal(networkAllowed, event === 'workflow_dispatch' && status === 'success' && scope === 'network-proof');
+        assert.equal(networkAllowed, event === 'workflow_dispatch' && status === 'success' && ['network-proof', 'network-proof-contexts'].includes(scope));
         assert.ok([loginAllowed, suiteAllowed, networkAllowed].filter(Boolean).length <= 1);
       });
     }
@@ -129,7 +129,7 @@ test('entrada restrita, permissões de leitura e SHA único para todos os checko
   const scope = valueOf(inputs, 'scope', 0);
   assert.equal(valueOf(scope, 'type', 0), 'choice');
   assert.equal(valueOf(scope, 'default', 0), 'login');
-  assert.deepEqual(valueOf(scope, 'options', 0).split('\n'), ['- login', '- full-suite', '- network-proof']);
+  assert.deepEqual(valueOf(scope, 'options', 0).split('\n'), ['- login', '- full-suite', '- network-proof', '- network-proof-contexts']);
   assert.deepEqual([...events.matchAll(/^([\w-]+):/gm)].map(match => match[1]).sort(), ['pull_request', 'workflow_dispatch']);
   assert.equal(permission(yaml, 'contents', 0), 'read');
   assert.doesNotMatch(yaml, /secrets\s*\.|issues:\s*write|contents:\s*write|pull_request_target|e2e-teardown|catalog_send_events/);

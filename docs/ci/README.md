@@ -18,7 +18,7 @@
 | DB Live Guard | [`db-live-guard.yml`](../../.github/workflows/db-live-guard.yml) | agendado (semanal, segunda) e dispatch sobre main | o contrato do banco de PRODUCAO (drift, paridade, runtime config) | issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio | issue de guardas vivos | — | — |
 | DB Migrate (production) | [`db-migrate.yml`](../../.github/workflows/db-migrate.yml) | dispatch na main, com o job gateado por environment | dry-run obrigatorio e apply com hash estrutural da migration | nada e aplicado; o dry-run precisa passar antes | operador que disparou e a issue de ops | — | — |
 | Deploy Edge Functions | [`deploy-functions.yml`](../../.github/workflows/deploy-functions.yml) | push na main (supabase/functions/**, config.toml) e dispatch manual | as Edge Functions publicadas batem com o repo | o deploy aborta antes de publicar | operador que disparou | — | — |
-| E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolhe login, full-suite em três grupos fixos ou network-proof | login e 15 projetos em backend descartável; network-proof mede Node e três engines com TLS, topologia estrita e canário próprio | lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam; network-proof exige dummy previamente carregada | autor e revisor via check; publica somente metadados e logs redigidos; network-proof não valida Bun ou Edge nem libera o legado | — | — |
+| E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts | login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário | isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada | autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada | — | — |
 | E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main | os mesmos 15 projetos Playwright em três grupos com Supabase descartável e TLS local | preparo, testes e limpeza bloqueiam; publica só diagnóstico redigido e preserva o alerta da suíte | mesma issue de E2E; fecha somente após sucesso dos três grupos | — | — |
 | E2E Talk X (visual/launch + Auth smoke) | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
 | Inventário do estado real (semanal) | [`inventario-estado-semanal.yml`](../../.github/workflows/inventario-estado-semanal.yml) | agendado (seg 10:23 UTC) e dispatch | inventario/estado (banco, rotas, edges) regerado do banco oficial e do codigo | o job fica vermelho e o inventario nao e atualizado | PR automation/inventario-estado com o inventario novo | — | — |
@@ -103,10 +103,10 @@
 
 ### E2E isolado - login e suíte completa (`e2e-logado-isolado.yml`)
 
-- **Gatilho:** pull_request valida login; dispatch escolhe login, full-suite em três grupos fixos ou network-proof
-- **O que prova:** login e 15 projetos em backend descartável; network-proof mede Node e três engines com TLS, topologia estrita e canário próprio
-- **Quando falha:** lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam; network-proof exige dummy previamente carregada
-- **Quem é avisado:** autor e revisor via check; publica somente metadados e logs redigidos; network-proof não valida Bun ou Edge nem libera o legado
+- **Gatilho:** pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts
+- **O que prova:** login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário
+- **Quando falha:** isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada
+- **Quem é avisado:** autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada
 
 ### E2E logado (`e2e-logado.yml`)
 

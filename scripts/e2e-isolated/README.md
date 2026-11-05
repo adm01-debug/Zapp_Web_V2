@@ -164,3 +164,37 @@ Os testes locais das políticas e do protocolo usam:
     node --test scripts/ci/e2e-isolated-network-proof.unit.mjs
 
 Esses testes controlam Docker, navegador e transporte. Não devem ser apresentados como execução nativa dessas dependências.
+
+## Comparação dos contextos oficiais do Playwright
+
+O mesmo workflow aceita `scope=network-proof-contexts`. Essa entrada seleciona somente a comparação em loopback: não tenta dummy, veth, rota default, módulo de kernel ou fallback de rede. Containers usam `--cap-drop ALL`. Aplicação, banco e credenciais não são iniciados.
+
+Para cada engine fixada, a comparação mede um contexto direto sem opção offline, a fixture real do Playwright Test com sua opção padrão, a opção explícita `offline: false`, o setter isolado `setOffline(false)`, dois ciclos oficiais true→false e um contexto novo sem emulação. Um setter que não muda o estado não é contado como transição. O segundo ciclo exige eventos offline/online e bloqueio/restauração efetivos do fetch HTTPS. O contexto novo precisa conservar a observação nativa inicial.
+
+A fixture Test roda com uma configuração privada de conteúdo fixo: um teste, um worker e nenhum retry. Fonte, configuração e reporter são montados somente para leitura; o controller confere conteúdo, identidade e inventário dos arquivos. Resultado exige término do processo, reporte de um teste aprovado sem skip e correspondência entre o dado medido e o relatório. Nenhuma configuração ou sessão da aplicação é carregada.
+
+| Campo do relatório | Significado |
+|---|---|
+| `collection_complete` | Os três processos concluíram e forneceram observações completas válidas. |
+| `official_api_cycle_passed` | Os ciclos oficiais bloquearam/restauraram o fetch e produziram os estados e eventos exigidos nas três engines. |
+| `native_online_all` | Todos os contextos diretos sem emulação começaram online; `null` indica coleta incompleta. |
+| `test_default_online_all` | Todas as fixtures reais do Playwright Test começaram online; `null` indica coleta incompleta. |
+
+Um valor nativo false permanece false mesmo se o ciclo oficial funcionar. HTTPS, controles negativos de CA/SAN, topologia, canário com controles positivos e limpeza continuam obrigatórios. O relatório conserva `native_contract_qualified=false`, `authenticated_admission=false` e `plan_fully_validated=false`; Bun, Edge, IPv6 externo e as variantes de interface continuam explicitamente não executados. Essa medição informa a escolha de uma alteração futura do harness; não a aplica nem reativa o legado.
+
+    node --test scripts/ci/e2e-isolated-network-proof.unit.mjs scripts/ci/e2e-isolated-network-contexts.unit.mjs
+
+## Fixture exclusiva de QR
+
+No grupo autenticado, `seed-qr.mjs` roda depois de `seed-suite.mjs`. A preparação cria o administrador `qr.admin.e2e@example.invalid` e uma terceira conexão desconectada, `e2e-qr-local`, com token próprio no Vault descartável. O supervisor compartilhado, o agente de Arquivos, as duas conexões anteriores, seus tokens e o vínculo do contato canônico são conferidos antes/depois. Colisão com a fixture existente reprova; uma tentativa interrompida exige novo ambiente, sem tratar um seed parcial como concluído.
+
+O provider local aceita somente connect, QR e status para o token dessa conexão. A primeira leitura de QR fica vazia e a segunda fornece PNG com o texto inofensivo `ZAPP-E2E-SYNTHETIC-QR-NO-PAIRING-V1`. O digest, tamanho e decodificação da imagem são verificáveis; o conteúdo não permite pareamento de aparelho. A Edge, a leitura do Vault e a persistência continuam reais. Não há criação, exclusão, logout ou envio habilitados para essa credencial do provider.
+
+A fixture Playwright exige admissão Node e preflight do browser antes de ler as credenciais, faz login real pela UI e confirma usuário, perfil admin e conexão por Auth/RLS. O teste exige resposta HTTP concluída com contrato de QR pendente, imagem carregada, leitura persistida e polling de status. Após fechar o diálogo, observa mais de dois ciclos de três segundos para verificar o cancelamento.
+
+A limpeza rastreia operações conservadoramente: query inesperada, corpo ambíguo, falha ou request ainda pendente impedem o reset. Só depois da conclusão comprovada e do fechamento do contexto, o JWT do admin pode executar PATCH da própria fixture, com filtros de ID, instância, proprietário, não default, status e versão `updated_at`. Exige uma representação única e leitura posterior. Não usa chave de serviço no browser nem substitui erro por sucesso. A limpeza geral por posse do controller continua obrigatória mesmo quando esse reset é recusado.
+
+A prontidão específica de QR fica privada. Password e token exclusivos entram na redaction do controller e são excluídos do ambiente do processo do navegador. Modelos locais com Auth/RLS/Vault controlados validam decisões; só o grupo nativo integrado comprova essas dependências.
+
+    node --test scripts/ci/e2e-isolated-qr.unit.mjs scripts/ci/e2e-isolated-runtime.unit.mjs
+

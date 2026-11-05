@@ -105,7 +105,7 @@ export function snapshot() {
       iflink:Number(readFileSync('/sys/class/net/'+x.ifname+'/iflink','utf8').trim())})),official_host_local:true};
 }
 function envIdentity() { return identity(process.env.ZAPP_NETWORK_RUN,process.env.ZAPP_NETWORK_SHA); }
-function assertNamespace(expected) { if (namespace() !== expected) fail('namespace-changed'); }
+export function assertNamespace(expected) { if (namespace() !== expected) fail('namespace-changed'); }
 function helper(action) {
   envIdentity();
   const expected = process.env.ZAPP_NETWORK_NAMESPACE;
@@ -128,7 +128,7 @@ function helper(action) {
   assertTopology(snapshot(),'candidate',action === 'down' ? 'down' : 'up');
   return {schema:1,action,ok:true};
 }
-function tlsIdentity(expected) {
+export function tlsIdentity(expected) {
   const manifest = parseJson(readFileSync(TLS_PUBLIC+'/manifest.json','utf8'));
   object(manifest,['schema','run_id','source_sha','origin','ca_sha256','server_sha256','expires_at']);
   if (manifest.schema !== 1 || manifest.run_id !== expected.run_id || manifest.source_sha !== expected.source_sha || manifest.origin !== TLS_ORIGIN ||
@@ -156,7 +156,7 @@ async function serve() {
   process.once('SIGTERM',stop);process.once('SIGINT',stop);
   process.stdout.write('{"schema":1,"ready":true}\n');
 }
-async function fetchIdentity(expected) {
+export async function fetchIdentity(expected) {
   const r = await fetch(TLS_ORIGIN+'/identity?node='+Date.now(),{redirect:'error',signal:AbortSignal.timeout(5000),cache:'no-store'});
   if (!r.ok) fail('node-https'); const value = await r.json();
   object(value,['schema','run_id','source_sha','origin']);

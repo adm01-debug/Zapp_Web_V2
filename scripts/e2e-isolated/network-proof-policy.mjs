@@ -43,7 +43,7 @@ export function identity(runId, sourceSha) {
 export function requestScope(event, requested, sha) {
   identity('zapp-e2e-model-00000000', sha);
   if (event === 'pull_request') return 'login';
-  if (event !== 'workflow_dispatch' || !['login', 'full-suite', 'network-proof'].includes(requested || 'login')) fail('request-scope');
+  if (event !== 'workflow_dispatch' || !['login', 'full-suite', 'network-proof', 'network-proof-contexts'].includes(requested || 'login')) fail('request-scope');
   return requested || 'login';
 }
 export function commandOutput(result) {
