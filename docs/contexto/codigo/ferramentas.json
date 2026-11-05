@@ -5,7 +5,7 @@
   "linguagens": [
    "TypeScript (4180)",
    "SQL (1280)",
-   "Markdown (1035)",
+   "Markdown (1037)",
    "JSON (594)",
    "JavaScript (410)",
    "Shell (231)",
@@ -1071,9 +1071,19 @@
    "linhas": 177
   },
   {
+   "arquivo": "PENDENCIAS.md",
+   "titulo": "PENDÊNCIAS DE CI",
+   "linhas": 77
+  },
+  {
    "arquivo": "README.md",
    "titulo": "🚀 ZAPP-WEB (Pronto Talk Suite)",
    "linhas": 369
+  },
+  {
+   "arquivo": "RELATORIO_CI.md",
+   "titulo": "RELATÓRIO CI — fix-ci-workflows-hxupgs",
+   "linhas": 194
   },
   {
    "arquivo": "SECURITY.md",
@@ -1588,15 +1598,15 @@
     "arquivos": 25
    },
    {
+    "host": "zapp-web-v2.vercel.app",
+    "arquivos": 24
+   },
+   {
     "host": "edge.invalid",
     "arquivos": 23
    },
    {
     "host": "proj.supabase.co",
-    "arquivos": 23
-   },
-   {
-    "host": "zapp-web-v2.vercel.app",
     "arquivos": 23
    },
    {
@@ -1684,10 +1694,6 @@
     "arquivos": 7
    },
    {
-    "host": "zappweb.app.br",
-    "arquivos": 7
-   },
-   {
     "host": "evolution-test.example",
     "arquivos": 6
    },
@@ -1709,6 +1715,10 @@
    },
    {
     "host": "x.supabase.co",
+    "arquivos": 6
+   },
+   {
+    "host": "zappweb.app.br",
     "arquivos": 6
    },
    {

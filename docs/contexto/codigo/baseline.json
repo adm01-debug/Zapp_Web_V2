@@ -2,11 +2,41 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "03e9568c194342bfef82291b20e78c34bae3796d",
+  "commit": "d985c7fc86562051c4725fbe07f8bcfe44bd66e4",
   "branch": "main",
-  "data_commit": "2026-11-05T01:04:39Z",
+  "data_commit": "2026-11-05T12:52:44-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d985c7f",
+    "data": "2026-11-05",
+    "assunto": "chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais"
+   },
+   {
+    "sha": "72fd81d",
+    "data": "2026-11-05",
+    "assunto": "chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated"
+   },
+   {
+    "sha": "429bdb1",
+    "data": "2026-11-05",
+    "assunto": "chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs"
+   },
+   {
+    "sha": "341d3fd",
+    "data": "2026-11-05",
+    "assunto": "chore: adiciona baseline local completo ao RELATORIO_CI (#2731)"
+   },
+   {
+    "sha": "2f2cc18",
+    "data": "2026-11-05",
+    "assunto": "chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)"
+   },
+   {
+    "sha": "fa7d882",
+    "data": "2026-11-05",
+    "assunto": "fix: verificar V2 por padrão no smoke de produção (#2729)"
+   },
    {
     "sha": "03e9568",
     "data": "2026-11-05",
@@ -101,39 +131,9 @@
     "sha": "f4e5a10",
     "data": "2026-11-04",
     "assunto": "fix: evita padding duplicado nos carregamentos do Talk X (#2712)"
-   },
-   {
-    "sha": "a96bbd4",
-    "data": "2026-11-04",
-    "assunto": "fix(ci): bloquear cancelamentos e skips indevidos no gate (#2711)"
-   },
-   {
-    "sha": "93965f7",
-    "data": "2026-11-04",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2698)"
-   },
-   {
-    "sha": "b46f5d2",
-    "data": "2026-11-04",
-    "assunto": "fix(ci): restaurar auditorias e fortalecer automações (#2710)"
-   },
-   {
-    "sha": "451373f",
-    "data": "2026-11-03",
-    "assunto": "fix: corrigir geração e saúde dos contextos automáticos (#2708)"
-   },
-   {
-    "sha": "da9f551",
-    "data": "2026-11-03",
-    "assunto": "chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)"
-   },
-   {
-    "sha": "9b15c8b",
-    "data": "2026-11-03",
-    "assunto": "chore: adiciona __pycache__/ ao .gitignore"
    }
   ],
-  "arquivos_mudados_7d": 1249,
+  "arquivos_mudados_7d": 1244,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -181,7 +181,7 @@
    },
    {
     "pasta": "src/hooks/chat",
-    "mudancas": 119
+    "mudancas": 118
    },
    {
     "pasta": "src/components/tasks",
@@ -199,19 +199,23 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 23
+    "mudancas": 22
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 17
    },
    {
     "arquivo": "CLAUDE.md",
     "mudancas": 15
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
+    "arquivo": "docs/ci/README.md",
     "mudancas": 14
    },
    {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 14
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
@@ -222,15 +226,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 13
+    "arquivo": "ESTADO.md",
+    "mudancas": 12
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
-   },
-   {
-    "arquivo": "ESTADO.md",
     "mudancas": 12
    },
    {
@@ -242,6 +242,14 @@
     "mudancas": 11
    },
    {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 10
+   },
+   {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 10
    },
@@ -250,11 +258,11 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
-    "mudancas": 8
+    "arquivo": ".github/workflows/db-migrate.yml",
+    "mudancas": 7
    },
    {
-    "arquivo": ".github/workflows/db-migrate.yml",
+    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
     "mudancas": 7
    },
    {
@@ -288,14 +296,6 @@
    {
     "arquivo": "e2e/email-navy-visual.spec.ts",
     "mudancas": 6
-   },
-   {
-    "arquivo": "playwright.config.ts",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
-    "mudancas": 6
    }
   ],
   "autores_30d": [
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8219,
+  "arquivos_total": 8221,
   "arquivos_codigo": 4707,
   "linhas_codigo": 866772,
   "rotas": 18,
@@ -335,7 +335,7 @@
   "testes": 2568,
   "workflows": 20,
   "scripts": 406,
-  "docs_md": 1035
+  "docs_md": 1037
  },
  "por_pasta": {
   "docs/_arquivo": {

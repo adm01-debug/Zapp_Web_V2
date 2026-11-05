@@ -4369,7 +4369,7 @@
   },
   {
    "arquivo": "scripts/vercel/verify-production.mjs",
-   "descricao": "V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zappweb.app.br]",
+   "descricao": "V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zapp-web-v2.vercel.app]",
    "linhas": 134,
    "env": [
     "SMOKE_BASE_URL"

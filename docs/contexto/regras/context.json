@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "03e9568c194342bfef82291b20e78c34bae3796d",
+  "sha": "d985c7fc86562051c4725fbe07f8bcfe44bd66e4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-05 01:33 UTC",
-  "files_total": 8060,
+  "generated_at": "2026-11-05 16:14 UTC",
+  "files_total": 8062,
   "code_files": 5963,
   "code_lines": 1032219
  },
@@ -268296,7 +268296,7 @@
    "env": [
     "SMOKE_BASE_URL"
    ],
-   "doc": "!/usr/bin/env node V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zappweb.app.br] Retorna exit 0 se tudo OK, exit 1 em qualquer falha. O que verifica: 1. GET /version.json → 200, JSON válido com campo buildId 2. GET / → 200 (SPA ca …"
+   "doc": "!/usr/bin/env node V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zapp-web-v2.vercel.app] Retorna exit 0 se tudo OK, exit 1 em qualquer falha. O que verifica: 1. GET /version.json → 200, JSON válido com campo buildId 2. GET / → 200 …"
   },
   "src/App.tsx": {
    "path": "src/App.tsx",
@@ -381271,10 +381271,67 @@
   }
  },
  "git": {
-  "sha": "03e9568c194342bfef82291b20e78c34bae3796d",
+  "sha": "d985c7fc86562051c4725fbe07f8bcfe44bd66e4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d985c7f",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais",
+    "files": [
+     "RELATORIO_CI.md"
+    ]
+   },
+   {
+    "sha": "72fd81d",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated",
+    "files": [
+     "PENDENCIAS.md",
+     "RELATORIO_CI.md"
+    ]
+   },
+   {
+    "sha": "429bdb1",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs",
+    "files": [
+     "PENDENCIAS.md",
+     "RELATORIO_CI.md"
+    ]
+   },
+   {
+    "sha": "341d3fd",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "chore: adiciona baseline local completo ao RELATORIO_CI (#2731)",
+    "files": [
+     "RELATORIO_CI.md"
+    ]
+   },
+   {
+    "sha": "2f2cc18",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)",
+    "files": [
+     "PENDENCIAS.md",
+     "RELATORIO_CI.md"
+    ]
+   },
+   {
+    "sha": "fa7d882",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "fix: verificar V2 por padrão no smoke de produção (#2729)",
+    "files": [
+     "scripts/vercel/verify-production.mjs"
+    ]
+   },
    {
     "sha": "03e9568",
     "date": "2026-11-04",
@@ -381685,82 +381742,12 @@
     "files": [
      "scripts/supabase_snapshot/snapshot.py"
     ]
-   },
-   {
-    "sha": "9b15c8b",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore: adiciona __pycache__/ ao .gitignore",
-    "files": [
-     ".gitignore"
-    ]
-   },
-   {
-    "sha": "ded01b5",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)",
-    "files": [
-     "scripts/supabase_snapshot/snapshot.py"
-    ]
-   },
-   {
-    "sha": "bd25801",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)",
-    "files": [
-     ".github/workflows/db-guard.yml",
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/dashboard-rls-authorization.test.sh",
-     "scripts/db-audit/global-guards-regression.test.mjs",
-     "scripts/db-audit/grants-baseline.json",
-     "scripts/db-audit/realtime-publication-baseline.json",
-     "scripts/db-audit/runtime-config.test.sh",
-     "scripts/db-audit/talkx-attribution.test.sh",
-     "scripts/db-audit/talkx-rfm.test.sh",
-     "src/hooks/crm/__tests__/useVisibleAgents.test.tsx",
-     "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
-     "supabase/schema-catalog.json",
-     "supabase/tests/contact_purchases_rls_author.sql",
-     "supabase/tests/special_agent_visibility.sql"
-    ]
-   },
-   {
-    "sha": "535074c",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "fix(ai-context): rodapé do INDEX.md configurável por repo + README da automação (#2696)",
-    "files": [
-     "ai-context.config.json",
-     "scripts/ai-context/README.md",
-     "scripts/ai-context/gerar.mjs",
-     "scripts/ai-context/gerar.unit.mjs"
-    ]
-   },
-   {
-    "sha": "a3fb2a2",
-    "date": "2026-11-03",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#2695)",
-    "files": [
-     "supabase/schema-manifest.json"
-    ]
-   },
-   {
-    "sha": "29ae259",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias (#2562)",
-    "files": [
-     "supabase/migrations/20261102012400_login_attempts_retencao_90d.sql"
-    ]
    }
   ],
   "hot_files": [
    [
-    ".github/workflows/db-guard.yml",
-    4
+    "RELATORIO_CI.md",
+    5
    ],
    [
     "scripts/ci/e2e-isolated-runtime.unit.mjs",
@@ -381775,7 +381762,15 @@
     4
    ],
    [
+    "PENDENCIAS.md",
+    3
+   ],
+   [
     ".github/workflows/ci.yml",
+    3
+   ],
+   [
+    ".github/workflows/db-guard.yml",
     3
    ],
    [
@@ -381799,15 +381794,7 @@
     3
    ],
    [
-    "scripts/supabase_snapshot/snapshot.py",
-    3
-   ],
-   [
     "src/pages/Index.tsx",
-    2
-   ],
-   [
-    "docs/DB-INVENTORY.md",
     2
    ],
    [

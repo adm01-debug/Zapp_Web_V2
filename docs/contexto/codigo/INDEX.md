@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `03e9568c194342bfef82291b20e78c34bae3796d` (2026-11-05T01:04:39Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d985c7fc86562051c4725fbe07f8bcfe44bd66e4` (2026-11-05T12:52:44-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4180), SQL (1280), Markdown (1035), JSON (594), JavaScript (410), Shell (231), Python (119), YAML (28)
+- linguagens: TypeScript (4180), SQL (1280), Markdown (1037), JSON (594), JavaScript (410), Shell (231), Python (119), YAML (28)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8219 |
+| arquivos_total | 8221 |
 | arquivos_codigo | 4707 |
 | linhas_codigo | 866772 |
 | rotas | 18 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 2568 |
 | workflows | 20 |
 | scripts | 406 |
-| docs_md | 1035 |
+| docs_md | 1037 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -62,7 +62,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (285), scripts/ci (40), scripts/e2e-isolated (27)
-- docs: docs (31), (raiz) (10), .github (1)
+- docs: docs (31), (raiz) (12), .github (1)
 - nomenclatura: {"componentes":"PascalCase (90%)","hooks":"use + PascalCase","servicos":"camelCase (75%)","edge_functions":"kebab-case (95%)","tabelas":"snake_case (92%)"}
 - instruções para agentes no repo: AGENTS.md, CLAUDE.md
 
@@ -356,7 +356,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 
 ## Integrações externas
 - SDKs: ElevenLabs, Supabase, i18next, react-query, zod
-- hosts mais citados: stub.supabase.co, cdn.test, edge.invalid, proj.supabase.co, zapp-web-v2.vercel.app, edge.test, example.invalid, tnnnlkbymytvtqngbbqh.supabase.co, example.supabase.co, exemplo.test, projeto.supabase.co, api.elevenlabs.io, api.resend.com, exemplo.com, signed.test
+- hosts mais citados: stub.supabase.co, cdn.test, zapp-web-v2.vercel.app, edge.invalid, proj.supabase.co, edge.test, example.invalid, tnnnlkbymytvtqngbbqh.supabase.co, example.supabase.co, exemplo.test, projeto.supabase.co, api.elevenlabs.io, api.resend.com, exemplo.com, signed.test
 - webhooks recebidos: auth-login, batch-fetch-avatars, connection-health-check, crm-integration, csp-report, elevenlabs-webhook, evolution-webhook, gmail-cron-sync, gmail-webhook, public-api, searchbox-budget-alert, sync-call-records, talkx-link, whatsapp-webhook
 - env de integração (só nomes): ANTHROPIC_API_KEY, BITRIX_WEBHOOK_URL, CHATBOT_L1_WEBHOOK_SECRET, CRON_SECRET, ELEVENLABS_WEBHOOK_SECRET, EVOLUTION_API_FLAVOR, EVOLUTION_API_KEY, EVOLUTION_API_URL, EVOLUTION_INSTANCE_NAME, EVOLUTION_INSTANCE_TOKEN, EVOLUTION_VPS_SUPABASE_ANON_KEY, EVOLUTION_VPS_SUPABASE_URL, EVOLUTION_WEBHOOK_ENFORCE, EVOLUTION_WEBHOOK_SECRET, GMAIL_CAS_JWT, GMAIL_CAS_POSTGREST_URL, GMAIL_OIDC_AUDIENCE, GMAIL_OIDC_EMAIL, GMAIL_OIDC_JWKS_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GROQ_API_KEY, INTERNAL_ALERT_SECRET, MULTIPLIX_SCOPE_HMAC_SECRET, OPENAI_API_KEY, PREVIEW_EGRESS_SHARED_SECRET, RESEND_API_KEY, TALKX_CONVERT_SECRET, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, WEBHOOK_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 
@@ -384,27 +384,27 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55350 nós · 113390 arestas · 4092 comunidades · grafo do commit `03e9568c`
-- comunidades maiores: framer-motion (751), vitest (668), button.tsx (667), lucide-react (665), cn (570), TalkXSuppression.tsx (517), validation.ts (495), DashboardView.tsx (464), ref_node_fs (449), useMyWorkItems.ts (440), useAuth (420), getLogger (398)
+- 55377 nós · 113415 arestas · 4151 comunidades · grafo do commit `d985c7fc`
+- comunidades maiores: badge.tsx (725), client.ts (675), react (649), vitest (579), button.tsx (557), DashboardView.tsx (497), ref_node_fs (496), cn (427), catalogShared.tsx (422), validation.ts (386), evolution-webhook-messages.ts (381), @tanstack/react-query (323)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (23)
+- .github/workflows/ci.yml (22)
+- PENDENCIAS.md (17)
 - CLAUDE.md (15)
-- .github/workflows/db-guard.yml (14)
 - docs/ci/README.md (14)
+- .github/workflows/db-guard.yml (13)
 - .github/workflows/e2e-logado.yml (13)
 - scripts/ci/ci-docs-baseline.unit.mjs (13)
-- src/integrations/supabase/types.ts (13)
-- supabase/deployment-manifest.json (13)
 - ESTADO.md (12)
+- supabase/deployment-manifest.json (12)
 - .github/workflows/deploy-functions.yml (11)
 - docs/DB-INVENTORY.md (11)
+- src/integrations/supabase/types.ts (11)
+- RELATORIO_CI.md (10)
 - supabase/schema-manifest.json (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (8)
-- scripts/ci/workflow-contracts.unit.mjs (8)
-- .github/workflows/db-migrate.yml (7)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -460,7 +460,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (151 linhas)
 - `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (90 linhas)
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
+- `PENDENCIAS.md` — PENDÊNCIAS DE CI (77 linhas)
 - `README.md` — 🚀 ZAPP-WEB (Pronto Talk Suite) (369 linhas)
+- `RELATORIO_CI.md` — RELATÓRIO CI — fix-ci-workflows-hxupgs (194 linhas)
 - `SECURITY.md` — 🔒 Política de Segurança — ZAPP-WEB (95 linhas)
 - `TESTING_CONVENTION.md` — TESTING_CONVENTION.md — onde cada teste mora e como ele roda (104 linhas)
 - `docs/BACKUP-RECOVERY-STRATEGY.md` — 🔐 ZAPP-WEB — Estratégia de Backup e Recovery (336 linhas)
@@ -498,6 +500,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-05 `d985c7f` chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais
+- 2026-11-05 `72fd81d` chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated
+- 2026-11-05 `429bdb1` chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs
+- 2026-11-05 `341d3fd` chore: adiciona baseline local completo ao RELATORIO_CI (#2731)
+- 2026-11-05 `2f2cc18` chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)
+- 2026-11-05 `fa7d882` fix: verificar V2 por padrão no smoke de produção (#2729)
 - 2026-11-05 `03e9568` fix: não pular preview quando Git não consegue comparar commits (#2727)
 - 2026-11-05 `dabe5ac` fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)
 - 2026-11-05 `b149a80` fix: abrir boas-vindas sem efeito de estado no Index (#2725)
@@ -507,12 +515,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-04 `b298c33` test: alinhar auditoria E27 à migration arquivada (#2721)
 - 2026-11-04 `f00ed02` fix: preservar contraste das threads de Email durante entrada (#2720)
 - 2026-11-04 `5f3f7bd` fix: validar owners, áudio e coleta do E2E isolado (#2719)
-- 2026-11-04 `1681d0a` fix: restaurar foco da paleta com regressões de integração (#2718)
-- 2026-11-04 `afd8c7c` fix: validar a suíte logada em ambiente isolado (#2717)
-- 2026-11-04 `b88b4f1` ⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)
-- 2026-11-04 `f32223d` fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)
-- 2026-11-04 `6feabdf` chore: adicionar __pycache__/ ao .gitignore (#2703)
-- 2026-11-04 `46a0257` fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
