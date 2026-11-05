@@ -145,3 +145,22 @@ A prontidão de entrega precisa provar três fluxos completos: texto, imagem do 
 Os dois skips históricos de plataforma de `conversation.spec.ts` permanecem na categoria `known_runtime_skip`, vinculados a arquivo/blob/linha/título/projeto, motivo exato e inventário independente; o caso Chromium equivalente precisa ter passado. Eles não contam como `passed` e `allPassed` permanece falso. Outras ausências de fixture, Auth ou serviço, e os fixmes estáticos ainda existentes, não são reclassificadas para forçar verde. A lista nativa de testes e a decisão específica sobre essas pendências devem acompanhar o resultado da execução.
 
 Tarefas conserva os três cenários, suas asserções e a guarda R1 deslogada, com seleção explícita no projeto Chromium público e saída apenas do catch-all autenticado. Essa execução pertence ao CI público; não é contada duas vezes entre os 15 projetos acima. O arquivo de conversas permanece intacto para conservar o vínculo preciso da política de plataforma.
+
+
+## Prova manual de conectividade dos navegadores
+
+O dispatch de `.github/workflows/e2e-logado-isolado.yml` aceita também `scope=network-proof`. Esse diagnóstico não inicia aplicação, banco, seed, sessão de usuário ou provedor de mensagens. Usa a imagem Playwright fixada por digest, certificados sintéticos e um canário HTTP da própria execução. Não usa modelos de IA nem credenciais de aplicação; consome execução do Actions e armazenamento temporário.
+
+O baseline mede Node, Chromium, Firefox e WebKit em um namespace com loopback. Registra o valor nativo de `navigator.onLine` antes de qualquer emulação; online e offline são observações possíveis. A candidata exige prova passiva de que o módulo dummy já está carregado antes da criação de uma interface sem saída. Não carrega módulos nem aceita uma rota desconhecida para obter sucesso. O helper temporário recebe apenas NET_ADMIN; os navegadores não recebem essa capacidade nem socket Docker.
+
+A candidata verifica HTTPS válido, rejeição de certificados inválidos, emulação offline/online, down/up real do link e um contexto novo sem emulação. O canário tem controles positivos antes/depois das tentativas negativas, com contagem de conexões e requests; a orquestração Docker é assíncrona para manter o canário ativo. Containers são conferidos por identidade antes da remoção.
+
+O único artefato é `report.json`, com identidades e resultados fechados, publicado após limpeza válida. Ausência do módulo produz candidata `not_run` e falha, preservando as observações disponíveis do baseline. Falhas de protocolo, topologia, certificado, navegador ou limpeza também reprovam; o relatório não inclui URLs privadas, chaves ou logs livres.
+
+Mesmo um resultado aprovado deste diagnóstico conserva `plan_fully_validated=false`: transporte Bun/Edge e saída IPv6 externa continuam `not_run`. Ele não altera a admissão da aplicação, não substitui os guards atuais de loopback e não autoriza a reativação do workflow legado. Qualquer evolução desses guards depende da análise da evidência nativa.
+
+Os testes locais das políticas e do protocolo usam:
+
+    node --test scripts/ci/e2e-isolated-network-proof.unit.mjs
+
+Esses testes controlam Docker, navegador e transporte. Não devem ser apresentados como execução nativa dessas dependências.
