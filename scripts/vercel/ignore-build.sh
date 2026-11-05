@@ -24,7 +24,10 @@ fi
 
 # Verifica se algum arquivo de front foi alterado.
 # shellcheck disable=SC2086
-changed=$(git diff --name-only "$BASE" HEAD -- $FRONT_PATHS 2>/dev/null)
+if ! changed=$(git diff --name-only "$BASE" HEAD -- $FRONT_PATHS 2>/dev/null); then
+  echo "ignore-build: cannot compare commits — building."
+  exit 1
+fi
 
 if [ -n "$changed" ]; then
   echo "ignore-build: front files changed — building."
