@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // V162: Smoke de pós-deploy do Vercel para ZAPP Web V2.
-// Uso: node scripts/vercel/verify-production.mjs [--url=https://zappweb.app.br]
+// Uso: node scripts/vercel/verify-production.mjs [--url=https://zapp-web-v2.vercel.app]
 //      Retorna exit 0 se tudo OK, exit 1 em qualquer falha.
 //
 // O que verifica:
@@ -13,7 +13,7 @@
 
 import { fileURLToPath } from 'node:url';
 
-const DEFAULT_URL = 'https://zappweb.app.br';
+const DEFAULT_URL = 'https://zapp-web-v2.vercel.app';
 
 const args = Object.fromEntries(
   process.argv.slice(2)
