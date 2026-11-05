@@ -123,20 +123,20 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 
 ---
 
-## 3. Estado final (2026-11-05, commit `72fd81dc`)
+## 3. Estado final (2026-11-05, commit `d985c7fc`)
 
 | Workflow | Última run | Conclusão | Como resolveu |
 |---|---|---|---|
-| CI/CD Pipeline | [#42051421248](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42051421248) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731/#2732/#2734) |
+| CI/CD Pipeline | [#42059437948](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42059437948) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731/#2732/#2734/#2735) |
 | Auto Update PR Branches | [#42038873641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873641) | ✅ **success** | Sem mudança |
-| Contexto para agentes | [#41994814502](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41994814502) | ✅ **success** | Autorreparo (erro 500 transitório do GitHub) |
-| DB Guard | [#42036324088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324088) | ✅ **success** | Sem regressão |
-| E2E logado | [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) | ❌ **failure** | Workflow reativado; dispatch na `341d3fda`; deslogado-principal ✅ · deslogado-secundario ✅ · authenticated ❌ (`browser-suite-failed`) — ver `PENDENCIAS.md` §3 |
+| Contexto para agentes | [#42062290298](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062290298) | ✅ **success** | Dispatch na `d985c7fc` |
+| DB Guard | [#42059437953](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42059437953) | ✅ **success** | Sem regressão |
+| E2E logado | [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) | ⏳ **pending** | Workflow reativado; run criado por `workflow_run` do CI/CD Pipeline em `d985c7fc`; falha em `authenticated` esperada — ver `PENDENCIAS.md` §3 |
 | Notifica falha na main | [#42038873636](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873636) | ⏭️ **skipped** | Esperado (nenhuma falha na main) |
 | Talk X placar regen | [#42036324372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324372) | ✅ **success** | Sem mudança |
-| Settings Guard | [#41857084891](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41857084891) | ✅ **success** | Sem mudança |
+| Settings Guard | [#42062660126](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062660126) | ✅ **success** | Dispatch na `d985c7fc` |
 | CodeQL | [#41877066167](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41877066167) | ✅ **success** | Sem mudança |
-| Branch Hygiene Audit | [#41409678874](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41409678874) | ✅ **success** | Sem mudança |
+| **Branch Hygiene Audit** | [#42062235088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) | ❌ **failure** | **BLOQUEADO** — SLA de alertas de code scanning (step 6 W83), condição pré-existente não introduzida nesta sessão — ver `PENDENCIAS.md` §4 |
 | Inventário estado semanal | [#41471659293](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41471659293) | ✅ **success** | Sem mudança |
 | Vercel Env Cleanup | [#39296301620](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39296301620) | ✅ **success** | Última run na main: success |
 | Targeted Ledger Evidence | [#36041611976](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36041611976) | ✅ **success** | Dispatch-only |
@@ -165,12 +165,21 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 ### 4.3 E2E logado — job authenticated: browser-suite-failed
 
 - **Workflow:** `.github/workflows/e2e-logado.yml`
-- **Status:** `conclusion=failure` — run [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) em `341d3fda` (13:50:04Z–14:40:27Z)
+- **Falha documentada:** run [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) em `341d3fda` (13:50:04Z–14:40:27Z)
+- **Run em `d985c7fc`:** [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) — `pending` (criado por `workflow_run` do CI/CD Pipeline em `d985c7fc`; falha em `authenticated` esperada pelo mesmo padrão)
 - **Jobs confirmados:** deslogado-principal ✅ · deslogado-secundario ✅
-- **Job com falha:** `authenticated` — step 8 "Validar grupo e executar a suíte no backend descartável" falhou com `browser-suite-failed` após ~50 min (13:50:28Z–14:40:23Z); `real-browser-suite` executou ~45 min.
+- **Job com falha:** `authenticated` — step 8 "Validar grupo e executar a suíte no backend descartável" falhou com `browser-suite-failed` após ~50 min; `real-browser-suite` executou ~45 min.
 - **Issue aberta:** "[e2e-logado] Suíte logada quebrada na main" (0 casos identificados no resumo público).
 - **Artefato:** `playwright-report-logado-authenticated-42039283192-1` (195 KB, expira ~2026-11-08).
 - **Ação:** dono examinar o relatório Playwright para identificar os testes que falharam — ver `PENDENCIAS.md` §3.
+
+### 4.4 Branch Hygiene Audit — SLA de alertas de code scanning
+
+- **Workflow:** `.github/workflows/branch-hygiene-audit.yml`
+- **Run:** [#42062235088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) em `d985c7fc` (16:13:39Z–16:19:35Z)
+- **Passo que falha:** step 6 "SLA dos alertas de code scanning (W83)" — `conclusion=failure`
+- **Causa:** Alertas de code scanning (CodeQL) em aberto há mais tempo do que o limite de SLA configurado em W83. Condição temporal pré-existente, **não introduzida por esta sessão** — o workflow era ✅ no baseline (#41409678874) mas os alertas envelheceram.
+- **Ação:** dono revisar e fechar/corrigir os alertas de code scanning em aberto em https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning.
 
 ---
 
@@ -188,6 +197,6 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 | `npx vitest run --shard=3/3` | ✅ 619 arquivos, 5295 passed, exit 0 | ✅ sem regressão |
 | `check-claude-md-integrity` | ✅ exit 0 | ✅ sem regressão |
 | `supabase-usage-guard` | ✅ 0 violações | ✅ sem regressão |
-| Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 3 bloqueados (documentados em PENDENCIAS.md §1 §2 §3) |
+| Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 4 bloqueados (documentados em PENDENCIAS.md §1 §2 §3 §4) — §4 (branch-hygiene) é condição temporal pré-existente, não introduzida nesta sessão |
 
-**Nenhuma regressão introduzida nesta sessão.**
+**Nenhuma regressão de código introduzida nesta sessão.**
