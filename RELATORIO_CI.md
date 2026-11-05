@@ -76,26 +76,38 @@ node --test scripts/ci/*.unit.mjs 2>&1 | tail -10
 # exit 0
 ```
 
-### 1.8 Vitest (suíte unitária)
+### 1.8 Vitest (suíte unitária — 3 shards rodados localmente)
 
-Shard 1/3 rodado localmente (`npx vitest run --reporter=dot --shard=1/3`) em 2026-11-05 15:08 UTC:
+Os 3 shards foram rodados localmente em 2026-11-05. Todos com exit 0.
+
+**Shard 1/3** (`npx vitest run --reporter=dot --shard=1/3`) — 2026-11-05 11:49 UTC:
 
 ```
-npx vitest run --reporter=dot --shard=1/3
-# Test Files  620 passed (620)
-#      Tests  5136 passed | 6 expected fail | 5 todo (5147)
-#   Start at  11:49:03
-#   Duration  628.13s (transform 37.79s, setup 175.49s, import 297.57s, tests 523.00s, environment 732.38s)
-# exit 0
+Test Files  620 passed (620)
+     Tests  5136 passed | 6 expected fail | 5 todo (5147)
+  Duration  628.13s (transform 37.79s, setup 175.49s, import 297.57s, tests 523.00s, environment 732.38s)
+SHARD1_EXIT:0
 ```
 
-Shards 2/3 e 3/3 rodados em paralelo pela CI — todos ✅ no run [#42042318526](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42042318526) (`f9c495d`, 2026-11-05):
+**Shard 2/3** (`npx vitest run --reporter=dot --shard=2/3`) — 2026-11-05 12:21 UTC:
 
-| Shard | Início (UTC) | Fim (UTC) | Status |
-|---|---|---|---|
-| 1/3 (local) | 2026-11-05 15:08Z | 2026-11-05 15:18Z | ✅ exit 0 |
-| 2/3 (CI) | 14:10:03Z | 14:16:01Z | ✅ success |
-| 3/3 (CI) | 14:10:03Z | 14:15:40Z | ✅ success |
+```
+Test Files  617 passed | 2 skipped (619)
+     Tests  5298 passed | 6 expected fail | 9 todo (5313)
+  Duration  1103.92s (transform 54.68s, setup 302.03s, import 549.05s, tests 986.32s, environment 1169.68s)
+SHARD2_EXIT:0
+```
+
+**Shard 3/3** (`npx vitest run --reporter=dot --shard=3/3`) — 2026-11-05 12:21 UTC:
+
+```
+Test Files  616 passed | 3 skipped (619)
+     Tests  5295 passed | 7 expected fail | 27 todo (5329)
+  Duration  1094.33s (transform 54.99s, setup 312.95s, import 538.35s, tests 912.85s, environment 1207.17s)
+SHARD3_EXIT:0
+```
+
+**Total (3 shards):** 1858 arquivos, **15729 testes passed**, 19 expected fail, 41 todo — exit 0 nos 3 shards.
 
 ---
 
@@ -111,11 +123,11 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 
 ---
 
-## 3. Estado final (2026-11-05, commit `429bdb1a`)
+## 3. Estado final (2026-11-05, commit `72fd81dc`)
 
 | Workflow | Última run | Conclusão | Como resolveu |
 |---|---|---|---|
-| CI/CD Pipeline | [#42043927728](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42043927728) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731/#2732) |
+| CI/CD Pipeline | [#42051421248](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42051421248) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731/#2732/#2734) |
 | Auto Update PR Branches | [#42038873641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873641) | ✅ **success** | Sem mudança |
 | Contexto para agentes | [#41994814502](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41994814502) | ✅ **success** | Autorreparo (erro 500 transitório do GitHub) |
 | DB Guard | [#42036324088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324088) | ✅ **success** | Sem regressão |
@@ -172,6 +184,8 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 | `npx eslint` | ✅ exit 0 | ✅ sem regressão |
 | `node --test scripts/ci/*.unit.mjs` | ✅ 4273/4275 pass, exit 0 | ✅ sem regressão |
 | `npx vitest run --shard=1/3` | ✅ 620 arquivos, 5136 passed, exit 0 | ✅ sem regressão |
+| `npx vitest run --shard=2/3` | ✅ 619 arquivos, 5298 passed, exit 0 | ✅ sem regressão |
+| `npx vitest run --shard=3/3` | ✅ 619 arquivos, 5295 passed, exit 0 | ✅ sem regressão |
 | `check-claude-md-integrity` | ✅ exit 0 | ✅ sem regressão |
 | `supabase-usage-guard` | ✅ 0 violações | ✅ sem regressão |
 | Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 3 bloqueados (documentados em PENDENCIAS.md §1 §2 §3) |
