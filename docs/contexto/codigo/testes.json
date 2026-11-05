@@ -19879,12 +19879,12 @@
   {
    "arquivo": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
    "tipo": "unit",
-   "linhas": 244,
+   "linhas": 278,
    "testa": [
     "src/components/keyboard/GlobalKeyboardProvider.tsx",
     "src/pages/Index.tsx"
    ],
-   "casos": 4
+   "casos": 5
   },
   {
    "arquivo": "src/pages/__tests__/Install.limpeza-listeners.test.tsx",

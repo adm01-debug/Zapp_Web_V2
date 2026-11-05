@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "c0d715f5a63a29634b98f1d34f076943b46392cc",
+  "sha": "b149a801d0cc62acbd34cb9c419f5183d05ebb9b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 23:57 UTC",
+  "generated_at": "2026-11-05 00:18 UTC",
   "files_total": 8060,
   "code_files": 5963,
-  "code_lines": 1032182
+  "code_lines": 1032212
  },
  "version": "1.3.2",
- "facts_hash": "eb47c25187dbfd37",
+ "facts_hash": "9d242ae7eac6880e",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68891,7 +68891,7 @@
   {
    "module": "src/pages",
    "files": 70,
-   "lines": 10672,
+   "lines": 10702,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -195429,6 +195429,14 @@
    {
     "file": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
     "name": "Ctrl+2 já em ?view=dashboard mantém o shell em dashboard"
+   },
+   {
+    "file": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
+    "name": "boas-vindas do onboarding"
+   },
+   {
+    "file": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
+    "name": "abre para usuário pendente e permanece fechada após dispensar"
    },
    {
     "file": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
@@ -348529,7 +348537,7 @@
   },
   "src/pages/Index.tsx": {
    "path": "src/pages/Index.tsx",
-   "lines": 203,
+   "lines": 199,
    "exports": [
     "default Index"
    ],
@@ -349136,7 +349144,7 @@
   },
   "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx": {
    "path": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
-   "lines": 244,
+   "lines": 278,
    "is_test": true,
    "navigates": [
     "/"
@@ -349148,6 +349156,8 @@
     "#447 — Ctrl+2 troca a view do shell para dashboard",
     "Ctrl+2 partindo de ?view=inbox faz o shell receber dashboard",
     "Ctrl+2 já em ?view=dashboard mantém o shell em dashboard",
+    "boas-vindas do onboarding",
+    "abre para usuário pendente e permanece fechada após dispensar",
     "PE-31 — a página repassa o total real de não lidas ao shell",
     "entrega o contador do Chat e o do Teams do hook, não um 0 cravado"
    ]
@@ -381260,10 +381270,20 @@
   }
  },
  "git": {
-  "sha": "c0d715f5a63a29634b98f1d34f076943b46392cc",
+  "sha": "b149a801d0cc62acbd34cb9c419f5183d05ebb9b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b149a80",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: abrir boas-vindas sem efeito de estado no Index (#2725)",
+    "files": [
+     "src/pages/Index.tsx",
+     "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx"
+    ]
+   },
    {
     "sha": "c0d715f",
     "date": "2026-11-04",
@@ -381789,15 +381809,6 @@
      "src/hooks/crm/useContactPurchases.ts",
      "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts"
     ]
-   },
-   {
-    "sha": "7a2e35e",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes (#2687)",
-    "files": [
-     "docs/contexto/regras/manual/regras.md"
-    ]
    }
   ],
   "hot_files": [
@@ -381850,6 +381861,10 @@
     3
    ],
    [
+    "src/pages/Index.tsx",
+    2
+   ],
+   [
     "scripts/ci/check-test-inventory.mjs",
     2
    ],
@@ -381875,10 +381890,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-gateway.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-results.unit.mjs",
     2
    ]
   ]

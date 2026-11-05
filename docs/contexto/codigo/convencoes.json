@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: abrir boas-vindas sem efeito de estado no Index (#2725)",
    "infra: executar os 33 testes shell ausentes no DB Guard (#2724)",
    "fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)",
    "test: alinhar IA-131 OpenRouter à cadeia real de migrations (#2722)",
-   "test: alinhar auditoria E27 à migration arquivada (#2721)",
-   "fix: preservar contraste das threads de Email durante entrada (#2720)"
+   "test: alinhar auditoria E27 à migration arquivada (#2721)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -9900,7 +9900,6 @@
    "src/hooks/ui/useKeyboardNavigation.ts",
    "src/hooks/ui/useOnboarding.ts",
    "src/hooks/ui/useOnboardingChecklist.ts",
-   "src/integrations/supabase/client.ts",
    "src/lib/audit.ts"
   ],
   "src/pages/Install.tsx": [

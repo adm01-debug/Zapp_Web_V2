@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c0d715f5a63a29634b98f1d34f076943b46392cc",
+  "commit": "b149a801d0cc62acbd34cb9c419f5183d05ebb9b",
   "branch": "main",
-  "data_commit": "2026-11-04T23:56:11Z",
+  "data_commit": "2026-11-05T00:17:48Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b149a80",
+    "data": "2026-11-05",
+    "assunto": "fix: abrir boas-vindas sem efeito de estado no Index (#2725)"
+   },
    {
     "sha": "c0d715f",
     "data": "2026-11-04",
@@ -126,14 +131,9 @@
     "sha": "bd25801",
     "data": "2026-11-03",
     "assunto": "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)"
-   },
-   {
-    "sha": "535074c",
-    "data": "2026-11-03",
-    "assunto": "fix(ai-context): rodapé do INDEX.md configurável por repo + README da automação (#2696)"
    }
   ],
-  "arquivos_mudados_7d": 1245,
+  "arquivos_mudados_7d": 1246,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8219,
   "arquivos_codigo": 4707,
-  "linhas_codigo": 866735,
+  "linhas_codigo": 866765,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -740,7 +740,7 @@
   },
   "src/pages": {
    "arquivos": 70,
-   "linhas": 10672
+   "linhas": 10702
   },
   "src/providers": {
    "arquivos": 10,
