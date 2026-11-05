@@ -78,46 +78,68 @@ node --test scripts/ci/*.unit.mjs 2>&1 | tail -10
 
 ### 1.8 Vitest (suíte unitária)
 
-Vitest foi iniciado em background (`npx vitest run --reporter=verbose`). O processo foi encerrado pelo timeout da sessão antes de concluir (a suíte completa leva ~90s). O CI remoto rodou `🧪 Unit Tests` com sucesso no run #11129 (`fa7d882`) — evidência de que a suíte passa na main.
+Vitest foi iniciado em background (`npx vitest run --reporter=verbose`). O processo foi encerrado pelo timeout da sessão antes de concluir (a suíte completa leva ~90s). O CI remoto rodou `🧪 Unit Tests` com sucesso no run [#42036324045](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324045) (`341d3fda`) — evidência de que a suíte passa na main.
 
 ---
 
 ## 2. Inventário de workflows com falha no baseline
 
-Consulta: últimas 50 runs com `conclusion=failure` na `main`.
-Workflows únicos com falha encontrados: **5**
+Consulta: última run de cada workflow na `main` em 2026-11-05.
 
 | Workflow | Última run com falha | SHA | Motivo |
 |---|---|---|---|
-| CI/CD Pipeline (`ci.yml`) | #11112 | `451373f5` | Flaky webkit: timeout no teste `e2e/email-navy-visual.spec.ts` |
-| Contexto (`contexto.yml`) | #42 | `03e9568` | Erro 500 transitório do GitHub Push API |
-| DB Guard (`db-guard.yml`) | #10654 | `fa7d882` | Permissão multiplix |
-| Deploy Edge Functions (`deploy-functions.yml`) | #956 | `afd8c7ca` | Manifesto desatualizado (edge `ai-usage-outbox-drain` ausente) |
-| E2E Logado (`e2e-logado.yml`) | #1489 | `451373f5` | Timeout de auth setup (`AUTH_LOGIN_TIMEOUT_MS`) — transitório |
+| Deploy Edge Functions (`deploy-functions.yml`) | [#41883030015](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) | `afd8c7ca` | Manifesto desatualizado (`ai-usage-outbox-drain` ausente) |
+| E2E Logado (`e2e-logado.yml`) | [#41755669133](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41755669133) | `451373f5` | Workflow desativado manualmente; última execução: timeout de auth setup (versão antiga, infraestrutura) |
+| DB Live Guard (`db-live-guard.yml`) | [#41425677046](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41425677046) | `7c42b7ce` | Drift de migrations: 3 sem ledger + 2 conteúdo divergente + manifest/types desatualizados |
 
 ---
 
-## 3. Estado final (2026-11-05)
+## 3. Estado final (2026-11-05, commit `341d3fda`)
 
-| Workflow | Estado | Como resolveu |
-|---|---|---|
-| CI/CD Pipeline | ✅ **VERDE** (run #11129, `fa7d882`) | Autorreparo: commits posteriores corrigiram a flakiness |
-| Contexto | ✅ **VERDE** (run #43, `03e9568`) | Autorreparo: erro 500 do GitHub era transitório |
-| DB Guard | ✅ **VERDE** (run #10655, `fa7d882`) | Autorreparo: permissão multiplix resolvida |
-| E2E Logado | ✅ **VERDE** (runs #6778/#6779, `fa7d882`) | Autorreparo: timeout de auth era transitório |
-| Deploy Edge Functions | ❌ **BLOQUEADO** | Aguarda merge do PR #2707 (ver `PENDENCIAS.md`) |
+| Workflow | Última run | Conclusão | Como resolveu |
+|---|---|---|---|
+| CI/CD Pipeline | [#42036324045](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324045) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731) |
+| Auto Update PR Branches | [#42038873641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873641) | ✅ **success** | Sem mudança |
+| Contexto para agentes | [#41994814502](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41994814502) | ✅ **success** | Autorreparo (erro 500 transitório do GitHub) |
+| DB Guard | [#42036324088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324088) | ✅ **success** | Sem regressão |
+| E2E logado | [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) | ⏳ **in_progress** | Workflow reativado; dispatch na `341d3fda`; deslogado-principal ✅ · deslogado-secundario ✅ · authenticated ⏳ (ver `PENDENCIAS.md` §3) |
+| Notifica falha na main | [#42038873636](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873636) | ⏭️ **skipped** | Esperado (nenhuma falha na main) |
+| Talk X placar regen | [#42036324372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324372) | ✅ **success** | Sem mudança |
+| Settings Guard | [#41857084891](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41857084891) | ✅ **success** | Sem mudança |
+| CodeQL | [#41877066167](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41877066167) | ✅ **success** | Sem mudança |
+| Branch Hygiene Audit | [#41409678874](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41409678874) | ✅ **success** | Sem mudança |
+| Inventário estado semanal | [#41471659293](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41471659293) | ✅ **success** | Sem mudança |
+| Vercel Env Cleanup | [#39296301620](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39296301620) | ✅ **success** | Última run na main: success |
+| Targeted Ledger Evidence | [#36041611976](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36041611976) | ✅ **success** | Dispatch-only |
+| CRM Sync Worker | [#35717413825](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35717413825) | ⏭️ **skipped** | Schedule comentado (deliberado — `vars.CRM_SYNC_WORKER_ENABLED`) |
+| **Deploy Edge Functions** | [#41883030015](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) | ❌ **failure** | **BLOQUEADO** — ver `PENDENCIAS.md` §1 |
+| **DB Live Guard** | [#42039646275](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039646275) | ❌ **failure** | **BLOQUEADO** — drift de migrations em produção (DDL) — ver `PENDENCIAS.md` §2 |
 
 ---
 
-## 4. Deploy Edge Functions — detalhe do bloqueio
+## 4. Bloqueios documentados
+
+### 4.1 Deploy Edge Functions
 
 - **Workflow:** `.github/workflows/deploy-functions.yml`
-- **Última run:** #956, commit `afd8c7ca`, `conclusion=failure`
-- **Erro exato:** `Deployment manifest is stale: supabase/deployment-manifest.json`
-- **Causa:** PR #2707 adicionou a edge `ai-usage-outbox-drain` mas não foi mergeada; o manifesto ficou desatualizado.
-- **Por que a run #956 é o estado atual:** os commits entre `afd8c7ca` e `fa7d882` (HEAD da main) não alteraram `supabase/functions/` nem `supabase/config.toml`, portanto o workflow não foi disparado novamente.
-- **Por que não corrijo:** PR #2707 toca `supabase/deployment-manifest.json` (AGENTS.md regra 3) **e** contém migration DDL (AGENTS.md regra 8). Não é possível corrigir sem aprovação do dono.
-- **Ação necessária:** dono mergeiar PR #2707; deploy normalizará automaticamente.
+- **Erro:** `Deployment manifest is stale: supabase/deployment-manifest.json`
+- **Causa:** PR #2707 não mergeada (DDL + conflito de arquivo — AGENTS.md regras 3 e 8).
+- **Ação:** dono mergeiar PR #2707.
+
+### 4.2 DB Live Guard
+
+- **Workflow:** `.github/workflows/db-live-guard.yml`
+- **Erro:** Drift de migrations — 3 arquivos sem ledger + 2 com conteúdo divergente.
+- **Causa:** Migrations aplicadas em produção com texto diferente do arquivo, ou migrations ainda não aplicadas (DDL — AGENTS.md regra 8).
+- **Ação:** dono aplicar/reconciliar as 5 migrations listadas em `PENDENCIAS.md` §2.
+
+### 4.3 E2E logado — job authenticated
+
+- **Workflow:** `.github/workflows/e2e-logado.yml`
+- **Status:** `in_progress` no momento deste commit (run [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) em `341d3fda`)
+- **Jobs confirmados:** deslogado-principal ✅ · deslogado-secundario ✅
+- **Job pendente:** authenticated (step 8 desde 13:50:28Z UTC, timeout 75 min)
+- **Ação:** aguardar conclusão; se failure, diagnosticar e corrigir.
 
 ---
 
@@ -132,6 +154,6 @@ Workflows únicos com falha encontrados: **5**
 | `node --test scripts/ci/*.unit.mjs` | ✅ 4273/4275 pass, exit 0 | ✅ sem regressão |
 | `check-claude-md-integrity` | ✅ exit 0 | ✅ sem regressão |
 | `supabase-usage-guard` | ✅ 0 violações | ✅ sem regressão |
-| Workflows com falha na main | 5 | 1 (bloqueado por PR externa) |
+| Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 2 bloqueados (DDL em produção, requerem dono) + 1 e2e in_progress |
 
 **Nenhuma regressão introduzida nesta sessão.**
