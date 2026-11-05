@@ -85,7 +85,7 @@ test.describe('DialogContent — rodapé alcançável em 1280x720', () => {
       await expect(addDialog).toBeHidden({ timeout: 15_000 });
       await page.keyboard.press('Escape');
 
-      const search = page.getByPlaceholder(/Buscar por nome, telefone/);
+      const search = page.getByPlaceholder(/^Buscar por nome, (?:telefone, email|apelido) ou empresa…$/);
       await search.fill(phone.slice(-9));
       const row = page.getByTestId('contact-card').filter({ hasText: name });
       await expect(row).toBeVisible({ timeout: 15_000 });

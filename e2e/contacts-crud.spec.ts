@@ -17,7 +17,7 @@ test.describe('Contatos — criar, editar e excluir', () => {
 
   test('ciclo completo some da lista e do banco', async ({ page }) => {
     await gotoContacts(page);
-    const search = page.getByPlaceholder(/Buscar por nome, telefone/);
+    const search = page.getByPlaceholder(/^Buscar por nome, (?:telefone, email|apelido) ou empresa…$/);
 
     await page.getByTestId('contact-create-fab').click();
     const addDialog = page.getByRole('dialog', { name: 'Adicionar Contato' });
