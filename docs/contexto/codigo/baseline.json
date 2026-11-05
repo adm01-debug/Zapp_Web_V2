@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d985c7fc86562051c4725fbe07f8bcfe44bd66e4",
+  "commit": "f03e6f6a2d1c81e1504d5757eb364e3ee6b7bfe6",
   "branch": "main",
-  "data_commit": "2026-11-05T12:52:44-03:00",
+  "data_commit": "2026-11-05T13:37:22-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f03e6f6",
+    "data": "2026-11-05",
+    "assunto": "chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc"
+   },
    {
     "sha": "d985c7f",
     "data": "2026-11-05",
@@ -126,11 +131,6 @@
     "sha": "5431b96",
     "data": "2026-11-04",
     "assunto": "fix: executa paridade Talk X com Deno 2.9.5 (#2714)"
-   },
-   {
-    "sha": "f4e5a10",
-    "data": "2026-11-04",
-    "assunto": "fix: evita padding duplicado nos carregamentos do Talk X (#2712)"
    }
   ],
   "arquivos_mudados_7d": 1244,
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 141
+    "mudancas": 140
    },
    {
     "pasta": "src/hooks/integrations",
@@ -189,7 +189,7 @@
    },
    {
     "pasta": "src/components/settings",
-    "mudancas": 112
+    "mudancas": 111
    },
    {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 17
+    "mudancas": 18
    },
    {
     "arquivo": "CLAUDE.md",
@@ -238,16 +238,16 @@
     "mudancas": 11
    },
    {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 11
+   },
+   {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 11
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 11
-   },
-   {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 10
    },
    {
     "arquivo": "supabase/schema-manifest.json",

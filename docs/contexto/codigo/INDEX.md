@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d985c7fc86562051c4725fbe07f8bcfe44bd66e4` (2026-11-05T12:52:44-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f03e6f6a2d1c81e1504d5757eb364e3ee6b7bfe6` (2026-11-05T13:37:22-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,14 +384,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55377 nós · 113415 arestas · 4151 comunidades · grafo do commit `d985c7fc`
-- comunidades maiores: badge.tsx (725), client.ts (675), react (649), vitest (579), button.tsx (557), DashboardView.tsx (497), ref_node_fs (496), cn (427), catalogShared.tsx (422), validation.ts (386), evolution-webhook-messages.ts (381), @tanstack/react-query (323)
+- 55380 nós · 113418 arestas · 4097 comunidades · grafo do commit `f03e6f6a`
+- comunidades maiores: lucide-react (973), vitest (870), TalkXSuppression.tsx (821), react (744), client.ts (613), DashboardView.tsx (457), @tanstack/react-query (453), useMyWorkItems.ts (431), cn (430), ref_node_fs (396), ref_node_assert (391), ExternalProductManagement.tsx (371)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (22)
-- PENDENCIAS.md (17)
+- PENDENCIAS.md (18)
 - CLAUDE.md (15)
 - docs/ci/README.md (14)
 - .github/workflows/db-guard.yml (13)
@@ -400,9 +400,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - ESTADO.md (12)
 - supabase/deployment-manifest.json (12)
 - .github/workflows/deploy-functions.yml (11)
+- RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
 - src/integrations/supabase/types.ts (11)
-- RELATORIO_CI.md (10)
 - supabase/schema-manifest.json (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (8)
 
@@ -460,9 +460,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (151 linhas)
 - `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (90 linhas)
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
-- `PENDENCIAS.md` — PENDÊNCIAS DE CI (77 linhas)
+- `PENDENCIAS.md` — PENDÊNCIAS DE CI (96 linhas)
 - `README.md` — 🚀 ZAPP-WEB (Pronto Talk Suite) (369 linhas)
-- `RELATORIO_CI.md` — RELATÓRIO CI — fix-ci-workflows-hxupgs (194 linhas)
+- `RELATORIO_CI.md` — RELATÓRIO CI — fix-ci-workflows-hxupgs (203 linhas)
 - `SECURITY.md` — 🔒 Política de Segurança — ZAPP-WEB (95 linhas)
 - `TESTING_CONVENTION.md` — TESTING_CONVENTION.md — onde cada teste mora e como ele roda (104 linhas)
 - `docs/BACKUP-RECOVERY-STRATEGY.md` — 🔐 ZAPP-WEB — Estratégia de Backup e Recovery (336 linhas)
@@ -500,6 +500,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-05 `f03e6f6` chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc
 - 2026-11-05 `d985c7f` chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais
 - 2026-11-05 `72fd81d` chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated
 - 2026-11-05 `429bdb1` chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs
@@ -514,7 +515,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-04 `53036dd` test: alinhar IA-131 OpenRouter à cadeia real de migrations (#2722)
 - 2026-11-04 `b298c33` test: alinhar auditoria E27 à migration arquivada (#2721)
 - 2026-11-04 `f00ed02` fix: preservar contraste das threads de Email durante entrada (#2720)
-- 2026-11-04 `5f3f7bd` fix: validar owners, áudio e coleta do E2E isolado (#2719)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
