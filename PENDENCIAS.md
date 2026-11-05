@@ -55,19 +55,22 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 
 ---
 
-## 3. E2E logado — job authenticated aguardando conclusão
+## 3. E2E logado — job authenticated: browser-suite-failed
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
-| Run em andamento | [#42039283192 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
-| Status no momento deste commit | `in_progress` — job `authenticated` rodando step 8 desde 13:50:28Z (timeout: 75 min) |
-| Jobs concluídos com sucesso | `deslogado-principal` ✅ (13:50:08Z–13:55:59Z) · `deslogado-secundario` ✅ (13:50:08Z–13:56:04Z) |
-| Job pendente | `authenticated` ⏳ — step "Validar grupo e executar a suíte no backend descartável" in_progress |
-| Contexto | Workflow estava `disabled_manually`; reativado nesta sessão e dispatchado manualmente na `main` `341d3fda`. |
+| Run com falha | [#42039283192 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
+| Job | `authenticated` ([127285511593](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192/job/127285511593)) |
+| Passo que falha | `Validar grupo e executar a suíte no backend descartável` (step 8, 13:50:28Z–14:40:23Z, ~50 min) |
+| Código de falha | `browser-suite-failed` — `real-browser-suite` executou ~45 min; 0 casos identificados no resumo público |
+| Issue aberta | "[e2e-logado] Suíte logada quebrada na main" (criada em 14:40:25Z, 0 test cases no resumo público) |
+| Jobs que passaram | `deslogado-principal` ✅ (13:50:08Z–13:55:59Z) · `deslogado-secundario` ✅ (13:50:08Z–13:56:04Z) |
+| Artefato diagnóstico | `playwright-report-logado-authenticated-42039283192-1` (195 KB, 44 arquivos; expira ~2026-11-08) |
 
-### Ação necessária
+### O que o dono precisa fazer
 
-Nenhuma ação manual do dono. Quando o job `authenticated` concluir:
-- Se `success`: workflow confirmado verde — atualizar RELATORIO_CI.md com `conclusion=success`.
-- Se `failure`: diagnosticar a falha e abrir PR de correção ou registrar aqui o motivo.
+1. Baixar o artefato [playwright-report-logado-authenticated-42039283192-1](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192/artifacts/13425621512) para identificar qual(is) teste(s) falhou/falharam e o motivo exato.
+2. Se for regressão de código: abrir PR de fix.
+3. Se for infra/flakiness: re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` atual para confirmar verde.
+4. Depois de verificar verde: atualizar este arquivo removendo este bloqueio e atualizar RELATORIO_CI.md §3/§4.3.
