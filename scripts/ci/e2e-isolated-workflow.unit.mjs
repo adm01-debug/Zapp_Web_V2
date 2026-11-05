@@ -18,6 +18,7 @@ const yaml = readFileSync(new URL('.github/workflows/e2e-logado-isolado.yml', ro
 const metadata = jobOf(yaml, 'image-metadata');
 const login = jobOf(yaml, 'bootstrap-login');
 const suite = jobOf(yaml, 'full-suite');
+const network = jobOf(yaml, 'network-proof');
 const request = onlyStep(stepsOf(metadata), step => valueOf(step, 'id') === 'request', 'admissão');
 const runSuite = onlyStep(stepsOf(suite), step => valueOf(step, 'id') === 'suite', 'controller da suíte');
 const temp = mkdtempSync(join(tmpdir(), 'e2e-isolated-workflow-'));
@@ -45,10 +46,10 @@ function assertRequest(env, expected) {
   assert.deepEqual(values, expected ?? {});
 }
 
-for (const scope of ['', 'login', 'full-suite', 'LOGIN', 'suite', 'authenticated', ' full-suite', 'full-suite ', 'login\n', '$(id)', '../suite']) {
+for (const scope of ['', 'login', 'full-suite', 'network-proof', 'NETWORK-PROOF', ' network-proof', 'network-proof ', 'network-proof\n', 'LOGIN', 'suite', 'authenticated', ' full-suite', 'full-suite ', 'login\n', '$(id)', '../suite']) {
   for (const event of ['pull_request', 'workflow_dispatch']) {
     test(`admissão real: ${event}, scope ${JSON.stringify(scope)}`, () => {
-      const accepted = event === 'pull_request' || ['', 'login', 'full-suite'].includes(scope);
+      const accepted = event === 'pull_request' || ['', 'login', 'full-suite', 'network-proof'].includes(scope);
       assertRequest({ EVENT_NAME: event, REQUEST_SCOPE: scope, CHECKOUT_SHA: sha }, accepted ? {
         scope: event === 'pull_request' ? 'login' : scope || 'login', sha,
       } : undefined);
@@ -100,7 +101,7 @@ for (const [group, projects] of [
 }
 
 for (const event of ['pull_request', 'workflow_dispatch', 'push']) {
-  for (const scope of ['login', 'full-suite', 'unexpected']) {
+  for (const scope of ['login', 'full-suite', 'network-proof', 'unexpected']) {
     for (const status of ['success', 'failure', 'cancelled', 'skipped']) {
       test(`grafo de jobs: ${event}/${scope}/${status}`, () => {
         const context = {
@@ -110,9 +111,11 @@ for (const event of ['pull_request', 'workflow_dispatch', 'push']) {
         const eligible = conditionAllows(conditionOf(metadata, 4), context);
         const loginAllowed = eligible && conditionAllows(conditionOf(login, 4), context);
         const suiteAllowed = eligible && conditionAllows(conditionOf(suite, 4), context);
+        const networkAllowed = eligible && conditionAllows(conditionOf(network, 4), context);
         assert.equal(loginAllowed, ['pull_request', 'workflow_dispatch'].includes(event) && status === 'success' && scope === 'login');
         assert.equal(suiteAllowed, event === 'workflow_dispatch' && status === 'success' && scope === 'full-suite');
-        assert.equal(loginAllowed && suiteAllowed, false);
+        assert.equal(networkAllowed, event === 'workflow_dispatch' && status === 'success' && scope === 'network-proof');
+        assert.ok([loginAllowed, suiteAllowed, networkAllowed].filter(Boolean).length <= 1);
       });
     }
   }
@@ -126,7 +129,7 @@ test('entrada restrita, permissões de leitura e SHA único para todos os checko
   const scope = valueOf(inputs, 'scope', 0);
   assert.equal(valueOf(scope, 'type', 0), 'choice');
   assert.equal(valueOf(scope, 'default', 0), 'login');
-  assert.deepEqual(valueOf(scope, 'options', 0).split('\n'), ['- login', '- full-suite']);
+  assert.deepEqual(valueOf(scope, 'options', 0).split('\n'), ['- login', '- full-suite', '- network-proof']);
   assert.deepEqual([...events.matchAll(/^([\w-]+):/gm)].map(match => match[1]).sort(), ['pull_request', 'workflow_dispatch']);
   assert.equal(permission(yaml, 'contents', 0), 'read');
   assert.doesNotMatch(yaml, /secrets\s*\.|issues:\s*write|contents:\s*write|pull_request_target|e2e-teardown|catalog_send_events/);
@@ -171,7 +174,7 @@ test('matriz fixa preserva os 15 projetos e orçamentos para bootstrap, browser 
   assert.doesNotMatch(invocation, /--workers|--no-deps|--project=|eval\b/);
 });
 
-for (const [id, job, controllerId] of [['bootstrap-login', login, 'bootstrap'], ['full-suite', suite, 'suite']]) {
+for (const [id, job, controllerId] of [['bootstrap-login', login, 'bootstrap'], ['full-suite', suite, 'suite'], ['network-proof', network, 'network']]) {
   test(`${id}: dependências e ferramentas TLS vêm antes do controller; sem browsers no host`, () => {
     const steps = stepsOf(job);
     const controller = onlyStep(steps, step => valueOf(step, 'id') === controllerId, 'controller');
@@ -183,6 +186,8 @@ for (const [id, job, controllerId] of [['bootstrap-login', login, 'bootstrap'], 
     assert.equal(nestedValue(cache, 'with', 'path'), '~/.bun/install/cache');
     assert.match(runOf(install), /bun install --frozen-lockfile --ignore-scripts/);
     assert.match(runOf(tls), /sudo apt-get update\n.*sudo apt-get install --no-install-recommends -y openssl libnss3-tools/);
+    assert.ok(steps.indexOf(setup) < steps.indexOf(cache));
+    assert.ok(steps.indexOf(cache) < steps.indexOf(install));
     assert.ok(steps.indexOf(install) < steps.indexOf(controller));
     assert.ok(steps.indexOf(tls) < steps.indexOf(controller));
     assert.doesNotMatch(steps.map(runOf).join('\n'), /playwright.*install|update-ca-certificates|NODE_TLS_REJECT_UNAUTHORIZED|ignoreHTTPSErrors|curl .*--insecure/);
@@ -193,6 +198,7 @@ for (const [job, stepId, expectedPath] of [
   [metadata, 'resolve', '${{ runner.temp }}/e2e-isolated-images/report.json'],
   [login, 'bootstrap', '${{ runner.temp }}/e2e-isolated-login/public'],
   [suite, 'suite', '${{ runner.temp }}/e2e-isolated-suite-${{ matrix.name }}/public'],
+  [network, 'network', '${{ runner.temp }}/e2e-network-proof/report.json'],
 ]) {
   const artifact = onlyStep(stepsOf(job), step => /actions\/upload-artifact@/.test(valueOf(step, 'uses') ?? ''), 'artifact público');
   test(`artifact ${stepId}: só saída pública, retenção curta e caminho obrigatório`, () => {
