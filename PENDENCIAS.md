@@ -10,10 +10,11 @@
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/deploy-functions.yml` |
-| Última run com falha | [#956 (run `afd8c7ca`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41541397024) |
+| Última run com falha | [#956 (SHA `afd8c7ca`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) |
+| Última run na main | #956 em `afd8c7ca` (o commit `fa7d882` não alterou `supabase/functions/` nem `supabase/config.toml`, portanto não disparou o workflow; run #956 é o estado atual) |
 | Erro exato | `Deployment manifest is stale: supabase/deployment-manifest.json` |
 | Causa | PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707) (`fix: cron do drain de ai_usage_outbox e comentario do CodeQL`) adicionou a edge function `ai-usage-outbox-drain` mas ainda não foi mergeada. O `generate-manifest.mjs` que atualiza `supabase/deployment-manifest.json` está dentro do próprio PR. |
-| Por que não posso corrigir agora | PR #2707 toca `supabase/deployment-manifest.json` (conflito de arquivo — AGENTS.md regra 3) **e** contém migration DDL (`supabase/migrations/`) — requer aprovação do dono (AGENTS.md regra 8). |
+| Por que não posso corrigir | PR #2707 toca `supabase/deployment-manifest.json` (conflito de arquivo — AGENTS.md regra 3) **e** contém migration DDL (`supabase/migrations/`) — requer aprovação do dono (AGENTS.md regra 8). |
 
 ### O que o dono precisa fazer
 
