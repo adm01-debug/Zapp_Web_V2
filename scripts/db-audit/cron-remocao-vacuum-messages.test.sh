@@ -41,10 +41,10 @@ docker run -d --name "$NAME" -e POSTGRES_PASSWORD=teste -e POSTGRES_DB=teste "$I
 trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true' EXIT
 
 for _ in $(seq 1 60); do
-  docker exec "$NAME" pg_isready -U postgres -d teste >/dev/null 2>&1 && break
+  docker exec "$NAME" pg_isready -h 127.0.0.1 -U postgres -d teste >/dev/null 2>&1 && break
   sleep 1
 done
-docker exec "$NAME" pg_isready -U postgres -d teste >/dev/null 2>&1 || { echo "PG nao subiu"; exit 2; }
+docker exec "$NAME" pg_isready -h 127.0.0.1 -U postgres -d teste >/dev/null 2>&1 || { echo "PG nao subiu"; exit 2; }
 
 q()            { docker exec -i -e PGPASSWORD=teste "$NAME" psql -U postgres -d teste -X -q -A -t -v ON_ERROR_STOP=1 "$@"; }
 aplica()       { docker exec -i -e PGPASSWORD=teste "$NAME" psql -U postgres -d teste -X -q -v ON_ERROR_STOP=1 < "$1" >/dev/null; }
