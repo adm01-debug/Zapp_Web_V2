@@ -60,7 +60,8 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
-| Run com falha | [#42039283192 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
+| Falha documentada | [#42039283192 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
+| Run em `d985c7fc` | [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) — `pending` (criado por `workflow_run` do CI/CD Pipeline; mesmo comportamento esperado) |
 | Job | `authenticated` ([127285511593](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192/job/127285511593)) |
 | Passo que falha | `Validar grupo e executar a suíte no backend descartável` (step 8, 13:50:28Z–14:40:23Z, ~50 min) |
 | Código de falha | `browser-suite-failed` — `real-browser-suite` executou ~45 min; 0 casos identificados no resumo público |
@@ -74,3 +75,21 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 2. Se for regressão de código: abrir PR de fix.
 3. Se for infra/flakiness: re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` atual para confirmar verde.
 4. Depois de verificar verde: atualizar este arquivo removendo este bloqueio e atualizar RELATORIO_CI.md §3/§4.3.
+
+---
+
+## 4. Branch Hygiene Audit — SLA de alertas de code scanning
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/branch-hygiene-audit.yml` |
+| Run com falha | [#42062235088 (commit `d985c7fc`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) — 16:13:39Z–16:19:35Z |
+| Passo que falha | Step 6 "SLA dos alertas de code scanning (W83)" — `conclusion=failure` |
+| Causa raiz | Alertas de code scanning (CodeQL) em aberto há mais tempo do que o limite de SLA configurado (referência W83 do inventário de workflows). Condição **temporal e pré-existente** — o workflow era ✅ no baseline desta sessão (#41409678874) mas os alertas envelheceram desde então. **Não introduzida por esta sessão** (nenhuma alteração de código ou configuração de CodeQL foi feita). |
+| Por que não posso corrigir agora | Fechar/dispensar alertas de code scanning é decisão de segurança do dono; corrigir o código apontado pelos alertas está fora do escopo desta sessão de CI. |
+
+### O que o dono precisa fazer
+
+1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
+2. Para cada alerta: corrigir o código (PR de fix) ou dispensar com justificativa se for falso positivo.
+3. Após fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
