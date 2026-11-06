@@ -536,8 +536,8 @@
     },
     {
       "path": "supabase/functions/detect-new-device/index.ts",
-      "bytes": 14648,
-      "sha256": "aade9eec9b15d666ccc8797bf08c6a37381a9776a0a63f2d421a49090192c537"
+      "bytes": 15815,
+      "sha256": "61b5304ab1724cd8eee856e7731d2735c7be14e58439505822915e4bc1360797"
     },
     {
       "path": "supabase/functions/elevenlabs-agent-token/index.ts",
@@ -1477,7 +1477,7 @@
       "name": "detect-new-device",
       "entrypoint": "supabase/functions/detect-new-device/index.ts",
       "verify_jwt": true,
-      "source_sha256": "408078559340b3a89aae14716da24ec6a9932b72ce8d7224ef9a9cd508d05f3c",
+      "source_sha256": "c60ddad6ed393d06b9962f4abd7495a88fd7c53ef0485ad5e94522a0384ca46d",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/email-font-stack.ts",
@@ -2534,5 +2534,5 @@
       ]
     }
   ],
-  "manifest_sha256": "abb571a12c97befde85545873d50c99619aeb7acd4c62ca85d032056d05ed3f2"
+  "manifest_sha256": "3659e3515bcd6f84bf2de4b19ed910b1f0174c59095ed9e3d449699f9ce362da"
 }
