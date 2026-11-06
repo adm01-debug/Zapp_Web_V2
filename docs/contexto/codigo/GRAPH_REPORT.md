@@ -1,4 +1,4 @@
-# Graph Report - Zapp_Web_V2  (2026-11-05)
+# Graph Report - Zapp_Web_V2  (2026-11-06)
 
 ## Corpus Check
 - 7133 files · ~8,897,959 words
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f03e6f6a`
+- Built from commit: `c6af71c4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

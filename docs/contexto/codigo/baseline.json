@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f03e6f6a2d1c81e1504d5757eb364e3ee6b7bfe6",
+  "commit": "c6af71c4a0d3eadce5c7abd4c04df4b559c77976",
   "branch": "main",
-  "data_commit": "2026-11-05T13:37:22-03:00",
+  "data_commit": "2026-11-06T00:23:46Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c6af71c",
+    "data": "2026-11-06",
+    "assunto": "chore: regenera manifesto de deploy das edge functions (#2737)"
+   },
    {
     "sha": "f03e6f6",
     "data": "2026-11-05",
@@ -126,14 +131,9 @@
     "sha": "ec2e5b6",
     "data": "2026-11-04",
     "assunto": "chore: sincroniza matriz de estados do Talk X (#2715)"
-   },
-   {
-    "sha": "5431b96",
-    "data": "2026-11-04",
-    "assunto": "fix: executa paridade Talk X com Deno 2.9.5 (#2714)"
    }
   ],
-  "arquivos_mudados_7d": 1244,
+  "arquivos_mudados_7d": 1101,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -226,11 +226,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 12
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
+    "arquivo": "ESTADO.md",
     "mudancas": 12
    },
    {

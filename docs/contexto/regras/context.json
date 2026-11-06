@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f03e6f6a2d1c81e1504d5757eb364e3ee6b7bfe6",
+  "sha": "c6af71c4a0d3eadce5c7abd4c04df4b559c77976",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-05 16:46 UTC",
+  "generated_at": "2026-11-06 00:24 UTC",
   "files_total": 8062,
   "code_files": 5963,
   "code_lines": 1032219
@@ -381271,10 +381271,19 @@
   }
  },
  "git": {
-  "sha": "f03e6f6a2d1c81e1504d5757eb364e3ee6b7bfe6",
+  "sha": "c6af71c4a0d3eadce5c7abd4c04df4b559c77976",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c6af71c",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "chore: regenera manifesto de deploy das edge functions (#2737)",
+    "files": [
+     "supabase/deployment-manifest.json"
+    ]
+   },
    {
     "sha": "f03e6f6",
     "date": "2026-11-05",
@@ -381720,28 +381729,6 @@
      "scripts/db-audit/docker-shim",
      "scripts/db-audit/supabase-snapshot-stats.test.sh",
      "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx"
-    ]
-   },
-   {
-    "sha": "451373f",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "fix: corrigir geração e saúde dos contextos automáticos (#2708)",
-    "files": [
-     "scripts/ai-context/README.md",
-     "scripts/ai-context/gerar.mjs",
-     "scripts/ai-context/gerar.unit.mjs",
-     "scripts/ci/ai-context-generator.unit.mjs",
-     "scripts/ci/contexto-indice.unit.mjs",
-     "scripts/ci/regras-negocio.unit.mjs",
-     "scripts/ci/supabase-snapshot.unit.mjs",
-     "scripts/regras_negocio/README.md",
-     "scripts/regras_negocio/generate.py",
-     "scripts/regras_negocio/indice.py",
-     "scripts/regras_negocio/test_generate.py",
-     "scripts/supabase_snapshot/README.md",
-     "scripts/supabase_snapshot/snapshot.py",
-     "scripts/supabase_snapshot/test_snapshot.py"
     ]
    }
   ],
