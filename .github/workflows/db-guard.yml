@@ -194,6 +194,14 @@ jobs:
       - name: Instalar dependencias do guard AST
         run: bun install --frozen-lockfile --ignore-scripts
 
+      - name: Executar suites Node antes mantidas na allowlist
+        run: |
+          node --test \
+            scripts/catalog/validate-plan.test.mjs \
+            scripts/ui-audit/view-container-padding.unit.mjs \
+            scripts/db-tests/run-all.unit.mjs \
+            scripts/talkx/gen-estados.unit.mjs
+
       # O teste de integracao da V02 fala com um PostgREST real e e escrito em
       # Deno, como os testes da edge. Mesma action e mesmo SHA pinado do ci.yml
       # (o guard nao instala Deno em nenhum outro passo).
