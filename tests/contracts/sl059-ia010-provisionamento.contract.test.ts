@@ -11,9 +11,12 @@ import {
   PREFIXO_ENSAIO,
   PREFIXO_TELEFONE_ENSAIO,
   conferirAlvoLocal,
+  executarCli,
+  interpretarArgumentos,
   planoDeEnsaio,
   sqlDeProvisionamento,
   sqlDeRemocao,
+  validarPlanoSeguro,
 } from '../../scripts/ia/ensaio-provisionamento.mjs';
 
 /**
@@ -166,6 +169,18 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
       const ateOFim = bloco.split(';')[0];
       expect(ateOFim).toMatch(/on conflict/iu);
     }
+    expect(SQL).toContain('is_read = excluded.is_read');
+  });
+
+  it('o gerador recusa plano sem todos os marcadores sintéticos', () => {
+    expect(validarPlanoSeguro(plano)).toBe(plano);
+    expect(() => sqlDeRemocao({ ...plano, prefixo: '' })).toThrow(/marcadores/u);
+    expect(() => sqlDeRemocao({ ...plano, prefixo: '%' })).toThrow(/marcadores/u);
+    expect(() => sqlDeProvisionamento({ ...plano, dominio: 'cliente.com.br' })).toThrow(/marcadores/u);
+
+    const departamentos = structuredClone(plano.departamentos);
+    departamentos[0]!.contatos[0]!.telefone = '+5511999999999';
+    expect(() => sqlDeProvisionamento({ ...plano, departamentos })).toThrow(/faixa reservada/u);
   });
 
   it('a reversão é só por prefixo: nenhum delete alcança dado que não seja de ensaio', () => {
@@ -233,14 +248,40 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
     expect(SQL).not.toMatch(/(?:^|\s)host=/imu);
     expect(SQL).not.toMatch(/https?:\/\//iu);
 
-    expect(conferirAlvoLocal('http://127.0.0.1:54321')).toBe('127.0.0.1');
+    expect(conferirAlvoLocal('postgres://127.0.0.1:54321/postgres')).toBe('127.0.0.1');
     expect(conferirAlvoLocal('postgresql://postgres:senha@localhost:54322/postgres')).toBe('localhost');
+    expect(conferirAlvoLocal('postgresql://postgres:senha@[::1]:54322/postgres')).toMatch(/::1/u);
     expect(conferirAlvoLocal(undefined)).toBeNull();
     expect(conferirAlvoLocal('')).toBeNull();
+    expect(() => conferirAlvoLocal('https://localhost:5432/postgres')).toThrow(/protocolo não-PostgreSQL/u);
     expect(() => conferirAlvoLocal('postgresql://u:p@db.exemplo-do-cliente.com:5432/postgres')).toThrow(
       /não-local/u,
     );
     expect(() => conferirAlvoLocal('isso-nao-e-url')).toThrow(/não é uma URL válida/u);
+  });
+
+  it('a CLI rejeita ambiguidade, opção desconhecida e alvo inseguro sem emitir DML', () => {
+    expect(interpretarArgumentos([])).toBe('--plano');
+    expect(interpretarArgumentos(['--sql'])).toBe('--sql');
+    expect(() => interpretarArgumentos(['--sql', '--remover'])).toThrow(/exatamente uma/u);
+    expect(() => interpretarArgumentos(['--sql=agora'])).toThrow(/desconhecida/u);
+
+    const executar = (argv: string[], DB_URL?: string) => {
+      let out = '';
+      let err = '';
+      const status = executarCli(argv, {
+        env: DB_URL === undefined ? {} : { DB_URL },
+        stdout: { write: (valor: string) => { out += valor; return true; } } as NodeJS.WriteStream,
+        stderr: { write: (valor: string) => { err += valor; return true; } } as NodeJS.WriteStream,
+      });
+      return { status, out, err };
+    };
+
+    expect(executar(['--sql', '--remover'])).toMatchObject({ status: 1, out: '' });
+    expect(executar(['arquivo.sql'])).toMatchObject({ status: 1, out: '' });
+    expect(executar(['--sql'], 'https://localhost/postgres')).toMatchObject({ status: 1, out: '' });
+    expect(executar(['--sql'], 'postgresql://u:p@db.exemplo.com/postgres')).toMatchObject({ status: 1, out: '' });
+    expect(executar(['--sql'], 'postgresql://u:p@localhost:5432/postgres')).toMatchObject({ status: 0 });
   });
 
   it('cada caso de borda do §2 tem estado declarado — e o do mesmo telefone tem prova do bloqueio', () => {
