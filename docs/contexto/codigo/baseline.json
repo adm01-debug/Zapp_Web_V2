@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "83e821b8a590f671e792836046839c142313412e",
+  "commit": "3ece06f86cc95a73eb4ca55c3268c5428fd8810d",
   "branch": "main",
-  "data_commit": "2026-11-06T16:24:09Z",
+  "data_commit": "2026-11-06T15:42:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "3ece06f",
+    "data": "2026-11-06",
+    "assunto": "fix: corrige stale closure na navegação por teclado da paleta de comandos (#2749)"
+   },
    {
     "sha": "83e821b",
     "data": "2026-11-06",
@@ -126,11 +131,6 @@
     "sha": "c0d715f",
     "data": "2026-11-04",
     "assunto": "infra: executar os 33 testes shell ausentes no DB Guard (#2724)"
-   },
-   {
-    "sha": "46c29a6",
-    "data": "2026-11-04",
-    "assunto": "fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)"
    }
   ],
   "arquivos_mudados_7d": 1072,
@@ -164,12 +164,12 @@
     "mudancas": 141
    },
    {
-    "pasta": "src/hooks/integrations",
+    "pasta": "src/components/ui",
     "mudancas": 133
    },
    {
-    "pasta": "src/components/ui",
-    "mudancas": 132
+    "pasta": "src/hooks/integrations",
+    "mudancas": 133
    },
    {
     "pasta": "src/lib/__tests__",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8252,
   "arquivos_codigo": 4734,
-  "linhas_codigo": 873147,
+  "linhas_codigo": 873157,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368055
+   "linhas": 368065
   },
   "src/config": {
    "arquivos": 3,

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "83e821b8a590f671e792836046839c142313412e",
+  "sha": "3ece06f86cc95a73eb4ca55c3268c5428fd8810d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 16:25 UTC",
+  "generated_at": "2026-11-06 18:43 UTC",
   "files_total": 8093,
   "code_files": 5986,
-  "code_lines": 1038504
+  "code_lines": 1038514
  },
  "version": "1.3.2",
- "facts_hash": "ad3709f42fab4255",
+ "facts_hash": "0f95797161974f79",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68081,7 +68081,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368055,
+   "lines": 368065,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -89794,6 +89794,10 @@
    {
     "file": "src/components/ui/command-palette-data.tsx",
     "text": "href ou id `nav-`, então escolher qualquer uma delas apenas fechava o diálogo, como se"
+   },
+   {
+    "file": "src/components/ui/command-palette.tsx",
+    "text": "então ele não pode capturar `allItems`/`selectedIndex` do render em que foi criado (stale"
    },
    {
     "file": "src/components/ui/command-palette.tsx",
@@ -312172,12 +312176,13 @@
   },
   "src/components/ui/command-palette.tsx": {
    "path": "src/components/ui/command-palette.tsx",
-   "lines": 366,
+   "lines": 376,
    "exports": [
     "function CommandPalette",
     "function useCommandPalette"
    ],
    "rule_comments": [
+    "então ele não pode capturar `allItems`/`selectedIndex` do render em que foi criado (stale",
     "estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar"
    ],
    "hooks": [
@@ -382373,10 +382378,19 @@
   }
  },
  "git": {
-  "sha": "83e821b8a590f671e792836046839c142313412e",
+  "sha": "3ece06f86cc95a73eb4ca55c3268c5428fd8810d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "3ece06f",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: corrige stale closure na navegação por teclado da paleta de comandos (#2749)",
+    "files": [
+     "src/components/ui/command-palette.tsx"
+    ]
+   },
    {
     "sha": "83e821b",
     "date": "2026-11-06",
@@ -382736,17 +382750,6 @@
      "scripts/e2e-isolated/run.mjs",
      "src/components/notifications/__tests__/SoundVolumeControl.test.tsx"
     ]
-   },
-   {
-    "sha": "1681d0a",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: restaurar foco da paleta com regressões de integração (#2718)",
-    "files": [
-     "e2e/busca-global-paleta.spec.ts",
-     "src/components/ui/__tests__/command-palette.a11y.test.tsx",
-     "src/components/ui/command-palette.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -382760,10 +382763,6 @@
    ],
    [
     "docs/ci/README.md",
-    2
-   ],
-   [
-    "e2e/busca-global-paleta.spec.ts",
     2
    ],
    [
@@ -382799,11 +382798,19 @@
     2
    ],
    [
+    "src/components/ui/command-palette.tsx",
+    1
+   ],
+   [
     ".github/workflows/e2e-logado-isolado.yml",
     1
    ],
    [
     "e2e/README.md",
+    1
+   ],
+   [
+    "e2e/busca-global-paleta.spec.ts",
     1
    ],
    [
@@ -382824,10 +382831,6 @@
    ],
    [
     "e2e/contacts-views.spec.ts",
-    1
-   ],
-   [
-    "e2e/dialog-rodape-viewport.spec.ts",
     1
    ]
   ]
