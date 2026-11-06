@@ -1,8 +1,8 @@
 # docs:
-#   gatilho: pull_request valida login; dispatch escolhe login ou full-suite em três grupos fixos
-#   prova: executa login ou os 15 projetos em backend descartável, com TLS local e namespace sem saída
-#   falha: lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam
-#   avisa: autor e revisor via check; publica somente metadados e logs redigidos
+#   gatilho: pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts
+#   prova: login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário
+#   falha: isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada
+#   avisa: autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada
 # PR continua com um teste setup. A suíte completa exige dispatch explícito;
 # o workflow legado permanece desativado até a prova nativa dos três grupos.
 name: E2E isolado - login e suíte completa
@@ -18,6 +18,8 @@ on:
         options:
           - login
           - full-suite
+          - network-proof
+          - network-proof-contexts
   pull_request:
     paths:
       - '.github/workflows/e2e-logado-isolado.yml'
@@ -58,7 +60,7 @@ jobs:
             pull_request) scope=login ;;
             workflow_dispatch)
               scope="${REQUEST_SCOPE:-login}"
-              case "$scope" in login|full-suite) ;; *) echo '::error::Escopo de execução inválido.'; exit 1 ;; esac
+              case "$scope" in login|full-suite|network-proof|network-proof-contexts) ;; *) echo '::error::Escopo de execução inválido.'; exit 1 ;; esac
               ;;
             *) echo '::error::Evento não permitido neste workflow.'; exit 1 ;;
           esac
@@ -207,5 +209,65 @@ jobs:
         with:
           name: e2e-isolated-suite-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/e2e-isolated-suite-${{ matrix.name }}/public
+          retention-days: 3
+          if-no-files-found: error
+
+  network-proof:
+    name: Medir conectividade nativa sem aplicação ou banco
+    needs: image-metadata
+    if: github.event_name == 'workflow_dispatch' && needs.image-metadata.result == 'success' && (needs.image-metadata.outputs.scope == 'network-proof' || needs.image-metadata.outputs.scope == 'network-proof-contexts')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout do SHA validado
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.image-metadata.outputs.sha }}
+      - name: Preparar Bun para instalar dependências pinadas
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+      - name: Restaurar cache de pacotes do Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+      - name: Instalar dependências antes do isolamento
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile --ignore-scripts
+      - name: Validar políticas e protocolo antes da prova nativa
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test scripts/ci/e2e-isolated-network-proof.unit.mjs scripts/ci/e2e-isolated-network-contexts.unit.mjs
+      - name: Preparar TLS e iproute2 antes dos namespaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y openssl libnss3-tools iproute2
+      - name: Executar corte nativo Node e três engines
+        id: network
+        shell: bash
+        env:
+          ZAPP_PROOF_SCOPE: ${{ needs.image-metadata.outputs.scope }}
+          ZAPP_PROOF_SHA: ${{ needs.image-metadata.outputs.sha }}
+        run: |
+          set -euo pipefail
+          case "$ZAPP_PROOF_SCOPE" in
+            network-proof) node scripts/e2e-isolated/network-proof.mjs "$RUNNER_TEMP/e2e-network-proof/report.json" ;;
+            network-proof-contexts) node scripts/e2e-isolated/network-contexts.mjs "$RUNNER_TEMP/e2e-network-proof/report.json" ;;
+            *) echo '::error::Escopo de prova de rede inválido.'; exit 1 ;;
+          esac
+      - name: Publicar somente relatório fechado após limpeza
+        if: always() && steps.network.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-network-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/e2e-network-proof/report.json
           retention-days: 3
           if-no-files-found: error

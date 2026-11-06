@@ -7,6 +7,7 @@ import { evoFetch, extractMessageId } from '../../supabase/functions/_shared/evo
 
 const env = () => ({ ZAPP_E2E_RUN_ID: 'zapp-e2e-provider-test', GITHUB_SHA: 'a'.repeat(40),
   EVOLUTION_API_KEY: 'e2e-local-admin-canary', EVOLUTION_DEFAULT_INSTANCE_TOKEN: 'e2e-instance-canary',
+  E2E_QR_INSTANCE_TOKEN: 'e2e-instance-qr-' + 'a'.repeat(48),
   PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: 'e2e-catalog-canary', NODE_EXTRA_CA_CERTS: '/run/zapp-e2e-tls/ca.crt' });
 const interfaces = () => ({ lo: [{ address: '127.0.0.1', internal: true }] });
 function provider(options = {}) {

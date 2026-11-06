@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
+import { types } from 'node:util';
 import {
   OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, CATALOG_SKU, assertOwnedContainer,
   assertContainerIsolation, assertSourceSha, assertOfficialHostIsLocal, makeProof, syntheticCredentials, sha256,
@@ -18,6 +19,7 @@ import { collectPlaywrightInventory } from './collection.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
 import { restoreRoutineOwnership } from './routine-ownership.mjs';
+import { QR_SEED_PATH, validateQrSeedProof } from './qr-contract.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -75,6 +77,75 @@ export function parseFilesSeedDiagnostic(result) {
       !validSeedFailure(value.failure) || (Object.hasOwn(value, 'cleanup') && (!validSeedFailure(value.cleanup) || value.cleanup.stage !== 'db-close'))) return unavailable('invalid');
   const copy = input => Object.fromEntries(['stage', 'error_name', 'code', 'sqlstate', 'http_status'].filter(key => Object.hasOwn(input, key)).map(key => [key, input[key]]));
   return { schema: 1, seed: 'files-volume', available: true, failure: copy(value.failure), ...(value.cleanup ? { cleanup: copy(value.cleanup) } : {}) };
+}
+
+const BROWSER_PROCESS_CODES = new Set(['ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES']);
+const BROWSER_READ_CODES = new Set(['ENOENT', 'EACCES', 'EPERM', 'EISDIR', 'EIO', 'EMFILE', 'ENFILE']);
+const BROWSER_SIGNALS = new Set(['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGHUP', 'SIGABRT',
+  'SIGSEGV', 'SIGBUS', 'SIGILL', 'SIGFPE', 'SIGQUIT', 'SIGPIPE', 'SIGTRAP']);
+const UNKNOWN_BROWSER_FIELD = Object.freeze({ known: false });
+
+function browserDataValue(object, key) {
+  if (object === null || (typeof object !== 'object' && typeof object !== 'function')) return UNKNOWN_BROWSER_FIELD;
+  try {
+    let current = object;
+    for (let depth = 0; current !== null && depth < 8; depth++) {
+      if (types.isProxy(current)) return UNKNOWN_BROWSER_FIELD;
+      const descriptor = Object.getOwnPropertyDescriptor(current, key);
+      if (descriptor) return Object.hasOwn(descriptor, 'value') ? { known: true, value: descriptor.value } : UNKNOWN_BROWSER_FIELD;
+      current = Object.getPrototypeOf(current);
+    }
+    return current === null ? { known: true, value: undefined } : UNKNOWN_BROWSER_FIELD;
+  } catch { return UNKNOWN_BROWSER_FIELD; }
+}
+const closedBrowserRecord = fields => Object.freeze(Object.assign(Object.create(null), fields));
+const unknownBrowserReport = () => closedBrowserRecord({ read: 'unknown', read_error_code: 'unknown', parse: 'unknown' });
+
+/** Read and decode once; keep the original undefined fallback on either failure. */
+export function readBrowserReportOnce(read) {
+  let contents;
+  try { contents = read(); }
+  catch (error) {
+    const field = browserDataValue(error, 'code');
+    const code = field.known && typeof field.value === 'string' && BROWSER_READ_CODES.has(field.value) ? field.value : 'unknown';
+    return { report: undefined, observation: closedBrowserRecord({
+      read: code === 'ENOENT' ? 'missing' : 'failed', read_error_code: code, parse: 'not-attempted',
+    }) };
+  }
+  try { return { report: JSON.parse(contents), observation: closedBrowserRecord({ read: 'ok', read_error_code: null, parse: 'decoded' }) }; }
+  catch { return { report: undefined, observation: closedBrowserRecord({ read: 'ok', read_error_code: null, parse: 'invalid' }) }; }
+}
+
+function safeBrowserReportObservation(observation) {
+  const read = browserDataValue(observation, 'read'), code = browserDataValue(observation, 'read_error_code'), parse = browserDataValue(observation, 'parse');
+  if (!read.known || !code.known || !parse.known) return unknownBrowserReport();
+  if (read.value === 'ok' && code.value === null && ['decoded', 'invalid'].includes(parse.value)) {
+    return closedBrowserRecord({ read: 'ok', read_error_code: null, parse: parse.value });
+  }
+  if (parse.value === 'not-attempted' && ((read.value === 'missing' && code.value === 'ENOENT') ||
+      (read.value === 'failed' && typeof code.value === 'string' && code.value !== 'ENOENT' &&
+       (BROWSER_READ_CODES.has(code.value) || code.value === 'unknown')))) {
+    return closedBrowserRecord({ read: read.value, read_error_code: code.value, parse: 'not-attempted' });
+  }
+  return unknownBrowserReport();
+}
+
+/** Closed observations only: never invoke accessors, Proxy traps or toJSON. */
+export function browserResultDiagnostic(result, observation) {
+  const status = browserDataValue(result, 'status'), signal = browserDataValue(result, 'signal'), error = browserDataValue(result, 'error');
+  const code = error.known && error.value ? browserDataValue(error.value, 'code') : UNKNOWN_BROWSER_FIELD;
+  return closedBrowserRecord({
+    schema: 1,
+    process: closedBrowserRecord({
+      status: status.known && (status.value === null || (Number.isInteger(status.value) && status.value >= 0 && status.value <= 255)) ? status.value : 'unknown',
+      signal: signal.known && (signal.value === null || signal.value === undefined) ? null :
+        signal.known && typeof signal.value === 'string' && BROWSER_SIGNALS.has(signal.value) ? signal.value : 'unknown',
+      error: !error.known ? 'unknown' : error.value ? 'present' : 'none',
+      error_code: error.known && !error.value ? null :
+        code.known && typeof code.value === 'string' && BROWSER_PROCESS_CODES.has(code.value) ? code.value : 'unknown',
+    }),
+    report: safeBrowserReportObservation(observation),
+  });
 }
 
 export function assertPinnedImages(lock) {
@@ -220,7 +291,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   const writable = new Set([output, bundles, bundleCache]);
   let credentials;
   let reportReady = false;
-  let providerCatalog, providerDiagnostic, routineOwnership;
+  let providerCatalog, providerDiagnostic, routineOwnership, browserDiagnostic;
   let failure;
   let cancelled = false;
   let cleaning = false;
@@ -522,6 +593,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       driverRun(['bun', 'e2e/fixtures/arquivos-local/seed.ts'], 'seed-files-volume', 240_000, { recordLog: false });
       driverRun(['node', 'e2e/fixtures/seed-files-tab.mjs'], 'seed-files-canonical', 240_000, { recordLog: false });
       driverRun(['node', 'scripts/e2e-isolated/seed-suite.mjs'], 'seed-suite', 240_000, { recordLog: false });
+      driverRun(['node', 'scripts/e2e-isolated/seed-qr.mjs'], 'seed-qr', 240_000, { recordLog: false });
       // Catalog metadata is observational. Its failure never decides readiness.
       try { providerCatalog = parseCatalog(psql(PROVIDER_CATALOG_SQL, [], CATALOG_EXECUTOR_OPTIONS)); }
       catch { providerCatalog = { available: false, reason: 'query-failed' }; }
@@ -538,6 +610,11 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
         provider = JSON.parse(readFileSync(path.join(output, 'provider-ready.json'), 'utf8'));
       } catch { throw new Error('suite-proof-unreadable'); }
       assertSuiteReadiness(suiteSeed, provider, runId, sourceSha);
+      let qrSeed;
+      try { qrSeed = JSON.parse(readFileSync(path.join(output, path.basename(QR_SEED_PATH)), 'utf8')); }
+      catch { throw new Error('qr-seed-proof-unreadable'); }
+      validateQrSeedProof(qrSeed, { runId, sourceSha, networkNamespace: network.network_namespace,
+        anonHash: sha256(credentials.anonKey) });
       catalogVerified = true;
     }
     const seed = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'seed'], 'seed-proof'));
@@ -560,8 +637,9 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     state.native_e2e = true;
     const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });
     writeFileSync(path.join(output, scope === 'login' ? 'browser-login.log' : 'browser-suite.log'), redacted(String(browserResult.stdout || '') + String(browserResult.stderr || '')), { mode: 0o600 });
-    let report;
-    try { report = JSON.parse(readFileSync(path.join(output, 'results.json'), 'utf8')); } catch { /* Summary records invalid/missing collection explicitly. */ }
+    const { report, observation } = readBrowserReportOnce(() => readFileSync(path.join(output, 'results.json'), 'utf8'));
+    try { browserDiagnostic = browserResultDiagnostic(browserResult, observation); }
+    catch { /* Observation cannot replace the original result. */ }
     const summary = summarizePlaywrightResult(report, { scope: reportScope, expectedProjects: projects, inventory,
       ...(fullSuite ? { conversationPlatformSkips: { sourceSha, sourceBlobs: {
         'e2e/conversation.spec.ts': gitBlob(readFileSync(path.join(ROOT, 'e2e/conversation.spec.ts'))),
@@ -640,7 +718,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     // Never copy the verifier's raw file. Only the closed parsed objects enter
     // the already-redacted publication path; diagnostic I/O remains best effort.
-    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic], ['routine-ownership.json', routineOwnership]]) {
+    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic], ['routine-ownership.json', routineOwnership], ['browser-result-diagnostic.json', browserDiagnostic]]) {
       if (diagnostic) {
         try { writeJson(path.join(published, name), diagnostic); } catch { /* Observation cannot replace the original result. */ }
       }

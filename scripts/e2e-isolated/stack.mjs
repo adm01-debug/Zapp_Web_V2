@@ -81,7 +81,7 @@ export function serviceConfiguration({ credentials: c, runId, sourceSha, fullSui
     ...(fullSuite ? { provider: {
       env: { ...shared, ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha,
         EVOLUTION_API_KEY: c.evolutionKey, EVOLUTION_DEFAULT_INSTANCE_TOKEN: c.instanceToken,
-        PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: c.catalogKey },
+        PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: c.catalogKey, E2E_QR_INSTANCE_TOKEN: c.qrInstanceToken },
       args: ['node', '/work/scripts/e2e-isolated/providers.mjs'],
     } } : {}),
     vite: {
@@ -103,7 +103,8 @@ export function serviceConfiguration({ credentials: c, runId, sourceSha, fullSui
         E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY: c.serviceRoleKey,
         E2E_TEST_EMAIL: c.email, E2E_TEST_PASSWORD: c.password,
         ...(fullSuite ? { DB_URL: database('supabase_admin'), EVOLUTION_DEFAULT_INSTANCE_TOKEN: c.instanceToken,
-          E2E_CATALOG_PRODUCT_SKU: CATALOG_SKU } : {}),
+          E2E_CATALOG_PRODUCT_SKU: CATALOG_SKU, E2E_QR_TEST_EMAIL: c.qrEmail,
+          E2E_QR_TEST_PASSWORD: c.qrPassword, E2E_QR_INSTANCE_TOKEN: c.qrInstanceToken } : {}),
         CAPTURA_DIR: '/output/captures', PLAYWRIGHT_HTML_OPEN: 'never',
       },
       args: ['node', '-e', 'setInterval(() => {}, 1000)'],

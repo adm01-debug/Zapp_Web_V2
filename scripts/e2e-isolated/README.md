@@ -102,6 +102,28 @@ A coleta define `PLAYWRIGHT_JSON_OUTPUT_FILE` somente no seu processo, em um sub
 
 Falhas de preparo, ausência, tipo, tamanho, leitura, JSON e gravação recebem códigos fechados `collection-report-*`, `collection-inventory-write` ou `collection-public-inventory-write`; falhas de processo e inventário conservam os gates bloqueantes. O JSON bruto permanece privado e somente o inventário sanitizado existente entra no artifact. Os contratos locais verificam o helper e o controller com fronteiras controladas; a execução Docker/Playwright real continua necessária para obter o inventário autenticado e seus resultados.
 
+### Diagnóstico fechado do processo do navegador
+
+`browser-result-diagnostic.json` (schema 1) separa três evidências: término do processo, leitura de `results.json` e decodificação JSON. O controller lê o arquivo uma vez e, quando a leitura termina, tenta decodificá-lo uma vez. Falhas continuam entregando `undefined` ao resumo existente; não há nova leitura, espera ou retry para aproveitar um relatório tardio.
+
+| Campo | Valores publicados |
+|---|---|
+| `process.status` | Inteiro de 0 a 255, `null` ou `"unknown"` |
+| `process.signal` | `null`, sinal da lista fechada ou `"unknown"` |
+| `process.error` | `"none"`, `"present"` ou `"unknown"` |
+| `process.error_code` | `null`, `ETIMEDOUT`, `ENOBUFS`, `ENOENT`, `EACCES` ou `"unknown"` |
+| `report.read` | `"ok"`, `"missing"`, `"failed"` ou `"unknown"` |
+| `report.read_error_code` | `null`, `ENOENT`, `EACCES`, `EPERM`, `EISDIR`, `EIO`, `EMFILE`, `ENFILE` ou `"unknown"` |
+| `report.parse` | `"decoded"`, `"invalid"`, `"not-attempted"` ou `"unknown"` |
+
+Os sinais permitidos são `SIGTERM`, `SIGKILL`, `SIGINT`, `SIGHUP`, `SIGABRT`, `SIGSEGV`, `SIGBUS`, `SIGILL`, `SIGFPE`, `SIGQUIT`, `SIGPIPE` e `SIGTRAP`. Valores fora desses domínios viram `unknown`. A observação usa descritores de dados com travessia limitada; getters, proxies e conversões de objetos não são executados para classificar os campos.
+
+`decoded` afirma somente que o JSON pôde ser decodificado: `null`, `{}` ou outro formato incompatível continuam reprovados pelo parser Playwright. Saída zero com erro ou sinal continua reprovada pelo gate de processo. Inventário, contagens, política de skips e critérios de aprovação permanecem no resumo e nos gates existentes. Um intervalo próximo do timeout configurado, sozinho, não prova `ETIMEDOUT`; esse código só é publicado quando observado no resultado do processo.
+
+A captura fica em memória antes dos gates. A publicação usa o laço protegido dos diagnósticos reconstruídos, em modo 0600, e passa pelo redator obrigatório. Uma falha de gravação desse diagnóstico não substitui a falha original nem transforma sucesso em falha. A ausência do arquivo pode significar que o navegador não chegou a iniciar ou que a publicação falhou; ela não significa aprovação. O gate `report_ready` continua bloqueando upload quando o redator falha.
+
+O schema não contém duração, stdout/stderr, mensagem, stack, cause, caminho, URL, corpo do relatório ou campos privados. Os objetos publicados têm protótipo nulo e são congelados. Os contratos locais exercitam helpers e controller reais com processos controlados; eles não substituem a execução Docker/Playwright nativa.
+
 O grupo autenticado compila todos os entrypoints Edge ativos e versionados antes de criar credenciais, verificando seus blobs. Não basta compilar `auth-login`. O provider de Evolution GO e do catálogo externo opera apenas em `127.0.0.1:8081`, no namespace fechado; seus dados e recibos são sintéticos. Auth, PostgREST, Storage, Realtime, RPCs e handlers da aplicação continuam reais. A fronteira do catálogo aceita somente as consultas documentadas da fixture e recusa formas desconhecidas; não é um substituto geral de PostgreSQL ou busca textual.
 
 Depois do login real, o controller executa os seeds existentes de Arquivos, o seed de suíte e o verificador de providers. O seed conserva os proprietários de Arquivos, prepara paginação, conversa principal, inbox e Talk X e verifica leituras com o JWT do usuário. A preferência de onboarding do supervisor compartilhado e do usuário de Arquivos precisa ser realmente `true`; o Tour usa usuário novo por teste, preferência comprovada `false`, sessão vazia e limpeza por posse, sem redefinir preferências compartilhadas.
@@ -123,3 +145,56 @@ A prontidão de entrega precisa provar três fluxos completos: texto, imagem do 
 Os dois skips históricos de plataforma de `conversation.spec.ts` permanecem na categoria `known_runtime_skip`, vinculados a arquivo/blob/linha/título/projeto, motivo exato e inventário independente; o caso Chromium equivalente precisa ter passado. Eles não contam como `passed` e `allPassed` permanece falso. Outras ausências de fixture, Auth ou serviço, e os fixmes estáticos ainda existentes, não são reclassificadas para forçar verde. A lista nativa de testes e a decisão específica sobre essas pendências devem acompanhar o resultado da execução.
 
 Tarefas conserva os três cenários, suas asserções e a guarda R1 deslogada, com seleção explícita no projeto Chromium público e saída apenas do catch-all autenticado. Essa execução pertence ao CI público; não é contada duas vezes entre os 15 projetos acima. O arquivo de conversas permanece intacto para conservar o vínculo preciso da política de plataforma.
+
+
+## Prova manual de conectividade dos navegadores
+
+O dispatch de `.github/workflows/e2e-logado-isolado.yml` aceita também `scope=network-proof`. Esse diagnóstico não inicia aplicação, banco, seed, sessão de usuário ou provedor de mensagens. Usa a imagem Playwright fixada por digest, certificados sintéticos e um canário HTTP da própria execução. Não usa modelos de IA nem credenciais de aplicação; consome execução do Actions e armazenamento temporário.
+
+O baseline mede Node, Chromium, Firefox e WebKit em um namespace com loopback. Registra o valor nativo de `navigator.onLine` antes de qualquer emulação; online e offline são observações possíveis. A candidata exige prova passiva de que o módulo dummy já está carregado antes da criação de uma interface sem saída. Não carrega módulos nem aceita uma rota desconhecida para obter sucesso. O helper temporário recebe apenas NET_ADMIN; os navegadores não recebem essa capacidade nem socket Docker.
+
+A candidata verifica HTTPS válido, rejeição de certificados inválidos, emulação offline/online, down/up real do link e um contexto novo sem emulação. O canário tem controles positivos antes/depois das tentativas negativas, com contagem de conexões e requests; a orquestração Docker é assíncrona para manter o canário ativo. Containers são conferidos por identidade antes da remoção.
+
+O único artefato é `report.json`, com identidades e resultados fechados, publicado após limpeza válida. Ausência do módulo produz candidata `not_run` e falha, preservando as observações disponíveis do baseline. Falhas de protocolo, topologia, certificado, navegador ou limpeza também reprovam; o relatório não inclui URLs privadas, chaves ou logs livres.
+
+Mesmo um resultado aprovado deste diagnóstico conserva `plan_fully_validated=false`: transporte Bun/Edge e saída IPv6 externa continuam `not_run`. Ele não altera a admissão da aplicação, não substitui os guards atuais de loopback e não autoriza a reativação do workflow legado. Qualquer evolução desses guards depende da análise da evidência nativa.
+
+Os testes locais das políticas e do protocolo usam:
+
+    node --test scripts/ci/e2e-isolated-network-proof.unit.mjs
+
+Esses testes controlam Docker, navegador e transporte. Não devem ser apresentados como execução nativa dessas dependências.
+
+## Comparação dos contextos oficiais do Playwright
+
+O mesmo workflow aceita `scope=network-proof-contexts`. Essa entrada seleciona somente a comparação em loopback: não tenta dummy, veth, rota default, módulo de kernel ou fallback de rede. Containers usam `--cap-drop ALL`. Aplicação, banco e credenciais não são iniciados.
+
+Para cada engine fixada, a comparação mede um contexto direto sem opção offline, a fixture real do Playwright Test com sua opção padrão, a opção explícita `offline: false`, o setter isolado `setOffline(false)`, dois ciclos oficiais true→false e um contexto novo sem emulação. Um setter que não muda o estado não é contado como transição. O segundo ciclo exige eventos offline/online e bloqueio/restauração efetivos do fetch HTTPS. O contexto novo precisa conservar a observação nativa inicial.
+
+A fixture Test roda com uma configuração privada de conteúdo fixo: um teste, um worker e nenhum retry. Fonte, configuração e reporter são montados somente para leitura; o controller confere conteúdo, identidade e inventário dos arquivos. Resultado exige término do processo, reporte de um teste aprovado sem skip e correspondência entre o dado medido e o relatório. Nenhuma configuração ou sessão da aplicação é carregada.
+
+| Campo do relatório | Significado |
+|---|---|
+| `collection_complete` | Os três processos concluíram e forneceram observações completas válidas. |
+| `official_api_cycle_passed` | Os ciclos oficiais bloquearam/restauraram o fetch e produziram os estados e eventos exigidos nas três engines. |
+| `native_online_all` | Todos os contextos diretos sem emulação começaram online; `null` indica coleta incompleta. |
+| `test_default_online_all` | Todas as fixtures reais do Playwright Test começaram online; `null` indica coleta incompleta. |
+
+Um valor nativo false permanece false mesmo se o ciclo oficial funcionar. HTTPS, controles negativos de CA/SAN, topologia, canário com controles positivos e limpeza continuam obrigatórios. O relatório conserva `native_contract_qualified=false`, `authenticated_admission=false` e `plan_fully_validated=false`; Bun, Edge, IPv6 externo e as variantes de interface continuam explicitamente não executados. Essa medição informa a escolha de uma alteração futura do harness; não a aplica nem reativa o legado.
+
+    node --test scripts/ci/e2e-isolated-network-proof.unit.mjs scripts/ci/e2e-isolated-network-contexts.unit.mjs
+
+## Fixture exclusiva de QR
+
+No grupo autenticado, `seed-qr.mjs` roda depois de `seed-suite.mjs`. A preparação cria o administrador `qr.admin.e2e@example.invalid` e uma terceira conexão desconectada, `e2e-qr-local`, com token próprio no Vault descartável. O supervisor compartilhado, o agente de Arquivos, as duas conexões anteriores, seus tokens e o vínculo do contato canônico são conferidos antes/depois. Colisão com a fixture existente reprova; uma tentativa interrompida exige novo ambiente, sem tratar um seed parcial como concluído.
+
+O provider local aceita somente connect, QR e status para o token dessa conexão. A primeira leitura de QR fica vazia e a segunda fornece PNG com o texto inofensivo `ZAPP-E2E-SYNTHETIC-QR-NO-PAIRING-V1`. O digest, tamanho e decodificação da imagem são verificáveis; o conteúdo não permite pareamento de aparelho. A Edge, a leitura do Vault e a persistência continuam reais. Não há criação, exclusão, logout ou envio habilitados para essa credencial do provider.
+
+A fixture Playwright exige admissão Node e preflight do browser antes de ler as credenciais, faz login real pela UI e confirma usuário, perfil admin e conexão por Auth/RLS. O teste exige resposta HTTP concluída com contrato de QR pendente, imagem carregada, leitura persistida e polling de status. Após fechar o diálogo, observa mais de dois ciclos de três segundos para verificar o cancelamento.
+
+A limpeza rastreia operações conservadoramente: query inesperada, corpo ambíguo, falha ou request ainda pendente impedem o reset. Só depois da conclusão comprovada e do fechamento do contexto, o JWT do admin pode executar PATCH da própria fixture, com filtros de ID, instância, proprietário, não default, status e versão `updated_at`. Exige uma representação única e leitura posterior. Não usa chave de serviço no browser nem substitui erro por sucesso. A limpeza geral por posse do controller continua obrigatória mesmo quando esse reset é recusado.
+
+A prontidão específica de QR fica privada. Password e token exclusivos entram na redaction do controller e são excluídos do ambiente do processo do navegador. Modelos locais com Auth/RLS/Vault controlados validam decisões; só o grupo nativo integrado comprova essas dependências.
+
+    node --test scripts/ci/e2e-isolated-qr.unit.mjs scripts/ci/e2e-isolated-runtime.unit.mjs
+

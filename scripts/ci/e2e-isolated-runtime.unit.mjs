@@ -3,16 +3,18 @@ import { after, test } from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { assertPinnedImages, functionPolicy, prepareMountTargets } from '../e2e-isolated/run.mjs';
+import { assertPinnedImages, functionPolicy, prepareMountTargets, readBrowserReportOnce, browserResultDiagnostic } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS, sha256 } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
 import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
 import { OWNERSHIP_ROUTINES, OWNERSHIP_EXECUTOR_OPTIONS, ownershipSql } from '../e2e-isolated/routine-ownership.mjs';
+import { QR_FIXTURE, QR_SEED_FLAGS } from '../e2e-isolated/qr-contract.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -207,14 +209,14 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic,
-    catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult } = typeof options === 'function' ? { manifest: options } : options;
+    catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult, browserObservation } = typeof options === 'function' ? { manifest: options } : options;
   const fullSeed = scope === 'suite' && group === 'authenticated';
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs', 'qr-contract.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -238,6 +240,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     writeFileSync(path.join(root, 'scripts/e2e-isolated/images.lock.json'), JSON.stringify(data));
   }
   const calls = [];
+  let browserReadCalls = 0, restoreBrowserFilesystem;
   const containers = new Map();
   const volumes = new Map();
   let migrationCalls = 0;
@@ -512,6 +515,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         'e2e/fixtures/arquivos-local/seed.ts': 'files-volume',
         'e2e/fixtures/seed-files-tab.mjs': 'files-canonical',
         'scripts/e2e-isolated/seed-suite.mjs': 'suite-seed',
+        'scripts/e2e-isolated/seed-qr.mjs': 'qr-seed',
         'scripts/e2e-isolated/verify-providers.mjs': 'provider-verification',
       };
       for (const [file, name] of Object.entries(suiteCommands)) {
@@ -533,6 +537,15 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
           if (fault.startsWith('suite-proof-')) data[fault.slice('suite-proof-'.length)] = false;
           writeFileSync(path.join(output, 'suite-seed-ready.json'), JSON.stringify(data));
         }
+        if (name === 'qr-seed' && fault !== 'qr-proof-missing') {
+          const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, origin: 'https://127.0.0.1:5173',
+            network_namespace: 'net:[1234]', anon_key_sha256: sha256(driverLocalAnonKey),
+            user_id: 'e2e71190-7005-4509-a000-000000000001', profile_id: 'e2e71190-7005-4509-a000-000000000002',
+            connection_id: QR_FIXTURE.id, instance_id: QR_FIXTURE.instance,
+            ...Object.fromEntries(QR_SEED_FLAGS.map(key => [key, true])) };
+          if (fault.startsWith('qr-proof-')) data[fault.slice('qr-proof-'.length)] = false;
+          writeFileSync(path.join(output, 'qr-seed-ready.json'), JSON.stringify(data));
+        }
         if (name === 'provider-verification' && fault !== 'provider-proof-missing') {
           const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, ...Object.fromEntries(PROVIDER_FLAGS.map(key => [key, true])), catalog_sku: 'E2E-LOCAL-001', delivery_proofs: { text: true, catalog_image: true, storage_image: true } };
           if (fault.startsWith('provider-proof-')) data[fault.slice('provider-proof-'.length)] = false;
@@ -546,7 +559,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         if (scope === 'suite') {
           assert.deepEqual(allAfter(argv, '--project'), GROUPS[group]);
           assert.equal(argv.includes('E2E_CATALOG_PRODUCT_SKU_VERIFIED=true'), fullSeed);
-          assert.deepEqual(suiteStages, fullSeed ? ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification'] : []);
+          assert.deepEqual(suiteStages, fullSeed ? ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification'] : []);
         }
         if (argv.includes('--list')) {
           listCalls++;
@@ -586,10 +599,29 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'browser starts only after proof');
         const report = scope === 'suite' ? suiteJson({ fault, group }) : playwrightJson({ failed: fault === 'browser-failure' });
         if (fault === 'wrong-result') report.stats.expected = 0;
-        writeFileSync(path.join(output, 'results.json'), JSON.stringify(report));
+        if (!browserObservation || !Object.hasOwn(browserObservation, 'report')) writeFileSync(path.join(output, 'results.json'), JSON.stringify(report));
+        else if (browserObservation.report !== undefined) writeFileSync(path.join(output, 'results.json'), browserObservation.report);
+        if (browserObservation) {
+          const originalRead = fs.readFileSync, originalWrite = fs.writeFileSync;
+          fs.readFileSync = (file, ...args) => {
+            if (file === path.join(output, 'results.json')) {
+              browserReadCalls++;
+              if (Object.hasOwn(browserObservation, 'readError')) throw browserObservation.readError;
+            }
+            return originalRead(file, ...args);
+          };
+          if (browserObservation.writeFailure) fs.writeFileSync = (file, ...args) => {
+            if (file === path.join(output, 'public', 'browser-result-diagnostic.json')) throw new Error('private-sentinel diagnostic write failure');
+            return originalWrite(file, ...args);
+          };
+          syncBuiltinESMExports();
+          restoreBrowserFilesystem = () => { fs.readFileSync = originalRead; fs.writeFileSync = originalWrite; syncBuiltinESMExports(); };
+        }
+        if (browserObservation && Object.hasOwn(browserObservation, 'result')) return browserObservation.result;
         if (fault === 'browser-failure' || fault === 'suite-browser-failure') return error('controlled browser failure');
         mkdirSync(path.join(output, 'playwright-report'), { recursive: true });
         writeFileSync(path.join(output, 'playwright-report/raw.html'), 'must-never-publish-session-token');
+        if (fault === 'qr-redaction') return ok('QR_REDACTION_PROBE ' + diagnosticCredentials.E2E_QR_TEST_PASSWORD + ' ' + diagnosticCredentials.E2E_QR_INSTANCE_TOKEN);
         return ok('1 passed');
       }
       assert.fail('unexpected docker exec: ' + argv.join(' '));
@@ -610,12 +642,13 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   globalThis.setTimeout = (callback, _delay, ...args) => realTimeout(callback, 0, ...args);
   const originalOutput = process.env.GITHUB_OUTPUT;
   const diagnosticOutput = path.join(temporary, 'github-output');
-  if (seedDiagnostic) process.env.GITHUB_OUTPUT = diagnosticOutput;
+  if (seedDiagnostic || browserObservation) process.env.GITHUB_OUTPUT = diagnosticOutput;
   let exit;
   try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, ...(scope === 'suite' ? { group } : {}) }); }
   finally {
+    restoreBrowserFilesystem?.();
     globalThis.setTimeout = realTimeout;
-    if (seedDiagnostic) {
+    if (seedDiagnostic || browserObservation) {
       if (originalOutput === undefined) delete process.env.GITHUB_OUTPUT;
       else process.env.GITHUB_OUTPUT = originalOutput;
     }
@@ -628,7 +661,11 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   for (const name of publicFiles) {
     const content = readFileSync(path.join(output, 'public', name), 'utf8');
     assert.equal(/must-never-publish|private-sentinel|raw SQL must never publish/.test(content), false, 'private report/config and SQL must not publish');
+    for (const key of ['E2E_QR_TEST_PASSWORD', 'E2E_QR_INSTANCE_TOKEN']) {
+      if (diagnosticCredentials[key]) assert.equal(content.includes(diagnosticCredentials[key]), false, key + ' must not publish');
+    }
   }
+  const qrRedaction = fault === 'qr-redaction' ? readFileSync(path.join(output, 'public', 'browser-suite.log'), 'utf8') : null;
   const tlsDiagnosticLog = tlsDiagnostic && existsSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'))
     ? readFileSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'), 'utf8') : null;
   const pullLogs = pullDiagnostic ? Object.fromEntries(Object.keys(assertPinnedImages(lock())).flatMap(role => {
@@ -644,14 +681,18 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     privateMode: statSync(seedDiagnosticFile).mode & 0o777,
     publicMode: statSync(seedDiagnosticPublic).mode & 0o777,
   } : null;
-  const reportOutput = seedDiagnostic ? readFileSync(diagnosticOutput, 'utf8') : null;
+  const reportOutput = seedDiagnostic || browserObservation ? readFileSync(diagnosticOutput, 'utf8') : null;
   const providerMetadata = Object.fromEntries(['provider-catalog.json', 'provider-diagnostic.json'].flatMap(name => {
     const file = path.join(output, 'public', name);
     return existsSync(file) ? [[name, { value: JSON.parse(readFileSync(file, 'utf8')), mode: statSync(file).mode & 0o777 }]] : [];
   }));
   const ownershipFile = path.join(output, 'public', 'routine-ownership.json');
   const ownershipMetadata = existsSync(ownershipFile) ? { value: JSON.parse(readFileSync(ownershipFile, 'utf8')), mode: statSync(ownershipFile).mode & 0o777 } : null;
-  const result = { ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const browserFile = path.join(output, 'public', 'browser-result-diagnostic.json');
+  const browserMetadata = existsSync(browserFile) ? { value: JSON.parse(readFileSync(browserFile, 'utf8')), mode: statSync(browserFile).mode & 0o777 } : null;
+  const browserSummaryFile = path.join(output, 'results-summary.json');
+  const browserSummary = browserObservation && existsSync(browserSummaryFile) ? JSON.parse(readFileSync(browserSummaryFile, 'utf8')) : null;
+  const result = { qrRedaction, browserMetadata, browserSummary, browserReadCalls, ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -687,7 +728,7 @@ for (const [label, subprocess, available, reason] of filesDiagnosticCases) test(
   assert.equal(value.filesDiagnostic.privateMode, 0o600); assert.equal(value.filesDiagnostic.publicMode, 0o600);
   assert.equal(value.reportOutput, 'report_ready=true\n');
   assert.ok(value.publicFiles.includes('seed-files-volume-diagnostic.json'));
-  assert.ok(!value.publicFiles.some(name => /seed-files-volume\.log|seed-files-canonical\.log|seed-suite\.log|verify-providers\.log/.test(name)));
+  assert.ok(!value.publicFiles.some(name => /seed-files-volume\.log|seed-files-canonical\.log|seed-suite\.log|seed-qr\.log|verify-providers\.log/.test(name)));
 });
 test('seed diagnostic controller/success does not publish an error even when a line is forged', async t => {
   const value = await controllerFixture(t, 'none', { scope: 'suite', seedDiagnostic: { status: 0, stdout: filesDiagnosticNoise, stderr: filesDiagnosticLine(filesDiagnosticRecord) } });
@@ -859,11 +900,11 @@ test('suite controller: authenticated collects exactly its nine existing project
   assert.equal(value.browserCalls, 1);
   assert.equal(value.listCalls, 1);
   assert.deepEqual(value.bundled, ['main.eszip', ...FUNCTIONS.map(name => name + '.eszip'), 'tls-edge-probe.eszip']);
-  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification']);
   assert.equal(value.containers.size, 0);
   assert.equal(value.volumes.size, 0);
   for (const name of ['suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json']) assert.ok(value.publicFiles.includes(name));
-  assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\.log|verify-providers\.log/.test(name)), 'raw seed/provider output stays private');
+  assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\.log|seed-qr\.log|verify-providers\.log/.test(name)), 'raw seed/provider output stays private');
 });
 for (const [name, options, code] of [
   ['missing report', { collectionFile: 'missing' }, 'collection-report-missing'],
@@ -910,6 +951,16 @@ test('suite controller: only the two source-bound platform skips are distinct fr
   assert.equal(value.state.suite.known_runtime_skip, 2);
   assert.equal(value.state.suite.skipped_runtime, 0);
 });
+test('suite controller: QR password and scoped provider token are redacted from browser output', async t => {
+  const value = await controllerFixture(t, 'qr-redaction', { scope: 'suite' });
+  assert.equal(value.exit, 0); assert.match(value.qrRedaction, /QR_REDACTION_PROBE/);
+  for (const key of ['E2E_QR_TEST_PASSWORD', 'E2E_QR_INSTANCE_TOKEN']) {
+    assert.ok(value.diagnosticCredentials[key]?.length >= 24);
+    assert.equal(value.qrRedaction.includes(value.diagnosticCredentials[key]), false);
+  }
+  assert.equal(value.publicFiles.includes('qr-seed-ready.json'), false, 'QR admin readiness remains private');
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
 const suiteFaults = {
   'untracked-handler': 'function-source-changed',
   'changed-handler': 'function-source-changed',
@@ -918,9 +969,13 @@ const suiteFaults = {
   'files-volume-failure': 'seed-files-volume',
   'files-canonical-failure': 'seed-files-canonical',
   'suite-seed-failure': 'seed-suite',
+  'qr-seed-failure': 'seed-qr',
   'provider-verification-failure': 'verify-providers',
   'suite-proof-missing': 'suite-proof-unreadable',
   'provider-proof-missing': 'suite-proof-unreadable',
+  'qr-proof-missing': 'qr-seed-proof-unreadable',
+  ...Object.fromEntries([...QR_SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'origin', 'network_namespace',
+    'anon_key_sha256', 'user_id', 'profile_id', 'connection_id', 'instance_id'].map(key => ['qr-proof-' + key, 'qr-seed-proof'])),
   ...Object.fromEntries([...SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'pagination_seed_count'].map(key => ['suite-proof-' + key, 'suite-seed-proof-mismatch'])),
   ...Object.fromEntries([...PROVIDER_FLAGS, 'schema', 'run_id', 'source_sha', 'catalog_sku', 'delivery_proofs', 'delivery_proofs.text', 'delivery_proofs.catalog_image', 'delivery_proofs.storage_image', 'delivery_proofs-extra'].map(key => ['provider-proof-' + key, 'provider-proof-mismatch'])),
   ...Object.fromEntries(GROUPS.authenticated.map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),
@@ -1104,7 +1159,7 @@ for (const [name, catalogResult, available] of providerCatalogCases) {
     assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
     assert.equal(value.catalogCalls.length, 1);
     assert.deepEqual(value.catalogCalls[0], { input: PROVIDER_CATALOG_SQL,
-      ...CATALOG_EXECUTOR_OPTIONS, afterStages: ['files-volume', 'files-canonical', 'suite-seed'] });
+      ...CATALOG_EXECUTOR_OPTIONS, afterStages: ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed'] });
     const published = value.providerMetadata['provider-catalog.json'];
     assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
     assert.equal(value.providerMetadata['provider-diagnostic.json'], undefined);
@@ -1135,7 +1190,7 @@ for (const [name, raw, available] of providerRawCases) {
     assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
     assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
     assert.equal(value.catalogCalls.length, 1);
-    assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+    assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification']);
     const published = value.providerMetadata['provider-diagnostic.json'];
     assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
     if (available) assert.deepEqual(published.value, { available: true, ...providerFailureMetadata });
@@ -1205,7 +1260,7 @@ test('ownership controller confirms only the authenticated step, before seeds an
   assert.equal(value.ownershipCalls[0].afterMigrations, 1); assert.equal(value.ownershipCalls[0].beforeSeeds, 0);
   assert.equal(value.ownershipMetadata.mode, 0o600); assert.equal(value.ownershipMetadata.value.confirmed, true);
   assert.equal(value.ownershipMetadata.value.verified.length, 6);
-  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification']);
   assert.equal(value.catalogCalls.length, 1, 'the independent catalog is still observed after seeds');
   assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
   assert.equal(value.publicFiles.some(name => /ownership.*\.log$/.test(name)), false);
@@ -1263,4 +1318,206 @@ test('ownership success cannot override a later failure of the real verifier pat
   assert.equal(value.exit, 1); assert.equal(value.state.error, 'verify-providers');
   assert.equal(value.browserCalls, 0);
   assert.deepEqual(value.providerMetadata['provider-diagnostic.json'].value, { available: true, ...providerFailureMetadata });
+});
+
+// Browser observations exercise the real reader/classifier; subprocesses remain
+// controlled in controllerFixture, while publication and the redactor stay real.
+const browserPlain = value => JSON.parse(JSON.stringify(value));
+const browserDecoded = { read: 'ok', read_error_code: null, parse: 'decoded' };
+const browserUnknown = { read: 'unknown', read_error_code: 'unknown', parse: 'unknown' };
+const browserPrivate = 'private-sentinel://must-never-publish@example.test/path?token=secret';
+for (const [name, raw, expected, parse] of [
+  ['object', '{"value":"private-sentinel"}', { value: 'private-sentinel' }, 'decoded'],
+  ['null', 'null', null, 'decoded'], ['array', '[]', [], 'decoded'],
+  ['boolean', 'false', false, 'decoded'], ['number', '0', 0, 'decoded'],
+  ['string', '"private-sentinel"', 'private-sentinel', 'decoded'],
+  ['truncated', '{"value":', undefined, 'invalid'], ['empty', '', undefined, 'invalid'],
+  ['undefined', undefined, undefined, 'invalid'],
+]) test('browser diagnostic reader: ' + name, () => {
+  let reads = 0;
+  const result = readBrowserReportOnce(() => { reads++; return raw; });
+  assert.equal(reads, 1); assert.deepEqual(result.report, expected);
+  assert.deepEqual(browserPlain(result.observation), { read: 'ok', read_error_code: null, parse });
+});
+for (const code of ['ENOENT', 'EACCES', 'EPERM', 'EISDIR', 'EIO', 'EMFILE', 'ENFILE', browserPrivate]) {
+  test('browser diagnostic reader: closed read code ' + (code === browserPrivate ? 'unknown' : code), () => {
+    let reads = 0;
+    const result = readBrowserReportOnce(() => { reads++; throw { code, message: browserPrivate, path: browserPrivate }; });
+    assert.equal(reads, 1); assert.equal(result.report, undefined);
+    assert.deepEqual(browserPlain(result.observation), { read: code === 'ENOENT' ? 'missing' : 'failed',
+      read_error_code: code === browserPrivate ? 'unknown' : code, parse: 'not-attempted' });
+  });
+}
+for (const [name, thrown] of [['null', null], ['undefined', undefined], ['false', false], ['zero', 0], ['empty', ''], ['symbol', Symbol('x')], ['bigint', 0n]]) {
+  test('browser diagnostic reader: primitive throw ' + name, () => {
+    const result = readBrowserReportOnce(() => { throw thrown; });
+    assert.equal(result.report, undefined);
+    assert.deepEqual(browserPlain(result.observation), { read: 'failed', read_error_code: 'unknown', parse: 'not-attempted' });
+  });
+}
+test('browser diagnostic reader decodes once and does not retry a later file', () => {
+  for (const raw of ['{}', '{"truncated":']) {
+    const original = JSON.parse;
+    let parses = 0;
+    JSON.parse = (...args) => { parses++; return original(...args); };
+    try { readBrowserReportOnce(() => raw); } finally { JSON.parse = original; }
+    assert.equal(parses, 1);
+  }
+  let reads = 0;
+  const result = readBrowserReportOnce(() => { if (++reads === 1) throw { code: 'ENOENT' }; return '{}'; });
+  assert.equal(reads, 1); assert.equal(result.report, undefined);
+});
+
+for (const [name, status, expected] of [
+  ['zero', 0, 0], ['exit-one', 1, 1], ['last-exit', 255, 255], ['null', null, null],
+  ['negative', -1, 'unknown'], ['fraction', 0.5, 'unknown'], ['large', 256, 'unknown'],
+  ['nan', NaN, 'unknown'], ['infinity', Infinity, 'unknown'], ['string', browserPrivate, 'unknown'],
+  ['bigint', 0n, 'unknown'], ['symbol', Symbol('x'), 'unknown'], ['absent', undefined, 'unknown'],
+]) test('browser diagnostic process status: ' + name, () => {
+  assert.equal(browserResultDiagnostic({ status }, browserDecoded).process.status, expected);
+});
+for (const signal of ['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGHUP', 'SIGABRT', 'SIGSEGV', 'SIGBUS', 'SIGILL', 'SIGFPE', 'SIGQUIT', 'SIGPIPE', 'SIGTRAP']) {
+  test('browser diagnostic process signal: ' + signal, () => {
+    assert.equal(browserResultDiagnostic({ status: null, signal }, browserDecoded).process.signal, signal);
+  });
+}
+for (const code of ['ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES', browserPrivate]) {
+  test('browser diagnostic process error code: ' + (code === browserPrivate ? 'unknown' : code), () => {
+    const result = browserResultDiagnostic({ status: 0, error: { code, message: browserPrivate, stack: browserPrivate, cause: browserPrivate } }, browserDecoded);
+    assert.equal(result.process.error, 'present');
+    assert.equal(result.process.error_code, code === browserPrivate ? 'unknown' : code);
+    assert.equal(JSON.stringify(result).includes(browserPrivate), false);
+  });
+}
+for (const [name, value] of [['private-string', browserPrivate], ['object', { toString() { throw Error('must not coerce'); } }], ['integer', 15]]) {
+  test('browser diagnostic does not coerce signal or error code: ' + name, () => {
+    const result = browserResultDiagnostic({ status: 0, signal: value, error: { code: value } }, browserDecoded);
+    assert.equal(result.process.signal, 'unknown'); assert.equal(result.process.error_code, 'unknown');
+  });
+}
+for (const key of ['status', 'signal', 'error']) {
+  test('browser diagnostic does not execute process getter: ' + key, () => {
+    let accesses = 0;
+    const value = { status: 0, signal: null };
+    Object.defineProperty(value, key, { get() { accesses++; throw Error(browserPrivate); } });
+    assert.equal(browserResultDiagnostic(value, browserDecoded).process[key], 'unknown');
+    assert.equal(accesses, 0);
+  });
+}
+for (const [name, consume] of [
+  ['process', value => browserResultDiagnostic(value, browserDecoded)],
+  ['process-error', value => browserResultDiagnostic({ status: 0, error: value }, browserDecoded)],
+  ['read-error', value => readBrowserReportOnce(() => { throw value; })],
+  ['observation', value => browserResultDiagnostic({ status: 0 }, value)],
+]) {
+  test('browser diagnostic never invokes Proxy traps: ' + name, () => {
+    let traps = 0;
+    const value = new Proxy({}, { get() { traps++; throw Error(browserPrivate); },
+      getOwnPropertyDescriptor() { traps++; throw Error(browserPrivate); }, getPrototypeOf() { traps++; throw Error(browserPrivate); } });
+    assert.doesNotThrow(() => consume(value)); assert.equal(traps, 0);
+  });
+  test('browser diagnostic handles revoked Proxy: ' + name, () => {
+    const { proxy, revoke } = Proxy.revocable({}, {}); revoke();
+    assert.doesNotThrow(() => consume(proxy));
+  });
+}
+test('browser diagnostic never executes inherited getters or toJSON and bounds traversal', () => {
+  let accesses = 0;
+  const accessor = { get status() { accesses++; return 0; }, toJSON() { throw Error(browserPrivate); } };
+  assert.equal(browserResultDiagnostic(Object.create(accessor), browserDecoded).process.status, 'unknown');
+  const error = { get code() { accesses++; return 'ETIMEDOUT'; } };
+  assert.equal(browserResultDiagnostic({ status: null, error }, browserDecoded).process.error_code, 'unknown');
+  assert.equal(readBrowserReportOnce(() => { throw error; }).observation.read_error_code, 'unknown');
+  for (const field of ['read', 'read_error_code', 'parse']) {
+    const value = { ...browserDecoded };
+    Object.defineProperty(value, field, { get() { accesses++; return browserDecoded[field]; } });
+    assert.deepEqual(browserPlain(browserResultDiagnostic({ status: 0 }, value).report), browserUnknown);
+  }
+  assert.equal(accesses, 0);
+  let deep = { status: 0 };
+  for (let depth = 0; depth < 8; depth++) deep = Object.create(deep);
+  assert.equal(browserResultDiagnostic(deep, browserDecoded).process.status, 'unknown');
+  assert.equal(browserResultDiagnostic(Object.create({ status: 0 }), browserDecoded).process.status, 0);
+});
+for (const [name, observation] of [
+  ['absent', undefined], ['null', null], ['empty', {}],
+  ['private-read', { ...browserDecoded, read: browserPrivate }],
+  ['private-code', { read: 'failed', read_error_code: browserPrivate, parse: 'not-attempted' }],
+  ['missing-with-denied', { read: 'missing', read_error_code: 'EACCES', parse: 'not-attempted' }],
+  ['failed-with-missing', { read: 'failed', read_error_code: 'ENOENT', parse: 'not-attempted' }],
+  ['parsed-after-failed-read', { read: 'failed', read_error_code: 'EIO', parse: 'decoded' }],
+  ['read-ok-with-error', { ...browserDecoded, read_error_code: 'EIO' }],
+  ['unknown-parse', { ...browserDecoded, parse: browserPrivate }],
+]) test('browser diagnostic rejects contradictory observation: ' + name, () => {
+  assert.deepEqual(browserPlain(browserResultDiagnostic({ status: 0 }, observation).report), browserUnknown);
+});
+test('browser diagnostic serializes only frozen closed records', () => {
+  const result = browserResultDiagnostic({ status: 0, stdout: browserPrivate, stderr: browserPrivate, duration: browserPrivate, toJSON() { throw Error(browserPrivate); } }, { ...browserDecoded, private: browserPrivate });
+  assert.deepEqual(browserPlain(result), { schema: 1, process: { status: 0, signal: null, error: 'none', error_code: null }, report: browserDecoded });
+  for (const record of [result, result.process, result.report]) {
+    assert.equal(Object.getPrototypeOf(record), null); assert.equal(Object.isFrozen(record), true);
+    assert.throws(() => { record.private = browserPrivate; }, TypeError);
+  }
+});
+
+const browserTimeout = { status: null, signal: 'SIGTERM', error: { code: 'ETIMEDOUT', message: browserPrivate }, stdout: '', stderr: '' };
+const browserControllerCases = [
+  { name: 'login passes', scope: 'login' },
+  { name: 'authenticated passes' },
+  { name: 'logged-out passes', group: 'deslogado-principal' },
+  { name: 'missing JSON', observation: { report: undefined }, failure: 'suite-result-not-clean', read: 'missing', parse: 'not-attempted' },
+  { name: 'read denied', observation: { readError: { code: 'EACCES', message: browserPrivate } }, failure: 'suite-result-not-clean', read: 'failed', parse: 'not-attempted' },
+  { name: 'truncated JSON', observation: { report: '{"config":' }, failure: 'suite-result-not-clean', parse: 'invalid' },
+  { name: 'decoded invalid shape', observation: { report: '{}' }, failure: 'suite-result-not-clean', invalidShape: true },
+  { name: 'decoded null', observation: { report: 'null' }, failure: 'suite-result-not-clean', invalidShape: true },
+  { name: 'timeout and missing JSON', observation: { result: browserTimeout, report: undefined }, failure: 'browser-suite-failed', read: 'missing', parse: 'not-attempted', code: 'ETIMEDOUT' },
+  { name: 'ENOBUFS and valid JSON', observation: { result: { ...browserTimeout, error: { code: 'ENOBUFS', message: browserPrivate } } }, failure: 'browser-suite-failed', code: 'ENOBUFS' },
+  { name: 'zero status with error', observation: { result: { ...ok(), error: { code: browserPrivate } } }, failure: 'browser-suite-failed', code: 'unknown' },
+  { name: 'zero status with signal', observation: { result: { ...ok(), signal: 'SIGKILL' } }, failure: 'browser-suite-failed' },
+  { name: 'process failure and valid JSON', observation: { result: error() }, failure: 'browser-suite-failed' },
+  { name: 'test failure and clean process', observation: { report: JSON.stringify(suiteJson({ fault: 'suite-browser-failure' })) }, failure: 'suite-result-not-clean' },
+  { name: 'explicit FIXME remains failure', fault: 'explicit-skip', failure: 'suite-result-not-clean' },
+  { name: 'known platform skips remain classified', fault: 'known-platform-skips', knownSkips: true },
+  { name: 'diagnostic write failure preserves success', observation: { writeFailure: true }, unpublished: true },
+  { name: 'diagnostic write failure preserves process error', observation: { writeFailure: true, result: browserTimeout }, failure: 'browser-suite-failed', unpublished: true },
+  { name: 'redactor preserves process failure and blocks upload', fault: 'redactor-failure', observation: { result: browserTimeout }, failure: 'browser-suite-failed', redactorFailure: true },
+  { name: 'redactor failure blocks upload after browser success', fault: 'redactor-failure', failure: 'report-redaction-failed', redactorFailure: true },
+];
+for (const scenario of browserControllerCases) {
+  test('browser diagnostic controller: ' + scenario.name, async t => {
+    const value = await controllerFixture(t, scenario.fault ?? 'none', {
+      scope: scenario.scope ?? 'suite', group: scenario.group ?? 'authenticated', browserObservation: scenario.observation ?? {},
+    });
+    assert.equal(value.exit, scenario.failure ? 1 : 0);
+    assert.equal(value.state.error, scenario.failure);
+    assert.equal(value.state.success, !scenario.failure);
+    assert.equal(value.browserCalls, 1); assert.equal(value.listCalls, 1); assert.equal(value.browserReadCalls, 1);
+    assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.match(value.reportOutput, new RegExp('report_ready=' + String(!scenario.redactorFailure) + '\\n'));
+    if (scenario.unpublished) assert.equal(value.browserMetadata, null);
+    else {
+      assert.equal(value.browserMetadata.mode, 0o600);
+      const diagnostic = value.browserMetadata.value;
+      assert.deepEqual(Object.keys(diagnostic), ['schema', 'process', 'report']);
+      assert.deepEqual(Object.keys(diagnostic.process), ['status', 'signal', 'error', 'error_code']);
+      assert.deepEqual(Object.keys(diagnostic.report), ['read', 'read_error_code', 'parse']);
+      assert.equal(diagnostic.report.read, scenario.read ?? 'ok');
+      assert.equal(diagnostic.report.parse, scenario.parse ?? 'decoded');
+      if (scenario.code) assert.equal(diagnostic.process.error_code, scenario.code);
+      assert.equal(JSON.stringify(diagnostic).includes(browserPrivate), false);
+    }
+    if (scenario.invalidShape) {
+      assert.equal(value.browserSummary.inventoryVerified, false);
+      assert.ok(value.browserSummary.reasons.includes('PLAYWRIGHT_REPORT_INVALID_SHAPE'));
+    }
+    if (scenario.knownSkips) {
+      assert.equal(value.browserSummary.counts.known_runtime_skip, 2);
+      assert.equal(value.browserSummary.ok, true); assert.equal(value.browserSummary.allPassed, false);
+    }
+  });
+}
+test('browser diagnostic is absent when the browser never starts', async t => {
+  const value = await controllerFixture(t, 'pending-pin', { browserObservation: {} });
+  assert.equal(value.browserCalls, 0); assert.equal(value.browserReadCalls, 0);
+  assert.equal(value.browserMetadata, null); assert.equal(value.exit, 1);
 });

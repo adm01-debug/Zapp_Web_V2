@@ -35,7 +35,9 @@ test.describe('Contatos — vistas', () => {
     await expect(page.locator('[data-rfd-droppable-id]').first()).toBeVisible();
 
     await pickSecondaryView(page, 'Mapa');
-    await expect(page.getByText('contatos mapeados')).toBeVisible();
+    const mapCount = page.getByTestId('map-count');
+    await expect(mapCount).toBeVisible();
+    await expect(mapCount).toContainText('contatos carregados');
 
     await pickSecondaryView(page, 'Analytics');
     await expect(page.getByRole('heading', { name: 'Analytics de Contatos' })).toBeVisible();

@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { QR_FIXTURE } from './qr-contract.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { networkInterfaces } from 'node:os';
 import { pathToFileURL } from 'node:url';
@@ -153,12 +154,17 @@ export function createProviders({ env = process.env, interfaces = networkInterfa
   if (!/^net:\[\d+\]$/.test(networkNamespace)) fail('invalid-provider-namespace');
   const adminKey = env.EVOLUTION_API_KEY, instanceKey = env.EVOLUTION_DEFAULT_INSTANCE_TOKEN;
   const catalogKey = env.PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY;
+  const qrKey = env.E2E_QR_INSTANCE_TOKEN;
   if (!adminKey?.startsWith('e2e-local-') || !instanceKey?.startsWith('e2e-instance-') ||
       !catalogKey?.startsWith('e2e-catalog-')) fail('provider-synthetic-keys-missing');
+  if (!/^e2e-instance-qr-[a-f0-9]{48}$/.test(qrKey ?? '') || qrKey === instanceKey || qrKey === adminKey) fail('provider-qr-key');
   const identity = { schema: 1, run_id: runId, source_sha: sourceSha, origin: PROVIDER_ORIGIN, network_namespace: networkNamespace };
   const messages = [], mediaReceipts = [], data = catalogData(now());
+  const qr = { generation: 0, connects: 0, qr_reads: 0, status_reads: 0, delivered: 0 };
+  let generationReads = 0;
   const evidence = () => ({ ...identity, count: messages.length, message_ids: [...messages],
-    media_receipts: mediaReceipts.map(receipt => ({ ...receipt })) });
+    media_receipts: mediaReceipts.map(receipt => ({ ...receipt })),
+    qr: { instance: QR_FIXTURE.instance, image_sha256: QR_FIXTURE.imageSha256, ...qr } });
   const handler = async request => {
     const url = new URL(request.url);
     if (url.origin !== PROVIDER_ORIGIN) return json({ error: 'local-origin-required' }, 400);
@@ -183,6 +189,39 @@ export function createProviders({ env = process.env, interfaces = networkInterfa
       if (!['GET', 'HEAD'].includes(request.method)) return json({ error: 'read-only-catalog' }, 405);
       try { return catalogResponse(request, url, data[table]); }
       catch { return json({ code: 'PGRST100', message: 'Unsupported synthetic catalog query' }, 400); }
+    }
+    // GO selects its instance by credential. This third token has no send,
+    // create, delete, logout or callback capability, even in the local provider.
+    const qrRoute = ['/instance/connect', '/instance/qr'].includes(url.pathname);
+    if (qrRoute || request.headers.get('apikey') === qrKey) {
+      if (request.headers.get('apikey') !== qrKey) return json({ error: 'invalid-qr-credential' }, 401);
+      if (url.search || !['/instance/connect', '/instance/qr', '/instance/status'].includes(url.pathname)) {
+        return json({ error: 'unsupported-qr-route' }, 404);
+      }
+      if (url.pathname === '/instance/connect') {
+        if (request.method !== 'POST') return json({ error: 'method-not-allowed' }, 405);
+        let body;
+        try {
+          const raw = await request.text();
+          if (Buffer.byteLength(raw) > MAX_BODY) return json({ error: 'body-too-large' }, 413);
+          body = JSON.parse(raw);
+        } catch { return json({ error: 'invalid-qr-body' }, 400); }
+        if (!object(body) || Object.keys(body).sort().join(',') !== 'immediate,subscribe,webhookUrl' ||
+            body.immediate !== true || !Array.isArray(body.subscribe) || body.subscribe.length !== 1 ||
+            body.subscribe[0] !== 'ALL' || body.webhookUrl !== ORIGIN + '/functions/v1/evolution-webhook') {
+          return json({ error: 'invalid-qr-body' }, 400);
+        }
+        qr.generation += 1; qr.connects += 1; generationReads = 0;
+        return json({ message: 'success', data: { Name: QR_FIXTURE.instance } });
+      }
+      if (request.method !== 'GET') return json({ error: 'method-not-allowed' }, 405);
+      if (url.pathname === '/instance/status') {
+        qr.status_reads += 1;
+        return json({ message: 'success', data: { Name: QR_FIXTURE.instance, Connected: false, LoggedIn: false } });
+      }
+      qr.qr_reads += 1; generationReads += 1;
+      return json({ message: 'success', data: qr.generation > 0 && generationReads > 1
+        ? { code: QR_FIXTURE.payload, qrcode: QR_FIXTURE.image } : {} });
     }
     const isAdmin = url.pathname === '/instance/all';
     if (request.headers.get('apikey') !== (isAdmin ? adminKey : instanceKey)) return json({ error: 'invalid-provider-credential' }, 401);

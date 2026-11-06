@@ -104,7 +104,7 @@ export function ConnectionCard({
 
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
-      <Card className="border border-secondary/20 bg-card hover:border-secondary/40 transition-all min-w-0">
+      <Card data-testid="connection-card" className="border border-secondary/20 bg-card hover:border-secondary/40 transition-all min-w-0">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
