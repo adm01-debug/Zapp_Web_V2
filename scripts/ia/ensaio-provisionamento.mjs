@@ -298,6 +298,37 @@ function literais(valores) {
   });
 }
 
+/** Recusa planos alterados que poderiam misturar dados reais ao DML ou ampliar a reversão. */
+export function validarPlanoSeguro(plano) {
+  if (plano?.prefixo !== PREFIXO_ENSAIO || plano?.dominio !== DOMINIO_ENSAIO) {
+    throw new Error('ensaio: marcadores do plano foram alterados');
+  }
+  if (!Array.isArray(plano.departamentos) || plano.departamentos.length !== DEPARTAMENTOS_ENSAIO.length) {
+    throw new Error('ensaio: departamentos do plano estão incompletos');
+  }
+  const nomes = plano.departamentos.map((departamento) => departamento.nome);
+  if (nomes.some((nome, indice) => nome !== DEPARTAMENTOS_ENSAIO[indice])) {
+    throw new Error('ensaio: departamentos do plano divergem do contrato');
+  }
+  for (const departamento of plano.departamentos) {
+    if (!departamento.fila?.nome?.startsWith(PREFIXO_ENSAIO)) {
+      throw new Error('ensaio: fila sem marcador reservado');
+    }
+    if (!Array.isArray(departamento.contatos) || departamento.contatos.length !== CONTATOS_POR_DEPARTAMENTO) {
+      throw new Error(`ensaio: contatos incompletos em ${departamento.nome}`);
+    }
+    for (const contato of departamento.contatos) {
+      if (!contato.nome?.startsWith(PREFIXO_ENSAIO)) throw new Error('ensaio: contato sem marcador reservado');
+      if (!contato.telefone?.startsWith(PREFIXO_TELEFONE_ENSAIO)) throw new Error('ensaio: telefone fora da faixa reservada');
+      if (!contato.email?.endsWith(`@${DOMINIO_ENSAIO}`)) throw new Error('ensaio: e-mail fora do domínio reservado');
+      if (!Array.isArray(contato.mensagens) || contato.mensagens.some((mensagem) => !mensagem.content?.includes(PREFIXO_ENSAIO))) {
+        throw new Error('ensaio: mensagem sem marcador reservado');
+      }
+    }
+  }
+  return plano;
+}
+
 /** Cabeçalho comum aos dois DML (provisionamento e remoção). */
 export function cabecalhoSql(plano, rotulo) {
   return [
@@ -312,6 +343,7 @@ export function cabecalhoSql(plano, rotulo) {
 
 /** DML aditivo e idempotente do ensaio (departamentos, filas, contatos e mensagens). */
 export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
+  validarPlanoSeguro(plano);
   const linhas = [...cabecalhoSql(plano, 'provisionamento'), 'begin;'];
 
   const departamentos = plano.departamentos.map((d) => [
@@ -382,7 +414,7 @@ export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
     mensagens.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
     'on conflict (id) do update set contact_id = excluded.contact_id, sender = excluded.sender,',
     '  content = excluded.content, message_type = excluded.message_type,',
-    '  transcription = excluded.transcription;',
+    '  transcription = excluded.transcription, is_read = excluded.is_read;',
     '',
     'commit;',
   );
@@ -392,6 +424,7 @@ export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
 
 /** DML de reversão: tudo por prefixo/marcador, nada por id solto. */
 export function sqlDeRemocao(plano = planoDeEnsaio()) {
+  validarPlanoSeguro(plano);
   const rotulo = `${plano.prefixo}`;
   return (
     [
@@ -427,12 +460,16 @@ export function sqlDeRemocao(plano = planoDeEnsaio()) {
  */
 export function conferirAlvoLocal(url) {
   if (url === undefined || url === null || url === '') return null;
-  let host;
+  let alvo;
   try {
-    host = new URL(url).hostname;
+    alvo = new URL(url);
   } catch {
     throw new Error(`ensaio: DB_URL não é uma URL válida (${url}). Proibido seguir sem saber o alvo.`);
   }
+  if (!['postgres:', 'postgresql:'].includes(alvo.protocol)) {
+    throw new Error(`ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol}).`);
+  }
+  const host = alvo.hostname;
   const locais = ['127.0.0.1', 'localhost', '::1', '[::1]'];
   if (!locais.includes(host)) {
     throw new Error(
@@ -480,8 +517,28 @@ Aplicar (banco local da cópia de trabalho, nunca produção):
   bun scripts/ia/ensaio-provisionamento.mjs --sql | zapp-db-local psql <cópia> [nome]
 `;
 
-function main(argv) {
-  const flag = argv[2] ?? '--plano';
+const FLAGS = new Set(['--plano', '--sql', '--remover', '--ajuda', '-h']);
+
+export function interpretarArgumentos(argv = []) {
+  if (!Array.isArray(argv) || argv.length > 1) {
+    throw new Error('informe exatamente uma opção');
+  }
+  const flag = argv[0] ?? '--plano';
+  if (!FLAGS.has(flag)) throw new Error(`flag desconhecida (${flag})`);
+  return flag;
+}
+
+export function executarCli(
+  argv = [],
+  { env = process.env, stdout = process.stdout, stderr = process.stderr } = {},
+) {
+  let flag;
+  try {
+    flag = interpretarArgumentos(argv);
+  } catch (error) {
+    stderr.write(`ensaio: ${error.message}\n${AJUDA}`);
+    return 1;
+  }
   const plano = planoDeEnsaio();
 
   if (flag === '--ajuda' || flag === '-h') {
@@ -493,16 +550,21 @@ function main(argv) {
     return 0;
   }
   if (flag === '--sql' || flag === '--remover') {
-    const host = conferirAlvoLocal(process.env.DB_URL);
-    if (host) process.stderr.write(`ensaio: alvo conferido (${host})\n`);
-    else process.stderr.write('ensaio: DB_URL ausente — nada a conferir; a aplicação é por zapp-db-local (local)\n');
-    process.stdout.write(flag === '--sql' ? sqlDeProvisionamento(plano) : sqlDeRemocao(plano));
+    let host;
+    try {
+      host = conferirAlvoLocal(env.DB_URL);
+    } catch (error) {
+      stderr.write(`${error.message}\n`);
+      return 1;
+    }
+    if (host) stderr.write(`ensaio: alvo conferido (${host})\n`);
+    else stderr.write('ensaio: DB_URL ausente — nada a conferir; a aplicação é por zapp-db-local (local)\n');
+    stdout.write(flag === '--sql' ? sqlDeProvisionamento(plano) : sqlDeRemocao(plano));
     return 0;
   }
-  process.stderr.write(`ensaio: flag desconhecida (${flag})\n${AJUDA}`);
-  return 1;
+  throw new Error(`ensaio: estado de CLI não tratado (${flag})`);
 }
 
 if (process.argv[1] && process.argv[1].endsWith('ensaio-provisionamento.mjs')) {
-  process.exitCode = main(process.argv);
+  process.exitCode = executarCli(process.argv.slice(2));
 }
