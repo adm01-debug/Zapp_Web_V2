@@ -295,7 +295,7 @@ export function resetRateLimitServiceClient(): void {
 }
 function getServiceClient(): Promise<RateLimitRpcClient> {
   if (!serviceClientPromise) {
-    serviceClientPromise = import("https://esm.sh/@supabase/supabase-js@2.87.1").then(({ createClient }) =>
+    serviceClientPromise = import("npm:@supabase/supabase-js@2.87.1").then(({ createClient }) =>
       createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
         auth: { persistSession: false },
       })
@@ -512,7 +512,7 @@ export async function requireAuth(
     const result: AuthUserResult = opts.getUser
       ? await opts.getUser(authHeader)
       : await (async (): Promise<AuthUserResult> => {
-          const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
+          const { createClient } = await import("npm:@supabase/supabase-js@2.87.1");
           const supabaseUrl = requireEnv("SUPABASE_URL");
           const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
           const client = createClient(supabaseUrl, anonKey, {
@@ -586,7 +586,7 @@ export async function requireAuth(
 
 export async function createAuthedClient(req: Request) {
   const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
-  const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
+  const { createClient } = await import("npm:@supabase/supabase-js@2.87.1");
   const supabaseUrl = requireEnv("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
   return createClient(supabaseUrl, anonKey, {

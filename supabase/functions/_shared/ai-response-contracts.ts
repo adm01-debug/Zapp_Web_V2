@@ -24,7 +24,7 @@
  * (fonte única): o enum do schema é construído A PARTIR deles, então não existe
  * lista duplicada para dessincronizar.
  */
-import { z } from "https://esm.sh/zod@3.23.8";
+import { z } from "npm:zod@3.23.8";
 import { SENTIMENT_VALUES, URGENCY_VALUES } from "./ai-vocabulary.ts";
 
 // `SENTIMENT_VALUES`/`URGENCY_VALUES` podem chegar como tupla `as const` ou como

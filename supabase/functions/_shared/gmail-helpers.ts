@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { Logger, requireEnv } from "./validation.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";

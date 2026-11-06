@@ -12,8 +12,8 @@
 // O cliente do banco aqui e o SERVICE — ele NAO passa por RLS, entao a regra de visibilidade e aplicada
 // EXPLICITAMENTE neste arquivo (as policies da migration 20261003132707 sao a segunda camada, para quem
 // consultar a tabela por outro caminho). As decisoes ficam em funcoes puras, testadas sem banco.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
-import { z } from 'https://esm.sh/zod@3.23.8';
+import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
+import { z } from 'npm:zod@3.23.8';
 import {
   enforceRateLimit, errorResponse, getClientIP, handleCors, jsonResponse, requireAuth, requireEnv,
 } from '../_shared/validation.ts';

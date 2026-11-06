@@ -13,7 +13,7 @@
  *   GMAIL_CAS_JWT           — JWT service_role do banco local
  * Sem elas, registra UM teste ignorado e o CI segue verde.
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { resetGmailHistoryCursor } from "../gmail-helpers.ts";
 
 const pgrest = Deno.env.get("GMAIL_CAS_POSTGREST_URL");
