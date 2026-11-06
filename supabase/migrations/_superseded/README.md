@@ -132,6 +132,18 @@ Confirmação: `SELECT count(*) FROM supabase_migrations.schema_migrations WHERE
 atualizados para 6 parâmetros, então aplicar via `producao-ddl` com aprovação do Joaquim.
 Não mover de volta para `supabase/migrations/`.
 
+### `20261026240300_drop_bkp_261023.sql`
+
+**Ainda não aplicada — movida em 06/11/2026 para restaurar a paridade do DB Live Guard.**
+O arquivo entrou na pasta ativa em 02/11 afirmando que a versão estava no ledger, mas a consulta
+ao banco oficial do run `42143639908` confirmou que não existe registro para `20261026240300`.
+
+O próprio arquivo proíbe o `DROP SCHEMA _bkp_261023 CASCADE` antes de 22/11/2026. Manter o arquivo
+na pasta ativa faria o `db push` tentar apagar o snapshot antes desse prazo e deixaria a paridade
+arquivos/ledger permanentemente vermelha. Para executar depois do prazo, criar uma migration nova,
+com versão acima do máximo vivo, após validar os contatos e a ausência de incidentes conforme o
+roteiro preservado neste arquivo; não mover esta versão de volta para a pasta ativa.
+
 ## Regra
 
 Nao apagar. Nao reaplicar. Servem como registro historico do schema anterior a migracao.
