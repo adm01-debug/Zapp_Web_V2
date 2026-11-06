@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "abfe326881273314d078651511e0149d01456293",
+  "sha": "86c9ec831126241588522705c12847ffb08b53d6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 11:13 UTC",
+  "generated_at": "2026-11-06 11:24 UTC",
   "files_total": 8063,
-  "code_files": 5964,
-  "code_lines": 1032500
+  "code_files": 5963,
+  "code_lines": 1032468
  },
  "version": "1.3.2",
- "facts_hash": "2920fd9332f2f8d6",
+ "facts_hash": "3dd67512e68767d8",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -43603,7 +43603,6 @@
    "supabase/migrations/20261026210300_reconcile_team_reactions_force_conversation_id_trig.sql",
    "supabase/migrations/20261026220300_classificar_rls_sem_policy.sql",
    "supabase/migrations/20261026230300_decidir_schemas_backup.sql",
-   "supabase/migrations/20261026240300_drop_bkp_261023.sql",
    "supabase/migrations/20261030100000_copilot_sessions.sql",
    "supabase/migrations/20261030110000_copilot_insights.sql",
    "supabase/migrations/20261030135126_revoke_public_table_structure_grants.sql",
@@ -69664,8 +69663,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1082,
-   "lines": 104153,
+   "files": 1081,
+   "lines": 104121,
    "tables": [
     "audit_logs",
     "departments",
@@ -95066,10 +95065,6 @@
    {
     "file": "supabase/migrations/20261016002012_my_network_status.sql",
     "text": "ip_seen  — do MESMO par de cabecalhos de getClientIP (validation.ts):"
-   },
-   {
-    "file": "supabase/migrations/20261026240300_drop_bkp_261023.sql",
-    "text": ") FROM _bkp_261023.contacts;           -- deve bater ≥ 3730"
    }
   ],
   "db_constraints": [
@@ -377356,13 +377351,6 @@
    "path": "supabase/migrations/20261026230300_decidir_schemas_backup.sql",
    "lines": 35
   },
-  "supabase/migrations/20261026240300_drop_bkp_261023.sql": {
-   "path": "supabase/migrations/20261026240300_drop_bkp_261023.sql",
-   "lines": 32,
-   "rule_comments": [
-    ") FROM _bkp_261023.contacts;           -- deve bater ≥ 3730"
-   ]
-  },
   "supabase/migrations/20261030100000_copilot_sessions.sql": {
    "path": "supabase/migrations/20261030100000_copilot_sessions.sql",
    "lines": 55,
@@ -381293,10 +381281,22 @@
   }
  },
  "git": {
-  "sha": "abfe326881273314d078651511e0149d01456293",
+  "sha": "86c9ec831126241588522705c12847ffb08b53d6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "86c9ec8",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: reconciliar drift do DB Live Guard (#2741)",
+    "files": [
+     "scripts/db-audit/migration-evidence.json",
+     "scripts/db-audit/replay-known-failures.json",
+     "supabase/migrations/_superseded/20261026240300_drop_bkp_261023.sql",
+     "supabase/migrations/_superseded/README.md"
+    ]
+   },
    {
     "sha": "abfe326",
     "date": "2026-11-06",
@@ -381667,63 +381667,6 @@
     "author": "adm01-debug",
     "subject": "chore: adicionar __pycache__/ ao .gitignore (#2703)",
     "files": []
-   },
-   {
-    "sha": "46a0257",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)",
-    "files": [
-     ".github/workflows/db-guard.yml",
-     ".github/workflows/e2e-logado-isolado.yml",
-     "CLAUDE.md",
-     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-     "docs/ci/README.md",
-     "e2e/auth-diagnostics.ts",
-     "e2e/auth.setup.ts",
-     "scripts/ci/check-test-inventory.mjs",
-     "scripts/ci/ci-docs-baseline.unit.mjs",
-     "scripts/ci/e2e-auth-isolation.unit.mjs",
-     "scripts/ci/e2e-auth-setup.unit.mjs",
-     "scripts/ci/e2e-isolated-images.unit.mjs",
-     "scripts/ci/e2e-isolated-loader.unit.mjs",
-     "scripts/ci/e2e-isolated-login-seed.unit.mjs",
-     "scripts/ci/e2e-isolated-migrations.unit.mjs",
-     "scripts/ci/e2e-isolated-results.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/ci/e2e-isolated.unit.mjs",
-     "scripts/ci/edge-http-harness.unit.mjs",
-     "scripts/db-audit/README.md",
-     "scripts/db-audit/assert-deno-junit.py",
-     "scripts/db-audit/gmail-cas-postgrest.test.sh",
-     "scripts/db-audit/postgrest-internal-url.py",
-     "scripts/db-audit/talkx-engine-provider.test.sh",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/admission.d.mts",
-     "scripts/e2e-isolated/admission.mjs",
-     "scripts/e2e-isolated/gateway.mjs",
-     "scripts/e2e-isolated/images.lock.json",
-     "scripts/e2e-isolated/main/LICENSE.supabase",
-     "scripts/e2e-isolated/main/README.md",
-     "scripts/e2e-isolated/main/index.ts",
-     "scripts/e2e-isolated/main/memory-pressure.ts",
-     "scripts/e2e-isolated/migrations.mjs",
-     "scripts/e2e-isolated/platform/README.md",
-     "scripts/e2e-isolated/platform/jwt.sql",
-     "scripts/e2e-isolated/platform/realtime.sql",
-     "scripts/e2e-isolated/platform/roles.sql",
-     "scripts/e2e-isolated/platform/sources.json",
-     "scripts/e2e-isolated/platform/webhooks.sql",
-     "scripts/e2e-isolated/playwright.config.ts",
-     "scripts/e2e-isolated/resolve-images.mjs",
-     "scripts/e2e-isolated/results.mjs",
-     "scripts/e2e-isolated/run.mjs",
-     "scripts/e2e-isolated/run.sh",
-     "scripts/e2e-isolated/runtime-contract.mjs",
-     "scripts/e2e-isolated/runtime-probe.mjs",
-     "scripts/e2e-isolated/seed-login.mjs",
-     "scripts/e2e-isolated/stack.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -381737,34 +381680,14 @@
    ],
    [
     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    4
+    3
    ],
    [
     "scripts/e2e-isolated/README.md",
-    4
+    3
    ],
    [
     "scripts/e2e-isolated/run.mjs",
-    4
-   ],
-   [
-    ".github/workflows/db-guard.yml",
-    3
-   ],
-   [
-    "scripts/ci/check-test-inventory.mjs",
-    3
-   ],
-   [
-    ".github/workflows/e2e-logado-isolado.yml",
-    3
-   ],
-   [
-    "scripts/e2e-isolated/gateway.mjs",
-    3
-   ],
-   [
-    "scripts/e2e-isolated/runtime-contract.mjs",
     3
    ],
    [
@@ -381773,6 +381696,14 @@
    ],
    [
     "scripts/ci/vercel-env-cleanup.mjs",
+    2
+   ],
+   [
+    ".github/workflows/db-guard.yml",
+    2
+   ],
+   [
+    "scripts/ci/check-test-inventory.mjs",
     2
    ],
    [
@@ -381792,11 +381723,7 @@
     2
    ],
    [
-    "docs/ci/README.md",
-    2
-   ],
-   [
-    "scripts/ci/ci-docs-baseline.unit.mjs",
+    ".github/workflows/e2e-logado-isolado.yml",
     2
    ],
    [
@@ -381804,8 +381731,24 @@
     2
    ],
    [
-    "scripts/ci/e2e-isolated-results.unit.mjs",
+    "scripts/ci/e2e-isolated-tls.unit.mjs",
     2
+   ],
+   [
+    "scripts/e2e-isolated/gateway.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/runtime-contract.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/tls-probe.mjs",
+    2
+   ],
+   [
+    "scripts/db-audit/migration-evidence.json",
+    1
    ]
   ]
  }

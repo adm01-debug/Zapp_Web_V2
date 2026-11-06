@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "abfe326881273314d078651511e0149d01456293",
+  "commit": "86c9ec831126241588522705c12847ffb08b53d6",
   "branch": "main",
-  "data_commit": "2026-11-06T11:12:05Z",
+  "data_commit": "2026-11-06T11:23:19Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "86c9ec8",
+    "data": "2026-11-06",
+    "assunto": "fix: reconciliar drift do DB Live Guard (#2741)"
+   },
    {
     "sha": "abfe326",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "5f3f7bd",
     "data": "2026-11-04",
     "assunto": "fix: validar owners, áudio e coleta do E2E isolado (#2719)"
-   },
-   {
-    "sha": "1681d0a",
-    "data": "2026-11-04",
-    "assunto": "fix: restaurar foco da paleta com regressões de integração (#2718)"
    }
   ],
-  "arquivos_mudados_7d": 1022,
+  "arquivos_mudados_7d": 1023,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -157,7 +157,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 199
+    "mudancas": 195
    },
    {
     "pasta": "src/components/dashboard",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 136
+    "mudancas": 134
    },
    {
     "pasta": "src/components/ui",
@@ -230,10 +230,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
-    "mudancas": 11
-   },
-   {
     "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 11
    },
@@ -250,6 +246,10 @@
     "mudancas": 11
    },
    {
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 10
+   },
+   {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 10
    },
@@ -258,19 +258,15 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
-    "mudancas": 7
-   },
-   {
     "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 7
+    "mudancas": 8
    },
    {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
-    "mudancas": 7
+    "mudancas": 8
    },
    {
-    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
+    "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
     "mudancas": 7
    },
    {
@@ -291,6 +287,10 @@
    },
    {
     "arquivo": "scripts/db-audit/known-violations.json",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
     "mudancas": 6
    },
    {
@@ -330,7 +330,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 216,
-  "migrations": 1082,
+  "migrations": 1081,
   "cron_jobs": 25,
   "testes": 2569,
   "workflows": 20,

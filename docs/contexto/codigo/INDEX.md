@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `abfe326881273314d078651511e0149d01456293` (2026-11-06T11:12:05Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `86c9ec831126241588522705c12847ffb08b53d6` (2026-11-06T11:23:19Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -46,7 +46,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 490 |
 | edge_functions | 85 |
 | tabelas | 216 |
-| migrations | 1082 |
+| migrations | 1081 |
 | cron_jobs | 25 |
 | testes | 2569 |
 | workflows | 20 |
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55389 nós · 113436 arestas · 4091 comunidades · grafo do commit `abfe3268`
-- comunidades maiores: react (785), framer-motion (720), cn (715), ExternalProductManagement.tsx (670), vitest (651), button.tsx (603), @tanstack/react-query (470), WorkItemSheet.tsx (465), DashboardCard.tsx (459), useTalkXSegments.ts (355), ref_node_fs (348), validation.ts (305)
+- 55390 nós · 113437 arestas · 4089 comunidades · grafo do commit `86c9ec83`
+- comunidades maiores: TalkXSuppression.tsx (810), lucide-react (764), react (647), button.tsx (600), cn (501), @tanstack/react-query (471), useAuth (456), ref_node_fs (400), chat.ts (398), useSendProduct.ts (385), DashboardView.tsx (380), useRealtimeMessages.ts (368)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -398,11 +398,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (13)
 - ESTADO.md (12)
 - scripts/ci/ci-docs-baseline.unit.mjs (12)
-- .github/workflows/deploy-functions.yml (11)
 - .github/workflows/e2e-logado.yml (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
 - src/integrations/supabase/types.ts (11)
+- .github/workflows/deploy-functions.yml (10)
 - supabase/schema-manifest.json (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (8)
 
@@ -500,6 +500,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-06 `86c9ec8` fix: reconciliar drift do DB Live Guard (#2741)
 - 2026-11-06 `abfe326` chore: validar manifesto de edge functions no CI por PR (#2738)
 - 2026-11-06 `d5fc2f9` test: provar e endurecer cleanup de variáveis Vercel (#2746)
 - 2026-11-06 `5f2f9af` fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)
@@ -514,7 +515,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-05 `429bdb1` chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs
 - 2026-11-05 `341d3fd` chore: adiciona baseline local completo ao RELATORIO_CI (#2731)
 - 2026-11-05 `2f2cc18` chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)
-- 2026-11-05 `fa7d882` fix: verificar V2 por padrão no smoke de produção (#2729)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
