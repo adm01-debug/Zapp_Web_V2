@@ -23,9 +23,9 @@ partir do código e falha quando:
 |---|---|
 | A | 54 |
 | B | 1 |
-| C | 3 |
+| C | 4 |
 | D | 6 |
-| E | 21 |
+| E | 20 |
 | **total** | **85** |
 
 ## Tabela
@@ -43,7 +43,7 @@ partir do código e falha quando:
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
-| `ai-usage-outbox-drain` | E | — sem chamador no repositório — |
+| `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:68` · `supabase/config.toml:96` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
 | `auth-login` | A | `src/lib/serverLogin.ts:129` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
@@ -118,7 +118,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfós (21) — GATE B
+## Órfós (20) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador ext de
@@ -128,7 +128,6 @@ As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guard
 mantém a lista honesta.
 
 - `ai-auto-tag`
-- `ai-usage-outbox-drain`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
 - `copilot-live`
