@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "cabaa6a554d9357d3f0e143f0bfb29e6012bd7bb",
+  "commit": "712da7c00df63ae4c58fabe7ae5f8db6fb673e09",
   "branch": "main",
-  "data_commit": "2026-11-06T01:07:07Z",
+  "data_commit": "2026-11-05T22:24:04-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "712da7c",
+    "data": "2026-11-05",
+    "assunto": "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)"
+   },
    {
     "sha": "cabaa6a",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "46a0257",
     "data": "2026-11-04",
     "assunto": "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)"
-   },
-   {
-    "sha": "4fa15ac",
-    "data": "2026-11-04",
-    "assunto": "chore: adiciona __pycache__/ ao .gitignore (#2700)"
    }
   ],
-  "arquivos_mudados_7d": 1103,
+  "arquivos_mudados_7d": 1102,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 21
+    "mudancas": 20
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -210,15 +210,15 @@
     "mudancas": 15
    },
    {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 14
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "docs/ci/README.md",
     "mudancas": 13
    },
    {

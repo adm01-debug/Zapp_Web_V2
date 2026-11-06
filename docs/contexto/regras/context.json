@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "cabaa6a554d9357d3f0e143f0bfb29e6012bd7bb",
+  "sha": "712da7c00df63ae4c58fabe7ae5f8db6fb673e09",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 01:14 UTC",
+  "generated_at": "2026-11-06 01:25 UTC",
   "files_total": 8062,
   "code_files": 5963,
   "code_lines": 1032254
@@ -381276,10 +381276,19 @@
   }
  },
  "git": {
-  "sha": "cabaa6a554d9357d3f0e143f0bfb29e6012bd7bb",
+  "sha": "712da7c00df63ae4c58fabe7ae5f8db6fb673e09",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "712da7c",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)",
+    "files": [
+     "supabase/migrations/20261102032200_revoga_execute_public_cron_schedule.sql"
+    ]
+   },
    {
     "sha": "cabaa6a",
     "date": "2026-11-05",
@@ -381694,17 +381703,6 @@
      ".github/workflows/ci.yml",
      "scripts/ci/README.md",
      "scripts/ci/ci-gate.unit.mjs"
-    ]
-   },
-   {
-    "sha": "93965f7",
-    "date": "2026-11-04",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#2698)",
-    "files": [
-     "scripts/db-audit/grants-baseline.json",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-manifest.json"
     ]
    }
   ],
