@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "3ece06f86cc95a73eb4ca55c3268c5428fd8810d",
+  "sha": "3886f4b374ef128f86c967b6510604e305fcb7ec",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 18:43 UTC",
-  "files_total": 8093,
+  "generated_at": "2026-11-06 19:12 UTC",
+  "files_total": 8094,
   "code_files": 5986,
-  "code_lines": 1038514
+  "code_lines": 1038617
  },
  "version": "1.3.2",
- "facts_hash": "0f95797161974f79",
+ "facts_hash": "f4bf95325dbb6880",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67752,7 +67752,7 @@
   {
    "module": "scripts",
    "files": 433,
-   "lines": 85047,
+   "lines": 85109,
    "tables": [
     "a",
     "alem_do_limite",
@@ -69870,7 +69870,7 @@
   {
    "module": "tests",
    "files": 95,
-   "lines": 20464,
+   "lines": 20505,
    "tables": [
     "audit_logs",
     "conversation_analyses",
@@ -73554,8 +73554,7 @@
     "scripts/db-tests/run-all.mjs"
    ],
    "DB_URL": [
-    "scripts/ai-context/gerar.unit.mjs",
-    "scripts/ia/ensaio-provisionamento.mjs"
+    "scripts/ai-context/gerar.unit.mjs"
    ],
    "DENO_ENV": [
     "supabase/functions/_shared/providers/__tests__/registry.test.ts"
@@ -81550,6 +81549,58 @@
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
     "msg": "ensaio: DB_URL não é uma URL válida (${url}). Proibido seguir sem saber o alvo."
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol})."
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: contato sem marcador reservado"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: contatos incompletos em ${departamento.nome}"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: departamentos do plano divergem do contrato"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: departamentos do plano estão incompletos"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: e-mail fora do domínio reservado"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: estado de CLI não tratado (${flag})"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: fila sem marcador reservado"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: marcadores do plano foram alterados"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: mensagem sem marcador reservado"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: telefone fora da faixa reservada"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "flag desconhecida (${flag})"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "informe exatamente uma opção"
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
@@ -210124,6 +210175,10 @@
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    "name": "o gerador recusa plano sem todos os marcadores sintéticos"
+   },
+   {
+    "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
     "name": "a reversão é só por prefixo: nenhum delete alcança dado que não seja de ensaio"
    },
    {
@@ -210141,6 +210196,10 @@
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
     "name": "o gerador não guarda alvo de rede e recusa host que não seja local"
+   },
+   {
+    "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    "name": "a CLI rejeita ambiguidade, opção desconhecida e alvo inseguro sem emitir DML"
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
@@ -268327,7 +268386,7 @@
   },
   "scripts/ia/ensaio-provisionamento.mjs": {
    "path": "scripts/ia/ensaio-provisionamento.mjs",
-   "lines": 509,
+   "lines": 571,
    "exports": [
     "const PREFIXO_ENSAIO",
     "const DOMINIO_ENSAIO",
@@ -268342,17 +268401,30 @@
     "function uuidEnsaio",
     "function telefoneEnsaio",
     "function planoDeEnsaio",
+    "function validarPlanoSeguro",
     "function cabecalhoSql",
     "function sqlDeProvisionamento",
     "function sqlDeRemocao",
-    "function conferirAlvoLocal"
-   ],
-   "env": [
-    "DB_URL"
+    "function conferirAlvoLocal",
+    "function interpretarArgumentos",
+    "function executarCli"
    ],
    "errors": [
     "ensaio: DB_URL aponta para host não-local (${host}). Este provisionamento é LOCAL (regra R1): use zapp-db-local env.",
     "ensaio: DB_URL não é uma URL válida (${url}). Proibido seguir sem saber o alvo.",
+    "ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol}).",
+    "ensaio: contato sem marcador reservado",
+    "ensaio: contatos incompletos em ${departamento.nome}",
+    "ensaio: departamentos do plano divergem do contrato",
+    "ensaio: departamentos do plano estão incompletos",
+    "ensaio: e-mail fora do domínio reservado",
+    "ensaio: estado de CLI não tratado (${flag})",
+    "ensaio: fila sem marcador reservado",
+    "ensaio: marcadores do plano foram alterados",
+    "ensaio: mensagem sem marcador reservado",
+    "ensaio: telefone fora da faixa reservada",
+    "flag desconhecida (${flag})",
+    "informe exatamente uma opção",
     "telefoneEnsaio: sequência inválida (${sequencia})",
     "uuidEnsaio: sequência fora da faixa (${sequencia})"
    ],
@@ -268379,6 +268451,13 @@
     "o mesmo artefato serve ao banco local (onde os ensaios rodam, regra R1) e ao",
     "- o 4º perfil (\"somente leitura\") fica declarado como PENDENTE, porque o",
     "* Conversa longa da IA-063: mínimo de mensagens por departamento. */"
+   ],
+   "calc_fns": [
+    {
+     "name": "validarPlanoSeguro",
+     "params": "plano",
+     "body": "if (plano?.prefixo !== PREFIXO_ENSAIO || plano?.dominio !== DOMINIO_ENSAIO) { throw new Error('ensaio: marcadores do plano foram alterados'); } if (!Array.isArray(plano.departamentos) || plano.departamentos.length !== DEPARTAMENTOS_ENSAIO.length) { throw new Error('ensaio: departamentos do plano estão incompletos'); } const nomes = plano.departamentos.map((departamento) => departamento.nome); if (nomes.some((nome, indice) => nome !== DEPARTAMENTOS_ENSAIO[indice])) { throw new Error('ensaio: depa …"
+    }
    ]
   },
   "scripts/inventario/banco.sql": {
@@ -382072,7 +382151,7 @@
   },
   "tests/contracts/sl059-ia010-provisionamento.contract.test.ts": {
    "path": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-   "lines": 291,
+   "lines": 332,
    "is_test": true,
    "rule_comments": [
     "cópia (onde os ensaios rodam, regra R1) e, no canônico, só sob autorização.",
@@ -382094,11 +382173,13 @@
     "o 4º perfil fica PENDENTE e nenhum papel é inventado fora do enum real",
     "o DML só escreve em colunas que existem no retrato canônico do schema",
     "o provisionamento é idempotente: todo insert traz on conflict",
+    "o gerador recusa plano sem todos os marcadores sintéticos",
     "a reversão é só por prefixo: nenhum delete alcança dado que não seja de ensaio",
     "a reversão apaga só tabelas que o provisionamento escreve",
     "conversa-sem-analise e contato-sem-memoria são garantidos por omissão no DML",
     "as filas usam só cores que o sistema já tem",
     "o gerador não guarda alvo de rede e recusa host que não seja local",
+    "a CLI rejeita ambiguidade, opção desconhecida e alvo inseguro sem emitir DML",
     "cada caso de borda do §2 tem estado declarado — e o do mesmo telefone tem prova do bloqueio",
     "a IA-010 e o índice registram o estado real do provisionamento"
    ]
@@ -382378,10 +382459,22 @@
   }
  },
  "git": {
-  "sha": "3ece06f86cc95a73eb4ca55c3268c5428fd8810d",
+  "sha": "3886f4b374ef128f86c967b6510604e305fcb7ec",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "3886f4b",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: endurecer provisionamento sintético de IA (#2750)",
+    "files": [
+     "docs/ia/IA-010-ambiente-de-ensaio.md",
+     "scripts/ia/README.md",
+     "scripts/ia/ensaio-provisionamento.mjs",
+     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
+    ]
+   },
    {
     "sha": "3ece06f",
     "date": "2026-11-06",
@@ -382729,27 +382822,6 @@
      "e2e/email-navy-visual.spec.ts",
      "src/components/email/EmailThreadList.tsx"
     ]
-   },
-   {
-    "sha": "5f3f7bd",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: validar owners, áudio e coleta do E2E isolado (#2719)",
-    "files": [
-     "e2e/fixtures/arquivos-local/seed.ts",
-     "e2e/fixtures/seed-files-tab.mjs",
-     "e2e/media-volume.spec.ts",
-     "scripts/ci/e2e-isolated-collection.unit.mjs",
-     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/ci/e2e-media-volume-fixture.unit.mjs",
-     "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/collection.mjs",
-     "scripts/e2e-isolated/routine-ownership.mjs",
-     "scripts/e2e-isolated/run.mjs",
-     "src/components/notifications/__tests__/SoundVolumeControl.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -382763,18 +382835,6 @@
    ],
    [
     "docs/ci/README.md",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/README.md",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/run.mjs",
     2
    ],
    [
@@ -382796,6 +382856,22 @@
    [
     "src/pages/Index.tsx",
     2
+   ],
+   [
+    "docs/ia/IA-010-ambiente-de-ensaio.md",
+    1
+   ],
+   [
+    "scripts/ia/README.md",
+    1
+   ],
+   [
+    "scripts/ia/ensaio-provisionamento.mjs",
+    1
+   ],
+   [
+    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    1
    ],
    [
     "src/components/ui/command-palette.tsx",
@@ -382827,10 +382903,6 @@
    ],
    [
     "e2e/contacts-view.spec.ts",
-    1
-   ],
-   [
-    "e2e/contacts-views.spec.ts",
     1
    ]
   ]

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "3ece06f86cc95a73eb4ca55c3268c5428fd8810d",
+  "commit": "3886f4b374ef128f86c967b6510604e305fcb7ec",
   "branch": "main",
-  "data_commit": "2026-11-06T15:42:14-03:00",
+  "data_commit": "2026-11-06T16:03:13-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "3886f4b",
+    "data": "2026-11-06",
+    "assunto": "fix: endurecer provisionamento sintético de IA (#2750)"
+   },
    {
     "sha": "3ece06f",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "b149a80",
     "data": "2026-11-05",
     "assunto": "fix: abrir boas-vindas sem efeito de estado no Index (#2725)"
-   },
-   {
-    "sha": "c0d715f",
-    "data": "2026-11-04",
-    "assunto": "infra: executar os 33 testes shell ausentes no DB Guard (#2724)"
    }
   ],
-  "arquivos_mudados_7d": 1072,
+  "arquivos_mudados_7d": 1073,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8252,
+  "arquivos_total": 8253,
   "arquivos_codigo": 4734,
-  "linhas_codigo": 873157,
+  "linhas_codigo": 873260,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -335,7 +335,7 @@
   "testes": 2579,
   "workflows": 21,
   "scripts": 417,
-  "docs_md": 1040
+  "docs_md": 1041
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -636,7 +636,7 @@
   },
   "scripts/ia": {
    "arquivos": 1,
-   "linhas": 509
+   "linhas": 571
   },
   "scripts/inventario": {
    "arquivos": 4,
@@ -784,7 +784,7 @@
   },
   "tests/contracts": {
    "arquivos": 95,
-   "linhas": 20464
+   "linhas": 20505
   },
   "vite.config.ts": {
    "arquivos": 1,
