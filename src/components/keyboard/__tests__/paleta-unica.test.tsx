@@ -200,6 +200,21 @@ async function itemPorId(id: string): Promise<HTMLElement> {
   });
 }
 
+/**
+ * Navega com ArrowDown até `alvo` ficar `aria-selected`. A lista com query monta
+ * `[...filteredCommands, ...searchResults]` (command-palette.tsx): comandos filtrados vêm
+ * ANTES dos contatos, então a posição de um contato varia com a query — esperar índice fixo
+ * era flaky. O loop com limite (cada tecla dentro de `act` força o flush do estado do React
+ * antes da próxima) elimina a dependência da posição absoluta.
+ */
+async function selecionarPorTeclado(alvo: HTMLElement, passosMax = 30) {
+  for (let passo = 0; passo < passosMax; passo += 1) {
+    if (alvo.getAttribute('aria-selected') === 'true') return;
+    act(() => { fireEvent.keyDown(window, { key: 'ArrowDown' }); });
+  }
+  throw new Error(`alvo ainda não selecionado após ${passosMax} ArrowDown`);
+}
+
 describe('Ctrl+K — contatos pelo serviço e navegação compartilhados', () => {
   for (const [view, interaction] of [['dashboard', 'click'], ['inbox', 'keyboard']] as const) {
     it('abre o segundo homônimo pelo UUID: ' + view + ' / ' + interaction, async () => {
@@ -228,10 +243,9 @@ describe('Ctrl+K — contatos pelo serviço e navegação compartilhados', () =>
       window.addEventListener('open-contact-chat', consume);
       try {
         if (interaction === 'keyboard') {
-          expect(first).toHaveAttribute('aria-selected', 'true');
-          fireEvent.keyDown(window, { key: 'ArrowDown' });
-          await vi.waitFor(() => expect(second).toHaveAttribute('aria-selected', 'true'));
-          fireEvent.keyDown(window, { key: 'Enter' });
+          await selecionarPorTeclado(first);
+          await selecionarPorTeclado(second);
+          act(() => { fireEvent.keyDown(window, { key: 'Enter' }); });
         } else {
           fireEvent.click(second);
         }
