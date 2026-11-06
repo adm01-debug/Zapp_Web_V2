@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1081,
+ "migrations": 1082,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -271,6 +271,7 @@
   "fn_send_audio_meme",
   "fn_toggle_user_meme_favorite",
   "get_ai_jobs_cron_secret",
+  "get_ai_usage_outbox_drain_cron_secret",
   "get_avatars_refresh_cron_secret",
   "get_channel_credentials",
   "get_channel_credentials_safe",
@@ -1734,6 +1735,12 @@
    "nome": "ai-jobs-tick-1min",
    "agenda": "* * * * *",
    "migration": "20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql"
+  },
+  {
+   "nome": "ai-usage-outbox-drain",
+   "agenda": "3-53/10 * * * *",
+   "migration": "20261103223000_ai_usage_outbox_drain_cron.sql",
+   "chama_edge": "ai-usage-outbox-drain"
   },
   {
    "nome": "avatars-refresh",

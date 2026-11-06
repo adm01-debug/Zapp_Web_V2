@@ -4180,7 +4180,7 @@
   {
    "arquivo": "scripts/edge-deploy/smoke-functions.mjs",
    "descricao": "W61: origens canônicas lidas de allowed-origins.json (sincronizado com validation.ts) verify_jwt=false is required for cron callers that cannot mint a user JWT,",
-   "linhas": 200,
+   "linhas": 206,
    "env": [],
    "npm_scripts": [],
    "workflows": [

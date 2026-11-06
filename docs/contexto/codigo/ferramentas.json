@@ -4,7 +4,7 @@
  "stack": {
   "linguagens": [
    "TypeScript (4187)",
-   "SQL (1280)",
+   "SQL (1281)",
    "Markdown (1042)",
    "JSON (595)",
    "JavaScript (430)",
@@ -1093,7 +1093,7 @@
   {
    "arquivo": "ESTADO.md",
    "titulo": "ESTADO.md — o que está ligado e quem chama",
-   "linhas": 151
+   "linhas": 150
   },
   {
    "arquivo": "FEATURE_REGISTRY.md",
@@ -2599,6 +2599,7 @@
    "WHATSAPP_VERIFY_TOKEN"
   ],
   "webhooks_recebidos": [
+   "ai-usage-outbox-drain",
    "auth-login",
    "batch-fetch-avatars",
    "connection-health-check",

@@ -21713,7 +21713,7 @@
   {
    "arquivo": "supabase/functions/ai-usage-outbox-drain/index.test.ts",
    "tipo": "unit",
-   "linhas": 266,
+   "linhas": 265,
    "testa": [
     "supabase/functions/_shared/ai-usage.ts",
     "supabase/functions/ai-usage-outbox-drain/index.ts"

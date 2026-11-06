@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c0e511884eb5d94fa951ff1db42f75e2f3acf7db",
+  "commit": "4ac4bd4ed908a6c3ca574e6a52573669246fbe83",
   "branch": "main",
-  "data_commit": "2026-11-06T16:59:57-03:00",
+  "data_commit": "2026-11-06T20:12:48Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "4ac4bd4",
+    "data": "2026-11-06",
+    "assunto": "fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)"
+   },
    {
     "sha": "c0e5118",
     "data": "2026-11-06",
@@ -126,18 +131,13 @@
     "sha": "fa7d882",
     "data": "2026-11-05",
     "assunto": "fix: verificar V2 por padrão no smoke de produção (#2729)"
-   },
-   {
-    "sha": "03e9568",
-    "data": "2026-11-05",
-    "assunto": "fix: não pular preview quando Git não consegue comparar commits (#2727)"
    }
   ],
-  "arquivos_mudados_7d": 1052,
+  "arquivos_mudados_7d": 1056,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 804
+    "mudancas": 800
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -218,16 +218,16 @@
     "mudancas": 14
    },
    {
+    "arquivo": "ESTADO.md",
+    "mudancas": 13
+   },
+   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 13
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 12
-   },
-   {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 12
+    "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
@@ -274,6 +274,10 @@
     "mudancas": 7
    },
    {
+    "arquivo": ".github/workflows/codeql.yml",
+    "mudancas": 6
+   },
+   {
     "arquivo": ".github/workflows/db-migrate.yml",
     "mudancas": 6
    },
@@ -288,10 +292,6 @@
    {
     "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 6
-   },
-   {
-    "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 5
    },
    {
     "arquivo": ".github/workflows/notifica-falha-main.yml",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8256,
+  "arquivos_total": 8257,
   "arquivos_codigo": 4734,
-  "linhas_codigo": 873274,
+  "linhas_codigo": 873314,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -330,8 +330,8 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 216,
-  "migrations": 1081,
-  "cron_jobs": 25,
+  "migrations": 1082,
+  "cron_jobs": 26,
   "testes": 2579,
   "workflows": 21,
   "scripts": 417,
@@ -628,7 +628,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
-   "linhas": 4098
+   "linhas": 4104
   },
   "scripts/eslint": {
    "arquivos": 1,
@@ -776,7 +776,7 @@
   },
   "supabase/functions": {
    "arquivos": 380,
-   "linhas": 115604
+   "linhas": 115638
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -1214,7 +1214,6 @@
   ],
   "edges_orfas": [
    "ai-auto-tag",
-   "ai-usage-outbox-drain",
    "auto-close-conversations",
    "cleanup-rate-limit-logs",
    "copilot-live",

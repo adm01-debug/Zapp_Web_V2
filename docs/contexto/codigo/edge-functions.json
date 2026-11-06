@@ -4,6 +4,7 @@
  "pasta": "supabase/functions",
  "total": 85,
  "verify_jwt_false": [
+  "ai-usage-outbox-drain",
   "auth-login",
   "batch-fetch-avatars",
   "connection-health-check",
@@ -575,15 +576,16 @@
    "nome": "ai-usage-outbox-drain",
    "entrada": "supabase/functions/ai-usage-outbox-drain/index.ts",
    "arquivos": 1,
-   "linhas": 124,
-   "verify_jwt": true,
+   "linhas": 159,
+   "verify_jwt": false,
    "metodos": [
     "POST"
    ],
    "tabelas": [],
    "rpcs": [],
    "env": [
-    "CRON_SECRET"
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_URL"
    ],
    "buckets": [],
    "chama_edges": [],
@@ -595,8 +597,8 @@
    ],
    "chamada_pelo_front": [],
    "chamada_por_edges": [],
-   "chamada_por_sql_ou_cron": false,
-   "orfa": true,
+   "chamada_por_sql_ou_cron": true,
+   "orfa": false,
    "testes": 1
   },
   {
