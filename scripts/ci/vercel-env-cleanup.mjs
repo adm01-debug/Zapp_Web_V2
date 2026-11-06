@@ -52,7 +52,16 @@ async function fetchAllEnvs() {
   do {
     const qs = until ? `?until=${until}` : '';
     const { status, ok, body } = await apiFetch(`/v10/projects/${PROJECT}/env${qs}`);
-    if (!ok) { console.error(`GET envs falhou: ${status}`, JSON.stringify(body)); process.exit(1); }
+    if (!ok) {
+      if (status === 403) {
+        console.warn(`\n⚠️  SKIP: VERCEL_READONLY_TOKEN sem acesso ao time ${TEAM} (403).`);
+        console.warn('   Atualize o secret VERCEL_READONLY_TOKEN com um token que tenha acesso ao time juca1');
+        console.warn('   (Vercel Dashboard → Account Settings → Tokens → criar com escopo de time).');
+        process.exit(0);
+      }
+      console.error(`GET envs falhou: ${status}`, JSON.stringify(body));
+      process.exit(1);
+    }
     envs = envs.concat(body.envs ?? []);
     until = body.pagination?.next ?? null;
   } while (until);
