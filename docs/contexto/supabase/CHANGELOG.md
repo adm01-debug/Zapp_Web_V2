@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-06 02:49 UTC
+
+- **migrations** adicionado (3): `20261026240300_drop_bkp_261023`, `20261102012400_login_attempts_retencao_90d`, `20261102032200_revoga_execute_public_cron_schedule`
+- **migrations** alterado (2): `20261102012200_department_invites_restringe_escrita`, `20261103201500_remove_pagamentos_e_special_agent`
+
 ## 2026-11-05 01:32 UTC
 
 - **functions** alterado (1): `public.contacts_stats_series(p_include_legacy boolean)`

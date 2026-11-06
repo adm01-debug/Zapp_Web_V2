@@ -1066,6 +1066,7 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261026210300 | [reconcile_team_reactions_force_conversation_id_trig](migrations/20261026210300_reconcile_team_reactions_force_conversation_id_trig.sql) | 3 |
 | 20261026220300 | [classificar_rls_sem_policy](migrations/20261026220300_classificar_rls_sem_policy.sql) | 19 |
 | 20261026230300 | [decidir_schemas_backup](migrations/20261026230300_decidir_schemas_backup.sql) | 11 |
+| 20261026240300 | [drop_bkp_261023](migrations/20261026240300_drop_bkp_261023.sql) | 1 |
 | 20261030100000 | [copilot_sessions](migrations/20261030100000_copilot_sessions.sql) | 8 |
 | 20261030110000 | [copilot_insights](migrations/20261030110000_copilot_insights.sql) | 7 |
 | 20261030135126 | [revoke_public_table_structure_grants](migrations/20261030135126_revoke_public_table_structure_grants.sql) | 2 |
@@ -1078,8 +1079,10 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261031130000 | [search_event_rpc](migrations/20261031130000_search_event_rpc.sql) | 10 |
 | 20261031170000 | [high3-fk-indexes](migrations/20261031170000_high3-fk-indexes.sql) | 48 |
 | 20261101213000 | [rls_update_with_check_explicit](migrations/20261101213000_rls_update_with_check_explicit.sql) | 8 |
-| 20261102012200 | [department_invites_restringe_escrita](migrations/20261102012200_department_invites_restringe_escrita.sql) | 8 |
+| 20261102012200 | [department_invites_restringe_escrita](migrations/20261102012200_department_invites_restringe_escrita.sql) | 1 |
+| 20261102012400 | [login_attempts_retencao_90d](migrations/20261102012400_login_attempts_retencao_90d.sql) | 1 |
 | 20261102022200 | [cron_historico_retencao_7d](migrations/20261102022200_cron_historico_retencao_7d.sql) | 1 |
+| 20261102032200 | [revoga_execute_public_cron_schedule](migrations/20261102032200_revoga_execute_public_cron_schedule.sql) | 1 |
 | 20261102042200 | [talkx_delivery_log_sem_prazo_fixo](migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql) | 3 |
 | 20261102052200 | [talkx_retencao_guarda_e_test_sends_90](migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql) | 3 |
-| 20261103201500 | [remove_pagamentos_e_special_agent](migrations/20261103201500_remove_pagamentos_e_special_agent.sql) | 25 |
+| 20261103201500 | [remove_pagamentos_e_special_agent](migrations/20261103201500_remove_pagamentos_e_special_agent.sql) | 1 |

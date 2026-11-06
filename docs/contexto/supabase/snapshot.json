@@ -87646,6 +87646,12 @@
         "version": "20261026230300"
       },
       {
+        "name": "drop_bkp_261023",
+        "statements": 1,
+        "statements_sha": "9c86faabf85529ef",
+        "version": "20261026240300"
+      },
+      {
         "name": "copilot_sessions",
         "statements": 8,
         "statements_sha": "d71488d636ff6873",
@@ -87719,15 +87725,27 @@
       },
       {
         "name": "department_invites_restringe_escrita",
-        "statements": 8,
-        "statements_sha": "d52b4372b4e5aa23",
+        "statements": 1,
+        "statements_sha": "2e12a96f5360c74f",
         "version": "20261102012200"
+      },
+      {
+        "name": "login_attempts_retencao_90d",
+        "statements": 1,
+        "statements_sha": "b04ab1e175f74dba",
+        "version": "20261102012400"
       },
       {
         "name": "cron_historico_retencao_7d",
         "statements": 1,
         "statements_sha": "e57a9b4d8069f493",
         "version": "20261102022200"
+      },
+      {
+        "name": "revoga_execute_public_cron_schedule",
+        "statements": 1,
+        "statements_sha": "2392c108361e0b93",
+        "version": "20261102032200"
       },
       {
         "name": "talkx_delivery_log_sem_prazo_fixo",
@@ -87743,8 +87761,8 @@
       },
       {
         "name": "remove_pagamentos_e_special_agent",
-        "statements": 25,
-        "statements_sha": "f1af716c9e70ed2d",
+        "statements": 1,
+        "statements_sha": "3ae44434ba41910a",
         "version": "20261103201500"
       }
     ],
