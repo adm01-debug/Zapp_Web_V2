@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "3886f4b374ef128f86c967b6510604e305fcb7ec",
+  "sha": "37822ce6fda406ab45d4cdece524650db4cc79b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 19:12 UTC",
-  "files_total": 8094,
+  "generated_at": "2026-11-06 19:43 UTC",
+  "files_total": 8097,
   "code_files": 5986,
   "code_lines": 1038617
  },
@@ -382459,10 +382459,22 @@
   }
  },
  "git": {
-  "sha": "3886f4b374ef128f86c967b6510604e305fcb7ec",
+  "sha": "37822ce6fda406ab45d4cdece524650db4cc79b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "37822ce",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)",
+    "files": [
+     "analise-prs/auditorias-anteriores.md",
+     "analise-prs/prs.csv",
+     "analise-prs/prs.json",
+     "analise-prs/regras-de-negocio.md"
+    ]
+   },
    {
     "sha": "3886f4b",
     "date": "2026-11-06",
@@ -382812,16 +382824,6 @@
     "files": [
      "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
     ]
-   },
-   {
-    "sha": "f00ed02",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: preservar contraste das threads de Email durante entrada (#2720)",
-    "files": [
-     "e2e/email-navy-visual.spec.ts",
-     "src/components/email/EmailThreadList.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -382832,6 +382834,10 @@
    [
     "PENDENCIAS.md",
     4
+   ],
+   [
+    "analise-prs/auditorias-anteriores.md",
+    2
    ],
    [
     "docs/ci/README.md",
@@ -382856,6 +382862,18 @@
    [
     "src/pages/Index.tsx",
     2
+   ],
+   [
+    "analise-prs/prs.csv",
+    1
+   ],
+   [
+    "analise-prs/prs.json",
+    1
+   ],
+   [
+    "analise-prs/regras-de-negocio.md",
+    1
    ],
    [
     "docs/ia/IA-010-ambiente-de-ensaio.md",
@@ -382887,22 +382905,6 @@
    ],
    [
     "e2e/busca-global-paleta.spec.ts",
-    1
-   ],
-   [
-    "e2e/conexoes.spec.ts",
-    1
-   ],
-   [
-    "e2e/contacts-crud.spec.ts",
-    1
-   ],
-   [
-    "e2e/contacts-detail.spec.ts",
-    1
-   ],
-   [
-    "e2e/contacts-view.spec.ts",
     1
    ]
   ]

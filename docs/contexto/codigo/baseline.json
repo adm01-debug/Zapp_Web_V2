@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "3886f4b374ef128f86c967b6510604e305fcb7ec",
+  "commit": "37822ce6fda406ab45d4cdece524650db4cc79b4",
   "branch": "main",
-  "data_commit": "2026-11-06T16:03:13-03:00",
+  "data_commit": "2026-11-06T16:39:29-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "37822ce",
+    "data": "2026-11-06",
+    "assunto": "chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)"
+   },
    {
     "sha": "3886f4b",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "dabe5ac",
     "data": "2026-11-05",
     "assunto": "fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)"
-   },
-   {
-    "sha": "b149a80",
-    "data": "2026-11-05",
-    "assunto": "fix: abrir boas-vindas sem efeito de estado no Index (#2725)"
    }
   ],
-  "arquivos_mudados_7d": 1073,
+  "arquivos_mudados_7d": 1065,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8253,
+  "arquivos_total": 8256,
   "arquivos_codigo": 4734,
   "linhas_codigo": 873260,
   "rotas": 18,
@@ -335,7 +335,7 @@
   "testes": 2579,
   "workflows": 21,
   "scripts": 417,
-  "docs_md": 1041
+  "docs_md": 1042
  },
  "por_pasta": {
   "docs/_arquivo": {

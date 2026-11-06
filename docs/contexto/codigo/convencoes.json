@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)",
    "fix: endurecer provisionamento sintético de IA (#2750)",
    "fix: corrige stale closure na navegação por teclado da paleta de comandos (#2749)",
    "fix: corrigir preparo e diagnóstico da suíte isolada (#2728)",
-   "chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)",
-   "fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)"
+   "chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
