@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5f2f9af947c68d9f7db9054a8bed426072adab1c",
+  "commit": "abfe326881273314d078651511e0149d01456293",
   "branch": "main",
-  "data_commit": "2026-11-06T10:32:05Z",
+  "data_commit": "2026-11-06T11:12:05Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "abfe326",
+    "data": "2026-11-06",
+    "assunto": "chore: validar manifesto de edge functions no CI por PR (#2738)"
+   },
+   {
+    "sha": "d5fc2f9",
+    "data": "2026-11-06",
+    "assunto": "test: provar e endurecer cleanup de variáveis Vercel (#2746)"
+   },
    {
     "sha": "5f2f9af",
     "data": "2026-11-06",
@@ -121,16 +131,6 @@
     "sha": "1681d0a",
     "data": "2026-11-04",
     "assunto": "fix: restaurar foco da paleta com regressões de integração (#2718)"
-   },
-   {
-    "sha": "afd8c7c",
-    "data": "2026-11-04",
-    "assunto": "fix: validar a suíte logada em ambiente isolado (#2717)"
-   },
-   {
-    "sha": "b88b4f1",
-    "data": "2026-11-04",
-    "assunto": "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)"
    }
   ],
   "arquivos_mudados_7d": 1022,
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 20
+    "mudancas": 21
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -222,10 +222,6 @@
     "mudancas": 13
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 12
-   },
-   {
     "arquivo": "ESTADO.md",
     "mudancas": 12
    },
@@ -235,6 +231,10 @@
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 11
+   },
+   {
+    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 11
    },
    {
@@ -258,10 +258,6 @@
     "mudancas": 8
    },
    {
-    "arquivo": ".github/workflows/db-migrate.yml",
-    "mudancas": 7
-   },
-   {
     "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
     "mudancas": 7
    },
@@ -282,6 +278,10 @@
     "mudancas": 7
    },
    {
+    "arquivo": ".github/workflows/db-migrate.yml",
+    "mudancas": 6
+   },
+   {
     "arquivo": "AGENTS.md",
     "mudancas": 6
    },
@@ -290,12 +290,12 @@
     "mudancas": 6
    },
    {
-    "arquivo": "playwright.config.ts",
+    "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/db-audit/known-violations.json",
-    "mudancas": 6
+    "arquivo": ".github/workflows/codeql.yml",
+    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8221,
-  "arquivos_codigo": 4707,
-  "linhas_codigo": 866802,
+  "arquivos_total": 8222,
+  "arquivos_codigo": 4708,
+  "linhas_codigo": 867053,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,7 +332,7 @@
   "tabelas": 216,
   "migrations": 1082,
   "cron_jobs": 25,
-  "testes": 2568,
+  "testes": 2569,
   "workflows": 20,
   "scripts": 406,
   "docs_md": 1037
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 190,
-   "linhas": 38261
+   "arquivos": 191,
+   "linhas": 38512
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 426,
+  "console_log": 417,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 46,

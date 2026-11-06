@@ -7,7 +7,7 @@
    "SQL (1280)",
    "Markdown (1037)",
    "JSON (594)",
-   "JavaScript (410)",
+   "JavaScript (411)",
    "Shell (231)",
    "Python (119)",
    "YAML (28)"
@@ -222,6 +222,7 @@
     "scripts/ci/check-test-inventory.mjs",
     "scripts/ci/render-workflow-docs.mjs",
     "scripts/ci/typecheck-ratchet.mjs",
+    "scripts/edge-deploy/generate-manifest.mjs",
     "scripts/talkx/v4-status.mjs",
     "scripts/vercel/ignore-build.unit.mjs"
    ],
@@ -1999,6 +2000,10 @@
    },
    {
     "host": "api.resend.com.evil.tld",
+    "arquivos": 1
+   },
+   {
+    "host": "api.vercel.com",
     "arquivos": 1
    },
    {

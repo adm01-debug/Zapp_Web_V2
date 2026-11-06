@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1945)",
-   "outro (197)",
+   "outro (198)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore: validar manifesto de edge functions no CI por PR (#2738)",
+   "test: provar e endurecer cleanup de variáveis Vercel (#2746)",
    "fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)",
    "fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)",
-   "infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)",
-   "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)",
-   "fix: cancelar timer de preview ao desmontar painel (#2739)"
+   "infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5f2f9af947c68d9f7db9054a8bed426072adab1c",
+  "sha": "abfe326881273314d078651511e0149d01456293",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 10:33 UTC",
-  "files_total": 8062,
-  "code_files": 5963,
-  "code_lines": 1032249
+  "generated_at": "2026-11-06 11:13 UTC",
+  "files_total": 8063,
+  "code_files": 5964,
+  "code_lines": 1032500
  },
  "version": "1.3.2",
- "facts_hash": "44bc95067c004327",
+ "facts_hash": "2920fd9332f2f8d6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -307,7 +307,7 @@
    ".tsx": 2319,
    ".ts": 1860,
    ".sql": 1280,
-   ".mjs": 384,
+   ".mjs": 385,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67734,8 +67734,8 @@
   },
   {
    "module": "scripts",
-   "files": 413,
-   "lines": 79716,
+   "files": 414,
+   "lines": 79967,
    "tables": [
     "a",
     "alem_do_limite",
@@ -80570,6 +80570,10 @@
    {
     "file": "scripts/ci/vercel-env-baseline.mjs",
     "msg": "Target "
+   },
+   {
+    "file": "scripts/ci/vercel-env-cleanup.unit.mjs",
+    "msg": "token=segredo"
    },
    {
     "file": "scripts/ci/verify-crm-integration-doc.unit.mjs",
@@ -263915,7 +263919,13 @@
   },
   "scripts/ci/vercel-env-cleanup.mjs": {
    "path": "scripts/ci/vercel-env-cleanup.mjs",
-   "lines": 104,
+   "lines": 188,
+   "exports": [
+    "const PROJECT",
+    "const TEAM",
+    "const REMOVE",
+    "function executarCleanup"
+   ],
    "env": [
     "DRY_RUN",
     "VERCEL_TOKEN"
@@ -263931,10 +263941,17 @@
     }
    ],
    "rule_comments": [
-    "NUNCA imprime valores — apenas keys, targets e status HTTP."
+    "NUNCA imprime valores ou IDs — apenas keys, targets e status HTTP."
    ],
-   "doc": "V043-V065 — Remove vars perigosas/mortas do Vercel. Uso: VERCEL_TOKEN=... [DRY_RUN=1] node scripts/ci/vercel-env-cleanup.mjs Disparado por .github/workflows/vercel-env-cleanup.yml NUNCA imprime valores — apenas keys, targets e status HTTP.",
+   "doc": "!/usr/bin/env node",
    "uses_service_role": true
+  },
+  "scripts/ci/vercel-env-cleanup.unit.mjs": {
+   "path": "scripts/ci/vercel-env-cleanup.unit.mjs",
+   "lines": 167,
+   "errors": [
+    "token=segredo"
+   ]
   },
   "scripts/ci/verify-crm-integration-doc.unit.mjs": {
    "path": "scripts/ci/verify-crm-integration-doc.unit.mjs",
@@ -381276,10 +381293,29 @@
   }
  },
  "git": {
-  "sha": "5f2f9af947c68d9f7db9054a8bed426072adab1c",
+  "sha": "abfe326881273314d078651511e0149d01456293",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "abfe326",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "chore: validar manifesto de edge functions no CI por PR (#2738)",
+    "files": [
+     ".github/workflows/ci.yml"
+    ]
+   },
+   {
+    "sha": "d5fc2f9",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "test: provar e endurecer cleanup de variáveis Vercel (#2746)",
+    "files": [
+     "scripts/ci/vercel-env-cleanup.mjs",
+     "scripts/ci/vercel-env-cleanup.unit.mjs"
+    ]
+   },
    {
     "sha": "5f2f9af",
     "date": "2026-11-06",
@@ -381688,22 +381724,6 @@
      "scripts/e2e-isolated/seed-login.mjs",
      "scripts/e2e-isolated/stack.mjs"
     ]
-   },
-   {
-    "sha": "4fa15ac",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "chore: adiciona __pycache__/ ao .gitignore (#2700)",
-    "files": []
-   },
-   {
-    "sha": "ec2e5b6",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "chore: sincroniza matriz de estados do Talk X (#2715)",
-    "files": [
-     "docs/talkx/ESTADOS.md"
-    ]
    }
   ],
   "hot_files": [
@@ -381748,6 +381768,14 @@
     3
    ],
    [
+    ".github/workflows/ci.yml",
+    2
+   ],
+   [
+    "scripts/ci/vercel-env-cleanup.mjs",
+    2
+   ],
+   [
     "src/pages/Index.tsx",
     2
    ],
@@ -381777,14 +381805,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-results.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-tls.unit.mjs",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/results.mjs",
     2
    ]
   ]

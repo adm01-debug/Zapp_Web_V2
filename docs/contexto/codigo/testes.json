@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2568,
+ "total": 2569,
  "por_tipo": {
   "contrato": 113,
   "e2e": 73,
   "pytest": 3,
   "qa": 6,
-  "unit": 2283
+  "unit": 2284
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 197
+   "arquivos": 198
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -1784,6 +1784,15 @@
     "scripts/ci/vercel-env-baseline.mjs"
    ],
    "casos": 7
+  },
+  {
+   "arquivo": "scripts/ci/vercel-env-cleanup.unit.mjs",
+   "tipo": "unit",
+   "linhas": 167,
+   "testa": [
+    "scripts/ci/vercel-env-cleanup.mjs"
+   ],
+   "casos": 8
   },
   {
    "arquivo": "scripts/ci/verify-crm-integration-doc.unit.mjs",
@@ -23409,6 +23418,7 @@
   "scripts/ci/sla-code-scanning.mjs": 1,
   "scripts/ci/typecheck-ratchet.mjs": 1,
   "scripts/ci/vercel-env-baseline.mjs": 1,
+  "scripts/ci/vercel-env-cleanup.mjs": 1,
   "scripts/ci/workflow-test-support.mjs": 16,
   "scripts/db-audit/check-realtime-subscriptions.mjs": 1,
   "scripts/db-audit/check-runtime-config.mjs": 1,

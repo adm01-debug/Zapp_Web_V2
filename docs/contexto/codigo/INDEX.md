@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5f2f9af947c68d9f7db9054a8bed426072adab1c` (2026-11-06T10:32:05Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `abfe326881273314d078651511e0149d01456293` (2026-11-06T11:12:05Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4180), SQL (1280), Markdown (1037), JSON (594), JavaScript (410), Shell (231), Python (119), YAML (28)
+- linguagens: TypeScript (4180), SQL (1280), Markdown (1037), JSON (594), JavaScript (411), Shell (231), Python (119), YAML (28)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8221 |
-| arquivos_codigo | 4707 |
-| linhas_codigo | 866802 |
+| arquivos_total | 8222 |
+| arquivos_codigo | 4708 |
+| linhas_codigo | 867053 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -48,7 +48,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 216 |
 | migrations | 1082 |
 | cron_jobs | 25 |
-| testes | 2568 |
+| testes | 2569 |
 | workflows | 20 |
 | scripts | 406 |
 | docs_md | 1037 |
@@ -58,7 +58,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (851), src/pages (26), src/features (2)
 - hooks: src/hooks (409), src/components (72), src/contexts (2)
 - servicos_logica: src/lib (143), src/services (17), src/utils (8)
-- testes: co-localizado (__tests__) (1945), outro (197), co-localizado (*.test) (168)
+- testes: co-localizado (__tests__) (1945), outro (198), co-localizado (*.test) (168)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (285), scripts/ci (40), scripts/e2e-isolated (27)
@@ -384,22 +384,22 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55382 nós · 113422 arestas · 4099 comunidades · grafo do commit `5f2f9af9`
-- comunidades maiores: vitest (779), react (681), framer-motion (642), TalkXSuppression.tsx (635), lucide-react (613), ExternalProductManagement.tsx (507), cn (497), WorkItemSheet.tsx (490), ref_node_fs (470), useAuth (389), DashboardView.tsx (386), @tanstack/react-query (383)
+- 55389 nós · 113436 arestas · 4091 comunidades · grafo do commit `abfe3268`
+- comunidades maiores: react (785), framer-motion (720), cn (715), ExternalProductManagement.tsx (670), vitest (651), button.tsx (603), @tanstack/react-query (470), WorkItemSheet.tsx (465), DashboardCard.tsx (459), useTalkXSegments.ts (355), ref_node_fs (348), validation.ts (305)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (20)
+- .github/workflows/ci.yml (21)
 - PENDENCIAS.md (18)
 - CLAUDE.md (15)
 - .github/workflows/db-guard.yml (14)
 - docs/ci/README.md (13)
 - supabase/deployment-manifest.json (13)
-- .github/workflows/e2e-logado.yml (12)
 - ESTADO.md (12)
 - scripts/ci/ci-docs-baseline.unit.mjs (12)
 - .github/workflows/deploy-functions.yml (11)
+- .github/workflows/e2e-logado.yml (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
 - src/integrations/supabase/types.ts (11)
@@ -500,6 +500,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-06 `abfe326` chore: validar manifesto de edge functions no CI por PR (#2738)
+- 2026-11-06 `d5fc2f9` test: provar e endurecer cleanup de variáveis Vercel (#2746)
 - 2026-11-06 `5f2f9af` fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)
 - 2026-11-06 `a4e43d1` fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)
 - 2026-11-06 `2623adb` infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)
@@ -513,8 +515,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-05 `341d3fd` chore: adiciona baseline local completo ao RELATORIO_CI (#2731)
 - 2026-11-05 `2f2cc18` chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)
 - 2026-11-05 `fa7d882` fix: verificar V2 por padrão no smoke de produção (#2729)
-- 2026-11-05 `03e9568` fix: não pular preview quando Git não consegue comparar commits (#2727)
-- 2026-11-05 `dabe5ac` fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
