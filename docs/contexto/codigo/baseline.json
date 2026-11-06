@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "37822ce6fda406ab45d4cdece524650db4cc79b4",
+  "commit": "c0e511884eb5d94fa951ff1db42f75e2f3acf7db",
   "branch": "main",
-  "data_commit": "2026-11-06T16:39:29-03:00",
+  "data_commit": "2026-11-06T16:59:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c0e5118",
+    "data": "2026-11-06",
+    "assunto": "fix: evita posição absoluta na navegação da paleta (teste flaky)"
+   },
    {
     "sha": "37822ce",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "03e9568",
     "data": "2026-11-05",
     "assunto": "fix: não pular preview quando Git não consegue comparar commits (#2727)"
-   },
-   {
-    "sha": "dabe5ac",
-    "data": "2026-11-05",
-    "assunto": "fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)"
    }
   ],
-  "arquivos_mudados_7d": 1065,
+  "arquivos_mudados_7d": 1052,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -164,12 +164,12 @@
     "mudancas": 141
    },
    {
-    "pasta": "src/components/ui",
+    "pasta": "src/hooks/integrations",
     "mudancas": 133
    },
    {
-    "pasta": "src/hooks/integrations",
-    "mudancas": 133
+    "pasta": "src/components/ui",
+    "mudancas": 131
    },
    {
     "pasta": "src/lib/__tests__",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8256,
   "arquivos_codigo": 4734,
-  "linhas_codigo": 873260,
+  "linhas_codigo": 873274,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368065
+   "linhas": 368079
   },
   "src/config": {
    "arquivos": 3,

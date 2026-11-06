@@ -9215,7 +9215,7 @@
   {
    "arquivo": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
    "tipo": "unit",
-   "linhas": 277,
+   "linhas": 291,
    "testa": [
     "src/components/keyboard/GlobalKeyboardProvider.tsx"
    ],

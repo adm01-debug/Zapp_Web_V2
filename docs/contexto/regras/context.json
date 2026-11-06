@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "37822ce6fda406ab45d4cdece524650db4cc79b4",
+  "sha": "c0e511884eb5d94fa951ff1db42f75e2f3acf7db",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 19:43 UTC",
+  "generated_at": "2026-11-06 20:01 UTC",
   "files_total": 8097,
   "code_files": 5986,
-  "code_lines": 1038617
+  "code_lines": 1038631
  },
  "version": "1.3.2",
- "facts_hash": "f4bf95325dbb6880",
+ "facts_hash": "a3e236a55586ebbc",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68081,7 +68081,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368065,
+   "lines": 368079,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -294751,9 +294751,10 @@
   },
   "src/components/keyboard/__tests__/paleta-unica.test.tsx": {
    "path": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
-   "lines": 277,
+   "lines": 291,
    "is_test": true,
    "errors": [
+    "alvo ainda não selecionado após ${passosMax} ArrowDown",
     "comando ainda não apareceu"
    ],
    "role_checks": [
@@ -294762,6 +294763,7 @@
     "supervisor"
    ],
    "rule_comments": [
+    "era flaky. O loop com limite (cada tecla dentro de `act` força o flush do estado do React",
     "nesta suíte: este listener controla apenas a confirmação do consumidor."
    ],
    "tests": [
@@ -382459,10 +382461,19 @@
   }
  },
  "git": {
-  "sha": "37822ce6fda406ab45d4cdece524650db4cc79b4",
+  "sha": "c0e511884eb5d94fa951ff1db42f75e2f3acf7db",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c0e5118",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: evita posição absoluta na navegação da paleta (teste flaky)",
+    "files": [
+     "src/components/keyboard/__tests__/paleta-unica.test.tsx"
+    ]
+   },
    {
     "sha": "37822ce",
     "date": "2026-11-06",
@@ -382815,15 +382826,6 @@
     "files": [
      "scripts/db-audit/ia131-audio-stt-openrouter.test.sh"
     ]
-   },
-   {
-    "sha": "b298c33",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "test: alinhar auditoria E27 à migration arquivada (#2721)",
-    "files": [
-     "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
-    ]
    }
   ],
   "hot_files": [
@@ -382834,6 +382836,10 @@
    [
     "PENDENCIAS.md",
     4
+   ],
+   [
+    "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+    2
    ],
    [
     "analise-prs/auditorias-anteriores.md",
@@ -382901,10 +382907,6 @@
    ],
    [
     "e2e/README.md",
-    1
-   ],
-   [
-    "e2e/busca-global-paleta.spec.ts",
     1
    ]
   ]

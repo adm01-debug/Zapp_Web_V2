@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `37822ce6fda406ab45d4cdece524650db4cc79b4` (2026-11-06T16:39:29-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c0e511884eb5d94fa951ff1db42f75e2f3acf7db` (2026-11-06T16:59:57-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8256 |
 | arquivos_codigo | 4734 |
-| linhas_codigo | 873260 |
+| linhas_codigo | 873274 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55867 nós · 115336 arestas · 4121 comunidades · grafo do commit `37822ce6`
-- comunidades maiores: lucide-react (942), react (806), client.ts (725), vitest (614), ref_node_fs (556), TalkXSuppression.tsx (555), validation.ts (444), evolution-webhook-messages.ts (414), ExternalProductManagement.tsx (405), e2e-isolated-runtime.unit.mjs (346), useTeamChatPanel.ts (341), @tanstack/react-query (326)
+- 55868 nós · 115337 arestas · 4112 comunidades · grafo do commit `c0e51188`
+- comunidades maiores: lucide-react (910), TalkXSuppression.tsx (909), cn (886), react (850), vitest (580), DashboardView.tsx (479), validation.ts (458), ref_node_assert (428), evolution-webhook-messages.ts (401), ref_node_fs (376), framer-motion (366), @tanstack/react-query (356)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-06 `c0e5118` fix: evita posição absoluta na navegação da paleta (teste flaky)
 - 2026-11-06 `37822ce` chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)
 - 2026-11-06 `3886f4b` fix: endurecer provisionamento sintético de IA (#2750)
 - 2026-11-06 `3ece06f` fix: corrige stale closure na navegação por teclado da paleta de comandos (#2749)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `a4e43d1` fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)
 - 2026-11-06 `2623adb` infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)
 - 2026-11-05 `712da7c` fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)
-- 2026-11-06 `cabaa6a` fix: cancelar timer de preview ao desmontar painel (#2739)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
