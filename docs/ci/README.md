@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**20 workflows.**
+**21 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -21,6 +21,7 @@
 | E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts | login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário | isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada | autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada | — | — |
 | E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main | os mesmos 15 projetos Playwright em três grupos com Supabase descartável e TLS local | preparo, testes e limpeza bloqueiam; publica só diagnóstico redigido e preserva o alerta da suíte | mesma issue de E2E; fecha somente após sucesso dos três grupos | — | — |
 | E2E Talk X (visual/launch + Auth smoke) | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
+| Front release targets (V2/V3) | [`front-release-targets.yml`](../../.github/workflows/front-release-targets.yml) | push na main; schedule de hora em hora (minuto 17); dispatch | V2 no alias Vercel corresponde ao SHA da main e V3 no domínio publica uma release V3 íntegra | a trilha divergente fica vermelha e a automação de falhas abre uma issue | equipe de operação, por meio do check separado e da issue de falha na main | — | — |
 | Inventário do estado real (semanal) | [`inventario-estado-semanal.yml`](../../.github/workflows/inventario-estado-semanal.yml) | agendado (seg 10:23 UTC) e dispatch | inventario/estado (banco, rotas, edges) regerado do banco oficial e do codigo | o job fica vermelho e o inventario nao e atualizado | PR automation/inventario-estado com o inventario novo | — | — |
 | Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na main) | abre issue quando qualquer workflow critico falha na main | a falha do workflow original fica sem issue de acompanhamento | equipe de operacao, por meio da issue criada no repositorio | — | — |
 | Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
@@ -121,6 +122,13 @@
 - **O que prova:** o fluxo do Talk X no navegador
 - **Quando falha:** PR fica vermelho com o artefato do Playwright
 - **Quem é avisado:** autor do PR
+
+### Front release targets (V2/V3) (`front-release-targets.yml`)
+
+- **Gatilho:** push na main; schedule de hora em hora (minuto 17); dispatch
+- **O que prova:** V2 no alias Vercel corresponde ao SHA da main e V3 no domínio publica uma release V3 íntegra
+- **Quando falha:** a trilha divergente fica vermelha e a automação de falhas abre uma issue
+- **Quem é avisado:** equipe de operação, por meio do check separado e da issue de falha na main
 
 ### Inventário do estado real (semanal) (`inventario-estado-semanal.yml`)
 

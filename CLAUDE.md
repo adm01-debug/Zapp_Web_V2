@@ -252,9 +252,9 @@ Fatos do perímetro que já custaram retrabalho:
 
 ### Workflows
 
-**Inventário vigente (2026-11-04):** **20** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
+**Inventário vigente (2026-11-06):** **21** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
 `branch-hygiene-audit`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`, `db-live-guard`, `db-migrate`,
-`contexto`, `deploy-functions`, `e2e-logado`, `e2e-logado-isolado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
+`contexto`, `deploy-functions`, `e2e-logado`, `e2e-logado-isolado`, `e2e-talkx`, `front-release-targets`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
 `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
 dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica do inventário é o
 **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs --check` roda no CI); esta lista
@@ -266,7 +266,8 @@ dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica 
   `workflow_run` legítimo leva `# zizmor: ignore[dangerous-triggers]` na linha do gatilho.
 - **Agendamentos (UTC):** types-sync `49 5 * * 1` · db-live-guard `13 6 * * 1` · settings-guard
   `15 7 * * *` · talkx-status-regen `45 7 * * 1` · branch-hygiene `56 7 * * 1` · codeql `30 9 * * *` ·
-  inventario-estado-semanal `23 10 * * 1` · auto-update-pr-branch `7,37 * * * *`.
+  inventario-estado-semanal `23 10 * * 1` · auto-update-pr-branch `7,37 * * * *` ·
+  front-release-targets `17 * * * *`.
 - **`db-live-guard` não roda em PR, por design** (não expõe `DESTINO_URL` a código de PR): roda no
   push da `main`, agendado e por dispatch, e abre/comenta uma issue única com label `db-live-guard`.
   Por isso o "Contrato DB vivo" nunca é required check. O retry de conexão mora **só** no transporte
@@ -291,8 +292,8 @@ dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica 
 |---|---|
 | Projeto | `zapp_web_v2` (ID: `prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp`) |
 | Team | `juca1` / `team_QyN41X0q8hrqhW80AwokbFLv` |
-| Alias de projeto | `https://zapp-web-v2.vercel.app` (é o `FALLBACK_ORIGIN` em `supabase/functions/_shared/cors-origins.ts`) |
-| Domínio próprio | `zappweb.app.br` / `www.zappweb.app.br` estão na lista de CORS das edges. **NÃO VERIFICADO** qual projeto da Vercel serve o domínio hoje (o MCP da sessão de 01/11 recebeu 403/404 na Vercel; o repo `Zapp_Web_V3` também declara `www.zappweb.app.br`) |
+| Alias de projeto V2 | `https://zapp-web-v2.vercel.app` (é o `FALLBACK_ORIGIN` em `supabase/functions/_shared/cors-origins.ts`) |
+| Domínio principal | `https://zappweb.app.br` serve a **V3**, não este projeto. Confirmado em 06/11/2026 por `/version.json`: contrato V3 com `gitSha`/`releaseId`; o alias acima expõe o contrato V2 com `buildId` igual ao SHA da `main`. O workflow `front-release-targets.yml` monitora as duas trilhas separadamente. |
 | Preview URL pattern | `https://zappwebv2-{hash}-juca1.vercel.app` |
 | Região | `iad1` |
 | Framework / build / output | Vite + React · `bun run build` · `dist/` · Node 24.x |
