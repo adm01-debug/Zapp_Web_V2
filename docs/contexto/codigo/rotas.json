@@ -1251,7 +1251,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 1405
+   "arquivos_puxados": 1407
   },
   {
    "protegida": false,
@@ -2076,7 +2076,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 378
+   "arquivos_puxados": 379
   },
   {
    "protegida": false,
@@ -2516,7 +2516,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 140
+   "arquivos_puxados": 141
   },
   {
    "protegida": true,
@@ -2657,7 +2657,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 118
+   "arquivos_puxados": 119
   },
   {
    "protegida": false,
@@ -3513,7 +3513,7 @@
     "radiogroup",
     "status"
    ],
-   "arquivos_puxados": 120
+   "arquivos_puxados": 121
   },
   {
    "id": "chatbot",
@@ -3904,7 +3904,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 214
+   "arquivos_puxados": 215
   },
   {
    "id": "crm360",
@@ -5200,7 +5200,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 583
+   "arquivos_puxados": 584
   },
   {
    "id": "integrations",
@@ -5495,7 +5495,7 @@
     "region",
     "status"
    ],
-   "arquivos_puxados": 62
+   "arquivos_puxados": 63
   },
   {
    "id": "nps",
@@ -5942,7 +5942,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 412
+   "arquivos_puxados": 413
   },
   {
    "id": "omnichannel",
@@ -7050,7 +7050,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 210
+   "arquivos_puxados": 211
   },
   {
    "id": "talkx-kit",
@@ -7211,7 +7211,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 136
+   "arquivos_puxados": 137
   },
   {
    "id": "team-chat",

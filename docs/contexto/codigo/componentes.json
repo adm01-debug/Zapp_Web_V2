@@ -7785,7 +7785,7 @@
     "CommandPaletteHost"
    ],
    "export_default": null,
-   "linhas": 34,
+   "linhas": 43,
    "dominio": "components/keyboard",
    "hooks_locais": [
     "useCatalogQuickSearch",
@@ -12872,7 +12872,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "orfao": false
   },
   {

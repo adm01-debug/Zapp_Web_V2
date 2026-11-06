@@ -1,14 +1,14 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 189,
+ "total": 191,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
   "data": 1,
   "integrations": 3,
-  "lib": 143,
+  "lib": 145,
   "providers": 1,
   "python": 9,
   "segments": 1,
@@ -2016,6 +2016,30 @@
    "orfao": false
   },
   {
+   "arquivo": "src/lib/commandPaletteSearch.ts",
+   "camada": "lib",
+   "exports": [
+    "searchCommandSources",
+    "searchContactCommands"
+   ],
+   "export_default": null,
+   "linhas": 65,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "components/keyboard"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
    "arquivo": "src/lib/contactHealth.ts",
    "camada": "lib",
    "exports": [
@@ -2568,7 +2592,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 8,
+   "usado_por": 9,
    "usado_por_modulos": [
     "components/email",
     "components/gmail",
@@ -2577,7 +2601,8 @@
     "hooks/email",
     "hooks/inbox",
     "hooks/integrations",
-    "hooks/team-chat"
+    "hooks/team-chat",
+    "lib"
    ],
    "coberto_por_testes": 6,
    "orfao": false
@@ -3859,6 +3884,30 @@
     "components/omnichannel"
    ],
    "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/openContactChat.ts",
+   "camada": "lib",
+   "exports": [
+    "openContactChat"
+   ],
+   "export_default": null,
+   "linhas": 61,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 2,
+   "usado_por_modulos": [
+    "components/catalog",
+    "lib"
+   ],
+   "coberto_por_testes": 0,
    "orfao": false
   },
   {
@@ -5392,7 +5441,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 12,
+   "usado_por": 13,
    "usado_por_modulos": [
     "components/calls",
     "components/contacts",
@@ -5400,6 +5449,7 @@
     "components/tasks",
     "hooks/contacts",
     "hooks/crm",
+    "lib",
     "services"
    ],
    "coberto_por_testes": 4,

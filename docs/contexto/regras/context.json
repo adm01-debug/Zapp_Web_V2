@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "0a3442b1bc59e5934b05b5ffa04f94bd74f3b0cc",
+  "sha": "83e821b8a590f671e792836046839c142313412e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 12:59 UTC",
-  "files_total": 8067,
-  "code_files": 5965,
-  "code_lines": 1032831
+  "generated_at": "2026-11-06 16:25 UTC",
+  "files_total": 8093,
+  "code_files": 5986,
+  "code_lines": 1038504
  },
  "version": "1.3.2",
- "facts_hash": "2f47935b7d1bdc03",
+ "facts_hash": "ad3709f42fab4255",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,9 +314,9 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1860,
+   ".ts": 1864,
    ".sql": 1280,
-   ".mjs": 387,
+   ".mjs": 404,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -61893,7 +61893,7 @@
      "log_audit_event",
      "user_has_permission"
     ],
-    "deps_count": 163
+    "deps_count": 164
    },
    {
     "path": "/2fa",
@@ -67598,8 +67598,8 @@
   },
   {
    "module": "e2e",
-   "files": 76,
-   "lines": 17388,
+   "files": 78,
+   "lines": 18057,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -67612,6 +67612,8 @@
     "e2e-talkx.ts: E2E_TALKX_CONNECTION_ID, E2E_TALKX_CONNECTION_LABEL, E2E_TALKX_SEGMENT_ID, E2E_TALKX_SEGMENT_NAME, E2E_TALKX_SEGMENT_REGEX, E2E_TALKX_EXECUTION_ID",
     "email-navy.ts: mockEmailNavy",
     "fixture-conversation.ts: FixtureConversationFailure, FixtureConversationError, pickFixtureConversationIndex, conversationItemNames, openFixtureConversation",
+    "function-completion.ts: ISOLATED_HTTP_ORIGIN, ObservedFunction, CompletedFunctionCall, observeIsolatedFunctionPosts, requireSipNotConfigured, DeviceResult",
+    "isolated-qr.ts: qrRequestOperation, qrRequestAction, test",
     "mapa-mocks.ts: SUPABASE_HOST, Registro, fixtureMapbox, json, querObjetoUnico, mockAppShell",
     "onboarding-isolated.ts: withFreshOnboardingUser, test, gotoOnboardingContacts",
     "onboarding.ts: OVERLAY_ONBOARDING, TITULO_ONBOARDING, dispensarOnboarding",
@@ -67715,6 +67717,8 @@
     "e2e/fixtures/e2e-talkx.unit.test.mjs",
     "e2e/fixtures/email-navy.ts",
     "e2e/fixtures/fixture-conversation.ts",
+    "e2e/fixtures/function-completion.ts",
+    "e2e/fixtures/isolated-qr.ts",
     "e2e/fixtures/mapa-mocks.ts",
     "e2e/fixtures/onboarding-isolated.ts",
     "e2e/fixtures/onboarding.ts",
@@ -67747,8 +67751,8 @@
   },
   {
    "module": "scripts",
-   "files": 416,
-   "lines": 80330,
+   "files": 433,
+   "lines": 85047,
    "tables": [
     "a",
     "alem_do_limite",
@@ -67938,6 +67942,7 @@
     "scripts/ci/ci-e2e-projects.unit.mjs",
     "scripts/ci/ci-gate.unit.mjs",
     "scripts/ci/codeql-paths.unit.mjs",
+    "scripts/ci/command-palette-contacts.unit.mjs",
     "scripts/ci/commit-msg-lint.mjs",
     "scripts/ci/commit-msg-lint.unit.mjs",
     "scripts/ci/complete-system-features-doc.unit.mjs",
@@ -67962,8 +67967,7 @@
     "scripts/ci/e2e-auth-setup.unit.mjs",
     "scripts/ci/e2e-email-axe-ready.unit.mjs",
     "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
-    "scripts/ci/e2e-isolated-alert.unit.mjs",
-    "scripts/ci/e2e-isolated-collection.unit.mjs"
+    "scripts/ci/e2e-http-regressions.unit.mjs"
    ]
   },
   {
@@ -68077,7 +68081,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368011,
+   "lines": 368055,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68726,8 +68730,8 @@
   },
   {
    "module": "src/lib",
-   "files": 279,
-   "lines": 38560,
+   "files": 281,
+   "lines": 38803,
    "tables": [
     "contacts",
     "security_alerts"
@@ -68748,6 +68752,7 @@
     "chunkReload.ts: CHUNK_RELOAD_AT_KEY, CHUNK_RELOAD_COUNT_KEY, LEGACY_CHUNK_RELOAD_KEY, CHUNK_RELOAD_COOLDOWN_MS, MAX_CHUNK_RELOADS, CLOCK_SKEW_TOLERANCE_MS",
     "clipboard.ts: COPIADO, FALHA_COPIA, copiarTexto, avisarCopia",
     "cnpjUtils.ts: isValidCnpj",
+    "commandPaletteSearch.ts: searchContactCommands, searchCommandSources",
     "contactHealth.ts: ContactHealthFieldKey, ContactHealthInput, ContactHealthField, CONTACT_HEALTH_FIELDS, ContactHealthLevel, ContactHealthMissingField",
     "crmIntegration.ts: CRMIntegrationAction, CRMIntegrationResponse, callCRMIntegration",
     "crossTabDrainLock.ts: OFFLINE_QUEUE_LOCK_NAME, OFFLINE_QUEUE_LOCK_CHANNEL_NAME, OFFLINE_QUEUE_LOCK_WINDOW_MS, CrossTabDrainLock, CrossTabDrainLockOptions, createCrossTabDrainLock",
@@ -68771,8 +68776,7 @@
     "engagementScore.ts: engagementScore, engagementLevel",
     "errorReporter.ts: shouldReport, resetErrorReporterForTests, reportClientError",
     "externalProxy.ts: queryExternalProxy",
-    "fetchAllRows.ts: PageResult, AllRowsResult, FetchAllRowsOptions, fetchAllRows",
-    "fileSenderIdentity.ts: SenderKind, SELF_SENDER_NAME, TEAM_SENDER_NAME, CONTACT_SENDER_FALLBACK, AGENT_SENDER_FALLBACK, SenderIdentityItem"
+    "fetchAllRows.ts: PageResult, AllRowsResult, FetchAllRowsOptions, fetchAllRows"
    ],
    "docs": [
     "a11y.ts: Accessibility utility for screen reader announcements via ARIA live regions. Uses the live regions added in AppShell.tsx.",
@@ -68836,6 +68840,7 @@
     "src/lib/chunkReload.ts",
     "src/lib/clipboard.ts",
     "src/lib/cnpjUtils.ts",
+    "src/lib/commandPaletteSearch.ts",
     "src/lib/contactHealth.ts",
     "src/lib/crmIntegration.ts",
     "src/lib/crossTabDrainLock.ts",
@@ -68885,6 +68890,7 @@
     "src/lib/multiplix-eligibility.ts",
     "src/lib/notificationDedupe.ts",
     "src/lib/offlineQueue.ts",
+    "src/lib/openContactChat.ts",
     "src/lib/parseUserAgent.ts",
     "src/lib/pdfThumbnail.ts",
     "src/lib/plural.ts",
@@ -68896,9 +68902,7 @@
     "src/lib/queryClient.ts",
     "src/lib/queryRetry.ts",
     "src/lib/realtimeTopic.ts",
-    "src/lib/reload-blockers.ts",
-    "src/lib/retry.ts",
-    "src/lib/rlsError.ts"
+    "src/lib/reload-blockers.ts"
    ]
   },
   {
@@ -73609,6 +73613,7 @@
     "e2e/fixtures/seed-files-tab.mjs"
    ],
    "E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY": [
+    "e2e/email-link-contato.spec.ts",
     "e2e/files-tab.spec.ts",
     "e2e/fixtures/onboarding-isolated.ts",
     "e2e/fixtures/seed-files-tab.mjs"
@@ -73621,10 +73626,12 @@
     "e2e/catalog.spec.ts"
    ],
    "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE": [
-    "e2e/fixtures/supabase-env.ts"
+    "e2e/fixtures/supabase-env.ts",
+    "e2e/navegacao-modulos.spec.ts"
    ],
    "E2E_SUPABASE_URL_OVERRIDE": [
-    "e2e/fixtures/supabase-env.ts"
+    "e2e/fixtures/supabase-env.ts",
+    "e2e/navegacao-modulos.spec.ts"
    ],
    "E2E_TEST_": [
     "scripts/ci/e2e-auth-setup.unit.mjs"
@@ -73798,11 +73805,15 @@
     "scripts/ci/reuso-arvore.mjs"
    ],
    "GITHUB_RUN_ATTEMPT": [
-    "e2e/fixtures/e2e-talkx.ts"
+    "e2e/fixtures/e2e-talkx.ts",
+    "scripts/e2e-isolated/network-contexts.mjs",
+    "scripts/e2e-isolated/network-proof.mjs"
    ],
    "GITHUB_RUN_ID": [
     "e2e/fixtures/e2e-talkx.ts",
-    "scripts/ci/github-settings-guard.mjs"
+    "scripts/ci/github-settings-guard.mjs",
+    "scripts/e2e-isolated/network-contexts.mjs",
+    "scripts/e2e-isolated/network-proof.mjs"
    ],
    "GITHUB_SERVER_URL": [
     "scripts/edge-deploy/register-deployment.mjs"
@@ -73968,6 +73979,7 @@
     "scripts/ci/db-guard-confiabilidade.unit.mjs",
     "scripts/ci/e2e-isolated-collection.unit.mjs",
     "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
+    "scripts/ci/e2e-isolated-network-contexts.unit.mjs",
     "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
     "scripts/ci/e2e-isolated-tls.unit.mjs",
     "scripts/ci/e2e-isolated-workflow.unit.mjs",
@@ -74122,6 +74134,7 @@
    ],
    "RECORDED": [
     "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
+    "scripts/ci/e2e-isolated-network-contexts.unit.mjs",
     "scripts/ci/e2e-isolated-workflow.unit.mjs"
    ],
    "REDIGIR_LOG_BASE": [
@@ -74512,6 +74525,7 @@
    "ZAPP_E2E_LOCAL": [
     "e2e/catalog.spec.ts",
     "e2e/email-link-contato.spec.ts",
+    "e2e/fixtures/e2e-contact.ts",
     "e2e/fixtures/supabase-env.ts"
    ],
    "ZAPP_E2E_RUN_ID": [
@@ -74519,6 +74533,25 @@
     "scripts/e2e-isolated/runtime-probe.mjs",
     "scripts/e2e-isolated/seed-login.mjs",
     "scripts/e2e-isolated/tls-edge-probe.ts"
+   ],
+   "ZAPP_NETWORK_NAMESPACE": [
+    "scripts/e2e-isolated/network-contexts-browser.mjs",
+    "scripts/e2e-isolated/network-proof-browser.mjs"
+   ],
+   "ZAPP_NETWORK_RUN": [
+    "scripts/e2e-isolated/network-contexts-browser.mjs",
+    "scripts/e2e-isolated/network-proof-browser.mjs"
+   ],
+   "ZAPP_NETWORK_SHA": [
+    "scripts/e2e-isolated/network-contexts-browser.mjs",
+    "scripts/e2e-isolated/network-proof-browser.mjs"
+   ],
+   "ZAPP_NETWORK_VARIANT": [
+    "scripts/e2e-isolated/network-proof-browser.mjs"
+   ],
+   "ZAPP_PROOF_SHA": [
+    "scripts/e2e-isolated/network-contexts.mjs",
+    "scripts/e2e-isolated/network-proof.mjs"
    ],
    "ZAPP_TEST_PG_PASSWORD": [
     "scripts/db-audit/psql-environment.integration.mjs"
@@ -75575,6 +75608,8 @@
     "src/test/guardaDeRede.test.ts"
    ],
    "https://127.0.0.1:": [
+    "scripts/e2e-isolated/network-contexts-browser.mjs",
+    "scripts/e2e-isolated/network-proof-browser.mjs",
     "scripts/e2e-isolated/tls-edge-probe.ts"
    ],
    "https://ai.gateway.lovable.dev": [
@@ -79989,6 +80024,22 @@
     "msg": "not-visible"
    },
    {
+    "file": "e2e/fixtures/function-completion.ts",
+    "msg": "[e2e-http/"
+   },
+   {
+    "file": "e2e/fixtures/isolated-qr.ts",
+    "msg": "[e2e-isolated/qr-admin-login]"
+   },
+   {
+    "file": "e2e/fixtures/isolated-qr.ts",
+    "msg": "[e2e-isolated/qr-admin-session]"
+   },
+   {
+    "file": "e2e/fixtures/isolated-qr.ts",
+    "msg": "[e2e-isolated/qr-base-url]"
+   },
+   {
     "file": "e2e/fixtures/onboarding-isolated.ts",
     "msg": "[E2E tour/${code}]"
    },
@@ -80165,6 +80216,14 @@
     "msg": "sobrou token em "
    },
    {
+    "file": "scripts/ci/command-palette-contacts.unit.mjs",
+    "msg": "PRIVATE-SOURCE"
+   },
+   {
+    "file": "scripts/ci/command-palette-contacts.unit.mjs",
+    "msg": "não deve carregar lista nem gravar dados"
+   },
+   {
     "file": "scripts/ci/contexto-publicacao.unit.mjs",
     "msg": "Artifact-id sem arquivo correspondente"
    },
@@ -80213,8 +80272,16 @@
     "msg": "forbidden-"
    },
    {
+    "file": "scripts/ci/e2e-http-regressions.unit.mjs",
+    "msg": "SENSITIVE-RAW-NATIVE"
+   },
+   {
     "file": "scripts/ci/e2e-isolated-alert.unit.mjs",
     "msg": "rede proibida neste teste"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
+    "msg": "fixture-refusal"
    },
    {
     "file": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
@@ -80257,6 +80324,10 @@
     "msg": "credentials read before isolation"
    },
    {
+    "file": "scripts/ci/e2e-isolated-network-contexts.unit.mjs",
+    "msg": "network blocked"
+   },
+   {
     "file": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
     "msg": "Unexpected controlled boundary: "
    },
@@ -80275,6 +80346,10 @@
    {
     "file": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
     "msg": "synthetic transport rejection"
+   },
+   {
+    "file": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "msg": "private-sentinel diagnostic write failure"
    },
    {
     "file": "scripts/ci/e2e-isolated-runtime.unit.mjs",
@@ -80953,6 +81028,10 @@
     "msg": "identity unavailable"
    },
    {
+    "file": "scripts/e2e-isolated/fixture-access.mjs",
+    "msg": "[e2e-fixture/"
+   },
+   {
     "file": "scripts/e2e-isolated/gateway.mjs",
     "msg": "gateway-listen-failed"
    },
@@ -80971,6 +81050,10 @@
    {
     "file": "scripts/e2e-isolated/migrations.mjs",
     "msg": "[e2e-isolated/unreviewed-vault-configuration] "
+   },
+   {
+    "file": "scripts/e2e-isolated/network-proof-policy.mjs",
+    "msg": "[network-proof/"
    },
    {
     "file": "scripts/e2e-isolated/providers.mjs",
@@ -81147,6 +81230,10 @@
    {
     "file": "scripts/e2e-isolated/run.mjs",
     "msg": "provider-proof-mismatch"
+   },
+   {
+    "file": "scripts/e2e-isolated/run.mjs",
+    "msg": "qr-seed-proof-unreadable"
    },
    {
     "file": "scripts/e2e-isolated/run.mjs",
@@ -85311,6 +85398,10 @@
    {
     "file": "src/lib/a11y.ts",
     "msg": ");\n  if (el) {\n    el.textContent = "
+   },
+   {
+    "file": "src/lib/commandPaletteSearch.ts",
+    "msg": "invalid-contact-id"
    },
    {
     "file": "src/lib/crmIntegration.ts",
@@ -91799,6 +91890,10 @@
    {
     "file": "src/lib/cnpjUtils.ts",
     "text": "* Validação de CNPJ por dígito verificador (algoritmo padrão da Receita Federal). */"
+   },
+   {
+    "file": "src/lib/commandPaletteSearch.ts",
+    "text": "* O prazo é da espera da paleta; não aborta nem repete a chamada de transporte. */"
    },
    {
     "file": "src/lib/contactHealth.ts",
@@ -106005,6 +106100,16 @@
     "value": "'Copiado!'"
    },
    {
+    "file": "src/lib/commandPaletteSearch.ts",
+    "name": "CONTACT_LIMIT",
+    "value": "8"
+   },
+   {
+    "file": "src/lib/commandPaletteSearch.ts",
+    "name": "SOURCE_TIMEOUT_MS",
+    "value": "5"
+   },
+   {
     "file": "src/lib/crossTabDrainLock.ts",
     "name": "OFFLINE_QUEUE_LOCK_WINDOW_MS",
     "value": "2"
@@ -117908,6 +118013,12 @@
     "kind": "escreve"
    },
    {
+    "file": "src/lib/commandPaletteSearch.ts",
+    "field": "status",
+    "value": "fulfilled",
+    "kind": "compara"
+   },
+   {
     "file": "src/lib/crossTabDrainLock.ts",
     "field": "type",
     "value": "CLAIM",
@@ -126117,6 +126228,10 @@
    },
    {
     "file": "e2e/busca-global-paleta.spec.ts",
+    "name": "a busca global abre o segundo contato homônimo a partir de "
+   },
+   {
+    "file": "e2e/busca-global-paleta.spec.ts",
     "name": "o primeiro Ctrl+K logo após carregar a tela já abre a paleta"
    },
    {
@@ -126150,6 +126265,14 @@
    {
     "file": "e2e/conexoes.spec.ts",
     "name": "abre o diálogo de nova conexão e o Cancelar fecha sem criar nada"
+   },
+   {
+    "file": "e2e/conexoes.spec.ts",
+    "name": "mantém nova conexão bloqueada quando a flag está desabilitada"
+   },
+   {
+    "file": "e2e/conexoes.spec.ts",
+    "name": "abrir o QR de uma conexão desconectada"
    },
    {
     "file": "e2e/contact-address.spec.ts",
@@ -126653,6 +126776,10 @@
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "SIP 401 e Device 500 históricos REPROVAM sem tolerância de defeito"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
     "name": "pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM"
    },
    {
@@ -126666,6 +126793,18 @@
    {
     "file": "e2e/navegacao-modulos.spec.ts",
     "name": "DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "o motor SIP conclui o provisionamento autenticado ao abrir Telefonia no ambiente isolado"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "detect-new-device conclui o aviso real de boot com uma sessão identificada"
+   },
+   {
+    "file": "e2e/navegacao-modulos.spec.ts",
+    "name": "detect-new-device preserva uma linha canônica em duas chamadas concorrentes de uma sessão Auth nova"
    },
    {
     "file": "e2e/onboarding-dispensar.spec.ts",
@@ -126710,6 +126849,10 @@
    {
     "file": "e2e/quick-controls-volume.spec.ts",
     "name": "S13/S14: clique fora e Esc FECHAM o painel"
+   },
+   {
+    "file": "e2e/quick-controls-volume.spec.ts",
+    "name": "S15: ao fechar, o foco volta ao gatilho"
    },
    {
     "file": "e2e/quick-controls-volume.spec.ts",
@@ -152318,6 +152461,22 @@
    {
     "file": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
     "name": "já no Talk X: escolher um template abre aquele template (popstate)"
+   },
+   {
+    "file": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+    "name": "Ctrl+K — contatos pelo serviço e navegação compartilhados"
+   },
+   {
+    "file": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+    "name": "abre o segundo homônimo pelo UUID: "
+   },
+   {
+    "file": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+    "name": "catálogo indisponível mantém os contatos encontrados"
+   },
+   {
+    "file": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+    "name": "erro de contatos é visível e mantém o produto encontrado"
    },
    {
     "file": "src/components/knowledge/__tests__/KnowledgeBaseView.a11y.test.tsx",
@@ -188650,6 +188809,54 @@
    {
     "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
     "name": "nao casa quando o nome exibido e outro contato com o mesmo sufixo"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "identidade do nome renderizado — avatar e preview nao sao candidatos"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "o harness reproduz a colisao do seletor antigo com o avatar"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "o atributo fica somente no span do nome real do componente"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "avatar e preview imitando a fixture nao mudam o nome extraido"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "elemento de nome ausente produz vazio, sem fallback para avatar ou preview"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "avatar ausente nao muda o nome e companhia continua parte do texto"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "a extracao preserva a ordem apresentada ao evaluateAll"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "spec real com elementos concorrentes de identidade"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "abre a fixture correta quando o avatar do primeiro contato imita seu nome"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "aborta sem clicar/digitar/enviar quando o alvo esta em "
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "dois nomes reais continuam ambiguos mesmo com avatares diferentes"
+   },
+   {
+    "file": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+    "name": "preserva normalizacao do nome real sem depender das iniciais"
    },
    {
     "file": "src/lib/__tests__/e2e-supabase-env.test.ts",
@@ -235389,6 +235596,7 @@
      ],
      "fulfilled": [
       "compara:src/hooks/integrations/useWhatsAppStatus.ts",
+      "compara:src/lib/commandPaletteSearch.ts",
       "compara:supabase/functions/gmail-cron-sync/index.ts"
      ],
      "CLOSED": [
@@ -239207,6 +239415,7 @@
    "e2e/email-link-contato.spec.ts",
    "e2e/files-tab.spec.ts",
    "e2e/fixtures/arquivos-local/seed.ts",
+   "e2e/fixtures/e2e-contact.ts",
    "e2e/fixtures/onboarding-isolated.ts",
    "e2e/fixtures/seed-files-tab.mjs",
    "e2e/navegacao-modulos.spec.ts",
@@ -239217,12 +239426,16 @@
    "scripts/ci/check-pr-workflow-secrets.unit.mjs",
    "scripts/ci/crm-integration-contract.unit.mjs",
    "scripts/ci/e2e-auth-isolation.unit.mjs",
+   "scripts/ci/e2e-http-regressions.unit.mjs",
+   "scripts/ci/e2e-isolated-email-l08.unit.mjs",
+   "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
    "scripts/ci/e2e-isolated-fixtures.unit.mjs",
    "scripts/ci/e2e-isolated-images.unit.mjs",
    "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
    "scripts/ci/e2e-isolated-login-seed.unit.mjs",
    "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
    "scripts/ci/e2e-isolated-providers.unit.mjs",
+   "scripts/ci/e2e-isolated-qr.unit.mjs",
    "scripts/ci/e2e-isolated-runtime.unit.mjs",
    "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
    "scripts/ci/e2e-isolated-seed.unit.mjs",
@@ -239259,11 +239472,13 @@
    "scripts/db-audit/talkx-recovery-runtime.sql",
    "scripts/db-audit/talkx-template-history-runtime.sql",
    "scripts/db-audit/validate-runtime-proof.mjs",
+   "scripts/e2e-isolated/fixture-access.mjs",
    "scripts/e2e-isolated/platform/webhooks.sql",
    "scripts/e2e-isolated/provider-diagnostics.mjs",
    "scripts/e2e-isolated/providers.mjs",
    "scripts/e2e-isolated/runtime-contract.mjs",
    "scripts/e2e-isolated/seed-login.mjs",
+   "scripts/e2e-isolated/seed-qr.mjs",
    "scripts/e2e-isolated/seed-suite.mjs",
    "scripts/e2e-isolated/stack.mjs",
    "scripts/e2e-isolated/tls-edge-probe.ts",
@@ -254667,6 +254882,7 @@
     "msg": "valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS",
     "where": [
      "compara:src/hooks/integrations/useWhatsAppStatus.ts",
+     "compara:src/lib/commandPaletteSearch.ts",
      "compara:supabase/functions/gmail-cron-sync/index.ts"
     ]
    },
@@ -258344,7 +258560,7 @@
   },
   "e2e/busca-global-paleta.spec.ts": {
    "path": "e2e/busca-global-paleta.spec.ts",
-   "lines": 308,
+   "lines": 379,
    "is_test": true,
    "params": [
     {
@@ -258358,7 +258574,6 @@
    ],
    "rule_comments": [
     "A paleta não pode estourar a largura da viewport de 390px.",
-    "* BUG (não corrigido neste cartão — só documentado): ⌘K/Ctrl+K abre apenas a busca",
     "enquanto CommandPaletteHost carrega. Um único Ctrl+K deve tornar o diálogo",
     "seguinte deve fechar a paleta sem outra alternância no bubble."
    ],
@@ -258376,6 +258591,7 @@
     "Ctrl+/ abre a ajuda de atalhos com os atalhos principais do registry",
     "celular 390x844",
     "o botão Buscar do cabeçalho abre a mesma paleta e ela navega",
+    "a busca global abre o segundo contato homônimo a partir de ",
     "o primeiro Ctrl+K logo após carregar a tela já abre a paleta",
     "o Ctrl+K seguinte fecha a paleta aberta (alterna)",
     "Esc devolve o foco ao elemento de origem"
@@ -258421,16 +258637,18 @@
   },
   "e2e/conexoes.spec.ts": {
    "path": "e2e/conexoes.spec.ts",
-   "lines": 60,
+   "lines": 156,
    "is_test": true,
    "rule_comments": [
-    "explícito para não fingir cobertura (regra R1)."
+    "* Controla somente a leitura da flag deste cenário e impede criação acidental. */"
    ],
    "tests": [
     "Conexões — tela e estados honestos",
     "mostra os cartões de estatística e a ação de nova conexão",
     "a lista tem conexões OU o vazio é explicado — nunca os dois ao mesmo tempo",
-    "abre o diálogo de nova conexão e o Cancelar fecha sem criar nada"
+    "abre o diálogo de nova conexão e o Cancelar fecha sem criar nada",
+    "mantém nova conexão bloqueada quando a flag está desabilitada",
+    "abrir o QR de uma conexão desconectada"
    ]
   },
   "e2e/contact-address.spec.ts": {
@@ -258534,7 +258752,7 @@
    "is_test": true,
    "temporal": [
     "await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });",
-    "await expect(page.getByRole('heading', { level: 3, name })).toBeVisible({ timeout: 15_000 });"
+    "await expect(page.getByRole('heading', { level: 2, name })).toBeVisible({ timeout: 15_000 });"
    ],
    "tests": [
     "Contatos — painel de detalhe",
@@ -258618,7 +258836,7 @@
   },
   "e2e/contacts-views.spec.ts": {
    "path": "e2e/contacts-views.spec.ts",
-   "lines": 70,
+   "lines": 72,
    "is_test": true,
    "temporal": [
     "await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });"
@@ -258690,15 +258908,23 @@
   },
   "e2e/email-link-contato.spec.ts": {
    "path": "e2e/email-link-contato.spec.ts",
-   "lines": 318,
+   "lines": 368,
    "is_test": true,
    "env": [
     "API_URL",
+    "E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY",
     "SERVICE_ROLE_KEY",
     "ZAPP_E2E_LOCAL"
    ],
    "errors": [
-    "Sessão do Supabase não encontrada no localStorage — o project "
+    "Sessão do Supabase não encontrada no localStorage — o project ",
+    "[e2e-email/admission]",
+    "[e2e-email/conversation-prepare]",
+    "[e2e-email/http-failed]",
+    "[e2e-email/local-configuration]",
+    "[e2e-email/request-failed]",
+    "[e2e-email/request-shape]",
+    "[e2e-email/service-credential]"
    ],
    "params": [
     {
@@ -258728,7 +258954,18 @@
     {
      "name": "MSG_SETUP",
      "value": "'[E2E L08 setup] mensagem para abrir a conversa'"
+    },
+    {
+     "name": "LOCAL_ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
     }
+   ],
+   "role_checks": [
+    "service_role"
+   ],
+   "rule_comments": [
+    "fixa e chave sintética local, lida somente após a admissão. Fora do modo",
+    "* Reabre com o usuário real e cria somente o texto de preparo próprio de L08. */"
    ],
    "temporal": [
     "await expect(destinatarios).toBeVisible({ timeout: 20_000 });",
@@ -259069,9 +259306,11 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "path": "e2e/navegacao-modulos.spec.ts",
-   "lines": 1792,
+   "lines": 1906,
    "is_test": true,
    "env": [
+    "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE",
+    "E2E_SUPABASE_URL_OVERRIDE",
     "E2E_TEST_EMAIL",
     "E2E_TEST_PASSWORD",
     "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY",
@@ -259080,6 +259319,13 @@
    "errors": [
     ")).toHaveCount(0);\n  } else if (item.id === ",
     "E2E_TEST_EMAIL/E2E_TEST_PASSWORD não estão definidas e não há sessão montada. Rode pelo ",
+    "[e2e-http/boot-identity]",
+    "[e2e-http/concurrent-request]",
+    "[e2e-http/local-json]",
+    "[e2e-http/local-path]",
+    "[e2e-http/local-request]",
+    "[e2e-http/local-status]",
+    "[e2e-http/synthetic-login]",
     "login local não concluiu (banco local do conjunto). Tela: ${visivel.slice(0, 400)}",
     "nem o shell autenticado nem a tela de login ficaram de pé (banco local do conjunto do cartão)"
    ],
@@ -259117,6 +259363,7 @@
     "nem regra por texto solto: endpoint novo, outro status ou outro corpo REPROVAM.",
     "* tag que CONTÉM (o React acusa \"X dentro de X\" / \"X não pode conter X\") */",
     "4xx de validação, endpoint novo, par de tags novo) entra em `reprovam`.",
+    "SIP aceita somente a lacuna exata 503; Device prova boot e sessão concorrente. */",
     "subtítulo não pode ser p. O React avisa \"In HTML, <div> cannot be a descendant"
    ],
    "temporal": [
@@ -259152,10 +259399,14 @@
     "console.error sem resposta justificada REPROVA (status solto não tolera)",
     "sombra de console com URL da mensagem só casa com a resposta MEDIDA correspondente",
     "sombra sem URL na mensagem só casa com a resposta MEDIDA que a precede",
+    "SIP 401 e Device 500 históricos REPROVAM sem tolerância de defeito",
     "pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM",
     "DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item",
     "DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro",
-    "DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>"
+    "DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>",
+    "o motor SIP conclui o provisionamento autenticado ao abrir Telefonia no ambiente isolado",
+    "detect-new-device conclui o aviso real de boot com uma sessão identificada",
+    "detect-new-device preserva uma linha canônica em duas chamadas concorrentes de uma sessão Auth nova"
    ],
    "uses_service_role": true
   },
@@ -259227,13 +259478,14 @@
   },
   "e2e/quick-controls-volume.spec.ts": {
    "path": "e2e/quick-controls-volume.spec.ts",
-   "lines": 640,
+   "lines": 646,
    "is_test": true,
    "env": [
     "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY",
     "VITE_ZAPP_LOCAL_SUPABASE_URL"
    ],
    "errors": [
+    "Content real do Popover não encontrado",
     "rótulo sem porcentagem: "
    ],
    "params": [
@@ -259243,7 +259495,8 @@
     }
    ],
    "rule_comments": [
-    "O clique comum NÃO pode mais alternar o mudo (o mudo rápido é a tecla M)."
+    "O clique comum NÃO pode mais alternar o mudo (o mudo rápido é a tecla M).",
+    "real impede aprovar apenas o foco transitório do hook antes do autofocus final."
    ],
    "temporal": [
     ".poll(() => lerPercentualDoRotulo(gatilho), { timeout: 5_000 })",
@@ -259262,6 +259515,7 @@
     "S19: setas ↑/↓ andam de 5 em 5 e a tecla M alterna o mudo",
     "B5: a roda do mouse só ajusta o volume com o painel ABERTO",
     "S13/S14: clique fora e Esc FECHAM o painel",
+    "S15: ao fechar, o foco volta ao gatilho",
     "B2: no TOQUE o painel abre e NÃO fecha ao soltar o dedo",
     "B3 (hover): os 6 botões têm dica ao passar o mouse",
     "B3 (foco): os 6 botões têm dica ao receber o foco",
@@ -259747,7 +260001,7 @@
   },
   "e2e/fixtures/e2e-contact.ts": {
    "path": "e2e/fixtures/e2e-contact.ts",
-   "lines": 271,
+   "lines": 281,
    "exports": [
     "const E2E_FIXTURE_CONTACT_ID",
     "const E2E_FIXTURE_CONTACT_NAME",
@@ -259758,6 +260012,9 @@
     "function cleanupE2EReactions",
     "function ensureReactionAbsent",
     "function fixtureHasClosureToday"
+   ],
+   "env": [
+    "ZAPP_E2E_LOCAL"
    ],
    "errors": [
     "Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()} ",
@@ -259778,7 +260035,8 @@
    ],
    "temporal": [
     "await badge.waitFor({ state: 'detached', timeout: 8_000 });"
-   ]
+   ],
+   "uses_service_role": true
   },
   "e2e/fixtures/e2e-talkx.ts": {
    "path": "e2e/fixtures/e2e-talkx.ts",
@@ -259846,7 +260104,7 @@
   },
   "e2e/fixtures/fixture-conversation.ts": {
    "path": "e2e/fixtures/fixture-conversation.ts",
-   "lines": 119,
+   "lines": 118,
    "exports": [
     "type FixtureConversationFailure",
     "class FixtureConversationError",
@@ -259866,10 +260124,75 @@
    ],
    "rule_comments": [
     "// Regra agora: a conversa so e aberta quando o nome exibido casa com a fixture e",
+    "* O atributo identifica somente o nome exibido por VirtualizedRealtimeList",
     "* Abre SOMENTE a conversa do contato fixture e devolve o item aberto."
    ],
    "temporal": [
     "await items.first().waitFor({ state: 'visible', timeout: 15_000 });"
+   ]
+  },
+  "e2e/fixtures/function-completion.ts": {
+   "path": "e2e/fixtures/function-completion.ts",
+   "lines": 197,
+   "exports": [
+    "const ISOLATED_HTTP_ORIGIN",
+    "type ObservedFunction",
+    "interface CompletedFunctionCall",
+    "function observeIsolatedFunctionPosts",
+    "function requireSipNotConfigured",
+    "interface DeviceResult",
+    "function requireDeviceResult",
+    "interface SessionIdentity",
+    "function readIsolatedSessionIdentity",
+    "function requireSessionAbsent",
+    "function requireCanonicalSession",
+    "function requireOwnedDevice",
+    "function requireSameKnownSession",
+    "function readBearerAccessToken",
+    "function readLoginAccessToken",
+    "function requireSyntheticUser",
+    "function requireFreshAuthSession"
+   ],
+   "errors": [
+    "[e2e-http/"
+   ],
+   "enums": [
+    {
+     "name": "ObservedFunction",
+     "values": "get-sip-password | detect-new-device"
+    }
+   ],
+   "params": [
+    {
+     "name": "ISOLATED_HTTP_ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    }
+   ],
+   "role_checks": [
+    "authenticated"
+   ],
+   "rule_comments": [
+    "O prazo de conclusão começa em completed(), depois do boot/gatilho do teste.",
+    "Prazo único: uma segunda chamada não reinicia os 30 s da barreira."
+   ]
+  },
+  "e2e/fixtures/isolated-qr.ts": {
+   "path": "e2e/fixtures/isolated-qr.ts",
+   "lines": 111,
+   "exports": [
+    "function qrRequestOperation",
+    "function qrRequestAction",
+    "const test"
+   ],
+   "errors": [
+    "[e2e-isolated/qr-admin-login]",
+    "[e2e-isolated/qr-admin-session]",
+    "[e2e-isolated/qr-base-url]"
+   ],
+   "temporal": [
+    "await expect(shell.or(refusal).first()).toBeVisible({ timeout: 120000 });",
+    "await page.goto('/auth', { timeout: 15000 });",
+    "}, { timeout: 180000 }],"
    ]
   },
   "e2e/fixtures/mapa-mocks.ts": {
@@ -260024,7 +260347,7 @@
   },
   "e2e/fixtures/talkx-demo.ts": {
    "path": "e2e/fixtures/talkx-demo.ts",
-   "lines": 297,
+   "lines": 310,
    "exports": [
     "const ESCRITA_NAO_PREVISTA",
     "type TalkXDemoData",
@@ -260056,7 +260379,8 @@
    "rule_comments": [
     "2100-01-01T00:00:00Z — nunca expira no teste",
     "O GoTrue lê esta chave do localStorage em `getSession()` e valida apenas o",
-    "Permissão nomeada (RoleService.checkPermission → rpc/user_has_permission)."
+    "Permissão nomeada (RoleService.checkPermission → rpc/user_has_permission).",
+    "GoTrue auth: JWT com assinatura falsa não passa na validação do servidor local;"
    ],
    "temporal": [
     "expires_in: 3600,"
@@ -261404,6 +261728,27 @@
     "), workflow.indexOf("
    ]
   },
+  "scripts/ci/command-palette-contacts.unit.mjs": {
+   "path": "scripts/ci/command-palette-contacts.unit.mjs",
+   "lines": 426,
+   "errors": [
+    "PRIVATE-SOURCE",
+    "não deve carregar lista nem gravar dados"
+   ],
+   "params": [
+    {
+     "name": "FIRST",
+     "value": "'11111111-1111-4111-8111-111111111111'"
+    },
+    {
+     "name": "SECOND",
+     "value": "'22222222-2222-4222-8222-222222222222'"
+    }
+   ],
+   "rule_comments": [
+    "* Contratos dos helpers REAIS: somente Supabase, history/eventos e relógio"
+   ]
+  },
   "scripts/ci/commit-msg-lint.mjs": {
    "path": "scripts/ci/commit-msg-lint.mjs",
    "lines": 108,
@@ -261877,6 +262222,14 @@
     "vm.runInNewContext(compiled, { test(name, fn) { assert.equal(name, title); assert.equal(callback, undefined); callback = fn; }, expect }, { timeout: 1000 });"
    ]
   },
+  "scripts/ci/e2e-http-regressions.unit.mjs": {
+   "path": "scripts/ci/e2e-http-regressions.unit.mjs",
+   "lines": 486,
+   "errors": [
+    "SENSITIVE-RAW-NATIVE"
+   ],
+   "uses_service_role": true
+  },
   "scripts/ci/e2e-isolated-alert.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-alert.unit.mjs",
    "lines": 94,
@@ -261894,6 +262247,82 @@
    "temporal": [
     "{ encoding: 'utf8', timeout: 10_000, env: { PATH: process.env.PATH } });"
    ]
+  },
+  "scripts/ci/e2e-isolated-email-l08.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-email-l08.unit.mjs",
+   "lines": 167,
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "CONTACT",
+     "value": "'04dff4dc-c6b1-4283-ac22-bd8639804759'"
+    },
+    {
+     "name": "NOW",
+     "value": "1"
+    },
+    {
+     "name": "CANARY",
+     "value": "'PRIVATE_TRANSPORT_CANARY'"
+    }
+   ],
+   "temporal": [
+    "vm.runInContext(js + '\\n;globalThis.helpers = { restAdmin, limparSemeadura, garantirConversaAberta };', context, { timeout: 1000 });"
+   ],
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-fixture-access.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
+   "lines": 442,
+   "errors": [
+    "fixture-refusal"
+   ],
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "CONTACT",
+     "value": "'04dff4dc-c6b1-4283-ac22-bd8639804759'"
+    },
+    {
+     "name": "CONTENT",
+     "value": "'[E2E fixture setup]'"
+    },
+    {
+     "name": "SHA",
+     "value": "'03e9568c194342bfef82291b20e78c34bae3796d'"
+    },
+    {
+     "name": "FIELDS",
+     "value": "'id,contact_id,sender,content,message_type'"
+    },
+    {
+     "name": "CANARY",
+     "value": "'synthetic_secret_canary_not_a_real_credential'"
+    }
+   ],
+   "rule_comments": [
+    "único limite substituído; o corpo da fixture é o mesmo do checkout testado."
+   ],
+   "calc_fns": [
+    {
+     "name": "cancel",
+     "params": "",
+     "body": "return new Promise(() => {});"
+    }
+   ],
+   "temporal": [
+    "test('a non-completing stream cancellation cannot hold a refusal open', { timeout: 1000 }, async () => {"
+   ],
+   "side_effects": [
+    "enqueue("
+   ],
+   "uses_service_role": true
   },
   "scripts/ci/e2e-isolated-fixtures.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
@@ -262010,9 +262439,36 @@
     "new review required */\\n' + s],"
    ]
   },
+  "scripts/ci/e2e-isolated-network-contexts.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-network-contexts.unit.mjs",
+   "lines": 193,
+   "env": [
+    "PATH",
+    "RECORDED"
+   ],
+   "errors": [
+    "network blocked"
+   ],
+   "temporal": [
+    "const r=spawnSync('bash',['-s'],{input:runOf(controller),encoding:'utf8',cwd:directory,env:{PATH:bin+':'+process.env.PATH,ZAPP_PROOF_SCOPE:scope,RUNNER_TEMP:dir …"
+   ]
+  },
+  "scripts/ci/e2e-isolated-network-proof.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-network-proof.unit.mjs",
+   "lines": 329,
+   "temporal": [
+    "const child=runCommand(process.execPath,['-e','setTimeout(()=>process.exit(0),120)'],{env:{},timeout:10000}).then(r=>{childDone=true;return r;});",
+    "test('async subprocess abort cannot become success',async()=>{const c=new AbortController();const pending=runCommand(process.execPath,['-e','setInterval(()=>{}, …",
+    "test('async subprocess bounds combined output',async()=>{const r=await runCommand(process.execPath,['-e','process.stdout.write(\"x\".repeat(4096))'],{env:{},timeo …",
+    "test('async subprocess handles missing executable',async()=>{const r=await runCommand('/nonexistent-network-proof-tool',[],{env:{},timeout:10000});assert(r.erro …",
+    "test('async subprocess keeps callbacks alive while waiting',async()=>{let ticks=0;const timer=setInterval(()=>ticks++,10);try{const r=await runCommand(process.e …",
+    "test('async subprocess rejects nonzero',async()=>{const r=await runCommand(process.execPath,['-e','process.exit(7)'],{env:{},timeout:10000});assert.equal(r.code …",
+    "test('async subprocess timeout is observable',async()=>{const r=await runCommand(process.execPath,['-e','setInterval(()=>{},1000)'],{env:{},timeout:30});assert. …"
+   ]
+  },
   "scripts/ci/e2e-isolated-provider-readiness.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
-   "lines": 526,
+   "lines": 527,
    "errors": [
     "Unexpected controlled boundary: ",
     "diagnostic-write-failed",
@@ -262030,7 +262486,42 @@
   },
   "scripts/ci/e2e-isolated-providers.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-providers.unit.mjs",
-   "lines": 171,
+   "lines": 172,
+   "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-qr.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-qr.unit.mjs",
+   "lines": 364,
+   "params": [
+    {
+     "name": "RUN",
+     "value": "'zapp-e2e-qr-models-00000001'"
+    },
+    {
+     "name": "SHA",
+     "value": "'a'"
+    },
+    {
+     "name": "SUP",
+     "value": "'e2e65100-0000-4000-a000-000000009001'"
+    },
+    {
+     "name": "SUP_P",
+     "value": "'e2e65100-0000-4000-a000-000000009002'"
+    },
+    {
+     "name": "FILE_P",
+     "value": "'e2e65100-0000-4000-a000-000000009003'"
+    },
+    {
+     "name": "QR_USER",
+     "value": "'e2e71190-7005-4509-a000-000000000001'"
+    },
+    {
+     "name": "QR_PROFILE",
+     "value": "'e2e71190-7005-4509-a000-000000000002'"
+    }
+   ],
    "uses_service_role": true
   },
   "scripts/ci/e2e-isolated-results.unit.mjs": {
@@ -262100,11 +262591,12 @@
   },
   "scripts/ci/e2e-isolated-runtime.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "lines": 1267,
+   "lines": 1524,
    "env": [
     "GITHUB_OUTPUT"
    ],
    "errors": [
+    "private-sentinel diagnostic write failure",
     "private-sentinel write failure"
    ],
    "params": [
@@ -262129,7 +262621,8 @@
     "subprocess channels contain canaries and must never become a seed .log.",
     "synthetic:must-never-publish@127.0.0.1:5173/path?token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjYW5hcnkifQ.c2VjcmV0\\n';",
     "Capture both subprocess channels before required() throws. No registry/network",
-    "A failed pre-database TLS probe must leave a useful redacted diagnostic."
+    "A failed pre-database TLS probe must leave a useful redacted diagnostic.",
+    "must-never-publish@example.test/path?token=secret';"
    ],
    "temporal": [
     "assert.deepEqual(CATALOG_EXECUTOR_OPTIONS, { timeout: 5000, killSignal: 'SIGKILL', maxBuffer: 8192 });",
@@ -262279,7 +262772,7 @@
   },
   "scripts/ci/e2e-isolated-workflow.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-workflow.unit.mjs",
-   "lines": 223,
+   "lines": 229,
    "env": [
     "PATH",
     "RECORDED"
@@ -266384,6 +266877,56 @@
     }
    ]
   },
+  "scripts/e2e-isolated/fixture-access.mjs": {
+   "path": "scripts/e2e-isolated/fixture-access.mjs",
+   "lines": 198,
+   "exports": [
+    "function assertIsolatedFixtureEnvironment",
+    "function insertIsolatedFixtureMessage"
+   ],
+   "errors": [
+    "[e2e-fixture/"
+   ],
+   "params": [
+    {
+     "name": "ORIGIN",
+     "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "CONTENT",
+     "value": "'[E2E fixture setup]'"
+    },
+    {
+     "name": "FIELDS",
+     "value": "'id,contact_id,sender,content,message_type'"
+    },
+    {
+     "name": "MAX_BYTES",
+     "value": "8192"
+    },
+    {
+     "name": "MAX_READS",
+     "value": "64"
+    }
+   ],
+   "role_checks": [
+    "authenticated",
+    "service_role"
+   ],
+   "rule_comments": [
+    "A segunda entrada é somente a seam interna dos testes Node. Ela não integra",
+    "Não esperar cancel(): o limite de leitura também deve encerrar streams",
+    "* Prepara somente a mensagem fixa no backend descartável; o browser não recebe a chave. */"
+   ],
+   "calc_fns": [
+    {
+     "name": "revalidate",
+     "params": "input, deps, target",
+     "body": "const current = currentEvidence(input, deps); sameIdentity(target, current); return current;"
+    }
+   ],
+   "uses_service_role": true
+  },
   "scripts/e2e-isolated/gateway.mjs": {
    "path": "scripts/e2e-isolated/gateway.mjs",
    "lines": 120,
@@ -266427,6 +266970,284 @@
     "of Vault calls to exact source bytes; future changes must be reviewed again."
    ]
   },
+  "scripts/e2e-isolated/network-contexts-browser.mjs": {
+   "path": "scripts/e2e-isolated/network-contexts-browser.mjs",
+   "lines": 196,
+   "exports": [
+    "const FIXED_SOURCES",
+    "function verifySources",
+    "function verifyTestOutput",
+    "function readConfig",
+    "function checkContextTopology",
+    "function testConfiguration",
+    "function makeTestConfiguration",
+    "class ContextsReporter",
+    "function localRequest",
+    "function tlsChecks",
+    "function runTestDefault",
+    "function testEnvironment",
+    "function runRealTest",
+    "function observeExplicitFalse",
+    "function observeCycle"
+   ],
+   "external_urls": [
+    "https://127.0.0.1:"
+   ],
+   "env": [
+    "ZAPP_NETWORK_NAMESPACE",
+    "ZAPP_NETWORK_RUN",
+    "ZAPP_NETWORK_SHA"
+   ],
+   "params": [
+    {
+     "name": "SCRIPT",
+     "value": "'/work/scripts/e2e-isolated/network-contexts-browser.mjs'"
+    }
+   ],
+   "rule_comments": [
+    "offline is intentionally absent: the real Test fixture must supply its default."
+   ],
+   "temporal": [
+    "async function externalBrowser(context,cfg){const page=await context.newPage();try{await page.goto(cfg.canary_url,{timeout:5000,waitUntil:'domcontentloaded'});r …",
+    "const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4000);let response;",
+    "const run=await runner(process.execPath,[cli,'test','--config',SOURCE+'/playwright.config.mjs'],{env:testEnvironment(env),cwd:SOURCE,timeout:45_000,maxBytes:128 …",
+    "if(!before)await page.waitForFunction(()=>navigator.onLine===true,null,{timeout:1000}).catch(()=>{});",
+    "timeout:30_000,globalTimeout:45_000,maxFailures:1,reporter:[[SOURCE+'/reporter.mjs']],projects:[{name:cfg.engine}],",
+    "{desired,event,changed:before!==desired},{timeout:8000}).catch(()=>{});"
+   ]
+  },
+  "scripts/e2e-isolated/network-contexts-policy.mjs": {
+   "path": "scripts/e2e-isolated/network-contexts-policy.mjs",
+   "lines": 103,
+   "exports": [
+    "const SCOPE",
+    "const SOURCE",
+    "const TEST_OUTPUT",
+    "const TEST_RESULTS",
+    "const TEST_TITLE",
+    "const PHASES",
+    "const CONTEXT_FAILURES",
+    "function envelope",
+    "function assertEnvelope",
+    "function assertConfig",
+    "function assertEvents",
+    "function assertTestDefault",
+    "function assertTestRecord",
+    "function assertTestRunner",
+    "function assertContextResult",
+    "function qualifications",
+    "function contextResultPassed",
+    "function assertContextFailure",
+    "function publicContextFailure",
+    "function summarizeContexts",
+    "function validateContextsReport"
+   ],
+   "params": [
+    {
+     "name": "SCOPE",
+     "value": "'network-proof-contexts'"
+    },
+    {
+     "name": "SOURCE",
+     "value": "'/run/zapp-network-contexts-source'"
+    },
+    {
+     "name": "TEST_OUTPUT",
+     "value": "'/run/zapp-network-contexts-test-output'"
+    },
+    {
+     "name": "TEST_TITLE",
+     "value": "'isolated real Playwright Test default'"
+    }
+   ],
+   "calc_fns": [
+    {
+     "name": "validateContextsReport",
+     "params": "r",
+     "body": "object(r,['schema','scope','run_id','source_sha','status','stage','failure_code','topology','topology_verified','collection_complete','official_api_cycle_passed','native_online_all','test_default_online_all','engines','cleanup','native_contract_qualified','authenticated_admission','plan_fully_validated','unproved']); identity(r.run_id,r.source_sha); if(r.schema!==2||r.scope!==SCOPE||!['passed','failed'].includes(r.status)||!['preflight','baseline','contexts','cleanup','complete'].includes(r.stag …"
+    }
+   ]
+  },
+  "scripts/e2e-isolated/network-contexts.mjs": {
+   "path": "scripts/e2e-isolated/network-contexts.mjs",
+   "lines": 115,
+   "exports": [
+    "function writeContextSources",
+    "function collectContextOutcome",
+    "function orchestrateContexts",
+    "class ContextRuntime"
+   ],
+   "env": [
+    "GITHUB_RUN_ATTEMPT",
+    "GITHUB_RUN_ID",
+    "ZAPP_PROOF_SHA"
+   ],
+   "params": [
+    {
+     "name": "SCRIPT",
+     "value": "'/work/scripts/e2e-isolated/network-contexts-browser.mjs'"
+    }
+   ],
+   "side_effects": [
+    "publish("
+   ]
+  },
+  "scripts/e2e-isolated/network-proof-browser.mjs": {
+   "path": "scripts/e2e-isolated/network-proof-browser.mjs",
+   "lines": 278,
+   "exports": [
+    "const CONTROL",
+    "const TOOLS",
+    "function tlsControlRejected",
+    "function probeBrowserTlsControl",
+    "function readBoundedJson",
+    "function writeAtomicJson",
+    "function protocolFileIdentity",
+    "function waitForJson",
+    "function passiveDummy",
+    "function namespace",
+    "function snapshot",
+    "function assertNamespace",
+    "function tlsIdentity",
+    "function fetchIdentity"
+   ],
+   "external_urls": [
+    "https://127.0.0.1:"
+   ],
+   "env": [
+    "ZAPP_NETWORK_NAMESPACE",
+    "ZAPP_NETWORK_RUN",
+    "ZAPP_NETWORK_SHA",
+    "ZAPP_NETWORK_VARIANT"
+   ],
+   "params": [
+    {
+     "name": "CONTROL",
+     "value": "'/run/zapp-network-control'"
+    },
+    {
+     "name": "TOOLS",
+     "value": "'/run/zapp-network-tools'"
+    }
+   ],
+   "rule_comments": [
+    "Never probe by loading. Both passive observations must be true immediately",
+    "A distinct context has NEVER received setOffline: these events must be native."
+   ],
+   "temporal": [
+    "const waitEvent = async (page,value,event) => {await page.waitForFunction(({value,event}) => navigator.onLine===value && window.__networkProofEvents.includes(ev …",
+    "const warmup=await page.goto(warmupUrl,{waitUntil:'load',timeout:8000});",
+    "env:{PATH:'/usr/sbin:/usr/bin:/sbin:/bin',LC_ALL:'C'},encoding:'utf8',timeout:5000,maxBuffer:MAX_JSON,",
+    "try {await outside.goto(config.canary_url,{timeout:5000,waitUntil:'domcontentloaded'});} catch {browserBlocked=true;}",
+    "try{await page.goto('https://127.0.0.1:'+(kind==='tls_wrong_san_rejected'?5176:5175),{waitUntil:'load',timeout:8000});}"
+   ]
+  },
+  "scripts/e2e-isolated/network-proof-policy.mjs": {
+   "path": "scripts/e2e-isolated/network-proof-policy.mjs",
+   "lines": 222,
+   "exports": [
+    "const ENGINES",
+    "const VARIANTS",
+    "const DEVICE",
+    "const ADDRESS",
+    "const PURPOSE",
+    "const VERSION",
+    "const DRIVER",
+    "const MAX_JSON",
+    "const PHASES",
+    "const FAILURE_CODES",
+    "function publicFailureCode",
+    "const digest",
+    "function fail",
+    "function requireTrue",
+    "function object",
+    "function identity",
+    "function requestScope",
+    "function commandOutput",
+    "function parseJson",
+    "function dummyIsLoaded",
+    "function assertControl",
+    "function assertCanary",
+    "function assertTopology",
+    "function assertContainer",
+    "function assertEngineResult",
+    "function assertFailure"
+   ],
+   "errors": [
+    "[network-proof/"
+   ],
+   "params": [
+    {
+     "name": "DEVICE",
+     "value": "'e2e-dummy0'"
+    },
+    {
+     "name": "ADDRESS",
+     "value": "'192.0.2.1'"
+    },
+    {
+     "name": "PURPOSE",
+     "value": "'network-proof'"
+    },
+    {
+     "name": "VERSION",
+     "value": "'1.64.1'"
+    },
+    {
+     "name": "MAX_JSON",
+     "value": "64"
+    }
+   ],
+   "calc_fns": [
+    {
+     "name": "dummyIsLoaded",
+     "params": "modules, initstate",
+     "body": "if (typeof modules !== 'string' || Buffer.byteLength(modules) > 1024 * 1024 || typeof initstate !== 'string') return false; const entries = modules.split(/\\r?\\n/).filter(line => /^dummy(?:\\s|$)/.test(line)); return entries.length === 1 && /^dummy\\s+\\d+\\s+\\d+\\s+\\S+\\s+Live\\s+0x[0-9a-f]+(?:\\s+\\([^\\s()]+\\))?$/.test(entries[0]) && initstate.trim() === 'live';"
+    }
+   ]
+  },
+  "scripts/e2e-isolated/network-proof.mjs": {
+   "path": "scripts/e2e-isolated/network-proof.mjs",
+   "lines": 355,
+   "exports": [
+    "function runCommand",
+    "function validatePublicReport",
+    "function orchestrateProof",
+    "function prepareNetworkTools",
+    "class HostCanary",
+    "function collectCompletedProof",
+    "class NativeRuntime"
+   ],
+   "env": [
+    "GITHUB_RUN_ATTEMPT",
+    "GITHUB_RUN_ID",
+    "ZAPP_PROOF_SHA"
+   ],
+   "params": [
+    {
+     "name": "SCRIPT",
+     "value": "'/work/scripts/e2e-isolated/network-proof-browser.mjs'"
+    }
+   ],
+   "calc_fns": [
+    {
+     "name": "validatePublicReport",
+     "params": "r",
+     "body": "object(r,['schema','run_id','source_sha','scope','status','stage','failure_code','module_preloaded','baseline','candidate','cleanup','plan_fully_validated','unproved']); identity(r.run_id,r.source_sha); if(r.schema!==1 || r.scope!=='network-proof' || !['passed','failed'].includes(r.status) || !['preflight','baseline','module','candidate','cleanup','complete'].includes(r.stage) || ![true,false,null].includes(r.module_preloaded) || typeof r.cleanup!=='boolean' || r.plan_fully_validated!==false || …"
+    }
+   ],
+   "temporal": [
+    "async docker(args,{cleanup=false,timeout=30_000}={}){",
+    "await this.docker(['pull',DRIVER],{timeout:240_000});",
+    "const code=(await this.docker(['wait',helper.id],{timeout:45_000})).trim();const c=await this.inspect(helper);",
+    "const output=commandOutput(await command('/usr/bin/ldd',[source],{env:{PATH:'/usr/bin:/bin',LC_ALL:'C'},timeout:5000}));",
+    "const req=this.request({hostname:this.address,port:this.port,path:this.pathname,agent:false,timeout:3000},res=>{",
+    "export function runCommand(program,args,{env={},cwd,timeout=30_000,signal,maxBytes=1024*1024}={}) {"
+   ],
+   "side_effects": [
+    "publish("
+   ]
+  },
   "scripts/e2e-isolated/playwright.config.ts": {
    "path": "scripts/e2e-isolated/playwright.config.ts",
    "lines": 36,
@@ -266461,7 +267282,7 @@
   },
   "scripts/e2e-isolated/providers.mjs": {
    "path": "scripts/e2e-isolated/providers.mjs",
-   "lines": 258,
+   "lines": 297,
    "exports": [
     "const CATALOG_MEDIA_URL",
     "const PROVIDER_PNG",
@@ -266491,6 +267312,53 @@
     }
    ],
    "uses_service_role": true
+  },
+  "scripts/e2e-isolated/qr-contract.mjs": {
+   "path": "scripts/e2e-isolated/qr-contract.mjs",
+   "lines": 105,
+   "exports": [
+    "const QR_FIXTURE",
+    "const QR_SEED_PATH",
+    "const QR_FIELDS",
+    "const QR_SEED_FLAGS",
+    "const validQrId",
+    "const qrFail",
+    "function validateQrSeedProof",
+    "function assertQrImage",
+    "function assertQrRow",
+    "function assertQrProviderEvidence",
+    "function readQrJson",
+    "function qrJwt"
+   ],
+   "role_checks": [
+    "role"
+   ],
+   "calc_fns": [
+    {
+     "name": "validQrId",
+     "params": "value",
+     "body": "typeof value === 'string' && UUID.test(value);"
+    },
+    {
+     "name": "validateQrSeedProof",
+     "params": "value, expected",
+     "body": "if (!value || value.schema !== 1 || value.run_id !== expected.runId || value.source_sha !== expected.sourceSha || value.origin !== ORIGIN || value.network_namespace !== expected.networkNamespace || value.anon_key_sha256 !== expected.anonHash || !validQrId(value.user_id) || !validQrId(value.profile_id) || value.connection_id !== QR_FIXTURE.id || value.instance_id !== QR_FIXTURE.instance || QR_SEED_FLAGS.some(flag => value[flag] !== true)) qrFail('seed-proof'); return { userId: value.user_id, prof …"
+    }
+   ]
+  },
+  "scripts/e2e-isolated/qr-fixture-access.mjs": {
+   "path": "scripts/e2e-isolated/qr-fixture-access.mjs",
+   "lines": 158,
+   "exports": [
+    "function createQrOperationTracker",
+    "function createIsolatedQrFixtureAccess"
+   ],
+   "role_checks": [
+    "admin"
+   ],
+   "side_effects": [
+    "notify"
+   ]
   },
   "scripts/e2e-isolated/resolve-images.mjs": {
    "path": "scripts/e2e-isolated/resolve-images.mjs",
@@ -266562,9 +267430,11 @@
   },
   "scripts/e2e-isolated/run.mjs": {
    "path": "scripts/e2e-isolated/run.mjs",
-   "lines": 678,
+   "lines": 756,
    "exports": [
     "function parseFilesSeedDiagnostic",
+    "function readBrowserReportOnce",
+    "function browserResultDiagnostic",
     "function assertPinnedImages",
     "function functionPolicy",
     "function discoverFunctionEntries",
@@ -266605,6 +267475,7 @@
     "output-must-be-outside-checkout",
     "playwright-image-version-mismatch",
     "provider-proof-mismatch",
+    "qr-seed-proof-unreadable",
     "real-platform-schema-missing",
     "routine-ownership-failed",
     "run-cancelled",
@@ -266652,7 +267523,7 @@
   },
   "scripts/e2e-isolated/runtime-contract.mjs": {
    "path": "scripts/e2e-isolated/runtime-contract.mjs",
-   "lines": 153,
+   "lines": 156,
    "exports": [
     "const ORIGIN",
     "const PROVIDER_ORIGIN",
@@ -266747,6 +267618,19 @@
    ],
    "uses_service_role": true
   },
+  "scripts/e2e-isolated/seed-qr.mjs": {
+   "path": "scripts/e2e-isolated/seed-qr.mjs",
+   "lines": 194,
+   "exports": [
+    "function seedQr"
+   ],
+   "role_checks": [
+    "admin",
+    "agent",
+    "supervisor"
+   ],
+   "uses_service_role": true
+  },
   "scripts/e2e-isolated/seed-suite.mjs": {
    "path": "scripts/e2e-isolated/seed-suite.mjs",
    "lines": 174,
@@ -266772,7 +267656,7 @@
   },
   "scripts/e2e-isolated/stack.mjs": {
    "path": "scripts/e2e-isolated/stack.mjs",
-   "lines": 141,
+   "lines": 142,
    "exports": [
     "function serviceConfiguration",
     "function containerArguments"
@@ -273783,13 +274667,12 @@
   },
   "src/components/catalog/useSendProduct.ts": {
    "path": "src/components/catalog/useSendProduct.ts",
-   "lines": 332,
+   "lines": 275,
    "exports": [
     "interface ContactResult",
     "interface SendProgress",
     "const PHOTO_MIN_INTERVAL_MS",
     "const PHOTO_INTERVAL_JITTER_MS",
-    "function openContactChat",
     "function useContactSearch",
     "interface SendEventProductInfo",
     "function useSendToContact"
@@ -293745,7 +294628,7 @@
   },
   "src/components/keyboard/CommandPaletteHost.tsx": {
    "path": "src/components/keyboard/CommandPaletteHost.tsx",
-   "lines": 34,
+   "lines": 43,
    "exports": [
     "function CommandPaletteHost"
    ]
@@ -293785,12 +294668,18 @@
   },
   "src/components/keyboard/__tests__/paleta-unica.test.tsx": {
    "path": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
-   "lines": 185,
+   "lines": 277,
    "is_test": true,
+   "errors": [
+    "comando ainda não apareceu"
+   ],
    "role_checks": [
     "admin",
     "r",
     "supervisor"
+   ],
+   "rule_comments": [
+    "nesta suíte: este listener controla apenas a confirmação do consumidor."
    ],
    "tests": [
     "paleta única do ⌘K (X054)",
@@ -293801,7 +294690,11 @@
     "escolher um módulo navega direto a ele e fecha a paleta",
     "escolher uma campanha do Talk X abre aquela campanha, não só o módulo",
     "escolher um segmento abre aquele segmento, não só a aba (fora do Talk X)",
-    "já no Talk X: escolher um template abre aquele template (popstate)"
+    "já no Talk X: escolher um template abre aquele template (popstate)",
+    "Ctrl+K — contatos pelo serviço e navegação compartilhados",
+    "abre o segundo homônimo pelo UUID: ",
+    "catálogo indisponível mantém os contatos encontrados",
+    "erro de contatos é visível e mantém o produto encontrado"
    ]
   },
   "src/components/knowledge/KnowledgeBaseView.tsx": {
@@ -341227,6 +342120,37 @@
     }
    ]
   },
+  "src/lib/commandPaletteSearch.ts": {
+   "path": "src/lib/commandPaletteSearch.ts",
+   "lines": 65,
+   "exports": [
+    "function searchContactCommands",
+    "function searchCommandSources"
+   ],
+   "errors": [
+    "invalid-contact-id"
+   ],
+   "params": [
+    {
+     "name": "CONTACT_LIMIT",
+     "value": "8"
+    },
+    {
+     "name": "SOURCE_TIMEOUT_MS",
+     "value": "5"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "fulfilled",
+     "kind": "compara"
+    }
+   ],
+   "rule_comments": [
+    "* O prazo é da espera da paleta; não aborta nem repete a chamada de transporte. */"
+   ]
+  },
   "src/lib/contactHealth.ts": {
    "path": "src/lib/contactHealth.ts",
    "lines": 145,
@@ -342540,6 +343464,13 @@
     "enqueue("
    ]
   },
+  "src/lib/openContactChat.ts": {
+   "path": "src/lib/openContactChat.ts",
+   "lines": 61,
+   "exports": [
+    "function openContactChat"
+   ]
+  },
   "src/lib/parseUserAgent.ts": {
    "path": "src/lib/parseUserAgent.ts",
    "lines": 79,
@@ -343789,9 +344720,10 @@
   },
   "src/lib/__tests__/e2e-messaging-fixture.test.ts": {
    "path": "src/lib/__tests__/e2e-messaging-fixture.test.ts",
-   "lines": 135,
+   "lines": 242,
    "is_test": true,
    "errors": [
+    "extracao real falhou: ${proc.stderr || proc.stdout}",
     "harness falhou: ${proc.stderr || proc.stdout}",
     "processo filho falhou: ${proc.stderr || proc.stdout}"
    ],
@@ -343812,7 +344744,19 @@
     "aborta quando mais de um item casa (ambiguidade)",
     "normaliza espaco e caixa do nome renderizado",
     "aborta em lista vazia (inbox sem nenhuma conversa renderizada)",
-    "nao casa quando o nome exibido e outro contato com o mesmo sufixo"
+    "nao casa quando o nome exibido e outro contato com o mesmo sufixo",
+    "identidade do nome renderizado — avatar e preview nao sao candidatos",
+    "o harness reproduz a colisao do seletor antigo com o avatar",
+    "o atributo fica somente no span do nome real do componente",
+    "avatar e preview imitando a fixture nao mudam o nome extraido",
+    "elemento de nome ausente produz vazio, sem fallback para avatar ou preview",
+    "avatar ausente nao muda o nome e companhia continua parte do texto",
+    "a extracao preserva a ordem apresentada ao evaluateAll",
+    "spec real com elementos concorrentes de identidade",
+    "abre a fixture correta quando o avatar do primeiro contato imita seu nome",
+    "aborta sem clicar/digitar/enviar quando o alvo esta em ",
+    "dois nomes reais continuam ambiguos mesmo com avatares diferentes",
+    "preserva normalizacao do nome real sem depender das iniciais"
    ]
   },
   "src/lib/__tests__/e2e-supabase-env.test.ts": {
@@ -345736,12 +346680,15 @@
   },
   "src/lib/__tests__/helpers/messaging-spec-harness.mjs": {
    "path": "src/lib/__tests__/helpers/messaging-spec-harness.mjs",
-   "lines": 122,
+   "lines": 132,
    "is_test": true,
    "exports": [
+    "function criarPage",
     "function rodar"
    ],
    "errors": [
+    "conversa controlada exige nome",
+    "seletor nao modelado no DOM controlado: ",
     "teste de envio nao encontrado no spec (registrados: ${testes.map((t) => t.nome).join("
    ],
    "rule_comments": [
@@ -381426,10 +382373,93 @@
   }
  },
  "git": {
-  "sha": "0a3442b1bc59e5934b05b5ffa04f94bd74f3b0cc",
+  "sha": "83e821b8a590f671e792836046839c142313412e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "83e821b",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: corrigir preparo e diagnóstico da suíte isolada (#2728)",
+    "files": [
+     ".github/workflows/e2e-logado-isolado.yml",
+     "docs/ci/README.md",
+     "e2e/README.md",
+     "e2e/busca-global-paleta.spec.ts",
+     "e2e/conexoes.spec.ts",
+     "e2e/contacts-crud.spec.ts",
+     "e2e/contacts-detail.spec.ts",
+     "e2e/contacts-view.spec.ts",
+     "e2e/contacts-views.spec.ts",
+     "e2e/dialog-rodape-viewport.spec.ts",
+     "e2e/email-link-contato.spec.ts",
+     "e2e/fixtures/e2e-contact.ts",
+     "e2e/fixtures/fixture-conversation.ts",
+     "e2e/fixtures/function-completion.ts",
+     "e2e/fixtures/isolated-qr.ts",
+     "e2e/navegacao-modulos.spec.ts",
+     "e2e/quick-controls-volume.spec.ts",
+     "scripts/ci/command-palette-contacts.unit.mjs",
+     "scripts/ci/e2e-http-regressions.unit.mjs",
+     "scripts/ci/e2e-isolated-email-l08.unit.mjs",
+     "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
+     "scripts/ci/e2e-isolated-network-contexts.unit.mjs",
+     "scripts/ci/e2e-isolated-network-proof.unit.mjs",
+     "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+     "scripts/ci/e2e-isolated-providers.unit.mjs",
+     "scripts/ci/e2e-isolated-qr.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/ci/e2e-isolated-workflow.unit.mjs",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/fixture-access.d.mts",
+     "scripts/e2e-isolated/fixture-access.mjs",
+     "scripts/e2e-isolated/network-contexts-browser.mjs",
+     "scripts/e2e-isolated/network-contexts-policy.mjs",
+     "scripts/e2e-isolated/network-contexts.mjs",
+     "scripts/e2e-isolated/network-proof-browser.mjs",
+     "scripts/e2e-isolated/network-proof-policy.mjs",
+     "scripts/e2e-isolated/network-proof.mjs",
+     "scripts/e2e-isolated/providers.mjs",
+     "scripts/e2e-isolated/qr-contract.d.mts",
+     "scripts/e2e-isolated/qr-contract.mjs",
+     "scripts/e2e-isolated/qr-fixture-access.d.mts",
+     "scripts/e2e-isolated/qr-fixture-access.mjs",
+     "scripts/e2e-isolated/run.mjs",
+     "scripts/e2e-isolated/runtime-contract.mjs",
+     "scripts/e2e-isolated/seed-qr.mjs",
+     "scripts/e2e-isolated/stack.mjs",
+     "src/components/catalog/useSendProduct.ts",
+     "src/components/connections/ConnectionCard.tsx",
+     "src/components/dashboard/DashboardToolbar.tsx",
+     "src/components/inbox/VirtualizedRealtimeList.tsx",
+     "src/components/keyboard/CommandPaletteHost.tsx",
+     "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+     "src/lib/__tests__/e2e-messaging-fixture.test.ts",
+     "src/lib/__tests__/helpers/messaging-spec-harness.mjs",
+     "src/lib/commandPaletteSearch.ts",
+     "src/lib/openContactChat.ts"
+    ]
+   },
+   {
+    "sha": "042e593",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)",
+    "files": [
+     "analise-prs/auditorias-anteriores.md",
+     "analise-prs/diagnostico-3-prs-restantes-261106.md"
+    ]
+   },
+   {
+    "sha": "3adec58",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)",
+    "files": [
+     "e2e/fixtures/talkx-demo.ts"
+    ]
+   },
    {
     "sha": "0a3442b",
     "date": "2026-11-06",
@@ -381717,114 +382747,6 @@
      "src/components/ui/__tests__/command-palette.a11y.test.tsx",
      "src/components/ui/command-palette.tsx"
     ]
-   },
-   {
-    "sha": "afd8c7c",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: validar a suíte logada em ambiente isolado (#2717)",
-    "files": [
-     ".github/workflows/e2e-logado-isolado.yml",
-     ".github/workflows/e2e-logado.yml",
-     "docs/ci/README.md",
-     "e2e/README.md",
-     "e2e/busca-global-paleta.spec.ts",
-     "e2e/catalog.spec.ts",
-     "e2e/email-navy-visual.spec.ts",
-     "e2e/fixtures/arquivos-local/seed.ts",
-     "e2e/fixtures/mapa-mocks.ts",
-     "e2e/fixtures/onboarding-isolated.ts",
-     "e2e/fixtures/supabase-env.ts",
-     "e2e/fixtures/talkx-demo.ts",
-     "e2e/navegacao-modulos.spec.ts",
-     "e2e/onboarding-tour.spec.ts",
-     "e2e/quarantine.unit.mjs",
-     "e2e/telefonia.spec.ts",
-     "scripts/ci/ci-docs-baseline.unit.mjs",
-     "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
-     "scripts/ci/e2e-isolated-alert.unit.mjs",
-     "scripts/ci/e2e-isolated-fixtures.unit.mjs",
-     "scripts/ci/e2e-isolated-gateway.unit.mjs",
-     "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
-     "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
-     "scripts/ci/e2e-isolated-providers.unit.mjs",
-     "scripts/ci/e2e-isolated-results.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
-     "scripts/ci/e2e-isolated-seed.unit.mjs",
-     "scripts/ci/e2e-isolated-suite.unit.mjs",
-     "scripts/ci/e2e-isolated-tls.unit.mjs",
-     "scripts/ci/e2e-isolated-tour.unit.mjs",
-     "scripts/ci/e2e-isolated-workflow.unit.mjs",
-     "scripts/ci/e2e-recovery.unit.mjs",
-     "scripts/ci/e2e-teardown.unit.mjs",
-     "scripts/ci/marcador-specs.unit.mjs",
-     "scripts/ci/redigir-relatorio.unit.mjs",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/gateway.mjs",
-     "scripts/e2e-isolated/provider-diagnostics.mjs",
-     "scripts/e2e-isolated/providers.mjs",
-     "scripts/e2e-isolated/results.mjs",
-     "scripts/e2e-isolated/run.mjs",
-     "scripts/e2e-isolated/runtime-contract.mjs",
-     "scripts/e2e-isolated/runtime-skips.md",
-     "scripts/e2e-isolated/seed-suite.mjs",
-     "scripts/e2e-isolated/stack.mjs",
-     "scripts/e2e-isolated/tls-probe.mjs",
-     "scripts/e2e-isolated/verify-providers.mjs",
-     "src/components/calls/__tests__/NewCallPanel.test.tsx",
-     "src/components/docs/SystemFeaturesView.tsx",
-     "src/components/docs/__tests__/SystemFeaturesView.test.tsx",
-     "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
-     "src/components/inbox/location-picker/useAddressAutocomplete.ts",
-     "src/components/layout/PageHeader.tsx",
-     "src/components/layout/__tests__/PageHeader.trilha.test.tsx",
-     "src/lib/calls/__tests__/phone.test.ts",
-     "src/lib/calls/phone.ts",
-     "supabase/functions/detect-new-device/index.test.ts",
-     "supabase/functions/detect-new-device/index.ts"
-    ]
-   },
-   {
-    "sha": "b88b4f1",
-    "date": "2026-11-04",
-    "author": "dependabot[bot]",
-    "subject": "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)",
-    "files": [
-     "bun.lock",
-     "package.json"
-    ]
-   },
-   {
-    "sha": "f32223d",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)",
-    "files": [
-     ".github/workflows/e2e-logado-isolado.yml",
-     "e2e/location-picker.spec.ts",
-     "e2e/tarefas-quadro.spec.ts",
-     "playwright.config.ts",
-     "scripts/ci/e2e-auth-isolation.unit.mjs",
-     "scripts/ci/e2e-isolated-gateway.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
-     "scripts/ci/e2e-isolated-tls.unit.mjs",
-     "scripts/ci/e2e-isolated.unit.mjs",
-     "scripts/ci/e2e-tarefas-project.unit.mjs",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/admission.mjs",
-     "scripts/e2e-isolated/gateway.mjs",
-     "scripts/e2e-isolated/run.mjs",
-     "scripts/e2e-isolated/runtime-contract.mjs",
-     "scripts/e2e-isolated/runtime-probe.mjs",
-     "scripts/e2e-isolated/tls-edge-probe.ts",
-     "scripts/e2e-isolated/tls-probe.mjs",
-     "scripts/e2e-isolated/tls.mjs",
-     "src/config/__tests__/supabase.test.ts",
-     "src/config/supabase.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -381837,23 +382759,23 @@
     4
    ],
    [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    3
-   ],
-   [
-    "scripts/e2e-isolated/README.md",
-    3
-   ],
-   [
-    "scripts/e2e-isolated/run.mjs",
-    3
-   ],
-   [
     "docs/ci/README.md",
     2
    ],
    [
-    "scripts/ci/ci-docs-baseline.unit.mjs",
+    "e2e/busca-global-paleta.spec.ts",
+    2
+   ],
+   [
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/README.md",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/run.mjs",
     2
    ],
    [
@@ -381877,36 +382799,36 @@
     2
    ],
    [
-    "e2e/email-navy-visual.spec.ts",
-    2
-   ],
-   [
-    "e2e/fixtures/arquivos-local/seed.ts",
-    2
-   ],
-   [
-    "e2e/busca-global-paleta.spec.ts",
-    2
-   ],
-   [
     ".github/workflows/e2e-logado-isolado.yml",
-    2
+    1
    ],
    [
-    "scripts/ci/e2e-isolated-gateway.unit.mjs",
-    2
+    "e2e/README.md",
+    1
    ],
    [
-    "scripts/ci/e2e-isolated-tls.unit.mjs",
-    2
+    "e2e/conexoes.spec.ts",
+    1
    ],
    [
-    "scripts/e2e-isolated/gateway.mjs",
-    2
+    "e2e/contacts-crud.spec.ts",
+    1
    ],
    [
-    "scripts/e2e-isolated/runtime-contract.mjs",
-    2
+    "e2e/contacts-detail.spec.ts",
+    1
+   ],
+   [
+    "e2e/contacts-view.spec.ts",
+    1
+   ],
+   [
+    "e2e/contacts-views.spec.ts",
+    1
+   ],
+   [
+    "e2e/dialog-rodape-viewport.spec.ts",
+    1
    ]
   ]
  }

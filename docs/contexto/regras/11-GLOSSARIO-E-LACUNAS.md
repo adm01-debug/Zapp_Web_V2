@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0a3442b1bc` · branch `main` · 2026-11-06 12:59 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `83e821b8a5` · branch `main` · 2026-11-06 16:25 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -349,7 +349,7 @@
 | status | valor `not-found` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/inbox/useRealtimeInbox.ts` |
 | status | valor `block` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useEvolutionApi.ts`<br>`escreve:src/hooks/integrations/useEvolutionApi.ts` |
 | status | valor `segstatus` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/integrations/useTalkXSegments.ts` |
-| status | valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useWhatsAppStatus.ts`<br>`compara:supabase/functions/gmail-cron-sync/index.ts` |
+| status | valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useWhatsAppStatus.ts`<br>`compara:src/lib/commandPaletteSearch.ts`<br>`compara:supabase/functions/gmail-cron-sync/index.ts` |
 | status | valor `CLOSED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/realtime/useSupabaseRealtime.ts` |
 | status | valor `string` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/calls/terminoRemoto.ts`<br>`compara:src/services/outbound-message.service.ts`<br>`compara:supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:supabase/functions/elevenlabs-webhook/index.ts` |
 | status | valor `request_error` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/ai-usage.ts` |

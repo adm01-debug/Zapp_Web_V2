@@ -3,11 +3,11 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4180)",
+   "TypeScript (4187)",
    "SQL (1280)",
-   "Markdown (1038)",
+   "Markdown (1040)",
    "JSON (594)",
-   "JavaScript (413)",
+   "JavaScript (430)",
    "Shell (231)",
    "Python (119)",
    "YAML (29)"
@@ -697,12 +697,15 @@
    "jobs": [
     "image-metadata",
     "bootstrap-login",
-    "full-suite"
+    "full-suite",
+    "network-proof"
    ],
    "permissoes": [
     "contents: read"
    ],
    "scripts_usados": [
+    "scripts/e2e-isolated/network-contexts.mjs",
+    "scripts/e2e-isolated/network-proof.mjs",
     "scripts/e2e-isolated/resolve-images.mjs",
     "scripts/e2e-isolated/run.sh"
    ],
@@ -1642,11 +1645,11 @@
     "arquivos": 23
    },
    {
-    "host": "edge.test",
-    "arquivos": 19
+    "host": "example.invalid",
+    "arquivos": 21
    },
    {
-    "host": "example.invalid",
+    "host": "edge.test",
     "arquivos": 19
    },
    {
@@ -1770,6 +1773,10 @@
     "arquivos": 5
    },
    {
+    "host": "proxy.invalid",
+    "arquivos": 5
+   },
+   {
     "host": "x.com",
     "arquivos": 5
    },
@@ -1783,6 +1790,10 @@
    },
    {
     "host": "exemplo.invalid",
+    "arquivos": 4
+   },
+   {
+    "host": "external.invalid",
     "arquivos": 4
    },
    {
@@ -1830,10 +1841,6 @@
     "arquivos": 3
    },
    {
-    "host": "external.invalid",
-    "arquivos": 3
-   },
-   {
     "host": "fonts.googleapis.com",
     "arquivos": 3
    },
@@ -1870,6 +1877,10 @@
     "arquivos": 3
    },
    {
+    "host": "project.supabase.co",
+    "arquivos": 3
+   },
+   {
     "host": "projeto-de-teste.invalid",
     "arquivos": 3
    },
@@ -1879,10 +1890,6 @@
    },
    {
     "host": "promogifts.com.br",
-    "arquivos": 3
-   },
-   {
-    "host": "proxy.invalid",
     "arquivos": 3
    },
    {
@@ -1915,6 +1922,10 @@
    },
    {
     "host": "api.pwnedpasswords.com",
+    "arquivos": 2
+   },
+   {
+    "host": "app.example.invalid",
     "arquivos": 2
    },
    {
@@ -1967,10 +1978,6 @@
    },
    {
     "host": "phishing.example",
-    "arquivos": 2
-   },
-   {
-    "host": "project.supabase.co",
     "arquivos": 2
    },
    {
@@ -2043,10 +2050,6 @@
    },
    {
     "host": "api.zappweb.app.br",
-    "arquivos": 1
-   },
-   {
-    "host": "app.example.invalid",
     "arquivos": 1
    },
    {
@@ -2290,6 +2293,10 @@
     "arquivos": 1
    },
    {
+    "host": "outside.example",
+    "arquivos": 1
+   },
+   {
     "host": "override.supabase.co",
     "arquivos": 1
    },
@@ -2383,6 +2390,10 @@
    },
    {
     "host": "sb-testref.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "secret.example",
     "arquivos": 1
    },
    {
@@ -2643,15 +2654,15 @@
    },
    {
     "papel": "admin",
-    "ocorrencias": 66
+    "ocorrencias": 69
    },
    {
     "papel": "agent",
-    "ocorrencias": 58
+    "ocorrencias": 60
    },
    {
     "papel": "supervisor",
-    "ocorrencias": 36
+    "ocorrencias": 38
    },
    {
     "papel": "dialog",
@@ -2668,6 +2679,10 @@
    {
     "papel": "region",
     "ocorrencias": 19
+   },
+   {
+    "papel": "authenticated",
+    "ocorrencias": 18
    },
    {
     "papel": "button",
@@ -2690,12 +2705,12 @@
     "ocorrencias": 14
    },
    {
-    "papel": "tablist",
+    "papel": "service_role",
     "ocorrencias": 14
    },
    {
-    "papel": "authenticated",
-    "ocorrencias": 13
+    "papel": "tablist",
+    "ocorrencias": 14
    },
    {
     "papel": "menuitem",
@@ -2710,19 +2725,15 @@
     "ocorrencias": 11
    },
    {
+    "papel": "anon",
+    "ocorrencias": 10
+   },
+   {
     "papel": "progressbar",
     "ocorrencias": 10
    },
    {
-    "papel": "anon",
-    "ocorrencias": 9
-   },
-   {
     "papel": "combobox",
-    "ocorrencias": 9
-   },
-   {
-    "papel": "service_role",
     "ocorrencias": 9
    },
    {

@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2230,
- "arestas": 7755,
+ "nos": 2245,
+ "arestas": 7793,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -149,6 +149,10 @@
    "importado_por": 37
   },
   {
+   "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
+   "importado_por": 36
+  },
+  {
    "arquivo": "src/integrations/supabase/types.ts",
    "importado_por": 35
   },
@@ -158,10 +162,6 @@
   },
   {
    "arquivo": "src/config/supabase.ts",
-   "importado_por": 32
-  },
-  {
-   "arquivo": "supabase/functions/_shared/ai-usage.ts",
    "importado_por": 32
   }
  ],
@@ -544,13 +544,13 @@
  "modulos_mais_acoplados": [
   {
    "modulo": "lib",
-   "depende_de": 9,
+   "depende_de": 11,
    "importado_por": 102
   },
   {
    "modulo": "components/ui",
    "depende_de": 7,
-   "importado_por": 66
+   "importado_por": 67
   },
   {
    "modulo": "pages",
@@ -565,7 +565,7 @@
   {
    "modulo": "hooks/system",
    "depende_de": 13,
-   "importado_por": 41
+   "importado_por": 42
   },
   {
    "modulo": "components/inbox",

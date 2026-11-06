@@ -1032,7 +1032,7 @@
    "modulo": "components/catalog",
    "arquivos": 20,
    "testes": 45,
-   "linhas": 7819,
+   "linhas": 7762,
    "itens_menu": [
     "Catálogo",
     "Templates WA"
@@ -3268,7 +3268,7 @@
    "modulo": "components/keyboard",
    "arquivos": 3,
    "testes": 2,
-   "linhas": 460,
+   "linhas": 469,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -3318,7 +3318,12 @@
     "talkx-send"
    ],
    "tabelas": [
+    "ai_conversation_tags",
+    "contact_custom_fields",
+    "contact_notes",
     "contacts",
+    "conversation_sla",
+    "csat_surveys",
     "messages",
     "profiles",
     "talkx_campaign_metrics",
@@ -3332,9 +3337,13 @@
    ],
    "rpcs": [
     "app_bootstrap",
+    "can_delete_contacts",
+    "contacts_count_by_type",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
+    "get_last_message_dates",
+    "search_contacts",
     "talkx_overview_stats",
     "update_talkx_template_with_snapshot",
     "user_has_permission"
@@ -7651,6 +7660,7 @@
     "hooks/realtime",
     "hooks/team-chat",
     "hooks/ui",
+    "lib",
     "pages",
     "pages/admin",
     "pages/admin-telemetria",
@@ -12459,6 +12469,7 @@
     "hooks/sla",
     "hooks/tasks",
     "hooks/ui",
+    "lib",
     "pages",
     "pages/admin",
     "pages/admin-telemetria"
@@ -13212,9 +13223,9 @@
   },
   {
    "modulo": "lib",
-   "arquivos": 108,
+   "arquivos": 110,
    "testes": 0,
-   "linhas": 10454,
+   "linhas": 10580,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -13414,10 +13425,12 @@
    ],
    "depende_de_modulos": [
     "components/inbox",
+    "components/ui",
     "config",
     "hooks/crm",
     "hooks/gmail",
     "hooks/integrations",
+    "hooks/system",
     "integrations/supabase",
     "lib/journey",
     "services",

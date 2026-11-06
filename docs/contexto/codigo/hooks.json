@@ -199,7 +199,7 @@
     "useContactSearch",
     "useSendToContact"
    ],
-   "linhas": 332,
+   "linhas": 275,
    "dominio": "components/catalog",
    "tabelas": [],
    "rpcs": [],
@@ -10262,7 +10262,6 @@
     "src/components/admin/AdminCRMDashboard.tsx",
     "src/components/calls/ActiveCallBar.tsx",
     "src/components/catalog/ContactSelectionStep.tsx",
-    "src/components/catalog/useSendProduct.ts",
     "src/components/contacts/useContactsCRUD.ts",
     "src/components/dashboard/AIQuickAccess.tsx",
     "src/components/dashboard/SentimentTrendChart.tsx",
@@ -10284,6 +10283,7 @@
     "src/hooks/system/index.ts",
     "src/hooks/tasks/useWorkItemNotifications.ts",
     "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+    "src/lib/openContactChat.ts",
     "src/pages/Index.tsx"
    ],
    "coberto_por_testes": 8

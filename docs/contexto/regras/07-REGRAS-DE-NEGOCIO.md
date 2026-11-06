@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0a3442b1bc` · branch `main` · 2026-11-06 12:59 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `83e821b8a5` · branch `main` · 2026-11-06 16:25 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3736,7 +3736,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
 | `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
 | `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
-| … +615 linhas — lista completa em `context.json` | | |
+| … +617 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4362,6 +4362,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | [e2e-talkx] cleanup exato do draft falhou: HTTP ${response.status()} | `e2e/fixtures/e2e-talkx.ts` |
 | ambiguous | `e2e/fixtures/fixture-conversation.ts` |
 | not-visible | `e2e/fixtures/fixture-conversation.ts` |
+| [e2e-http/ | `e2e/fixtures/function-completion.ts` |
+| [e2e-isolated/qr-admin-login] | `e2e/fixtures/isolated-qr.ts` |
+| [e2e-isolated/qr-admin-session] | `e2e/fixtures/isolated-qr.ts` |
+| [e2e-isolated/qr-base-url] | `e2e/fixtures/isolated-qr.ts` |
 | [E2E tour/${code}] | `e2e/fixtures/onboarding-isolated.ts` |
 | [e2e/isolated-fixture] configuração local incompleta ou divergente | `e2e/fixtures/supabase-env.ts` |
 | [e2e] ${name} nao encontrada em .env.production. Esse arquivo e a fonte PRIMARIA  | `e2e/fixtures/supabase-env.ts` |
@@ -4406,6 +4410,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | funcao desconhecida em  | `scripts/ci/ci-artifacts.unit.mjs` |
 | operando nao booleano em  | `scripts/ci/ci-artifacts.unit.mjs` |
 | sobrou token em  | `scripts/ci/ci-artifacts.unit.mjs` |
+| PRIVATE-SOURCE | `scripts/ci/command-palette-contacts.unit.mjs` |
+| não deve carregar lista nem gravar dados | `scripts/ci/command-palette-contacts.unit.mjs` |
 | Artifact-id sem arquivo correspondente | `scripts/ci/contexto-publicacao.unit.mjs` |
 | Download simulado falhou: ${failDownload} | `scripts/ci/contexto-publicacao.unit.mjs` |
 | ).   assert.doesNotMatch(readme, /não mais\s+lido direto pelo dashboard/,  | `scripts/ci/dashboard-readme-drift.unit.mjs` |
@@ -4418,7 +4424,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | [E2E setup/ISOLATION_PROOF] prova recusada | `scripts/ci/e2e-auth-setup.unit.mjs` |
 | prazo simulado | `scripts/ci/e2e-auth-setup.unit.mjs` |
 | forbidden- | `scripts/ci/e2e-email-navigation-diagnostics.unit.mjs` |
+| SENSITIVE-RAW-NATIVE | `scripts/ci/e2e-http-regressions.unit.mjs` |
 | rede proibida neste teste | `scripts/ci/e2e-isolated-alert.unit.mjs` |
+| fixture-refusal | `scripts/ci/e2e-isolated-fixture-access.unit.mjs` |
 | controlled missing file | `scripts/ci/e2e-isolated-fixtures.unit.mjs` |
 | unexpected file read | `scripts/ci/e2e-isolated-fixtures.unit.mjs` |
 | unexpected mutation:  | `scripts/ci/e2e-isolated-images.unit.mjs` |
@@ -4429,11 +4437,13 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | worker error | `scripts/ci/e2e-isolated-loader.unit.mjs` |
 | credentials read before gateway verification | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
 | credentials read before isolation | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
+| network blocked | `scripts/ci/e2e-isolated-network-contexts.unit.mjs` |
 | Unexpected controlled boundary:  | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | diagnostic-write-failed | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
+| private-sentinel diagnostic write failure | `scripts/ci/e2e-isolated-runtime.unit.mjs` |
 | private-sentinel write failure | `scripts/ci/e2e-isolated-runtime.unit.mjs` |
 | helper must not open SQL | `scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs` |
 | synthetic EPIPE | `scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs` |
@@ -4473,17 +4483,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | tsc saiu com exit ${status} (falha de CLI, nao lista de diagnosticos): ${snippet(output)} | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} com diagnostico GLOBAL (config/CLI quebrada), que nao e uma  | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} sem nenhum diagnostico TypeScript reconhecivel  | `scripts/ci/implicit-any-ratchet.mjs` |
-| gh mock não coberto: ${method} ${path} | `scripts/ci/issue-rotativa.unit.mjs` |
-| ${label} falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)} | `scripts/ci/lint-ratchet.mjs` |
-| --base nao combina com --staged. | `scripts/ci/lint-ratchet.mjs` |
-| --base nao combina com --update-baseline. | `scripts/ci/lint-ratchet.mjs` |
-| --staged nao combina com --update-baseline. | `scripts/ci/lint-ratchet.mjs` |
-| Argumento desconhecido: ${argument} | `scripts/ci/lint-ratchet.mjs` |
-| Baseline ESLint invalido ou com schema diferente de ${SCHEMA_VERSION}. | `scripts/ci/lint-ratchet.mjs` |
-| ESLint falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)} | `scripts/ci/lint-ratchet.mjs` |
-| ESLint local nao encontrado. Execute a instalacao das dependencias primeiro. | `scripts/ci/lint-ratchet.mjs` |
-| ESLint nao produziu JSON valido: ${error.message} | `scripts/ci/lint-ratchet.mjs` |
-| … +1667 linhas — lista completa em `context.json` | |
+| … +1681 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4551,7 +4551,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21097 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21121 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4689,12 +4689,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/calls/__tests__/persistence.test.ts` | 25 | upsertMyCall — mapa p_* da RPC · grava a chamada tocando com os nomes exatos dos parâmetros · grava o fim com status/motivo/duração e OMITE o que não tem valor · upsertMyCall — retry idempotente … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts` | 25 | F48 preview: cada bloco reproduz EXATAMENTE o payload do worker para o destinatario · F48 preview: conteudo com placeholders é identico ao worker para outro destinatario · F48 preview: sem blocos, cai no template do dispatch — o MESMO payload do worker atual · F48 preview: destinatario de outro dono/inexistente responde 404 nomeado … |
 | `supabase/functions/send-scheduled-report/index.test.ts` | 25 | auth: sem identidade → 401 e zero lookup/Resend/service-role · auth: x-cron-secret errado → 401 sem efeito · auth: CRON_SECRET vazio → x-cron-secret não autoriza (fail closed) · auth: Bearer inválido → 401 sem efeito … |
+| `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `src/components/inbox/__tests__/ConversationTabs.test.tsx` | 24 | etapa 75 — ConversationTabs (8 abas da fusão) · renderiza as 8 abas e nenhuma aba removida · badge de Tarefas mostra tasksOpen · não renderiza badge quando o contador é zero … |
 | `src/components/inbox/chat/__tests__/ChatSearchBar.test.tsx` | 24 | ChatSearchBar · renders nothing when closed · renders input and filters when open · finds messages by text content … |
 | `src/hooks/__tests__/useBitrixApi.test.ts` | 24 | useBitrixApi · initializes with loading false · initializes with error null · exposes listLeads function … |
 | `src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts` | 24 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · envia a mensagem pelo caminho da edge function, nunca direto para a Evolution · expõe exatamente as funções do contrato (nada a mais, nada a menos) … |
 | `src/hooks/system/__tests__/useSecurityPushNotifications.test.ts` | 24 | useSecurityPushNotifications — envio do alerta · com push disponível envia notificação com IP, urgência e vibração longa · severidade baixa não exige interação e usa vibração curta · descrição ausente cai no texto padrão … |
 | `src/hooks/tasks/__tests__/useMyWorkItems.test.tsx` | 24 | useMyWorkItems — Fase B · create envia created_by e assigned_to do perfil autenticado · create recusa aviso no passado (remind_in_past) sem tocar no banco · complete move para done e oferece undo … |
+| `src/lib/__tests__/e2e-messaging-fixture.test.ts` | 24 | e2e/messaging.spec.ts — o spec real (R2-INF-007) · com conversa alheia em PRIMEIRO lugar envia para a fixture e nunca para ela · com a fixture no topo segue enviando (caminho feliz preservado) · sem a fixture visivel aborta sem clicar, digitar ou enviar … |
 | `src/services/__tests__/navigation.service.test.ts` | 24 | NavigationService integration maturity · keeps incomplete integrations out of production-ready groups · exposes every navigation id exactly once across primary and grouped menus · preserves the full-layout contract for workspace views … |
 | `src/components/catalog/__tests__/sendProductUtils.test.ts` | 23 | groupVariantsByColor · agrupa variantes pela cor e coleta thumbs sem duplicar · usa  · lista vazia retorna array vazio … |
 | `src/components/contacts/__tests__/useContactFormValidation.test.ts` | 23 | useContactFormValidation — checkEmailDuplicate · debounces query by 500 ms — no call before timeout · consecutive changes within 500 ms fire only one query (last value wins) · escapes % wildcard in email passed to ilike … |
@@ -4741,7 +4743,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/rlsConversationAccess.test.ts` | 21 | RLS real: contacts (schema resolvido das migrations) · o conjunto de policies bate com o manifest do schema real · SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin) · INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil) … |
 | `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts` | 21 | whatsapp-webhook: POST sem assinatura -> 401 antes de qualquer efeito (sem SUPABASE_URL configurada) · whatsapp-webhook: assinatura HMAC inválida -> 401 · whatsapp-webhook: replay — assinatura válida de OUTRO corpo -> 401 · whatsapp-webhook: sem WHATSAPP_APP_SECRET configurado -> 401 (falha fechada, mesmo com header bem formado) … |
 | `supabase/functions/detect-new-device/index.test.ts` | 21 | extractAuthSessionId extrai session_id do claim JWT · extractAuthSessionId devolve null sem claim ou com token malformado · extractAuthSessionId ignora session_id fora do claim (só o token conta) · decideSessionUpsert atualiza linha existente da mesma sessão Auth … |
-| `e2e/navegacao-modulos.spec.ts` | 20 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `src/components/calls/__tests__/CallDialog.test.tsx` | 20 | CallDialog — aceite T21: abrir o diálogo NÃO insere em  · disca pelo provider e não toca em nenhum caminho de escrita da tabela  · não disca de novo quando a chamada já existe ( · disca UMA única vez por abertura, mesmo com  … |
 | `src/components/contacts/__tests__/useContactsCRUD.test.tsx` | 20 | useContactsCRUD — edição não apaga endereço (C1) · E01 — editar só o nome preserva endereço e coordenada da linha completa · E05 — abre a edição com 1 fetch pelo id · E05 — falha do getById não perde endereço: o update não escreve os campos de endereço … |
 | `src/components/gmail/__tests__/EmailThreadView.test.tsx` | 20 | EmailThreadView · chama setSelectedThreadId com thread.id no mount · chama setSelectedThreadId(null) no unmount · exibe o subject da thread no header … |
@@ -4836,6 +4837,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/_adv_vocabulary-consumers-gaps.test.ts` | 17 | ADVERSARIAL — defeitos de consumidor (comparação morta / ausência → valor) · $file :: $what · ADVERSARIAL — chaves de vocabulário EN fora do módulo canônico · $file :: $what … |
 | `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
 | `tests/contracts/ai-vision-modality.contract.test.ts` | 17 | IA-033 — texto puro segue o caminho de hoje (padrão por finalidade) · sem  · IA-033 — visão resolve no provedor que declara a modalidade · um candidato ativo declarando vision resolve NELE, mesmo sem is_default … |
+| `e2e/quick-controls-volume.spec.ts` | 16 | controles de volume da sidebar — prova local autenticada · B1: o clique comum abre o painel dos ALERTAS com −, +, Silenciar e o valor em % · B4: o painel do FONE abre com o nome completo e o valor em % · S11: os botões − e + andam de 5 em 5 e o rótulo acompanha … |
 | `scripts/db-audit/register-migration.test.mjs` | 16 | splitStatements respects dollar-quoted function bodies (does not split on internal semicolons) · splitStatements strips line comments but preserves them inside dollar-quoted bodies · buildInsertSql picks a dollar-quote tag that does not collide with the statement body · parseMigrationFile rejects a filename that does not match the version_name.sql convention … |
 | `scripts/db-audit/talkx-e90-links-contract.test.mjs` | 16 | Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site · Talk X personalize() resolves every placeholder in a single pass over the original template · Talk X personalize() never lets a custom field with a reserved name override a built-in placeholder · Talk X custom-fields pagination orders by a stable unique key … |
 | `src/components/calls/__tests__/CallHistoryCells.test.tsx` | 16 | CallContactCell (T48) · peer_name vence os outros dois · sem peer_name cai no contact_name · sem nome nenhum mostra o telefone formatado … |
@@ -4853,8 +4855,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 16 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
 | `src/hooks/integrations/__tests__/useTalkXCampaignList.test.ts` | 16 | useTalkXCampaignList — paginação no servidor (X078) · página 3 com 10 por página pede o intervalo 20–29 e traz colunas nomeadas com count exato · com 1.200 campanhas a 2ª página devolve 10 linhas e o total é 1.200 · ordenação e filtros (status, segmento, criador, período) vão na consulta … |
 | `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` | 16 | realtimeUtils — normalização da mensagem · preenche status/default de status_updated_at sem sobrescrever o que veio · traduz tipo cru sem suporte para unsupported carregando o motivo · realtimeUtils — ordenação … |
-| `src/hooks/tasks/__tests__/workItemBoardGroups.test.ts` | 16 | boardByDue — colunas por prazo (etapa 101 / D1) · cada item cai em UMA coluna: nada some e nada duplica · prazo com hora que JÁ passou (hoje às 9h) é Atrasada, não Para hoje (R2-MOD-058) · prazo de dia inteiro de hoje (23:59) ainda vale como Para hoje ao meio-dia … |
-| `src/lib/__tests__/emailThreadQuery.test.ts` | 16 | emailThreadQuery (OTH-005) · traduz estado, marcador, período, anexos e busca para o servidor · sem filtro nenhum não manda condição extra ao servidor · período  … |
 | … +1943 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
@@ -5357,4 +5357,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
 | estático que some no mesmo prazo. Em ambos os casos `onDone` avisa o fim para | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
 | * Prazo do realce (2 pulsos), em ms. */ | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
-| … +1643 linhas — lista completa em `context.json` | |
+| … +1644 linhas — lista completa em `context.json` | |

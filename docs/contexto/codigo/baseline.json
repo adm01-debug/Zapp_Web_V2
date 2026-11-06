@@ -2,11 +2,26 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0a3442b1bc59e5934b05b5ffa04f94bd74f3b0cc",
+  "commit": "83e821b8a590f671e792836046839c142313412e",
   "branch": "main",
-  "data_commit": "2026-11-06T09:58:04-03:00",
+  "data_commit": "2026-11-06T16:24:09Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "83e821b",
+    "data": "2026-11-06",
+    "assunto": "fix: corrigir preparo e diagnóstico da suíte isolada (#2728)"
+   },
+   {
+    "sha": "042e593",
+    "data": "2026-11-06",
+    "assunto": "chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)"
+   },
+   {
+    "sha": "3adec58",
+    "data": "2026-11-06",
+    "assunto": "fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)"
+   },
    {
     "sha": "0a3442b",
     "data": "2026-11-06",
@@ -116,28 +131,13 @@
     "sha": "46c29a6",
     "data": "2026-11-04",
     "assunto": "fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)"
-   },
-   {
-    "sha": "53036dd",
-    "data": "2026-11-04",
-    "assunto": "test: alinhar IA-131 OpenRouter à cadeia real de migrations (#2722)"
-   },
-   {
-    "sha": "b298c33",
-    "data": "2026-11-04",
-    "assunto": "test: alinhar auditoria E27 à migration arquivada (#2721)"
-   },
-   {
-    "sha": "f00ed02",
-    "data": "2026-11-04",
-    "assunto": "fix: preservar contraste das threads de Email durante entrada (#2720)"
    }
   ],
-  "arquivos_mudados_7d": 1030,
+  "arquivos_mudados_7d": 1072,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 803
+    "mudancas": 804
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -157,26 +157,26 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 195
+    "mudancas": 194
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 140
+    "mudancas": 141
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 134
+    "mudancas": 133
    },
    {
     "pasta": "src/components/ui",
     "mudancas": 132
    },
    {
-    "pasta": "src/components/contacts",
-    "mudancas": 122
+    "pasta": "src/lib/__tests__",
+    "mudancas": 124
    },
    {
-    "pasta": "src/lib/__tests__",
+    "pasta": "src/components/contacts",
     "mudancas": 122
    },
    {
@@ -207,14 +207,14 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 16
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 14
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
+    "mudancas": 15
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 14
    },
    {
@@ -222,11 +222,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
+    "arquivo": "ESTADO.md",
+    "mudancas": 12
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
@@ -290,11 +290,11 @@
     "mudancas": 6
    },
    {
-    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
-    "mudancas": 6
+    "arquivo": ".github/workflows/codeql.yml",
+    "mudancas": 5
    },
    {
-    "arquivo": ".github/workflows/codeql.yml",
+    "arquivo": ".github/workflows/notifica-falha-main.yml",
     "mudancas": 5
    }
   ],
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8226,
-  "arquivos_codigo": 4710,
-  "linhas_codigo": 867416,
+  "arquivos_total": 8252,
+  "arquivos_codigo": 4734,
+  "linhas_codigo": 873147,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,10 +332,10 @@
   "tabelas": 216,
   "migrations": 1081,
   "cron_jobs": 25,
-  "testes": 2570,
+  "testes": 2579,
   "workflows": 21,
-  "scripts": 407,
-  "docs_md": 1038
+  "scripts": 417,
+  "docs_md": 1040
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -392,7 +392,7 @@
   },
   "e2e/busca-global-paleta.spec.ts": {
    "arquivos": 1,
-   "linhas": 308
+   "linhas": 379
   },
   "e2e/catalog.spec.ts": {
    "arquivos": 1,
@@ -400,7 +400,7 @@
   },
   "e2e/conexoes.spec.ts": {
    "arquivos": 1,
-   "linhas": 60
+   "linhas": 156
   },
   "e2e/contact-address.spec.ts": {
    "arquivos": 1,
@@ -440,7 +440,7 @@
   },
   "e2e/contacts-views.spec.ts": {
    "arquivos": 1,
-   "linhas": 70
+   "linhas": 72
   },
   "e2e/conversation.spec.ts": {
    "arquivos": 1,
@@ -456,7 +456,7 @@
   },
   "e2e/email-link-contato.spec.ts": {
    "arquivos": 1,
-   "linhas": 318
+   "linhas": 368
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
@@ -467,8 +467,8 @@
    "linhas": 602
   },
   "e2e/fixtures": {
-   "arquivos": 17,
-   "linhas": 2819
+   "arquivos": 19,
+   "linhas": 3149
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "arquivos": 1,
@@ -508,7 +508,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "arquivos": 1,
-   "linhas": 1792
+   "linhas": 1906
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "arquivos": 1,
@@ -528,7 +528,7 @@
   },
   "e2e/quick-controls-volume.spec.ts": {
    "arquivos": 1,
-   "linhas": 640
+   "linhas": 646
   },
   "e2e/reactions.spec.ts": {
    "arquivos": 1,
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 192,
-   "linhas": 38680
+   "arquivos": 199,
+   "linhas": 41352
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -623,8 +623,8 @@
    "linhas": 229
   },
   "scripts/e2e-isolated": {
-   "arquivos": 23,
-   "linhas": 3977
+   "arquivos": 36,
+   "linhas": 6080
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368011
+   "linhas": 368055
   },
   "src/config": {
    "arquivos": 3,
@@ -731,8 +731,8 @@
    "linhas": 15529
   },
   "src/lib": {
-   "arquivos": 279,
-   "linhas": 38560
+   "arquivos": 281,
+   "linhas": 38803
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -903,10 +903,10 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 418,
+  "console_log": 419,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 46,
+  "todos": 48,
   "arquivos_acima_500_linhas": 99
  },
  "todos": [
@@ -933,6 +933,18 @@
    "linha": 11,
    "tipo": "TODO",
    "texto": "PR"
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-network-contexts.unit.mjs",
+   "linha": 126,
+   "tipo": "FIXME",
+   "texto": ", app import or init script',()=>{const source=Object.values(FIXED_SOURCES).join('\\n');assert.match("
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "linha": 1479,
+   "tipo": "FIXME",
+   "texto": "remains failure', fault: 'explicit-skip', failure: 'suite-result-not-clean' },"
   },
   {
    "arquivo": "scripts/ci/types-sync-workflow.unit.mjs",

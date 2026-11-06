@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 407,
+ "total": 417,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3686,6 +3686,15 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/fixture-access.mjs",
+   "descricao": null,
+   "linhas": 198,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/gateway.mjs",
    "descricao": null,
    "linhas": 120,
@@ -3725,6 +3734,81 @@
    "env": [],
    "npm_scripts": [],
    "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/network-contexts-browser.mjs",
+   "descricao": null,
+   "linhas": 196,
+   "env": [
+    "ZAPP_NETWORK_NAMESPACE",
+    "ZAPP_NETWORK_RUN",
+    "ZAPP_NETWORK_SHA"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/network-contexts-policy.mjs",
+   "descricao": null,
+   "linhas": 103,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/network-contexts.mjs",
+   "descricao": null,
+   "linhas": 115,
+   "env": [
+    "GITHUB_RUN_ATTEMPT",
+    "GITHUB_RUN_ID",
+    "ZAPP_PROOF_SHA"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "e2e-logado-isolado.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/network-proof-browser.mjs",
+   "descricao": null,
+   "linhas": 278,
+   "env": [
+    "ZAPP_NETWORK_NAMESPACE",
+    "ZAPP_NETWORK_RUN",
+    "ZAPP_NETWORK_SHA",
+    "ZAPP_NETWORK_VARIANT"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/network-proof-policy.mjs",
+   "descricao": null,
+   "linhas": 222,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/network-proof.mjs",
+   "descricao": null,
+   "linhas": 355,
+   "env": [
+    "GITHUB_RUN_ATTEMPT",
+    "GITHUB_RUN_ID",
+    "ZAPP_PROOF_SHA"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "e2e-logado-isolado.yml"
+   ],
    "orfao": false
   },
   {
@@ -3784,7 +3868,25 @@
   {
    "arquivo": "scripts/e2e-isolated/providers.mjs",
    "descricao": null,
-   "linhas": 258,
+   "linhas": 297,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/qr-contract.mjs",
+   "descricao": "QR version 3, encoded with ReportLab 4.4.9 and independently decoded with jsQR 1.4.0. The payload is harmless text, never a WhatsApp pairing secret.",
+   "linhas": 105,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/qr-fixture-access.mjs",
+   "descricao": "* Tracks fixture operations and ambiguous local requests; failure is not server completion. */",
+   "linhas": 158,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3827,7 +3929,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 678,
+   "linhas": 756,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"
@@ -3851,7 +3953,7 @@
   {
    "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
    "descricao": null,
-   "linhas": 153,
+   "linhas": 156,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3889,6 +3991,15 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/seed-qr.mjs",
+   "descricao": "* A third, isolated connection; never promotes the suite's supervisor. */",
+   "linhas": 194,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/seed-suite.mjs",
    "descricao": "These identities belong to the existing synthetic E2E fixtures. The owner is resolved from this run's real login; no hosted profile/user ID is copied.",
    "linhas": 174,
@@ -3900,7 +4011,7 @@
   {
    "arquivo": "scripts/e2e-isolated/stack.mjs",
    "descricao": null,
-   "linhas": 141,
+   "linhas": 142,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
