@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "c6af71c4a0d3eadce5c7abd4c04df4b559c77976",
+  "sha": "cabaa6a554d9357d3f0e143f0bfb29e6012bd7bb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 00:24 UTC",
+  "generated_at": "2026-11-06 01:14 UTC",
   "files_total": 8062,
   "code_files": 5963,
-  "code_lines": 1032219
+  "code_lines": 1032254
  },
  "version": "1.3.2",
- "facts_hash": "dfd9317268b9457f",
+ "facts_hash": "7e680cfa282dde56",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68064,7 +68064,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 367976,
+   "lines": 368011,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -157357,6 +157357,10 @@
    {
     "file": "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx",
     "name": "7. o preview toca o som real no volume real: previewSound(tipo do cartão, settings.soundVolume)"
+   },
+   {
+    "file": "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx",
+    "name": "o timer do preview é cancelado ao desmontar o painel"
    },
    {
     "file": "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx",
@@ -299867,7 +299871,7 @@
   },
   "src/components/settings/SoundCustomizationPanel.tsx": {
    "path": "src/components/settings/SoundCustomizationPanel.tsx",
-   "lines": 197,
+   "lines": 206,
    "exports": [
     "function SoundCustomizationPanel"
    ],
@@ -300454,7 +300458,7 @@
   },
   "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx": {
    "path": "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx",
-   "lines": 348,
+   "lines": 374,
    "is_test": true,
    "errors": [
     ",\n  goal_sound_type: ",
@@ -300473,6 +300477,7 @@
     "5. a tela só oferece os 5 tipos do banco e nenhum upsert sai fora do vocabulário",
     "6. quando o upsert falha, avisa e a tela NÃO fica confirmada (volta ao valor gravado)",
     "7. o preview toca o som real no volume real: previewSound(tipo do cartão, settings.soundVolume)",
+    "o timer do preview é cancelado ao desmontar o painel",
     "8. com ",
     "9. o upload guarda o caminho do storage e diz que o arquivo NÃO está aplicado",
     "10. o Volume geral reflete o teto e o piso do hook (10–100), nunca um estado local"
@@ -381271,10 +381276,20 @@
   }
  },
  "git": {
-  "sha": "c6af71c4a0d3eadce5c7abd4c04df4b559c77976",
+  "sha": "cabaa6a554d9357d3f0e143f0bfb29e6012bd7bb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "cabaa6a",
+    "date": "2026-11-05",
+    "author": "adm01-debug",
+    "subject": "fix: cancelar timer de preview ao desmontar painel (#2739)",
+    "files": [
+     "src/components/settings/SoundCustomizationPanel.tsx",
+     "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx"
+    ]
+   },
    {
     "sha": "c6af71c",
     "date": "2026-11-05",
@@ -381691,45 +381706,6 @@
      "src/integrations/supabase/types.ts",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "b46f5d2",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix(ci): restaurar auditorias e fortalecer automações (#2710)",
-    "files": [
-     ".github/workflows/branch-hygiene-audit.yml",
-     ".github/workflows/ci.yml",
-     ".github/workflows/contexto.yml",
-     ".github/workflows/db-guard.yml",
-     ".github/workflows/e2e-logado.yml",
-     "docs/ci/README.md",
-     "e2e/README.md",
-     "e2e/auth-diagnostics.ts",
-     "e2e/auth.setup.ts",
-     "e2e/email-navy-visual.spec.ts",
-     "e2e/location-picker.spec.ts",
-     "playwright.config.ts",
-     "scripts/ci/actions-kpi.unit.mjs",
-     "scripts/ci/branch-hygiene-runtime.unit.mjs",
-     "scripts/ci/branch-podaveis.unit.mjs",
-     "scripts/ci/contexto-publicacao.unit.mjs",
-     "scripts/ci/db-guard-confiabilidade.unit.mjs",
-     "scripts/ci/deno-reproducibility.unit.mjs",
-     "scripts/ci/e2e-auth-diagnostics.unit.mjs",
-     "scripts/ci/e2e-auth-setup.unit.mjs",
-     "scripts/ci/e2e-email-axe-ready.unit.mjs",
-     "scripts/ci/e2e-recovery.unit.mjs",
-     "scripts/ci/marcador-specs.unit.mjs",
-     "scripts/ci/redigir-relatorio.unit.mjs",
-     "scripts/ci/sla-code-scanning.unit.mjs",
-     "scripts/ci/talkx-status-warn.unit.mjs",
-     "scripts/ci/workflow-test-support.mjs",
-     "scripts/db-audit/README.md",
-     "scripts/db-audit/docker-shim",
-     "scripts/db-audit/supabase-snapshot-stats.test.sh",
-     "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -381754,23 +381730,7 @@
     4
    ],
    [
-    ".github/workflows/ci.yml",
-    3
-   ],
-   [
-    ".github/workflows/db-guard.yml",
-    3
-   ],
-   [
-    "e2e/email-navy-visual.spec.ts",
-    3
-   ],
-   [
     ".github/workflows/e2e-logado-isolado.yml",
-    3
-   ],
-   [
-    "docs/ci/README.md",
     3
    ],
    [
@@ -381786,7 +381746,19 @@
     2
    ],
    [
+    ".github/workflows/ci.yml",
+    2
+   ],
+   [
+    ".github/workflows/db-guard.yml",
+    2
+   ],
+   [
     "scripts/ci/check-test-inventory.mjs",
+    2
+   ],
+   [
+    "e2e/email-navy-visual.spec.ts",
     2
    ],
    [
@@ -381798,11 +381770,7 @@
     2
    ],
    [
-    ".github/workflows/e2e-logado.yml",
-    2
-   ],
-   [
-    "e2e/README.md",
+    "docs/ci/README.md",
     2
    ],
    [
@@ -381811,6 +381779,14 @@
    ],
    [
     "scripts/ci/e2e-isolated-gateway.unit.mjs",
+    2
+   ],
+   [
+    "scripts/ci/e2e-isolated-results.unit.mjs",
+    2
+   ],
+   [
+    "scripts/ci/e2e-isolated-tls.unit.mjs",
     2
    ]
   ]

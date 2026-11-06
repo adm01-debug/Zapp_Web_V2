@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: cancelar timer de preview ao desmontar painel (#2739)",
    "chore: regenera manifesto de deploy das edge functions (#2737)",
    "chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc",
    "chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais",
-   "chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated",
-   "chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs"
+   "chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -10756,11 +10756,11 @@
   {
    "arquivo": "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx",
    "tipo": "unit",
-   "linhas": 348,
+   "linhas": 374,
    "testa": [
     "src/components/settings/SoundCustomizationPanel.tsx"
    ],
-   "casos": 10
+   "casos": 11
   },
   {
    "arquivo": "src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx",

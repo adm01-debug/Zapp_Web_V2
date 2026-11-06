@@ -10318,7 +10318,7 @@
     "SoundCustomizationPanel"
    ],
    "export_default": null,
-   "linhas": 197,
+   "linhas": 206,
    "dominio": "components/settings",
    "hooks_locais": [
     "useNotificationSettings"
