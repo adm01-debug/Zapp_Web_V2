@@ -13,7 +13,13 @@ const DEFAULT_ALLOWED_ORIGIN = CANONICAL_ORIGINS[0]; // fallback para testes uni
 const DEFAULT_DENIED_ORIGIN = _allowedOriginsConfig.denied_example ?? 'https://edge-smoke.invalid';
 // verify_jwt=false is required for cron callers that cannot mint a user JWT,
 // but these functions still enforce authentication inside their handler.
-const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration', 'connection-health-check', 'batch-fetch-avatars']);
+const INTERNAL_AUTH_FUNCTIONS = new Set([
+  'crm-integration',
+  'connection-health-check',
+  'batch-fetch-avatars',
+  // verify_jwt=false para o pg_cron; sem o segredo do Vault tem de continuar 401.
+  'ai-usage-outbox-drain',
+]);
 const DISABLED_FUNCTIONS = new Map([['public-api', 410]]);
 
 function parseArgs(argv) {

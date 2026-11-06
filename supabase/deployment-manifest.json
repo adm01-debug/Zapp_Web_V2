@@ -4,13 +4,13 @@
   "legacy_unmanaged_functions": [],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "5dd80482c2ed44b7c0132099f8a81cd13e8fbe11bff866c50f52e85e8972060a"
+    "sha256": "e6281d46e573d47b0c5e8e1c381c996245004d2a257c4dec6df18c96269ff723"
   },
   "summary": {
     "function_count": 85,
     "source_file_count": 169,
-    "verify_jwt_true": 71,
-    "verify_jwt_false": 14
+    "verify_jwt_true": 70,
+    "verify_jwt_false": 15
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
   "source_files": [
@@ -451,8 +451,8 @@
     },
     {
       "path": "supabase/functions/ai-usage-outbox-drain/index.ts",
-      "bytes": 5020,
-      "sha256": "86c54a35071d79320119273adea52929c6b0df8e3b7c084ab027a9c083d40c3e"
+      "bytes": 6154,
+      "sha256": "8b4718e360f8f1aba7c51ff8d8d29c7d30b1a4f48e1a0e93e6aa87bfa0d2fd9d"
     },
     {
       "path": "supabase/functions/approve-password-reset/index.ts",
@@ -1148,8 +1148,8 @@
     {
       "name": "ai-usage-outbox-drain",
       "entrypoint": "supabase/functions/ai-usage-outbox-drain/index.ts",
-      "verify_jwt": true,
-      "source_sha256": "224f9ebc102728205daf2da7d0ad40b49699740323ce694f377615f880d52051",
+      "verify_jwt": false,
+      "source_sha256": "17c4cc798e597adfd8edde82a5be899327039c6bd6560eb656daa31f7eb916cb",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -2534,5 +2534,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2110f6820722798dd65405c832542cb949cbb61d5311f2e66a7a034b1d0bc5e1"
+  "manifest_sha256": "3659e3515bcd6f84bf2de4b19ed910b1f0174c59095ed9e3d449699f9ce362da"
 }

@@ -14,7 +14,9 @@
 name: CodeQL
 
 on:
-  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura semanal + dispatch.
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR.
+  # A varredura continua DIARIA (30 9 * * * = 06:30 BRT). Semanal deixaria ate
+  # 6 dias sem SAST, e este workflow nao roda mais em pull request.
   # W50: permite reexecutar a varredura completa apos triagem sem precisar de PR novo.
   workflow_dispatch:
   schedule:

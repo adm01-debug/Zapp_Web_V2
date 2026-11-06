@@ -224,11 +224,11 @@ function stubRede(): { chamadas: Chamada[]; restaurar: () => void } {
 Deno.test("real (sem espião): drena public.ai_usage_outbox e dá baixa por id", async () => {
   const limpaUrl = comEnv("SUPABASE_URL", "https://local.supabase.test");
   const limpaChave = comEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-local");
-  const limpaCron = comEnv("CRON_SECRET", SEGREDO);
   const rede = stubRede();
   try {
     const res = await handleAiUsageOutboxDrain(
       requisicao({ segredo: SEGREDO, corpo: JSON.stringify({ limite: 7 }) }),
+      { cronSecret: SEGREDO },
     );
     assertEquals(res.status, 200);
     const corpo = await res.json() as Record<string, unknown>;
@@ -258,7 +258,6 @@ Deno.test("real (sem espião): drena public.ai_usage_outbox e dá baixa por id",
     );
   } finally {
     rede.restaurar();
-    limpaCron();
     limpaChave();
     limpaUrl();
   }
