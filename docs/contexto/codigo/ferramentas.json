@@ -5,12 +5,12 @@
   "linguagens": [
    "TypeScript (4180)",
    "SQL (1280)",
-   "Markdown (1037)",
+   "Markdown (1038)",
    "JSON (594)",
-   "JavaScript (411)",
+   "JavaScript (413)",
    "Shell (231)",
    "Python (119)",
-   "YAML (28)"
+   "YAML (29)"
   ],
   "linguagem_principal": "TypeScript",
   "framework": "React",
@@ -780,6 +780,37 @@
    ]
   },
   {
+   "arquivo": ".github/workflows/front-release-targets.yml",
+   "nome": "Front release targets (V2/V3)",
+   "gatilhos": [
+    "push",
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "17 * * * *"
+   ],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "v2-alias",
+    "v3-domain"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/vercel/verify-release-targets.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node"
+   ]
+  },
+  {
    "arquivo": ".github/workflows/inventario-estado-semanal.yml",
    "nome": "Inventário do estado real (semanal)",
    "gatilhos": [
@@ -1049,7 +1080,7 @@
   {
    "arquivo": "CLAUDE.md",
    "titulo": "CLAUDE.md — ZAPP WEB V2 (ficha técnica do repositório)",
-   "linhas": 380
+   "linhas": 381
   },
   {
    "arquivo": "CONTRIBUTING.md",
@@ -1600,7 +1631,7 @@
    },
    {
     "host": "zapp-web-v2.vercel.app",
-    "arquivos": 24
+    "arquivos": 25
    },
    {
     "host": "edge.invalid",
@@ -1695,6 +1726,10 @@
     "arquivos": 7
    },
    {
+    "host": "zappweb.app.br",
+    "arquivos": 7
+   },
+   {
     "host": "evolution-test.example",
     "arquivos": 6
    },
@@ -1716,10 +1751,6 @@
    },
    {
     "host": "x.supabase.co",
-    "arquivos": 6
-   },
-   {
-    "host": "zappweb.app.br",
     "arquivos": 6
    },
    {

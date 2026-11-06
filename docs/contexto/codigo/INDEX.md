@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `86c9ec831126241588522705c12847ffb08b53d6` (2026-11-06T11:23:19Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `0a3442b1bc59e5934b05b5ffa04f94bd74f3b0cc` (2026-11-06T09:58:04-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4180), SQL (1280), Markdown (1037), JSON (594), JavaScript (411), Shell (231), Python (119), YAML (28)
+- linguagens: TypeScript (4180), SQL (1280), Markdown (1038), JSON (594), JavaScript (413), Shell (231), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8222 |
-| arquivos_codigo | 4708 |
-| linhas_codigo | 867053 |
+| arquivos_total | 8226 |
+| arquivos_codigo | 4710 |
+| linhas_codigo | 867416 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -48,17 +48,17 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 216 |
 | migrations | 1081 |
 | cron_jobs | 25 |
-| testes | 2569 |
-| workflows | 20 |
-| scripts | 406 |
-| docs_md | 1037 |
+| testes | 2570 |
+| workflows | 21 |
+| scripts | 407 |
+| docs_md | 1038 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
 - componentes: src/components (851), src/pages (26), src/features (2)
 - hooks: src/hooks (409), src/components (72), src/contexts (2)
 - servicos_logica: src/lib (143), src/services (17), src/utils (8)
-- testes: co-localizado (__tests__) (1945), outro (198), co-localizado (*.test) (168)
+- testes: co-localizado (__tests__) (1945), outro (199), co-localizado (*.test) (168)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (285), scripts/ci (40), scripts/e2e-isolated (27)
@@ -384,27 +384,27 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55390 nós · 113437 arestas · 4089 comunidades · grafo do commit `86c9ec83`
-- comunidades maiores: TalkXSuppression.tsx (810), lucide-react (764), react (647), button.tsx (600), cn (501), @tanstack/react-query (471), useAuth (456), ref_node_fs (400), chat.ts (398), useSendProduct.ts (385), DashboardView.tsx (380), useRealtimeMessages.ts (368)
+- 55416 nós · 113482 arestas · 4126 comunidades · grafo do commit `0a3442b1`
+- comunidades maiores: cn (946), button.tsx (773), react (685), TalkXSuppression.tsx (626), vitest (564), input.tsx (525), ExternalProductManagement.tsx (468), DashboardView.tsx (465), validation.ts (372), ref_node_assert (325), ref_node_fs (325), @tanstack/react-query (301)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (21)
+- .github/workflows/ci.yml (20)
 - PENDENCIAS.md (18)
-- CLAUDE.md (15)
+- CLAUDE.md (16)
 - .github/workflows/db-guard.yml (14)
-- docs/ci/README.md (13)
+- docs/ci/README.md (14)
+- scripts/ci/ci-docs-baseline.unit.mjs (13)
 - supabase/deployment-manifest.json (13)
 - ESTADO.md (12)
-- scripts/ci/ci-docs-baseline.unit.mjs (12)
 - .github/workflows/e2e-logado.yml (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
 - src/integrations/supabase/types.ts (11)
 - .github/workflows/deploy-functions.yml (10)
 - supabase/schema-manifest.json (10)
-- docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (8)
+- docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (9)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -420,6 +420,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `e2e-logado-isolado.yml` — E2E isolado - login e suíte completa (pull_request, workflow_dispatch)
 - `e2e-logado.yml` — E2E logado (workflow_dispatch, workflow_run)
 - `e2e-talkx.yml` — E2E Talk X (visual/launch + Auth smoke) (pull_request, workflow_dispatch)
+- `front-release-targets.yml` — Front release targets (V2/V3) (push, schedule, workflow_dispatch; cron 17 * * * *)
 - `inventario-estado-semanal.yml` — Inventário do estado real (semanal) (schedule, workflow_dispatch; cron 23 10 * * 1)
 - `notifica-falha-main.yml` — Notifica falha na main (workflow_run)
 - `settings-guard.yml` — Settings Guard (schedule, workflow_dispatch; cron 15 7 * * *)
@@ -455,7 +456,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `.github/PULL_REQUEST_TEMPLATE.md` (65 linhas)
 - `AGENTS.md` — AGENTS.md — Zapp Web V2 (195 linhas)
 - `CHANGELOG.md` — Changelog (90 linhas)
-- `CLAUDE.md` — CLAUDE.md — ZAPP WEB V2 (ficha técnica do repositório) (380 linhas)
+- `CLAUDE.md` — CLAUDE.md — ZAPP WEB V2 (ficha técnica do repositório) (381 linhas)
 - `CONTRIBUTING.md` — Guia de Contribuição — Zapp Web V2 (112 linhas)
 - `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (151 linhas)
 - `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (90 linhas)
@@ -500,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-06 `0a3442b` infra: monitorar releases V2 e V3 em trilhas separadas (#2747)
 - 2026-11-06 `86c9ec8` fix: reconciliar drift do DB Live Guard (#2741)
 - 2026-11-06 `abfe326` chore: validar manifesto de edge functions no CI por PR (#2738)
 - 2026-11-06 `d5fc2f9` test: provar e endurecer cleanup de variáveis Vercel (#2746)
@@ -514,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-05 `72fd81d` chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated
 - 2026-11-05 `429bdb1` chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs
 - 2026-11-05 `341d3fd` chore: adiciona baseline local completo ao RELATORIO_CI (#2731)
-- 2026-11-05 `2f2cc18` chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

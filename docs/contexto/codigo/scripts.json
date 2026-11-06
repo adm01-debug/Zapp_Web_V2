@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 406,
+ "total": 407,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -4377,6 +4377,17 @@
    ],
    "npm_scripts": [],
    "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/vercel/verify-release-targets.mjs",
+   "descricao": null,
+   "linhas": 195,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "front-release-targets.yml"
+   ],
    "orfao": false
   }
  ]

@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1945)",
-   "outro (198)",
+   "outro (199)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "infra: monitorar releases V2 e V3 em trilhas separadas (#2747)",
    "fix: reconciliar drift do DB Live Guard (#2741)",
    "chore: validar manifesto de edge functions no CI por PR (#2738)",
    "test: provar e endurecer cleanup de variáveis Vercel (#2746)",
-   "fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)",
-   "fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)"
+   "fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

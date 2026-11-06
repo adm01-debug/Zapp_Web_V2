@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `86c9ec8311` · branch `main` · 2026-11-06 11:24 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0a3442b1bc` · branch `main` · 2026-11-06 12:59 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4483,7 +4483,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | ESLint falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)} | `scripts/ci/lint-ratchet.mjs` |
 | ESLint local nao encontrado. Execute a instalacao das dependencias primeiro. | `scripts/ci/lint-ratchet.mjs` |
 | ESLint nao produziu JSON valido: ${error.message} | `scripts/ci/lint-ratchet.mjs` |
-| … +1647 linhas — lista completa em `context.json` | |
+| … +1667 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

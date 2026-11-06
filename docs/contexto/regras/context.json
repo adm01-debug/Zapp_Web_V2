@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "86c9ec831126241588522705c12847ffb08b53d6",
+  "sha": "0a3442b1bc59e5934b05b5ffa04f94bd74f3b0cc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 11:24 UTC",
-  "files_total": 8063,
-  "code_files": 5963,
-  "code_lines": 1032468
+  "generated_at": "2026-11-06 12:59 UTC",
+  "files_total": 8067,
+  "code_files": 5965,
+  "code_lines": 1032831
  },
  "version": "1.3.2",
- "facts_hash": "3dd67512e68767d8",
+ "facts_hash": "2f47935b7d1bdc03",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -249,6 +249,15 @@
     ]
    },
    {
+    "file": ".github/workflows/front-release-targets.yml",
+    "name": "Front release targets (V2/V3)",
+    "triggers": [
+     "push",
+     "schedule",
+     "workflow_dispatch"
+    ]
+   },
+   {
     "file": ".github/workflows/inventario-estado-semanal.yml",
     "name": "Inventário do estado real (semanal)",
     "triggers": [
@@ -307,7 +316,7 @@
    ".tsx": 2319,
    ".ts": 1860,
    ".sql": 1280,
-   ".mjs": 385,
+   ".mjs": 387,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -64957,6 +64966,11 @@
    },
    {
     "kind": "GitHub Actions cron",
+    "detail": "17 * * * *",
+    "file": ".github/workflows/front-release-targets.yml"
+   },
+   {
+    "kind": "GitHub Actions cron",
     "detail": "23 10 * * 1",
     "file": ".github/workflows/inventario-estado-semanal.yml"
    },
@@ -67733,8 +67747,8 @@
   },
   {
    "module": "scripts",
-   "files": 414,
-   "lines": 79967,
+   "files": 416,
+   "lines": 80330,
    "tables": [
     "a",
     "alem_do_limite",
@@ -81673,6 +81687,86 @@
    {
     "file": "scripts/ui-audit/width-regression.mjs",
     "msg": "redirecionado para /auth — STORAGE_STATE expirado ou invalido"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "${field} inválido"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "${kind} HTTP ${res?.status ?? "
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "${name} deve ser inteiro entre ${min} e ${max}"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "--expected-sha deve ser um SHA completo"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "--expected-sha pertence somente ao alvo v2"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "--target deve ser v2 ou v3"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "SPA V2 sem entry JavaScript"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "V2 ainda em ${body.buildId.slice(0, 12)}; esperado ${expectedSha.slice(0, 12)}"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "V2 buildId inválido"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "V3 builtAt inválido ou futuro"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "V3 builtAt sem fuso válido"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "V3 gitSha e releaseId divergem"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "V3 gitSha/releaseId inválido"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "alvo desconhecido: ${target}"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "argumento desconhecido: --${match[1]}"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "argumento inválido: ${item}"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "argumento repetido: --${match[1]}"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "header ${name} inválido"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "version.json inválido"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "version.json não é JSON válido"
    },
    {
     "file": "src/main.tsx",
@@ -262472,6 +262566,23 @@
     "HTTP 502"
    ]
   },
+  "scripts/ci/front-release-targets.unit.mjs": {
+   "path": "scripts/ci/front-release-targets.unit.mjs",
+   "lines": 168,
+   "params": [
+    {
+     "name": "SHA_V2",
+     "value": "'a'"
+    },
+    {
+     "name": "SHA_V3",
+     "value": "'b'"
+    }
+   ],
+   "side_effects": [
+    "notify"
+   ]
+  },
   "scripts/ci/gerar-matriz-edge-tabela.mjs": {
    "path": "scripts/ci/gerar-matriz-edge-tabela.mjs",
    "lines": 87,
@@ -268313,6 +268424,40 @@
     "SMOKE_BASE_URL"
    ],
    "doc": "!/usr/bin/env node V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zapp-web-v2.vercel.app] Retorna exit 0 se tudo OK, exit 1 em qualquer falha. O que verifica: 1. GET /version.json → 200, JSON válido com campo buildId 2. GET / → 200 …"
+  },
+  "scripts/vercel/verify-release-targets.mjs": {
+   "path": "scripts/vercel/verify-release-targets.mjs",
+   "lines": 195,
+   "exports": [
+    "const TARGETS",
+    "function parseArgs",
+    "function validarVersao",
+    "function verificarAlvo",
+    "function resumoMarkdown"
+   ],
+   "errors": [
+    "${field} inválido",
+    "${kind} HTTP ${res?.status ?? ",
+    "${name} deve ser inteiro entre ${min} e ${max}",
+    "--expected-sha deve ser um SHA completo",
+    "--expected-sha pertence somente ao alvo v2",
+    "--target deve ser v2 ou v3",
+    "SPA V2 sem entry JavaScript",
+    "V2 ainda em ${body.buildId.slice(0, 12)}; esperado ${expectedSha.slice(0, 12)}",
+    "V2 buildId inválido",
+    "V3 builtAt inválido ou futuro",
+    "V3 builtAt sem fuso válido",
+    "V3 gitSha e releaseId divergem",
+    "V3 gitSha/releaseId inválido",
+    "alvo desconhecido: ${target}",
+    "argumento desconhecido: --${match[1]}",
+    "argumento inválido: ${item}",
+    "argumento repetido: --${match[1]}",
+    "header ${name} inválido",
+    "version.json inválido",
+    "version.json não é JSON válido"
+   ],
+   "doc": "!/usr/bin/env node"
   },
   "src/App.tsx": {
    "path": "src/App.tsx",
@@ -381281,10 +381426,30 @@
   }
  },
  "git": {
-  "sha": "86c9ec831126241588522705c12847ffb08b53d6",
+  "sha": "0a3442b1bc59e5934b05b5ffa04f94bd74f3b0cc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "0a3442b",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "infra: monitorar releases V2 e V3 em trilhas separadas (#2747)",
+    "files": [
+     ".github/workflows/front-release-targets.yml",
+     ".github/workflows/notifica-falha-main.yml",
+     "CLAUDE.md",
+     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+     "docs/ci/README.md",
+     "docs/runbooks/deploy.md",
+     "docs/runbooks/slo.md",
+     "scripts/ci/ci-docs-baseline.unit.mjs",
+     "scripts/ci/front-release-targets.unit.mjs",
+     "scripts/ci/slo-docs-honesty.unit.mjs",
+     "scripts/vercel/README.md",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "86c9ec8",
     "date": "2026-11-06",
@@ -381660,13 +381825,6 @@
      "src/config/__tests__/supabase.test.ts",
      "src/config/supabase.ts"
     ]
-   },
-   {
-    "sha": "6feabdf",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "chore: adicionar __pycache__/ ao .gitignore (#2703)",
-    "files": []
    }
   ],
   "hot_files": [
@@ -381689,6 +381847,14 @@
    [
     "scripts/e2e-isolated/run.mjs",
     3
+   ],
+   [
+    "docs/ci/README.md",
+    2
+   ],
+   [
+    "scripts/ci/ci-docs-baseline.unit.mjs",
+    2
    ],
    [
     ".github/workflows/ci.yml",
@@ -381741,14 +381907,6 @@
    [
     "scripts/e2e-isolated/runtime-contract.mjs",
     2
-   ],
-   [
-    "scripts/e2e-isolated/tls-probe.mjs",
-    2
-   ],
-   [
-    "scripts/db-audit/migration-evidence.json",
-    1
    ]
   ]
  }

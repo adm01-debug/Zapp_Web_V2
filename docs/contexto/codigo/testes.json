@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2569,
+ "total": 2570,
  "por_tipo": {
   "contrato": 113,
   "e2e": 73,
   "pytest": 3,
   "qa": 6,
-  "unit": 2284
+  "unit": 2285
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 198
+   "arquivos": 199
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -1318,6 +1318,15 @@
     "scripts/ci/fila-merge.mjs"
    ],
    "casos": 18
+  },
+  {
+   "arquivo": "scripts/ci/front-release-targets.unit.mjs",
+   "tipo": "unit",
+   "linhas": 168,
+   "testa": [
+    "scripts/vercel/verify-release-targets.mjs"
+   ],
+   "casos": 9
   },
   {
    "arquivo": "scripts/ci/gerar-matriz-edge-tabela.unit.mjs",
@@ -23476,6 +23485,7 @@
   "scripts/talkx/v4-status.mjs": 1,
   "scripts/ui-audit/width-check.mjs": 1,
   "scripts/ui-audit/width-regression.mjs": 1,
+  "scripts/vercel/verify-release-targets.mjs": 1,
   "src/App.tsx": 4,
   "src/adapters/evolutionAdapter.ts": 2,
   "src/adapters/inboxAdapter.ts": 2,

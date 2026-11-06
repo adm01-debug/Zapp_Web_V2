@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "86c9ec831126241588522705c12847ffb08b53d6",
+  "commit": "0a3442b1bc59e5934b05b5ffa04f94bd74f3b0cc",
   "branch": "main",
-  "data_commit": "2026-11-06T11:23:19Z",
+  "data_commit": "2026-11-06T09:58:04-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0a3442b",
+    "data": "2026-11-06",
+    "assunto": "infra: monitorar releases V2 e V3 em trilhas separadas (#2747)"
+   },
    {
     "sha": "86c9ec8",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "f00ed02",
     "data": "2026-11-04",
     "assunto": "fix: preservar contraste das threads de Email durante entrada (#2720)"
-   },
-   {
-    "sha": "5f3f7bd",
-    "data": "2026-11-04",
-    "assunto": "fix: validar owners, áudio e coleta do E2E isolado (#2719)"
    }
   ],
-  "arquivos_mudados_7d": 1023,
+  "arquivos_mudados_7d": 1030,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 21
+    "mudancas": 20
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -215,6 +215,10 @@
    },
    {
     "arquivo": "docs/ci/README.md",
+    "mudancas": 14
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 13
    },
    {
@@ -223,10 +227,6 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 12
    },
    {
@@ -255,7 +255,7 @@
    },
    {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 8
+    "mudancas": 9
    },
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8222,
-  "arquivos_codigo": 4708,
-  "linhas_codigo": 867053,
+  "arquivos_total": 8226,
+  "arquivos_codigo": 4710,
+  "linhas_codigo": 867416,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,10 +332,10 @@
   "tabelas": 216,
   "migrations": 1081,
   "cron_jobs": 25,
-  "testes": 2569,
-  "workflows": 20,
-  "scripts": 406,
-  "docs_md": 1037
+  "testes": 2570,
+  "workflows": 21,
+  "scripts": 407,
+  "docs_md": 1038
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 191,
-   "linhas": 38512
+   "arquivos": 192,
+   "linhas": 38680
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -683,8 +683,8 @@
    "linhas": 651
   },
   "scripts/vercel": {
-   "arquivos": 2,
-   "linhas": 225
+   "arquivos": 3,
+   "linhas": 420
   },
   "src/App.tsx": {
    "arquivos": 1,
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 417,
+  "console_log": 418,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 46,
