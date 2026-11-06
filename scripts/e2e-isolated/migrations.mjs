@@ -14,6 +14,7 @@ const REVIEWED_VAULT = {
   '20260929610000_multiplix_cron_window_and_limits.sql': '4b73c26ccbe11bfe9e953993713baa2de497c720',
   '20261001311230_talkx_campaign_worker_lease.sql': '8187b1b62ae04c8401bff2d326307c806dc855f0',
   '20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql': '44b2fba209ae7990d43bff1f3a50635a1b85a8c2',
+  '20261103223000_ai_usage_outbox_drain_cron.sql': 'f5a151d98b1c27f1f7f9e2943ba994502892ecb6',
 };
 const LOCAL_URL_CONFIGURATION = new Set([
   '20261001391230_talkx_engine_tick.sql',
