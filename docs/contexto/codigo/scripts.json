@@ -216,7 +216,7 @@
   {
    "arquivo": "scripts/ci/check-test-inventory.mjs",
    "descricao": "E48: verifica que todo .test.ts (supabase/functions/) e .test.sh (scripts/db-audit/) tem correspondente registrado em ci.yml / db-guard.yml.",
-   "linhas": 224,
+   "linhas": 210,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -1656,7 +1656,7 @@
   {
    "arquivo": "scripts/db-audit/message-reactions-autoria.test.sh",
    "descricao": "R2-DB-019 / item 302 do BACKLOG_VERIFICADO (P2) — \"Reacoes do WhatsApp nao vinculam a autoria ao usuario que grava\".",
-   "linhas": 360,
+   "linhas": 372,
    "env": [],
    "npm_scripts": [],
    "workflows": [

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)",
    "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)",
    "fix: cancelar timer de preview ao desmontar painel (#2739)",
    "chore: regenera manifesto de deploy das edge functions (#2737)",
-   "chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc",
-   "chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais"
+   "chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

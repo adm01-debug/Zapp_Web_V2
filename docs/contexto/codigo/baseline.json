@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "712da7c00df63ae4c58fabe7ae5f8db6fb673e09",
+  "commit": "2623adbcd704403a3cc4e62b2ec94bd47abf3f0c",
   "branch": "main",
-  "data_commit": "2026-11-05T22:24:04-03:00",
+  "data_commit": "2026-11-06T03:16:46Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2623adb",
+    "data": "2026-11-06",
+    "assunto": "infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)"
+   },
    {
     "sha": "712da7c",
     "data": "2026-11-05",
@@ -126,11 +131,6 @@
     "sha": "6feabdf",
     "data": "2026-11-04",
     "assunto": "chore: adicionar __pycache__/ ao .gitignore (#2703)"
-   },
-   {
-    "sha": "46a0257",
-    "data": "2026-11-04",
-    "assunto": "fix(ci): validar integrações HTTP e autenticação em ambiente isolado (#2713)"
    }
   ],
   "arquivos_mudados_7d": 1102,
@@ -211,18 +211,10 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 13
-   },
-   {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 13
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 13
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 13
    },
    {
@@ -230,7 +222,15 @@
     "mudancas": 13
    },
    {
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 12
+   },
+   {
     "arquivo": "ESTADO.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 12
    },
    {
@@ -294,7 +294,7 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+    "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 6
    }
   ],
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8221,
   "arquivos_codigo": 4707,
-  "linhas_codigo": 866807,
+  "linhas_codigo": 866793,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 190,
-   "linhas": 38266
+   "linhas": 38252
   },
   "scripts/db-audit": {
    "arquivos": 81,

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `712da7c00df63ae4c58fabe7ae5f8db6fb673e09` (2026-11-05T22:24:04-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `2623adbcd704403a3cc4e62b2ec94bd47abf3f0c` (2026-11-06T03:16:46Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8221 |
 | arquivos_codigo | 4707 |
-| linhas_codigo | 866807 |
+| linhas_codigo | 866793 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55380 nós · 113418 arestas · 4097 comunidades · grafo do commit `712da7c0`
+- 55380 nós · 113418 arestas · 4097 comunidades · grafo do commit `2623adbc`
 - comunidades maiores: lucide-react (973), vitest (870), TalkXSuppression.tsx (821), react (744), client.ts (613), DashboardView.tsx (457), @tanstack/react-query (453), useMyWorkItems.ts (431), cn (430), ref_node_fs (396), ref_node_assert (391), ExternalProductManagement.tsx (371)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -393,12 +393,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/ci.yml (20)
 - PENDENCIAS.md (18)
 - CLAUDE.md (15)
-- .github/workflows/db-guard.yml (13)
-- .github/workflows/e2e-logado.yml (13)
+- .github/workflows/db-guard.yml (14)
 - docs/ci/README.md (13)
-- scripts/ci/ci-docs-baseline.unit.mjs (13)
 - supabase/deployment-manifest.json (13)
+- .github/workflows/e2e-logado.yml (12)
 - ESTADO.md (12)
+- scripts/ci/ci-docs-baseline.unit.mjs (12)
 - .github/workflows/deploy-functions.yml (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
@@ -500,6 +500,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-06 `2623adb` infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)
 - 2026-11-05 `712da7c` fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)
 - 2026-11-06 `cabaa6a` fix: cancelar timer de preview ao desmontar painel (#2739)
 - 2026-11-06 `c6af71c` chore: regenera manifesto de deploy das edge functions (#2737)
@@ -514,7 +515,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-05 `dabe5ac` fix: aguardar PostgreSQL final no teste de remoção do cron (#2726)
 - 2026-11-05 `b149a80` fix: abrir boas-vindas sem efeito de estado no Index (#2725)
 - 2026-11-04 `c0d715f` infra: executar os 33 testes shell ausentes no DB Guard (#2724)
-- 2026-11-04 `46c29a6` fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
