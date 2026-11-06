@@ -230,7 +230,7 @@ describe('Ctrl+K — contatos pelo serviço e navegação compartilhados', () =>
         if (interaction === 'keyboard') {
           expect(first).toHaveAttribute('aria-selected', 'true');
           fireEvent.keyDown(window, { key: 'ArrowDown' });
-          expect(second).toHaveAttribute('aria-selected', 'true');
+          await vi.waitFor(() => expect(second).toHaveAttribute('aria-selected', 'true'));
           fireEvent.keyDown(window, { key: 'Enter' });
         } else {
           fireEvent.click(second);
