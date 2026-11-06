@@ -80,7 +80,7 @@ representados (ver §3).
 ## 6. Estado do provisionamento em 08/10/2026 (ponta de dia) — cartão SL-059
 
 **Artefato:** `scripts/ia/ensaio-provisionamento.mjs` (gerador, determinístico, sem acesso a banco) e o
-contrato `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` (13 conferências do plano, do
+contrato `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` (15 conferências do plano, do
 DML e dos marcadores contra este documento, contra `supabase/schema-manifest.json` e contra a paleta
 real do sistema).
 
