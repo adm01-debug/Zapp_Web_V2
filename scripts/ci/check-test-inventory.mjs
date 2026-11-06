@@ -58,23 +58,9 @@ function gitLsFilesOuDisco(relDir) {
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
 // Todos os testes shell de db-audit são executados no DB Guard; não há exceções.
-// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
-// ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
-// primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
-// ui-audit entraram depois (2026-10-05) e ficaram invisíveis pelo mesmo motivo.
-export const ALLOWLIST_NODE = new Set([
-  // Valida um plano de catálogo sintético contra o repositório (offline).
-  'scripts/catalog/validate-plan.test.mjs',
-  // Auditoria de layout lida do próprio repositório (offline); falha hoje (0/2 em 30/10), fica até ser corrigida.
-  'scripts/ui-audit/view-container-padding.unit.mjs',
-  // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
-  // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
-  // `run:` de ci.yml é do dono do workflow.
-  'scripts/db-tests/run-all.unit.mjs',
-  // Suite TalkX offline (gen-estados): prova o motor TalkX sem
-  // banco. Passo de uma linha em ci.yml — promover pelo dono do workflow (agente não edita workflow).
-  'scripts/talkx/gen-estados.unit.mjs',
-]);
+// As quatro exceções históricas foram promovidas ao DB Guard offline; novas suítes
+// Node sem bloco `run:` devem falhar no inventário em vez de entrar nesta lista.
+export const ALLOWLIST_NODE = new Set();
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
