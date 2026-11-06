@@ -4636,6 +4636,7 @@
     "useNavigate",
     "useReducedMotion",
     "useState",
+    "useSyncExternalStore",
     "useToast"
    ],
    "hooks_locais": [
@@ -5315,6 +5316,7 @@
     "useNavigate",
     "useReducedMotion",
     "useState",
+    "useSyncExternalStore",
     "useToast"
    ],
    "hooks_locais": [
@@ -7711,6 +7713,7 @@
     "useNavigate",
     "useReducedMotion",
     "useState",
+    "useSyncExternalStore",
     "useToast"
    ],
    "hooks_locais": [
@@ -7827,6 +7830,7 @@
     "useReducedMotion",
     "useRef",
     "useState",
+    "useSyncExternalStore",
     "useToast"
    ],
    "hooks_locais": [

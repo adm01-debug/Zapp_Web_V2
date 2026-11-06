@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "2623adbcd704403a3cc4e62b2ec94bd47abf3f0c",
+  "sha": "5f2f9af947c68d9f7db9054a8bed426072adab1c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 03:25 UTC",
+  "generated_at": "2026-11-06 10:33 UTC",
   "files_total": 8062,
   "code_files": 5963,
-  "code_lines": 1032240
+  "code_lines": 1032249
  },
  "version": "1.3.2",
- "facts_hash": "1d4110ef933fb911",
+ "facts_hash": "44bc95067c004327",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67735,7 +67735,7 @@
   {
    "module": "scripts",
    "files": 413,
-   "lines": 79707,
+   "lines": 79716,
    "tables": [
     "a",
     "alem_do_limite",
@@ -263915,7 +263915,7 @@
   },
   "scripts/ci/vercel-env-cleanup.mjs": {
    "path": "scripts/ci/vercel-env-cleanup.mjs",
-   "lines": 95,
+   "lines": 104,
    "env": [
     "DRY_RUN",
     "VERCEL_TOKEN"
@@ -381276,10 +381276,29 @@
   }
  },
  "git": {
-  "sha": "2623adbcd704403a3cc4e62b2ec94bd47abf3f0c",
+  "sha": "5f2f9af947c68d9f7db9054a8bed426072adab1c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5f2f9af",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)",
+    "files": [
+     "src/components/talkx/help/TalkXHelpCenter.tsx",
+     "src/hooks/ui/use-toast.ts"
+    ]
+   },
+   {
+    "sha": "a4e43d1",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)",
+    "files": [
+     "scripts/ci/vercel-env-cleanup.mjs"
+    ]
+   },
    {
     "sha": "2623adb",
     "date": "2026-11-06",
@@ -381684,25 +381703,6 @@
     "subject": "chore: sincroniza matriz de estados do Talk X (#2715)",
     "files": [
      "docs/talkx/ESTADOS.md"
-    ]
-   },
-   {
-    "sha": "5431b96",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: executa paridade Talk X com Deno 2.9.5 (#2714)",
-    "files": [
-     "scripts/db-audit/talkx-personalize-parity.test.mjs"
-    ]
-   },
-   {
-    "sha": "f4e5a10",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: evita padding duplicado nos carregamentos do Talk X (#2712)",
-    "files": [
-     "scripts/ui-audit/view-container-padding.unit.mjs",
-     "src/components/talkx/TalkXView.tsx"
     ]
    }
   ],

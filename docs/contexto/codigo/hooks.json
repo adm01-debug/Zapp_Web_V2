@@ -11516,7 +11516,7 @@
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useEffect"
+    "useSyncExternalStore"
    ],
    "canais_realtime": [],
    "usado_por": 56,
