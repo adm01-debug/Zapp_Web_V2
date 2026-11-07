@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
-import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 /**
  * IA-010 / cartão SL-059 — provisionamento do ambiente de ensaio.
@@ -26,7 +27,7 @@ import { pathToFileURL } from 'node:url';
  *
  *   bun scripts/ia/ensaio-provisionamento.mjs                # plano (padrão; nada escreve)
  *   bun scripts/ia/ensaio-provisionamento.mjs --sql          # DML aditivo e idempotente
- *   bun scripts/ia/ensaio-provisionamento.mjs --remover      # DML de reversão, por prefixo
+ *   bun scripts/ia/ensaio-provisionamento.mjs --remover      # reversão por IDs + marcadores
  *   bun scripts/ia/ensaio-provisionamento.mjs --sql \
  *     | zapp-db-local psql <cópia-de-trabalho> [nome]        # única aplicação autorizada a um agente
  *
@@ -305,6 +306,79 @@ export function planoDeEnsaio() {
   });
 }
 
+function exigir(condicao, mensagem) {
+  if (!condicao) throw new Error(`ensaio: plano canônico inválido (${mensagem})`);
+}
+
+/**
+ * Invariantes independentes do gerador. Elas impedem que uma regressão em
+ * `planoDeEnsaio` passe despercebida só porque o plano recebido e a nova saída
+ * defeituosa continuam iguais entre si.
+ */
+export function validarInvariantesPlano(plano) {
+  exigir(plano?.prefixo === PREFIXO_ENSAIO, 'prefixo');
+  exigir(plano?.dominio === DOMINIO_ENSAIO, 'domínio');
+  exigir(Array.isArray(plano.departamentos), 'departamentos ausentes');
+  exigir(plano.departamentos.length === DEPARTAMENTOS_ENSAIO.length, 'quantidade de departamentos');
+
+  const ids = [];
+  let mensagens = 0;
+  plano.departamentos.forEach((departamento, indiceDepartamento) => {
+    const nome = DEPARTAMENTOS_ENSAIO[indiceDepartamento];
+    const nomeSlug = slug(nome);
+    exigir(departamento.nome === nome && departamento.nomeSlug === nomeSlug, `departamento ${indiceDepartamento}`);
+    exigir(departamento.fila?.nome === `${PREFIXO_ENSAIO}${nome}-Fila`, `nome da fila ${nome}`);
+    exigir(
+      departamento.fila?.descricao === `Fila sintética de ensaio do departamento ${nome} (IA-010)`,
+      `descrição da fila ${nome}`,
+    );
+    exigir(PALETA_FILAS.includes(departamento.fila?.cor), `cor da fila ${nome}`);
+    exigir(departamento.fila?.prioridade === indiceDepartamento + 1, `prioridade da fila ${nome}`);
+    ids.push(departamento.fila.id);
+
+    exigir(departamento.contatos?.length === CONTATOS_POR_DEPARTAMENTO, `contatos de ${nome}`);
+    departamento.contatos.forEach((contato, indiceContato) => {
+      const numero = String(indiceContato + 1).padStart(2, '0');
+      exigir(contato.nome === `${PREFIXO_ENSAIO}${nome}-C${numero}`, `nome do contato ${nome}/${numero}`);
+      exigir(/^\+5500\d{9}$/u.test(contato.telefone), `telefone do contato ${nome}/${numero}`);
+      exigir(
+        contato.email === `ensaio.${nomeSlug}-c${numero}@${DOMINIO_ENSAIO}`,
+        `e-mail do contato ${nome}/${numero}`,
+      );
+      exigir(['unknown', 'opt_out'].includes(contato.consent_status), `consentimento ${nome}/${numero}`);
+      ids.push(contato.id);
+
+      exigir(Array.isArray(contato.mensagens), `mensagens de ${nome}/${numero}`);
+      contato.mensagens.forEach((mensagem, indiceMensagem) => {
+        exigir(['contact', 'agent'].includes(mensagem.sender), `sender ${nome}/${numero}/${indiceMensagem}`);
+        exigir(['text', 'audio'].includes(mensagem.message_type), `tipo ${nome}/${numero}/${indiceMensagem}`);
+        exigir(mensagem.transcription === null, `transcrição ${nome}/${numero}/${indiceMensagem}`);
+        exigir(
+          typeof mensagem.content === 'string' && mensagem.content.startsWith(`${PREFIXO_ENSAIO}${nome} `),
+          `conteúdo ${nome}/${numero}/${indiceMensagem}`,
+        );
+      });
+      mensagens += contato.mensagens.length;
+    });
+  });
+
+  exigir(ids.every((id) => /^e0510000-0000-4000-8000-[0-9a-f]{12}$/u.test(id)), 'formato de UUID');
+  exigir(new Set(ids).size === ids.length, 'UUIDs repetidos');
+  exigir(mensagens === 1374, 'quantidade de mensagens');
+  exigir(
+    plano.tot?.departamentos === 6 &&
+      plano.tot?.filas === 6 &&
+      plano.tot?.contatos === 36 &&
+      plano.tot?.conversasDeTexto === 18 &&
+      plano.tot?.conversasLongas === 6 &&
+      plano.tot?.mensagens === 1374 &&
+      plano.tot?.perfis === 4 &&
+      plano.tot?.perfisProvisionaveis === 3,
+    'totais',
+  );
+  return plano;
+}
+
 function literais(valores) {
   return valores.map((valor) => {
     if (valor === null) return 'null';
@@ -317,18 +391,138 @@ function literais(valores) {
 /** Recusa planos alterados que poderiam misturar dados reais ao DML ou ampliar a reversão. */
 export function validarPlanoSeguro(plano) {
   const canonico = planoDeEnsaio();
+  validarInvariantesPlano(canonico);
   if (!isDeepStrictEqual(plano, canonico)) {
     throw new Error('ensaio: plano diverge do contrato canônico determinístico');
   }
   return canonico;
 }
 
+const LOCK_ENSAIO = 'select pg_advisory_xact_lock(1162756947, 1229402160);';
+
+function idsSql(registros) {
+  return registros.map(({ id }) => literais([id])[0]).join(', ');
+}
+
+function idsUuidSql(registros) {
+  return registros.map(({ id }) => `${literais([id])[0]}::uuid`).join(', ');
+}
+
+function marcadoresDoPlano(plano) {
+  let mensagem = 0x1000000;
+  return {
+    departamentos: plano.departamentos.map((departamento, indice) => ({
+      id: uuidEnsaio(1000 + indice),
+      nome: `${plano.prefixo}${departamento.nome}`,
+      is_active: true,
+    })),
+    filas: plano.departamentos.map(({ fila }) => ({
+      id: fila.id,
+      nome: fila.nome,
+      descricao: fila.descricao,
+      cor: fila.cor,
+      is_active: true,
+      prioridade: fila.prioridade,
+    })),
+    contatos: plano.departamentos.flatMap((departamento) =>
+      departamento.contatos.map((contato) => ({
+        id: contato.id,
+        nome: contato.nome,
+        telefone: contato.telefone,
+        email: contato.email,
+        conversation_status: 'open',
+        queue_id: departamento.fila.id,
+        consent_status: contato.consent_status,
+        notes: `${plano.prefixo}contato de ensaio`,
+      })),
+    ),
+    mensagens: plano.departamentos.flatMap((departamento) =>
+      departamento.contatos.flatMap((contato) =>
+        contato.mensagens.map((item) => ({
+          id: uuidEnsaio(mensagem++),
+          contact_id: contato.id,
+          sender: item.sender,
+          content: item.content,
+          message_type: item.message_type,
+          transcription: item.transcription,
+          is_read: false,
+        })),
+      ),
+    ),
+  };
+}
+
+function preflightColisoes({ departamentos, filas, contatos, mensagens }) {
+  const valores = (registros, campos) =>
+    registros.map((registro) => `      (${literais(campos.map((campo) => registro[campo])).join(', ')})`).join(',\n');
+  return [
+    'do $ensaio$',
+    'begin',
+    `  perform 1 from public.departments where id in (${idsUuidSql(departamentos)}) for update;`,
+    `  perform 1 from public.queues where id in (${idsUuidSql(filas)}) for update;`,
+    `  perform 1 from public.contacts where id in (${idsUuidSql(contatos)}) for update;`,
+    `  perform 1 from public.messages where id in (${idsUuidSql(mensagens)}) for update;`,
+    '  if exists (',
+    '    select 1 from public.departments atual',
+    `    join (values\n${valores(departamentos, ['id', 'nome', 'is_active'])}`,
+    '    ) as esperado(id, nome, is_active) on atual.id = esperado.id::uuid',
+    `    where atual.id in (${idsUuidSql(departamentos)})`,
+    '      and (atual.name is distinct from esperado.nome',
+    '        or atual.is_active is distinct from esperado.is_active)',
+    "  ) then raise exception 'ensaio: colisão de ID reservado em departments' using errcode = '23505'; end if;",
+    '  if exists (',
+    '    select 1 from public.queues atual',
+    `    join (values\n${valores(filas, ['id', 'nome', 'descricao', 'cor', 'is_active', 'prioridade'])}`,
+    '    ) as esperado(id, nome, descricao, cor, is_active, prioridade) on atual.id = esperado.id::uuid',
+    `    where atual.id in (${idsUuidSql(filas)})`,
+    '      and (atual.name is distinct from esperado.nome',
+    '        or atual.description is distinct from esperado.descricao',
+    '        or atual.color is distinct from esperado.cor',
+    '        or atual.is_active is distinct from esperado.is_active',
+    '        or atual.priority is distinct from esperado.prioridade)',
+    "  ) then raise exception 'ensaio: colisão de ID reservado em queues' using errcode = '23505'; end if;",
+    '  if exists (',
+    '    select 1 from public.contacts atual',
+    `    join (values\n${valores(contatos, ['id', 'nome', 'telefone', 'email', 'conversation_status', 'queue_id', 'consent_status', 'notes'])}`,
+    '    ) as esperado(id, nome, telefone, email, conversation_status, queue_id, consent_status, notes)',
+    '      on atual.id = esperado.id::uuid',
+    `    where atual.id in (${idsUuidSql(contatos)})`,
+    '      and (atual.name is distinct from esperado.nome',
+    '        or atual.phone is distinct from esperado.telefone',
+    '        or atual.email is distinct from esperado.email',
+    '        or atual.conversation_status::text is distinct from esperado.conversation_status',
+    '        or atual.queue_id is distinct from esperado.queue_id::uuid',
+    '        or atual.consent_status::text is distinct from esperado.consent_status',
+    '        or atual.notes is distinct from esperado.notes)',
+    "  ) then raise exception 'ensaio: colisão de ID reservado em contacts' using errcode = '23505'; end if;",
+    '  if exists (',
+    '    select 1 from public.messages atual',
+    `    join (values\n${valores(mensagens, ['id', 'contact_id', 'sender', 'content', 'message_type', 'transcription', 'is_read'])}`,
+    '    ) as esperado(id, contact_id, sender, content, message_type, transcription, is_read)',
+    '      on atual.id = esperado.id::uuid',
+    `    where atual.id in (${idsUuidSql(mensagens)})`,
+    '      and (atual.contact_id is distinct from esperado.contact_id::uuid',
+    '        or atual.sender::text is distinct from esperado.sender',
+    '        or atual.content is distinct from esperado.content',
+    '        or atual.message_type::text is distinct from esperado.message_type',
+    '        or atual.transcription is distinct from esperado.transcription',
+    '        or atual.is_read is distinct from esperado.is_read)',
+    "  ) then raise exception 'ensaio: colisão de ID reservado em messages' using errcode = '23505'; end if;",
+    'end',
+    '$ensaio$;',
+  ].join('\n');
+}
+
 /** Cabeçalho comum aos dois DML (provisionamento e remoção). */
 export function cabecalhoSql(plano, rotulo) {
+  const planoSeguro = validarPlanoSeguro(plano);
+  if (!['provisionamento', 'reversão'].includes(rotulo)) {
+    throw new Error('ensaio: rótulo SQL inválido');
+  }
   return [
     `-- IA-010 / SL-059 — ${rotulo} do ambiente de ensaio`,
     `-- Fonte: docs/ia/IA-010-ambiente-de-ensaio.md §2`,
-    `-- Marcadores: nomes com "${plano.prefixo}", e-mails em @${plano.dominio},`,
+    `-- Marcadores: nomes com "${planoSeguro.prefixo}", e-mails em @${planoSeguro.dominio},`,
     `--             telefones em ${PREFIXO_TELEFONE_ENSAIO}***** (fora de faixa real).`,
     '-- Proibido: destinatário real, banco-fonte/CRM externo, contato de produção como fixture.',
     '-- Aplicar SÓ no banco local da cópia: zapp-db-local psql <cópia> [nome].',
@@ -338,20 +532,11 @@ export function cabecalhoSql(plano, rotulo) {
 /** DML aditivo e idempotente do ensaio (departamentos, filas, contatos e mensagens). */
 export function sqlDeProvisionamento(planoRecebido = planoDeEnsaio()) {
   const plano = validarPlanoSeguro(planoRecebido);
-  const linhas = [...cabecalhoSql(plano, 'provisionamento'), 'begin;'];
-
   const departamentos = plano.departamentos.map((d) => [
     uuidEnsaio(1000 + DEPARTAMENTOS_ENSAIO.indexOf(d.nome)),
     `${plano.prefixo}${d.nome}`,
     true,
   ]);
-
-  linhas.push(
-    `insert into public.departments (id, name, is_active) values`,
-    departamentos.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
-    'on conflict (id) do update set name = excluded.name, is_active = true;',
-  );
-
   const filas = plano.departamentos.map((d) => [
     d.fila.id,
     d.fila.nome,
@@ -360,30 +545,12 @@ export function sqlDeProvisionamento(planoRecebido = planoDeEnsaio()) {
     true,
     d.fila.prioridade,
   ]);
-  linhas.push(
-    '',
-    `insert into public.queues (id, name, description, color, is_active, priority) values`,
-    filas.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
-    'on conflict (id) do update set name = excluded.name, description = excluded.description,',
-    '  color = excluded.color, is_active = true, priority = excluded.priority;',
-  );
-
   const contatos = [];
   plano.departamentos.forEach((d) => {
     d.contatos.forEach((c) => {
       contatos.push([c.id, c.nome, c.telefone, c.email, 'open', d.fila.id, c.consent_status, `${plano.prefixo}contato de ensaio`]);
     });
   });
-  linhas.push(
-    '',
-    `insert into public.contacts (id, name, phone, email, conversation_status, queue_id, consent_status, notes) values`,
-    contatos.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
-    'on conflict (id) do update set name = excluded.name, phone = excluded.phone,',
-    '  email = excluded.email, conversation_status = excluded.conversation_status,',
-    '  queue_id = excluded.queue_id, consent_status = excluded.consent_status,',
-    '  notes = excluded.notes;',
-  );
-
   // Cada mensagem recebe id determinístico: base própria por conversa.
   let base = 0x1000000;
   const mensagens = [];
@@ -402,41 +569,73 @@ export function sqlDeProvisionamento(planoRecebido = planoDeEnsaio()) {
       });
     });
   });
+
+  const idsGerados = [...departamentos, ...filas, ...contatos, ...mensagens].map(([id]) => id);
+  exigir(new Set(idsGerados).size === idsGerados.length, 'IDs SQL repetidos');
+
+  const marcadores = marcadoresDoPlano(plano);
+  const linhas = [
+    ...cabecalhoSql(plano, 'provisionamento'),
+    'begin;',
+    LOCK_ENSAIO,
+    preflightColisoes(marcadores),
+  ];
+
   linhas.push(
+    `insert into public.departments (id, name, is_active) values`,
+    departamentos.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
+    'on conflict (id) do nothing;',
     '',
+    `insert into public.queues (id, name, description, color, is_active, priority) values`,
+    filas.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
+    'on conflict (id) do nothing;',
+    '',
+    `insert into public.contacts (id, name, phone, email, conversation_status, queue_id, consent_status, notes) values`,
+    contatos.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
+    'on conflict (id) do nothing;',
+    '',
+  );
+  linhas.push(
     `insert into public.messages (id, contact_id, sender, content, message_type, transcription, is_read) values`,
     mensagens.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
-    'on conflict (id) do update set contact_id = excluded.contact_id, sender = excluded.sender,',
-    '  content = excluded.content, message_type = excluded.message_type,',
-    '  transcription = excluded.transcription, is_read = excluded.is_read;',
+    'on conflict (id) do nothing;',
     '',
+    preflightColisoes(marcadores),
     'commit;',
   );
 
   return linhas.join('\n') + '\n';
 }
 
-/** DML de reversão: tudo por prefixo/marcador, nada por id solto. */
+/** DML de reversão: exige simultaneamente IDs reservados e marcadores canônicos. */
 export function sqlDeRemocao(planoRecebido = planoDeEnsaio()) {
   const plano = validarPlanoSeguro(planoRecebido);
   const rotulo = `${plano.prefixo}`;
+  const marcadores = marcadoresDoPlano(plano);
   return (
     [
       ...cabecalhoSql(plano, 'reversão'),
       'begin;',
+      LOCK_ENSAIO,
+      preflightColisoes(marcadores),
       '',
       `-- mensagens dos contatos de ensaio`,
       `delete from public.messages`,
-      ` where contact_id in (select id from public.contacts where name like '${rotulo}%');`,
+      ` where id in (${idsSql(marcadores.mensagens)})`,
+      `   and contact_id in (${idsSql(marcadores.contatos)})`,
+      `   and content like '${rotulo}%';`,
       '',
       `-- contatos de ensaio`,
-      `delete from public.contacts where name like '${rotulo}%';`,
+      `delete from public.contacts`,
+      ` where id in (${idsSql(marcadores.contatos)}) and name like '${rotulo}%';`,
       '',
       `-- filas de ensaio`,
-      `delete from public.queues where name like '${rotulo}%';`,
+      `delete from public.queues`,
+      ` where id in (${idsSql(marcadores.filas)}) and name like '${rotulo}%';`,
       '',
       `-- departamentos de ensaio`,
-      `delete from public.departments where name like '${rotulo}%';`,
+      `delete from public.departments`,
+      ` where id in (${idsSql(marcadores.departamentos)}) and name like '${rotulo}%';`,
       '',
       '-- Sem deletes em auth.users, auth.identities, public.profiles ou',
       '-- public.user_roles: o provisionamento não cria identidade nenhuma, e',
@@ -461,13 +660,13 @@ export function conferirAlvoLocal(url) {
     throw new Error('ensaio: DB_URL não é uma URL válida. Proibido seguir sem saber o alvo.');
   }
   if (!['postgres:', 'postgresql:'].includes(alvo.protocol)) {
-    throw new Error(`ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol}).`);
+    throw new Error('ensaio: DB_URL usa protocolo não-PostgreSQL.');
   }
   const host = alvo.hostname;
   const locais = ['127.0.0.1', 'localhost', '::1', '[::1]'];
   if (!locais.includes(host)) {
     throw new Error(
-      `ensaio: DB_URL aponta para host não-local (${host}). Este provisionamento é LOCAL (regra R1): use zapp-db-local env.`,
+      'ensaio: DB_URL aponta para host não-local. Este provisionamento é LOCAL (regra R1): use zapp-db-local env.',
     );
   }
   return host;
@@ -504,7 +703,7 @@ const AJUDA = `uso: bun scripts/ia/ensaio-provisionamento.mjs [--plano|--sql|--r
 
   --plano    (padrão) resumo do ambiente de ensaio; nada é escrito
   --sql      imprime o DML aditivo e idempotente (aplicar só no banco LOCAL)
-  --remover  imprime o DML de reversão, por prefixo ENSAIO-
+  --remover  imprime a reversão limitada aos IDs e marcadores canônicos
   --ajuda    esta ajuda
 
 Aplicar (banco local da cópia de trabalho, nunca produção):
@@ -559,6 +758,15 @@ export function executarCli(
   throw new Error(`ensaio: estado de CLI não tratado (${flag})`);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+function chamadoComoEntrypoint(caminho = process.argv[1]) {
+  if (!caminho) return false;
+  try {
+    return realpathSync(caminho) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (chamadoComoEntrypoint()) {
   process.exitCode = executarCli(process.argv.slice(2));
 }
