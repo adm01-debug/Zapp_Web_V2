@@ -60,13 +60,11 @@ async function openContactPanel(page: import('@playwright/test').Page) {
   await page.getByTestId('status-chip-all').click();
   await page.getByTestId('conversation-item').filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME }).first().click();
   const panel = page.getByTestId('contact-panel');
-  // No desktop o estado inicial intencional e aberto. O antigo helper clicava
-  // sempre no item de alternancia e, portanto, fechava exatamente esse painel.
-  if (!await panel.isVisible()) {
-    await page.getByTestId('chat-header-more-actions').click();
-    await page.getByRole('menuitem', { name: 'Detalhes do contato' }).click();
-  }
-  await expect(panel).toBeVisible();
+  // No desktop o estado inicial intencional é aberto. ContactDetailsResponsive
+  // chega por lazy-load: consultar isVisible() imediatamente após selecionar a
+  // conversa observava o intervalo antes da montagem e o clique de fallback
+  // alternava showDetails de true para false. Espere a montagem real.
+  await expect(panel).toBeVisible({ timeout: 20_000 });
 }
 
 // e2e/inbox-contact-sidebar.spec.ts — etapa 90 do plano

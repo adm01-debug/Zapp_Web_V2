@@ -75,6 +75,13 @@ async function abrirConversaDoFixture(page: Page): Promise<void> {
   await button.click();
 }
 
+function controlesRapidos(page: Page) {
+  // A conversa semeada contém um player de áudio, que monta outro
+  // MediaVolumeControl no balão. Esta spec exercita explicitamente o controle
+  // global da navegação lateral; escopar evita confundi-lo com o do player.
+  return page.getByRole('navigation', { name: 'Menu de navegação principal' });
+}
+
 async function volumeDoAudioCarregado(page: Page): Promise<number> {
   const audio = page.locator(`audio[src*="${AUDIO_SIGNED_PATH}"]`);
   if (await audio.count() !== 1) return Number.NaN;
@@ -103,7 +110,7 @@ test.describe('Volume das mídias de conversa', () => {
     // apareciam como *flaky* (1ª tentativa vermelha, retry verde).
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
-    const controle = page.getByRole('button', { name: LABEL_CONTROLE });
+    const controle = controlesRapidos(page).getByRole('button', { name: LABEL_CONTROLE });
     await expect(controle).toBeVisible();
 
     await controle.focus();
@@ -142,7 +149,7 @@ test.describe('Volume das mídias de conversa', () => {
     await page.reload();
     await abrirConversaDoFixture(page);
 
-    const controleDepois = page.getByRole('button', { name: LABEL_CONTROLE });
+    const controleDepois = controlesRapidos(page).getByRole('button', { name: LABEL_CONTROLE });
     await controleDepois.focus();
     await controleDepois.press('Enter');
 
@@ -155,25 +162,27 @@ test.describe('Volume das mídias de conversa', () => {
   test('mudo da mídia não silencia os alertas e persiste no reload', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
-    const alerta = page.getByRole('button', { name: LABEL_ALERTA });
+    const controles = controlesRapidos(page);
+    const alerta = controles.getByRole('button', { name: LABEL_ALERTA });
     const rotuloAlertaAntes = await alerta.getAttribute('aria-label');
 
-    await page.getByRole('button', { name: LABEL_VOLUME }).click();
+    await controles.getByRole('button', { name: LABEL_VOLUME }).click();
     await page.getByRole('button', { name: 'Silenciar' }).click();
 
-    await expect(page.getByRole('button', { name: LABEL_MUDO })).toBeVisible();
+    await expect(controles.getByRole('button', { name: LABEL_MUDO })).toBeVisible();
     // Critério 3 do plano: o canal dos alertas não muda de estado com a mídia muda.
     expect(await alerta.getAttribute('aria-label')).toBe(rotuloAlertaAntes);
 
     await page.reload();
     await abrirConversaDoFixture(page);
 
-    await expect(page.getByRole('button', { name: LABEL_MUDO })).toBeVisible();
+    const controlesDepois = controlesRapidos(page);
+    await expect(controlesDepois.getByRole('button', { name: LABEL_MUDO })).toBeVisible();
 
     // desfaz para não deixar a mídia muda na sessão de quem rodar depois
-    await page.getByRole('button', { name: LABEL_MUDO }).click();
+    await controlesDepois.getByRole('button', { name: LABEL_MUDO }).click();
     await page.getByRole('button', { name: 'Ativar som' }).click();
-    await expect(page.getByRole('button', { name: LABEL_VOLUME })).toBeVisible();
+    await expect(controlesDepois.getByRole('button', { name: LABEL_VOLUME })).toBeVisible();
   });
 
   // A fixture isolada garante objeto/linha únicos e valida os bytes baixados do Storage.

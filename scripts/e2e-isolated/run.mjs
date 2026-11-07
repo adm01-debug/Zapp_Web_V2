@@ -188,6 +188,14 @@ export function browserTimeoutMs(scope, fullSuite) {
   return scope === 'login' ? 600_000 : fullSuite ? 55 * 60_000 : 15 * 60_000;
 }
 
+export function browserWorkers(scope, fullSuite) {
+  // O projeto principal já declara fullyParallel e dois workers. A suíte
+  // autenticada possui 266 casos e, serializada à força, não cabe nos 55
+  // minutos de validade reservados à fase do navegador. Os grupos menores e o
+  // bootstrap continuam com um worker; cada job preserva backend próprio.
+  return scope === 'suite' && fullSuite ? 2 : 1;
+}
+
 export function assertPinnedImages(lock) {
   const required = ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', 'driver'];
   if (!lock?.images || required.some(name => !/^[a-z0-9./_-]+:[A-Za-z0-9_.-]+@sha256:[a-f0-9]{64}$/.test(lock.images[name] ?? ''))) {
@@ -674,7 +682,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     writeJson(path.join(output, 'readiness.json'), proof);
     phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
     const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
-      ...projects.flatMap(name => ['--project', name]), '--workers', '1'];
+      ...projects.flatMap(name => ['--project', name]), '--workers', String(browserWorkers(scope, fullSuite))];
     const inventory = collectPlaywrightInventory({ output, scope, projects,
       execute: report => docker(['exec', '-e', 'PLAYWRIGHT_JSON_OUTPUT_FILE=' + report,
         ...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),

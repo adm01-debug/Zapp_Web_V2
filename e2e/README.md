@@ -23,11 +23,13 @@ bash scripts/e2e-isolated/run.sh suite deslogado-secundario /tmp/e2e-isolated-de
 ```
 
 `login` executa somente `setup/authenticate`. Esse resultado não aprova os demais
-projetos. Cada grupo da suíte usa coleta `--list` separada, a mesma seleção na
-execução e `--workers 1`, porque as fixtures existentes compartilham recursos.
-Não há parâmetro livre para ignorar dependências, escolher comandos ou apontar
-um backend externo. O resultado completo depende da execução nativa de cada
-grupo, não das simulações locais de controle.
+projetos. Cada grupo da suíte usa coleta `--list` separada e a mesma seleção e
+concorrência na execução. Login e grupos deslogados ficam em `--workers 1`; o
+grupo autenticado usa os dois workers declarados pela configuração do projeto,
+dentro do seu backend descartável exclusivo. Não há parâmetro livre para ignorar
+dependências, escolher comandos ou apontar um backend externo. O resultado
+completo depende da execução nativa de cada grupo, não das simulações locais de
+controle.
 
 ## Fixture de autenticação
 

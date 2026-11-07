@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertPinnedImages, functionPolicy, prepareMountTargets, readBrowserReportOnce, browserResultDiagnostic,
-  browserTimeoutMs, parseQrSeedDiagnostic } from '../e2e-isolated/run.mjs';
+  browserTimeoutMs, browserWorkers, parseQrSeedDiagnostic } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS, sha256 } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
@@ -37,6 +37,12 @@ test('browser timeout stays inside the isolation proof lifetime and outer job bu
   assert.equal(browserTimeoutMs('suite', true), 55 * 60_000);
   assert.equal(browserTimeoutMs('suite', false), 15 * 60_000);
   assert.ok(browserTimeoutMs('suite', true) < 60 * 60_000);
+});
+
+test('only the full authenticated suite restores the two project workers', () => {
+  assert.equal(browserWorkers('login', false), 1);
+  assert.equal(browserWorkers('suite', false), 1);
+  assert.equal(browserWorkers('suite', true), 2);
 });
 let certificateFixture;
 let certificateRoot;
@@ -566,6 +572,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         return ok('private-sentinel-from-seed');
       }
       if (argv.includes('node_modules/@playwright/test/cli.js')) {
+        assert.equal(valueAfter(argv, '--workers'), fullSeed ? '2' : '1');
         if (scope === 'suite') {
           assert.deepEqual(allAfter(argv, '--project'), GROUPS[group]);
           assert.equal(argv.includes('E2E_CATALOG_PRODUCT_SKU_VERIFIED=true'), fullSeed);

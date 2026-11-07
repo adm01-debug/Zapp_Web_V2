@@ -439,9 +439,13 @@ test.describe('aba Arquivos — prova local autenticada', () => {
     await expect(painel.getByText('Enviado por', { exact: true })).toBeVisible();
     await expect(painel.getByRole('img', { name: 'Enviado por Você' })).toBeVisible();
 
-    // Inline e Sheet permanecem montados no DOM responsivo; somente um botao
-    // pertence a superficie visivel. Sem o filtro, strict mode encontra os dois.
-    await painel.getByRole('button', { name: 'Fechar' }).filter({ visible: true }).click();
+    // O Sheet possui o seu próprio botão de fechar e o conteúdo compartilhado
+    // possui outro. O contrato desta prova é o botão do FileDetailContent, que
+    // existe uma única vez dentro da superfície responsiva escolhida acima.
+    await painel
+      .getByTestId('file-detail-panel')
+      .getByRole('button', { name: 'Fechar' })
+      .click();
     await expect(painel).not.toBeVisible();
   });
 
