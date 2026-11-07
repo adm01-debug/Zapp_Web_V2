@@ -128,3 +128,6 @@ docs/design/*.png
 # Worktrees isolados de agentes (Agent tool, isolation: worktree) — efêmeros, nunca versionar
 .claude/worktrees/
 .vercel
+
+# npm lockfile (projeto usa bun; package-lock.json é artefato acidental)
+package-lock.json
