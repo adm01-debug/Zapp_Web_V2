@@ -83,9 +83,9 @@ function fixture() {
 }
 
 for (const [name, owners, changed] of [
-  ['six replay-owned functions', Array(6).fill('supabase_admin'), 6],
-  ['six already-correct functions', Array(6).fill('postgres'), 0],
-  ['three replay-owned and three already-correct functions', Array.from({ length: 6 }, (_, i) => i % 2 ? 'postgres' : 'supabase_admin'), 3],
+  ['seven replay-owned functions', Array(7).fill('supabase_admin'), 7],
+  ['seven already-correct functions', Array(7).fill('postgres'), 0],
+  ['four replay-owned and three already-correct functions', Array.from({ length: 7 }, (_, i) => i % 2 ? 'postgres' : 'supabase_admin'), 4],
 ]) test('ownership confirms ' + name + ' only after the complete process', () => {
   const value = fixture(); value.state.result = ok(stdout(records(owners)));
   const result = value.run();
@@ -164,7 +164,7 @@ for (const [name, mutate] of [
   const value = fixture(); mutate(value.state.result);
   const result = value.run();
   assert.equal(result.confirmed, false); assert.equal(result.reason, 'sql-process-failed');
-  assert.equal(result.before.length, 6); assert.equal(Object.hasOwn(result, 'verified'), false);
+  assert.equal(result.before.length, 7); assert.equal(Object.hasOwn(result, 'verified'), false);
   assert.equal(value.state.sqlCalls.length, 1);
   assert.equal(JSON.stringify(result).includes('private-sentinel'), false);
 });
@@ -226,11 +226,11 @@ test('failed SQL publishes only allowed before metadata, with no inferred rollba
   assert.equal(JSON.stringify(result).includes('private-sentinel'), false);
 });
 
-test('SQL fixes the six signatures, validates all before ALTER and verifies before COMMIT', () => {
+test('SQL fixes the seven signatures, validates all before ALTER and verifies before COMMIT', () => {
   const sql = ownershipSql(RUN, SHA);
   const values = [...sql.matchAll(/\(\d, '(public\.[^']+)', '([a-f0-9]{64})'\)/g)].map(([, signature, definition_sha256]) => ({ signature, definition_sha256 }));
   assert.deepEqual(values, OWNERSHIP_ROUTINES);
-  assert.equal(OWNERSHIP_ROUTINES.length, 6);
+  assert.equal(OWNERSHIP_ROUTINES.length, 7);
   assert.ok(sql.indexOf('isolated_owner_precondition_rejected') < sql.indexOf('ALTER FUNCTION'));
   assert.ok(sql.indexOf('isolated_owner_acl_changed') < sql.indexOf("'stage', 'verified'"));
   assert.ok(sql.indexOf("'stage', 'verified'") < sql.lastIndexOf('COMMIT;'));

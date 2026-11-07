@@ -63,7 +63,13 @@ test.describe('Conversation state transitions', () => {
     test.skip(browserName !== 'chromium',
       'CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a' +
       " getByRole('option') de forma confiavel em Firefox/WebKit no CI");
-    const conversation = page.locator('[data-testid="conversation-item"]').first();
+    // O backend isolado tambem semeia conversas de Arquivos e paginacao. Fechar
+    // `.first()` tornava o alvo dependente de updated_at/ordem da lista e podia
+    // exercitar outro contato. O contrato deste spec e o fixture canonico.
+    const conversation = page
+      .getByTestId('conversation-item')
+      .filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME });
+    await expect(conversation).toHaveCount(1);
     await conversation.click();
 
     // getByRole('button', { name: /mais ações/i }) sem escopo bate em 2
@@ -92,7 +98,14 @@ test.describe('Conversation state transitions', () => {
     await page.getByRole('button', { name: /^encerrar$/i }).click();
     const response = await encerramento;
     const body = await response.json().catch(() => null) as unknown;
-    expect(response.ok(), `close_conversation_atomic: HTTP ${response.status()}`).toBe(true);
+    const erro = body && typeof body === 'object'
+      ? String((body as { code?: unknown; message?: unknown }).code ??
+          (body as { message?: unknown }).message ?? '')
+      : '';
+    expect(
+      response.ok(),
+      `close_conversation_atomic: HTTP ${response.status()}${erro ? ` (${erro})` : ''}`,
+    ).toBe(true);
     expect(body).toEqual([
       expect.objectContaining({
         closure_id: expect.any(String),

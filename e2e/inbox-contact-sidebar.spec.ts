@@ -59,9 +59,14 @@ async function installSidebarMocks(page: import('@playwright/test').Page, sideba
 async function openContactPanel(page: import('@playwright/test').Page) {
   await page.getByTestId('status-chip-all').click();
   await page.getByTestId('conversation-item').filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME }).first().click();
-  await page.getByTestId('chat-header-more-actions').click();
-  await page.getByRole('menuitem', { name: 'Detalhes do contato' }).click();
-  await expect(page.getByTestId('contact-panel')).toBeVisible();
+  const panel = page.getByTestId('contact-panel');
+  // No desktop o estado inicial intencional e aberto. O antigo helper clicava
+  // sempre no item de alternancia e, portanto, fechava exatamente esse painel.
+  if (!await panel.isVisible()) {
+    await page.getByTestId('chat-header-more-actions').click();
+    await page.getByRole('menuitem', { name: 'Detalhes do contato' }).click();
+  }
+  await expect(panel).toBeVisible();
 }
 
 // e2e/inbox-contact-sidebar.spec.ts — etapa 90 do plano

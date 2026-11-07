@@ -1300,7 +1300,7 @@ test('ownership controller confirms only the authenticated step, before seeds an
   assert.equal(value.ownershipCalls.length, 1);
   assert.equal(value.ownershipCalls[0].afterMigrations, 1); assert.equal(value.ownershipCalls[0].beforeSeeds, 0);
   assert.equal(value.ownershipMetadata.mode, 0o600); assert.equal(value.ownershipMetadata.value.confirmed, true);
-  assert.equal(value.ownershipMetadata.value.verified.length, 6);
+  assert.equal(value.ownershipMetadata.value.verified.length, 7);
   assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'qr-seed', 'provider-verification']);
   assert.equal(value.catalogCalls.length, 1, 'the independent catalog is still observed after seeds');
   assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);

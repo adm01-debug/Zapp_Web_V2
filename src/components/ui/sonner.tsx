@@ -32,9 +32,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:rounded-lg',
           closeButton: 'group-[.toast]:bg-card group-[.toast]:border-border/40 group-[.toast]:text-muted-foreground group-[.toast]:hover:text-foreground',
           success: 'group-[.toaster]:!bg-success group-[.toaster]:!border-success group-[.toaster]:!text-success-foreground group-[.toaster]:backdrop-blur-xl [&_[data-title]]:!text-success-foreground [&_[data-description]]:!text-success-foreground',
-          error: 'group-[.toaster]:!bg-destructive/10 group-[.toaster]:!border-destructive/30 group-[.toaster]:!text-destructive group-[.toaster]:backdrop-blur-xl',
-          warning: 'group-[.toaster]:!bg-warning/10 group-[.toaster]:!border-warning/30 group-[.toaster]:!text-warning group-[.toaster]:backdrop-blur-xl',
-          info: 'group-[.toaster]:!bg-info/10 group-[.toaster]:!border-info/30 group-[.toaster]:!text-info group-[.toaster]:backdrop-blur-xl',
+          error: 'group-[.toaster]:!bg-card group-[.toaster]:!border-destructive/60 group-[.toaster]:!text-[hsl(var(--destructive-text))] group-[.toaster]:backdrop-blur-xl [&_[data-title]]:!text-[hsl(var(--destructive-text))] [&_[data-description]]:!text-[hsl(var(--destructive-text))]',
+          warning: 'group-[.toaster]:!bg-card group-[.toaster]:!border-warning/60 group-[.toaster]:!text-[hsl(var(--warning-text))] group-[.toaster]:backdrop-blur-xl [&_[data-title]]:!text-[hsl(var(--warning-text))] [&_[data-description]]:!text-[hsl(var(--warning-text))]',
+          info: 'group-[.toaster]:!bg-card group-[.toaster]:!border-info/60 group-[.toaster]:!text-foreground group-[.toaster]:backdrop-blur-xl [&_[data-title]]:!text-foreground [&_[data-description]]:!text-foreground',
         },
       }}
       {...props}

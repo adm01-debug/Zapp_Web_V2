@@ -439,7 +439,9 @@ test.describe('aba Arquivos — prova local autenticada', () => {
     await expect(painel.getByText('Enviado por', { exact: true })).toBeVisible();
     await expect(painel.getByRole('img', { name: 'Enviado por Você' })).toBeVisible();
 
-    await painel.getByRole('button', { name: 'Fechar' }).click();
+    // Inline e Sheet permanecem montados no DOM responsivo; somente um botao
+    // pertence a superficie visivel. Sem o filtro, strict mode encontra os dois.
+    await painel.getByRole('button', { name: 'Fechar' }).filter({ visible: true }).click();
     await expect(painel).not.toBeVisible();
   });
 

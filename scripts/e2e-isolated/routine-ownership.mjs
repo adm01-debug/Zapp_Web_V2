@@ -11,6 +11,7 @@ export const OWNERSHIP_ROUTINES = Object.freeze([
   ['public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'],
   ['public.get_instance_token(text)', '5082afe06f6d581652c74d67a09bdbdb3317e4600ab223ea2a082997b3ff7777'],
   ['public.enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)', '866a5819d62fcbaa539029b50d83fed2dc985fd621052829d0bacac8b4fbeeba'],
+  ['public.close_conversation_atomic(uuid,uuid,text,text,text,text)', 'ab317cb9f04ddb2fb6b15c8d8c85c4833e1b2452f38dfb16c00db9710d444e41'],
 ].map(([signature, definition_sha256]) => Object.freeze({ signature, definition_sha256 })));
 
 export const OWNERSHIP_EXECUTOR_OPTIONS = Object.freeze({ timeout: 5_000, killSignal: 'SIGKILL', maxBuffer: 8_192 });
@@ -180,7 +181,8 @@ WITH expected(ordinal, signature, expected_sha256) AS (
     (3, 'public.complete_outbound_message(uuid,uuid,text,text)', '31225dd6be1b4c2ec2b5e081626a45f369b9318554250a5f05738ac760675b68'),
     (4, 'public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'),
     (5, 'public.get_instance_token(text)', '5082afe06f6d581652c74d67a09bdbdb3317e4600ab223ea2a082997b3ff7777'),
-    (6, 'public.enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)', '866a5819d62fcbaa539029b50d83fed2dc985fd621052829d0bacac8b4fbeeba')
+    (6, 'public.enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)', '866a5819d62fcbaa539029b50d83fed2dc985fd621052829d0bacac8b4fbeeba'),
+    (7, 'public.close_conversation_atomic(uuid,uuid,text,text,text,text)', 'ab317cb9f04ddb2fb6b15c8d8c85c4833e1b2452f38dfb16c00db9710d444e41')
 )
 SELECT e.ordinal, e.signature, e.expected_sha256, p.oid AS proc_oid,
        p.proowner AS old_owner, pg_catalog.to_regrole('postgres')::oid AS new_owner,
@@ -209,8 +211,8 @@ DECLARE
   item record;
   acl_ok boolean;
 BEGIN
-  IF (SELECT count(*) FROM pg_temp.e2e_owner_before) <> 6
-     OR (SELECT count(DISTINCT proc_oid) FROM pg_temp.e2e_owner_before) <> 6
+  IF (SELECT count(*) FROM pg_temp.e2e_owner_before) <> 7
+     OR (SELECT count(DISTINCT proc_oid) FROM pg_temp.e2e_owner_before) <> 7
      OR EXISTS (SELECT FROM pg_temp.e2e_owner_before WHERE
        proc_oid IS NULL OR prokind IS DISTINCT FROM 'f' OR prosecdef IS DISTINCT FROM true
        OR old_owner NOT IN (new_owner, pg_catalog.to_regrole('supabase_admin')::oid)
@@ -269,7 +271,7 @@ BEGIN
     UNION ALL
     (SELECT * FROM actual EXCEPT SELECT * FROM expected)
   ), shape AS (
-    SELECT count(*) = 6 AND count(DISTINCT b.proc_oid) = 6
+    SELECT count(*) = 7 AND count(DISTINCT b.proc_oid) = 7
            AND coalesce(bool_and(
              b.old_owner IS NOT NULL
              AND b.new_owner IS NOT NULL
