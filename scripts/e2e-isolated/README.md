@@ -41,6 +41,8 @@ O workflow de preparo aceita PR e dispatch para obter a prova antes do merge, co
 
 O comando exige Linux, Docker local, Bun 1.4.0, OpenSSL 3, `certutil` (pacote `libnss3-tools`) e as dependências do checkout. A origem deste corte é `https://127.0.0.1:5173`; o tráfego dos serviços dentro do namespace continua em loopback. Rejeita qualquer uma das sete imagens sem digest e exige que a versão instalada do Playwright seja a mesma da imagem de navegador. O SHA registrado é o `git rev-parse HEAD` do checkout executado, inclusive quando o evento de PR usa um merge-ref.
 
+O Vite desse ambiente injeta um estado de conectividade online no navegador com `ZAPP_E2E_FORCE_ONLINE=1`. O namespace continua sem interface externa, mas o Chromium deixa de tratar os serviços HTTPS locais como indisponíveis apenas porque não existe uma rota padrão. Polling, envio de mensagens e ações da interface permanecem no caminho online esperado sem liberar acesso à internet. A configuração Vite comum não recebe essa adaptação.
+
 A sequência executada é:
 
 1. Validar o lock, o checkout e as dependências; conferir OpenSSL/NSS antes de gerar qualquer chave. Puxar os digests exatos e conferir `install`/`update-ca-certificates` na imagem do driver, sem credenciais.
@@ -82,21 +84,25 @@ As regressões executam funções reais e o controlador com interfaces Docker, G
 A configuração isolada preserva projetos, dependências e assertions. O modo `login` seleciona somente `setup`; os modos abaixo executam a seleção explícita de cada grupo. Sucesso do login não declara os demais casos aprovados. A reativação do workflow autenticado anterior depende da substituição completa e validada.
 
 
-## Suíte em três grupos
+## Suíte em cinco grupos isolados
 
-    bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-authenticated
+    bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-authenticated-1
+    bash scripts/e2e-isolated/run.sh suite authenticated-2-of-3 /tmp/e2e-isolated-authenticated-2
+    bash scripts/e2e-isolated/run.sh suite authenticated-3-of-3 /tmp/e2e-isolated-authenticated-3
     bash scripts/e2e-isolated/run.sh suite deslogado-principal /tmp/e2e-isolated-deslogado-principal
     bash scripts/e2e-isolated/run.sh suite deslogado-secundario /tmp/e2e-isolated-deslogado-secundario
 
-A entrada aceita somente esses três grupos e exige saída fora do checkout, inicialmente vazia. Cada comando cria seu próprio ambiente. Os projetos conservam a união de 9 + 3 + 3; não há expressão livre de shell, nome de projeto arbitrário ou desativação das dependências.
+A entrada aceita somente esses cinco grupos e exige saída fora do checkout, inicialmente vazia. Cada comando cria seu próprio ambiente. Os três grupos autenticados repetem os mesmos nove projetos, mas repartem seus casos uma única vez com os shards fechados `1/3`, `2/3` e `3/3`; os grupos deslogados conservam três projetos cada. A união continua tendo 15 projetos distintos. Não há expressão livre de shell, shard arbitrário, nome de projeto arbitrário ou desativação das dependências.
 
 | Grupo | Projetos explícitos |
 |---|---|
-| `authenticated` | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `authenticated-1-of-3` (`--shard 1/3`) | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `authenticated-2-of-3` (`--shard 2/3`) | os mesmos nove projetos, em backend próprio |
+| `authenticated-3-of-3` (`--shard 3/3`) | os mesmos nove projetos, em backend próprio |
 | `deslogado-principal` | `chromium-mapa`, `firefox-auth`, `webkit-auth` |
 | `deslogado-secundario` | `chromium-telefonia`, `firefox-telefonia`, `webkit-telefonia` |
 
-A coleta `--list --reporter=json` é uma chamada separada da execução. Ambas usam os mesmos projetos e `--workers 1`, porque os testes existentes compartilham recursos. O resumo confronta identidades e resultados; teste ausente, extra, flaky, erro de coleta ou skip inesperado não vira aprovação. O limite de execução do navegador é 45 minutos no grupo autenticado e 15 nos grupos deslogados, além do preparo do ambiente. A prova de isolamento só é emitida após as verificações do seed e mantém validade máxima de 60 minutos.
+A coleta `--list --reporter=json` é uma chamada separada da execução e usa exatamente a mesma seleção, shard e concorrência. Todos os grupos usam `--workers 1`. Os shards autenticados paralelizam somente entre backends independentes; nunca há dois workers mutando as mesmas fixtures. Cada job conserva seu próprio backend descartável. O resumo confronta identidades e resultados; teste ausente, extra, flaky, erro de coleta ou skip inesperado não vira aprovação. O limite de execução do navegador é 55 minutos em cada shard autenticado e 15 nos grupos deslogados, além do preparo do ambiente. O teto autenticado permanece abaixo dos 60 minutos de validade da prova de isolamento; cada job externo reserva 75 minutos para incluir preparo e limpeza.
 
 A coleta define `PLAYWRIGHT_JSON_OUTPUT_FILE` somente no seu processo, em um subdiretório privado novo de output; o browser conserva `/output/results.json`. O controller exige status 0 sem erro/sinal, arquivo regular sem links, tamanho positivo até 64 MiB, UTF-8/JSON integrais e o mesmo parser de inventário. Não interpreta stdout, que pode conter a listagem humana do Playwright e saída de módulos importados. Não há fallback, retry nem mudança de seleção: auxiliares Node elegíveis pelo catch-all continuam sendo importados. Seus guardrails próprios continuam sendo responsabilidade do workflow Talk X.
 
@@ -128,11 +134,11 @@ O grupo autenticado compila todos os entrypoints Edge ativos e versionados antes
 
 Depois do login real, o controller executa os seeds existentes de Arquivos, o seed de suíte e o verificador de providers. O seed conserva os proprietários de Arquivos, prepara paginação, conversa principal, inbox e Talk X e verifica leituras com o JWT do usuário. A preferência de onboarding do supervisor compartilhado e do usuário de Arquivos precisa ser realmente `true`; o Tour usa usuário novo por teste, preferência comprovada `false`, sessão vazia e limpeza por posse, sem redefinir preferências compartilhadas.
 
-### Proprietários das seis rotinas de entrega
+### Proprietários das sete rotinas privilegiadas
 
-Somente no grupo autenticado, depois do replay e da revalidação de cron desligado, o controller restaura para `postgres` o proprietário de seis assinaturas fixas: `enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)`, `claim_outbound_message(uuid,uuid,text,integer)`, `complete_outbound_message(uuid,uuid,text,text)`, `fail_outbound_message(uuid,uuid,boolean)`, `get_instance_token(text)` e `enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)`, todas em `public`. O snapshot `contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e` registra esse owner; o replay local cria as seis como `supabase_admin`. O usuário global do replay permanece inalterado.
+Somente no grupo autenticado, depois do replay e da revalidação de cron desligado, o controller restaura para `postgres` o proprietário de sete assinaturas fixas: `enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)`, `claim_outbound_message(uuid,uuid,text,integer)`, `complete_outbound_message(uuid,uuid,text,text)`, `fail_outbound_message(uuid,uuid,boolean)`, `get_instance_token(text)`, `enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)` e `close_conversation_atomic(uuid,uuid,text,text,text,text)`, todas em `public`. O snapshot `contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e` registra `postgres` nas rotinas privilegiadas; o replay local as cria como `supabase_admin`. Isso também preserva o contrato dos triggers de encerramento, que aceitam os campos internos `client_request_id` e `closure_id` somente quando a RPC é executada por `postgres`/`service_role`. O usuário global do replay permanece inalterado.
 
-`routine-ownership.mjs` vincula cada assinatura ao SHA256 integral de sua definição exportada. Antes de qualquer ALTER, exige seis OIDs distintos, função SECURITY DEFINER, owner atual `supabase_admin` ou `postgres` e definição exata. Diferença de formato ou corpo bloqueia; não há normalização de hash, descoberta de funções adicionais, GRANT, mudança de guardas/RLS ou alteração de migrations. Owner já correto é validado sem novo ALTER.
+`routine-ownership.mjs` vincula cada assinatura ao SHA256 integral de sua definição exportada. Antes de qualquer ALTER, exige sete OIDs distintos, função SECURITY DEFINER, owner atual `supabase_admin` ou `postgres` e definição exata. Diferença de formato ou corpo bloqueia; não há normalização de hash, descoberta de funções adicionais, GRANT, mudança de guardas/RLS ou alteração de migrations. Owner já correto é validado sem novo ALTER.
 
 A etapa reinspeciona CID, imagem, rótulos, estado, namespace e volume da execução. O novo `psql` usa o CID conferido, socket local, ambiente mínimo com `env -i`, `-X`, `-w` e limites de tempo. Não herda PGHOSTADDR, PGSERVICE, PGOPTIONS ou URL de conexão. A transação preserva definição, atributos e ACL do replay; a comparação transforma somente as entradas anteriores do proprietário (grantor e grantee), conserva grant options, terceiros e a distinção entre ACL NULL e vazia. Isso não afirma equivalência integral das permissões com produção nem elimina as falhas históricas aceitas pelo replay.
 
