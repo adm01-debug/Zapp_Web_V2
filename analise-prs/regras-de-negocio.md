@@ -1,101 +1,119 @@
-# Regras de Negócio — Zapp Web V2
+# Regras de Negócio — Análise de PRs (2026-10-24)
 
-> Extraídas de: `CLAUDE.md`, `docs/`, `supabase/migrations/`, `.github/workflows/`, `src/`, auditoria de código
-> Cada regra indica a fonte (arquivo:seção ou PR).
+Fonte de verdade para classificação de PRs nesta sessão de análise.
+SHA do main no início da análise: `17976eb8b877809ba089660f1fb5b86835573c2d`
 
-**Fontes primárias:**
-- `CLAUDE.md` — seção "Perímetro do GitHub" (estado canônico 2026-10-03)
-- `CLAUDE.md` — seção "Fluxo Git"
-- `CLAUDE.md` — seção "E15(b)" (strict=true policy desde 02/10)
-- `CLAUDE.md` — seção "Auditoria de workflows"
-- `.github/workflows/ci.yml` — definição dos required checks
-- API `GET /repos/adm01-debug/Zapp_Web_V2/branches/main/protection` — verified 2026-10-23
+---
 
-## 1. Banco de dados
+## R1 — MUST_NOT_MERGE (proibido para sempre)
 
-- Projeto Supabase oficial: `tnnnlkbymytvtqngbbqh` (Cloud)
-- DDL deve sempre seguir: arquivo em `supabase/migrations/` → PR → merge em `main` → deploy → apply
-- `supabase_apply_migration` está bugado; usar `db_query` + INSERT no ledger
-- Registro de migration: `scripts/db-audit/register-migration.mjs`
-- Nunca aplicar DDL em branch paralela (causa drift)
-- Migration destrutiva (REVOKE, DROP, rename de contrato) só após deploy do código correspondente
+PRs que nunca devem ser mergeadas, independentemente do estado ou da fila.
 
-## 2. Evolution GO (WhatsApp)
+| PR | Motivo | Fonte |
+|---|---|---|
+| **#2078** | Seta `strict: false` em `scripts/ci/github-settings-baseline.json`, revertendo política `strict=true` revogada permanentemente em E15(b) (02/10/2026) | CLAUDE.md §Perímetro do GitHub; `analise-prs/dossies/PR-2078.md` |
+| **#2135** | Contém `DROP POLICY IF EXISTS` em migration — DDL destrutivo proibido por regra de segurança desta sessão | `analise-prs/dossies/PR-2135.md` |
+| **#2137** | Contém `DROP POLICY IF EXISTS` em migration — DDL destrutivo proibido por regra de segurança desta sessão | `analise-prs/dossies/PR-2137.md` |
 
-- Flavor: Evolution GO (`evoapicloud/evolution-go`)
-- URL: `https://evolution-go-rxj2.srv1481814.hstgr.cloud`
-- Instância: `PRINCIPAL`
-- Auth via `EVOLUTION_API_KEY` (global) e `EVOLUTION_INSTANCE_TOKEN` (por instância)
-- Secrets só em Edge Functions, nunca no front
-- Tradução de rotas em `supabase/functions/_shared/evolution-go-routes.ts`
+---
 
-## 3. Contatos — critério de visibilidade (F5/D4)
+## R2 — TOCA_WORKFLOWS (descartada — não tocar .github/workflows/)
 
-- Contato visível = `deleted_at IS NULL` AND `is_lid_legacy = false` AND `phone ~ '^[0-9]{10,15}$'`
-- `search_contacts` e `contacts_count_by_type` aceitam `include_legacy boolean DEFAULT false`
-- Front envia `include_legacy: true` só quando toggle "Mostrar legados" ativo
-- Mudar critério = mudar migration + `CONTACT_VISIBLE_PHONE_PATTERN` + teste de contrato
+PRs que modificam `.github/workflows/` são excluídas do batch de merge por regra de negócio desta sessão.
+Exceção única já consumida: PR #2210 (recriação de `auto-update-pr-branch.yml`) foi mergeada na sessão anterior — disputa registrada pelo stop hook.
 
-## 4. Branch protection (perímetro canônico 2026-10-03)
+PRs nesta categoria: `#1979, #2044, #2046, #2123, #2125, #2126, #2128, #2190, #2195, #2196, #2197, #2207`
 
-**Fonte:** `CLAUDE.md` seção "Perímetro do GitHub — estado canônico (2026-10-03)" + API verificada em 2026-10-23
+Fonte: instrução permanente da sessão — "PRs tocando `.github/workflows/` são DESCARTADA".
 
-- `strict=true` (política vigente desde 01/10 — `CLAUDE.md` E15(b), 02/10/2026)
-- `enforce_admins=true`
-- 6 required checks DECLARADOS no CLAUDE.md: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`
-- **Required checks REAIS (API branch protection, verificado 2026-10-23):** apenas `🏗️ Build` e `🔎 TypeCheck` — os demais rodam mas não bloqueiam merge pela API
-- Squash merge apenas (`allow_squash_merge=true`, `allow_merge_commit=false`, `allow_rebase_merge=false`) — fonte: `CLAUDE.md` seção "Perímetro do GitHub"
-- `delete_branch_on_merge=true`
-- `allow_auto_merge=true`
-- Sem required reviewers (vários agentes com auto-merge)
+---
 
-## 5. CI/CD
+## R3 — DRAFT (não mergeável até autor marcar como pronta)
 
-- Deploy front: Vercel automático no merge em `main`
-- Deploy edge functions: `deploy-functions.yml` via `workflow_dispatch` — não é automático
-- Merge em `main` ≠ deploy de edge function
-- `auto-update-pr-branch.yml` atualiza PRs BEHIND com auto-merge quando `main` avança
-- 16 workflows + 3 dinâmicos (Dependabot, Dependency Graph, Copilot)
+PRs em estado draft não podem receber squash-merge. Aguardam ação do autor.
+Estado verificado via GraphQL `isDraft` field.
 
-## 6. Módulo Talk X / Campanhas
+PRs nesta categoria: `#1991, #1997, #1998, #2000, #2002, #2003, #2013, #2022, #2024, #2025, #2026, #2029, #2030, #2032, #2034, #2035, #2036, #2037, #2054, #2092, #2093, #2100, #2108, #2113, #2116, #2138, #2199, #2200, #2206`
 
-- Plano vigente: `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md` (X001–X200)
-- Branch: `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`
-- PR: título terminando em `(X<NNN>)`
-- Uma etapa = uma PR
+---
 
-## 7. Fluxo Git (sessões paralelas)
+## R4 — CONFLITO (DIRTY — conflito de merge com main)
 
-- Nunca commitar em `main`/`master` diretamente
-- Branch: `claude/<tipo>-<slug>-<AAMMDD-HHMM>`
-- Uma tarefa = uma branch = uma PR
-- PRs com sobreposição de arquivos: parar e avisar antes de abrir segunda
-- Nunca fechar PR de outra sessão sem confirmar que conteúdo chegou em `main`
+PRs com `mergeStateStatus = DIRTY` têm conflito de merge. Resolução manual necessária por humano ou autor.
+Não é responsabilidade desta sessão resolver conflitos — escopo = merge das PRs limpas.
 
-## 8. Tema / UI
+PRs nesta categoria: `#1930, #1975, #2040, #2042, #2051, #2056, #2058, #2059, #2060, #2063, #2071, #2072, #2074, #2080, #2088, #2091, #2098, #2104, #2105, #2109, #2110, #2111, #2112, #2124, #2129, #2139, #2142, #2143, #2144, #2145, #2147, #2151, #2155, #2185, #2187`
 
-- Token `--inbox-panel-bg` para fundo de painéis do inbox (não `bg-black` fixo)
-- Sempre incluir variante `dark:` para mudanças de cor
-- Contraste mínimo WCAG AA: 4.5:1
+Fonte: `analise-prs/dossies/PR-1930.md` (exemplo); GraphQL `mergeStateStatus` field.
 
-## 9. SalesView/Journey
+---
 
-- IDs internos `orders`/`history` ficam mesmo com renomeação de rótulo
-- Renomear ID requer `TAB_REDIRECTS` em `useInboxUIState.ts`
-- Sem % de variação em estatísticas sem query real
+## R5 — BEHIND_BLOQUEADA (strict=true, aguardando auto-update)
 
-## 10. Segurança
+PRs com `mergeStateStatus = BEHIND` não podem ser mergeadas diretamente quando `strict=true` na branch protection.
+Exigem que a branch seja atualizada com o HEAD do main antes de tentar o merge.
 
-- `sha_pinning_required=true` para workflows
-- Secrets não em repos públicos
-- RLS em todas as tabelas com dados de usuário
-- `supabase-usage-guard.mjs` deve retornar `novas: 0` antes de mergear
+Mecanismo de desbloqueio: `auto-update-pr-branch.yml` (recriado em PR #2210 — agora ativo).
+Este workflow processa PRs com `auto_merge` habilitado, serialmente (FIFO por `enabledAt`), uma por execução.
 
-## 11. Escrita no GitHub
+PRs nesta categoria (50): `#2005, #2044, #2046, #2057, #2062, #2064, #2065, #2066, #2067, #2068, #2069, #2070, #2073, #2075, #2076, #2077, #2079, #2081, #2082, #2083, #2084, #2085, #2086, #2087, #2089, #2090, #2097, #2102, #2107, #2119, #2120, #2121, #2123, #2125, #2126, #2127, #2128, #2141, #2146, #2148, #2149, #2152, #2186, #2190, #2191, #2195, #2196, #2197, #2208, #2209`
 
-**Fonte:** `CLAUDE.md` seção "Repo e escrita" + `/goal` hard rules da sessão
+Fonte: CLAUDE.md §Perímetro do GitHub (`strict=true`); `RELATORIO_PRS.md` §"Required Checks"; `.github/workflows/auto-update-pr-branch.yml`.
 
-- **SOMENTE** via MCP `GITHUB - MCP - FOREVER` (`github_push_files`)
-- MCP padrão do GitHub retorna 403 em write
-- **Nesta sessão de análise:** única escrita permitida é `github_merge_pull_request` (regra do goal)
-- `github_update_pr_branch` NÃO está autorizado → PRs BEHIND não podem ser atualizadas por esta sessão
+---
+
+## R6 — Critério de regressão
+
+Uma PR introduz regressão se, após merge de teste local no main HEAD, ocorrer qualquer dos seguintes:
+
+1. **TypeCheck:** passa de 0 erros para N>0 erros (`tsc --noEmit` com exit não-zero)
+2. **Novos testes quebrando:** falhas em arquivos de teste diferentes dos 3 listados na baseline pré-existente
+
+### Falhas pré-existentes no main (NÃO são regressões)
+
+| Arquivo | Teste |
+|---|---|
+| `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx` | `com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid` |
+| `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx` | `com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6` |
+| `src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx` | `waitFor bubble` (linha 122) |
+| `src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx` | `suporta troca da lista de mensagens (nova mensagem chega) sem loop` |
+
+Fonte: `analise-prs/baseline/ci-baseline.md` (gerado em 2026-10-24).
+
+---
+
+## R7 — Required checks (branch protection via API GitHub)
+
+Apenas **2** checks são required na branch protection da `main`:
+
+| Check | Condição para merge |
+|---|---|
+| `🏗️ Build` | `skipped` ou `success` (skipped = OK — unit-tests falham → build é pulado via `needs:`) |
+| `🔎 TypeCheck` | `success` |
+
+Os demais checks (Unit Tests, E2E, Contrato DB offline, Security Audit) rodam mas **não bloqueiam** merge.
+Já falham no main por causas pré-existentes não relacionadas a PRs abertas.
+
+Fonte: `RELATORIO_PRS.md` §"Required Checks da Branch Protection (API)"; verificado via `github_get_branch_protection`.
+
+---
+
+## R8 — Ferramentas de escrita autorizadas
+
+Única ferramenta autorizada para escrita no GitHub: MCP `GITHUB - MCP - FOREVER` (`github_merge_pull_request`, `github_push_files`).
+O MCP padrão do GitHub retorna 403 em operações de escrita.
+
+`github_update_pr_branch` é **absolutamente proibido** nesta sessão (instrução permanente).
+
+---
+
+## R9 — SKIP_SELF
+
+PR `#2095` é a branch desta sessão de análise (`claude/fix-z017-z020-auth-cors-261018-1950`). Ignorada.
+
+---
+
+## R10 — Merge squash only
+
+Todos os merges usam squash: `merge_method: "squash"` via `github_merge_pull_request`.
+Branch é deletada automaticamente pós-merge (`delete_branch_on_merge=true` no repo).

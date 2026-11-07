@@ -1,42 +1,40 @@
-# CI Baseline — main (2026-10-23)
+# CI Baseline — main HEAD `17976eb8b877809ba089660f1fb5b86835573c2d`
 
-## SHA de referência
-`328a475ca75b421664edacfda79a598e01c77e64`
+Gerado em: 2026-10-24T00:06Z
 
-## Estado dos checks (run #40012407457)
+## TypeCheck
 
-| Check | Estado |
-|---|---|
-| 🔎 TypeCheck | ✅ success |
-| 🔒 Security Audit | ✅ success |
-| 🧩 Node CI Scripts | ✅ success |
-| Replay local das migrations | ✅ success |
-| 🏗️ Build | ⏭️ skipped |
-| 🧪 Unit Tests (1/3) | ❌ failure |
-| 🧪 Unit Tests (2/3) | ❌ failure |
-| 🧪 Unit Tests (3/3) | ❌ failure |
-| Contrato DB offline | ❌ failure |
-| 🎭 E2E Tests (Playwright) | ⏳ in_progress |
-| 🎭 E2E logado (chromium-e2e-core) | ❌ failure |
-| 🎭 E2E logado (deslogado-principal) | ❌ failure |
-| 🎭 E2E logado (deslogado-secundario) | ⏳ in_progress |
+**Resultado:** PASS (exit 0)
+Comando: `tsc --noEmit`
+Nenhum erro de tipo.
 
-## Conclusão
+## Unit Tests — falhas pré-existentes no main (NÃO são regressões de PR)
 
-Main está **VERMELHA** nos required checks. Para merges funcionarem com `strict=true`:
-1. PRs #2192, #2193, #2187, #2190 precisam ser mergeadas nessa ordem (são as que corrigem os testes)
-2. Após essas, main fica verde → outras PRs BEHIND podem ser mergeadas
+| Arquivo | Teste | Falha |
+|---|---|---|
+| `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx` | `com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid` | expected `grid-cols-4` to contain `grid-cols-5` |
+| `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx` | `com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6` | expected `grid-cols-4` to contain `grid-cols-8` |
+| `src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx` | (linha 122) `waitFor bubble` | `[data-testid="bubble"]` não encontrado |
+| `src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx` | `suporta troca da lista de mensagens (nova mensagem chega) sem loop` | `[data-testid="bubble"]` não encontrado |
 
-## Required checks da main (6 obrigatórios)
-1. `🔍 Lint & TypeCheck` — verde
-2. `🧪 Unit Tests` — **VERMELHO** (3/3 falhas)
-3. `🏗️ Build` — skipped (depende de testes)
-4. `🔒 Security Audit` — verde
-5. `Contrato DB offline` — **VERMELHO**
-6. `🎭 E2E Tests (Playwright)` — in_progress
+Total de arquivos com falha: 3 (FilesTab.fase6 + ChatMessagesArea.movimento-reduzido + ChatMessagesArea.loop)
+Total de testes com falha: 4
 
-## PRs que corrigem a main
-- **#2192** (1 arquivo): "fix: guarda de vigência do teste RLS do Dashboard" → destrava Contrato DB offline
-- **#2193** (2 arquivos): "fix: testes de ChatMessagesArea e FilesTab"
-- **#2187** (69 arquivos): "fix(tests): corrige falhas de testes no baseline main"
-- **#2190** (92 arquivos): "fix: corrige 9 falhas de CI que mantinham a main vermelha"
+## Required checks na branch protection (via API GitHub)
+
+| Check | Status main | É required? |
+|---|---|---|
+| `🏗️ Build` | SKIPPED (unit-tests falham → build pulado via `needs:`) | **SIM** (skipped=OK) |
+| `🔎 TypeCheck` | SUCCESS | **SIM** |
+| `🧪 Unit Tests` | FAILURE (4 testes acima) | NÃO |
+| `🔒 Security Audit` | SUCCESS | NÃO |
+| `Contrato DB offline` | FAILURE (DROP ROLE pg_monitor PG17) | NÃO |
+| `🎭 E2E Tests` | NÃO RODA (só push main) | NÃO |
+
+**Conclusão:** Uma PR pode ser mergeada se `TypeCheck=success` e `Build=skipped` (sem erros de tipo). 
+Falhas em Unit Tests, Security, DB offline e E2E NÃO bloqueiam merge.
+
+## Referência de regressão
+
+Uma PR introduz regressão se, após merge de teste local, o TypeCheck passar de 0 erros para N>0 erros,
+ou se ela adicionar falhas novas em arquivos de teste além dos 3 listados acima.
