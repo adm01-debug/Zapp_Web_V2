@@ -12,7 +12,12 @@ node scripts/ia/ensaio-provisionamento.mjs --remover
 
 O provisionamento e a reversão aceitam apenas o plano canônico completo e imutável, incluindo IDs,
 vocabulários e os marcadores reservados `ENSAIO-`, `ensaio.invalid` e `+5500`. Mensagens de erro não
-repetem a `DB_URL`. Nenhum secret é necessário. O contrato executável é:
+repetem a `DB_URL`. Os dois DMLs usam o mesmo advisory lock transacional, travam as quatro tabelas e
+as linhas reservadas, e repetem automaticamente o preflight após um deadlock; recusam colisões nesse
+namespace; e a reversão exige IDs, marcadores e igualdade integral dos campos canônicos ao mesmo
+tempo. Nenhum
+registro divergente é reparado silenciosamente: a transação falha fechada para não confundir drift
+com colisão de dados externos. Nenhum secret é necessário. O contrato executável é:
 
 ```sh
 bunx vitest run --config vitest.contracts.config.ts \
