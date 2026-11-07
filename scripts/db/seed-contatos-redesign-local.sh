@@ -23,7 +23,7 @@
 #
 # IDEMPOTENTE: no modo seed roda 2x e confere que a contagem nao mudou.
 
-set -uo pipefail
+set -euo pipefail
 
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQL="$AQUI/seed-contatos-redesign-local.sql"
@@ -34,8 +34,19 @@ uso() { sed -n '2,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --url)      URL="${2:-}"; shift 2 ;;
-    --url=*)    URL="${1#--url=}"; shift ;;
+    --url)
+      if [ $# -lt 2 ] || [ -z "${2:-}" ] || [[ "${2:-}" == -* ]]; then
+        echo "ERRO: --url exige uma URI postgres:// ou postgresql://." >&2
+        exit 2
+      fi
+      URL="$2"
+      shift 2
+      ;;
+    --url=*)
+      URL="${1#--url=}"
+      [ -n "$URL" ] || { echo "ERRO: --url exige uma URI postgres:// ou postgresql://." >&2; exit 2; }
+      shift
+      ;;
     --rollback) MODO="rollback"; shift ;;
     --verificar|--check) MODO="verificar"; shift ;;
     -h|--help)  uso; exit 0 ;;
@@ -60,36 +71,124 @@ fi
 [ -n "$URL" ] || { echo "ERRO: informe a URL do banco LOCAL (--url, \$SEED_DB_URL) ou rode dentro da tarefa com o banco local de pe." >&2; exit 2; }
 
 # ------------------------------------------------------ TRAVA: so banco local
-case "$URL" in
-  *supabase*)   # cobre *.supabase.co, *.supabase.in, pooler.supabase.com etc. (producao)
-    echo "RECUSADO: a URL aponta para o Supabase/producao. Este script so roda em banco LOCAL." >&2; exit 3 ;;
-esac
-AUTORIDADE="${URL#*://}"
-AUTORIDADE="${AUTORIDADE%%/*}"
-AUTORIDADE="${AUTORIDADE##*@}"
-HOST="${AUTORIDADE%%:*}"
-case "$HOST" in \[*\]) HOST="${HOST#[}"; HOST="${HOST%]}";; esac
-case "$HOST" in
-  localhost|127.0.0.1|::1|0.0.0.0) ;;
-  *) echo "RECUSADO: host '$HOST' nao e local. Este script so roda em localhost/127.0.0.1." >&2; exit 3 ;;
-esac
+command -v node >/dev/null 2>&1 || { echo "ERRO: node nao encontrado no PATH." >&2; exit 2; }
+command -v base64 >/dev/null 2>&1 || { echo "ERRO: base64 nao encontrado no PATH." >&2; exit 2; }
+
+# O parser WHATWG evita os atalhos ambiguos do parsing manual (IPv6, @/colon na senha
+# e parametros libpq last-wins). Campos saem em base64 para nunca passar pela avaliacao
+# do shell. A URI fica somente no ambiente deste processo curto, nunca no argv do psql.
+if URL_PARTS_B64="$(ZAPP_SEED_URL="$URL" node <<'NODE'
+const raw = process.env.ZAPP_SEED_URL ?? '';
+const refuse = message => {
+  console.error(`RECUSADO: ${message}`);
+  process.exit(3);
+};
+
+if (raw.includes('?') || raw.includes('#')) {
+  refuse('parametros e fragmentos nao sao permitidos na URI do banco local.');
+}
+
+let parsed;
+try {
+  parsed = new URL(raw);
+} catch {
+  refuse('URI de banco invalida.');
+}
+
+if (parsed.protocol !== 'postgres:' && parsed.protocol !== 'postgresql:') {
+  refuse('a URI deve usar postgres:// ou postgresql://.');
+}
+
+const decode = (value, label) => {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    refuse(`${label} possui escape percentual invalido.`);
+  }
+  if (/[\0\r\n]/u.test(decoded)) refuse(`${label} possui caractere de controle.`);
+  return decoded;
+};
+
+let host = parsed.hostname;
+if (host.startsWith('[') && host.endsWith(']')) host = host.slice(1, -1);
+if (!['localhost', '127.0.0.1', '::1'].includes(host)) {
+  refuse('o host nao e localhost, 127.0.0.1 ou ::1.');
+}
+
+const port = parsed.port || '5432';
+const user = decode(parsed.username, 'usuario');
+const password = decode(parsed.password, 'senha');
+const database = decode(parsed.pathname.replace(/^\//u, ''), 'database');
+if (!user) refuse('a URI precisa informar o usuario.');
+if (!database) refuse('a URI precisa informar o database.');
+
+for (const value of [host, port, user, password, database]) {
+  console.log(Buffer.from(value, 'utf8').toString('base64'));
+}
+NODE
+)"; then
+  :
+else
+  parser_status=$?
+  exit "$parser_status"
+fi
+
+mapfile -t URL_PARTS <<< "$URL_PARTS_B64"
+[ "${#URL_PARTS[@]}" -eq 5 ] || { echo "ERRO: parser da URI retornou formato invalido." >&2; exit 2; }
+decode_b64() { printf '%s' "$1" | base64 --decode; }
+
+PGHOST="$(decode_b64 "${URL_PARTS[0]}")"
+PGPORT="$(decode_b64 "${URL_PARTS[1]}")"
+PGUSER="$(decode_b64 "${URL_PARTS[2]}")"
+URL_PASSWORD="$(decode_b64 "${URL_PARTS[3]}")"
+PGDATABASE="$(decode_b64 "${URL_PARTS[4]}")"
+if [ -n "$URL_PASSWORD" ]; then
+  PGPASSWORD="$URL_PASSWORD"
+else
+  PGPASSWORD="${SEED_DB_PASSWORD:-postgres}"
+fi
+export PGHOST PGPORT PGUSER PGDATABASE PGPASSWORD
+
+# Nao propagar copias da URI para o processo psql. A senha segue apenas no canal
+# proprio do libpq (PGPASSWORD), nunca na linha de comando.
+URL=''
+URL_PASSWORD=''
+unset SEED_DB_URL DATABASE_URL ZAPP_SEED_URL
 
 command -v psql >/dev/null 2>&1 || { echo "ERRO: psql nao encontrado no PATH." >&2; exit 2; }
 
-# credencial do banco local: a padrao 'postgres' vai por PGPASSWORD (nunca na URL do repositorio).
-# Se a propria --url trouxer senha, ela tem precedencia.
-export PGPASSWORD="${SEED_DB_PASSWORD:-postgres}"
-
-PSQL=(psql "$URL" -X -q -v ON_ERROR_STOP=1)
+PSQL=(psql -X -q -v ON_ERROR_STOP=1)
 
 echo "== seed-contatos-redesign (RD-009) =="
-echo "banco local: ${HOST}:${AUTORIDADE##*:}"
+DISPLAY_HOST="$PGHOST"
+[[ "$DISPLAY_HOST" == *:* ]] && DISPLAY_HOST="[$DISPLAY_HOST]"
+echo "banco local: ${DISPLAY_HOST}:${PGPORT}"
 
 if [ "$MODO" = "rollback" ]; then
   # Manutencao do FIXTURE local: apaga so o que este script criou (ids d9000000-*).
   # Nao e funcionalidade do produto — o Zapp nao tem exclusao em massa de contatos.
   "${PSQL[@]}" <<'SQL'
+begin;
+do $guard$
+declare
+  v_ip text;
+begin
+  v_ip := host(inet_client_addr());
+  if v_ip is not null
+     and not (
+          v_ip::inet <<= inet '127.0.0.0/8'
+       or v_ip::inet <<= inet '10.0.0.0/8'
+       or v_ip::inet <<= inet '172.16.0.0/12'
+       or v_ip::inet <<= inet '192.168.0.0/16'
+       or v_ip = '::1'
+     ) then
+    raise exception 'seed-contatos-redesign: RECUSADO. Conexao vinda de % (fora da rede local) — rollback bloqueado.', v_ip;
+  end if;
+end
+$guard$;
 delete from public.contacts where id::text like 'd9000000-%';
+commit;
 SQL
   "${PSQL[@]}" -At -c "select 'restantes=' || count(*) from public.contacts where id::text like 'd9000000-%';"
   echo "-- rollback concluido"

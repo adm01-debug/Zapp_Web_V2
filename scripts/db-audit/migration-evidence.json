@@ -1185,6 +1185,32 @@
       "kind": "ledger-divergence/pinned-sql-marker",
       "reason": "safer-replay",
       "justification": "O ledger preserva um marker do REVOKE anterior; o arquivo local condiciona a operação à autoridade do executor para que o replay como postgres não aborte. Arquivo, SQL local, array integral e marker ficam fixados sem promover o comentário a SQL aplicado."
+    },
+    {
+      "version": "20261107153000",
+      "filename": "20261107153000_fix_gamification_streak_resolutions_guard.sql",
+      "file_sha256": "dd4a4b4980f95e8d27da371e3e1835716edb19ae42467a2dddbe034777ed435c",
+      "file_sql_sha256": "0df11e2953aef750712432e27f4f51cf8e1ff5ce7524abda47161f7a60bad4a8",
+      "ledger_name": "fix_gamification_streak_resolutions_guard",
+      "ledger_statements_sha256": "de63f6d910551777680d24795bd1c06d50fce43f3a1ec4be9ba2a6b379d735c1",
+      "ledger_sql_sha256": "a2656ba6b9d88a209438b7d420c7d8188d17d85a8e79fb2cc842c86742113b85",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "O arquivo e o ledger preservam as mesmas duas funções e a mesma lógica de autorização; a serialização gravada compactou apenas espaços e quebras de linha dentro dos corpos PL/pgSQL, e ambas as representações ficam fixadas por hashes independentes."
+    },
+    {
+      "version": "20261107170000",
+      "filename": "20261107170000_fix_message_reactions_rls.sql",
+      "file_sha256": "9252864bb30883a874017863d705a841b14e53b2f921eb59a71bbb2e824d87c2",
+      "file_sql_sha256": "117b663b8929fd3581b4b024200c3012d5f515b1d639ce631e0661311916e952",
+      "ledger_name": "fix_message_reactions_rls",
+      "ledger_statements_sha256": "13e5e750312e9e616b39047beeebcba3c293553c1a57cc4d9db0123eb1f2ac05",
+      "ledger_sql_sha256": "64d0bc9df17b60065818f413caff49137ab379945f2723dbc72094af2339ee4b",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O ledger preserva as seis operações efetivamente aplicadas para recriar as policies canônicas de INSERT, UPDATE e DELETE. O replay acrescenta oito DROP POLICY IF EXISTS de nomes legados; todos estão ausentes no banco vivo, portanto são guards idempotentes sem efeito no estado final. As duas representações ficam fixadas por hashes independentes sem reescrever a migration nem o ledger."
     }
   ]
 }

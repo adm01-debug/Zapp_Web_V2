@@ -202,7 +202,26 @@ jobs:
           else
             echo "Branch $CONTEXTO_BRANCH ainda não existe: primeira coleta."
           fi
-          if [ "$FORCE" = "true" ]; then rm -f "$SNAPSHOT_DIR/snapshot.json"; fi
+          if [ "$FORCE" = "true" ] && [ -f "$SNAPSHOT_DIR/snapshot.json" ]; then
+            python3 - "$SNAPSHOT_DIR" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          output = pathlib.Path(sys.argv[1])
+          snapshot = output / "snapshot.json"
+          data = json.loads(snapshot.read_text(encoding="utf-8"))
+          if not (
+              isinstance(data, dict)
+              and data.get("format_version") == 2
+              and isinstance(data.get("db"), dict)
+              and isinstance(data.get("api"), dict)
+          ):
+              raise SystemExit("snapshot anterior inválido; regeneração forçada recusada")
+          (output / ".supabase-snapshot-output").write_text("supabase-snapshot-v2\n", encoding="utf-8")
+          snapshot.unlink()
+          PY
+          fi
 
       - name: Gerar supabase/
         env:
