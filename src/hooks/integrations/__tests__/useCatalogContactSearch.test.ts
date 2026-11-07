@@ -150,13 +150,26 @@ describe('buildContactSearchFilter — CT-43 (busca de contato)', () => {
     expect(stored.includes(digits)).toBe(true);
 
     const filter = buildContactSearchFilter('9999');
-    expect(filter).toContain(`phone.ilike."%${digits}%"`);
+    expect(filter).toContain(`phone_search_digits.ilike."%${digits}%"`);
     expect(filter).toContain('name.ilike."%9999%"');
   });
 
   it('termo só com letras não gera cláusula de telefone ("%%" casaria toda a base)', () => {
-    expect(buildContactSearchFilter('tom')).not.toContain('phone.ilike');
+    expect(buildContactSearchFilter('tom')).not.toContain('phone_search_digits.ilike');
     expect(buildContactSearchFilter('tom')).not.toContain('%%');
+  });
+
+  it('não transforma um único dígito embutido no nome em busca ampla por telefone', () => {
+    expect(buildContactSearchFilter('[E2E] Contato de teste - nao apagar')).toBe(
+      'name.ilike."%[E2E] Contato de teste - nao apagar%"'
+    );
+    expect(buildContactSearchFilter('Cliente 2')).not.toContain('phone_search_digits.ilike');
+    expect(buildContactSearchFilter('Cliente 41')).not.toContain('phone_search_digits.ilike');
+    expect(buildContactSearchFilter('Loja 2026')).not.toContain('phone_search_digits.ilike');
+    expect(buildContactSearchFilter('41')).toContain('phone_search_digits.ilike."%41%"');
+    expect(buildContactSearchFilter('+55 (41) 9999-0000')).toContain(
+      'phone_search_digits.ilike."%554199990000%"'
+    );
   });
 
   it('escapa o termo para não quebrar a gramática do or()', () => {

@@ -138,6 +138,8 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     surname: null,
     nickname: dc.pushName,
     phone: dc.phone,
+    // Espelha a coluna gerada de `contacts` para o ContactRow sintético.
+    phone_search_digits: dc.phone.replace(/[^0-9]/g, ''),
     email: null,
     avatar_url: null,
     // Contato derivado do WhatsApp nunca nasce bloqueado (o bloqueio e estado do cadastro).

@@ -19,9 +19,11 @@ test.describe('Talk X — demo determinística (fixture da tela 01)', () => {
     await page.goto('/?view=talkx');
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
 
-    // KPI "Total de campanhas" = 24 (a fixture tem 24 campanhas).
-    await expect(page.getByText('Total de campanhas')).toBeVisible();
-    await expect(page.getByText('24', { exact: true }).first()).toBeVisible();
+    // A fixture tem 24 linhas, mas a RPC conta campanhas iniciadas na janela:
+    // duas agendadas e um rascunho ainda não têm started_at, logo o KPI é 21.
+    const totalCampaigns = page.getByTestId('kpi-card').filter({ hasText: 'Total de campanhas' });
+    await expect(totalCampaigns).toBeVisible();
+    await expect(totalCampaigns.getByText('21', { exact: true })).toBeVisible();
 
     // Campanha mais recente da fixture aparece na tabela (e no rail de "Últimas").
     await expect(page.getByText('Lançamento Linha Office').first()).toBeVisible();

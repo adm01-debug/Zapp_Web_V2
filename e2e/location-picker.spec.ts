@@ -132,7 +132,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
       for (const type of ['keydown', 'keyup'] as const) {
         input.addEventListener(type, (event) => {
           const key = (event as KeyboardEvent).key;
-          if (key === 'ArrowDown' || key === 'Enter') observe(`${type}:${key}`);
+          if (['ArrowDown', 'Enter'].includes(key)) observe(`${type}:${key}`);
         }, { capture: true });
       }
       observe('before-input');
@@ -165,7 +165,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
 
     // Valores fechados e contagens: o log pode sobreviver à redação de artifacts sem
     // expor a URL inteira ou qualquer conteúdo do contato/endereço da fixture.
-    console.info('E71_KEYBOARD_DIAGNOSTIC', JSON.stringify({
+    process.stdout.write(`E71_KEYBOARD_DIAGNOSTIC ${JSON.stringify({
       phases: JSON.parse(keyboardPhases ?? '[]') as unknown,
       completedPhases: ['option-visible', 'highlight-assertion', 'selection-visible', 'send-enabled', 'cancelled'],
       endpointCounts: {
@@ -173,7 +173,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
         retrieve: registro.mapbox.filter((u) => u.includes('/searchbox/v1/retrieve/')).length,
         forward: registro.mapbox.filter((u) => u.includes('/searchbox/v1/forward')).length,
       },
-    }));
+    })}\n`);
 
     // Passo 3 da etapa: a rota da Mapbox foi de fato exercitada e interceptada.
     expect(registro.mapbox.filter((u) => u.includes('/searchbox/v1/suggest')).length).toBeGreaterThan(0);

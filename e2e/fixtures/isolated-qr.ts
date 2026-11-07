@@ -43,7 +43,7 @@ interface QrAdminSession {
   closeDialog(): Promise<QrCompletion>;
 }
 export const test = base.extend<{ qrAdmin: QrAdminSession }>({
-  qrAdmin: [async ({ browser, baseURL }, use) => {
+  qrAdmin: [async ({ browser, baseURL }, provide) => {
     if (typeof baseURL !== 'string') throw new Error('[e2e-isolated/qr-base-url]');
     const access = await createIsolatedQrFixtureAccess({ baseURL, anonKey: SUPABASE_ANON_KEY });
     const operations = createQrOperationTracker();
@@ -85,7 +85,7 @@ export const test = base.extend<{ qrAdmin: QrAdminSession }>({
       if (typeof token !== 'string') throw new Error('[e2e-isolated/qr-admin-session]');
       await access.assertBaseline(token);
       ownsFixture = true;
-      await use({ page, access, token, operations, closeDialog });
+      await provide({ page, access, token, operations, closeDialog });
     } catch (error) { primary = error; }
     finally {
       try {

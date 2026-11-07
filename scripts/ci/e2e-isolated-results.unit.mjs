@@ -139,6 +139,32 @@ test('inventário não pode ser substituído por relatório já executado', () =
 test('inventário não pode omitir um projeto exigido', () => {
   assert.throws(() => readPlaywrightInventory(fixture({ listed: true }), { projects: ['setup', 'chromium-authenticated'] }), /PROJECT_INVENTORY_MISMATCH/);
 });
+test('shard nativo preserva a seleção fechada mesmo quando parte dos projetos não recebe casos', () => {
+  const listed = fixture({ listed: true });
+  listed.config.shard = { current: 1, total: 3 };
+  listed.config.projects.push({ name: 'firefox-conversation', repeatEach: 1 });
+  const selected = ['setup', 'firefox-conversation'];
+  const inventory = readPlaywrightInventory(listed, { projects: selected, shard: '1/3' });
+  assert.deepEqual(inventory.projects, ['setup']);
+  assert.deepEqual(inventory.selectedProjects, [...selected].sort());
+  assert.equal(inventory.shard, '1/3');
+  const report = clone(listed);
+  const entry = item(report); entry.status = 'expected'; entry.results = [{ status: 'passed', workerIndex: 0, retry: 0, errors: [] }];
+  report.stats = { expected: 1, unexpected: 0, flaky: 0, skipped: 0 };
+  const result = summarizePlaywrightResult(report, { scope: 'authenticated-suite', expectedProjects: selected, inventory });
+  assert.equal(result.ok, true); assert.equal(result.allPassed, true); assert.equal(result.shard, '1/3');
+});
+test('shard nativo exige a mesma partição na coleta e na execução', () => {
+  const listed = fixture({ listed: true }); listed.config.shard = { current: 2, total: 3 };
+  assert.throws(() => readPlaywrightInventory(listed, { projects: ['setup'], shard: '1/3' }), /SHARD_MISMATCH/);
+  const inventory = readPlaywrightInventory(listed, { projects: ['setup'], shard: '2/3' });
+  const report = fixture(); report.config.shard = { current: 3, total: 3 };
+  assert.equal(summarizePlaywrightResult(report, { scope: 'authenticated-suite', expectedProjects: ['setup'], inventory }).ok, false);
+});
+test('shard nativo não aceita caso fora da seleção fechada', () => {
+  const listed = fixture({ listed: true }); listed.config.shard = { current: 1, total: 3 };
+  assert.throws(() => readPlaywrightInventory(listed, { projects: ['chromium-authenticated'], shard: '1/3' }), /PROJECT_INVENTORY_MISMATCH/);
+});
 test('projetos exigidos duplicados são rejeitados', () => {
   assert.throws(() => readPlaywrightInventory(fixture({ listed: true }), { projects: ['setup', 'setup'] }), /INVALID_PROJECTS/);
 });
@@ -222,7 +248,7 @@ test('contradição: índice de retry sem tentativa inicial é rejeitado', () =>
 // are parser controls, not a native browser run or a native --list artifact.
 const PLATFORM_PROJECTS = ['chromium-e2e-core', 'firefox-conversation', 'webkit-conversation'];
 const PLATFORM_REASON = "CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a getByRole('option') de forma confiavel em Firefox/WebKit no CI";
-const PLATFORM_BLOB = '96a821d6c8389d526a9a5d65554687412510a92a';
+const PLATFORM_BLOB = '7039743b2e607c10ff769ab508683135d2a713e7';
 const PLATFORM_FILE = 'e2e/conversation.spec.ts';
 const SOURCE_SHA = 'a96bbd4cbaeed5a8bad7c42af347e56960e6cac7';
 const platformSpec = json => json.suites[0].suites[0].specs[0];
@@ -233,8 +259,8 @@ function platformFixture() {
   const listed = {
     config: { rootDir: '/repo/e2e', projects: PLATFORM_PROJECTS.map(name => ({ name, repeatEach: 1 })) },
     suites: [{ title: 'conversation.spec.ts', file: 'conversation.spec.ts', specs: [], suites: [{
-      title: 'Conversation state transitions', file: 'conversation.spec.ts', line: 43, column: 6,
-      specs: [{ title: 'resolving conversation via CloseConversationDialog succeeds', file: 'conversation.spec.ts', line: 59, column: 7,
+      title: 'Conversation state transitions', file: 'conversation.spec.ts', line: 32, column: 6,
+      specs: [{ title: 'resolving conversation via CloseConversationDialog succeeds', file: 'conversation.spec.ts', line: 47, column: 7,
         tests: PLATFORM_PROJECTS.map(projectName => ({ projectName, projectId: projectName, expectedStatus: 'passed', status: 'skipped', annotations: [], results: [] })) }],
     }] }], errors: [], stats: { expected: 0, unexpected: 0, flaky: 0, skipped: 3 },
   };
@@ -258,6 +284,19 @@ function evaluatePlatform(context, parser = summarizePlaywrightResult) {
   } catch { return { ok: false, allPassed: false, counts: {}, cases: [], inventoryRejected: true }; }
   return parser(context.report, { expectedProjects: context.projects, inventory, ...context.options });
 }
+
+test('runtime platform: shard com Firefox/WebKit mantém só as exceções presentes e a prova de fonte', () => {
+  const context = platformFixture();
+  for (const json of [context.listed, context.report]) {
+    json.config.shard = { current: 3, total: 3 };
+    platformSpec(json).tests = platformSpec(json).tests.filter(entry => entry.projectName !== 'chromium-e2e-core');
+  }
+  context.report.stats = { expected: 0, unexpected: 0, flaky: 0, skipped: 2 };
+  const inventory = readPlaywrightInventory(context.listed, { projects: context.projects, shard: '3/3' });
+  const result = summarizePlaywrightResult(context.report, { expectedProjects: context.projects, inventory, ...context.options });
+  assert.equal(result.ok, true); assert.equal(result.counts.known_runtime_skip, 2); assert.equal(result.counts.passed, 0);
+  assert.equal(result.runtimeSkipContract.shard, '3/3');
+});
 
 const PLATFORM_CASES = [];
 const platformCase = (name, change = () => {}, ok = false, known) => PLATFORM_CASES.push({ name, change, ok, known });

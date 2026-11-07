@@ -1,16 +1,17 @@
 import { test, expect } from '@playwright/test';
 import {
+  E2E_FIXTURE_CONTACT_ID,
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
-  fixtureHasClosureToday,
 } from './fixtures/e2e-contact';
 
-// beforeEach navega para "/" (raiz) e clica no chip "Todas" ANTES de reabrir
-// o fixture: 1) ensureFixtureConversationOpen le o token via page.evaluate ->
-// window.localStorage, que lanca SecurityError numa pagina ainda em
-// about:blank (origem opaca) — por isso a navegacao vem primeiro; 2) o chip
-// padrao ("Em atendimento") depende do feature flag inbox.status-fsm e de
+// beforeEach reabre o fixture via API antes de navegar para "/" (raiz): a
+// sessao vem do storageState do BrowserContext, portanto o preparo funciona
+// ainda em about:blank. A unica navegacao monta a SPA ja com os dados frescos,
+// sem reload/goto concorrente com o bootstrap em Firefox/WebKit. Depois, o chip
+// "Todas" evita o filtro padrao ("Em atendimento"), que depende do feature flag
+// inbox.status-fsm e de
 // assigned_to bater com o profile logado, enquanto "Todas" nao filtra por
 // isso — mais determinístico para o teste.
 //
@@ -19,18 +20,6 @@ import {
 // catch-all "*" cai no NotFound) e src/pages/Index.tsx
 // (useNavigationHistory('inbox') e estado interno da SPA, nao rota de URL).
 // Reproduzido ao vivo com magiclink real: "/inbox" devolve 404.
-//
-// O reload() depois do PATCH fica por robustez, nao por causa comprovada:
-// ensureFixtureConversationOpen reabre a conversa direto via REST, e sem
-// reload a pagina so saberia do novo status via realtime (canal
-// 'global-contacts-realtime'), cuja inscricao pode ainda nao estar pronta
-// quando o PATCH commita. A run 36257595651 (workflow_dispatch, pos PR
-// #869) foi citada aqui antes como prova desse mecanismo — mas essa run
-// teve conclusion=failure, e o teste que ela quebrou tinha causa raiz
-// diferente e ja identificada (ver comentario abaixo: truncamento do nome
-// exibido, PR #816). O reload() nunca foi isolado como a correcao real da
-// falha; mantido por forcar um fetch inicial fresco e nao ter custo
-// perceptivel no teste.
 //
 // O assert do chip "Todas" compara com o texto RENDERIZADO no item, e a lista
 // exibe so `contact.nickname?.trim() || name.split(' ')[0]` (a primeira
@@ -42,9 +31,8 @@ import {
 // E2E_FIXTURE_CONTACT_DISPLAY_NAME.
 test.describe('Conversation state transitions', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
     await ensureFixtureConversationOpen(page);
-    await page.reload();
+    await page.goto('/');
     await page.getByTestId('status-chip-all').click();
   });
 
@@ -63,14 +51,13 @@ test.describe('Conversation state transitions', () => {
     test.skip(browserName !== 'chromium',
       'CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a' +
       " getByRole('option') de forma confiavel em Firefox/WebKit no CI");
-    // O schema permite 1 encerramento por contato por DIA e o token do usuario
-    // nao apaga a linha (ver fixtureHasClosureToday). Sem esta checagem, um
-    // retry depois de um encerramento bem-sucedido recebia 23505 e NUNCA podia
-    // passar -- derrubando o job e2e-logado mesmo quando a 1a tentativa so tinha
-    // esbarrado em instabilidade de rede.
-    const jaEncerradaHoje = await fixtureHasClosureToday(page);
-
-    const conversation = page.locator('[data-testid="conversation-item"]').first();
+    // O backend isolado tambem semeia conversas de Arquivos e paginacao. Fechar
+    // `.first()` tornava o alvo dependente de updated_at/ordem da lista e podia
+    // exercitar outro contato. O contrato deste spec e o fixture canonico.
+    const conversation = page
+      .getByTestId('conversation-item')
+      .filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME });
+    await expect(conversation).toHaveCount(1);
     await conversation.click();
 
     // getByRole('button', { name: /mais ações/i }) sem escopo bate em 2
@@ -91,18 +78,31 @@ test.describe('Conversation state transitions', () => {
     // "*") que também habilita o botão "Encerrar".
     await page.getByRole('combobox').filter({ hasText: /selecione o motivo/i }).click();
     await page.getByRole('option', { name: /^resolvido$/i }).click();
+    const encerramento = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'POST' &&
+        url.pathname.endsWith('/rest/v1/rpc/close_conversation_atomic');
+    });
     await page.getByRole('button', { name: /^encerrar$/i }).click();
-
-    if (jaEncerradaHoje) {
-      // Pre-condicao medida: o dia ja tem encerramento registrado para o contato
-      // fixture, entao a RPC close_conversation_atomic responde 23505 e a UI recusa
-      // o duplicado com a mensagem de erro. Este e o comportamento correto do app.
-      await expect(
-        page.getByText(/não foi possível encerrar a conversa/i)
-      ).toBeVisible();
-    } else {
-      await expect(page.getByText(/conversa encerrada com registro/i)).toBeVisible();
-    }
+    const response = await encerramento;
+    const body = await response.json().catch(() => null) as unknown;
+    const erro = body && typeof body === 'object'
+      ? String((body as { code?: unknown; message?: unknown }).code ??
+          (body as { message?: unknown }).message ?? '')
+      : '';
+    expect(
+      response.ok(),
+      `close_conversation_atomic: HTTP ${response.status()}${erro ? ` (${erro})` : ''}`,
+    ).toBe(true);
+    expect(body).toEqual([
+      expect.objectContaining({
+        closure_id: expect.any(String),
+        event_id: expect.any(String),
+        contact_id: E2E_FIXTURE_CONTACT_ID,
+        conversation_status: 'resolved',
+      }),
+    ]);
+    await expect(page.getByRole('dialog')).toBeHidden();
   });
 
   test('"Todas" filter shows the seeded conversation', async ({ page }) => {

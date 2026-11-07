@@ -89,9 +89,7 @@ test.describe('DialogContent — rodapé alcançável em 1280x720', () => {
       await search.fill(phone.slice(-9));
       const row = page.getByTestId('contact-card').filter({ hasText: name });
       await expect(row).toBeVisible({ timeout: 15_000 });
-      await row.hover();
-      await row.locator('button[aria-haspopup="menu"]').click();
-      await page.getByRole('menuitem', { name: /Editar/ }).click();
+      await row.getByRole('button', { name: 'Editar' }).click();
 
       const editDialog = page.getByRole('dialog', { name: 'Editar Contato' });
       await expect(editDialog).toBeVisible();
