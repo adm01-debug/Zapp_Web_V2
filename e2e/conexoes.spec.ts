@@ -103,7 +103,7 @@ test.describe('Conexões — tela e estados honestos', () => {
     const card = main.getByTestId('connection-card').filter({ hasText: QR_FIXTURE.name });
     await expect(card).toHaveCount(1);
     await expect(card.getByText(QR_FIXTURE.name, { exact: true })).toBeVisible();
-    await expect(card.getByText('Desconectado', { exact: true })).toBeVisible();
+    await expect(card.getByText('Desconectado', { exact: true }).first()).toBeVisible();
     const [connected] = await Promise.all([
       page.waitForResponse(response => qrRequestAction(response.request()) === 'connect'),
       card.getByRole('button', { name: 'Conectar', exact: true }).click(),

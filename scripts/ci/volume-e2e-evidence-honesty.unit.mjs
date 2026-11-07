@@ -10,7 +10,7 @@ import { stripTypeScriptTypes } from 'node:module';
 // Esse registro não é reescrito pela posterior autorização do backend descartável.
 //
 // O spec atual possui áudio canônico no ambiente isolado. Sua preparação, bytes,
-// identidade por usuário, cardinalidade e metadados são exercitados pelos 50 casos
+// identidade por usuário, cardinalidade e metadados são exercitados pelos 51 casos
 // de e2e-media-volume-fixture.unit.mjs, no mesmo glob obrigatório de Node.
 // Estes dois guardas finais verificam a declaração ativa e o limite da evidência:
 // volume inicial/metadados não são audição, play() ou transcrição comprovados.
@@ -179,7 +179,12 @@ function auditDeclarations(source) {
   test.fixme = register('fixme'); test.skip = register('skip'); test.only = register('only');
   test.describe = (_title, callback) => callback();
   test.beforeEach = test.afterAll = () => {};
-  const globals = { test, E2E_FIXTURE_CONTACT_ID: 'synthetic-contact',
+  test.use = test.setTimeout = () => {};
+  const globals = { test, E2E_ARQUIVOS: {
+      usuario: { email: 'synthetic@example.test', senha: 'synthetic-password' },
+      contato: { id: 'synthetic-contact', nomeVisivel: 'Synthetic' },
+      mensagens: { audio: { objeto: 'synthetic.ogg' } },
+    },
     MEDIA_VOLUME_LABEL: 'media', MEDIA_VOLUME_LABEL_MUTED: 'muted', MEDIA_VOLUME_SLIDER_LABEL: 'slider',
     SOUND_VOLUME_LABEL: 'alert', SOUND_VOLUME_LABEL_MUTED: 'alert-muted' };
   try {
@@ -198,7 +203,7 @@ function auditCurrentDisclosure(source) {
   const text = limpo(source.split('\n').filter(line => /^\s*\/\//.test(line)).map(line => line.replace(/^\s*\/\/\s?/, '')).join('\n'));
   const issues = [];
   if (!/backend descartavel isolado/.test(text)) issues.push('current-scope-not-isolated');
-  if (!/seed-files-tab\.mjs[^.]{0,100}audio canonico[^.]{0,100}jwt local[^.]{0,100}storage\/rls/.test(text)) issues.push('current-fixture-chain-undocumented');
+  if (!/arquivos-local\/seed\.ts[^.]{0,100}storage\/rls[^.]{0,100}mesmo usuario/.test(text)) issues.push('current-fixture-chain-undocumented');
   if (!/metadados do audio canonico assinado pelo fluxo real do player/.test(text)) issues.push('current-evidence-not-metadata');
   if (!/nao afirma reproducao audivel, play\(\) ou transcricao/.test(text)) issues.push('current-playback-limit-missing');
   if (/(reproducao audivel|playback real|audio real)[^.]{0,80}(comprovad|validad|confirmad)/.test(text)) issues.push('current-claims-native-playback');

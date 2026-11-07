@@ -57,6 +57,7 @@ export interface VolumeRocker {
   handleTriggerClick: () => void;
   handlePointerDown: () => void;
   handleTriggerKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
+  handleCloseAutoFocus: (event: Event) => void;
 }
 
 /** O mínimo que os dois caminhos de teclado (botão e container) precisam do evento. */
@@ -252,6 +253,25 @@ export function useVolumeRocker({
     [enabled, onAdjust, onToggleMute, step, setOpen],
   );
 
+  const handleCloseAutoFocus = useCallback((event: Event) => {
+    // Sem PopoverTrigger, o FocusScope do Radix não conhece o botão de origem.
+    // Impedimos o fallback tardio (que no Chromium real mandava o foco ao body)
+    // e restauramos o gatilho somente quando o foco ainda estava no controle.
+    // Clique/tab deliberado para outro elemento continua preservado.
+    event.preventDefault();
+    const active = document.activeElement;
+    // O autofocus tardio de um painel antigo pode ocorrer depois de uma
+    // reabertura imediata. Se o foco já está no painel novo, ele é soberano.
+    if (active instanceof Element && active.closest(`[${VOLUME_PANEL_ATTRIBUTE}]`)) return;
+    const focoExterno = active instanceof Element
+      && active !== document.body
+      && active !== document.documentElement
+      && !rootRef.current?.contains(active);
+    if (!focoExterno) {
+      rootRef.current?.querySelector<HTMLButtonElement>(`button[${VOLUME_CONTROL_ATTRIBUTE}]`)?.focus();
+    }
+  }, [rootRef]);
+
   return {
     open,
     setOpen,
@@ -259,5 +279,6 @@ export function useVolumeRocker({
     handleTriggerClick,
     handlePointerDown,
     handleTriggerKeyDown,
+    handleCloseAutoFocus,
   };
 }

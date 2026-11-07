@@ -99,10 +99,8 @@ export async function executarCleanup({
     const { status, ok, networkError, body } = await apiFetch(`${path.pathname}${path.search}`);
     if (!ok) {
       if (status === 403) {
-        output.warn(`\n⚠️  SKIP: VERCEL_READONLY_TOKEN sem acesso ao time ${team} (403).`);
-        output.warn('   Atualize o secret VERCEL_READONLY_TOKEN com um token que tenha acesso ao time juca1');
-        output.warn('   (Vercel Dashboard → Account Settings → Tokens → criar com escopo de time).');
-        return 0;
+        output.error(`GET envs falhou: VERCEL_READONLY_TOKEN sem acesso ao time ${team} (403)`);
+        return 1;
       }
       output.error(networkError ? 'GET envs falhou: erro de rede' : `GET envs falhou: ${status}`);
       return 1;

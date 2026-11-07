@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   OWNERSHIP_ROUTINES, OWNERSHIP_EXECUTOR_OPTIONS, ownershipSql, parseOwnershipResult, restoreRoutineOwnership,
 } from '../e2e-isolated/routine-ownership.mjs';
-import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE } from '../e2e-isolated/runtime-contract.mjs';
+import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, GROUP_SHARDS } from '../e2e-isolated/runtime-contract.mjs';
 
 const RUN = 'zapp-e2e-ownership-unit';
 const SHA = 'a'.repeat(40);
@@ -14,6 +14,7 @@ const DRIVER = 'mcr.microsoft.com/playwright:v1.64.1-noble@sha256:' + 'e'.repeat
 const PATH = '/usr/lib/postgresql/17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
 const MOUNT = '/var/lib/docker/volumes/' + RUN + '-postgres/_data';
 const IDENTITY = { runId: RUN, sourceSha: SHA };
+const AUTH_GROUP = Object.keys(GROUP_SHARDS)[0];
 const ok = stdout => ({ status: 0, error: null, signal: null, stdout, stderr: '' });
 
 function records(owners = OWNERSHIP_ROUTINES.map(() => 'supabase_admin')) {
@@ -39,7 +40,7 @@ function fixture() {
     source: ok(SHA + '\n'), namespace: ok('net:[1234]\n'), result: ok(stdout(records())), calls: [], sqlCalls: [],
   };
   state.database.Mounts.push({ Type: 'volume', Name: RUN + '-postgres', Source: MOUNT, Destination: '/var/lib/postgresql/data', RW: true });
-  const options = { dockerConfig: '/tmp/owned-docker-client', scope: 'suite', group: 'authenticated', ...IDENTITY,
+  const options = { dockerConfig: '/tmp/owned-docker-client', scope: 'suite', group: AUTH_GROUP, ...IDENTITY,
     anchorId: ANCHOR, anchorImage: DRIVER, databaseId: DATABASE, databaseImage: IMAGE, volumeName: RUN + '-postgres',
     networkNamespace: 'net:[1234]', allowedWritableSources: new Set([MOUNT]), command(program, args, commandOptions) {
       state.calls.push({ program, args, options: commandOptions });
@@ -83,9 +84,9 @@ function fixture() {
 }
 
 for (const [name, owners, changed] of [
-  ['six replay-owned functions', Array(6).fill('supabase_admin'), 6],
-  ['six already-correct functions', Array(6).fill('postgres'), 0],
-  ['three replay-owned and three already-correct functions', Array.from({ length: 6 }, (_, i) => i % 2 ? 'postgres' : 'supabase_admin'), 3],
+  ['seven replay-owned functions', Array(7).fill('supabase_admin'), 7],
+  ['seven already-correct functions', Array(7).fill('postgres'), 0],
+  ['four replay-owned and three already-correct functions', Array.from({ length: 7 }, (_, i) => i % 2 ? 'postgres' : 'supabase_admin'), 4],
 ]) test('ownership confirms ' + name + ' only after the complete process', () => {
   const value = fixture(); value.state.result = ok(stdout(records(owners)));
   const result = value.run();
@@ -164,7 +165,7 @@ for (const [name, mutate] of [
   const value = fixture(); mutate(value.state.result);
   const result = value.run();
   assert.equal(result.confirmed, false); assert.equal(result.reason, 'sql-process-failed');
-  assert.equal(result.before.length, 6); assert.equal(Object.hasOwn(result, 'verified'), false);
+  assert.equal(result.before.length, 7); assert.equal(Object.hasOwn(result, 'verified'), false);
   assert.equal(value.state.sqlCalls.length, 1);
   assert.equal(JSON.stringify(result).includes('private-sentinel'), false);
 });
@@ -226,11 +227,11 @@ test('failed SQL publishes only allowed before metadata, with no inferred rollba
   assert.equal(JSON.stringify(result).includes('private-sentinel'), false);
 });
 
-test('SQL fixes the six signatures, validates all before ALTER and verifies before COMMIT', () => {
+test('SQL fixes the seven signatures, validates all before ALTER and verifies before COMMIT', () => {
   const sql = ownershipSql(RUN, SHA);
   const values = [...sql.matchAll(/\(\d, '(public\.[^']+)', '([a-f0-9]{64})'\)/g)].map(([, signature, definition_sha256]) => ({ signature, definition_sha256 }));
   assert.deepEqual(values, OWNERSHIP_ROUTINES);
-  assert.equal(OWNERSHIP_ROUTINES.length, 6);
+  assert.equal(OWNERSHIP_ROUTINES.length, 7);
   assert.ok(sql.indexOf('isolated_owner_precondition_rejected') < sql.indexOf('ALTER FUNCTION'));
   assert.ok(sql.indexOf('isolated_owner_acl_changed') < sql.indexOf("'stage', 'verified'"));
   assert.ok(sql.indexOf("'stage', 'verified'") < sql.lastIndexOf('COMMIT;'));
