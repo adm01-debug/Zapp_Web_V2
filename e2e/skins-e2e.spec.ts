@@ -168,6 +168,18 @@ async function montarApp(page: Page, registro: Registro): Promise<string[]> {
     // watchdog apagaria o #root (mesmo ajuste das specs deslogadas vizinhas).
     (window as Window & { __BOOT_DEADLINE_MS?: number }).__BOOT_DEADLINE_MS = 60_000;
   });
+  // Telemetria opcional não faz parte da superfície de Skins. No runner isolado
+  // não há Internet; responder o coletor com JS vazio mantém o harness hermético
+  // sem transformar indisponibilidade externa em console.error do produto.
+  await page.route('https://va.vercel-scripts.com/v1/speed-insights/script.debug.js', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/javascript', body: '' }),
+  );
+  await page.route('https://fonts.googleapis.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/css', body: '' }),
+  );
+  await page.route('https://fonts.gstatic.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'font/woff2', body: '' }),
+  );
   await bloquearRedeReal(page, registro);
   await mockAppShell(page, registro);
   await installFakeSession(page);

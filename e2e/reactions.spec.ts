@@ -8,6 +8,18 @@ import {
 } from './fixtures/e2e-contact';
 import { dispensarOnboarding } from './fixtures/onboarding';
 
+function esperarMutacao(page: import('@playwright/test').Page, method: 'POST' | 'DELETE') {
+  return page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === method && url.pathname.endsWith('/rest/v1/message_reactions');
+  });
+}
+
+async function exigirSucesso(response: import('@playwright/test').Response, operation: string) {
+  const body = await response.text().catch(() => '');
+  expect(response.ok(), `${operation}: HTTP ${response.status()} ${body.slice(0, 300)}`).toBe(true);
+}
+
 test.describe('Reactions flow', () => {
   // Orcamento explicito (o padrao do projeto e 30 s): este fluxo e multi-etapa --
   // no beforeEach vai goto + onboarding + fixture + cleanup + reload, e no corpo
@@ -97,7 +109,9 @@ test.describe('Reactions flow', () => {
     // somavam ao orcamento do teste sem necessidade.
     await bar.waitFor({ timeout: 3_000 });
 
+    const insercao = esperarMutacao(page, 'POST');
     await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();
+    await exigirSucesso(await insercao, 'adicionar reação');
 
     // Reaction badge should appear below the message
     await expect(
@@ -133,7 +147,9 @@ test.describe('Reactions flow', () => {
     await bar.waitFor({ timeout: 3_000 });
 
     // Add the reaction
+    const insercao = esperarMutacao(page, 'POST');
     await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();
+    await exigirSucesso(await insercao, 'adicionar reação');
 
     const badge = message.locator('[data-testid="reaction-badge"][data-emoji="👍"]');
     await expect(badge).toBeVisible({ timeout: 8_000 });
@@ -141,7 +157,9 @@ test.describe('Reactions flow', () => {
     // Toggle it off -- move mouse away first to dismiss the quick-reaction-bar overlay
     // (com o hover ativo a barra fica por cima do badge e intercepta o clique).
     await page.mouse.move(0, 0);
+    const remocao = esperarMutacao(page, 'DELETE');
     await badge.click();
+    await exigirSucesso(await remocao, 'remover reação');
     await expect(badge).not.toBeVisible({ timeout: 8_000 });
   });
 });

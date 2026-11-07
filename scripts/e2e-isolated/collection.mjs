@@ -38,7 +38,7 @@ function readReport(file) {
 }
 
 /** Same selection and parser; only the reporter transport is different. */
-export function collectPlaywrightInventory({ output, scope, projects, execute }) {
+export function collectPlaywrightInventory({ output, scope, projects, shard, execute }) {
   let directory;
   try { directory = fs.mkdtempSync(path.join(output, 'collection-')); fs.chmodSync(directory, 0o700); }
   catch { fail('collection-report-prepare'); }
@@ -51,7 +51,7 @@ export function collectPlaywrightInventory({ output, scope, projects, execute })
   if (!result || result.status !== 0 || result.error || result.signal) fail(scope === 'login' ? 'collect-login' : 'collect-suite');
   const json = readReport(report);
   let inventory;
-  try { inventory = readPlaywrightInventory(json, { projects }); }
+  try { inventory = readPlaywrightInventory(json, { projects, ...(shard ? { shard } : {}) }); }
   catch { fail(scope === 'login' ? 'login-inventory-invalid' : 'suite-inventory-invalid'); }
   if (scope === 'login' && inventory.total !== 1) fail('login-inventory-not-exact');
   try { fs.writeFileSync(path.join(output, 'inventory.json'), JSON.stringify(json, null, 2) + '\n', { mode: 0o600 }); }

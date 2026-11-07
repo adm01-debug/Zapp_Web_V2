@@ -4,7 +4,7 @@
 #   falha: isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada
 #   avisa: autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada
 # PR continua com um teste setup. A suíte completa exige dispatch explícito;
-# o workflow legado permanece desativado até a prova nativa dos três grupos.
+# o workflow legado permanece desativado até a prova nativa dos cinco grupos.
 name: E2E isolado - login e suíte completa
 
 on:
@@ -147,9 +147,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # O controller executa workers1: as fixtures compartilham estado.
-          # O orçamento inclui preparo/limpeza além do browser (45/15/15 min).
-          - name: authenticated
+          # Cada shard autenticado recebe backend próprio e executa workers1:
+          # as fixtures compartilham estado dentro de um backend. A seleção e a
+          # execução usam o mesmo shard fechado pelo controller.
+          - name: authenticated-1-of-3
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            timeout-minutes: 75
+          - name: authenticated-2-of-3
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            timeout-minutes: 75
+          - name: authenticated-3-of-3
             projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
             timeout-minutes: 75
           - name: deslogado-principal

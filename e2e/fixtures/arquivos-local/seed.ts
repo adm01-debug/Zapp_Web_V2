@@ -218,6 +218,8 @@ async function provarObjetoPrivadoComoUsuario(token: string, caminho: string, es
 async function main() {
   markSeedStage('db-open');
   const db = abrirSql(DB_URL);
+  let didThrow = false;
+  let thrown: unknown;
   try {
     markSeedStage('sql-begin');
     await db.begin(async (tx) => {
@@ -412,15 +414,18 @@ async function main() {
     );
   } catch (error) {
     primarySeedFailure = seedFailureDescriptor(seedStage, error, seedHttpStatus);
-    throw error;
+    didThrow = true;
+    thrown = error;
   } finally {
     markSeedStage('db-close');
     try { await db.end(); }
     catch (error) {
       cleanupSeedFailure = seedFailureDescriptor(seedStage, error, seedHttpStatus);
-      throw error;
+      didThrow = true;
+      thrown = error;
     }
   }
+  if (didThrow) throw thrown;
 }
 
 try { await main(); }

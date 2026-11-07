@@ -12,7 +12,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import { crc32, inflateSync } from 'node:zlib';
 import { createTlsMaterial, preflightTlsTools, tlsMounts, tlsEnvironment, installDriverTlsTrust, readGatewayTls,
   serveTlsProbe, TLS_ORIGIN, TLS_PUBLIC, TLS_PRIVATE, TLS_PNG } from '../e2e-isolated/tls.mjs';
-import { certificateFailure, assertTlsClientContext, probeClient, probeBrowsers, probeEdge } from '../e2e-isolated/tls-probe.mjs';
+import { certificateFailure, certificateNavigationFailure, assertTlsClientContext, probeClient, probeBrowsers, probeEdge } from '../e2e-isolated/tls-probe.mjs';
 
 const runId = 'zapp-e2e-tls-contract-12345678', sourceSha = 'a'.repeat(40);
 const identity = { schema: 1, run_id: runId, source_sha: sourceSha, origin: TLS_ORIGIN };
@@ -270,6 +270,32 @@ for (const [engine, kind, message, expected] of errorCases) test('erro TLS ' + e
   assert.equal(certificateFailure(new Error(message), kind, engine), expected);
 });
 
+test('cancelamento nativo do WebKit só vale com evidência de rede exata do controle TLS', () => {
+  const error = new Error('page.goto: Operation was cancelled; maybe frame was detached?');
+  const exact = {
+    request_count: 1, request_failed_count: 1, request_finished_count: 0,
+    response_count: 0, ignored_event_count: 0, response_statuses: [],
+    failure_error_texts: ['Operation was cancelled'],
+  };
+  assert.equal(certificateNavigationFailure(error, 'untrusted', 'webkit', exact), true);
+  assert.equal(certificateNavigationFailure(error, 'untrusted', 'chromium', exact), false);
+  assert.equal(certificateNavigationFailure(error, 'untrusted', 'webkit', { ...exact, response_count: 1 }), false);
+  assert.equal(certificateNavigationFailure(error, 'untrusted', 'webkit', { ...exact, request_count: 2 }), false);
+  assert.equal(certificateNavigationFailure(error, 'untrusted', 'webkit', {
+    ...exact, failure_error_texts: ['TLS certificate is not trusted'],
+  }), false);
+  for (const message of [
+    'Timeout 15000ms exceeded; Operation was cancelled',
+    'ECONNREFUSED; Operation was cancelled',
+    'Operation was cancelled because navigation timed out',
+    'page.goto: Operation was cancelled\nCall log:\nTimeout 15000ms exceeded',
+    'page.goto: Operation was cancelled\nCall log:\nECONNREFUSED',
+  ]) {
+    assert.equal(certificateNavigationFailure(new Error(message), 'untrusted', 'webkit', exact), false);
+  }
+  assert.equal(certificateNavigationFailure(error, 'expired', 'webkit', exact), false);
+});
+
 function clientFetch(patch = () => undefined) {
   return async (url, options) => {
     assert.equal(options.redirect, 'error'); assert.ok(options.signal);
@@ -481,6 +507,8 @@ const tlsDiagnosticCases = [
     name: 'preserve-recognized-' + engine + '-' + kind, engine, kind, recognized: true,
   }))),
   { name: 'generic-cancel-remains-failure', gotoMessage: 'Operation was cancelled; maybe frame was detached?' },
+  { name: 'webkit-cancel-with-matching-network-failure', engine: 'webkit', kind: 'untrusted',
+    gotoMessage: 'Operation was cancelled; maybe frame was detached?', text: 'Operation was cancelled', recognizedByEvidence: true },
   { name: 'unknown-SSL-remains-failure', gotoMessage: 'SSL_ERROR_UNKNOWN' },
   { name: 'redact-https-query', text: 'Certificate rejected https://127.0.0.1:5175/path?token=private', errorText: 'Certificate rejected [url]' },
   { name: 'redact-http-url', text: 'Certificate rejected http://local.invalid/path', errorText: 'Certificate rejected [url]' },
@@ -495,7 +523,7 @@ const tlsDiagnosticCases = [
   { name: 'no-control-byte-injection', text: 'Certificate\u0000rejected', errorText: 'Certificate rejected' },
   { name: 'unrelated-error-not-recorded', request: { otherFrame: true }, text: 'unrelated-private-value', requests: 0, failures: 0, ignored: 2 },
 ];
-assert.equal(tlsDiagnosticCases.length, 48);
+assert.equal(tlsDiagnosticCases.length, 49);
 
 function tlsDiagnosticFixture(spec) {
   const records = [], order = [], pages = [];
@@ -573,7 +601,7 @@ for (const spec of tlsDiagnosticCases) test('TLS request diagnostic: ' + spec.na
   for (let i = 0; i < 80; i++) await Promise.resolve();
   assert.equal(completed, true, 'diagnostics never waits beyond its one-second bound');
   const outcome = await execution;
-  if (spec.recognized) assert.ok(outcome.value);
+  if (spec.recognized || spec.recognizedByEvidence) assert.ok(outcome.value);
   else { assert.match(outcome.error?.message ?? '', /not-certificate-error/); assert.equal(outcome.error.cause, fixture.original); }
   const record = fixture.records.find(record => record.engine === fixture.engineName && record.kind === fixture.kind);
   assert.ok(record, 'the native probe emits a separate request diagnostic');
@@ -617,7 +645,11 @@ test('TLS request diagnostic: both existing redactors preserve evidence and remo
 const tlsWarmupTargets = ['chromium', 'firefox', 'webkit'].flatMap(engine => ['untrusted', 'wrong_san'].map(kind => ({ engine, kind })));
 const tlsWarmupCases = [
   ...tlsWarmupTargets.map(target => ({ ...target, name: 'valid/' + target.engine + '/' + target.kind })),
-  ...tlsWarmupTargets.map(target => ({ ...target, name: 'generic-stays-rejected/' + target.engine + '/' + target.kind, negative: 'cancelled' })),
+  ...tlsWarmupTargets.filter(target => target.engine !== 'webkit')
+    .map(target => ({ ...target, name: 'generic-stays-rejected/' + target.engine + '/' + target.kind, negative: 'cancelled' })),
+  ...tlsWarmupTargets.filter(target => target.engine === 'webkit')
+    .map(target => ({ ...target, name: 'native-cancel-proved-by-network/' + target.engine + '/' + target.kind,
+      negative: 'cancelled', cancelAccepted: true })),
   ...tlsWarmupTargets.map(target => ({ ...target, name: 'invalid-certificate-accepted/' + target.engine + '/' + target.kind, negative: 'accepted' })),
   ...['Timeout 15000ms exceeded', 'ECONNREFUSED', 'Unacceptable TLS certificate', 'Frame was detached', 'Operation was cancelled', 'Target page has been closed']
     .map((message, index) => ({ ...tlsWarmupTargets[index], name: 'warmup-goto-error/' + index, warmupError: message })),
@@ -716,9 +748,14 @@ for (const spec of tlsWarmupCases) test('TLS same-page warmup: ' + spec.name, as
     assert.equal(fixture.diagnostics.some(record => record.engine === spec.engine && record.kind === spec.kind), false);
     if (spec.warmupError) assert.equal(failure, fixture.warmupError);
   } else if (spec.negative) {
-    assert.match(failure?.message ?? '', new RegExp(spec.negative === 'accepted' ? '-accepted' : '-not-certificate-error'));
+    if (spec.cancelAccepted) {
+      assert.equal(failure, undefined);
+      assert.equal(Object.keys(checks).length, 3);
+    } else {
+      assert.match(failure?.message ?? '', new RegExp(spec.negative === 'accepted' ? '-accepted' : '-not-certificate-error'));
+    }
     assert.equal(target.negativeAttempts, 1, 'no negative retry');
-    if (spec.negative === 'cancelled') assert.equal(failure.cause, fixture.original);
+    if (spec.negative === 'cancelled' && !spec.cancelAccepted) assert.equal(failure.cause, fixture.original);
   } else {
     assert.equal(failure, undefined); assert.equal(Object.keys(checks).length, 3);
     assert.equal(fixture.pages.filter(page => page.role !== 'positive').length, 6);
