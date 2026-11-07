@@ -1092,6 +1092,7 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261107122000 | [contacts_phone_search_digits](migrations/20261107122000_contacts_phone_search_digits.sql) | 4 |
 | 20261107123000 | [finalize_goal_notification_and_reaction_backup_policies](migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql) | 5 |
 | 20261107133000 | [fix_copilot_rls_open_policies](migrations/20261107133000_fix_copilot_rls_open_policies.sql) | 30 |
+| 20261107143000 | [reconciliar_rls_department_policies](migrations/20261107143000_reconciliar_rls_department_policies.sql) | 10 |
 | 20261107153000 | [fix_gamification_streak_resolutions_guard](migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql) | 2 |
 | 20261107163000 | [fix_copilot_rls_wrong_join_column](migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql) | 4 |
 | 20261107170000 | [fix_message_reactions_rls](migrations/20261107170000_fix_message_reactions_rls.sql) | 6 |

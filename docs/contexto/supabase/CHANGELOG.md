@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 21:42 UTC
+
+- **migrations** adicionado (1): `20261107143000_reconciliar_rls_department_policies`
+
 ## 2026-11-07 20:39 UTC
 
 - **functions** alterado (3): `public.get_profile_id_for_user(_user_id uuid)`, `public.get_visible_agent_ids(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`
