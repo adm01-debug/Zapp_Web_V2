@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "761ab3b056f8245e11e2bf001d8180b7124d2be8",
+  "sha": "b67ef0c61baeb273652b4a7a097aff213bd624b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 15:29 UTC",
-  "files_total": 8129,
-  "code_files": 5996,
-  "code_lines": 1040852
+  "generated_at": "2026-11-07 16:09 UTC",
+  "files_total": 8131,
+  "code_files": 5998,
+  "code_lines": 1040941
  },
  "version": "1.3.2",
- "facts_hash": "43d0c36245b1fdbd",
+ "facts_hash": "f8db2d985969f669",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -315,7 +315,7 @@
   "languages": {
    ".tsx": 2319,
    ".ts": 1865,
-   ".sql": 1287,
+   ".sql": 1289,
    ".mjs": 406,
    ".py": 119,
    ".cjs": 19,
@@ -24603,36 +24603,6 @@
     "src": "supabase/migrations/20261030160000_tcm_insert_member_conversation_authorization.sql"
    },
    {
-    "name": "copilot_outcomes_insert",
-    "table": "copilot_outcomes",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_outcomes_select",
-    "table": "copilot_outcomes",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_objection_catalog_insert",
-    "table": "copilot_objection_catalog",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
     "name": "copilot_objection_catalog_select",
     "table": "copilot_objection_catalog",
     "cmd": "SELECT",
@@ -24640,126 +24610,6 @@
     "mode": "permissive",
     "using": "true",
     "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_usage_insert",
-    "table": "copilot_usage",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_usage_select",
-    "table": "copilot_usage",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_seller_settings_insert",
-    "table": "copilot_seller_settings",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_seller_settings_select",
-    "table": "copilot_seller_settings",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_seller_settings_update",
-    "table": "copilot_seller_settings",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_help_requests_insert",
-    "table": "copilot_help_requests",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_help_requests_select",
-    "table": "copilot_help_requests",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_learning_moments_insert",
-    "table": "copilot_learning_moments",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_learning_moments_select",
-    "table": "copilot_learning_moments",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_conversation_scores_insert",
-    "table": "copilot_conversation_scores",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_conversation_scores_select",
-    "table": "copilot_conversation_scores",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_conversation_scores_update",
-    "table": "copilot_conversation_scores",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "true",
     "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
    },
    {
@@ -24841,6 +24691,156 @@
     "using": "false",
     "check": "false",
     "src": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql"
+   },
+   {
+    "name": "copilot_help_requests_select",
+    "table": "copilot_help_requests",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_help_requests_insert",
+    "table": "copilot_help_requests",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_outcomes_select",
+    "table": "copilot_outcomes",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_outcomes_insert",
+    "table": "copilot_outcomes",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_seller_settings_select",
+    "table": "copilot_seller_settings",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_seller_settings_insert",
+    "table": "copilot_seller_settings",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_seller_settings_update",
+    "table": "copilot_seller_settings",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_usage_select",
+    "table": "copilot_usage",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_usage_insert",
+    "table": "copilot_usage",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_conversation_scores_insert",
+    "table": "copilot_conversation_scores",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "scored_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_conversation_scores_update",
+    "table": "copilot_conversation_scores",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "scored_by = auth.uid()",
+    "check": "scored_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_learning_moments_insert",
+    "table": "copilot_learning_moments",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "tagged_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_objection_catalog_insert",
+    "table": "copilot_objection_catalog",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "submitted_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_conversation_scores_select",
+    "table": "copilot_conversation_scores",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "scored_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
+   },
+   {
+    "name": "copilot_learning_moments_select",
+    "table": "copilot_learning_moments",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "tagged_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -43762,6 +43762,8 @@
    "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
    "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
    "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
+   "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+   "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -69872,8 +69874,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1087,
-   "lines": 104464,
+   "files": 1089,
+   "lines": 104553,
    "tables": [
     "audit_logs",
     "departments",
@@ -217014,36 +217016,6 @@
     "src": "supabase/migrations/20261030160000_tcm_insert_member_conversation_authorization.sql"
    },
    {
-    "name": "copilot_outcomes_insert",
-    "table": "copilot_outcomes",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_outcomes_select",
-    "table": "copilot_outcomes",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_objection_catalog_insert",
-    "table": "copilot_objection_catalog",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
     "name": "copilot_objection_catalog_select",
     "table": "copilot_objection_catalog",
     "cmd": "SELECT",
@@ -217051,126 +217023,6 @@
     "mode": "permissive",
     "using": "true",
     "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_usage_insert",
-    "table": "copilot_usage",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_usage_select",
-    "table": "copilot_usage",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_seller_settings_insert",
-    "table": "copilot_seller_settings",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_seller_settings_select",
-    "table": "copilot_seller_settings",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_seller_settings_update",
-    "table": "copilot_seller_settings",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_help_requests_insert",
-    "table": "copilot_help_requests",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_help_requests_select",
-    "table": "copilot_help_requests",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_learning_moments_insert",
-    "table": "copilot_learning_moments",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_learning_moments_select",
-    "table": "copilot_learning_moments",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_conversation_scores_insert",
-    "table": "copilot_conversation_scores",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "true",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_conversation_scores_select",
-    "table": "copilot_conversation_scores",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "",
-    "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
-   },
-   {
-    "name": "copilot_conversation_scores_update",
-    "table": "copilot_conversation_scores",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "true",
-    "check": "true",
     "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
    },
    {
@@ -217252,6 +217104,156 @@
     "using": "false",
     "check": "false",
     "src": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql"
+   },
+   {
+    "name": "copilot_help_requests_select",
+    "table": "copilot_help_requests",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_help_requests_insert",
+    "table": "copilot_help_requests",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_outcomes_select",
+    "table": "copilot_outcomes",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_outcomes_insert",
+    "table": "copilot_outcomes",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_seller_settings_select",
+    "table": "copilot_seller_settings",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_seller_settings_insert",
+    "table": "copilot_seller_settings",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_seller_settings_update",
+    "table": "copilot_seller_settings",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_usage_select",
+    "table": "copilot_usage",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "seller_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_usage_insert",
+    "table": "copilot_usage",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "seller_id = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_conversation_scores_insert",
+    "table": "copilot_conversation_scores",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "scored_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_conversation_scores_update",
+    "table": "copilot_conversation_scores",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "scored_by = auth.uid()",
+    "check": "scored_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_learning_moments_insert",
+    "table": "copilot_learning_moments",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "tagged_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_objection_catalog_insert",
+    "table": "copilot_objection_catalog",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "submitted_by = auth.uid()",
+    "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "copilot_conversation_scores_select",
+    "table": "copilot_conversation_scores",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "scored_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
+   },
+   {
+    "name": "copilot_learning_moments_select",
+    "table": "copilot_learning_moments",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "tagged_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -237557,13 +237559,13 @@
    "copilot_conversation_scores": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: true"
+     "authenticated: scored_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())"
     ],
     "INSERT": [
-     "authenticated: true"
+     "authenticated: scored_by = auth.uid()"
     ],
     "UPDATE": [
-     "authenticated: true"
+     "authenticated: scored_by = auth.uid()"
     ],
     "DELETE": []
    },
@@ -237581,10 +237583,10 @@
    "copilot_help_requests": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "INSERT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "UPDATE": [],
     "DELETE": []
@@ -237611,10 +237613,10 @@
    "copilot_learning_moments": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: true"
+     "authenticated: tagged_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())"
     ],
     "INSERT": [
-     "authenticated: true"
+     "authenticated: tagged_by = auth.uid()"
     ],
     "UPDATE": [],
     "DELETE": []
@@ -237625,7 +237627,7 @@
      "authenticated: true"
     ],
     "INSERT": [
-     "authenticated: true"
+     "authenticated: submitted_by = auth.uid()"
     ],
     "UPDATE": [],
     "DELETE": []
@@ -237633,10 +237635,10 @@
    "copilot_outcomes": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "INSERT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "UPDATE": [],
     "DELETE": []
@@ -237644,13 +237646,13 @@
    "copilot_seller_settings": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "INSERT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "UPDATE": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "DELETE": []
    },
@@ -237676,10 +237678,10 @@
    "copilot_usage": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "INSERT": [
-     "authenticated: true"
+     "authenticated: seller_id = auth.uid()"
     ],
     "UPDATE": [],
     "DELETE": []
@@ -240531,6 +240533,7 @@
    "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
    "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql",
    "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+   "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -379236,6 +379239,15 @@
    "path": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
    "lines": 33
   },
+  "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql": {
+   "path": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+   "lines": 69,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql": {
+   "path": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
+   "lines": 20
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -383083,10 +383095,20 @@
   }
  },
  "git": {
-  "sha": "761ab3b056f8245e11e2bf001d8180b7124d2be8",
+  "sha": "b67ef0c61baeb273652b4a7a097aff213bd624b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b67ef0c",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(db): fecha RLS multi-tenant do Copilot (#2763)",
+    "files": [
+     "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+     "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
+    ]
+   },
    {
     "sha": "761ab3b",
     "date": "2026-11-07",
@@ -383669,23 +383691,9 @@
      "PENDENCIAS.md",
      "RELATORIO_CI.md"
     ]
-   },
-   {
-    "sha": "429bdb1",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs",
-    "files": [
-     "PENDENCIAS.md",
-     "RELATORIO_CI.md"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "RELATORIO_CI.md",
-    4
-   ],
    [
     "docs/ci/README.md",
     3
@@ -383699,7 +383707,7 @@
     3
    ],
    [
-    "PENDENCIAS.md",
+    "RELATORIO_CI.md",
     3
    ],
    [
@@ -383760,6 +383768,10 @@
    ],
    [
     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    2
+   ],
+   [
+    "scripts/ci/e2e-isolated-workflow.unit.mjs",
     2
    ]
   ]

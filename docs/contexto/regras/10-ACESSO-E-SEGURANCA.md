@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `761ab3b056` · branch `main` · 2026-11-07 15:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b67ef0c61b` · branch `main` · 2026-11-07 16:09 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -76,16 +76,16 @@
 | `conversation_sla` | enabled | authenticated: is_admin_or_supervisor(auth.uid()) OR contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_v | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
 | `conversation_snoozes` | enabled | authenticated: snoozed_by IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) | authenticated: snoozed_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contact | — | authenticated: snoozed_by IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) |
 | `conversation_tasks` | enabled | authenticated: created_by = public.current_profile_id() OR public.is_admin_or_supervisor(auth.uid())<br>authenticated: contact_id IS NOT NULL AND public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: created_by = public.current_profile_id() AND (contact_id IS NULL OR public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: created_by = public.current_profile_id() OR public.is_admin_or_supervisor(auth.uid()) | authenticated: created_by = public.current_profile_id() OR public.is_admin_or_supervisor(auth.uid()) |
-| `copilot_conversation_scores` | enabled | authenticated: true | authenticated: true | authenticated: true | — |
+| `copilot_conversation_scores` | enabled | authenticated: scored_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid()) | authenticated: scored_by = auth.uid() | authenticated: scored_by = auth.uid() | — |
 | `copilot_feedback` | enabled | authenticated: created_by = auth.uid() | authenticated: created_by = auth.uid() | — | — |
-| `copilot_help_requests` | enabled | authenticated: true | authenticated: true | — | — |
+| `copilot_help_requests` | enabled | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | — | — |
 | `copilot_insights` | enabled | public: profile_id = auth.uid()<br>service_role: true | public: profile_id = auth.uid()<br>service_role: true | public: profile_id = auth.uid()<br>service_role: true | public: profile_id = auth.uid()<br>service_role: true |
-| `copilot_learning_moments` | enabled | authenticated: true | authenticated: true | — | — |
-| `copilot_objection_catalog` | enabled | authenticated: true | authenticated: true | — | — |
-| `copilot_outcomes` | enabled | authenticated: true | authenticated: true | — | — |
-| `copilot_seller_settings` | enabled | authenticated: true | authenticated: true | authenticated: true | — |
+| `copilot_learning_moments` | enabled | authenticated: tagged_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid()) | authenticated: tagged_by = auth.uid() | — | — |
+| `copilot_objection_catalog` | enabled | authenticated: true | authenticated: submitted_by = auth.uid() | — | — |
+| `copilot_outcomes` | enabled | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | — | — |
+| `copilot_seller_settings` | enabled | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | — |
 | `copilot_sessions` | enabled | public: profile_id = auth.uid()<br>service_role: true | public: profile_id = auth.uid()<br>service_role: true | public: profile_id = auth.uid()<br>service_role: true | public: profile_id = auth.uid()<br>service_role: true |
-| `copilot_usage` | enabled | authenticated: true | authenticated: true | — | — |
+| `copilot_usage` | enabled | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | — | — |
 | `crisis_room_alerts` | enabled | authenticated: auth.uid() IS NOT NULL | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) |
 | `crm_contact_links` | enabled | authenticated: public.is_contact_visible_to_user(zapp_contact_id, auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `crm_sync_outbox` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | — | — | — |
@@ -253,7 +253,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 745 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 746 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -405,7 +405,7 @@
 - `supabase/functions/_shared/request-policy.ts`
 - `supabase/functions/_shared/talkx-reply.ts`
 - `supabase/functions/_shared/validation.ts`
-- … +595 (lista completa em `context.json`)
+- … +596 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 

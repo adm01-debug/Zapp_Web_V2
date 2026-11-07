@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "761ab3b056f8245e11e2bf001d8180b7124d2be8",
+  "commit": "b67ef0c61baeb273652b4a7a097aff213bd624b4",
   "branch": "main",
-  "data_commit": "2026-11-07T12:22:54-03:00",
+  "data_commit": "2026-11-07T12:57:26-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b67ef0c",
+    "data": "2026-11-07",
+    "assunto": "fix(db): fecha RLS multi-tenant do Copilot (#2763)"
+   },
    {
     "sha": "761ab3b",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "712da7c",
     "data": "2026-11-05",
     "assunto": "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)"
-   },
-   {
-    "sha": "cabaa6a",
-    "data": "2026-11-06",
-    "assunto": "fix: cancelar timer de preview ao desmontar painel (#2739)"
    }
   ],
-  "arquivos_mudados_7d": 1114,
+  "arquivos_mudados_7d": 1116,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -219,7 +219,7 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 13
+    "mudancas": 12
    },
    {
     "arquivo": "ESTADO.md",
@@ -234,12 +234,12 @@
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
+    "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
    {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 11
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 10
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 284
+    "commits": 285
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 8
+    "commits": 7
    },
    {
     "autor": "github-actions[bot]",
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8288,
+  "arquivos_total": 8290,
   "arquivos_codigo": 4737,
   "linhas_codigo": 875007,
   "rotas": 18,
@@ -330,7 +330,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1087,
+  "migrations": 1089,
   "cron_jobs": 26,
   "testes": 2581,
   "workflows": 21,
