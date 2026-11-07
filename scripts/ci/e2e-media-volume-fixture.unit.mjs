@@ -126,10 +126,14 @@ for (const [name, labels, buttons, accepted] of [
 for (const [name, elements, expected] of [
   ['metadata', [ready()], 0.16], ['future data', [ready({ readyState: 4 })], 0.16],
   ['no element', [], NaN], ['duplicate', [ready(), ready()], NaN],
-  ['not loaded', [ready({ readyState: 0 })], NaN], ['detached', [ready({ isConnected: false })], NaN],
-  ['media error', [ready({ error: { code: 4 } })], NaN],
-  ['zero duration', [ready({ duration: 0 })], NaN], ['NaN duration', [ready({ duration: NaN })], NaN],
-  ['infinite duration', [ready({ duration: Infinity })], NaN],
+  // O seed já valida assinatura, download e bytes do Ogg. Este helper prova somente
+  // que o elemento conectado recebeu a URL canônica e o ganho global, mesmo antes
+  // de o navegador concluir os metadados ou decidir a reprodução.
+  ['not loaded yet', [ready({ readyState: 0 })], 0.16], ['detached', [ready({ isConnected: false })], NaN],
+  ['media error does not erase gain', [ready({ error: { code: 4 } })], 0.16],
+  ['zero duration does not erase gain', [ready({ duration: 0 })], 0.16],
+  ['NaN duration does not erase gain', [ready({ duration: NaN })], 0.16],
+  ['infinite duration does not erase gain', [ready({ duration: Infinity })], 0.16],
   ['foreign origin', [ready({ currentSrc: 'https://foreign.invalid' + SIGNED_PATH })], NaN],
   ['wrong path', [ready({ currentSrc: ORIGIN + '/wrong.ogg' })], NaN],
   ['blob currentSrc despite expected attribute', [ready({ src: SIGNED_URL, currentSrc: 'blob:' + ORIGIN + '/synthetic' })], NaN],

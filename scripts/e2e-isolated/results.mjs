@@ -16,7 +16,7 @@ const record = value => value !== null && typeof value === 'object' && !Array.is
 // The native inventory supplies the column; the complete identity must match.
 const CONVERSATION_SKIP = Object.freeze({
   sourceFile: 'e2e/conversation.spec.ts',
-  sourceBlob: '96a821d6c8389d526a9a5d65554687412510a92a',
+  sourceBlob: 'e205dc3a6eea158c5b00b592dfb7aa467ef46f98',
   reportFile: 'conversation.spec.ts', line: 59,
   titlePath: ['conversation.spec.ts', 'Conversation state transitions'],
   title: 'resolving conversation via CloseConversationDialog succeeds',
