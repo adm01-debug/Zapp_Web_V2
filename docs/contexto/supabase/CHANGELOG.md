@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 14:50 UTC
+
+- **functions** alterado (2): `public.close_conversation_atomic(p_contact_id uuid, p_client_request_id uuid, p_close_reason text, p_outcome text, p_classification text, p_notes text)`, `public.is_admin_or_supervisor(_user_id uuid)`
+
 ## 2026-11-07 14:11 UTC
 
 - **migrations** alterado (1): `20261103223000_ai_usage_outbox_drain_cron`
