@@ -3,12 +3,21 @@
 > Estado em 2026-09-05. O que está **medido hoje** vs. o que é **alvo**. Nada aqui é
 > aspiracional sem dizer de onde sai o número.
 
+## Atualização 2026-11-06
+
+- O workflow `front-release-targets.yml` agora consulta, de fora da Vercel, o
+  `/version.json`, a SPA e os assets publicados da V2 e da V3 a cada hora. Ele detecta
+  indisponibilidade e divergência de release, mas a cadência ainda não mede o SLO de 99,9 %
+  proposto abaixo, que exige amostras por minuto.
+- A V2 é observada em `https://zapp-web-v2.vercel.app`; o domínio
+  `https://zappweb.app.br` pertence à V3 e tem uma trilha de identidade independente.
+
 ## Atualização 2026-10-08 (item S2-4 da auditoria de 2026-09-05)
 
 Reconciliação com o código desta data; o retrato de 05/09 abaixo continua como histórico.
 
-- **Monitor externo de uptime continua não existindo.** Não há workflow, script nem painel
-  registrado no repositório que alcance as URLs de fora (`/version.json`, REST do Supabase,
+- **Naquela data, monitor externo de uptime não existia.** Não havia workflow, script nem painel
+  registrado no repositório que alcançasse as URLs de fora (`/version.json`, REST do Supabase,
   Evolution GO). Por isso a tabela de SLOs ganhou a coluna **Fonte hoje**, com `REAL`,
   `PARCIAL` ou `PENDENTE` por linha: nenhuma linha pode citar medição que não existe.
 - **`x-request-id` existe na borda, não ponta a ponta.** `supabase/functions/_shared/validation.ts`
@@ -35,7 +44,7 @@ Reconciliação com o código desta data; o retrato de 05/09 abaixo continua com
 | WhatsApp (Evolution GO) | Hostinger `evolution-go-rxj2` | edge `connection-health-check` → `connection_health_logs` + alerta em `EvolutionDisconnectBanner` (realtime em `whatsapp_connections.status`) |
 | Jobs (pg_cron) | Supabase Cloud | `cron.job_run_details` — 6 jobs ativos **lidos de `cron.job` em 2026-09-05**: `avatars-refresh` (hora em hora), `gmail-incremental-sync` (5 min), `cleanup-link-preview-cache` (03:00), `vacuum-contacts-daily` (03:30), `cleanup-edge-rate-limits` (a cada 15 min), `vacuum-messages-post-expurgo` (anual). Os dois `vacuum-*` foram criados direto no banco (sem migration no repo); `purge-processed-webhook-events` (`supabase/migrations/_foreign/20260612141500`) é do Supabase self-hosted (AtomicaBR): `evolution_webhook_events` não existe neste banco, então **não se aplica aqui** (ver `supabase/migrations/_foreign/README.md`) |
 
-**O que não existe hoje:** monitor externo (uptime check de fora da infra), alerta
+**O que ainda não existe hoje:** monitor externo com cadência de um minuto para medir o SLO, alerta
 automático quando `connection-health-check` marca instância `disconnected` (a edge só roda
 quando alguém abre Diagnóstico/Monitoramento — `src/hooks/system/useDiagnosticsData.ts:241`,
 `src/components/monitoring/hooks/useMonitoringActions.ts:17`), e página de status.
@@ -47,7 +56,7 @@ cadência ou alerta; **PENDENTE** = a fonte citada ainda não existe no reposit�
 
 | SLO | Alvo | Como medir (fonte real) | Fonte hoje |
 |---|---|---|---|
-| Front disponível | 99,9 % | uptime check externo em `https://zapp-web-v2.vercel.app/version.json` (HTTP 200 + JSON) a cada 1 min | PENDENTE — nenhum monitor externo no repositório (passo 2) |
+| Front disponível | 99,9 % | uptime check externo em `https://zapp-web-v2.vercel.app/version.json` (HTTP 200 + JSON) a cada 1 min | PARCIAL — `front-release-targets.yml` valida versão, SPA e assets a cada hora; falta cadência de 1 min e histórico de disponibilidade |
 | Webhook `evolution-webhook` erro / aceitação | erro ≤ 0,5 % ⇔ aceitação ≥ 99,5 % — alvo único do webhook, sem meta paralela (as duas leituras são o mesmo número, só muda o lado olhado) | logs da edge `evolution-webhook` (`status` ≠ 2xx / total), Supabase Dashboard → Edge Functions → Logs | PARCIAL — os logs existem; falta consulta versionada e alerta |
 | Webhook `evolution-webhook` latência | p95 < 500 ms | duração por invocação, lida dos **logs da Edge Function** no Supabase (Dashboard → Edge Functions → `evolution-webhook` → Logs); `extensions.pg_stat_statements` **não** serve de fonte — mede tempo de SQL, não a duração da função | PARCIAL — a duração por invocação está nos logs da Edge Function; falta consulta versionada e alerta |
 | Mensagem inbound visível | p95 < 5 s entre `messages.created_at` (timestamp do WhatsApp) e `now()` no INSERT | `ingest_inbound_message` grava o `created_at` do provedor; a view diária `slo_inbound_latency_daily` compara com `now()` | PENDENTE — a view `slo_inbound_latency_daily` não existe em `supabase/schema-manifest.json` (passo 4) |
@@ -78,8 +87,8 @@ seguem o mesmo id.
 1. **Cron do health check** — `cron.schedule('connection-health-check', '*/5 * * * *',
    net.http_post(... '/functions/v1/connection-health-check' ...))`, mesmo padrão do
    `avatars-refresh`. Sem isso o SLO de instância não tem amostra.
-2. **Uptime externo** — checar `/version.json` de fora (qualquer monitor HTTP com alerta por
-   e-mail/WhatsApp); registrar aqui a URL do painel quando existir.
+2. **Completar uptime externo** — reduzir a cadência de uma hora para um minuto ou adotar monitor
+   HTTP com histórico e alerta por e-mail/WhatsApp; registrar aqui a URL do painel quando existir.
 3. **Alerta de desconexão** — trigger em `connection_health_logs` (status `disconnected` por
    2 amostras seguidas) → `net.http_post` para a instância `PRINCIPAL` avisando o admin.
 4. **View `slo_inbound_latency_daily`** — p50/p95 por dia a partir de `messages` (sender =

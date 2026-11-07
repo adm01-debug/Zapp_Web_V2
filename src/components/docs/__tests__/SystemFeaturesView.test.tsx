@@ -37,6 +37,7 @@ describe('SystemFeaturesView — estado real do catálogo (R2-GOV-002)', () => {
 
     const selo = screen.getByTestId('catalog-status-badge');
     expect(selo).toHaveTextContent(`${marcados.length} desativada`);
+    expect(selo.closest('p'), 'o selo real não pode ficar dentro de um parágrafo').toBeNull();
 
     expect(screen.queryByText(/100% implementado/i)).toBeNull();
   });
@@ -47,6 +48,7 @@ describe('SystemFeaturesView — estado real do catálogo (R2-GOV-002)', () => {
 
     expect(screen.queryAllByText(/^desativado$/i)).toHaveLength(0);
     expect(screen.getByTestId('catalog-status-badge')).not.toHaveTextContent(/desativada/i);
+    expect(screen.getByTestId('catalog-status-badge').closest('p'), 'o selo ativo não pode ficar dentro de um parágrafo').toBeNull();
   });
 });
 

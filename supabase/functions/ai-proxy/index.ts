@@ -44,7 +44,7 @@ import {
   type AiFeature,
   type AiModality,
 } from "../_shared/ai-capabilities.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 
 const AiProxySchema = z.object({
   messages: z.array(z.object({

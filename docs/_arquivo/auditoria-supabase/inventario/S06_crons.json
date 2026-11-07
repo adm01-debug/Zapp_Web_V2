@@ -1,0 +1,13 @@
+{
+  "secao": "6_crons",
+  "gerado_em": "2026-10-30",
+  "total_jobs": 24,
+  "achados": [
+    {"id": "S06-001", "severidade": "CRITICO", "objeto": "TODOS os cron jobs - job startup timeout em massa", "descricao": "Em 2026-10-30 as 20:46 UTC, multiplos jobs falharam em cascata. 15 jobs com startup timeout. Indica esgotamento do pg_cron worker pool ou connection pool saturado.", "evidencia": "cron.job_run_details: 50+ falhas com return_message='job startup timeout' entre 20:44 e 21:59 UTC. Jobs: talkx-scheduler, tasks-notify-due, ai-jobs-tick, dispatch-scheduled-messages, gmail-incremental-sync, connection-health-check, multiplix-send-trigger, crm-sync-outbox, expire-stale-agent-presence, csat-reply-capture, close-stale-calls", "impacto": "Mensagens programadas nao disparadas, health checks perdidos, sincronizacao gmail atrasada", "correcao": "1) Auditar numero de crons rodando simultaneamente no minuto de pico. 2) Rever se user_roles RLS recursion (S05-001) esta saturando conexoes. 3) Consolidar crons menos criticos. 4) Escalonar 3 jobs com schedule * * * * * para evitar colisao."},
+    {"id": "S06-002", "severidade": "ALTO", "objeto": "talkx-scheduler-1min - 10% taxa de falha", "descricao": "4343 falhas em 30 dias (10.06%). Job critico para entrega de campanhas TalkX falhando 1 em 10 vezes.", "evidencia": "cron.job_run_details: failed=4343, total=43179"},
+    {"id": "S06-003", "severidade": "ALTO", "objeto": "jobid=19 - cron orfao sem nome", "descricao": "302 execucoes em job_run_details para jobid=19 que nao existe mais em cron.job. Job deletado mas historico permanece."},
+    {"id": "S06-004", "severidade": "ALTO", "objeto": "3 jobs com schedule * * * * * simultaneos", "descricao": "tasks-notify-due, talkx-scheduler-1min e dispatch-scheduled-messages rodam todo minuto simultaneamente disputando resources.", "correcao": "Escalonar com offsets ou consolidar em um unico cron."},
+    {"id": "S06-005", "severidade": "MEDIO", "objeto": "gmail-incremental-sync - vault read em cada execucao", "descricao": "Leitura de vault.decrypted_secrets em cada execucao (12x/hora). A anon_key e publica - overhead desnecessario.", "correcao": "Usar anon_key hardcoded no cron command (e publica)."},
+    {"id": "S06-006", "severidade": "INFO", "objeto": "Nenhum secret hardcoded nos comandos de cron", "descricao": "Todos os secrets nos cron commands sao lidos de vault.decrypted_secrets - boas praticas."}
+  ]
+}

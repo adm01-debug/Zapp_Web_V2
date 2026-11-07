@@ -1,0 +1,101 @@
+{
+  "auditado_em": "2026-10-31",
+  "secao": "1 - Triggers",
+  "total_tabelas_com_triggers": 86,
+  "top_tabelas": [
+    {
+      "tabela": "contacts",
+      "total_triggers": 17,
+      "exemplos": [
+        "on_contact_created_auto_assign",
+        "queue_overflow_rewrite (×2)",
+        "trg_audit_contact_*",
+        "trg_contacts_fsm_transition",
+        "trg_normalize_phone_on_insert",
+        "trg_normalize_phone_on_update"
+      ],
+      "observacao": "Alta densidade — normalização de telefone, FSM, auditoria, auto-assign. Risco: triggers em cadeia podem causar latência em INSERT em lote."
+    },
+    {
+      "tabela": "messages",
+      "total_triggers": 12,
+      "exemplos": [
+        "trg_conversation_reopen_on_inbound",
+        "trg_guard_message_immutable_columns",
+        "trg_messages_sla_first_response (×2)",
+        "trg_notify_new_message",
+        "trg_update_conversation_last_message"
+      ],
+      "observacao": "Caminho crítico de performance — cada INSERT em messages dispara 12 triggers."
+    },
+    {
+      "tabela": "talkx_campaigns",
+      "total_triggers": 10,
+      "exemplos": [
+        "trg_talkx_campaign_status_transition",
+        "trg_talkx_campaign_audit"
+      ],
+      "observacao": "OK"
+    },
+    {
+      "tabela": "talkx_recipients",
+      "total_triggers": 8,
+      "exemplos": [
+        "trg_talkx_recipient_status_transition"
+      ],
+      "observacao": "OK"
+    },
+    {
+      "tabela": "conversation_closures",
+      "total_triggers": 7,
+      "exemplos": [
+        "trg_conversation_closure_guard",
+        "trg_closure_audit"
+      ],
+      "observacao": "OK"
+    },
+    {
+      "tabela": "profiles",
+      "total_triggers": 6,
+      "exemplos": [
+        "prevent_can_download_escalation",
+        "prevent_privilege_escalation",
+        "trg_revoke_sessions_on_profile_deactivate"
+      ],
+      "observacao": "SEGURANÇA: triggers anti-escalação de privilégio são defesa em profundidade crítica."
+    },
+    {
+      "tabela": "queues",
+      "total_triggers": 6,
+      "exemplos": [
+        "trg_queue_member_overflow_rewrite"
+      ],
+      "observacao": "OK"
+    },
+    {
+      "tabela": "user_roles",
+      "total_triggers": 6,
+      "exemplos": [
+        "audit_user_role_changes (×3)",
+        "sync_profile_role (×3)"
+      ],
+      "observacao": "Auditoria tripla (INSERT/UPDATE/DELETE) e sync de role para profiles. Correto e necessário."
+    }
+  ],
+  "achados": [
+    {
+      "id": "S01-T001",
+      "severidade": "MEDIO",
+      "tabela": "messages",
+      "descricao": "12 triggers disparados em cada INSERT em messages. Caminho crítico de alta frequência — qualquer trigger lento aqui impacta latência de entrega de mensagens.",
+      "correcao": "Monitorar mean_exec_time dos triggers via pg_stat_user_tables. Avaliar consolidar triggers similares."
+    },
+    {
+      "id": "S01-T002",
+      "severidade": "INFO",
+      "tabela": "contacts",
+      "descricao": "17 triggers — maior densidade do banco. Inclui normalização de telefone (trg_normalize_phone_*) que deveria ser idempotente.",
+      "correcao": "Verificar se triggers de normalização são BEFORE (correto) ou AFTER (redundante)."
+    }
+  ]
+}

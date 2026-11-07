@@ -1,0 +1,25 @@
+{
+  "coletado_em": "2026-10-30",
+  "total_jobs": 24,
+  "todos_ativos": true,
+  "jobs": [
+    {"jobname": "talkx-scheduler-1min", "schedule": "* * * * *", "tipo": "db_function", "function": "trigger_talkx_engine_tick()", "taxa_falha_30d_pct": 10.06},
+    {"jobname": "tasks-notify-due", "schedule": "* * * * *", "tipo": "db_function", "function": "notify_due_tasks()", "taxa_falha_30d_pct": 4.60},
+    {"jobname": "dispatch-scheduled-messages", "schedule": "* * * * *", "tipo": "db_function", "function": "dispatch_scheduled_messages()", "taxa_falha_30d_pct": 6.52},
+    {"jobname": "expire-stale-agent-presence", "schedule": "1-59/2 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 4.74},
+    {"jobname": "multiplix-send-trigger", "schedule": "0-58/2 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 4.60},
+    {"jobname": "crm-sync-outbox", "schedule": "1-59/2 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 3.51},
+    {"jobname": "ai-jobs-tick-1min", "schedule": "1-59 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 4.29},
+    {"jobname": "connection-health-check", "schedule": "2-57/5 * * * *", "tipo": "http_post", "edge": "connection-health-check", "taxa_falha_30d_pct": 5.05},
+    {"jobname": "gmail-incremental-sync", "schedule": "0-55/5 * * * *", "tipo": "http_post", "edge": "gmail-cron-sync", "taxa_falha_30d_pct": 5.25},
+    {"jobname": "csat-reply-capture-tick", "schedule": "*/2 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 6.40},
+    {"jobname": "cleanup-edge-rate-limits", "schedule": "7-52/15 * * * *", "tipo": "sql_direct", "taxa_falha_30d_pct": 5.25},
+    {"jobname": "close-stale-calls", "schedule": "*/5 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 7.07},
+    {"jobname": "voice-changer-tmp-purge", "schedule": "17 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 8.47},
+    {"jobname": "searchbox-budget-alert", "schedule": "0 12 * * *", "tipo": "db_function", "taxa_falha_30d_pct": 0},
+    {"jobname": "vacuum-contacts-daily", "schedule": "42 3 * * *", "tipo": "sql_direct", "taxa_falha_30d_pct": 1.69},
+    {"jobname": "security-acl-score", "schedule": "23 * * * *", "tipo": "db_function", "taxa_falha_30d_pct": 6.21},
+    {"jobname": "avatars-refresh", "schedule": "7 * * * *", "tipo": "http_post", "edge": "batch-fetch-avatars", "taxa_falha_30d_pct": 5.54}
+  ],
+  "orphan_job_id_19": {"jobid": 19, "nome": null, "runs_30d": 302, "nota": "Job deletado mas historico permanece em job_run_details"}
+}

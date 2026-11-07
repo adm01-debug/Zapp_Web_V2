@@ -1,0 +1,273 @@
+# docs:
+#   gatilho: pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts
+#   prova: login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário
+#   falha: isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada
+#   avisa: autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada
+# PR continua com um teste setup. A suíte completa exige dispatch explícito;
+# o workflow legado permanece desativado até a prova nativa dos três grupos.
+name: E2E isolado - login e suíte completa
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Escopo da prova no backend descartável
+        type: choice
+        required: false
+        default: login
+        options:
+          - login
+          - full-suite
+          - network-proof
+          - network-proof-contexts
+  pull_request:
+    paths:
+      - '.github/workflows/e2e-logado-isolado.yml'
+      - 'scripts/e2e-isolated/**'
+      - 'scripts/ci/e2e-isolated*.unit.mjs'
+      - 'e2e/auth.setup.ts'
+      - 'e2e/auth-diagnostics.ts'
+      - 'src/config/supabase.ts'
+      - 'playwright.config.ts'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-isolado-preparo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image-metadata:
+    name: Resolver imagens sem banco ou credenciais
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    outputs:
+      scope: ${{ steps.request.outputs.scope }}
+      sha: ${{ steps.request.outputs.sha }}
+    steps:
+      - name: Validar evento, escopo e SHA antes do checkout
+        id: request
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REQUEST_SCOPE: ${{ inputs.scope }}
+          CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            pull_request) scope=login ;;
+            workflow_dispatch)
+              scope="${REQUEST_SCOPE:-login}"
+              case "$scope" in login|full-suite|network-proof|network-proof-contexts) ;; *) echo '::error::Escopo de execução inválido.'; exit 1 ;; esac
+              ;;
+            *) echo '::error::Evento não permitido neste workflow.'; exit 1 ;;
+          esac
+          if [[ ! "$CHECKOUT_SHA" =~ ^[0-9a-f]{40}$ || "$CHECKOUT_SHA" == 0000000000000000000000000000000000000000 ]]; then
+            echo '::error::SHA de checkout inválido.'
+            exit 1
+          fi
+          printf 'scope=%s\nsha=%s\n' "$scope" "$CHECKOUT_SHA" >> "$GITHUB_OUTPUT"
+      - name: Checkout do código da revisão
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ steps.request.outputs.sha }}
+      - name: Resolver digests e bloquear lock pendente
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/e2e-isolated/resolve-images.mjs "$RUNNER_TEMP/e2e-isolated-images/report.json"
+      - name: Publicar somente os metadados de imagens
+        if: always() && steps.resolve.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-isolated-images-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/e2e-isolated-images/report.json
+          retention-days: 3
+          if-no-files-found: error
+
+  bootstrap-login:
+    name: Bootstrap e login real no ambiente descartável
+    needs: image-metadata
+    if: needs.image-metadata.result == 'success' && needs.image-metadata.outputs.scope == 'login'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout do código da revisão
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.image-metadata.outputs.sha }}
+      - name: Preparar Bun da versão do repositório
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+      - name: Restaurar cache de pacotes do Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+      - name: Instalar dependências antes do ambiente sem saída de rede
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile --ignore-scripts
+      - name: Preparar ferramentas TLS antes de gerar certificados ou credenciais
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y openssl libnss3-tools
+      - name: Executar bootstrap, admissão e login reais
+        id: bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/e2e-isolated/run.sh login "$RUNNER_TEMP/e2e-isolated-login"
+      - name: Publicar somente o diagnóstico redigido do ambiente local
+        if: always() && steps.bootstrap.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-isolated-login-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/e2e-isolated-login/public
+          retention-days: 3
+          if-no-files-found: error
+
+  full-suite:
+    name: Suíte isolada (${{ matrix.name }})
+    needs: image-metadata
+    if: github.event_name == 'workflow_dispatch' && needs.image-metadata.result == 'success' && needs.image-metadata.outputs.scope == 'full-suite'
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout-minutes }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # O controller executa workers1: as fixtures compartilham estado.
+          # O orçamento inclui preparo/limpeza além do browser (45/15/15 min).
+          - name: authenticated
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            timeout-minutes: 75
+          - name: deslogado-principal
+            projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
+            timeout-minutes: 45
+          - name: deslogado-secundario
+            projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
+            timeout-minutes: 45
+    steps:
+      - name: Checkout do SHA validado da revisão
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.image-metadata.outputs.sha }}
+      - name: Preparar Bun da versão do repositório
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+      - name: Restaurar cache de pacotes do Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+      - name: Instalar dependências antes do ambiente sem saída de rede
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile --ignore-scripts
+      - name: Preparar ferramentas TLS antes de gerar certificados ou credenciais
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y openssl libnss3-tools
+      - name: Validar grupo e executar a suíte no backend descartável
+        id: suite
+        shell: bash
+        env:
+          E2E_GROUP: ${{ matrix.name }}
+          E2E_PROJECTS: ${{ matrix.projects }}
+          E2E_OUTPUT: ${{ runner.temp }}/e2e-isolated-suite-${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { GROUPS } from './scripts/e2e-isolated/runtime-contract.mjs';
+          const group = process.env.E2E_GROUP;
+          const expected = process.env.E2E_PROJECTS?.split(' ');
+          if (!Object.hasOwn(GROUPS, group) || JSON.stringify(expected) !== JSON.stringify(GROUPS[group].map(name => '--project=' + name))) {
+            throw new Error('Grupo e inventário de projetos divergentes.');
+          }
+          NODE
+          bash scripts/e2e-isolated/run.sh suite "$E2E_GROUP" "$E2E_OUTPUT"
+      - name: Publicar somente o diagnóstico redigido do grupo
+        if: always() && steps.suite.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-isolated-suite-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/e2e-isolated-suite-${{ matrix.name }}/public
+          retention-days: 3
+          if-no-files-found: error
+
+  network-proof:
+    name: Medir conectividade nativa sem aplicação ou banco
+    needs: image-metadata
+    if: github.event_name == 'workflow_dispatch' && needs.image-metadata.result == 'success' && (needs.image-metadata.outputs.scope == 'network-proof' || needs.image-metadata.outputs.scope == 'network-proof-contexts')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout do SHA validado
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.image-metadata.outputs.sha }}
+      - name: Preparar Bun para instalar dependências pinadas
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+      - name: Restaurar cache de pacotes do Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+      - name: Instalar dependências antes do isolamento
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile --ignore-scripts
+      - name: Validar políticas e protocolo antes da prova nativa
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test scripts/ci/e2e-isolated-network-proof.unit.mjs scripts/ci/e2e-isolated-network-contexts.unit.mjs
+      - name: Preparar TLS e iproute2 antes dos namespaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y openssl libnss3-tools iproute2
+      - name: Executar corte nativo Node e três engines
+        id: network
+        shell: bash
+        env:
+          ZAPP_PROOF_SCOPE: ${{ needs.image-metadata.outputs.scope }}
+          ZAPP_PROOF_SHA: ${{ needs.image-metadata.outputs.sha }}
+        run: |
+          set -euo pipefail
+          case "$ZAPP_PROOF_SCOPE" in
+            network-proof) node scripts/e2e-isolated/network-proof.mjs "$RUNNER_TEMP/e2e-network-proof/report.json" ;;
+            network-proof-contexts) node scripts/e2e-isolated/network-contexts.mjs "$RUNNER_TEMP/e2e-network-proof/report.json" ;;
+            *) echo '::error::Escopo de prova de rede inválido.'; exit 1 ;;
+          esac
+      - name: Publicar somente relatório fechado após limpeza
+        if: always() && steps.network.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-network-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/e2e-network-proof/report.json
+          retention-days: 3
+          if-no-files-found: error

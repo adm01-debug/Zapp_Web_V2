@@ -1,3 +1,6 @@
+import { isDeepStrictEqual } from 'node:util';
+import { pathToFileURL } from 'node:url';
+
 /**
  * IA-010 / cartão SL-059 — provisionamento do ambiente de ensaio.
  *
@@ -55,8 +58,14 @@ export const MINIMO_CONVERSA_LONGA = 200;
 /** Mensagens da conversa longa provisionada por departamento. */
 export const MENSAGENS_CONVERSA_LONGA = 216;
 
+function congelarProfundo(valor) {
+  if (valor === null || typeof valor !== 'object' || Object.isFrozen(valor)) return valor;
+  for (const filho of Object.values(valor)) congelarProfundo(filho);
+  return Object.freeze(valor);
+}
+
 /** Paleta já existente no sistema (src/components/queues/queueColors.ts). */
-export const PALETA_FILAS = [
+export const PALETA_FILAS = Object.freeze([
   'hsl(var(--primary))',
   'hsl(var(--success))',
   'hsl(var(--warning))',
@@ -65,10 +74,17 @@ export const PALETA_FILAS = [
   'hsl(var(--dash-red))',
   'hsl(var(--info))',
   'hsl(var(--dash-green))',
-];
+]);
 
 /** Departamentos do ensaio (IA-010 §2). */
-export const DEPARTAMENTOS_ENSAIO = ['Vendas', 'Compras', 'Logística', 'Financeiro', 'SAC', 'RH'];
+export const DEPARTAMENTOS_ENSAIO = Object.freeze([
+  'Vendas',
+  'Compras',
+  'Logística',
+  'Financeiro',
+  'SAC',
+  'RH',
+]);
 
 /** Contatos por departamento (IA-010 §2). */
 export const CONTATOS_POR_DEPARTAMENTO = 6;
@@ -78,7 +94,7 @@ export const CONTATOS_POR_DEPARTAMENTO = 6;
  * `public.app_role` (supabase/migrations/20251215025014_*.sql) tem só
  * `admin`, `supervisor` e `agent`.
  */
-export const PERFIS_ENSAIO = [
+export const PERFIS_ENSAIO = congelarProfundo([
   { chave: 'admin', papel: 'admin', nome: 'ENSAIO-Admin', email: 'ensaio.admin@ensaio.invalid' },
   {
     chave: 'supervisor',
@@ -95,10 +111,10 @@ export const PERFIS_ENSAIO = [
     pendencia:
       'public.app_role tem só admin/supervisor/agent — o 4º perfil depende da decisão + migration do cartão SL-058',
   },
-];
+]);
 
 /** Colunas que este gerador escreve, por tabela (conferidas contra o retrato canônico). */
-export const COLUNAS_USADAS = {
+export const COLUNAS_USADAS = congelarProfundo({
   departments: ['id', 'name', 'is_active'],
   queues: ['id', 'name', 'description', 'color', 'is_active', 'priority'],
   contacts: [
@@ -120,7 +136,7 @@ export const COLUNAS_USADAS = {
     'transcription',
     'is_read',
   ],
-};
+});
 
 /** UUID determinístico do ensaio (formato v4; prefixo próprio, jamais colide com dado real). */
 export function uuidEnsaio(sequencia) {
@@ -202,7 +218,7 @@ export function planoDeEnsaio() {
       } else {
         mensagens.push({
           sender: 'contact',
-          content: `${PREFIXO_ENSAIO}${nomeDepartamento} áudio sem transcrição`,
+          content: `${PREFIXO_ENSAIO}${nomeDepartamento} áudio d'ensaio sem transcrição`,
           message_type: 'audio',
           transcription: null,
         });
@@ -279,14 +295,14 @@ export function planoDeEnsaio() {
     perfisProvisionaveis: PERFIS_ENSAIO.filter((p) => p.papel !== null).length,
   };
 
-  return {
+  return congelarProfundo({
     prefixo: PREFIXO_ENSAIO,
     dominio: DOMINIO_ENSAIO,
     perfis: PERFIS_ENSAIO,
     departamentos,
     casosDeBorda,
     tot,
-  };
+  });
 }
 
 function literais(valores) {
@@ -296,6 +312,15 @@ function literais(valores) {
     if (typeof valor === 'number') return String(valor);
     return `'${String(valor).replace(/'/gu, "''")}'`;
   });
+}
+
+/** Recusa planos alterados que poderiam misturar dados reais ao DML ou ampliar a reversão. */
+export function validarPlanoSeguro(plano) {
+  const canonico = planoDeEnsaio();
+  if (!isDeepStrictEqual(plano, canonico)) {
+    throw new Error('ensaio: plano diverge do contrato canônico determinístico');
+  }
+  return canonico;
 }
 
 /** Cabeçalho comum aos dois DML (provisionamento e remoção). */
@@ -311,7 +336,8 @@ export function cabecalhoSql(plano, rotulo) {
 }
 
 /** DML aditivo e idempotente do ensaio (departamentos, filas, contatos e mensagens). */
-export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
+export function sqlDeProvisionamento(planoRecebido = planoDeEnsaio()) {
+  const plano = validarPlanoSeguro(planoRecebido);
   const linhas = [...cabecalhoSql(plano, 'provisionamento'), 'begin;'];
 
   const departamentos = plano.departamentos.map((d) => [
@@ -382,7 +408,7 @@ export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
     mensagens.map((valor) => `  (${literais(valor).join(', ')})`).join(',\n'),
     'on conflict (id) do update set contact_id = excluded.contact_id, sender = excluded.sender,',
     '  content = excluded.content, message_type = excluded.message_type,',
-    '  transcription = excluded.transcription;',
+    '  transcription = excluded.transcription, is_read = excluded.is_read;',
     '',
     'commit;',
   );
@@ -391,7 +417,8 @@ export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
 }
 
 /** DML de reversão: tudo por prefixo/marcador, nada por id solto. */
-export function sqlDeRemocao(plano = planoDeEnsaio()) {
+export function sqlDeRemocao(planoRecebido = planoDeEnsaio()) {
+  const plano = validarPlanoSeguro(planoRecebido);
   const rotulo = `${plano.prefixo}`;
   return (
     [
@@ -427,12 +454,16 @@ export function sqlDeRemocao(plano = planoDeEnsaio()) {
  */
 export function conferirAlvoLocal(url) {
   if (url === undefined || url === null || url === '') return null;
-  let host;
+  let alvo;
   try {
-    host = new URL(url).hostname;
+    alvo = new URL(url);
   } catch {
-    throw new Error(`ensaio: DB_URL não é uma URL válida (${url}). Proibido seguir sem saber o alvo.`);
+    throw new Error('ensaio: DB_URL não é uma URL válida. Proibido seguir sem saber o alvo.');
   }
+  if (!['postgres:', 'postgresql:'].includes(alvo.protocol)) {
+    throw new Error(`ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol}).`);
+  }
+  const host = alvo.hostname;
   const locais = ['127.0.0.1', 'localhost', '::1', '[::1]'];
   if (!locais.includes(host)) {
     throw new Error(
@@ -480,29 +511,54 @@ Aplicar (banco local da cópia de trabalho, nunca produção):
   bun scripts/ia/ensaio-provisionamento.mjs --sql | zapp-db-local psql <cópia> [nome]
 `;
 
-function main(argv) {
-  const flag = argv[2] ?? '--plano';
+const FLAGS = new Set(['--plano', '--sql', '--remover', '--ajuda', '-h']);
+
+export function interpretarArgumentos(argv = []) {
+  if (!Array.isArray(argv) || argv.length > 1) {
+    throw new Error('informe exatamente uma opção');
+  }
+  const flag = argv[0] ?? '--plano';
+  if (!FLAGS.has(flag)) throw new Error(`flag desconhecida (${flag})`);
+  return flag;
+}
+
+export function executarCli(
+  argv = [],
+  { env = process.env, stdout = process.stdout, stderr = process.stderr } = {},
+) {
+  let flag;
+  try {
+    flag = interpretarArgumentos(argv);
+  } catch (error) {
+    stderr.write(`ensaio: ${error.message}\n${AJUDA}`);
+    return 1;
+  }
   const plano = planoDeEnsaio();
 
   if (flag === '--ajuda' || flag === '-h') {
-    process.stdout.write(AJUDA);
+    stdout.write(AJUDA);
     return 0;
   }
   if (flag === '--plano') {
-    process.stdout.write(resumoDoPlano(plano));
+    stdout.write(resumoDoPlano(plano));
     return 0;
   }
   if (flag === '--sql' || flag === '--remover') {
-    const host = conferirAlvoLocal(process.env.DB_URL);
-    if (host) process.stderr.write(`ensaio: alvo conferido (${host})\n`);
-    else process.stderr.write('ensaio: DB_URL ausente — nada a conferir; a aplicação é por zapp-db-local (local)\n');
-    process.stdout.write(flag === '--sql' ? sqlDeProvisionamento(plano) : sqlDeRemocao(plano));
+    let host;
+    try {
+      host = conferirAlvoLocal(env.DB_URL);
+    } catch (error) {
+      stderr.write(`${error.message}\n`);
+      return 1;
+    }
+    if (host) stderr.write(`ensaio: alvo conferido (${host})\n`);
+    else stderr.write('ensaio: DB_URL ausente — nada a conferir; a aplicação é por zapp-db-local (local)\n');
+    stdout.write(flag === '--sql' ? sqlDeProvisionamento(plano) : sqlDeRemocao(plano));
     return 0;
   }
-  process.stderr.write(`ensaio: flag desconhecida (${flag})\n${AJUDA}`);
-  return 1;
+  throw new Error(`ensaio: estado de CLI não tratado (${flag})`);
 }
 
-if (process.argv[1] && process.argv[1].endsWith('ensaio-provisionamento.mjs')) {
-  process.exitCode = main(process.argv);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  process.exitCode = executarCli(process.argv.slice(2));
 }

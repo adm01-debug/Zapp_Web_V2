@@ -1,0 +1,5 @@
+-- Tombstone: a versão 20261026240300 já está registrada no ledger oficial.
+-- O SQL destrutivo registrado fica preservado e pinado em
+-- _superseded/20261026240300_drop_bkp_261023.sql.
+-- Este arquivo ativo é intencionalmente não executável para impedir que db push
+-- ou replay tentem repetir DROP SCHEMA _bkp_261023 CASCADE.

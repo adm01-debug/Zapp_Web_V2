@@ -104,7 +104,7 @@ export function ConnectionCard({
 
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
-      <Card className="border border-secondary/20 bg-card hover:border-secondary/40 transition-all min-w-0">
+      <Card data-testid="connection-card" className="border border-secondary/20 bg-card hover:border-secondary/40 transition-all min-w-0">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
@@ -175,12 +175,15 @@ export function ConnectionCard({
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" size="sm" onClick={() => onCopyId(connection.id)}><Copy className="w-4 h-4 mr-2" />Copiar ID</Button>
               </motion.div>
-              {connection.status !== 'connected' && (
+              {connection.status !== 'connected' && isAdmin && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button variant="outline" size="sm" onClick={() => onShowQrCode(connection)} className="border-whatsapp text-whatsapp hover:bg-whatsapp hover:text-primary-foreground">
                     <QrCode className="w-4 h-4 mr-2" />Conectar
                   </Button>
                 </motion.div>
+              )}
+              {connection.status !== 'connected' && !isAdmin && (
+                <span className="text-xs text-muted-foreground" data-testid="qr-only-admin">Reconexão por QR Code: só admin</span>
               )}
               {connection.status === 'connected' && (
                 <motion.div whileHover={{ scale: disconnecting ? 1 : 1.05 }} whileTap={{ scale: disconnecting ? 1 : 0.95 }}>
@@ -205,7 +208,10 @@ export function ConnectionCard({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onSetDefault(connection.id)}><Star className="w-4 h-4 mr-2" />Definir como padrão</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onShowQrCode(connection)}><QrCode className="w-4 h-4 mr-2" />Gerar QR Code</DropdownMenuItem>
+                  {/* QR Code é só admin (regras.md §4.2, 2026-11-03); supervisor vê a conexão mas não pareia. */}
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => onShowQrCode(connection)}><QrCode className="w-4 h-4 mr-2" />Gerar QR Code</DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => onBusinessHours(connection.id, connection.name)}><Clock className="w-4 h-4 mr-2" />Horário de Atendimento</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onQueues(connection.id, connection.name)}><Link2 className="w-4 h-4 mr-2" />Vincular Filas</DropdownMenuItem>
                   {connection.instance_id && (

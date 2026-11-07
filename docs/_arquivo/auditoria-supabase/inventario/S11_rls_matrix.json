@@ -1,0 +1,30 @@
+{
+  "secao": "11_rls",
+  "gerado_em": "2026-10-30",
+  "resumo": {
+    "total_tabelas_public": "~187 com RLS",
+    "tabelas_sem_rls": 0,
+    "tabelas_rls_sem_policy": 17,
+    "total_policies": "ver matrix"
+  },
+  "achados_criticos": [
+    {"id": "S11-001", "severidade": "CRITICO", "tabela": "talkx_campaign_segments", "roles": "public", "descricao": "Policies INSERT/SELECT/UPDATE/DELETE com role=public - acesso sem autenticacao", "evidencia": "cmd: INSERT/UPDATE/DELETE/SELECT, roles: public - qualquer conexao DB sem JWT"},
+    {"id": "S11-002", "severidade": "ALTO", "tabela": "copilot_sessions", "roles": "public", "descricao": "Policy ALL para service_role(true) e UPDATE para public role sem WITH CHECK", "evidencia": "vendor_own_sessions: qual=(profile_id = auth.uid()), with_check=null, role=public"},
+    {"id": "S11-003", "severidade": "ALTO", "tabela": "copilot_insights", "roles": "public", "descricao": "Policy UPDATE para public role sem WITH CHECK", "evidencia": "vendor_own_insights: qual=(profile_id = auth.uid()), with_check=null, role=public"},
+    {"id": "S11-004", "severidade": "ALTO", "tabela": "voip_profile_credentials", "descricao": "Tabela com credenciais VoIP tem RLS ON mas nenhuma policy", "evidencia": "SELECT: 0 policies, rowsecurity=true"},
+    {"id": "S11-005", "severidade": "ALTO", "tabela": "contacts", "policy": "Users can update their assigned contacts", "descricao": "UPDATE sem WITH CHECK - agente pode reassignar contato sem restricao de destino", "evidencia": "with_check=null, qual=can_edit_contact(...)"},
+    {"id": "S11-006", "severidade": "ALTO", "tabela": "talkx_campaigns", "policy": "Users can update own campaigns", "descricao": "UPDATE sem WITH CHECK - user pode alterar created_by para outro perfil", "evidencia": "qual contem AND is_admin_or_supervisor mas with_check=null"}
+  ],
+  "matriz_por_tabela": {
+    "nota": "187 tabelas com policies. Principais tabelas criticas abaixo.",
+    "messages": {"select": 1, "insert": 1, "update": 1, "delete": 0, "all": 0, "nota": "Isolamento por assigned_to via get_visible_agent_ids"},
+    "contacts": {"select": 1, "insert": 1, "update": 1, "delete": 0, "all": 0, "nota": "UPDATE sem WITH CHECK - ALTO"},
+    "profiles": {"select": 2, "insert": 1, "update": 3, "delete": 0, "all": 0, "nota": "3 policies de UPDATE com logica de bloqueio de campos sensiveis"},
+    "whatsapp_connections": {"select": 1, "insert": 1, "update": 1, "delete": 1, "all": 0, "nota": "So admin/supervisor"},
+    "talkx_campaigns": {"select": 2, "insert": 1, "update": 1, "delete": 1, "all": 0, "nota": "UPDATE sem WITH CHECK - ALTO"},
+    "talkx_campaign_segments": {"select": 2, "insert": 1, "update": 1, "delete": 1, "all": 0, "roles": "public", "nota": "CRITICO - public role sem JWT"},
+    "copilot_sessions": {"select": 0, "insert": 0, "update": 1, "delete": 0, "all": 2, "nota": "ALTO - public role UPDATE sem WITH CHECK"},
+    "copilot_insights": {"select": 0, "insert": 0, "update": 1, "delete": 0, "all": 2, "nota": "ALTO - public role UPDATE sem WITH CHECK"}
+  },
+  "nota_rls_prod_only": "Teste de matriz isolamento tenant A x B requer banco local temporario com migrations. Marcado como NAO TESTADO em producao conforme regras da auditoria."
+}

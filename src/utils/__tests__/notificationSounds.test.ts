@@ -38,6 +38,7 @@ vi.stubGlobal('AudioContext', FakeAudioContext);
 
 import {
   playNotificationSound,
+  showBrowserNotification,
 } from '@/utils/notificationSounds';
 
 describe('notificationSounds', () => {
@@ -114,6 +115,56 @@ describe('notificationSounds', () => {
         expect(() => playNotificationSound('message', 'quiet' as never)).not.toThrow();
         vi.runAllTimers();
         expect(criarOscilador).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('showBrowserNotification', () => {
+    const mockClose = vi.fn();
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Stub global Notification com close spy
+      class FakeNotification {
+        static permission = 'granted';
+        onclick: (() => void) | null = null;
+        close = mockClose;
+        constructor(_title: string, _options?: NotificationOptions) {}
+      }
+      vi.stubGlobal('Notification', FakeNotification);
+    });
+
+    it('fecha automaticamente após 5s quando requireInteraction não está definido', () => {
+      vi.useFakeTimers();
+      try {
+        showBrowserNotification('Teste', 'Mensagem');
+        expect(mockClose).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(5000);
+        expect(mockClose).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('fecha automaticamente após 5s quando requireInteraction=false', () => {
+      vi.useFakeTimers();
+      try {
+        showBrowserNotification('Teste', 'Mensagem', { requireInteraction: false });
+        vi.advanceTimersByTime(5000);
+        expect(mockClose).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('NÃO fecha automaticamente quando requireInteraction=true (War Room)', () => {
+      vi.useFakeTimers();
+      try {
+        showBrowserNotification('War Room', 'Alerta crítico', { requireInteraction: true });
+        vi.advanceTimersByTime(10000); // bem além dos 5s
+        expect(mockClose).not.toHaveBeenCalled();
       } finally {
         vi.useRealTimers();
       }

@@ -340,8 +340,8 @@ test.describe('Tarefas e o modo Quadro (E21)', () => {
     // Fixture conferida: a "Caixa de entrada" nasce com UM card.
     expect(antes).toBe(1);
 
-    // O QuickAdd do cabeçalho (o da coluna tem outro placeholder).
-    const campo = page.getByPlaceholder(/Adicionar tarefa/);
+    // QuickAdd da faixa superior; o campo da coluna tem o mesmo nome acessível.
+    const campo = page.getByTestId('tasks-capture-row').getByRole('textbox', { name: 'Adicionar tarefa', exact: true });
     await campo.fill(TITULO_NOVO);
     await campo.press('Enter');
 

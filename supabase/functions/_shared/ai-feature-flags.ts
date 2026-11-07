@@ -28,7 +28,7 @@
  * O custo é uma leitura do PostgREST por requisição de IA.
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, requireEnv } from "./validation.ts";
 
 /** Capacidades de IA do desenho IA-009 + Copiloto de Vendas (CV-010). */

@@ -33,7 +33,7 @@ aparece como run vermelho, não como comportamento silencioso.
 |---|---|---|---|---|
 | `perimetro-leitura` | só branch policy (sem revisor, sem wait timer) | `protected_branches` (`main`) | `SETTINGS_GUARD_TOKEN` (criado 15/10 11:13 UTC por uma sessão de agente; **valor e escopo desconhecidos**, ver W11) | `settings-guard.yml` › `guard` |
 | `banco-leitura` | só branch policy | `protected_branches` | — | `db-live-guard.yml` › `live-contract`, `types-sync.yml` › `sync` |
-| `producao-edge-functions` | só branch policy | `protected_branches` | — | `deploy-functions.yml` › `deploy`, `crm-sync-worker.yml` › `drain` |
+| `producao-edge-functions` | só branch policy | `protected_branches` | — | `deploy-functions.yml` › `deploy`, `crm-sync-worker.yml` › `drain`, `inventario-estado-semanal.yml` › `gerar` |
 | `producao-ddl` | **revisor obrigatório** `adm01-debug` + branch policy | `protected_branches` | — | `db-migrate.yml` › `migrate` |
 | `db-ledger-evidence` | **revisor obrigatório** `adm01-debug` + branch policy | `protected_branches` | — | `targeted-ledger-evidence.yml` › `export-encrypted-evidence` |
 | `legacy-import-destrutivo` | revisor obrigatório + branch policy | `protected_branches` | — | nenhum desde 15/10 (`supabase-sync.yml` removido). **Não** recebe `DESTINO_URL` |
@@ -141,8 +141,9 @@ o antigo em Developer settings → Fine-grained tokens. **Reverter:**
 
 ## 3. W62: segredos de deploy → `producao-edge-functions`
 
-**Consumidores:** `deploy-functions.yml` › `deploy` (os 8) e `crm-sync-worker.yml` › `drain` (só
-`CRON_SECRET`). Os dois já declaram `environment: producao-edge-functions`. Nenhum outro job lê esses
+**Consumidores:** `deploy-functions.yml` › `deploy` (os 8), `crm-sync-worker.yml` › `drain` (só
+`CRON_SECRET`) e `inventario-estado-semanal.yml` › `gerar` (só `SUPABASE_ACCESS_TOKEN`, leitura). Os três
+declaram `environment: producao-edge-functions`. Nenhum outro job lê esses
 secrets; o teste de contrato garante isso.
 
 | Secret | Origem → destino | Onde pegar o valor | Validação local antes de gravar |

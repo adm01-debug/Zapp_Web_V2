@@ -1,0 +1,94 @@
+{
+  "secao": "4_integridade",
+  "gerado_em": "2026-10-30",
+  "resumo": {
+    "colunas_id_sem_fk": 108,
+    "fks_sem_indice": 32,
+    "tabelas_sem_pk": 1,
+    "sequences_pct_max": "todas < 0.0001%",
+    "duplicate_phones_contacts": 0,
+    "users_count": 10,
+    "profiles_count": 10,
+    "profiles_user_id_orfaos": 0
+  },
+  "achados": [
+    {
+      "id": "S04-001",
+      "severidade": "ALTO",
+      "objeto": "profiles.user_id",
+      "descricao": "Coluna user_id uuid NOT NULL em profiles nao tem FK para auth.users. A integridade referencial entre agentes e auth e LOGICA (via trigger), nao estrutural.",
+      "evidencia": "information_schema.table_constraints: profiles so tem FK profiles_department_id_fkey. 0 orphans encontrados atualmente mas sem garantia futura.",
+      "impacto": "profile.user_id pode apontar para usuario deletado sem cascata/restricao",
+      "correcao": "ALTER TABLE public.profiles ADD CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;"
+    },
+    {
+      "id": "S04-002",
+      "severidade": "ALTO",
+      "objeto": "32 FKs sem indice na coluna referenciante",
+      "descricao": "32 FKs declaradas em public.* sem indice na coluna filho - cascade/lookup sem indice = seq scan completo na tabela filho",
+      "evidencia": "INT-A2 query: 32 rows. Top afetadas: talkx_campaigns (owner, launched_by, paused_by, etc.), conversation_events (from_queue_id, to_queue_id), multiplix_delivery_items (block_id, recipient_id, voice_asset_id)",
+      "tabelas_impactadas": [
+        "ai_model_prices.provider_id",
+        "contacts.ai_projection_analysis_id",
+        "conversation_events.from_queue_id",
+        "conversation_events.to_queue_id",
+        "department_invitations.used_by",
+        "instance_pauses.paused_by",
+        "instance_pauses.resumed_by",
+        "multiplix_delivery_items.block_id",
+        "multiplix_delivery_items.recipient_id",
+        "multiplix_delivery_items.voice_asset_id",
+        "multiplix_dispatches.whatsapp_connection_id",
+        "queues.overflow_queue_id",
+        "reminders.migrated_task_id",
+        "sla_alert_events.queue_id",
+        "sla_alert_events.resolved_by",
+        "talkx_campaigns.cancelled_by",
+        "talkx_campaigns.consent_confirmed_by",
+        "talkx_campaigns.launch_confirmed_by",
+        "talkx_campaigns.launched_by",
+        "talkx_campaigns.owner",
+        "talkx_campaigns.paused_by",
+        "talkx_campaigns.recurrence_next_campaign_id",
+        "talkx_campaigns.responsible_id",
+        "talkx_campaigns.template_version_id",
+        "talkx_links.created_by",
+        "talkx_optout_keywords.created_by",
+        "talkx_segment_versions.created_by",
+        "talkx_segments.published_by",
+        "talkx_templates.current_version_id",
+        "talkx_test_sends.campaign_id",
+        "talkx_test_sends.connection_id",
+        "talkx_test_sends.template_id"
+      ]
+    },
+    {
+      "id": "S04-003",
+      "severidade": "MEDIO",
+      "objeto": "_zapp_fn_before",
+      "descricao": "Tabela _zapp_fn_before nao tem PK. Provavelmente e tabela de migracao auxiliar/internal.",
+      "evidencia": "INT-A3: table_name='_zapp_fn_before' em information_schema.tables sem PK constraint"
+    },
+    {
+      "id": "S04-004",
+      "severidade": "MEDIO",
+      "objeto": "108 colunas *_id sem FK",
+      "descricao": "108 colunas com sufixo _id nao tem FK declarada. Casos criticos: catalog_favorites.product_id, talkx_recipients.segment_id, voip_profile_credentials.vault_secret_id",
+      "evidencia": "INT-A1: 108 rows"
+    },
+    {
+      "id": "S04-005",
+      "severidade": "INFO",
+      "objeto": "ON DELETE NO ACTION em todas as 50+ FKs",
+      "descricao": "Todas as FKs auditadas usam ON DELETE NO ACTION. Risco de orfaos se registros pai forem deletados sem tratar filhos.",
+      "evidencia": "INT-A8: 50 rows com delete_rule=NO ACTION"
+    },
+    {
+      "id": "S04-006",
+      "severidade": "INFO",
+      "objeto": "Sequences",
+      "descricao": "Todas as sequences usam bigint max (9.2x10^18). Uso atual < 0.0001% - sem risco de overflow.",
+      "evidencia": "pg_sequences: last_value maximo = 3604; pct_used = 0.0000%"
+    }
+  ]
+}

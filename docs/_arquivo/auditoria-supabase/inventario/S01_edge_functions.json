@@ -1,0 +1,17 @@
+{
+  "coletado_em": "2026-10-30",
+  "total_no_repo": 85,
+  "funcoes_de_alto_risco": [
+    {"nome": "external-db-bridge", "risco": "ALTO", "motivo": "acesso a banco externo"},
+    {"nome": "external-db-proxy", "risco": "ALTO", "motivo": "proxy para banco externo"},
+    {"nome": "public-api", "risco": "ALTO", "motivo": "DESATIVADA (retorna 410 Gone)"},
+    {"nome": "auth-login", "risco": "ALTO", "motivo": "logica de login customizada"},
+    {"nome": "create-user", "risco": "ALTO", "motivo": "criacao de usuario"},
+    {"nome": "invite-user", "risco": "MEDIO"},
+    {"nome": "revoke-auth-sessions", "risco": "MEDIO"},
+    {"nome": "message-delivery", "risco": "MEDIO"},
+    {"nome": "talkx-send", "risco": "MEDIO"},
+    {"nome": "evolution-webhook", "risco": "MEDIO"}
+  ],
+  "nota": "Drift entre repo e banco nao verificavel via SQL; requer Supabase CLI ou dashboard"
+}

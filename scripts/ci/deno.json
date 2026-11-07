@@ -1,7 +1,10 @@
 {
+  "imports": {
+    "https://esm.sh/tslib@2.8.1/denonext/tslib.mjs": "npm:tslib@2.8.1/tslib.es6.mjs"
+  },
   "lock": {
     "path": "./deno.lock",
     "frozen": true
   },
-  "nodeModulesDir": "none"
+  "nodeModulesDir": "auto"
 }

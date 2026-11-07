@@ -1,0 +1,18 @@
+dist/assets/SettingsView-Bpz-UvrX.js                         193.20 kB
+dist/assets/vendor-voip-zxcsBpGh.js                          221.66 kB
+dist/assets/vendor-ui-BMawdW6q.js                            228.58 kB
+dist/assets/index-DrxnNC7O.js                                244.10 kB
+dist/assets/vendor-data-Dcw5mGCT.js                          247.75 kB
+dist/assets/ChatPanel-QVx1R0pb.js                            249.84 kB
+dist/assets/vendor-core-BAZq5Xi7.js                          259.40 kB
+dist/assets/DashboardView-BuA5DKHF.js                        272.46 kB
+dist/assets/pdf-OP67xiYv.js                                  430.26 kB
+dist/assets/EmailComposer-DoK8BEsf.js                        449.95 kB
+dist/assets/vendor-charts-DG5CPYFa.js                        458.43 kB
+dist/assets/vendor-voice-DXu5Hskv.js                         534.40 kB
+dist/assets/vendor-maps-Bft6jOsb.js                        1,870.45 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 1200 kB after minification.
+✓ built in 20.96s
+EXIT=0

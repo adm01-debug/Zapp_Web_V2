@@ -61,7 +61,8 @@ Storage.
 | `useTeamPresence`                  | `useTeamPresence.ts`         | canal   | `team-presence-<conversationId>`       |
 | `useDepartmentProfiles`            | `useDepartmentManagement.ts` | rpc     | `get_team_profiles`                    |
 | `useDepartmentAuditLogs`           | `useDepartmentManagement.ts` | tabela  | `department_audit_logs`                |
-| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invites`                   |
+| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invitations`               |
+| `useCreateDepartmentInvite`        | `useDepartmentManagement.ts` | rpc     | `create_department_invite`             |
 | `useDepartmentWhatsAppCredentials` | `useDepartmentManagement.ts` | rpc     | `get_department_whatsapp_mode`         |
 | `uploadTeamMedia`                  | `uploadTeamMedia.ts`         | storage | `team-chat-files`                      |
 
@@ -131,7 +132,9 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
 `accept_invite`, `create_invite`, `join_department`, `leave_department`,
 `remove_member`, `update_settings`, `delete_department`, `create_department`,
 `update_role`, `kick_member`, `create_group`, `delete_group`,
-`whatsapp_updated`, `access_requested`.
+`whatsapp_updated`, `access_requested`, `invite_created`, `invite_revoked`,
+`invite_accepted`, `member_added`, `member_removed`, `department_transferred`,
+`add_member`, `delete_invite`.
 
 ## Pendências conhecidas (não são convenção)
 
@@ -140,6 +143,5 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
   fora deste módulo.
 - `useDepartmentManagement` ainda grava em `department_audit_logs` pelo cliente
   (e o `INSERT` de `authenticated` foi revogado) e faz `upsert` em
-  `department_whatsapp_configs`, que não existe em `types.ts`. A troca pelas
-  RPCs (`create_department_invite`, `set_department_whatsapp_config`) é do item
-  F62 do plano de finalização.
+  `department_whatsapp_configs`, que não existe em `types.ts`. A troca pela
+  RPC `set_department_whatsapp_config` é do item F62 do plano de finalização.

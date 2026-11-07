@@ -15,7 +15,6 @@
     "actions/download-artifact",
     "github/codeql-action",
     "actions/dependency-review-action",
-    "ossf/scorecard-action",
-    "step-security/harden-runner"
+    "ossf/scorecard-action"
   ]
 }

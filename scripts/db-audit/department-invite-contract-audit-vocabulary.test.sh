@@ -25,11 +25,14 @@
 #             * linhas legadas (código de 12, status 'used', verbo antigo) sobrevivem: as
 #               constraints entram NOT VALID e o formato de código é trigger de INSERT.
 #   BLOCO C — o Rollback do próprio arquivo roda e devolve o estado anterior.
+#   BLOCO D — migration de compatibilidade valida os verbos emitidos pelo
+#             frontend (`add_member`, `delete_invite`) e preserva o legado.
 
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261007012808_department_invite_contract_audit_vocabulary.sql"
+compat_migration="$repo_root/supabase/migrations/20261030143745_team_chat_audit_actions_legacy_compat.sql"
 mig_e14="$repo_root/supabase/migrations/20260928500000_team_chat_e14_department_invitations_schema.sql"
 mig_e15="$repo_root/supabase/migrations/20260928510000_team_chat_e15_accept_department_invite_rpc.sql"
 mig_e16="$repo_root/supabase/migrations/20260928520000_team_chat_e16_create_department_invite_rpc.sql"
@@ -85,7 +88,7 @@ expect_error() {
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
-for f in "$migration" "$mig_e14" "$mig_e15" "$mig_e16" "$mig_e17"; do
+for f in "$migration" "$compat_migration" "$mig_e14" "$mig_e15" "$mig_e16" "$mig_e17"; do
   [[ -f "$f" ]] || fail "migration nao encontrada: $f"
 done
 
@@ -455,4 +458,15 @@ expect_value 'C.4 rollback rodou: a RPC antiga volta a gerar codigo de 12 caract
 expect_value 'C.5 rollback rodou: a auditoria antiga volta a gravar o codigo em details' 'true' \
   "SELECT (details ? 'code')::text FROM public.department_audit_logs WHERE action='create_invite' ORDER BY created_at DESC LIMIT 1;"
 
-printf '\n== TODOS OS BLOCOS PASSARAM (A: defeito reproduzido · B: corrigido · C: rollback) ==\n'
+printf '\n============ BLOCO D — vocabulario runtime e frontend compativel ============\n'
+psql_file "$compat_migration" >/dev/null
+expect_ok 'D.1 o verbo add_member emitido pelo frontend passa pelo CHECK' \
+  "INSERT INTO public.department_audit_logs(department_id, action, profile_id) VALUES ('$DEP1','add_member','$P_ADM');"
+expect_ok 'D.2 o verbo delete_invite emitido pelo frontend passa pelo CHECK' \
+  "INSERT INTO public.department_audit_logs(department_id, action, profile_id) VALUES ('$DEP1','delete_invite','$P_ADM');"
+expect_ok 'D.3 o verbo canonico invite_created continua aceito' \
+  "INSERT INTO public.department_audit_logs(department_id, action, profile_id) VALUES ('$DEP1','invite_created','$P_ADM');"
+expect_ok 'D.4 verbos historicos existentes continuam aceitos' \
+  "INSERT INTO public.department_audit_logs(department_id, action, profile_id) VALUES ('$DEP1','update_settings','$P_ADM');"
+
+printf '\n== TODOS OS BLOCOS PASSARAM (A: defeito reproduzido · B: corrigido · C: rollback · D: compatibilidade live) ==\n'

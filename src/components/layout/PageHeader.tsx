@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { ChevronLeft, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -100,25 +101,27 @@ export function PageHeader({
                   const isLast = index === restCrumbs.length - 1;
 
                   return (
-                    <BreadcrumbItem key={crumb.label}>
+                    <Fragment key={crumb.label}>
                       <BreadcrumbSeparator />
-                      {isLast ? (
-                        <BreadcrumbPage className="font-semibold text-foreground">{crumb.label}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink
-                          href={crumb.href}
-                          onClick={(e) => {
-                            if (crumb.onClick) {
-                              e.preventDefault();
-                              crumb.onClick();
-                            }
-                          }}
-                          className="hover:text-foreground transition-colors"
-                        >
-                          {crumb.label}
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
+                      <BreadcrumbItem>
+                        {isLast ? (
+                          <BreadcrumbPage className="font-semibold text-foreground">{crumb.label}</BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink
+                            href={crumb.href}
+                            onClick={(e) => {
+                              if (crumb.onClick) {
+                                e.preventDefault();
+                                crumb.onClick();
+                              }
+                            }}
+                            className="hover:text-foreground transition-colors"
+                          >
+                            {crumb.label}
+                          </BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                    </Fragment>
                   );
                 })}
               </BreadcrumbList>

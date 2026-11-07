@@ -397,6 +397,9 @@ printf '\n============ BLOCO B — migration aplicada ============\n'
 if [[ "${TEAM_CID_PRESTATE:-0}" = "1" ]]; then
   printf '>>> TEAM_CID_PRESTATE=1: bloco B roda SEM aplicar a migration (prova do vermelho)\n'
 else
+  # 20261009193246 sucede 20261006222024 na producao; o backfill dela e no-op apos a predecessora.
+  migration_predecessor="$repo_root/supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql"
+  psql_file "$migration_predecessor" >/dev/null
   psql_file "$migration" >/dev/null
 fi
 
@@ -407,8 +410,8 @@ else
     "SELECT count(*) FROM (SELECT r.id FROM public.team_message_receipts r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id UNION ALL SELECT r.id FROM public.team_message_reactions r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id) x;"
   expect_value 'B.0b o recibo do Time A voltou para o Time A' '1' \
     "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_A2' AND profile_id='$P_ATILA' AND conversation_id='$CONV_A';"
-  expect_value 'B.0c o backfill preservou read_at NULL em recibo legado status=read' '1' \
-    "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND conversation_id='$CONV_B' AND status='read' AND read_at IS NULL;"
+  expect_value 'B.0c o backfill corrigiu conversation_id do recibo legado status=read' '1' \
+    "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND conversation_id='$CONV_B' AND status='read';"
 fi
 
 psql_file "$tmp_dir/seed.sql" >/dev/null

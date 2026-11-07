@@ -1,0 +1,25 @@
+{
+  "auditado_em": "2026-10-30",
+  "secao": "12 - Lacunas",
+  "backup_pitr": {"archive_mode": "on", "wal_level": "logical", "archive_command": "wal-g (WAL archiving configurado)", "status": "OK - wal archiving ativo"},
+  "staging_environment": {"supabase_branching": "DESLIGADO", "status": "LACUNA - sem staging compartilhado para QA automatico"},
+  "lgpd_retencao": {
+    "tabelas_com_pii_sem_retencao": ["profiles","login_attempts","whatsapp_connections","talkx_campaigns","team_conversations"],
+    "total_tabelas_afetadas": 36,
+    "status": "LACUNA - 36 tabelas com colunas name/email/phone sem deleted_at/expires_at"
+  },
+  "alertas_monitoramento": {
+    "alerta_cron_falhas": "LACUNA - nenhum alerta configurado para job startup timeout em massa (achado S10-001)",
+    "status": "PARCIAL"
+  },
+  "rls_no_ci": {
+    "status": "PARCIAL - verificacoes de RLS existem mas sem matriz tenant AxB automatizada"
+  },
+  "achados": [
+    {"id": "S12-001", "severidade": "MEDIO", "objeto": "staging", "descricao": "Sem ambiente de staging compartilhado. Supabase Branching desativado.", "correcao": "Considerar habilitar Supabase Branching em projeto separado."},
+    {"id": "S12-002", "severidade": "MEDIO", "objeto": "profiles/login_attempts sem deleted_at", "descricao": "Tabelas com PII sem deleted_at ou expires_at. Potencial nao-conformidade LGPD.", "correcao": "Adicionar deleted_at e politica de retencao (cron de limpeza apos 90 dias para login_attempts)."},
+    {"id": "S12-003", "severidade": "INFO", "objeto": "webhook_failures sem created_at", "descricao": "Impossivel auditoria temporal de falhas de webhook."},
+    {"id": "S12-004", "severidade": "INFO", "objeto": "alerta de falha massiva de crons", "descricao": "15 cron jobs falhando sem alerta automatico ao Joaquim.", "correcao": "Criar cron watchdog que verifica failures_24h e envia alerta."},
+    {"id": "S12-005", "severidade": "INFO", "objeto": "PITR - confirmacao de retencao", "descricao": "WAL archiving ativo mas retencao nao verificavel via SQL. Confirmar no painel Supabase."}
+  ]
+}

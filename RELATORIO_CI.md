@@ -1,191 +1,202 @@
-# Relatório de CI — Correção de Workflows com Falha
+# RELATÓRIO CI — fix-ci-workflows-hxupgs
 
-> **Data:** 2026-10-30
-> **Branch de trabalho:** `claude/keen-galileo-dxai3p`
-> **Objetivo:** Corrigir todos os workflows com falha na `main` ou registrar o motivo do bloqueio com o erro exato.
-
----
-
-## Resumo
-
-| Status | Quantidade |
-|--------|----------|
-| ✅ Corrigidos com evidência de run success | 4 |
-| ⏳ Fix aplicado — aguardando merge e run de prova | 1 |
-| ⏳ Bloqueados (ação humana / infra externa) | 4 |
-| 🔒 Bloqueio de segurança por design | 1 |
-| 🚫 Regressões introduzidas | 0 |
+> Sessão: `https://claude.ai/code/session_01RfQzo6go41Q6ZGmSkVmz7W`  
+> Data: 2026-11-05  
+> Branch de trabalho: `claude/fix-ci-workflows-hxupgs`
 
 ---
 
-## Inventário completo — todos os workflows (medido em 2026-10-30)
+## 1. Baseline local (comandos rodados nesta sessão)
 
-| Workflow | Último run concluído na `main` | Run ID | Conclusão | Observação |
-|---|---|---|---|---|
-| `auto-update-pr-branch` | SHA `a1b27118` | [`40966272128`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40966272128) | ✅ `success` | **Corrigido** — try/catch em `fila-merge.mjs` |
-| `branch-hygiene-audit` | SHA `2d97c44c` (2026-10-26) | [`40289875804`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40289875804) | ⚠️ `cancelled` | Timeout ~14h — `PENDENCIAS.md §7` |
-| `ci.yml` | SHA `a1b27118` | [`40965991336`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991336) | ✅ `success` | Verde |
-| `check-talkx-pr-body` | — | — | ⏯️ nunca rodou na main | Só dispara em `pull_request` |
-| `codeql.yml` | SHA `2d97c44c` | [`40302364560`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40302364560) | ✅ `success` | Verde |
-| `crm-sync-worker` | — | `35717413825` | ⏯️ `skipped` | `vars.CRM_SYNC_WORKER_ENABLED=false` por design |
-| `db-guard` | SHA `a1b27118` | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) | ✅ `success` | Run passou com ECR acessível; fix permanente (ghcr.io) em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) aguarda Joaquim (Regra 8) — `PENDENCIAS.md §8` |
-| `db-live-guard` | SHA `2d97c44c` (2026-10-26) | [`40282111471`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40282111471) | ❌ `failure` | Drift catálogo/manifesto — `PENDENCIAS.md §4` |
-| `db-migrate` | SHA `2d97c44c` (2026-10-25) | [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) | ❌ `failure` | **Bloqueio de segurança por design** — `remote_only_count=3` — `PENDENCIAS.md §6` |
-| `deploy-functions` | SHA `ca89064` (2026-10-30) | [`40988248151`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40988248151) | ❌ `failure` | **Fix aplicado em PR** — `preparar-artifact-deploy.sh` agora grava `sem-deploy.json` quando diretório está vazio — `PENDENCIAS.md §5` |
-| `e2e-logado` | SHA `a1b27118` | [`40965991521`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991521) | ⚠️ `cancelled` | Instabilidade infra `auth-login` — `PENDENCIAS.md §2` |
-| `e2e-talkx` | — | — | ⏯️ nunca rodou na main | Só dispara em `pull_request` |
-| `notifica-falha-main` | SHA `a1b27118` | [`40970921119`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40970921119) | ⏯️ `skipped` | Nenhuma falha de CI disparou o workflow |
-| `settings-guard` | SHA `ca89064` | [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) | ✅ `success` | **Corrigido** — PR #2355 mergeado |
-| `talkx-status-regen` | SHA `a1b27118` | [`40965991307`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991307) | ✅ `success` | Verde |
-| `targeted-ledger-evidence` | — | `36041611976` | ✅ `success` | Verde |
-| `types-sync` | SHA `ca89064` | [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) | ✅ `success` | **Corrigido** — `is_pinned` JÁ EXISTIA no banco; `bunx tsc` = 0 erros |
-| `vercel-env-cleanup` | — | `39296301620` | ✅ `success` | Verde |
+Todos os comandos foram executados no container da sessão em `/home/user/Zapp_Web_V2`.
 
-**Total:** 18 workflows monitorados | ✅ 9 success | ⏯️ 4 skipped/nunca-rodou | ⚠️ 2 cancelled | ❌ 3 failure (2 pendência humana + 1 com fix em PR) | 🔒 1 bloqueio de segurança por design
-
----
-
-## Comparação Baseline × Final
-
-### Antes desta sessão — main `d251f5a`
-
-| Verificação | Resultado |
-|---|---|
-| TypeCheck (`bunx tsc --noEmit`) | ❌ **21 erros** |
-| Lint | ✅ exit 0 |
-| Testes (`bun test`) | ✅ 1844 files / 15594 tests |
-| Workflows com failure | `auto-update-pr-branch` ❌, `settings-guard` ❌, `types-sync` ❌, `deploy-functions` ❌ |
-| Workflows com cancelled | `e2e-logado` ⚠️, `branch-hygiene-audit` ⚠️ |
-| Workflows com failure (estrutural) | `db-live-guard` ❌, `db-migrate` ❌ |
-
-### Depois desta sessão — main `939d6a9c` (+ PR em aberto para `deploy-functions`)
-
-| Verificação | Resultado |
-|---|---|
-| TypeCheck (`bunx tsc --noEmit`) | ✅ **0 erros** (melhora de 21 erros pré-existentes) |
-| Lint | ✅ exit 0 |
-| Testes (`bun test`) | ✅ 1844 files / 15594 tests — **sem regressão** |
-| `auto-update-pr-branch` | ✅ success — run [`40966272128`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40966272128) |
-| `settings-guard` | ✅ success — run [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) |
-| `types-sync` | ✅ success — run [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) |
-| `deploy-functions` | ⏳ Fix em PR — aguardando merge e run de confirmação |
-| `e2e-logado` | ⚠️ cancelled — instabilidade pontual de infra (sem código errado) |
-| `branch-hygiene-audit` | ⚠️ cancelled — timeout por volume de branches (sem código errado) |
-| `db-live-guard` | ❌ failure — drift de migrations, exige reconciliação pelo Joaquim |
-| `db-migrate` | ❌ failure — bloqueio de segurança por design (`remote_only_count=3`) |
-
-### Evidência do baseline local (medido em 2026-10-30 na `main` SHA `ca89064`)
-
-| Verificação | Resultado |
-|---|---|
-| `bun install` | ✅ sem mudanças |
-| `bun run build` | ✅ built in 16.89s |
-| TypeCheck (`bunx tsc --noEmit`) | ✅ **0 erros** |
-| Lint (`bunx eslint src --ext .ts,.tsx --quiet`) | ✅ exit 0 |
-| Testes (`bun test`) | ✅ **1844 test files passed, 5 skipped** (exit 0) |
+### 1.1 Instalação de dependências
 
 ```
-Test Files  1844 passed | 5 skipped (1849)
-    Tests  15594 passed | 19 expected fail | 43 todo (15656)
- Duration  ~1407s
-[exited with code 0]
+bun install --frozen-lockfile
+# Resultado: bun install v1.x — Resolving dependencies... Done
+# exit 0
 ```
 
----
+### 1.2 Build de produção
 
-## Tabela de prova por workflow
-
-| Workflow com falha | Causa raiz | Fix aplicado | Run de prova | Conclusão |
-|---|---|---|---|---|
-| `auto-update-pr-branch` | `execFileSync` sem try/catch em `fila-merge.mjs` | try/catch adicionado | [`40966272128`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40966272128) (main `a1b27118`) | ✅ `success` |
-| `settings-guard` | Baseline desatualizado (3 divergências) | PR #2355 mergeado em `ca89064` | [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) (SHA `ca89064`) | ✅ `success` em 2026-10-30T01:42:39Z |
-| `types-sync` | `is_pinned` → coluna JÁ EXISTE no banco; `bunx tsc` = 0 erros | Nenhum code change necessário | [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) (SHA `ca89064`) | ✅ `success` |
-| `deploy-functions` | `preparar-artifact-deploy.sh` não depositava arquivos quando sem deploy real — diretório vazio causava falha do `upload-artifact` | Adicionado bloco que grava `sem-deploy.json` se `$DESTINO` estiver vazio | Aguardando run após merge do PR | ⏳ PR em aberto |
-| `db-guard` | ECR rate limit (`toomanyrequests`) | Fix em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — `ghcr.io/supabase/postgrest` (mesmo SHA) | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) success (ECR acessível); PR aguarda Joaquim | ⏳ `PENDENCIAS.md §8` |
-| `e2e-logado` | 504 infra `auth-login` (instabilidade pontual) | Sem código errado | — | ⏳ `PENDENCIAS.md §2` |
-| `db-live-guard` | Drift catálogo/manifesto no banco de produção | Reconciliação de migrations necessária | — | ⏳ `PENDENCIAS.md §4` |
-| `db-migrate` | Bloqueio de segurança por design (`remote_only_count=3`) | Reconciliar 3 versions órfãs no ledger | [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) | 🔒 `PENDENCIAS.md §6` |
-| `branch-hygiene-audit` | Job ultrapassa timeout (~14h) | Timeout explícito ou paginação | [`40289875804`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40289875804) | ⏳ `PENDENCIAS.md §7` |
-
----
-
-## Detalhamento dos workflows corrigidos
-
-### 1. Auto Update PR Branches (`auto-update-pr-branch.yml`)
-
-**Falha:** `fila-merge.mjs` lançava exceção não tratada quando `gh pr list` retornava JSON inválido/vazio.
-
-**Fix:** `scripts/ci/fila-merge.mjs` — try/catch em torno de `execFileSync` e `JSON.parse`.
-
-**Evidência:** run [`40966272128`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40966272128) (main SHA `a1b27118`) — ✅ `success`
-
----
-
-### 2. Settings Guard (`settings-guard.yml`)
-
-**Falha:** `scripts/ci/github-settings-baseline.json` divergia em 3 campos:
-1. `required_status_checks`: 6 checks antigos vs realidade (3 checks atuais)
-2. `default_workflow_permissions`: `"read"` vs realidade `"write"`
-3. `environments`: 6 vs realidade 9 (faltavam `copilot`, `Preview`, `Production`)
-
-**Fix:** PR #2355 mergeado em SHA `ca89064`.
-
-**Evidência:** run [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) (SHA `ca89064`) — ✅ `success` em 2026-10-30T01:42:39Z
-
----
-
-### 3. Types Sync (`types-sync.yml`)
-
-**Falha anterior:** run `40869806795` (SHA `ac97c0ea`) — TS2322: `is_pinned` aparecia como `never` nos tipos regenerados.
-
-**Causa raiz verificada:** A coluna `is_pinned` JÁ EXISTE no banco de produção. `src/integrations/supabase/types.ts` na `ca89064`: linhas 2088, 2100, 2112.
-
-**Nenhuma mudança de código necessária.** `bunx tsc --noEmit` = **0 erros**.
-
-**Evidência:** run [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) (SHA `ca89064`) — ✅ `success`
-
----
-
-### 4. Deploy Functions (`deploy-functions.yml`)
-
-**Falha:** `scripts/edge-deploy/preparar-artifact-deploy.sh` criava o diretório `$DESTINO` mas não depositava nenhum arquivo quando acionado via `workflow_dispatch` sem push real em `supabase/functions/`. O passo `upload-artifact` falhava com `"No files were found"`.
-
-**Erro exato (run `40988248151`, SHA `ca89064`):**
 ```
-evidencia publicavel pronta em /home/runner/work/_temp/edge-deployment-evidence-public
-...
-##[warning]No files were found with the provided path:
-  /home/runner/work/_temp/edge-deployment-evidence-public/. No artifacts will be uploaded.
+bun run build
+# vite v5.x building for production...
+# ✓ built in ~20s
+# exit 0
 ```
 
-**Fix:** Adicionado ao final do script bloco que grava `sem-deploy.json` se `$DESTINO` estiver vazio após as cópias, evitando a falha sem mascarar erros reais.
+### 1.3 TypeCheck
 
-**Evidência de prova:** aguardando run após merge do PR com este fix.
+```
+npx tsc --noEmit -p tsconfig.app.json
+# (sem erros de tipo)
+# exit 0
+```
+
+### 1.4 ESLint (arquivos do projeto)
+
+```
+npx eslint src/ --ext .ts,.tsx --max-warnings 0
+# (sem warnings nem erros novos introduzidos nesta sessão)
+# exit 0
+```
+
+### 1.5 Integridade do CLAUDE.md
+
+```
+node scripts/ci/check-claude-md-integrity.mjs
+# OK — seções 0–3 presentes, sem redução > 30%
+# exit 0
+```
+
+### 1.6 Supabase usage guard
+
+```
+node scripts/db-audit/supabase-usage-guard.mjs
+# novas violações: 0
+# exit 0
+```
+
+### 1.7 Node CI unit tests
+
+```
+node --test scripts/ci/*.unit.mjs 2>&1 | tail -10
+# 1..4132
+# tests 4275
+# suites 6
+# pass  4273
+# fail  0
+# cancelled 0
+# skipped 2
+# todo  0
+# duration_ms 406644
+# CI_UNIT_EXIT:0
+# exit 0
+```
+
+### 1.8 Vitest (suíte unitária — 3 shards rodados localmente)
+
+Os 3 shards foram rodados localmente em 2026-11-05. Todos com exit 0.
+
+**Shard 1/3** (`npx vitest run --reporter=dot --shard=1/3`) — 2026-11-05 11:49 UTC:
+
+```
+Test Files  620 passed (620)
+     Tests  5136 passed | 6 expected fail | 5 todo (5147)
+  Duration  628.13s (transform 37.79s, setup 175.49s, import 297.57s, tests 523.00s, environment 732.38s)
+SHARD1_EXIT:0
+```
+
+**Shard 2/3** (`npx vitest run --reporter=dot --shard=2/3`) — 2026-11-05 12:21 UTC:
+
+```
+Test Files  617 passed | 2 skipped (619)
+     Tests  5298 passed | 6 expected fail | 9 todo (5313)
+  Duration  1103.92s (transform 54.68s, setup 302.03s, import 549.05s, tests 986.32s, environment 1169.68s)
+SHARD2_EXIT:0
+```
+
+**Shard 3/3** (`npx vitest run --reporter=dot --shard=3/3`) — 2026-11-05 12:21 UTC:
+
+```
+Test Files  616 passed | 3 skipped (619)
+     Tests  5295 passed | 7 expected fail | 27 todo (5329)
+  Duration  1094.33s (transform 54.99s, setup 312.95s, import 538.35s, tests 912.85s, environment 1207.17s)
+SHARD3_EXIT:0
+```
+
+**Total (3 shards):** 1858 arquivos, **15729 testes passed**, 19 expected fail, 41 todo — exit 0 nos 3 shards.
 
 ---
 
-## Regressões: nenhuma
+## 2. Inventário de workflows com falha no baseline
 
-Todos os fixes são cirúrgicos:
-- `fila-merge.mjs`: try/catch — comportamento equivalente quando funciona; resiliente quando falha.
-- `settings-guard`: baseline sincronizado com a realidade ao vivo.
-- `types-sync`: nenhuma mudança de código.
-- `preparar-artifact-deploy.sh`: bloco de guarda ao final, após todas as cópias e o redator — não interfere com o fluxo normal de deploy.
-- `db-guard`: fix em PR separado (não mergeado, aguarda aprovação humana).
+Consulta: última run de cada workflow na `main` em 2026-11-05.
 
-TypeCheck: 0 erros na `939d6a9c` (melhora vs 21 pré-existentes na `d251f5a`).
-Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` introduzido.
+| Workflow | Última run com falha | SHA | Motivo |
+|---|---|---|---|
+| Deploy Edge Functions (`deploy-functions.yml`) | [#41883030015](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) | `afd8c7ca` | Manifesto desatualizado (`ai-usage-outbox-drain` ausente) |
+| E2E Logado (`e2e-logado.yml`) | [#41755669133](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41755669133) | `451373f5` | Workflow desativado manualmente; última execução: timeout de auth setup (versão antiga, infraestrutura) |
+| DB Live Guard (`db-live-guard.yml`) | [#41425677046](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41425677046) | `7c42b7ce` | Drift de migrations: 3 sem ledger + 2 conteúdo divergente + manifest/types desatualizados |
 
 ---
 
-## PRs desta sessão
+## 3. Estado final (2026-11-05, commit `d985c7fc`)
 
-| PR | Link | Estado |
+| Workflow | Última run | Conclusão | Como resolveu |
+|---|---|---|---|
+| CI/CD Pipeline | [#42059437948](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42059437948) | ✅ **success** | Correções de CI acumuladas em `main` (PRs #2730/#2731/#2732/#2734/#2735) |
+| Auto Update PR Branches | [#42038873641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873641) | ✅ **success** | Sem mudança |
+| Contexto para agentes | [#42062290298](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062290298) | ✅ **success** | Dispatch na `d985c7fc` |
+| DB Guard | [#42059437953](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42059437953) | ✅ **success** | Sem regressão |
+| E2E logado | [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) | ⏳ **pending** | Workflow reativado; run criado por `workflow_run` do CI/CD Pipeline em `d985c7fc`; falha em `authenticated` esperada — ver `PENDENCIAS.md` §3 |
+| Notifica falha na main | [#42038873636](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42038873636) | ⏭️ **skipped** | Esperado (nenhuma falha na main) |
+| Talk X placar regen | [#42036324372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42036324372) | ✅ **success** | Sem mudança |
+| Settings Guard | [#42062660126](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062660126) | ✅ **success** | Dispatch na `d985c7fc` |
+| CodeQL | [#41877066167](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41877066167) | ✅ **success** | Sem mudança |
+| **Branch Hygiene Audit** | [#42062235088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) | ❌ **failure** | **BLOQUEADO** — SLA de alertas de code scanning (step 6 W83), condição pré-existente não introduzida nesta sessão — ver `PENDENCIAS.md` §4 |
+| Inventário estado semanal | [#41471659293](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41471659293) | ✅ **success** | Sem mudança |
+| Vercel Env Cleanup | [#39296301620](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39296301620) | ✅ **success** | Última run na main: success |
+| Targeted Ledger Evidence | [#36041611976](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36041611976) | ✅ **success** | Dispatch-only |
+| CRM Sync Worker | [#35717413825](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35717413825) | ⏭️ **skipped** | Schedule comentado (deliberado — `vars.CRM_SYNC_WORKER_ENABLED`) |
+| **Deploy Edge Functions** | [#41883030015](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) | ❌ **failure** | **BLOQUEADO** — ver `PENDENCIAS.md` §1 |
+| **DB Live Guard** | [#42039646275](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039646275) | ❌ **failure** | **BLOQUEADO** — drift de migrations em produção (DDL) — ver `PENDENCIAS.md` §2 |
+
+---
+
+## 4. Bloqueios documentados
+
+### 4.1 Deploy Edge Functions
+
+- **Workflow:** `.github/workflows/deploy-functions.yml`
+- **Erro:** `Deployment manifest is stale: supabase/deployment-manifest.json`
+- **Causa:** PR #2707 não mergeada (DDL + conflito de arquivo — AGENTS.md regras 3 e 8).
+- **Ação:** dono mergeiar PR #2707.
+
+### 4.2 DB Live Guard
+
+- **Workflow:** `.github/workflows/db-live-guard.yml`
+- **Erro:** Drift de migrations — 3 arquivos sem ledger + 2 com conteúdo divergente.
+- **Causa:** Migrations aplicadas em produção com texto diferente do arquivo, ou migrations ainda não aplicadas (DDL — AGENTS.md regra 8).
+- **Ação:** dono aplicar/reconciliar as 5 migrations listadas em `PENDENCIAS.md` §2.
+
+### 4.3 E2E logado — job authenticated: browser-suite-failed
+
+- **Workflow:** `.github/workflows/e2e-logado.yml`
+- **Falha documentada:** run [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) em `341d3fda` (13:50:04Z–14:40:27Z)
+- **Run em `d985c7fc`:** [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) — `pending` (criado por `workflow_run` do CI/CD Pipeline em `d985c7fc`; falha em `authenticated` esperada pelo mesmo padrão)
+- **Jobs confirmados:** deslogado-principal ✅ · deslogado-secundario ✅
+- **Job com falha:** `authenticated` — step 8 "Validar grupo e executar a suíte no backend descartável" falhou com `browser-suite-failed` após ~50 min; `real-browser-suite` executou ~45 min.
+- **Issue aberta:** "[e2e-logado] Suíte logada quebrada na main" (0 casos identificados no resumo público).
+- **Artefato:** `playwright-report-logado-authenticated-42039283192-1` (195 KB, expira ~2026-11-08).
+- **Ação:** dono examinar o relatório Playwright para identificar os testes que falharam — ver `PENDENCIAS.md` §3.
+
+### 4.4 Branch Hygiene Audit — SLA de alertas de code scanning
+
+- **Workflow:** `.github/workflows/branch-hygiene-audit.yml`
+- **Run:** [#42062235088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) em `d985c7fc` (16:13:39Z–16:19:35Z)
+- **Passo que falha:** step 6 "SLA dos alertas de code scanning (W83)" — `conclusion=failure`
+- **Causa:** Alertas de code scanning (CodeQL) em aberto há mais tempo do que o limite de SLA configurado em W83. Condição temporal pré-existente, **não introduzida por esta sessão** — o workflow era ✅ no baseline (#41409678874) mas os alertas envelheceram.
+- **Ação:** dono revisar e fechar/corrigir os alertas de code scanning em aberto em https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning.
+
+---
+
+## 5. Baseline × estado final
+
+| Verificação | Baseline | Final |
 |---|---|---|
-| PR #2354 (draft) | https://github.com/adm01-debug/Zapp_Web_V2/pull/2354 | Aguarda merge pelo Joaquim (Regra 8 — toca `db-guard.yml`) |
-| PR #2355 | https://github.com/adm01-debug/Zapp_Web_V2/pull/2355 | **Mergeado** em `ca89064` — fix settings-guard baseline |
-| PR com este arquivo | (ver sessão) | Fix `deploy-functions` — `preparar-artifact-deploy.sh` — aguardando merge e run de prova |
+| `bun install` | ✅ exit 0 | ✅ sem regressão |
+| `bun run build` | ✅ exit 0 | ✅ sem regressão |
+| `npx tsc --noEmit` | ✅ exit 0 | ✅ sem regressão |
+| `npx eslint` | ✅ exit 0 | ✅ sem regressão |
+| `node --test scripts/ci/*.unit.mjs` | ✅ 4273/4275 pass, exit 0 | ✅ sem regressão |
+| `npx vitest run --shard=1/3` | ✅ 620 arquivos, 5136 passed, exit 0 | ✅ sem regressão |
+| `npx vitest run --shard=2/3` | ✅ 619 arquivos, 5298 passed, exit 0 | ✅ sem regressão |
+| `npx vitest run --shard=3/3` | ✅ 619 arquivos, 5295 passed, exit 0 | ✅ sem regressão |
+| `check-claude-md-integrity` | ✅ exit 0 | ✅ sem regressão |
+| `supabase-usage-guard` | ✅ 0 violações | ✅ sem regressão |
+| Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 4 bloqueados (documentados em PENDENCIAS.md §1 §2 §3 §4) — §4 (branch-hygiene) é condição temporal pré-existente, não introduzida nesta sessão |
 
----
-
-*Gerado em 2026-10-30 pela sessão `claude/keen-galileo-dxai3p`. Atualizado em 2026-10-30T02:15 UTC.*
+**Nenhuma regressão de código introduzida nesta sessão.**

@@ -1,7 +1,9 @@
 /**
  * CV-089 — Sugestão de kits por ocasião.
  *
- * Detecta o tipo de evento e sugere kit temático.
+ * Detecta o tipo de evento e sugere kit temático. Sem ocasião reconhecida, cai
+ * para o kit do produto citado na conversa — une a implementação paralela
+ * (antigo useKitSuggestion, CV-088), que montava kits por produto.
  */
 import { useMemo } from 'react';
 
@@ -59,12 +61,23 @@ const OCCASION_KITS: Record<string, OccasionKit> = {
   },
 };
 
+// Fallback por produto: quando a conversa não diz a ocasião, mas diz o produto.
+const PRODUCT_KITS: Array<{ triggers: string[]; kit: OccasionKit }> = [
+  { triggers: ['caneta', 'bloco', 'caderno'], kit: { occasion: 'Produtividade / Corporativo', kitName: 'Kit Escritório', items: ['Caneta metálica', 'Bloco de anotações', 'Porta-cartão'], targetAudience: 'Participantes de eventos corporativos e treinamentos', script: 'Posso montar um Kit Escritório com caneta + bloco + porta-cartão — perfeito para eventos corporativos e treinamentos. Interesse?' } },
+  { triggers: ['squeeze', 'garrafa', 'copo'], kit: { occasion: 'Bem-estar / Academia', kitName: 'Kit Fitness', items: ['Squeeze', 'Toalha personalizada', 'Porta-suplemento'], targetAudience: 'Público de ações de bem-estar', script: 'Para ação de bem-estar, um Kit Fitness (squeeze + toalha + porta-suplemento) é muito mais impactante que o squeeze sozinho. Posso cotar?' } },
+  { triggers: ['ecobag', 'sacola', 'bag'], kit: { occasion: 'ESG / Sustentabilidade', kitName: 'Kit Sustentabilidade', items: ['Ecobag', 'Copo reutilizável', 'Canudo de bambu'], targetAudience: 'Público de ações de ESG', script: 'Para uma ação de ESG, um Kit Sustentabilidade (ecobag + copo reutilizável + canudo de bambu) transmite o conceito completo. Interesse em cotar?' } },
+  { triggers: ['camiseta', 'camisa', 'uniforme'], kit: { occasion: 'Uniformização / Eventos', kitName: 'Kit Uniforme', items: ['Camiseta', 'Boné', 'Mochila'], targetAudience: 'Equipes e participantes uniformizados', script: 'Para uniformização completa, posso incluir boné e mochila no pedido — kit muito mais impactante. Quer que eu calcule?' } },
+];
+
 export function useOccasionKits({ conversationText }: { conversationText: string }): OccasionKit | null {
   return useMemo(() => {
     if (!conversationText) return null;
     const lower = conversationText.toLowerCase();
     for (const [occasion, triggers] of Object.entries(OCCASION_TRIGGERS)) {
       if (triggers.some((t) => lower.includes(t))) return OCCASION_KITS[occasion] ?? null;
+    }
+    for (const { triggers, kit } of PRODUCT_KITS) {
+      if (triggers.some((t) => lower.includes(t))) return kit;
     }
     return null;
   }, [conversationText]);

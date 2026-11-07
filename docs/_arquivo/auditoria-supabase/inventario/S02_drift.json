@@ -1,0 +1,20 @@
+{
+  "coletado_em": "2026-10-30",
+  "migrations_drift": {
+    "repo_sql_count": 1064,
+    "banco_ledger_count": 1064,
+    "paridade_contagem": "OK",
+    "migrations_null_statements": {
+      "count": 65,
+      "severidade": "MEDIO",
+      "descricao": "65 migrations com statements=NULL no ledger. SQL nao auditavel, viola regra 7 do CLAUDE.md."
+    }
+  },
+  "edge_functions_drift": {"status": "NAO_VERIFICADO", "motivo": "Requer Supabase CLI"},
+  "types_ts_drift": {"status": "NAO_VERIFICADO_PARCIAL", "nota": "workflow types-sync automatiza. Verificar ultimo run."},
+  "achados_principais": [
+    {"id": "S02-001", "severidade": "MEDIO", "objeto": "65 migrations com statements=NULL", "descricao": "SQL nao auditavel, viola regra 7 do CLAUDE.md", "evidencia": "SELECT count(*) FROM supabase_migrations.schema_migrations WHERE statements IS NULL = 65"},
+    {"id": "S02-002", "severidade": "INFO", "objeto": "edge functions vs repo", "descricao": "NAO_VERIFICADO - requer CLI"},
+    {"id": "S02-003", "severidade": "INFO", "objeto": "schema _bkp_261023", "descricao": "Backup sem migrations versionadas e sem RLS"}
+  ]
+}

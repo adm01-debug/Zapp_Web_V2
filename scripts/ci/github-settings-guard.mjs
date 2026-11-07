@@ -268,10 +268,13 @@ async function checarWorkflowPermissions() {
 }
 
 async function checarSelectedActions() {
-  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  // A API devolve padrões com `@*` (wildcard total); strip só esse sufixo.
+  // `@v1`, `@sha` e similares são preservados: diferem do baseline e disparam divergência.
+  const normalizar = (p) => p.replace(/@\*$/, '');
+  const encontradosPatterns = [...new Set((sel?.patterns_allowed ?? []).map(normalizar))].sort();
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
@@ -279,6 +282,16 @@ async function checarSelectedActions() {
       encontrado: encontradosPatterns.join(', ') || '(nenhum)',
       restauravel: false,
     });
+  }
+  const blVerified = baseline.selected_actions_verified_allowed ?? false;
+  const encontradoVerified = sel?.verified_allowed ?? false;
+  if (encontradoVerified !== blVerified) {
+    divergencias.push({ campo: 'selected_actions.verified_allowed', esperado: blVerified, encontrado: encontradoVerified, restauravel: false });
+  }
+  const blGithubOwned = baseline.selected_actions_github_owned_allowed ?? false;
+  const encontradoGithubOwned = sel?.github_owned_allowed ?? false;
+  if (encontradoGithubOwned !== blGithubOwned) {
+    divergencias.push({ campo: 'selected_actions.github_owned_allowed', esperado: blGithubOwned, encontrado: encontradoGithubOwned, restauravel: false });
   }
   return divergencias;
 }

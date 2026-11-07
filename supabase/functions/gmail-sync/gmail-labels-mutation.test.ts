@@ -12,7 +12,7 @@
  *   - requisição de não-dono é negada (403) e a consulta é escopada por user_id.
  */
 import { assert, assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleGmailSync, isSystemGmailLabelId, runGmailLabelMutation } from "./index.ts";
 
 const CONTA = "11111111-1111-4111-8111-111111111111";

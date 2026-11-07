@@ -11,16 +11,17 @@
 #             * tcm_delete_own_or_admin não guarda o último owner → grupo fica sem owner;
 #             * GRANT UPDATE na tabela team_conversations anula os REVOKEs de coluna
 #               (type, created_by, department_id seguem graváveis).
-#   BLOCO B — migration aplicada: create_team_group_conversation atômica (criador vira
+#   BLOCO B — migrations aplicadas: create_team_group_conversation atômica (criador vira
 #             owner, membro inválido desfaz tudo, departamento é get-or-create), INSERT
-#             direto só cria 'member', último owner não sai nem é rebaixado (promoção e
-#             transferência canônicas liberam a saída), UPDATE por coluna só em
-#             name/avatar_url/updated_at e autorização canônica via user_roles.
+#             direto só cria 'member' e só owner/admin/supervisor pode convidar; bootstrap
+#             permite apenas o próprio criador como primeiro membro. Último owner não sai
+#             nem é rebaixado; UPDATE por coluna só em name/avatar_url/updated_at.
 
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261004185228_team_membership_bootstrap_owner_grants.sql"
+membership_auth_migration="$repo_root/supabase/migrations/20261030160000_tcm_insert_member_conversation_authorization.sql"
 postgres_image="${TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-team-membership-test-$$"
 
@@ -68,6 +69,7 @@ expect_error_as() {
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
+[[ -f "$membership_auth_migration" ]] || fail "migration A2 nao encontrada: $membership_auth_migration"
 
 printf '== container: %s (imagem %s) ==\n' "$container_name" "$postgres_image"
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
@@ -339,7 +341,11 @@ psql_sql "UPDATE public.team_conversations SET department_id=NULL WHERE id='$G_O
 
 printf '\n============ BLOCO B — migration aplicada ============\n'
 psql_file "$migration" >/dev/null
+psql_file "$membership_auth_migration" >/dev/null
 psql_file "$tmp_dir/seed.sql" >/dev/null
+
+expect_value 'B.0 helper A2 e SECURITY DEFINER, search_path fixo e EXECUTE restrito' 't' \
+  "SELECT p.prosecdef AND p.proconfig @> ARRAY['search_path=public'] AND has_function_privilege('authenticated', p.oid, 'EXECUTE') AND NOT has_function_privilege('anon', p.oid, 'EXECUTE') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='can_insert_team_conversation_member' AND pg_get_function_arguments(p.oid)='_conversation_id uuid, _profile_id uuid, _member_role text';"
 
 CONV_B1="$(as_user "$ATILA" "SELECT public.create_team_group_conversation('Time X', ARRAY['$P_DORA']::uuid[], NULL);" | tail -n1)"
 [[ "$CONV_B1" =~ ^[0-9a-f-]{36}$ ]] || fail "B.1 a RPC nao devolveu uuid: $CONV_B1"
@@ -369,16 +375,21 @@ expect_value 'B.9 ...e NAO adiciona quem chamou depois (DORA segue fora)' '1' \
 expect_error_as 'B.10 INSERT direto com member_role=owner agora e barrado pela policy' \
   'row-level security' "$DORA" \
   "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_OLD','$P_EVA','owner');"
-expect_ok_as 'B.11 membro segue podendo adicionar como member (papel forjado, nao a entrada)' \
-  "$DORA" "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_OLD','$P_EVA','member');"
-psql_sql "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_OLD' AND profile_id='$P_EVA';" >/dev/null
+expect_error_as 'B.11 membro comum nao pode adicionar terceiros, mesmo como member' \
+  'row-level security' "$DORA" \
+  "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_OLD','$P_EVA','member');"
 
 expect_error_as 'B.12 quem nao e membro/criador/admin nao se auto-convida' \
   'row-level security' "$EVA" \
   "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_OLD','$P_EVA');"
-expect_ok_as 'B.13 fallback de bootstrap: o CRIADOR sem membership ainda anexa membros (como member)' \
+expect_ok_as 'B.13 bootstrap permite ao criador inserir somente a si proprio como primeiro membro' \
   "$CARLOS" "INSERT INTO public.team_conversations (id, type, name, created_by) VALUES ('e0000000-0000-0000-0000-0000000000c1','group','Do Carlos','$P_CARLOS');
-            INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('e0000000-0000-0000-0000-0000000000c1','$P_CARLOS'),('e0000000-0000-0000-0000-0000000000c1','$P_EVA');"
+            INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('e0000000-0000-0000-0000-0000000000c1','$P_CARLOS');"
+expect_value 'B.13a criador foi adicionado como member, sem elevacao direta' 'member' \
+  "SELECT member_role FROM public.team_conversation_members WHERE conversation_id='e0000000-0000-0000-0000-0000000000c1' AND profile_id='$P_CARLOS';"
+expect_error_as 'B.13b criador nao pode usar bootstrap para inserir terceiro' \
+  'row-level security' "$CARLOS" \
+  "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('e0000000-0000-0000-0000-0000000000c1','$P_EVA');"
 
 expect_ok_as 'B.14 DELETE do ultimo owner nao estoura erro: a RLS filtra a linha' \
   "$OTTO" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_OTTO';"
@@ -440,10 +451,18 @@ expect_error_as 'B.37 UPDATE de department_id tambem negado' \
 expect_value 'B.38 created_by intacto depois das tentativas' "$P_OTTO" \
   "SELECT created_by FROM public.team_conversations WHERE id='$G_OLD';"
 
-expect_ok_as 'B.39 admin CANONICO (user_roles, profiles.role=agent) adiciona membro' \
+expect_ok_as 'B.39 owner da conversa adiciona terceiro como member' \
+  "$OTTO" "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_EVA');"
+expect_value 'B.39a insercao direta de owner nao eleva o papel do convidado' 'member' \
+  "SELECT member_role FROM public.team_conversation_members WHERE conversation_id='$G_ROLE' AND profile_id='$P_EVA';"
+psql_sql "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_ROLE' AND profile_id='$P_EVA'; UPDATE public.team_conversation_members SET member_role='owner' WHERE conversation_id='$G_OLD' AND profile_id='$P_DORA';" >/dev/null
+expect_error_as 'B.39b owner em outra conversa nao pode adicionar terceiro nesta conversa' \
+  'row-level security' "$DORA" \
+  "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_EVA');"
+expect_ok_as 'B.39c admin CANONICO (user_roles, profiles.role=agent) adiciona membro' \
   "$ADM" "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_EVA');"
 expect_error_as 'B.40 profiles.role=admin SEM user_roles nao vale mais (autorizacao canonica)' \
   'row-level security' "$PSEUDO" \
   "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_DORA');"
 
-printf '\nPASS: TC-003 — bootstrap atomico por RPC (sem orfao), INSERT direto so cria member, ultimo owner protegido na saida e no rebaixamento, transferencia canonica e grants efetivos por coluna.\n'
+printf '\nPASS: TC-003/A2 — bootstrap atomico, self-bootstrap restrito, terceiros apenas por owner da conversa ou admin/supervisor, sem escalacao direta de papel; ultimo owner e grants por coluna protegidos.\n'

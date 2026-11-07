@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, gotoOnboardingContacts } from './fixtures/onboarding-isolated';
 
-import { gotoContacts } from './fixtures/contacts-page';
+test.use({ storageState: { cookies: [], origins: [] } });
+// Each test creates its own local Auth user and completes a real UI login.
+test.setTimeout(120_000);
 
 /**
  * Overlay do tour de onboarding (`src/components/onboarding/WelcomeModal.tsx`):
@@ -19,14 +21,10 @@ import { gotoContacts } from './fixtures/contacts-page';
  * teclado, (c) a decisão não volta em navegador novo e (d) dispensado o tour, o
  * app volta a responder ao clique.
  *
- * Estado tolerado: se o usuário de teste já concluiu o tour (linha em
- * `user_settings`, que é o resultado normal depois da correção), o modal não abre.
- * O teste do invariante continua rodando; os que dependem do modal aberto são
- * pulados com motivo explícito.
- *
- * Sem `mode: 'serial'`: uma falha num teste não pode esconder o resultado do
- * outro. O estado compartilhado (a linha em `user_settings`) é tratado pelo skip
- * explícito, e o CI roda com workers=1.
+ * Cada teste/tentativa tem usuário sintético próprio, sessão vazia e a coluna
+ * `user_settings.onboarding_completed` comprovadamente false. O modal precisa
+ * abrir: sua ausência é falha, sem depender do estado de outro teste. A fixture
+ * preserva os demais usuários e remove somente a conta cuja posse reconfirmou.
  */
 
 /** Espera curta de propósito: overlay que intercepta cliques precisa falhar rápido. */
@@ -83,42 +81,38 @@ async function expectClickLands(page: Page): Promise<void> {
 
 test.describe('tour de onboarding não pode bloquear a aplicação', () => {
   test('é um diálogo, fecha no Escape, não volta em navegador novo e libera o clique', async ({ page }) => {
-    await gotoContacts(page);
+    await gotoOnboardingContacts(page);
 
     const abriu = await tourVisible(page);
     test.info().annotations.push({
       type: 'tour-aberto',
-      description: abriu ? 'sim' : 'não (decisão já persistida em user_settings)',
+      description: abriu ? 'sim' : 'não (usuário isolado ainda não concluiu o tour)',
     });
+    expect(abriu, 'o usuário novo precisa exercitar o tour aberto').toBe(true);
 
-    if (abriu) {
-      // O diálogo é o CARD do modal (o overlay é só backdrop) e o nome acessível vem do h2 via
-      // aria-labelledby="welcome-modal-title" -> "Bem-vindo...". Antes o nome vinha de um
-      // aria-label="Boas-vindas" no overlay, que era um SEGUNDO diálogo aninhado.
-      await expect(page.getByRole('dialog', { name: /bem-vindo/i })).toHaveAttribute(
-        'aria-modal',
-        'true',
-      );
+    // O diálogo é o CARD do modal (o overlay é só backdrop) e o nome acessível vem do h2 via
+    // aria-labelledby="welcome-modal-title" -> "Bem-vindo...". Antes o nome vinha de um
+    // aria-label="Boas-vindas" no overlay, que era um SEGUNDO diálogo aninhado.
+    await expect(page.getByRole('dialog', { name: /bem-vindo/i })).toHaveAttribute(
+      'aria-modal',
+      'true',
+    );
 
-      await page.keyboard.press('Escape');
-      await expect(skipButton(page)).toBeHidden({ timeout: PROBE });
+    await page.keyboard.press('Escape');
+    await expect(skipButton(page)).toBeHidden({ timeout: PROBE });
 
-      // "Navegador novo": sem a chave local, a única memória possível é o banco.
-      await forgetLocalTourFlag(page);
-      await page.reload();
-      await expectNoTour(page);
-    } else {
-      // Nada de overlay pendurado por cima da tela.
-      await expectNoTour(page);
-    }
+    // "Navegador novo": sem a chave local, a única memória possível é o banco.
+    await forgetLocalTourFlag(page);
+    await page.reload();
+    await expectNoTour(page);
 
     // O invariante do relato: com o tour fora do caminho, o clique chega no app.
     await expectClickLands(page);
   });
 
   test('"Pular tour" fecha e a decisão sobrevive a navegador novo', async ({ page }) => {
-    await gotoContacts(page);
-    test.skip(!(await tourVisible(page)), 'tour não abriu: decisão já persistida em user_settings');
+    await gotoOnboardingContacts(page);
+    expect(await tourVisible(page), 'o usuário novo precisa exercitar o tour aberto').toBe(true);
 
     await skipButton(page).click({ timeout: PROBE });
     await expect(skipButton(page)).toBeHidden({ timeout: PROBE });

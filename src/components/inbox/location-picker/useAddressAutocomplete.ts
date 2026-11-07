@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { suggestPlaces, retrievePlaceResult, searchPlaces, getCachedSuggest } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
@@ -263,7 +263,13 @@ function toForwardSuggestion(place: GeoSearchPlace, index: number): GeoSuggestio
  * existem para o segundo consumidor não herdar filtro nem telemetria do primeiro.
  */
 export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): UseAddressAutocompleteResult {
-  const { token, proximity, enabled, types, sessionSource = 'picker' } = options;
+  const { token, proximity: requestedProximity, enabled, types, sessionSource = 'picker' } = options;
+  const proximityLat = requestedProximity?.lat;
+  const proximityLng = requestedProximity?.lng;
+  // Eventos do mapa podem entregar outro objeto para o mesmo centro, sem mudar a busca.
+  const proximity = useMemo(() => proximityLat === undefined || proximityLng === undefined
+    ? undefined
+    : { lat: proximityLat, lng: proximityLng }, [proximityLat, proximityLng]);
   const [state, dispatch] = useReducer(reducer, initialState);
   // Consulta corrente do /suggest: aborta a anterior antes de abrir uma nova, pra resposta
   // lenta da 1ª nunca sobrescrever a 2ª.

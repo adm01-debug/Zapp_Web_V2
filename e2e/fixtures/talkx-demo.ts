@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
+import { SUPABASE_URL, SUPABASE_STORAGE_KEY } from './supabase-env';
 
 /**
  * Backend fake do Talk X para E2E determinístico (plano V4, etapa X003).
@@ -9,7 +10,7 @@ import type { Page, Route } from '@playwright/test';
  * e intercepta, via `page.route`, as chamadas do módulo:
  *   - `rest/v1/talkx_*`            → GET devolve a fixture da tela; escrita → 403
  *   - `rest/v1/rpc/talkx_*`        → escrita não prevista (403)
- *   - `functions/v1/talkx-*`       → escrita não prevista (403)
+ *   - `functions/v1/talkx-*        → escrita não prevista (403)
  *
  * Qualquer escrita não prevista é bloqueada com o corpo `{ "message": "escrita não prevista" }`
  * — o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)
@@ -18,7 +19,7 @@ import type { Page, Route } from '@playwright/test';
  * Contrato de crescimento (X003/X004): a fixture cresce junto com cada etapa de
  * tela — a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no
  * JSON da tela correspondente. Enquanto a tela não tem fixture, o arquivo é `{}`
- * e a régua a PULA (não captura, não falha). Referenciar uma fixture `{}` lança
+ * e a régua a PULA (não captura, não falha). Referenciar uma fixtura `{}` lança
  * `FixtureVaziaError` em vez de renderizar uma tela vazia em silêncio
  * (ver e2e/README.md e docs/talkx/v4/etapas/F00-regua-e-governanca.md).
  *
@@ -147,7 +148,7 @@ export async function mockTalkXBackend(page: Page, tela: string) {
 
 export const FAKE_USER_ID = '00000000-0000-4000-8000-000000000001';
 const FAKE_EMAIL = 'visual@test.local';
-const AUTH_STORAGE_KEY = 'sb-tnnnlkbymytvtqngbbqh-auth-token';
+const AUTH_STORAGE_KEY = SUPABASE_STORAGE_KEY;
 const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z — nunca expira no teste
 
 function b64url(value: unknown): string {
@@ -170,7 +171,7 @@ const FAKE_SESSION = {
     aud: 'authenticated',
     exp: FAKE_EXP,
     iat: 0,
-    iss: 'https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1',
+    iss: SUPABASE_URL + '/auth/v1',
   }),
   refresh_token: 'fake-refresh-token',
   expires_at: FAKE_EXP,
@@ -219,7 +220,7 @@ export async function mockTalkXAuth(page: Page) {
   // (`data = data[0]`), então array serve para os dois formatos de leitura.
   // Responder objeto quebra quem LISTA `profiles` sem filtro de id (passo 1 do
   // wizard de campanha, V25: `.select('id,name,email').eq('is_active', true)`):
-  // o array vira objeto, `(ed.owners ?? []).map` estoura TypeError e a tela cai
+  // o array vira objeto, `(ed.owners ?? []).map` estoura TypeError a tela cai
   // no error boundary ("Erro ao carregar Campanhas") em vez de renderizar.
   await page.route(/\/rest\/v1\/profiles/, (route) => {
     if (!isRead(route.request().method())) return writeBlocked(route);
@@ -276,6 +277,19 @@ export async function mockTalkXAuth(page: Page) {
     contentType: 'application/json',
     body: JSON.stringify([{ onboarding_completed: true }]),
   }));
+
+  // GoTrue auth: JWT com assinatura falsa não passa na validação do servidor local;
+  // mocamos /auth/v1/user e /auth/v1/token para o app não receber 403 bad_jwt.
+  await page.route(/\/auth\/v1\/user/, (route) =>
+    isRead(route.request().method())
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FAKE_SESSION.user) })
+      : writeBlocked(route),
+  );
+  await page.route(/\/auth\/v1\/token/, (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FAKE_SESSION) })
+      : writeBlocked(route),
+  );
 }
 
 /**

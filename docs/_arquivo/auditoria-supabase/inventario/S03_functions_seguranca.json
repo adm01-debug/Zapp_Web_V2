@@ -1,0 +1,36 @@
+{
+  "secao": "3_seguranca",
+  "gerado_em": "2026-10-30",
+  "security_definer_functions": {
+    "total": 403,
+    "com_search_path_inseguro": 0,
+    "nota": "TODOS os 403 SECURITY DEFINER tem search_path configurado. Nenhuma insegura por esse criterio."
+  },
+  "functions_com_execute_dinamico": [
+    {"schema": "public", "func": "guard_talkx_template_update", "risco": "trigger - precisa revisar SQL dinamico"},
+    {"schema": "public", "func": "increment_custom_emoji_use", "risco": "baixo - provavelmente UPDATE dinamico"},
+    {"schema": "public", "func": "mcp_exec", "risco": "CRITICO - funcao de execucao SQL arbitraria pelo MCP, deve verificar quem pode chamar"},
+    {"schema": "public", "func": "merge_contacts_atomic", "risco": "ALTO - operacao destrutiva, SQL dinamico"},
+    {"schema": "public", "func": "purge_gmail_account_data", "risco": "ALTO - purge com EXECUTE, risco de injecao de schema/tabela"},
+    {"schema": "public", "func": "purge_talkx_expired_data", "risco": "MEDIO"},
+    {"schema": "public", "func": "score_security_acl", "risco": "MEDIO - leitura dinamica de ACL"},
+    {"schema": "public", "func": "talkx_audience_query", "risco": "ALTO - query de audiencia com SQL dinamico, potencial SQLi se input nao sanitizado"},
+    {"schema": "public", "func": "talkx_engine_cron_runs", "risco": "MEDIO"},
+    {"schema": "public", "func": "trigger_pending_multiplix_dispatches", "risco": "BAIXO"},
+    {"schema": "public", "func": "trigger_talkx_engine_tick", "risco": "BAIXO"},
+    {"schema": "realtime", "func": "apply_rls", "risco": "Sistema interno Supabase"},
+    {"schema": "extensions", "func": "grant_pg_graphql_access", "risco": "Sistema interno"},
+    {"schema": "extensions", "func": "grant_pg_net_access", "risco": "Sistema interno"}
+  ],
+  "service_role_hardcoded_no_fonte": {
+    "encontrado": false,
+    "nota": "Mencoes a 'service_role' no codigo src/ sao apenas strings em testes e comentarios, NAO chaves JWT"
+  },
+  "anon_key_hardcoded": {
+    "arquivo": "src/integrations/supabase/client.ts",
+    "role_do_jwt": "anon",
+    "projeto": "tnnnlkbymytvtqngbbqh",
+    "severidade": "INFO",
+    "nota": "Anon key e PUBLICA e intencionalmente hardcoded no cliente - padrao Supabase. Nao e falha de seguranca."
+  }
+}

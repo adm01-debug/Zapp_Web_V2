@@ -145,10 +145,13 @@ export function RadarPhase8to15Panel({
             Risco de perda {lossRisk.level === 'high' ? 'alto' : 'médio'}
           </p>
           {lossRisk.recoveryAction && (
+            <p className="mt-0.5 text-xs text-muted-foreground">{lossRisk.recoveryAction}</p>
+          )}
+          {lossRisk.script && (
             <button
               type="button"
               className="mt-1 text-xs text-primary hover:underline"
-              onClick={() => onInsertText(lossRisk.recoveryAction)}
+              onClick={() => onInsertText(lossRisk.script)}
             >
               Usar script de recuperação
             </button>

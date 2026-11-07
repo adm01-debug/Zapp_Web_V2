@@ -204,3 +204,51 @@ describe('pickUniquePhoneMatch (T14)', () => {
     expect(pickUniquePhoneMatch([], '11999992048')).toBeNull();
   });
 });
+
+describe('identidade BR com país explícito', () => {
+  it.each([
+    '+14155552671',
+    '+4930123456',
+    '+33123456789',
+    '+442079460123',
+    '+1 (415) 555-2671',
+    '  +33 1 23 45 67 89  ',
+  ])('recusa outro país e preserva a grafia de %s', (raw) => {
+    expect(normalizeE164BR(raw)).toBeNull();
+    expect(formatPhoneBR(raw)).toBe(raw.trim());
+    expect(phoneQueryVariants(raw)).toEqual([]);
+    expect(phonesMatchExact(raw, raw)).toBe(false);
+  });
+
+  it.each([
+    ['+14155552671', '+5514155552671'],
+    ['+4930123456', '+554930123456'],
+    ['+33123456789', '+5533123456789'],
+  ])('não confunde %s com a identidade BR %s', (foreign, brazil) => {
+    expect(phonesMatchExact(foreign, brazil)).toBe(false);
+    expect(phonesMatchExact(brazil, foreign)).toBe(false);
+    const foreignContact = { id: 'foreign', phone: foreign };
+    const brazilContact = { id: 'br', phone: brazil };
+    expect(pickUniquePhoneMatch([foreignContact], brazil)).toBeNull();
+    expect(pickUniquePhoneMatch([brazilContact], foreign)).toBeNull();
+    expect(pickUniquePhoneMatch([foreignContact, brazilContact], foreign)).toBeNull();
+    expect(pickUniquePhoneMatch([foreignContact, brazilContact], brazil)).toBe('br');
+    expect(pickUniquePhoneMatch([brazilContact, foreignContact], brazil)).toBe('br');
+  });
+
+  it('mantém +55 com máscara, DDD 55 local e a entrada ambígua sem +', () => {
+    expect(normalizeE164BR('  +55 (11) 99999-2048  ')).toBe(CANONICAL);
+    expect(normalizeE164BR('+ 55 11 99999 2048')).toBe(CANONICAL);
+    expect(normalizeE164BR('5599999204')).toBe('+5555999999204');
+    expect(normalizeE164BR('5533334444')).toBe('+555533334444');
+    expect(normalizeE164BR('14155552671')).toBe('+5514155552671');
+  });
+
+  it('mantém incompletos sem adivinhar um número brasileiro', () => {
+    for (const raw of ['+', '+55', '+55 11']) {
+      expect(normalizeE164BR(raw)).toBeNull();
+      expect(formatPhoneBR(raw)).toBe(raw);
+      expect(phoneQueryVariants(raw)).toEqual([]);
+    }
+  });
+});

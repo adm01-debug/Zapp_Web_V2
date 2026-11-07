@@ -49,7 +49,7 @@ test('o passo de replay nao usa o docker-shim (ele FINJE o docker e nao aplica m
 });
 
 test('a imagem fixada por digest vive num lugar SO (o script), nao no job', () => {
-  assert.match(script, /public\.ecr\.aws\/supabase\/postgres:[0-9.]+@sha256:[0-9a-f]{64}/u);
+  assert.match(script, /ghcr\.io\/supabase\/postgres:[0-9.]+@sha256:[0-9a-f]{64}/u);
   // O job so EXTRAI a imagem do script; nao carrega um digest proprio (senao os dois divergem).
   assert.doesNotMatch(job, /[0-9a-f]{64}/u, 'nao duplique o digest da imagem no workflow');
   assert.match(job, /grep -m1 -oE[^\n]*scripts\/db-audit\/replay-local\.sh/u);

@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-env';
+import { insertIsolatedFixtureMessage } from '../../scripts/e2e-isolated/fixture-access.mjs';
 // ambos públicos por design (URL do projeto + anon key). Duplicados aqui porque o
 // Contato fixo em produção, atribuído ao usuário de teste E2E
 // (e2e.zapp@promobrindes.com.br, perfil agente) — é o único contato que esse
@@ -67,8 +68,9 @@ async function getAccessToken(page: Page): Promise<string> {
 //    c.messages.length === 0 (FSM mode exige mensagens para não inflar a inbox
 //    com contatos históricos sem atividade). O único message do fixture é de
 //    2026-09-24 e cai fora da janela de 1000 mensagens após um dia de tráfego.
-//    Fix: inserir uma message fresca antes de recarregar a página — a policy
-//    INSERT de messages não tem WITH CHECK (qualquer authenticated insere).
+//    Fix: inserir uma message fresca antes de recarregar a página. No backend
+//    isolado, o guard de proveniência exige service_role para sender='contact';
+//    o helper Node admite o ambiente e o usuário antes desse preparo fixo.
 export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
   const accessToken = await getAccessToken(page);
   const headers = {
@@ -96,10 +98,18 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
     }
   }
 
+  if (process.env.ZAPP_E2E_LOCAL === '1') {
+    await insertIsolatedFixtureMessage({
+      baseURL: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY, accessToken,
+    });
+    return;
+  }
+
   // 2. Inserir mensagem fresca para garantir que o contato apareça na inbox
   //    (InboxFilters exige messages.length > 0; janela de 1000 msgs pode deixar
   //    mensagens antigas de fora quando o volume diário ultrapassa esse limite).
-  //    A policy INSERT de messages não tem WITH CHECK — authenticated pode inserir.
+  //    Ramo legado preservado; o guard de proveniência atual pode recusar este
+  //    INSERT autenticado de entrada. O preparo privilegiado só existe no isolado.
   const msgResponse = await page.request.post(
     `${SUPABASE_URL}/rest/v1/messages`,
     {

@@ -26,7 +26,7 @@ test.describe('Contatos — visão geral', () => {
   });
 
   test('busca por "a" traz resultados e limpar volta à lista completa', async ({ page }) => {
-    const search = page.getByPlaceholder(/Buscar por nome, telefone/);
+    const search = page.getByPlaceholder(/^Buscar por nome, (?:telefone, email|apelido) ou empresa…$/);
     await search.fill('a');
     await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });
     await search.fill('');

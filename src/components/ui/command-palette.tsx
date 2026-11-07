@@ -39,6 +39,53 @@ export function CommandPalette({
   const [searchResults, setSearchResults] = React.useState<CommandItem[]>([]);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const focusReturnRef = React.useRef<{
+    open: boolean;
+    content: HTMLDivElement | null;
+    origin: HTMLElement | null;
+    href: string | null;
+    restore: boolean;
+  }>({ open: false, content: null, origin: null, href: null, restore: true });
+
+  React.useLayoutEffect(() => {
+    const state = focusReturnRef.current;
+    if (open && !state.open) state.restore = true;
+    state.open = open;
+  }, [open]);
+
+  const rememberContent = React.useCallback((node: HTMLDivElement | null) => {
+    // O Radix entrega o autofocus de saída depois da desmontagem; retenha o dono
+    // até esse evento para não consumir a origem de uma paleta já reaberta.
+    if (node) focusReturnRef.current.content = node;
+  }, []);
+
+  const captureFocusOrigin = React.useCallback(() => {
+    const state = focusReturnRef.current;
+    const active = document.activeElement;
+    if (state.content?.contains(active)) return;
+    state.origin = active instanceof HTMLElement && active !== document.body &&
+      active !== document.documentElement ? active : null;
+    state.href = state.origin ? document.location.href : null;
+  }, []);
+
+  const restoreFocusOrigin = React.useCallback((event: Event) => {
+    event.preventDefault();
+    const state = focusReturnRef.current;
+    const content = state.content;
+    if (state.open || !content || event.currentTarget !== content || content.isConnected) return;
+    const { origin, href, restore } = state;
+    state.origin = null;
+    state.href = null;
+    state.content = null;
+    if (!origin || !restore || href !== document.location.href ||
+      origin.ownerDocument !== document || !origin.isConnected || origin.matches(':disabled') ||
+      origin.closest('[aria-disabled="true"], [inert], [hidden], [aria-hidden="true"]')) return;
+    const active = document.activeElement;
+    if (active === origin) return;
+    if (active && active !== document.body && active !== document.documentElement &&
+      !content.contains(active)) return;
+    origin.focus({ preventScroll: true });
+  }, []);
 
   const allCommands = React.useMemo(() => [...navigationCommands, ...defaultActionCommands, ...customCommands], [navigationCommands, customCommands]);
 
@@ -87,6 +134,14 @@ export function CommandPalette({
     [query, groupedCommands, quickAccessItems, recentCommands]
   );
 
+  // O listener de teclado é registrado uma única vez enquanto a paleta está aberta (deps [open]),
+  // então ele não pode capturar `allItems`/`selectedIndex` do render em que foi criado (stale
+  // closure). Espelhamos os valores em refs, atualizados a cada render, e o handler lê sempre delas.
+  const allItemsRef = React.useRef(allItems);
+  const selectedIndexRef = React.useRef(selectedIndex);
+  allItemsRef.current = allItems;
+  selectedIndexRef.current = selectedIndex;
+
   // R2-INF-032 (#377): cada digitação é um TERMO novo. A resposta de um termo anterior que ainda
   // estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar
   // resultado — sem esta trava, a resposta do catálogo ANTIGO substituía os resultados da consulta
@@ -127,19 +182,22 @@ export function CommandPalette({
     if (item.action) item.action();
     else if (item.href) window.location.href = item.href;
     else if (item.id.startsWith('nav-')) onNavigate?.(item.id.replace('nav-', ''));
+    focusReturnRef.current.restore = false;
     onOpenChange(false); setQuery('');
   }, [onNavigate, onOpenChange]);
 
   React.useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (!open) return;
-      if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex((p) => (p + 1) % Math.max(allItems.length, 1)); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex((p) => (p - 1 + allItems.length) % Math.max(allItems.length, 1)); }
-      else if (e.key === 'Enter' && allItems[selectedIndex]) { e.preventDefault(); executeCommand(allItems[selectedIndex]); }
+      const items = allItemsRef.current;
+      const idx = selectedIndexRef.current;
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex((p) => (p + 1) % Math.max(items.length, 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex((p) => (p - 1 + items.length) % Math.max(items.length, 1)); }
+      else if (e.key === 'Enter' && items[idx]) { e.preventDefault(); executeCommand(items[idx]); }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [open, allItems, selectedIndex, executeCommand]);
+  }, [open, executeCommand]);
 
   // Os dois ajustes abaixo são entregues no próximo tick para não mudar estado durante o
   // render. Cada id fica guardado em ref e o retorno do efeito limpa o que estiver pendente —
@@ -150,12 +208,12 @@ export function CommandPalette({
 
   React.useEffect(() => {
     if (!open) { resetTimerRef.current = setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
-    else focusTimerRef.current = setTimeout(() => inputRef.current?.focus(), 0);
+    else focusTimerRef.current = setTimeout(() => { captureFocusOrigin(); inputRef.current?.focus(); }, 0);
     return () => {
       if (resetTimerRef.current) { clearTimeout(resetTimerRef.current); resetTimerRef.current = null; }
       if (focusTimerRef.current) { clearTimeout(focusTimerRef.current); focusTimerRef.current = null; }
     };
-  }, [open]);
+  }, [open, captureFocusOrigin]);
 
   const categoryIcons: Record<CommandCategory, React.ReactNode> = {
     navigation: <ArrowRight className="h-3 w-3" />, action: <Zap className="h-3 w-3" />,
@@ -177,7 +235,9 @@ export function CommandPalette({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="max-w-2xl p-0 overflow-hidden gap-0">
+      <DialogContent ref={rememberContent} onOpenAutoFocus={captureFocusOrigin}
+        onCloseAutoFocus={restoreFocusOrigin}
+        aria-describedby={undefined} className="max-w-2xl p-0 overflow-hidden gap-0">
         <DialogTitle className="sr-only">Paleta de comandos</DialogTitle>
         <div className="flex items-center border-b border-border px-4">
           <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />

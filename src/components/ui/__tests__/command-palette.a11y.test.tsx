@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import * as React from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { CommandPalette } from '@/components/ui/command-palette';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 // a11y do ⌘K: o campo de busca é um `combobox` nomeado que aponta para a lista
 // (`listbox`) e anuncia o item realçado (`aria-activedescendant`); cada item é uma
@@ -137,5 +139,219 @@ describe('CommandPalette — sem violações de axe', () => {
     );
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'caneca' } });
     expect(await axe(document.body)).toHaveNoViolations();
+  });
+});
+
+describe('CommandPalette — devolução de foco sem DialogTrigger', () => {
+  const fixtures: HTMLElement[] = [];
+  let originalHref: string;
+
+  beforeEach(() => {
+    originalHref = window.location.href;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  });
+
+  afterEach(() => {
+    try {
+      cleanup();
+      act(() => { vi.runOnlyPendingTimers(); });
+    } finally {
+      fixtures.splice(0).forEach((element) => element.remove());
+      window.history.replaceState(null, '', originalHref);
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
+  });
+
+  const flushFocus = () => act(() => { vi.runOnlyPendingTimers(); });
+
+  function originElement(kind: 'input' | 'button' | 'contenteditable' = 'input') {
+    const element = document.createElement(kind === 'contenteditable' ? 'div' : kind);
+    if (kind === 'contenteditable') {
+      element.setAttribute('contenteditable', 'true');
+      element.tabIndex = 0;
+    }
+    document.body.appendChild(element);
+    fixtures.push(element);
+    element.focus();
+    expect(element).toHaveFocus();
+    return element;
+  }
+
+  function controlledPalette(
+    props: Omit<React.ComponentProps<typeof CommandPalette>, 'open' | 'onOpenChange'> = {},
+    strict = false,
+  ) {
+    let view: ReturnType<typeof render>;
+    const setOpen = (open: boolean) => view.rerender(tree(open));
+    const tree = (open: boolean) => {
+      const palette = <CommandPalette {...props} open={open} onOpenChange={setOpen} />;
+      return strict ? <React.StrictMode>{palette}</React.StrictMode> : palette;
+    };
+    view = render(tree(false));
+    return {
+      setOpen,
+      open() {
+        setOpen(true);
+        flushFocus();
+        const input = screen.getByRole('combobox', { name: 'Buscar comandos' });
+        expect(input).toHaveFocus();
+        return input;
+      },
+    };
+  }
+
+  for (const kind of ['input', 'button', 'contenteditable'] as const) {
+    for (const close of ['Escape', 'Fechar', 'controle externo'] as const) {
+      it(`devolve o foco ao ${kind} após ${close}`, () => {
+        const origin = originElement(kind);
+        const palette = controlledPalette();
+        const input = palette.open();
+
+        if (close === 'Escape') fireEvent.keyDown(input, { key: 'Escape' });
+        else if (close === 'Fechar') fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+        else palette.setOpen(false); // mesmo contrato controlado usado pelo toggle do provider
+        flushFocus();
+
+        expect(screen.queryByRole('dialog', { name: 'Paleta de comandos' })).not.toBeInTheDocument();
+        expect(origin).toHaveFocus();
+      });
+    }
+  }
+
+  const invalidOrigins: [string, (element: HTMLElement) => void][] = [
+    ['removida', (element) => element.remove()],
+    ['disabled', (element) => element.setAttribute('disabled', '')],
+    ['inert', (element) => element.setAttribute('inert', '')],
+    ['aria-disabled', (element) => element.setAttribute('aria-disabled', 'true')],
+  ];
+  for (const [reason, invalidate] of invalidOrigins) {
+    it(`não tenta focar a origem ${reason}`, () => {
+      const origin = originElement();
+      const palette = controlledPalette();
+      palette.open();
+      const focus = vi.spyOn(origin, 'focus');
+      invalidate(origin);
+
+      palette.setOpen(false);
+      flushFocus();
+
+      expect(focus).not.toHaveBeenCalled();
+      expect(origin).not.toHaveFocus();
+    });
+  }
+
+  it('preserva o foco de outro diálogo aberto antes do callback de saída', () => {
+    const origin = originElement();
+    const palette = controlledPalette();
+    palette.open();
+    palette.setOpen(false);
+    render(
+      <Dialog open>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Próximo diálogo</DialogTitle>
+          <input aria-label="Destino do próximo diálogo" />
+        </DialogContent>
+      </Dialog>,
+    );
+    const destination = screen.getByRole('textbox', { name: 'Destino do próximo diálogo' });
+    expect(destination).toHaveFocus();
+
+    flushFocus();
+
+    expect(destination).toHaveFocus();
+    expect(origin).not.toHaveFocus();
+  });
+
+  for (const branch of ['action', 'navigation'] as const) {
+    it(`não restaura após ${branch} enquanto o destino ainda vai receber foco`, () => {
+      const origin = originElement();
+      const callback = vi.fn();
+      const palette = controlledPalette({
+        navigationCommands: [{
+          id: branch === 'navigation' ? 'nav-tasks' : 'action-local',
+          title: 'Continuar operação', category: 'action',
+          ...(branch === 'action' ? { action: callback } : {}),
+        }],
+        onNavigate: callback,
+      });
+      palette.open();
+
+      fireEvent.click(screen.getByRole('option', { name: 'Continuar operação' }));
+      flushFocus();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      if (branch === 'navigation') expect(callback).toHaveBeenCalledWith('tasks');
+      expect(window.location.href).toBe(originalHref);
+      expect(screen.queryByRole('dialog', { name: 'Paleta de comandos' })).not.toBeInTheDocument();
+      expect(origin).not.toHaveFocus();
+    });
+  }
+
+  it('não restaura o elemento da tela anterior quando a URL mudou', () => {
+    const origin = originElement();
+    const palette = controlledPalette();
+    palette.open();
+    const destination = new URL(window.location.href);
+    destination.searchParams.set('view', 'tasks');
+    window.history.replaceState(null, '', destination.href);
+
+    palette.setOpen(false);
+    flushFocus();
+
+    expect(origin).not.toHaveFocus();
+  });
+
+  it('a limpeza do StrictMode não restaura enquanto a paleta continua aberta', () => {
+    const origin = originElement();
+    const palette = controlledPalette({}, true);
+    const input = palette.open();
+    expect(origin).not.toHaveFocus();
+    expect(input).toHaveFocus();
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    flushFocus();
+
+    expect(origin).toHaveFocus();
+  });
+
+  it('o callback da primeira abertura não consome a origem de uma reabertura rápida', () => {
+    const firstOrigin = originElement();
+    const palette = controlledPalette();
+    palette.open();
+    palette.setOpen(false);
+    const nextOrigin = originElement('button');
+    palette.setOpen(true);
+    flushFocus();
+    const input = screen.getByRole('combobox', { name: 'Buscar comandos' });
+    expect(input).toHaveFocus();
+    expect(firstOrigin).not.toHaveFocus();
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    flushFocus();
+
+    expect(nextOrigin).toHaveFocus();
+    expect(firstOrigin).not.toHaveFocus();
+  });
+
+  it('retorna à origem do diálogo subjacente que continua aberto', () => {
+    render(
+      <Dialog open>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Diálogo de origem</DialogTitle>
+          <input aria-label="Origem no diálogo" />
+        </DialogContent>
+      </Dialog>,
+    );
+    const origin = screen.getByRole('textbox', { name: 'Origem no diálogo' });
+    expect(origin).toHaveFocus();
+    const palette = controlledPalette();
+    const input = palette.open();
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    flushFocus();
+
+    expect(origin).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Diálogo de origem' })).toBeInTheDocument();
   });
 });
