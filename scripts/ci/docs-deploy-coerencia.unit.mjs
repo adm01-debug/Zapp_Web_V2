@@ -7,7 +7,7 @@ const ler = (caminho) => readFile(new URL(caminho, import.meta.url), 'utf8');
 const [workflow, deployment, claude, template, ci, readmeCi] = await Promise.all([
   ler('../../.github/workflows/deploy-functions.yml'),
   ler('../../docs/DEPLOYMENT.md'),
-  ler('../../CLAUDE.md'),
+  ler('../../docs/agentes/vercel-deploy.md'), // CLAUDE.md e so `@AGENTS.md`; a regra de deploy mora aqui
   ler('../../.github/PULL_REQUEST_TEMPLATE.md'),
   ler('../../.github/workflows/ci.yml'),
   ler('../../docs/ci/README.md'),
@@ -28,10 +28,10 @@ test('GA37: DEPLOYMENT.md acompanha o gatilho automático de Edge Functions', ()
   assert.doesNotMatch(deployment, /deployadas \*\*somente\*\* via `workflow_dispatch`/i);
 });
 
-test('GA37: CLAUDE.md distingue a regra atual do registro histórico', () => {
+test('GA37: docs/agentes/vercel-deploy.md distingue a regra atual do registro histórico', () => {
   assert.match(claude, /Retificação de 2026-10-07 — Edge Functions/);
   const inicio = claude.indexOf('### Deploy e edge functions');
-  assert.notEqual(inicio, -1, 'seção atual de deploy sumiu do CLAUDE.md');
+  assert.notEqual(inicio, -1, 'seção atual de deploy sumiu de docs/agentes/vercel-deploy.md');
   const secao = claude.slice(inicio, claude.indexOf('\n### ', inicio + 1));
   assert.match(secao, /deploy automático/i);
   assert.doesNotMatch(secao, /NÃO sobem com o front|aprovação de Joaquim/);

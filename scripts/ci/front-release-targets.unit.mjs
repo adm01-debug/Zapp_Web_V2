@@ -157,7 +157,7 @@ test('workflow mantém V2 e V3 em jobs separados e só compara a main com V2', (
 
 test('falha do monitor abre issue e a documentação não confunde V3 com deploy V2', () => {
   const notify = readFileSync('.github/workflows/notifica-falha-main.yml', 'utf8');
-  const claude = readFileSync('CLAUDE.md', 'utf8');
+  const claude = readFileSync('docs/agentes/vercel-deploy.md', 'utf8'); // CLAUDE.md e so `@AGENTS.md`
   const runbook = readFileSync('docs/runbooks/deploy.md', 'utf8');
   const readme = readFileSync('scripts/vercel/README.md', 'utf8');
   assert.match(notify, /- Front release targets \(V2\/V3\)/u);
