@@ -4,7 +4,7 @@
 import * as jose from 'jsr:@panva/jose@6.2.15'
 import { startMemoryPressureLoop } from './memory-pressure.ts'
 
-console.log('main function started')
+console.warn('main function started')
 startMemoryPressureLoop()
 
 addEventListener('unhandledrejection', (ev) => {
@@ -302,7 +302,7 @@ async function isValidHybridJWT(jwt: string): Promise<AuthFailure | null> {
   }
 
   if (jwtAlgorithm === 'HS256') {
-    console.log(`Legacy token type detected, attempting ${jwtAlgorithm} verification.`)
+    console.warn(`Legacy token type detected, attempting ${jwtAlgorithm} verification.`)
 
     return await isValidLegacyJWT(jwt)
   }
