@@ -9,6 +9,7 @@ Uso e tamanho em `stats.md`.
 | ops.hermes_change_log | idx_hermes_change_log_run | btree | run_id | não | sim |  |
 | ops.hermes_change_log | idx_hermes_change_log_status | btree | status | não | sim |  |
 | public._rb_message_reactions_contato_20261007001008 | _rb_message_reactions_contato_20261007001008_pkey | btree | reaction_id | sim | sim |  |
+| public._rb_message_reactions_one_per_agent_20261107121000 | _rb_message_reactions_one_per_agent_20261107121000_pkey | btree | id | sim | sim |  |
 | public._zapp_mig133_log | _zapp_mig133_log_pkey | btree | version | sim | sim |  |
 | public.agent_achievements | agent_achievements_pkey | btree | id | sim | sim |  |
 | public.agent_achievements | idx_agent_achievements_earned_at | btree | earned_at | não | sim |  |
@@ -170,6 +171,7 @@ Uso e tamanho em `stats.md`.
 | public.contacts | idx_contacts_email_trgm | gin | email | não | sim |  |
 | public.contacts | idx_contacts_is_lid_legacy | btree | is_lid_legacy | não | sim | `(is_lid_legacy = true)` |
 | public.contacts | idx_contacts_name_asc | btree | name | não | sim |  |
+| public.contacts | idx_contacts_phone_search_digits_trgm | gin | phone_search_digits | não | sim |  |
 | public.contacts | idx_contacts_queue_id | btree | queue_id | não | sim |  |
 | public.contacts | idx_contacts_tags_gin | gin | tags | não | sim |  |
 | public.contacts | idx_contacts_talk_me_waiting | btree | queue_id, conversation_status, id | não | sim | `((assigned_to IS NULL) AND (deleted_at IS NULL) AND (channel_type = 'whatsapp'::text))` |
@@ -371,6 +373,7 @@ Uso e tamanho em `stats.md`.
 | public.message_reactions | idx_message_reactions_user_id | btree | user_id | não | sim |  |
 | public.message_reactions | message_reactions_message_id_contact_id_emoji_key | btree | message_id, contact_id, emoji | sim | sim |  |
 | public.message_reactions | message_reactions_message_id_user_id_emoji_key | btree | message_id, user_id, emoji | sim | sim |  |
+| public.message_reactions | message_reactions_one_per_agent | btree | message_id, user_id | sim | sim |  |
 | public.message_reactions | message_reactions_pkey | btree | id | sim | sim |  |
 | public.message_reports | idx_message_reports_resolved_by | btree | resolved_by | não | sim |  |
 | public.message_reports | message_reports_message_id_reporter_id_key | btree | message_id, reporter_id | sim | sim |  |

@@ -7,6 +7,7 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 | ALTA | view_security_definer | public.catalog_send_stats | View em public sem security_invoker: executa como owner e ignora RLS das tabelas base. |
 | MÉDIA | no_primary_key | public._zapp_fn_before | Sem chave primária: Realtime/replicação e updates por linha ficam frágeis. |
 | MÉDIA | rls_no_policies | public._rb_message_reactions_contato_20261007001008 | RLS ligado sem policies: inacessível via API (só service_role). |
+| MÉDIA | rls_no_policies | public._rb_message_reactions_one_per_agent_20261107121000 | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public._zapp_fn_before | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public._zapp_mig133_log | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public.agent_mini_game_xp_daily | RLS ligado sem policies: inacessível via API (só service_role). |
@@ -242,7 +243,6 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 | BAIXA | policy_auth_fn_not_wrapped | public.multiplix_voice_grants.Admins read every voice grant | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.multiplix_voice_grants.Callers read their own voice grants | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.notifications.Users can delete own notifications | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
-| BAIXA | policy_auth_fn_not_wrapped | public.notifications.Users can update own notifications | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.notifications.Users can view own notifications | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.nps_surveys.Admins and own agents can view NPS surveys | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.nps_surveys.Admins can delete NPS surveys | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |

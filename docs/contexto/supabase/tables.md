@@ -15,6 +15,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [_bkp_261023.user_settings](tables/bkp_261023/user_settings.md) | table | não | 0 | 38 | não | [bkp-261023] Snapshot de public.user_settings em 23/10/2026 (4 linhas). |
 | [ops.hermes_change_log](tables/ops/hermes_change_log.md) | table | sim | 1 | 25 | não |  |
 | [public._rb_message_reactions_contato_20261007001008](tables/public/rb_message_reactions_contato_20261007001008.md) | table | sim | 0 | 2 | não | [RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação. |
+| [public._rb_message_reactions_one_per_agent_20261107121000](tables/public/rb_message_reactions_one_per_agent_20261107121000.md) | table | sim | 0 | 6 | não | Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem. |
 | [public._zapp_fn_before](tables/public/zapp_fn_before.md) | table | sim | 0 | 2 | não | [RLS-sem-policy: intencional] Snapshot das definições de funções antes de migrations críticas. Só leitura por service_role/DBA. |
 | [public._zapp_mig133_log](tables/public/zapp_mig133_log.md) | table | sim | 0 | 5 | não | [RLS-sem-policy: intencional] Log interno da migration 133. Só service_role. |
 | [public.agent_achievements](tables/public/agent_achievements.md) | table | sim | 2 | 7 | sim |  |
@@ -62,7 +63,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.contact_identity_map](tables/public/contact_identity_map.md) | table | sim | 1 | 5 | não | Mapa LID -> JID do WhatsApp (identidade anonima vs numero) para reconciliar contatos. |
 | [public.contact_notes](tables/public/contact_notes.md) | table | sim | 4 | 10 | não |  |
 | [public.contact_protection_policy](tables/public/contact_protection_policy.md) | table | sim | 4 | 9 | não | CT-091: politica de protecao de contatos. scope_role NULL = padrao global; linha por papel sobrepoe. Só o admin altera. |
-| [public.contacts](tables/public/contacts.md) | table | sim | 3 | 46 | sim | Contato/cliente por canal (WhatsApp, e-mail, SICOOB): identidade, atribuicao (assigned_to, queue_id), classificacao por IA e conexao de origem. Uma linha = uma conversa/thread ativa com o contato. |
+| [public.contacts](tables/public/contacts.md) | table | sim | 3 | 47 | sim | Contato/cliente por canal (WhatsApp, e-mail, SICOOB): identidade, atribuicao (assigned_to, queue_id), classificacao por IA e conexao de origem. Uma linha = uma conversa/thread ativa com o contato. |
 | [public.conversation_analyses](tables/public/conversation_analyses.md) | table | sim | 2 | 25 | não |  |
 | [public.conversation_closures](tables/public/conversation_closures.md) | table | sim | 2 | 9 | não |  |
 | [public.conversation_events](tables/public/conversation_events.md) | table | sim | 2 | 11 | não | Linha do tempo de uma conversa: transferencias de agente/fila, abertura/fechamento e demais transicoes, com quem executou (performed_by) e metadata. |
@@ -133,7 +134,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.multiplix_recipients](tables/public/multiplix_recipients.md) | table | sim | 2 | 28 | sim |  |
 | [public.multiplix_voice_assets](tables/public/multiplix_voice_assets.md) | table | sim | 1 | 10 | não |  |
 | [public.multiplix_voice_grants](tables/public/multiplix_voice_grants.md) | table | sim | 2 | 9 | não |  |
-| [public.notifications](tables/public/notifications.md) | table | sim | 4 | 10 | sim |  |
+| [public.notifications](tables/public/notifications.md) | table | sim | 5 | 10 | sim |  |
 | [public.nps_surveys](tables/public/nps_surveys.md) | table | sim | 4 | 7 | não |  |
 | [public.number_reputation](tables/public/number_reputation.md) | table | sim | 3 | 12 | não |  |
 | [public.outbox_events](tables/public/outbox_events.md) | table | sim | 1 | 10 | não | Outbox genérica de eventos de integração (item 090). Pendente = processed_at is null; a assinatura HMAC-SHA256 do payload é verificada na Edge Function antes de gravar. |

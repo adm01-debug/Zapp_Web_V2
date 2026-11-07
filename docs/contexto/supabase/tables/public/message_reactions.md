@@ -32,6 +32,7 @@
 | message_reactions_message_id_contact_id_emoji_key | UNIQUE | `UNIQUE (message_id, contact_id, emoji)` |  |  | sim |
 | message_reactions_message_id_fkey | FOREIGN KEY | `FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE` | CASCADE | NO ACTION | sim |
 | message_reactions_message_id_user_id_emoji_key | UNIQUE | `UNIQUE (message_id, user_id, emoji)` |  |  | sim |
+| message_reactions_one_per_agent | UNIQUE | `UNIQUE (message_id, user_id)` |  |  | sim |
 | message_reactions_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
 | message_reactions_user_id_fkey | FOREIGN KEY | `FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE` | CASCADE | NO ACTION | sim |
 | reaction_author_check | CHECK | `CHECK (user_id IS NOT NULL OR contact_id IS NOT NULL)` |  |  | sim |
@@ -46,6 +47,7 @@
 | idx_message_reactions_user_id | btree | user_id | não | sim |  | `CREATE INDEX idx_message_reactions_user_id ON public.message_reactions USING btree (user_id)` |
 | message_reactions_message_id_contact_id_emoji_key | btree | message_id, contact_id, emoji | sim | sim |  | `CREATE UNIQUE INDEX message_reactions_message_id_contact_id_emoji_key ON public.message_reactions USING btree (message_id, contact_id, emoji)` |
 | message_reactions_message_id_user_id_emoji_key | btree | message_id, user_id, emoji | sim | sim |  | `CREATE UNIQUE INDEX message_reactions_message_id_user_id_emoji_key ON public.message_reactions USING btree (message_id, user_id, emoji)` |
+| message_reactions_one_per_agent | btree | message_id, user_id | sim | sim |  | `CREATE UNIQUE INDEX message_reactions_one_per_agent ON public.message_reactions USING btree (message_id, user_id)` |
 | message_reactions_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX message_reactions_pkey ON public.message_reactions USING btree (id)` |
 
 

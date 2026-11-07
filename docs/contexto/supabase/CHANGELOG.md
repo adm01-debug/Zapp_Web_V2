@@ -2,6 +2,18 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 13:42 UTC
+
+- **colunas** adicionado (7): `public._rb_message_reactions_one_per_agent_20261107121000.contact_id`, `public._rb_message_reactions_one_per_agent_20261107121000.created_at`, `public._rb_message_reactions_one_per_agent_20261107121000.emoji`, `public._rb_message_reactions_one_per_agent_20261107121000.id`, `public._rb_message_reactions_one_per_agent_20261107121000.message_id`, `public._rb_message_reactions_one_per_agent_20261107121000.user_id`, `public.contacts.phone_search_digits`
+- **constraints** adicionado (2): `public._rb_message_reactions_one_per_agent_20261107121000._rb_message_reactions_one_per_agent_20261107121000_pkey`, `public.message_reactions.message_reactions_one_per_agent`
+- **indexes** adicionado (3): `public._rb_message_reactions_one_per_agent_20261107121000_pkey`, `public.idx_contacts_phone_search_digits_trgm`, `public.message_reactions_one_per_agent`
+- **lints** adicionado (1): `rls_no_policies:public._rb_message_reactions_one_per_agent_20261107121000`
+- **lints** removido (1): `policy_auth_fn_not_wrapped:public.notifications.Users can update own notifications`
+- **migrations** adicionado (3): `20261107120000_goal_notifications_own_insert_policy`, `20261107121000_message_reactions_one_per_agent`, `20261107122000_contacts_phone_search_digits`
+- **policies (RLS)** adicionado (2): `public.notifications.Users can insert own goal notifications`, `public.notifications.Users can mark own notifications as read`
+- **policies (RLS)** removido (1): `public.notifications.Users can update own notifications`
+- **tabelas** adicionado (1): `public._rb_message_reactions_one_per_agent_20261107121000`
+
 ## 2026-11-07 11:34 UTC
 
 - **functions** adicionado (1): `public.get_ai_usage_outbox_drain_cron_secret()`

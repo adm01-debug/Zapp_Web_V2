@@ -64,6 +64,7 @@
 | 44 | `last_seen_at` | `timestamp with time zone` | sim |  |  |  |
 | 45 | `blocked_at` | `timestamp with time zone` | sim |  |  | Instante do bloqueio do contato. NULL = não bloqueado. Substitui a etiqueta textual `Bloqueado` em tags como estado de verdade. |
 | 46 | `blocked_by` | `uuid` | sim |  |  | auth.uid() (claim `sub`) de quem bloqueou. NULL quando não bloqueado (ou no backfill da etiqueta legada, que não tem autor). |
+| 47 | `phone_search_digits` | `text` | sim | `regexp_replace(COALESCE(phone, ''::text), '[^0-9]'::text, ''::text, 'g'::text)` | s | Somente dígitos de phone, gerados para busca consistente sem alterar o formato exibido. |
 
 
 ## Constraints
@@ -149,6 +150,7 @@
 | idx_contacts_email_trgm | gin | email | não | sim |  | `CREATE INDEX idx_contacts_email_trgm ON public.contacts USING gin (email extensions.gin_trgm_ops)` |
 | idx_contacts_is_lid_legacy | btree | is_lid_legacy | não | sim | `(is_lid_legacy = true)` | `CREATE INDEX idx_contacts_is_lid_legacy ON public.contacts USING btree (is_lid_legacy) WHERE (is_lid_legacy = true)` |
 | idx_contacts_name_asc | btree | name | não | sim |  | `CREATE INDEX idx_contacts_name_asc ON public.contacts USING btree (name)` |
+| idx_contacts_phone_search_digits_trgm | gin | phone_search_digits | não | sim |  | `CREATE INDEX idx_contacts_phone_search_digits_trgm ON public.contacts USING gin (phone_search_digits extensions.gin_trgm_ops)` |
 | idx_contacts_queue_id | btree | queue_id | não | sim |  | `CREATE INDEX idx_contacts_queue_id ON public.contacts USING btree (queue_id)` |
 | idx_contacts_tags_gin | gin | tags | não | sim |  | `CREATE INDEX idx_contacts_tags_gin ON public.contacts USING gin (tags)` |
 | idx_contacts_talk_me_waiting | btree | queue_id, conversation_status, id | não | sim | `((assigned_to IS NULL) AND (deleted_at IS NULL) AND (channel_type = 'whatsapp'::text))` | `CREATE INDEX idx_contacts_talk_me_waiting ON public.contacts USING btree (queue_id, conversation_status, id) WHERE ((assigned_to IS NULL) AND (deleted_at IS NULL) AND (channel_type = 'whatsapp'::text))` |

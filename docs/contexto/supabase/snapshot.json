@@ -2117,6 +2117,84 @@
         "generated": null,
         "identity": null,
         "is_enum": false,
+        "name": "id",
+        "nullable": false,
+        "position": 1,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "message_id",
+        "nullable": false,
+        "position": 2,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "user_id",
+        "nullable": true,
+        "position": 3,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "contact_id",
+        "nullable": true,
+        "position": 4,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "emoji",
+        "nullable": false,
+        "position": 5,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "created_at",
+        "nullable": false,
+        "position": 6,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "type": "timestamp with time zone"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
         "name": "k",
         "nullable": true,
         "position": 1,
@@ -8532,6 +8610,19 @@
         "schema": "public",
         "table": "contacts",
         "type": "uuid"
+      },
+      {
+        "comment": "Somente dígitos de phone, gerados para busca consistente sem alterar o formato exibido.",
+        "default": "regexp_replace(COALESCE(phone, ''::text), '[^0-9]'::text, ''::text, 'g'::text)",
+        "generated": "s",
+        "identity": null,
+        "is_enum": false,
+        "name": "phone_search_digits",
+        "nullable": true,
+        "position": 47,
+        "schema": "public",
+        "table": "contacts",
+        "type": "text"
       },
       {
         "comment": null,
@@ -32426,6 +32517,23 @@
       },
       {
         "columns": [
+          "id"
+        ],
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id)",
+        "name": "_rb_message_reactions_one_per_agent_20261107121000_pkey",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "type": "PRIMARY KEY",
+        "validated": true
+      },
+      {
+        "columns": [
           "version"
         ],
         "deferrable": false,
@@ -39099,6 +39207,24 @@
         "deferrable": false,
         "definition": "UNIQUE (message_id, user_id, emoji)",
         "name": "message_reactions_message_id_user_id_emoji_key",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "message_reactions",
+        "type": "UNIQUE",
+        "validated": true
+      },
+      {
+        "columns": [
+          "message_id",
+          "user_id"
+        ],
+        "deferrable": false,
+        "definition": "UNIQUE (message_id, user_id)",
+        "name": "message_reactions_one_per_agent",
         "on_delete": null,
         "on_update": null,
         "ref_columns": [],
@@ -67804,6 +67930,20 @@
       },
       {
         "columns": [
+          "id"
+        ],
+        "definition": "CREATE UNIQUE INDEX _rb_message_reactions_one_per_agent_20261107121000_pkey ON public._rb_message_reactions_one_per_agent_20261107121000 USING btree (id)",
+        "is_primary": true,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "_rb_message_reactions_one_per_agent_20261107121000_pkey",
+        "predicate": null,
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000"
+      },
+      {
+        "columns": [
           "version"
         ],
         "definition": "CREATE UNIQUE INDEX _zapp_mig133_log_pkey ON public._zapp_mig133_log USING btree (version)",
@@ -70087,6 +70227,20 @@
         "is_valid": true,
         "method": "btree",
         "name": "idx_contacts_name_asc",
+        "predicate": null,
+        "schema": "public",
+        "table": "contacts"
+      },
+      {
+        "columns": [
+          "phone_search_digits"
+        ],
+        "definition": "CREATE INDEX idx_contacts_phone_search_digits_trgm ON public.contacts USING gin (phone_search_digits extensions.gin_trgm_ops)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "gin",
+        "name": "idx_contacts_phone_search_digits_trgm",
         "predicate": null,
         "schema": "public",
         "table": "contacts"
@@ -72945,6 +73099,21 @@
         "is_valid": true,
         "method": "btree",
         "name": "message_reactions_message_id_user_id_emoji_key",
+        "predicate": null,
+        "schema": "public",
+        "table": "message_reactions"
+      },
+      {
+        "columns": [
+          "message_id",
+          "user_id"
+        ],
+        "definition": "CREATE UNIQUE INDEX message_reactions_one_per_agent ON public.message_reactions USING btree (message_id, user_id)",
+        "is_primary": false,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "message_reactions_one_per_agent",
         "predicate": null,
         "schema": "public",
         "table": "message_reactions"
@@ -78619,6 +78788,12 @@
       {
         "code": "rls_no_policies",
         "detail": "RLS ligado sem policies: inacessível via API (só service_role).",
+        "object": "public._rb_message_reactions_one_per_agent_20261107121000",
+        "severity": "MÉDIA"
+      },
+      {
+        "code": "rls_no_policies",
+        "detail": "RLS ligado sem policies: inacessível via API (só service_role).",
         "object": "public._zapp_fn_before",
         "severity": "MÉDIA"
       },
@@ -80024,12 +80199,6 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.notifications.Users can delete own notifications",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.notifications.Users can update own notifications",
         "severity": "BAIXA"
       },
       {
@@ -87799,6 +87968,24 @@
         "name": "ai_usage_outbox_drain_cron",
         "statements": [],
         "version": "20261103223000"
+      },
+      {
+        "name": "goal_notifications_own_insert_policy",
+        "statements": 10,
+        "statements_sha": "a66ef9b3a5da2337",
+        "version": "20261107120000"
+      },
+      {
+        "name": "message_reactions_one_per_agent",
+        "statements": 10,
+        "statements_sha": "2b46a0305d9eb6f0",
+        "version": "20261107121000"
+      },
+      {
+        "name": "contacts_phone_search_digits",
+        "statements": 4,
+        "statements_sha": "666591f91c9c87e8",
+        "version": "20261107122000"
       }
     ],
     "policies": [
@@ -91175,16 +91362,28 @@
         "with_check": null
       },
       {
-        "cmd": "UPDATE",
-        "name": "Users can update own notifications",
+        "cmd": "INSERT",
+        "name": "Users can insert own goal notifications",
         "permissive": "PERMISSIVE",
         "roles": [
           "authenticated"
         ],
         "schema": "public",
         "table": "notifications",
-        "using": "(user_id = auth.uid())",
-        "with_check": null
+        "using": null,
+        "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (type = 'goal'::text) AND (is_read IS FALSE) AND (read_at IS NULL) AND ((created_at >= (now() - '00:05:00'::interval)) AND (created_at <= (now() + '00:05:00'::interval))) AND ((length(title) >= 1) AND (length(title) <= 200)) AND ((length(message) >= 1) AND (length(message) <= 1000)) AND (dedupe_key ~ '^goal:v1:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:(daily|weekly|monthly):[0-9]{4}-[0-9]{2}-[0-9]{2}$'::text) AND (jsonb_typeof(metadata) = 'object'::text) AND ((metadata ->> 'goal_id'::text) = split_part(dedupe_key, ':'::text, 3)) AND ((metadata ->> 'period'::text) = split_part(dedupe_key, ':'::text, 4)) AND ((metadata ->> 'goal_type'::text) = ANY (ARRAY['messages_sent'::text, 'conversations_resolved'::text, 'contacts_handled'::text, 'resolution_rate'::text, 'response_time'::text, 'satisfaction'::text])) AND (jsonb_typeof((metadata -> 'current'::text)) = 'number'::text) AND (jsonb_typeof((metadata -> 'target'::text)) = 'number'::text) AND (octet_length((metadata)::text) <= 2048) AND (metadata = jsonb_build_object('goal_id', (metadata -> 'goal_id'::text), 'goal_type', (metadata -> 'goal_type'::text), 'period', (metadata -> 'period'::text), 'current', (metadata -> 'current'::text), 'target', (metadata -> 'target'::text))) AND\nCASE\n    WHEN pg_input_is_valid(split_part(dedupe_key, ':'::text, 5), 'date'::text) THEN\n    CASE (metadata ->> 'period'::text)\n        WHEN 'daily'::text THEN (((split_part(dedupe_key, ':'::text, 5))::date >= (CURRENT_DATE - 1)) AND ((split_part(dedupe_key, ':'::text, 5))::date <= (CURRENT_DATE + 1)))\n        WHEN 'weekly'::text THEN ((EXTRACT(isodow FROM (split_part(dedupe_key, ':'::text, 5))::date) = (1)::numeric) AND (((split_part(dedupe_key, ':'::text, 5))::date >= (CURRENT_DATE - 8)) AND ((split_part(dedupe_key, ':'::text, 5))::date <= (CURRENT_DATE + 1))))\n        WHEN 'monthly'::text THEN ((EXTRACT(day FROM (split_part(dedupe_key, ':'::text, 5))::date) = (1)::numeric) AND (((split_part(dedupe_key, ':'::text, 5))::date >= ((date_trunc('month'::text, (CURRENT_DATE)::timestamp with time zone) - '1 mon'::interval))::date) AND ((split_part(dedupe_key, ':'::text, 5))::date <= ((date_trunc('month'::text, (CURRENT_DATE)::timestamp with time zone) + '1 mon'::interval))::date)))\n        ELSE false\n    END\n    ELSE false\nEND AND (EXISTS ( SELECT 1\n   FROM goals_configurations goal\n  WHERE (((goal.id)::text = (notifications.metadata ->> 'goal_id'::text)) AND (goal.is_active IS TRUE) AND (goal.goal_type = (notifications.metadata ->> 'goal_type'::text)) AND ((goal.profile_id IN ( SELECT profile.id\n           FROM profiles profile\n          WHERE (profile.user_id = ( SELECT auth.uid() AS uid)))) OR ((goal.queue_id IS NOT NULL) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (goal.queue_id IN ( SELECT membership.queue_id\n           FROM (queue_members membership\n             JOIN profiles member_profile ON ((member_profile.id = membership.profile_id)))\n          WHERE (member_profile.user_id = ( SELECT auth.uid() AS uid))))))) AND ((notifications.metadata -> 'target'::text) = to_jsonb(\n        CASE (notifications.metadata ->> 'period'::text)\n            WHEN 'daily'::text THEN goal.daily_target\n            WHEN 'weekly'::text THEN goal.weekly_target\n            WHEN 'monthly'::text THEN goal.monthly_target\n            ELSE NULL::integer\n        END)) AND (((notifications.metadata ->> 'target'::text))::numeric > (0)::numeric)))) AND\nCASE\n    WHEN ((metadata ->> 'goal_type'::text) = 'response_time'::text) THEN ((((metadata ->> 'current'::text))::numeric > (0)::numeric) AND (((metadata ->> 'current'::text))::numeric <= ((metadata ->> 'target'::text))::numeric))\n    ELSE (((metadata ->> 'current'::text))::numeric >= ((metadata ->> 'target'::text))::numeric)\nEND AND (abs(((metadata ->> 'current'::text))::numeric) <= ('1000000000000'::bigint)::numeric))"
+      },
+      {
+        "cmd": "UPDATE",
+        "name": "Users can mark own notifications as read",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "notifications",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (is_read IS TRUE) AND (read_at IS NOT NULL) AND (read_at >= (created_at - '00:05:00'::interval)) AND (read_at <= (now() + '00:05:00'::interval)))"
       },
       {
         "cmd": "SELECT",
@@ -95160,6 +95359,21 @@
         "is_partition": false,
         "kind": "table",
         "name": "_rb_message_reactions_contato_20261007001008",
+        "owner": "postgres",
+        "parent": null,
+        "partition_bound": null,
+        "partition_key": null,
+        "replica_identity": "default",
+        "rls_enabled": true,
+        "rls_forced": false,
+        "schema": "public"
+      },
+      {
+        "comment": "Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem.",
+        "from_extension": false,
+        "is_partition": false,
+        "kind": "table",
+        "name": "_rb_message_reactions_one_per_agent_20261107121000",
         "owner": "postgres",
         "parent": null,
         "partition_bound": null,
