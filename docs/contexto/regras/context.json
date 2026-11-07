@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "e900ae317218172259a6363c3f156ed01f368f7b",
+  "sha": "529389d3f0ed733fc12fbdbdd8da911b079b1258",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 14:45 UTC",
-  "files_total": 8107,
+  "generated_at": "2026-11-07 15:05 UTC",
+  "files_total": 8129,
   "code_files": 5996,
   "code_lines": 1040846
  },
@@ -383083,10 +383083,40 @@
   }
  },
  "git": {
-  "sha": "e900ae317218172259a6363c3f156ed01f368f7b",
+  "sha": "529389d3f0ed733fc12fbdbdd8da911b079b1258",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "529389d",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)",
+    "files": [
+     "analise/dossies/claude-confident-babbage-ivgmmn.md",
+     "analise/dossies/codex-docs-email-navy-plan-100-20261002.md",
+     "analise/dossies/codex-talk-me-carousel-refinement-20260930.md",
+     "analise/dossies/dia-2026-10-07.md",
+     "analise/dossies/docs-plano-contatos-cabecalho-botao-50-etapas-2026-09-30.md",
+     "analise/dossies/docs-plano-ordem-banner-20-etapas-2026-09-30.md",
+     "analise/dossies/hermes-a11y-aria-hidden-focus-2610021746e07a.md",
+     "analise/dossies/hermes-mapa-f4-p3-observabilidade-2610011830d2a2.md",
+     "analise/dossies/hermes-plano-volume-50-etapas-finalizacao-2610011018e48d.md",
+     "analise/dossies/hermes-sonar-s7773-number-parseint-2610022025ac4f.md",
+     "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
+     "analise/dossies/lote2-01-dia-2026-10-08.md",
+     "analise/dossies/lote2-02-backup-dia-2026-10-13.md",
+     "analise/dossies/lote2-03-backup-dia-2026-10-14.md",
+     "analise/dossies/lote2-04-w21-classificar-migration-drift.md",
+     "analise/dossies/lote2-05-w10-mutacao-mapa-so-pr.md",
+     "analise/dossies/lote2-06-cors-zappweb-app-br.md",
+     "analise/dossies/lote2-07-fix-ci-reativar-suites-261016-1530.md",
+     "analise/dossies/lote2-08-lote-2026-10-16-880-cards.md",
+     "analise/dossies/lote2-09-codex-sincronizacao-ledger-20261016.md",
+     "analise/dossies/lote2-10-feat-copiloto-cv011-020-migrations-261016-1930.md",
+     "analise/progresso.json"
+    ]
+   },
    {
     "sha": "e900ae3",
     "date": "2026-11-07",
@@ -383649,26 +383679,12 @@
     "files": [
      "RELATORIO_CI.md"
     ]
-   },
-   {
-    "sha": "2f2cc18",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)",
-    "files": [
-     "PENDENCIAS.md",
-     "RELATORIO_CI.md"
-    ]
    }
   ],
   "hot_files": [
    [
     "RELATORIO_CI.md",
-    6
-   ],
-   [
-    "PENDENCIAS.md",
-    4
+    5
    ],
    [
     "docs/ci/README.md",
@@ -383680,6 +383696,10 @@
    ],
    [
     "supabase/deployment-manifest.json",
+    3
+   ],
+   [
+    "PENDENCIAS.md",
     3
    ],
    [

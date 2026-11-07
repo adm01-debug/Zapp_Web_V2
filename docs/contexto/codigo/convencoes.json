@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)",
    "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)",
    "fix: torna Vercel Cleanup fail-closed em 403 (#2758)",
    "fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)",
-   "infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)",
-   "fix: blindar plano sintético contra IDs externos (#2757)"
+   "infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

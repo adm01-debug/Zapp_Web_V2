@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e900ae317218172259a6363c3f156ed01f368f7b",
+  "commit": "529389d3f0ed733fc12fbdbdd8da911b079b1258",
   "branch": "main",
-  "data_commit": "2026-11-07T11:37:20-03:00",
+  "data_commit": "2026-11-07T14:59:09Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "529389d",
+    "data": "2026-11-07",
+    "assunto": "chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)"
+   },
    {
     "sha": "e900ae3",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "c6af71c",
     "data": "2026-11-06",
     "assunto": "chore: regenera manifesto de deploy das edge functions (#2737)"
-   },
-   {
-    "sha": "f03e6f6",
-    "data": "2026-11-05",
-    "assunto": "chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc"
    }
   ],
-  "arquivos_mudados_7d": 1112,
+  "arquivos_mudados_7d": 1113,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 803
+    "mudancas": 794
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -148,16 +148,16 @@
     "mudancas": 277
    },
    {
+    "pasta": "docs/_arquivo/analise-prs",
+    "mudancas": 211
+   },
+   {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 213
+    "mudancas": 210
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 213
-   },
-   {
-    "pasta": "docs/_arquivo/analise-prs",
-    "mudancas": 211
+    "mudancas": 202
    },
    {
     "pasta": "src/components/dashboard",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 135
+    "mudancas": 134
    },
    {
     "pasta": "src/lib/__tests__",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 20
+    "mudancas": 19
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -207,14 +207,10 @@
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 16
-   },
-   {
-    "arquivo": "CLAUDE.md",
     "mudancas": 15
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
+    "arquivo": "CLAUDE.md",
     "mudancas": 14
    },
    {
@@ -222,15 +218,15 @@
     "mudancas": 14
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 13
+   },
+   {
+    "arquivo": "ESTADO.md",
+    "mudancas": 12
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 13
-   },
-   {
-    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 12
    },
    {
@@ -238,15 +234,15 @@
     "mudancas": 12
    },
    {
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 11
+   },
+   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
-   },
-   {
-    "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 10
    },
    {
@@ -254,8 +250,12 @@
     "mudancas": 10
    },
    {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 9
+   },
+   {
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "mudancas": 8
    },
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
@@ -278,10 +278,6 @@
     "mudancas": 6
    },
    {
-    "arquivo": ".github/workflows/db-migrate.yml",
-    "mudancas": 6
-   },
-   {
     "arquivo": "AGENTS.md",
     "mudancas": 6
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 6
    }
   ],
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8266,
+  "arquivos_total": 8288,
   "arquivos_codigo": 4737,
   "linhas_codigo": 875001,
   "rotas": 18,
@@ -335,7 +335,7 @@
   "testes": 2581,
   "workflows": 21,
   "scripts": 419,
-  "docs_md": 1042
+  "docs_md": 1063
  },
  "por_pasta": {
   "docs/_arquivo": {

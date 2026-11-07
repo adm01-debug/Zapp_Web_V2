@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e900ae317218172259a6363c3f156ed01f368f7b` (2026-11-07T11:37:20-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `529389d3f0ed733fc12fbdbdd8da911b079b1258` (2026-11-07T14:59:09Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4188), SQL (1287), Markdown (1042), JSON (595), JavaScript (432), Shell (231), Python (119), YAML (29)
+- linguagens: TypeScript (4188), SQL (1287), Markdown (1063), JSON (596), JavaScript (432), Shell (231), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8266 |
+| arquivos_total | 8288 |
 | arquivos_codigo | 4737 |
 | linhas_codigo | 875001 |
 | rotas | 18 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 2581 |
 | workflows | 21 |
 | scripts | 419 |
-| docs_md | 1042 |
+| docs_md | 1063 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -385,27 +385,27 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55935 nós · 115492 arestas · 4115 comunidades · grafo do commit `e900ae31`
-- comunidades maiores: TalkXSuppression.tsx (826), vitest (820), react (802), lucide-react (730), button.tsx (525), ExternalProductManagement.tsx (489), chat.ts (423), DashboardView.tsx (379), useMyWorkItems.ts (371), @tanstack/react-query (356), ref_node_fs (353), ref_node_assert (340)
+- 56073 nós · 115616 arestas · 4115 comunidades · grafo do commit `529389d3`
+- comunidades maiores: vitest (985), lucide-react (967), react (928), TalkXSuppression.tsx (805), ExternalProductManagement.tsx (669), client.ts (664), @tanstack/react-query (452), validation.ts (344), ref_node_fs (339), ref_node_assert (334), TalkXSegments.tsx (320), useTeamChatPanel.ts (311)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (20)
+- .github/workflows/ci.yml (19)
 - PENDENCIAS.md (18)
-- docs/ci/README.md (16)
-- CLAUDE.md (15)
-- .github/workflows/db-guard.yml (14)
+- docs/ci/README.md (15)
+- CLAUDE.md (14)
 - supabase/deployment-manifest.json (14)
-- ESTADO.md (13)
-- scripts/ci/ci-docs-baseline.unit.mjs (13)
-- .github/workflows/e2e-logado.yml (12)
+- .github/workflows/db-guard.yml (13)
+- ESTADO.md (12)
+- scripts/ci/ci-docs-baseline.unit.mjs (12)
 - src/integrations/supabase/types.ts (12)
+- .github/workflows/e2e-logado.yml (11)
 - RELATORIO_CI.md (11)
-- docs/DB-INVENTORY.md (11)
-- .github/workflows/deploy-functions.yml (10)
+- docs/DB-INVENTORY.md (10)
 - supabase/schema-manifest.json (10)
-- docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (9)
+- .github/workflows/deploy-functions.yml (9)
+- docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (8)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `529389d` chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)
 - 2026-11-07 `e900ae3` fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)
 - 2026-11-07 `5b62b93` fix: torna Vercel Cleanup fail-closed em 403 (#2758)
 - 2026-11-07 `0601e3b` fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `83e821b` fix: corrigir preparo e diagnóstico da suíte isolada (#2728)
 - 2026-11-06 `042e593` chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)
 - 2026-11-06 `3adec58` fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)
-- 2026-11-06 `0a3442b` infra: monitorar releases V2 e V3 em trilhas separadas (#2747)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
