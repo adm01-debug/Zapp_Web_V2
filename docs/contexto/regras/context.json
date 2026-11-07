@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "effd6b0bb9876f776fcf6a150b1dde35df25723f",
+  "sha": "fb328a65b7e5c0d9854e828e4fcde9c08b59c95f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 20:00 UTC",
+  "generated_at": "2026-11-07 20:26 UTC",
   "files_total": 8140,
   "code_files": 6000,
   "code_lines": 1041605
@@ -383158,10 +383158,19 @@
   }
  },
  "git": {
-  "sha": "effd6b0bb9876f776fcf6a150b1dde35df25723f",
+  "sha": "fb328a65b7e5c0d9854e828e4fcde9c08b59c95f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "fb328a6",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(db): registra formatação divergente da migration 20261107153000 (#2781)",
+    "files": [
+     "scripts/db-audit/migration-evidence.json"
+    ]
+   },
    {
     "sha": "effd6b0",
     "date": "2026-11-07",
@@ -383758,22 +383767,12 @@
      "scripts/ci/vercel-env-cleanup.mjs",
      "scripts/ci/vercel-env-cleanup.unit.mjs"
     ]
-   },
-   {
-    "sha": "5f2f9af",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)",
-    "files": [
-     "src/components/talkx/help/TalkXHelpCenter.tsx",
-     "src/hooks/ui/use-toast.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "scripts/db-audit/migration-evidence.json",
-    3
+    4
    ],
    [
     "docs/ia/IA-010-ambiente-de-ensaio.md",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "effd6b0bb9876f776fcf6a150b1dde35df25723f",
+  "commit": "fb328a65b7e5c0d9854e828e4fcde9c08b59c95f",
   "branch": "main",
-  "data_commit": "2026-11-07T19:50:19Z",
+  "data_commit": "2026-11-07T20:16:32Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "fb328a6",
+    "data": "2026-11-07",
+    "assunto": "fix(db): registra formatação divergente da migration 20261107153000 (#2781)"
+   },
    {
     "sha": "effd6b0",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "042e593",
     "data": "2026-11-06",
     "assunto": "chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)"
-   },
-   {
-    "sha": "3adec58",
-    "data": "2026-11-06",
-    "assunto": "fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)"
    }
   ],
   "arquivos_mudados_7d": 1085,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 715
+    "mudancas": 713
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -254,11 +254,11 @@
     "mudancas": 9
    },
    {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 8
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 9
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     "mudancas": 8
    },
    {
