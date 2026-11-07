@@ -5,15 +5,15 @@ Ler quando mexer em conexão WhatsApp, QR Code, edge `evolution-api` ou na VPS d
 | O que | Valor |
 |---|---|
 | Flavor | **Evolution GO** (`evoapicloud/evolution-go`) — `EVOLUTION_API_FLAVOR=go` |
-| URL pública | `https://evolution-go-rxj2.srv1481814.hstgr.cloud` (também em `public/version.json`) |
-| Hospedagem | VPS **Hostinger** `srv1481814.hstgr.cloud` → Gerenciador Docker, projeto **`evolution-go-rxj2`** |
-| Containers | `evolution-go-rxj2-api-1` (porta host **32783** → 4000), `evolution-go-rxj2-postgres-1`, `evolution-go-rxj2-pg-backup-1` |
+| URL pública | valor de `EVOLUTION_API_URL` nos secrets das Edge Functions (`supabase secrets list`); o front a lê de `public/version.json` |
+| Hospedagem | VPS **Hostinger** (hostname: painel Hostinger → VPS, ou MCP `HOSTINGER`) → Gerenciador Docker, projeto da Evolution GO (nome = subdomínio da URL acima) |
+| Containers | `<projeto>-api-1` (porta host mapeada → 4000; ver o projeto no Gerenciador Docker), `<projeto>-postgres-1`, `<projeto>-pg-backup-1` |
 | Instância padrão | `PRINCIPAL` (`EVOLUTION_INSTANCE_NAME`; é o `instance_id` da conexão real em `whatsapp_connections`) |
 | Auth | `EVOLUTION_API_KEY` (global, endpoints admin `/instance/*`) e `EVOLUTION_INSTANCE_TOKEN` (endpoints por instância `/send/*`, `/message/*`) — secrets nas Edge Functions, nunca no front |
 | Tradução de rotas | `supabase/functions/_shared/evolution-go-routes.ts` (GO ↔ v2 legada) |
 | Gestão da VPS | MCP **`HOSTINGER`** (VPS/Docker). **NÃO** é a VPS AtomicaBR/Portainer — Portainer não enxerga estes containers. |
 
-O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões WhatsApp). **Não
+O Postgres do projeto da Evolution GO é interno dela (estado de sessões WhatsApp). **Não
 confundir com o banco do projeto** e não aplicar migrations do repo nele. A conexão
 `[E2E] Conexão WhatsApp Teste` (`instance_id = E2E_FIXTURE`) é fixture do E2E — **não apagar**.
 

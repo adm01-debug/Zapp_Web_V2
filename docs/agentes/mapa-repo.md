@@ -11,7 +11,7 @@ Ler quando precisar saber onde fica algo antes de buscar por texto.
 | Qual banco, migrations, Evolution, GitHub, Vercel, domínio | `AGENTS.md` + `docs/agentes/*.md` |
 | Inventário de workflows de CI | `docs/ci/README.md` (gerado — não editar à mão) |
 | **Contexto gerado para agentes — antes de qualquer tarefa ou planejamento** | **`docs/contexto/00-INDEX.md` na branch `contexto`** (`git show origin/contexto:docs/contexto/00-INDEX.md`): diz qual fonte é dona de cada fato e a ordem de leitura. Gerado a cada 10 min — não editar; regras humanas em `docs/contexto/regras/manual/` (main) |
-| Histórico, auditorias, planos antigos | `docs/`, `docs/_arquivo/`, `analise/`, `inventario/` antigo, `qa/` — contexto, **não** fonte de verdade |
+| Histórico, auditorias, planos antigos | `docs/`, `docs/_arquivo/` (inclui `analise/`), `analise-prs/`, `inventario/` antigo, `qa/` — contexto, **não** fonte de verdade |
 
 ## Mapa rápido
 
@@ -45,8 +45,19 @@ O repo usa **bun**: há `bun.lock` e **não** há `package-lock.json`, então `n
   Team Chat leva ~90s);
 - typecheck: `bun run typecheck` (`tsc -b --force`, lento) ou `npx tsc --noEmit -p tsconfig.app.json`
   para conferir rápido;
-- lint dos arquivos tocados: `npx eslint <arquivos>`; E2E: `bun run test:e2e` (Playwright, 1 worker no CI);
+- lint dos arquivos tocados: `npx eslint <arquivos>`; E2E: `bun run test:e2e` (Playwright, 2 workers no CI e
+  local — GR-016 em `playwright.config.ts`);
 - guardas do CI antes do PR: `node --test scripts/ci/*.unit.mjs`, `node scripts/db-audit/supabase-usage-guard.mjs`,
   `node scripts/ci/check-claude-md-integrity.mjs` (vigia `AGENTS.md` + `docs/agentes/`).
 - hooks do husky: `pre-commit` (lint ratchet dos arquivos staged, manifesto de edges), `commit-msg`
   (`scripts/ci/commit-msg-lint.mjs`), `pre-push` (typecheck ratchet, lint ratchet, `check-migration-drift`).
+
+## Grafo de código (graphify) — detalhes
+
+`bun run graph:setup` → `scripts/graphify/setup.sh`; precisa de `uv` ou `pipx`. `graphify-out/` (~50 MB) e os
+hooks do husky ficam no `.gitignore`: cada clone gera os seus. Frescura: compare `git rev-parse --short HEAD`
+com a linha "Built from commit" de `graphify-out/GRAPH_REPORT.md`; se divergir, `graphify update .` (só AST,
+sem custo de API). Os hooks `PreToolUse` em `.claude/settings.json` chamam `graphify hook-guard` e não fazem
+nada onde o graphify não estiver instalado. Em sessão de nuvem, `.claude/hooks/session-start.sh` instala o
+graphify e gera o grafo em segundo plano (~3 min; log em `graphify-out/.session-start.log`; pula se o grafo
+já é do commit atual).

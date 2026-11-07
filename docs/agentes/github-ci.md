@@ -8,7 +8,12 @@ ou um workflow falhar de forma estranha.
 - Repo `adm01-debug/Zapp_Web_V2` (grafia canônica; a API aceita `zapp-web-v2`), branch `main`, público.
 - **Escrita: somente MCP `GITHUB - MCP - FOREVER`** (`github_push_files`). O MCP padrão do GitHub
   retorna 403 em write. `github_push_files` sobrescreve o arquivo — mande o conteúdo integral com
-  apenas a mudança semântica, e confira depois que o arquivo remoto bate com o que você testou.
+  apenas a mudança semântica, e confira depois que o arquivo remoto bate com o que você testou. Ele aceita
+  `files` e `delete` no mesmo commit (1 commit atômico).
+- Commits: `<tipo>(<escopo>): <assunto>` com assunto ≥ 10 caracteres e sem ponto final; tipos aceitos pelo
+  hook `commit-msg` (`scripts/ci/commit-msg-lint.mjs`): `feat fix docs style refactor perf test build ci
+  chore security revert`. `infra` existe só como tipo de **branch** (`claude/infra-...`); para o commit use
+  `ci:` ou `chore:`. Via MCP o hook não roda — siga o padrão mesmo assim.
 - Sessão na nuvem: `git clone` e leitura por `raw.githubusercontent.com` funcionam (repo público), mas
   `git push` volta 403 do proxy quando o repo não está entre as fontes autorizadas da sessão — escreva
   só pelo MCP. Para listar PRs abertas com os arquivos que tocam numa chamada só, use `github_graphql`
@@ -51,9 +56,9 @@ Fatos do perímetro que já custaram retrabalho:
   mandar todos os campos já regrediu o `strict` três vezes; para um campo só, use
   `github_update_required_status_checks`).
 - **Fila de merge nativa é impossível aqui** — `adm01-debug` é conta `User`; `merge_queue` responde
-  `422 Invalid rule`. Os gatilhos `merge_group` em `ci.yml`, `db-guard.yml` e `codeql.yml` ficam lá,
-  inertes. O substituto é o `auto-update-pr-branch.yml` (fila serial: atualiza uma PR com auto-merge
-  por vez, via `scripts/ci/fila-merge.mjs`).
+  `422 Invalid rule`. O gatilho `merge_group` só resta em `db-guard.yml`, inerte (`ci.yml` e `codeql.yml`
+  já não o declaram). O substituto é o `auto-update-pr-branch.yml` (fila serial: atualiza uma PR com
+  auto-merge por vez, via `scripts/ci/fila-merge.mjs`).
 - **NÃO desligue `can_approve_pull_request_reviews`.** O toggle é "Allow GitHub Actions to create
   **and** approve pull requests": desligado, o `types-sync` não consegue abrir PR.
 - **`TYPES_SYNC_PR_TOKEN` não é necessário — não crie.** O PR do `types-sync` nasce com `GITHUB_TOKEN`
