@@ -134,15 +134,15 @@ Não mover de volta para `supabase/migrations/`.
 
 ### `20261026240300_drop_bkp_261023.sql`
 
-**Ainda não aplicada — movida em 06/11/2026 para restaurar a paridade do DB Live Guard.**
-O arquivo entrou na pasta ativa em 02/11 afirmando que a versão estava no ledger, mas a consulta
-ao banco oficial do run `42143639908` confirmou que não existe registro para `20261026240300`.
+**Registrada no ledger entre os runs `42143639908` e `42270182966` de 06/11/2026.**
+O ledger preserva `DROP SCHEMA _bkp_261023 CASCADE`, mas esse registro isolado não prova o efeito
+no catálogo. O SQL original permanece neste diretório e é fixado por hash na evidência
+`ledger-archive/registered-tombstone`. O schema `_bkp_261023` ainda existia na
+consulta read-only de 07/11/2026; portanto o registro nao e tratado como prova de apply.
 
-O próprio arquivo proíbe o `DROP SCHEMA _bkp_261023 CASCADE` antes de 22/11/2026. Manter o arquivo
-na pasta ativa faria o `db push` tentar apagar o snapshot antes desse prazo e deixaria a paridade
-arquivos/ledger permanentemente vermelha. Para executar depois do prazo, criar uma migration nova,
-com versão acima do máximo vivo, após validar os contatos e a ausência de incidentes conforme o
-roteiro preservado neste arquivo; não mover esta versão de volta para a pasta ativa.
+Na pasta ativa existe apenas um tombstone de comentários com a mesma versão. Ele mantém a paridade
+arquivos/ledger sem permitir que `db push` ou replay repitam o `DROP` caso o registro do ledger seja
+removido ou reparado. Nunca mover o SQL executável de volta para `supabase/migrations/`.
 
 ## Regra
 

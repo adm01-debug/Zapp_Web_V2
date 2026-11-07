@@ -125,6 +125,21 @@ O total aparece separadamente no resultado do guard e **nao** incrementa a conta
 conteudo historico verificado. O estado atual continua sendo provado de forma
 independente pelo manifesto estrutural completo no DB Live Guard.
 
+O tipo `ledger-divergence/pinned-sql-marker` cobre um replay local endurecido cujo
+ledger preserva somente um marker `sql-sha256` do SQL anterior. Ele fixa bytes e
+SQL local, nome, array integral e marker; exige exatamente um marker valido, nenhum
+SQL canonico e falha quando marker e replay voltam a coincidir. O comentario nunca
+e promovido a prova de SQL aplicado.
+
+O tipo `ledger-archive/registered-tombstone` representa uma migration destrutiva
+registrada cujo efeito nao pode ser inferido apenas do ledger e cujo SQL nao pode
+permanecer executavel no glob ativo. A pasta ativa contem
+um tombstone somente de comentarios; o SQL original permanece em `_superseded/`
+com caminho canonico e hashes de bytes/SQL fixados. O manifesto tambem fixa nome,
+array integral e SQL canonico do ledger, exigindo que o SQL arquivado seja identico
+ao SQL registrado no ledger. Archive ausente, symlink, caminho alternativo, tombstone
+executavel ou qualquer hash divergente falha fechado.
+
 As seis entradas revisadas nessa categoria sao `20260827120000`, `20260827130000`,
 `20260827140000`, `20260827150000`, `20260827160000` e `20260828000000`. Qualquer
 mudanca de byte, nome, statements ou marker falha fechado; se SQL historico autentico

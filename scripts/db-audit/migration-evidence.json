@@ -1123,6 +1123,19 @@
       "justification": "O arquivo no repo difere do SQL aplicado em producao para os limites de filtros salvos no inbox (indice unico + trigger). Migration imutavel; arquivo fixado por hash proprio. Hashes medidos em 02/11/2026."
     },
     {
+      "version": "20261026240300",
+      "filename": "20261026240300_drop_bkp_261023.sql",
+      "file_sha256": "ae73ca7b6be01398a8c1e658ba34f01988a6df299186a4803cdbff6b05fef34c",
+      "archive_path": "_superseded/20261026240300_drop_bkp_261023.sql",
+      "archive_file_sha256": "9bde6f6b60e2963534a299839787f1e769f7750a22ec435f8e765db7e556dd58",
+      "archive_sql_sha256": "2a796dcdf0666f9d38033db76fb084860037578d18dc185479a82f2826e095a6",
+      "ledger_name": "drop_bkp_261023",
+      "ledger_statements_sha256": "80d62a82b35b9b7f945a8ea08915e80b3d01d1d46e961deb4e644e0fda3008b9",
+      "ledger_sql_sha256": "2a796dcdf0666f9d38033db76fb084860037578d18dc185479a82f2826e095a6",
+      "kind": "ledger-archive/registered-tombstone",
+      "justification": "O ledger oficial registra o DROP destrutivo, mas o schema de backup ainda existe. O tombstone impede execução, mantém a paridade e preserva o SQL registrado no archive sem afirmar que o efeito foi aplicado."
+    },
+    {
       "version": "20261031100000",
       "filename": "20261031100000_copilot_fases13_15_tabelas.sql",
       "file_sha256": "753f2272f1593da181e64c11046a58243145524f7afcf346445f6a3811770309",
@@ -1149,56 +1162,16 @@
       "justification": "O arquivo no repo difere do SQL aplicado em producao para o RPC de log de search events (coluna client_event_id + funcao log_search_event + revogacao de INSERT direto). Migration imutavel; arquivo fixado por hash proprio. Hashes medidos em 02/11/2026."
     },
     {
-      "version": "20261102012200",
-      "filename": "20261102012200_department_invites_restringe_escrita.sql",
-      "file_sha256": "15e3be57bca2ae9acb18f0f82342360276b91c838a408ab1c4b5d8e0e5b07633",
-      "file_sql_sha256": "fe7fd53e915857faeec23619b1e33b4f17a8f11061bb1b2d63a63c8c85186b01",
-      "kind": "ledger-divergence/pinned-replay",
-      "ledger_name": "department_invites_restringe_escrita",
-      "ledger_statements_sha256": "6a17ff4dfe6cec6da24555f4808526be98776a0609483479cdd7364608fb6cf1",
-      "ledger_sql_sha256": "5f4bd13ad136d3edd3aa547d76f38abccd5b43e706aba9e29f26997936684b7e",
-      "reason": "safer-replay",
-      "related_migration": null,
-      "justification": "O arquivo versionado preserva o replay completo das policies e da RPC de convites, enquanto o ledger oficial preserva o SQL efetivamente aplicado com forma canonica diferente. Ambos os conteudos foram fixados pelos hashes publicados pelo DB Live Guard em 06/11/2026."
-    },
-    {
-      "version": "20261102012400",
-      "filename": "20261102012400_login_attempts_retencao_90d.sql",
-      "file_sha256": "9e6b244781a646ed1f4a7e21e30c32540715a3a7af4913d86b21c6d3926f231c",
-      "file_sql_sha256": "a61513c5575db88d2c4219a6d86a9940011115301ee02b63febcc65ea49b6104",
-      "kind": "ledger-divergence/pinned-replay",
-      "ledger_name": "login_attempts_retencao_90d",
-      "ledger_statements_sha256": "6cf2d1b2efad189efa42d1e8d9a33a5e49039e25beb1c0f243f79f523b96f9bc",
-      "ledger_sql_sha256": "da587e92bb648e7f2b7a4b73c1601a006fc3d312062eca0b9a7facd237b8c5f2",
-      "reason": "safer-replay",
-      "related_migration": null,
-      "justification": "O arquivo versionado preserva o replay idempotente do job de retencao de login, enquanto o ledger oficial preserva o SQL efetivamente aplicado com forma canonica diferente. Ambos os conteudos foram fixados pelos hashes publicados pelo DB Live Guard em 06/11/2026."
-    },
-    {
       "version": "20261102032200",
       "filename": "20261102032200_revoga_execute_public_cron_schedule.sql",
       "file_sha256": "e38a2ef45bd67746a23b1ef79568c86b1dfa5f0a45f2f65df43fadfd53eee45b",
       "file_sql_sha256": "d2118cfbf5ef8ec22e0a489c4ee982b60a364a6f483d2f71e34422dad806d733",
-      "kind": "ledger-divergence/pinned-replay",
       "ledger_name": "revoga_execute_public_cron_schedule",
-      "ledger_statements_sha256": "f04691cd2a8f553ae0c0681e69dd9e32b8ab280ac4d7a16bff73524b400673b3",
-      "ledger_sql_sha256": "355fee7e0ff4f2c775c7ad4f227f5c1df275c109848df7c9d72db2538410ba6b",
+      "ledger_statements_sha256": "a60da45d70d55f96bb9ba4e79c16a136b009fecce3220d6d307fb8e8a0caa2e7",
+      "ledger_sql_marker_sha256": "e455424b9c85c0f0900828c8a7812e921d686bbd4176f876779eaea67b88bf00",
+      "kind": "ledger-divergence/pinned-sql-marker",
       "reason": "safer-replay",
-      "related_migration": null,
-      "justification": "O ledger preserva o REVOKE aplicado antes da correcao da PR 2740; o arquivo versionado agora condiciona a operacao a autoridade do executor para que o replay como postgres nao aborte. Os dois conteudos ficam fixados por hashes independentes medidos pelo DB Live Guard em 06/11/2026."
-    },
-    {
-      "version": "20261103201500",
-      "filename": "20261103201500_remove_pagamentos_e_special_agent.sql",
-      "file_sha256": "80a508abddbaef78462d79b3cf271a273a8ad0cf5d10e81c2f127f50b628f130",
-      "file_sql_sha256": "818136f6687867be7d02b6c4ac2fd841af5483f1541529f0ba706d90189ac7c8",
-      "kind": "ledger-divergence/pinned-replay",
-      "ledger_name": "remove_pagamentos_e_special_agent",
-      "ledger_statements_sha256": "8333249a017cf6e6fff63395fe34a7f93e771fd3b42e2be95a68fcf08909cef5",
-      "ledger_sql_sha256": "b79ed10a306beb682d494f5e555ac21fc8380af3b9794c8a8457f93d3a0faed1",
-      "reason": "safer-replay",
-      "related_migration": null,
-      "justification": "O arquivo versionado preserva o replay completo da retirada de pagamentos e special_agent, enquanto o ledger oficial preserva o SQL efetivamente aplicado com forma canonica diferente. Ambos os conteudos foram fixados pelos hashes publicados pelo DB Live Guard em 06/11/2026."
+      "justification": "O ledger preserva um marker do REVOKE anterior; o arquivo local condiciona a operação à autoridade do executor para que o replay como postgres não aborte. Arquivo, SQL local, array integral e marker ficam fixados sem promover o comentário a SQL aplicado."
     }
   ]
 }
