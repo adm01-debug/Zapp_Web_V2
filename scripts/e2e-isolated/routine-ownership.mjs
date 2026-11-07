@@ -1,5 +1,5 @@
 import {
-  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, assertRunId, assertSourceSha, assertContainerIsolation,
+  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, assertRunId, assertSourceSha, assertContainerIsolation, isAuthenticatedGroup,
 } from './runtime-contract.mjs';
 
 // Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e.
@@ -97,7 +97,7 @@ export function restoreRoutineOwnership({ command, dockerConfig, scope, group, r
   let phase = 'scope';
   try {
     assertRunId(runId); assertSourceSha(sourceSha);
-    if (scope !== 'suite' || group !== 'authenticated' || !CID.test(anchorId) || !CID.test(databaseId)
+    if (scope !== 'suite' || !isAuthenticatedGroup(group) || !CID.test(anchorId) || !CID.test(databaseId)
         || anchorId === databaseId || !IMAGE.test(anchorImage) || !IMAGE.test(databaseImage)
         || volumeName !== runId + '-postgres' || !NET.test(networkNamespace)
         || !(allowedWritableSources instanceof Set) || typeof dockerConfig !== 'string' || !dockerConfig.startsWith('/')) reject();

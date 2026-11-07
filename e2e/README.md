@@ -17,19 +17,21 @@ imagens e os arquivos publicáveis estão em
 bun install --frozen-lockfile --ignore-scripts
 # Cada destino precisa estar vazio e fora do checkout.
 bash scripts/e2e-isolated/run.sh login /tmp/e2e-isolated-login
-bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-authenticated
+bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-authenticated-1
+bash scripts/e2e-isolated/run.sh suite authenticated-2-of-3 /tmp/e2e-isolated-authenticated-2
+bash scripts/e2e-isolated/run.sh suite authenticated-3-of-3 /tmp/e2e-isolated-authenticated-3
 bash scripts/e2e-isolated/run.sh suite deslogado-principal /tmp/e2e-isolated-deslogado-principal
 bash scripts/e2e-isolated/run.sh suite deslogado-secundario /tmp/e2e-isolated-deslogado-secundario
 ```
 
 `login` executa somente `setup/authenticate`. Esse resultado não aprova os demais
-projetos. Cada grupo da suíte usa coleta `--list` separada e a mesma seleção e
-concorrência na execução. Login e grupos deslogados ficam em `--workers 1`; o
-grupo autenticado usa os dois workers declarados pela configuração do projeto,
-dentro do seu backend descartável exclusivo. Não há parâmetro livre para ignorar
-dependências, escolher comandos ou apontar um backend externo. O resultado
-completo depende da execução nativa de cada grupo, não das simulações locais de
-controle.
+projetos. Cada grupo da suíte usa coleta `--list` separada e a mesma seleção,
+shard e concorrência na execução. Todos usam `--workers 1`: os três shards
+autenticados distribuem os casos `1/3`, `2/3` e `3/3` em backends descartáveis
+independentes, sem concorrência sobre as mesmas fixtures. Não há parâmetro livre
+para ignorar dependências, escolher comandos ou apontar um backend externo. O
+resultado completo depende da execução nativa dos cinco grupos, não das
+simulações locais de controle.
 
 ## Fixture de autenticação
 
@@ -61,11 +63,15 @@ Essa cobertura pública não deve ser contada novamente entre os projetos abaixo
 
 ## Grupos e GitHub Actions
 
-A interface do controller conserva a seleção explícita de 9 + 3 + 3 projetos:
+A interface do controller conserva 15 projetos distintos. A seleção autenticada
+de nove projetos é repetida em três backends e o Playwright atribui cada caso a
+exatamente um dos shards fechados:
 
 | Grupo | Projetos |
 |---|---|
-| `authenticated` | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `authenticated-1-of-3` (`--shard 1/3`) | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `authenticated-2-of-3` (`--shard 2/3`) | os mesmos nove projetos, em backend próprio |
+| `authenticated-3-of-3` (`--shard 3/3`) | os mesmos nove projetos, em backend próprio |
 | `deslogado-principal` | `chromium-mapa`, `firefox-auth`, `webkit-auth` |
 | `deslogado-secundario` | `chromium-telefonia`, `firefox-telefonia`, `webkit-telefonia` |
 
@@ -271,11 +277,14 @@ há `storageState`, credencial real, fixture remota nem URL de Supabase externo.
 
 ### Como rodar
 
-O grupo `authenticated` do controller executa os seeds existentes de Arquivos,
-prepara Auth/Storage reais e valida seus proprietários antes de abrir o browser:
+Os três grupos `authenticated-*-of-3` executam os seeds de Arquivos em backends
+independentes. Para reproduzir o shard que contém o caso, rode a matriz completa;
+cada comando prepara Auth/Storage reais e valida seus proprietários:
 
 ```bash
-bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-arquivos
+bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-arquivos-1
+bash scripts/e2e-isolated/run.sh suite authenticated-2-of-3 /tmp/e2e-isolated-arquivos-2
+bash scripts/e2e-isolated/run.sh suite authenticated-3-of-3 /tmp/e2e-isolated-arquivos-3
 ```
 
 Não substitui os dados por respostas fixas nem ignora `setup`. O usuário e os

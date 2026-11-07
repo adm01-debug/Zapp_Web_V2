@@ -6,7 +6,8 @@ import path from 'node:path';
 import { runLogin, runSuite, discoverFunctionEntries } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { serviceConfiguration } from '../e2e-isolated/stack.mjs';
-import { browserEnvironment, syntheticCredentials, ORIGIN, PROVIDER_ORIGIN, CATALOG_SKU, GROUPS } from '../e2e-isolated/runtime-contract.mjs';
+import { browserEnvironment, syntheticCredentials, ORIGIN, PROVIDER_ORIGIN, CATALOG_SKU, GROUPS,
+  GROUP_SHARDS } from '../e2e-isolated/runtime-contract.mjs';
 
 const RUN = 'zapp-e2e-suite-contract-0001';
 const SHA = 'a'.repeat(40);
@@ -33,12 +34,13 @@ for (const [name, options] of [
 test('runSuite does not fall back to login when its group is absent', async () => {
   await assert.rejects(runSuite({ command() { assert.fail('no command allowed'); } }), /invalid-isolated-scope/);
 });
-test('suite groups preserve the exact 9+3+3 existing project union', () => {
-  assert.deepEqual(Object.keys(GROUPS), ['authenticated', 'deslogado-principal', 'deslogado-secundario']);
+test('suite groups preserve three closed authenticated shards and the exact 15-project union', () => {
+  assert.deepEqual(Object.keys(GROUPS), [...Object.keys(GROUP_SHARDS), 'deslogado-principal', 'deslogado-secundario']);
   const all = Object.values(GROUPS).flat();
-  assert.deepEqual(Object.values(GROUPS).map(items => items.length), [9, 3, 3]);
+  assert.deepEqual(Object.values(GROUPS).map(items => items.length), [9, 9, 9, 3, 3]);
+  assert.deepEqual(Object.values(GROUP_SHARDS), ['1/3', '2/3', '3/3']);
   assert.equal(new Set(all).size, 15);
-  assert.equal(all.filter(name => name === 'setup').length, 1);
+  assert.equal(all.filter(name => name === 'setup').length, 3);
 });
 
 function functions(t) {

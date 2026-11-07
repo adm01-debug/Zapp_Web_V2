@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   OWNERSHIP_ROUTINES, OWNERSHIP_EXECUTOR_OPTIONS, ownershipSql, parseOwnershipResult, restoreRoutineOwnership,
 } from '../e2e-isolated/routine-ownership.mjs';
-import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE } from '../e2e-isolated/runtime-contract.mjs';
+import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, GROUP_SHARDS } from '../e2e-isolated/runtime-contract.mjs';
 
 const RUN = 'zapp-e2e-ownership-unit';
 const SHA = 'a'.repeat(40);
@@ -14,6 +14,7 @@ const DRIVER = 'mcr.microsoft.com/playwright:v1.64.1-noble@sha256:' + 'e'.repeat
 const PATH = '/usr/lib/postgresql/17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
 const MOUNT = '/var/lib/docker/volumes/' + RUN + '-postgres/_data';
 const IDENTITY = { runId: RUN, sourceSha: SHA };
+const AUTH_GROUP = Object.keys(GROUP_SHARDS)[0];
 const ok = stdout => ({ status: 0, error: null, signal: null, stdout, stderr: '' });
 
 function records(owners = OWNERSHIP_ROUTINES.map(() => 'supabase_admin')) {
@@ -39,7 +40,7 @@ function fixture() {
     source: ok(SHA + '\n'), namespace: ok('net:[1234]\n'), result: ok(stdout(records())), calls: [], sqlCalls: [],
   };
   state.database.Mounts.push({ Type: 'volume', Name: RUN + '-postgres', Source: MOUNT, Destination: '/var/lib/postgresql/data', RW: true });
-  const options = { dockerConfig: '/tmp/owned-docker-client', scope: 'suite', group: 'authenticated', ...IDENTITY,
+  const options = { dockerConfig: '/tmp/owned-docker-client', scope: 'suite', group: AUTH_GROUP, ...IDENTITY,
     anchorId: ANCHOR, anchorImage: DRIVER, databaseId: DATABASE, databaseImage: IMAGE, volumeName: RUN + '-postgres',
     networkNamespace: 'net:[1234]', allowedWritableSources: new Set([MOUNT]), command(program, args, commandOptions) {
       state.calls.push({ program, args, options: commandOptions });

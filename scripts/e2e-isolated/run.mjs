@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { types } from 'node:util';
 import {
-  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, CATALOG_SKU, assertOwnedContainer,
+  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, GROUP_SHARDS, CATALOG_SKU, assertOwnedContainer,
   assertContainerIsolation, assertSourceSha, assertOfficialHostIsLocal, makeProof, syntheticCredentials, sha256,
 } from './runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from './stack.mjs';
@@ -188,12 +188,10 @@ export function browserTimeoutMs(scope, fullSuite) {
   return scope === 'login' ? 600_000 : fullSuite ? 55 * 60_000 : 15 * 60_000;
 }
 
-export function browserWorkers(scope, fullSuite) {
-  // O projeto principal já declara fullyParallel e dois workers. A suíte
-  // autenticada possui 266 casos e, serializada à força, não cabe nos 55
-  // minutos de validade reservados à fase do navegador. Os grupos menores e o
-  // bootstrap continuam com um worker; cada job preserva backend próprio.
-  return scope === 'suite' && fullSuite ? 2 : 1;
+export const browserWorkers = () => 1;
+
+export function browserShard(scope, group) {
+  return scope === 'suite' && Object.hasOwn(GROUP_SHARDS, group) ? GROUP_SHARDS[group] : null;
 }
 
 export function assertPinnedImages(lock) {
@@ -308,7 +306,8 @@ function safeCode(error) {
 export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group } = {}) {
   if (!['login', 'suite'].includes(scope) || (scope === 'login' && group !== undefined) ||
       (scope === 'suite' && !Object.hasOwn(GROUPS, group))) throw new Error('invalid-isolated-scope');
-  const fullSuite = scope === 'suite' && group === 'authenticated';
+  const shard = browserShard(scope, group);
+  const fullSuite = shard !== null;
   const projects = scope === 'login' ? ['setup'] : GROUPS[group];
   const reportScope = scope === 'login' ? 'bootstrap-and-login' : fullSuite ? 'authenticated-suite' : group;
   let output = path.resolve(outputDirectory || '');
@@ -682,7 +681,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     writeJson(path.join(output, 'readiness.json'), proof);
     phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
     const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
-      ...projects.flatMap(name => ['--project', name]), '--workers', String(browserWorkers(scope, fullSuite))];
+      ...projects.flatMap(name => ['--project', name]), ...(shard ? ['--shard', shard] : []), '--workers', String(browserWorkers())];
     const inventory = collectPlaywrightInventory({ output, scope, projects,
       execute: report => docker(['exec', '-e', 'PLAYWRIGHT_JSON_OUTPUT_FILE=' + report,
         ...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),

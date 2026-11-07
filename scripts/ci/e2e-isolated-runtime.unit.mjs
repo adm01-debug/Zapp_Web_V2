@@ -8,9 +8,10 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertPinnedImages, functionPolicy, prepareMountTargets, readBrowserReportOnce, browserResultDiagnostic,
-  browserTimeoutMs, browserWorkers, parseQrSeedDiagnostic } from '../e2e-isolated/run.mjs';
+  browserTimeoutMs, browserWorkers, browserShard, parseQrSeedDiagnostic } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
-import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS, sha256 } from '../e2e-isolated/runtime-contract.mjs';
+import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS, GROUP_SHARDS, isAuthenticatedGroup,
+  sha256 } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
 import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
@@ -22,6 +23,7 @@ const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
 const SOURCE_SHA = 'a'.repeat(40);
 const MIGRATION = '20260101000000_fixture.sql';
 const SQL = 'select 1;\n';
+const AUTH_GROUP = Object.keys(GROUP_SHARDS)[0];
 const lock = () => JSON.parse(readFileSync(path.join(MODULES, 'images.lock.json'), 'utf8'));
 const ok = stdout => ({ status: 0, stdout: stdout ?? '', stderr: '' });
 const error = stderr => ({ status: 1, stdout: '', stderr: stderr ?? 'simulated command failure' });
@@ -39,10 +41,11 @@ test('browser timeout stays inside the isolation proof lifetime and outer job bu
   assert.ok(browserTimeoutMs('suite', true) < 60 * 60_000);
 });
 
-test('only the full authenticated suite restores the two project workers', () => {
-  assert.equal(browserWorkers('login', false), 1);
-  assert.equal(browserWorkers('suite', false), 1);
-  assert.equal(browserWorkers('suite', true), 2);
+test('every backend stays serial and only authenticated groups receive a closed shard', () => {
+  assert.equal(browserWorkers(), 1);
+  assert.equal(browserShard('login', AUTH_GROUP), null);
+  assert.equal(browserShard('suite', 'deslogado-principal'), null);
+  assert.equal(browserShard('suite', AUTH_GROUP), '1/3');
 });
 let certificateFixture;
 let certificateRoot;
@@ -91,7 +94,7 @@ function playwrightJson({ listed = false, failed = false } = {}) {
   };
 }
 
-function suiteJson({ listed = false, fault, group = 'authenticated' } = {}) {
+function suiteJson({ listed = false, fault, group = AUTH_GROUP } = {}) {
   const projects = GROUPS[group].filter(name => fault !== 'missing-project-' + name);
   const report = playwrightJson({ listed });
   report.config.projects = projects.map(name => ({ name, repeatEach: 1 }));
@@ -222,9 +225,9 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 }
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
-  const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic,
+  const { scope = 'login', group = AUTH_GROUP, manifest = value => value, pullDiagnostic, seedDiagnostic,
     catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult, browserObservation } = typeof options === 'function' ? { manifest: options } : options;
-  const fullSeed = scope === 'suite' && group === 'authenticated';
+  const fullSeed = scope === 'suite' && isAuthenticatedGroup(group);
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
@@ -278,7 +281,10 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   let tlsUpdated = false;
   let tlsBoot = false;
   let tlsProbeRemoved = false;
-  const valueAfter = (args, flag) => args[args.indexOf(flag) + 1];
+  const valueAfter = (args, flag) => {
+    const index = args.indexOf(flag);
+    return index < 0 ? undefined : args[index + 1];
+  };
   const allAfter = (args, flag) => args.flatMap((value, i) => value === flag ? [args[i + 1]] : []);
   const fakeCommand = (program, args, options) => {
     calls.push({ program, args: [...args] });
@@ -572,7 +578,8 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
         return ok('private-sentinel-from-seed');
       }
       if (argv.includes('node_modules/@playwright/test/cli.js')) {
-        assert.equal(valueAfter(argv, '--workers'), fullSeed ? '2' : '1');
+        assert.equal(valueAfter(argv, '--workers'), '1');
+        assert.equal(valueAfter(argv, '--shard'), fullSeed ? GROUP_SHARDS[group] : undefined);
         if (scope === 'suite') {
           assert.deepEqual(allAfter(argv, '--project'), GROUPS[group]);
           assert.equal(argv.includes('E2E_CATALOG_PRODUCT_SKU_VERIFIED=true'), fullSeed);
@@ -931,12 +938,12 @@ for (const fault of ['browser-failure', 'wrong-result', 'redactor-failure', 'cle
   });
 }
 
-test('suite controller: authenticated collects exactly its nine existing projects after every seed/provider check', async t => {
-  const value = await controllerFixture(t, 'none', { scope: 'suite' });
+for (const group of Object.keys(GROUP_SHARDS)) test('suite controller: ' + group + ' collects its closed shard after every seed/provider check', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', group });
   assert.equal(value.exit, 0);
   assert.equal(value.state.scope, 'authenticated-suite');
-  assert.equal(value.state.suite.passed, GROUPS.authenticated.length);
-  assert.equal(value.state.suite.total, GROUPS.authenticated.length);
+  assert.equal(value.state.suite.passed, GROUPS[AUTH_GROUP].length);
+  assert.equal(value.state.suite.total, GROUPS[AUTH_GROUP].length);
   assert.equal(value.browserCalls, 1);
   assert.equal(value.listCalls, 1);
   assert.deepEqual(value.bundled, ['main.eszip', ...FUNCTIONS.map(name => name + '.eszip'), 'tls-edge-probe.eszip']);
@@ -1018,7 +1025,7 @@ const suiteFaults = {
     'anon_key_sha256', 'user_id', 'profile_id', 'connection_id', 'instance_id'].map(key => ['qr-proof-' + key, 'qr-seed-proof'])),
   ...Object.fromEntries([...SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'pagination_seed_count'].map(key => ['suite-proof-' + key, 'suite-seed-proof-mismatch'])),
   ...Object.fromEntries([...PROVIDER_FLAGS, 'schema', 'run_id', 'source_sha', 'catalog_sku', 'delivery_proofs', 'delivery_proofs.text', 'delivery_proofs.catalog_image', 'delivery_proofs.storage_image', 'delivery_proofs-extra'].map(key => ['provider-proof-' + key, 'provider-proof-mismatch'])),
-  ...Object.fromEntries(GROUPS.authenticated.map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),
+  ...Object.fromEntries(GROUPS[AUTH_GROUP].map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),
 };
 for (const [fault, expectedCode] of Object.entries(suiteFaults)) test('suite controller: ' + fault + ' blocks browser without concealing cleanup', async t => {
   const value = await controllerFixture(t, fault, { scope: 'suite' });
@@ -1534,7 +1541,7 @@ const browserControllerCases = [
 for (const scenario of browserControllerCases) {
   test('browser diagnostic controller: ' + scenario.name, async t => {
     const value = await controllerFixture(t, scenario.fault ?? 'none', {
-      scope: scenario.scope ?? 'suite', group: scenario.group ?? 'authenticated', browserObservation: scenario.observation ?? {},
+      scope: scenario.scope ?? 'suite', group: scenario.group ?? AUTH_GROUP, browserObservation: scenario.observation ?? {},
     });
     assert.equal(value.exit, scenario.failure ? 1 : 0);
     assert.equal(value.state.error, scenario.failure);

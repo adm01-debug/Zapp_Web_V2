@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { GROUPS } from '../e2e-isolated/runtime-contract.mjs';
+import { GROUPS, GROUP_SHARDS } from '../e2e-isolated/runtime-contract.mjs';
 import {
   assertBlocking, conditionAllows, conditionOf, jobOf, nestedValue, onlyStep,
   permission, runOf, scriptOf, stepsOf, valueOf,
@@ -99,6 +99,18 @@ for (const [group, projects] of [['unknown', ''], ['authenticated', '--project=s
     assert.equal(existsSync(recorded), false);
   });
 }
+
+test('legado: matriz fixa preserva os três shards autenticados, 15 projetos e orçamentos', () => {
+  const matrix = [...job.matchAll(/^ {10}- name: ([\w-]+)\n {12}projects: (.+)\n {12}timeout-minutes: (\d+)$/gm)];
+  assert.deepEqual(matrix.map(match => match[1]), Object.keys(GROUPS));
+  assert.deepEqual(matrix.map(match => match[2].split(' ').map(token => token.replace(/^--project=/, ''))), Object.values(GROUPS));
+  assert.deepEqual(matrix.map(match => Number(match[3])), [75, 75, 75, 45, 45]);
+  assert.deepEqual(Object.values(GROUPS).map(projects => projects.length), [9, 9, 9, 3, 3]);
+  assert.deepEqual(Object.values(GROUP_SHARDS), ['1/3', '2/3', '3/3']);
+  assert.equal(new Set(Object.values(GROUPS).flat()).size, 15);
+  assert.equal(valueOf(valueOf(job, 'strategy', 4), 'fail-fast', 0), 'false');
+  assert.equal(valueOf(job, 'timeout-minutes', 4), '${{ matrix.timeout-minutes }}');
+});
 
 test('legado conserva os gatilhos, fila e main-only sem secrets nem chamadas de produção', () => {
   const on = valueOf(yaml, 'on', 0);
