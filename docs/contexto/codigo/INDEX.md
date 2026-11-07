@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `529389d3f0ed733fc12fbdbdd8da911b079b1258` (2026-11-07T14:59:09Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `761ab3b056f8245e11e2bf001d8180b7124d2be8` (2026-11-07T12:22:54-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8288 |
 | arquivos_codigo | 4737 |
-| linhas_codigo | 875001 |
+| linhas_codigo | 875007 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56073 nós · 115616 arestas · 4115 comunidades · grafo do commit `529389d3`
+- 56073 nós · 115616 arestas · 4115 comunidades · grafo do commit `761ab3b0`
 - comunidades maiores: vitest (985), lucide-react (967), react (928), TalkXSuppression.tsx (805), ExternalProductManagement.tsx (669), client.ts (664), @tanstack/react-query (452), validation.ts (344), ref_node_fs (339), ref_node_assert (334), TalkXSegments.tsx (320), useTeamChatPanel.ts (311)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `761ab3b` fix: deep-link de tipo no inbox prevalece sobre preferência salva (PK-14)
 - 2026-11-07 `529389d` chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)
 - 2026-11-07 `e900ae3` fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)
 - 2026-11-07 `5b62b93` fix: torna Vercel Cleanup fail-closed em 403 (#2758)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `3ece06f` fix: corrige stale closure na navegação por teclado da paleta de comandos (#2749)
 - 2026-11-06 `83e821b` fix: corrigir preparo e diagnóstico da suíte isolada (#2728)
 - 2026-11-06 `042e593` chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)
-- 2026-11-06 `3adec58` fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

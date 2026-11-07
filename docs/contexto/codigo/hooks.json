@@ -7373,7 +7373,7 @@
    "hooks_exportados": [
     "useInboxFilters"
    ],
-   "linhas": 294,
+   "linhas": 300,
    "dominio": "hooks/inbox",
    "tabelas": [],
    "rpcs": [],

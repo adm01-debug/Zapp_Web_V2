@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "529389d3f0ed733fc12fbdbdd8da911b079b1258",
+  "commit": "761ab3b056f8245e11e2bf001d8180b7124d2be8",
   "branch": "main",
-  "data_commit": "2026-11-07T14:59:09Z",
+  "data_commit": "2026-11-07T12:22:54-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "761ab3b",
+    "data": "2026-11-07",
+    "assunto": "fix: deep-link de tipo no inbox prevalece sobre preferência salva (PK-14)"
+   },
    {
     "sha": "529389d",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "cabaa6a",
     "data": "2026-11-06",
     "assunto": "fix: cancelar timer de preview ao desmontar painel (#2739)"
-   },
-   {
-    "sha": "c6af71c",
-    "data": "2026-11-06",
-    "assunto": "chore: regenera manifesto de deploy das edge functions (#2737)"
    }
   ],
-  "arquivos_mudados_7d": 1113,
+  "arquivos_mudados_7d": 1114,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -274,10 +274,6 @@
     "mudancas": 7
    },
    {
-    "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 6
-   },
-   {
     "arquivo": "AGENTS.md",
     "mudancas": 6
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "scripts/db-audit/known-violations.json",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 6
    }
   ],
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8288,
   "arquivos_codigo": 4737,
-  "linhas_codigo": 875001,
+  "linhas_codigo": 875007,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -720,7 +720,7 @@
   },
   "src/hooks": {
    "arquivos": 980,
-   "linhas": 159637
+   "linhas": 159643
   },
   "src/i18n": {
    "arquivos": 2,
