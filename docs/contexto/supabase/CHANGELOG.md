@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 19:47 UTC
+
+- **functions** alterado (2): `public.current_profile_id()`, `public.is_admin(_user_id uuid)`
+
 ## 2026-11-07 17:18 UTC
 
 - **migrations** adicionado (1): `20261107170000_fix_message_reactions_rls`
