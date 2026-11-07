@@ -62,13 +62,38 @@ export function estaDentro(raiz, candidato) {
 }
 
 /**
+ * Resolve links simbolicos mesmo quando o alvo final ainda nao existe.
+ *
+ * `realpathSync` exige que o caminho inteiro exista, mas varios chamadores usam
+ * esta guarda antes de criar um arquivo. Nesse caso subimos ate o ancestral
+ * existente mais proximo, resolvemos os links dele e recolocamos os segmentos
+ * inexistentes. Assim `tmp/link-para-fora/novo.json` nao passa apenas porque
+ * `novo.json` ainda nao foi criado.
+ */
+function caminhoRealMesmoSeAusente(caminho) {
+  let existente = caminho;
+  const ausentes = [];
+
+  while (!fs.existsSync(existente)) {
+    const pai = path.dirname(existente);
+    if (pai === existente) break;
+    ausentes.unshift(path.basename(existente));
+    existente = pai;
+  }
+
+  const baseReal = fs.realpathSync.native(existente);
+  return path.resolve(baseReal, ...ausentes);
+}
+
+/**
  * Resolve o caminho recebido do chamador e exige que fique dentro de uma raiz
  * permitida. Lanca (fail-closed) quando escapa -- quem chama converte em erro
  * legivel + `process.exit` com o codigo de entrada invalida do proprio script.
  */
 export function resolverCaminhoPermitido(valor, rotulo, raizes = RAIZES_PERMITIDAS) {
-  const resolvido = path.resolve(valor);
-  if (!raizes.some((raiz) => estaDentro(raiz, resolvido))) {
+  const resolvido = caminhoRealMesmoSeAusente(path.resolve(valor));
+  const raizesReais = raizes.map((raiz) => caminhoRealMesmoSeAusente(path.resolve(raiz)));
+  if (!raizesReais.some((raiz) => estaDentro(raiz, resolvido))) {
     throw new Error('caminho de ' + rotulo + ' fora das raizes permitidas (repositorio ou diretorio temporario): ' + valor);
   }
   return resolvido;
