@@ -172,11 +172,9 @@ async function getCurrentProfileId(page: Page): Promise<string | null> {
 //
 // ESCOPO OBRIGATORIO: a policy de DELETE ('Users can delete their own reactions')
 // so conhece `user_id = profile do caller`, sem olhar contato/mensagem. Um filtro
-// apenas por `user_id` apagava TODAS as reacoes do usuario logado — em qualquer
-// conversa, nao so as escritas por este E2E (numa conta de QA real isso e perda de
-// dado). `contact_id` e o mesmo vinculo gravado pelo app no upsert
-// (useReactionMutations.addMutation), entao escopar por ele cobre exatamente o que
-// esta suite escreve e nada mais.
+// apenas por `user_id` apagaria TODAS as reacoes do usuario logado. Reações de
+// atendente têm `contact_id = NULL` por desenho; portanto o escopo seguro é a lista
+// de mensagens pertencentes ao contato sintético, nunca o contact_id da reação.
 // Sem limpeza: hasReacted de emoji retorna true em runs seguintes → clique REMOVE
 // em vez de ADICIONAR → badge desaparece → toBeVisible falha (root cause das falhas :41 :65).
 // RLS: policy 'Users can delete their own reactions' cobre user_id = profile.id do caller.
@@ -198,8 +196,21 @@ export async function cleanupE2EReactions(page: Page): Promise<void> {
     console.warn('[e2e-contact] cleanupE2EReactions: profile do usuario logado nao resolvido');
     return;
   }
+  const messagesResponse = await page.request.get(
+    `${SUPABASE_URL}/rest/v1/messages?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&select=id`,
+    { headers }
+  );
+  if (!messagesResponse.ok()) {
+    console.warn(
+      `[e2e-contact] cleanupE2EReactions/messages: HTTP ${messagesResponse.status()} ${await messagesResponse.text().catch(() => '')}`
+    );
+    return;
+  }
+  const messageRows = (await messagesResponse.json().catch(() => [])) as Array<{ id?: string }>;
+  const messageIds = messageRows.map((row) => row.id).filter((id): id is string => Boolean(id));
+  if (messageIds.length === 0) return;
   const resp = await page.request.delete(
-    `${SUPABASE_URL}/rest/v1/message_reactions?user_id=eq.${profileId}&contact_id=eq.${E2E_FIXTURE_CONTACT_ID}`,
+    `${SUPABASE_URL}/rest/v1/message_reactions?user_id=eq.${profileId}&message_id=in.(${messageIds.join(',')})`,
     { headers }
   );
   if (!resp.ok() && resp.status() !== 404) {

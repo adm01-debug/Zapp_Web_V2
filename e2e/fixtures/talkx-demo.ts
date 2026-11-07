@@ -114,6 +114,56 @@ function emptyJson(route: Route) {
 
 const isRead = (m: string) => m === 'GET' || m === 'HEAD';
 
+type DemoCampaign = {
+  status?: string;
+  started_at?: string | null;
+};
+
+type DemoRecipient = {
+  contact_id?: string | null;
+  sent_at?: string | null;
+  delivered_at?: string | null;
+};
+
+function inWindow(value: string | null | undefined, from: number, to: number): boolean {
+  if (!value) return false;
+  const time = Date.parse(value);
+  return Number.isFinite(time) && time >= from && time < to;
+}
+
+/**
+ * Resposta mínima fiel à RPC `talkx_overview_stats` consumida pela Visão geral.
+ * Os números saem da própria fixture e respeitam a janela pedida pelo cliente;
+ * assim o demo não consulta o banco nem inventa o KPI que pretende validar.
+ */
+function overviewStatsFromFixture(data: TalkXDemoData, body: unknown) {
+  const params = body && typeof body === 'object' ? body as Record<string, unknown> : {};
+  const from = Date.parse(String(params.p_from ?? '2020-01-01T00:00:00.000Z'));
+  const to = Date.parse(String(params.p_to ?? '2100-01-01T00:00:00.000Z'));
+  const campaigns = (data.talkx_campaigns ?? []) as DemoCampaign[];
+  const recipients = (data.talkx_recipients ?? []) as DemoRecipient[];
+  const currentCampaigns = campaigns.filter((campaign) => inWindow(campaign.started_at, from, to));
+  const sent = recipients.filter((recipient) => inWindow(recipient.sent_at, from, to));
+  const delivered = recipients.filter((recipient) => inWindow(recipient.delivered_at, from, to));
+  const contactsReached = new Set(sent.map((recipient) => recipient.contact_id).filter(Boolean)).size;
+  const active = campaigns.filter((campaign) =>
+    campaign.status === 'sending' || campaign.status === 'scheduled' || campaign.status === 'paused'
+  ).length;
+
+  return {
+    current: {
+      campaigns_sent: currentCampaigns.length,
+      completed: currentCampaigns.filter((campaign) => campaign.status === 'completed').length,
+      contacts_reached: contactsReached,
+      sent: sent.length,
+      delivery_rate_pct: sent.length > 0 ? Number(((delivered.length / sent.length) * 100).toFixed(1)) : 0,
+    },
+    previous: null,
+    active,
+    daily: [],
+  };
+}
+
 export async function mockTalkXBackend(page: Page, tela: string) {
   const data = loadDemoData(tela);
 
@@ -128,8 +178,21 @@ export async function mockTalkXBackend(page: Page, tela: string) {
     });
   });
 
-  // RPCs talkx_* e edge functions talkx-*: o demo nunca dispara envio/escrita.
-  await page.route(/\/rest\/v1\/rpc\/talkx_[a-z_]+/, writeBlocked);
+  // A Visão geral lê seus KPIs por RPC. Ela é uma leitura determinística da
+  // fixture; as demais RPCs talkx_* continuam bloqueadas como escrita imprevista.
+  await page.route(/\/rest\/v1\/rpc\/talkx_[a-z_]+/, async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (pathname.endsWith('/talkx_overview_stats') && route.request().method() === 'POST') {
+      let body: unknown = {};
+      try { body = route.request().postDataJSON(); } catch { /* corpo inválido usa a janela padrão */ }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(overviewStatsFromFixture(data, body)),
+      });
+    }
+    return writeBlocked(route);
+  });
   await page.route(/\/functions\/v1\/talkx-[a-z-]+/, writeBlocked);
 
   // Criadores (get_team_profiles) e contatos (insights) respondem vazios para o

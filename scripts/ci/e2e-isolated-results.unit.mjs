@@ -248,7 +248,7 @@ test('contradição: índice de retry sem tentativa inicial é rejeitado', () =>
 // are parser controls, not a native browser run or a native --list artifact.
 const PLATFORM_PROJECTS = ['chromium-e2e-core', 'firefox-conversation', 'webkit-conversation'];
 const PLATFORM_REASON = "CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a getByRole('option') de forma confiavel em Firefox/WebKit no CI";
-const PLATFORM_BLOB = '6af8fa24e4a0e401ea660a1e7b0dadee11c76bf2';
+const PLATFORM_BLOB = '706c1fc0c55d7ae7b4fad46edac1b8356ebf366f';
 const PLATFORM_FILE = 'e2e/conversation.spec.ts';
 const SOURCE_SHA = 'a96bbd4cbaeed5a8bad7c42af347e56960e6cac7';
 const platformSpec = json => json.suites[0].suites[0].specs[0];

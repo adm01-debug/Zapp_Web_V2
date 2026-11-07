@@ -24,6 +24,18 @@ describe('Progress', () => {
     expect(root).toHaveAttribute('data-state', 'indeterminate');
   });
 
+  it.each([
+    { recebido: 1020, anunciado: 100, transform: 'translateX(-0%)' },
+    { recebido: -12, anunciado: 0, transform: 'translateX(-100%)' },
+    { recebido: Number.NaN, anunciado: 0, transform: 'translateX(-100%)' },
+  ])('normaliza $recebido para o intervalo semântico da barra', ({ recebido, anunciado, transform }) => {
+    const { container } = render(<Progress value={recebido} aria-label="Capacidade" />);
+
+    expect(screen.getByRole('progressbar', { name: 'Capacidade' }))
+      .toHaveAttribute('aria-valuenow', String(anunciado));
+    expect(container.firstElementChild?.firstElementChild).toHaveStyle({ transform });
+  });
+
   // Travamento de regressão do achado R2-INF-035 (cartão #491): o wrapper desestrutura `value`,
   // usa-o no transform do Indicator e precisa repassá-lo ao Root. Sem a linha `value={value}` do
   // Root, o Radix perde a medida e `aria-valuenow` some. Os dois casos abaixo ficam VERMELHOS

@@ -102,8 +102,19 @@ export { expect };
 
 /** Preserve contact readiness without the helper that dismisses the tour. */
 export async function gotoOnboardingContacts(page: Page): Promise<void> {
+  const heading = page
+    .getByRole('main', { name: 'Conteúdo principal' })
+    .getByRole('heading', { level: 1, name: 'Contatos' });
   await page.goto('/?view=contacts');
-  await expect(page.getByRole('main', { name: 'Conteúdo principal' }).getByRole('heading', { level: 1, name: 'Contatos' })).toBeAttached({ timeout: 20_000 });
+  // O primeiro documento pode ser substituído pela navegação pós-login ainda
+  // pendente. Uma única repetição idempotente, acionada pela ausência exata da
+  // superfície, evita aprovar uma tela incompleta e não usa espera fixa.
+  try {
+    await expect(heading).toBeAttached({ timeout: 20_000 });
+  } catch {
+    await page.goto('/?view=contacts');
+    await expect(heading).toBeAttached({ timeout: 20_000 });
+  }
   await expect(page.getByTestId('kpi-card').first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('tab', { name: /Todos/ })).toBeVisible();
   await expect(page.getByText('Carregando contatos', { exact: false })).toHaveCount(0, { timeout: 20_000 });

@@ -194,6 +194,7 @@ export function SoundVolumeControl({ className }: { className?: string }) {
         collisionPadding={8}
         className="z-[60] w-40 p-2.5 bg-card/90 backdrop-blur motion-reduce:animate-none"
         onClick={(event) => event.stopPropagation()}
+        onCloseAutoFocus={rocker.handleCloseAutoFocus}
       >
         <VolumeSliderPopoverContent
           title={SOUND_VOLUME_SLIDER_LABEL}

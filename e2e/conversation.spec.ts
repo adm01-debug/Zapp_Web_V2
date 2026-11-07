@@ -20,17 +20,17 @@ import {
 // (useNavigationHistory('inbox') e estado interno da SPA, nao rota de URL).
 // Reproduzido ao vivo com magiclink real: "/inbox" devolve 404.
 //
-// O reload() depois do PATCH fica por robustez, nao por causa comprovada:
+// A segunda navegacao depois do PATCH fica por robustez, nao por causa comprovada:
 // ensureFixtureConversationOpen reabre a conversa direto via REST, e sem
-// reload a pagina so saberia do novo status via realtime (canal
+// reiniciar o documento a pagina so saberia do novo status via realtime (canal
 // 'global-contacts-realtime'), cuja inscricao pode ainda nao estar pronta
 // quando o PATCH commita. A run 36257595651 (workflow_dispatch, pos PR
 // #869) foi citada aqui antes como prova desse mecanismo — mas essa run
 // teve conclusion=failure, e o teste que ela quebrou tinha causa raiz
 // diferente e ja identificada (ver comentario abaixo: truncamento do nome
-// exibido, PR #816). O reload() nunca foi isolado como a correcao real da
-// falha; mantido por forcar um fetch inicial fresco e nao ter custo
-// perceptivel no teste.
+// exibido, PR #816). Uma nova `goto('/')` reinicia o documento e forca o mesmo
+// fetch inicial fresco. Ela evita a interrupcao de frame observada no WebKit
+// quando `reload()` concorria com a navegacao interna do shell.
 //
 // O assert do chip "Todas" compara com o texto RENDERIZADO no item, e a lista
 // exibe so `contact.nickname?.trim() || name.split(' ')[0]` (a primeira
@@ -44,7 +44,7 @@ test.describe('Conversation state transitions', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await ensureFixtureConversationOpen(page);
-    await page.reload();
+    await page.goto('/');
     await page.getByTestId('status-chip-all').click();
   });
 

@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { messageReactionsQueryKey } from './useBatchReactions';
+import type { MessageReaction } from './types';
 
 interface ReactionMutationOptions {
   instanceName?: string;
@@ -72,8 +74,25 @@ export function useReactionMutations(
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['message-reactions', messageId] });
+    onSuccess: (inserted, emoji) => {
+      // O lote de reações pode ter semeado `[]` no cache. Confirmada a escrita,
+      // publique a linha imediatamente para os dois consumidores do balão
+      // (barra rápida e badges); o refetch abaixo reconcilia nomes/estado remoto.
+      // Depender só da invalidação deixava o badge ausente até outra atualização.
+      if (inserted) {
+        queryClient.setQueryData<MessageReaction[]>(
+          messageReactionsQueryKey(messageId),
+          (current = []) => [
+            ...current.filter((reaction) => !(
+              reaction.message_id === messageId
+              && reaction.user_id === profileId
+              && reaction.emoji === emoji
+            )),
+            { ...inserted, user_name: 'Você' } as MessageReaction,
+          ],
+        );
+      }
+      void queryClient.invalidateQueries({ queryKey: messageReactionsQueryKey(messageId) });
     },
     onError: (error) => {
       log.error('Failed to add reaction', error);
@@ -111,8 +130,16 @@ export function useReactionMutations(
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['message-reactions', messageId] });
+    onSuccess: (_data, emoji) => {
+      queryClient.setQueryData<MessageReaction[]>(
+        messageReactionsQueryKey(messageId),
+        (current = []) => current.filter((reaction) => !(
+          reaction.message_id === messageId
+          && reaction.user_id === profileId
+          && reaction.emoji === emoji
+        )),
+      );
+      void queryClient.invalidateQueries({ queryKey: messageReactionsQueryKey(messageId) });
     },
     onError: (error) => {
       log.error('Failed to remove reaction', error);

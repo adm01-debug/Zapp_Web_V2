@@ -142,7 +142,7 @@ function montar(options?: Parameters<typeof useReactionMutations>[2]) {
   const rendered = renderHook(() => useReactionMutations(MESSAGE_ID, PROFILE_ID, options), {
     wrapper,
   });
-  return { ...rendered, invalidateSpy };
+  return { ...rendered, invalidateSpy, queryClient };
 }
 
 beforeEach(() => {
@@ -184,7 +184,7 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
 
   it('adicionar: com transporte aceito grava localmente DEPOIS do envio e invalida a query', async () => {
     mocks.sendReaction.mockResolvedValue({ ok: true });
-    const { result, invalidateSpy } = montar(TRANSPORT);
+    const { result, invalidateSpy, queryClient } = montar(TRANSPORT);
 
     await act(async () => {
       await result.current.addMutation.mutateAsync(EMOJI);
@@ -195,6 +195,9 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
     expect(mocks.transportCallsAtLocalWrite).toEqual([1]);
     expect(mocks.rows).toEqual([
       { message_id: MESSAGE_ID, user_id: PROFILE_ID, contact_id: CONTACT_ID, emoji: EMOJI },
+    ]);
+    expect(queryClient.getQueryData(['message-reactions', MESSAGE_ID])).toEqual([
+      expect.objectContaining({ message_id: MESSAGE_ID, user_id: PROFILE_ID, emoji: EMOJI }),
     ]);
     expect(mocks.toast).not.toHaveBeenCalled();
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['message-reactions', MESSAGE_ID] });
@@ -240,7 +243,13 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
   it('remover: transporte rejeitado rejeita a mutation, avisa e preserva a reação que existia', async () => {
     seedReacao();
     mocks.sendReaction.mockRejectedValue(new Error('evolution 503'));
-    const { result, invalidateSpy } = montar(TRANSPORT);
+    const { result, invalidateSpy, queryClient } = montar(TRANSPORT);
+    queryClient.setQueryData(['message-reactions', MESSAGE_ID], [{
+      message_id: MESSAGE_ID,
+      user_id: PROFILE_ID,
+      contact_id: CONTACT_ID,
+      emoji: EMOJI,
+    }]);
 
     await act(async () => {
       await expect(result.current.removeMutation.mutateAsync(EMOJI)).rejects.toThrow(
@@ -265,13 +274,22 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
       { message_id: MESSAGE_ID, user_id: PROFILE_ID, contact_id: CONTACT_ID, emoji: EMOJI },
     ]);
     expect(mocks.deleteCalls).toEqual([]);
+    expect(queryClient.getQueryData(['message-reactions', MESSAGE_ID])).toEqual([
+      expect.objectContaining({ message_id: MESSAGE_ID, user_id: PROFILE_ID, emoji: EMOJI }),
+    ]);
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
   it('remover: com transporte aceito remove localmente DEPOIS do envio e invalida a query', async () => {
     seedReacao();
     mocks.sendReaction.mockResolvedValue({ ok: true });
-    const { result, invalidateSpy } = montar(TRANSPORT);
+    const { result, invalidateSpy, queryClient } = montar(TRANSPORT);
+    queryClient.setQueryData(['message-reactions', MESSAGE_ID], [{
+      message_id: MESSAGE_ID,
+      user_id: PROFILE_ID,
+      contact_id: CONTACT_ID,
+      emoji: EMOJI,
+    }]);
 
     await act(async () => {
       await result.current.removeMutation.mutateAsync(EMOJI);
@@ -280,6 +298,7 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
     expect(mocks.sendReaction).toHaveBeenCalledTimes(1);
     expect(mocks.transportCallsAtLocalWrite).toEqual([1]);
     expect(mocks.rows).toEqual([]);
+    expect(queryClient.getQueryData(['message-reactions', MESSAGE_ID])).toEqual([]);
     expect(mocks.deleteCalls).toEqual([
       { message_id: MESSAGE_ID, user_id: PROFILE_ID, emoji: EMOJI },
     ]);
