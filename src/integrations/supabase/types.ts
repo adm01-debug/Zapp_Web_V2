@@ -13373,6 +13373,7 @@ export type Database = {
         Returns: boolean
       }
       get_ai_jobs_cron_secret: { Args: never; Returns: string }
+      get_ai_usage_outbox_drain_cron_secret: { Args: never; Returns: string }
       get_avatars_refresh_cron_secret: { Args: never; Returns: string }
       get_channel_credentials: {
         Args: { _connection_id: string }
