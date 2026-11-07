@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "0601e3b64e4d1c867827f4a045ac984a0ecee4f5",
+  "sha": "5b62b9338e23df8ce2bfa6b3da6bb0565f9def93",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 13:31 UTC",
+  "generated_at": "2026-11-07 14:29 UTC",
   "files_total": 8099,
   "code_files": 5988,
-  "code_lines": 1039107
+  "code_lines": 1039105
  },
  "version": "1.3.2",
- "facts_hash": "20ac47ec011bfe65",
+ "facts_hash": "b9773db13640646d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67785,7 +67785,7 @@
   {
    "module": "scripts",
    "files": 433,
-   "lines": 85374,
+   "lines": 85372,
    "tables": [
     "a",
     "alem_do_limite",
@@ -264642,7 +264642,7 @@
   },
   "scripts/ci/vercel-env-cleanup.mjs": {
    "path": "scripts/ci/vercel-env-cleanup.mjs",
-   "lines": 188,
+   "lines": 186,
    "exports": [
     "const PROJECT",
     "const TEAM",
@@ -382539,10 +382539,20 @@
   }
  },
  "git": {
-  "sha": "0601e3b64e4d1c867827f4a045ac984a0ecee4f5",
+  "sha": "5b62b9338e23df8ce2bfa6b3da6bb0565f9def93",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5b62b93",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix: torna Vercel Cleanup fail-closed em 403 (#2758)",
+    "files": [
+     "scripts/ci/vercel-env-cleanup.mjs",
+     "scripts/ci/vercel-env-cleanup.unit.mjs"
+    ]
+   },
    {
     "sha": "0601e3b",
     "date": "2026-11-07",
@@ -383006,16 +383016,6 @@
     "files": [
      "scripts/vercel/verify-production.mjs"
     ]
-   },
-   {
-    "sha": "03e9568",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: não pular preview quando Git não consegue comparar commits (#2727)",
-    "files": [
-     "scripts/vercel/ignore-build.sh",
-     "scripts/vercel/ignore-build.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -383028,8 +383028,16 @@
     4
    ],
    [
+    "scripts/ci/vercel-env-cleanup.mjs",
+    3
+   ],
+   [
     "supabase/deployment-manifest.json",
     3
+   ],
+   [
+    "scripts/ci/vercel-env-cleanup.unit.mjs",
+    2
    ],
    [
     "scripts/db-audit/migration-evidence.json",
@@ -383068,10 +383076,6 @@
     2
    ],
    [
-    "scripts/ci/vercel-env-cleanup.mjs",
-    2
-   ],
-   [
     "docs/MIGRATIONS.md",
     1
    ],
@@ -383093,10 +383097,6 @@
    ],
    [
     "scripts/ci/deno-reproducibility.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/deno.json",
     1
    ]
   ]

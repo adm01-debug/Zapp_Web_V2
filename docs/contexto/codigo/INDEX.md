@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `0601e3b64e4d1c867827f4a045ac984a0ecee4f5` (2026-11-07T10:29:13-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5b62b9338e23df8ce2bfa6b3da6bb0565f9def93` (2026-11-07T11:13:37-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8258 |
 | arquivos_codigo | 4734 |
-| linhas_codigo | 873664 |
+| linhas_codigo | 873662 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55879 nós · 115382 arestas · 4193 comunidades · grafo do commit `0601e3b6`
+- 55879 nós · 115382 arestas · 4193 comunidades · grafo do commit `5b62b933`
 - comunidades maiores: lucide-react (785), react (708), DashboardView.tsx (530), ExternalProductManagement.tsx (523), useAuth.tsx (465), chat.ts (416), TalkXOverview.tsx (402), validation.ts (392), inspect.ts (364), ref_node_assert (361), vitest (361), cn (357)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `5b62b93` fix: torna Vercel Cleanup fail-closed em 403 (#2758)
 - 2026-11-07 `0601e3b` fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)
 - 2026-11-07 `7f3c259` infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)
 - 2026-11-07 `636880b` fix: blindar plano sintético contra IDs externos (#2757)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `3adec58` fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)
 - 2026-11-06 `0a3442b` infra: monitorar releases V2 e V3 em trilhas separadas (#2747)
 - 2026-11-06 `86c9ec8` fix: reconciliar drift do DB Live Guard (#2741)
-- 2026-11-06 `abfe326` chore: validar manifesto de edge functions no CI por PR (#2738)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
