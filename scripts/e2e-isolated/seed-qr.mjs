@@ -59,10 +59,10 @@ export async function seedQr({ env = process.env, fetcher = fetch, readFile = re
     return value;
   }
   const expected = { ...target, anonHash: '' };
-  const gateway = await request(ORIGIN, '/__e2e/identity');
+  const gateway = await request(ORIGIN, '/__e2e/identity', {}, 200, 'gateway-identity');
   if (gateway?.schema !== 1 || gateway.run_id !== target.runId || gateway.source_sha !== target.sourceSha ||
       gateway.origin !== ORIGIN) qrFail('gateway-identity');
-  const provider = await request(PROVIDER_ORIGIN, '/__e2e/identity');
+  const provider = await request(PROVIDER_ORIGIN, '/__e2e/identity', {}, 200, 'provider-identity');
   if (provider?.schema !== 1 || provider.run_id !== target.runId || provider.source_sha !== target.sourceSha ||
       provider.origin !== PROVIDER_ORIGIN || provider.network_namespace !== target.networkNamespace) qrFail('provider-identity');
 
@@ -81,99 +81,99 @@ export async function seedQr({ env = process.env, fetcher = fetch, readFile = re
   expected.anonHash = sha256(credentials.ANON_KEY);
   const service = { apikey: credentials.SERVICE_ROLE_KEY, Authorization: 'Bearer ' + credentials.SERVICE_ROLE_KEY,
     'Content-Type': 'application/json' };
-  const post = (path, body, status = 200) => request(ORIGIN, path, {
+  const post = (path, body, status = 200, code = 'post') => request(ORIGIN, path, {
     method: 'POST', headers: { ...service, Prefer: 'return=representation' }, body: JSON.stringify(body),
-  }, status);
-  const read = path => request(ORIGIN, path, { headers: service });
+  }, status, code);
+  const read = (path, code = 'read') => request(ORIGIN, path, { headers: service }, 200, code);
 
   async function existingSnapshot() {
     const f = SUITE_FIXTURES;
     const connections = await read('/rest/v1/whatsapp_connections?id=in.(' + f.connection + ',' + f.filesConnection + ')' +
-      '&select=id,instance_id,status,is_default,created_by,phone_number&order=id');
+      '&select=id,instance_id,status,is_default,created_by,phone_number&order=id', 'existing-connections');
     const names = new Map([[f.connection, f.instance], [f.filesConnection, 'e2e-arquivos-local']]);
     if (!Array.isArray(connections) || connections.length !== 2 || new Set(connections.map(row => row.id)).size !== 2 ||
         connections.some(row => names.get(row.id) !== row.instance_id || row.status !== 'connected')) qrFail('existing-connections');
     const profiles = await read('/rest/v1/profiles?user_id=in.(' + target.supervisorId + ',' + f.filesUser + ')' +
-      '&select=id,user_id,role,is_active&order=user_id');
+      '&select=id,user_id,role,is_active&order=user_id', 'existing-roles');
     if (!Array.isArray(profiles) || profiles.length !== 2 ||
         !profiles.some(row => row.user_id === target.supervisorId && row.id === target.supervisorProfile && row.role === 'supervisor' && row.is_active === true) ||
         !profiles.some(row => row.user_id === f.filesUser && row.role === 'agent' && row.is_active === true)) qrFail('existing-roles');
     for (const instance of names.values()) {
-      const token = await post('/rest/v1/rpc/get_instance_token', { p_instance_id: instance });
+      const token = await post('/rest/v1/rpc/get_instance_token', { p_instance_id: instance }, 200, 'existing-token');
       if (token !== credentials.EVOLUTION_DEFAULT_INSTANCE_TOKEN) qrFail('existing-token');
     }
-    const contact = await read('/rest/v1/contacts?id=eq.' + f.contact + '&select=id,assigned_to,whatsapp_connection_id');
+    const contact = await read('/rest/v1/contacts?id=eq.' + f.contact + '&select=id,assigned_to,whatsapp_connection_id', 'existing-contact');
     if (!Array.isArray(contact) || contact.length !== 1 || contact[0].id !== f.contact ||
         contact[0].whatsapp_connection_id !== f.connection ||
         contact[0].assigned_to !== profiles.find(row => row.user_id === f.filesUser).id) qrFail('existing-contact');
     return { connections, profiles, contact };
   }
   const before = await existingSnapshot();
-  const maintenance = await read('/rest/v1/global_settings?key=eq.whatsapp_maintenance_until&select=value');
+  const maintenance = await read('/rest/v1/global_settings?key=eq.whatsapp_maintenance_until&select=value', 'maintenance');
   if (!Array.isArray(maintenance) || maintenance.length > 1 || maintenance.some(row =>
       row.value && (!Number.isFinite(Date.parse(row.value)) || Date.parse(row.value) > now()))) qrFail('maintenance-active');
 
   const collision = await read('/rest/v1/whatsapp_connections?or=' +
     encodeURIComponent('(id.eq.' + QR_FIXTURE.id + ',instance_id.eq.' + QR_FIXTURE.instance + ',name.eq.' + QR_FIXTURE.name + ')') +
-    '&select=id');
+    '&select=id', 'fixture-collision');
   if (!Array.isArray(collision) || collision.length !== 0) qrFail('fixture-collision');
 
   const created = await post('/auth/v1/admin/users', {
     email: credentials.E2E_QR_TEST_EMAIL, password: credentials.E2E_QR_TEST_PASSWORD,
     email_confirm: true, user_metadata: { name: 'Admin QR sintético E2E' },
-  }, [200, 201]);
+  }, [200, 201], 'admin-create');
   const userId = created?.id ?? created?.user?.id;
   if (!validQrId(userId) || [target.supervisorId, SUITE_FIXTURES.filesUser].includes(userId)) qrFail('admin-identity');
-  const profiles = await read('/rest/v1/profiles?user_id=eq.' + userId + '&select=id,user_id');
+  const profiles = await read('/rest/v1/profiles?user_id=eq.' + userId + '&select=id,user_id', 'admin-profile');
   const profile = Array.isArray(profiles) && profiles.length === 1 ? profiles[0] : null;
   if (!profile || !validQrId(profile.id) || profile.user_id !== userId || profile.id === target.supervisorProfile) qrFail('admin-profile');
   await request(ORIGIN, '/rest/v1/profiles?user_id=eq.' + userId + '&select=id,user_id,is_active', {
     method: 'PATCH', headers: { ...service, Prefer: 'return=representation' },
     body: JSON.stringify({ name: 'Admin QR sintético E2E', is_active: true }),
-  });
-  const role = await post('/rest/v1/user_roles?select=user_id,role', { user_id: userId, role: 'admin' }, 201);
+  }, 200, 'admin-profile-update');
+  const role = await post('/rest/v1/user_roles?select=user_id,role', { user_id: userId, role: 'admin' }, 201, 'admin-role');
   if (!Array.isArray(role) || role.length !== 1 || role[0].user_id !== userId || role[0].role !== 'admin') qrFail('admin-role');
   await request(ORIGIN, '/rest/v1/user_settings?on_conflict=user_id&select=user_id,onboarding_completed', {
     method: 'POST', headers: { ...service, Prefer: 'resolution=merge-duplicates,return=representation' },
     body: JSON.stringify({ user_id: userId, onboarding_completed: true }),
-  }, 201);
+  }, 201, 'admin-onboarding-write');
 
   const inserted = await post('/rest/v1/whatsapp_connections?select=' + QR_FIELDS, {
     id: QR_FIXTURE.id, name: QR_FIXTURE.name, phone_number: QR_FIXTURE.phone,
     instance_id: QR_FIXTURE.instance, status: 'disconnected', qr_code: null,
     is_default: false, created_by: profile.id,
-  }, 201);
+  }, 201, 'connection-create');
   assertQrRow(inserted, profile.id, 'disconnected');
   const secretId = await post('/rest/v1/rpc/set_instance_token', {
     p_connection_id: QR_FIXTURE.id, p_token: credentials.E2E_QR_INSTANCE_TOKEN,
-  });
+  }, 200, 'token-store');
   if (!validQrId(secretId)) qrFail('token-store');
-  const token = await post('/rest/v1/rpc/get_instance_token', { p_instance_id: QR_FIXTURE.instance });
+  const token = await post('/rest/v1/rpc/get_instance_token', { p_instance_id: QR_FIXTURE.instance }, 200, 'token-readback');
   if (token !== credentials.E2E_QR_INSTANCE_TOKEN) qrFail('token-readback');
 
   const session = await request(ORIGIN, '/functions/v1/auth-login', {
     method: 'POST', headers: { apikey: credentials.ANON_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: credentials.E2E_QR_TEST_EMAIL, password: credentials.E2E_QR_TEST_PASSWORD,
       userAgent: 'isolated-qr-readiness', mode: 'login' }),
-  });
+  }, 200, 'admin-login');
   qrJwt(session?.access_token, 'authenticated', now(), userId);
   if (typeof session.refresh_token !== 'string' || !session.refresh_token) qrFail('admin-login');
   const user = { apikey: credentials.ANON_KEY, Authorization: 'Bearer ' + session.access_token };
-  const identity = await request(ORIGIN, '/auth/v1/user', { headers: user });
+  const identity = await request(ORIGIN, '/auth/v1/user', { headers: user }, 200, 'admin-auth');
   if (identity?.id !== userId || identity.email !== QR_FIXTURE.email) qrFail('admin-auth');
-  const own = await request(ORIGIN, '/rest/v1/profiles?user_id=eq.' + userId + '&select=id,user_id,role,is_active', { headers: user });
+  const own = await request(ORIGIN, '/rest/v1/profiles?user_id=eq.' + userId + '&select=id,user_id,role,is_active', { headers: user }, 200, 'admin-rls');
   if (!Array.isArray(own) || own.length !== 1 || own[0].id !== profile.id || own[0].user_id !== userId ||
       own[0].role !== 'admin' || own[0].is_active !== true) qrFail('admin-rls');
-  const visible = await request(ORIGIN, '/rest/v1/whatsapp_connections?id=eq.' + QR_FIXTURE.id + '&select=' + QR_FIELDS, { headers: user });
+  const visible = await request(ORIGIN, '/rest/v1/whatsapp_connections?id=eq.' + QR_FIXTURE.id + '&select=' + QR_FIELDS, { headers: user }, 200, 'connection-rls');
   assertQrRow(visible, profile.id, 'disconnected');
-  const settings = await request(ORIGIN, '/rest/v1/user_settings?user_id=eq.' + userId + '&select=user_id,onboarding_completed', { headers: user });
+  const settings = await request(ORIGIN, '/rest/v1/user_settings?user_id=eq.' + userId + '&select=user_id,onboarding_completed', { headers: user }, 200, 'admin-onboarding');
   if (!Array.isArray(settings) || settings.length !== 1 || settings[0].user_id !== userId || settings[0].onboarding_completed !== true) qrFail('admin-onboarding');
 
   const status = await request(PROVIDER_ORIGIN, '/instance/status', {
     headers: { apikey: credentials.E2E_QR_INSTANCE_TOKEN },
-  });
+  }, 200, 'provider-state');
   if (status?.data?.Name !== QR_FIXTURE.instance || status.data.Connected !== false || status.data.LoggedIn !== false) qrFail('provider-state');
-  const evidence = assertQrProviderEvidence(await request(PROVIDER_ORIGIN, '/__e2e/evidence'), expected);
+  const evidence = assertQrProviderEvidence(await request(PROVIDER_ORIGIN, '/__e2e/evidence', {}, 200, 'provider-evidence'), expected);
   if (evidence.generation !== 0 || evidence.connects !== 0 || evidence.qr_reads !== 0) qrFail('provider-used-before-browser');
   if (JSON.stringify(await existingSnapshot()) !== JSON.stringify(before)) qrFail('existing-fixtures-changed');
   const ready = {

@@ -79,6 +79,42 @@ export function parseFilesSeedDiagnostic(result) {
   return { schema: 1, seed: 'files-volume', available: true, failure: copy(value.failure), ...(value.cleanup ? { cleanup: copy(value.cleanup) } : {}) };
 }
 
+/** The QR seed keeps response bodies private; publish only a closed stage code. */
+const QR_DIAGNOSTIC_DIRECT_CODES = Object.freeze([
+  'bootstrap-proof', 'bootstrap-tls', 'bootstrap-namespace', 'identity-changed',
+  'credential-changed', 'target', 'gateway-identity', 'provider-identity',
+  'bootstrap-credentials', 'existing-connections', 'existing-roles', 'existing-token',
+  'existing-contact', 'maintenance-active', 'fixture-collision', 'admin-identity',
+  'admin-profile', 'admin-role', 'token-store', 'token-readback', 'credential',
+  'admin-login', 'admin-auth', 'admin-rls', 'admin-onboarding', 'provider-state',
+  'provider-evidence', 'provider-used-before-browser', 'existing-fixtures-changed',
+  'seed-proof', 'image-mismatch', 'fixture-row',
+]);
+const QR_DIAGNOSTIC_REQUEST_STAGES = Object.freeze([
+  'gateway-identity', 'provider-identity', 'existing-connections', 'existing-roles',
+  'existing-token', 'existing-contact', 'maintenance', 'fixture-collision',
+  'admin-create', 'admin-profile', 'admin-profile-update', 'admin-role',
+  'admin-onboarding-write', 'connection-create', 'token-store', 'token-readback',
+  'admin-login', 'admin-auth', 'admin-rls', 'connection-rls', 'admin-onboarding',
+  'provider-state', 'provider-evidence',
+]);
+const QR_DIAGNOSTIC_CODES = new Set([
+  ...QR_DIAGNOSTIC_DIRECT_CODES.map(code => 'qr-' + code),
+  ...QR_DIAGNOSTIC_REQUEST_STAGES.flatMap(stage => ['request', 'http', 'json'].map(kind => 'qr-' + stage + '-' + kind)),
+]);
+export function parseQrSeedDiagnostic(result) {
+  if (result.status === 0 && !result.error && !result.signal) return null;
+  const unavailable = reason => ({ schema: 1, seed: 'qr', available: false, reason });
+  if ([result.stdout, result.stderr].some(value => value != null && typeof value !== 'string')) return unavailable('invalid');
+  const matches = [...((result.stdout ?? '') + '\n' + (result.stderr ?? '')).matchAll(/\[e2e-isolated\/(qr-[a-z][a-z0-9-]{0,100})\]/g)]
+    .map(match => match[1]);
+  if (matches.length === 0) return unavailable('missing');
+  if (matches.some(code => !QR_DIAGNOSTIC_CODES.has(code))) return unavailable('invalid');
+  const codes = [...new Set(matches)];
+  if (codes.length !== 1) return unavailable('ambiguous');
+  return { schema: 1, seed: 'qr', available: true, code: codes[0] };
+}
+
 const BROWSER_PROCESS_CODES = new Set(['ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES']);
 const BROWSER_READ_CODES = new Set(['ENOENT', 'EACCES', 'EPERM', 'EISDIR', 'EIO', 'EMFILE', 'ENFILE']);
 const BROWSER_SIGNALS = new Set(['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGHUP', 'SIGABRT',
@@ -376,6 +412,12 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       try {
         const diagnostic = parseFilesSeedDiagnostic(result);
         if (diagnostic) writeJson(path.join(output, 'seed-files-volume-diagnostic.json'), diagnostic);
+      } catch { /* Observation must not replace the original required() failure. */ }
+    }
+    if (code === 'seed-qr') {
+      try {
+        const diagnostic = parseQrSeedDiagnostic(result);
+        if (diagnostic) writeJson(path.join(output, 'qr-seed-diagnostic.json'), diagnostic);
       } catch { /* Observation must not replace the original required() failure. */ }
     }
     return required(result, code);
@@ -713,7 +755,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     // runner. They may contain newly-issued session tokens not known to seed.
     // Only these controlled metadata files and already-redacted logs publish.
     const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'entrypoints.json', 'migration-sources.json', 'migration-results.json',
-      'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
+      'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'qr-seed-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
       'results-summary.json', 'postgres-log-summary.json'];
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     // Never copy the verifier's raw file. Only the closed parsed objects enter

@@ -7,7 +7,8 @@ import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { assertPinnedImages, functionPolicy, prepareMountTargets, readBrowserReportOnce, browserResultDiagnostic } from '../e2e-isolated/run.mjs';
+import { assertPinnedImages, functionPolicy, prepareMountTargets, readBrowserReportOnce, browserResultDiagnostic,
+  parseQrSeedDiagnostic } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS, sha256 } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
@@ -530,7 +531,9 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
           if (result.status !== 0 || result.error || result.signal) return result;
         }
         if (name === 'files-volume' && seedDiagnostic) return seedDiagnostic;
-        if (fault === name + '-failure') return error('private-sentinel-from-seed');
+        if (fault === name + '-failure') return error(name === 'qr-seed'
+          ? 'private-sentinel-from-seed\nError: [e2e-isolated/qr-existing-connections-http]\n'
+          : 'private-sentinel-from-seed');
         const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
         if (name === 'suite-seed' && fault !== 'suite-proof-missing') {
           const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, ...Object.fromEntries(SEED_FLAGS.map(key => [key, true])), pagination_seed_count: 51 };
@@ -681,6 +684,14 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     privateMode: statSync(seedDiagnosticFile).mode & 0o777,
     publicMode: statSync(seedDiagnosticPublic).mode & 0o777,
   } : null;
+  const qrDiagnosticFile = path.join(output, 'qr-seed-diagnostic.json');
+  const qrDiagnosticPublic = path.join(output, 'public', 'qr-seed-diagnostic.json');
+  const qrDiagnostic = existsSync(qrDiagnosticFile) ? {
+    private: JSON.parse(readFileSync(qrDiagnosticFile, 'utf8')),
+    published: JSON.parse(readFileSync(qrDiagnosticPublic, 'utf8')),
+    privateMode: statSync(qrDiagnosticFile).mode & 0o777,
+    publicMode: statSync(qrDiagnosticPublic).mode & 0o777,
+  } : null;
   const reportOutput = seedDiagnostic || browserObservation ? readFileSync(diagnosticOutput, 'utf8') : null;
   const providerMetadata = Object.fromEntries(['provider-catalog.json', 'provider-diagnostic.json'].flatMap(name => {
     const file = path.join(output, 'public', name);
@@ -692,7 +703,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const browserMetadata = existsSync(browserFile) ? { value: JSON.parse(readFileSync(browserFile, 'utf8')), mode: statSync(browserFile).mode & 0o777 } : null;
   const browserSummaryFile = path.join(output, 'results-summary.json');
   const browserSummary = browserObservation && existsSync(browserSummaryFile) ? JSON.parse(readFileSync(browserSummaryFile, 'utf8')) : null;
-  const result = { qrRedaction, browserMetadata, browserSummary, browserReadCalls, ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const result = { qrRedaction, qrDiagnostic, browserMetadata, browserSummary, browserReadCalls, ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -743,6 +754,21 @@ test('seed diagnostic controller/report redaction failure preserves the seed fai
   assert.equal(value.filesDiagnostic.published.available, true); assert.equal(value.reportOutput, 'report_ready=false\n');
   assert.equal(value.browserCalls, 0); assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
 });
+
+for (const [label, subprocess, expected] of [
+  ['success', { status: 0, stdout: '[e2e-isolated/qr-existing-connections]\n', stderr: '' }, null],
+  ['closed assertion', { status: 1, stdout: '', stderr: 'Error: [e2e-isolated/qr-existing-connections]\n' },
+    { schema: 1, seed: 'qr', available: true, code: 'qr-existing-connections' }],
+  ['closed request stage', { status: 1, stdout: '', stderr: 'Error: [e2e-isolated/qr-maintenance-http]\n' },
+    { schema: 1, seed: 'qr', available: true, code: 'qr-maintenance-http' }],
+  ['duplicate stack code', { status: 1, stdout: '[e2e-isolated/qr-admin-create-json]\n', stderr: '[e2e-isolated/qr-admin-create-json]\n' },
+    { schema: 1, seed: 'qr', available: true, code: 'qr-admin-create-json' }],
+  ['missing', { status: 1, stdout: 'private response', stderr: '' }, { schema: 1, seed: 'qr', available: false, reason: 'missing' }],
+  ['unknown code', { status: 1, stdout: '', stderr: '[e2e-isolated/qr-private-response]' }, { schema: 1, seed: 'qr', available: false, reason: 'invalid' }],
+  ['ambiguous', { status: 1, stdout: '[e2e-isolated/qr-maintenance-http]', stderr: '[e2e-isolated/qr-fixture-collision]' },
+    { schema: 1, seed: 'qr', available: false, reason: 'ambiguous' }],
+  ['invalid channel', { status: 1, stdout: Buffer.from('private'), stderr: '' }, { schema: 1, seed: 'qr', available: false, reason: 'invalid' }],
+]) test('QR seed diagnostic parser/' + label, () => assert.deepEqual(parseQrSeedDiagnostic(subprocess), expected));
 
 // Capture both subprocess channels before required() throws. No registry/network
 // runs here; controller, cleanup and both publication redactors remain real.
@@ -988,6 +1014,14 @@ for (const [fault, expectedCode] of Object.entries(suiteFaults)) test('suite con
   assert.equal(value.browserCalls, 0);
   assert.equal(value.containers.size, 0);
   assert.equal(value.volumes.size, 0);
+  if (fault === 'qr-seed-failure') {
+    assert.deepEqual(value.qrDiagnostic.private,
+      { schema: 1, seed: 'qr', available: true, code: 'qr-existing-connections-http' });
+    assert.deepEqual(value.qrDiagnostic.published, value.qrDiagnostic.private);
+    assert.equal(value.qrDiagnostic.privateMode, 0o600); assert.equal(value.qrDiagnostic.publicMode, 0o600);
+    assert.ok(value.publicFiles.includes('qr-seed-diagnostic.json'));
+    assert.ok(!value.publicFiles.includes('seed-qr.log'));
+  } else assert.equal(value.qrDiagnostic, null);
 });
 for (const fault of ['runtime-skip', 'suite-stats-mismatch', 'suite-browser-failure']) test('suite controller: ' + fault + ' keeps native report counts and fails the suite', async t => {
   const value = await controllerFixture(t, fault, { scope: 'suite' });
