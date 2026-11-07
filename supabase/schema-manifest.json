@@ -5235,7 +5235,6 @@
         "f:claim_due_csat_surveys(p_limit integer)": "66a1eb7e4e5214a89358928527885c6e",
         "f:enforce_contacts_consent_status_guard()": "96f0e235fe101dc0259d359b05e77a4e",
         "f:enforce_multiplix_dispatch_mutability()": "f93102dd080a023e066d2a94f04f8dbc",
-        "f:get_ai_usage_outbox_drain_cron_secret()": "ee293350e1d0df7f67ba443bdc9e291e",
         "f:guard_conversation_closure_request_id()": "91ed44c407c337b25e8204bbe5ad9dcd",
         "f:has_role(_user_id uuid, _role app_role)": "03b203ad9d3b8da7030d704f2be082ae",
         "f:kick_talkx_campaign(p_campaign_id uuid)": "6d757fd90abd1c0fb4ab9d8c0b604ecd",
@@ -6370,7 +6369,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-07T13:31:06Z",
+    "generated_at": "2026-11-04T09:30:47Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -6833,7 +6832,6 @@
         "f:enforce_contacts_consent_status_guard()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_multiplix_dispatch_mutability()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:fn_send_audio_meme(p_meme_id uuid)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:get_ai_usage_outbox_drain_cron_secret()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:get_gmail_tokens(p_account_id uuid)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:guard_conversation_closure_request_id()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:has_role(_user_id uuid, _role app_role)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -6928,7 +6926,6 @@
         "f:claim_due_csat_surveys(p_limit integer)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:dashboard_daily_series(p_days integer)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_contacts_consent_status_guard()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:get_ai_usage_outbox_drain_cron_secret()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:get_connection_qr_code(_connection_id uuid)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:get_profile_id_for_user(_user_id uuid)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:has_role(_user_id uuid, _role app_role)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
