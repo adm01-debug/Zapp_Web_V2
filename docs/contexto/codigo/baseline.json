@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c75963020dea4009e1b9ed18c3727e8bc79e4b5c",
+  "commit": "43fb7342a7bea6e647b64c2927e253a1506b3f79",
   "branch": "main",
-  "data_commit": "2026-11-07T18:51:06Z",
+  "data_commit": "2026-11-07T19:05:52Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "43fb734",
+    "data": "2026-11-07",
+    "assunto": "fix(db): reconciliar ledger da migration 20261010062941 (#2775)"
+   },
    {
     "sha": "c759630",
     "data": "2026-11-07",
@@ -126,11 +131,6 @@
     "sha": "86c9ec8",
     "data": "2026-11-06",
     "assunto": "fix: reconciliar drift do DB Live Guard (#2741)"
-   },
-   {
-    "sha": "abfe326",
-    "data": "2026-11-06",
-    "assunto": "chore: validar manifesto de edge functions no CI por PR (#2738)"
    }
   ],
   "arquivos_mudados_7d": 1116,
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 130
+    "mudancas": 128
    },
    {
     "pasta": "src/components/contacts",
@@ -258,15 +258,15 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 8
+   },
+   {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 8
    },
    {
     "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 7
    },
    {

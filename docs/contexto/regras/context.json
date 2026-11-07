@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "c75963020dea4009e1b9ed18c3727e8bc79e4b5c",
+  "sha": "43fb7342a7bea6e647b64c2927e253a1506b3f79",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 19:03 UTC",
+  "generated_at": "2026-11-07 19:10 UTC",
   "files_total": 8133,
   "code_files": 5999,
   "code_lines": 1041493
@@ -383135,10 +383135,19 @@
   }
  },
  "git": {
-  "sha": "c75963020dea4009e1b9ed18c3727e8bc79e4b5c",
+  "sha": "43fb7342a7bea6e647b64c2927e253a1506b3f79",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "43fb734",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(db): reconciliar ledger da migration 20261010062941 (#2775)",
+    "files": [
+     "scripts/db-audit/migration-evidence.json"
+    ]
+   },
    {
     "sha": "c759630",
     "date": "2026-11-07",
@@ -383725,18 +383734,13 @@
      "scripts/ci/check-test-inventory.mjs",
      "scripts/db-audit/message-reactions-autoria.test.sh"
     ]
-   },
-   {
-    "sha": "712da7c",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)",
-    "files": [
-     "supabase/migrations/20261102032200_revoga_execute_public_cron_schedule.sql"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/db-audit/migration-evidence.json",
+    3
+   ],
    [
     "docs/ia/IA-010-ambiente-de-ensaio.md",
     3
@@ -383811,10 +383815,6 @@
    ],
    [
     "e2e/navegacao-modulos.spec.ts",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
     2
    ]
   ]
