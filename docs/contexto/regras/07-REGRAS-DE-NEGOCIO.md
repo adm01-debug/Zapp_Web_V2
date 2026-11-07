@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd8091e59c` · branch `main` · 2026-11-07 16:58 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `343971b1b9` · branch `main` · 2026-11-07 18:09 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4485,7 +4485,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | tsc saiu com exit ${status} (falha de CLI, nao lista de diagnosticos): ${snippet(output)} | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} com diagnostico GLOBAL (config/CLI quebrada), que nao e uma  | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} sem nenhum diagnostico TypeScript reconhecivel  | `scripts/ci/implicit-any-ratchet.mjs` |
-| … +1687 linhas — lista completa em `context.json` | |
+| … +1689 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4553,7 +4553,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21145 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21146 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4786,6 +4786,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/ai-response-contracts.behavior.contract.test.ts` | 19 | IA-025 · estrutura correta passa · aceita a saída completa · aceita a saída mínima e não inventa os opcionais · IA-025 · JSON válido com valor errado é rejeitado (não corrigido) … |
 | `tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts` | 19 | (1) banco: três colunas novas NULLABLE (IA-047) · (2) banco: três índices únicos PARCIAIS com o where correto (IA-047) · a migration NÃO cria índice único TOTAL sobre a coluna nova (risco de colisão com histórico) · (3) banco: aditivo, idempotente, com rollback e sem transação explícita … |
 | `tests/contracts/requireauth-network-policy.contract.test.ts` | 19 | canonicalEndpointFromUrl — endpoint canônico estável a partir da URL · extrai o nome da função do gateway /functions/v1/<nome> · descarta sub-path e devolve só o nome da função · usa o primeiro segmento quando não há a barra functions/v1 … |
+| `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` | 19 | SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produção · o gerador existe no repositório e o plano cobre o §2 da IA-010 · todo registro nasce marcado: prefixo ENSAIO-, domínio de teste e faixa de telefone própria · nenhum dado pessoal real: sem CPF/CNPJ e sem telefone repetido no plano … |
 | `scripts/db-audit/check-catalog-fresh.test.mjs` | 18 | aceita conjuntos identicos em ordem diferente · falha quando surge coluna nova no banco · falha quando o tipo de uma coluna muda · falha quando a nulabilidade de uma coluna muda … |
 | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` | 18 | AutomationEditorDialog — estado por registro (R2-MOD-001) · mostra os dados do registro aberto · ao trocar de registro (mesmo componente montado), não reaproveita o estado do anterior · ao abrir  … |
 | `src/components/groups/__tests__/GroupsView.test.tsx` | 18 | GroupsView · renders the page title · shows empty state when no groups · renders groups when data loads … |
@@ -4806,7 +4807,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/gmail-oauth/index.test.ts` | 18 | get-auth-url sem state responde 400 e não registra tentativa · get-auth-url com state registra a tentativa vinculada ao usuário e devolve a URL · exchange-code sem state responde 400 sem tocar no Google · exchange-code com state divergente/não registrado responde 403 sem tocar no Google … |
 | `tests/contracts/ai-endpoints-auth.contract.test.ts` | 18 | endpoints de IA — ordem entre autenticação e gasto de provedor (IA-011) · ${fn} autentica o chamador antes de chamar o provedor · o contrato não confunde import com chamada (guarda do próprio teste) · cliente do voice-agent — credencial da sessão (IA-011, regressão A1) … |
 | `tests/contracts/crm-sentiment-boundary.contract.test.ts` | 18 | sentimentForExternalCrm — mapa canônico pt-BR → domínio EN do CRM · cobre exatamente os 4 canônicos (nem a mais, nem a menos) · aceita variação de caixa/espaço do valor canônico · ausência não vira token — nunca inventa sentimento … |
-| `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` | 18 | SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produção · o gerador existe no repositório e o plano cobre o §2 da IA-010 · todo registro nasce marcado: prefixo ENSAIO-, domínio de teste e faixa de telefone própria · nenhum dado pessoal real: sem CPF/CNPJ e sem telefone repetido no plano … |
 | `src/components/admin/__tests__/adminDownloadPermission.test.ts` | 17 | useAdminData - can_download no handleSaveUser · envia can_download no payload de update · envia can_download=false quando desabilitado · UserWithRole interface … |
 | `src/components/calls/__tests__/NewCallPanel.test.tsx` | 17 | NewCallPanel (T56/T59/T60) · tem o segmentado VoIP/WhatsApp como radiogroup, independente das abas do historico · lembra o canal escolhido no localStorage · desabilita a opcao sem capacidade de discar … |
 | `src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx` | 17 | CatalogAdvancedFilters — faixa de preço (slider real, E36) · sem stats, usa o teto de fallback (2000) — nunca hardcoded  · com stats.price_max, o teto vem dele (arredondado para cima) — nunca um valor fixo · inicializa o slider com priceMin/priceMax de filters, clampado ao teto real … |

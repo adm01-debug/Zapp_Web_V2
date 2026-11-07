@@ -4269,7 +4269,7 @@
   {
    "arquivo": "scripts/ia/ensaio-provisionamento.mjs",
    "descricao": "* IA-010 / cartão SL-059 — provisionamento do ambiente de ensaio.",
-   "linhas": 565,
+   "linhas": 841,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

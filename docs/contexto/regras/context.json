@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "bd8091e59c4197f6286db80baaef2a02f62fd0f6",
+  "sha": "343971b1b9765e28200552e96f4b0c6f9781aaa4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 16:58 UTC",
+  "generated_at": "2026-11-07 18:09 UTC",
   "files_total": 8132,
   "code_files": 5999,
-  "code_lines": 1041007
+  "code_lines": 1041490
  },
  "version": "1.3.2",
- "facts_hash": "c662b1a560840e9d",
+ "facts_hash": "a485682e03f31756",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67944,7 +67944,7 @@
   {
    "module": "scripts",
    "files": 436,
-   "lines": 85934,
+   "lines": 86210,
    "tables": [
     "a",
     "alem_do_limite",
@@ -70064,7 +70064,7 @@
   {
    "module": "tests",
    "files": 95,
-   "lines": 20596,
+   "lines": 20803,
    "tables": [
     "audit_logs",
     "conversation_analyses",
@@ -81744,7 +81744,7 @@
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: DB_URL aponta para host não-local (${host}). Este provisionamento é LOCAL (regra R1): use zapp-db-local env."
+    "msg": "ensaio: DB_URL aponta para host não-local. Este provisionamento é LOCAL (regra R1): use zapp-db-local env."
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
@@ -81752,7 +81752,7 @@
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol})."
+    "msg": "ensaio: DB_URL usa protocolo não-PostgreSQL."
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
@@ -81760,7 +81760,15 @@
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: plano canônico inválido (${mensagem})"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
     "msg": "ensaio: plano diverge do contrato canônico determinístico"
+   },
+   {
+    "file": "scripts/ia/ensaio-provisionamento.mjs",
+    "msg": "ensaio: rótulo SQL inválido"
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
@@ -210498,11 +210506,15 @@
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-    "name": "o DML só escreve em colunas que existem no retrato canônico do schema"
+    "name": "o DML escreve exatamente nas tabelas e colunas permitidas pelo contrato"
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-    "name": "o provisionamento é transacional e todo upsert restaura o registro canônico"
+    "name": "o provisionamento é transacional, idempotente e falha fechado em qualquer colisão"
+   },
+   {
+    "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    "name": "valida invariantes independentes do próprio gerador canônico"
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
@@ -210514,7 +210526,7 @@
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-    "name": "a reversão é só por prefixo: nenhum delete alcança dado que não seja de ensaio"
+    "name": "a reversão exige IDs e marcadores: nenhum delete alcança dado apenas parecido"
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
@@ -268936,7 +268948,7 @@
   },
   "scripts/ia/ensaio-provisionamento.mjs": {
    "path": "scripts/ia/ensaio-provisionamento.mjs",
-   "lines": 565,
+   "lines": 841,
    "exports": [
     "const PREFIXO_ENSAIO",
     "const DOMINIO_ENSAIO",
@@ -268951,6 +268963,7 @@
     "function uuidEnsaio",
     "function telefoneEnsaio",
     "function planoDeEnsaio",
+    "function validarInvariantesPlano",
     "function validarPlanoSeguro",
     "function cabecalhoSql",
     "function sqlDeProvisionamento",
@@ -268960,11 +268973,13 @@
     "function executarCli"
    ],
    "errors": [
-    "ensaio: DB_URL aponta para host não-local (${host}). Este provisionamento é LOCAL (regra R1): use zapp-db-local env.",
+    "ensaio: DB_URL aponta para host não-local. Este provisionamento é LOCAL (regra R1): use zapp-db-local env.",
     "ensaio: DB_URL não é uma URL válida. Proibido seguir sem saber o alvo.",
-    "ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol}).",
+    "ensaio: DB_URL usa protocolo não-PostgreSQL.",
     "ensaio: estado de CLI não tratado (${flag})",
+    "ensaio: plano canônico inválido (${mensagem})",
     "ensaio: plano diverge do contrato canônico determinístico",
+    "ensaio: rótulo SQL inválido",
     "flag desconhecida (${flag})",
     "informe exatamente uma opção",
     "telefoneEnsaio: sequência inválida (${sequencia})",
@@ -268986,6 +269001,10 @@
     {
      "name": "CONTATOS_POR_DEPARTAMENTO",
      "value": "6"
+    },
+    {
+     "name": "LOCK_ENSAIO",
+     "value": "'select pg_advisory_xact_lock(1162756947, 1229402160);'"
     }
    ],
    "rule_comments": [
@@ -268996,10 +269015,23 @@
    ],
    "calc_fns": [
     {
+     "name": "validarInvariantesPlano",
+     "params": "plano",
+     "body": "exigir(plano?.prefixo === PREFIXO_ENSAIO, 'prefixo'); exigir(plano?.dominio === DOMINIO_ENSAIO, 'domínio'); exigir(Array.isArray(plano.departamentos), 'departamentos ausentes'); exigir(plano.departamentos.length === DEPARTAMENTOS_ENSAIO.length, 'quantidade de departamentos'); const ids = []; let mensagens = 0; plano.departamentos.forEach((departamento, indiceDepartamento) => { const nome = DEPARTAMENTOS_ENSAIO[indiceDepartamento]; const nomeSlug = slug(nome); exigir(departamento.nome === nome && …"
+    },
+    {
      "name": "validarPlanoSeguro",
      "params": "plano",
-     "body": "const canonico = planoDeEnsaio(); if (!isDeepStrictEqual(plano, canonico)) { throw new Error('ensaio: plano diverge do contrato canônico determinístico'); } return canonico;"
+     "body": "const canonico = planoDeEnsaio(); validarInvariantesPlano(canonico); if (!isDeepStrictEqual(plano, canonico)) { throw new Error('ensaio: plano diverge do contrato canônico determinístico'); } return canonico;"
+    },
+    {
+     "name": "valores",
+     "params": "registros, campos",
+     "body": ""
     }
+   ],
+   "percents": [
+    "' perform pg_sleep(tentativa * 0.05);',"
    ]
   },
   "scripts/inventario/banco.sql": {
@@ -382792,7 +382824,7 @@
   },
   "tests/contracts/sl059-ia010-provisionamento.contract.test.ts": {
    "path": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-   "lines": 423,
+   "lines": 630,
    "is_test": true,
    "rule_comments": [
     "cópia (onde os ensaios rodam, regra R1) e, no canônico, só sob autorização.",
@@ -382812,11 +382844,12 @@
     "todo registro nasce marcado: prefixo ENSAIO-, domínio de teste e faixa de telefone própria",
     "nenhum dado pessoal real: sem CPF/CNPJ e sem telefone repetido no plano",
     "o 4º perfil fica PENDENTE e nenhum papel é inventado fora do enum real",
-    "o DML só escreve em colunas que existem no retrato canônico do schema",
-    "o provisionamento é transacional e todo upsert restaura o registro canônico",
+    "o DML escreve exatamente nas tabelas e colunas permitidas pelo contrato",
+    "o provisionamento é transacional, idempotente e falha fechado em qualquer colisão",
+    "valida invariantes independentes do próprio gerador canônico",
     "o gerador aceita apenas o plano canônico completo, inclusive IDs e vocabulários",
     "templates e plano canônico são profundamente imutáveis",
-    "a reversão é só por prefixo: nenhum delete alcança dado que não seja de ensaio",
+    "a reversão exige IDs e marcadores: nenhum delete alcança dado apenas parecido",
     "a reversão apaga só tabelas que o provisionamento escreve",
     "conversa-sem-analise e contato-sem-memoria são garantidos por omissão no DML",
     "as filas usam só cores que o sistema já tem",
@@ -383102,10 +383135,22 @@
   }
  },
  "git": {
-  "sha": "bd8091e59c4197f6286db80baaef2a02f62fd0f6",
+  "sha": "343971b1b9765e28200552e96f4b0c6f9781aaa4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "343971b",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix: fecha colisões e corridas no ensaio sintético (#2759)",
+    "files": [
+     "docs/ia/IA-010-ambiente-de-ensaio.md",
+     "scripts/ia/README.md",
+     "scripts/ia/ensaio-provisionamento.mjs",
+     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
+    ]
+   },
    {
     "sha": "bd8091e",
     "date": "2026-11-07",
@@ -383690,19 +383735,25 @@
     "files": [
      "supabase/deployment-manifest.json"
     ]
-   },
-   {
-    "sha": "f03e6f6",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc",
-    "files": [
-     "PENDENCIAS.md",
-     "RELATORIO_CI.md"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "docs/ia/IA-010-ambiente-de-ensaio.md",
+    3
+   ],
+   [
+    "scripts/ia/README.md",
+    3
+   ],
+   [
+    "scripts/ia/ensaio-provisionamento.mjs",
+    3
+   ],
+   [
+    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    3
+   ],
    [
     "docs/ci/README.md",
     3
@@ -383765,22 +383816,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-network-proof.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-qr.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/e2e-isolated-workflow.unit.mjs",
     2
    ]
   ]

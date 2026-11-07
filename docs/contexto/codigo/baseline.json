@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bd8091e59c4197f6286db80baaef2a02f62fd0f6",
+  "commit": "343971b1b9765e28200552e96f4b0c6f9781aaa4",
   "branch": "main",
-  "data_commit": "2026-11-07T13:41:21-03:00",
+  "data_commit": "2026-11-07T14:28:34-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "343971b",
+    "data": "2026-11-07",
+    "assunto": "fix: fecha colisões e corridas no ensaio sintético (#2759)"
+   },
    {
     "sha": "bd8091e",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "5f2f9af",
     "data": "2026-11-06",
     "assunto": "fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)"
-   },
-   {
-    "sha": "a4e43d1",
-    "data": "2026-11-06",
-    "assunto": "fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)"
    }
   ],
-  "arquivos_mudados_7d": 1117,
+  "arquivos_mudados_7d": 1116,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 794
+    "mudancas": 716
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -152,16 +152,16 @@
     "mudancas": 211
    },
    {
-    "pasta": "src/hooks/__tests__",
-    "mudancas": 210
-   },
-   {
     "pasta": "supabase/functions/_shared",
     "mudancas": 202
    },
    {
+    "pasta": "src/hooks/__tests__",
+    "mudancas": 147
+   },
+   {
     "pasta": "src/components/dashboard",
-    "mudancas": 141
+    "mudancas": 139
    },
    {
     "pasta": "src/components/ui",
@@ -169,31 +169,31 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 134
-   },
-   {
-    "pasta": "src/lib/__tests__",
-    "mudancas": 125
+    "mudancas": 130
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 122
+    "mudancas": 119
    },
    {
-    "pasta": "src/hooks/chat",
-    "mudancas": 120
+    "pasta": "src/lib/__tests__",
+    "mudancas": 117
    },
    {
     "pasta": "src/components/tasks",
     "mudancas": 115
    },
    {
-    "pasta": "src/components/settings",
-    "mudancas": 113
+    "pasta": "src/hooks/chat",
+    "mudancas": 110
    },
    {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
     "mudancas": 105
+   },
+   {
+    "pasta": "src/components/settings",
+    "mudancas": 102
    }
   ],
   "arquivos_mais_mudados_90d": [
@@ -215,10 +215,6 @@
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 14
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 13
    },
    {
@@ -226,12 +222,16 @@
     "mudancas": 12
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 12
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 12
+   },
+   {
+    "arquivo": "ESTADO.md",
+    "mudancas": 11
    },
    {
     "arquivo": "RELATORIO_CI.md",
@@ -258,15 +258,15 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 8
-   },
-   {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 8
    },
    {
     "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 7
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8291,
   "arquivos_codigo": 4737,
-  "linhas_codigo": 875008,
+  "linhas_codigo": 875491,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -636,7 +636,7 @@
   },
   "scripts/ia": {
    "arquivos": 1,
-   "linhas": 565
+   "linhas": 841
   },
   "scripts/inventario": {
    "arquivos": 4,
@@ -784,7 +784,7 @@
   },
   "tests/contracts": {
    "arquivos": 95,
-   "linhas": 20596
+   "linhas": 20803
   },
   "vite.config.ts": {
    "arquivos": 1,
