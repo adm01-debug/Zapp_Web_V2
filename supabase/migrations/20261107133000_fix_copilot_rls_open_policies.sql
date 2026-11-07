@@ -1,68 +1,30 @@
--- Corrige RLS aberta (USING/CHECK true) em 7 tabelas copilot_*.
--- Achado: qualquer vendedor autenticado lia/escrevia os dados de
--- QUALQUER outro vendedor nestas tabelas (service_role tem BYPASSRLS,
--- não é afetado). Escopo por seller_id = auth.uid(), ou pelo autor da
--- ação (scored_by/tagged_by) OR dono da conversa via
--- copilot_sessions.profile_id — mesmo padrão já usado em
--- copilot_sessions/copilot_insights/copilot_feedback.
-
 DROP POLICY IF EXISTS copilot_help_requests_select ON copilot_help_requests;
 DROP POLICY IF EXISTS copilot_help_requests_insert ON copilot_help_requests;
-CREATE POLICY copilot_help_requests_select ON copilot_help_requests
-  FOR SELECT TO authenticated USING (seller_id = auth.uid());
-CREATE POLICY copilot_help_requests_insert ON copilot_help_requests
-  FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
-
+CREATE POLICY copilot_help_requests_select ON copilot_help_requests FOR SELECT TO authenticated USING (seller_id = auth.uid());
+CREATE POLICY copilot_help_requests_insert ON copilot_help_requests FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
 DROP POLICY IF EXISTS copilot_outcomes_select ON copilot_outcomes;
 DROP POLICY IF EXISTS copilot_outcomes_insert ON copilot_outcomes;
-CREATE POLICY copilot_outcomes_select ON copilot_outcomes
-  FOR SELECT TO authenticated USING (seller_id = auth.uid());
-CREATE POLICY copilot_outcomes_insert ON copilot_outcomes
-  FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
-
+CREATE POLICY copilot_outcomes_select ON copilot_outcomes FOR SELECT TO authenticated USING (seller_id = auth.uid());
+CREATE POLICY copilot_outcomes_insert ON copilot_outcomes FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
 DROP POLICY IF EXISTS copilot_seller_settings_select ON copilot_seller_settings;
 DROP POLICY IF EXISTS copilot_seller_settings_insert ON copilot_seller_settings;
 DROP POLICY IF EXISTS copilot_seller_settings_update ON copilot_seller_settings;
-CREATE POLICY copilot_seller_settings_select ON copilot_seller_settings
-  FOR SELECT TO authenticated USING (seller_id = auth.uid());
-CREATE POLICY copilot_seller_settings_insert ON copilot_seller_settings
-  FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
-CREATE POLICY copilot_seller_settings_update ON copilot_seller_settings
-  FOR UPDATE TO authenticated USING (seller_id = auth.uid()) WITH CHECK (seller_id = auth.uid());
-
+CREATE POLICY copilot_seller_settings_select ON copilot_seller_settings FOR SELECT TO authenticated USING (seller_id = auth.uid());
+CREATE POLICY copilot_seller_settings_insert ON copilot_seller_settings FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
+CREATE POLICY copilot_seller_settings_update ON copilot_seller_settings FOR UPDATE TO authenticated USING (seller_id = auth.uid()) WITH CHECK (seller_id = auth.uid());
 DROP POLICY IF EXISTS copilot_usage_select ON copilot_usage;
 DROP POLICY IF EXISTS copilot_usage_insert ON copilot_usage;
-CREATE POLICY copilot_usage_select ON copilot_usage
-  FOR SELECT TO authenticated USING (seller_id = auth.uid());
-CREATE POLICY copilot_usage_insert ON copilot_usage
-  FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
-
+CREATE POLICY copilot_usage_select ON copilot_usage FOR SELECT TO authenticated USING (seller_id = auth.uid());
+CREATE POLICY copilot_usage_insert ON copilot_usage FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());
 DROP POLICY IF EXISTS copilot_conversation_scores_select ON copilot_conversation_scores;
 DROP POLICY IF EXISTS copilot_conversation_scores_insert ON copilot_conversation_scores;
 DROP POLICY IF EXISTS copilot_conversation_scores_update ON copilot_conversation_scores;
-CREATE POLICY copilot_conversation_scores_select ON copilot_conversation_scores
-  FOR SELECT TO authenticated USING (
-    scored_by = auth.uid()
-    OR conversation_id IN (SELECT id FROM copilot_sessions WHERE profile_id = auth.uid())
-  );
-CREATE POLICY copilot_conversation_scores_insert ON copilot_conversation_scores
-  FOR INSERT TO authenticated WITH CHECK (scored_by = auth.uid());
-CREATE POLICY copilot_conversation_scores_update ON copilot_conversation_scores
-  FOR UPDATE TO authenticated USING (scored_by = auth.uid()) WITH CHECK (scored_by = auth.uid());
-
+CREATE POLICY copilot_conversation_scores_select ON copilot_conversation_scores FOR SELECT TO authenticated USING (scored_by = auth.uid() OR conversation_id IN (SELECT id FROM copilot_sessions WHERE profile_id = auth.uid()));
+CREATE POLICY copilot_conversation_scores_insert ON copilot_conversation_scores FOR INSERT TO authenticated WITH CHECK (scored_by = auth.uid());
+CREATE POLICY copilot_conversation_scores_update ON copilot_conversation_scores FOR UPDATE TO authenticated USING (scored_by = auth.uid()) WITH CHECK (scored_by = auth.uid());
 DROP POLICY IF EXISTS copilot_learning_moments_select ON copilot_learning_moments;
 DROP POLICY IF EXISTS copilot_learning_moments_insert ON copilot_learning_moments;
-CREATE POLICY copilot_learning_moments_select ON copilot_learning_moments
-  FOR SELECT TO authenticated USING (
-    tagged_by = auth.uid()
-    OR conversation_id IN (SELECT id FROM copilot_sessions WHERE profile_id = auth.uid())
-  );
-CREATE POLICY copilot_learning_moments_insert ON copilot_learning_moments
-  FOR INSERT TO authenticated WITH CHECK (tagged_by = auth.uid());
-
--- objection_catalog é catálogo compartilhado do time (SELECT fica aberto
--- de propósito); só o INSERT tinha CHECK(true), permitindo atribuir a
--- entrada a outro submitted_by.
+CREATE POLICY copilot_learning_moments_select ON copilot_learning_moments FOR SELECT TO authenticated USING (tagged_by = auth.uid() OR conversation_id IN (SELECT id FROM copilot_sessions WHERE profile_id = auth.uid()));
+CREATE POLICY copilot_learning_moments_insert ON copilot_learning_moments FOR INSERT TO authenticated WITH CHECK (tagged_by = auth.uid());
 DROP POLICY IF EXISTS copilot_objection_catalog_insert ON copilot_objection_catalog;
-CREATE POLICY copilot_objection_catalog_insert ON copilot_objection_catalog
-  FOR INSERT TO authenticated WITH CHECK (submitted_by = auth.uid());
+CREATE POLICY copilot_objection_catalog_insert ON copilot_objection_catalog FOR INSERT TO authenticated WITH CHECK (submitted_by = auth.uid());
