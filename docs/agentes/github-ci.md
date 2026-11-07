@@ -101,9 +101,12 @@ mais os dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot).
 
 - `node --test scripts/ci/*.unit.mjs` (docs e baselines do CI);
 - `node scripts/db-audit/supabase-usage-guard.mjs` (se mexer em `.from()`/`.rpc()` ou migration);
-- `node scripts/ci/check-claude-md-integrity.mjs` (se mexer no `CLAUDE.md`).
+- `node scripts/ci/check-claude-md-integrity.mjs` (GA02; se mexer em `AGENTS.md` ou `docs/agentes/`: exige os
+  cabeçalhos do `AGENTS.md` e barra o conjunto `AGENTS.md` + `CLAUDE.md` + `docs/agentes/*.md` encolher >30%).
 
 Arquivos com contrato verificado por teste — ao mexer, rode o teste junto:
-`src/hooks/team-chat/README.md` (`__tests__/contratosModulo.test.ts`); `CLAUDE.md`
-(`check-claude-md-integrity.mjs`, `ci-docs-baseline.unit.mjs`, `docs-deploy-coerencia.unit.mjs`,
-`front-release-targets.unit.mjs`); `docs/ci/README.md` (gerado — não edite à mão).
+`src/hooks/team-chat/README.md` (`__tests__/contratosModulo.test.ts`); `docs/agentes/github-ci.md`
+(`ci-docs-baseline.unit.mjs`: contagem de workflows, política de `strict`, "403 administrativo");
+`docs/agentes/vercel-deploy.md` (`docs-deploy-coerencia.unit.mjs`: seção `### Deploy e edge functions` e
+retificação; `front-release-targets.unit.mjs`: `zappweb.app.br` serve a V3); `docs/ci/README.md` (gerado —
+não edite à mão).

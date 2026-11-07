@@ -15,7 +15,9 @@ Ler quando for confirmar um deploy, mexer em env vars do Vercel, domínio ou dep
 | MCP Vercel | ferramentas `mcp__Vercel__*` — escrita = ação de produção |
 | Projeto legado | `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`) ainda existe; **não é o projeto atual** |
 
-## Deploy e edge functions
+## Deploy, env vars e pendências
+
+### Deploy e edge functions
 
 - **Front (Vercel):** deploy automático na `main` — merge em `main` = deploy em produção.
 - **Edge functions:** deploy automático quando o push na `main` altera código implantável em
@@ -27,7 +29,7 @@ Ler quando for confirmar um deploy, mexer em env vars do Vercel, domínio ou dep
 Retificação de 2026-10-07 — Edge Functions: o registro histórico de deploy manual de edges foi
 superado pela regra acima (deploy automático no push da `main`).
 
-## Regras de env vars no Vercel
+### Regras de env vars no Vercel
 
 - **Nunca** colocar chaves de servidor (OPENAI, ANTHROPIC, GROQ, EVOLUTION) — não há serverless neste projeto.
 - **Nunca** colocar `POSTGRES_*`, `SUPABASE_SERVICE_ROLE_KEY` ou `SUPABASE_JWT_SECRET` — são do back-end.
@@ -36,7 +38,7 @@ superado pela regra acima (deploy automático no push da `main`).
 - Baseline de vars esperadas: `scripts/ci/vercel-env-baseline.json`; snapshot "antes":
   `docs/audits/vercel-snapshot-2026-10-18-antes.json`.
 
-## Pendências de Vercel (dependem de ação no dashboard)
+### Pendências de Vercel (dependem de ação no dashboard)
 
 1. Redirect: apex canônico, `www` → apex.
 2. Remover 17 vars de integração morta + 5 chaves de servidor + `VITE_*` não lidas.

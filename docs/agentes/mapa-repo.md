@@ -47,6 +47,6 @@ O repo usa **bun**: há `bun.lock` e **não** há `package-lock.json`, então `n
   para conferir rápido;
 - lint dos arquivos tocados: `npx eslint <arquivos>`; E2E: `bun run test:e2e` (Playwright, 1 worker no CI);
 - guardas do CI antes do PR: `node --test scripts/ci/*.unit.mjs`, `node scripts/db-audit/supabase-usage-guard.mjs`,
-  `node scripts/ci/check-claude-md-integrity.mjs`.
+  `node scripts/ci/check-claude-md-integrity.mjs` (vigia `AGENTS.md` + `docs/agentes/`).
 - hooks do husky: `pre-commit` (lint ratchet dos arquivos staged, manifesto de edges), `commit-msg`
   (`scripts/ci/commit-msg-lint.mjs`), `pre-push` (typecheck ratchet, lint ratchet, `check-migration-drift`).
