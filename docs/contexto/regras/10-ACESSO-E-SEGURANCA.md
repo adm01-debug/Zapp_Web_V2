@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `fb328a65b7` · branch `main` · 2026-11-07 20:26 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ea6c809837` · branch `main` · 2026-11-07 20:34 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -125,7 +125,7 @@
 | `message_attempts` | enabled | authenticated: public.is_admin(auth.uid()) | — | — | — |
 | `message_favorites` | enabled | authenticated: user_id = (select auth.uid()) | authenticated: user_id = (select auth.uid()) and exists ( select 1 from public.messages m where m.id = message_id and public.is_contact_visi | — | authenticated: user_id = (select auth.uid()) |
 | `message_pins` | enabled | authenticated: public.is_contact_visible_to_user(contact_id, (select auth.uid())) | — | — | — |
-| `message_reactions` | enabled | authenticated: message_id IN ( SELECT m.id FROM messages m WHERE m.contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN ( SELE<br>authenticated: public.is_admin_or_supervisor(auth.uid()) OR user_id = public.get_profile_id_for_user(auth.uid()) OR contact_id IN ( SELECT c | authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND contact_id IS NOT DISTINCT FROM ( SELECT m.contact_id FROM public.me | authenticated: user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) |
+| `message_reactions` | enabled | authenticated: message_id IN ( SELECT m.id FROM messages m WHERE m.contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN ( SELE<br>authenticated: public.is_admin_or_supervisor(auth.uid()) OR user_id = public.get_profile_id_for_user(auth.uid()) OR contact_id IN ( SELECT c | authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c | authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c | authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c |
 | `message_reports` | enabled | authenticated: reporter_id = (select auth.uid()) or public.is_admin_or_supervisor((select auth.uid())) | — | authenticated: public.is_admin_or_supervisor((select auth.uid())) | — |
 | `message_templates` | enabled | authenticated: user_id = auth.uid() OR is_global = true | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `messages` | enabled | authenticated: is_admin_or_supervisor(auth.uid()) OR contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_v | authenticated: public.is_privileged_contact_caller() OR ( sender = 'agent' AND ( is_admin_or_supervisor(auth.uid()) OR ( (agent_id IS NULL O | authenticated: contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT public.get_visible_agent_ids(auth.uid())) ) | — |

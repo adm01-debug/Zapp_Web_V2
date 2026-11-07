@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "fb328a65b7e5c0d9854e828e4fcde9c08b59c95f",
+  "commit": "ea6c809837e4fa24962d36c327ca8cb02ffd4da5",
   "branch": "main",
-  "data_commit": "2026-11-07T20:16:32Z",
+  "data_commit": "2026-11-07T20:32:48Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ea6c809",
+    "data": "2026-11-07",
+    "assunto": "fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)"
+   },
    {
     "sha": "fb328a6",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "83e821b",
     "data": "2026-11-06",
     "assunto": "fix: corrigir preparo e diagnóstico da suíte isolada (#2728)"
-   },
-   {
-    "sha": "042e593",
-    "data": "2026-11-06",
-    "assunto": "chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)"
    }
   ],
-  "arquivos_mudados_7d": 1085,
+  "arquivos_mudados_7d": 1087,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -214,16 +214,16 @@
     "mudancas": 15
    },
    {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 13
+   },
+   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 13
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 12
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -246,15 +246,15 @@
     "mudancas": 10
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 10
-   },
-   {
     "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 9
    },
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 9
    },
    {
@@ -286,15 +286,15 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
-    "mudancas": 6
-   },
-   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 6
    },
    {
     "arquivo": "scripts/db-audit/known-violations.json",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 6
    }
   ],
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8299,
+  "arquivos_total": 8301,
   "arquivos_codigo": 4737,
   "linhas_codigo": 875565,
   "rotas": 18,
@@ -330,11 +330,11 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1091,
+  "migrations": 1092,
   "cron_jobs": 26,
   "testes": 2581,
   "workflows": 21,
-  "scripts": 419,
+  "scripts": 420,
   "docs_md": 1070
  },
  "por_pasta": {

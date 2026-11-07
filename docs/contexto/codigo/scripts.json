@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 419,
+ "total": 420,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -1657,6 +1657,17 @@
    "arquivo": "scripts/db-audit/message-reactions-autoria.test.sh",
    "descricao": "R2-DB-019 / item 302 do BACKLOG_VERIFICADO (P2) — \"Reacoes do WhatsApp nao vinculam a autoria ao usuario que grava\".",
    "linhas": 372,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/message-reactions-visibilidade-fila.test.sh",
+   "descricao": "SEC-RLS — \"visibilidade != escrita\" em public.message_reactions. Reproduz o gap do e2e-logado (run 1518): um agente autenticado não-admin que é membro",
+   "linhas": 321,
    "env": [],
    "npm_scripts": [],
    "workflows": [

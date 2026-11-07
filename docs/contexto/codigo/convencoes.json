@@ -29,7 +29,7 @@
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (285)",
+   "scripts/db-audit (286)",
    "scripts/ci (40)",
    "scripts/e2e-isolated (39)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)",
    "fix(db): registra formatação divergente da migration 20261107153000 (#2781)",
    "chore: instruções enxutas para agentes (#2762)",
    "chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)",
-   "fix(db): reconciliar ledger da migration 20261010062941 (#2775)",
-   "chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)"
+   "fix(db): reconciliar ledger da migration 20261010062941 (#2775)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "fb328a65b7e5c0d9854e828e4fcde9c08b59c95f",
+  "sha": "ea6c809837e4fa24962d36c327ca8cb02ffd4da5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 20:26 UTC",
-  "files_total": 8140,
-  "code_files": 6000,
-  "code_lines": 1041605
+  "generated_at": "2026-11-07 20:34 UTC",
+  "files_total": 8142,
+  "code_files": 6001,
+  "code_lines": 1041744
  },
  "version": "1.3.2",
- "facts_hash": "4d9375a82028d53f",
+ "facts_hash": "093d873c8253cfb8",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -315,7 +315,7 @@
   "languages": {
    ".tsx": 2319,
    ".ts": 1865,
-   ".sql": 1291,
+   ".sql": 1292,
    ".mjs": 406,
    ".py": 119,
    ".cjs": 19,
@@ -24263,36 +24263,6 @@
     "src": "supabase/migrations/20261013044440_connection_alert_preferences.sql"
    },
    {
-    "name": "message_reactions_insert_policy",
-    "table": "message_reactions",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "user_id = public.get_profile_id_for_user(auth.uid()) AND contact_id IS NOT DISTINCT FROM ( SELECT m.contact_id FROM public.messages m WHERE m.id = message_id ) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_ …",
-    "src": "supabase/migrations/20261013210000_message_reactions_autoria.sql"
-   },
-   {
-    "name": "message_reactions_update_policy",
-    "table": "message_reactions",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "public.is_admin_or_supervisor(auth.uid()) OR ( user_id = public.get_profile_id_for_user(auth.uid()) AND contact_id IS NOT DISTINCT FROM ( SELECT m.contact_id FROM public.messages m WHERE m.id = message_id ) )",
-    "src": "supabase/migrations/20261013210000_message_reactions_autoria.sql"
-   },
-   {
-    "name": "message_reactions_delete_policy",
-    "table": "message_reactions",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20261013210000_message_reactions_autoria.sql"
-   },
-   {
     "name": "realtime_topic_select_autorizado",
     "table": "realtime.messages",
     "cmd": "SELECT",
@@ -24841,6 +24811,36 @@
     "using": "tagged_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())",
     "check": "",
     "src": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
+   },
+   {
+    "name": "message_reactions_insert_policy",
+    "table": "message_reactions",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
+   },
+   {
+    "name": "message_reactions_update_policy",
+    "table": "message_reactions",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "check": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
+   },
+   {
+    "name": "message_reactions_delete_policy",
+    "table": "message_reactions",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "check": "",
+    "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -43766,6 +43766,7 @@
    "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql",
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
+   "supabase/migrations/20261107170000_fix_message_reactions_rls.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -69876,8 +69877,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1091,
-   "lines": 104659,
+   "files": 1092,
+   "lines": 104798,
    "tables": [
     "audit_logs",
     "departments",
@@ -216690,36 +216691,6 @@
     "src": "supabase/migrations/20261013044440_connection_alert_preferences.sql"
    },
    {
-    "name": "message_reactions_insert_policy",
-    "table": "message_reactions",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "user_id = public.get_profile_id_for_user(auth.uid()) AND contact_id IS NOT DISTINCT FROM ( SELECT m.contact_id FROM public.messages m WHERE m.id = message_id ) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_ …",
-    "src": "supabase/migrations/20261013210000_message_reactions_autoria.sql"
-   },
-   {
-    "name": "message_reactions_update_policy",
-    "table": "message_reactions",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "public.is_admin_or_supervisor(auth.uid()) OR ( user_id = public.get_profile_id_for_user(auth.uid()) AND contact_id IS NOT DISTINCT FROM ( SELECT m.contact_id FROM public.messages m WHERE m.id = message_id ) )",
-    "src": "supabase/migrations/20261013210000_message_reactions_autoria.sql"
-   },
-   {
-    "name": "message_reactions_delete_policy",
-    "table": "message_reactions",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20261013210000_message_reactions_autoria.sql"
-   },
-   {
     "name": "realtime_topic_select_autorizado",
     "table": "realtime.messages",
     "cmd": "SELECT",
@@ -217268,6 +217239,36 @@
     "using": "tagged_by = auth.uid() OR conversation_id IN (SELECT conversation_id FROM copilot_sessions WHERE profile_id = auth.uid())",
     "check": "",
     "src": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
+   },
+   {
+    "name": "message_reactions_insert_policy",
+    "table": "message_reactions",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
+   },
+   {
+    "name": "message_reactions_update_policy",
+    "table": "message_reactions",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "check": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
+   },
+   {
+    "name": "message_reactions_delete_policy",
+    "table": "message_reactions",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE m.id = message_id AND ( public.is_admin_or_supervisor(auth.uid()) OR m.contact_id IN ( SELECT c2.id FROM public.contacts c2 WHERE c2.assigned_to IN (S …",
+    "check": "",
+    "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -238216,13 +238217,13 @@
      "authenticated: public.is_admin_or_supervisor(auth.uid()) OR user_id = public.get_profile_id_for_user(auth.uid()) OR contact_id IN ( SELECT c"
     ],
     "INSERT": [
-     "authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND contact_id IS NOT DISTINCT FROM ( SELECT m.contact_id FROM public.me"
+     "authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c"
     ],
     "UPDATE": [
-     "authenticated: user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid())"
+     "authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c"
     ],
     "DELETE": [
-     "authenticated: user_id = public.get_profile_id_for_user(auth.uid()) OR public.is_admin_or_supervisor(auth.uid())"
+     "authenticated: user_id = public.get_profile_id_for_user(auth.uid()) AND EXISTS ( SELECT 1 FROM public.messages m JOIN public.contacts c ON c"
     ]
    },
    "message_reports": {
@@ -379310,6 +379311,10 @@
    "path": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
    "lines": 20
   },
+  "supabase/migrations/20261107170000_fix_message_reactions_rls.sql": {
+   "path": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql",
+   "lines": 139
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -383158,10 +383163,21 @@
   }
  },
  "git": {
-  "sha": "fb328a65b7e5c0d9854e828e4fcde9c08b59c95f",
+  "sha": "ea6c809837e4fa24962d36c327ca8cb02ffd4da5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ea6c809",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     "scripts/db-audit/message-reactions-visibilidade-fila.test.sh",
+     "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
+    ]
+   },
    {
     "sha": "fb328a6",
     "date": "2026-11-07",
@@ -383756,16 +383772,6 @@
     "subject": "chore: validar manifesto de edge functions no CI por PR (#2738)",
     "files": [
      ".github/workflows/ci.yml"
-    ]
-   },
-   {
-    "sha": "d5fc2f9",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "test: provar e endurecer cleanup de variáveis Vercel (#2746)",
-    "files": [
-     "scripts/ci/vercel-env-cleanup.mjs",
-     "scripts/ci/vercel-env-cleanup.unit.mjs"
     ]
    }
   ],

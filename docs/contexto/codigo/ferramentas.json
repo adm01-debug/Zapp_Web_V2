@@ -4,11 +4,11 @@
  "stack": {
   "linguagens": [
    "TypeScript (4188)",
-   "SQL (1291)",
+   "SQL (1292)",
    "Markdown (1070)",
    "JSON (596)",
    "JavaScript (432)",
-   "Shell (231)",
+   "Shell (232)",
    "Python (119)",
    "YAML (29)"
   ],
@@ -416,6 +416,7 @@
     "scripts/db-audit/message-attempts-log.test.sh",
     "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
     "scripts/db-audit/message-reactions-autoria.test.sh",
+    "scripts/db-audit/message-reactions-visibilidade-fila.test.sh",
     "scripts/db-audit/messages-group-sender.test.sh",
     "scripts/db-audit/multiplix-delivery-leases.test.sh",
     "scripts/db-audit/multiplix-drain-enum-cast.test.sh",
