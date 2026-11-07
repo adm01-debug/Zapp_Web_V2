@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f103a30633940297da61f791545a600dc6cbc207",
+  "commit": "a03ef628b948044df8173a5fe621ca0dd70bf6fc",
   "branch": "main",
-  "data_commit": "2026-11-07T21:26:25Z",
+  "data_commit": "2026-11-07T19:04:49-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a03ef62",
+    "data": "2026-11-07",
+    "assunto": "fix: não aninhar <div> dentro de <p> na tela LGPD (#2779)"
+   },
    {
     "sha": "f103a30",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "4ac4bd4",
     "data": "2026-11-06",
     "assunto": "fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)"
-   },
-   {
-    "sha": "c0e5118",
-    "data": "2026-11-06",
-    "assunto": "fix: evita posição absoluta na navegação da paleta (teste flaky)"
    }
   ],
-  "arquivos_mudados_7d": 1107,
+  "arquivos_mudados_7d": 1109,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8311,
   "arquivos_codigo": 4747,
-  "linhas_codigo": 877107,
+  "linhas_codigo": 877109,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368185
+   "linhas": 368187
   },
   "src/config": {
    "arquivos": 3,

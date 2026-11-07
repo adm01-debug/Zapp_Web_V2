@@ -4327,7 +4327,7 @@
   {
    "arquivo": "src/components/compliance/__tests__/LGPDComplianceView.test.tsx",
    "tipo": "unit",
-   "linhas": 99,
+   "linhas": 101,
    "testa": [
     "src/components/compliance/LGPDComplianceView.tsx"
    ],
