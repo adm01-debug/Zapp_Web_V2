@@ -266,7 +266,7 @@ test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
       const url = new URL(response.url());
       return response.request().method() === 'GET' &&
         url.pathname.endsWith('/rest/v1/contacts') &&
-        url.searchParams.has('or');
+        (url.searchParams.get('or') ?? '').includes(E2E_FIXTURE_CONTACT_NAME);
     });
     await buscaContato.fill(E2E_FIXTURE_CONTACT_NAME);
     const respostaBusca = await buscaConcluida;
