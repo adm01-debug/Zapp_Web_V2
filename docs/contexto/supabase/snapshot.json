@@ -88051,7 +88051,8 @@
       },
       {
         "name": "ai_usage_outbox_drain_cron",
-        "statements": [],
+        "statements": 5,
+        "statements_sha": "c57998cf7ceb86d4",
         "version": "20261103223000"
       },
       {

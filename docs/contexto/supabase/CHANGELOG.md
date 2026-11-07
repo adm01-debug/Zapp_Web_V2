@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 14:11 UTC
+
+- **migrations** alterado (1): `20261103223000_ai_usage_outbox_drain_cron`
+
 ## 2026-11-07 13:55 UTC
 
 - **functions** alterado (2): `public.increment_agent_resolutions(p_profile_id uuid)`, `public.update_agent_streak(p_profile_id uuid, p_increment boolean)`
