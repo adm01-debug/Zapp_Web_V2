@@ -182,13 +182,12 @@ describe('CommandPalette — devolução de foco sem DialogTrigger', () => {
     props: Omit<React.ComponentProps<typeof CommandPalette>, 'open' | 'onOpenChange'> = {},
     strict = false,
   ) {
-    let view: ReturnType<typeof render>;
-    const setOpen = (open: boolean) => view.rerender(tree(open));
-    const tree = (open: boolean) => {
+    function setOpen(open: boolean) { view.rerender(tree(open)); }
+    function tree(open: boolean) {
       const palette = <CommandPalette {...props} open={open} onOpenChange={setOpen} />;
       return strict ? <React.StrictMode>{palette}</React.StrictMode> : palette;
-    };
-    view = render(tree(false));
+    }
+    const view = render(tree(false));
     return {
       setOpen,
       open() {

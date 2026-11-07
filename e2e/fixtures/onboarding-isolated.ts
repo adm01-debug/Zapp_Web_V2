@@ -11,12 +11,11 @@ function fail(code: string): never { throw new Error(`[E2E tour/${code}]`); }
 /** A new Auth user per test/attempt; no shared supervisor preference is reset. */
 export async function withFreshOnboardingUser(
   { page, baseURL }: { page: Page; baseURL: string | undefined },
-  use: () => Promise<void>,
+  exercise: () => Promise<void>,
 ): Promise<void> {
   // This verifies the actual browser resolver before any privileged key is read.
   await assertIsolatedAuthEnvironment({ page, baseURL });
-  let owner: IsolatedAuthTarget | undefined;
-  async function isolatedTarget(): Promise<IsolatedAuthTarget> {
+  async function isolatedTarget(expected?: IsolatedAuthTarget): Promise<IsolatedAuthTarget> {
     let proof: unknown;
     let namespace: string;
     try {
@@ -27,19 +26,20 @@ export async function withFreshOnboardingUser(
     } catch { fail('isolation-proof'); }
     const current = validateIsolatedAuthEvidence({ baseURL, env: process.env, proof,
       networkNamespace: namespace, interfaces: networkInterfaces(), now: Date.now() });
-    if (owner && (current.origin !== owner.origin || current.run_id !== owner.run_id ||
-      current.source_sha !== owner.source_sha || current.anon_key_sha256 !== owner.anon_key_sha256)) fail('foreign-run');
+    if (expected && (current.origin !== expected.origin || current.run_id !== expected.run_id ||
+      current.source_sha !== expected.source_sha ||
+      !Object.is(current.anon_key_sha256, expected.anon_key_sha256))) fail('foreign-run');
     return current;
   }
-  owner = await isolatedTarget();
+  const owner = await isolatedTarget();
   const service = process.env.SERVICE_ROLE_KEY;
-  if (!service || service !== process.env.E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY) fail('local-service-key');
+  if (!service || !Object.is(service, process.env.E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY)) fail('local-service-key');
   const email = `tour.${randomBytes(12).toString('hex')}@example.invalid`;
   const password = randomBytes(24).toString('base64url') + 'aA9!';
   const marker = { e2e_fixture: 'onboarding-tour', e2e_run_id: owner.run_id, e2e_source_sha: owner.source_sha };
   const headers = { apikey: service, Authorization: `Bearer ${service}`, 'Content-Type': 'application/json' };
   async function request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
-    await isolatedTarget();
+    await isolatedTarget(owner);
     if (!path.startsWith('/') || path.startsWith('//')) fail('invalid-local-path');
     let response: Response;
     try {
@@ -84,7 +84,7 @@ export async function withFreshOnboardingUser(
     await page.locator('#login-password').fill(password);
     await page.getByRole('button', { name: /^entrar$/i }).click();
     await expect(page.locator('#main-navigation')).toBeVisible({ timeout: 60_000 });
-    await use();
+    await exercise();
   } finally {
     // Runs even when the test fails. A closed page is not needed for cleanup.
     const current = await request<LocalUser>(`/auth/v1/admin/users/${id}`);
@@ -94,8 +94,8 @@ export async function withFreshOnboardingUser(
 }
 
 export const test = base.extend<{ freshOnboardingUser: void }>({
-  freshOnboardingUser: [async ({ page, baseURL }, use) => {
-    await withFreshOnboardingUser({ page, baseURL }, use);
+  freshOnboardingUser: [async ({ page, baseURL }, provide) => {
+    await withFreshOnboardingUser({ page, baseURL }, provide);
   }, { auto: true }],
 });
 export { expect };

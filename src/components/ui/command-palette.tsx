@@ -134,14 +134,6 @@ export function CommandPalette({
     [query, groupedCommands, quickAccessItems, recentCommands]
   );
 
-  // O listener de teclado é registrado uma única vez enquanto a paleta está aberta (deps [open]),
-  // então ele não pode capturar `allItems`/`selectedIndex` do render em que foi criado (stale
-  // closure). Espelhamos os valores em refs, atualizados a cada render, e o handler lê sempre delas.
-  const allItemsRef = React.useRef(allItems);
-  const selectedIndexRef = React.useRef(selectedIndex);
-  allItemsRef.current = allItems;
-  selectedIndexRef.current = selectedIndex;
-
   // R2-INF-032 (#377): cada digitação é um TERMO novo. A resposta de um termo anterior que ainda
   // estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar
   // resultado — sem esta trava, a resposta do catálogo ANTIGO substituía os resultados da consulta
@@ -189,15 +181,19 @@ export function CommandPalette({
   React.useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (!open) return;
-      const items = allItemsRef.current;
-      const idx = selectedIndexRef.current;
-      if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex((p) => (p + 1) % Math.max(items.length, 1)); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex((p) => (p - 1 + items.length) % Math.max(items.length, 1)); }
-      else if (e.key === 'Enter' && items[idx]) { e.preventDefault(); executeCommand(items[idx]); }
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault(); setSelectedIndex((p) => (p + 1) % Math.max(allItems.length, 1)); break;
+        case 'ArrowUp':
+          e.preventDefault(); setSelectedIndex((p) => (p - 1 + allItems.length) % Math.max(allItems.length, 1)); break;
+        case 'Enter':
+          if (allItems[selectedIndex]) { e.preventDefault(); executeCommand(allItems[selectedIndex]); }
+          break;
+      }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [open, executeCommand]);
+  }, [open, executeCommand, allItems, selectedIndex]);
 
   // Os dois ajustes abaixo são entregues no próximo tick para não mudar estado durante o
   // render. Cada id fica guardado em ref e o retorno do efeito limpa o que estiver pendente —
@@ -364,7 +360,7 @@ export function CommandPalette({
 export function useCommandPalette() {
   const [isOpen, setIsOpen] = React.useState(false);
   React.useEffect(() => {
-    const h = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsOpen(p => !p); } };
+    const h = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && ['k'].includes(e.key)) { e.preventDefault(); setIsOpen(p => !p); } };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, []);
