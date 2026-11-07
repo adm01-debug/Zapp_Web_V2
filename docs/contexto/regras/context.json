@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b8244e0b811b08aa2bcc812b70cfead23291292f",
+  "sha": "b5ad544ec05fdb1383603e1ca006af957d1c29c9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 23:19 UTC",
+  "generated_at": "2026-11-07 23:38 UTC",
   "files_total": 8152,
   "code_files": 6011,
-  "code_lines": 1043288
+  "code_lines": 1043316
  },
  "version": "1.3.2",
- "facts_hash": "ac281411db140465",
+ "facts_hash": "52e3caa6f430ab5a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67946,7 +67946,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 87762,
+   "lines": 87790,
    "tables": [
     "a",
     "alem_do_limite",
@@ -265281,10 +265281,9 @@
   },
   "scripts/ci/vercel-env-cleanup.mjs": {
    "path": "scripts/ci/vercel-env-cleanup.mjs",
-   "lines": 186,
+   "lines": 184,
    "exports": [
     "const PROJECT",
-    "const TEAM",
     "const REMOVE",
     "function executarCleanup"
    ],
@@ -265296,10 +265295,6 @@
     {
      "name": "PROJECT",
      "value": "'prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp'"
-    },
-    {
-     "name": "TEAM",
-     "value": "'team_QyN41X0q8hrqhW80AwokbFLv'"
     }
    ],
    "rule_comments": [
@@ -265310,7 +265305,7 @@
   },
   "scripts/ci/vercel-env-cleanup.unit.mjs": {
    "path": "scripts/ci/vercel-env-cleanup.unit.mjs",
-   "lines": 167,
+   "lines": 197,
    "errors": [
     "token=segredo"
    ]
@@ -383422,10 +383417,20 @@
   }
  },
  "git": {
-  "sha": "b8244e0b811b08aa2bcc812b70cfead23291292f",
+  "sha": "b5ad544ec05fdb1383603e1ca006af957d1c29c9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b5ad544",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(ci): corrige escopo do cleanup de variáveis Vercel (#2786)",
+    "files": [
+     "scripts/ci/vercel-env-cleanup.mjs",
+     "scripts/ci/vercel-env-cleanup.unit.mjs"
+    ]
+   },
    {
     "sha": "b8244e0",
     "date": "2026-11-07",
@@ -383991,15 +383996,6 @@
      "scripts/ia/ensaio-provisionamento.mjs",
      "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
     ]
-   },
-   {
-    "sha": "3ece06f",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: corrige stale closure na navegação por teclado da paleta de comandos (#2749)",
-    "files": [
-     "src/components/ui/command-palette.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -384028,6 +384024,14 @@
     3
    ],
    [
+    "scripts/ci/vercel-env-cleanup.mjs",
+    2
+   ],
+   [
+    "scripts/ci/vercel-env-cleanup.unit.mjs",
+    2
+   ],
+   [
     "docs/DB-INVENTORY.md",
     2
    ],
@@ -384037,10 +384041,6 @@
    ],
    [
     "e2e/navegacao-modulos.spec.ts",
-    2
-   ],
-   [
-    "src/components/ui/command-palette.tsx",
     2
    ],
    [
@@ -384077,10 +384077,6 @@
    ],
    [
     "scripts/ci/check-audit-pdf-determinism.mjs",
-    1
-   ],
-   [
-    "scripts/ci/check-audit-pdf-determinism.unit.mjs",
     1
    ]
   ]

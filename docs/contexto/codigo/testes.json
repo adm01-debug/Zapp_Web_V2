@@ -1940,11 +1940,11 @@
   {
    "arquivo": "scripts/ci/vercel-env-cleanup.unit.mjs",
    "tipo": "unit",
-   "linhas": 167,
+   "linhas": 197,
    "testa": [
     "scripts/ci/vercel-env-cleanup.mjs"
    ],
-   "casos": 8
+   "casos": 9
   },
   {
    "arquivo": "scripts/ci/verify-crm-integration-doc.unit.mjs",

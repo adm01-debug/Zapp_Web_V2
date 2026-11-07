@@ -1,7 +1,7 @@
 # Graph Report - Zapp_Web_V2  (2026-11-07)
 
 ## Corpus Check
-- 7221 files · ~8,974,556 words
+- 7221 files · ~8,974,699 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 94 file(s) not represented in the graph (top: .tsv 32, .csv 13, (none) 12)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b8244e0b`
+- Built from commit: `b5ad544e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -6912,7 +6912,7 @@ Nodes (11): agora, CAUSA_NO_CODIGO, codigo, comentario(), executar(), extrairBlo
 
 ### Community 901 - "vercel-env-cleanup.mjs"
 Cohesion: 0.22
-Nodes (9): alvoSeguro(), executarCleanup(), apiFetch(), principal(), PROJECT, REMOVE, targetsLegiveis(), TEAM (+1 more)
+Nodes (9): alvoSeguro(), executarCleanup(), apiFetch(), principal(), PROJECT, REMOVE, targetsLegiveis(), CURSORES_SEGUROS (+1 more)
 
 ### Community 902 - "admin-cron-jobs-rpc.test.sh"
 Cohesion: 0.32

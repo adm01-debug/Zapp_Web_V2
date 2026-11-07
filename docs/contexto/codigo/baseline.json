@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b8244e0b811b08aa2bcc812b70cfead23291292f",
+  "commit": "b5ad544ec05fdb1383603e1ca006af957d1c29c9",
   "branch": "main",
-  "data_commit": "2026-11-07T20:08:29-03:00",
+  "data_commit": "2026-11-07T23:31:13Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b5ad544",
+    "data": "2026-11-07",
+    "assunto": "fix(ci): corrige escopo do cleanup de variáveis Vercel (#2786)"
+   },
    {
     "sha": "b8244e0",
     "data": "2026-11-07",
@@ -126,11 +131,6 @@
     "sha": "636880b",
     "data": "2026-11-07",
     "assunto": "fix: blindar plano sintético contra IDs externos (#2757)"
-   },
-   {
-    "sha": "a5043f9",
-    "data": "2026-11-06",
-    "assunto": "fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)"
    }
   ],
   "arquivos_mudados_7d": 1109,
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 19
+    "mudancas": 18
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8311,
   "arquivos_codigo": 4747,
-  "linhas_codigo": 877109,
+  "linhas_codigo": 877137,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 206,
-   "linhas": 42538
+   "linhas": 42566
   },
   "scripts/db-audit": {
    "arquivos": 81,

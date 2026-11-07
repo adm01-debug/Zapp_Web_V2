@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ci): corrige escopo do cleanup de variáveis Vercel (#2786)",
    "fix(e2e): exclui talkx-visual do projeto chromium-authenticated (#2785)",
    "fix: não aninhar <div> dentro de <p> na tela LGPD (#2779)",
    "fix(db): registra replay seguro da migration 20261107170000 (#2784)",
-   "chore(db): sincroniza artefatos derivados e inventário (#2783)",
-   "fix: endurecer scripts e automatizar guardas residuais (#2773)"
+   "chore(db): sincroniza artefatos derivados e inventário (#2783)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

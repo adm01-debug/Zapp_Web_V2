@@ -458,7 +458,7 @@
   {
    "arquivo": "scripts/ci/vercel-env-cleanup.mjs",
    "descricao": "* V043-V065 — Remove vars perigosas/mortas do Vercel.",
-   "linhas": 186,
+   "linhas": 184,
    "env": [
     "DRY_RUN",
     "VERCEL_TOKEN"
