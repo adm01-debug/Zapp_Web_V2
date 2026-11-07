@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `636880baeb1413fbb56f0b234cedc19d63ec96c7` (2026-11-07T09:50:20-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7f3c25944a116bfb5b7b4693d4d1ece56c2eb768` (2026-11-07T13:02:42Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8257 |
 | arquivos_codigo | 4734 |
-| linhas_codigo | 873400 |
+| linhas_codigo | 873404 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,8 +385,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55873 nós · 115350 arestas · 4088 comunidades · grafo do commit `636880ba`
-- comunidades maiores: TalkXSuppression.tsx (931), react (736), framer-motion (734), vitest (704), lucide-react (677), utils.ts (660), cn (622), validation.ts (443), tooltip.tsx (415), evolution-webhook-messages.ts (404), @tanstack/react-query (364), useExternalCatalog.ts (330)
+- 55876 nós · 115374 arestas · 4117 comunidades · grafo do commit `7f3c2594`
+- comunidades maiores: lucide-react (901), cn (805), react (648), vitest (539), DashboardView.tsx (514), catalogShared.tsx (496), validation.ts (419), useTalkXSegments.ts (358), ref_node_fs (319), chat.ts (307), useTeamChatPanel.ts (302), useAuth (296)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -396,9 +396,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CLAUDE.md (15)
 - docs/ci/README.md (15)
 - .github/workflows/db-guard.yml (14)
+- supabase/deployment-manifest.json (14)
 - ESTADO.md (13)
 - scripts/ci/ci-docs-baseline.unit.mjs (13)
-- supabase/deployment-manifest.json (13)
 - .github/workflows/e2e-logado.yml (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `7f3c259` infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)
 - 2026-11-07 `636880b` fix: blindar plano sintético contra IDs externos (#2757)
 - 2026-11-06 `a5043f9` fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)
 - 2026-11-06 `4ac4bd4` fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `86c9ec8` fix: reconciliar drift do DB Live Guard (#2741)
 - 2026-11-06 `abfe326` chore: validar manifesto de edge functions no CI por PR (#2738)
 - 2026-11-06 `d5fc2f9` test: provar e endurecer cleanup de variáveis Vercel (#2746)
-- 2026-11-06 `5f2f9af` fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

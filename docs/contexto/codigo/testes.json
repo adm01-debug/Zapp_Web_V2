@@ -953,7 +953,7 @@
   {
    "arquivo": "scripts/ci/deno-reproducibility.unit.mjs",
    "tipo": "unit",
-   "linhas": 59,
+   "linhas": 63,
    "testa": [
     "scripts/ci/workflow-test-support.mjs"
    ],

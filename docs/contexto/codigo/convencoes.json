@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)",
    "fix: blindar plano sintético contra IDs externos (#2757)",
    "fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)",
    "fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)",
-   "fix: evita posição absoluta na navegação da paleta (teste flaky)",
-   "chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)"
+   "fix: evita posição absoluta na navegação da paleta (teste flaky)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
