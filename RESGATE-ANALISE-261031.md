@@ -4,6 +4,92 @@
 
 ---
 
+## 0. ATUALIZAÇÃO 2026-11-07 — Delta desde o relatório original
+
+> Re-análise read-only em 07/11. O repo evoluiu muito desde 31/10: **27 branches novas**, `main` local agora **182 commits atrás** de `origin/main`, e **219 arquivos modificados** no working tree.
+
+### 0.1 Estado do GitHub (origin/main)
+
+- `origin/main` avançou para `5b62b9338e` (últimos merges: #2758 Vercel Cleanup fail-closed, #2756 DB Live Guard, #2753 esm.sh→npm, #2757 plano sintético, #2754 vault e2e, #2707 drain cron, #2752 inventário B10, #2750 provisionamento IA, #2749/#2748/#2744/#2747/#2741).
+- `main` local parado em `239f6d8ca7` — **182 commits atrás** do origin (era 13 em 31/10). Ninguém fez pull/fast-forward no principal desde então.
+- **CI do main: verde** (último run 31/10 17:39Z, segundo a triagem de PRs).
+
+### 0.2 Branches novas desde 01/11 (27) — risco de perda
+
+| Data | Branch | Tracking | Commits únicos vs origin/main |
+|---|---|---|---|
+| 07/11 | `claude/chore-instrucoes-enxutas-261107-1030` | origin (própria) | 2 (`a176f8e268`, `b21053427f` — AGENTS.md único) |
+| 07/11 | `claude/chore-ci-local-261107-1103` | origin/main | 0 (já na main) |
+| 07/11 | `Github_Copilotinfra-edge-npm` | **SEM-REMOTE** | 1 (`9149c1ceee5` — deployment-manifest LF) |
+| 07/11 | `Github_Copilotliterate-pancake` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotstunning-giggle` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotvalidacao-esm-npm` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotfix-e2e-vault-guard-06111807` | origin (gone) | 1 (`898d3ae3816`) |
+| 06/11 | `Github_Copilotcurly-pancake` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotfuzzy-telegram` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotglowing-pancake` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotshiny-sniffle` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotsuper-bassoon` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `pr2753` | **SEM-REMOTE** | 1 (`31c4d3c0b2` — esm.sh→npm, **já squashado na main como #2753**) |
+| 06/11 | `Github_Copilotvigilant-dollop` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotfix-paleta-unica-stale-closure-keyboard` | origin (gone) | 1 (`b9d0dfe464b`) |
+| 06/11 | `Github_Copilotliterate-spork` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotprobable-eureka` | **SEM-REMOTE** | 0 (já na main) |
+| 06/11 | `Github_Copilotupgraded-adventure` | **SEM-REMOTE** | 0 (já na main) |
+| 01/11 | `claude/fix-talkx-segmentos-regressao-261101-1944` | origin (própria) | 1 (`d8eb518aa1` — restaura X111/X112/X116 do C011) |
+| 01/11 | `claude/feat-incidentes-pausa-investigados-261024-1640` | origin (própria) | 5 (C121 IP2-A/B — migration + aba Pausas) |
+| 01/11 | `claude/feat-message-delivery-post-iniciado-261101-1937` | origin (própria) | 4 (PD-79 fail-closed + classifyUnclaimedCause) |
+| 01/11 | `claude/feat-metas-seletor-periodo-261101-1208` | origin (própria) | 2 (C130 — seletor Hoje/Semana/Mês) |
+| 01/11 | `claude/chore-mapa-resgate-pos-24-10-261101-1415` | origin (própria) | 1 (`34c717da12` — mapa do delta pós-24/10) |
+| 01/11 | `codex/fix-lint-phone-settings-20261101` | origin (própria) | 2 (`36760d7e7e`, `e90cc15753`) |
+| 01/11 | `codex/fix-typecheck-baseline-20261101` | origin/main | 1 (`4555f3ca4d` — JSX + filtro inbox) |
+| 01/11 | `codex/consolidacao-baseline-pr-20261101` | origin (própria) | 1 (`3ab810b4d8`) |
+| 01/11 | `codex/consolidacao-baseline-20261101` | **SEM-REMOTE** | 2 (`41cb12a85a`, `20b276dc36`) |
+
+**Leitura:** a maioria das `Github_Copilot*` de 06/11 são branches locais de PRs **já mergeadas** (commits iguais aos da main — sem risco). As que importam: `claude/chore-instrucoes-enxutas` (2 commits únicos), `Github_Copilotinfra-edge-npm` (1), `codex/consolidacao-baseline-20261101` (2), `pr2753` (1, já na main como squash), e as 6 branches `claude/*`/`codex/*` de 01/11 com tracking próprio (trabalho de C121/C130/C011/PD-79 — **verificar se as PRs correspondentes foram mergeadas**).
+
+### 0.3 Branches à frente do origin (atualizado 07/11)
+
+13 branches com commits não publicados (era 11 em 31/10):
+
+| Branch | À frente | Atrás | Observação |
+|---|---|---|---|
+| `codex/diagnostico-e2e-mapa-20261028` | 8 | 245 | Diagnóstico E2E mapa |
+| `claude_juca/practical-rubin-8xnw0u` | 4 | 79 | merge main; mock do main |
+| `claude/fix-ga-fase23-edge-e2e-261020-2200` | 3 | 290 | fix lint worktrees |
+| `codex/teamchat-audit-action-contract-20261030` | 2 | 26 | Team chat audit |
+| `hermes/robustez-primitivos-ui-...` | 2 | 378 | UI primitivos |
+| `claude/fix-ga-fase1-lote-banco-261020-2200` | 1 | 309 | GA19/GA18 |
+| `claude/fix-ga-fase78-perimetro-custo-261020-2200` | 1 | 309 | GA75-95 |
+| `claude/fix-ga-resto-dbmigrate-20261021-0729` | 1 | 309 | GA13-17 |
+| `claude/fix-ga-resto-sonar-contracts-20261021-0726` | 1 | 309 | GA86/99/100 |
+| `codex/consolida-docs-deploy-ga98` | 1 | 243 | docs deploy |
+| `codex/fix-typecheck-baseline-20261101` | 1 | 140 | JSX + filtro inbox |
+| `hermes/telefonia-fase8-motion-a11y-...` | 1 | 430 | motion a11y T75 |
+| `local/fase0-banco-local` | 7 | 400 | fase 0 banco local |
+
+### 0.4 Working tree sujo (219 arquivos) — NOVO risco
+
+O working tree do principal tem **219 arquivos modificados**, mas a análise mostra que **196 são apenas mudança de modo** (`100644 → 100755`, chmod +x) e **14 são deleções** (11 `.merge_file_*` + 3 `.Zone.Identifier` de protótipos). **Nenhuma mudança real de conteúdo** — o diff de conteúdo é 0 linhas. Ou seja: o working tree está "sujo" por um `chmod +x` em massa (provavelmente de um `git config core.fileMode` desligado + checkout) e por artefatos de merge parcial antigos. **Limpeza segura:** `git config core.fileMode false` + `git checkout -- .` (ou commit do chmod se for intencional).
+
+Untracked novos: `AUDIT-A-PROCESSAR-261031.md`, `TRIAGEM-PRS-GITHUB-261031.md`, `resgate-online/` (relatório de resgate dos clusters C007–C303, 01/11), e um arquivo estranho chamado `=` (possível erro de redirecionamento).
+
+### 0.5 Novos artefatos de resgate (01/11) — já existem!
+
+Outras sessões já fizeram trabalho de resgate em 01/11 que **complementa** este relatório:
+
+- **`resgate-online/RELATORIO_RESGATE.md`** — resgate dos clusters C007 C019 C098 C097 C121 C297 C303 C110 C130 C011. Veredito: 6 JÁ IMPLEMENTADAS (#2223 #2224 #2231 #2234 #2236 #2240 mergeadas), 4 ABERTAS (C121 #2471/#2469, C297 #2480, C110 #2466/#2238, C130 #2484). Achado crítico: **#2239 (C130) entrou na main como squash VAZIO (0 arquivos)** — a feature nunca chegou.
+- **`resgate-online/progresso.json`** — estado por cluster com PRs e contagem de commits próprios.
+- **`resgate-online/dossies/`** — 10 dossiês (C007, C011, C019, C097, C098, C110, C121, C130, C297, C303).
+- **`AUDIT-A-PROCESSAR-261031.md`** — auditoria de `_a-processar/ZAPP_WEB_V2_LOCAL`: 12.559 commits vs origin/main, mas **só 2 arquivos não commitados em risco** (recomenda commit + push e depois pode remover a cópia).
+- **`TRIAGEM-PRS-GITHUB-261031.md`** — triagem de 99 PRs abertas: 81 ready, 18 draft, 40 mergeable, 59 conflitantes, 39 CI verde. **Aviso: mega-branch #2445 e PR #2265 CRITICAL-1 (segurança).**
+
+### 0.6 Conclusão do delta
+
+O trabalho de resgate **já está em andamento por outras sessões** (clusters C007–C303, triagem de PRs, auditoria do `_a-processar`). O que este relatório adiciona de novo: (a) o mapa completo de branches locais sem push, (b) a descoberta de que o working tree sujo é só chmod + deleções (limpeza trivial), (c) as 27 branches novas de 01–07/11 com seus commits únicos, (d) a confirmação de que `main` local está 182 commits atrás. **Próxima ação recomendada:** fast-forward do `main` local + push das branches com commits únicos ainda não mergeados (verificar PRs de C121/C130/C011/PD-79).
+
+---
+
 ## 1. Auditorias e Handoffs Anteriores Encontrados
 
 ### Arquivos-chave localizados (por relevância)
