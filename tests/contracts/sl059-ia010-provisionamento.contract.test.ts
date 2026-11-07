@@ -1,5 +1,8 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   COLUNAS_USADAS,
@@ -162,25 +165,91 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
     }
   });
 
-  it('o provisionamento é idempotente: todo insert traz on conflict', () => {
+  it('o provisionamento é transacional e todo upsert restaura o registro canônico', () => {
     const blocos = SQL.split(/insert into/iu).slice(1);
     expect(blocos.length).toBeGreaterThanOrEqual(4);
     for (const bloco of blocos) {
       const ateOFim = bloco.split(';')[0];
-      expect(ateOFim).toMatch(/on conflict/iu);
+      expect(ateOFim).toMatch(/on conflict \(id\) do update set/iu);
     }
-    expect(SQL).toContain('is_read = excluded.is_read');
+    for (const dml of [SQL, REMOCAO]) {
+      expect(dml.match(/\bbegin;/giu)).toHaveLength(1);
+      expect(dml.match(/\bcommit;/giu)).toHaveLength(1);
+      expect(dml).toMatch(/begin;[\s\S]+commit;/iu);
+    }
+    const blocosPorTabela = new Map(
+      [...SQL.matchAll(/insert into public\.(\w+)[\s\S]*?;/giu)].map((match) => [match[1]!, match[0]]),
+    );
+    const restauracoesPorTabela: Record<string, string[]> = {
+      departments: ['name = excluded.name', 'is_active = true'],
+      queues: [
+        'name = excluded.name',
+        'description = excluded.description',
+        'color = excluded.color',
+        'is_active = true',
+        'priority = excluded.priority',
+      ],
+      contacts: [
+        'name = excluded.name',
+        'phone = excluded.phone',
+        'email = excluded.email',
+        'conversation_status = excluded.conversation_status',
+        'queue_id = excluded.queue_id',
+        'consent_status = excluded.consent_status',
+        'notes = excluded.notes',
+      ],
+      messages: [
+        'contact_id = excluded.contact_id',
+        'sender = excluded.sender',
+        'content = excluded.content',
+        'message_type = excluded.message_type',
+        'transcription = excluded.transcription',
+        'is_read = excluded.is_read',
+      ],
+    };
+    for (const [tabela, restauracoes] of Object.entries(restauracoesPorTabela)) {
+      const bloco = blocosPorTabela.get(tabela);
+      expect(bloco, `upsert ausente para ${tabela}`).toBeDefined();
+      for (const restauracao of restauracoes) expect(bloco).toContain(restauracao);
+    }
+    expect(SQL).toContain("áudio d''ensaio sem transcrição");
   });
 
-  it('o gerador recusa plano sem todos os marcadores sintéticos', () => {
-    expect(validarPlanoSeguro(plano)).toBe(plano);
-    expect(() => sqlDeRemocao({ ...plano, prefixo: '' })).toThrow(/marcadores/u);
-    expect(() => sqlDeRemocao({ ...plano, prefixo: '%' })).toThrow(/marcadores/u);
-    expect(() => sqlDeProvisionamento({ ...plano, dominio: 'cliente.com.br' })).toThrow(/marcadores/u);
+  it('o gerador aceita apenas o plano canônico completo, inclusive IDs e vocabulários', () => {
+    expect(validarPlanoSeguro(structuredClone(plano))).toEqual(plano);
 
-    const departamentos = structuredClone(plano.departamentos);
-    departamentos[0]!.contatos[0]!.telefone = '+5511999999999';
-    expect(() => sqlDeProvisionamento({ ...plano, departamentos })).toThrow(/faixa reservada/u);
+    const mutacoes: Array<(valor: ReturnType<typeof planoDeEnsaio>) => void> = [
+      (valor) => { valor.prefixo = '%'; },
+      (valor) => { valor.dominio = 'cliente.com.br'; },
+      (valor) => { valor.departamentos[0].fila.id = '11111111-1111-4111-8111-111111111111'; },
+      (valor) => { valor.departamentos[0].contatos[0].id = '22222222-2222-4222-8222-222222222222'; },
+      (valor) => { valor.departamentos[0].contatos[0].telefone = '+5511999999999'; },
+      (valor) => { valor.departamentos[0].contatos[0].email = 'ENSAIO-invalido@ensaio.invalid'; },
+      (valor) => { valor.departamentos[0].contatos[0].consent_status = 'intruso'; },
+      (valor) => { valor.departamentos[0].contatos[0].mensagens[0].sender = 'intruso'; },
+      (valor) => { valor.departamentos[0].contatos[0].mensagens[0].message_type = 'intruso'; },
+      (valor) => { valor.departamentos[0].contatos[0].mensagens[0].content += ' CPF 123.456.789-00'; },
+      (valor) => { valor.tot.contatos = 999; },
+      (valor) => { valor.casosDeBorda.pop(); },
+    ];
+
+    for (const adulterar of mutacoes) {
+      const adulterado = structuredClone(plano);
+      adulterar(adulterado);
+      expect(() => sqlDeProvisionamento(adulterado)).toThrow(/contrato canônico/u);
+      expect(() => sqlDeRemocao(adulterado)).toThrow(/contrato canônico/u);
+    }
+  });
+
+  it('templates e plano canônico são profundamente imutáveis', () => {
+    expect(Object.isFrozen(DEPARTAMENTOS_ENSAIO)).toBe(true);
+    expect(Object.isFrozen(PALETA_FILAS)).toBe(true);
+    expect(Object.isFrozen(PERFIS_ENSAIO)).toBe(true);
+    expect(Object.isFrozen(PERFIS_ENSAIO[0])).toBe(true);
+    expect(Object.isFrozen(plano)).toBe(true);
+    expect(Object.isFrozen(plano.departamentos[0]!.fila)).toBe(true);
+    expect(Object.isFrozen(plano.departamentos[0]!.contatos[0]!.mensagens[0])).toBe(true);
+    expect(() => (PALETA_FILAS as unknown as string[]).push('cor-externa')).toThrow();
   });
 
   it('a reversão é só por prefixo: nenhum delete alcança dado que não seja de ensaio', () => {
@@ -282,6 +351,28 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
     expect(executar(['--sql'], 'https://localhost/postgres')).toMatchObject({ status: 1, out: '' });
     expect(executar(['--sql'], 'postgresql://u:p@db.exemplo.com/postgres')).toMatchObject({ status: 1, out: '' });
     expect(executar(['--sql'], 'postgresql://u:p@localhost:5432/postgres')).toMatchObject({ status: 0 });
+    expect(executar(['--plano'])).toMatchObject({ status: 0, err: '' });
+    expect(executar(['--plano']).out).toContain('plano do ambiente de ensaio');
+    expect(executar(['--ajuda']).out).toContain('uso: bun scripts/ia/ensaio-provisionamento.mjs');
+
+    const segredo = 'SENHA_SUPER_SECRETA_2750';
+    const invalida = executar(['--sql'], `postgresql://usuario:${segredo}@[`);
+    expect(invalida).toMatchObject({ status: 1, out: '' });
+    expect(invalida.err).not.toContain(segredo);
+  });
+
+  it('importar o módulo por um programa homônimo não executa a CLI', () => {
+    const pasta = mkdtempSync(join(tmpdir(), 'ensaio-import-'));
+    const chamador = join(pasta, 'ensaio-provisionamento.mjs');
+    try {
+      writeFileSync(chamador, `import ${JSON.stringify(pathToFileURL(MODULO).href)};\nconsole.log('import-ok');\n`);
+      const resultado = spawnSync(process.execPath, [chamador, '--sql'], { encoding: 'utf8' });
+      expect(resultado.status).toBe(0);
+      expect(resultado.stderr).toBe('');
+      expect(resultado.stdout.trim()).toBe('import-ok');
+    } finally {
+      rmSync(pasta, { recursive: true, force: true });
+    }
   });
 
   it('cada caso de borda do §2 tem estado declarado — e o do mesmo telefone tem prova do bloqueio', () => {
