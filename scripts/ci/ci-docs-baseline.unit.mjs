@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const CLAUDE = join(RAIZ, 'CLAUDE.md');
+// As frases vigiadas (contagem de workflows, politica de strict) moram em docs/agentes/github-ci.md;
+// CLAUDE.md e so `@AGENTS.md`.
+const CLAUDE = join(RAIZ, 'docs/agentes/github-ci.md');
 const PLANO = join(RAIZ, 'docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md');
 const BASELINE = join(RAIZ, 'scripts/ci/github-settings-baseline.json');
 const P006 = join(RAIZ, 'docs/reconciliation/tasks/P006.json');
@@ -299,11 +301,11 @@ test('inventario: 21 YAML em .github/workflows e a fonte gerada em paridade', as
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
-test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
+test('docs/agentes/github-ci.md: contagem atual e fonte canonica (sem 14/17)', async () => {
   assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 21), []);
 });
 
-test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
+test('docs/agentes/github-ci.md: politica unica de strict, coerente com o baseline', async () => {
   const claude = await readFile(CLAUDE, 'utf8');
   const baseline = JSON.parse(await readFile(BASELINE, 'utf8'));
   assert.equal(baseline.branch_protection_main.strict, true);
