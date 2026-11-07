@@ -91,7 +91,9 @@ describe('LGPDComplianceView — Portabilidade não dá sinal contraditório (t_
 
     const selo = screen.getByText('indisponível');
     // O selo está na MESMA linha de título da Portabilidade (e não de outro direito).
-    expect(selo.closest('p')).toHaveTextContent('Portabilidade');
+    // O Badge renderiza <div> e o wrapper do título também é <div> (correção de
+    // aninhamento p > div): o ancestral imediato do selo é o wrapper do título.
+    expect(selo.parentElement).toHaveTextContent('Portabilidade');
     // Só a Portabilidade recebe o selo; Acesso/Retificação/Eliminação seguem ativos.
     expect(screen.getAllByText('indisponível')).toHaveLength(1);
   });
