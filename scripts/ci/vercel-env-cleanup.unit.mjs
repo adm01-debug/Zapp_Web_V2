@@ -72,10 +72,39 @@ test('dry-run pagina, codifica cursor, deduplica ID e não expõe valor nem ID',
   assert.equal(code, 0);
   assert.deepEqual(metodos, ['GET', 'GET']);
   assert.equal(new URL(urls[1]).searchParams.get('until'), 'a&b = ç');
-  assert.equal(new URL(urls[1]).searchParams.get('teamId'), 'team_QyN41X0q8hrqhW80AwokbFLv');
+  assert.equal(new URL(urls[0]).searchParams.has('teamId'), false);
+  assert.equal(new URL(urls[1]).searchParams.has('teamId'), false);
   assert.match(log.texto(), /Vars a remover: 1/);
   assert.doesNotMatch(log.texto(), /id-secreto|valor-secreto|também-secreto|token-secreto/);
 });
+
+const CURSORES_SEGUROS = Object.freeze([
+  '1', '0002', '42', '999999999999', 'a', 'abc', 'A-Z', 'a_b', 'a.b', 'a~b',
+  'a b', 'a+b', 'a&b', 'a=b', 'a?b', 'a#b', 'a/b', 'a\\b', 'a:b', 'a;b',
+  'a,b', 'a@b', 'a%b', 'a[b]', 'a{b}', '(a)', 'ç', '東京', 'emoji-🚀', 'linha\n2',
+  'tabs\taqui', 'cursor-com-128-' + 'x'.repeat(128),
+]);
+
+for (const [indice, cursor] of CURSORES_SEGUROS.entries()) {
+  test(`cenário ${indice + 1}: cursor é codificado sem reintroduzir teamId`, async () => {
+    const urls = [];
+    const log = saida();
+    const code = await executarCleanup({
+      token: 'token',
+      output: log.output,
+      fetchImpl: async (url) => {
+        urls.push(String(url));
+        return urls.length === 1
+          ? resposta(200, { envs: [], pagination: { next: cursor } })
+          : resposta(200, { envs: [], pagination: { next: null } });
+      },
+    });
+    assert.equal(code, 0);
+    assert.equal(urls.length, 2);
+    assert.equal(new URL(urls[1]).searchParams.get('until'), cursor);
+    assert.equal(urls.every((url) => !new URL(url).searchParams.has('teamId')), true);
+  });
+}
 
 test('apply remove somente allowlist, codifica ID e continua após falha parcial', async () => {
   const chamadas = [];
@@ -101,6 +130,7 @@ test('apply remove somente allowlist, codifica ID e continua após falha parcial
   assert.equal(deletes.length, 2);
   assert.match(deletes[0].url, /id%2Fum/);
   assert.match(deletes[1].url, /id%20dois/);
+  assert.equal(deletes.every((item) => !new URL(item.url).searchParams.has('teamId')), true);
   assert.match(log.texto(), /Concluído: 1 removidas, 1 erros/);
   assert.doesNotMatch(log.texto(), /intocada|não imprimir/);
 });
