@@ -6385,7 +6385,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-07T19:38:48Z",
+    "generated_at": "2026-11-07T20:18:11Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
