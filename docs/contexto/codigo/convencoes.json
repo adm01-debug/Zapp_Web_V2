@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)",
    "fix: alinha labels dos controles rápidos no spec de volume (#2776)",
    "fix: fecha colisões e corridas no ensaio sintético (#2759)",
    "chore(db): sincroniza artefatos derivados do banco (#2769)",
-   "fix(db): protege streak e resoluções por usuário autenticado (#2766)",
-   "fix(db): fecha RLS multi-tenant do Copilot (#2763)"
+   "fix(db): protege streak e resoluções por usuário autenticado (#2766)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

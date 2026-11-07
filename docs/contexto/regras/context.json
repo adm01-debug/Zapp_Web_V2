@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "f77653b6f3fff90045268ce6b5863ad0afc1b5a6",
+  "sha": "c75963020dea4009e1b9ed18c3727e8bc79e4b5c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 18:43 UTC",
-  "files_total": 8132,
+  "generated_at": "2026-11-07 19:03 UTC",
+  "files_total": 8133,
   "code_files": 5999,
   "code_lines": 1041493
  },
@@ -383135,10 +383135,19 @@
   }
  },
  "git": {
-  "sha": "f77653b6f3fff90045268ce6b5863ad0afc1b5a6",
+  "sha": "c75963020dea4009e1b9ed18c3727e8bc79e4b5c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c759630",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)",
+    "files": [
+     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-11-07.md"
+    ]
+   },
    {
     "sha": "f77653b",
     "date": "2026-11-07",
@@ -383724,16 +383733,6 @@
     "subject": "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)",
     "files": [
      "supabase/migrations/20261102032200_revoga_execute_public_cron_schedule.sql"
-    ]
-   },
-   {
-    "sha": "cabaa6a",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "fix: cancelar timer de preview ao desmontar painel (#2739)",
-    "files": [
-     "src/components/settings/SoundCustomizationPanel.tsx",
-     "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx"
     ]
    }
   ],

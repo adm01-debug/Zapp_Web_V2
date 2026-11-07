@@ -5,7 +5,7 @@
   "linguagens": [
    "TypeScript (4188)",
    "SQL (1290)",
-   "Markdown (1063)",
+   "Markdown (1064)",
    "JSON (596)",
    "JavaScript (432)",
    "Shell (231)",
@@ -1293,7 +1293,7 @@
   },
   {
    "pasta": "docs/audits",
-   "arquivos_md": 176
+   "arquivos_md": 177
   },
   {
    "pasta": "docs/reconciliation",

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f77653b6f3fff90045268ce6b5863ad0afc1b5a6` (2026-11-07T15:24:25-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c75963020dea4009e1b9ed18c3727e8bc79e4b5c` (2026-11-07T18:51:06Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4188), SQL (1290), Markdown (1063), JSON (596), JavaScript (432), Shell (231), Python (119), YAML (29)
+- linguagens: TypeScript (4188), SQL (1290), Markdown (1064), JSON (596), JavaScript (432), Shell (231), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8291 |
+| arquivos_total | 8292 |
 | arquivos_codigo | 4737 |
 | linhas_codigo | 875494 |
 | rotas | 18 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 2581 |
 | workflows | 21 |
 | scripts | 419 |
-| docs_md | 1063 |
+| docs_md | 1064 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -385,8 +385,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56086 nós · 115645 arestas · 4157 comunidades · grafo do commit `f77653b6`
-- comunidades maiores: TalkXSuppression.tsx (1179), lucide-react (945), cn (856), react (691), vitest (595), ref_node_fs (526), validation.ts (472), DashboardView.tsx (402), @tanstack/react-query (401), ref_https (392), e2e-isolated-runtime.unit.mjs (368), multiplix-send/index.ts (322)
+- 56101 nós · 115660 arestas · 4106 comunidades · grafo do commit `c7596302`
+- comunidades maiores: cn (996), TalkXSuppression.tsx (777), client.ts (667), card.tsx (600), vitest (518), input.tsx (508), react (485), @tanstack/react-query (407), DashboardCard (401), framer-motion (384), ref_https (383), validation.ts (382)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -498,10 +498,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/audit_report.md` — 🛡️ Relatório de Auditoria Enterprise: Pronto Talk Suite (ZAPP-WEB) (108 linhas)
 - `docs/contracts.md` — Contratos das Edge Functions (51 linhas)
 - `docs/crm-external-grants.md` — GRANTs Externos — CRM pgxfvjmuubtbowutlide (111 linhas)
-- subpastas de docs/: docs/_arquivo (332), docs/audits (176), docs/reconciliation (134), docs/design (64), docs/plans (58), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (8), docs/decisions (8), docs/handoffs (8), docs/ci (7), docs/migration (6), docs/tipografia (6), docs/evidencias (4), docs/contexto (3), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
+- subpastas de docs/: docs/_arquivo (332), docs/audits (177), docs/reconciliation (134), docs/design (64), docs/plans (58), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (8), docs/decisions (8), docs/handoffs (8), docs/ci (7), docs/migration (6), docs/tipografia (6), docs/evidencias (4), docs/contexto (3), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `c759630` chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)
 - 2026-11-07 `f77653b` fix: alinha labels dos controles rápidos no spec de volume (#2776)
 - 2026-11-07 `343971b` fix: fecha colisões e corridas no ensaio sintético (#2759)
 - 2026-11-07 `bd8091e` chore(db): sincroniza artefatos derivados do banco (#2769)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-07 `636880b` fix: blindar plano sintético contra IDs externos (#2757)
 - 2026-11-06 `a5043f9` fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)
 - 2026-11-06 `4ac4bd4` fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)
-- 2026-11-06 `c0e5118` fix: evita posição absoluta na navegação da paleta (teste flaky)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
