@@ -1,3 +1,6 @@
+import { isDeepStrictEqual } from 'node:util';
+import { pathToFileURL } from 'node:url';
+
 /**
  * IA-010 / cartão SL-059 — provisionamento do ambiente de ensaio.
  *
@@ -55,8 +58,14 @@ export const MINIMO_CONVERSA_LONGA = 200;
 /** Mensagens da conversa longa provisionada por departamento. */
 export const MENSAGENS_CONVERSA_LONGA = 216;
 
+function congelarProfundo(valor) {
+  if (valor === null || typeof valor !== 'object' || Object.isFrozen(valor)) return valor;
+  for (const filho of Object.values(valor)) congelarProfundo(filho);
+  return Object.freeze(valor);
+}
+
 /** Paleta já existente no sistema (src/components/queues/queueColors.ts). */
-export const PALETA_FILAS = [
+export const PALETA_FILAS = Object.freeze([
   'hsl(var(--primary))',
   'hsl(var(--success))',
   'hsl(var(--warning))',
@@ -65,10 +74,17 @@ export const PALETA_FILAS = [
   'hsl(var(--dash-red))',
   'hsl(var(--info))',
   'hsl(var(--dash-green))',
-];
+]);
 
 /** Departamentos do ensaio (IA-010 §2). */
-export const DEPARTAMENTOS_ENSAIO = ['Vendas', 'Compras', 'Logística', 'Financeiro', 'SAC', 'RH'];
+export const DEPARTAMENTOS_ENSAIO = Object.freeze([
+  'Vendas',
+  'Compras',
+  'Logística',
+  'Financeiro',
+  'SAC',
+  'RH',
+]);
 
 /** Contatos por departamento (IA-010 §2). */
 export const CONTATOS_POR_DEPARTAMENTO = 6;
@@ -78,7 +94,7 @@ export const CONTATOS_POR_DEPARTAMENTO = 6;
  * `public.app_role` (supabase/migrations/20251215025014_*.sql) tem só
  * `admin`, `supervisor` e `agent`.
  */
-export const PERFIS_ENSAIO = [
+export const PERFIS_ENSAIO = congelarProfundo([
   { chave: 'admin', papel: 'admin', nome: 'ENSAIO-Admin', email: 'ensaio.admin@ensaio.invalid' },
   {
     chave: 'supervisor',
@@ -95,10 +111,10 @@ export const PERFIS_ENSAIO = [
     pendencia:
       'public.app_role tem só admin/supervisor/agent — o 4º perfil depende da decisão + migration do cartão SL-058',
   },
-];
+]);
 
 /** Colunas que este gerador escreve, por tabela (conferidas contra o retrato canônico). */
-export const COLUNAS_USADAS = {
+export const COLUNAS_USADAS = congelarProfundo({
   departments: ['id', 'name', 'is_active'],
   queues: ['id', 'name', 'description', 'color', 'is_active', 'priority'],
   contacts: [
@@ -120,7 +136,7 @@ export const COLUNAS_USADAS = {
     'transcription',
     'is_read',
   ],
-};
+});
 
 /** UUID determinístico do ensaio (formato v4; prefixo próprio, jamais colide com dado real). */
 export function uuidEnsaio(sequencia) {
@@ -202,7 +218,7 @@ export function planoDeEnsaio() {
       } else {
         mensagens.push({
           sender: 'contact',
-          content: `${PREFIXO_ENSAIO}${nomeDepartamento} áudio sem transcrição`,
+          content: `${PREFIXO_ENSAIO}${nomeDepartamento} áudio d'ensaio sem transcrição`,
           message_type: 'audio',
           transcription: null,
         });
@@ -279,14 +295,14 @@ export function planoDeEnsaio() {
     perfisProvisionaveis: PERFIS_ENSAIO.filter((p) => p.papel !== null).length,
   };
 
-  return {
+  return congelarProfundo({
     prefixo: PREFIXO_ENSAIO,
     dominio: DOMINIO_ENSAIO,
     perfis: PERFIS_ENSAIO,
     departamentos,
     casosDeBorda,
     tot,
-  };
+  });
 }
 
 function literais(valores) {
@@ -300,33 +316,11 @@ function literais(valores) {
 
 /** Recusa planos alterados que poderiam misturar dados reais ao DML ou ampliar a reversão. */
 export function validarPlanoSeguro(plano) {
-  if (plano?.prefixo !== PREFIXO_ENSAIO || plano?.dominio !== DOMINIO_ENSAIO) {
-    throw new Error('ensaio: marcadores do plano foram alterados');
+  const canonico = planoDeEnsaio();
+  if (!isDeepStrictEqual(plano, canonico)) {
+    throw new Error('ensaio: plano diverge do contrato canônico determinístico');
   }
-  if (!Array.isArray(plano.departamentos) || plano.departamentos.length !== DEPARTAMENTOS_ENSAIO.length) {
-    throw new Error('ensaio: departamentos do plano estão incompletos');
-  }
-  const nomes = plano.departamentos.map((departamento) => departamento.nome);
-  if (nomes.some((nome, indice) => nome !== DEPARTAMENTOS_ENSAIO[indice])) {
-    throw new Error('ensaio: departamentos do plano divergem do contrato');
-  }
-  for (const departamento of plano.departamentos) {
-    if (!departamento.fila?.nome?.startsWith(PREFIXO_ENSAIO)) {
-      throw new Error('ensaio: fila sem marcador reservado');
-    }
-    if (!Array.isArray(departamento.contatos) || departamento.contatos.length !== CONTATOS_POR_DEPARTAMENTO) {
-      throw new Error(`ensaio: contatos incompletos em ${departamento.nome}`);
-    }
-    for (const contato of departamento.contatos) {
-      if (!contato.nome?.startsWith(PREFIXO_ENSAIO)) throw new Error('ensaio: contato sem marcador reservado');
-      if (!contato.telefone?.startsWith(PREFIXO_TELEFONE_ENSAIO)) throw new Error('ensaio: telefone fora da faixa reservada');
-      if (!contato.email?.endsWith(`@${DOMINIO_ENSAIO}`)) throw new Error('ensaio: e-mail fora do domínio reservado');
-      if (!Array.isArray(contato.mensagens) || contato.mensagens.some((mensagem) => !mensagem.content?.includes(PREFIXO_ENSAIO))) {
-        throw new Error('ensaio: mensagem sem marcador reservado');
-      }
-    }
-  }
-  return plano;
+  return canonico;
 }
 
 /** Cabeçalho comum aos dois DML (provisionamento e remoção). */
@@ -342,8 +336,8 @@ export function cabecalhoSql(plano, rotulo) {
 }
 
 /** DML aditivo e idempotente do ensaio (departamentos, filas, contatos e mensagens). */
-export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
-  validarPlanoSeguro(plano);
+export function sqlDeProvisionamento(planoRecebido = planoDeEnsaio()) {
+  const plano = validarPlanoSeguro(planoRecebido);
   const linhas = [...cabecalhoSql(plano, 'provisionamento'), 'begin;'];
 
   const departamentos = plano.departamentos.map((d) => [
@@ -423,8 +417,8 @@ export function sqlDeProvisionamento(plano = planoDeEnsaio()) {
 }
 
 /** DML de reversão: tudo por prefixo/marcador, nada por id solto. */
-export function sqlDeRemocao(plano = planoDeEnsaio()) {
-  validarPlanoSeguro(plano);
+export function sqlDeRemocao(planoRecebido = planoDeEnsaio()) {
+  const plano = validarPlanoSeguro(planoRecebido);
   const rotulo = `${plano.prefixo}`;
   return (
     [
@@ -464,7 +458,7 @@ export function conferirAlvoLocal(url) {
   try {
     alvo = new URL(url);
   } catch {
-    throw new Error(`ensaio: DB_URL não é uma URL válida (${url}). Proibido seguir sem saber o alvo.`);
+    throw new Error('ensaio: DB_URL não é uma URL válida. Proibido seguir sem saber o alvo.');
   }
   if (!['postgres:', 'postgresql:'].includes(alvo.protocol)) {
     throw new Error(`ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol}).`);
@@ -542,11 +536,11 @@ export function executarCli(
   const plano = planoDeEnsaio();
 
   if (flag === '--ajuda' || flag === '-h') {
-    process.stdout.write(AJUDA);
+    stdout.write(AJUDA);
     return 0;
   }
   if (flag === '--plano') {
-    process.stdout.write(resumoDoPlano(plano));
+    stdout.write(resumoDoPlano(plano));
     return 0;
   }
   if (flag === '--sql' || flag === '--remover') {
@@ -565,6 +559,6 @@ export function executarCli(
   throw new Error(`ensaio: estado de CLI não tratado (${flag})`);
 }
 
-if (process.argv[1] && process.argv[1].endsWith('ensaio-provisionamento.mjs')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   process.exitCode = executarCli(process.argv.slice(2));
 }
