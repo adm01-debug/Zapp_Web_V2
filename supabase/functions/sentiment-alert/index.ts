@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, errorResponse, getClientIP, handleCors, jsonResponse, Logger, requireAuth, requireEnv } from "../_shared/validation.ts";
 import { SentimentAlertSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { buildSentimentNotification, escapeHtml, sentimentSettingsOwnerId, singleLineLabel } from "../_shared/notification-events.ts";

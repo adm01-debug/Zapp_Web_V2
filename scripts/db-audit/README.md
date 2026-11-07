@@ -161,6 +161,13 @@ historico nem transforma metadados textuais em prova. O
 guard reporta esse total separadamente; o DB Live Guard prova o estado estrutural
 atual comparando o manifesto integral do banco canonico com o snapshot versionado.
 
+Quando um replay endurecido diverge de um unico marker `sql-sha256` historico, use
+`ledger-divergence/pinned-sql-marker`: arquivo, SQL local, array e marker ficam
+fixados sem tratar comentario como SQL aplicado. Para DDL destrutiva registrada que
+precisa ficar fora do glob executavel, use `ledger-archive/registered-tombstone`:
+o ativo e somente comentarios e o SQL original permanece em `_superseded/`, com
+bytes e SQL pinados contra o ledger.
+
 ## Por que o guard e offline
 
 Porque assim ele roda em PR de fork, sem secret, e nao vira aquele check que fica

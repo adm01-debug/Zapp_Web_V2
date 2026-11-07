@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
@@ -585,7 +585,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           try {
             // O esm.sh serve os tipos do qrcode junto do módulo, então não precisa de `any`:
             // basta escolher entre o default (CJS) e o próprio namespace (ESM).
-            const qrMod = await import('https://esm.sh/qrcode@1.5.3');
+            const qrMod = await import('npm:qrcode@1.5.3');
             const qrRenderer = (qrMod as { default?: typeof qrMod }).default ?? qrMod;
             const svg = await qrRenderer.toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
             base64 = `data:image/svg+xml;base64,${btoa(svg)}`;

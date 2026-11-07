@@ -1,7 +1,7 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, markDegraded } from "../_shared/validation.ts";
 import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/voice-copilot-authz.ts";
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 
 /**
  * Busca de produtos por voz: reusa a MESMA edge que o CmdK já chama

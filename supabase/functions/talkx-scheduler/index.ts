@@ -19,7 +19,7 @@
  *   - O scheduler NÃO mexe em status 'sending' — isso é do tick (X012). Aqui só
  *     saem 'start' para agendadas vencidas e retomadas de pausas elegíveis.
  */
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns } from "../_shared/talkx-resume-policy.ts";
 import { parseBusinessHours, type BusinessHours } from "../_shared/talkx-window.ts";

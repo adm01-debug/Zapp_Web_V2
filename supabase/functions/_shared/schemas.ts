@@ -2,7 +2,7 @@
  * Shared Zod schemas for Edge Function input validation.
  * Import: import { z, parseBody, ... } from "../_shared/schemas.ts";
  */
-import { z } from "https://esm.sh/zod@3.23.8";
+import { z } from "npm:zod@3.23.8";
 // E45: a lista de ações válidas do `evolution-api` NÃO é reescrita aqui — vem
 // dos conjuntos que o próprio handler usa para autorizar (fonte única).
 import { CONTROL_ACTIONS, READ_ACTIONS, SEND_ACTIONS } from "./evolution-control-authz.ts";

@@ -12,7 +12,7 @@
  *
  * Returns a Response on rejection (401/429), or null when allowed.
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { checkRateLimit, errorResponse, requireEnv } from "./validation.ts";
 import { enforceAiCapability } from "./ai-feature-flags.ts";
 

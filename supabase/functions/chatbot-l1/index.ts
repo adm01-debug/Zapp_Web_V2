@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, verifyHmacSignature, createAuthedClient } from "../_shared/validation.ts";
 import { ChatbotL1Schema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";

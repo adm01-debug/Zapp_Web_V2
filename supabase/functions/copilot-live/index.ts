@@ -7,7 +7,7 @@
  * será adicionada iterativamente.
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { allowedOriginFor } from '../_shared/cors-origins.ts';
 
 function cors(req: Request) {

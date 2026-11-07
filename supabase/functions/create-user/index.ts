@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
+import { z } from "npm:zod@3.23.8";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 
 // ── Seams de injeção (R2-AUTH-016) ──────────────────────────────────────────

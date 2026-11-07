@@ -209,7 +209,7 @@ export async function authorizeObservability(
 
 /** Cliente de escopo usuário (anon key): a decisão de papel não usa cliente privilegiado. */
 async function makeUserScopedClient(authHeader: string): Promise<ObservabilityAuthClient> {
-  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.87.1');
+  const { createClient } = await import('npm:@supabase/supabase-js@2.87.1');
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
     ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
     ?? '';
