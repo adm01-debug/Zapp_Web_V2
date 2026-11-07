@@ -194,12 +194,19 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
     expect(plano.tot.perfisProvisionaveis).toBe(3);
   });
 
-  it('o DML só escreve em colunas que existem no retrato canônico do schema', () => {
+  it('o DML escreve exatamente nas tabelas e colunas permitidas pelo contrato', () => {
     // Lista real de colunas de cada `insert into public.<tabela> (…)` do SQL gerado.
     const colunasPorInsert = new Map<string, string[]>();
     for (const m of SQL.matchAll(/insert into public\.(\w+)\s*\(([^)]*)\)/giu)) {
-      colunasPorInsert.set(m[1]!, m[2]!.split(',').map((c) => c.trim()));
+      const tabela = m[1]!;
+      expect(colunasPorInsert.has(tabela), `insert duplicado em public.${tabela}`).toBe(false);
+      colunasPorInsert.set(
+        tabela,
+        m[2]!.split(',').map((c) => c.trim()),
+      );
     }
+
+    expect([...colunasPorInsert.keys()].sort()).toEqual(Object.keys(COLUNAS_USADAS).sort());
 
     for (const [tabela, colunas] of Object.entries(COLUNAS_USADAS)) {
       const doInsert = colunasPorInsert.get(tabela);
@@ -211,12 +218,9 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
           `coluna ausente no retrato canônico: ${tabela}.${coluna}`,
         ).toBeDefined();
       }
-      // Toda coluna declarada em COLUNAS_USADAS precisa estar no insert real.
-      for (const coluna of colunas) {
-        expect(doInsert, `COLUNAS_USADAS.${tabela} cita coluna fora do insert: ${coluna}`).toContain(
-          coluna,
-        );
-      }
+      // Igualdade e ordem exatas impedem ampliar silenciosamente a superfície
+      // escrita para campos sensíveis que também existam no schema canônico.
+      expect(doInsert, `colunas divergentes em public.${tabela}`).toEqual(colunas);
     }
   });
 
