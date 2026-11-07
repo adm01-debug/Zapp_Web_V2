@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `43fb7342a7bea6e647b64c2927e253a1506b3f79` (2026-11-07T19:05:52Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `51d456a9e1660350929b2a5767d988185ed18de1` (2026-11-07T19:37:05Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4188), SQL (1290), Markdown (1064), JSON (596), JavaScript (432), Shell (231), Python (119), YAML (29)
+- linguagens: TypeScript (4188), SQL (1291), Markdown (1064), JSON (596), JavaScript (432), Shell (231), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8292 |
+| arquivos_total | 8293 |
 | arquivos_codigo | 4737 |
 | linhas_codigo | 875494 |
 | rotas | 18 |
@@ -46,7 +46,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 490 |
 | edge_functions | 85 |
 | tabelas | 217 |
-| migrations | 1090 |
+| migrations | 1091 |
 | cron_jobs | 26 |
 | testes | 2581 |
 | workflows | 21 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56101 nós · 115660 arestas · 4106 comunidades · grafo do commit `43fb7342`
+- 56102 nós · 115660 arestas · 4107 comunidades · grafo do commit `51d456a9`
 - comunidades maiores: cn (996), TalkXSuppression.tsx (777), client.ts (667), card.tsx (600), vitest (518), input.tsx (508), react (485), @tanstack/react-query (407), DashboardCard (401), framer-motion (384), ref_https (383), validation.ts (382)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `51d456a` chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)
 - 2026-11-07 `43fb734` fix(db): reconciliar ledger da migration 20261010062941 (#2775)
 - 2026-11-07 `c759630` chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)
 - 2026-11-07 `f77653b` fix: alinha labels dos controles rápidos no spec de volume (#2776)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-07 `0601e3b` fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)
 - 2026-11-07 `7f3c259` infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)
 - 2026-11-07 `636880b` fix: blindar plano sintético contra IDs externos (#2757)
-- 2026-11-06 `a5043f9` fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "43fb7342a7bea6e647b64c2927e253a1506b3f79",
+  "sha": "51d456a9e1660350929b2a5767d988185ed18de1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 19:10 UTC",
-  "files_total": 8133,
-  "code_files": 5999,
-  "code_lines": 1041493
+  "generated_at": "2026-11-07 19:41 UTC",
+  "files_total": 8134,
+  "code_files": 6000,
+  "code_lines": 1041534
  },
  "version": "1.3.2",
- "facts_hash": "08d3f4a892159324",
+ "facts_hash": "aa8fc771711bcc97",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -315,7 +315,7 @@
   "languages": {
    ".tsx": 2319,
    ".ts": 1865,
-   ".sql": 1290,
+   ".sql": 1291,
    ".mjs": 406,
    ".py": 119,
    ".cjs": 19,
@@ -22953,16 +22953,6 @@
     "src": "supabase/migrations/20260928490000_team_chat_e13_receipts_hardening.sql"
    },
    {
-    "name": "dept_audit_select_own_dept",
-    "table": "department_audit_logs",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = public.current_profile_id() AND p.department_id = department_audit_logs.department_id AND p.role IN ('admin','supervisor'))",
-    "check": "",
-    "src": "supabase/migrations/20260928530000_team_chat_e17_department_audit_logs_hardening.sql"
-   },
-   {
     "name": "team_chat_files_insert",
     "table": "storage.objects",
     "cmd": "INSERT",
@@ -24613,26 +24603,6 @@
     "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
    },
    {
-    "name": "dept_invites_insert_admin",
-    "table": "department_invites",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid()) )",
-    "src": "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql"
-   },
-   {
-    "name": "dept_invites_delete_admin",
-    "table": "department_invites",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql"
-   },
-   {
     "name": "department_invitations_select_admin_supervisor",
     "table": "department_invitations",
     "cmd": "SELECT",
@@ -24821,6 +24791,36 @@
     "using": "",
     "check": "submitted_by = auth.uid()",
     "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "dept_invites_insert_admin",
+    "table": "department_invites",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() ) )",
+    "src": "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
+   },
+   {
+    "name": "dept_invites_delete_admin",
+    "table": "department_invites",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "is_admin(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
+   },
+   {
+    "name": "dept_audit_select_own_dept",
+    "table": "department_audit_logs",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "EXISTS ( SELECT 1 FROM public.profiles p WHERE p.id = current_profile_id() AND p.department_id = department_audit_logs.department_id AND p.role = ANY (ARRAY['admin'::text, 'supervisor'::text]) )",
+    "check": "",
+    "src": "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
    },
    {
     "name": "copilot_conversation_scores_select",
@@ -43763,6 +43763,7 @@
    "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
    "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
    "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+   "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql",
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
    "supabase/tests/admin_inbox_silence.sql",
@@ -69875,8 +69876,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1090,
-   "lines": 104618,
+   "files": 1091,
+   "lines": 104659,
    "tables": [
     "audit_logs",
     "departments",
@@ -215379,16 +215380,6 @@
     "src": "supabase/migrations/20260928490000_team_chat_e13_receipts_hardening.sql"
    },
    {
-    "name": "dept_audit_select_own_dept",
-    "table": "department_audit_logs",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = public.current_profile_id() AND p.department_id = department_audit_logs.department_id AND p.role IN ('admin','supervisor'))",
-    "check": "",
-    "src": "supabase/migrations/20260928530000_team_chat_e17_department_audit_logs_hardening.sql"
-   },
-   {
     "name": "team_chat_files_insert",
     "table": "storage.objects",
     "cmd": "INSERT",
@@ -217039,26 +217030,6 @@
     "src": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
    },
    {
-    "name": "dept_invites_insert_admin",
-    "table": "department_invites",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid()) )",
-    "src": "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql"
-   },
-   {
-    "name": "dept_invites_delete_admin",
-    "table": "department_invites",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql"
-   },
-   {
     "name": "department_invitations_select_admin_supervisor",
     "table": "department_invitations",
     "cmd": "SELECT",
@@ -217247,6 +217218,36 @@
     "using": "",
     "check": "submitted_by = auth.uid()",
     "src": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql"
+   },
+   {
+    "name": "dept_invites_insert_admin",
+    "table": "department_invites",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() ) )",
+    "src": "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
+   },
+   {
+    "name": "dept_invites_delete_admin",
+    "table": "department_invites",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "is_admin(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
+   },
+   {
+    "name": "dept_audit_select_own_dept",
+    "table": "department_audit_logs",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "EXISTS ( SELECT 1 FROM public.profiles p WHERE p.id = current_profile_id() AND p.department_id = department_audit_logs.department_id AND p.role = ANY (ARRAY['admin'::text, 'supervisor'::text]) )",
+    "check": "",
+    "src": "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
    },
    {
     "name": "copilot_conversation_scores_select",
@@ -237796,7 +237797,7 @@
    "department_audit_logs": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = public.current_profile_id() AND p.department_id = department_audit_logs."
+     "authenticated: EXISTS ( SELECT 1 FROM public.profiles p WHERE p.id = current_profile_id() AND p.department_id = department_audit_logs.depart"
     ],
     "INSERT": [],
     "UPDATE": [],
@@ -237824,11 +237825,11 @@
      "authenticated: true"
     ],
     "INSERT": [
-     "authenticated: public.is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN (SELECT p.id FROM public.profiles p WHERE p.user_id = a"
+     "authenticated: is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.ui"
     ],
     "UPDATE": [],
     "DELETE": [
-     "authenticated: public.is_admin(auth.uid())"
+     "authenticated: is_admin(auth.uid())"
     ]
    },
    "departments": {
@@ -379278,6 +379279,10 @@
    "lines": 69,
    "uses_service_role": true
   },
+  "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql": {
+   "path": "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql",
+   "lines": 41
+  },
   "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql": {
    "path": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "lines": 65,
@@ -383135,10 +383140,19 @@
   }
  },
  "git": {
-  "sha": "43fb7342a7bea6e647b64c2927e253a1506b3f79",
+  "sha": "51d456a9e1660350929b2a5767d988185ed18de1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "51d456a",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)",
+    "files": [
+     "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
+    ]
+   },
    {
     "sha": "43fb734",
     "date": "2026-11-07",
@@ -383722,17 +383736,6 @@
     "subject": "fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)",
     "files": [
      "scripts/ci/vercel-env-cleanup.mjs"
-    ]
-   },
-   {
-    "sha": "2623adb",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)",
-    "files": [
-     ".github/workflows/db-guard.yml",
-     "scripts/ci/check-test-inventory.mjs",
-     "scripts/db-audit/message-reactions-autoria.test.sh"
     ]
    }
   ],

@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `43fb7342a7` · branch `main` · 2026-11-07 19:10 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `51d456a9e1` · branch `main` · 2026-11-07 19:41 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -93,9 +93,9 @@
 | `csat_surveys` | enabled | authenticated: agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: agent_id IS NULL OR agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.ui | — | — |
 | `custom_emojis` | enabled | authenticated: true | authenticated: uploaded_by = auth.uid() | authenticated: (uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: (uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()) |
 | `deal_activities` | enabled | authenticated: is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) OR performed_by = public.get_profile_id_for_user(auth.uid()) OR deal_id IN ( SELECT | authenticated: performed_by = public.get_profile_id_for_user(auth.uid()) AND ( public.is_admin_or_supervisor(auth.uid()) OR deal_id IN ( SEL | — | — |
-| `department_audit_logs` | enabled | authenticated: EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = public.current_profile_id() AND p.department_id = department_audit_logs. | — | — | — |
+| `department_audit_logs` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.profiles p WHERE p.id = current_profile_id() AND p.department_id = department_audit_logs.depart | — | — | — |
 | `department_invitations` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin(auth.uid()) | authenticated: public.is_admin(auth.uid()) | authenticated: public.is_admin(auth.uid()) | authenticated: public.is_admin(auth.uid()) |
-| `department_invites` | enabled | authenticated: true | authenticated: public.is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN (SELECT p.id FROM public.profiles p WHERE p.user_id = a | — | authenticated: public.is_admin(auth.uid()) |
+| `department_invites` | enabled | authenticated: true | authenticated: is_admin(auth.uid()) AND ( created_by IS NULL OR created_by IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.ui | — | authenticated: is_admin(auth.uid()) |
 | `departments` | enabled | authenticated: true<br>authenticated: public.is_admin(auth.uid()) | authenticated: public.is_admin(auth.uid()) | authenticated: public.is_admin(auth.uid()) | authenticated: public.is_admin(auth.uid()) |
 | `edge_rate_limits` | enabled | — | — | — | — |
 | `email_attachments` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.email_messages em JOIN public.gmail_accounts ga ON ga.id = em.gmail_account_id WHERE em.id = em | service_role: true | — | — |

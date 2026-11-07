@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "43fb7342a7bea6e647b64c2927e253a1506b3f79",
+  "commit": "51d456a9e1660350929b2a5767d988185ed18de1",
   "branch": "main",
-  "data_commit": "2026-11-07T19:05:52Z",
+  "data_commit": "2026-11-07T19:37:05Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "51d456a",
+    "data": "2026-11-07",
+    "assunto": "chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)"
+   },
    {
     "sha": "43fb734",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "0a3442b",
     "data": "2026-11-06",
     "assunto": "infra: monitorar releases V2 e V3 em trilhas separadas (#2747)"
-   },
-   {
-    "sha": "86c9ec8",
-    "data": "2026-11-06",
-    "assunto": "fix: reconciliar drift do DB Live Guard (#2741)"
    }
   ],
-  "arquivos_mudados_7d": 1116,
+  "arquivos_mudados_7d": 1075,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8292,
+  "arquivos_total": 8293,
   "arquivos_codigo": 4737,
   "linhas_codigo": 875494,
   "rotas": 18,
@@ -330,7 +330,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1090,
+  "migrations": 1091,
   "cron_jobs": 26,
   "testes": 2581,
   "workflows": 21,
