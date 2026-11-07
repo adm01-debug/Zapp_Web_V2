@@ -114,6 +114,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [auditTotal, setAuditTotal] = useState(0);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [createUserError, setCreateUserError] = useState<CreateUserFieldError | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const deletingIdRef = useRef<string | null>(null);
   const togglingIdRef = useRef<string | null>(null);
@@ -131,7 +132,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
           const msg = (profileError as { message?: string }).message ?? 'Erro ao carregar usuários';
           setError(msg);
           if (isAccessDeniedError(profileError)) {
-            toast.error(describeAccessError(profileError, 'Usuários'));
+            toast.error(describeAccessError(profileError));
           } else {
             toast.error('Erro ao carregar usuários');
           }
@@ -196,6 +197,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   const handleCreateUser = useCallback(
     async (payload: CreateUserPayload): Promise<boolean> => {
       setIsCreatingUser(true);
+      setCreateUserError(null);
       try {
         let avatarPath: string | null = null;
 
@@ -217,15 +219,44 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
           body.avatar_url = avatarPath;
         }
 
-        const { error: invokeError } = await invokeEdge('create-user', { body });
-        if (invokeError) {
-          const errMsg = await readEdgeError(invokeError);
-          toast.error(errMsg.message ?? 'Erro ao criar usuário');
+        const callEdge = async () => {
+          const result = await invokeEdge('create-user', body);
+          if (result.error) throw result.error;
+        };
+
+        try {
+          await callEdge();
+          toast.success('Usuário criado com sucesso!');
+          await fetchData();
+          return true;
+        } catch (err) {
+          const parsed = await readEdgeError(err);
+          if (parsed.status === 401) {
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              const mapped = mapCreateUserError(undefined);
+              setCreateUserError(mapped);
+              toast.error(mapped.message);
+              return false;
+            }
+            try {
+              await callEdge();
+              toast.success('Usuário criado com sucesso!');
+              await fetchData();
+              return true;
+            } catch (retryErr) {
+              const parsedRetry = await readEdgeError(retryErr);
+              const mapped = mapCreateUserError(parsedRetry.message);
+              setCreateUserError(mapped);
+              toast.error(mapped.message);
+              return false;
+            }
+          }
+          const mapped = mapCreateUserError(parsed.message);
+          setCreateUserError(mapped);
+          toast.error(mapped.message);
           return false;
         }
-
-        await fetchData();
-        return true;
       } catch (err) {
         log.error('handleCreateUser error', err);
         return false;
@@ -246,7 +277,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
         .order('name', { ascending: true });
       if (fetchError) {
         if (isAccessDeniedError(fetchError)) {
-          toast.error(describeAccessError(fetchError, 'Usuários'));
+          toast.error(describeAccessError(fetchError));
         } else {
           toast.error('Erro ao carregar usuários');
         }
@@ -449,6 +480,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   const handleSaveRamal = useCallback(
     async (profileId: string, ramal: string, sipPassword: string): Promise<boolean> => {
       try {
+        // @ts-expect-error — set_voip_profile_credentials not yet in generated types
         const { error: rpcError } = await supabase.rpc('set_voip_profile_credentials', {
           p_profile_id: profileId,
           p_ramal: ramal,
@@ -508,6 +540,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
     auditLogs,
     auditTotal,
     isCreatingUser,
+    createUserError,
     isDeletingUser,
     deletingIdRef,
     fetchData,

@@ -3,12 +3,12 @@ import { Bell, BellOff, Pause, Play, Maximize, Minimize, RefreshCcw } from 'luci
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useWarRoomData } from './useWarRoomData';
+import { useWarRoomData } from '@/hooks/business/useWarRoomData';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { SentinelAlertPanel } from './SentinelAlertPanel';
 
 interface Agent { id: string; name: string; status: string; avatar_url?: string | null }
-interface Queue { id: string; name: string; pending: number }
+interface Queue { id: string; name: string; waiting: number }
 
 interface WarRoomDashboardProps {
   agents?: Agent[];
@@ -19,7 +19,7 @@ export function WarRoomDashboard({ agents: propsAgents, queues: propsQueues }: W
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const realData = useWarRoomData();
-  const { settings, updateSetting } = useNotificationSettings();
+  const { settings, updateSettings } = useNotificationSettings();
 
   useEffect(() => {
     const handleFSChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -27,7 +27,7 @@ export function WarRoomDashboard({ agents: propsAgents, queues: propsQueues }: W
     return () => document.removeEventListener('fullscreenchange', handleFSChange);
   }, []);
 
-  const hasCriticalAlerts = realData.alerts?.some(a => (a.severity === 'critical')) ?? false;
+  const hasCriticalAlerts = realData.alerts?.some(a => (a.type === 'critical')) ?? false;
 
   if (!propsAgents && !propsQueues && realData.isLoading) {
     return (
@@ -58,7 +58,7 @@ export function WarRoomDashboard({ agents: propsAgents, queues: propsQueues }: W
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => updateSetting('soundEnabled', !settings.soundEnabled)}
+            onClick={() => void updateSettings({ soundEnabled: !settings.soundEnabled })}
             aria-label={settings.soundEnabled ? 'Desativar som de alertas' : 'Ativar som de alertas'}
           >
             {settings.soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
@@ -98,7 +98,7 @@ export function WarRoomDashboard({ agents: propsAgents, queues: propsQueues }: W
           <Card key={queue.id}>
             <CardContent>
               <p className="font-medium">{queue.name}</p>
-              <span>{queue.pending} pendentes</span>
+              <span>{queue.waiting} pendentes</span>
             </CardContent>
           </Card>
         ))}

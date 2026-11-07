@@ -11,7 +11,7 @@ import { OverviewTab, AgentsTab, AlertsTab, DistributionTab } from './SentimentT
 export function SentimentAlertsDashboard() {
   const [period, setPeriod] = useState('7');
   const [activeTab, setActiveTab] = useState('overview');
-  const { alerts, analyses, loading, error, isError, incomplete, stats, dailyData, agentData, fetchData } = useSentimentData(period);
+  const { alerts, analyses, loading, error, isError, stats, dailyData, agentData, fetchData } = useSentimentData(period);
 
   return (
     <div className="space-y-6 w-full min-w-0">
@@ -47,12 +47,6 @@ export function SentimentAlertsDashboard() {
           </Button>
         </div>
       )}
-
-      {!isError && incomplete ? (
-        <p className="text-xs text-muted-foreground" data-testid="sentiment-incomplete">
-          A leitura do período não foi completa — os números podem estar abaixo do total.
-        </p>
-      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[

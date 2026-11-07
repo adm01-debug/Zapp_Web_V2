@@ -522,8 +522,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     isFetchingOlder,
     hasOlderMessages,
     fetchOlderMessages,
-    refetchMessages,
-    retrySearch,
     showStats,
     setShowStats,
     showTransferDialog,
