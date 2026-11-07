@@ -37,9 +37,15 @@ function fixture() {
 
 test('stdin vazio (/dev/null) gera edges sem criar tabelas-uso.json', () => {
   const root = fixture();
+  const bin = join(root, 'bin');
+  mkdirSync(bin);
+  const rg = join(bin, 'rg');
+  writeFileSync(rg, '#!/bin/sh\nexit 1\n');
+  chmodSync(rg, 0o755);
   const result = spawnSync(process.execPath, [join(root, 'scripts/inventario/gerar-repo.mjs')], {
     cwd: root,
     encoding: 'utf8',
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH ?? ''}` },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
