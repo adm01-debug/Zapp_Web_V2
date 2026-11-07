@@ -817,9 +817,9 @@
       "ledger_name": "talkx_campaign_recipients_page",
       "ledger_statements_sha256": "90cfe45a5d561c860b8464d0c02f59caca7a3db8ec6086c6220667ae54eaca05",
       "ledger_sql_sha256": "82715feb61bf7e11b72e08e4c915597ca6c7a0aed9b853c6c6c84b3f5b8beb0a",
-      "reason": "safer-replay",
+      "reason": "format-only",
       "related_migration": null,
-      "justification": "O arquivo no repo difere do SQL aplicado no banco canonico para a RPC paginada de destinatarios TalkX. A migration historica e imutavel; as duas representacoes foram verificadas e fixadas por hashes independentes em 07/11/2026."
+      "justification": "O arquivo no repo difere do SQL aplicado no banco canonico somente por dois comentarios internos ao corpo PL/pgSQL (status reais e KPIs). A migration historica e imutavel; as duas representacoes foram verificadas e fixadas por hashes independentes em 07/11/2026."
     },
     {
       "version": "20261011191021",
