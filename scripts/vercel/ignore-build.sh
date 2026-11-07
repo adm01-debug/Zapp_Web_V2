@@ -10,7 +10,7 @@ if [ "$VERCEL_ENV" = "production" ]; then
 fi
 
 # Caminhos que afetam o bundle do front-end.
-FRONT_PATHS="src public index.html package.json bun.lock vite.config.ts vercel.json tailwind.config.ts postcss.config.js tsconfig.json tsconfig.app.json tsconfig.node.json components.json scripts/vercel"
+FRONT_PATHS="src public index.html .env.production package.json bun.lock vite.config.ts vercel.json tailwind.config.ts postcss.config.js tsconfig.json tsconfig.app.json tsconfig.node.json components.json scripts/vercel"
 
 # Determina o commit base.
 BASE="$VERCEL_GIT_PREVIOUS_SHA"

@@ -93,20 +93,23 @@ function exigirHeader(headers, name, expected) {
   }
 }
 
-async function resposta(fetchImpl, url, kind) {
+const REQUEST_TIMEOUT_MS = 15_000;
+
+async function resposta(fetchImpl, url, kind, requestTimeoutMs) {
   const res = await fetchImpl(url, {
     cache: 'no-store',
     redirect: 'error',
+    signal: AbortSignal.timeout(requestTimeoutMs),
     headers: { 'cache-control': 'no-cache', 'user-agent': 'zapp-release-targets/1' },
   });
   if (!res || res.status !== 200) throw new Error(`${kind} HTTP ${res?.status ?? 'sem resposta'}`);
   return res;
 }
 
-async function umaTentativa({ target, expectedSha, fetchImpl, now }) {
+async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeoutMs }) {
   const config = TARGETS[target];
   const nonce = `${now}-${Math.random().toString(16).slice(2)}`;
-  const versionRes = await resposta(fetchImpl, `${config.url}/version.json?verify=${nonce}`, 'version.json');
+  const versionRes = await resposta(fetchImpl, `${config.url}/version.json?verify=${nonce}`, 'version.json', requestTimeoutMs);
   exigirHeader(versionRes.headers, 'content-type', 'application/json');
   exigirHeader(versionRes.headers, 'cache-control', 'no-store');
   exigirHeader(versionRes.headers, 'x-content-type-options', 'nosniff');
@@ -118,7 +121,7 @@ async function umaTentativa({ target, expectedSha, fetchImpl, now }) {
   try { body = await versionRes.json(); } catch { throw new Error('version.json não é JSON válido'); }
   const version = validarVersao(target, body, { expectedSha, now });
 
-  const rootRes = await resposta(fetchImpl, `${config.url}/?verify=${nonce}`, 'SPA');
+  const rootRes = await resposta(fetchImpl, `${config.url}/?verify=${nonce}`, 'SPA', requestTimeoutMs);
   exigirHeader(rootRes.headers, 'content-type', 'text/html');
   exigirHeader(rootRes.headers, 'cache-control', 'no-store');
   exigirHeader(rootRes.headers, 'x-content-type-options', 'nosniff');
@@ -135,7 +138,7 @@ async function umaTentativa({ target, expectedSha, fetchImpl, now }) {
   }
   const assets = [entry, version.entryCss].filter(Boolean);
   for (const asset of assets) {
-    const assetRes = await resposta(fetchImpl, `${config.url}/${asset}`, `asset ${asset}`);
+    const assetRes = await resposta(fetchImpl, `${config.url}/${asset}`, `asset ${asset}`, requestTimeoutMs);
     exigirHeader(assetRes.headers, 'cache-control', 'immutable');
   }
   return { target, label: config.label, url: config.url, ...version, entry };
@@ -149,12 +152,13 @@ export async function verificarAlvo({
   fetchImpl = globalThis.fetch,
   sleepImpl = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   nowImpl = () => Date.now(),
+  requestTimeoutMs = REQUEST_TIMEOUT_MS,
 } = {}) {
   if (!Object.hasOwn(TARGETS, target)) return { ok: false, target, error: 'alvo inválido' };
   let error = 'falha desconhecida';
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const result = await umaTentativa({ target, expectedSha, fetchImpl, now: nowImpl() });
+      const result = await umaTentativa({ target, expectedSha, fetchImpl, now: nowImpl(), requestTimeoutMs });
       return { ok: true, attempt, ...result };
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'falha não identificada';

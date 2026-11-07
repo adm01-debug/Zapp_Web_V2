@@ -117,7 +117,7 @@ colocou (ou repôs) cada uma:
 | `message_reactions` | `20260413123216_c48f8862-af0c-48bd-8037-475fb9977550.sql` |
 | `team_messages`, `team_conversation_members`, `team_message_receipts` | `20260929240000_team_chat_e34_drift_mirror_metadata_realtime.sql` |
 | `talkx_recipients` | `20261003212707_talkx_receipts_replies.sql` |
-| `talkx_campaign_events` | `20260927570000_talkx_e27_realtime_campaign_events.sql` |
+| `talkx_campaign_events` | `20260927500001_talkx_e27_realtime_campaign_events.sql` |
 | `multiplix_recipients` | `20260927210000_multiplix_rls_hardening_realtime_pii.sql` |
 | `multiplix_dispatches` | `20260929620000_multiplix_realtime_column_scope.sql` |
 

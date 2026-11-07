@@ -82,6 +82,20 @@ test("scanTsxInline: acusa font-family literal em CSS embutido", () => {
   });
 });
 
+test("scanTsxInline: ignora testes, stories e fixtures para nao ler regex como estilo", () => {
+  withTmpDir((dir) => {
+    mkdirSync(path.join(dir, "__tests__"));
+    mkdirSync(path.join(dir, "fixtures"));
+    writeFileSync(path.join(dir, "Componente.tsx"), `const s = { fontFamily: 'Arial' };\n`);
+    writeFileSync(path.join(dir, "Componente.test.tsx"), `expect(src).toMatch(/fontFamily:\\s*'Fake'/);\n`);
+    writeFileSync(path.join(dir, "Historia.stories.tsx"), `const s = { fontFamily: 'Fake' };\n`);
+    writeFileSync(path.join(dir, "__tests__", "Regex.test.ts"), `const r = /fontFamily:\\s*'Fake'/;\n`);
+    writeFileSync(path.join(dir, "fixtures", "Fake.tsx"), `const s = { fontFamily: 'Fake' };\n`);
+    const { literalFamily } = scanTsxInline(dir);
+    assert.deepEqual(literalFamily.map((item) => item.value), ['Arial']);
+  });
+});
+
 test("parseLoadedWeights: le faixa variavel (wght@min..max) da URL do Google Fonts", () => {
   withTmpDir((dir) => {
     const html = `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&display=swap" rel="stylesheet" />`;
