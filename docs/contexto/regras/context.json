@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "4ac4bd4ed908a6c3ca574e6a52573669246fbe83",
+  "sha": "a5043f95d776ec116a1784a38fd54027031b48ba",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-06 20:14 UTC",
+  "generated_at": "2026-11-07 00:51 UTC",
   "files_total": 8098,
   "code_files": 5987,
-  "code_lines": 1038751
+  "code_lines": 1038752
  },
  "version": "1.3.2",
- "facts_hash": "1718a97779308f8e",
+ "facts_hash": "b5c0baaed8638904",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67784,7 +67784,7 @@
   {
    "module": "scripts",
    "files": 433,
-   "lines": 85115,
+   "lines": 85116,
    "tables": [
     "a",
     "alem_do_limite",
@@ -267075,7 +267075,7 @@
   },
   "scripts/e2e-isolated/migrations.mjs": {
    "path": "scripts/e2e-isolated/migrations.mjs",
-   "lines": 80,
+   "lines": 81,
    "exports": [
     "function gitBlob",
     "function prepareMigration",
@@ -382534,10 +382534,19 @@
   }
  },
  "git": {
-  "sha": "4ac4bd4ed908a6c3ca574e6a52573669246fbe83",
+  "sha": "a5043f95d776ec116a1784a38fd54027031b48ba",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a5043f9",
+    "date": "2026-11-06",
+    "author": "adm01-debug",
+    "subject": "fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)",
+    "files": [
+     "scripts/e2e-isolated/migrations.mjs"
+    ]
+   },
    {
     "sha": "4ac4bd4",
     "date": "2026-11-06",
@@ -382895,17 +382904,6 @@
      "docs/DB-INVENTORY.md",
      "scripts/ci/check-test-inventory.mjs"
     ]
-   },
-   {
-    "sha": "46c29a6",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "fix: confirmar DOM antes da transição nativa ao voltar ao Email (#2723)",
-    "files": [
-     "src/hooks/ui/__tests__/useViewTransition.test.tsx",
-     "src/hooks/ui/useViewTransition.ts",
-     "src/pages/Index.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -382950,8 +382948,8 @@
     2
    ],
    [
-    "src/pages/Index.tsx",
-    2
+    "scripts/e2e-isolated/migrations.mjs",
+    1
    ],
    [
     ".github/workflows/codeql.yml",

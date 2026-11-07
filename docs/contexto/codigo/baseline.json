@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "4ac4bd4ed908a6c3ca574e6a52573669246fbe83",
+  "commit": "a5043f95d776ec116a1784a38fd54027031b48ba",
   "branch": "main",
-  "data_commit": "2026-11-06T20:12:48Z",
+  "data_commit": "2026-11-06T21:38:35-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a5043f9",
+    "data": "2026-11-06",
+    "assunto": "fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)"
+   },
    {
     "sha": "4ac4bd4",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "2f2cc18",
     "data": "2026-11-05",
     "assunto": "chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)"
-   },
-   {
-    "sha": "fa7d882",
-    "data": "2026-11-05",
-    "assunto": "fix: verificar V2 por padrão no smoke de produção (#2729)"
    }
   ],
-  "arquivos_mudados_7d": 1056,
+  "arquivos_mudados_7d": 1041,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8257,
   "arquivos_codigo": 4734,
-  "linhas_codigo": 873314,
+  "linhas_codigo": 873315,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -624,7 +624,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 36,
-   "linhas": 6080
+   "linhas": 6081
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
