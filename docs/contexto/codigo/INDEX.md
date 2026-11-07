@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `343971b1b9765e28200552e96f4b0c6f9781aaa4` (2026-11-07T14:28:34-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f77653b6f3fff90045268ce6b5863ad0afc1b5a6` (2026-11-07T15:24:25-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8291 |
 | arquivos_codigo | 4737 |
-| linhas_codigo | 875491 |
+| linhas_codigo | 875494 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56086 nós · 115645 arestas · 4157 comunidades · grafo do commit `343971b1`
+- 56086 nós · 115645 arestas · 4157 comunidades · grafo do commit `f77653b6`
 - comunidades maiores: TalkXSuppression.tsx (1179), lucide-react (945), cn (856), react (691), vitest (595), ref_node_fs (526), validation.ts (472), DashboardView.tsx (402), @tanstack/react-query (401), ref_https (392), e2e-isolated-runtime.unit.mjs (368), multiplix-send/index.ts (322)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `f77653b` fix: alinha labels dos controles rápidos no spec de volume (#2776)
 - 2026-11-07 `343971b` fix: fecha colisões e corridas no ensaio sintético (#2759)
 - 2026-11-07 `bd8091e` chore(db): sincroniza artefatos derivados do banco (#2769)
 - 2026-11-07 `a9c9835` fix(db): protege streak e resoluções por usuário autenticado (#2766)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `a5043f9` fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)
 - 2026-11-06 `4ac4bd4` fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)
 - 2026-11-06 `c0e5118` fix: evita posição absoluta na navegação da paleta (teste flaky)
-- 2026-11-06 `37822ce` chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

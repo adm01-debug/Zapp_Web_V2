@@ -499,7 +499,7 @@
   {
    "arquivo": "e2e/quick-controls-volume.spec.ts",
    "tipo": "e2e",
-   "linhas": 646,
+   "linhas": 649,
    "testa": [],
    "casos": 16
   },

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "343971b1b9765e28200552e96f4b0c6f9781aaa4",
+  "sha": "f77653b6f3fff90045268ce6b5863ad0afc1b5a6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 18:09 UTC",
+  "generated_at": "2026-11-07 18:43 UTC",
   "files_total": 8132,
   "code_files": 5999,
-  "code_lines": 1041490
+  "code_lines": 1041493
  },
  "version": "1.3.2",
- "facts_hash": "a485682e03f31756",
+ "facts_hash": "08d3f4a892159324",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67791,7 +67791,7 @@
   {
    "module": "e2e",
    "files": 78,
-   "lines": 18291,
+   "lines": 18294,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -260039,7 +260039,7 @@
   },
   "e2e/quick-controls-volume.spec.ts": {
    "path": "e2e/quick-controls-volume.spec.ts",
-   "lines": 646,
+   "lines": 649,
    "is_test": true,
    "env": [
     "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY",
@@ -383135,10 +383135,19 @@
   }
  },
  "git": {
-  "sha": "343971b1b9765e28200552e96f4b0c6f9781aaa4",
+  "sha": "f77653b6f3fff90045268ce6b5863ad0afc1b5a6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f77653b",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix: alinha labels dos controles rápidos no spec de volume (#2776)",
+    "files": [
+     "e2e/quick-controls-volume.spec.ts"
+    ]
+   },
    {
     "sha": "343971b",
     "date": "2026-11-07",
@@ -383726,15 +383735,6 @@
      "src/components/settings/SoundCustomizationPanel.tsx",
      "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx"
     ]
-   },
-   {
-    "sha": "c6af71c",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "chore: regenera manifesto de deploy das edge functions (#2737)",
-    "files": [
-     "supabase/deployment-manifest.json"
-    ]
    }
   ],
   "hot_files": [
@@ -383763,8 +383763,8 @@
     3
    ],
    [
-    "supabase/deployment-manifest.json",
-    3
+    "e2e/quick-controls-volume.spec.ts",
+    2
    ],
    [
     "src/integrations/supabase/types.ts",

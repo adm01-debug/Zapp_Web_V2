@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "343971b1b9765e28200552e96f4b0c6f9781aaa4",
+  "commit": "f77653b6f3fff90045268ce6b5863ad0afc1b5a6",
   "branch": "main",
-  "data_commit": "2026-11-07T14:28:34-03:00",
+  "data_commit": "2026-11-07T15:24:25-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f77653b",
+    "data": "2026-11-07",
+    "assunto": "fix: alinha labels dos controles rápidos no spec de volume (#2776)"
+   },
    {
     "sha": "343971b",
     "data": "2026-11-07",
@@ -126,11 +131,6 @@
     "sha": "d5fc2f9",
     "data": "2026-11-06",
     "assunto": "test: provar e endurecer cleanup de variáveis Vercel (#2746)"
-   },
-   {
-    "sha": "5f2f9af",
-    "data": "2026-11-06",
-    "assunto": "fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)"
    }
   ],
   "arquivos_mudados_7d": 1116,
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8291,
   "arquivos_codigo": 4737,
-  "linhas_codigo": 875491,
+  "linhas_codigo": 875494,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -528,7 +528,7 @@
   },
   "e2e/quick-controls-volume.spec.ts": {
    "arquivos": 1,
-   "linhas": 646
+   "linhas": 649
   },
   "e2e/reactions.spec.ts": {
    "arquivos": 1,
