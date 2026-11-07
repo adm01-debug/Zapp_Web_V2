@@ -45,7 +45,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `true` |
+| WITH CHECK | `(seller_id = auth.uid())` |
 
 ### `copilot_seller_settings_select`
 
@@ -54,7 +54,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `true` |
+| USING | `(seller_id = auth.uid())` |
 | WITH CHECK |  |
 
 ### `copilot_seller_settings_update`
@@ -64,8 +64,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `true` |
-| WITH CHECK | `true` |
+| USING | `(seller_id = auth.uid())` |
+| WITH CHECK | `(seller_id = auth.uid())` |
 
 
 ## Triggers

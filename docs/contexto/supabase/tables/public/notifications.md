@@ -6,7 +6,7 @@
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 5 |
+| policies | 4 |
 | realtime (publication) | sim |
 | replica identity | full |
 | vem de extensão | não |
@@ -48,16 +48,6 @@
 
 
 ## Policies (RLS)
-
-### `Block authenticated notification inserts`
-
-| campo | valor |
-|---|---|
-| comando | INSERT |
-| tipo | PERMISSIVE |
-| roles | authenticated |
-| USING |  |
-| WITH CHECK | `false` |
 
 ### `Users can delete own notifications`
 

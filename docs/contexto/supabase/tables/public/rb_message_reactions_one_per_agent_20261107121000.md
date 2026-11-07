@@ -8,7 +8,7 @@
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 0 |
+| policies | 1 |
 | realtime (publication) | não |
 | replica identity | default |
 | vem de extensão | não |
@@ -42,8 +42,15 @@
 
 ## Policies (RLS)
 
-> ⚠️ RLS habilitado **sem policies**: nenhum acesso via API (anon/authenticated).
+### `No client access to reaction rollback backup`
 
+| campo | valor |
+|---|---|
+| comando | ALL |
+| tipo | PERMISSIVE |
+| roles | anon, authenticated |
+| USING | `false` |
+| WITH CHECK | `false` |
 
 
 ## Triggers

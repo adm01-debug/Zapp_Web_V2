@@ -55960,7 +55960,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "df612fd75e3bb6a7",
+        "definition_sha": "fd2dac61dc91c820",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -66667,7 +66667,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "b5a74471bc1eb8e4",
+        "definition_sha": "6d6a7794606dccdd",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -78788,12 +78788,6 @@
       {
         "code": "rls_no_policies",
         "detail": "RLS ligado sem policies: inacessível via API (só service_role).",
-        "object": "public._rb_message_reactions_one_per_agent_20261107121000",
-        "severity": "MÉDIA"
-      },
-      {
-        "code": "rls_no_policies",
-        "detail": "RLS ligado sem policies: inacessível via API (só service_role).",
         "object": "public._zapp_fn_before",
         "severity": "MÉDIA"
       },
@@ -79580,6 +79574,24 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_conversation_scores.copilot_conversation_scores_insert",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_conversation_scores.copilot_conversation_scores_select",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_conversation_scores.copilot_conversation_scores_update",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.copilot_feedback.copilot_feedback_insert",
         "severity": "BAIXA"
       },
@@ -79592,13 +79604,85 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_help_requests.copilot_help_requests_insert",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_help_requests.copilot_help_requests_select",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.copilot_insights.vendor_own_insights",
         "severity": "BAIXA"
       },
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_learning_moments.copilot_learning_moments_insert",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_learning_moments.copilot_learning_moments_select",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_objection_catalog.copilot_objection_catalog_insert",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_outcomes.copilot_outcomes_insert",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_outcomes.copilot_outcomes_select",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_seller_settings.copilot_seller_settings_insert",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_seller_settings.copilot_seller_settings_select",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_seller_settings.copilot_seller_settings_update",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.copilot_sessions.vendor_own_sessions",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_usage.copilot_usage_insert",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_usage.copilot_usage_select",
         "severity": "BAIXA"
       },
       {
@@ -86911,7 +86995,8 @@
       },
       {
         "name": "talkx_campaign_recipients_page",
-        "statements": [],
+        "statements": 4,
+        "statements_sha": "fd2572b8b54cd430",
         "version": "20261010062941"
       },
       {
@@ -87986,6 +88071,30 @@
         "statements": 4,
         "statements_sha": "666591f91c9c87e8",
         "version": "20261107122000"
+      },
+      {
+        "name": "finalize_goal_notification_and_reaction_backup_policies",
+        "statements": 5,
+        "statements_sha": "33d0428d9c06485a",
+        "version": "20261107123000"
+      },
+      {
+        "name": "fix_copilot_rls_open_policies",
+        "statements": 30,
+        "statements_sha": "1d787339d3e2bee5",
+        "version": "20261107133000"
+      },
+      {
+        "name": "fix_gamification_streak_resolutions_guard",
+        "statements": 2,
+        "statements_sha": "057e2be8d9470c08",
+        "version": "20261107153000"
+      },
+      {
+        "name": "fix_copilot_rls_wrong_join_column",
+        "statements": 4,
+        "statements_sha": "33ab1478f23754ac",
+        "version": "20261107163000"
       }
     ],
     "policies": [
@@ -88000,6 +88109,19 @@
         "table": "hermes_change_log",
         "using": "true",
         "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "name": "No client access to reaction rollback backup",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "_rb_message_reactions_one_per_agent_20261107121000",
+        "using": "false",
+        "with_check": "false"
       },
       {
         "cmd": "INSERT",
@@ -89607,7 +89729,7 @@
         "schema": "public",
         "table": "copilot_conversation_scores",
         "using": null,
-        "with_check": "true"
+        "with_check": "(scored_by = auth.uid())"
       },
       {
         "cmd": "SELECT",
@@ -89618,7 +89740,7 @@
         ],
         "schema": "public",
         "table": "copilot_conversation_scores",
-        "using": "true",
+        "using": "((scored_by = auth.uid()) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id\n   FROM copilot_sessions\n  WHERE (copilot_sessions.profile_id = auth.uid()))))",
         "with_check": null
       },
       {
@@ -89630,8 +89752,8 @@
         ],
         "schema": "public",
         "table": "copilot_conversation_scores",
-        "using": "true",
-        "with_check": "true"
+        "using": "(scored_by = auth.uid())",
+        "with_check": "(scored_by = auth.uid())"
       },
       {
         "cmd": "INSERT",
@@ -89667,7 +89789,7 @@
         "schema": "public",
         "table": "copilot_help_requests",
         "using": null,
-        "with_check": "true"
+        "with_check": "(seller_id = auth.uid())"
       },
       {
         "cmd": "SELECT",
@@ -89678,7 +89800,7 @@
         ],
         "schema": "public",
         "table": "copilot_help_requests",
-        "using": "true",
+        "using": "(seller_id = auth.uid())",
         "with_check": null
       },
       {
@@ -89715,7 +89837,7 @@
         "schema": "public",
         "table": "copilot_learning_moments",
         "using": null,
-        "with_check": "true"
+        "with_check": "(tagged_by = auth.uid())"
       },
       {
         "cmd": "SELECT",
@@ -89726,7 +89848,7 @@
         ],
         "schema": "public",
         "table": "copilot_learning_moments",
-        "using": "true",
+        "using": "((tagged_by = auth.uid()) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id\n   FROM copilot_sessions\n  WHERE (copilot_sessions.profile_id = auth.uid()))))",
         "with_check": null
       },
       {
@@ -89739,7 +89861,7 @@
         "schema": "public",
         "table": "copilot_objection_catalog",
         "using": null,
-        "with_check": "true"
+        "with_check": "(submitted_by = auth.uid())"
       },
       {
         "cmd": "SELECT",
@@ -89763,7 +89885,7 @@
         "schema": "public",
         "table": "copilot_outcomes",
         "using": null,
-        "with_check": "true"
+        "with_check": "(seller_id = auth.uid())"
       },
       {
         "cmd": "SELECT",
@@ -89774,7 +89896,7 @@
         ],
         "schema": "public",
         "table": "copilot_outcomes",
-        "using": "true",
+        "using": "(seller_id = auth.uid())",
         "with_check": null
       },
       {
@@ -89787,7 +89909,7 @@
         "schema": "public",
         "table": "copilot_seller_settings",
         "using": null,
-        "with_check": "true"
+        "with_check": "(seller_id = auth.uid())"
       },
       {
         "cmd": "SELECT",
@@ -89798,7 +89920,7 @@
         ],
         "schema": "public",
         "table": "copilot_seller_settings",
-        "using": "true",
+        "using": "(seller_id = auth.uid())",
         "with_check": null
       },
       {
@@ -89810,8 +89932,8 @@
         ],
         "schema": "public",
         "table": "copilot_seller_settings",
-        "using": "true",
-        "with_check": "true"
+        "using": "(seller_id = auth.uid())",
+        "with_check": "(seller_id = auth.uid())"
       },
       {
         "cmd": "ALL",
@@ -89847,7 +89969,7 @@
         "schema": "public",
         "table": "copilot_usage",
         "using": null,
-        "with_check": "true"
+        "with_check": "(seller_id = auth.uid())"
       },
       {
         "cmd": "SELECT",
@@ -89858,7 +89980,7 @@
         ],
         "schema": "public",
         "table": "copilot_usage",
-        "using": "true",
+        "using": "(seller_id = auth.uid())",
         "with_check": null
       },
       {
@@ -91336,18 +91458,6 @@
         "table": "multiplix_voice_grants",
         "using": "((revoked_at IS NULL) AND (((roles IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM unnest(multiplix_voice_grants.roles) r(r)\n  WHERE has_role(auth.uid(), r.r)))) OR ((perfis IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.user_id = auth.uid()) AND (p.id = ANY (multiplix_voice_grants.perfis))))))))",
         "with_check": null
-      },
-      {
-        "cmd": "INSERT",
-        "name": "Block authenticated notification inserts",
-        "permissive": "PERMISSIVE",
-        "roles": [
-          "authenticated"
-        ],
-        "schema": "public",
-        "table": "notifications",
-        "using": null,
-        "with_check": "false"
       },
       {
         "cmd": "DELETE",

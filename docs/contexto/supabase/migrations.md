@@ -889,7 +889,7 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261010024534 | [request_department_access_rpc](migrations/20261010024534_request_department_access_rpc.sql) | 5 |
 | 20261010042500 | [talkx_campaign_launch_checks](migrations/20261010042500_talkx_campaign_launch_checks.sql) | 0 |
 | 20261010060000 | [talkx_monitor_panel](migrations/20261010060000_talkx_monitor_panel.sql) | 0 |
-| 20261010062941 | [talkx_campaign_recipients_page](migrations/20261010062941_talkx_campaign_recipients_page.sql) | 0 |
+| 20261010062941 | [talkx_campaign_recipients_page](migrations/20261010062941_talkx_campaign_recipients_page.sql) | 4 |
 | 20261010063527 | [user_sessions_expire_diario](migrations/20261010063527_user_sessions_expire_diario.sql) | 0 |
 | 20261010064729 | [team_messages_page_cursor_tiebreak_and_min_limit](migrations/20261010064729_team_messages_page_cursor_tiebreak_and_min_limit.sql) | 0 |
 | 20261010071304 | [talkx_help_views_top_topics](migrations/20261010071304_talkx_help_views_top_topics.sql) | 0 |
@@ -1090,3 +1090,7 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261107120000 | [goal_notifications_own_insert_policy](migrations/20261107120000_goal_notifications_own_insert_policy.sql) | 10 |
 | 20261107121000 | [message_reactions_one_per_agent](migrations/20261107121000_message_reactions_one_per_agent.sql) | 10 |
 | 20261107122000 | [contacts_phone_search_digits](migrations/20261107122000_contacts_phone_search_digits.sql) | 4 |
+| 20261107123000 | [finalize_goal_notification_and_reaction_backup_policies](migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql) | 5 |
+| 20261107133000 | [fix_copilot_rls_open_policies](migrations/20261107133000_fix_copilot_rls_open_policies.sql) | 30 |
+| 20261107153000 | [fix_gamification_streak_resolutions_guard](migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql) | 2 |
+| 20261107163000 | [fix_copilot_rls_wrong_join_column](migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql) | 4 |

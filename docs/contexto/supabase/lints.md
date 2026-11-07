@@ -7,7 +7,6 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 | ALTA | view_security_definer | public.catalog_send_stats | View em public sem security_invoker: executa como owner e ignora RLS das tabelas base. |
 | MÉDIA | no_primary_key | public._zapp_fn_before | Sem chave primária: Realtime/replicação e updates por linha ficam frágeis. |
 | MÉDIA | rls_no_policies | public._rb_message_reactions_contato_20261007001008 | RLS ligado sem policies: inacessível via API (só service_role). |
-| MÉDIA | rls_no_policies | public._rb_message_reactions_one_per_agent_20261107121000 | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public._zapp_fn_before | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public._zapp_mig133_log | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public.agent_mini_game_xp_daily | RLS ligado sem policies: inacessível via API (só service_role). |
@@ -139,10 +138,25 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 | BAIXA | policy_auth_fn_not_wrapped | public.conversation_tasks.tasks_select_contact_visible | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.conversation_tasks.tasks_select_own | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.conversation_tasks.tasks_update_own | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_conversation_scores.copilot_conversation_scores_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_conversation_scores.copilot_conversation_scores_select | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_conversation_scores.copilot_conversation_scores_update | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.copilot_feedback.copilot_feedback_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.copilot_feedback.copilot_feedback_select | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_help_requests.copilot_help_requests_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_help_requests.copilot_help_requests_select | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.copilot_insights.vendor_own_insights | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_learning_moments.copilot_learning_moments_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_learning_moments.copilot_learning_moments_select | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_objection_catalog.copilot_objection_catalog_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_outcomes.copilot_outcomes_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_outcomes.copilot_outcomes_select | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_seller_settings.copilot_seller_settings_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_seller_settings.copilot_seller_settings_select | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_seller_settings.copilot_seller_settings_update | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.copilot_sessions.vendor_own_sessions | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_usage.copilot_usage_insert | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.copilot_usage.copilot_usage_select | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.crisis_room_alerts.Admins can delete crisis alerts | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.crisis_room_alerts.Admins can insert crisis alerts | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | public.crisis_room_alerts.Admins can update crisis alerts | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |

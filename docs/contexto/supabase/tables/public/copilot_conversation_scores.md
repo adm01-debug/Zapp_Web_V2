@@ -47,7 +47,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `true` |
+| WITH CHECK | `(scored_by = auth.uid())` |
 
 ### `copilot_conversation_scores_select`
 
@@ -56,7 +56,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `true` |
+| USING | `((scored_by = auth.uid()) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = auth.uid()))))` |
 | WITH CHECK |  |
 
 ### `copilot_conversation_scores_update`
@@ -66,8 +66,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `true` |
-| WITH CHECK | `true` |
+| USING | `(scored_by = auth.uid())` |
+| WITH CHECK | `(scored_by = auth.uid())` |
 
 
 ## Triggers

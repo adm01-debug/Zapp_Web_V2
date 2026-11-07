@@ -50,7 +50,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `true` |
+| WITH CHECK | `(tagged_by = auth.uid())` |
 
 ### `copilot_learning_moments_select`
 
@@ -59,7 +59,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `true` |
+| USING | `((tagged_by = auth.uid()) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = auth.uid()))))` |
 | WITH CHECK |  |
 
 
