@@ -30,9 +30,23 @@ stage() {
   for f in CLAUDE.md AGENTS.md; do [ -f "$f" ] && git add "$f" || true; done
 }
 
+assert_no_foreign_staged_changes() {
+  local path
+  while IFS= read -r -d '' path; do
+    case "$path" in
+      "$OUT_DIR"|"$OUT_DIR"/*|CLAUDE.md|AGENTS.md) ;;
+      *)
+        echo "ERRO: há alteração staged fora da saída gerada: $path. Nada foi publicado." >&2
+        return 1
+        ;;
+    esac
+  done < <(git diff --cached --name-only -z)
+}
+
 if git check-ignore -q "$OUT_DIR"; then
   echo "ERRO: $OUT_DIR está no .gitignore — os docs nunca seriam commitados. Remova a regra ou mude AI_CONTEXT_OUT."; exit 1
 fi
+assert_no_foreign_staged_changes
 if [ "$MODE" = "branch" ]; then
   # Branch derivada = branch padrão + 1 commit. Nunca toca a branch de origem: trabalha em HEAD destacado.
   BRANCH_OUT="${BRANCH_OUT:-contexto}"
@@ -69,6 +83,52 @@ if git diff --cached --quiet; then
 fi
 git commit -q -m "$MSG"
 
+# O SHA muda no rebase, mas estes metadados de autoria são preservados. Eles
+# distinguem o commit gerado do novo topo da origem quando o rebase descarta
+# nossa alteração por ela já ter sido aplicada por outro produtor.
+remember_generated_head() {
+  GENERATED_COMMIT=$(git rev-parse HEAD)
+  GENERATED_AUTHOR_EMAIL=$(git show -s --format=%ae HEAD)
+  GENERATED_AUTHOR_DATE=$(git show -s --format=%aI HEAD)
+}
+
+generated_commit_is_head() {
+  [ "$(git show -s --format=%B HEAD)" = "$MSG" ] &&
+    [ "$(git show -s --format=%ae HEAD)" = "$GENERATED_AUTHOR_EMAIL" ] &&
+    [ "$(git show -s --format=%aI HEAD)" = "$GENERATED_AUTHOR_DATE" ]
+}
+
+generated_output_conflict_is_recoverable() {
+  local conflicted=0 path
+  [ "$(git rev-parse -q --verify REBASE_HEAD 2>/dev/null || true)" = "$GENERATED_COMMIT" ] || return 1
+  while IFS= read -r -d '' path; do
+    conflicted=1
+    case "$path" in
+      "$OUT_DIR"|"$OUT_DIR"/*) ;;
+      *) return 1 ;;
+    esac
+  done < <(git diff --name-only --diff-filter=U -z)
+  [ "$conflicted" = 1 ]
+}
+
+discard_generated_output_commit() {
+  local path
+  local -a generated_paths=()
+  while IFS= read -r -d '' path; do
+    case "$path" in "$OUT_DIR"|"$OUT_DIR"/*) generated_paths+=("$path");; esac
+  done < <(git diff-tree --no-commit-id --name-only -z -r "$GENERATED_COMMIT")
+  git reset -q --mixed "$GENERATED_COMMIT^"
+  for path in "${generated_paths[@]}"; do
+    if git cat-file -e "HEAD:$path" 2>/dev/null; then
+      git restore --source=HEAD --staged --worktree -- "$path"
+    else
+      rm -f -- "$path"
+    fi
+  done
+}
+
+remember_generated_head
+
 if [ "$MODE" = "push" ]; then
   for attempt in 1 2 3; do
     if git push -q origin "HEAD:$BRANCH" 2>/tmp/push.err; then
@@ -80,11 +140,40 @@ if [ "$MODE" = "push" ]; then
     fi
     echo "push falhou (tentativa $attempt) — sincronizando com origin/$BRANCH e regenerando"
     git fetch -q origin "$BRANCH"
-    git reset -q --hard "origin/$BRANCH"         # CI não tem nada local além dos docs gerados…
-    eval "$GEN_CMD --force"                      # …que são regenerados sobre o código novo
+    # Reaplica somente o commit gerado sobre a origem. --autostash preserva alterações
+    # locais rastreadas; arquivos não rastreados permanecem intocados. Nunca use reset
+    # destrutivo aqui: este utilitário também pode ser executado fora de um runner efêmero.
+    if ! git rebase --autostash "origin/$BRANCH"; then
+      if generated_output_conflict_is_recoverable; then
+        git rebase --abort >/dev/null 2>&1 || true
+        discard_generated_output_commit
+        if ! git rebase --autostash "origin/$BRANCH"; then
+          git rebase --abort >/dev/null 2>&1 || true
+          echo "ERRO: não foi possível preservar os commits locais antes de regenerar." >&2
+          exit 1
+        fi
+      else
+        git rebase --abort >/dev/null 2>&1 || true
+        echo "ERRO: conflito fora da saída gerada; o checkout local foi preservado." >&2
+        exit 1
+      fi
+    fi
+    # Um rebase bem-sucedido troca o SHA do commit sobrevivente mesmo quando a
+    # regeneração seguinte não cria diff. Não atualize a identidade se ele foi
+    # descartado: nesse caso HEAD pertence à origem ou ao usuário.
+    if generated_commit_is_head; then remember_generated_head; fi
+    eval "$GEN_CMD --force"
     stage
-    if git diff --cached --quiet; then echo "após sincronizar, nada a commitar"; exit 0; fi
-    git commit -q -m "$MSG"
+    if ! git diff --cached --quiet; then
+      if generated_commit_is_head; then
+        git commit -q --amend --no-edit
+      else
+        # O rebase pode descartar o commit gerado como patch equivalente. Nesse
+        # caso HEAD pertence à origem (ou ao usuário) e jamais deve ser emendado.
+        git commit -q -m "$MSG"
+      fi
+      remember_generated_head
+    fi
   done
   if [ "$MODE" != "pr" ]; then
     echo "ERRO: não foi possível publicar após 3 tentativas"; cat /tmp/push.err; exit 1

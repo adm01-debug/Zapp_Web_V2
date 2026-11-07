@@ -15,7 +15,7 @@
 
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { spawnSync } from 'child_process';
-import { join } from 'path';
+import { join, posix as pathPosix } from 'path';
 import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 import { fileURLToPath } from 'url';
 
@@ -46,7 +46,14 @@ function listarArquivosNoDisco(relDir) {
 function gitLsFilesOuDisco(relDir) {
   try {
     const resultado = spawnSync(resolverExecutavel('git'), ['ls-files', relDir], { cwd: root, encoding: 'utf8' });
-    if (typeof resultado.stdout === 'string') return resultado.stdout.split('\n').filter(Boolean);
+    if (typeof resultado.stdout === 'string') {
+      // Inclui arquivos ainda não adicionados ao índice. Sem a união com o disco, o
+      // preflight local dizia OK e o mesmo commit falhava apenas no checkout limpo do CI.
+      return [...new Set([
+        ...resultado.stdout.split('\n').filter(Boolean),
+        ...listarArquivosNoDisco(relDir),
+      ])].sort();
+    }
   } catch {
     // O CI também executa este arquivo via `deno test` sem --allow-sys/--allow-run.
     // Nesse modo o shim Node de Deno não deixa `fs.access(X_OK)`/child_process
@@ -128,6 +135,34 @@ export function orfaosNode(suites, padroes, allowlist = ALLOWLIST_NODE) {
   return suites.filter(f => !padroes.some(p => casaPadrao(f, p)) && !allowlist.has(f));
 }
 
+/**
+ * Suites alcançadas por imports estáticos de uma suite já coberta pelo workflow.
+ * O fechamento transitivo permite agregadores em scripts/ci sem transformar a
+ * ALLOWLIST_NODE em atalho: import dinâmico, comentário ou caminho inexistente não conta.
+ */
+export function suitesCobertasPorImport(suites, padroes, ler = read) {
+  const existentes = new Set(suites);
+  const cobertas = new Set(suites.filter(f => padroes.some(p => casaPadrao(f, p))));
+  const pendentes = [...cobertas];
+  const importEstatico = /(?:^|\n)\s*import\s+(?:[^'"\n]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+
+  while (pendentes.length > 0) {
+    const agregador = pendentes.pop();
+    const fonte = ler(agregador);
+    for (const [, especificador] of fonte.matchAll(importEstatico)) {
+      if (!especificador.startsWith('.')) continue;
+      const importada = pathPosix.normalize(
+        pathPosix.join(pathPosix.dirname(agregador), especificador),
+      );
+      if (!existentes.has(importada) || cobertas.has(importada)) continue;
+      cobertas.add(importada);
+      pendentes.push(importada);
+    }
+  }
+
+  return cobertas;
+}
+
 /** Suites Node versionadas em scripts/, do disco. */
 export function suitesNodeNoDisco() {
   return gitLsFilesOuDisco('scripts')
@@ -143,7 +178,10 @@ export function padroesNodeDosWorkflows() {
 }
 
 export function suitesNodeOrfas() {
-  return orfaosNode(suitesNodeNoDisco(), padroesNodeDosWorkflows());
+  const suites = suitesNodeNoDisco();
+  const padroes = padroesNodeDosWorkflows();
+  const cobertas = suitesCobertasPorImport(suites, padroes);
+  return orfaosNode(suites, padroes, new Set([...ALLOWLIST_NODE, ...cobertas]));
 }
 
 // ── 4. Detectar órfãos ────────────────────────────────────────────────────────

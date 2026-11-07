@@ -59,6 +59,22 @@ from psycopg.rows import dict_row
 # --------------------------------------------------------------------------- #
 
 FORMAT_VERSION = 2
+OUTPUT_MARKER = ".supabase-snapshot-output"
+OUTPUT_MARKER_CONTENT = f"supabase-snapshot-v{FORMAT_VERSION}\n"
+CONFIG_ERRORS: list[str] = []
+
+
+def env_int(name: str, default: int, minimum: int) -> int:
+    raw = os.environ.get(name, str(default)).strip()
+    try:
+        value = int(raw)
+    except ValueError:
+        CONFIG_ERRORS.append(f"{name} deve ser um inteiro >= {minimum}; recebido {raw!r}")
+        return default
+    if value < minimum:
+        CONFIG_ERRORS.append(f"{name} deve ser >= {minimum}; recebido {value}")
+        return default
+    return value
 
 DB_URL = os.environ.get("SUPABASE_DB_URL", "").strip()
 PROJECT_REF = os.environ.get("SUPABASE_PROJECT_REF", "").strip()
@@ -67,13 +83,13 @@ OUT = pathlib.Path(os.environ.get("SNAPSHOT_DIR", "docs/supabase")).resolve()
 PGDUMP_SCHEMAS = [s.strip() for s in os.environ.get("PGDUMP_SCHEMAS", "public").split(",") if s.strip()]
 GEN_TYPES = os.environ.get("GEN_TYPES", "true").lower() in ("1", "true", "yes")
 PGDUMP = os.environ.get("PGDUMP", "true").lower() in ("1", "true", "yes")
-CRON_RUNS_PER_JOB = int(os.environ.get("CRON_RUNS_PER_JOB", "3"))
-STAT_STATEMENTS_TOP = int(os.environ.get("STAT_STATEMENTS_TOP", "15"))
+CRON_RUNS_PER_JOB = env_int("CRON_RUNS_PER_JOB", 3, 0)
+STAT_STATEMENTS_TOP = env_int("STAT_STATEMENTS_TOP", 15, 0)
 # Raiz do repositório para cruzar "quem chama cada função no código". Vazio = desliga.
 REPO_ROOT = pathlib.Path(os.environ.get("REPO_ROOT", ".")).resolve() if os.environ.get("REPO_ROOT", ".") else None
 CODE_SCAN_DIRS = [d.strip() for d in os.environ.get("CODE_SCAN_DIRS", "src,supabase/functions,supabase/migrations,scripts,app,lib,server,api").split(",") if d.strip()]
 CODE_SCAN_EXT = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".sql", ".py", ".go", ".vue", ".svelte"}
-CODE_SCAN_MAX_FILES = int(os.environ.get("CODE_SCAN_MAX_FILES", "20000"))
+CODE_SCAN_MAX_FILES = env_int("CODE_SCAN_MAX_FILES", 20000, 1)
 
 SYSTEM_SCHEMAS = {"pg_catalog", "information_schema", "pg_toast"}
 # Schemas internos do Supabase: cheios de objetos que não são do app. Ficam fora da
@@ -115,6 +131,51 @@ CARRIED: list[str] = []  # seções reaproveitadas da coleta anterior por erro
 
 def log(msg: str) -> None:
     print(f"[snapshot] {msg}", flush=True)
+
+
+def valid_previous_snapshot(path: pathlib.Path) -> bool:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
+    return (
+        isinstance(data, dict)
+        and data.get("format_version") == FORMAT_VERSION
+        and isinstance(data.get("db"), dict)
+        and isinstance(data.get("api"), dict)
+    )
+
+
+def prepare_output_directory() -> None:
+    """Recusa alvos amplos ou alheios antes de qualquer coleta/limpeza."""
+    cwd = pathlib.Path.cwd().resolve()
+    home = pathlib.Path.home().resolve()
+    filesystem_root = pathlib.Path(cwd.anchor).resolve()
+    if OUT in {filesystem_root, home, cwd} or cwd.is_relative_to(OUT):
+        raise ValueError(
+            f"SNAPSHOT_DIR inseguro: {OUT}. Use uma subpasta exclusiva fora dos ancestrais do checkout."
+        )
+    if OUT.exists() and not OUT.is_dir():
+        raise ValueError(f"SNAPSHOT_DIR não é um diretório: {OUT}")
+
+    if OUT.exists():
+        entries = list(OUT.iterdir())
+        marker = OUT / OUTPUT_MARKER
+        marker_valid = False
+        if marker.is_file():
+            try:
+                marker_valid = marker.read_text(encoding="utf-8") == OUTPUT_MARKER_CONTENT
+            except (OSError, UnicodeError):
+                marker_valid = False
+        legacy_valid = valid_previous_snapshot(OUT / "snapshot.json")
+        if entries and not (marker_valid or legacy_valid):
+            raise ValueError(
+                f"SNAPSHOT_DIR não vazio e sem marcador/snapshot válido: {OUT}. Nada foi alterado."
+            )
+    else:
+        OUT.mkdir(parents=True)
+
+    (OUT / OUTPUT_MARKER).write_text(OUTPUT_MARKER_CONTENT, encoding="utf-8")
 
 
 def record_error(section: str, err: Exception | str) -> None:
@@ -1641,10 +1702,17 @@ def update_changelog(diff: list[tuple[str, str, list[str]]], previous_existed: b
 # --------------------------------------------------------------------------- #
 
 def main() -> int:
+    if CONFIG_ERRORS:
+        print("Configuração inválida: " + "; ".join(CONFIG_ERRORS), file=sys.stderr)
+        return 2
     if not DB_URL:
         print("SUPABASE_DB_URL não definido", file=sys.stderr)
         return 2
-    OUT.mkdir(parents=True, exist_ok=True)
+    try:
+        prepare_output_directory()
+    except ValueError as error:
+        print(f"Configuração inválida: {error}", file=sys.stderr)
+        return 2
 
     previous = None
     prev_path = OUT / "snapshot.json"
@@ -1673,7 +1741,7 @@ def main() -> int:
         types_ts = (OUT / "types.ts").read_text(encoding="utf-8")
         CARRIED.append("types.ts")
 
-    preserved = {"CHANGELOG.md", "edge-functions", "snapshot.json", ".gitattributes"}
+    preserved = {"CHANGELOG.md", "edge-functions", "snapshot.json", ".gitattributes", OUTPUT_MARKER}
     preserved.update(name for name in ("functions", "migrations") if name in CARRIED)
     for item in OUT.iterdir():
         if item.name in preserved:

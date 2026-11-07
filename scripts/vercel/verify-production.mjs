@@ -14,6 +14,7 @@
 import { fileURLToPath } from 'node:url';
 
 const DEFAULT_URL = 'https://zapp-web-v2.vercel.app';
+const SHA = /^[0-9a-f]{40}$/u;
 
 const args = Object.fromEntries(
   process.argv.slice(2)
@@ -57,8 +58,8 @@ async function checkVersionJson() {
     const res = await fetch(`${BASE_URL}/version.json`);
     if (res.status !== 200) { fail('/version.json status', res.status); return; }
     const body = await res.json();
-    if (typeof body.buildId !== 'string' || !body.buildId) {
-      fail('/version.json campo buildId ausente ou inválido');
+    if (!SHA.test(body.buildId ?? '')) {
+      fail('/version.json campo buildId ausente ou inválido (esperado SHA completo)');
     } else {
       ok(`/version.json → buildId="${body.buildId}"`);
     }
@@ -99,7 +100,7 @@ async function checkAssetCaching() {
     const html = await rootRes.text();
     const assetMatch = html.match(/\/assets\/[^"' >]+\.js/);
     if (!assetMatch) {
-      ok('/assets/* — nenhum asset JS encontrado no HTML; pulando verificação de cache');
+      fail('/ SPA sem asset JavaScript em /assets/');
       return;
     }
     const assetPath = assetMatch[0];
