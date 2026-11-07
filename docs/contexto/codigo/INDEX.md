@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a5043f95d776ec116a1784a38fd54027031b48ba` (2026-11-06T21:38:35-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `636880baeb1413fbb56f0b234cedc19d63ec96c7` (2026-11-07T09:50:20-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8257 |
 | arquivos_codigo | 4734 |
-| linhas_codigo | 873315 |
+| linhas_codigo | 873400 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,8 +385,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55872 nós · 115341 arestas · 4166 comunidades · grafo do commit `a5043f95`
-- comunidades maiores: lucide-react (995), react (928), cn (787), vitest (614), DashboardView.tsx (487), @tanstack/react-query (434), evolution-webhook-messages.ts (394), catalogShared.tsx (380), validation.ts (369), ref_node_fs (357), avatar.tsx (337), TalkXSuppression.tsx (321)
+- 55873 nós · 115350 arestas · 4088 comunidades · grafo do commit `636880ba`
+- comunidades maiores: TalkXSuppression.tsx (931), react (736), framer-motion (734), vitest (704), lucide-react (677), utils.ts (660), cn (622), validation.ts (443), tooltip.tsx (415), evolution-webhook-messages.ts (404), @tanstack/react-query (364), useExternalCatalog.ts (330)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `636880b` fix: blindar plano sintético contra IDs externos (#2757)
 - 2026-11-06 `a5043f9` fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)
 - 2026-11-06 `4ac4bd4` fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)
 - 2026-11-06 `c0e5118` fix: evita posição absoluta na navegação da paleta (teste flaky)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `abfe326` chore: validar manifesto de edge functions no CI por PR (#2738)
 - 2026-11-06 `d5fc2f9` test: provar e endurecer cleanup de variáveis Vercel (#2746)
 - 2026-11-06 `5f2f9af` fix: eliminar corridas no toast legado e na Ajuda Talk X (#2745)
-- 2026-11-06 `a4e43d1` fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

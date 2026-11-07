@@ -23306,11 +23306,11 @@
   {
    "arquivo": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
    "tipo": "contrato",
-   "linhas": 332,
+   "linhas": 423,
    "testa": [
     "scripts/ia/ensaio-provisionamento.mjs"
    ],
-   "casos": 19
+   "casos": 21
   },
   {
    "arquivo": "tests/contracts/sl218-bloco18-estado.contract.test.ts",

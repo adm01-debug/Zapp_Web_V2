@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a5043f95d776ec116a1784a38fd54027031b48ba",
+  "sha": "636880baeb1413fbb56f0b234cedc19d63ec96c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 00:51 UTC",
+  "generated_at": "2026-11-07 12:59 UTC",
   "files_total": 8098,
   "code_files": 5987,
-  "code_lines": 1038752
+  "code_lines": 1038837
  },
  "version": "1.3.2",
- "facts_hash": "b5c0baaed8638904",
+ "facts_hash": "e4daed2ba0cfbed7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67784,7 +67784,7 @@
   {
    "module": "scripts",
    "files": 433,
-   "lines": 85116,
+   "lines": 85110,
    "tables": [
     "a",
     "alem_do_limite",
@@ -69902,7 +69902,7 @@
   {
    "module": "tests",
    "files": 95,
-   "lines": 20505,
+   "lines": 20596,
    "tables": [
     "audit_logs",
     "conversation_analyses",
@@ -81581,7 +81581,7 @@
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: DB_URL não é uma URL válida (${url}). Proibido seguir sem saber o alvo."
+    "msg": "ensaio: DB_URL não é uma URL válida. Proibido seguir sem saber o alvo."
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
@@ -81589,43 +81589,11 @@
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: contato sem marcador reservado"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: contatos incompletos em ${departamento.nome}"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: departamentos do plano divergem do contrato"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: departamentos do plano estão incompletos"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: e-mail fora do domínio reservado"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
     "msg": "ensaio: estado de CLI não tratado (${flag})"
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: fila sem marcador reservado"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: marcadores do plano foram alterados"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: mensagem sem marcador reservado"
-   },
-   {
-    "file": "scripts/ia/ensaio-provisionamento.mjs",
-    "msg": "ensaio: telefone fora da faixa reservada"
+    "msg": "ensaio: plano diverge do contrato canônico determinístico"
    },
    {
     "file": "scripts/ia/ensaio-provisionamento.mjs",
@@ -210204,11 +210172,15 @@
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-    "name": "o provisionamento é idempotente: todo insert traz on conflict"
+    "name": "o provisionamento é transacional e todo upsert restaura o registro canônico"
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-    "name": "o gerador recusa plano sem todos os marcadores sintéticos"
+    "name": "o gerador aceita apenas o plano canônico completo, inclusive IDs e vocabulários"
+   },
+   {
+    "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    "name": "templates e plano canônico são profundamente imutáveis"
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
@@ -210233,6 +210205,10 @@
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
     "name": "a CLI rejeita ambiguidade, opção desconhecida e alvo inseguro sem emitir DML"
+   },
+   {
+    "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    "name": "importar o módulo por um programa homônimo não executa a CLI"
    },
    {
     "file": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
@@ -268452,7 +268428,7 @@
   },
   "scripts/ia/ensaio-provisionamento.mjs": {
    "path": "scripts/ia/ensaio-provisionamento.mjs",
-   "lines": 571,
+   "lines": 565,
    "exports": [
     "const PREFIXO_ENSAIO",
     "const DOMINIO_ENSAIO",
@@ -268477,18 +268453,10 @@
    ],
    "errors": [
     "ensaio: DB_URL aponta para host não-local (${host}). Este provisionamento é LOCAL (regra R1): use zapp-db-local env.",
-    "ensaio: DB_URL não é uma URL válida (${url}). Proibido seguir sem saber o alvo.",
+    "ensaio: DB_URL não é uma URL válida. Proibido seguir sem saber o alvo.",
     "ensaio: DB_URL usa protocolo não-PostgreSQL (${alvo.protocol}).",
-    "ensaio: contato sem marcador reservado",
-    "ensaio: contatos incompletos em ${departamento.nome}",
-    "ensaio: departamentos do plano divergem do contrato",
-    "ensaio: departamentos do plano estão incompletos",
-    "ensaio: e-mail fora do domínio reservado",
     "ensaio: estado de CLI não tratado (${flag})",
-    "ensaio: fila sem marcador reservado",
-    "ensaio: marcadores do plano foram alterados",
-    "ensaio: mensagem sem marcador reservado",
-    "ensaio: telefone fora da faixa reservada",
+    "ensaio: plano diverge do contrato canônico determinístico",
     "flag desconhecida (${flag})",
     "informe exatamente uma opção",
     "telefoneEnsaio: sequência inválida (${sequencia})",
@@ -268522,7 +268490,7 @@
     {
      "name": "validarPlanoSeguro",
      "params": "plano",
-     "body": "if (plano?.prefixo !== PREFIXO_ENSAIO || plano?.dominio !== DOMINIO_ENSAIO) { throw new Error('ensaio: marcadores do plano foram alterados'); } if (!Array.isArray(plano.departamentos) || plano.departamentos.length !== DEPARTAMENTOS_ENSAIO.length) { throw new Error('ensaio: departamentos do plano estão incompletos'); } const nomes = plano.departamentos.map((departamento) => departamento.nome); if (nomes.some((nome, indice) => nome !== DEPARTAMENTOS_ENSAIO[indice])) { throw new Error('ensaio: depa …"
+     "body": "const canonico = planoDeEnsaio(); if (!isDeepStrictEqual(plano, canonico)) { throw new Error('ensaio: plano diverge do contrato canônico determinístico'); } return canonico;"
     }
    ]
   },
@@ -382226,7 +382194,7 @@
   },
   "tests/contracts/sl059-ia010-provisionamento.contract.test.ts": {
    "path": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-   "lines": 332,
+   "lines": 423,
    "is_test": true,
    "rule_comments": [
     "cópia (onde os ensaios rodam, regra R1) e, no canônico, só sob autorização.",
@@ -382247,14 +382215,16 @@
     "nenhum dado pessoal real: sem CPF/CNPJ e sem telefone repetido no plano",
     "o 4º perfil fica PENDENTE e nenhum papel é inventado fora do enum real",
     "o DML só escreve em colunas que existem no retrato canônico do schema",
-    "o provisionamento é idempotente: todo insert traz on conflict",
-    "o gerador recusa plano sem todos os marcadores sintéticos",
+    "o provisionamento é transacional e todo upsert restaura o registro canônico",
+    "o gerador aceita apenas o plano canônico completo, inclusive IDs e vocabulários",
+    "templates e plano canônico são profundamente imutáveis",
     "a reversão é só por prefixo: nenhum delete alcança dado que não seja de ensaio",
     "a reversão apaga só tabelas que o provisionamento escreve",
     "conversa-sem-analise e contato-sem-memoria são garantidos por omissão no DML",
     "as filas usam só cores que o sistema já tem",
     "o gerador não guarda alvo de rede e recusa host que não seja local",
     "a CLI rejeita ambiguidade, opção desconhecida e alvo inseguro sem emitir DML",
+    "importar o módulo por um programa homônimo não executa a CLI",
     "cada caso de borda do §2 tem estado declarado — e o do mesmo telefone tem prova do bloqueio",
     "a IA-010 e o índice registram o estado real do provisionamento"
    ]
@@ -382534,10 +382504,22 @@
   }
  },
  "git": {
-  "sha": "a5043f95d776ec116a1784a38fd54027031b48ba",
+  "sha": "636880baeb1413fbb56f0b234cedc19d63ec96c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "636880b",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix: blindar plano sintético contra IDs externos (#2757)",
+    "files": [
+     "docs/ia/IA-010-ambiente-de-ensaio.md",
+     "scripts/ia/README.md",
+     "scripts/ia/ensaio-provisionamento.mjs",
+     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
+    ]
+   },
    {
     "sha": "a5043f9",
     "date": "2026-11-06",
@@ -382892,18 +382874,6 @@
      "src/pages/Index.tsx",
      "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx"
     ]
-   },
-   {
-    "sha": "c0d715f",
-    "date": "2026-11-04",
-    "author": "adm01-debug",
-    "subject": "infra: executar os 33 testes shell ausentes no DB Guard (#2724)",
-    "files": [
-     ".github/workflows/ci.yml",
-     ".github/workflows/db-guard.yml",
-     "docs/DB-INVENTORY.md",
-     "scripts/ci/check-test-inventory.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -382914,6 +382884,22 @@
    [
     "PENDENCIAS.md",
     4
+   ],
+   [
+    "docs/ia/IA-010-ambiente-de-ensaio.md",
+    2
+   ],
+   [
+    "scripts/ia/README.md",
+    2
+   ],
+   [
+    "scripts/ia/ensaio-provisionamento.mjs",
+    2
+   ],
+   [
+    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    2
    ],
    [
     "supabase/deployment-manifest.json",
@@ -382932,19 +382918,7 @@
     2
    ],
    [
-    ".github/workflows/ci.yml",
-    2
-   ],
-   [
     "scripts/ci/vercel-env-cleanup.mjs",
-    2
-   ],
-   [
-    ".github/workflows/db-guard.yml",
-    2
-   ],
-   [
-    "scripts/ci/check-test-inventory.mjs",
     2
    ],
    [
@@ -382981,10 +382955,6 @@
    ],
    [
     "analise-prs/prs.csv",
-    1
-   ],
-   [
-    "analise-prs/prs.json",
     1
    ]
   ]

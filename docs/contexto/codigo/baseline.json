@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a5043f95d776ec116a1784a38fd54027031b48ba",
+  "commit": "636880baeb1413fbb56f0b234cedc19d63ec96c7",
   "branch": "main",
-  "data_commit": "2026-11-06T21:38:35-03:00",
+  "data_commit": "2026-11-07T09:50:20-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "636880b",
+    "data": "2026-11-07",
+    "assunto": "fix: blindar plano sintético contra IDs externos (#2757)"
+   },
    {
     "sha": "a5043f9",
     "data": "2026-11-06",
@@ -126,14 +131,9 @@
     "sha": "341d3fd",
     "data": "2026-11-05",
     "assunto": "chore: adiciona baseline local completo ao RELATORIO_CI (#2731)"
-   },
-   {
-    "sha": "2f2cc18",
-    "data": "2026-11-05",
-    "assunto": "chore: relatório CI e pendências de workflows (fix-ci-workflows-hxupgs) (#2730)"
    }
   ],
-  "arquivos_mudados_7d": 1041,
+  "arquivos_mudados_7d": 981,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8257,
   "arquivos_codigo": 4734,
-  "linhas_codigo": 873315,
+  "linhas_codigo": 873400,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -636,7 +636,7 @@
   },
   "scripts/ia": {
    "arquivos": 1,
-   "linhas": 571
+   "linhas": 565
   },
   "scripts/inventario": {
    "arquivos": 4,
@@ -784,7 +784,7 @@
   },
   "tests/contracts": {
    "arquivos": 95,
-   "linhas": 20505
+   "linhas": 20596
   },
   "vite.config.ts": {
    "arquivos": 1,
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 419,
+  "console_log": 420,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,
