@@ -83,6 +83,22 @@ if git diff --cached --quiet; then
 fi
 git commit -q -m "$MSG"
 
+# O SHA muda no rebase, mas estes metadados de autoria são preservados. Eles
+# distinguem o commit gerado do novo topo da origem quando o rebase descarta
+# nossa alteração por ela já ter sido aplicada por outro produtor.
+remember_generated_head() {
+  GENERATED_AUTHOR_EMAIL=$(git show -s --format=%ae HEAD)
+  GENERATED_AUTHOR_DATE=$(git show -s --format=%aI HEAD)
+}
+
+generated_commit_is_head() {
+  [ "$(git show -s --format=%B HEAD)" = "$MSG" ] &&
+    [ "$(git show -s --format=%ae HEAD)" = "$GENERATED_AUTHOR_EMAIL" ] &&
+    [ "$(git show -s --format=%aI HEAD)" = "$GENERATED_AUTHOR_DATE" ]
+}
+
+remember_generated_head
+
 if [ "$MODE" = "push" ]; then
   for attempt in 1 2 3; do
     if git push -q origin "HEAD:$BRANCH" 2>/tmp/push.err; then
@@ -104,7 +120,16 @@ if [ "$MODE" = "push" ]; then
     fi
     eval "$GEN_CMD --force"
     stage
-    if ! git diff --cached --quiet; then git commit -q --amend --no-edit; fi
+    if ! git diff --cached --quiet; then
+      if generated_commit_is_head; then
+        git commit -q --amend --no-edit
+      else
+        # O rebase pode descartar o commit gerado como patch equivalente. Nesse
+        # caso HEAD pertence à origem (ou ao usuário) e jamais deve ser emendado.
+        git commit -q -m "$MSG"
+      fi
+      remember_generated_head
+    fi
   done
   if [ "$MODE" != "pr" ]; then
     echo "ERRO: não foi possível publicar após 3 tentativas"; cat /tmp/push.err; exit 1

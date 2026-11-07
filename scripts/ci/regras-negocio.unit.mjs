@@ -62,3 +62,69 @@ test('publicador preserva trabalho local quando o push falha', () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('publicador não emenda commit alheio quando rebase descarta patch equivalente', () => {
+  const root = mkdtempSync(join(tmpdir(), 'regras-publish-equivalent-'));
+  const remote = join(root, 'remote.git');
+  const checkout = join(root, 'checkout');
+  const peer = join(root, 'peer');
+  try {
+    git(root, 'init', '--bare', '-q', remote);
+    git(root, 'init', '-q', '-b', 'main', checkout);
+    git(checkout, 'config', 'user.email', 'local@example.invalid');
+    git(checkout, 'config', 'user.name', 'Local');
+    mkdirSync(join(checkout, 'docs', 'ai-context'), { recursive: true });
+    writeFileSync(join(checkout, 'docs', 'ai-context', 'generated.md'), 'old\n');
+    git(checkout, 'add', '.');
+    git(checkout, 'commit', '-qm', 'baseline');
+    git(checkout, 'remote', 'add', 'origin', remote);
+    git(checkout, 'push', '-q', '-u', 'origin', 'main');
+    git(root, `--git-dir=${remote}`, 'symbolic-ref', 'HEAD', 'refs/heads/main');
+
+    git(root, 'clone', '-q', remote, peer);
+    git(peer, 'config', 'user.email', 'peer@example.invalid');
+    git(peer, 'config', 'user.name', 'Peer');
+    writeFileSync(join(peer, 'docs', 'ai-context', 'generated.md'), 'new\n');
+    git(peer, 'add', '.');
+    git(peer, 'commit', '-qm', 'chore: aplica conteúdo equivalente');
+    writeFileSync(join(peer, 'peer.txt'), 'trabalho concorrente\n');
+    git(peer, 'add', '.');
+    git(peer, 'commit', '-qm', 'feat: preserva trabalho concorrente');
+    git(peer, 'push', '-q', 'origin', 'main');
+
+    writeFileSync(join(checkout, 'docs', 'ai-context', 'generated.md'), 'new\n');
+    const generator = join(root, 'regenerate.sh');
+    writeFileSync(generator, `#!/usr/bin/env bash
+set -euo pipefail
+printf 'regenerated\\n' > docs/ai-context/generated.md
+`);
+    chmodSync(generator, 0o700);
+
+    const result = spawnSync('bash', [publishScript], {
+      cwd: checkout,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        BRANCH: 'main',
+        OUT_DIR: 'docs/ai-context',
+        MODE: 'push',
+        GEN_CMD: generator,
+      },
+      timeout: 30_000,
+    });
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    git(checkout, 'fetch', '-q', 'origin', 'main');
+    assert.equal(git(checkout, 'show', 'origin/main:docs/ai-context/generated.md'), 'regenerated\n');
+    assert.equal(git(checkout, 'show', 'origin/main:peer.txt'), 'trabalho concorrente\n');
+    assert.equal(git(checkout, 'log', '-1', '--format=%s', 'origin/main').trim(),
+      'chore(ai-context): atualiza contexto para agentes [skip ci]');
+    assert.equal(git(checkout, 'log', '-1', '--format=%ae', 'origin/main').trim(),
+      'ai-context-bot@users.noreply.github.com');
+    assert.equal(git(checkout, 'log', '-1', '--format=%s', 'origin/main^').trim(),
+      'feat: preserva trabalho concorrente');
+    assert.equal(git(checkout, 'log', '-1', '--format=%ae', 'origin/main^').trim(),
+      'peer@example.invalid');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
