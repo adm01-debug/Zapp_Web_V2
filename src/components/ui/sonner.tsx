@@ -31,7 +31,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:rounded-lg group-[.toast]:font-medium group-[.toast]:shadow-sm',
           cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:rounded-lg',
           closeButton: 'group-[.toast]:bg-card group-[.toast]:border-border/40 group-[.toast]:text-muted-foreground group-[.toast]:hover:text-foreground',
-          success: 'group-[.toaster]:!bg-success/10 group-[.toaster]:!border-success/30 group-[.toaster]:!text-success group-[.toaster]:backdrop-blur-xl',
+          success: 'group-[.toaster]:!bg-success group-[.toaster]:!border-success group-[.toaster]:!text-success-foreground group-[.toaster]:backdrop-blur-xl [&_[data-title]]:!text-success-foreground [&_[data-description]]:!text-success-foreground',
           error: 'group-[.toaster]:!bg-destructive/10 group-[.toaster]:!border-destructive/30 group-[.toaster]:!text-destructive group-[.toaster]:backdrop-blur-xl',
           warning: 'group-[.toaster]:!bg-warning/10 group-[.toaster]:!border-warning/30 group-[.toaster]:!text-warning group-[.toaster]:backdrop-blur-xl',
           info: 'group-[.toaster]:!bg-info/10 group-[.toaster]:!border-info/30 group-[.toaster]:!text-info group-[.toaster]:backdrop-blur-xl',

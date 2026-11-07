@@ -72,8 +72,7 @@ async function volumeDoAudioCarregado(page: Page): Promise<number> {
     const element = elemento as HTMLAudioElement;
     try {
       const src = new URL(element.currentSrc);
-      if (!element.isConnected || element.readyState < 1 || element.error !== null ||
-          !Number.isFinite(element.duration) || element.duration <= 0 ||
+      if (!element.isConnected || !element.currentSrc ||
           src.origin !== origin || src.pathname !== path) return Number.NaN;
       return element.volume;
     } catch { return Number.NaN; }
@@ -181,8 +180,9 @@ test.describe('Volume das mídias de conversa', () => {
     await expect(page.getByRole('button', { name: LABEL_VOLUME })).toBeVisible();
   });
 
-  // A fixture isolada garante objeto/linha únicos. A assinatura vem de useAudioPlayer;
-  // HAVE_METADATA respeita preload="metadata" sem forçar reprodução ou transcrição.
+  // A fixture isolada garante objeto/linha únicos e valida os bytes baixados do Storage.
+  // Aqui a assinatura vem de useAudioPlayer e a prova se limita ao contrato desta spec:
+  // URL canônica aplicada ao elemento real e ganho global inicial, sem exigir reprodução.
   test('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 

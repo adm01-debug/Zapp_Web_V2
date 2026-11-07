@@ -101,7 +101,12 @@ test.describe('Conversation state transitions', () => {
         page.getByText(/não foi possível encerrar a conversa/i)
       ).toBeVisible();
     } else {
-      await expect(page.getByText(/conversa encerrada com registro/i)).toBeVisible();
+      // O toast dura poucos segundos e pode desaparecer durante a atualização da
+      // lista/realtime. A pós-condição persistida é a prova funcional do encerramento:
+      // a mesma leitura autenticada usada na pré-condição passa a encontrar o registro.
+      await expect
+        .poll(() => fixtureHasClosureToday(page), { timeout: 10_000 })
+        .toBe(true);
     }
   });
 

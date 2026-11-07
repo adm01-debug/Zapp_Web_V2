@@ -64,6 +64,22 @@ function emPx(declaracao: string, insetDaAreaSegura: number): number {
 }
 
 describe('sonner — offset no celular (U1-04)', () => {
+  it('usa fundo sólido e foreground contrastante no toast de sucesso', async () => {
+    render(<Toaster />);
+    act(() => {
+      toast.success('Meta alcançada', { description: '54 de 50 contatos atendidos' });
+    });
+
+    const aviso = await waitFor(() => {
+      const elemento = document.querySelector<HTMLElement>('[data-sonner-toast][data-type="success"]');
+      expect(elemento).not.toBeNull();
+      return elemento!;
+    });
+    expect(aviso.className).toContain('!bg-success');
+    expect(aviso.className).toContain('!text-success-foreground');
+    expect(aviso.className).toContain('[&_[data-description]]:!text-success-foreground');
+  });
+
   it('aplica --mobile-offset-bottom em calc() com a área segura e preserva as laterais', async () => {
     const toaster = await toasterMontado();
 
