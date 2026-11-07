@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 17:18 UTC
+
+- **migrations** adicionado (1): `20261107170000_fix_message_reactions_rls`
+- **policies (RLS)** alterado (3): `public.message_reactions.message_reactions_delete_policy`, `public.message_reactions.message_reactions_insert_policy`, `public.message_reactions.message_reactions_update_policy`
+
 ## 2026-11-07 16:29 UTC
 
 - **functions** alterado (2): `public.is_admin_or_supervisor(_user_id uuid)`, `public.register_agent_active_day(p_profile_id uuid, p_day date)`
