@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 16:29 UTC
+
+- **functions** alterado (2): `public.is_admin_or_supervisor(_user_id uuid)`, `public.register_agent_active_day(p_profile_id uuid, p_day date)`
+
 ## 2026-11-07 14:50 UTC
 
 - **functions** alterado (2): `public.close_conversation_atomic(p_contact_id uuid, p_client_request_id uuid, p_close_reason text, p_outcome text, p_classification text, p_notes text)`, `public.is_admin_or_supervisor(_user_id uuid)`

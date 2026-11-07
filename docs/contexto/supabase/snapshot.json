@@ -56456,7 +56456,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 384,
+          "code_total_files": 385,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -60609,9 +60609,13 @@
             {
               "file": "supabase/migrations/20261013044500_gamification_streak_dias_seguidos.sql",
               "hits": 6
+            },
+            {
+              "file": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [
             "public.handle_conversation_closure_gamification",
