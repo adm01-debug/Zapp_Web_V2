@@ -69,6 +69,28 @@ export function certificateFailure(error, kind, engine = 'node') {
   return patterns.test(text);
 }
 
+/**
+ * WebKit/Linux can collapse a rejected provisional TLS load into the generic
+ * `Operation was cancelled`. That string alone is never certificate evidence.
+ * Accept it only when the exact controlled top-level request also failed once,
+ * with the same native cancellation and without any response/finished event.
+ */
+export function certificateNavigationFailure(error, kind, engine, record) {
+  if (certificateFailure(error, kind, engine)) return true;
+  if (engine !== 'webkit') return false;
+  const text = [error?.message, error?.cause?.message].filter(Boolean).join(' ');
+  const cancelled = /Operation was cancelled(?:; maybe frame was detached\?)?/i;
+  return cancelled.test(text)
+    && record?.request_count === 1
+    && record.request_failed_count === 1
+    && record.request_finished_count === 0
+    && record.response_count === 0
+    && record.ignored_event_count === 0
+    && record.response_statuses?.length === 0
+    && record.failure_error_texts?.length === 1
+    && cancelled.test(record.failure_error_texts[0] ?? '');
+}
+
 export function assertTlsClientContext(env, interfaces) {
   assertLoopbackOnly(interfaces); assertNoProxy(env);
   const runId = assertRunId(env.ZAPP_E2E_RUN_ID), sourceSha = assertSourceSha(env.GITHUB_SHA);
@@ -143,7 +165,9 @@ export async function probeBrowsers({ runId, sourceSha, env, engines, environmen
             diagnostic({ engine: name, kind, ...observation.record });
           } finally { observation?.stop(); await negative.close(); }
           if (!rejection) fail('browser-' + name + '-' + kind + '-accepted');
-          if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);
+          if (!certificateNavigationFailure(rejection, kind, name, observation?.record)) {
+            fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);
+          }
         }
         results[name] = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
       } finally { await context.close(); }
