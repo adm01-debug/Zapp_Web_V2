@@ -41,6 +41,8 @@ O workflow de preparo aceita PR e dispatch para obter a prova antes do merge, co
 
 O comando exige Linux, Docker local, Bun 1.4.0, OpenSSL 3, `certutil` (pacote `libnss3-tools`) e as dependências do checkout. A origem deste corte é `https://127.0.0.1:5173`; o tráfego dos serviços dentro do namespace continua em loopback. Rejeita qualquer uma das sete imagens sem digest e exige que a versão instalada do Playwright seja a mesma da imagem de navegador. O SHA registrado é o `git rev-parse HEAD` do checkout executado, inclusive quando o evento de PR usa um merge-ref.
 
+O Vite desse ambiente injeta um estado de conectividade online no navegador com `ZAPP_E2E_FORCE_ONLINE=1`. O namespace continua sem interface externa, mas o Chromium deixa de tratar os serviços HTTPS locais como indisponíveis apenas porque não existe uma rota padrão. Polling, envio de mensagens e ações da interface permanecem no caminho online esperado sem liberar acesso à internet. A configuração Vite comum não recebe essa adaptação.
+
 A sequência executada é:
 
 1. Validar o lock, o checkout e as dependências; conferir OpenSSL/NSS antes de gerar qualquer chave. Puxar os digests exatos e conferir `install`/`update-ca-certificates` na imagem do driver, sem credenciais.
