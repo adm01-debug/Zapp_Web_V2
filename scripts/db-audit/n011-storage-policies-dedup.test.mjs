@@ -192,8 +192,8 @@ test('estado final: avatars/DELETE tem exatamente 1 policy ("Users can delete th
   assert.deepEqual(grupo(todos, 'avatars', 'DELETE'), ['Users can delete their own avatar']);
 });
 
-test('estado final: avatars/SELECT tem exatamente 1 policy ("Anyone can view avatars")', () => {
-  assert.deepEqual(grupo(todos, 'avatars', 'SELECT'), ['Anyone can view avatars']);
+test('estado final: avatars/SELECT tem exatamente 1 policy ("avatars authenticated read")', () => {
+  assert.deepEqual(grupo(todos, 'avatars', 'SELECT'), ['avatars authenticated read']);
 });
 
 // --- Formato do arquivo de fix ---
