@@ -18,7 +18,7 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const workflow = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
 const matrix = jobOf(workflow, 'e2e-logado');
 const groups = [...matrix.matchAll(/^ {10}- name: (.+)$/gm)].map((match) => match[1]);
-assert.equal(groups.length, 3, 'atualize os cenarios se os grupos da matriz mudarem');
+assert.deepEqual(groups, Object.keys(GROUPS), 'atualize os cenarios se os grupos da matriz mudarem');
 const alert = onlyStep(stepsOf(matrix), (step) => scriptOf(step).includes('github.rest.issues.create('), 'alerta E2E');
 const closing = [...jobsOf(workflow)].flatMap(([id, job]) => stepsOf(job)
   .filter((step) => /state:\s*['"]closed['"]/.test(scriptOf(step))).map((step) => ({ id, job, step })));
@@ -38,11 +38,13 @@ test('E83: a recuperacao fica fora da matriz e depende de seu resultado completo
   assert.equal(conditionOf(close.step), 'success()');
 });
 
-function permutations(values) {
-  if (!values.length) return [[]];
-  return values.flatMap((value, index) => permutations(values.filter((_, i) => i !== index)).map((rest) => [value, ...rest]));
+function representativeOrders(values) {
+  const rotations = values.map((_, index) => [...values.slice(index), ...values.slice(0, index)]);
+  return [...rotations, ...rotations.map((order) => [...order].reverse())];
 }
-const orders = permutations(groups);
+// Cinco grupos teriam 120 permutações. As rotações nos dois sentidos colocam
+// cada grupo em todas as posições sem multiplicar o teste por um fatorial.
+const orders = representativeOrders(groups);
 const scenarios = [];
 for (let mask = 0; mask < 2 ** groups.length; mask++) {
   for (const [index, order] of orders.entries()) scenarios.push({
