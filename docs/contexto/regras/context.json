@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7991a1f470c5dd5e967f182563d76e857cff1301",
+  "sha": "5fec88f4357fdf7c80ac32b23554ffa9fcd4add6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 21:01 UTC",
+  "generated_at": "2026-11-07 21:13 UTC",
   "files_total": 8152,
   "code_files": 6011,
-  "code_lines": 1043259
+  "code_lines": 1043286
  },
  "version": "1.3.2",
- "facts_hash": "c774126448a933e7",
+ "facts_hash": "346645cdf5587e79",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68898,7 +68898,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15533,
+   "lines": 15560,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -342751,7 +342751,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15460,
+   "lines": 15487,
    "exports": [
     "type Json",
     "type Database",
@@ -383422,10 +383422,22 @@
   }
  },
  "git": {
-  "sha": "7991a1f470c5dd5e967f182563d76e857cff1301",
+  "sha": "5fec88f4357fdf7c80ac32b23554ffa9fcd4add6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5fec88f",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "chore(db): sincroniza artefatos derivados e inventário (#2783)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "7991a1f",
     "date": "2026-11-07",
@@ -384043,29 +384055,13 @@
     "files": [
      "e2e/fixtures/talkx-demo.ts"
     ]
-   },
-   {
-    "sha": "0a3442b",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "infra: monitorar releases V2 e V3 em trilhas separadas (#2747)",
-    "files": [
-     ".github/workflows/front-release-targets.yml",
-     ".github/workflows/notifica-falha-main.yml",
-     "CLAUDE.md",
-     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-     "docs/ci/README.md",
-     "docs/runbooks/deploy.md",
-     "docs/runbooks/slo.md",
-     "scripts/ci/ci-docs-baseline.unit.mjs",
-     "scripts/ci/front-release-targets.unit.mjs",
-     "scripts/ci/slo-docs-honesty.unit.mjs",
-     "scripts/vercel/README.md",
-     "scripts/vercel/verify-release-targets.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "src/integrations/supabase/types.ts",
+    3
+   ],
    [
     "e2e/navegacao-modulos.spec.ts",
     3
@@ -384091,23 +384087,11 @@
     3
    ],
    [
-    "docs/ci/README.md",
-    3
-   ],
-   [
-    "scripts/vercel/verify-release-targets.mjs",
+    "docs/DB-INVENTORY.md",
     2
    ],
    [
-    "CLAUDE.md",
-    2
-   ],
-   [
-    "scripts/ci/ci-docs-baseline.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/front-release-targets.unit.mjs",
+    "supabase/schema-catalog.json",
     2
    ],
    [
@@ -384115,11 +384099,11 @@
     2
    ],
    [
-    "src/integrations/supabase/types.ts",
+    ".github/workflows/e2e-logado-isolado.yml",
     2
    ],
    [
-    ".github/workflows/e2e-logado-isolado.yml",
+    "docs/ci/README.md",
     2
    ],
    [
@@ -384144,6 +384128,14 @@
    ],
    [
     "e2e/email-link-contato.spec.ts",
+    2
+   ],
+   [
+    "e2e/fixtures/e2e-contact.ts",
+    2
+   ],
+   [
+    "e2e/fixtures/isolated-qr.ts",
     2
    ]
   ]

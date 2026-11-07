@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7991a1f470c5dd5e967f182563d76e857cff1301` (2026-11-07T20:59:34Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5fec88f4357fdf7c80ac32b23554ffa9fcd4add6` (2026-11-07T21:11:16Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8311 |
 | arquivos_codigo | 4747 |
-| linhas_codigo | 877080 |
+| linhas_codigo | 877107 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56161 nós · 115800 arestas · 4139 comunidades · grafo do commit `7991a1f4`
+- 56161 nós · 115800 arestas · 4139 comunidades · grafo do commit `5fec88f4`
 - comunidades maiores: cn (915), react (863), vitest (761), badge.tsx (711), button.tsx (684), catalogShared.tsx (481), useMyWorkItems.ts (448), ref_node_assert (445), DashboardView.tsx (403), validation.ts (401), ref_node_fs (390), e2e-isolated-runtime.unit.mjs (367)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -397,15 +397,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/ci/README.md (15)
 - .github/workflows/db-guard.yml (13)
 - supabase/deployment-manifest.json (13)
-- scripts/ci/ci-docs-baseline.unit.mjs (12)
 - src/integrations/supabase/types.ts (12)
 - ESTADO.md (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
+- scripts/ci/ci-docs-baseline.unit.mjs (11)
 - .github/workflows/e2e-logado.yml (10)
+- supabase/schema-manifest.json (10)
 - .github/workflows/deploy-functions.yml (9)
 - scripts/db-audit/migration-evidence.json (9)
-- supabase/schema-manifest.json (9)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -472,7 +472,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/COMPLETE_SYSTEM_FEATURES.md` — 📋 Levantamento Completo de Funcionalidades do Sistema (1061 linhas)
 - `docs/CONEXOES_WHATSAPP_RUNBOOK.md` — Runbook — Conexões de WhatsApp (V2) (235 linhas)
 - `docs/CRM360_TECHNICAL_DOCS.md` — ZAPP-WEB × CRM 360° — Documentação Técnica (109 linhas)
-- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (288 linhas)
+- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (289 linhas)
 - `docs/DB-SECURITY.md` — Seguranca do banco — notas operacionais (279 linhas)
 - `docs/DEPLOYMENT.md` — 🚀 Guia de Deploy - ZAPP-WEB (349 linhas)
 - `docs/DISTRIBUTION-FALLBACKS.md` — Distribuição de Atendimentos — Tabela-Verdade de Fallbacks (314 linhas)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `5fec88f` chore(db): sincroniza artefatos derivados e inventário (#2783)
 - 2026-11-07 `7991a1f` fix: endurecer scripts e automatizar guardas residuais (#2773)
 - 2026-11-07 `cc39387` fix(e2e): tolera ruído de ambiente SIP 401 e Device 500 no guard de varredura (#2777)
 - 2026-11-07 `ea6c809` fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-07 `a9c9835` fix(db): protege streak e resoluções por usuário autenticado (#2766)
 - 2026-11-07 `b67ef0c` fix(db): fecha RLS multi-tenant do Copilot (#2763)
 - 2026-11-07 `761ab3b` fix: deep-link de tipo no inbox prevalece sobre preferência salva (PK-14)
-- 2026-11-07 `529389d` chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

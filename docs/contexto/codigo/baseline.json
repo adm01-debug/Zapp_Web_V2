@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7991a1f470c5dd5e967f182563d76e857cff1301",
+  "commit": "5fec88f4357fdf7c80ac32b23554ffa9fcd4add6",
   "branch": "main",
-  "data_commit": "2026-11-07T20:59:34Z",
+  "data_commit": "2026-11-07T21:11:16Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5fec88f",
+    "data": "2026-11-07",
+    "assunto": "chore(db): sincroniza artefatos derivados e inventário (#2783)"
+   },
    {
     "sha": "7991a1f",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "37822ce",
     "data": "2026-11-06",
     "assunto": "chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)"
-   },
-   {
-    "sha": "3886f4b",
-    "data": "2026-11-06",
-    "assunto": "fix: endurecer provisionamento sintético de IA (#2750)"
    }
   ],
   "arquivos_mudados_7d": 1107,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 713
+    "mudancas": 708
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -153,7 +153,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 202
+    "mudancas": 201
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/chat",
-    "mudancas": 109
+    "mudancas": 108
    },
    {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
@@ -222,10 +222,6 @@
     "mudancas": 13
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 12
-   },
-   {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 12
    },
@@ -242,7 +238,15 @@
     "mudancas": 11
    },
    {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 11
+   },
+   {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 10
    },
    {
@@ -254,19 +258,15 @@
     "mudancas": 9
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 9
-   },
-   {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/db-audit/replay-known-failures.json",
-    "mudancas": 8
+    "arquivo": "AGENTS.md",
+    "mudancas": 7
    },
    {
-    "arquivo": "AGENTS.md",
+    "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 7
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8311,
   "arquivos_codigo": 4747,
-  "linhas_codigo": 877080,
+  "linhas_codigo": 877107,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15533
+   "linhas": 15560
   },
   "src/lib": {
    "arquivos": 281,
@@ -802,7 +802,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15460
+   "linhas": 15487
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
