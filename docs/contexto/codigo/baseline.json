@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "51d456a9e1660350929b2a5767d988185ed18de1",
+  "commit": "effd6b0bb9876f776fcf6a150b1dde35df25723f",
   "branch": "main",
-  "data_commit": "2026-11-07T19:37:05Z",
+  "data_commit": "2026-11-07T19:50:19Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "effd6b0",
+    "data": "2026-11-07",
+    "assunto": "chore: instruções enxutas para agentes (#2762)"
+   },
    {
     "sha": "51d456a",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "3adec58",
     "data": "2026-11-06",
     "assunto": "fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)"
-   },
-   {
-    "sha": "0a3442b",
-    "data": "2026-11-06",
-    "assunto": "infra: monitorar releases V2 e V3 em trilhas separadas (#2747)"
    }
   ],
-  "arquivos_mudados_7d": 1075,
+  "arquivos_mudados_7d": 1085,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -206,12 +206,16 @@
     "mudancas": 18
    },
    {
+    "arquivo": "CLAUDE.md",
+    "mudancas": 15
+   },
+   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 15
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 14
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 13
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
@@ -219,10 +223,6 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 12
    },
    {
@@ -266,16 +266,12 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+    "arquivo": "AGENTS.md",
     "mudancas": 7
    },
    {
     "arquivo": "supabase/functions/deno.json",
     "mudancas": 7
-   },
-   {
-    "arquivo": "AGENTS.md",
-    "mudancas": 6
    },
    {
     "arquivo": "e2e/email-navy-visual.spec.ts",
@@ -287,6 +283,10 @@
    },
    {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
     "mudancas": 6
    },
    {
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8293,
+  "arquivos_total": 8299,
   "arquivos_codigo": 4737,
-  "linhas_codigo": 875494,
+  "linhas_codigo": 875565,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -335,7 +335,7 @@
   "testes": 2581,
   "workflows": 21,
   "scripts": 419,
-  "docs_md": 1064
+  "docs_md": 1070
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 200,
-   "linhas": 41729
+   "linhas": 41800
   },
   "scripts/db-audit": {
    "arquivos": 81,

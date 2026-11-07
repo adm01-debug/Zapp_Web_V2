@@ -828,7 +828,7 @@
   {
    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
    "tipo": "unit",
-   "linhas": 543,
+   "linhas": 545,
    "testa": [],
    "casos": 44
   },

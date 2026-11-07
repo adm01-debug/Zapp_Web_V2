@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "51d456a9e1660350929b2a5767d988185ed18de1",
+  "sha": "effd6b0bb9876f776fcf6a150b1dde35df25723f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 19:41 UTC",
-  "files_total": 8134,
+  "generated_at": "2026-11-07 20:00 UTC",
+  "files_total": 8140,
   "code_files": 6000,
-  "code_lines": 1041534
+  "code_lines": 1041605
  },
  "version": "1.3.2",
- "facts_hash": "aa8fc771711bcc97",
+ "facts_hash": "4d9375a82028d53f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67945,7 +67945,7 @@
   {
    "module": "scripts",
    "files": 436,
-   "lines": 86210,
+   "lines": 86281,
    "tables": [
     "a",
     "alem_do_limite",
@@ -261879,19 +261879,36 @@
   },
   "scripts/ci/check-claude-md-integrity.mjs": {
    "path": "scripts/ci/check-claude-md-integrity.mjs",
-   "lines": 53,
+   "lines": 122,
    "env": [
     "CLAUDE_MD_BASE"
    ],
    "params": [
     {
+     "name": "AGENTS",
+     "value": "'AGENTS.md'"
+    },
+    {
+     "name": "DOCS_DIR",
+     "value": "'docs/agentes'"
+    },
+    {
      "name": "SHRINK_THRESHOLD",
      "value": "0.30"
+    },
+    {
+     "name": "FILE_SHRINK_THRESHOLD",
+     "value": "0.50"
     }
+   ],
+   "rule_comments": [
+    "100)}% vs ${BASE} (atual: ${agora} bytes, base: ${naBase} bytes); limite por arquivo e ${Math.round(FILE_SHRINK_THRESHOLD * 100)}%.`);"
    ],
    "doc": "!/usr/bin/env node",
    "percents": [
-    "* Verifica: arquivo existe, cabecalhos obrigatorios presentes, nao encolheu >30% vs a base."
+    "* AGENTS.md + CLAUDE.md + docs/agentes/*.md nao encolheu >30% em bytes vs a base, e cada arquivo",
+    "* vigiado (AGENTS.md e cada docs/agentes/*.md que exista na base) continua existindo com >=50% do",
+    "// com >= 50% do tamanho de la. CLAUDE.md fica de fora: e so `@AGENTS.md` por design."
    ]
   },
   "scripts/ci/check-disposable-pg-backoff.unit.mjs": {
@@ -262249,7 +262266,7 @@
   },
   "scripts/ci/ci-docs-baseline.unit.mjs": {
    "path": "scripts/ci/ci-docs-baseline.unit.mjs",
-   "lines": 543,
+   "lines": 545,
    "params": [
     {
      "name": "SECAO_ABERTURA",
@@ -262589,6 +262606,7 @@
    "path": "scripts/ci/docs-deploy-coerencia.unit.mjs",
    "lines": 50,
    "rule_comments": [
+    "CLAUDE.md e so `@AGENTS.md`; a regra de deploy mora aqui",
     "\\*/, 'gatilho deve cobrir as Edge Functions');",
     "\\*\\/\\*\\.md/, 'documentação não deve disparar deploy');",
     "\\*somente\\*\\* via `workflow_dispatch`/i);"
@@ -383140,10 +383158,32 @@
   }
  },
  "git": {
-  "sha": "51d456a9e1660350929b2a5767d988185ed18de1",
+  "sha": "effd6b0bb9876f776fcf6a150b1dde35df25723f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "effd6b0",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "chore: instruções enxutas para agentes (#2762)",
+    "files": [
+     ".agents/skills/zapp-web-v2/SKILL.md",
+     ".claude/skills/zapp-web-v2/SKILL.md",
+     "AGENTS.md",
+     "CLAUDE.md",
+     "docs/agentes/banco.md",
+     "docs/agentes/evolution-go.md",
+     "docs/agentes/github-ci.md",
+     "docs/agentes/mapa-repo.md",
+     "docs/agentes/regras-dominio.md",
+     "docs/agentes/vercel-deploy.md",
+     "scripts/ci/check-claude-md-integrity.mjs",
+     "scripts/ci/ci-docs-baseline.unit.mjs",
+     "scripts/ci/docs-deploy-coerencia.unit.mjs",
+     "scripts/ci/front-release-targets.unit.mjs"
+    ]
+   },
    {
     "sha": "51d456a",
     "date": "2026-11-07",
@@ -383728,15 +383768,6 @@
      "src/components/talkx/help/TalkXHelpCenter.tsx",
      "src/hooks/ui/use-toast.ts"
     ]
-   },
-   {
-    "sha": "a4e43d1",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)",
-    "files": [
-     "scripts/ci/vercel-env-cleanup.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -383765,8 +383796,16 @@
     3
    ],
    [
-    "scripts/ci/vercel-env-cleanup.mjs",
-    3
+    "CLAUDE.md",
+    2
+   ],
+   [
+    "scripts/ci/ci-docs-baseline.unit.mjs",
+    2
+   ],
+   [
+    "scripts/ci/front-release-targets.unit.mjs",
+    2
    ],
    [
     "e2e/quick-controls-volume.spec.ts",
@@ -383810,14 +383849,6 @@
    ],
    [
     "e2e/fixtures/isolated-qr.ts",
-    2
-   ],
-   [
-    "e2e/fixtures/talkx-demo.ts",
-    2
-   ],
-   [
-    "e2e/navegacao-modulos.spec.ts",
     2
    ]
   ]

@@ -5,7 +5,7 @@
   "linguagens": [
    "TypeScript (4188)",
    "SQL (1291)",
-   "Markdown (1064)",
+   "Markdown (1070)",
    "JSON (596)",
    "JavaScript (432)",
    "Shell (231)",
@@ -1073,7 +1073,7 @@
   {
    "arquivo": "AGENTS.md",
    "titulo": "AGENTS.md — Zapp Web V2",
-   "linhas": 195
+   "linhas": 100
   },
   {
    "arquivo": "CHANGELOG.md",
@@ -1082,8 +1082,8 @@
   },
   {
    "arquivo": "CLAUDE.md",
-   "titulo": "CLAUDE.md — ZAPP WEB V2 (ficha técnica do repositório)",
-   "linhas": 381
+   "titulo": null,
+   "linhas": 2
   },
   {
    "arquivo": "CONTRIBUTING.md",
@@ -1350,6 +1350,10 @@
   {
    "pasta": "docs/ci",
    "arquivos_md": 7
+  },
+  {
+   "pasta": "docs/agentes",
+   "arquivos_md": 6
   },
   {
    "pasta": "docs/migration",
