@@ -53095,6 +53095,36 @@
       {
         "args": "",
         "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "aba74e613d0940a3",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "sql",
+        "leakproof": false,
+        "name": "get_ai_usage_outbox_drain_cron_secret",
+        "owner": "postgres",
+        "returns": "text",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
           "code": [
             {
               "file": "supabase/functions/batch-fetch-avatars/index.ts",
@@ -87764,6 +87794,11 @@
         "statements": 1,
         "statements_sha": "3ae44434ba41910a",
         "version": "20261103201500"
+      },
+      {
+        "name": "ai_usage_outbox_drain_cron",
+        "statements": [],
+        "version": "20261103223000"
       }
     ],
     "policies": [
@@ -100278,6 +100313,11 @@
         "created_at": "2026-10-02T09:55:46.471289+00:00",
         "description": "",
         "name": "ai_jobs_cron_secret"
+      },
+      {
+        "created_at": "2026-11-07T11:22:53.500487+00:00",
+        "description": "",
+        "name": "ai_usage_outbox_drain_cron_secret"
       },
       {
         "created_at": "2026-09-30T19:08:33.596592+00:00",

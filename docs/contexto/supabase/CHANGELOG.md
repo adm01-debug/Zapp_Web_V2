@@ -2,6 +2,12 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-07 11:34 UTC
+
+- **functions** adicionado (1): `public.get_ai_usage_outbox_drain_cron_secret()`
+- **migrations** adicionado (1): `20261103223000_ai_usage_outbox_drain_cron`
+- **vault secrets (nomes)** adicionado (1): `ai_usage_outbox_drain_cron_secret`
+
 ## 2026-11-07 02:02 UTC
 
 - **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_03`

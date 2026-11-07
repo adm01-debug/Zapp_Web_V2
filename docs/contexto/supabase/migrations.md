@@ -1086,3 +1086,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261102042200 | [talkx_delivery_log_sem_prazo_fixo](migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql) | 3 |
 | 20261102052200 | [talkx_retencao_guarda_e_test_sends_90](migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql) | 3 |
 | 20261103201500 | [remove_pagamentos_e_special_agent](migrations/20261103201500_remove_pagamentos_e_special_agent.sql) | 1 |
+| 20261103223000 | [ai_usage_outbox_drain_cron](migrations/20261103223000_ai_usage_outbox_drain_cron.sql) | 0 |

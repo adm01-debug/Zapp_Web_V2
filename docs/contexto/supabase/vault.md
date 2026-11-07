@@ -3,6 +3,7 @@
 | nome | descrição | criado em |
 |---|---|---|
 | ai_jobs_cron_secret |  | 2026-10-02 09:55:46.471289+00:00 |
+| ai_usage_outbox_drain_cron_secret |  | 2026-11-07 11:22:53.500487+00:00 |
 | avatars_refresh_cron_secret | Credencial de maquina do cron avatars-refresh (pg_cron -> edge). Gerada in-db 2026-09-30. NUNCA logar. | 2026-09-30 19:08:33.596592+00:00 |
 | connection_health_check_cron_secret | Credencial de maquina do cron connection-health-check (pg_cron -> edge). Gerada in-db 2026-09-30. NUNCA logar. | 2026-09-30 19:08:33.596592+00:00 |
 | gmail_cron_secret | x-cron-secret para autenticar chamadas do pg_cron a edge gmail-cron-sync | 2026-08-29 14:37:04.613267+00:00 |
