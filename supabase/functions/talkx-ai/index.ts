@@ -27,7 +27,7 @@
  * são criadas lá. Enquanto as chaves não existirem, o padrão do item vale:
  * orçamento 0 = desligado, logo a função recusa com `ai_disabled`.
  */
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, internalErrorResponse, jsonResponse, Logger } from "../_shared/validation.ts";
 import { calcularCusto, type TarifaDeModelo, type UnidadeCobravel } from "../_shared/ai-usage.ts";
 
