@@ -682,7 +682,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
     const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
       ...projects.flatMap(name => ['--project', name]), ...(shard ? ['--shard', shard] : []), '--workers', String(browserWorkers())];
-    const inventory = collectPlaywrightInventory({ output, scope, projects,
+    const inventory = collectPlaywrightInventory({ output, scope, projects, ...(shard ? { shard } : {}),
       execute: report => docker(['exec', '-e', 'PLAYWRIGHT_JSON_OUTPUT_FILE=' + report,
         ...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),
     });

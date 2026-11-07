@@ -98,6 +98,10 @@ function suiteJson({ listed = false, fault, group = AUTH_GROUP } = {}) {
   const projects = GROUPS[group].filter(name => fault !== 'missing-project-' + name);
   const report = playwrightJson({ listed });
   report.config.projects = projects.map(name => ({ name, repeatEach: 1 }));
+  if (GROUP_SHARDS[group]) {
+    const [current, total] = GROUP_SHARDS[group].split('/').map(Number);
+    report.config.shard = { current, total };
+  }
   report.suites = projects.map(name => {
     const suite = structuredClone(report.suites[0]);
     suite.title = name + '.spec.ts';
@@ -1025,7 +1029,6 @@ const suiteFaults = {
     'anon_key_sha256', 'user_id', 'profile_id', 'connection_id', 'instance_id'].map(key => ['qr-proof-' + key, 'qr-seed-proof'])),
   ...Object.fromEntries([...SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'pagination_seed_count'].map(key => ['suite-proof-' + key, 'suite-seed-proof-mismatch'])),
   ...Object.fromEntries([...PROVIDER_FLAGS, 'schema', 'run_id', 'source_sha', 'catalog_sku', 'delivery_proofs', 'delivery_proofs.text', 'delivery_proofs.catalog_image', 'delivery_proofs.storage_image', 'delivery_proofs-extra'].map(key => ['provider-proof-' + key, 'provider-proof-mismatch'])),
-  ...Object.fromEntries(GROUPS[AUTH_GROUP].map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),
 };
 for (const [fault, expectedCode] of Object.entries(suiteFaults)) test('suite controller: ' + fault + ' blocks browser without concealing cleanup', async t => {
   const value = await controllerFixture(t, fault, { scope: 'suite' });

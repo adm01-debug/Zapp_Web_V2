@@ -32,7 +32,9 @@ function conversationSkipContract(proof, inventory, scope) {
       !record(proof.sourceBlobs) || Object.keys(proof.sourceBlobs).length !== 1 ||
       proof.sourceBlobs[CONVERSATION_SKIP.sourceFile] !== CONVERSATION_SKIP.sourceBlob) fail('PLATFORM_SKIP_SOURCE');
   const keys = new Map();
-  for (const project of [...CONVERSATION_SKIP.projects, CONVERSATION_SKIP.chromium]) {
+  const reviewedProjects = [...CONVERSATION_SKIP.projects, CONVERSATION_SKIP.chromium];
+  const requiredProjects = inventory.shard ? reviewedProjects.filter(project => inventory.projects.includes(project)) : reviewedProjects;
+  for (const project of requiredProjects) {
     const matches = inventory.cases.filter(item => item.project === project && item.location?.file === CONVERSATION_SKIP.reportFile && item.location?.line === CONVERSATION_SKIP.line);
     if (matches.length !== 1) fail('PLATFORM_SKIP_INVENTORY');
     const item = matches[0];
@@ -42,8 +44,8 @@ function conversationSkipContract(proof, inventory, scope) {
     if (item.key !== key) fail('PLATFORM_SKIP_IDENTITY');
     keys.set(project, key);
   }
-  return { keys: new Set(CONVERSATION_SKIP.projects.map(project => keys.get(project))), allKeys: new Set(keys.values()), chromiumKey: keys.get(CONVERSATION_SKIP.chromium),
-    metadata: { sourceSha: proof.sourceSha, file: CONVERSATION_SKIP.sourceFile, gitBlob: CONVERSATION_SKIP.sourceBlob } };
+  return { keys: new Set(CONVERSATION_SKIP.projects.map(project => keys.get(project)).filter(Boolean)), allKeys: new Set(keys.values()), chromiumKey: keys.get(CONVERSATION_SKIP.chromium),
+    metadata: { sourceSha: proof.sourceSha, file: CONVERSATION_SKIP.sourceFile, gitBlob: CONVERSATION_SKIP.sourceBlob, ...(inventory.shard ? { shard: inventory.shard } : {}) } };
 }
 
 function matchingPlatformAnnotations(testAnnotations, resultAnnotations, skipped) {
@@ -69,6 +71,21 @@ function knownConversationSkip(item) {
 function projectList(values) {
   if (!Array.isArray(values) || values.length === 0 || values.some(value => !string(value)) || new Set(values).size !== values.length) fail('INVALID_PROJECTS');
   return [...values].sort();
+}
+
+function shardValue(value) {
+  if (value === undefined || value === null) return null;
+  if (!record(value) || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify(['current', 'total']) ||
+      !integer(value.current) || value.current === 0 || !integer(value.total) || value.total === 0 || value.current > value.total) fail('INVALID_SHARD');
+  return `${value.current}/${value.total}`;
+}
+
+function expectedShard(value) {
+  if (value === undefined) return null;
+  if (typeof value !== 'string' || !/^[1-9]\d*\/[1-9]\d*$/.test(value)) fail('INVALID_SHARD');
+  const [current, total] = value.split('/').map(Number);
+  if (!Number.isSafeInteger(current) || !Number.isSafeInteger(total) || current > total) fail('INVALID_SHARD');
+  return value;
 }
 
 function readReport(json) {
@@ -111,7 +128,7 @@ function readReport(json) {
     }
   };
   walk(json.suites);
-  return { cases, configured, errors: json.errors.length };
+  return { cases, configured, errors: json.errors.length, shard: shardValue(json.config.shard) };
 }
 
 function matchingProjects(cases, expected) {
@@ -121,15 +138,20 @@ function matchingProjects(cases, expected) {
 }
 
 /** Consume only the separate JSON emitted by `playwright test --list`. */
-export function readPlaywrightInventory(json, { projects } = {}) {
+export function readPlaywrightInventory(json, { projects, shard } = {}) {
   const report = readReport(json);
   if (report.errors) fail('INVENTORY_COLLECTION_ERRORS');
   if (!report.cases.length) fail('EMPTY_INVENTORY');
   if (report.cases.some(item => item.results.length !== 0)) fail('INVENTORY_CONTAINS_EXECUTIONS');
-  const actualProjects = matchingProjects(report.cases, projects);
+  const requiredShard = expectedShard(shard);
+  if (report.shard !== requiredShard) fail('SHARD_MISMATCH');
+  const actualProjects = matchingProjects(report.cases, requiredShard ? undefined : projects);
+  const selectedProjects = requiredShard ? projectList(projects) : null;
+  if (selectedProjects && actualProjects.some(project => !selectedProjects.includes(project))) fail('PROJECT_INVENTORY_MISMATCH');
   return {
     schema: 1, kind: 'playwright-inventory', total: report.cases.length,
     projects: actualProjects,
+    ...(requiredShard ? { selectedProjects, shard: requiredShard } : {}),
     cases: report.cases.map(({ key, project, location, expectedStatus, annotationTypes }) => ({ key, project, location, expectedStatus, annotationTypes })),
   };
 }
@@ -161,10 +183,24 @@ export function summarizePlaywrightResult(json, { scope = 'unknown', expectedPro
     if (!record(inventory) || inventory.schema !== 1 || inventory.kind !== 'playwright-inventory' || !Array.isArray(inventory.cases) || inventory.cases.length === 0 || inventory.total !== inventory.cases.length) fail('MISSING_OR_INVALID_INVENTORY');
     const expected = new Map(inventory.cases.map(item => [item.key, item]));
     if (expected.size !== inventory.cases.length) fail('DUPLICATE_INVENTORY_CASE');
-    const projects = matchingProjects(inventory.cases, expectedProjects || inventory.projects);
+    const inventoryShard = expectedShard(inventory.shard);
+    let projects;
+    let selectedProjects;
+    if (inventoryShard) {
+      selectedProjects = projectList(inventory.selectedProjects);
+      if (expectedProjects && JSON.stringify(selectedProjects) !== JSON.stringify(projectList(expectedProjects))) fail('PROJECT_INVENTORY_MISMATCH');
+      projects = matchingProjects(inventory.cases, inventory.projects);
+      if (projects.some(project => !selectedProjects.includes(project))) fail('PROJECT_INVENTORY_MISMATCH');
+      summary.shard = inventoryShard;
+    } else {
+      if (inventory.selectedProjects !== undefined) fail('INVALID_PROJECTS');
+      projects = matchingProjects(inventory.cases, expectedProjects || inventory.projects);
+    }
     summary.projects = projects;
     summary.counts.total = expected.size;
     const report = readReport(json);
+    if (report.shard !== inventoryShard) fail('SHARD_MISMATCH');
+    if (inventoryShard && matchingProjects(report.cases).some(project => !selectedProjects.includes(project))) fail('PROJECT_INVENTORY_MISMATCH');
     const platform = conversationPlatformSkips === undefined ? null : conversationSkipContract(conversationPlatformSkips, inventory, scope);
     if (platform) summary.runtimeSkipContract = platform.metadata;
     summary.inventoryVerified = true;
@@ -235,7 +271,7 @@ export function summarizePlaywrightResult(json, { scope = 'unknown', expectedPro
     for (const name of Object.keys(actualStats)) {
       if (!integer(json.stats[name]) || json.stats[name] !== actualStats[name]) reason('stats_mismatch');
     }
-    if (platform && summary.counts.known_runtime_skip > 0 && !summary.cases.some(item => item.key === platform.chromiumKey && item.outcome === 'passed')) reason('platform_skip_without_chromium_pass');
+    if (platform && summary.counts.known_runtime_skip > 0 && platform.chromiumKey && !summary.cases.some(item => item.key === platform.chromiumKey && item.outcome === 'passed')) reason('platform_skip_without_chromium_pass');
     if (summary.counts.total !== summary.counts.passed + summary.counts.expected_failure + summary.counts.unexpected_pass + summary.counts.failed + summary.counts.flaky + summary.counts.skipped_explicit + summary.counts.skipped_runtime + summary.counts.not_run + summary.counts.missing_from_report + (summary.counts.known_runtime_skip || 0)) reason('case_count_mismatch');
     summary.ok = summary.reasons.length === 0;
     summary.allPassed = summary.ok && summary.counts.passed === summary.counts.total;
