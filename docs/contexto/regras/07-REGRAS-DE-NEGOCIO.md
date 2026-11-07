@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7f3c25944a` · branch `main` · 2026-11-07 13:04 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0601e3b64e` · branch `main` · 2026-11-07 13:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4551,7 +4551,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21125 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21129 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4562,7 +4562,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useExternalCatalog.test.ts` | 80 | useExternalCatalog · Initialization · initializes with empty state · exposes all expected methods … |
 | `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 80 | Fase F — correções da auditoria · a busca ignora acento e caixa:  · lista nula não derruba o recorte (guarda  · concluída SEM carimbo entra nos 7 dias da Lista (mesma regra do Quadro) … |
 | `supabase/functions/multiplix-send/index.test.ts` | 80 | personalize resolve {{empresa}} com o nome da empresa · personalize resolve {{saudacao}} para um período válido do dia · personalize mantém o texto byte a byte E reporta {{empresa}} sem valor em missing (MX06) · personalize usa fallback [variavel] para placeholder fora do conjunto fixo (nunca lança) … |
-| `scripts/db-audit/check-migration-drift.test.mjs` | 72 | aceita migration com nome e SQL equivalentes no ledger · aceita registro legado sem name/statements, sem inventar evidencia · fixa arquivo legado por hash sem chamar seus bytes de conteudo historico · name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger … |
+| `scripts/db-audit/check-migration-drift.test.mjs` | 76 | aceita migration com nome e SQL equivalentes no ledger · aceita registro legado sem name/statements, sem inventar evidencia · fixa arquivo legado por hash sem chamar seus bytes de conteudo historico · name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger … |
 | `src/lib/__tests__/emailHtml.test.ts` | 70 | sanitizeEmailHtml — XSS básico · remove <script> · remove event handlers (onclick, onerror, onload) · remove javascript: em href … |
 | `src/hooks/__tests__/useEvolutionApi.test.ts` | 69 | useEvolutionApi - Exhaustive Test Suite · Initialization · starts with isLoading = false · exposes all supported functions … |
 | `supabase/functions/talkx-send/index.test.ts` | 69 | personalize resolves the built-in placeholders (nome/apelido/empresa/saudacao) · personalize falls back to a bracket placeholder for an unresolved variable instead of throwing · personalize substitutes the real value when the contact has that custom field · personalize resolves multiple custom values in the same message … |

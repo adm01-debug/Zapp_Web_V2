@@ -4,7 +4,7 @@
  "stack": {
   "linguagens": [
    "TypeScript (4187)",
-   "SQL (1281)",
+   "SQL (1282)",
    "Markdown (1042)",
    "JSON (595)",
    "JavaScript (430)",
@@ -1213,7 +1213,7 @@
   {
    "arquivo": "docs/MIGRATIONS.md",
    "titulo": "Migrations — procedimento e armadilhas",
-   "linhas": 580
+   "linhas": 595
   },
   {
    "arquivo": "docs/POP-ATENDIMENTO-BASICO.md",

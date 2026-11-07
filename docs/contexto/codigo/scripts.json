@@ -721,7 +721,7 @@
   {
    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
    "descricao": "* Valida supabase/migrations e compara cada migration com",
-   "linhas": 892,
+   "linhas": 1007,
    "env": [
     "DESTINO_URL",
     "LEDGER_RETRY_DELAYS_MS",

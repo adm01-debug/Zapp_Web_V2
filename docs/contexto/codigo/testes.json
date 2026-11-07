@@ -1993,9 +1993,9 @@
   {
    "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
    "tipo": "unit",
-   "linhas": 1178,
+   "linhas": 1323,
    "testa": [],
-   "casos": 72
+   "casos": 76
   },
   {
    "arquivo": "scripts/db-audit/check-realtime-subscriptions.test.mjs",

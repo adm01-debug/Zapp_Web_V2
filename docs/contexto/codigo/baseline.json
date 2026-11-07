@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7f3c25944a116bfb5b7b4693d4d1ece56c2eb768",
+  "commit": "0601e3b64e4d1c867827f4a045ac984a0ecee4f5",
   "branch": "main",
-  "data_commit": "2026-11-07T13:02:42Z",
+  "data_commit": "2026-11-07T10:29:13-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0601e3b",
+    "data": "2026-11-07",
+    "assunto": "fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)"
+   },
    {
     "sha": "7f3c259",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "72fd81d",
     "data": "2026-11-05",
     "assunto": "chore: atualiza RELATORIO_CI e PENDENCIAS com evidência real do Vitest e E2E authenticated"
-   },
-   {
-    "sha": "429bdb1",
-    "data": "2026-11-05",
-    "assunto": "chore: atualiza PENDENCIAS.md e RELATORIO_CI.md com estado real dos CIs"
    }
   ],
-  "arquivos_mudados_7d": 1076,
+  "arquivos_mudados_7d": 1079,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -258,15 +258,15 @@
     "mudancas": 9
    },
    {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 8
+   },
+   {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 8
    },
    {
     "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 7
    },
    {
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8257,
+  "arquivos_total": 8258,
   "arquivos_codigo": 4734,
-  "linhas_codigo": 873404,
+  "linhas_codigo": 873664,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -330,7 +330,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 216,
-  "migrations": 1082,
+  "migrations": 1083,
   "cron_jobs": 26,
   "testes": 2579,
   "workflows": 21,
@@ -612,7 +612,7 @@
   },
   "scripts/db-audit": {
    "arquivos": 81,
-   "linhas": 15062
+   "linhas": 15322
   },
   "scripts/db-tests": {
    "arquivos": 3,
@@ -873,6 +873,10 @@
    "linhas": 1024
   },
   {
+   "arquivo": "scripts/db-audit/check-migration-drift.mjs",
+   "linhas": 1007
+  },
+  {
    "arquivo": "supabase/functions/crm-integration/index.ts",
    "linhas": 998
   },
@@ -895,10 +899,6 @@
   {
    "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
    "linhas": 947
-  },
-  {
-   "arquivo": "scripts/ai-context/gerar.mjs",
-   "linhas": 924
   }
  ],
  "qualidade": {

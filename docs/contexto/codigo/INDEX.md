@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7f3c25944a116bfb5b7b4693d4d1ece56c2eb768` (2026-11-07T13:02:42Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `0601e3b64e4d1c867827f4a045ac984a0ecee4f5` (2026-11-07T10:29:13-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4187), SQL (1281), Markdown (1042), JSON (595), JavaScript (430), Shell (231), Python (119), YAML (29)
+- linguagens: TypeScript (4187), SQL (1282), Markdown (1042), JSON (595), JavaScript (430), Shell (231), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8257 |
+| arquivos_total | 8258 |
 | arquivos_codigo | 4734 |
-| linhas_codigo | 873404 |
+| linhas_codigo | 873664 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -46,7 +46,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 490 |
 | edge_functions | 85 |
 | tabelas | 216 |
-| migrations | 1082 |
+| migrations | 1083 |
 | cron_jobs | 26 |
 | testes | 2579 |
 | workflows | 21 |
@@ -385,8 +385,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55876 nós · 115374 arestas · 4117 comunidades · grafo do commit `7f3c2594`
-- comunidades maiores: lucide-react (901), cn (805), react (648), vitest (539), DashboardView.tsx (514), catalogShared.tsx (496), validation.ts (419), useTalkXSegments.ts (358), ref_node_fs (319), chat.ts (307), useTeamChatPanel.ts (302), useAuth (296)
+- 55879 nós · 115382 arestas · 4193 comunidades · grafo do commit `0601e3b6`
+- comunidades maiores: lucide-react (785), react (708), DashboardView.tsx (530), ExternalProductManagement.tsx (523), useAuth.tsx (465), chat.ts (416), TalkXOverview.tsx (402), validation.ts (392), inspect.ts (364), ref_node_assert (361), vitest (361), cn (357)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -483,7 +483,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/INCIDENT-RUNBOOK.md` — 🚨 ZAPP-WEB — Runbook de Incidentes (349 linhas)
 - `docs/JORNADA_MENSAGEM_WHATSAPP.md` — Jornada da mensagem de WhatsApp — Zapp Web V2 (92 linhas)
 - `docs/LGPD-RETENTION-POLICY.md` — 🛡️ ZAPP-WEB — Política de Retenção de Dados (LGPD) (398 linhas)
-- `docs/MIGRATIONS.md` — Migrations — procedimento e armadilhas (580 linhas)
+- `docs/MIGRATIONS.md` — Migrations — procedimento e armadilhas (595 linhas)
 - `docs/POP-ATENDIMENTO-BASICO.md` — 📝 POP — Procedimento Operacional Padrão (256 linhas)
 - `docs/PROJECT_TEMPLATE.md` — 🏗️ Template de Projeto Base - WhatsApp CRM (875 linhas)
 - `docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md` — PROMPT PARA LOVABLE — Integração completa CRM 360° no zapp-web (222 linhas)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `0601e3b` fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)
 - 2026-11-07 `7f3c259` infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)
 - 2026-11-07 `636880b` fix: blindar plano sintético contra IDs externos (#2757)
 - 2026-11-06 `a5043f9` fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `0a3442b` infra: monitorar releases V2 e V3 em trilhas separadas (#2747)
 - 2026-11-06 `86c9ec8` fix: reconciliar drift do DB Live Guard (#2741)
 - 2026-11-06 `abfe326` chore: validar manifesto de edge functions no CI por PR (#2738)
-- 2026-11-06 `d5fc2f9` test: provar e endurecer cleanup de variáveis Vercel (#2746)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
