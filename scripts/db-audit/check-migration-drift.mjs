@@ -35,6 +35,8 @@ const SHA256_RE = /^[a-f0-9]{64}$/;
 const LEDGER_STATEMENTS_HASH_DOMAIN = 'zapp-migration-ledger-statements-v1\0';
 const COMMENT_ONLY_KIND = 'ledger-only/comment-only';
 const NAME_ONLY_KIND = 'ledger-only/name-and-file-pinned';
+const REGISTERED_TOMBSTONE_KIND = 'ledger-archive/registered-tombstone';
+const PINNED_MARKER_KIND = 'ledger-divergence/pinned-sql-marker';
 const PINNED_REPLAY_KIND = 'ledger-divergence/pinned-replay';
 const PINNED_REPLAY_REASONS = new Set([
   'endpoint-literal-update',
@@ -181,6 +183,18 @@ function loadEvidence(filePath) {
           'file_sha256', 'filename', 'justification', 'kind', 'ledger_name',
           'version',
         ]
+        : item.kind === REGISTERED_TOMBSTONE_KIND
+            ? [
+              'archive_file_sha256', 'archive_path', 'archive_sql_sha256',
+              'file_sha256', 'filename', 'justification', 'kind', 'ledger_name',
+              'ledger_sql_sha256', 'ledger_statements_sha256', 'version',
+            ]
+            : item.kind === PINNED_MARKER_KIND
+              ? [
+                'file_sha256', 'file_sql_sha256', 'filename', 'justification',
+                'kind', 'ledger_name', 'ledger_sql_marker_sha256',
+                'ledger_statements_sha256', 'reason', 'version',
+              ]
         : item.kind === PINNED_REPLAY_KIND
         ? [
           'file_sha256', 'file_sql_sha256', 'filename', 'justification', 'kind',
@@ -233,7 +247,41 @@ function loadEvidence(filePath) {
       fail('precisa de justificativa factual entre 40 e 1000 caracteres');
     }
 
-    if (item.kind === COMMENT_ONLY_KIND || item.kind === NAME_ONLY_KIND) {
+    if (item.kind === COMMENT_ONLY_KIND || item.kind === NAME_ONLY_KIND
+        || item.kind === REGISTERED_TOMBSTONE_KIND) {
+      if (match && typeof item.ledger_name === 'string'
+          && normalizeLedgerName(item.version, item.ledger_name) !== match[2]) {
+        fail('possui ledger_name divergente do filename');
+      }
+      if (item.kind === REGISTERED_TOMBSTONE_KIND) {
+        if (item.archive_path !== `_superseded/${item.filename}`) {
+          fail('possui archive_path fora do caminho canonico');
+        }
+        if (typeof item.archive_file_sha256 !== 'string'
+            || !SHA256_RE.test(item.archive_file_sha256)) {
+          fail('possui archive_file_sha256 invalido');
+        }
+        if (typeof item.archive_sql_sha256 !== 'string'
+            || !SHA256_RE.test(item.archive_sql_sha256)) {
+          fail('possui archive_sql_sha256 invalido');
+        }
+        if (typeof item.ledger_sql_sha256 !== 'string'
+            || !SHA256_RE.test(item.ledger_sql_sha256)) {
+          fail('possui ledger_sql_sha256 invalido');
+        }
+        if (item.archive_sql_sha256 !== item.ledger_sql_sha256) {
+          fail('exige SQL canonico identico entre archive e ledger');
+        }
+      }
+    } else if (item.kind === PINNED_MARKER_KIND) {
+      if (typeof item.file_sql_sha256 !== 'string' || !SHA256_RE.test(item.file_sql_sha256)) {
+        fail('possui file_sql_sha256 invalido');
+      }
+      if (typeof item.ledger_sql_marker_sha256 !== 'string'
+          || !SHA256_RE.test(item.ledger_sql_marker_sha256)) {
+        fail('possui ledger_sql_marker_sha256 invalido');
+      }
+      if (item.reason !== 'safer-replay') fail('possui reason nao permitido');
       if (match && typeof item.ledger_name === 'string'
           && normalizeLedgerName(item.version, item.ledger_name) !== match[2]) {
         fail('possui ledger_name divergente do filename');
@@ -395,6 +443,34 @@ function loadMigrations(dir, evidence) {
     } else if (exception.kind === NAME_ONLY_KIND) {
       if (!migration.hasCode) {
         errors.push(`excecao name-and-file-pinned exige SQL executavel: ${migration.fileName}`);
+      }
+    } else if (exception.kind === REGISTERED_TOMBSTONE_KIND) {
+      if (!migration.commentOnly) {
+        errors.push(`excecao registered-tombstone exige arquivo ativo somente de comentarios: ${migration.fileName}`);
+      }
+      const archivePath = path.join(dir, exception.archive_path);
+      const archiveDir = path.dirname(archivePath);
+      try {
+        const dirStat = fs.lstatSync(archiveDir);
+        const fileStat = fs.lstatSync(archivePath);
+        if (!dirStat.isDirectory() || dirStat.isSymbolicLink()
+            || !fileStat.isFile() || fileStat.isSymbolicLink()) {
+          errors.push(`archive nao regular ou symlink em ${migration.version}`);
+          continue;
+        }
+        const archiveBuffer = fs.readFileSync(archivePath);
+        const archiveContent = archiveBuffer.toString('utf8');
+        if (!hasSqlCode(archiveContent)) {
+          errors.push(`archive exige SQL executavel em ${migration.version}`);
+        }
+        if (sha256(archiveBuffer) !== exception.archive_file_sha256) {
+          errors.push(`archive_file_sha256 divergente em ${migration.version}`);
+        }
+        if (sha256(canonicalSql(archiveContent)) !== exception.archive_sql_sha256) {
+          errors.push(`archive_sql_sha256 divergente em ${migration.version}`);
+        }
+      } catch (error) {
+        errors.push(`archive ausente ou ilegivel em ${migration.version}: ${error.code || 'erro'}`);
       }
     } else {
       if (!migration.hasCode) {
@@ -671,6 +747,45 @@ function compare(migrations, records, exceptionsByVersion) {
         }
       }
       if (errors.length === errorsBeforeMigration) pinnedWithoutHistoricalContent += 1;
+      continue;
+    }
+
+    if (exception?.kind === PINNED_MARKER_KIND) {
+      if (!record.name || record.name !== exception.ledger_name) {
+        errors.push(`ledger_name divergente do manifesto em ${migration.version}`);
+      }
+      if (statementsHash !== exception.ledger_statements_sha256) {
+        errors.push(`ledger_statements_sha256 divergente do manifesto em ${migration.version}`);
+      }
+      if (ledgerSql || fileHashes.length !== 0 || sqlHashMarkers.invalid
+          || sqlHashMarkers.occurrences !== 1 || sqlHashes.length !== 1
+          || sqlHashes[0] !== exception.ledger_sql_marker_sha256) {
+        errors.push(`excecao pinned-sql-marker exige um marker SQL exato e nenhum SQL canonico em ${migration.version}`);
+      }
+      if (migration.sqlHash !== exception.file_sql_sha256) {
+        errors.push(`file_sql_sha256 divergente do manifesto em ${migration.version}`);
+      }
+      if (exception.file_sql_sha256 === exception.ledger_sql_marker_sha256) {
+        errors.push(`excecao pinned-sql-marker obsoleta em ${migration.version}`);
+      }
+      if (errors.length === errorsBeforeMigration) verifiedEvidence += 1;
+      continue;
+    }
+
+    if (exception?.kind === REGISTERED_TOMBSTONE_KIND) {
+      if (!record.name || record.name !== exception.ledger_name) {
+        errors.push(`ledger_name divergente do manifesto em ${migration.version}`);
+      }
+      if (statementsHash !== exception.ledger_statements_sha256) {
+        errors.push(`ledger_statements_sha256 divergente do manifesto em ${migration.version}`);
+      }
+      if (ledgerSqlHash !== exception.ledger_sql_sha256) {
+        errors.push(`ledger_sql_sha256 divergente do manifesto em ${migration.version}`);
+      }
+      if (!ledgerSql) {
+        errors.push(`excecao registered-tombstone exige ledgerSql canonico nao vazio em ${migration.version}`);
+      }
+      if (errors.length === errorsBeforeMigration) verifiedEvidence += 1;
       continue;
     }
 

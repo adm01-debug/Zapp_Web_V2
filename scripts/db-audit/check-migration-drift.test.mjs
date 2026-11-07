@@ -62,6 +62,40 @@ function nameOnlyEvidence(content = SQL, overrides = {}) {
   };
 }
 
+function pinnedMarkerEvidence(content = SQL, statements = [`-- sql-sha256: ${fixtureSqlHash('legacy_demo')}`], overrides = {}) {
+  return {
+    version: VERSION,
+    filename: FILE,
+    file_sha256: sha256(content),
+    ledger_name: 'create_demo',
+    file_sql_sha256: fixtureSqlHash('demo'),
+    ledger_statements_sha256: statementsHash(statements),
+    ledger_sql_marker_sha256: fixtureSqlHash('legacy_demo'),
+    kind: 'ledger-divergence/pinned-sql-marker',
+    reason: 'safer-replay',
+    justification: 'O marker fixa o SQL anterior enquanto o arquivo local preserva um replay mais seguro e independente.',
+    ...overrides,
+  };
+}
+
+function registeredTombstoneEvidence(tombstone, archive, overrides = {}) {
+  const archiveSqlHash = fixtureSqlHash('demo');
+  return {
+    version: VERSION,
+    filename: FILE,
+    file_sha256: sha256(tombstone),
+    archive_path: `_superseded/${FILE}`,
+    archive_file_sha256: sha256(archive),
+    archive_sql_sha256: archiveSqlHash,
+    ledger_name: 'create_demo',
+    ledger_statements_sha256: statementsHash([SQL.trim()]),
+    ledger_sql_sha256: archiveSqlHash,
+    kind: 'ledger-archive/registered-tombstone',
+    justification: 'O SQL registrado permanece arquivado e pinado, enquanto o arquivo ativo não executável impede execução destrutiva.',
+    ...overrides,
+  };
+}
+
 function pinnedEvidence({
   content = SQL,
   statements = [OTHER_SQL.trim()],
@@ -132,6 +166,7 @@ function runGuard({
   psqlFailCount = 0,
   psqlFailMessage = 'connection refused (fake)',
   retryDelaysMs = null,
+  symlinks = {},
 } = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-drift-test-'));
   const migrationsDir = path.join(tmp, 'migrations');
@@ -141,7 +176,14 @@ function runGuard({
   fs.mkdirSync(migrationsDir);
 
   for (const [name, content] of Object.entries(files)) {
-    fs.writeFileSync(path.join(migrationsDir, name), content);
+    const target = path.join(migrationsDir, name);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, content);
+  }
+  for (const [name, target] of Object.entries(symlinks)) {
+    const link = path.join(migrationsDir, name);
+    fs.mkdirSync(path.dirname(link), { recursive: true });
+    fs.symlinkSync(target, link);
   }
   fs.writeFileSync(
     fakePsql,
@@ -260,6 +302,109 @@ test('name-and-file-pinned exige SQL local e rejeita campos desconhecidos', () =
   });
   assert.equal(unknownField.status, 1);
   assert.match(unknownField.stderr, /campos ausentes ou desconhecidos/);
+});
+
+test('pinned-sql-marker fixa arquivo, array e marker divergente sem promover comentario a SQL aplicado', () => {
+  const statements = [`-- sql-sha256: ${fixtureSqlHash('legacy_demo')}`];
+  const accepted = runGuard({
+    ledger: [ledgerRecord({ statements })],
+    evidence: [pinnedMarkerEvidence(SQL, statements)],
+  });
+  assert.equal(accepted.status, 0, accepted.stderr);
+
+  for (const changedStatements of [[], ['metadado alterado'], [SQL.trim()]]) {
+    const changed = runGuard({
+      ledger: [ledgerRecord({ statements: changedStatements })],
+      evidence: [pinnedMarkerEvidence(SQL, statements)],
+    });
+    assert.equal(changed.status, 1);
+    assert.match(changed.stderr, /ledger_statements_sha256 divergente|pinned-sql-marker exige um marker SQL exato/);
+  }
+
+  const obsolete = runGuard({
+    ledger: [ledgerRecord({ statements: [`-- sql-sha256: ${fixtureSqlHash('demo')}`] })],
+    evidence: [pinnedMarkerEvidence(SQL, [`-- sql-sha256: ${fixtureSqlHash('demo')}`], {
+      ledger_sql_marker_sha256: fixtureSqlHash('demo'),
+    })],
+  });
+  assert.equal(obsolete.status, 1);
+  assert.match(obsolete.stderr, /pinned-sql-marker obsoleta/);
+});
+
+test('registered-tombstone aceita arquivo ativo inerte e archive identico ao ledger', () => {
+  const tombstone = '-- tombstone aplicado; SQL preservado no archive\n';
+  const result = runGuard({
+    files: { [FILE]: tombstone, [`_superseded/${FILE}`]: SQL },
+    ledger: [ledgerRecord({ statements: [SQL.trim()] })],
+    evidence: [registeredTombstoneEvidence(tombstone, SQL)],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
+});
+
+test('registered-tombstone falha fechado para ativo executavel, archive ausente ou adulterado', () => {
+  const tombstone = '-- tombstone aplicado; SQL preservado no archive\n';
+  const evidence = registeredTombstoneEvidence(tombstone, SQL);
+  const executable = runGuard({
+    files: { [FILE]: SQL, [`_superseded/${FILE}`]: SQL },
+    ledger: [ledgerRecord({ statements: [SQL.trim()] })],
+    evidence: [evidence],
+  });
+  assert.equal(executable.status, 1);
+  assert.match(executable.stderr, /registered-tombstone exige arquivo ativo somente de comentarios|file_sha256 divergente/);
+
+  const missing = runGuard({
+    files: { [FILE]: tombstone },
+    ledger: [ledgerRecord({ statements: [SQL.trim()] })],
+    evidence: [evidence],
+  });
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /archive ausente ou ilegivel/);
+
+  const changedArchive = runGuard({
+    files: { [FILE]: tombstone, [`_superseded/${FILE}`]: OTHER_SQL },
+    ledger: [ledgerRecord({ statements: [SQL.trim()] })],
+    evidence: [evidence],
+  });
+  assert.equal(changedArchive.status, 1);
+  assert.match(changedArchive.stderr, /archive_(file|sql)_sha256 divergente/);
+
+  const symlink = runGuard({
+    files: { [FILE]: tombstone, 'archive-real.sql': SQL },
+    symlinks: { [`_superseded/${FILE}`]: '../archive-real.sql' },
+    ledger: [ledgerRecord({ statements: [SQL.trim()] })],
+    evidence: [evidence],
+  });
+  assert.equal(symlink.status, 1);
+  assert.match(symlink.stderr, /archive nao regular ou symlink/);
+});
+
+test('registered-tombstone rejeita caminho não canônico, ledger vazio e hashes divergentes', () => {
+  const tombstone = '-- tombstone aplicado; SQL preservado no archive\n';
+  const files = { [FILE]: tombstone, [`_superseded/${FILE}`]: SQL };
+  const badPath = runGuard({
+    destino: false,
+    files,
+    evidence: [registeredTombstoneEvidence(tombstone, SQL, { archive_path: `../${FILE}` })],
+  });
+  assert.equal(badPath.status, 1);
+  assert.match(badPath.stderr, /archive_path fora do caminho canonico/);
+
+  const emptyLedger = runGuard({
+    files,
+    ledger: [ledgerRecord({ statements: [] })],
+    evidence: [registeredTombstoneEvidence(tombstone, SQL)],
+  });
+  assert.equal(emptyLedger.status, 1);
+  assert.match(emptyLedger.stderr, /ledger_(statements|sql)_sha256 divergente|ledgerSql canonico nao vazio/);
+
+  const changedName = runGuard({
+    files,
+    ledger: [ledgerRecord({ name: 'outro_nome', statements: [SQL.trim()] })],
+    evidence: [registeredTombstoneEvidence(tombstone, SQL)],
+  });
+  assert.equal(changedName.status, 1);
+  assert.match(changedName.stderr, /ledger_name divergente do manifesto/);
 });
 
 test('valida estrutura local mesmo sem DESTINO_URL', () => {
