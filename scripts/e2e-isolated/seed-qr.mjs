@@ -105,7 +105,7 @@ export async function seedQr({ env = process.env, fetcher = fetch, readFile = re
     const contact = await read('/rest/v1/contacts?id=eq.' + f.contact + '&select=id,assigned_to,whatsapp_connection_id', 'existing-contact');
     if (!Array.isArray(contact) || contact.length !== 1 || contact[0].id !== f.contact ||
         contact[0].whatsapp_connection_id !== f.connection ||
-        contact[0].assigned_to !== profiles.find(row => row.user_id === f.filesUser).id) qrFail('existing-contact');
+        !validQrId(contact[0].assigned_to) || contact[0].assigned_to === target.supervisorProfile) qrFail('existing-contact');
     return { connections, profiles, contact };
   }
   const before = await existingSnapshot();
