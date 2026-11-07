@@ -809,6 +809,19 @@
       "justification": "O arquivo foi corrigido para desligar o trigger team_message_receipts_update_guard_trig durante o backfill de conversation_id (esse trigger preencheria read_at=now() para recibos com status='read', mas a correcao funcional desta migration e so reconciliar conversation_id legado). A migration ja foi aplicada em producao sem o DISABLE/ENABLE (10 statements no ledger); o arquivo passa a ter 12 statements com a protecao. O arquivo corrigido corresponde a versao de referencia 20261006222024 que ja tinha o mesmo padrao. Hashes medidos em 27/10/2026."
     },
     {
+      "version": "20261010062941",
+      "filename": "20261010062941_talkx_campaign_recipients_page.sql",
+      "file_sha256": "0341084d1c85356a1bafe11361fb9e6cac7049453701f1ec58d594baed08bb6e",
+      "file_sql_sha256": "d12319a713cb283ab783f906b5ba2bb3b10e02c742508cceeb24b37c459ce7b1",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_name": "talkx_campaign_recipients_page",
+      "ledger_statements_sha256": "90cfe45a5d561c860b8464d0c02f59caca7a3db8ec6086c6220667ae54eaca05",
+      "ledger_sql_sha256": "82715feb61bf7e11b72e08e4c915597ca6c7a0aed9b853c6c6c84b3f5b8beb0a",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo no repo difere do SQL aplicado no banco canonico para a RPC paginada de destinatarios TalkX. A migration historica e imutavel; as duas representacoes foram verificadas e fixadas por hashes independentes em 07/11/2026."
+    },
+    {
       "version": "20261011191021",
       "filename": "20261011191021_departments_admin.sql",
       "file_sha256": "9c645e10d754204642684e41080c96c29ef5d2acc5786982ddd95b1d35ceed52",
