@@ -82,6 +82,38 @@ test('resolverCaminhoPermitido respeita o array de raizes explicito do chamador'
   );
 });
 
+test('resolverCaminhoPermitido recusa arquivo existente acessado por symlink que escapa da raiz', () => {
+  const raiz = fs.mkdtempSync(path.join(os.tmpdir(), 'seguranca-processo-raiz-'));
+  const fora = fs.mkdtempSync(path.join(os.tmpdir(), 'seguranca-processo-fora-'));
+  try {
+    const arquivoFora = path.join(fora, 'segredo.json');
+    fs.writeFileSync(arquivoFora, '{}');
+    fs.symlinkSync(fora, path.join(raiz, 'escape'));
+    assert.throws(
+      () => resolverCaminhoPermitido(path.join(raiz, 'escape', 'segredo.json'), 'entrada', [raiz]),
+      /fora das raizes permitidas/,
+    );
+  } finally {
+    fs.rmSync(raiz, { recursive: true, force: true });
+    fs.rmSync(fora, { recursive: true, force: true });
+  }
+});
+
+test('resolverCaminhoPermitido recusa alvo inexistente sob diretorio symlink que escapa da raiz', () => {
+  const raiz = fs.mkdtempSync(path.join(os.tmpdir(), 'seguranca-processo-raiz-'));
+  const fora = fs.mkdtempSync(path.join(os.tmpdir(), 'seguranca-processo-fora-'));
+  try {
+    fs.symlinkSync(fora, path.join(raiz, 'escape'));
+    assert.throws(
+      () => resolverCaminhoPermitido(path.join(raiz, 'escape', 'novo.json'), 'saida', [raiz]),
+      /fora das raizes permitidas/,
+    );
+  } finally {
+    fs.rmSync(raiz, { recursive: true, force: true });
+    fs.rmSync(fora, { recursive: true, force: true });
+  }
+});
+
 test('RAIZ_REPO aponta para o pacote Zapp_Web_V2 e esta entre as raizes permitidas', () => {
   const pacote = JSON.parse(fs.readFileSync(path.join(RAIZ_REPO, 'package.json'), 'utf8'));
   assert.equal(pacote.name, 'zapp-web-v2');

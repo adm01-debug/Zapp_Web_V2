@@ -30,9 +30,23 @@ stage() {
   for f in CLAUDE.md AGENTS.md; do [ -f "$f" ] && git add "$f" || true; done
 }
 
+assert_no_foreign_staged_changes() {
+  local path
+  while IFS= read -r -d '' path; do
+    case "$path" in
+      "$OUT_DIR"|"$OUT_DIR"/*|CLAUDE.md|AGENTS.md) ;;
+      *)
+        echo "ERRO: há alteração staged fora da saída gerada: $path. Nada foi publicado." >&2
+        return 1
+        ;;
+    esac
+  done < <(git diff --cached --name-only -z)
+}
+
 if git check-ignore -q "$OUT_DIR"; then
   echo "ERRO: $OUT_DIR está no .gitignore — os docs nunca seriam commitados. Remova a regra ou mude AI_CONTEXT_OUT."; exit 1
 fi
+assert_no_foreign_staged_changes
 if [ "$MODE" = "branch" ]; then
   # Branch derivada = branch padrão + 1 commit. Nunca toca a branch de origem: trabalha em HEAD destacado.
   BRANCH_OUT="${BRANCH_OUT:-contexto}"
@@ -80,11 +94,17 @@ if [ "$MODE" = "push" ]; then
     fi
     echo "push falhou (tentativa $attempt) — sincronizando com origin/$BRANCH e regenerando"
     git fetch -q origin "$BRANCH"
-    git reset -q --hard "origin/$BRANCH"         # CI não tem nada local além dos docs gerados…
-    eval "$GEN_CMD --force"                      # …que são regenerados sobre o código novo
+    # Reaplica somente o commit gerado sobre a origem. --autostash preserva alterações
+    # locais rastreadas; arquivos não rastreados permanecem intocados. Nunca use reset
+    # destrutivo aqui: este utilitário também pode ser executado fora de um runner efêmero.
+    if ! git rebase --autostash "origin/$BRANCH"; then
+      git rebase --abort >/dev/null 2>&1 || true
+      echo "ERRO: não foi possível sincronizar sem sobrescrever o checkout local." >&2
+      exit 1
+    fi
+    eval "$GEN_CMD --force"
     stage
-    if git diff --cached --quiet; then echo "após sincronizar, nada a commitar"; exit 0; fi
-    git commit -q -m "$MSG"
+    if ! git diff --cached --quiet; then git commit -q --amend --no-edit; fi
   done
   if [ "$MODE" != "pr" ]; then
     echo "ERRO: não foi possível publicar após 3 tentativas"; cat /tmp/push.err; exit 1

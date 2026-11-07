@@ -382,7 +382,9 @@ async function principal() {
           }
           console.warn(`[rd-001] ${largura}px ${tema}: rodada ${tentativa} instável (${ultimoErro}) — refazendo`);
         }
-        if (!r) throw new Error(`${largura}px ${tema}: 3 tentativas sem rodada limpa (${ultimoErro})`);
+        if (!r || r.requisicoesFalhas > 0 || r.errosPagina > 0) {
+          throw new Error(`${largura}px ${tema}: 3 tentativas sem rodada limpa (${ultimoErro})`);
+        }
         resultados.push(r);
         console.log(
           `[rd-001] ${largura}px ${tema}: 1a linha ${r.primeiraLinhaAlturaPx ?? '—'}px, ` +
