@@ -29,7 +29,7 @@ test('falha fechado sem token e não acessa a rede', async () => {
   assert.match(log.texto(), /VERCEL_TOKEN ausente/);
 });
 
-test('403 de leitura preserva o skip operacional e nunca tenta DELETE', async () => {
+test('403 de leitura falha fechado e nunca tenta DELETE', async () => {
   const metodos = [];
   const log = saida();
   const code = await executarCleanup({
@@ -41,9 +41,9 @@ test('403 de leitura preserva o skip operacional e nunca tenta DELETE', async ()
     output: log.output,
     dryRun: false,
   });
-  assert.equal(code, 0);
+  assert.equal(code, 1);
   assert.deepEqual(metodos, ['GET']);
-  assert.match(log.texto(), /SKIP.*403/);
+  assert.match(log.texto(), /GET envs falhou.*403/);
   assert.doesNotMatch(log.texto(), /segredo|negado/);
 });
 
