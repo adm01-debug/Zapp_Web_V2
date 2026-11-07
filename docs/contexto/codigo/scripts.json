@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 417,
+ "total": 419,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3695,6 +3695,17 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/force-online.mjs",
+   "descricao": "* A loopback-only namespace has no default route, so browser engines can report",
+   "linhas": 31,
+   "env": [
+    "ZAPP_E2E_FORCE_ONLINE"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/gateway.mjs",
    "descricao": null,
    "linhas": 120,
@@ -3776,7 +3787,7 @@
   {
    "arquivo": "scripts/e2e-isolated/network-proof-browser.mjs",
    "descricao": null,
-   "linhas": 278,
+   "linhas": 286,
    "env": [
     "ZAPP_NETWORK_NAMESPACE",
     "ZAPP_NETWORK_RUN",
@@ -3909,7 +3920,7 @@
   {
    "arquivo": "scripts/e2e-isolated/results.mjs",
    "descricao": "Schema: Playwright v1.64.1 packages/playwright/src/reporters/json.ts. Counts describe test cases, not retry attempts or nested steps. Public output",
-   "linhas": 248,
+   "linhas": 284,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -3918,7 +3929,7 @@
   {
    "arquivo": "scripts/e2e-isolated/routine-ownership.mjs",
    "descricao": "Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e. These are full SHA256 hashes of pg_get_functiondef, not the snapshot's JSON hash.",
-   "linhas": 304,
+   "linhas": 306,
    "env": [
     "PATH"
    ],
@@ -3929,7 +3940,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 756,
+   "linhas": 809,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"
@@ -3953,7 +3964,7 @@
   {
    "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
    "descricao": null,
-   "linhas": 156,
+   "linhas": 166,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4011,7 +4022,7 @@
   {
    "arquivo": "scripts/e2e-isolated/stack.mjs",
    "descricao": null,
-   "linhas": 142,
+   "linhas": 144,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4036,7 +4047,7 @@
   {
    "arquivo": "scripts/e2e-isolated/tls-probe.mjs",
    "descricao": null,
-   "linhas": 177,
+   "linhas": 208,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4057,6 +4068,15 @@
    "arquivo": "scripts/e2e-isolated/verify-providers.mjs",
    "descricao": "* Tests the real local app boundary. Only Evolution/PromoGifts are fixtures. */",
    "linhas": 205,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/e2e-isolated/vite.config.ts",
+   "descricao": null,
+   "linhas": 14,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

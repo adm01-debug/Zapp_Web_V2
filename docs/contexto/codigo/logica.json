@@ -408,7 +408,7 @@
     "jidToPhone"
    ],
    "export_default": null,
-   "linhas": 229,
+   "linhas": 231,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -434,7 +434,7 @@
     "mapRealtimeMessageToMessage"
    ],
    "export_default": null,
-   "linhas": 120,
+   "linhas": 127,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -726,7 +726,7 @@
     "TablesUpdate"
    ],
    "export_default": null,
-   "linhas": 15456,
+   "linhas": 15459,
    "tabelas": [],
    "rpcs": [],
    "edges": [],

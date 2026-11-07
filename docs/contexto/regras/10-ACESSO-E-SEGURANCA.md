@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5b62b9338e` · branch `main` · 2026-11-07 14:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e900ae3172` · branch `main` · 2026-11-07 14:45 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -17,6 +17,7 @@
 | Tabela | RLS | SELECT | INSERT | UPDATE | DELETE |
 |---|---|---|---|---|---|
 | `_rb_message_reactions_contato_20261007001008` | enabled | — | — | — | — |
+| `_rb_message_reactions_one_per_agent_20261107121000` | enabled | anon, authenticated: false | anon, authenticated: false | anon, authenticated: false | anon, authenticated: false |
 | `_zapp_fn_before` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `_zapp_mig133_log` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `agent_achievements` | enabled | authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | — | — |
@@ -139,7 +140,7 @@
 | `multiplix_recipients` | forced | authenticated: EXISTS ( SELECT 1 FROM public.multiplix_dispatches md WHERE md.id = multiplix_recipients.dispatch_id AND ( md.created_by = (S | — | — | authenticated: public.is_admin_or_supervisor(auth.uid()) AND EXISTS ( SELECT 1 FROM public.multiplix_dispatches md WHERE md.id = multiplix_r |
 | `multiplix_voice_assets` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.multiplix_voice_grants g WHERE g.voice_id = multiplix_voice_assets.voice_id AND g.revoked_at IS | — | — | — |
 | `multiplix_voice_grants` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: revoked_at IS NULL AND ( (roles IS NOT NULL AND EXISTS ( SELECT 1 FROM unnest(roles) AS r WHERE public.has_role(auth.uid(), r | — | — | — |
-| `notifications` | enabled | authenticated: user_id = auth.uid() | authenticated: false | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
+| `notifications` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = (SELECT auth.uid()) AND type = 'goal' AND is_read IS FALSE AND read_at IS NULL AND created_at BETWEEN now() - inter | authenticated: user_id = (SELECT auth.uid())<br>authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `nps_surveys` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) OR agent_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | authenticated: agent_id IS NOT NULL AND agent_id IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() ) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `number_reputation` | enabled | authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
 | `ops.hermes_change_log` | enabled | service_role: true | service_role: true | service_role: true | service_role: true |
@@ -252,7 +253,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 743 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 745 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -404,7 +405,7 @@
 - `supabase/functions/_shared/request-policy.ts`
 - `supabase/functions/_shared/talkx-reply.ts`
 - `supabase/functions/_shared/validation.ts`
-- … +593 (lista completa em `context.json`)
+- … +595 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -850,7 +851,7 @@ Middleware matcher (Next.js): nenhum
 | grant | anon | select, update | `profiles` |
 | grant | anon, authenticated | execute | `multiplix_audiences_validate_shared_roles` |
 | grant | anon, authenticated, service_role | all | `talkx_settings` |
-| grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `auth.uid` |
+| grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `auth.uid`, `auth.uid` |
 | grant | authenticated | delete | `multiplix_recipients` |
 | grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +149 |
 | grant | authenticated | insert | `search_events` |
@@ -859,7 +860,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated | select | `profiles_public`, `password_reset_requests_safe`, `password_reset_requests_safe`, `profiles_public`, `whatsapp_connections_public`, `whatsapp_connections_public`, `login_attempts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `whatsapp_connections_agent`, `channel_connections_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `gmail_accounts_safe`, `gmail_accounts_safe` … +42 |
 | grant | authenticated | select, insert | `catalog_send_events`, `talkx_help_views`, `audit_logs` |
 | grant | authenticated | select, insert, delete | `message_favorites` |
-| grant | authenticated | select, insert, update | `sla_alert_preferences`, `connection_alert_preferences`, `messages` |
+| grant | authenticated | select, insert, update | `sla_alert_preferences`, `connection_alert_preferences`, `notifications`, `messages` |
 | grant | authenticated | select, insert, update, delete | `audio_meme_favorites`, `crm_contact_links`, `talkx_template_variants`, `multiplix_dispatches`, `multiplix_recipients`, `multiplix_blocks`, `catalog_favorites`, `multiplix_audiences`, `multiplix_audience_members`, `talkx_optout_keywords`, `talkx_campaign_segments`, `email_signatures`, `rate_limit_configs`, `password_reset_requests` |
 | grant | authenticated | update | `whisper_messages`, `whisper_messages` |
 | grant | authenticated, anon, service_role | execute | `pg_temp.assert_permitido`, `pg_temp.assert_negado`, `is_contact_visible_to_user`, `get_visible_agent_ids`, `get_profile_id_for_user`, `is_admin_or_supervisor` |
@@ -888,7 +889,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
 | revoke | PUBLIC, anon, authenticated | execute | `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `reschedule_talkx_recipient`, `transition_talkx_campaign`, `expire_stale_agent_presence`, `handle_message_gamification`, `handle_conversation_closure_gamification`, `get_department_whatsapp_credentials`, `get_department_whatsapp_api_key`, `record_incoming_call_event`, `sanitize_reset_request`, `team_receipts_fill_conversation_id`, `team_reactions_force_conversation_id`, `sanitize_reset_request` … +20 |
 | revoke | PUBLIC, anon, authenticated | truncate, references, trigger | `public` |
-| revoke | PUBLIC, anon, authenticated, service_role | all | `talkx_template_variants`, `talkx_template_versions`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `supabase_migrations.version_reservations`, `supabase_migrations.reserve_migration_version`, `contact_deletion_audit`, `apply_zapp_cron_secrets_l5`, `apply_zapp_cron_secrets_l5`, `resolve_contact_guard_actor`, `prevent_contact_queue_hijack`, `prevent_contact_assignee_hijack`, `increment_talkx_template_use`, `multiplix_events`, `message_reactions_normalize_author` … +9 |
+| revoke | PUBLIC, anon, authenticated, service_role | all | `talkx_template_variants`, `talkx_template_versions`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `supabase_migrations.version_reservations`, `supabase_migrations.reserve_migration_version`, `contact_deletion_audit`, `apply_zapp_cron_secrets_l5`, `apply_zapp_cron_secrets_l5`, `resolve_contact_guard_actor`, `prevent_contact_queue_hijack`, `prevent_contact_assignee_hijack`, `increment_talkx_template_use`, `multiplix_events`, `message_reactions_normalize_author` … +10 |
 | revoke | PUBLIC, anon, authenticated, service_role | execute | `audit_contact_deletion_change`, `audit_contact_address_change`, `audit_role_changes`, `audit_role_permissions_changes`, `department_audit_logs_fill_profile_name`, `record_talkx_campaign_lifecycle_event`, `set_talkx_recipient_status_changed_at`, `conversation_task_rearm_on_remind_change`, `audit_contact_block_change`, `sanitize_reset_request`, `rate_limit_reset_requests` |
 | revoke | PUBLIC, anon, service_role | all | `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients`, `save_talkx_campaign_draft`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `enqueue_outbound_message`, `log_unauthorized_inbox_scope`, `enqueue_group_outbound_message`, `admin_list_cron_jobs`, `admin_toggle_cron_job`, `set_contact_blocked`, `crisis_room_snapshot` |
 | revoke | anon | all | `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs`, `multiplix_dispatches` … +30 |
@@ -920,7 +921,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | authenticated | insert, update, delete, truncate, references, trigger | `multiplix_voice_assets`, `multiplix_voice_grants`, `reconnection_logs` |
 | revoke | authenticated | truncate, references, trigger | `multiplix_dispatches`, `multiplix_recipients`, `multiplix_blocks`, `multiplix_audiences`, `multiplix_audience_members` |
 | revoke | authenticated | truncate, trigger, references | `whatsapp_connections` |
-| revoke | authenticated | update | `team_conversation_members`, `team_messages`, `storage.objects`, `team_conversations`, `whisper_messages`, `passkey_credentials`, `whisper_messages` |
+| revoke | authenticated | update | `team_conversation_members`, `team_messages`, `storage.objects`, `team_conversations`, `whisper_messages`, `passkey_credentials`, `whisper_messages`, `notifications` |
 | revoke | authenticated, anon | select | `departments` |
 | revoke | authenticated, anon | truncate, references | `contacts` |
 | revoke | authenticated, anon, PUBLIC | execute | `mcp_exec`, `mcp_exec_many` |
@@ -1182,6 +1183,7 @@ Middleware matcher (Next.js): nenhum
 | `copilot_help_requests` | `created_at` |
 | `copilot_learning_moments` | `created_at` |
 | `copilot_conversation_scores` | `updated_at` |
+| `_rb_message_reactions_one_per_agent_20261107121000` | `created_at` |
 | `instance_pauses` | `created_at` |
 | `outbox_events` | `created_at` |
 | `search_events` | `created_at` |

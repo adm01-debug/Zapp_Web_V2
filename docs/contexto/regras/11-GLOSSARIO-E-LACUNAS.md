@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5b62b9338e` · branch `main` · 2026-11-07 14:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e900ae3172` · branch `main` · 2026-11-07 14:45 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -8,6 +8,7 @@
 | Termo | Significado / valores | Tamanho | Origem |
 |---|---|---|---|
 | `_rb_message_reactions_contato_20261007001008` | [RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação. | 2 colunas | migration |
+| `_rb_message_reactions_one_per_agent_20261107121000` | Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem. | 6 colunas | migration |
 | `_zapp_fn_before` | _(sem COMMENT ON TABLE — significado não documentado)_ | 2 colunas | types.ts |
 | `_zapp_mig133_log` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | types.ts |
 | `agent_achievements` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
@@ -58,7 +59,7 @@
 | `contact_identity_map` | Mapa LID -> JID do WhatsApp (identidade anonima vs numero) para reconciliar contatos. | 5 colunas | migration |
 | `contact_notes` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
 | `contact_protection_policy` | CT-091: politica de protecao de contatos. scope_role NULL = padrao global; linha por papel sobrepoe. Só o admin altera. | 9 colunas | migration |
-| `contacts` | Contato/cliente por canal (WhatsApp, e-mail, SICOOB): identidade, atribuicao (assigned_to, queue_id), classificacao por IA e conexao de origem. Uma linha = uma conversa/thread ativa com o contato. | 46 colunas | migration |
+| `contacts` | Contato/cliente por canal (WhatsApp, e-mail, SICOOB): identidade, atribuicao (assigned_to, queue_id), classificacao por IA e conexao de origem. Uma linha = uma conversa/thread ativa com o contato. | 47 colunas | migration |
 | `conversation_analyses` | _(sem COMMENT ON TABLE — significado não documentado)_ | 25 colunas | migration |
 | `conversation_closures` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `conversation_events` | Linha do tempo de uma conversa: transferencias de agente/fila, abertura/fechamento e demais transicoes, com quem executou (performed_by) e metadata. | 11 colunas | migration |
@@ -306,8 +307,7 @@
 | `DocumentFamily` (TS) | pdf \| sheet \| doc \| ppt \| archive \| generic |  | `src/components/inbox/tabs/fileDisplay.ts` |
 | `GlowToken` (TS) | primary \| success \| warning \| info \| muted |  | `src/components/inbox/tabs/journey/motion/presets.ts` |
 | `TimePeriod` (TS) | 1h \| 6h \| 12h \| 24h \| 7d |  | `src/components/monitoring/hooks/types.ts` |
-| `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
-| … +346 linhas — lista completa em `context.json` | | | |
+| … +347 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -594,7 +594,7 @@
 - `whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 173/233 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
+- 173/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

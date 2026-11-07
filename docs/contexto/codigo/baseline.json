@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5b62b9338e23df8ce2bfa6b3da6bb0565f9def93",
+  "commit": "e900ae317218172259a6363c3f156ed01f368f7b",
   "branch": "main",
-  "data_commit": "2026-11-07T11:13:37-03:00",
+  "data_commit": "2026-11-07T11:37:20-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e900ae3",
+    "data": "2026-11-07",
+    "assunto": "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)"
+   },
    {
     "sha": "5b62b93",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "f03e6f6",
     "data": "2026-11-05",
     "assunto": "chore: RELATORIO_CI e PENDENCIAS — estado final em d985c7fc"
-   },
-   {
-    "sha": "d985c7f",
-    "data": "2026-11-05",
-    "assunto": "chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais"
    }
   ],
-  "arquivos_mudados_7d": 1067,
+  "arquivos_mudados_7d": 1112,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 800
+    "mudancas": 803
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -148,12 +148,12 @@
     "mudancas": 277
    },
    {
-    "pasta": "supabase/functions/_shared",
+    "pasta": "src/hooks/__tests__",
     "mudancas": 213
    },
    {
-    "pasta": "src/hooks/__tests__",
-    "mudancas": 212
+    "pasta": "supabase/functions/_shared",
+    "mudancas": 213
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -164,16 +164,16 @@
     "mudancas": 141
    },
    {
-    "pasta": "src/hooks/integrations",
-    "mudancas": 133
+    "pasta": "src/components/ui",
+    "mudancas": 138
    },
    {
-    "pasta": "src/components/ui",
-    "mudancas": 131
+    "pasta": "src/hooks/integrations",
+    "mudancas": 135
    },
    {
     "pasta": "src/lib/__tests__",
-    "mudancas": 124
+    "mudancas": 125
    },
    {
     "pasta": "src/components/contacts",
@@ -181,7 +181,7 @@
    },
    {
     "pasta": "src/hooks/chat",
-    "mudancas": 118
+    "mudancas": 120
    },
    {
     "pasta": "src/components/tasks",
@@ -206,11 +206,11 @@
     "mudancas": 18
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 15
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 16
    },
    {
-    "arquivo": "docs/ci/README.md",
+    "arquivo": "CLAUDE.md",
     "mudancas": 15
    },
    {
@@ -231,7 +231,11 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 11
+    "mudancas": 12
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 12
    },
    {
     "arquivo": "RELATORIO_CI.md",
@@ -239,10 +243,6 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 11
    },
    {
@@ -290,11 +290,11 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/db-audit/known-violations.json",
+    "arquivo": "e2e/telefonia.spec.ts",
     "mudancas": 6
    },
    {
-    "arquivo": "supabase/functions/connection-health-check/index.ts",
+    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 6
    }
   ],
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8258,
-  "arquivos_codigo": 4734,
-  "linhas_codigo": 873662,
+  "arquivos_total": 8266,
+  "arquivos_codigo": 4737,
+  "linhas_codigo": 875001,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -329,12 +329,12 @@
   "componentes": 885,
   "hooks": 490,
   "edge_functions": 85,
-  "tabelas": 216,
-  "migrations": 1083,
+  "tabelas": 217,
+  "migrations": 1087,
   "cron_jobs": 26,
-  "testes": 2579,
+  "testes": 2581,
   "workflows": 21,
-  "scripts": 417,
+  "scripts": 419,
   "docs_md": 1042
  },
  "por_pasta": {
@@ -380,7 +380,7 @@
   },
   "e2e/auth-diagnostics.ts": {
    "arquivos": 1,
-   "linhas": 118
+   "linhas": 120
   },
   "e2e/auth.setup.ts": {
    "arquivos": 1,
@@ -396,7 +396,7 @@
   },
   "e2e/catalog.spec.ts": {
    "arquivos": 1,
-   "linhas": 310
+   "linhas": 322
   },
   "e2e/conexoes.spec.ts": {
    "arquivos": 1,
@@ -416,7 +416,7 @@
   },
   "e2e/contacts-crud.spec.ts": {
    "arquivos": 1,
-   "linhas": 55
+   "linhas": 53
   },
   "e2e/contacts-detail.spec.ts": {
    "arquivos": 1,
@@ -440,7 +440,7 @@
   },
   "e2e/contacts-views.spec.ts": {
    "arquivos": 1,
-   "linhas": 72
+   "linhas": 78
   },
   "e2e/conversation.spec.ts": {
    "arquivos": 1,
@@ -448,15 +448,15 @@
   },
   "e2e/ct94-ui-429.spec.ts": {
    "arquivos": 1,
-   "linhas": 142
+   "linhas": 149
   },
   "e2e/dialog-rodape-viewport.spec.ts": {
    "arquivos": 1,
-   "linhas": 108
+   "linhas": 106
   },
   "e2e/email-link-contato.spec.ts": {
    "arquivos": 1,
-   "linhas": 368
+   "linhas": 369
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
@@ -464,15 +464,15 @@
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,
-   "linhas": 602
+   "linhas": 609
   },
   "e2e/fixtures": {
    "arquivos": 19,
-   "linhas": 3149
+   "linhas": 3276
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "arquivos": 1,
-   "linhas": 160
+   "linhas": 165
   },
   "e2e/inbox-contraste.spec.ts": {
    "arquivos": 1,
@@ -488,7 +488,7 @@
   },
   "e2e/media-volume.spec.ts": {
    "arquivos": 1,
-   "linhas": 202
+   "linhas": 207
   },
   "e2e/messaging.spec.ts": {
    "arquivos": 1,
@@ -508,11 +508,11 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "arquivos": 1,
-   "linhas": 1906
+   "linhas": 1908
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "arquivos": 1,
-   "linhas": 98
+   "linhas": 92
   },
   "e2e/onboarding-tour.spec.ts": {
    "arquivos": 1,
@@ -532,11 +532,11 @@
   },
   "e2e/reactions.spec.ts": {
    "arquivos": 1,
-   "linhas": 148
+   "linhas": 166
   },
   "e2e/skins-e2e.spec.ts": {
    "arquivos": 1,
-   "linhas": 745
+   "linhas": 757
   },
   "e2e/support": {
    "arquivos": 1,
@@ -548,11 +548,11 @@
   },
   "e2e/talkx-demo.spec.ts": {
    "arquivos": 1,
-   "linhas": 42
+   "linhas": 44
   },
   "e2e/talkx-launch.spec.ts": {
    "arquivos": 1,
-   "linhas": 231
+   "linhas": 245
   },
   "e2e/talkx-visual.spec.ts": {
    "arquivos": 1,
@@ -560,7 +560,7 @@
   },
   "e2e/talkx.spec.ts": {
    "arquivos": 1,
-   "linhas": 286
+   "linhas": 303
   },
   "e2e/tarefas-linha-de-base.spec.ts": {
    "arquivos": 1,
@@ -576,7 +576,7 @@
   },
   "e2e/telefonia.spec.ts": {
    "arquivos": 1,
-   "linhas": 438
+   "linhas": 445
   },
   "e2e/theme-alto-contraste.spec.ts": {
    "arquivos": 1,
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 199,
-   "linhas": 41354
+   "arquivos": 200,
+   "linhas": 41729
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -623,8 +623,8 @@
    "linhas": 229
   },
   "scripts/e2e-isolated": {
-   "arquivos": 36,
-   "linhas": 6081
+   "arquivos": 38,
+   "linhas": 6268
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
@@ -696,11 +696,11 @@
   },
   "src/adapters": {
    "arquivos": 5,
-   "linhas": 590
+   "linhas": 616
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368079
+   "linhas": 368185
   },
   "src/config": {
    "arquivos": 3,
@@ -720,7 +720,7 @@
   },
   "src/hooks": {
    "arquivos": 980,
-   "linhas": 159234
+   "linhas": 159637
   },
   "src/i18n": {
    "arquivos": 2,
@@ -728,11 +728,11 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15529
+   "linhas": 15532
   },
   "src/lib": {
    "arquivos": 281,
-   "linhas": 38803
+   "linhas": 38808
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -802,7 +802,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15456
+   "linhas": 15459
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 420,
+  "console_log": 417,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,
@@ -942,7 +942,7 @@
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "linha": 1479,
+   "linha": 1537,
    "tipo": "FIXME",
    "texto": "remains failure', fault: 'explicit-skip', failure: 'suite-result-not-clean' },"
   },

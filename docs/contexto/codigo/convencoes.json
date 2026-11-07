@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1945)",
-   "outro (206)",
+   "outro (207)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
@@ -31,7 +31,7 @@
   "scripts": [
    "scripts/db-audit (285)",
    "scripts/ci (40)",
-   "scripts/e2e-isolated (37)"
+   "scripts/e2e-isolated (39)"
   ],
   "docs": [
    "docs (31)",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)",
    "fix: torna Vercel Cleanup fail-closed em 403 (#2758)",
    "fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)",
    "infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)",
-   "fix: blindar plano sintético contra IDs externos (#2757)",
-   "fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)"
+   "fix: blindar plano sintético contra IDs externos (#2757)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

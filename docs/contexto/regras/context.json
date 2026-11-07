@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5b62b9338e23df8ce2bfa6b3da6bb0565f9def93",
+  "sha": "e900ae317218172259a6363c3f156ed01f368f7b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 14:29 UTC",
-  "files_total": 8099,
-  "code_files": 5988,
-  "code_lines": 1039105
+  "generated_at": "2026-11-07 14:45 UTC",
+  "files_total": 8107,
+  "code_files": 5996,
+  "code_lines": 1040846
  },
  "version": "1.3.2",
- "facts_hash": "b9773db13640646d",
+ "facts_hash": "7389f9e14b67042a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,9 +314,9 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1864,
-   ".sql": 1282,
-   ".mjs": 404,
+   ".ts": 1865,
+   ".sql": 1287,
+   ".mjs": 406,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -3645,6 +3645,13 @@
       "src": "src/integrations/supabase/types.ts"
      },
      {
+      "name": "phone_search_digits",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
       "name": "postal_code",
       "type": "string | null",
       "fk": "",
@@ -6189,74 +6196,74 @@
       "type": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
       "fk": "",
       "generated": "",
-      "src": "supabase/tests/admin_unlock_login_autorizacao.sql"
-     },
-     {
-      "name": "created_at",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "dedupe_key",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_read",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "message",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "metadata",
-      "type": "Json | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "read_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "title",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "type",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
      },
      {
       "name": "user_id",
-      "type": "string not null",
+      "type": "uuid NOT NULL",
       "fk": "",
       "generated": "",
-      "src": "src/integrations/supabase/types.ts"
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "type",
+      "type": "text NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "title",
+      "type": "text NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "message",
+      "type": "text NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "metadata",
+      "type": "jsonb NOT NULL DEFAULT '{}'::jsonb",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "dedupe_key",
+      "type": "text UNIQUE",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "is_read",
+      "type": "boolean NOT NULL DEFAULT false",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "read_at",
+      "type": "timestamptz",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+     },
+     {
+      "name": "created_at",
+      "type": "timestamptz NOT NULL DEFAULT now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
      }
     ],
     "constraints": [],
-    "src": "supabase/tests/admin_unlock_login_autorizacao.sql",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql",
     "comment": "",
     "origin": "migration"
    },
@@ -17654,6 +17661,56 @@
     "comment": "",
     "origin": "migration"
    },
+   "_rb_message_reactions_one_per_agent_20261107121000": {
+    "columns": [
+     {
+      "name": "id",
+      "type": "uuid PRIMARY KEY",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+     },
+     {
+      "name": "message_id",
+      "type": "uuid NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+     },
+     {
+      "name": "user_id",
+      "type": "uuid",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+     },
+     {
+      "name": "contact_id",
+      "type": "uuid",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+     },
+     {
+      "name": "emoji",
+      "type": "text NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+     },
+     {
+      "name": "created_at",
+      "type": "timestamptz NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+     }
+    ],
+    "constraints": [],
+    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+    "comment": "Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem.",
+    "origin": "migration"
+   },
    "auth.users": {
     "columns": [
      {
@@ -19516,26 +19573,6 @@
     "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
    },
    {
-    "name": "Users can view own notifications",
-    "table": "notifications",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = auth.uid()",
-    "check": "",
-    "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
-   },
-   {
-    "name": "Users can update own notifications",
-    "table": "notifications",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = auth.uid()",
-    "check": "",
-    "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
-   },
-   {
     "name": "Users can delete own notifications",
     "table": "notifications",
     "cmd": "DELETE",
@@ -21264,16 +21301,6 @@
     "using": "false",
     "check": "",
     "src": "supabase/migrations/20260404174354_30f2c688-f26a-4c18-9657-8448de6613bd.sql"
-   },
-   {
-    "name": "Block authenticated notification inserts",
-    "table": "notifications",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "false",
-    "src": "supabase/migrations/20260404174629_09b4d24e-1ead-4fdb-b31d-4293b9660724.sql"
    },
    {
     "name": "Block authenticated version inserts",
@@ -24784,6 +24811,56 @@
     "using": "has_role(auth.uid(), 'agent'::app_role) AND agent_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())",
     "check": "",
     "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
+    "name": "Users can insert own goal notifications",
+    "table": "notifications",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "user_id = (SELECT auth.uid()) AND type = 'goal' AND is_read IS FALSE AND read_at IS NULL AND created_at BETWEEN now() - interval '5 minutes' AND now() + interval '5 minutes' AND length(title) BETWEEN 1 AND 200 AND length(message) BETWEEN 1 AND 1000 AND dedupe_key ~ '^goal:v1:[0-9a-f]{8}-[0-9a-f]{4}- …",
+    "src": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "name": "Users can mark own notifications as read",
+    "table": "notifications",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = (SELECT auth.uid())",
+    "check": "user_id = (SELECT auth.uid()) AND is_read IS TRUE AND read_at IS NOT NULL AND read_at >= created_at - interval '5 minutes' AND read_at <= now() + interval '5 minutes'",
+    "src": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "name": "No client access to reaction rollback backup",
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "cmd": "ALL",
+    "roles": "anon, authenticated",
+    "mode": "permissive",
+    "using": "false",
+    "check": "false",
+    "src": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql"
+   },
+   {
+    "name": "Users can update own notifications",
+    "table": "notifications",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "name": "Users can view own notifications",
+    "table": "notifications",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
    },
    {
     "name": "Users can view own profile",
@@ -34855,6 +34932,32 @@
     "raises": [],
     "tables": []
    },
+   "run_as": {
+    "args": "p_role text, p_uid uuid, p_sql text",
+    "returns": "text",
+    "lang": "plpgsql",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "DECLARE n bigint; BEGIN EXECUTE format('SET LOCAL ROLE %I', p_role); PERFORM set_config('request.jwt.claim.sub', coalesce(p_uid::text, ''), true); BEGIN EXECUTE p_sql; GET DIAGNOSTICS n = ROW_COUNT; RESET ROLE; RETURN 'OK ' || n; EXCEPTION WHEN OTHERS THEN RESET ROLE; RETURN 'ERROR ' || SQLSTATE; END; END",
+    "raises": [],
+    "tables": []
+   },
+   "expect": {
+    "args": "p_label text, p_actual text, p_expected text",
+    "returns": "void",
+    "lang": "plpgsql",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "BEGIN IF p_actual IS DISTINCT FROM p_expected THEN RAISE EXCEPTION 'FAIL [%]: expected %, got %', p_label, p_expected, p_actual; END IF; RAISE NOTICE 'PASS [%] -> %', p_label, p_actual; END",
+    "raises": [
+     "FAIL [%]: expected %, got %"
+    ],
+    "tables": [
+     "p_expected"
+    ]
+   },
    "t190_assert": {
     "args": "p_ok boolean, p_msg text",
     "returns": "void",
@@ -42309,6 +42412,14 @@
     "src": "supabase/migrations/20261031170000_high3-fk-indexes.sql"
    },
    {
+    "name": "idx_contacts_phone_search_digits_trgm",
+    "table": "contacts",
+    "columns": "phone_search_digits extensions.gin_trgm_ops",
+    "unique": false,
+    "where": "",
+    "src": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql"
+   },
+   {
     "name": "idx_ai_conversation_tags_contact_id",
     "table": "ai_conversation_tags",
     "columns": "contact_id",
@@ -43647,6 +43758,10 @@
    "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
    "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
    "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql",
+   "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+   "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+   "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
+   "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -43677,6 +43792,7 @@
    "supabase/tests/gamification_streak_dias_seguidos.sql",
    "supabase/tests/get_team_birthdays.sql",
    "supabase/tests/global_settings_secrets_rls.sql",
+   "supabase/tests/goal_notifications_own_insert_policy.sql",
    "supabase/tests/ia_outbox_stats_hmac.sql",
    "supabase/tests/inbox_agregado_por_contato.sql",
    "supabase/tests/inbox_scope_permissions.sql",
@@ -43954,6 +44070,7 @@
    "copilot_help_requests": "enabled",
    "copilot_learning_moments": "enabled",
    "copilot_conversation_scores": "enabled",
+   "_rb_message_reactions_one_per_agent_20261107121000": "enabled",
    "zz_prova_sem_rls": "enabled",
    "zz_prova_policy": "enabled"
   },
@@ -56455,6 +56572,22 @@
     "src": "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "update",
+    "object": "notifications",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "_rb_message_reactions_one_per_agent_20261107121000",
+    "objkind": "table",
+    "roles": "PUBLIC, anon, authenticated, service_role",
+    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -56517,6 +56650,22 @@
     "objkind": "table",
     "roles": "anon",
     "src": "supabase/tests/global_settings_secrets_rls.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "auth.uid",
+    "objkind": "function",
+    "roles": "anon, authenticated, service_role",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select, insert, update",
+    "object": "notifications",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
    },
    {
     "kind": "grant",
@@ -61497,6 +61646,11 @@
     "src": "supabase/tests/gamification_streak_dias_seguidos.sql"
    },
    {
+    "function": "expect",
+    "msg": "FAIL [%]: expected %, got %",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+   },
+   {
     "function": "t190_assert",
     "msg": "FALHOU: %",
     "src": "supabase/tests/indeterminate_optout_outbox.sql"
@@ -61836,7 +61990,9 @@
    "column:copilot_sessions.comm_style": "CV-037 — etiquetas de estilo de comunicação do cliente.",
    "column:copilot_sessions.decision_role": "CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…).",
    "column:copilot_sessions.occasion": "CV-035/036 — ocasião comercial detectada (natal, sipat, outubro_rosa, …).",
-   "column:copilot_sessions.stakeholders": "CV-039 — pessoas citadas na conversa que participam da decisão."
+   "column:copilot_sessions.stakeholders": "CV-039 — pessoas citadas na conversa que participam da decisão.",
+   "table:_rb_message_reactions_one_per_agent_20261107121000": "Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem.",
+   "column:contacts.phone_search_digits": "Somente dígitos de phone, gerados para busca consistente sem alterar o formato exibido."
   },
   "types_file": "src/integrations/supabase/types.ts"
  },
@@ -67632,7 +67788,7 @@
   {
    "module": "e2e",
    "files": 78,
-   "lines": 18057,
+   "lines": 18291,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -67784,8 +67940,8 @@
   },
   {
    "module": "scripts",
-   "files": 433,
-   "lines": 85372,
+   "files": 436,
+   "lines": 85934,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68085,7 +68241,7 @@
   {
    "module": "src/adapters",
    "files": 5,
-   "lines": 590,
+   "lines": 616,
    "tables": [],
    "exports": [
     "evolutionAdapter.ts: jidToPhone, evolutionToRealtimeMessage, deriveContactsFromMessages, derivedToConversationContact, buildExternalConversations",
@@ -68114,7 +68270,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368079,
+   "lines": 368185,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68450,7 +68606,7 @@
   {
    "module": "src/hooks",
    "files": 980,
-   "lines": 159234,
+   "lines": 159637,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -68737,7 +68893,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15529,
+   "lines": 15532,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -68764,7 +68920,7 @@
   {
    "module": "src/lib",
    "files": 281,
-   "lines": 38803,
+   "lines": 38808,
    "tables": [
     "contacts",
     "security_alerts"
@@ -69716,8 +69872,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1083,
-   "lines": 104207,
+   "files": 1087,
+   "lines": 104464,
    "tables": [
     "audit_logs",
     "departments",
@@ -69812,8 +69968,8 @@
   },
   {
    "module": "supabase/tests",
-   "files": 90,
-   "lines": 27520,
+   "files": 91,
+   "lines": 27665,
    "tables": [],
    "exports": [],
    "docs": [],
@@ -69850,6 +70006,7 @@
     "supabase/tests/gamification_streak_dias_seguidos.sql",
     "supabase/tests/get_team_birthdays.sql",
     "supabase/tests/global_settings_secrets_rls.sql",
+    "supabase/tests/goal_notifications_own_insert_policy.sql",
     "supabase/tests/ia_outbox_stats_hmac.sql",
     "supabase/tests/inbox_agregado_por_contato.sql",
     "supabase/tests/inbox_scope_permissions.sql",
@@ -69898,8 +70055,7 @@
     "supabase/tests/tasks_contact_visibility.sql",
     "supabase/tests/tc002_find_or_create_direct_pair.sql",
     "supabase/tests/team_chat_files_bucket_limit.sql",
-    "supabase/tests/transfer_conversation_atomicidade.sql",
-    "supabase/tests/update_own_profile_sem_email.sql"
+    "supabase/tests/transfer_conversation_atomicidade.sql"
    ]
   },
   {
@@ -74067,6 +74223,7 @@
     "scripts/db-audit/check-triple-parity.test.mjs"
    ],
    "PLAYWRIGHT_BASE_URL": [
+    "e2e/fixtures/e2e-contact.ts",
     "playwright.config.ts",
     "scripts/ci/e2e-auth-setup.unit.mjs"
    ],
@@ -74556,6 +74713,9 @@
    ],
    "ZAPP_CSS_UNDER_TEST": [
     "src/styles/__tests__/mobileAreaSeguraRolagem.test.ts"
+   ],
+   "ZAPP_E2E_FORCE_ONLINE": [
+    "scripts/e2e-isolated/force-online.mjs"
    ],
    "ZAPP_E2E_LOCAL": [
     "e2e/catalog.spec.ts",
@@ -76137,6 +76297,7 @@
   ],
   "tables_only_in_schema": [
    "_rb_message_reactions_contato_20261007001008",
+   "_rb_message_reactions_one_per_agent_20261107121000",
    "_zapp_fn_before",
    "_zapp_mig133_log",
    "agent_mini_game_xp_daily",
@@ -80024,7 +80185,7 @@
    },
    {
     "file": "e2e/fixtures/e2e-contact.ts",
-    "msg": "Sessão do Supabase não encontrada no localStorage — e2e/auth.setup.ts deveria "
+    "msg": "Sessão do Supabase não encontrada no storageState — e2e/auth.setup.ts deveria "
    },
    {
     "file": "e2e/fixtures/e2e-contact.ts",
@@ -85116,6 +85277,10 @@
    },
    {
     "file": "src/hooks/reactions/useReactionMutations.ts",
+    "msg": "Estado da reação mudou repetidamente durante a sincronização"
+   },
+   {
+    "file": "src/hooks/reactions/useReactionMutations.ts",
     "msg": "Perfil não encontrado"
    },
    {
@@ -89852,10 +90017,6 @@
    },
    {
     "file": "src/components/ui/command-palette.tsx",
-    "text": "então ele não pode capturar `allItems`/`selectedIndex` do render em que foi criado (stale"
-   },
-   {
-    "file": "src/components/ui/command-palette.tsx",
     "text": "estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar"
    },
    {
@@ -89873,6 +90034,14 @@
    {
     "file": "src/components/ui/icon-button.tsx",
     "text": "* Required for accessibility - describes the button action */"
+   },
+   {
+    "file": "src/components/ui/progress.tsx",
+    "text": "Radix aceita somente 0..100. Consumidores podem fornecer razões acima de"
+   },
+   {
+    "file": "src/components/ui/progress.tsx",
+    "text": "100% (capacidade excedida no War Room); a barra deve representar \"cheio\","
    },
    {
     "file": "src/components/ui/skip-link.tsx",
@@ -90756,6 +90925,10 @@
    },
    {
     "file": "src/hooks/integrations/useCatalogContactSearch.ts",
+    "text": "consulta uma busca telefônica. Essa cláusula ampla combinada ao limit(15)"
+   },
+   {
+    "file": "src/hooks/integrations/useCatalogContactSearch.ts",
     "text": "(log apenas) — nunca deve impedir o envio real já concluído. */"
    },
    {
@@ -91101,6 +91274,14 @@
    {
     "file": "src/hooks/reactions/useBatchReactions.ts",
     "text": "* Teto de ids por `.in()` (limite de URL do PostgREST). */"
+   },
+   {
+    "file": "src/hooks/reactions/useReactionMutations.ts",
+    "text": "compensação inversa somente depois de um readback conclusivo. Erro"
+   },
+   {
+    "file": "src/hooks/reactions/useReactionMutations.ts",
+    "text": "reação somente se o readback provar que o banco ainda a conserva."
    },
    {
     "file": "src/hooks/realtime/incomingAlertScope.ts",
@@ -91877,6 +92058,10 @@
    {
     "file": "src/hooks/ui/useVolumeRocker.ts",
     "text": "`react-hooks/refs` (a mesma regra que motivou a assinatura deste hook)."
+   },
+   {
+    "file": "src/hooks/ui/useVolumeRocker.ts",
+    "text": "e restauramos o gatilho somente quando o foco ainda estava no controle."
    },
    {
     "file": "src/hooks/voice/retry.ts",
@@ -97848,17 +98033,7 @@
    },
    {
     "table": "notifications",
-    "column": "created_at",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "notifications",
-    "column": "message",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "notifications",
-    "column": "title",
+    "column": "user_id",
     "rule": "obrigatório"
    },
    {
@@ -97868,8 +98043,33 @@
    },
    {
     "table": "notifications",
-    "column": "user_id",
+    "column": "title",
     "rule": "obrigatório"
+   },
+   {
+    "table": "notifications",
+    "column": "message",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "notifications",
+    "column": "metadata",
+    "rule": "default '{}'::jsonb"
+   },
+   {
+    "table": "notifications",
+    "column": "dedupe_key",
+    "rule": "único"
+   },
+   {
+    "table": "notifications",
+    "column": "is_read",
+    "rule": "default false"
+   },
+   {
+    "table": "notifications",
+    "column": "created_at",
+    "rule": "default now()"
    },
    {
     "table": "queue_goals",
@@ -103300,6 +103500,26 @@
     "table": "copilot_conversation_scores",
     "column": "updated_at",
     "rule": "default now()"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "id",
+    "rule": "PK"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "message_id",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "emoji",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "created_at",
+    "rule": "obrigatório"
    },
    {
     "table": "auth.users",
@@ -125378,6 +125598,26 @@
     "line": "-- purge_talkx_expired_data: o bloco 6 (talkx_delivery_log) apagava com `interval '30 days'` fixo,"
    },
    {
+    "file": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+    "line": "AND (date_trunc('month', current_date) + interval '1 month')::date"
+   },
+   {
+    "file": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+    "line": "AND created_at BETWEEN now() - interval '5 minutes' AND now() + interval '5 minutes'"
+   },
+   {
+    "file": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+    "line": "AND read_at <= now() + interval '5 minutes'"
+   },
+   {
+    "file": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+    "line": "AND read_at >= created_at - interval '5 minutes'"
+   },
+   {
+    "file": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+    "line": "BETWEEN (date_trunc('month', current_date) - interval '1 month')::date"
+   },
+   {
     "file": "supabase-export/BLOCO_01_schema_completo.sql",
     "line": "AND created_at > now() - interval '1 hour';"
    },
@@ -125846,6 +126086,10 @@
    {
     "file": "src/components/ui/VolumeSliderPopoverContent.tsx",
     "line": "* `VolumeDial` (dial circular, padrão slider-08) no lugar do slider vertical, ficou ~30%"
+   },
+   {
+    "file": "src/components/ui/progress.tsx",
+    "line": "// 100% (capacidade excedida no War Room); a barra deve representar \"cheio\","
    },
    {
     "file": "src/components/ui/micro-interactions/feedback.tsx",
@@ -129470,6 +129714,10 @@
     "name": "nasce sem selo VIP (is_vip do ContactRow, default da coluna)"
    },
    {
+    "file": "src/adapters/__tests__/evolutionAdapter.test.ts",
+    "name": "espelha o telefone normalizado da coluna gerada de contacts"
+   },
+   {
     "file": "src/adapters/__tests__/evolutionAdapter.unsupported-message-types.test.ts",
     "name": "evolutionToRealtimeMessage — tipos sem renderização"
    },
@@ -129524,6 +129772,10 @@
    {
     "file": "src/adapters/__tests__/inboxAdapter.test.ts",
     "name": "does not render coordinates from malformed location content"
+   },
+   {
+    "file": "src/adapters/__tests__/inboxAdapter.test.ts",
+    "name": "normaliza a nota de voz ptt para o player canonico de audio"
    },
    {
     "file": "src/components/__tests__/CT70_reduzirMovimentoAutomacaoIa.test.tsx",
@@ -143304,6 +143556,10 @@
    {
     "file": "src/components/inbox/__tests__/MessageReactions.aria.test.tsx",
     "name": "nomeia o botão que abre o seletor de reações"
+   },
+   {
+    "file": "src/components/inbox/__tests__/MessageReactions.aria.test.tsx",
+    "name": "bloqueia atalhos, trigger e picker estendido durante qualquer mutation compartilhada"
    },
    {
     "file": "src/components/inbox/__tests__/MessageReactions.autoria-unica.test.tsx",
@@ -167355,6 +167611,10 @@
    },
    {
     "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+    "name": "não duplica option/id quando um acesso rápido também está nos recentes"
+   },
+   {
+    "file": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
     "name": "o campo é combobox nomeado que aponta para a lista e para o item ativo"
    },
    {
@@ -167819,6 +168079,10 @@
    },
    {
     "file": "src/components/ui/__tests__/progress.test.tsx",
+    "name": "fornece nome acessível padrão quando o consumidor não nomeia a barra"
+   },
+   {
+    "file": "src/components/ui/__tests__/progress.test.tsx",
     "name": "preserva o estado indeterminado quando value não é informado"
    },
    {
@@ -167936,6 +168200,10 @@
    {
     "file": "src/components/ui/__tests__/sonner-offset-mobile.test.tsx",
     "name": "sonner — offset no celular (U1-04)"
+   },
+   {
+    "file": "src/components/ui/__tests__/sonner-offset-mobile.test.tsx",
+    "name": "usa fundo sólido e foreground contrastante no toast de sucesso"
    },
    {
     "file": "src/components/ui/__tests__/sonner-offset-mobile.test.tsx",
@@ -174191,6 +174459,14 @@
    },
    {
     "file": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+    "name": "não envia POST quando a chave do incidente já existe"
+   },
+   {
+    "file": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+    "name": "falha no precheck de dedupe é registrada e nunca vira POST"
+   },
+   {
+    "file": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
     "name": "conta o conjunto inteiro de violações, não só a primeira página de 1000"
    },
    {
@@ -177088,6 +177364,14 @@
    {
     "file": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
     "name": "useMessageReactions — rejeição do transporte no contrato público (R2-INB-032)"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
+    "name": "compartilha a pendência entre duas instâncias da mesma mensagem"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
+    "name": "duas instâncias no mesmo tick convergem atomicamente para um único emoji"
    },
    {
     "file": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
@@ -181559,6 +181843,10 @@
    },
    {
     "file": "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
+    "name": "não transforma um único dígito embutido no nome em busca ampla por telefone"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
     "name": "escapa o termo para não quebrar a gramática do or()"
    },
    {
@@ -184083,6 +184371,18 @@
    },
    {
     "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
+    "name": "adicionar substitui no cache qualquer emoji anterior do mesmo autor"
+   },
+   {
+    "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
+    "name": "adicionar: falha local após envio compensa removendo a reação remota"
+   },
+   {
+    "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
+    "name": "adicionar: erro ambíguo após commit é confirmado por readback e não compensa ao contrário"
+   },
+   {
+    "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
     "name": "adicionar: sem contexto de transporte continua gravando local (contrato preservado)"
    },
    {
@@ -184092,6 +184392,14 @@
    {
     "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
     "name": "remover: transporte rejeitado rejeita a mutation, avisa e preserva a reação que existia"
+   },
+   {
+    "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
+    "name": "remover: falha local após envio compensa restaurando a reação remota"
+   },
+   {
+    "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
+    "name": "remover: erro ambíguo após commit é confirmado por readback e não restaura ao contrário"
    },
    {
     "file": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
@@ -211676,26 +211984,6 @@
     "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
    },
    {
-    "name": "Users can view own notifications",
-    "table": "notifications",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = auth.uid()",
-    "check": "",
-    "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
-   },
-   {
-    "name": "Users can update own notifications",
-    "table": "notifications",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "user_id = auth.uid()",
-    "check": "",
-    "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
-   },
-   {
     "name": "Users can delete own notifications",
     "table": "notifications",
     "cmd": "DELETE",
@@ -213424,16 +213712,6 @@
     "using": "false",
     "check": "",
     "src": "supabase/migrations/20260404174354_30f2c688-f26a-4c18-9657-8448de6613bd.sql"
-   },
-   {
-    "name": "Block authenticated notification inserts",
-    "table": "notifications",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "false",
-    "src": "supabase/migrations/20260404174629_09b4d24e-1ead-4fdb-b31d-4293b9660724.sql"
    },
    {
     "name": "Block authenticated version inserts",
@@ -216944,6 +217222,56 @@
     "using": "has_role(auth.uid(), 'agent'::app_role) AND agent_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())",
     "check": "",
     "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
+    "name": "Users can insert own goal notifications",
+    "table": "notifications",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "user_id = (SELECT auth.uid()) AND type = 'goal' AND is_read IS FALSE AND read_at IS NULL AND created_at BETWEEN now() - interval '5 minutes' AND now() + interval '5 minutes' AND length(title) BETWEEN 1 AND 200 AND length(message) BETWEEN 1 AND 1000 AND dedupe_key ~ '^goal:v1:[0-9a-f]{8}-[0-9a-f]{4}- …",
+    "src": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "name": "Users can mark own notifications as read",
+    "table": "notifications",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = (SELECT auth.uid())",
+    "check": "user_id = (SELECT auth.uid()) AND is_read IS TRUE AND read_at IS NOT NULL AND read_at >= created_at - interval '5 minutes' AND read_at <= now() + interval '5 minutes'",
+    "src": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "name": "No client access to reaction rollback backup",
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "cmd": "ALL",
+    "roles": "anon, authenticated",
+    "mode": "permissive",
+    "using": "false",
+    "check": "false",
+    "src": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql"
+   },
+   {
+    "name": "Users can update own notifications",
+    "table": "notifications",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "name": "Users can view own notifications",
+    "table": "notifications",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
    },
    {
     "name": "Users can view own profile",
@@ -227015,6 +227343,32 @@
     "raises": [],
     "tables": []
    },
+   "run_as": {
+    "args": "p_role text, p_uid uuid, p_sql text",
+    "returns": "text",
+    "lang": "plpgsql",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "DECLARE n bigint; BEGIN EXECUTE format('SET LOCAL ROLE %I', p_role); PERFORM set_config('request.jwt.claim.sub', coalesce(p_uid::text, ''), true); BEGIN EXECUTE p_sql; GET DIAGNOSTICS n = ROW_COUNT; RESET ROLE; RETURN 'OK ' || n; EXCEPTION WHEN OTHERS THEN RESET ROLE; RETURN 'ERROR ' || SQLSTATE; END; END",
+    "raises": [],
+    "tables": []
+   },
+   "expect": {
+    "args": "p_label text, p_actual text, p_expected text",
+    "returns": "void",
+    "lang": "plpgsql",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "BEGIN IF p_actual IS DISTINCT FROM p_expected THEN RAISE EXCEPTION 'FAIL [%]: expected %, got %', p_label, p_expected, p_actual; END IF; RAISE NOTICE 'PASS [%] -> %', p_label, p_actual; END",
+    "raises": [
+     "FAIL [%]: expected %, got %"
+    ],
+    "tables": [
+     "p_expected"
+    ]
+   },
    "t190_assert": {
     "args": "p_ok boolean, p_msg text",
     "returns": "void",
@@ -232157,6 +232511,11 @@
     "src": "supabase/tests/gamification_streak_dias_seguidos.sql"
    },
    {
+    "function": "expect",
+    "msg": "FAIL [%]: expected %, got %",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+   },
+   {
     "function": "t190_assert",
     "msg": "FALHOU: %",
     "src": "supabase/tests/indeterminate_optout_outbox.sql"
@@ -232508,6 +232867,10 @@
    {
     "file": "src/hooks/business/useAbandonmentRate.ts",
     "limit": "1000"
+   },
+   {
+    "file": "src/hooks/business/useWarRoomAlerts.ts",
+    "limit": "1"
    },
    {
     "file": "src/hooks/business/useWarRoomAlerts.ts",
@@ -236417,6 +236780,21 @@
     "UPDATE": [],
     "DELETE": []
    },
+   "_rb_message_reactions_one_per_agent_20261107121000": {
+    "rls": "enabled",
+    "SELECT": [
+     "anon, authenticated: false"
+    ],
+    "INSERT": [
+     "anon, authenticated: false"
+    ],
+    "UPDATE": [
+     "anon, authenticated: false"
+    ],
+    "DELETE": [
+     "anon, authenticated: false"
+    ]
+   },
    "_zapp_fn_before": {
     "rls": "não encontrado",
     "SELECT": [],
@@ -238012,9 +238390,10 @@
      "authenticated: user_id = auth.uid()"
     ],
     "INSERT": [
-     "authenticated: false"
+     "authenticated: user_id = (SELECT auth.uid()) AND type = 'goal' AND is_read IS FALSE AND read_at IS NULL AND created_at BETWEEN now() - inter"
     ],
     "UPDATE": [
+     "authenticated: user_id = (SELECT auth.uid())",
      "authenticated: user_id = auth.uid()"
     ],
     "DELETE": [
@@ -240151,6 +240530,7 @@
    "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
    "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
    "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql",
+   "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -240180,6 +240560,7 @@
    "supabase/tests/gamification_revoke_client_rpcs.sql",
    "supabase/tests/gamification_streak_dias_seguidos.sql",
    "supabase/tests/global_settings_secrets_rls.sql",
+   "supabase/tests/goal_notifications_own_insert_policy.sql",
    "supabase/tests/ia_outbox_stats_hmac.sql",
    "supabase/tests/inbox_agregado_por_contato.sql",
    "supabase/tests/inbox_scope_permissions.sql",
@@ -253152,6 +253533,22 @@
     "src": "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "update",
+    "object": "notifications",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "_rb_message_reactions_one_per_agent_20261107121000",
+    "objkind": "table",
+    "roles": "PUBLIC, anon, authenticated, service_role",
+    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -253214,6 +253611,22 @@
     "objkind": "table",
     "roles": "anon",
     "src": "supabase/tests/global_settings_secrets_rls.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "auth.uid",
+    "objkind": "function",
+    "roles": "anon, authenticated, service_role",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select, insert, update",
+    "object": "notifications",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/tests/goal_notifications_own_insert_policy.sql"
    },
    {
     "kind": "grant",
@@ -254528,6 +254941,9 @@
    ],
    "copilot_conversation_scores": [
     "updated_at"
+   ],
+   "_rb_message_reactions_one_per_agent_20261107121000": [
+    "created_at"
    ],
    "auth.users": [],
    "storage.buckets": [],
@@ -256408,7 +256824,7 @@
    "`whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "173/233 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
+   "173/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -258602,7 +259018,7 @@
   },
   "e2e/auth-diagnostics.ts": {
    "path": "e2e/auth-diagnostics.ts",
-   "lines": 118,
+   "lines": 120,
    "exports": [
     "class AuthTargetError",
     "type AuthTarget",
@@ -258723,7 +259139,7 @@
   },
   "e2e/catalog.spec.ts": {
    "path": "e2e/catalog.spec.ts",
-   "lines": 310,
+   "lines": 322,
    "is_test": true,
    "env": [
     "E2E_SUPABASE_ANON_KEY",
@@ -258857,7 +259273,7 @@
   },
   "e2e/contacts-crud.spec.ts": {
    "path": "e2e/contacts-crud.spec.ts",
-   "lines": 55,
+   "lines": 53,
    "is_test": true,
    "temporal": [
     "await expect(addDialog).toBeHidden({ timeout: 15_000 });",
@@ -258960,7 +259376,7 @@
   },
   "e2e/contacts-views.spec.ts": {
    "path": "e2e/contacts-views.spec.ts",
-   "lines": 72,
+   "lines": 78,
    "is_test": true,
    "temporal": [
     "await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });"
@@ -258983,7 +259399,7 @@
   },
   "e2e/ct94-ui-429.spec.ts": {
    "path": "e2e/ct94-ui-429.spec.ts",
-   "lines": 142,
+   "lines": 149,
    "is_test": true,
    "params": [
     {
@@ -259015,7 +259431,7 @@
   },
   "e2e/dialog-rodape-viewport.spec.ts": {
    "path": "e2e/dialog-rodape-viewport.spec.ts",
-   "lines": 108,
+   "lines": 106,
    "is_test": true,
    "temporal": [
     "await expect(addDialog).toBeHidden({ timeout: 15_000 });",
@@ -259032,7 +259448,7 @@
   },
   "e2e/email-link-contato.spec.ts": {
    "path": "e2e/email-link-contato.spec.ts",
-   "lines": 368,
+   "lines": 369,
    "is_test": true,
    "env": [
     "API_URL",
@@ -259159,7 +259575,7 @@
   },
   "e2e/files-tab.spec.ts": {
    "path": "e2e/files-tab.spec.ts",
-   "lines": 602,
+   "lines": 609,
    "is_test": true,
    "env": [
     "E2E_LOCAL_SUPABASE_ANON_KEY",
@@ -259211,8 +259627,11 @@
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "path": "e2e/inbox-contact-sidebar.spec.ts",
-   "lines": 160,
+   "lines": 165,
    "is_test": true,
+   "temporal": [
+    "await expect(panel).toBeVisible({ timeout: 20_000 });"
+   ],
    "tests": [
     "Sidebar ",
     "renderiza exatamente as 3 seções do plano",
@@ -259279,18 +259698,19 @@
   },
   "e2e/media-volume.spec.ts": {
    "path": "e2e/media-volume.spec.ts",
-   "lines": 202,
+   "lines": 207,
    "is_test": true,
    "errors": [
     "Sessão do projeto configurado ausente para a prova de volume"
    ],
    "params": [
     {
-     "name": "AUDIO_FILE",
-     "value": "'e2e-media-volume.ogg'"
+     "name": "NAV_TIMEOUT",
+     "value": "60"
     }
    ],
    "temporal": [
+    "const NAV_TIMEOUT = 60_000;",
     "timeout: 10_000,"
    ],
    "tests": [
@@ -259336,7 +259756,7 @@
     }
    ],
    "rule_comments": [
-    "regra de papel que está sob teste."
+    "dois cenários — é a regra de papel que está sob teste."
    ],
    "temporal": [
     "await expect(page.getByRole('heading', { name: 'Acesso restrito' })).toBeVisible({ timeout: 20_000 });",
@@ -259430,7 +259850,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "path": "e2e/navegacao-modulos.spec.ts",
-   "lines": 1906,
+   "lines": 1908,
    "is_test": true,
    "env": [
     "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE",
@@ -259536,7 +259956,7 @@
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "path": "e2e/onboarding-dispensar.spec.ts",
-   "lines": 98,
+   "lines": 92,
    "is_test": true,
    "temporal": [
     "await aba.click({ timeout: 5_000 });",
@@ -259652,7 +260072,7 @@
   },
   "e2e/reactions.spec.ts": {
    "path": "e2e/reactions.spec.ts",
-   "lines": 148,
+   "lines": 166,
    "is_test": true,
    "temporal": [
     ").toBeVisible({ timeout: 8_000 });",
@@ -259672,7 +260092,7 @@
   },
   "e2e/skins-e2e.spec.ts": {
    "path": "e2e/skins-e2e.spec.ts",
-   "lines": 745,
+   "lines": 757,
    "is_test": true,
    "errors": [
     "#main-navigation sem caixa",
@@ -259761,7 +260181,7 @@
   },
   "e2e/talkx-demo.spec.ts": {
    "path": "e2e/talkx-demo.spec.ts",
-   "lines": 42,
+   "lines": 44,
    "is_test": true,
    "tests": [
     "Talk X — demo determinística (fixture da tela 01)",
@@ -259770,7 +260190,7 @@
   },
   "e2e/talkx-launch.spec.ts": {
    "path": "e2e/talkx-launch.spec.ts",
-   "lines": 231,
+   "lines": 245,
    "is_test": true,
    "params": [
     {
@@ -259811,7 +260231,9 @@
    ],
    "temporal": [
     "await expect(ajuda).toBeVisible({ timeout: 30_000 });",
-    "await expect(page.getByRole('button', { name: 'Ajuda' })).toBeVisible({ timeout: 30_000 });"
+    "await expect(page.getByRole('button', { name: 'Ajuda' })).toBeVisible({ timeout: 30_000 });",
+    "{ n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name …",
+    "{ n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('he …"
    ],
    "tests": [
     "tela ${tela.n} — ${tela.nome}",
@@ -259830,7 +260252,7 @@
   },
   "e2e/talkx.spec.ts": {
    "path": "e2e/talkx.spec.ts",
-   "lines": 286,
+   "lines": 303,
    "is_test": true,
    "errors": [
     "Falha ao limpar ${cleanupErrors.length} draft(s) E2E: ${cleanupErrors.join("
@@ -259966,7 +260388,7 @@
   },
   "e2e/telefonia.spec.ts": {
    "path": "e2e/telefonia.spec.ts",
-   "lines": 438,
+   "lines": 445,
    "is_test": true,
    "params": [
     {
@@ -260125,7 +260547,7 @@
   },
   "e2e/fixtures/e2e-contact.ts": {
    "path": "e2e/fixtures/e2e-contact.ts",
-   "lines": 281,
+   "lines": 269,
    "exports": [
     "const E2E_FIXTURE_CONTACT_ID",
     "const E2E_FIXTURE_CONTACT_NAME",
@@ -260134,15 +260556,15 @@
     "function cleanupFixtureMessages",
     "const E2E_FIXTURE_PROFILE_ID_CI",
     "function cleanupE2EReactions",
-    "function ensureReactionAbsent",
-    "function fixtureHasClosureToday"
+    "function ensureReactionAbsent"
    ],
    "env": [
+    "PLAYWRIGHT_BASE_URL",
     "ZAPP_E2E_LOCAL"
    ],
    "errors": [
     "Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()} ",
-    "Sessão do Supabase não encontrada no localStorage — e2e/auth.setup.ts deveria ",
+    "Sessão do Supabase não encontrada no storageState — e2e/auth.setup.ts deveria ",
     "set_conversation_status falhou: HTTP ${rpcResponse.status()} ${body}"
    ],
    "params": [
@@ -260152,10 +260574,9 @@
     }
    ],
    "rule_comments": [
+    "storageState. Le-la daqui evita navegar apenas para acessar localStorage e,",
     "mensagens antigas de fora quando o volume diário ultrapassa esse limite).",
-    "apenas por `user_id` apagava TODAS as reacoes do usuario logado — em qualquer",
-    "do e2e-logado.yml limpa com service role apenas ENTRE RUNS, nunca entre",
-    "Mesma regra do indice unico: o dia do encerramento e o dia em America/Sao_Paulo."
+    "apenas por `user_id` apagaria TODAS as reacoes do usuario logado. Reações de"
    ],
    "temporal": [
     "await badge.waitFor({ state: 'detached', timeout: 8_000 });"
@@ -260321,7 +260742,7 @@
   },
   "e2e/fixtures/mapa-mocks.ts": {
    "path": "e2e/fixtures/mapa-mocks.ts",
-   "lines": 165,
+   "lines": 178,
    "exports": [
     "const SUPABASE_HOST",
     "type Registro",
@@ -260332,6 +260753,9 @@
     "function mockMapboxSearchbox",
     "function bloquearRedeReal"
    ],
+   "role_checks": [
+    "admin"
+   ],
    "rule_comments": [
     "* Requisições que NÃO tinham mock e foram barradas pelo guarda — deve ficar vazio. */",
     "RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).",
@@ -260340,7 +260764,7 @@
   },
   "e2e/fixtures/onboarding-isolated.ts": {
    "path": "e2e/fixtures/onboarding-isolated.ts",
-   "lines": 111,
+   "lines": 122,
    "exports": [
     "function withFreshOnboardingUser",
     "const test",
@@ -260360,7 +260784,7 @@
     "Merge only this preference. The app, not the fixture, must persist true."
    ],
    "temporal": [
-    "await expect(page.getByRole('main', { name: 'Conteúdo principal' }).getByRole('heading', { level: 1, name: 'Contatos' })).toBeAttached({ timeout: 20_000 });",
+    "await expect(heading).toBeAttached({ timeout: 20_000 });",
     "await expect(page.getByTestId('kpi-card').first()).toBeVisible({ timeout: 20_000 });",
     "await expect(page.getByText('Carregando contatos', { exact: false })).toHaveCount(0, { timeout: 20_000 });",
     "await expect(page.locator('#main-navigation')).toBeVisible({ timeout: 60_000 });"
@@ -260471,7 +260895,7 @@
   },
   "e2e/fixtures/talkx-demo.ts": {
    "path": "e2e/fixtures/talkx-demo.ts",
-   "lines": 310,
+   "lines": 420,
    "exports": [
     "const ESCRITA_NAO_PREVISTA",
     "type TalkXDemoData",
@@ -260480,6 +260904,7 @@
     "function fixturesComDados",
     "function fixturesVazias",
     "function fixtureDaTela",
+    "function overviewStatsFromFixture",
     "function mockTalkXBackend",
     "const FAKE_USER_ID",
     "function installFakeSession",
@@ -260525,7 +260950,7 @@
   },
   "e2e/fixtures/arquivos-local/seed.ts": {
    "path": "e2e/fixtures/arquivos-local/seed.ts",
-   "lines": 432,
+   "lines": 437,
    "errors": [
     "seed arquivos-local: ${rotulo} aponta para host não-local (${host}). Proibido.",
     "seed arquivos-local: variável ${nome} ausente (rode via env de zapp-db-local)",
@@ -262356,7 +262781,7 @@
   },
   "scripts/ci/e2e-isolated-alert.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-alert.unit.mjs",
-   "lines": 94,
+   "lines": 95,
    "errors": [
     "rede proibida neste teste"
    ],
@@ -262364,7 +262789,7 @@
   },
   "scripts/ci/e2e-isolated-collection.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-collection.unit.mjs",
-   "lines": 189,
+   "lines": 200,
    "env": [
     "PATH"
    ],
@@ -262400,7 +262825,7 @@
   },
   "scripts/ci/e2e-isolated-fixture-access.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
-   "lines": 442,
+   "lines": 488,
    "errors": [
     "fixture-refusal"
    ],
@@ -262408,6 +262833,10 @@
     {
      "name": "ORIGIN",
      "value": "'https://127.0.0.1:5173'"
+    },
+    {
+     "name": "APP_ORIGIN",
+     "value": "'https://app.example.test'"
     },
     {
      "name": "CONTACT",
@@ -262450,7 +262879,7 @@
   },
   "scripts/ci/e2e-isolated-fixtures.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
-   "lines": 132,
+   "lines": 167,
    "errors": [
     "controlled missing file",
     "unexpected file read"
@@ -262462,6 +262891,10 @@
     }
    ],
    "uses_service_role": true
+  },
+  "scripts/ci/e2e-isolated-force-online.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-force-online.unit.mjs",
+   "lines": 51
   },
   "scripts/ci/e2e-isolated-gateway.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-gateway.unit.mjs",
@@ -262496,7 +262929,7 @@
   },
   "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
-   "lines": 152,
+   "lines": 164,
    "env": [
     "PATH",
     "RECORDED"
@@ -262579,7 +263012,7 @@
   },
   "scripts/ci/e2e-isolated-network-proof.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-network-proof.unit.mjs",
-   "lines": 329,
+   "lines": 357,
    "temporal": [
     "const child=runCommand(process.execPath,['-e','setTimeout(()=>process.exit(0),120)'],{env:{},timeout:10000}).then(r=>{childDone=true;return r;});",
     "test('async subprocess abort cannot become success',async()=>{const c=new AbortController();const pending=runCommand(process.execPath,['-e','setInterval(()=>{}, …",
@@ -262615,7 +263048,7 @@
   },
   "scripts/ci/e2e-isolated-qr.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-qr.unit.mjs",
-   "lines": 364,
+   "lines": 372,
    "params": [
     {
      "name": "RUN",
@@ -262638,6 +263071,10 @@
      "value": "'e2e65100-0000-4000-a000-000000009003'"
     },
     {
+     "name": "CONTACT_OWNER",
+     "value": "'e2e65100-0000-4000-a000-000000009004'"
+    },
+    {
      "name": "QR_USER",
      "value": "'e2e71190-7005-4509-a000-000000000001'"
     },
@@ -262650,11 +263087,11 @@
   },
   "scripts/ci/e2e-isolated-results.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-results.unit.mjs",
-   "lines": 385,
+   "lines": 424,
    "params": [
     {
      "name": "PLATFORM_BLOB",
-     "value": "'96a821d6c8389d526a9a5d65554687412510a92a'"
+     "value": "'7039743b2e607c10ff769ab508683135d2a713e7'"
     },
     {
      "name": "PLATFORM_FILE",
@@ -262668,7 +263105,7 @@
   },
   "scripts/ci/e2e-isolated-routine-ownership.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
-   "lines": 245,
+   "lines": 246,
    "params": [
     {
      "name": "RUN",
@@ -262715,7 +263152,7 @@
   },
   "scripts/ci/e2e-isolated-runtime.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "lines": 1524,
+   "lines": 1582,
    "env": [
     "GITHUB_OUTPUT"
    ],
@@ -262810,7 +263247,7 @@
   },
   "scripts/ci/e2e-isolated-suite.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-suite.unit.mjs",
-   "lines": 106,
+   "lines": 108,
    "params": [
     {
      "name": "RUN",
@@ -262835,7 +263272,7 @@
   },
   "scripts/ci/e2e-isolated-tls.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-tls.unit.mjs",
-   "lines": 738,
+   "lines": 775,
    "env": [
     "PATH"
    ],
@@ -262896,7 +263333,7 @@
   },
   "scripts/ci/e2e-isolated-workflow.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-workflow.unit.mjs",
-   "lines": 229,
+   "lines": 230,
    "env": [
     "PATH",
     "RECORDED"
@@ -262925,7 +263362,7 @@
   },
   "scripts/ci/e2e-media-volume-fixture.unit.mjs": {
    "path": "scripts/ci/e2e-media-volume-fixture.unit.mjs",
-   "lines": 294,
+   "lines": 332,
    "errors": [
     "blocked",
     "seed-exit-"
@@ -262956,6 +263393,9 @@
      "value": "'e2e-media-volume.ogg'"
     }
    ],
+   "rule_comments": [
+    "O seed já valida assinatura, download e bytes do Ogg. Este helper prova somente"
+   ],
    "temporal": [
     "assert.deepEqual(JSON.parse(init.body), { expiresIn: 60 });",
     "assert.deepEqual(h.observed.polls, [{ options: { timeout: 10_000 }, target: 0.16, precision: 2 }]);"
@@ -262964,7 +263404,7 @@
   },
   "scripts/ci/e2e-recovery.unit.mjs": {
    "path": "scripts/ci/e2e-recovery.unit.mjs",
-   "lines": 138,
+   "lines": 140,
    "errors": [
     "rede proibida neste teste"
    ],
@@ -264691,7 +265131,7 @@
   },
   "scripts/ci/volume-e2e-evidence-honesty.unit.mjs": {
    "path": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
-   "lines": 217,
+   "lines": 222,
    "exports": [
     "function auditarEvidenciaVolume"
    ],
@@ -267063,6 +267503,22 @@
    ],
    "uses_service_role": true
   },
+  "scripts/e2e-isolated/force-online.mjs": {
+   "path": "scripts/e2e-isolated/force-online.mjs",
+   "lines": 31,
+   "exports": [
+    "function installIsolatedOnlineState",
+    "const FORCE_ONLINE_SCRIPT",
+    "function isolatedOnlinePlugin"
+   ],
+   "env": [
+    "ZAPP_E2E_FORCE_ONLINE"
+   ],
+   "rule_comments": [
+    "The suite must exercise the real local backend instead of the application's"
+   ],
+   "doc": "A loopback-only namespace has no default route, so browser engines can report `navigator.onLine === false` even while the isolated HTTPS gateway is healthy. The suite must exercise the real local backend instead of the application's offline queue. This bootstrap is injected only by the isolated Vite …"
+  },
   "scripts/e2e-isolated/gateway.mjs": {
    "path": "scripts/e2e-isolated/gateway.mjs",
    "lines": 120,
@@ -267230,7 +267686,7 @@
   },
   "scripts/e2e-isolated/network-proof-browser.mjs": {
    "path": "scripts/e2e-isolated/network-proof-browser.mjs",
-   "lines": 278,
+   "lines": 286,
    "exports": [
     "const CONTROL",
     "const TOOLS",
@@ -267275,7 +267731,7 @@
     "const warmup=await page.goto(warmupUrl,{waitUntil:'load',timeout:8000});",
     "env:{PATH:'/usr/sbin:/usr/bin:/sbin:/bin',LC_ALL:'C'},encoding:'utf8',timeout:5000,maxBuffer:MAX_JSON,",
     "try {await outside.goto(config.canary_url,{timeout:5000,waitUntil:'domcontentloaded'});} catch {browserBlocked=true;}",
-    "try{await page.goto('https://127.0.0.1:'+(kind==='tls_wrong_san_rejected'?5176:5175),{waitUntil:'load',timeout:8000});}"
+    "try{await page.goto(controlUrl,{waitUntil:'load',timeout:8000});}"
    ]
   },
   "scripts/e2e-isolated/network-proof-policy.mjs": {
@@ -267529,7 +267985,7 @@
   },
   "scripts/e2e-isolated/results.mjs": {
    "path": "scripts/e2e-isolated/results.mjs",
-   "lines": 248,
+   "lines": 284,
    "exports": [
     "function readPlaywrightInventory",
     "function summarizePlaywrightResult"
@@ -267543,7 +267999,7 @@
   },
   "scripts/e2e-isolated/routine-ownership.mjs": {
    "path": "scripts/e2e-isolated/routine-ownership.mjs",
-   "lines": 304,
+   "lines": 306,
    "exports": [
     "const OWNERSHIP_ROUTINES",
     "const OWNERSHIP_EXECUTOR_OPTIONS",
@@ -267566,11 +268022,15 @@
   },
   "scripts/e2e-isolated/run.mjs": {
    "path": "scripts/e2e-isolated/run.mjs",
-   "lines": 756,
+   "lines": 809,
    "exports": [
     "function parseFilesSeedDiagnostic",
+    "function parseQrSeedDiagnostic",
     "function readBrowserReportOnce",
     "function browserResultDiagnostic",
+    "function browserTimeoutMs",
+    "const browserWorkers",
+    "function browserShard",
     "function assertPinnedImages",
     "function functionPolicy",
     "function discoverFunctionEntries",
@@ -267627,6 +268087,7 @@
    ],
    "rule_comments": [
     "* Full-suite warmup must compile every tracked, active Edge entrypoint. */",
+    "Observation must not replace the original required() failure. */ }",
     "Observation must not replace the original required() failure. */ }"
    ],
    "calc_fns": [
@@ -267659,7 +268120,7 @@
   },
   "scripts/e2e-isolated/runtime-contract.mjs": {
    "path": "scripts/e2e-isolated/runtime-contract.mjs",
-   "lines": 156,
+   "lines": 166,
    "exports": [
     "const ORIGIN",
     "const PROVIDER_ORIGIN",
@@ -267669,6 +268130,8 @@
     "const OWNER_LABEL",
     "const PURPOSE_LABEL",
     "const PURPOSE",
+    "const GROUP_SHARDS",
+    "const isAuthenticatedGroup",
     "const GROUPS",
     "function fail",
     "function assertRunId",
@@ -267792,7 +268255,7 @@
   },
   "scripts/e2e-isolated/stack.mjs": {
    "path": "scripts/e2e-isolated/stack.mjs",
-   "lines": 142,
+   "lines": 144,
    "exports": [
     "function serviceConfiguration",
     "function containerArguments"
@@ -267823,9 +268286,11 @@
   },
   "scripts/e2e-isolated/tls-probe.mjs": {
    "path": "scripts/e2e-isolated/tls-probe.mjs",
-   "lines": 177,
+   "lines": 208,
    "exports": [
+    "function navigationDiagnostic",
     "function certificateFailure",
+    "function certificateNavigationFailure",
     "function assertTlsClientContext",
     "function probeClient",
     "function probeBrowsers",
@@ -267912,6 +268377,13 @@
      "params": "value",
      "body": "if (!owns(value, PROVIDER_ORIGIN) || value.network_namespace !== networkNamespace || !Number.isSafeInteger(value.count) || value.count < 0 || !Array.isArray(value.message_ids) || value.message_ids.length !== value.count || new Set(value.message_ids).size !== value.count || !value.message_ids.every(id => typeof id === 'string' && /^local-[a-zA-Z0-9-]{1,100}$/.test(id)) || !Array.isArray(value.media_receipts) || new Set(value.media_receipts.map(row => row.message_id)).size !== value.media_receipts …"
     }
+   ]
+  },
+  "scripts/e2e-isolated/vite.config.ts": {
+   "path": "scripts/e2e-isolated/vite.config.ts",
+   "lines": 14,
+   "exports": [
+    "default defineConfig"
    ]
   },
   "scripts/e2e-isolated/main/index.ts": {
@@ -269871,7 +270343,7 @@
   },
   "src/adapters/evolutionAdapter.ts": {
    "path": "src/adapters/evolutionAdapter.ts",
-   "lines": 229,
+   "lines": 231,
    "exports": [
     "function jidToPhone",
     "function evolutionToRealtimeMessage",
@@ -269908,7 +270380,7 @@
   },
   "src/adapters/inboxAdapter.ts": {
    "path": "src/adapters/inboxAdapter.ts",
-   "lines": 120,
+   "lines": 127,
    "exports": [
     "function mapMessageRowToMessage",
     "function mapRealtimeContactToContact",
@@ -269938,7 +270410,7 @@
   },
   "src/adapters/__tests__/evolutionAdapter.test.ts": {
    "path": "src/adapters/__tests__/evolutionAdapter.test.ts",
-   "lines": 83,
+   "lines": 89,
    "is_test": true,
    "tests": [
     "evolutionToRealtimeMessage",
@@ -269946,7 +270418,8 @@
     "derivedToConversationContact",
     "marca o contato derivado como não excluído (deleted_at exigido pelo ContactRow)",
     "carrega a origem do canal de entrada (WhatsApp) em vez de null",
-    "nasce sem selo VIP (is_vip do ContactRow, default da coluna)"
+    "nasce sem selo VIP (is_vip do ContactRow, default da coluna)",
+    "espelha o telefone normalizado da coluna gerada de contacts"
    ]
   },
   "src/adapters/__tests__/evolutionAdapter.unsupported-message-types.test.ts": {
@@ -269970,12 +270443,13 @@
   },
   "src/adapters/__tests__/inboxAdapter.test.ts": {
    "path": "src/adapters/__tests__/inboxAdapter.test.ts",
-   "lines": 24,
+   "lines": 35,
    "is_test": true,
    "tests": [
     "mapMessageRowToMessage",
     "hydrates a safe location object from the canonical atomic payload",
-    "does not render coordinates from malformed location content"
+    "does not render coordinates from malformed location content",
+    "normaliza a nota de voz ptt para o player canonico de audio"
    ]
   },
   "src/components/CommandPalette.tsx": {
@@ -283714,7 +284188,7 @@
   },
   "src/components/inbox/MediaVolumeControl.tsx": {
    "path": "src/components/inbox/MediaVolumeControl.tsx",
-   "lines": 199,
+   "lines": 200,
    "exports": [
     "type MediaVolumeControlVariant",
     "interface MediaVolumeControlProps",
@@ -283856,7 +284330,7 @@
   },
   "src/components/inbox/MessageReactions.tsx": {
    "path": "src/components/inbox/MessageReactions.tsx",
-   "lines": 437,
+   "lines": 443,
    "exports": [
     "function MessageReactions",
     "function QuickReactionBar"
@@ -286214,11 +286688,12 @@
   },
   "src/components/inbox/__tests__/MessageReactions.aria.test.tsx": {
    "path": "src/components/inbox/__tests__/MessageReactions.aria.test.tsx",
-   "lines": 50,
+   "lines": 66,
    "is_test": true,
    "tests": [
     "QuickReactionBar — botão ",
-    "nomeia o botão que abre o seletor de reações"
+    "nomeia o botão que abre o seletor de reações",
+    "bloqueia atalhos, trigger e picker estendido durante qualquer mutation compartilhada"
    ]
   },
   "src/components/inbox/__tests__/MessageReactions.autoria-unica.test.tsx": {
@@ -297404,7 +297879,7 @@
   },
   "src/components/notifications/SoundVolumeControl.tsx": {
    "path": "src/components/notifications/SoundVolumeControl.tsx",
-   "lines": 224,
+   "lines": 225,
    "exports": [
     "function SoundVolumeControl"
    ],
@@ -312328,7 +312803,6 @@
     "function useCommandPalette"
    ],
    "rule_comments": [
-    "então ele não pode capturar `allItems`/`selectedIndex` do render em que foi criado (stale",
     "estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar"
    ],
    "hooks": [
@@ -312580,7 +313054,14 @@
   },
   "src/components/ui/progress.tsx": {
    "path": "src/components/ui/progress.tsx",
-   "lines": 25
+   "lines": 40,
+   "rule_comments": [
+    "Radix aceita somente 0..100. Consumidores podem fornecer razões acima de",
+    "100% (capacidade excedida no War Room); a barra deve representar \"cheio\","
+   ],
+   "percents": [
+    "// 100% (capacidade excedida no War Room); a barra deve representar \"cheio\","
+   ]
   },
   "src/components/ui/quick-peek.tsx": {
    "path": "src/components/ui/quick-peek.tsx",
@@ -312843,7 +313324,7 @@
   },
   "src/components/ui/__tests__/VolumeTriggerButton.test.tsx": {
    "path": "src/components/ui/__tests__/VolumeTriggerButton.test.tsx",
-   "lines": 98,
+   "lines": 99,
    "is_test": true,
    "tests": [
     "VolumeTriggerButton — dica na sidebar (B3)",
@@ -312989,7 +313470,7 @@
   },
   "src/components/ui/__tests__/command-palette.a11y.test.tsx": {
    "path": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
-   "lines": 358,
+   "lines": 370,
    "is_test": true,
    "calc_fns": [
     {
@@ -313000,6 +313481,7 @@
    ],
    "tests": [
     "CommandPalette — campo e lista anunciados (combobox/listbox)",
+    "não duplica option/id quando um acesso rápido também está nos recentes",
     "o campo é combobox nomeado que aponta para a lista e para o item ativo",
     "as setas mudam o aria-activedescendant e o aria-selected para o item seguinte",
     "ao navegar com as setas, o item realçado é rolado para dentro da vista",
@@ -313221,10 +313703,11 @@
   },
   "src/components/ui/__tests__/progress.test.tsx": {
    "path": "src/components/ui/__tests__/progress.test.tsx",
-   "lines": 54,
+   "lines": 72,
    "is_test": true,
    "tests": [
     "Progress",
+    "fornece nome acessível padrão quando o consumidor não nomeia a barra",
     "preserva o estado indeterminado quando value não é informado",
     "encaminha value ao Root quando o consumidor espalha outras props",
     "prende a barra visual à mesma medida que o Root anuncia"
@@ -313287,9 +313770,11 @@
   },
   "src/components/ui/__tests__/sonner-offset-mobile.test.tsx": {
    "path": "src/components/ui/__tests__/sonner-offset-mobile.test.tsx",
-   "lines": 106,
+   "lines": 142,
    "is_test": true,
    "errors": [
+    "Atencao",
+    "Falha de conexao",
     "não achei ${rotulo} com ${regex}"
    ],
    "calc_fns": [
@@ -313301,6 +313786,7 @@
    ],
    "tests": [
     "sonner — offset no celular (U1-04)",
+    "usa fundo sólido e foreground contrastante no toast de sucesso",
     "aplica --mobile-offset-bottom em calc() com a área segura e preserva as laterais",
     "não sobrepõe a BottomNavigation (h-[60px] + borda) nem o MobileFAB",
     "no desktop o offset continua o padrão do sonner (24px nas laterais e no rodapé)"
@@ -317219,7 +317705,7 @@
   },
   "src/hooks/__tests__/useWarRoomAlerts.test.tsx": {
    "path": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
-   "lines": 409,
+   "lines": 447,
    "is_test": true,
    "params": [
     {
@@ -317242,6 +317728,8 @@
     "useWarRoomAlerts — monitor de SLA (R2-MOD-074)",
     "não recria o alerta quando as violações passam de 50 e a página é republicada",
     "continua alertando quando o conjunto de violações muda",
+    "não envia POST quando a chave do incidente já existe",
+    "falha no precheck de dedupe é registrada e nunca vira POST",
     "conta o conjunto inteiro de violações, não só a primeira página de 1000",
     "falha de leitura das violações não vira alerta",
     "erro real de gravação não é engolido e não cria alerta",
@@ -319722,7 +320210,7 @@
   },
   "src/hooks/business/useWarRoomAlerts.ts": {
    "path": "src/hooks/business/useWarRoomAlerts.ts",
-   "lines": 223,
+   "lines": 239,
    "exports": [
     "function slaIncidentKey",
     "function useWarRoomAlerts"
@@ -319742,6 +320230,10 @@
     },
     {
      "table": "warroom_alerts",
+     "op": "select"
+    },
+    {
+     "table": "warroom_alerts",
      "op": "insert"
     }
    ],
@@ -319751,6 +320243,7 @@
      "id"
     ],
     "warroom_alerts": [
+     "dedupe_key",
      "id",
      "is_read"
     ]
@@ -319777,6 +320270,7 @@
     "useWarRoomAlerts"
    ],
    "pagination": [
+    "1",
     "50"
    ]
   },
@@ -321411,7 +321905,7 @@
   },
   "src/hooks/chat/useMessageReactions.ts": {
    "path": "src/hooks/chat/useMessageReactions.ts",
-   "lines": 134,
+   "lines": 139,
    "exports": [
     "function useMessageReactions"
    ],
@@ -322943,7 +323437,7 @@
   },
   "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx": {
    "path": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
-   "lines": 298,
+   "lines": 373,
    "is_test": true,
    "params": [
     {
@@ -322953,6 +323447,8 @@
    ],
    "tests": [
     "useMessageReactions — rejeição do transporte no contrato público (R2-INB-032)",
+    "compartilha a pendência entre duas instâncias da mesma mensagem",
+    "duas instâncias no mesmo tick convergem atomicamente para um único emoji",
     "adicionar: addReaction rejeita e a lista pública não ganha a reação",
     "adicionar (controle): com o transporte aceito a lista pública ganha a reação",
     "remover: removeReaction rejeita e a reação que existia continua visível na lista",
@@ -330008,7 +330504,7 @@
   },
   "src/hooks/integrations/useCatalogContactSearch.ts": {
    "path": "src/hooks/integrations/useCatalogContactSearch.ts",
-   "lines": 114,
+   "lines": 117,
    "exports": [
     "const CONTACT_SEARCH_MIN_CHARS",
     "function contactSearchDigits",
@@ -330065,6 +330561,7 @@
    ],
    "rule_comments": [
     "* CT-43 — mínimo de caracteres para a busca sair do estado \"recentes\". */",
+    "consulta uma busca telefônica. Essa cláusula ampla combinada ao limit(15)",
     "(log apenas) — nunca deve impedir o envio real já concluído. */"
    ],
    "doc": "Busca de contatos usada pelo fluxo de envio de produto do Catálogo (SendProductDialog / ContactSelectionStep). Isolado aqui — e não em src/components/catalog/ — porque a camada de apresentação não fala com o Supabase direto (no-restricted-imports em src/components/**).",
@@ -332815,7 +333312,7 @@
   },
   "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts": {
    "path": "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
-   "lines": 215,
+   "lines": 228,
    "is_test": true,
    "rule_comments": [
     "permissão/rede antes passava despercebido (o `error` era descartado) e o"
@@ -332833,6 +333330,7 @@
     "normaliza o telefone para apenas dígitos",
     "acha um contato armazenado como ",
     "termo só com letras não gera cláusula de telefone (",
+    "não transforma um único dígito embutido no nome em busca ampla por telefone",
     "escapa o termo para não quebrar a gramática do or()",
     "fetchCatalogContactResults — falha ≠ lista vazia",
     "erro de consulta lança (depois de logar) em vez de devolver lista vazia",
@@ -334393,13 +334891,18 @@
   },
   "src/hooks/reactions/useReactionMutations.ts": {
    "path": "src/hooks/reactions/useReactionMutations.ts",
-   "lines": 125,
+   "lines": 226,
    "exports": [
+    "const reactionMutationKey",
     "function useReactionMutations"
    ],
    "tables": [
     {
      "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "message_reactions",
      "op": "select"
     },
     {
@@ -334426,7 +334929,12 @@
     "Contato da mensagem não encontrado",
     "Erro ao adicionar reação",
     "Erro ao remover reação",
+    "Estado da reação mudou repetidamente durante a sincronização",
     "Perfil não encontrado"
+   ],
+   "rule_comments": [
+    "compensação inversa somente depois de um readback conclusivo. Erro",
+    "reação somente se o readback provar que o banco ainda a conserva."
    ],
    "hooks": [
     "useReactionMutations"
@@ -334454,7 +334962,7 @@
   },
   "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx": {
    "path": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
-   "lines": 304,
+   "lines": 435,
    "is_test": true,
    "params": [
     {
@@ -334469,9 +334977,14 @@
     "useReactionMutations — rejeição do transporte (R2-INB-032)",
     "adicionar: transporte rejeitado rejeita a mutation, avisa e não confirma reação local",
     "adicionar: com transporte aceito grava localmente DEPOIS do envio e invalida a query",
+    "adicionar substitui no cache qualquer emoji anterior do mesmo autor",
+    "adicionar: falha local após envio compensa removendo a reação remota",
+    "adicionar: erro ambíguo após commit é confirmado por readback e não compensa ao contrário",
     "adicionar: sem contexto de transporte continua gravando local (contrato preservado)",
     "adicionar: contexto de transporte incompleto não chama a Evolution",
     "remover: transporte rejeitado rejeita a mutation, avisa e preserva a reação que existia",
+    "remover: falha local após envio compensa restaurando a reação remota",
+    "remover: erro ambíguo após commit é confirmado por readback e não restaura ao contrário",
     "remover: com transporte aceito remove localmente DEPOIS do envio e invalida a query",
     "remover: sem contexto de transporte continua removendo local (contrato preservado)"
    ]
@@ -341390,7 +341903,7 @@
   },
   "src/hooks/ui/useVolumeRocker.ts": {
    "path": "src/hooks/ui/useVolumeRocker.ts",
-   "lines": 264,
+   "lines": 285,
    "exports": [
     "const VOLUME_PANEL_ATTRIBUTE",
     "const VOLUME_CONTROL_ATTRIBUTE",
@@ -341414,7 +341927,8 @@
    ],
    "rule_comments": [
     "* O mínimo que os dois caminhos de teclado (botão e container) precisam do evento. */",
-    "`react-hooks/refs` (a mesma regra que motivou a assinatura deste hook)."
+    "`react-hooks/refs` (a mesma regra que motivou a assinatura deste hook).",
+    "e restauramos o gatilho somente quando o foco ainda estava no controle."
    ],
    "hooks": [
     "useVolumeRocker"
@@ -341921,7 +342435,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15456,
+   "lines": 15459,
    "exports": [
     "type Json",
     "type Database",
@@ -346143,7 +346657,7 @@
   },
   "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx": {
    "path": "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
-   "lines": 211,
+   "lines": 216,
    "is_test": true,
    "errors": [
     "canal "
@@ -378698,6 +379212,30 @@
    "lines": 80,
    "uses_service_role": true
   },
+  "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql": {
+   "path": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+   "lines": 138,
+   "temporal": [
+    "AND (date_trunc('month', current_date) + interval '1 month')::date",
+    "AND created_at BETWEEN now() - interval '5 minutes' AND now() + interval '5 minutes'",
+    "AND read_at <= now() + interval '5 minutes'",
+    "AND read_at >= created_at - interval '5 minutes'",
+    "BETWEEN (date_trunc('month', current_date) - interval '1 month')::date"
+   ]
+  },
+  "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql": {
+   "path": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+   "lines": 65,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261107122000_contacts_phone_search_digits.sql": {
+   "path": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
+   "lines": 21
+  },
+  "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql": {
+   "path": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
+   "lines": 33
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -378986,6 +379524,12 @@
   "supabase/tests/global_settings_secrets_rls.sql": {
    "path": "supabase/tests/global_settings_secrets_rls.sql",
    "lines": 403,
+   "is_test": true,
+   "uses_service_role": true
+  },
+  "supabase/tests/goal_notifications_own_insert_policy.sql": {
+   "path": "supabase/tests/goal_notifications_own_insert_policy.sql",
+   "lines": 145,
    "is_test": true,
    "uses_service_role": true
   },
@@ -382539,10 +383083,118 @@
   }
  },
  "git": {
-  "sha": "5b62b9338e23df8ce2bfa6b3da6bb0565f9def93",
+  "sha": "e900ae317218172259a6363c3f156ed01f368f7b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e900ae3",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)",
+    "files": [
+     ".github/workflows/e2e-logado-isolado.yml",
+     ".github/workflows/e2e-logado.yml",
+     "docs/ci/README.md",
+     "e2e/README.md",
+     "e2e/auth-diagnostics.ts",
+     "e2e/catalog.spec.ts",
+     "e2e/conexoes.spec.ts",
+     "e2e/contacts-crud.spec.ts",
+     "e2e/contacts-views.spec.ts",
+     "e2e/conversation.spec.ts",
+     "e2e/ct94-ui-429.spec.ts",
+     "e2e/dialog-rodape-viewport.spec.ts",
+     "e2e/email-link-contato.spec.ts",
+     "e2e/files-tab.spec.ts",
+     "e2e/fixtures/arquivos-local/dados.ts",
+     "e2e/fixtures/arquivos-local/seed.ts",
+     "e2e/fixtures/e2e-contact.ts",
+     "e2e/fixtures/isolated-qr.ts",
+     "e2e/fixtures/mapa-mocks.ts",
+     "e2e/fixtures/onboarding-isolated.ts",
+     "e2e/fixtures/supabase-env.ts",
+     "e2e/fixtures/talkx-demo.ts",
+     "e2e/inbox-contact-sidebar.spec.ts",
+     "e2e/location-picker.spec.ts",
+     "e2e/media-volume.spec.ts",
+     "e2e/monitoring.spec.ts",
+     "e2e/multiplix.spec.ts",
+     "e2e/navegacao-modulos.spec.ts",
+     "e2e/onboarding-dispensar.spec.ts",
+     "e2e/reactions.spec.ts",
+     "e2e/skins-e2e.spec.ts",
+     "e2e/talkx-demo.spec.ts",
+     "e2e/talkx-launch.spec.ts",
+     "e2e/talkx-visual.spec.ts",
+     "e2e/talkx.spec.ts",
+     "e2e/telefonia.spec.ts",
+     "scripts/ci/e2e-isolated-alert.unit.mjs",
+     "scripts/ci/e2e-isolated-collection.unit.mjs",
+     "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
+     "scripts/ci/e2e-isolated-fixtures.unit.mjs",
+     "scripts/ci/e2e-isolated-force-online.unit.mjs",
+     "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
+     "scripts/ci/e2e-isolated-network-proof.unit.mjs",
+     "scripts/ci/e2e-isolated-qr.unit.mjs",
+     "scripts/ci/e2e-isolated-results.unit.mjs",
+     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/ci/e2e-isolated-suite.unit.mjs",
+     "scripts/ci/e2e-isolated-tls.unit.mjs",
+     "scripts/ci/e2e-isolated-workflow.unit.mjs",
+     "scripts/ci/e2e-media-volume-fixture.unit.mjs",
+     "scripts/ci/e2e-recovery.unit.mjs",
+     "scripts/ci/eslint-baseline.json",
+     "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/collection.mjs",
+     "scripts/e2e-isolated/force-online.mjs",
+     "scripts/e2e-isolated/main/index.ts",
+     "scripts/e2e-isolated/main/memory-pressure.ts",
+     "scripts/e2e-isolated/network-proof-browser.mjs",
+     "scripts/e2e-isolated/results.mjs",
+     "scripts/e2e-isolated/routine-ownership.mjs",
+     "scripts/e2e-isolated/run.mjs",
+     "scripts/e2e-isolated/runtime-contract.mjs",
+     "scripts/e2e-isolated/runtime-skips.md",
+     "scripts/e2e-isolated/seed-qr.mjs",
+     "scripts/e2e-isolated/stack.mjs",
+     "scripts/e2e-isolated/tls-probe.mjs",
+     "scripts/e2e-isolated/vite.config.ts",
+     "src/adapters/__tests__/evolutionAdapter.test.ts",
+     "src/adapters/__tests__/inboxAdapter.test.ts",
+     "src/adapters/evolutionAdapter.ts",
+     "src/adapters/inboxAdapter.ts",
+     "src/components/inbox/MediaVolumeControl.tsx",
+     "src/components/inbox/MessageReactions.tsx",
+     "src/components/inbox/__tests__/MessageReactions.aria.test.tsx",
+     "src/components/notifications/SoundVolumeControl.tsx",
+     "src/components/ui/__tests__/VolumeTriggerButton.test.tsx",
+     "src/components/ui/__tests__/command-palette.a11y.test.tsx",
+     "src/components/ui/__tests__/progress.test.tsx",
+     "src/components/ui/__tests__/sonner-offset-mobile.test.tsx",
+     "src/components/ui/command-palette.tsx",
+     "src/components/ui/progress.tsx",
+     "src/components/ui/sonner.tsx",
+     "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+     "src/hooks/business/useWarRoomAlerts.ts",
+     "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
+     "src/hooks/chat/useMessageReactions.ts",
+     "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
+     "src/hooks/integrations/useCatalogContactSearch.ts",
+     "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
+     "src/hooks/reactions/useReactionMutations.ts",
+     "src/hooks/ui/useVolumeRocker.ts",
+     "src/integrations/supabase/types.ts",
+     "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
+     "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+     "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+     "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
+     "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
+     "supabase/tests/goal_notifications_own_insert_policy.sql"
+    ]
+   },
    {
     "sha": "5b62b93",
     "date": "2026-11-07",
@@ -383007,15 +383659,6 @@
      "PENDENCIAS.md",
      "RELATORIO_CI.md"
     ]
-   },
-   {
-    "sha": "fa7d882",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "fix: verificar V2 por padrão no smoke de produção (#2729)",
-    "files": [
-     "scripts/vercel/verify-production.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -383028,6 +383671,10 @@
     4
    ],
    [
+    "docs/ci/README.md",
+    3
+   ],
+   [
     "scripts/ci/vercel-env-cleanup.mjs",
     3
    ],
@@ -383036,68 +383683,64 @@
     3
    ],
    [
-    "scripts/ci/vercel-env-cleanup.unit.mjs",
+    ".github/workflows/e2e-logado-isolado.yml",
     2
    ],
    [
-    "scripts/db-audit/migration-evidence.json",
+    "e2e/README.md",
     2
    ],
    [
-    "supabase/migrations/_superseded/README.md",
+    "e2e/conexoes.spec.ts",
     2
    ],
    [
-    "docs/ia/IA-010-ambiente-de-ensaio.md",
+    "e2e/contacts-crud.spec.ts",
     2
    ],
    [
-    "scripts/ia/README.md",
+    "e2e/contacts-views.spec.ts",
     2
    ],
    [
-    "scripts/ia/ensaio-provisionamento.mjs",
+    "e2e/dialog-rodape-viewport.spec.ts",
     2
    ],
    [
-    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    "e2e/email-link-contato.spec.ts",
     2
    ],
    [
-    "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+    "e2e/fixtures/e2e-contact.ts",
     2
    ],
    [
-    "analise-prs/auditorias-anteriores.md",
+    "e2e/fixtures/isolated-qr.ts",
     2
    ],
    [
-    "docs/ci/README.md",
+    "e2e/fixtures/talkx-demo.ts",
     2
    ],
    [
-    "docs/MIGRATIONS.md",
-    1
+    "e2e/navegacao-modulos.spec.ts",
+    2
    ],
    [
-    "scripts/db-audit/README.md",
-    1
+    "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
+    2
    ],
    [
-    "scripts/db-audit/check-migration-drift.mjs",
-    1
+    "scripts/ci/e2e-isolated-network-proof.unit.mjs",
+    2
    ],
    [
-    "scripts/db-audit/check-migration-drift.test.mjs",
-    1
+    "scripts/ci/e2e-isolated-qr.unit.mjs",
+    2
    ],
    [
-    "supabase/migrations/20261026240300_drop_bkp_261023.sql",
-    1
-   ],
-   [
-    "scripts/ci/deno-reproducibility.unit.mjs",
-    1
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    2
    ]
   ]
  }

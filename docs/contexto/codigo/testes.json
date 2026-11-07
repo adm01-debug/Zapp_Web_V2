@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2579,
+ "total": 2581,
  "por_tipo": {
   "contrato": 113,
   "e2e": 75,
   "pytest": 3,
   "qa": 6,
-  "unit": 2292
+  "unit": 2293
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 206
+   "arquivos": 207
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -88,11 +88,11 @@
   {
    "arquivo": "e2e/auth-diagnostics.ts",
    "tipo": "e2e",
-   "linhas": 118,
+   "linhas": 120,
    "testa": [
     "supabase/functions/_shared/cors-origins.ts"
    ],
-   "casos": 2
+   "casos": 1
   },
   {
    "arquivo": "e2e/auth.setup.ts",
@@ -120,7 +120,7 @@
   {
    "arquivo": "e2e/catalog.spec.ts",
    "tipo": "e2e",
-   "linhas": 310,
+   "linhas": 322,
    "testa": [],
    "casos": 2
   },
@@ -157,7 +157,7 @@
   {
    "arquivo": "e2e/contacts-crud.spec.ts",
    "tipo": "e2e",
-   "linhas": 55,
+   "linhas": 53,
    "testa": [],
    "casos": 1
   },
@@ -199,9 +199,9 @@
   {
    "arquivo": "e2e/contacts-views.spec.ts",
    "tipo": "e2e",
-   "linhas": 72,
+   "linhas": 78,
    "testa": [],
-   "casos": 5
+   "casos": 6
   },
   {
    "arquivo": "e2e/conversation.spec.ts",
@@ -213,21 +213,21 @@
   {
    "arquivo": "e2e/ct94-ui-429.spec.ts",
    "tipo": "e2e",
-   "linhas": 142,
+   "linhas": 149,
    "testa": [],
    "casos": 1
   },
   {
    "arquivo": "e2e/dialog-rodape-viewport.spec.ts",
    "tipo": "e2e",
-   "linhas": 108,
+   "linhas": 106,
    "testa": [],
    "casos": 2
   },
   {
    "arquivo": "e2e/email-link-contato.spec.ts",
    "tipo": "e2e",
-   "linhas": 368,
+   "linhas": 369,
    "testa": [
     "scripts/e2e-isolated/fixture-access.mjs"
    ],
@@ -243,7 +243,7 @@
   {
    "arquivo": "e2e/files-tab.spec.ts",
    "tipo": "e2e",
-   "linhas": 602,
+   "linhas": 609,
    "testa": [
     "src/lib/storage_object_reference.ts"
    ],
@@ -259,7 +259,7 @@
   {
    "arquivo": "e2e/fixtures/arquivos-local/seed.ts",
    "tipo": "e2e",
-   "linhas": 432,
+   "linhas": 437,
    "testa": [],
    "casos": 1
   },
@@ -294,7 +294,7 @@
   {
    "arquivo": "e2e/fixtures/e2e-contact.ts",
    "tipo": "e2e",
-   "linhas": 281,
+   "linhas": 269,
    "testa": [
     "scripts/e2e-isolated/fixture-access.mjs"
    ],
@@ -349,14 +349,14 @@
   {
    "arquivo": "e2e/fixtures/mapa-mocks.ts",
    "tipo": "e2e",
-   "linhas": 165,
+   "linhas": 178,
    "testa": [],
    "casos": 1
   },
   {
    "arquivo": "e2e/fixtures/onboarding-isolated.ts",
    "tipo": "e2e",
-   "linhas": 111,
+   "linhas": 122,
    "testa": [
     "scripts/e2e-isolated/admission.mjs"
    ],
@@ -386,14 +386,14 @@
   {
    "arquivo": "e2e/fixtures/talkx-demo.ts",
    "tipo": "e2e",
-   "linhas": 310,
+   "linhas": 420,
    "testa": [],
    "casos": 0
   },
   {
    "arquivo": "e2e/inbox-contact-sidebar.spec.ts",
    "tipo": "e2e",
-   "linhas": 160,
+   "linhas": 165,
    "testa": [],
    "casos": 5
   },
@@ -421,7 +421,7 @@
   {
    "arquivo": "e2e/media-volume.spec.ts",
    "tipo": "e2e",
-   "linhas": 202,
+   "linhas": 207,
    "testa": [
     "src/lib/mediaVolumeStore.ts",
     "src/lib/volumeLabels.ts"
@@ -459,7 +459,7 @@
   {
    "arquivo": "e2e/navegacao-modulos.spec.ts",
    "tipo": "e2e",
-   "linhas": 1906,
+   "linhas": 1908,
    "testa": [
     "scripts/e2e-isolated/fixture-access.mjs",
     "src/lib/productName.ts"
@@ -469,7 +469,7 @@
   {
    "arquivo": "e2e/onboarding-dispensar.spec.ts",
    "tipo": "e2e",
-   "linhas": 98,
+   "linhas": 92,
    "testa": [],
    "casos": 1
   },
@@ -506,14 +506,14 @@
   {
    "arquivo": "e2e/reactions.spec.ts",
    "tipo": "e2e",
-   "linhas": 148,
+   "linhas": 166,
    "testa": [],
    "casos": 3
   },
   {
    "arquivo": "e2e/skins-e2e.spec.ts",
    "tipo": "e2e",
-   "linhas": 745,
+   "linhas": 757,
    "testa": [
     "src/components/settings/theme/presets.ts"
    ],
@@ -536,14 +536,14 @@
   {
    "arquivo": "e2e/talkx-demo.spec.ts",
    "tipo": "e2e",
-   "linhas": 42,
+   "linhas": 44,
    "testa": [],
    "casos": 1
   },
   {
    "arquivo": "e2e/talkx-launch.spec.ts",
    "tipo": "e2e",
-   "linhas": 231,
+   "linhas": 245,
    "testa": [],
    "casos": 1
   },
@@ -557,7 +557,7 @@
   {
    "arquivo": "e2e/talkx.spec.ts",
    "tipo": "e2e",
-   "linhas": 286,
+   "linhas": 303,
    "testa": [],
    "casos": 9
   },
@@ -585,7 +585,7 @@
   {
    "arquivo": "e2e/telefonia.spec.ts",
    "tipo": "e2e",
-   "linhas": 438,
+   "linhas": 445,
    "testa": [],
    "casos": 9
   },
@@ -1053,7 +1053,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-alert.unit.mjs",
    "tipo": "unit",
-   "linhas": 94,
+   "linhas": 95,
    "testa": [
     "scripts/ci/workflow-test-support.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs"
@@ -1063,7 +1063,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-collection.unit.mjs",
    "tipo": "unit",
-   "linhas": 189,
+   "linhas": 200,
    "testa": [
     "scripts/e2e-isolated/collection.mjs",
     "scripts/e2e-isolated/results.mjs"
@@ -1080,18 +1080,29 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
    "tipo": "unit",
-   "linhas": 442,
+   "linhas": 488,
    "testa": [
     "scripts/e2e-isolated/fixture-access.mjs"
    ],
-   "casos": 32
+   "casos": 35
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
    "tipo": "unit",
-   "linhas": 132,
+   "linhas": 167,
    "testa": [],
-   "casos": 6
+   "casos": 7
+  },
+  {
+   "arquivo": "scripts/ci/e2e-isolated-force-online.unit.mjs",
+   "tipo": "unit",
+   "linhas": 51,
+   "testa": [
+    "scripts/e2e-isolated/force-online.mjs",
+    "scripts/e2e-isolated/runtime-contract.mjs",
+    "scripts/e2e-isolated/stack.mjs"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-gateway.unit.mjs",
@@ -1116,12 +1127,12 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
    "tipo": "unit",
-   "linhas": 152,
+   "linhas": 164,
    "testa": [
     "scripts/ci/workflow-test-support.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs"
    ],
-   "casos": 17
+   "casos": 18
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-loader.unit.mjs",
@@ -1166,7 +1177,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-network-proof.unit.mjs",
    "tipo": "unit",
-   "linhas": 329,
+   "linhas": 357,
    "testa": [
     "scripts/e2e-isolated/network-proof-browser.mjs",
     "scripts/e2e-isolated/network-proof-policy.mjs",
@@ -1174,7 +1185,7 @@
     "scripts/e2e-isolated/runtime-contract.mjs",
     "scripts/e2e-isolated/tls.mjs"
    ],
-   "casos": 76
+   "casos": 77
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
@@ -1203,7 +1214,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-qr.unit.mjs",
    "tipo": "unit",
-   "linhas": 364,
+   "linhas": 372,
    "testa": [
     "scripts/e2e-isolated/providers.mjs",
     "scripts/e2e-isolated/qr-contract.mjs",
@@ -1212,21 +1223,21 @@
     "scripts/e2e-isolated/seed-qr.mjs",
     "scripts/e2e-isolated/seed-suite.mjs"
    ],
-   "casos": 26
+   "casos": 27
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-results.unit.mjs",
    "tipo": "unit",
-   "linhas": 385,
+   "linhas": 424,
    "testa": [
     "scripts/e2e-isolated/results.mjs"
    ],
-   "casos": 41
+   "casos": 45
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
    "tipo": "unit",
-   "linhas": 245,
+   "linhas": 246,
    "testa": [
     "scripts/e2e-isolated/routine-ownership.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs"
@@ -1245,7 +1256,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
    "tipo": "unit",
-   "linhas": 1524,
+   "linhas": 1582,
    "testa": [
     "scripts/e2e-isolated/migrations.mjs",
     "scripts/e2e-isolated/provider-diagnostics.mjs",
@@ -1256,7 +1267,7 @@
     "scripts/e2e-isolated/stack.mjs",
     "scripts/e2e-isolated/tls.mjs"
    ],
-   "casos": 67
+   "casos": 70
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
@@ -1280,7 +1291,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-suite.unit.mjs",
    "tipo": "unit",
-   "linhas": 106,
+   "linhas": 108,
    "testa": [
     "scripts/e2e-isolated/migrations.mjs",
     "scripts/e2e-isolated/run.mjs",
@@ -1301,12 +1312,12 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-tls.unit.mjs",
    "tipo": "unit",
-   "linhas": 738,
+   "linhas": 775,
    "testa": [
     "scripts/e2e-isolated/tls-probe.mjs",
     "scripts/e2e-isolated/tls.mjs"
    ],
-   "casos": 33
+   "casos": 34
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-tour.unit.mjs",
@@ -1320,7 +1331,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-workflow.unit.mjs",
    "tipo": "unit",
-   "linhas": 229,
+   "linhas": 230,
    "testa": [
     "scripts/ci/workflow-test-support.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs"
@@ -1340,14 +1351,14 @@
   {
    "arquivo": "scripts/ci/e2e-media-volume-fixture.unit.mjs",
    "tipo": "unit",
-   "linhas": 294,
+   "linhas": 332,
    "testa": [],
-   "casos": 8
+   "casos": 9
   },
   {
    "arquivo": "scripts/ci/e2e-recovery.unit.mjs",
    "tipo": "unit",
-   "linhas": 138,
+   "linhas": 140,
    "testa": [
     "scripts/ci/workflow-test-support.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs"
@@ -1922,7 +1933,7 @@
   {
    "arquivo": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
    "tipo": "unit",
-   "linhas": 217,
+   "linhas": 222,
    "testa": [],
    "casos": 23
   },
@@ -2640,12 +2651,12 @@
   {
    "arquivo": "src/adapters/__tests__/evolutionAdapter.test.ts",
    "tipo": "unit",
-   "linhas": 83,
+   "linhas": 89,
    "testa": [
     "src/adapters/evolutionAdapter.ts",
     "src/types/evolutionExternal.ts"
    ],
-   "casos": 4
+   "casos": 5
   },
   {
    "arquivo": "src/adapters/__tests__/evolutionAdapter.unsupported-message-types.test.ts",
@@ -2661,11 +2672,11 @@
   {
    "arquivo": "src/adapters/__tests__/inboxAdapter.test.ts",
    "tipo": "unit",
-   "linhas": 24,
+   "linhas": 35,
    "testa": [
     "src/adapters/inboxAdapter.ts"
    ],
-   "casos": 2
+   "casos": 3
   },
   {
    "arquivo": "src/components/__tests__/componentesDuplicados.test.ts",
@@ -6807,11 +6818,11 @@
   {
    "arquivo": "src/components/inbox/__tests__/MessageReactions.aria.test.tsx",
    "tipo": "unit",
-   "linhas": 50,
+   "linhas": 66,
    "testa": [
     "src/components/inbox/MessageReactions.tsx"
    ],
-   "casos": 1
+   "casos": 2
   },
   {
    "arquivo": "src/components/inbox/__tests__/MessageReactions.autoria-unica.test.tsx",
@@ -13512,12 +13523,12 @@
   {
    "arquivo": "src/components/ui/__tests__/command-palette.a11y.test.tsx",
    "tipo": "unit",
-   "linhas": 358,
+   "linhas": 370,
    "testa": [
     "src/components/ui/command-palette.tsx",
     "src/components/ui/dialog.tsx"
    ],
-   "casos": 17
+   "casos": 18
   },
   {
    "arquivo": "src/components/ui/__tests__/command-palette.busca-antiga.test.tsx",
@@ -13643,11 +13654,11 @@
   {
    "arquivo": "src/components/ui/__tests__/progress.test.tsx",
    "tipo": "unit",
-   "linhas": 54,
+   "linhas": 72,
    "testa": [
     "src/components/ui/progress.tsx"
    ],
-   "casos": 4
+   "casos": 6
   },
   {
    "arquivo": "src/components/ui/__tests__/skeleton-regiao-carregamento.test.tsx",
@@ -13692,11 +13703,11 @@
   {
    "arquivo": "src/components/ui/__tests__/sonner-offset-mobile.test.tsx",
    "tipo": "unit",
-   "linhas": 106,
+   "linhas": 142,
    "testa": [
     "src/components/ui/sonner.tsx"
    ],
-   "casos": 3
+   "casos": 5
   },
   {
    "arquivo": "src/components/ui/__tests__/supabase-connectivity-banner.test.tsx",
@@ -13743,7 +13754,7 @@
   {
    "arquivo": "src/components/ui/__tests__/VolumeTriggerButton.test.tsx",
    "tipo": "unit",
-   "linhas": 98,
+   "linhas": 99,
    "testa": [
     "src/components/ui/VolumeTriggerButton.tsx",
     "src/hooks/ui/useVolumeRocker.ts"
@@ -15124,11 +15135,11 @@
   {
    "arquivo": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
    "tipo": "unit",
-   "linhas": 409,
+   "linhas": 447,
    "testa": [
     "src/hooks/business/useWarRoomAlerts.ts"
    ],
-   "casos": 12
+   "casos": 14
   },
   {
    "arquivo": "src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx",
@@ -15835,11 +15846,11 @@
   {
    "arquivo": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
    "tipo": "unit",
-   "linhas": 298,
+   "linhas": 373,
    "testa": [
     "src/hooks/chat/useMessageReactions.ts"
    ],
-   "casos": 4
+   "casos": 6
   },
   {
    "arquivo": "src/hooks/chat/__tests__/useMessages.media.test.tsx",
@@ -17073,11 +17084,11 @@
   {
    "arquivo": "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
    "tipo": "unit",
-   "linhas": 215,
+   "linhas": 228,
    "testa": [
     "src/hooks/integrations/useCatalogContactSearch.ts"
    ],
-   "casos": 14
+   "casos": 15
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useCatalogRecentSends.test.tsx",
@@ -17619,11 +17630,11 @@
   {
    "arquivo": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
    "tipo": "unit",
-   "linhas": 304,
+   "linhas": 435,
    "testa": [
     "src/hooks/reactions/useReactionMutations.ts"
    ],
-   "casos": 7
+   "casos": 12
   },
   {
    "arquivo": "src/hooks/realtime/__tests__/messageSender.reply.test.ts",
@@ -19340,7 +19351,7 @@
   {
    "arquivo": "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
    "tipo": "unit",
-   "linhas": 211,
+   "linhas": 216,
    "testa": [
     "src/components/inbox/AudioMessagePlayer.tsx",
     "src/components/inbox/WhisperMode.tsx",
@@ -23435,6 +23446,7 @@
   "supabase/tests/gamification_streak_dias_seguidos.sql",
   "supabase/tests/get_team_birthdays.sql",
   "supabase/tests/global_settings_secrets_rls.sql",
+  "supabase/tests/goal_notifications_own_insert_policy.sql",
   "supabase/tests/ia_outbox_stats_hmac.sql",
   "supabase/tests/inbox_agregado_por_contato.sql",
   "supabase/tests/inbox_scope_permissions.sql",
@@ -23546,6 +23558,7 @@
   "scripts/e2e-isolated/admission.mjs": 5,
   "scripts/e2e-isolated/collection.mjs": 1,
   "scripts/e2e-isolated/fixture-access.mjs": 4,
+  "scripts/e2e-isolated/force-online.mjs": 1,
   "scripts/e2e-isolated/gateway.mjs": 2,
   "scripts/e2e-isolated/migrations.mjs": 3,
   "scripts/e2e-isolated/network-contexts-browser.mjs": 1,
@@ -23562,10 +23575,10 @@
   "scripts/e2e-isolated/results.mjs": 2,
   "scripts/e2e-isolated/routine-ownership.mjs": 2,
   "scripts/e2e-isolated/run.mjs": 3,
-  "scripts/e2e-isolated/runtime-contract.mjs": 17,
+  "scripts/e2e-isolated/runtime-contract.mjs": 18,
   "scripts/e2e-isolated/seed-qr.mjs": 1,
   "scripts/e2e-isolated/seed-suite.mjs": 3,
-  "scripts/e2e-isolated/stack.mjs": 2,
+  "scripts/e2e-isolated/stack.mjs": 3,
   "scripts/e2e-isolated/tls-probe.mjs": 1,
   "scripts/e2e-isolated/tls.mjs": 4,
   "scripts/e2e-isolated/verify-providers.mjs": 1,

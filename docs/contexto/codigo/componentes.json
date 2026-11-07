@@ -6356,7 +6356,7 @@
     "MediaVolumeControlVariant"
    ],
    "export_default": null,
-   "linhas": 199,
+   "linhas": 200,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useMediaVolume",
@@ -6408,7 +6408,7 @@
     "QuickReactionBar"
    ],
    "export_default": null,
-   "linhas": 437,
+   "linhas": 443,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useMessageReactions"
@@ -8733,7 +8733,7 @@
     "SoundVolumeControl"
    ],
    "export_default": null,
-   "linhas": 224,
+   "linhas": 225,
    "dominio": "components/notifications",
    "hooks_locais": [
     "useNotificationSettings",
@@ -13465,7 +13465,7 @@
     "Progress"
    ],
    "export_default": null,
-   "linhas": 25,
+   "linhas": 40,
    "dominio": "components/ui",
    "hooks_locais": [],
    "tabelas": [],

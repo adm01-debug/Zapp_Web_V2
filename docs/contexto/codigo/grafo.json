@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2245,
- "arestas": 7793,
+ "nos": 2247,
+ "arestas": 7797,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -145,12 +145,12 @@
    "importado_por": 40
   },
   {
-   "arquivo": "src/hooks/system/useUserRole.ts",
+   "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
    "importado_por": 37
   },
   {
-   "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
-   "importado_por": 36
+   "arquivo": "src/hooks/system/useUserRole.ts",
+   "importado_por": 37
   },
   {
    "arquivo": "src/integrations/supabase/types.ts",

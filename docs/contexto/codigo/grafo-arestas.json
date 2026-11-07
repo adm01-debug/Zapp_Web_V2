@@ -260,6 +260,10 @@
    "scripts/e2e-isolated/runtime-contract.mjs",
    "scripts/e2e-isolated/seed-suite.mjs"
   ],
+  "scripts/e2e-isolated/vite.config.ts": [
+   "scripts/e2e-isolated/force-online.mjs",
+   "vite.config.ts"
+  ],
   "scripts/edge-deploy/collect-remote.mjs": [
    "scripts/edge-deploy/manifest-lib.mjs",
    "scripts/edge-deploy/stable-inventory.mjs"
@@ -9003,6 +9007,8 @@
   ],
   "src/hooks/reactions/useReactionMutations.ts": [
    "src/hooks/integrations/useEvolutionApi.ts",
+   "src/hooks/reactions/types.ts",
+   "src/hooks/reactions/useBatchReactions.ts",
    "src/hooks/ui/use-toast.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5b62b9338e23df8ce2bfa6b3da6bb0565f9def93` (2026-11-07T11:13:37-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e900ae317218172259a6363c3f156ed01f368f7b` (2026-11-07T11:37:20-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4187), SQL (1282), Markdown (1042), JSON (595), JavaScript (430), Shell (231), Python (119), YAML (29)
+- linguagens: TypeScript (4188), SQL (1287), Markdown (1042), JSON (595), JavaScript (432), Shell (231), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8258 |
-| arquivos_codigo | 4734 |
-| linhas_codigo | 873662 |
+| arquivos_total | 8266 |
+| arquivos_codigo | 4737 |
+| linhas_codigo | 875001 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -45,12 +45,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | componentes | 885 |
 | hooks | 490 |
 | edge_functions | 85 |
-| tabelas | 216 |
-| migrations | 1083 |
+| tabelas | 217 |
+| migrations | 1087 |
 | cron_jobs | 26 |
-| testes | 2579 |
+| testes | 2581 |
 | workflows | 21 |
-| scripts | 417 |
+| scripts | 419 |
 | docs_md | 1042 |
 
 ## Onde ficam as coisas
@@ -58,10 +58,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (851), src/pages (26), src/features (2)
 - hooks: src/hooks (409), src/components (72), src/contexts (2)
 - servicos_logica: src/lib (145), src/services (17), src/utils (8)
-- testes: co-localizado (__tests__) (1945), outro (206), co-localizado (*.test) (168)
+- testes: co-localizado (__tests__) (1945), outro (207), co-localizado (*.test) (168)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
-- scripts: scripts/db-audit (285), scripts/ci (40), scripts/e2e-isolated (37)
+- scripts: scripts/db-audit (285), scripts/ci (40), scripts/e2e-isolated (39)
 - docs: docs (31), (raiz) (12), .github (1)
 - nomenclatura: {"componentes":"PascalCase (90%)","hooks":"use + PascalCase","servicos":"camelCase (75%)","edge_functions":"kebab-case (95%)","tabelas":"snake_case (92%)"}
 - instruções para agentes no repo: AGENTS.md, CLAUDE.md
@@ -362,7 +362,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - env de integração (só nomes): ANTHROPIC_API_KEY, BITRIX_WEBHOOK_URL, CHATBOT_L1_WEBHOOK_SECRET, CRON_SECRET, ELEVENLABS_WEBHOOK_SECRET, EVOLUTION_API_FLAVOR, EVOLUTION_API_KEY, EVOLUTION_API_URL, EVOLUTION_INSTANCE_NAME, EVOLUTION_INSTANCE_TOKEN, EVOLUTION_VPS_SUPABASE_ANON_KEY, EVOLUTION_VPS_SUPABASE_URL, EVOLUTION_WEBHOOK_ENFORCE, EVOLUTION_WEBHOOK_SECRET, GMAIL_CAS_JWT, GMAIL_CAS_POSTGREST_URL, GMAIL_OIDC_AUDIENCE, GMAIL_OIDC_EMAIL, GMAIL_OIDC_JWKS_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GROQ_API_KEY, INTERNAL_ALERT_SECRET, MULTIPLIX_SCOPE_HMAC_SECRET, OPENAI_API_KEY, PREVIEW_EGRESS_SHARED_SECRET, RESEND_API_KEY, TALKX_CONVERT_SECRET, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, WEBHOOK_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 
 ## Permissões / papéis
-- papéis no código: alert (109), status (103), admin (69), agent (60), supervisor (38), dialog (30), user (26), img (19), region (19), authenticated (18), button (17), group (15), tab (15), listbox (14), radiogroup (14), service_role (14), tablist (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (8), alertdialog (7), toolbar (7), list (6), note (6), log (5), menu (4), tabpanel (4), article (3), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), complementary (2), follower (2), fornecedor (2), gridcell (2), listitem (2), switch (2), A (1), B (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), form (1), fundo (1), gateway (1), grand (1), html (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), string (1), sup (1), target (1), textbox (1), texto (1), timer (1), untrusted (1)
+- papéis no código: alert (109), status (103), admin (69), agent (60), supervisor (38), dialog (30), user (26), img (19), region (19), authenticated (17), button (17), group (15), tab (15), listbox (14), radiogroup (14), service_role (14), tablist (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (8), alertdialog (7), toolbar (7), list (6), note (6), log (5), menu (4), tabpanel (4), article (3), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), complementary (2), follower (2), fornecedor (2), gridcell (2), listitem (2), switch (2), A (1), B (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), form (1), fundo (1), gateway (1), grand (1), html (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), string (1), sup (1), target (1), textbox (1), texto (1), timer (1), untrusted (1)
 - enums de papel: app_role: admin|supervisor|agent|special_agent
 - guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 10 · públicas: /*, /access-denied, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
 - feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, ENABLE_IMAGE_TRANSFORMATION, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, novo-inbox, video_call
@@ -385,24 +385,24 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 55879 nós · 115382 arestas · 4193 comunidades · grafo do commit `5b62b933`
-- comunidades maiores: lucide-react (785), react (708), DashboardView.tsx (530), ExternalProductManagement.tsx (523), useAuth.tsx (465), chat.ts (416), TalkXOverview.tsx (402), validation.ts (392), inspect.ts (364), ref_node_assert (361), vitest (361), cn (357)
+- 55935 nós · 115492 arestas · 4115 comunidades · grafo do commit `e900ae31`
+- comunidades maiores: TalkXSuppression.tsx (826), vitest (820), react (802), lucide-react (730), button.tsx (525), ExternalProductManagement.tsx (489), chat.ts (423), DashboardView.tsx (379), useMyWorkItems.ts (371), @tanstack/react-query (356), ref_node_fs (353), ref_node_assert (340)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (20)
 - PENDENCIAS.md (18)
+- docs/ci/README.md (16)
 - CLAUDE.md (15)
-- docs/ci/README.md (15)
 - .github/workflows/db-guard.yml (14)
 - supabase/deployment-manifest.json (14)
 - ESTADO.md (13)
 - scripts/ci/ci-docs-baseline.unit.mjs (13)
-- .github/workflows/e2e-logado.yml (11)
+- .github/workflows/e2e-logado.yml (12)
+- src/integrations/supabase/types.ts (12)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
-- src/integrations/supabase/types.ts (11)
 - .github/workflows/deploy-functions.yml (10)
 - supabase/schema-manifest.json (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (9)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `e900ae3` fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)
 - 2026-11-07 `5b62b93` fix: torna Vercel Cleanup fail-closed em 403 (#2758)
 - 2026-11-07 `0601e3b` fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)
 - 2026-11-07 `7f3c259` infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-06 `042e593` chore(docs): consolida reconciliação de auditorias e diagnóstico das 3 PRs restantes (#2748)
 - 2026-11-06 `3adec58` fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)
 - 2026-11-06 `0a3442b` infra: monitorar releases V2 e V3 em trilhas separadas (#2747)
-- 2026-11-06 `86c9ec8` fix: reconciliar drift do DB Live Guard (#2741)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

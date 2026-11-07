@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1083,
+ "migrations": 1087,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -1960,6 +1960,69 @@
     "so_na_migration": [],
     "so_no_types": []
    },
+   "usada_no_front": 0,
+   "usada_em_edges": [],
+   "triggers": [],
+   "sem_rls": false,
+   "nao_usada": true
+  },
+  "_rb_message_reactions_one_per_agent_20261107121000": {
+   "colunas": {
+    "contact_id": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "created_at": {
+     "tipo": "timestamptz",
+     "nn": true,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "emoji": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "id": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": true,
+     "default": null,
+     "ref": null
+    },
+    "message_id": {
+     "tipo": "uuid",
+     "nn": true,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "user_id": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    }
+   },
+   "rls": true,
+   "policies": [
+    {
+     "nome": "No client access to reaction rollback backup",
+     "comando": "all",
+     "para": "anon, authenticated",
+     "tipo": "permissive"
+    }
+   ],
+   "indices": [],
+   "fks": [],
+   "criada_em": "20261107121000_message_reactions_one_per_agent.sql",
    "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
@@ -7897,6 +7960,13 @@
      "default": null,
      "ref": null
     },
+    "phone_search_digits": {
+     "tipo": "text",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
     "postal_code": {
      "tipo": "text",
      "nn": false,
@@ -8056,6 +8126,11 @@
      "unico": false
     },
     {
+     "nome": "idx_contacts_phone_search_digits_trgm",
+     "colunas": "phone_search_digits extensions.gin_trgm_ops",
+     "unico": false
+    },
+    {
      "nome": "idx_contacts_queue_id",
      "colunas": "queue_id",
      "unico": false
@@ -8131,6 +8206,7 @@
     "nickname": "string | null",
     "notes": "string | null",
     "phone": "string",
+    "phone_search_digits": "string | null",
     "postal_code": "string | null",
     "presence_status": "string | null",
     "presence_updated_at": "string | null",
@@ -17945,19 +18021,19 @@
    "rls": true,
    "policies": [
     {
-     "nome": "Block authenticated notification inserts",
-     "comando": "insert",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
      "nome": "Users can delete own notifications",
      "comando": "delete",
      "para": "authenticated",
      "tipo": "permissive"
     },
     {
-     "nome": "Users can update own notifications",
+     "nome": "Users can insert own goal notifications",
+     "comando": "insert",
+     "para": "authenticated",
+     "tipo": "permissive"
+    },
+    {
+     "nome": "Users can mark own notifications as read",
      "comando": "update",
      "para": "authenticated",
      "tipo": "permissive"

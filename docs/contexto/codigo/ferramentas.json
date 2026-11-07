@@ -3,11 +3,11 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4187)",
-   "SQL (1282)",
+   "TypeScript (4188)",
+   "SQL (1287)",
    "Markdown (1042)",
    "JSON (595)",
-   "JavaScript (430)",
+   "JavaScript (432)",
    "Shell (231)",
    "Python (119)",
    "YAML (29)"
@@ -1797,6 +1797,10 @@
     "arquivos": 4
    },
    {
+    "host": "fonts.googleapis.com",
+    "arquivos": 4
+   },
+   {
     "host": "img.test",
     "arquivos": 4
    },
@@ -1838,10 +1842,6 @@
    },
    {
     "host": "exemplo.supabase.co",
-    "arquivos": 3
-   },
-   {
-    "host": "fonts.googleapis.com",
     "arquivos": 3
    },
    {
@@ -1989,6 +1989,10 @@
     "arquivos": 2
    },
    {
+    "host": "storage.test",
+    "arquivos": 2
+   },
+   {
     "host": "supabase.test",
     "arquivos": 2
    },
@@ -1998,6 +2002,10 @@
    },
    {
     "host": "tts.local.test",
+    "arquivos": 2
+   },
+   {
+    "host": "va.vercel-scripts.com",
     "arquivos": 2
    },
    {
@@ -2050,6 +2058,10 @@
    },
    {
     "host": "api.zappweb.app.br",
+    "arquivos": 1
+   },
+   {
+    "host": "app.example.test",
     "arquivos": 1
    },
    {
@@ -2170,6 +2182,10 @@
    },
    {
     "host": "foreign.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "foreign.supabase.co",
     "arquivos": 1
    },
    {
@@ -2413,10 +2429,6 @@
     "arquivos": 1
    },
    {
-    "host": "storage.test",
-    "arquivos": 1
-   },
-   {
     "host": "suaempresa.com",
     "arquivos": 1
    },
@@ -2466,10 +2478,6 @@
    },
    {
     "host": "untrusted.example.invalid",
-    "arquivos": 1
-   },
-   {
-    "host": "va.vercel-scripts.com",
     "arquivos": 1
    },
    {
@@ -2683,7 +2691,7 @@
    },
    {
     "papel": "authenticated",
-    "ocorrencias": 18
+    "ocorrencias": 17
    },
    {
     "papel": "button",
