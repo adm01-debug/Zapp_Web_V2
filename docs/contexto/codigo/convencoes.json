@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1945)",
-   "outro (207)",
+   "outro (217)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: endurecer scripts e automatizar guardas residuais (#2773)",
    "fix(e2e): tolera ruído de ambiente SIP 401 e Device 500 no guard de varredura (#2777)",
    "fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)",
    "fix(db): registra formatação divergente da migration 20261107153000 (#2781)",
-   "chore: instruções enxutas para agentes (#2762)",
-   "chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)"
+   "chore: instruções enxutas para agentes (#2762)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -7,7 +7,7 @@
    "SQL (1292)",
    "Markdown (1070)",
    "JSON (596)",
-   "JavaScript (432)",
+   "JavaScript (442)",
    "Shell (232)",
    "Python (119)",
    "YAML (29)"
@@ -180,6 +180,7 @@
    "scripts_usados": [
     "scripts/ci/actions-kpi.mjs",
     "scripts/ci/branch-podaveis.mjs",
+    "scripts/ci/bump-toolchain.mjs",
     "scripts/ci/sla-code-scanning.mjs"
    ],
    "npm_scripts": [],
@@ -1509,8 +1510,6 @@
    "AI_CONTEXT_SCHEMA_SNAPSHOT",
    "ANTHROPIC_API_KEY",
    "CODE_SCAN_DIRS",
-   "CODE_SCAN_MAX_FILES",
-   "CRON_RUNS_PER_JOB",
    "GEN_TYPES",
    "INBOX_SOURCE_ROOT",
    "PGDUMP",
@@ -1523,7 +1522,6 @@
    "SNAPSHOT_EXCLUDE_SCHEMAS",
    "SNAPSHOT_INCLUDE_SCHEMAS",
    "SOURCE",
-   "STAT_STATEMENTS_TOP",
    "SUPABASE_ACCESS_TOKEN",
    "SUPABASE_DB_URL",
    "SUPABASE_PROJECT_REF",
@@ -3303,7 +3301,7 @@
   "tabelas_sem_rls": []
  },
  "feature_flags": {
-  "total": 16,
+  "total": 17,
   "flags": [
    {
     "flag": "ENABLE_ANALYTICS",
@@ -3323,6 +3321,10 @@
    },
    {
     "flag": "ENABLE_IMAGE_TRANSFORMATION",
+    "arquivos": 1
+   },
+   {
+    "flag": "FEATURE_AUDIT",
     "arquivos": 1
    },
    {

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "cc39387036cda3d3b25eb9bf516ce0d05b548aef",
+  "sha": "7991a1f470c5dd5e967f182563d76e857cff1301",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 20:55 UTC",
-  "files_total": 8142,
-  "code_files": 6001,
-  "code_lines": 1041778
+  "generated_at": "2026-11-07 21:01 UTC",
+  "files_total": 8152,
+  "code_files": 6011,
+  "code_lines": 1043259
  },
  "version": "1.3.2",
- "facts_hash": "6723647d53692179",
+ "facts_hash": "c774126448a933e7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -316,7 +316,7 @@
    ".tsx": 2319,
    ".ts": 1865,
    ".sql": 1292,
-   ".mjs": 406,
+   ".mjs": 416,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67945,8 +67945,8 @@
   },
   {
    "module": "scripts",
-   "files": 436,
-   "lines": 86281,
+   "files": 446,
+   "lines": 87762,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68006,7 +68006,7 @@
     "check-supabase-url-import-meta.mjs: varrer, avaliar, guarda",
     "check-talkx-docs.unit.mjs: PREDECESSORES, DOCS_CORRENTES, diretoriosGerados, violacoes",
     "check-talkx-pr-body.mjs: etapaIdDoTitulo, secao, temTelaVisual, verificarCorpo, carregarEtapas",
-    "check-test-inventory.mjs: RAIZ, ALLOWLIST_NODE, padroesNodeDeWorkflow, casaPadrao, orfaosNode, suitesNodeNoDisco",
+    "check-test-inventory.mjs: RAIZ, ALLOWLIST_NODE, padroesNodeDeWorkflow, casaPadrao, orfaosNode, suitesCobertasPorImport",
     "check-workflow-pins-resolvem.mjs: coletarPins, commitDaTag, verificarPins",
     "check-workflow-pins.mjs: TOOLCHAIN_PATH, TOOLCHAIN_KEYS, findMutableActionRefs, findUnauthorizedActionOwners, findUnpinnedImages, loadToolchain",
     "commit-msg-lint.mjs: TIPOS, SUBJECT_MIN_LENGTH, cabecalhoDaMensagem, validarMensagem, main",
@@ -68107,6 +68107,7 @@
     "scripts/ci/catalog-ct73-docs.unit.mjs",
     "scripts/ci/catalog-perf-meta-docs.unit.mjs",
     "scripts/ci/check-audit-pdf-determinism.mjs",
+    "scripts/ci/check-audit-pdf-determinism.unit.mjs",
     "scripts/ci/check-bundle-secrets.mjs",
     "scripts/ci/check-bundle-secrets.unit.mjs",
     "scripts/ci/check-claude-md-integrity.mjs",
@@ -68160,8 +68161,7 @@
     "scripts/ci/e2e-auth-isolation.unit.mjs",
     "scripts/ci/e2e-auth-setup.unit.mjs",
     "scripts/ci/e2e-email-axe-ready.unit.mjs",
-    "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs",
-    "scripts/ci/e2e-http-regressions.unit.mjs"
+    "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs"
    ]
   },
   {
@@ -73727,12 +73727,6 @@
    "CODE_SCAN_DIRS": [
     "scripts/supabase_snapshot/snapshot.py"
    ],
-   "CODE_SCAN_MAX_FILES": [
-    "scripts/supabase_snapshot/snapshot.py"
-   ],
-   "CRON_RUNS_PER_JOB": [
-    "scripts/supabase_snapshot/snapshot.py"
-   ],
    "CRON_SECRET": [
     "supabase/functions/_shared/observability.ts",
     "supabase/functions/cleanup-rate-limit-logs/index.ts",
@@ -74177,7 +74171,10 @@
     "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
     "scripts/ci/e2e-isolated-tls.unit.mjs",
     "scripts/ci/e2e-isolated-workflow.unit.mjs",
+    "scripts/ci/inventario-repo.unit.mjs",
     "scripts/ci/prova-orcamento-argv-secrets.unit.mjs",
+    "scripts/ci/regras-negocio.unit.mjs",
+    "scripts/ci/seed-contatos-redesign-local.unit.mjs",
     "scripts/db-audit/global-guards-regression.test.mjs",
     "scripts/db-audit/validate-destino.test.mjs",
     "scripts/e2e-isolated/resolve-images.mjs",
@@ -74425,9 +74422,6 @@
    "SSL_CERT_FILE": [
     "scripts/e2e-isolated/tls-edge-probe.ts"
    ],
-   "STAT_STATEMENTS_TOP": [
-    "scripts/supabase_snapshot/snapshot.py"
-   ],
    "STORAGE_STATE": [
     "scripts/ui-audit/width-regression.mjs"
    ],
@@ -74441,7 +74435,6 @@
    "SUPABASE_ACCESS_TOKEN": [
     "scripts/db-audit/multiplix-audience-parity.mjs",
     "scripts/edge-deploy/collect-remote.mjs",
-    "scripts/edge-deploy/health-check.mjs",
     "scripts/edge-deploy/talkx-preflight.mjs",
     "scripts/inventario/gerar-banco.mjs",
     "scripts/supabase_snapshot/snapshot.py"
@@ -81562,19 +81555,119 @@
    },
    {
     "file": "scripts/edge-deploy/health-check.mjs",
-    "msg": "--project-ref obrigatorio"
+    "msg": "${label} inválido"
    },
    {
     "file": "scripts/edge-deploy/health-check.mjs",
-    "msg": "Apenas o projeto canonico e aceito"
+    "msg": "${name} exige um valor"
    },
    {
     "file": "scripts/edge-deploy/health-check.mjs",
-    "msg": "Argumento desconhecido: ${argv[i]}"
+    "msg": "--manifest obrigatório"
    },
    {
     "file": "scripts/edge-deploy/health-check.mjs",
-    "msg": "Management API retornou HTTP ${res.status} na consulta de analytics"
+    "msg": "--project-ref obrigatório"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "--threshold deve estar entre 0 e 1"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "--wait-ms deve estar entre 0 e ${MAX_WAIT_MS}"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "--wait-ms deve ser um inteiro não negativo"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Apenas o projeto canônico é aceito"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Argumento desconhecido: ${key}"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Contrato inválido na agregação de logs"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Contrato inválido na resposta da Management API"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Escopo de logs vazio"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Função fora do manifesto: ${scope}"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Janela de logs excede 24 horas"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Janela de logs inválida"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Management API indisponível (HTTP ${response.status})"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Management API recusou a consulta de logs (HTTP ${response.status})"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Management API retornou JSON inválido"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Manifesto Edge contém funções duplicadas"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Manifesto Edge não contém JSON válido"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Manifesto Edge sem lista de funções"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Projeto de logs inválido"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Resposta de logs contém ${label} inválido"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "Resposta de logs contém mais erros que invocações"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "SQL de logs ausente"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "SUPABASE_ACCESS_TOKEN ausente"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "slug de função inválido: ${String(value)}"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.mjs",
+    "msg": "transporte ou timeout ao consultar logs"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.unit.mjs",
+    "msg": "network secret"
    },
    {
     "file": "scripts/edge-deploy/manifest-lib.mjs",
@@ -81833,6 +81926,14 @@
     "msg": "sem --entrada e sem SUPABASE_ACCESS_TOKEN: nada para ler (veja o cabecalho do script)."
    },
    {
+    "file": "scripts/inventario/gerar-repo.mjs",
+    "msg": "ripgrep (rg) falhou com exit ${status}; o inventário não foi gerado."
+   },
+   {
+    "file": "scripts/inventario/gerar-repo.mjs",
+    "msg": "ripgrep (rg) não encontrado; o inventário não pode ser gerado com segurança."
+   },
+   {
     "file": "scripts/lib/seguranca-processo.mjs",
     "msg": "caminho de "
    },
@@ -81874,11 +81975,23 @@
    },
    {
     "file": "scripts/qa/contraste-contatos.mjs",
+    "msg": "--${bgToken} ausente (${theme}, badge ${badge.key})"
+   },
+   {
+    "file": "scripts/qa/contraste-contatos.mjs",
+    "msg": "--${textToken} ausente (${theme}, badge ${badge.key})"
+   },
+   {
+    "file": "scripts/qa/contraste-contatos.mjs",
     "msg": "--${t} ausente (${theme})"
    },
    {
     "file": "scripts/qa/contraste-contatos.mjs",
-    "msg": "badge ${key} sem receita esperada (texto claro+escuro e fundo rgba): ${badgeClass}"
+    "msg": "badge ${key} com opacidade inválida: ${m[2]}"
+   },
+   {
+    "file": "scripts/qa/contraste-contatos.mjs",
+    "msg": "badge ${key} sem receita esperada (tokens CSS ou texto HSL + fundo RGBA): ${badgeClass}"
    },
    {
     "file": "scripts/qa/contraste-contatos.mjs",
@@ -129265,6 +129378,14 @@
    {
     "file": "scripts/lib/seguranca-processo.test.mjs",
     "name": "resolverCaminhoPermitido respeita o array de raizes explicito do chamador"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "resolverCaminhoPermitido recusa arquivo existente acessado por symlink que escapa da raiz"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "resolverCaminhoPermitido recusa alvo inexistente sob diretorio symlink que escapa da raiz"
    },
    {
     "file": "scripts/lib/seguranca-processo.test.mjs",
@@ -261834,9 +261955,16 @@
   },
   "scripts/ci/check-audit-pdf-determinism.mjs": {
    "path": "scripts/ci/check-audit-pdf-determinism.mjs",
-   "lines": 27,
+   "lines": 31,
    "errors": [
     "audit_report.pdf is timezone-dependent: ${zones.join("
+   ]
+  },
+  "scripts/ci/check-audit-pdf-determinism.unit.mjs": {
+   "path": "scripts/ci/check-audit-pdf-determinism.unit.mjs",
+   "lines": 20,
+   "temporal": [
+    "timeout: 60_000,"
    ]
   },
   "scripts/ci/check-bundle-secrets.mjs": {
@@ -262163,13 +262291,14 @@
   },
   "scripts/ci/check-test-inventory.mjs": {
    "path": "scripts/ci/check-test-inventory.mjs",
-   "lines": 210,
+   "lines": 248,
    "exports": [
     "const RAIZ",
     "const ALLOWLIST_NODE",
     "function padroesNodeDeWorkflow",
     "function casaPadrao",
     "function orfaosNode",
+    "function suitesCobertasPorImport",
     "function suitesNodeNoDisco",
     "function padroesNodeDosWorkflows",
     "function suitesNodeOrfas",
@@ -262181,11 +262310,14 @@
      "value": "\"supabase/functions/**/*.test.ts\""
     }
    ],
+   "rule_comments": [
+    "preflight local dizia OK e o mesmo commit falhava apenas no checkout limpo do CI."
+   ],
    "doc": "!/usr/bin/env node E48: verifica que todo .test.ts (supabase/functions/) e .test.sh (scripts/db-audit/) tem correspondente registrado em ci.yml / db-guard.yml. E49: quando ci.yml usa $(git ls-files 'supabase/functions/**/*.test.ts'), a comparação individual de .test.ts é desnecessária (o glob cobre …"
   },
   "scripts/ci/check-test-inventory.unit.mjs": {
    "path": "scripts/ci/check-test-inventory.unit.mjs",
-   "lines": 105
+   "lines": 131
   },
   "scripts/ci/check-workflow-pins-resolvem.mjs": {
    "path": "scripts/ci/check-workflow-pins-resolvem.mjs",
@@ -262407,7 +262539,7 @@
   },
   "scripts/ci/contexto-publicacao.unit.mjs": {
    "path": "scripts/ci/contexto-publicacao.unit.mjs",
-   "lines": 374,
+   "lines": 421,
    "env": [
     "PATH"
    ],
@@ -263941,6 +264073,13 @@
    "lines": 108,
    "doc": "Contrato de scripts/inventario/mudou-conteudo.mjs: o workflow semanal so abre PR quando o inventario mudou alem das datas — inclusive no edges.json, que e gravado numa linha so."
   },
+  "scripts/ci/inventario-repo.unit.mjs": {
+   "path": "scripts/ci/inventario-repo.unit.mjs",
+   "lines": 93,
+   "env": [
+    "PATH"
+   ]
+  },
   "scripts/ci/inventario-rotas.unit.mjs": {
    "path": "scripts/ci/inventario-rotas.unit.mjs",
    "lines": 222,
@@ -264303,7 +264442,7 @@
   },
   "scripts/ci/medir-tipografia.unit.mjs": {
    "path": "scripts/ci/medir-tipografia.unit.mjs",
-   "lines": 183
+   "lines": 197
   },
   "scripts/ci/message-delivery-phase1-rollout.unit.mjs": {
    "path": "scripts/ci/message-delivery-phase1-rollout.unit.mjs",
@@ -264422,6 +264561,11 @@
    "lines": 78,
    "doc": "E66: prova de que o retry de conexao do preflight do db-migrate realmente funciona pelo caminho do psql-safe.mjs. Contexto: a politica de retry ja existia em psql-environment.mjs e ja era usada pelo db-live-guard, mas o psql-safe.mjs nao a acionava -- o callback devolvia o exit code em vez de lancar …"
   },
+  "scripts/ci/qa-vercel-auditores.unit.mjs": {
+   "path": "scripts/ci/qa-vercel-auditores.unit.mjs",
+   "lines": 6,
+   "doc": "Agregador deliberado: o job Node CI executa scripts/ci/*.unit.mjs e estes imports registram as suites nos mesmos processos do node:test, sem duplicar os casos."
+  },
   "scripts/ci/reconciliation-probe-provenance.unit.mjs": {
    "path": "scripts/ci/reconciliation-probe-provenance.unit.mjs",
    "lines": 177,
@@ -264504,9 +264648,13 @@
   },
   "scripts/ci/regras-negocio.unit.mjs": {
    "path": "scripts/ci/regras-negocio.unit.mjs",
-   "lines": 11,
+   "lines": 288,
+   "env": [
+    "PATH"
+   ],
    "temporal": [
-    "encoding: 'utf8', stdio: 'pipe', timeout: 60_000,"
+    "encoding: 'utf8', stdio: 'pipe', timeout: 60_000,",
+    "timeout: 30_000,"
    ]
   },
   "scripts/ci/render-workflow-docs.mjs": {
@@ -264656,6 +264804,16 @@
     "O unico par de secrets exposto no ci.yml deve ser o par de chaves publicaveis"
    ],
    "doc": "CI minimo (16/10/2026): o job `security:` (gitleaks + bun audit) foi removido. Os tres testes abaixo verificam as invariantes de seguranca que sobraram e que continuam valendo no workflow simplificado."
+  },
+  "scripts/ci/seed-contatos-redesign-local.unit.mjs": {
+   "path": "scripts/ci/seed-contatos-redesign-local.unit.mjs",
+   "lines": 176,
+   "env": [
+    "PATH"
+   ],
+   "temporal": [
+    "timeout: 3_000,"
+   ]
   },
   "scripts/ci/sla-code-scanning.mjs": {
    "path": "scripts/ci/sla-code-scanning.mjs",
@@ -264987,6 +265145,10 @@
    ],
    "doc": "!/usr/bin/env node E66 / SL-178 — registro das exceções CONSCIENTES de tipografia. `docs/tipografia/EXCECOES.md` é a lista das exceções conscientes ao padrão de tipografia, pedida pela etapa 66 do PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md e pela regra de execução do mesmo plano: \"Exceções cons …"
   },
+  "scripts/ci/toolchain-schedule.unit.mjs": {
+   "path": "scripts/ci/toolchain-schedule.unit.mjs",
+   "lines": 14
+  },
   "scripts/ci/typecheck-ratchet.mjs": {
    "path": "scripts/ci/typecheck-ratchet.mjs",
    "lines": 373,
@@ -265165,6 +265327,10 @@
    "path": "scripts/ci/verify-ledger-statements.unit.mjs",
    "lines": 120,
    "doc": "E65: prova de que o registro no ledger nao passa com `statements` NULL, vazio ou divergente do arquivo. Antes desta etapa, o passo \"Validar registro no ledger\" do db-migrate.yml provava so' `count(*) = 1`: uma linha com statements NULL ou vazio era aceita, e a trilha de auditoria perdia o conteudo e …"
+  },
+  "scripts/ci/verify-release-targets-timeout.unit.mjs": {
+   "path": "scripts/ci/verify-release-targets-timeout.unit.mjs",
+   "lines": 23
   },
   "scripts/ci/volume-e2e-evidence-honesty.unit.mjs": {
    "path": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
@@ -268602,15 +268768,53 @@
   },
   "scripts/edge-deploy/health-check.mjs": {
    "path": "scripts/edge-deploy/health-check.mjs",
-   "lines": 159,
-   "env": [
-    "SUPABASE_ACCESS_TOKEN"
+   "lines": 273,
+   "exports": [
+    "const CANONICAL_PROJECT",
+    "const MGMT_BASE",
+    "const DEFAULT_THRESHOLD",
+    "const DEFAULT_WAIT_MS",
+    "const MAX_WAIT_MS",
+    "const WINDOW_MS",
+    "const MAX_LOG_WINDOW_MS",
+    "class TransientAnalyticsError",
+    "function validateSlug",
+    "function parseArgs",
+    "function resolveScope",
+    "function buildLogsSql",
+    "function queryAnalytics",
+    "function runHealthCheck",
+    "function main"
    ],
    "errors": [
-    "--project-ref obrigatorio",
-    "Apenas o projeto canonico e aceito",
-    "Argumento desconhecido: ${argv[i]}",
-    "Management API retornou HTTP ${res.status} na consulta de analytics"
+    "${label} inválido",
+    "${name} exige um valor",
+    "--manifest obrigatório",
+    "--project-ref obrigatório",
+    "--threshold deve estar entre 0 e 1",
+    "--wait-ms deve estar entre 0 e ${MAX_WAIT_MS}",
+    "--wait-ms deve ser um inteiro não negativo",
+    "Apenas o projeto canônico é aceito",
+    "Argumento desconhecido: ${key}",
+    "Contrato inválido na agregação de logs",
+    "Contrato inválido na resposta da Management API",
+    "Escopo de logs vazio",
+    "Função fora do manifesto: ${scope}",
+    "Janela de logs excede 24 horas",
+    "Janela de logs inválida",
+    "Management API indisponível (HTTP ${response.status})",
+    "Management API recusou a consulta de logs (HTTP ${response.status})",
+    "Management API retornou JSON inválido",
+    "Manifesto Edge contém funções duplicadas",
+    "Manifesto Edge não contém JSON válido",
+    "Manifesto Edge sem lista de funções",
+    "Projeto de logs inválido",
+    "Resposta de logs contém ${label} inválido",
+    "Resposta de logs contém mais erros que invocações",
+    "SQL de logs ausente",
+    "SUPABASE_ACCESS_TOKEN ausente",
+    "slug de função inválido: ${String(value)}",
+    "transporte ou timeout ao consultar logs"
    ],
    "params": [
     {
@@ -268630,19 +268834,42 @@
      "value": "5"
     },
     {
-     "name": "WINDOW_MINUTES",
+     "name": "MAX_WAIT_MS",
+     "value": "15"
+    },
+    {
+     "name": "WINDOW_MS",
      "value": "5"
+    },
+    {
+     "name": "MAX_LOG_WINDOW_MS",
+     "value": "24"
     }
    ],
    "rule_comments": [
-    "nunca ::error:: — o check não pode derrubar deploys por indisponibilidade de"
+    "bloqueia regressões 5xx. Somente indisponibilidade transitória de",
+    ")$/.test(raw)) throw new Error('--wait-ms deve ser um inteiro não negativo');"
    ],
-   "doc": "!/usr/bin/env node W65: pós-deploy health check — 5 min após deploy, consulta logs de erro pela Management API e falha com ::error:: se a taxa de 5xx superar o limiar. Degradação controlada: falha de transporte ou API indisponível → ::warning::, nunca ::error:: — o check não pode derrubar deploys po …",
+   "doc": "!/usr/bin/env node W65: pós-deploy health check — consulta a API atual de logs do Supabase e bloqueia regressões 5xx. Somente indisponibilidade transitória de observabilidade (transporte, timeout ou HTTP 5xx) degrada para warning.",
+   "calc_fns": [
+    {
+     "name": "validateSlug",
+     "params": "value",
+     "body": "if (typeof value !== 'string' || !SLUG_PATTERN.test(value)) { throw new Error(`slug de função inválido: ${String(value)}`); } return value;"
+    }
+   ],
    "temporal": [
-    "const DEFAULT_WAIT_MS = 5 * 60 * 1000; // 5 min"
-   ],
-   "percents": [
-    "const DEFAULT_THRESHOLD = 0.10; // 10% de 5xx = falha"
+    "export const DEFAULT_WAIT_MS = 5 * 60 * 1000;",
+    "export const MAX_LOG_WINDOW_MS = 24 * 60 * 60 * 1000;",
+    "export const MAX_WAIT_MS = 15 * 60 * 1000;",
+    "export const WINDOW_MS = 5 * 60 * 1000;"
+   ]
+  },
+  "scripts/edge-deploy/health-check.unit.mjs": {
+   "path": "scripts/edge-deploy/health-check.unit.mjs",
+   "lines": 239,
+   "errors": [
+    "network secret"
    ]
   },
   "scripts/edge-deploy/log-injection.unit.mjs": {
@@ -269131,12 +269358,16 @@
   },
   "scripts/inventario/gerar-repo.mjs": {
    "path": "scripts/inventario/gerar-repo.mjs",
-   "lines": 70,
+   "lines": 81,
    "tables": [
     {
      "table": "tabela",
      "op": "ref"
     }
+   ],
+   "errors": [
+    "ripgrep (rg) falhou com exit ${status}; o inventário não foi gerado.",
+    "ripgrep (rg) não encontrado; o inventário não pode ser gerado com segurança."
    ],
    "doc": "!/usr/bin/env node Inventario gerado do lado do repositorio (sem acesso ao banco): - edge functions: linhas, segredos lidos (Deno.env.get) e quem as invoca (src, migrations, outras edges, e2e, CI) - tabelas: para cada nome recebido em stdin (uma por linha), quantos .from('tabela') ha em src/ e supab …"
   },
@@ -269204,7 +269435,7 @@
   },
   "scripts/lib/seguranca-processo.mjs": {
    "path": "scripts/lib/seguranca-processo.mjs",
-   "lines": 76,
+   "lines": 101,
    "exports": [
     "const RAIZ_REPO",
     "const RAIZES_PERMITIDAS",
@@ -269221,12 +269452,13 @@
    ],
    "rule_comments": [
     "processo filho. A regra `javascript:S4036` e puramente sintatica: dispara",
-    "fazendo `git init` passar onde ele deve ser bloqueado)."
+    "fazendo `git init` passar onde ele deve ser bloqueado).",
+    "inexistentes. Assim `tmp/link-para-fora/novo.json` nao passa apenas porque"
    ]
   },
   "scripts/lib/seguranca-processo.test.mjs": {
    "path": "scripts/lib/seguranca-processo.test.mjs",
-   "lines": 90,
+   "lines": 122,
    "is_test": true,
    "rule_comments": [
     "E o MESMO binario que o shell resolveria: nao pode pegar outro shim do PATH."
@@ -269239,6 +269471,8 @@
     "resolverCaminhoPermitido aceita caminho do repositorio e do tmpdir",
     "resolverCaminhoPermitido recusa ",
     "resolverCaminhoPermitido respeita o array de raizes explicito do chamador",
+    "resolverCaminhoPermitido recusa arquivo existente acessado por symlink que escapa da raiz",
+    "resolverCaminhoPermitido recusa alvo inexistente sob diretorio symlink que escapa da raiz",
     "RAIZ_REPO aponta para o pacote Zapp_Web_V2 e esta entre as raizes permitidas"
    ]
   },
@@ -269269,7 +269503,7 @@
   },
   "scripts/qa/contatos-redesign-baseline.cjs": {
    "path": "scripts/qa/contatos-redesign-baseline.cjs",
-   "lines": 434,
+   "lines": 436,
    "env": [
     "BASELINE_BASE_URL",
     "BASELINE_DEBUG",
@@ -269305,6 +269539,14 @@
    ],
    "doc": "!/usr/bin/env node"
   },
+  "scripts/qa/contatos-redesign-baseline.unit.mjs": {
+   "path": "scripts/qa/contatos-redesign-baseline.unit.mjs",
+   "lines": 15
+  },
+  "scripts/qa/contraste-auditores.unit.mjs": {
+   "path": "scripts/qa/contraste-auditores.unit.mjs",
+   "lines": 56
+  },
   "scripts/qa/contraste-combobox.mjs": {
    "path": "scripts/qa/contraste-combobox.mjs",
    "lines": 112,
@@ -269323,7 +269565,7 @@
   },
   "scripts/qa/contraste-contatos.mjs": {
    "path": "scripts/qa/contraste-contatos.mjs",
-   "lines": 135,
+   "lines": 174,
    "exports": [
     "const PAIRS",
     "function parseThemes",
@@ -269334,8 +269576,11 @@
     "function measureBadges"
    ],
    "errors": [
+    "--${bgToken} ausente (${theme}, badge ${badge.key})",
+    "--${textToken} ausente (${theme}, badge ${badge.key})",
     "--${t} ausente (${theme})",
-    "badge ${key} sem receita esperada (texto claro+escuro e fundo rgba): ${badgeClass}",
+    "badge ${key} com opacidade inválida: ${m[2]}",
+    "badge ${key} sem receita esperada (tokens CSS ou texto HSL + fundo RGBA): ${badgeClass}",
     "bloco ${selector} ausente",
     "bloco ${selector} sem fechamento",
     "nenhum badge encontrado em contactTypeConfig.tsx"
@@ -269344,7 +269589,7 @@
   },
   "scripts/qa/medir-tipografia.cjs": {
    "path": "scripts/qa/medir-tipografia.cjs",
-   "lines": 436,
+   "lines": 440,
    "env": [
     "GIT_SHA"
    ],
@@ -269565,9 +269810,12 @@
   },
   "scripts/supabase_snapshot/snapshot.py": {
    "path": "scripts/supabase_snapshot/snapshot.py",
-   "lines": 1723,
+   "lines": 1791,
    "exports": [
+    "def env_int",
     "def log",
+    "def valid_previous_snapshot",
+    "def prepare_output_directory",
     "def record_error",
     "def jsonable",
     "def dumps",
@@ -269623,10 +269871,7 @@
     "def introspect_api",
     "def run_pg_dump",
     "def run_gen_types",
-    "def is_caller_source",
-    "def sql_without_routine_declarations",
-    "def scan_code_files",
-    "def rx_name_keys"
+    "def is_caller_source"
    ],
    "rpc": [
     "fn",
@@ -269634,8 +269879,6 @@
    ],
    "env": [
     "CODE_SCAN_DIRS",
-    "CODE_SCAN_MAX_FILES",
-    "CRON_RUNS_PER_JOB",
     "GEN_TYPES",
     "PGDUMP",
     "PGDUMP_SCHEMAS",
@@ -269643,7 +269886,6 @@
     "SNAPSHOT_DIR",
     "SNAPSHOT_EXCLUDE_SCHEMAS",
     "SNAPSHOT_INCLUDE_SCHEMAS",
-    "STAT_STATEMENTS_TOP",
     "SUPABASE_ACCESS_TOKEN",
     "SUPABASE_DB_URL",
     "SUPABASE_PROJECT_REF",
@@ -269691,7 +269933,7 @@
   },
   "scripts/supabase_snapshot/test_snapshot.py": {
    "path": "scripts/supabase_snapshot/test_snapshot.py",
-   "lines": 822,
+   "lines": 878,
    "exports": [
     "class OfflineConnection",
     "def function",
@@ -269706,6 +269948,7 @@
     "class SnapshotHeartbeatTests",
     "def source_freshness_case",
     "class SnapshotDBStatsTests",
+    "class SnapshotConfigurationTests",
     "def db_stats_case"
    ],
    "rpc": [
@@ -269971,7 +270214,7 @@
   },
   "scripts/vercel/ignore-build.unit.mjs": {
    "path": "scripts/vercel/ignore-build.unit.mjs",
-   "lines": 91,
+   "lines": 100,
    "rule_comments": [
     "T3: Base definido, apenas README (não-front) mudou → pula.",
     "T5: SHA anterior ausente do checkout nao pode pular o build."
@@ -269980,15 +270223,25 @@
   },
   "scripts/vercel/verify-production.mjs": {
    "path": "scripts/vercel/verify-production.mjs",
-   "lines": 134,
+   "lines": 135,
    "env": [
     "SMOKE_BASE_URL"
    ],
    "doc": "!/usr/bin/env node V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zapp-web-v2.vercel.app] Retorna exit 0 se tudo OK, exit 1 em qualquer falha. O que verifica: 1. GET /version.json → 200, JSON válido com campo buildId 2. GET / → 200 …"
   },
+  "scripts/vercel/verify-production.unit.mjs": {
+   "path": "scripts/vercel/verify-production.unit.mjs",
+   "lines": 68,
+   "params": [
+    {
+     "name": "SHA",
+     "value": "'a'"
+    }
+   ]
+  },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
-   "lines": 195,
+   "lines": 199,
    "exports": [
     "const TARGETS",
     "function parseArgs",
@@ -270017,6 +270270,12 @@
     "header ${name} inválido",
     "version.json inválido",
     "version.json não é JSON válido"
+   ],
+   "params": [
+    {
+     "name": "REQUEST_TIMEOUT_MS",
+     "value": "15"
+    }
    ],
    "doc": "!/usr/bin/env node"
   },
@@ -383163,10 +383422,53 @@
   }
  },
  "git": {
-  "sha": "cc39387036cda3d3b25eb9bf516ce0d05b548aef",
+  "sha": "7991a1f470c5dd5e967f182563d76e857cff1301",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7991a1f",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix: endurecer scripts e automatizar guardas residuais (#2773)",
+    "files": [
+     ".github/workflows/branch-hygiene-audit.yml",
+     ".github/workflows/contexto.yml",
+     "docs/REALTIME-CHANNELS-INVENTORY.md",
+     "scripts/ci/check-audit-pdf-determinism.mjs",
+     "scripts/ci/check-audit-pdf-determinism.unit.mjs",
+     "scripts/ci/check-test-inventory.mjs",
+     "scripts/ci/check-test-inventory.unit.mjs",
+     "scripts/ci/contexto-publicacao.unit.mjs",
+     "scripts/ci/inventario-repo.unit.mjs",
+     "scripts/ci/medir-tipografia.unit.mjs",
+     "scripts/ci/qa-vercel-auditores.unit.mjs",
+     "scripts/ci/regras-negocio.unit.mjs",
+     "scripts/ci/seed-contatos-redesign-local.unit.mjs",
+     "scripts/ci/toolchain-schedule.unit.mjs",
+     "scripts/ci/verify-release-targets-timeout.unit.mjs",
+     "scripts/db/seed-contatos-redesign-local.sh",
+     "scripts/edge-deploy/health-check.mjs",
+     "scripts/edge-deploy/health-check.unit.mjs",
+     "scripts/inventario/gerar-repo.mjs",
+     "scripts/lib/seguranca-processo.mjs",
+     "scripts/lib/seguranca-processo.test.mjs",
+     "scripts/qa/contatos-redesign-baseline.cjs",
+     "scripts/qa/contatos-redesign-baseline.unit.mjs",
+     "scripts/qa/contraste-auditores.unit.mjs",
+     "scripts/qa/contraste-combobox.mjs",
+     "scripts/qa/contraste-contatos.mjs",
+     "scripts/qa/medir-tipografia.cjs",
+     "scripts/regras_negocio/publish.sh",
+     "scripts/supabase_snapshot/snapshot.py",
+     "scripts/supabase_snapshot/test_snapshot.py",
+     "scripts/vercel/ignore-build.sh",
+     "scripts/vercel/ignore-build.unit.mjs",
+     "scripts/vercel/verify-production.mjs",
+     "scripts/vercel/verify-production.unit.mjs",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "cc39387",
     "date": "2026-11-07",
@@ -383761,27 +384063,15 @@
      "scripts/vercel/README.md",
      "scripts/vercel/verify-release-targets.mjs"
     ]
-   },
-   {
-    "sha": "86c9ec8",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: reconciliar drift do DB Live Guard (#2741)",
-    "files": [
-     "scripts/db-audit/migration-evidence.json",
-     "scripts/db-audit/replay-known-failures.json",
-     "supabase/migrations/_superseded/20261026240300_drop_bkp_261023.sql",
-     "supabase/migrations/_superseded/README.md"
-    ]
    }
   ],
   "hot_files": [
    [
-    "scripts/db-audit/migration-evidence.json",
-    4
+    "e2e/navegacao-modulos.spec.ts",
+    3
    ],
    [
-    "e2e/navegacao-modulos.spec.ts",
+    "scripts/db-audit/migration-evidence.json",
     3
    ],
    [
@@ -383803,6 +384093,10 @@
    [
     "docs/ci/README.md",
     3
+   ],
+   [
+    "scripts/vercel/verify-release-targets.mjs",
+    2
    ],
    [
     "CLAUDE.md",
@@ -383850,10 +384144,6 @@
    ],
    [
     "e2e/email-link-contato.spec.ts",
-    2
-   ],
-   [
-    "e2e/fixtures/e2e-contact.ts",
     2
    ]
   ]

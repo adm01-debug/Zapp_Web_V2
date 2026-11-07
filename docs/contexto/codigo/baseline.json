@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "cc39387036cda3d3b25eb9bf516ce0d05b548aef",
+  "commit": "7991a1f470c5dd5e967f182563d76e857cff1301",
   "branch": "main",
-  "data_commit": "2026-11-07T20:45:33Z",
+  "data_commit": "2026-11-07T20:59:34Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7991a1f",
+    "data": "2026-11-07",
+    "assunto": "fix: endurecer scripts e automatizar guardas residuais (#2773)"
+   },
    {
     "sha": "cc39387",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "3886f4b",
     "data": "2026-11-06",
     "assunto": "fix: endurecer provisionamento sintético de IA (#2750)"
-   },
-   {
-    "sha": "3ece06f",
-    "data": "2026-11-06",
-    "assunto": "fix: corrige stale closure na navegação por teclado da paleta de comandos (#2749)"
    }
   ],
-  "arquivos_mudados_7d": 1085,
+  "arquivos_mudados_7d": 1107,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -218,12 +218,12 @@
     "mudancas": 13
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 12
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -282,6 +282,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "scripts/ci/check-test-inventory.mjs",
+    "mudancas": 6
+   },
+   {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 6
    },
@@ -291,10 +295,6 @@
    },
    {
     "arquivo": "scripts/db-audit/known-violations.json",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 6
    }
   ],
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8301,
-  "arquivos_codigo": 4737,
-  "linhas_codigo": 875599,
+  "arquivos_total": 8311,
+  "arquivos_codigo": 4747,
+  "linhas_codigo": 877080,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,7 +332,7 @@
   "tabelas": 217,
   "migrations": 1092,
   "cron_jobs": 26,
-  "testes": 2581,
+  "testes": 2591,
   "workflows": 21,
   "scripts": 420,
   "docs_md": 1070
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 200,
-   "linhas": 41800
+   "arquivos": 206,
+   "linhas": 42538
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -627,8 +627,8 @@
    "linhas": 6268
   },
   "scripts/edge-deploy": {
-   "arquivos": 29,
-   "linhas": 4104
+   "arquivos": 30,
+   "linhas": 4457
   },
   "scripts/eslint": {
    "arquivos": 1,
@@ -640,19 +640,19 @@
   },
   "scripts/inventario": {
    "arquivos": 4,
-   "linhas": 786
+   "linhas": 797
   },
   "scripts/lib": {
    "arquivos": 2,
-   "linhas": 166
+   "linhas": 223
   },
   "scripts/mutation": {
    "arquivos": 1,
    "linhas": 507
   },
   "scripts/qa": {
-   "arquivos": 6,
-   "linhas": 1591
+   "arquivos": 8,
+   "linhas": 1707
   },
   "scripts/regras_negocio": {
    "arquivos": 3,
@@ -660,7 +660,7 @@
   },
   "scripts/supabase_snapshot": {
    "arquivos": 2,
-   "linhas": 2545
+   "linhas": 2669
   },
   "scripts/talkx": {
    "arquivos": 6,
@@ -683,8 +683,8 @@
    "linhas": 651
   },
   "scripts/vercel": {
-   "arquivos": 3,
-   "linhas": 420
+   "arquivos": 4,
+   "linhas": 502
   },
   "src/App.tsx": {
    "arquivos": 1,
@@ -810,7 +810,7 @@
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
-   "linhas": 1723
+   "linhas": 1791
   },
   {
    "arquivo": "supabase/functions/talkx-send/index.ts",
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 417,
+  "console_log": 410,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,

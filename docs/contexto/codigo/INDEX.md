@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `cc39387036cda3d3b25eb9bf516ce0d05b548aef` (2026-11-07T20:45:33Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7991a1f470c5dd5e967f182563d76e857cff1301` (2026-11-07T20:59:34Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4188), SQL (1292), Markdown (1070), JSON (596), JavaScript (432), Shell (232), Python (119), YAML (29)
+- linguagens: TypeScript (4188), SQL (1292), Markdown (1070), JSON (596), JavaScript (442), Shell (232), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8301 |
-| arquivos_codigo | 4737 |
-| linhas_codigo | 875599 |
+| arquivos_total | 8311 |
+| arquivos_codigo | 4747 |
+| linhas_codigo | 877080 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -48,7 +48,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 217 |
 | migrations | 1092 |
 | cron_jobs | 26 |
-| testes | 2581 |
+| testes | 2591 |
 | workflows | 21 |
 | scripts | 420 |
 | docs_md | 1070 |
@@ -58,7 +58,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (851), src/pages (26), src/features (2)
 - hooks: src/hooks (409), src/components (72), src/contexts (2)
 - servicos_logica: src/lib (145), src/services (17), src/utils (8)
-- testes: co-localizado (__tests__) (1945), outro (207), co-localizado (*.test) (168)
+- testes: co-localizado (__tests__) (1945), outro (217), co-localizado (*.test) (168)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (286), scripts/ci (40), scripts/e2e-isolated (39)
@@ -365,7 +365,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - papéis no código: alert (109), status (103), admin (69), agent (60), supervisor (38), dialog (30), user (26), img (19), region (19), authenticated (17), button (17), group (15), tab (15), listbox (14), radiogroup (14), service_role (14), tablist (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (8), alertdialog (7), toolbar (7), list (6), note (6), log (5), menu (4), tabpanel (4), article (3), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), complementary (2), follower (2), fornecedor (2), gridcell (2), listitem (2), switch (2), A (1), B (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), form (1), fundo (1), gateway (1), grand (1), html (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), string (1), sup (1), target (1), textbox (1), texto (1), timer (1), untrusted (1)
 - enums de papel: app_role: admin|supervisor|agent|special_agent
 - guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 10 · públicas: /*, /access-denied, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
-- feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, ENABLE_IMAGE_TRANSFORMATION, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, novo-inbox, video_call
+- feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, ENABLE_IMAGE_TRANSFORMATION, FEATURE_AUDIT, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, novo-inbox, video_call
 
 ## Alertas (baseline.json → alertas)
 - rotas_sem_arquivo: 0
@@ -385,8 +385,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56091 nós · 115648 arestas · 4191 comunidades · grafo do commit `cc393870`
-- comunidades maiores: react (1120), button.tsx (986), TalkXSuppression.tsx (909), client.ts (764), DashboardView.tsx (550), vitest (540), validation.ts (491), ExternalProductManagement.tsx (443), @tanstack/react-query (405), ref_https (373), ref_node_assert (341), multiplix-send/index.ts (340)
+- 56161 nós · 115800 arestas · 4139 comunidades · grafo do commit `7991a1f4`
+- comunidades maiores: cn (915), react (863), vitest (761), badge.tsx (711), button.tsx (684), catalogShared.tsx (481), useMyWorkItems.ts (448), ref_node_assert (445), DashboardView.tsx (403), validation.ts (401), ref_node_fs (390), e2e-isolated-runtime.unit.mjs (367)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -396,8 +396,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CLAUDE.md (15)
 - docs/ci/README.md (15)
 - .github/workflows/db-guard.yml (13)
-- scripts/ci/ci-docs-baseline.unit.mjs (13)
 - supabase/deployment-manifest.json (13)
+- scripts/ci/ci-docs-baseline.unit.mjs (12)
 - src/integrations/supabase/types.ts (12)
 - ESTADO.md (11)
 - RELATORIO_CI.md (11)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-07 `7991a1f` fix: endurecer scripts e automatizar guardas residuais (#2773)
 - 2026-11-07 `cc39387` fix(e2e): tolera ruído de ambiente SIP 401 e Device 500 no guard de varredura (#2777)
 - 2026-11-07 `ea6c809` fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)
 - 2026-11-07 `fb328a6` fix(db): registra formatação divergente da migration 20261107153000 (#2781)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-07 `b67ef0c` fix(db): fecha RLS multi-tenant do Copilot (#2763)
 - 2026-11-07 `761ab3b` fix: deep-link de tipo no inbox prevalece sobre preferência salva (PK-14)
 - 2026-11-07 `529389d` chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)
-- 2026-11-07 `e900ae3` fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

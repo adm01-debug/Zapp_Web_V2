@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2581,
+ "total": 2591,
  "por_tipo": {
   "contrato": 113,
   "e2e": 75,
   "pytest": 3,
-  "qa": 6,
-  "unit": 2293
+  "qa": 8,
+  "unit": 2301
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 207
+   "arquivos": 217
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -708,6 +708,13 @@
    "casos": 8
   },
   {
+   "arquivo": "scripts/ci/check-audit-pdf-determinism.unit.mjs",
+   "tipo": "unit",
+   "linhas": 20,
+   "testa": [],
+   "casos": 1
+  },
+  {
    "arquivo": "scripts/ci/check-bundle-secrets.unit.mjs",
    "tipo": "unit",
    "linhas": 294,
@@ -794,11 +801,11 @@
   {
    "arquivo": "scripts/ci/check-test-inventory.unit.mjs",
    "tipo": "unit",
-   "linhas": 105,
+   "linhas": 131,
    "testa": [
     "scripts/ci/check-test-inventory.mjs"
    ],
-   "casos": 4
+   "casos": 5
   },
   {
    "arquivo": "scripts/ci/check-workflow-pins-resolvem.unit.mjs",
@@ -897,9 +904,9 @@
   {
    "arquivo": "scripts/ci/contexto-publicacao.unit.mjs",
    "tipo": "unit",
-   "linhas": 374,
+   "linhas": 421,
    "testa": [],
-   "casos": 15
+   "casos": 16
   },
   {
    "arquivo": "scripts/ci/crm-integration-contract.unit.mjs",
@@ -1501,6 +1508,13 @@
    "casos": 9
   },
   {
+   "arquivo": "scripts/ci/inventario-repo.unit.mjs",
+   "tipo": "unit",
+   "linhas": 93,
+   "testa": [],
+   "casos": 3
+  },
+  {
    "arquivo": "scripts/ci/inventario-rotas.unit.mjs",
    "tipo": "unit",
    "linhas": 222,
@@ -1570,9 +1584,9 @@
   {
    "arquivo": "scripts/ci/medir-tipografia.unit.mjs",
    "tipo": "unit",
-   "linhas": 183,
+   "linhas": 197,
    "testa": [],
-   "casos": 13
+   "casos": 14
   },
   {
    "arquivo": "scripts/ci/message-delivery-phase1-rollout.unit.mjs",
@@ -1652,6 +1666,13 @@
    "casos": 5
   },
   {
+   "arquivo": "scripts/ci/qa-vercel-auditores.unit.mjs",
+   "tipo": "unit",
+   "linhas": 6,
+   "testa": [],
+   "casos": 0
+  },
+  {
    "arquivo": "scripts/ci/reconciliation-probe-provenance.unit.mjs",
    "tipo": "unit",
    "linhas": 177,
@@ -1678,9 +1699,9 @@
   {
    "arquivo": "scripts/ci/regras-negocio.unit.mjs",
    "tipo": "unit",
-   "linhas": 11,
+   "linhas": 288,
    "testa": [],
-   "casos": 1
+   "casos": 5
   },
   {
    "arquivo": "scripts/ci/replay-migrations-guard.unit.mjs",
@@ -1752,6 +1773,13 @@
    "linhas": 42,
    "testa": [],
    "casos": 3
+  },
+  {
+   "arquivo": "scripts/ci/seed-contatos-redesign-local.unit.mjs",
+   "tipo": "unit",
+   "linhas": 176,
+   "testa": [],
+   "casos": 7
   },
   {
    "arquivo": "scripts/ci/sla-code-scanning.unit.mjs",
@@ -1857,6 +1885,13 @@
    "casos": 14
   },
   {
+   "arquivo": "scripts/ci/toolchain-schedule.unit.mjs",
+   "tipo": "unit",
+   "linhas": 14,
+   "testa": [],
+   "casos": 1
+  },
+  {
    "arquivo": "scripts/ci/typecheck-ratchet.unit.mjs",
    "tipo": "unit",
    "linhas": 399,
@@ -1929,6 +1964,15 @@
     "scripts/db-audit/verify-ledger-statements.mjs"
    ],
    "casos": 11
+  },
+  {
+   "arquivo": "scripts/ci/verify-release-targets-timeout.unit.mjs",
+   "tipo": "unit",
+   "linhas": 23,
+   "testa": [
+    "scripts/vercel/verify-release-targets.mjs"
+   ],
+   "casos": 1
   },
   {
    "arquivo": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
@@ -2323,6 +2367,15 @@
    "casos": 8
   },
   {
+   "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
+   "tipo": "unit",
+   "linhas": 239,
+   "testa": [
+    "scripts/edge-deploy/health-check.mjs"
+   ],
+   "casos": 8
+  },
+  {
    "arquivo": "scripts/edge-deploy/log-injection.unit.mjs",
    "tipo": "unit",
    "linhas": 106,
@@ -2421,18 +2474,32 @@
   {
    "arquivo": "scripts/lib/seguranca-processo.test.mjs",
    "tipo": "unit",
-   "linhas": 90,
+   "linhas": 122,
    "testa": [
     "scripts/lib/seguranca-processo.mjs"
    ],
-   "casos": 8
+   "casos": 10
   },
   {
    "arquivo": "scripts/qa/contatos-redesign-baseline.cjs",
    "tipo": "qa",
-   "linhas": 434,
+   "linhas": 436,
    "testa": [],
    "casos": 2
+  },
+  {
+   "arquivo": "scripts/qa/contatos-redesign-baseline.unit.mjs",
+   "tipo": "qa",
+   "linhas": 15,
+   "testa": [],
+   "casos": 1
+  },
+  {
+   "arquivo": "scripts/qa/contraste-auditores.unit.mjs",
+   "tipo": "qa",
+   "linhas": 56,
+   "testa": [],
+   "casos": 4
   },
   {
    "arquivo": "scripts/qa/contraste-combobox.mjs",
@@ -2444,16 +2511,16 @@
   {
    "arquivo": "scripts/qa/contraste-contatos.mjs",
    "tipo": "qa",
-   "linhas": 135,
+   "linhas": 174,
    "testa": [],
    "casos": 0
   },
   {
    "arquivo": "scripts/qa/medir-tipografia.cjs",
    "tipo": "qa",
-   "linhas": 436,
+   "linhas": 440,
    "testa": [],
-   "casos": 2
+   "casos": 3
   },
   {
    "arquivo": "scripts/qa/prova-visao-classificadores.mjs",
@@ -2479,7 +2546,7 @@
   {
    "arquivo": "scripts/supabase_snapshot/test_snapshot.py",
    "tipo": "pytest",
-   "linhas": 822,
+   "linhas": 878,
    "testa": [],
    "casos": 0
   },
@@ -2541,9 +2608,16 @@
   {
    "arquivo": "scripts/vercel/ignore-build.unit.mjs",
    "tipo": "unit",
-   "linhas": 91,
+   "linhas": 100,
    "testa": [],
-   "casos": 6
+   "casos": 7
+  },
+  {
+   "arquivo": "scripts/vercel/verify-production.unit.mjs",
+   "tipo": "unit",
+   "linhas": 68,
+   "testa": [],
+   "casos": 2
   },
   {
    "arquivo": "src/__tests__/a11y/icon-button-names.test.ts",
@@ -23585,6 +23659,7 @@
   "scripts/edge-deploy/allowed-origins.json": 1,
   "scripts/edge-deploy/deploy-plan.mjs": 1,
   "scripts/edge-deploy/deployment-record.mjs": 1,
+  "scripts/edge-deploy/health-check.mjs": 1,
   "scripts/edge-deploy/manifest-lib.mjs": 2,
   "scripts/edge-deploy/redigir-log.mjs": 1,
   "scripts/edge-deploy/register-deployment.mjs": 1,
@@ -23605,7 +23680,7 @@
   "scripts/talkx/v4-status.mjs": 1,
   "scripts/ui-audit/width-check.mjs": 1,
   "scripts/ui-audit/width-regression.mjs": 1,
-  "scripts/vercel/verify-release-targets.mjs": 1,
+  "scripts/vercel/verify-release-targets.mjs": 2,
   "src/App.tsx": 4,
   "src/adapters/evolutionAdapter.ts": 2,
   "src/adapters/inboxAdapter.ts": 2,
