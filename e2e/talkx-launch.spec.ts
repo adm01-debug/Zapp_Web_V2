@@ -161,6 +161,19 @@ async function prepararTalkXLaunch(page: Page): Promise<TalkXLaunchHarness> {
 test.describe('Talk X · lançamento com provedor falso', () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
 
+  async function dismissGlobalOverlays(page: Page) {
+    // Alertas globais são interativos e ocupam legitimamente o rodapé. O teste
+    // não usa `force`: dispensa cada aviso pelo controle acessível, exatamente
+    // como uma pessoa faria, antes de alcançar as ações inferiores do monitor.
+    for (const name of ['Fechar alerta', 'Dispensar por 24 horas']) {
+      const button = page.getByRole('button', { name, exact: true });
+      if (await button.isVisible()) {
+        await button.click();
+        await expect(button).toBeHidden();
+      }
+    }
+  }
+
   test('lança, pausa com motivo, retoma e cancela — tudo pelo stub', async ({ page }) => {
     const harness = await prepararTalkXLaunch(page);
 
@@ -211,6 +224,7 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     expect(harness.envios[2]).toEqual({ campaignId: CAMPAIGN_ID, action: 'start' });
 
     // 5) CANCELAR.
+    await dismissGlobalOverlays(page);
     await page.getByRole('button', { name: 'Cancelar campanha', exact: true }).click();
     const dialogoCancelar = page.getByRole('alertdialog');
     await expect(dialogoCancelar).toBeVisible();

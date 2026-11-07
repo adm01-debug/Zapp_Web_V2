@@ -7,7 +7,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertNoProxy, assertOfficialHostIsLocal, browserEnvironment } from './runtime-contract.mjs';
 import { TLS_ORIGIN, TLS_PUBLIC, TLS_PRIVATE } from './tls.mjs';
-import { certificateFailure } from './tls-probe.mjs';
+import { certificateFailure, certificateNavigationFailure, navigationDiagnostic } from './tls-probe.mjs';
 import { ADDRESS, DEVICE, ENGINES, MAX_JSON, VARIANTS, VERSION, assertControl, assertEngineResult, assertFailure, assertTopology,
   commandOutput, digest, dummyIsLoaded, fail, identity, object, parseJson } from './network-proof-policy.mjs';
 
@@ -15,10 +15,11 @@ export const CONTROL = '/run/zapp-network-control';
 export const TOOLS = '/run/zapp-network-tools';
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 let failureEvidence=null;
-export function tlsControlRejected(kind,nodeCode,browserMessage,engine='chromium') {
+export function tlsControlRejected(kind,nodeCode,browserMessage,engine='chromium',record) {
   if(!['tls_wrong_san_rejected','tls_untrusted_rejected'].includes(kind)||!ENGINES.includes(engine))fail('tls-control-kind');
   const control=kind==='tls_wrong_san_rejected'?'wrong_san':'untrusted';
-  return certificateFailure({code:nodeCode},control,'node')&&certificateFailure({message:browserMessage},control,engine);
+  return certificateFailure({code:nodeCode},control,'node')
+    && certificateNavigationFailure({message:browserMessage},control,engine,record);
 }
 export async function probeBrowserTlsControl({page,id,kind,engine,nodeCode}) {
   identity(id.run_id,id.source_sha);
@@ -30,10 +31,17 @@ export async function probeBrowserTlsControl({page,id,kind,engine,nodeCode}) {
   if(warmup?.status()!==200||page.url()!==warmupUrl)fail('tls-warmup-document');
   const value=await warmup.json();object(value,['schema','run_id','source_sha','origin']);
   if(value.schema!==1||value.run_id!==id.run_id||value.source_sha!==id.source_sha||value.origin!==TLS_ORIGIN)fail('tls-warmup-identity');
-  let message;
-  try{await page.goto('https://127.0.0.1:'+(kind==='tls_wrong_san_rejected'?5176:5175),{waitUntil:'load',timeout:8000});}
-  catch(error){message=error.message;}
-  return tlsControlRejected(kind,nodeCode,message,engine);
+  const controlUrl='https://127.0.0.1:'+(kind==='tls_wrong_san_rejected'?5176:5175);
+  const observation=navigationDiagnostic(page,controlUrl,id.run_id,id.source_sha);
+  let rejection;
+  try {
+    try{await page.goto(controlUrl,{waitUntil:'load',timeout:8000});}
+    catch(error){rejection=error;}
+    if(rejection&&!certificateFailure(rejection,kind==='tls_wrong_san_rejected'?'wrong_san':'untrusted',engine))await observation.wait();
+  } finally {
+    observation.stop();
+  }
+  return tlsControlRejected(kind,nodeCode,rejection?.message,engine,observation.record);
 }
 export function readBoundedJson(file, optional = false) {
   let fd;

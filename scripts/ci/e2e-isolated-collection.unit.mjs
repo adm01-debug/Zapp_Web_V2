@@ -24,6 +24,17 @@ const cases = [];
 const add = (id, expected, options = {}) => cases.push({ id, expected, ...options });
 
 add('suite-nine-projects-and-unselected-config-preserved', 'accepted');
+add('native-shard-allows-selected-projects-without-cases-in-this-partition', 'accepted', { shard: '1/3', json: change(j => {
+  j.config.shard = { current: 1, total: 3 };
+  j.suites[0].specs = j.suites[0].specs.filter(spec => ['setup', 'chromium-e2e-core', 'chromium-authenticated'].includes(spec.tests[0].projectName));
+}) });
+add('native-shard-rejects-report-from-another-partition', 'suite-inventory-invalid', { shard: '1/3', json: change(j => {
+  j.config.shard = { current: 2, total: 3 };
+}) });
+add('native-shard-rejects-case-outside-the-closed-selection', 'suite-inventory-invalid', { shard: '1/3', json: change(j => {
+  j.config.shard = { current: 1, total: 3 };
+  j.suites[0].specs.push({ ...clone(j.suites[0].specs[0]), line: 100, tests: [{ ...clone(j.suites[0].specs[0].tests[0]), projectName: 'unselected-project' }] });
+}) });
 add('login-one-case-and-no-public-suite-file', 'accepted', { scope: 'login', json: report(['setup']) });
 const nodeOutput = spawnSync(process.execPath, ['--input-type=module', '-e',
   'import test from "node:test"; test("collection imported Node guard", () => {}); console.log(' + JSON.stringify(JSON.stringify(report())) + ');'],
@@ -163,10 +174,10 @@ function run(item) {
   }
   try {
     installFaults();
-    const inventory = collectPlaywrightInventory({ output, scope, projects: selected, execute });
+    const inventory = collectPlaywrightInventory({ output, scope, projects: selected, ...(item.shard ? { shard: item.shard } : {}), execute });
     total = inventory.total;
     outcome = 'accepted';
-    assert.deepEqual(inventory, readPlaywrightInventory(json, { projects: selected }));
+    assert.deepEqual(inventory, readPlaywrightInventory(json, { projects: selected, ...(item.shard ? { shard: item.shard } : {}) }));
     if (scope === 'suite') {
       const publicText = fs.readFileSync(path.join(output, 'test-inventory.json'), 'utf8');
       assert.equal(publicText.includes(marker), false);

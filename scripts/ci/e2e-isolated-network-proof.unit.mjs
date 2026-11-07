@@ -141,6 +141,32 @@ for(const [kind,code,message,expected,engine='chromium'] of [
   ['tls_untrusted_rejected','ERR_TLS_CERT_ALTNAME_INVALID','Unacceptable TLS certificate',false],
   ['tls_untrusted_rejected',null,'net::ERR_CERT_AUTHORITY_INVALID',false],
 ])test('TLS negative classification '+code+'/'+expected,()=>assert.equal(tlsControlRejected(kind,code,message,engine),expected));
+function tlsPage(message, failureText = message) {
+  const listeners = new Map(), frame = {}, calls = [];
+  let current = 'about:blank';
+  return {
+    calls,
+    mainFrame: () => frame,
+    url: () => current,
+    on(event, listener) { listeners.set(event, listener); },
+    off(event, listener) { if (listeners.get(event) === listener) listeners.delete(event); },
+    async goto(url, options) {
+      calls.push({ url, options }); current = url;
+      if (calls.length === 1) return { status: () => 200, json: async () => ({ ...ID, origin: TLS_ORIGIN }) };
+      const request = {
+        url: () => url,
+        method: () => 'GET',
+        resourceType: () => 'document',
+        isNavigationRequest: () => true,
+        frame: () => frame,
+        failure: () => ({ errorText: failureText }),
+      };
+      listeners.get('request')?.(request);
+      listeners.get('requestfailed')?.(request);
+      throw Error(message);
+    },
+  };
+}
 for(const kind of ['untrusted','wrong_san'])for(const engine of ['chromium','firefox','webkit']){
   const name=kind==='untrusted'?'tls_untrusted_rejected':'tls_wrong_san_rejected';
   const node=kind==='untrusted'?'UNABLE_TO_GET_ISSUER_CERT_LOCALLY':'ERR_TLS_CERT_ALTNAME_INVALID';
@@ -155,14 +181,16 @@ for(const kind of ['untrusted','wrong_san'])for(const engine of ['chromium','fir
     ['accepted navigation',node,undefined,false],['no Node rejection',undefined,message,false],
   ])test('existing classifier parity '+kind+'/'+engine+'/'+label,()=>assert.equal(tlsControlRejected(name,code,text,engine),expected));
   test('warm same page before negative TLS '+kind+'/'+engine,async()=>{
-    const calls=[];let current='about:blank';
-    const page={url:()=>current,async goto(url,options){calls.push({url,options});current=url;
-      if(calls.length===1)return {status:()=>200,json:async()=>({...ID,origin:TLS_ORIGIN})};throw Error(message);}};
+    const page=tlsPage(message);
     assert.equal(await probeBrowserTlsControl({page,id:ID,kind:name,engine,nodeCode:node}),true);
-    assert.deepEqual(calls.map(x=>x.url),[TLS_ORIGIN+'/identity','https://127.0.0.1:'+(kind==='untrusted'?5175:5176)]);
-    assert(calls.every(x=>x.options.waitUntil==='load'&&x.options.timeout===8000));
+    assert.deepEqual(page.calls.map(x=>x.url),[TLS_ORIGIN+'/identity','https://127.0.0.1:'+(kind==='untrusted'?5175:5176)]);
+    assert(page.calls.every(x=>x.options.waitUntil==='load'&&x.options.timeout===8000));
   });
 }
+test('network proof aceita cancelamento nativo WebKit somente com lifecycle exato', async()=>{
+  const page=tlsPage('Operation was cancelled; maybe frame was detached?','Operation was cancelled');
+  assert.equal(await probeBrowserTlsControl({page,id:ID,kind:'tls_untrusted_rejected',engine:'webkit',nodeCode:'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'}),true);
+});
 for(const fault of ['status-302','status-500','wrong-url','wrong-run','wrong-source','wrong-origin','wrong-schema','extra-field','warmup-throw','invalid-json'])
   test('reject negative TLS before invalid warmup: '+fault,async()=>{
     let calls=0;const url=TLS_ORIGIN+'/identity';

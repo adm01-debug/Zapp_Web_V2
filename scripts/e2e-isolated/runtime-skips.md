@@ -30,11 +30,11 @@ não vêm do JSON do reporter. `inventory` vem da coleta separada com
 | Vínculo | Valor revisado |
 |---|---|
 | Arquivo no checkout | `e2e/conversation.spec.ts` |
-| Blob Git | `96a821d6c8389d526a9a5d65554687412510a92a` |
+| Blob Git | `7039743b2e607c10ff769ab508683135d2a713e7` |
 | Arquivo no reporter isolado | `conversation.spec.ts` |
 | Suítes do reporter | `conversation.spec.ts` → `Conversation state transitions` |
 | Teste | `resolving conversation via CloseConversationDialog succeeds` |
-| Linha | `59` |
+| Linha | `47` |
 | Projetos com exceção | `firefox-conversation`, `webkit-conversation` |
 | Cobertura equivalente exigida | O mesmo caso em `chromium-e2e-core`, efetivamente aprovado |
 

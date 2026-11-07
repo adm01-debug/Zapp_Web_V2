@@ -188,6 +188,13 @@ async function abrirDiscador(page: Page) {
   await expect(page.getByRole('heading', { name: 'Telefonia' })).toBeVisible();
   // GR-012: aguarda teclado totalmente renderizado antes de retornar (Firefox)
   await expect(teclado(page)).toBeVisible();
+  // A view pode aparecer antes de a sondagem SIP terminar. No Firefox, clicar nesse
+  // intervalo permite que a atualização tardia remonte o painel e apague o primeiro
+  // dígito. O motivo fechado prova que o estado assíncrono da fixture já estabilizou.
+  await expect(page.getByTestId('tel-dial-reason')).toHaveText(
+    'Telefone não configurado nesta conta',
+    { timeout: BOOT_DEADLINE_MS },
+  );
   return page.getByTestId('tel-new-call-panel');
 }
 

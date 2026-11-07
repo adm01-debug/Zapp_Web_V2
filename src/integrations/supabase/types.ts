@@ -2388,6 +2388,7 @@ export type Database = {
           nickname: string | null
           notes: string | null
           phone: string
+          phone_search_digits: string | null
           postal_code: string | null
           presence_status: string | null
           presence_updated_at: string | null
@@ -2436,6 +2437,7 @@ export type Database = {
           nickname?: string | null
           notes?: string | null
           phone: string
+          phone_search_digits?: never
           postal_code?: string | null
           presence_status?: string | null
           presence_updated_at?: string | null
@@ -2484,6 +2486,7 @@ export type Database = {
           nickname?: string | null
           notes?: string | null
           phone?: string
+          phone_search_digits?: never
           postal_code?: string | null
           presence_status?: string | null
           presence_updated_at?: string | null

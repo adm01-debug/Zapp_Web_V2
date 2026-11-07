@@ -72,28 +72,39 @@ vi.mock('@/integrations/supabase/client', () => {
   function reactionsTable() {
     const chain: Record<string, unknown> = {};
     // leitura da lista: select('*').eq('message_id', id) → await
-    chain.select = () => ({
-      eq: (column: string, value: string) =>
-        Promise.resolve({
-          data: mocks.rows.filter((row) => String(row[column as keyof ReactionRow]) === value),
-          error: null,
-        }),
-    });
+    chain.select = () => {
+      const filters: Record<string, string> = {};
+      const query: Record<string, unknown> = {};
+      const result = () => ({
+        data: mocks.rows.filter((row) => matches(row, filters)),
+        error: null,
+      });
+      query.eq = (column: string, value: string) => {
+        filters[column] = value;
+        return query;
+      };
+      query.maybeSingle = () => {
+        const rows = result().data;
+        return Promise.resolve({ data: rows[0] ?? null, error: null });
+      };
+      query.then = (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
+        Promise.resolve(result()).then(resolve, reject);
+      return query;
+    };
     chain.upsert = (payload: Omit<ReactionRow, 'id' | 'created_at'>, opts?: { onConflict?: string }) => {
       mocks.upsertCalls.push({ ...payload, onConflict: opts?.onConflict });
-      const jaExiste = mocks.rows.some(
+      const existingIndex = mocks.rows.findIndex(
         (row) =>
           row.message_id === payload.message_id &&
-          row.user_id === payload.user_id &&
-          row.emoji === payload.emoji,
+          row.user_id === payload.user_id,
       );
-      if (!jaExiste) {
-        mocks.rows.push({
-          id: `r-${mocks.rows.length + 1}`,
-          created_at: '2026-10-06T00:00:00.000Z',
-          ...payload,
-        });
-      }
+      const next = {
+        id: `r-${mocks.rows.length + 1}`,
+        created_at: '2026-10-06T00:00:00.000Z',
+        ...payload,
+      };
+      if (existingIndex >= 0) mocks.rows.splice(existingIndex, 1, next);
+      else mocks.rows.push(next);
       const single: Record<string, unknown> = {};
       single.select = () => single;
       single.maybeSingle = () => Promise.resolve({ data: payload, error: null });
@@ -202,6 +213,70 @@ beforeEach(() => {
 });
 
 describe('useMessageReactions — rejeição do transporte no contrato público (R2-INB-032)', () => {
+  it('compartilha a pendência entre duas instâncias da mesma mensagem', async () => {
+    let releaseTransport!: (value: { ok: boolean }) => void;
+    let transportCalls = 0;
+    mocks.sendReaction.mockImplementation(() => {
+      transportCalls += 1;
+      if (transportCalls > 1) return Promise.resolve({ ok: true });
+      return new Promise((resolve) => { releaseTransport = resolve; });
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => ({
+      badges: useMessageReactions(MESSAGE_ID, TRANSPORT),
+      quickBar: useMessageReactions(MESSAGE_ID, TRANSPORT),
+    }), { wrapper });
+    await waitFor(() => expect(result.current.badges.isLoading).toBe(false));
+
+    let pending!: Promise<unknown>;
+    act(() => { pending = result.current.badges.addReaction(EMOJI); });
+    await waitFor(() => {
+      expect(result.current.badges.isReacting).toBe(true);
+      expect(result.current.quickBar.isReacting).toBe(true);
+    });
+
+    releaseTransport({ ok: true });
+    await act(async () => { await pending; });
+    await waitFor(() => {
+      expect(result.current.badges.isReacting).toBe(false);
+      expect(result.current.quickBar.isReacting).toBe(false);
+    });
+  });
+
+  it('duas instâncias no mesmo tick convergem atomicamente para um único emoji', async () => {
+    mocks.sendReaction.mockResolvedValue({ ok: true });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => ({
+      first: useMessageReactions(MESSAGE_ID, TRANSPORT),
+      second: useMessageReactions(MESSAGE_ID, TRANSPORT),
+    }), { wrapper });
+    await waitFor(() => expect(result.current.first.isLoading).toBe(false));
+
+    await act(async () => {
+      await Promise.all([
+        result.current.first.addReaction('👍'),
+        result.current.second.addReaction('❤️'),
+      ]);
+    });
+
+    expect(mocks.rows).toHaveLength(1);
+    expect(mocks.rows[0]).toMatchObject({
+      message_id: MESSAGE_ID,
+      user_id: PROFILE_ID,
+      emoji: '❤️',
+    });
+  });
+
   it('adicionar: addReaction rejeita e a lista pública não ganha a reação', async () => {
     mocks.sendReaction.mockRejectedValue(new Error('evolution 503'));
     const { result, invalidateSpy } = montar();

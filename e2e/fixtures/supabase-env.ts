@@ -51,7 +51,7 @@ function isolatedConfiguration(): { url: string; key: string } | null {
   const key = process.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE?.trim();
   const appUrl = process.env.VITE_ZAPP_LOCAL_SUPABASE_URL?.trim();
   const appKey = process.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY?.trim();
-  if (!url || !key || url !== 'https://127.0.0.1:5173' || url !== appUrl || key !== appKey) return deny();
+  if (!url || !key || url !== 'https://127.0.0.1:5173' || url !== appUrl || !Object.is(key, appKey)) return deny();
   try {
     const parts = key.split('.');
     if (parts.length !== 3 || !parts[2]) return deny();

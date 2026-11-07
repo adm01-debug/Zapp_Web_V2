@@ -79,22 +79,35 @@ export function querObjetoUnico(route: Route): boolean {
  * Identidade + RPCs + edge do app shell. Registre este ANTES das rotas específicas da
  * sua spec (a última registrada vence, então as suas têm prioridade).
  */
-export async function mockAppShell(page: Page, registro: Registro): Promise<void> {
+export async function mockAppShell(
+  page: Page,
+  registro: Registro,
+  options: { role?: 'admin' | 'agent'; onboardingCompleted?: boolean } = {},
+): Promise<void> {
+  const role = options.role ?? 'admin';
+  const onboardingCompleted = options.onboardingCompleted ?? true;
+  const bootstrapBase = role === 'admin'
+    ? BOOT_FAKE
+    : { ...BOOT_FAKE, roles: [role], role_permissions: [] };
+  const bootstrap = {
+    ...bootstrapBase,
+    user_settings: { ...bootstrapBase.user_settings, onboarding_completed: onboardingCompleted },
+  };
   await page.route(/\/rest\/v1\/profiles/, (route) =>
     json(route, querObjetoUnico(route) ? PERFIL_FAKE : [PERFIL_FAKE]));
   await page.route(/\/rest\/v1\/user_roles/, (route) =>
-    json(route, querObjetoUnico(route) ? { role: 'admin' } : [{ role: 'admin' }]));
+    json(route, querObjetoUnico(route) ? { role } : [{ role }]));
   await page.route(/\/rest\/v1\/user_settings/, (route) =>
     json(route, querObjetoUnico(route)
-      ? { onboarding_completed: true }
-      : [{ onboarding_completed: true }]));
+      ? { onboarding_completed: onboardingCompleted }
+      : [{ onboarding_completed: onboardingCompleted }]));
 
   // RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
   await page.route(/\/rest\/v1\/rpc\/count_searchbox_sessions_this_month/, (route) => json(route, 0));
   await page.route(/\/rest\/v1\/rpc\/(?!user_has_permission|count_searchbox_sessions_this_month)/, (route) => json(route, null));
   // A última rota registrada vence: responder o bootstrap depois do catch-all.
-  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => json(route, BOOT_FAKE));
+  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => json(route, bootstrap));
 
   // Edge functions: só o token do Mapbox importa; o resto é bloqueado.
   await page.route(/\/functions\/v1\/get-mapbox-token/, (route) => json(route, { token: 'pk.e2e-mapa' }));
