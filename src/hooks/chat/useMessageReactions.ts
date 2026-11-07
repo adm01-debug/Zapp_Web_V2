@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useReactionMutations } from '../reactions/useReactionMutations';
+import { reactionMutationKey, useReactionMutations } from '../reactions/useReactionMutations';
 import { messageReactionsQueryKey, useReactionsBatch } from '../reactions/useBatchReactions';
 import { MessageReaction, UseMessageReactionsOptions } from '../reactions/types';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
@@ -103,7 +103,12 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
 
   const { addMutation, removeMutation } = useReactionMutations(messageId, profile?.id, options);
 
-  const isReacting = addMutation.isPending || removeMutation.isPending;
+  // MessageReactions e QuickReactionBar montam hooks irmãos para a mesma
+  // mensagem. O MutationCache é o ponto compartilhado que faz a pendência de
+  // uma instância bloquear a outra; o scope no hook serializa qualquer chamada
+  // programática que escape do disabled da UI.
+  const sharedPendingCount = useIsMutating({ mutationKey: reactionMutationKey(messageId), exact: true });
+  const isReacting = sharedPendingCount > 0 || addMutation.isPending || removeMutation.isPending;
 
   const addReaction = useCallback((emoji: string) => addMutation.mutateAsync(emoji), [addMutation]);
   const removeReaction = useCallback((emoji: string) => removeMutation.mutateAsync(emoji), [removeMutation]);

@@ -16,6 +16,7 @@ const rocker = (): VolumeRocker => ({
   handleTriggerClick: vi.fn(),
   handlePointerDown: vi.fn(),
   handleTriggerKeyDown: vi.fn(),
+  handleCloseAutoFocus: vi.fn(),
 });
 
 const montar = (extra: Partial<React.ComponentProps<typeof VolumeTriggerButton>> = {}) => {

@@ -16,7 +16,9 @@ export type AuthTarget = { origin: string; kind: 'local' | 'remote' };
 
 /** Classifica a origem sem autenticar, ler secrets ou fazer I/O. */
 export function classifyAuthTarget(raw: unknown): AuthTarget {
-  if (typeof raw !== 'string' || !raw || raw.trim() !== raw || /[\u0000-\u001f]/.test(raw)) {
+  const hasControlCharacter = typeof raw === 'string' &&
+    Array.from(raw).some(character => character.charCodeAt(0) <= 0x1f);
+  if (typeof raw !== 'string' || !raw || raw.trim() !== raw || hasControlCharacter) {
     throw new AuthTargetError('TARGET_INVALID', 'baseURL ausente ou inválida.');
   }
   let url: URL;

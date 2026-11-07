@@ -106,7 +106,11 @@ vi.mock('@/hooks/crm/useAgents', () => ({
 }));
 
 vi.mock('@/hooks/reactions/useReactionMutations', () => ({
-  useReactionMutations: () => ({ addMutation: { mutateAsync: vi.fn() }, removeMutation: { mutateAsync: vi.fn() } }),
+  reactionMutationKey: (messageId: string) => ['message-reaction-mutation', messageId],
+  useReactionMutations: () => ({
+    addMutation: { mutateAsync: vi.fn(), isPending: false },
+    removeMutation: { mutateAsync: vi.fn(), isPending: false },
+  }),
 }));
 
 vi.mock('@/hooks/communication/useAudioPlayer', () => ({
@@ -135,6 +139,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-query')>()),
   useQuery: () => ({ data: undefined, isLoading: false, error: null, refetch: vi.fn() }),
   useQueryClient: () => ({ invalidateQueries: vi.fn(), getQueryState: vi.fn(), setQueryData: vi.fn() }),
+  useIsMutating: () => 0,
 }));
 
 type MotionDivProps = ComponentProps<'div'> & { initial?: unknown; animate?: unknown; exit?: unknown; transition?: unknown };

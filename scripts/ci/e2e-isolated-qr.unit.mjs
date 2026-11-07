@@ -20,6 +20,7 @@ const NS = 'net:[12345]';
 const SUP = 'e2e65100-0000-4000-a000-000000009001';
 const SUP_P = 'e2e65100-0000-4000-a000-000000009002';
 const FILE_P = 'e2e65100-0000-4000-a000-000000009003';
+const CONTACT_OWNER = 'e2e65100-0000-4000-a000-000000009004';
 const QR_USER = 'e2e71190-7005-4509-a000-000000000001';
 const QR_PROFILE = 'e2e71190-7005-4509-a000-000000000002';
 const SECRET = 'e2e71190-7005-4509-a000-000000000003';
@@ -54,7 +55,9 @@ function backend(options = {}) {
       { id: F.connection, instance_id: F.instance, status: 'connected', is_default: true, created_by: SUP_P, phone_number: F.connectionPhone },
       { id: F.filesConnection, instance_id: 'e2e-arquivos-local', status: 'connected', is_default: false, created_by: FILE_P, phone_number: '00000000002' },
     ],
-    contacts: [{ id: F.contact, assigned_to: FILE_P, whatsapp_connection_id: F.connection }],
+    // seed-files-tab.mjs runs after arquivos-local/seed.ts and intentionally
+    // assigns this canonical contact to its own synthetic profile.
+    contacts: [{ id: F.contact, assigned_to: CONTACT_OWNER, whatsapp_connection_id: F.connection }],
     global_settings: [],
     tokens: new Map([[F.instance, c.instanceToken], ['e2e-arquivos-local', c.instanceToken]]),
     auth: new Map(),
@@ -212,6 +215,11 @@ test('QR seed: distinct admin, third disconnected fixture, Vault roundtrip and a
   assert.ok(b.state.calls.some(c => c.path === '/rest/v1/whatsapp_connections' && c.headers.get('authorization') === 'Bearer ' + b.token()));
   assert.ok(!b.state.writes.some(c => c.path === '/rest/v1/profiles' && Object.hasOwn(c.body, 'role')));
   assert.equal(b.outsideFetches(), 0);
+});
+for (const owner of ['', SUP_P]) test('QR seed refuses invalid canonical contact owner ' + (owner || 'empty'), async () => {
+  const b = backend(); b.state.contacts[0].assigned_to = owner;
+  await assert.rejects(b.seed(), /existing-contact/);
+  assert.ok(!b.state.writes.some(c => c.path === '/auth/v1/admin/users'));
 });
 test('QR bootstrap precedes browser proof without a circular prerequisite', async () => {
   const b = backend(); b.state.files.delete('/run/zapp-e2e/proof.json'); await b.seed();

@@ -21,6 +21,13 @@ function parseLocation(content: string): Message['location'] | undefined {
   }
 }
 
+/** O provedor persiste notas de voz recebidas como `ptt`; a UI trabalha com o
+ * tipo canonico `audio`. Sem esta normalizacao o arquivo aparecia na galeria,
+ * mas o balao da conversa nao montava o player. */
+function normalizeMessageType(value: string): Message['type'] {
+  return (value === 'ptt' ? 'audio' : value) as Message['type'];
+}
+
 export function mapMessageRowToMessage(row: MessageRow): Message {
   return {
     ...row,
@@ -28,7 +35,7 @@ export function mapMessageRowToMessage(row: MessageRow): Message {
     content: row.content,
     sender: (row.sender as 'agent' | 'contact'),
     timestamp: new Date(row.created_at),
-    type: row.message_type as Message['type'],
+    type: normalizeMessageType(row.message_type),
     mediaUrl: row.media_url || undefined,
     isEdited: !!(row as { is_edited?: boolean }).is_edited,
     is_deleted: row.is_deleted ?? false,
@@ -53,7 +60,7 @@ export function mapRealtimeMessageToMessage(rm: RealtimeMessage, conversationId?
     id: rm.id,
     conversationId: conversationId || rm.contact_id || '',
     content: rm.content,
-    type: rm.message_type as Message['type'],
+    type: normalizeMessageType(rm.message_type),
     sender: rm.sender as Message['sender'],
     timestamp: new Date(rm.created_at),
     status: (rm.status as Message['status'] | null) || (rm.is_read ? 'read' : 'delivered'),

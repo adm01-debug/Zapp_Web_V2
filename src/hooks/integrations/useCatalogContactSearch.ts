@@ -34,10 +34,13 @@ export function buildContactSearchFilter(query: string): string | null {
 
   const clauses = [`name.ilike.${escapeOrFilterValue(`%${trimmed}%`)}`];
   const digits = contactSearchDigits(trimmed);
-  // Sem dígitos no termo ("tom"), a cláusula de telefone casaria "%" — todo
-  // contato — e derrubaria a busca por nome. Só entra quando há dígito.
-  if (digits.length > 0) {
-    clauses.push(`phone.ilike.${escapeOrFilterValue(`%${digits}%`)}`);
+  // Dígitos dentro de um nome ("[E2E] Contato", "Loja 2026") não tornam a
+  // consulta uma busca telefônica. Essa cláusula ampla combinada ao limit(15)
+  // podia excluir justamente o match exato por nome. Telefone só entra quando
+  // o termo inteiro contém dígitos e formatação telefônica comum, sem letras.
+  const phoneLike = /^[+\d\s().-]+$/u.test(trimmed);
+  if (phoneLike && digits.length >= CONTACT_SEARCH_MIN_CHARS) {
+    clauses.push(`phone_search_digits.ilike.${escapeOrFilterValue(`%${digits}%`)}`);
   }
   return clauses.join(',');
 }

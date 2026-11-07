@@ -6,7 +6,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { GROUPS } from '../e2e-isolated/runtime-contract.mjs';
+import { GROUPS, GROUP_SHARDS } from '../e2e-isolated/runtime-contract.mjs';
 import { jobOf, nestedValue, onlyStep, scriptOf, stepsOf } from './workflow-test-support.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -19,6 +19,7 @@ const sentinel = 'synthetic-private-email-and-token-never-published';
 const key = 'a'.repeat(64);
 const rejected = ['failed', 'flaky', 'unexpected_pass', 'skipped_explicit', 'skipped_runtime', 'not_run', 'missing_from_report', 'extra_reported'];
 const accepted = ['passed', 'expected_failure', 'known_runtime_skip'];
+const authenticatedGroup = Object.keys(GROUP_SHARDS)[0];
 const scenarios = [];
 for (const [group, projects] of Object.entries(GROUPS)) for (const outcome of [...rejected, ...accepted]) scenarios.push({
   name: `${group}/${outcome}`, group, ready: 'true',
@@ -26,21 +27,21 @@ for (const [group, projects] of Object.entries(GROUPS)) for (const outcome of [.
   names: rejected.includes(outcome) ? [`${projects[0]}:${key}`] : [],
 });
 for (const badKey of ['', 'a'.repeat(63), 'a'.repeat(65), 'A'.repeat(64), sentinel]) scenarios.push({
-  name: `key inválida ${JSON.stringify(badKey)}`, group: 'authenticated', ready: 'true',
+  name: `key inválida ${JSON.stringify(badKey)}`, group: authenticatedGroup, ready: 'true',
   summary: { schema: 1, cases: [{ project: 'setup', key: badKey, outcome: 'failed' }] }, names: [],
 });
 for (const project of ['chromium-mapa', 'chromium', '../outside', sentinel, '']) scenarios.push({
-  name: `projeto fora do grupo ${JSON.stringify(project)}`, group: 'authenticated', ready: 'true',
+  name: `projeto fora do grupo ${JSON.stringify(project)}`, group: authenticatedGroup, ready: 'true',
   summary: { schema: 1, cases: [{ project, key, outcome: 'failed' }] }, names: [],
 });
 for (const ready of ['false', '', true, undefined]) scenarios.push({
-  name: `redator não confirmou ${JSON.stringify(ready)}`, group: 'authenticated', ready,
+  name: `redator não confirmou ${JSON.stringify(ready)}`, group: authenticatedGroup, ready,
   summary: { schema: 1, cases: [{ project: 'setup', key, outcome: 'failed' }] }, names: [],
 });
 for (const [name, summary] of [['ausente', undefined], ['null', null], ['sem cases', { schema: 1 }], ['schema errado', { schema: 2, cases: [] }], ['objeto em cases', { schema: 1, cases: {} }], ['JSON inválido', sentinel]]) scenarios.push({
-  name, group: 'authenticated', ready: 'true', summary, names: [],
+  name, group: authenticatedGroup, ready: 'true', summary, names: [],
 });
-scenarios.push({ name: 'cleanup falhou depois dos casos aprovados', group: 'authenticated', ready: 'true', summary: { schema: 1, ok: true, cases: [{ project: 'setup', key, outcome: 'passed' }] }, names: [] });
+scenarios.push({ name: 'cleanup falhou depois dos casos aprovados', group: authenticatedGroup, ready: 'true', summary: { schema: 1, ok: true, cases: [{ project: 'setup', key, outcome: 'passed' }] }, names: [] });
 
 function fakeApi() {
   const issues = [];
