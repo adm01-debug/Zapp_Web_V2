@@ -54184,7 +54184,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 67,
+          "code_total_files": 68,
           "cron": [],
           "db": [
             "public.assume_conversation",
@@ -54790,7 +54790,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 33,
+          "code_total_files": 34,
           "cron": [],
           "db": [
             "public.can_delete_contacts",
@@ -56456,7 +56456,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 385,
+          "code_total_files": 386,
           "cron": [],
           "db": [
             "public.add_agent_xp",
