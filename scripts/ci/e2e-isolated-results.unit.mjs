@@ -248,7 +248,7 @@ test('contradição: índice de retry sem tentativa inicial é rejeitado', () =>
 // are parser controls, not a native browser run or a native --list artifact.
 const PLATFORM_PROJECTS = ['chromium-e2e-core', 'firefox-conversation', 'webkit-conversation'];
 const PLATFORM_REASON = "CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a getByRole('option') de forma confiavel em Firefox/WebKit no CI";
-const PLATFORM_BLOB = '706c1fc0c55d7ae7b4fad46edac1b8356ebf366f';
+const PLATFORM_BLOB = '7039743b2e607c10ff769ab508683135d2a713e7';
 const PLATFORM_FILE = 'e2e/conversation.spec.ts';
 const SOURCE_SHA = 'a96bbd4cbaeed5a8bad7c42af347e56960e6cac7';
 const platformSpec = json => json.suites[0].suites[0].specs[0];
@@ -259,8 +259,8 @@ function platformFixture() {
   const listed = {
     config: { rootDir: '/repo/e2e', projects: PLATFORM_PROJECTS.map(name => ({ name, repeatEach: 1 })) },
     suites: [{ title: 'conversation.spec.ts', file: 'conversation.spec.ts', specs: [], suites: [{
-      title: 'Conversation state transitions', file: 'conversation.spec.ts', line: 43, column: 6,
-      specs: [{ title: 'resolving conversation via CloseConversationDialog succeeds', file: 'conversation.spec.ts', line: 59, column: 7,
+      title: 'Conversation state transitions', file: 'conversation.spec.ts', line: 32, column: 6,
+      specs: [{ title: 'resolving conversation via CloseConversationDialog succeeds', file: 'conversation.spec.ts', line: 47, column: 7,
         tests: PLATFORM_PROJECTS.map(projectName => ({ projectName, projectId: projectName, expectedStatus: 'passed', status: 'skipped', annotations: [], results: [] })) }],
     }] }], errors: [], stats: { expected: 0, unexpected: 0, flaky: 0, skipped: 3 },
   };

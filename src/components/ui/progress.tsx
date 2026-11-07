@@ -15,12 +15,16 @@ const Progress = React.forwardRef<
     : Number.isFinite(value)
       ? Math.min(100, Math.max(0, value))
       : 0;
+  const accessibleName = props['aria-label'] || props['aria-labelledby']
+    ? {}
+    : { 'aria-label': 'Progresso' };
 
   return (
     <ProgressPrimitive.Root
       ref={ref}
       className={cn("relative h-4 w-full overflow-hidden rounded-full bg-secondary", className)}
       value={normalizedValue}
+      {...accessibleName}
       {...props}
     >
       <ProgressPrimitive.Indicator

@@ -22,6 +22,19 @@ const digitar = (input: HTMLElement, texto: string) =>
   fireEvent.change(input, { target: { value: texto } });
 
 describe('CommandPalette — campo e lista anunciados (combobox/listbox)', () => {
+  it('não duplica option/id quando um acesso rápido também está nos recentes', () => {
+    localStorage.setItem('zapp-recent-modules', JSON.stringify(['chat']));
+    try {
+      renderPalette();
+      const options = screen.getAllByRole('option');
+      const ids = options.map((option) => option.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(options.filter((option) => option.textContent?.includes('Inbox'))).toHaveLength(1);
+    } finally {
+      localStorage.removeItem('zapp-recent-modules');
+    }
+  });
+
   it('o campo é combobox nomeado que aponta para a lista e para o item ativo', () => {
     const { input } = renderPalette();
 

@@ -1280,8 +1280,10 @@ function relatarRodada(
  */
 test.beforeAll(async ({ request }) => {
   // O default do Playwright para hooks e 30 s, e uma passada de aquecimento (74
-  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook.
-  test.setTimeout(20 * 60_000);
+  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook. O orçamento
+  // agregado deste arquivo fica abaixo dos 55 min do controller isolado:
+  // 10 min de aquecimento + 22 min desktop + 22 min celular = 54 min.
+  test.setTimeout(10 * 60_000);
   let ultimoErro: unknown;
   for (let passada = 1; passada <= 4; passada += 1) {
     try {
@@ -1304,7 +1306,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     // A varredura é longa (43 percursos do mapa + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
-    test.setTimeout(30 * 60_000);
+    test.setTimeout(22 * 60_000);
     // O aquecimento do runtime do conjunto local roda UMA vez para o arquivo
     // inteiro (test.beforeAll, mais abaixo): repeti-lo dentro de cada teste
     // dobrava a carga sobre o runtime e o pico de memoria matava o navegador no
@@ -1379,7 +1381,7 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test('abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    test.setTimeout(30 * 60_000); // mesma razão do desktop: varredura longa
+    test.setTimeout(22 * 60_000); // mantém o orçamento agregado abaixo do controller de 55 min
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;

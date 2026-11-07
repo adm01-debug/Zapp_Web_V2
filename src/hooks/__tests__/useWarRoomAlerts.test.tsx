@@ -179,6 +179,7 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
   let alertas: LinhaAlerta[];
   let violacoes: string[];
   let erroDeLeitura: { code: string; message: string } | null;
+  let erroDeLookup: { code: string; message: string } | null;
   let erroDeInsert: { code: string; message: string } | null;
   let chavesNoBanco: Set<string>;
   let criados: LinhaAlerta[];
@@ -200,7 +201,7 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
                 consultasDedupe.push(key);
                 return Promise.resolve({
                   data: columns === 'id' && chavesNoBanco.has(key) ? [{ id: 'existente' }] : [],
-                  error: null,
+                  error: erroDeLookup,
                 });
               },
             }),
@@ -273,6 +274,7 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
     }));
     violacoes = idsDeViolacao(60);
     erroDeLeitura = null;
+    erroDeLookup = null;
     erroDeInsert = null;
     chavesNoBanco = new Set();
     criados = [];
@@ -335,6 +337,20 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
 
     expect(tentativas).toHaveLength(0);
     expect(criados).toHaveLength(0);
+  });
+
+  it('falha no precheck de dedupe é registrada e nunca vira POST', async () => {
+    erroDeLookup = { code: '42501', message: 'permission denied for warroom_alerts' };
+
+    renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(consultasDedupe).toHaveLength(1));
+
+    expect(tentativas).toHaveLength(0);
+    expect(criados).toHaveLength(0);
+    expect(erroNoConsole).toHaveBeenCalledWith(
+      '[useWarRoomAlerts] falha ao verificar alerta de SLA existente',
+      erroDeLookup,
+    );
   });
 
   it('conta o conjunto inteiro de violações, não só a primeira página de 1000', async () => {

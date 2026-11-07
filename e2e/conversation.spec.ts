@@ -6,11 +6,12 @@ import {
   cleanupFixtureMessages,
 } from './fixtures/e2e-contact';
 
-// beforeEach navega para "/" (raiz) e clica no chip "Todas" ANTES de reabrir
-// o fixture: 1) ensureFixtureConversationOpen le o token via page.evaluate ->
-// window.localStorage, que lanca SecurityError numa pagina ainda em
-// about:blank (origem opaca) — por isso a navegacao vem primeiro; 2) o chip
-// padrao ("Em atendimento") depende do feature flag inbox.status-fsm e de
+// beforeEach reabre o fixture via API antes de navegar para "/" (raiz): a
+// sessao vem do storageState do BrowserContext, portanto o preparo funciona
+// ainda em about:blank. A unica navegacao monta a SPA ja com os dados frescos,
+// sem reload/goto concorrente com o bootstrap em Firefox/WebKit. Depois, o chip
+// "Todas" evita o filtro padrao ("Em atendimento"), que depende do feature flag
+// inbox.status-fsm e de
 // assigned_to bater com o profile logado, enquanto "Todas" nao filtra por
 // isso — mais determinístico para o teste.
 //
@@ -19,18 +20,6 @@ import {
 // catch-all "*" cai no NotFound) e src/pages/Index.tsx
 // (useNavigationHistory('inbox') e estado interno da SPA, nao rota de URL).
 // Reproduzido ao vivo com magiclink real: "/inbox" devolve 404.
-//
-// A segunda navegacao depois do PATCH fica por robustez, nao por causa comprovada:
-// ensureFixtureConversationOpen reabre a conversa direto via REST, e sem
-// reiniciar o documento a pagina so saberia do novo status via realtime (canal
-// 'global-contacts-realtime'), cuja inscricao pode ainda nao estar pronta
-// quando o PATCH commita. A run 36257595651 (workflow_dispatch, pos PR
-// #869) foi citada aqui antes como prova desse mecanismo — mas essa run
-// teve conclusion=failure, e o teste que ela quebrou tinha causa raiz
-// diferente e ja identificada (ver comentario abaixo: truncamento do nome
-// exibido, PR #816). Uma nova `goto('/')` reinicia o documento e forca o mesmo
-// fetch inicial fresco. Ela evita a interrupcao de frame observada no WebKit
-// quando `reload()` concorria com a navegacao interna do shell.
 //
 // O assert do chip "Todas" compara com o texto RENDERIZADO no item, e a lista
 // exibe so `contact.nickname?.trim() || name.split(' ')[0]` (a primeira
@@ -42,7 +31,6 @@ import {
 // E2E_FIXTURE_CONTACT_DISPLAY_NAME.
 test.describe('Conversation state transitions', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
     await ensureFixtureConversationOpen(page);
     await page.goto('/');
     await page.getByTestId('status-chip-all').click();

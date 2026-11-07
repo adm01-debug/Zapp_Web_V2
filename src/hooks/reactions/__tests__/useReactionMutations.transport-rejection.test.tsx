@@ -38,6 +38,11 @@ const mocks = vi.hoisted(() => ({
   deleteCalls: [] as Array<Record<string, string>>,
   /** Quantas chamadas de transporte já tinham acontecido quando a escrita local rodou. */
   transportCallsAtLocalWrite: [] as number[],
+  upsertError: null as Error | null,
+  deleteError: null as Error | null,
+  upsertCommitsBeforeError: false,
+  deleteCommitsBeforeError: false,
+  readbackError: null as Error | null,
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -56,19 +61,41 @@ vi.mock('@/integrations/supabase/client', () => {
 
   function reactionsTable() {
     return {
+      select: () => {
+        const filters: Record<string, string> = {};
+        const chain: Record<string, unknown> = {};
+        chain.eq = (column: string, value: string) => {
+          filters[column] = value;
+          return chain;
+        };
+        chain.maybeSingle = () => {
+          if (mocks.readbackError) return Promise.resolve({ data: null, error: mocks.readbackError });
+          return Promise.resolve({
+            data: mocks.rows.find((row) => matches(row, filters)) ?? null,
+            error: null,
+          });
+        };
+        return chain;
+      },
       upsert: (payload: ReactionRow, opts?: { onConflict?: string }) => {
         mocks.upsertCalls.push({ ...payload, onConflict: opts?.onConflict });
         mocks.transportCallsAtLocalWrite.push(mocks.sendReaction.mock.calls.length);
-        const jaExiste = mocks.rows.some(
-          (row) =>
-            row.message_id === payload.message_id &&
-            row.user_id === payload.user_id &&
-            row.emoji === payload.emoji,
-        );
-        if (!jaExiste) mocks.rows.push({ ...payload });
         const chain: Record<string, unknown> = {};
         chain.select = () => chain;
-        chain.maybeSingle = () => Promise.resolve({ data: payload, error: null });
+        chain.maybeSingle = () => {
+          if (mocks.upsertError && !mocks.upsertCommitsBeforeError) {
+            return Promise.resolve({ data: null, error: mocks.upsertError });
+          }
+          const existingIndex = mocks.rows.findIndex(
+            (row) =>
+              row.message_id === payload.message_id &&
+              row.user_id === payload.user_id,
+          );
+          if (existingIndex >= 0) mocks.rows.splice(existingIndex, 1, { ...payload });
+          else mocks.rows.push({ ...payload });
+          if (mocks.upsertError) return Promise.resolve({ data: null, error: mocks.upsertError });
+          return Promise.resolve({ data: payload, error: null });
+        };
         return chain;
       },
       delete: () => {
@@ -81,8 +108,12 @@ vi.mock('@/integrations/supabase/client', () => {
         chain.then = (resolve: (v: unknown) => void, reject?: (e: unknown) => void) => {
           mocks.deleteCalls.push({ ...filters });
           mocks.transportCallsAtLocalWrite.push(mocks.sendReaction.mock.calls.length);
+          if (mocks.deleteError && !mocks.deleteCommitsBeforeError) {
+            return Promise.resolve({ error: mocks.deleteError }).then(resolve, reject);
+          }
           const restantes = mocks.rows.filter((row) => !matches(row, filters));
           mocks.rows.splice(0, mocks.rows.length, ...restantes);
+          if (mocks.deleteError) return Promise.resolve({ error: mocks.deleteError }).then(resolve, reject);
           return Promise.resolve({ error: null }).then(resolve, reject);
         };
         return chain;
@@ -152,6 +183,11 @@ beforeEach(() => {
   mocks.upsertCalls.length = 0;
   mocks.deleteCalls.length = 0;
   mocks.transportCallsAtLocalWrite.length = 0;
+  mocks.upsertError = null;
+  mocks.deleteError = null;
+  mocks.upsertCommitsBeforeError = false;
+  mocks.deleteCommitsBeforeError = false;
+  mocks.readbackError = null;
 });
 
 describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () => {
@@ -190,7 +226,7 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
       await result.current.addMutation.mutateAsync(EMOJI);
     });
 
-    expect(mocks.sendReaction).toHaveBeenCalledTimes(1);
+    expect(mocks.sendReaction).toHaveBeenCalledTimes(2);
     // 1 chamada de transporte já feita quando a gravação local rodou ⇒ envio antes da escrita.
     expect(mocks.transportCallsAtLocalWrite).toEqual([1]);
     expect(mocks.rows).toEqual([
@@ -201,6 +237,52 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
     ]);
     expect(mocks.toast).not.toHaveBeenCalled();
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['message-reactions', MESSAGE_ID] });
+  });
+
+  it('adicionar substitui no cache qualquer emoji anterior do mesmo autor', async () => {
+    seedReacao('❤️');
+    mocks.sendReaction.mockResolvedValue({ ok: true });
+    const { result, queryClient } = montar(TRANSPORT);
+    queryClient.setQueryData(['message-reactions', MESSAGE_ID], [{
+      message_id: MESSAGE_ID,
+      user_id: PROFILE_ID,
+      contact_id: CONTACT_ID,
+      emoji: '❤️',
+    }]);
+
+    await act(async () => { await result.current.addMutation.mutateAsync(EMOJI); });
+
+    expect(queryClient.getQueryData(['message-reactions', MESSAGE_ID])).toEqual([
+      expect.objectContaining({ user_id: PROFILE_ID, emoji: EMOJI }),
+    ]);
+  });
+
+  it('adicionar: falha local após envio compensa removendo a reação remota', async () => {
+    mocks.sendReaction.mockResolvedValue({ ok: true });
+    mocks.upsertError = new Error('RLS recusou upsert');
+    const { result, invalidateSpy } = montar(TRANSPORT);
+
+    await act(async () => {
+      await expect(result.current.addMutation.mutateAsync(EMOJI)).rejects.toThrow('RLS recusou upsert');
+    });
+
+    expect(mocks.sendReaction.mock.calls.map((call) => call[2])).toEqual([EMOJI, '']);
+    expect(mocks.rows).toEqual([]);
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('adicionar: erro ambíguo após commit é confirmado por readback e não compensa ao contrário', async () => {
+    mocks.sendReaction.mockResolvedValue({ ok: true });
+    mocks.upsertError = new Error('socket fechou após commit');
+    mocks.upsertCommitsBeforeError = true;
+    const { result } = montar(TRANSPORT);
+
+    await act(async () => { await result.current.addMutation.mutateAsync(EMOJI); });
+
+    expect(mocks.sendReaction.mock.calls.map((call) => call[2])).toEqual([EMOJI, EMOJI]);
+    expect(mocks.rows).toEqual([
+      { message_id: MESSAGE_ID, user_id: PROFILE_ID, contact_id: CONTACT_ID, emoji: EMOJI },
+    ]);
   });
 
   it('adicionar: sem contexto de transporte continua gravando local (contrato preservado)', async () => {
@@ -220,7 +302,7 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
         user_id: PROFILE_ID,
         contact_id: CONTACT_ID,
         emoji: EMOJI,
-        onConflict: 'message_id,user_id,emoji',
+        onConflict: 'message_id,user_id',
       },
     ]);
     expect(mocks.toast).not.toHaveBeenCalled();
@@ -280,6 +362,36 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
+  it('remover: falha local após envio compensa restaurando a reação remota', async () => {
+    seedReacao();
+    mocks.sendReaction.mockResolvedValue({ ok: true });
+    mocks.deleteError = new Error('RLS recusou delete');
+    const { result, invalidateSpy } = montar(TRANSPORT);
+
+    await act(async () => {
+      await expect(result.current.removeMutation.mutateAsync(EMOJI)).rejects.toThrow('RLS recusou delete');
+    });
+
+    expect(mocks.sendReaction.mock.calls.map((call) => call[2])).toEqual(['', EMOJI]);
+    expect(mocks.rows).toEqual([
+      { message_id: MESSAGE_ID, user_id: PROFILE_ID, contact_id: CONTACT_ID, emoji: EMOJI },
+    ]);
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('remover: erro ambíguo após commit é confirmado por readback e não restaura ao contrário', async () => {
+    seedReacao();
+    mocks.sendReaction.mockResolvedValue({ ok: true });
+    mocks.deleteError = new Error('socket fechou após commit');
+    mocks.deleteCommitsBeforeError = true;
+    const { result } = montar(TRANSPORT);
+
+    await act(async () => { await result.current.removeMutation.mutateAsync(EMOJI); });
+
+    expect(mocks.sendReaction.mock.calls.map((call) => call[2])).toEqual(['', '']);
+    expect(mocks.rows).toEqual([]);
+  });
+
   it('remover: com transporte aceito remove localmente DEPOIS do envio e invalida a query', async () => {
     seedReacao();
     mocks.sendReaction.mockResolvedValue({ ok: true });
@@ -295,7 +407,7 @@ describe('useReactionMutations — rejeição do transporte (R2-INB-032)', () =>
       await result.current.removeMutation.mutateAsync(EMOJI);
     });
 
-    expect(mocks.sendReaction).toHaveBeenCalledTimes(1);
+    expect(mocks.sendReaction).toHaveBeenCalledTimes(2);
     expect(mocks.transportCallsAtLocalWrite).toEqual([1]);
     expect(mocks.rows).toEqual([]);
     expect(queryClient.getQueryData(['message-reactions', MESSAGE_ID])).toEqual([]);

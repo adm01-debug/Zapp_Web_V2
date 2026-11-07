@@ -122,7 +122,7 @@ function suiteJson({ listed = false, fault, group = AUTH_GROUP } = {}) {
     if (['chromium-e2e-core', 'firefox-conversation', 'webkit-conversation'].includes(name)) {
       suite.title = suite.file = spec.file = 'conversation.spec.ts';
       spec.title = 'resolving conversation via CloseConversationDialog succeeds';
-      spec.line = 59; spec.column = 3;
+      spec.line = 47; spec.column = 3;
       suite.specs = [];
       suite.suites = [{ title: 'Conversation state transitions', specs: [spec] }];
       if (!listed && name !== 'chromium-e2e-core' && fault === 'known-platform-skips') {

@@ -16,8 +16,8 @@ const record = value => value !== null && typeof value === 'object' && !Array.is
 // The native inventory supplies the column; the complete identity must match.
 const CONVERSATION_SKIP = Object.freeze({
   sourceFile: 'e2e/conversation.spec.ts',
-  sourceBlob: '706c1fc0c55d7ae7b4fad46edac1b8356ebf366f',
-  reportFile: 'conversation.spec.ts', line: 59,
+  sourceBlob: '7039743b2e607c10ff769ab508683135d2a713e7',
+  reportFile: 'conversation.spec.ts', line: 47,
   titlePath: ['conversation.spec.ts', 'Conversation state transitions'],
   title: 'resolving conversation via CloseConversationDialog succeeds',
   reason: "CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a getByRole('option') de forma confiavel em Firefox/WebKit no CI",

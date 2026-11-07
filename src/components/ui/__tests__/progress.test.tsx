@@ -3,6 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { Progress } from '../progress';
 
 describe('Progress', () => {
+  it('fornece nome acessível padrão quando o consumidor não nomeia a barra', () => {
+    render(<Progress value={50} />);
+    expect(screen.getByRole('progressbar', { name: 'Progresso' }))
+      .toHaveAttribute('aria-valuenow', '50');
+  });
+
   it.each([
     { label: 'vazio', value: 0, transform: 'translateX(-100%)' },
     { label: 'carregando', value: 42, transform: 'translateX(-58%)' },

@@ -284,6 +284,16 @@ test('cancelamento nativo do WebKit só vale com evidência de rede exata do con
   assert.equal(certificateNavigationFailure(error, 'untrusted', 'webkit', {
     ...exact, failure_error_texts: ['TLS certificate is not trusted'],
   }), false);
+  for (const message of [
+    'Timeout 15000ms exceeded; Operation was cancelled',
+    'ECONNREFUSED; Operation was cancelled',
+    'Operation was cancelled because navigation timed out',
+    'page.goto: Operation was cancelled\nCall log:\nTimeout 15000ms exceeded',
+    'page.goto: Operation was cancelled\nCall log:\nECONNREFUSED',
+  ]) {
+    assert.equal(certificateNavigationFailure(new Error(message), 'untrusted', 'webkit', exact), false);
+  }
+  assert.equal(certificateNavigationFailure(error, 'expired', 'webkit', exact), false);
 });
 
 function clientFetch(patch = () => undefined) {

@@ -7,7 +7,7 @@ const fail = (code, cause) => { throw new Error('[e2e-isolated/tls-' + code + ']
 const hash = value => createHash('sha256').update(value).digest('hex');
 const controlUrl = name => 'https://127.0.0.1:' + TLS_CONTROLS[name] + '/__e2e/tls-control';
 
-function navigationDiagnostic(page, url, runId, sourceSha) {
+export function navigationDiagnostic(page, url, runId, sourceSha) {
   const frame = page.mainFrame();
   const record = { request_count: 0, request_failed_count: 0, request_finished_count: 0,
     response_count: 0, ignored_event_count: 0, response_statuses: [], failure_error_texts: [] };
@@ -77,10 +77,17 @@ export function certificateFailure(error, kind, engine = 'node') {
  */
 export function certificateNavigationFailure(error, kind, engine, record) {
   if (certificateFailure(error, kind, engine)) return true;
-  if (engine !== 'webkit') return false;
-  const text = [error?.message, error?.cause?.message].filter(Boolean).join(' ');
-  const cancelled = /Operation was cancelled(?:; maybe frame was detached\?)?/i;
-  return cancelled.test(text)
+  if (engine !== 'webkit' || !['untrusted', 'wrong_san'].includes(kind)) return false;
+  const nativeCancellation = value => {
+    if (typeof value !== 'string') return false;
+    if (/timed? ?out|ECONNREFUSED|ECONNRESET|ENOTFOUND|ERR_CONNECTION_REFUSED|NS_ERROR_CONNECTION_REFUSED|connection refused|aborted/iu.test(value)) return false;
+    const lines = value.trim().split(/\r?\n/u);
+    return /^(?:page\.goto:\s*)?Operation was cancelled(?:; maybe frame was detached\?)?$/iu.test(lines[0] ?? '')
+      && (lines.length === 1 || lines[1] === 'Call log:');
+  };
+  const messages = [error?.message, error?.cause?.message].filter(Boolean);
+  return messages.length > 0
+    && messages.every(nativeCancellation)
     && record?.request_count === 1
     && record.request_failed_count === 1
     && record.request_finished_count === 0
@@ -88,7 +95,7 @@ export function certificateNavigationFailure(error, kind, engine, record) {
     && record.ignored_event_count === 0
     && record.response_statuses?.length === 0
     && record.failure_error_texts?.length === 1
-    && cancelled.test(record.failure_error_texts[0] ?? '');
+    && nativeCancellation(record.failure_error_texts[0]);
 }
 
 export function assertTlsClientContext(env, interfaces) {

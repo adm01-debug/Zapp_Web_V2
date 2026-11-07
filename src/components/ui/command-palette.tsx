@@ -125,8 +125,12 @@ export function CommandPalette({
   // o teclado percorre — antes o listener só via `groupedCommands`, vazio sem consulta,
   // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034).
   const quickAccessItems = React.useMemo(
-    () => (query ? [] : navigationCommands.slice(0, 5)),
-    [query, navigationCommands]
+    () => {
+      if (query) return [];
+      const recentIds = new Set(recentCommands.map((command) => command.id));
+      return navigationCommands.slice(0, 5).filter((command) => !recentIds.has(command.id));
+    },
+    [query, navigationCommands, recentCommands]
   );
 
   const allItems = React.useMemo(
