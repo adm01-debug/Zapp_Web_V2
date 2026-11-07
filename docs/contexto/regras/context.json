@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ea6c809837e4fa24962d36c327ca8cb02ffd4da5",
+  "sha": "cc39387036cda3d3b25eb9bf516ce0d05b548aef",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 20:34 UTC",
+  "generated_at": "2026-11-07 20:55 UTC",
   "files_total": 8142,
   "code_files": 6001,
-  "code_lines": 1041744
+  "code_lines": 1041778
  },
  "version": "1.3.2",
- "facts_hash": "093d873c8253cfb8",
+ "facts_hash": "6723647d53692179",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67793,7 +67793,7 @@
   {
    "module": "e2e",
    "files": 78,
-   "lines": 18294,
+   "lines": 18328,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -127092,7 +127092,7 @@
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
-    "name": "SIP 401 e Device 500 históricos REPROVAM sem tolerância de defeito"
+    "name": "SIP 401 e Device 500 com corpo exato são lacunas de ambiente; corpo fora da assinatura REPROVA"
    },
    {
     "file": "e2e/navegacao-modulos.spec.ts",
@@ -259869,7 +259869,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "path": "e2e/navegacao-modulos.spec.ts",
-   "lines": 1908,
+   "lines": 1942,
    "is_test": true,
    "env": [
     "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE",
@@ -259924,9 +259924,9 @@
    ],
    "rule_comments": [
     "nem regra por texto solto: endpoint novo, outro status ou outro corpo REPROVAM.",
+    "mantém a sessão de auth da edge; o token expira/invalida",
     "* tag que CONTÉM (o React acusa \"X dentro de X\" / \"X não pode conter X\") */",
     "4xx de validação, endpoint novo, par de tags novo) entra em `reprovam`.",
-    "SIP aceita somente a lacuna exata 503; Device prova boot e sessão concorrente. */",
     "subtítulo não pode ser p. O React avisa \"In HTML, <div> cannot be a descendant"
    ],
    "temporal": [
@@ -259962,7 +259962,7 @@
     "console.error sem resposta justificada REPROVA (status solto não tolera)",
     "sombra de console com URL da mensagem só casa com a resposta MEDIDA correspondente",
     "sombra sem URL na mensagem só casa com a resposta MEDIDA que a precede",
-    "SIP 401 e Device 500 históricos REPROVAM sem tolerância de defeito",
+    "SIP 401 e Device 500 com corpo exato são lacunas de ambiente; corpo fora da assinatura REPROVA",
     "pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM",
     "DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item",
     "DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro",
@@ -383163,10 +383163,19 @@
   }
  },
  "git": {
-  "sha": "ea6c809837e4fa24962d36c327ca8cb02ffd4da5",
+  "sha": "cc39387036cda3d3b25eb9bf516ce0d05b548aef",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "cc39387",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): tolera ruído de ambiente SIP 401 e Device 500 no guard de varredura (#2777)",
+    "files": [
+     "e2e/navegacao-modulos.spec.ts"
+    ]
+   },
    {
     "sha": "ea6c809",
     "date": "2026-11-07",
@@ -383764,21 +383773,16 @@
      "supabase/migrations/_superseded/20261026240300_drop_bkp_261023.sql",
      "supabase/migrations/_superseded/README.md"
     ]
-   },
-   {
-    "sha": "abfe326",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "chore: validar manifesto de edge functions no CI por PR (#2738)",
-    "files": [
-     ".github/workflows/ci.yml"
-    ]
    }
   ],
   "hot_files": [
    [
     "scripts/db-audit/migration-evidence.json",
     4
+   ],
+   [
+    "e2e/navegacao-modulos.spec.ts",
+    3
    ],
    [
     "docs/ia/IA-010-ambiente-de-ensaio.md",
@@ -383850,10 +383854,6 @@
    ],
    [
     "e2e/fixtures/e2e-contact.ts",
-    2
-   ],
-   [
-    "e2e/fixtures/isolated-qr.ts",
     2
    ]
   ]
