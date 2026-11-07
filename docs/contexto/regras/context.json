@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "5fec88f4357fdf7c80ac32b23554ffa9fcd4add6",
+  "sha": "f103a30633940297da61f791545a600dc6cbc207",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 21:13 UTC",
+  "generated_at": "2026-11-07 21:32 UTC",
   "files_total": 8152,
   "code_files": 6011,
   "code_lines": 1043286
@@ -383422,10 +383422,19 @@
   }
  },
  "git": {
-  "sha": "5fec88f4357fdf7c80ac32b23554ffa9fcd4add6",
+  "sha": "f103a30633940297da61f791545a600dc6cbc207",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f103a30",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(db): registra replay seguro da migration 20261107170000 (#2784)",
+    "files": [
+     "scripts/db-audit/migration-evidence.json"
+    ]
+   },
    {
     "sha": "5fec88f",
     "date": "2026-11-07",
@@ -384046,28 +384055,19 @@
      "analise-prs/auditorias-anteriores.md",
      "analise-prs/diagnostico-3-prs-restantes-261106.md"
     ]
-   },
-   {
-    "sha": "3adec58",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: mockar endpoints GoTrue no mockTalkXAuth (e2e-logado JWT bad_jwt) (#2744)",
-    "files": [
-     "e2e/fixtures/talkx-demo.ts"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/db-audit/migration-evidence.json",
+    4
+   ],
    [
     "src/integrations/supabase/types.ts",
     3
    ],
    [
     "e2e/navegacao-modulos.spec.ts",
-    3
-   ],
-   [
-    "scripts/db-audit/migration-evidence.json",
     3
    ],
    [

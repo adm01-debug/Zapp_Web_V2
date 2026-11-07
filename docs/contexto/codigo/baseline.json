@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5fec88f4357fdf7c80ac32b23554ffa9fcd4add6",
+  "commit": "f103a30633940297da61f791545a600dc6cbc207",
   "branch": "main",
-  "data_commit": "2026-11-07T21:11:16Z",
+  "data_commit": "2026-11-07T21:26:25Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f103a30",
+    "data": "2026-11-07",
+    "assunto": "fix(db): registra replay seguro da migration 20261107170000 (#2784)"
+   },
    {
     "sha": "5fec88f",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "c0e5118",
     "data": "2026-11-06",
     "assunto": "fix: evita posição absoluta na navegação da paleta (teste flaky)"
-   },
-   {
-    "sha": "37822ce",
-    "data": "2026-11-06",
-    "assunto": "chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)"
    }
   ],
   "arquivos_mudados_7d": 1107,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 708
+    "mudancas": 707
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -207,11 +207,11 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -238,11 +238,15 @@
     "mudancas": 11
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 11
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 10
    },
    {
@@ -254,15 +258,11 @@
     "mudancas": 9
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 9
+    "arquivo": "AGENTS.md",
+    "mudancas": 7
    },
    {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "AGENTS.md",
     "mudancas": 7
    },
    {
