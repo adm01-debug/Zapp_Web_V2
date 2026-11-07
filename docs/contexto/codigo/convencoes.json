@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(db): protege streak e resoluções por usuário autenticado (#2766)",
    "fix(db): fecha RLS multi-tenant do Copilot (#2763)",
    "fix: deep-link de tipo no inbox prevalece sobre preferência salva (PK-14)",
    "chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)",
-   "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)",
-   "fix: torna Vercel Cleanup fail-closed em 403 (#2758)"
+   "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

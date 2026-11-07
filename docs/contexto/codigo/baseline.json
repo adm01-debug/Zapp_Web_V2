@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b67ef0c61baeb273652b4a7a097aff213bd624b4",
+  "commit": "a9c9835bd9d0c23e53458c84d5159cc1b24e5f7d",
   "branch": "main",
-  "data_commit": "2026-11-07T12:57:26-03:00",
+  "data_commit": "2026-11-07T13:17:06-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a9c9835",
+    "data": "2026-11-07",
+    "assunto": "fix(db): protege streak e resoluções por usuário autenticado (#2766)"
+   },
    {
     "sha": "b67ef0c",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "2623adb",
     "data": "2026-11-06",
     "assunto": "infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)"
-   },
-   {
-    "sha": "712da7c",
-    "data": "2026-11-05",
-    "assunto": "fix: condicionar REVOKE cron.schedule à autoridade do executor (#20261102032200)"
    }
   ],
-  "arquivos_mudados_7d": 1116,
+  "arquivos_mudados_7d": 1117,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -301,15 +301,15 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 285
-   },
-   {
-    "autor": "dependabot[bot]",
-    "commits": 7
+    "commits": 286
    },
    {
     "autor": "github-actions[bot]",
     "commits": 7
+   },
+   {
+    "autor": "dependabot[bot]",
+    "commits": 6
    },
    {
     "autor": "devin-ai-integration[bot]",
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8290,
+  "arquivos_total": 8291,
   "arquivos_codigo": 4737,
   "linhas_codigo": 875007,
   "rotas": 18,
@@ -330,7 +330,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1089,
+  "migrations": 1090,
   "cron_jobs": 26,
   "testes": 2581,
   "workflows": 21,

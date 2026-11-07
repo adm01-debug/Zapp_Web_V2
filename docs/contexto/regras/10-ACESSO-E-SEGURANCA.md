@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b67ef0c61b` · branch `main` · 2026-11-07 16:09 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a9c9835bd9` · branch `main` · 2026-11-07 16:18 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -253,7 +253,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 746 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 747 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -405,7 +405,7 @@
 - `supabase/functions/_shared/request-policy.ts`
 - `supabase/functions/_shared/talkx-reply.ts`
 - `supabase/functions/_shared/validation.ts`
-- … +596 (lista completa em `context.json`)
+- … +597 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
