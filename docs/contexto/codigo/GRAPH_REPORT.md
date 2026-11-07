@@ -1,7 +1,7 @@
 # Graph Report - Zapp_Web_V2  (2026-11-07)
 
 ## Corpus Check
-- 7201 files · ~8,961,071 words
+- 7201 files · ~8,961,080 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 94 file(s) not represented in the graph (top: .tsv 32, .csv 13, (none) 12)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a9c9835b`
+- Built from commit: `bd8091e5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a9c9835bd9d0c23e53458c84d5159cc1b24e5f7d",
+  "sha": "bd8091e59c4197f6286db80baaef2a02f62fd0f6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 16:18 UTC",
+  "generated_at": "2026-11-07 16:58 UTC",
   "files_total": 8132,
   "code_files": 5999,
-  "code_lines": 1041006
+  "code_lines": 1041007
  },
  "version": "1.3.2",
- "facts_hash": "8b49599692215b99",
+ "facts_hash": "c662b1a560840e9d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68896,7 +68896,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15532,
+   "lines": 15533,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -342440,7 +342440,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15459,
+   "lines": 15460,
    "exports": [
     "type Json",
     "type Database",
@@ -383102,10 +383102,22 @@
   }
  },
  "git": {
-  "sha": "a9c9835bd9d0c23e53458c84d5159cc1b24e5f7d",
+  "sha": "bd8091e59c4197f6286db80baaef2a02f62fd0f6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "bd8091e",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "chore(db): sincroniza artefatos derivados do banco (#2769)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json"
+    ]
+   },
    {
     "sha": "a9c9835",
     "date": "2026-11-07",
@@ -383688,15 +383700,6 @@
      "PENDENCIAS.md",
      "RELATORIO_CI.md"
     ]
-   },
-   {
-    "sha": "d985c7f",
-    "date": "2026-11-05",
-    "author": "adm01-debug",
-    "subject": "chore: RELATORIO_CI §1.8 com saída real dos 3 shards Vitest locais",
-    "files": [
-     "RELATORIO_CI.md"
-    ]
    }
   ],
   "hot_files": [
@@ -383711,6 +383714,10 @@
    [
     "supabase/deployment-manifest.json",
     3
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    2
    ],
    [
     ".github/workflows/e2e-logado-isolado.yml",
@@ -383774,10 +383781,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-workflow.unit.mjs",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/README.md",
     2
    ]
   ]

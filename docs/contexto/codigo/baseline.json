@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a9c9835bd9d0c23e53458c84d5159cc1b24e5f7d",
+  "commit": "bd8091e59c4197f6286db80baaef2a02f62fd0f6",
   "branch": "main",
-  "data_commit": "2026-11-07T13:17:06-03:00",
+  "data_commit": "2026-11-07T13:41:21-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "bd8091e",
+    "data": "2026-11-07",
+    "assunto": "chore(db): sincroniza artefatos derivados do banco (#2769)"
+   },
    {
     "sha": "a9c9835",
     "data": "2026-11-07",
@@ -126,11 +131,6 @@
     "sha": "a4e43d1",
     "data": "2026-11-06",
     "assunto": "fix: vercel-env-cleanup não falha com exit 1 quando token sem escopo de time (403) (#2743)"
-   },
-   {
-    "sha": "2623adb",
-    "data": "2026-11-06",
-    "assunto": "infra: executar suítes Node e estabilizar teste PostgreSQL (#2742)"
    }
   ],
   "arquivos_mudados_7d": 1117,
@@ -218,6 +218,10 @@
     "mudancas": 14
    },
    {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 13
+   },
+   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 12
    },
@@ -230,19 +234,15 @@
     "mudancas": 12
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 12
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 10
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 10
    },
    {
@@ -290,11 +290,11 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/db-audit/known-violations.json",
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/e2e-isolated/README.md",
+    "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 6
    }
   ],
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8291,
   "arquivos_codigo": 4737,
-  "linhas_codigo": 875007,
+  "linhas_codigo": 875008,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15532
+   "linhas": 15533
   },
   "src/lib": {
    "arquivos": 281,
@@ -802,7 +802,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15459
+   "linhas": 15460
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
