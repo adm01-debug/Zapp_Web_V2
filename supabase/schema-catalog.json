@@ -2677,6 +2677,7 @@
         "fn_send_audio_meme",
         "fn_toggle_user_meme_favorite",
         "get_ai_jobs_cron_secret",
+        "get_ai_usage_outbox_drain_cron_secret",
         "get_avatars_refresh_cron_secret",
         "get_channel_credentials",
         "get_channel_credentials_safe",
@@ -2940,7 +2941,7 @@
         "warroom_agent_today",
         "warroom_queue_stats"
     ],
-    "generated_at": "2026-11-02",
+    "generated_at": "2026-11-07",
     "format_version": 2,
     "check_constraints": [
         "agent_mini_game_xp_daily.agent_mini_game_xp_daily_game_id_check:CHECK ((game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text])))",
@@ -3412,6 +3413,7 @@
         "fn_send_audio_meme(p_meme_id uuid)->audio_memes|kind=f",
         "fn_toggle_user_meme_favorite(p_meme_id uuid)->boolean|kind=f",
         "get_ai_jobs_cron_secret()->text|kind=f",
+        "get_ai_usage_outbox_drain_cron_secret()->text|kind=f",
         "get_avatars_refresh_cron_secret()->text|kind=f",
         "get_channel_credentials(_connection_id uuid)->jsonb|kind=f",
         "get_channel_credentials_safe(p_channel_id uuid)->jsonb|kind=f",
