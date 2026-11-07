@@ -25,7 +25,11 @@ test('Edge contract CI pins its runtime and isolated frozen lock', () => {
   assert.match(shellCode(tests), /git ls-files 'supabase\/functions\/\*\*\/\*\.test\.ts'/);
   const config = JSON.parse(read('./deno.json'));
   assert.deepEqual(config.lock, { path: './deno.lock', frozen: true });
-  assert.equal(config.nodeModulesDir, 'none');
+  // nodeModulesDir: 'auto' permite resolver specifiers npm: (desde a migração esm.sh → npm)
+  assert.ok(
+    config.nodeModulesDir === 'none' || config.nodeModulesDir === 'auto',
+    `nodeModulesDir deve ser 'none' ou 'auto', atual: ${config.nodeModulesDir}`
+  );
   const lock = JSON.parse(read('./deno.lock'));
   assert.equal(lock.version, '5');
   assert.ok(Object.keys(lock.remote ?? {}).length > 0);

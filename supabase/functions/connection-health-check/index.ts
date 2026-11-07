@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { resolveEvolutionFlavor, resolveSessionRoute } from '../_shared/evolution-session-routes.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, type Logger } from "../_shared/validation.ts";

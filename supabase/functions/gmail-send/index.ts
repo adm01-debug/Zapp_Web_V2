@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailSendActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { buildGmailMimeMessage, encodeBase64Url } from "../_shared/gmail-mime.ts";

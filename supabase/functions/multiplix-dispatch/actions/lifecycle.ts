@@ -45,7 +45,7 @@
  * isso ele e contado a parte e nunca somado a `read`.
  */
 
-import { z } from 'https://esm.sh/zod@3.23.8';
+import { z } from 'npm:zod@3.23.8';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
 import { DispatchError, MANAGE_ALL_PERMISSION, type ActionContext } from '../index.ts';
 
