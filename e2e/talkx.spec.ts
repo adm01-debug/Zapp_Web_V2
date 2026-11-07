@@ -22,6 +22,22 @@ async function expandCampanhasGroup(page: Page) {
   }
 }
 
+async function leaveWizardWithoutSaving(page: Page) {
+  await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
+
+  const overviewHeading = page.getByRole('heading', { name: 'Campanhas' });
+  const unsavedHeading = page.getByRole('heading', { name: 'Você tem alterações não salvas' });
+  await expect(overviewHeading.or(unsavedHeading)).toBeVisible();
+
+  // O editor pode terminar de hidratar valores iniciais depois de abrir. Quando
+  // isso acontece, a proteção de saída pede uma decisão explícita; estes testes
+  // não criam campanha, então descartam o estado local em vez de gravar um draft.
+  if (await unsavedHeading.isVisible()) {
+    await page.getByRole('button', { name: 'Descartar rascunho' }).click();
+  }
+  await expect(overviewHeading).toBeVisible();
+}
+
 test.describe('Talk X module', () => {
   // Full-width viewport: sidebar renders in full mode (not compact/icon), eliminating
   // the pointer-event interception that required force: true at 1280×720.
@@ -62,8 +78,7 @@ test.describe('Talk X module', () => {
     // wizard renders and "Continuar" is present.
     await expect(page.getByRole('button', { name: /continuar/i })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
-    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+    await leaveWizardWithoutSaving(page);
   });
 
   test('help screen opens, searches, reads an article and goes back', async ({ page }) => {
@@ -103,6 +118,10 @@ test.describe('Talk X module', () => {
 
   test('Cmd/Ctrl+K outside the help still opens the command palette', async ({ page }) => {
     await page.goto('/?view=talkx');
+    // O atalho global é registrado pelo shell depois da hidratação. Dispará-lo
+    // logo após goto criava uma corrida no WebKit: a tecla chegava antes do
+    // listener e o retry passava. A tela pronta é a pré-condição do atalho.
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
 
     await page.keyboard.press('Control+k');
     await expect(page.getByPlaceholder('Buscar ou digitar comando...')).toBeVisible();
@@ -146,8 +165,7 @@ test.describe('Talk X module', () => {
     // Close the wizard via the header Voltar button (aria-label="Voltar", calls onClose).
     // On step 1 the footer Voltar is hidden (only shown when step > 1), so .first()
     // reliably targets the header button.
-    await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
-    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+    await leaveWizardWithoutSaving(page);
   });
 
   test('wizard stepper shows all four steps and continuar is initially disabled', async ({ page }) => {
@@ -176,8 +194,7 @@ test.describe('Talk X module', () => {
     await expect(continuar).toBeVisible();
     await expect(continuar).toBeDisabled();
 
-    await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
-    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+    await leaveWizardWithoutSaving(page);
   });
 
   test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page }, testInfo) => {

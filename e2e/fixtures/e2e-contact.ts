@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-env';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_STORAGE_KEY as AUTH_STORAGE_ENTRY_NAME } from './supabase-env';
 import { insertIsolatedFixtureMessage } from '../../scripts/e2e-isolated/fixture-access.mjs';
 // ambos públicos por design (URL do projeto + anon key). Duplicados aqui porque o
 // Contato fixo em produção, atribuído ao usuário de teste E2E
@@ -23,30 +23,44 @@ export const E2E_FIXTURE_CONTACT_DISPLAY_NAME = E2E_FIXTURE_CONTACT_NAME.split('
 // O id e' o que permite resolver o PROFILE do caller — `message_reactions.user_id`
 // guarda `profiles.id`, nao `auth.users.id`.
 async function getSession(page: Page): Promise<{ accessToken: string; userId: string | null }> {
-  const session = await page.evaluate(() => {
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i);
-      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
-      const raw = window.localStorage.getItem(key);
-      if (!raw) continue;
+  // A autenticacao do projeto dependente ja chega no BrowserContext por
+  // storageState. Le-la daqui evita navegar apenas para acessar localStorage e,
+  // principalmente, elimina reloads concorrentes com o bootstrap da SPA em
+  // Firefox/WebKit. storageState() tambem reflete renovacoes feitas em runtime.
+  const storageState = await page.context().storageState();
+  const expectedOrigin = new URL(
+    process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173'
+  ).origin;
+  let session: { access_token?: string; user?: { id?: string } } | null = null;
+  for (const origin of storageState.origins) {
+    // Um storageState pode conter tokens de mais de um projeto/origem. Nunca
+    // use o primeiro `sb-*-auth-token` global: ele pode autenticar outro
+    // backend e transformar o preparo do fixture em escrita cross-project.
+    if (origin.origin !== expectedOrigin) continue;
+    for (const entry of origin.localStorage) {
+      if (entry.name !== AUTH_STORAGE_ENTRY_NAME) continue;
       try {
-        const parsed = JSON.parse(raw) as { access_token?: string; user?: { id?: string } };
+        const parsed = JSON.parse(entry.value) as {
+          access_token?: string;
+          user?: { id?: string };
+        };
         if (parsed.access_token) {
-          return { access_token: parsed.access_token, user_id: parsed.user?.id ?? null };
+          session = parsed;
+          break;
         }
       } catch {
         // ignora entrada que não é o storage do supabase-js
       }
     }
-    return null;
-  });
+    if (session) break;
+  }
   if (!session?.access_token) {
     throw new Error(
-      'Sessão do Supabase não encontrada no localStorage — e2e/auth.setup.ts deveria ' +
+      'Sessão do Supabase não encontrada no storageState — e2e/auth.setup.ts deveria ' +
         'ter rodado antes (project "chromium-authenticated" depende de "setup").'
     );
   }
-  return { accessToken: session.access_token, userId: session.user_id };
+  return { accessToken: session.access_token, userId: session.user?.id ?? null };
 }
 
 async function getAccessToken(page: Page): Promise<string> {
@@ -172,11 +186,9 @@ async function getCurrentProfileId(page: Page): Promise<string | null> {
 //
 // ESCOPO OBRIGATORIO: a policy de DELETE ('Users can delete their own reactions')
 // so conhece `user_id = profile do caller`, sem olhar contato/mensagem. Um filtro
-// apenas por `user_id` apagava TODAS as reacoes do usuario logado — em qualquer
-// conversa, nao so as escritas por este E2E (numa conta de QA real isso e perda de
-// dado). `contact_id` e o mesmo vinculo gravado pelo app no upsert
-// (useReactionMutations.addMutation), entao escopar por ele cobre exatamente o que
-// esta suite escreve e nada mais.
+// apenas por `user_id` apagaria TODAS as reacoes do usuario logado. Reações de
+// atendente têm `contact_id = NULL` por desenho; portanto o escopo seguro é a lista
+// de mensagens pertencentes ao contato sintético, nunca o contact_id da reação.
 // Sem limpeza: hasReacted de emoji retorna true em runs seguintes → clique REMOVE
 // em vez de ADICIONAR → badge desaparece → toBeVisible falha (root cause das falhas :41 :65).
 // RLS: policy 'Users can delete their own reactions' cobre user_id = profile.id do caller.
@@ -198,18 +210,42 @@ export async function cleanupE2EReactions(page: Page): Promise<void> {
     console.warn('[e2e-contact] cleanupE2EReactions: profile do usuario logado nao resolvido');
     return;
   }
-  const resp = await page.request.delete(
-    `${SUPABASE_URL}/rest/v1/message_reactions?user_id=eq.${profileId}&contact_id=eq.${E2E_FIXTURE_CONTACT_ID}`,
-    { headers }
-  );
-  if (!resp.ok() && resp.status() !== 404) {
-    console.warn(
-      `[e2e-contact] cleanupE2EReactions: HTTP ${resp.status()} ${await resp.text().catch(() => '')}`
+  const messageIds: string[] = [];
+  const pageSize = 500;
+  for (let offset = 0; offset < 50_000; offset += pageSize) {
+    const messagesResponse = await page.request.get(
+      `${SUPABASE_URL}/rest/v1/messages?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}` +
+        `&select=id&order=id.asc&limit=${pageSize}&offset=${offset}`,
+      { headers }
     );
-    return;
+    if (!messagesResponse.ok()) {
+      console.warn(
+        `[e2e-contact] cleanupE2EReactions/messages: HTTP ${messagesResponse.status()} ${await messagesResponse.text().catch(() => '')}`
+      );
+      return;
+    }
+    const rows = (await messagesResponse.json().catch(() => [])) as Array<{ id?: string }>;
+    messageIds.push(...rows.map((row) => row.id).filter((id): id is string => Boolean(id)));
+    if (rows.length < pageSize) break;
   }
-  const apagadas = (await resp.json().catch(() => [])) as unknown[];
-  if (Array.isArray(apagadas) && apagadas.length === 0) {
+  if (messageIds.length === 0) return;
+  let deletedCount = 0;
+  for (let offset = 0; offset < messageIds.length; offset += 50) {
+    const chunk = messageIds.slice(offset, offset + 50);
+    const resp = await page.request.delete(
+      `${SUPABASE_URL}/rest/v1/message_reactions?user_id=eq.${profileId}&message_id=in.(${chunk.join(',')})`,
+      { headers }
+    );
+    if (!resp.ok() && resp.status() !== 404) {
+      console.warn(
+        `[e2e-contact] cleanupE2EReactions: HTTP ${resp.status()} ${await resp.text().catch(() => '')}`
+      );
+      return;
+    }
+    const deleted = (await resp.json().catch(() => [])) as unknown[];
+    if (Array.isArray(deleted)) deletedCount += deleted.length;
+  }
+  if (deletedCount === 0) {
     console.warn('[e2e-contact] cleanupE2EReactions: 0 reacoes apagadas (RLS ou ja limpo)');
   }
 }
@@ -229,52 +265,4 @@ export async function ensureReactionAbsent(
   await page.mouse.move(0, 0);
   await badge.click();
   await badge.waitFor({ state: 'detached', timeout: 8_000 });
-}
-
-// `true` quando o contato fixture ja tem encerramento registrado HOJE.
-//
-// Medido (run local com o usuario de QA): `close_conversation_atomic` insere em
-// `conversation_closures`, que tem indice unico
-// `conversation_closures_contact_day_uidx (contact_id, conversation_closure_day(created_at))`
-// — ou seja, **um encerramento por contato por dia** (migration
-// 20260927590000_conversation_closures_dedupe_and_unique_per_day.sql, com
-// `conversation_closure_day = (created_at AT TIME ZONE 'America/Sao_Paulo')::date`).
-// Consequencias medidas:
-//   - o 2o encerramento do dia devolve HTTP 409 / code 23505 e o app mostra
-//     "Nao foi possivel encerrar a conversa...". Confirmado no trace do Playwright
-//     (CONSOLE warning [CloseConversationDialog] Falha no encerramento atomico
-//     {code: 23505, details: Key (contact_id, conversation_closure_day(created_...)}).
-//   - o token do usuario NAO consegue limpar a linha: DELETE com RLS devolve 200 e
-//     remove 0 linhas (confirmado com `Prefer: return=representation`). O teardown
-//     do e2e-logado.yml limpa com service role apenas ENTRE RUNS, nunca entre
-//     tentativas do mesmo run.
-// Por isso um retry do Playwright depois de um encerramento bem-sucedido nunca
-// podia passar. Os testes usam esta checagem para validar o comportamento correto
-// nos dois cenarios (encerra quando o dia esta livre; recusa quando ja encerrou).
-export async function fixtureHasClosureToday(page: Page): Promise<boolean> {
-  const accessToken = await getAccessToken(page);
-  const response = await page.request.get(
-    `${SUPABASE_URL}/rest/v1/conversation_closures` +
-      `?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&select=created_at&order=created_at.desc&limit=1`,
-    {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  if (!response.ok()) return false; // indisponivel nao bloqueia o caminho feliz
-  const rows = (await response.json()) as Array<{ created_at?: string }>;
-  const criadoEm = Array.isArray(rows) ? rows[0]?.created_at : null;
-  if (!criadoEm) return false;
-  // Mesma regra do indice unico: o dia do encerramento e o dia em America/Sao_Paulo.
-  const diaSp = (iso: string | Date) =>
-    new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Sao_Paulo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(typeof iso === 'string' ? new Date(iso) : iso);
-  return diaSp(criadoEm) === diaSp(new Date());
 }

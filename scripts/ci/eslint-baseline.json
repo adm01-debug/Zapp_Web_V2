@@ -5,10 +5,6 @@
   "eslintConfigSha256": "9e63ecfc90d89ad9c7301e29f7e6e9dbda238aa561d33fb496af781cfff9d2c2",
   "files": [
     {
-      "path": "e2e/inbox-contact-sidebar.spec.ts",
-      "sha256": "79f8316cd65298241326f7a46b3a068089f6e71efd7940893d0ef24e183f57a6"
-    },
-    {
       "path": "e2e/skins-e2e.spec.ts",
       "sha256": "a8ca2720cda7a8ef1f8fe63d88ae85361b1ba805ee4c81ed617fc7065e965044"
     },
@@ -26,7 +22,7 @@
     },
     {
       "path": "src/components/admin/AdminView.tsx",
-      "sha256": "6bbfdbd581c9d2fd037bf62b9730d63dbfa83e0bba34fbb1e89ded8b4c9219f4"
+      "sha256": "7922c1e240491f879cdde6e289528d31711b01e56d1c13d7ef3e000001a61070"
     },
     {
       "path": "src/components/admin/AIUsageDashboard.tsx",
@@ -66,7 +62,7 @@
     },
     {
       "path": "src/components/admin/VisibilityGrantsManager.tsx",
-      "sha256": "7c8a0457315ea0ebe1f9bd63b50fc205cdfab020c9295b84cf56ee81d07df748"
+      "sha256": "cea7fea2880f8d1ad85589cc194eb1e5b2f3f5c787768dc9dc08e7c15d9211ff"
     },
     {
       "path": "src/components/agents/ConfigurePermissionsDialog.tsx",
@@ -174,7 +170,7 @@
     },
     {
       "path": "src/components/connections/ConnectionCard.tsx",
-      "sha256": "e50cb6ad8efa1d5bce67362ec368c3dbb9f8794420f29cf64b948040fae35848"
+      "sha256": "d8d584b492f4b42bf13041acc320ad36caa0b63815cc5a509e783f3c920b951b"
     },
     {
       "path": "src/components/connections/ConnectionsView.tsx",
@@ -298,7 +294,7 @@
     },
     {
       "path": "src/components/docs/SystemFeaturesView.tsx",
-      "sha256": "6e3ffed2ddea15022e676b1de9089c513d3523179f1ee5921aa2ce9cec34c991"
+      "sha256": "aa08c54b502d6e7f5d86949719b7257cd5885fae9ad6708d7e6b13c7a14147b3"
     },
     {
       "path": "src/components/effects/Confetti.tsx",
@@ -610,7 +606,7 @@
     },
     {
       "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "sha256": "14b9613595122a313fdce50dfa5239787bfee15103a3a3c8ca0c645b9200fca4"
+      "sha256": "c22e6fbac3a90aa2f49360744e31f53d02dfea32312d3f16b30a696f7dbff6c6"
     },
     {
       "path": "src/components/inbox/VoiceChanger.tsx",
@@ -870,7 +866,7 @@
     },
     {
       "path": "src/components/talkx/help/TalkXHelpCenter.tsx",
-      "sha256": "3cb52d1843b4feff688fd44a6383c0eb50d95780d64648f9c625480d1c0315a2"
+      "sha256": "658a7fc262e67600161d06d2b4b8e065d8df7deee77a3f08f27ad3a9dcf59e5f"
     },
     {
       "path": "src/components/talkx/kit/personalize.ts",
@@ -1014,7 +1010,7 @@
     },
     {
       "path": "src/components/ui/command-palette.tsx",
-      "sha256": "5018e46287536d39469497edd6860b91f27680be2791cfdd8f0c4908e8a5221a"
+      "sha256": "5fddf4843e6ffe1d6247e25bc5addcceb8f0fbd4c12139f0b2d0073247f63c16"
     },
     {
       "path": "src/components/ui/dialog.tsx",
@@ -1062,7 +1058,7 @@
     },
     {
       "path": "src/components/ui/sonner.tsx",
-      "sha256": "defce089b1b1a95c606beb530581e2327a90b29645dc46e1bacfd7ea88c20aef"
+      "sha256": "470afe5bfd4445203ee267c1055cc465f1604be6a64f33b4abf3caf2cc35e829"
     },
     {
       "path": "src/components/ui/toggle.tsx",
@@ -1390,7 +1386,7 @@
     },
     {
       "path": "src/pages/admin/useRolesPageState.ts",
-      "sha256": "cda2971d4f9a13fa86566ab7bda8f5169c9f962a0a6cf7637f78607e66bfbe9b"
+      "sha256": "3fc84811b72e09666f099a566d0cc2ded50c77049a91dbf6d08b2ce622e69423"
     },
     {
       "path": "src/pages/AdminTelemetriaPage.tsx",
@@ -1407,10 +1403,6 @@
     {
       "path": "src/pages/ForgotPassword.tsx",
       "sha256": "df410e0e6805dad27e1213bc590cae2bd035af8062e72bd92cf45c94530c61cf"
-    },
-    {
-      "path": "src/pages/Index.tsx",
-      "sha256": "09e8c63bcd13ed43fcd72156772635598be68b1300cb5c735d14bf051d739322"
     },
     {
       "path": "src/pages/Install.tsx",
@@ -1502,7 +1494,7 @@
     },
     {
       "path": "supabase/functions/ai-usage-outbox-drain/index.ts",
-      "sha256": "86c54a35071d79320119273adea52929c6b0df8e3b7c084ab027a9c083d40c3e"
+      "sha256": "8b4718e360f8f1aba7c51ff8d8d29c7d30b1a4f48e1a0e93e6aa87bfa0d2fd9d"
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
@@ -1574,20 +1566,6 @@
     }
   ],
   "issues": [
-    {
-      "file": "e2e/inbox-contact-sidebar.spec.ts",
-      "line": 40,
-      "column": 41,
-      "endLine": 40,
-      "endColumn": 71,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "772c30613d1fdcede521c7b9276d7b04a21af6fd8f6b29cbf8621d8e9042e6ce",
-      "lineHash": "d3151e3f31f3d0048246e4a93a3eaed3237bd3eeebad7260ea49d002373d71dc",
-      "contextHash": "469627f11bf78d3cc46392bb4375040da4fef01e88b876121dda3c5e96bff115"
-    },
     {
       "file": "e2e/skins-e2e.spec.ts",
       "line": 405,
@@ -9248,51 +9226,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 136,
-      "column": 11,
-      "endLine": 136,
-      "endColumn": 32,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "1e13eaab7f709b47b4ea1456600e0429a5760a18fcc5915dd20e793b9eb06e3c",
-      "lineHash": "44d1d4f6b6fc6c292f92cee269f7932a6cde8c85025dcb8b234388c1f5f332a0",
-      "contextHash": "bd01ecd38e660977e48cf9c645b5c03b6e5db826c442841839ca5e4cb38ba23a"
-    },
-    {
-      "file": "src/components/ui/command-palette.tsx",
-      "line": 137,
-      "column": 16,
-      "endLine": 137,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "76c618b1713218fd308b200fe1b76ac219c25333512a13f518e33f7ba368df66",
-      "lineHash": "6e1e6031199628df5ffd1e7f61e8897f4ff5e8756274bf6d8fbded7c977eb065",
-      "contextHash": "76507757f454d567ace206dd8436f572d15df545679970176bd58590b744ec7c"
-    },
-    {
-      "file": "src/components/ui/command-palette.tsx",
-      "line": 138,
-      "column": 16,
-      "endLine": 138,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "aac6258d4b1d478492a8fb0b3e533cc4ce703248ee4db1ec55a22d81a6f1a0a8",
-      "lineHash": "8572263cd6613d5435c103740119c75ca1f8f0ce7cdbef2759a10cdcabbf594a",
-      "contextHash": "86a28baaf954a82d9a7bc7ae5410cce099e6c4591b62fbd6f279baafb1821712"
-    },
-    {
-      "file": "src/components/ui/command-palette.tsx",
-      "line": 304,
+      "line": 360,
       "column": 17,
-      "endLine": 304,
+      "endLine": 360,
       "endColumn": 34,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -9301,20 +9237,6 @@
       "spanHash": "8b60c6589285e91df5ffc4ce79fa27b1b27d8d266d943f7eb32e9cf40750b161",
       "lineHash": "22df6cb30ad1c5f5a4d40f4048b70653cac6375e41eb61c4ae354c1c9a2896b7",
       "contextHash": "476abbbcf1f9ac49178276f793d2a2a192c2d9f93975bb6c89475a41944804d1"
-    },
-    {
-      "file": "src/components/ui/command-palette.tsx",
-      "line": 307,
-      "column": 71,
-      "endLine": 307,
-      "endColumn": 84,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "1e332e1466415867e0816be7a1ee739cae94c4b347e75b964d0db0d741e9f8e5",
-      "lineHash": "2dae4cc915b9464a45baeb5957e7950391b63217acbc900d2b1a56a1553fe109",
-      "contextHash": "210dd045ae0bf836299f087aef8829c9ebadae6b3c2a7de21155d1d71a3dfd05"
     },
     {
       "file": "src/components/ui/dialog.tsx",
@@ -11711,34 +11633,6 @@
       "contextHash": "96e60eb3e6a7d7b6f77c5b74ff6d988150c3aa67e77407549e5fba6a178a4338"
     },
     {
-      "file": "src/pages/Index.tsx",
-      "line": 108,
-      "column": 7,
-      "endLine": 108,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/pages/Index.tsx:108:7 106 | useEffect(() => { 107 | if (!loadingOnboarding && hasCompletedOnboarding === false && user) { > 108 | setShowWelcome(true); | ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 109 | } 110 | }, [loadingOnboarding, hasCompletedOnboarding, user]); 111 |",
-      "spanHash": "65c3d638653821691acaeb9fb74a3681b0e2b1514cbf5b66d6a559e6a91e17a3",
-      "lineHash": "032160aa3a7e26182c364f1bad6449b5dc498cc2c570fff68b829fac65bbf7b6",
-      "contextHash": "c61fedcd9a18740baf555f97abc5b5f76b7f78f880681cac7f9197422edb5958"
-    },
-    {
-      "file": "src/pages/Index.tsx",
-      "line": 5,
-      "column": 1,
-      "endLine": 5,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "818e1bf46e4a799a46031eb2675fe655cfa8d0e8662229ebc4b40d89b7fa7682"
-    },
-    {
       "file": "src/pages/Install.tsx",
       "line": 21,
       "column": 5,
@@ -12398,9 +12292,9 @@
     },
     {
       "file": "supabase/functions/ai-usage-outbox-drain/index.ts",
-      "line": 79,
+      "line": 114,
       "column": 22,
-      "endLine": 79,
+      "endLine": 114,
       "endColumn": 51,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12412,9 +12306,9 @@
     },
     {
       "file": "supabase/functions/ai-usage-outbox-drain/index.ts",
-      "line": 84,
+      "line": 119,
       "column": 22,
-      "endLine": 84,
+      "endLine": 119,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "local/no-secret-compare",

@@ -7,7 +7,7 @@ const fail = (code, cause) => { throw new Error('[e2e-isolated/tls-' + code + ']
 const hash = value => createHash('sha256').update(value).digest('hex');
 const controlUrl = name => 'https://127.0.0.1:' + TLS_CONTROLS[name] + '/__e2e/tls-control';
 
-function navigationDiagnostic(page, url, runId, sourceSha) {
+export function navigationDiagnostic(page, url, runId, sourceSha) {
   const frame = page.mainFrame();
   const record = { request_count: 0, request_failed_count: 0, request_finished_count: 0,
     response_count: 0, ignored_event_count: 0, response_statuses: [], failure_error_texts: [] };
@@ -67,6 +67,35 @@ export function certificateFailure(error, kind, engine = 'node') {
     ? /DEPTH_ZERO_SELF_SIGNED_CERT|SELF_SIGNED_CERT_IN_CHAIN|UNABLE_TO_VERIFY_LEAF_SIGNATURE|UNABLE_TO_GET_ISSUER_CERT_LOCALLY|ERR_CERT_AUTHORITY_INVALID|SEC_ERROR_UNKNOWN_ISSUER|unknown issuer|self.signed certificate/i
     : /ERR_TLS_CERT_ALTNAME_INVALID|ERR_CERT_COMMON_NAME_INVALID|SSL_ERROR_BAD_CERT_DOMAIN|hostname mismatch|IP address mismatch|NotValidForName|not valid for.*name/i;
   return patterns.test(text);
+}
+
+/**
+ * WebKit/Linux can collapse a rejected provisional TLS load into the generic
+ * `Operation was cancelled`. That string alone is never certificate evidence.
+ * Accept it only when the exact controlled top-level request also failed once,
+ * with the same native cancellation and without any response/finished event.
+ */
+export function certificateNavigationFailure(error, kind, engine, record) {
+  if (certificateFailure(error, kind, engine)) return true;
+  if (engine !== 'webkit' || !['untrusted', 'wrong_san'].includes(kind)) return false;
+  const nativeCancellation = value => {
+    if (typeof value !== 'string') return false;
+    if (/timed? ?out|ECONNREFUSED|ECONNRESET|ENOTFOUND|ERR_CONNECTION_REFUSED|NS_ERROR_CONNECTION_REFUSED|connection refused|aborted/iu.test(value)) return false;
+    const lines = value.trim().split(/\r?\n/u);
+    return /^(?:page\.goto:\s*)?Operation was cancelled(?:; maybe frame was detached\?)?$/iu.test(lines[0] ?? '')
+      && (lines.length === 1 || lines[1] === 'Call log:');
+  };
+  const messages = [error?.message, error?.cause?.message].filter(Boolean);
+  return messages.length > 0
+    && messages.every(nativeCancellation)
+    && record?.request_count === 1
+    && record.request_failed_count === 1
+    && record.request_finished_count === 0
+    && record.response_count === 0
+    && record.ignored_event_count === 0
+    && record.response_statuses?.length === 0
+    && record.failure_error_texts?.length === 1
+    && nativeCancellation(record.failure_error_texts[0]);
 }
 
 export function assertTlsClientContext(env, interfaces) {
@@ -143,7 +172,9 @@ export async function probeBrowsers({ runId, sourceSha, env, engines, environmen
             diagnostic({ engine: name, kind, ...observation.record });
           } finally { observation?.stop(); await negative.close(); }
           if (!rejection) fail('browser-' + name + '-' + kind + '-accepted');
-          if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);
+          if (!certificateNavigationFailure(rejection, kind, name, observation?.record)) {
+            fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);
+          }
         }
         results[name] = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
       } finally { await context.close(); }

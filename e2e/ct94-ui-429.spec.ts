@@ -88,6 +88,12 @@ async function prepararCatalogo429(page: Page): Promise<CatalogoHarness> {
     if (caminho.startsWith('rpc/')) {
       if (route.request().method() !== 'POST') return json(route, { message: ESCRITA_NAO_PREVISTA }, 403);
       if (caminho.slice('rpc/'.length) === 'user_has_permission') return json(route, true);
+      if (caminho.slice('rpc/'.length) === 'app_bootstrap') return json(route, {
+        profile: { id: FAKE_USER_ID, name: 'E2E Catálogo' },
+        roles: ['admin'], permissions: [], role_permissions: [], global_settings: [],
+        user_settings: { onboarding_completed: true }, departments: [],
+        unread_notifications: 0, fetched_at: '2026-11-07T00:00:00.000Z',
+      });
       return json(route, { message: ESCRITA_NAO_PREVISTA }, 403);
     }
     if (!isRead(route.request().method())) return json(route, { message: ESCRITA_NAO_PREVISTA }, 403);
@@ -98,6 +104,7 @@ async function prepararCatalogo429(page: Page): Promise<CatalogoHarness> {
       ]);
     }
     if (tabela === 'user_roles') return json(route, [{ role: 'admin' }]);
+    if (tabela === 'user_settings') return json(route, [{ onboarding_completed: true }]);
     return json(route, []);
   });
 

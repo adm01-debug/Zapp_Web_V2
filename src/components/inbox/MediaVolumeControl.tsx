@@ -165,6 +165,7 @@ export function MediaVolumeControl({
         collisionPadding={8}
         className="z-[60] w-40 p-2.5 bg-card/90 backdrop-blur motion-reduce:animate-none"
         onClick={(event) => event.stopPropagation()}
+        onCloseAutoFocus={rocker.handleCloseAutoFocus}
       >
         <VolumeSliderPopoverContent
           title={MEDIA_VOLUME_SLIDER_LABEL}

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { GROUPS } from '../e2e-isolated/runtime-contract.mjs';
+import { GROUPS, GROUP_SHARDS } from '../e2e-isolated/runtime-contract.mjs';
 import {
   assertBlocking, conditionAllows, conditionOf, jobOf, jobsOf, nestedValue,
   onlyStep, permission, runOf, stepsOf, valueOf,
@@ -157,12 +157,13 @@ test('entrada restrita, permissões de leitura e SHA único para todos os checko
   }
 });
 
-test('matriz fixa preserva os 15 projetos e orçamentos para bootstrap, browser e cleanup', () => {
+test('matriz fixa preserva os três shards autenticados, 15 projetos e orçamentos', () => {
   const matrix = [...suite.matchAll(/^ {10}- name: ([\w-]+)\n {12}projects: (.+)\n {12}timeout-minutes: (\d+)$/gm)];
   assert.deepEqual(matrix.map(match => match[1]), Object.keys(GROUPS));
   assert.deepEqual(matrix.map(match => match[2].split(' ').map(token => token.replace(/^--project=/, ''))), Object.values(GROUPS));
-  assert.deepEqual(matrix.map(match => Number(match[3])), [75, 45, 45]);
-  assert.deepEqual(Object.values(GROUPS).map(projects => projects.length), [9, 3, 3]);
+  assert.deepEqual(matrix.map(match => Number(match[3])), [75, 75, 75, 45, 45]);
+  assert.deepEqual(Object.values(GROUPS).map(projects => projects.length), [9, 9, 9, 3, 3]);
+  assert.deepEqual(Object.values(GROUP_SHARDS), ['1/3', '2/3', '3/3']);
   assert.equal(new Set(Object.values(GROUPS).flat()).size, 15);
   assert.equal(valueOf(valueOf(suite, 'strategy', 4), 'fail-fast', 0), 'false');
   assert.equal(valueOf(suite, 'timeout-minutes', 4), '${{ matrix.timeout-minutes }}');
@@ -224,5 +225,5 @@ test('artefatos da matriz não colidem entre grupos, runs e retentativas', () =>
   for (const group of Object.keys(GROUPS)) for (const run of ['101', '102']) for (const attempt of ['1', '2']) {
     names.push(template.replace('${{ matrix.name }}', group).replace('${{ github.run_id }}', run).replace('${{ github.run_attempt }}', attempt));
   }
-  assert.equal(new Set(names).size, 12);
+  assert.equal(new Set(names).size, 20);
 });

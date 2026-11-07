@@ -3,6 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { Progress } from '../progress';
 
 describe('Progress', () => {
+  it('fornece nome acessível padrão quando o consumidor não nomeia a barra', () => {
+    render(<Progress value={50} />);
+    expect(screen.getByRole('progressbar', { name: 'Progresso' }))
+      .toHaveAttribute('aria-valuenow', '50');
+  });
+
   it.each([
     { label: 'vazio', value: 0, transform: 'translateX(-100%)' },
     { label: 'carregando', value: 42, transform: 'translateX(-58%)' },
@@ -22,6 +28,18 @@ describe('Progress', () => {
     const root = screen.getByRole('progressbar', { name: 'Progresso indeterminado' });
     expect(root).not.toHaveAttribute('aria-valuenow');
     expect(root).toHaveAttribute('data-state', 'indeterminate');
+  });
+
+  it.each([
+    { recebido: 1020, anunciado: 100, transform: 'translateX(-0%)' },
+    { recebido: -12, anunciado: 0, transform: 'translateX(-100%)' },
+    { recebido: Number.NaN, anunciado: 0, transform: 'translateX(-100%)' },
+  ])('normaliza $recebido para o intervalo semântico da barra', ({ recebido, anunciado, transform }) => {
+    const { container } = render(<Progress value={recebido} aria-label="Capacidade" />);
+
+    expect(screen.getByRole('progressbar', { name: 'Capacidade' }))
+      .toHaveAttribute('aria-valuenow', String(anunciado));
+    expect(container.firstElementChild?.firstElementChild).toHaveStyle({ transform });
   });
 
   // Travamento de regressão do achado R2-INF-035 (cartão #491): o wrapper desestrutura `value`,

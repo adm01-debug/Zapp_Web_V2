@@ -115,6 +115,41 @@ for(const origin of [ORIGIN,'https://official.invalid']) {
   });
 }
 
+test('Talk X real preserva a série diária zero-fill e o fuso da RPC',()=>{
+  const context={SUPABASE_URL:ORIGIN,SUPABASE_STORAGE_KEY:'sb-127-auth-token',Buffer,join:path.join};
+  vm.runInNewContext(
+    javascript('e2e/fixtures/talkx-demo.ts')+'\nglobalThis.stats=overviewStatsFromFixture;',
+    context,
+  );
+  const result=context.stats({
+    talkx_campaigns:[
+      {status:'completed',started_at:'2026-10-01T15:00:00.000Z',failed_count:2,outcome_unknown_count:1},
+    ],
+    talkx_recipients:[
+      {
+        contact_id:'contact-1',
+        sent_at:'2026-10-02T02:59:59.000Z',
+        delivered_at:'2026-10-02T03:00:00.000Z',
+        replied_at:'2026-10-03T03:00:00.000Z',
+      },
+    ],
+  },{
+    p_from:'2026-10-01T03:00:00.000Z',
+    p_to:'2026-10-04T03:00:00.000Z',
+    p_timezone:'America/Sao_Paulo',
+  });
+  assert.equal(result.period.timezone,'America/Sao_Paulo');
+  assert.deepEqual(JSON.parse(JSON.stringify(result.daily)),[
+    {day:'2026-10-01',sent:1,delivered:0,replied:0},
+    {day:'2026-10-02',sent:0,delivered:1,replied:0},
+    {day:'2026-10-03',sent:0,delivered:0,replied:1},
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.current)),{
+    campaigns_sent:1,completed:1,contacts_reached:1,sent:1,delivered:1,replied:1,
+    failed:2,unknown:1,delivery_rate_pct:100,reply_rate_pct:100,active:0,
+  });
+});
+
 test('catálogo real usa o par local sem depender de secrets legados',()=>{
   const register=()=>{};
   register.describe=(_title,callback)=>callback();
