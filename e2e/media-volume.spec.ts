@@ -7,20 +7,15 @@ import {
   SOUND_VOLUME_LABEL_MUTED,
 } from '../src/lib/volumeLabels';
 import { mediaVolumeStorageKeys } from '../src/lib/mediaVolumeStore';
-import {
-  E2E_FIXTURE_CONTACT_ID,
-  E2E_FIXTURE_CONTACT_DISPLAY_NAME,
-  ensureFixtureConversationOpen,
-  cleanupFixtureMessages,
-} from './fixtures/e2e-contact';
+import { E2E_ARQUIVOS } from './fixtures/arquivos-local/dados';
 import { SUPABASE_URL, SUPABASE_STORAGE_KEY } from './fixtures/supabase-env';
 
 // E45 — fluxo real do controle de volume das mídias de conversa.
 //
-// Roda no project `chromium-authenticated` (ver e2e/README.md): depende de
-// `setup` e da sessão salva em `e2e/.auth/user.json` no backend descartável isolado.
-// `seed-files-tab.mjs` cria o áudio canônico com JWT local e verifica Storage/RLS;
-// `ensureFixtureConversationOpen` acrescenta só o texto removido no afterAll.
+// Roda no project `chromium-authenticated` (ver e2e/README.md) do backend
+// descartável isolado, mas entra pela UI com o usuário local da fixture de
+// Arquivos. `fixtures/arquivos-local/seed.ts` valida Storage/RLS com esse mesmo
+// usuário; assim, a assinatura abaixo não depende da visibilidade entre perfis.
 //
 // O que este spec prova, e o que ele deliberadamente NÃO prova:
 // - prova: o controle existe na sidebar, o clique abre o painel, o botão Silenciar
@@ -37,8 +32,23 @@ const LABEL_MUDO = MEDIA_VOLUME_LABEL_MUTED;
 const LABEL_CONTROLE = new RegExp(`^(${MEDIA_VOLUME_LABEL}|${MEDIA_VOLUME_LABEL_MUTED})`);
 const LABEL_SLIDER = MEDIA_VOLUME_SLIDER_LABEL;
 const LABEL_ALERTA = new RegExp(`${SOUND_VOLUME_LABEL}|${SOUND_VOLUME_LABEL_MUTED}`);
-const AUDIO_FILE = 'e2e-media-volume.ogg';
-const AUDIO_SIGNED_PATH = `/storage/v1/object/sign/whatsapp-media/${E2E_FIXTURE_CONTACT_ID}/${AUDIO_FILE}`;
+const AUDIO_SIGNED_PATH = `/storage/v1/object/sign/whatsapp-media/${E2E_ARQUIVOS.contato.id}/${E2E_ARQUIVOS.mensagens.audio.objeto}`;
+const NAV_TIMEOUT = 60_000;
+
+// A prova usa a identidade sintética que possui o contato e o objeto privado.
+test.use({ storageState: { cookies: [], origins: [] } });
+test.setTimeout(120_000);
+
+async function entrarPelaUI(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    (window as Window & { __BOOT_DEADLINE_MS?: number }).__BOOT_DEADLINE_MS = 60_000;
+  });
+  await page.goto('/auth');
+  await page.locator('#login-email').fill(E2E_ARQUIVOS.usuario.email);
+  await page.locator('#login-password').fill(E2E_ARQUIVOS.usuario.senha);
+  await page.getByRole('button', { name: /^entrar$/i }).click();
+  await expect(page.locator('#main-navigation')).toBeVisible({ timeout: NAV_TIMEOUT });
+}
 
 async function chaveVolumeDoUsuario(page: Page): Promise<string> {
   const userId = await page.evaluate((key) => {
@@ -56,8 +66,8 @@ async function chaveVolumeDoUsuario(page: Page): Promise<string> {
 
 async function abrirConversaDoFixture(page: Page): Promise<void> {
   await page.getByTestId('status-chip-all').click();
-  await page.getByLabel('Buscar contato pelo nome').fill(E2E_FIXTURE_CONTACT_DISPLAY_NAME);
-  const name = page.getByText(E2E_FIXTURE_CONTACT_DISPLAY_NAME, { exact: true });
+  await page.getByLabel('Buscar contato pelo nome').fill(E2E_ARQUIVOS.contato.nomeVisivel);
+  const name = page.getByText(E2E_ARQUIVOS.contato.nomeVisivel, { exact: true });
   const item = page.getByTestId('conversation-item').filter({ has: name });
   await expect(item).toHaveCount(1);
   const button = item.getByRole('button').filter({ has: name });
@@ -81,22 +91,8 @@ async function volumeDoAudioCarregado(page: Page): Promise<number> {
 
 test.describe('Volume das mídias de conversa', () => {
   test.beforeEach(async ({ page }) => {
-    // A navegação precisa vir antes de `ensureFixtureConversationOpen` (ele lê o
-    // token do Supabase no localStorage, e em about:blank isso lança SecurityError).
-    await page.goto('/');
-    await ensureFixtureConversationOpen(page);
-    await page.reload();
-    // Chip "Todas": o padrão ("Em atendimento") depende de feature flag e de
-    // `assigned_to` — "Todas" é o único filtro determinístico para o fixture.
+    await entrarPelaUI(page);
     await abrirConversaDoFixture(page);
-  });
-
-  test.afterAll(async ({ browser }) => {
-    const context = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
-    const page = await context.newPage();
-    await page.goto('/');
-    await cleanupFixtureMessages(page);
-    await context.close();
   });
 
   test('o controle da sidebar muda o volume e o valor sobrevive ao reload', async ({ page, browserName }) => {

@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 import {
+  E2E_FIXTURE_CONTACT_ID,
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
-  fixtureHasClosureToday,
 } from './fixtures/e2e-contact';
 
 // beforeEach navega para "/" (raiz) e clica no chip "Todas" ANTES de reabrir
@@ -63,13 +63,6 @@ test.describe('Conversation state transitions', () => {
     test.skip(browserName !== 'chromium',
       'CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a' +
       " getByRole('option') de forma confiavel em Firefox/WebKit no CI");
-    // O schema permite 1 encerramento por contato por DIA e o token do usuario
-    // nao apaga a linha (ver fixtureHasClosureToday). Sem esta checagem, um
-    // retry depois de um encerramento bem-sucedido recebia 23505 e NUNCA podia
-    // passar -- derrubando o job e2e-logado mesmo quando a 1a tentativa so tinha
-    // esbarrado em instabilidade de rede.
-    const jaEncerradaHoje = await fixtureHasClosureToday(page);
-
     const conversation = page.locator('[data-testid="conversation-item"]').first();
     await conversation.click();
 
@@ -91,23 +84,24 @@ test.describe('Conversation state transitions', () => {
     // "*") que também habilita o botão "Encerrar".
     await page.getByRole('combobox').filter({ hasText: /selecione o motivo/i }).click();
     await page.getByRole('option', { name: /^resolvido$/i }).click();
+    const encerramento = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'POST' &&
+        url.pathname.endsWith('/rest/v1/rpc/close_conversation_atomic');
+    });
     await page.getByRole('button', { name: /^encerrar$/i }).click();
-
-    if (jaEncerradaHoje) {
-      // Pre-condicao medida: o dia ja tem encerramento registrado para o contato
-      // fixture, entao a RPC close_conversation_atomic responde 23505 e a UI recusa
-      // o duplicado com a mensagem de erro. Este e o comportamento correto do app.
-      await expect(
-        page.getByText(/não foi possível encerrar a conversa/i)
-      ).toBeVisible();
-    } else {
-      // O toast dura poucos segundos e pode desaparecer durante a atualização da
-      // lista/realtime. A pós-condição persistida é a prova funcional do encerramento:
-      // a mesma leitura autenticada usada na pré-condição passa a encontrar o registro.
-      await expect
-        .poll(() => fixtureHasClosureToday(page), { timeout: 10_000 })
-        .toBe(true);
-    }
+    const response = await encerramento;
+    const body = await response.json().catch(() => null) as unknown;
+    expect(response.ok(), `close_conversation_atomic: HTTP ${response.status()}`).toBe(true);
+    expect(body).toEqual([
+      expect.objectContaining({
+        closure_id: expect.any(String),
+        event_id: expect.any(String),
+        contact_id: E2E_FIXTURE_CONTACT_ID,
+        conversation_status: 'resolved',
+      }),
+    ]);
+    await expect(page.getByRole('dialog')).toBeHidden();
   });
 
   test('"Todas" filter shows the seeded conversation', async ({ page }) => {

@@ -184,6 +184,10 @@ export function browserResultDiagnostic(result, observation) {
   });
 }
 
+export function browserTimeoutMs(scope, fullSuite) {
+  return scope === 'login' ? 600_000 : fullSuite ? 55 * 60_000 : 15 * 60_000;
+}
+
 export function assertPinnedImages(lock) {
   const required = ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', 'driver'];
   if (!lock?.images || required.some(name => !/^[a-z0-9./_-]+:[A-Za-z0-9_.-]+@sha256:[a-f0-9]{64}$/.test(lock.images[name] ?? ''))) {
@@ -677,7 +681,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     });
     phase(scope === 'login' ? 'real-browser-login' : 'real-browser-suite');
     state.native_e2e = true;
-    const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });
+    const browserResult = docker(inDriver(cli), { timeout: browserTimeoutMs(scope, fullSuite) });
     writeFileSync(path.join(output, scope === 'login' ? 'browser-login.log' : 'browser-suite.log'), redacted(String(browserResult.stdout || '') + String(browserResult.stderr || '')), { mode: 0o600 });
     const { report, observation } = readBrowserReportOnce(() => readFileSync(path.join(output, 'results.json'), 'utf8'));
     try { browserDiagnostic = browserResultDiagnostic(browserResult, observation); }

@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertPinnedImages, functionPolicy, prepareMountTargets, readBrowserReportOnce, browserResultDiagnostic,
-  parseQrSeedDiagnostic } from '../e2e-isolated/run.mjs';
+  browserTimeoutMs, parseQrSeedDiagnostic } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
 import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS, sha256 } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
@@ -31,6 +31,13 @@ const SEED_FLAGS = ['main_contact_rls', 'files_owner_preserved', 'pagination_rls
 const PROVIDER_FLAGS = ['delivery_real', 'provider_observed', 'delivery_user_rls', 'catalog_real',
   'catalog_media_https', 'storage_upload_real', 'storage_media_https', 'http_media_rejected'];
 const TLS_CHECKS = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
+
+test('browser timeout stays inside the isolation proof lifetime and outer job budget', () => {
+  assert.equal(browserTimeoutMs('login', false), 10 * 60_000);
+  assert.equal(browserTimeoutMs('suite', true), 55 * 60_000);
+  assert.equal(browserTimeoutMs('suite', false), 15 * 60_000);
+  assert.ok(browserTimeoutMs('suite', true) < 60 * 60_000);
+});
 let certificateFixture;
 let certificateRoot;
 after(() => { if (certificateRoot) rmSync(certificateRoot, { recursive: true, force: true }); });

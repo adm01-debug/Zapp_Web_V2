@@ -437,7 +437,7 @@ test.describe('aba Arquivos — prova local autenticada', () => {
     await expect(painel.getByText(doc.filename)).toBeVisible();
     await expect(painel.getByText(/Tamanho:/)).toBeVisible();
     await expect(painel.getByText('Enviado por', { exact: true })).toBeVisible();
-    await expect(painel.getByRole('img', { name: 'Enviado por Atendente' })).toBeVisible();
+    await expect(painel.getByRole('img', { name: 'Enviado por Você' })).toBeVisible();
 
     await painel.getByRole('button', { name: 'Fechar' }).click();
     await expect(painel).not.toBeVisible();

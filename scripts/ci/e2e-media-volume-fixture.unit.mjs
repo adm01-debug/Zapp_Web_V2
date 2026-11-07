@@ -16,7 +16,11 @@ const store = vm.runInNewContext('(function () {\n' + ts(read('src/lib/authentic
   ts(read('src/lib/mediaVolumeStore.ts')) + '\nreturn { mediaVolumeStorageKeys }; })()', { URL, SUPABASE_URL: 'https://127.0.0.1:5173' });
 const fixture = ts(read('e2e/fixtures/e2e-contact.ts'));
 const CONTACT = fixture.match(/const E2E_FIXTURE_CONTACT_ID = '([^']+)'/)[1];
-const NAME = fixture.match(/const E2E_FIXTURE_CONTACT_NAME = '([^']+)'/)[1].split(' ')[0];
+const filesFixture = vm.runInNewContext('(function () {\n' +
+  ts(read('e2e/fixtures/arquivos-local/dados.ts')) + '\nreturn E2E_ARQUIVOS; })()');
+const SPEC_CONTACT = filesFixture.contato.id;
+const NAME = filesFixture.contato.nomeVisivel;
+const SPEC_USER = filesFixture.usuario.id;
 const ORIGIN = 'https://127.0.0.1:5173';
 const SESSION_KEY = 'sb-127-auth-token';
 const USER = 'synthetic-media-user';
@@ -26,11 +30,12 @@ const JWT = 'synthetic-user-jwt';
 const AUDIO = Buffer.from(seed.match(/const AUDIO = Buffer.from\('([^']+)', 'base64'\)/)[1], 'base64');
 const AUDIO_FILE = 'e2e-media-volume.ogg';
 const SIGNED_PATH = `/storage/v1/object/sign/whatsapp-media/${CONTACT}/${AUDIO_FILE}`;
-const SIGNED_URL = ORIGIN + SIGNED_PATH + '?token=synthetic-signature';
+const SPEC_SIGNED_PATH = `/storage/v1/object/sign/whatsapp-media/${SPEC_CONTACT}/${filesFixture.mensagens.audio.objeto}`;
+const SPEC_SIGNED_URL = ORIGIN + SPEC_SIGNED_PATH + '?token=synthetic-signature';
 const session = user => JSON.stringify({ access_token: JWT, user: { id: user } });
 const snapshot = value => JSON.parse(JSON.stringify(value));
 
-function browserHarness({ entries = { [SESSION_KEY]: session(USER) }, blocked = false, labels = [NAME], buttons = 1, elements = [] } = {}) {
+function browserHarness({ entries = { [SESSION_KEY]: session(SPEC_USER) }, blocked = false, labels = [NAME], buttons = 1, elements = [] } = {}) {
   const storage = new Map(Object.entries(entries));
   const observed = { actions: [], tests: [], polls: [], reads: [] };
   const localStorage = {
@@ -41,9 +46,14 @@ function browserHarness({ entries = { [SESSION_KEY]: session(USER) }, blocked = 
   register.describe = (_title, callback) => callback();
   register.beforeEach = callback => { observed.beforeEach = callback; };
   register.afterAll = callback => { observed.afterAll = callback; };
+  register.use = options => { observed.use = snapshot(options); };
+  register.setTimeout = timeout => { observed.timeout = timeout; };
   register.skip = condition => assert.equal(condition, false, 'no runtime skip for configured Chromium');
   register.fixme = () => assert.fail('the seeded audio must execute');
-  const expect = locator => ({ toHaveCount: async count => assert.equal(await locator.count(), count) });
+  const expect = locator => ({
+    toHaveCount: async count => assert.equal(await locator.count(), count),
+    toBeVisible: async options => { assert.equal(locator.visible, true); observed.actions.push('visible:' + options.timeout); },
+  });
   expect.poll = (callback, options) => ({ toBeCloseTo: async (target, precision) => {
     observed.polls.push({ options: snapshot(options), target, precision });
     const value = await callback();
@@ -51,7 +61,7 @@ function browserHarness({ entries = { [SESSION_KEY]: session(USER) }, blocked = 
   } });
   const context = vm.createContext({ URL, window: { localStorage }, test: register, expect,
     SUPABASE_URL: ORIGIN, SUPABASE_STORAGE_KEY: SESSION_KEY,
-    E2E_FIXTURE_CONTACT_ID: CONTACT, E2E_FIXTURE_CONTACT_DISPLAY_NAME: NAME,
+    E2E_ARQUIVOS: filesFixture,
     mediaVolumeStorageKeys: store.mediaVolumeStorageKeys,
     MEDIA_VOLUME_LABEL: 'Media', MEDIA_VOLUME_LABEL_MUTED: 'Muted', MEDIA_VOLUME_SLIDER_LABEL: 'Slider',
     SOUND_VOLUME_LABEL: 'Alerts', SOUND_VOLUME_LABEL_MUTED: 'Alerts muted',
@@ -60,8 +70,14 @@ function browserHarness({ entries = { [SESSION_KEY]: session(USER) }, blocked = 
   vm.runInContext(ts(spec) + '\nglobalThis.helpers = { chaveVolumeDoUsuario, abrirConversaDoFixture, volumeDoAudioCarregado };', context);
   let chosen;
   const page = {
+    addInitScript: async () => { observed.actions.push('boot-deadline'); },
+    goto: async path => { assert.equal(path, '/auth'); observed.actions.push('auth'); },
     evaluate: async (callback, argument) => callback(argument),
     reload: async () => { observed.actions.push('reload'); },
+    getByRole: (role, options) => {
+      assert.equal(role, 'button'); assert.match(String(options.name), /entrar/i);
+      return { click: async () => observed.actions.push('login') };
+    },
     getByText: (text, options) => { assert.equal(options.exact, true); return { text }; },
     getByLabel: label => {
       assert.equal(label, 'Buscar contato pelo nome');
@@ -83,8 +99,15 @@ function browserHarness({ entries = { [SESSION_KEY]: session(USER) }, blocked = 
       } };
     },
     locator: selector => {
-      assert.equal(selector, `audio[src*="${SIGNED_PATH}"]`);
-      const matches = elements.filter(element => (element.src ?? element.currentSrc).includes(SIGNED_PATH));
+      if (selector === '#login-email' || selector === '#login-password') {
+        return { fill: async value => {
+          assert.equal(value, selector === '#login-email' ? filesFixture.usuario.email : filesFixture.usuario.senha);
+          observed.actions.push(selector === '#login-email' ? 'email' : 'password');
+        } };
+      }
+      if (selector === '#main-navigation') return { visible: true };
+      assert.equal(selector, `audio[src*="${SPEC_SIGNED_PATH}"]`);
+      const matches = elements.filter(element => (element.src ?? element.currentSrc).includes(SPEC_SIGNED_PATH));
       return { count: async () => matches.length,
         evaluate: async (callback, argument) => { assert.equal(matches.length, 1); return callback(matches[0], argument); } };
     },
@@ -92,24 +115,35 @@ function browserHarness({ entries = { [SESSION_KEY]: session(USER) }, blocked = 
   return { ...context.helpers, page, observed, storage, selected: () => chosen };
 }
 
-const ready = changes => ({ currentSrc: SIGNED_URL, isConnected: true, readyState: 1, duration: 0.3565, error: null, volume: 0.16, ...changes });
+const ready = changes => ({ currentSrc: SPEC_SIGNED_URL, isConnected: true, readyState: 1, duration: 0.3565, error: null, volume: 0.16, ...changes });
 
 for (const [name, entries, accepted] of [
-  ['configured identity', { [SESSION_KEY]: session(USER) }, true],
-  ['other project cannot win', { 'sb-other-auth-token': session('other'), [SESSION_KEY]: session(USER) }, true],
+  ['configured identity', { [SESSION_KEY]: session(SPEC_USER) }, true],
+  ['other project cannot win', { 'sb-other-auth-token': session('other'), [SESSION_KEY]: session(SPEC_USER) }, true],
   ['only other project', { 'sb-other-auth-token': session('other') }, false],
   ['missing session', {}, false], ['invalid JSON', { [SESSION_KEY]: '{' }, false],
   ['missing user', { [SESSION_KEY]: JSON.stringify({ access_token: JWT }) }, false],
   ['empty token', { [SESSION_KEY]: JSON.stringify({ access_token: '', user: { id: USER } }) }, false],
 ]) test('media fixture identity: ' + name, async () => {
   const h = browserHarness({ entries });
-  if (accepted) assert.equal(await h.chaveVolumeDoUsuario(h.page), 'zapp.media.volume.' + USER);
+  if (accepted) assert.equal(await h.chaveVolumeDoUsuario(h.page), 'zapp.media.volume.' + SPEC_USER);
   else await assert.rejects(h.chaveVolumeDoUsuario(h.page), /Sessão do projeto configurado ausente/);
   assert.deepEqual(h.observed.reads, [SESSION_KEY]);
 });
 test('media fixture fails closed when session storage is blocked', async () => {
   const h = browserHarness({ blocked: true });
   await assert.rejects(h.chaveVolumeDoUsuario(h.page), /Sessão do projeto configurado ausente/);
+});
+
+test('media fixture logs in through the Files owner before opening its conversation', async () => {
+  const h = browserHarness();
+  await h.observed.beforeEach({ page: h.page });
+  assert.deepEqual(h.observed.use, { storageState: { cookies: [], origins: [] } });
+  assert.equal(h.observed.timeout, 120_000);
+  assert.deepEqual(h.observed.actions, [
+    'boot-deadline', 'auth', 'email', 'password', 'login', 'visible:60000',
+    'all', 'search', 'conversation',
+  ]);
 });
 
 for (const [name, labels, buttons, accepted] of [
@@ -134,9 +168,9 @@ for (const [name, elements, expected] of [
   ['zero duration does not erase gain', [ready({ duration: 0 })], 0.16],
   ['NaN duration does not erase gain', [ready({ duration: NaN })], 0.16],
   ['infinite duration does not erase gain', [ready({ duration: Infinity })], 0.16],
-  ['foreign origin', [ready({ currentSrc: 'https://foreign.invalid' + SIGNED_PATH })], NaN],
+  ['foreign origin', [ready({ currentSrc: 'https://foreign.invalid' + SPEC_SIGNED_PATH })], NaN],
   ['wrong path', [ready({ currentSrc: ORIGIN + '/wrong.ogg' })], NaN],
-  ['blob currentSrc despite expected attribute', [ready({ src: SIGNED_URL, currentSrc: 'blob:' + ORIGIN + '/synthetic' })], NaN],
+  ['blob currentSrc despite expected attribute', [ready({ src: SPEC_SIGNED_URL, currentSrc: 'blob:' + ORIGIN + '/synthetic' })], NaN],
   ['linear gain stays a failing value', [ready({ volume: 0.4 })], 0.4],
 ]) test('media fixture readiness: ' + name, async () => {
   const h = browserHarness({ elements });
@@ -148,7 +182,7 @@ test('real audio test keeps the gain assertion and ten-second poll', async () =>
   assert.equal(h.observed.tests.length, 3);
   const audio = h.observed.tests.find(row => row.title === 'se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido');
   await audio.callback({ page: h.page, browserName: 'chromium' });
-  assert.equal(h.storage.get('zapp.media.volume.' + USER), '40');
+  assert.equal(h.storage.get('zapp.media.volume.' + SPEC_USER), '40');
   assert.equal(h.storage.has('zapp.media.volume'), false);
   assert.deepEqual(h.observed.actions, ['reload', 'all', 'search', 'conversation']);
   assert.deepEqual(h.observed.polls, [{ options: { timeout: 10_000 }, target: 0.16, precision: 2 }]);

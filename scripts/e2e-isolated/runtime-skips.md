@@ -30,7 +30,7 @@ não vêm do JSON do reporter. `inventory` vem da coleta separada com
 | Vínculo | Valor revisado |
 |---|---|
 | Arquivo no checkout | `e2e/conversation.spec.ts` |
-| Blob Git | `e205dc3a6eea158c5b00b592dfb7aa467ef46f98` |
+| Blob Git | `d94d957b155492b06272980816e75b6d9cabd15b` |
 | Arquivo no reporter isolado | `conversation.spec.ts` |
 | Suítes do reporter | `conversation.spec.ts` → `Conversation state transitions` |
 | Teste | `resolving conversation via CloseConversationDialog succeeds` |
