@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a03ef628b948044df8173a5fe621ca0dd70bf6fc",
+  "commit": "b8244e0b811b08aa2bcc812b70cfead23291292f",
   "branch": "main",
-  "data_commit": "2026-11-07T19:04:49-03:00",
+  "data_commit": "2026-11-07T20:08:29-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b8244e0",
+    "data": "2026-11-07",
+    "assunto": "fix(e2e): exclui talkx-visual do projeto chromium-authenticated (#2785)"
+   },
    {
     "sha": "a03ef62",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "a5043f9",
     "data": "2026-11-06",
     "assunto": "fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)"
-   },
-   {
-    "sha": "4ac4bd4",
-    "data": "2026-11-06",
-    "assunto": "fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)"
    }
   ],
   "arquivos_mudados_7d": 1109,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 707
+    "mudancas": 705
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -157,7 +157,7 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 147
+    "mudancas": 146
    },
    {
     "pasta": "src/components/dashboard",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/chat",
-    "mudancas": 108
+    "mudancas": 107
    },
    {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
@@ -282,6 +282,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "playwright.config.ts",
+    "mudancas": 6
+   },
+   {
     "arquivo": "scripts/ci/check-test-inventory.mjs",
     "mudancas": 6
    },
@@ -291,10 +295,6 @@
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 6
    }
   ],

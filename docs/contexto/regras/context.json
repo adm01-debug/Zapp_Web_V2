@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "a03ef628b948044df8173a5fe621ca0dd70bf6fc",
+  "sha": "b8244e0b811b08aa2bcc812b70cfead23291292f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 22:07 UTC",
+  "generated_at": "2026-11-07 23:19 UTC",
   "files_total": 8152,
   "code_files": 6011,
   "code_lines": 1043288
@@ -383422,10 +383422,19 @@
   }
  },
  "git": {
-  "sha": "a03ef628b948044df8173a5fe621ca0dd70bf6fc",
+  "sha": "b8244e0b811b08aa2bcc812b70cfead23291292f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b8244e0",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): exclui talkx-visual do projeto chromium-authenticated (#2785)",
+    "files": [
+     "playwright.config.ts"
+    ]
+   },
    {
     "sha": "a03ef62",
     "date": "2026-11-07",
@@ -383991,70 +384000,6 @@
     "files": [
      "src/components/ui/command-palette.tsx"
     ]
-   },
-   {
-    "sha": "83e821b",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: corrigir preparo e diagnóstico da suíte isolada (#2728)",
-    "files": [
-     ".github/workflows/e2e-logado-isolado.yml",
-     "docs/ci/README.md",
-     "e2e/README.md",
-     "e2e/busca-global-paleta.spec.ts",
-     "e2e/conexoes.spec.ts",
-     "e2e/contacts-crud.spec.ts",
-     "e2e/contacts-detail.spec.ts",
-     "e2e/contacts-view.spec.ts",
-     "e2e/contacts-views.spec.ts",
-     "e2e/dialog-rodape-viewport.spec.ts",
-     "e2e/email-link-contato.spec.ts",
-     "e2e/fixtures/e2e-contact.ts",
-     "e2e/fixtures/fixture-conversation.ts",
-     "e2e/fixtures/function-completion.ts",
-     "e2e/fixtures/isolated-qr.ts",
-     "e2e/navegacao-modulos.spec.ts",
-     "e2e/quick-controls-volume.spec.ts",
-     "scripts/ci/command-palette-contacts.unit.mjs",
-     "scripts/ci/e2e-http-regressions.unit.mjs",
-     "scripts/ci/e2e-isolated-email-l08.unit.mjs",
-     "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
-     "scripts/ci/e2e-isolated-network-contexts.unit.mjs",
-     "scripts/ci/e2e-isolated-network-proof.unit.mjs",
-     "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
-     "scripts/ci/e2e-isolated-providers.unit.mjs",
-     "scripts/ci/e2e-isolated-qr.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/ci/e2e-isolated-workflow.unit.mjs",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/fixture-access.d.mts",
-     "scripts/e2e-isolated/fixture-access.mjs",
-     "scripts/e2e-isolated/network-contexts-browser.mjs",
-     "scripts/e2e-isolated/network-contexts-policy.mjs",
-     "scripts/e2e-isolated/network-contexts.mjs",
-     "scripts/e2e-isolated/network-proof-browser.mjs",
-     "scripts/e2e-isolated/network-proof-policy.mjs",
-     "scripts/e2e-isolated/network-proof.mjs",
-     "scripts/e2e-isolated/providers.mjs",
-     "scripts/e2e-isolated/qr-contract.d.mts",
-     "scripts/e2e-isolated/qr-contract.mjs",
-     "scripts/e2e-isolated/qr-fixture-access.d.mts",
-     "scripts/e2e-isolated/qr-fixture-access.mjs",
-     "scripts/e2e-isolated/run.mjs",
-     "scripts/e2e-isolated/runtime-contract.mjs",
-     "scripts/e2e-isolated/seed-qr.mjs",
-     "scripts/e2e-isolated/stack.mjs",
-     "src/components/catalog/useSendProduct.ts",
-     "src/components/connections/ConnectionCard.tsx",
-     "src/components/dashboard/DashboardToolbar.tsx",
-     "src/components/inbox/VirtualizedRealtimeList.tsx",
-     "src/components/keyboard/CommandPaletteHost.tsx",
-     "src/components/keyboard/__tests__/paleta-unica.test.tsx",
-     "src/lib/__tests__/e2e-messaging-fixture.test.ts",
-     "src/lib/__tests__/helpers/messaging-spec-harness.mjs",
-     "src/lib/commandPaletteSearch.ts",
-     "src/lib/openContactChat.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384064,10 +384009,6 @@
    ],
    [
     "src/integrations/supabase/types.ts",
-    3
-   ],
-   [
-    "e2e/navegacao-modulos.spec.ts",
     3
    ],
    [
@@ -384095,48 +384036,52 @@
     2
    ],
    [
-    "e2e/quick-controls-volume.spec.ts",
+    "e2e/navegacao-modulos.spec.ts",
     2
    ],
    [
-    ".github/workflows/e2e-logado-isolado.yml",
+    "src/components/ui/command-palette.tsx",
     2
    ],
    [
-    "docs/ci/README.md",
+    "supabase/deployment-manifest.json",
     2
    ],
    [
-    "e2e/README.md",
-    2
+    "playwright.config.ts",
+    1
    ],
    [
-    "e2e/conexoes.spec.ts",
-    2
+    "src/components/compliance/LGPDComplianceView.tsx",
+    1
    ],
    [
-    "e2e/contacts-crud.spec.ts",
-    2
+    "src/components/compliance/__tests__/LGPDComplianceView.test.tsx",
+    1
    ],
    [
-    "e2e/contacts-views.spec.ts",
-    2
+    "supabase/schema-manifest.json",
+    1
    ],
    [
-    "e2e/dialog-rodape-viewport.spec.ts",
-    2
+    ".github/workflows/branch-hygiene-audit.yml",
+    1
    ],
    [
-    "e2e/email-link-contato.spec.ts",
-    2
+    ".github/workflows/contexto.yml",
+    1
    ],
    [
-    "e2e/fixtures/e2e-contact.ts",
-    2
+    "docs/REALTIME-CHANNELS-INVENTORY.md",
+    1
    ],
    [
-    "e2e/fixtures/isolated-qr.ts",
-    2
+    "scripts/ci/check-audit-pdf-determinism.mjs",
+    1
+   ],
+   [
+    "scripts/ci/check-audit-pdf-determinism.unit.mjs",
+    1
    ]
   ]
  }
