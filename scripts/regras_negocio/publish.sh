@@ -158,6 +158,10 @@ if [ "$MODE" = "push" ]; then
         exit 1
       fi
     fi
+    # Um rebase bem-sucedido troca o SHA do commit sobrevivente mesmo quando a
+    # regeneração seguinte não cria diff. Não atualize a identidade se ele foi
+    # descartado: nesse caso HEAD pertence à origem ou ao usuário.
+    if generated_commit_is_head; then remember_generated_head; fi
     eval "$GEN_CMD --force"
     stage
     if ! git diff --cached --quiet; then

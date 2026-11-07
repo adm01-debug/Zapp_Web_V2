@@ -197,3 +197,91 @@ printf 'regenerated from current origin\\n' > docs/ai-context/generated.md
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('publicador atualiza a identidade do commit entre duas corridas consecutivas', () => {
+  const root = mkdtempSync(join(tmpdir(), 'regras-publish-double-race-'));
+  const remote = join(root, 'remote.git');
+  const checkout = join(root, 'checkout');
+  const peer = join(root, 'peer');
+  const bin = join(root, 'bin');
+  try {
+    git(root, 'init', '--bare', '-q', remote);
+    git(root, 'init', '-q', '-b', 'main', checkout);
+    git(checkout, 'config', 'user.email', 'local@example.invalid');
+    git(checkout, 'config', 'user.name', 'Local');
+    mkdirSync(join(checkout, 'docs', 'ai-context'), { recursive: true });
+    writeFileSync(join(checkout, 'docs', 'ai-context', 'generated.md'), 'baseline\n');
+    git(checkout, 'add', '.');
+    git(checkout, 'commit', '-qm', 'baseline');
+    git(checkout, 'remote', 'add', 'origin', remote);
+    git(checkout, 'push', '-q', '-u', 'origin', 'main');
+    git(root, `--git-dir=${remote}`, 'symbolic-ref', 'HEAD', 'refs/heads/main');
+
+    git(root, 'clone', '-q', remote, peer);
+    git(peer, 'config', 'user.email', 'peer@example.invalid');
+    git(peer, 'config', 'user.name', 'Peer');
+    writeFileSync(join(peer, 'peer.txt'), 'primeira corrida\n');
+    git(peer, 'add', '.');
+    git(peer, 'commit', '-qm', 'feat: primeira corrida concorrente');
+    git(peer, 'push', '-q', 'origin', 'main');
+    writeFileSync(join(peer, 'docs', 'ai-context', 'generated.md'), 'segunda corrida conflitante\n');
+    git(peer, 'add', '.');
+    git(peer, 'commit', '-qm', 'feat: segunda corrida concorrente');
+
+    writeFileSync(join(checkout, 'docs', 'ai-context', 'generated.md'), 'conteúdo regenerado\n');
+    const calls = join(root, 'generator-calls.txt');
+    const generator = join(root, 'regenerate-double-race.sh');
+    writeFileSync(generator, `#!/usr/bin/env bash
+set -euo pipefail
+printf 'chamada\\n' >> '${calls}'
+printf 'conteúdo regenerado\\n' > docs/ai-context/generated.md
+`);
+    chmodSync(generator, 0o700);
+
+    mkdirSync(bin);
+    const realGit = execFileSync('which', ['git'], { encoding: 'utf8' }).trim();
+    const pushCount = join(root, 'push-count.txt');
+    const gitWrapper = join(bin, 'git');
+    writeFileSync(gitWrapper, `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "\${1:-}" == push ]]; then
+  count=0
+  [[ -f "$PUSH_COUNT" ]] && count=$(<"$PUSH_COUNT")
+  count=$((count + 1))
+  printf '%s\\n' "$count" > "$PUSH_COUNT"
+  if [[ "$count" == 2 ]]; then "$REAL_GIT" -C "$PEER" push -q origin main; fi
+fi
+exec "$REAL_GIT" "$@"
+`);
+    chmodSync(gitWrapper, 0o700);
+
+    const result = spawnSync('bash', [publishScript], {
+      cwd: checkout,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        REAL_GIT: realGit,
+        PUSH_COUNT: pushCount,
+        PEER: peer,
+        BRANCH: 'main',
+        OUT_DIR: 'docs/ai-context',
+        MODE: 'push',
+        GEN_CMD: generator,
+      },
+      timeout: 30_000,
+    });
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    git(checkout, 'fetch', '-q', 'origin', 'main');
+    assert.equal(readFileSync(calls, 'utf8'), 'chamada\nchamada\n');
+    assert.equal(readFileSync(pushCount, 'utf8'), '3\n');
+    assert.equal(git(checkout, 'show', 'origin/main:docs/ai-context/generated.md'), 'conteúdo regenerado\n');
+    assert.equal(git(checkout, 'show', 'origin/main:peer.txt'), 'primeira corrida\n');
+    assert.equal(git(checkout, 'log', '-1', '--format=%s', 'origin/main').trim(),
+      'chore(ai-context): atualiza contexto para agentes [skip ci]');
+    assert.equal(git(checkout, 'log', '-1', '--format=%s', 'origin/main^').trim(),
+      'feat: segunda corrida concorrente');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
