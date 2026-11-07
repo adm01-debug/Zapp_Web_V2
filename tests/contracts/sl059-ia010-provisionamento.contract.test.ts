@@ -63,6 +63,8 @@ const MANIFESTO = resolve(RAIZ, 'supabase/schema-manifest.json');
 const DOC_IA010 = resolve(RAIZ, 'docs/ia/IA-010-ambiente-de-ensaio.md');
 const README_IA = resolve(RAIZ, 'docs/ia/README.md');
 const PALETA_REAL_FILAS = resolve(RAIZ, 'src/components/queues/queueColors.ts');
+const LOCK_TABELAS_SQL =
+  'lock table public.departments, public.queues, public.contacts, public.messages in share row exclusive mode';
 
 const plano = planoDeEnsaio();
 const SQL = sqlDeProvisionamento(plano);
@@ -262,6 +264,15 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
     expect(REMOCAO.match(/perform 1 from public\.\w+ where id in \([^;]+::uuid\) for update;/gu)).toHaveLength(4);
     for (const dml of [SQL, REMOCAO]) {
       expect(dml.match(/select pg_advisory_xact_lock\(1162756947, 1229402160\);/gu)).toHaveLength(1);
+      const tentativas = dml === SQL ? 2 : 1;
+      expect(
+        dml.match(
+          /lock table public\.departments, public\.queues, public\.contacts, public\.messages in share row exclusive mode;/gu,
+        ),
+      ).toHaveLength(tentativas);
+      expect(dml.match(/exception when deadlock_detected then/gu)).toHaveLength(tentativas);
+      expect(dml.match(/if tentativa >= 5 then raise; end if;/gu)).toHaveLength(tentativas);
+      expect(dml.match(/perform pg_sleep\(tentativa \* 0\.05\);/gu)).toHaveLength(tentativas);
       for (const tabela of ['departments', 'queues', 'contacts', 'messages']) {
         expect(dml).toContain(`colisão de ID reservado em ${tabela}`);
       }
@@ -282,6 +293,11 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
     };
     const preflightsSql = instrucoesSql(SQL).filter((instrucao) => instrucao.startsWith('do $ensaio$'));
     const preflightsRemocao = instrucoesSql(REMOCAO).filter((instrucao) => instrucao.startsWith('do $ensaio$'));
+    for (const preflight of [...preflightsSql, ...preflightsRemocao]) {
+      expect(preflight).toContain('tentativa smallint := 0');
+      expect(preflight).toContain(LOCK_TABELAS_SQL);
+      expect(preflight).toMatch(/loop begin lock table[\s\S]+return; exception when deadlock_detected then/u);
+    }
     for (const [tabela, esperada] of Object.entries(condicoesExatas)) {
       const padrao = new RegExp(
         `select 1 from public\\.${tabela} atual[\\s\\S]*?on atual\\.id = esperado\\.id::uuid\\s+where atual\\.id in \\([^)]*::uuid\\)\\s+and \\(([\\s\\S]*?)\\)\\s+\\) then raise exception 'ensaio: colisão de ID reservado em ${tabela}'`,
@@ -406,13 +422,30 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
       'departments',
     ]);
     for (const instrucao of instrucoes.slice(3, 7)) {
+      expect(instrucao).toMatch(/\busing \(values\b/u);
       expect(instrucao).toMatch(/\bid in \(/u);
       expect(instrucao).toMatch(/like 'ENSAIO-%'/u);
+      expect(instrucao).toMatch(/\bis not distinct from\b/u);
       expect(instrucao).not.toMatch(/\bor\s+true\b/iu);
       expect(instrucao).not.toMatch(/\bilike\b/iu);
     }
-    expect(instrucoes[3]).toMatch(/contact_id in \(/u);
+    expect(instrucoes[3]).toMatch(/atual\.contact_id is not distinct from esperado\.contact_id::uuid/u);
     expect(instrucoes[7]).toBe('commit');
+
+    const condicoesExatasPorTabela: Record<string, string[]> = {
+      departments: ['name', 'is_active'],
+      queues: ['name', 'description', 'color', 'is_active', 'priority'],
+      contacts: ['name', 'phone', 'email', 'conversation_status::text', 'queue_id', 'consent_status::text', 'notes'],
+      messages: ['contact_id', 'sender::text', 'content', 'message_type::text', 'transcription', 'is_read'],
+    };
+    for (const [tabela, campos] of Object.entries(condicoesExatasPorTabela)) {
+      const deleteDaTabela = new RegExp(`delete from public\\.${tabela}([\\s\\S]*?);`, 'iu').exec(REMOCAO)?.[1] ?? '';
+      for (const campo of campos) {
+        expect(deleteDaTabela, `remoção de ${tabela} não compara ${campo}`).toContain(
+          `atual.${campo} is not distinct from`,
+        );
+      }
+    }
 
     for (const tabela of ['departments', 'queues', 'contacts', 'messages']) {
       const blocoInsert = new RegExp(

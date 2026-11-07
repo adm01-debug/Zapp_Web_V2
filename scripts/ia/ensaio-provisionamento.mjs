@@ -399,10 +399,8 @@ export function validarPlanoSeguro(plano) {
 }
 
 const LOCK_ENSAIO = 'select pg_advisory_xact_lock(1162756947, 1229402160);';
-
-function idsSql(registros) {
-  return registros.map(({ id }) => literais([id])[0]).join(', ');
-}
+const LOCK_TABELAS_ENSAIO =
+  'lock table public.departments, public.queues, public.contacts, public.messages in share row exclusive mode;';
 
 function idsUuidSql(registros) {
   return registros.map(({ id }) => `${literais([id])[0]}::uuid`).join(', ');
@@ -457,7 +455,12 @@ function preflightColisoes({ departamentos, filas, contatos, mensagens }) {
     registros.map((registro) => `      (${literais(campos.map((campo) => registro[campo])).join(', ')})`).join(',\n');
   return [
     'do $ensaio$',
+    'declare',
+    '  tentativa smallint := 0;',
     'begin',
+    '  loop',
+    '    begin',
+    `      ${LOCK_TABELAS_ENSAIO}`,
     `  perform 1 from public.departments where id in (${idsUuidSql(departamentos)}) for update;`,
     `  perform 1 from public.queues where id in (${idsUuidSql(filas)}) for update;`,
     `  perform 1 from public.contacts where id in (${idsUuidSql(contatos)}) for update;`,
@@ -508,8 +511,31 @@ function preflightColisoes({ departamentos, filas, contatos, mensagens }) {
     '        or atual.transcription is distinct from esperado.transcription',
     '        or atual.is_read is distinct from esperado.is_read)',
     "  ) then raise exception 'ensaio: colisão de ID reservado em messages' using errcode = '23505'; end if;",
+    '      return;',
+    '    exception when deadlock_detected then',
+    '      tentativa := tentativa + 1;',
+    '      if tentativa >= 5 then raise; end if;',
+    '      perform pg_sleep(tentativa * 0.05);',
+    '    end;',
+    '  end loop;',
     'end',
     '$ensaio$;',
+  ].join('\n');
+}
+
+function deleteRegistrosExatos({ tabela, registros, campos, condicoes, marcador }) {
+  const valores = registros
+    .map((registro) => `      (${literais(campos.map((campo) => registro[campo])).join(', ')})`)
+    .join(',\n');
+  return [
+    `delete from public.${tabela} atual`,
+    ` using (values\n${valores}`,
+    ` ) as esperado(${campos.join(', ')})`,
+    ' where atual.id = esperado.id::uuid',
+    `   and atual.id in (${idsUuidSql(registros)})`,
+    `   and ${marcador}`,
+    ...condicoes.map((condicao) => `   and ${condicao}`),
+    ';',
   ].join('\n');
 }
 
@@ -620,22 +646,64 @@ export function sqlDeRemocao(planoRecebido = planoDeEnsaio()) {
       preflightColisoes(marcadores),
       '',
       `-- mensagens dos contatos de ensaio`,
-      `delete from public.messages`,
-      ` where id in (${idsSql(marcadores.mensagens)})`,
-      `   and contact_id in (${idsSql(marcadores.contatos)})`,
-      `   and content like '${rotulo}%';`,
+      deleteRegistrosExatos({
+        tabela: 'messages',
+        registros: marcadores.mensagens,
+        campos: ['id', 'contact_id', 'sender', 'content', 'message_type', 'transcription', 'is_read'],
+        marcador: `atual.content like '${rotulo}%'`,
+        condicoes: [
+          'atual.contact_id is not distinct from esperado.contact_id::uuid',
+          'atual.sender::text is not distinct from esperado.sender',
+          'atual.content is not distinct from esperado.content',
+          'atual.message_type::text is not distinct from esperado.message_type',
+          'atual.transcription is not distinct from esperado.transcription',
+          'atual.is_read is not distinct from esperado.is_read',
+        ],
+      }),
       '',
       `-- contatos de ensaio`,
-      `delete from public.contacts`,
-      ` where id in (${idsSql(marcadores.contatos)}) and name like '${rotulo}%';`,
+      deleteRegistrosExatos({
+        tabela: 'contacts',
+        registros: marcadores.contatos,
+        campos: ['id', 'nome', 'telefone', 'email', 'conversation_status', 'queue_id', 'consent_status', 'notes'],
+        marcador: `atual.name like '${rotulo}%'`,
+        condicoes: [
+          'atual.name is not distinct from esperado.nome',
+          'atual.phone is not distinct from esperado.telefone',
+          'atual.email is not distinct from esperado.email',
+          'atual.conversation_status::text is not distinct from esperado.conversation_status',
+          'atual.queue_id is not distinct from esperado.queue_id::uuid',
+          'atual.consent_status::text is not distinct from esperado.consent_status',
+          'atual.notes is not distinct from esperado.notes',
+        ],
+      }),
       '',
       `-- filas de ensaio`,
-      `delete from public.queues`,
-      ` where id in (${idsSql(marcadores.filas)}) and name like '${rotulo}%';`,
+      deleteRegistrosExatos({
+        tabela: 'queues',
+        registros: marcadores.filas,
+        campos: ['id', 'nome', 'descricao', 'cor', 'is_active', 'prioridade'],
+        marcador: `atual.name like '${rotulo}%'`,
+        condicoes: [
+          'atual.name is not distinct from esperado.nome',
+          'atual.description is not distinct from esperado.descricao',
+          'atual.color is not distinct from esperado.cor',
+          'atual.is_active is not distinct from esperado.is_active',
+          'atual.priority is not distinct from esperado.prioridade',
+        ],
+      }),
       '',
       `-- departamentos de ensaio`,
-      `delete from public.departments`,
-      ` where id in (${idsSql(marcadores.departamentos)}) and name like '${rotulo}%';`,
+      deleteRegistrosExatos({
+        tabela: 'departments',
+        registros: marcadores.departamentos,
+        campos: ['id', 'nome', 'is_active'],
+        marcador: `atual.name like '${rotulo}%'`,
+        condicoes: [
+          'atual.name is not distinct from esperado.nome',
+          'atual.is_active is not distinct from esperado.is_active',
+        ],
+      }),
       '',
       '-- Sem deletes em auth.users, auth.identities, public.profiles ou',
       '-- public.user_roles: o provisionamento não cria identidade nenhuma, e',

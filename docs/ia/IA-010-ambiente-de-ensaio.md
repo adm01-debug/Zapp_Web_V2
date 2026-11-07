@@ -125,8 +125,10 @@ seletor de cor de fila, que o `CreateQueueDialog` apenas importa); o plano intei
 vocabulários e totais, é canônico e profundamente imutável; invariantes independentes recusam
 regressões do próprio gerador; a reaplicação idêntica usa `on conflict (id) do nothing`, enquanto
 qualquer divergência em ID reservado aborta a transação em vez de sobrescrever o registro;
-provisionamento e reversão compartilham um advisory lock transacional; toda remoção (`--remover`)
-exige o ID e o marcador; **a reversão apaga só tabelas que o
+provisionamento e reversão compartilham um advisory lock transacional, travam as quatro tabelas e
+as linhas reservadas, e repetem automaticamente o preflight se o PostgreSQL detectar deadlock; toda
+remoção (`--remover`) exige o ID, o marcador e a igualdade integral de todos os campos canônicos;
+**a reversão apaga só tabelas que o
 provisionamento escreve** (paridade, com lista de exceções deliberadas vazia); o DML não menciona
 `conversation_analyses` nem `conversation_memory` (os casos "conversa sem análise" e "contato sem
 memória" valem por omissão provada); e o gerador recusa host de banco que não seja local
