@@ -7,6 +7,8 @@ import test from 'node:test';
 import { assertIsolatedFixtureEnvironment, insertIsolatedFixtureMessage } from '../e2e-isolated/fixture-access.mjs';
 
 const ORIGIN = 'https://127.0.0.1:5173';
+const APP_ORIGIN = 'https://app.example.test';
+const STORAGE_KEY = 'sb-127-auth-token';
 const CONTACT = '04dff4dc-c6b1-4283-ac22-bd8639804759';
 const NAME = '[E2E] Contato de teste - nao apagar';
 const CONTENT = '[E2E fixture setup]';
@@ -356,15 +358,27 @@ function fixtureModule(mode, helper) {
     .replace(/^import .*?;\s*$/gm, '')
     .replace(/\bexport (?=(?:async )?function|const)/g, '');
   return runInNewContext(code + '\n({ ensureFixtureConversationOpen, cleanupFixtureMessages });', {
-    process: { env: { ZAPP_E2E_LOCAL: mode } }, SUPABASE_URL: ORIGIN, SUPABASE_ANON_KEY: 'fixture_public_anon',
-    insertIsolatedFixtureMessage: helper, console,
+    process: { env: { ZAPP_E2E_LOCAL: mode, PLAYWRIGHT_BASE_URL: APP_ORIGIN } },
+    SUPABASE_URL: ORIGIN, SUPABASE_ANON_KEY: 'fixture_public_anon', SUPABASE_STORAGE_KEY: STORAGE_KEY,
+    AUTH_STORAGE_ENTRY_NAME: STORAGE_KEY,
+    insertIsolatedFixtureMessage: helper, console, URL,
   });
 }
 
-function pageDouble({ rpcStatus = 200, rpcBody = '', messageStatus = 201, tokenValue = 'fixture_user_jwt' } = {}) {
+function pageDouble({ rpcStatus = 200, rpcBody = '', messageStatus = 201, tokenValue = 'fixture_user_jwt',
+  sessionOrigin = APP_ORIGIN, storageKey = STORAGE_KEY, extraOrigins = [] } = {}) {
   const calls = [];
   const page = {
-    async evaluate() { calls.push({ type: 'session' }); return tokenValue ? { access_token: tokenValue, user_id: UUID } : null; },
+    context: () => ({ storageState: async () => {
+      calls.push({ type: 'session' });
+      return { cookies: [], origins: [
+        ...extraOrigins,
+        { origin: sessionOrigin, localStorage: tokenValue ? [{
+          name: storageKey,
+          value: JSON.stringify({ access_token: tokenValue, user: { id: UUID } }),
+        }] : [] },
+      ] };
+    } }),
     request: {
       async post(url, options) {
         calls.push({ type: 'POST', url, options: plain(options) });
@@ -438,4 +452,36 @@ test('actual TS fixture cannot start RPC or helper without browser user session'
   const p = pageDouble({ tokenValue: null });
   await assert.rejects(fixtureModule('1', async () => assert.fail()).ensureFixtureConversationOpen(p.page), /Sessão do Supabase não encontrada/);
   assert.deepEqual(p.calls, [{ type: 'session' }]);
+});
+
+test('actual TS fixture ignores a Supabase token from another origin', async () => {
+  const p = pageDouble({ sessionOrigin: 'https://foreign.supabase.co' });
+  await assert.rejects(
+    fixtureModule('1', async () => assert.fail()).ensureFixtureConversationOpen(p.page),
+    /Sessão do Supabase não encontrada/,
+  );
+  assert.deepEqual(p.calls, [{ type: 'session' }]);
+});
+
+test('actual TS fixture ignores a token de outro projeto na origem correta do app', async () => {
+  const p = pageDouble({ storageKey: 'sb-foreign-auth-token' });
+  await assert.rejects(
+    fixtureModule('1', async () => assert.fail()).ensureFixtureConversationOpen(p.page),
+    /Sessão do Supabase não encontrada/,
+  );
+  assert.deepEqual(p.calls, [{ type: 'session' }]);
+});
+
+test('actual TS fixture selects the expected origin when storageState has multiple tokens', async () => {
+  const p = pageDouble({ extraOrigins: [{
+    origin: 'https://foreign.supabase.co',
+    localStorage: [{
+      name: 'sb-foreign-auth-token',
+      value: JSON.stringify({ access_token: 'foreign_jwt', user: { id: 'foreign-user' } }),
+    }],
+  }] });
+  await fixtureModule('1', async input => {
+    assert.equal(input.accessToken, 'fixture_user_jwt');
+  }).ensureFixtureConversationOpen(p.page);
+  assert.equal(p.calls[1].options.headers.Authorization, 'Bearer fixture_user_jwt');
 });

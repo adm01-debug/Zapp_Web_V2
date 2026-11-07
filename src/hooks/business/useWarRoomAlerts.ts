@@ -198,12 +198,28 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
       }
       if (encerrado || breachIds.length === 0) return;
 
+      const dedupeKey = slaIncidentKey(breachIds);
+      // Evita usar uma violação de unicidade como fluxo normal. Além de poupar o
+      // POST, isto não produz um 409 no navegador quando o alerta já existe
+      // (inclusive se foi dispensado). A constraint continua sendo a trava final
+      // contra a corrida entre dois clientes.
+      const { data: existing, error: lookupError } = await supabase
+        .from('warroom_alerts')
+        .select('id')
+        .eq('dedupe_key', dedupeKey)
+        .limit(1);
+      if (lookupError) {
+        console.error('[useWarRoomAlerts] falha ao verificar alerta de SLA existente', lookupError);
+        return;
+      }
+      if (encerrado || (existing?.length ?? 0) > 0) return;
+
       const { error } = await supabase.from('warroom_alerts').insert({
         alert_type: 'critical',
         title: `${breachIds.length} SLA(s) Violado(s)`,
         message: `Existem ${breachIds.length} conversas com SLA violado que precisam de atenção imediata.`,
         source: SLA_MONITOR_SOURCE,
-        dedupe_key: slaIncidentKey(breachIds),
+        dedupe_key: dedupeKey,
       });
       // 23505 = o incidente já tem alerta (inclusive dispensado): é o resultado
       // esperado da idempotência, não uma falha. Qualquer outro erro é registrado —
