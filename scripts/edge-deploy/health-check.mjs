@@ -57,9 +57,9 @@ export function parseArgs(argv) {
     else throw new Error(`Argumento desconhecido: ${key}`);
   }
 
-  if (!args.projectRef) { process.stderr.write('--project-ref obrigatório\n'); process.exit(2); }
+  if (!args.projectRef) throw new Error('--project-ref obrigatório');
   if (args.projectRef !== CANONICAL_PROJECT) throw new Error('Apenas o projeto canônico é aceito');
-  if (!args.manifestPath) { process.stderr.write('--manifest obrigatório\n'); process.exit(2); }
+  if (!args.manifestPath) throw new Error('--manifest obrigatório');
   if (!Number.isFinite(args.threshold) || args.threshold < 0 || args.threshold > 1) {
     throw new Error('--threshold deve estar entre 0 e 1');
   }
@@ -259,7 +259,14 @@ export async function runHealthCheck(args, {
 }
 
 export async function main(argv = process.argv.slice(2), dependencies) {
-  const outcome = await runHealthCheck(parseArgs(argv), dependencies);
+  let args;
+  try {
+    args = parseArgs(argv);
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
+  const outcome = await runHealthCheck(args, dependencies);
   if (outcome.status === 'failed') process.exitCode = 1;
   return outcome;
 }
