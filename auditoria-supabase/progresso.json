@@ -1,4 +1,64 @@
 {
+  "fase_0_fechamento_20261108": {
+    "timestamp": "2026-11-08T23:20Z",
+    "0_1_baseline": {
+      "estado": "concluída",
+      "baseline_antes_20261101T2120Z": {"migrations": 1072, "tables": 211, "policies": 520, "crons": 24, "buckets": 9, "sec_definer_fns": 402},
+      "baseline_depois_20261108T2253Z": {"migrations": 1092, "tables": 210, "policies": 553, "crons": 27, "buckets": 9, "sec_definer_fns": 407},
+      "evidencia": "db_query SELECT count(*) em supabase_migrations.schema_migrations / pg_tables / pg_policies / cron.job / storage.buckets / pg_proc(prosecdef) via MCP SUPABASE - ZAPP WEB V2 - MCP; ping confirmou projeto https://tnnnlkbymytvtqngbbqh.supabase.co antes de cada bateria",
+      "diff": "mig+20 tab-1 pol+33 crons+3 secdef+5 buckets=0 — nenhuma dessas escritas veio desta sessão (nenhuma tool de escrita Supabase foi chamada, só ping+db_query SELECT); atribuição por PR específica não verificada (fora do escopo desta consolidação, PRs já triadas em triage_prs_abertas de achados.json)"
+    },
+    "0_2_mesa_unica_achados": {
+      "estado": "concluída",
+      "evidencia": "achados.json consolida 47 ZW-nnnn de 3 fontes (sessão 2026-10-31 = 39 achados S01-S12, PR #2414 = 47 achados A/M/C, PR #2186 = 68 achados P001-P010) + PR #2462 absorvida sem achados novos; cada achado tem campo origem com IDs antigos mapeados; 0 duplicatas (ZW-0014 explicitamente marcada 'absorvido' por ZW-0003)"
+    },
+    "0_3_reverificacao": {
+      "estado": "concluída para CRÍTICO/ALTO e para PRs abertas; PARCIAL para MÉDIO/BAIXO/INFO (reexecutados apenas os do top 10)",
+      "criticos_altos_reexecutados_producao": ["ZW-0002 (ALTO→BAIXO, 2026-11-08T21:28Z)", "ZW-0004 (padrão mudou, 2026-11-08T21:30Z)", "ZW-0007 (42→29, 2026-11-08T22:48Z)", "ZW-0009 (inalterado, 2026-11-08T22:48Z)"],
+      "medios_top10_reexecutados_producao_20261108T2312_2315Z": {
+        "ZW-0003": "inalterado (policies_role_public=5, anon_grants=0)",
+        "ZW-0012": "melhorou (null_statements 65→64)",
+        "ZW-0013": "inalterado (ACL mcp_exec correta, 0 grantees fora postgres/service_role)",
+        "ZW-0015": "CORRIGIDO — apenas 2/7 funções de credenciais têm EXECUTE para authenticated, não todas 7 como o achado original afirmava",
+        "ZW-0016": "inalterado (count=4 funções SQL dinâmico+WHEN OTHERS)",
+        "ZW-0017": "RESOLVIDO — 13/13 views de public agora têm security_invoker (era 0/13 em 31/10)",
+        "ZW-0018": "inalterado (e2e_cleanup/e2e_cleanup_conversation_closures ainda SECURITY DEFINER, count=2)"
+      },
+      "nao_reexecutados_20261108": "BAIXO (ZW-0028,0029,0030) e INFO (ZW-0031 a ZW-0043, exceto os já tratados) — severidade não justifica nova reexecução nesta sessão por regra 7 (tokens); evidência original de 31/10/01-11 mantida, rotulada como tal em cada achado (sem reexecução = não é CRÍTICO/ALTO, não é obrigatório pela regra 0.3)"
+    },
+    "0_4_triagem_prs_abertas": {
+      "estado": "concluída — 13 PRs",
+      "evidencia": "triage_prs_abertas em achados.json: 2 ABSORVER (#2462,#2414), 9 APROVAÇÃO/REGRA 8 (#2481,#2485,#2487,#2491,#2461,#2471,#2476,#2460,#2473), 2 AUTÔNOMA (#2494,#2354)"
+    }
+  },
+  "fase_A_estado_secoes_20261108": {
+    "A.2_drift": "concluída — ZW-0012 (65→64 null_statements), ZW-0026 (nomes duplicados no ledger), ZW-0027 (types.ts desatualizado) cobertos",
+    "A.3_seguranca": "concluída — ZW-0001,0003,0007,0013,0014,0015,0016,0017,0022,0032,0044,0046 cobertos; reverificação 08/11 fechou ZW-0017 e corrigiu ZW-0015",
+    "A.4_integridade": "concluída — ZW-0006,0028,0029,0043 cobertos",
+    "A.5_performance": "concluída — ZW-0002,0023,0024,0025,0030 cobertos",
+    "A.6_crons": "concluída — ZW-0004,0041 cobertos",
+    "A.7_funcoes_triggers": "concluída — ZW-0005,0016,0018,0031,0033,0034 cobertos",
+    "A.8_edges_drift": "concluída — ZW-0010,0011,0019,0040,0045,0047 cobertos",
+    "A.9_realtime_auth_storage": "concluída — ZW-0008,0035,0036,0042 cobertos",
+    "A.10_bugs_funcionais": "concluída — ZW-0009 coberto",
+    "A.11_rls_matrix": "PARCIAL — ZW-0037 (matriz 8x8 em Postgres 16 local, sessão 31/10) é a única evidência; matriz antes×depois em producao com 2 tenants NÃO executada nesta sessão (requer BEGIN/SET LOCAL para simular JWT, não suportado pelo MCP customizado desta auditoria — db_query roda 1 transação por chamada sem persistir SET LOCAL entre chamadas)",
+    "A.12_lgpd_pitr_staging": "PARCIAL — ZW-0020,0038 concluídos; ZW-0039 (PITR dias de retenção) NÃO VERIFICADO, requer Dashboard Supabase (aba Backups), sem equivalente via SQL/MCP",
+    "A.13_pendentes_parciais": "PARCIAL — ZW-0032 (17 tabelas sem policy) VERIFICADO; ZW-0040 (14 edges verify_jwt=false) PARCIALMENTE VERIFICADO (message-delivery não auditada); PITR (ZW-0039) NÃO VERIFICADO",
+    "A.14_guardas": {
+      "G1_database_identity": "NÃO VERIFICADO — requer DESTINO_URL (secret ausente neste container)",
+      "G2_secdef_public_execute": "PASS — 2026-11-01T17:50Z",
+      "G3_migration_drift": "PASS PARCIAL — offline, sem DESTINO_URL",
+      "G4_mcp_exec_acl": "PASS — 2026-11-01T17:52Z, reconfirmado 2026-11-08T23:12Z (0 grantees fora de postgres/service_role)",
+      "G5_triple_parity": "PASS PARCIAL — offline, sem DESTINO_URL",
+      "G6_manifest_fresh": "NÃO VERIFICADO — requer psql + DESTINO_URL",
+      "G7_catalog_fresh": "NÃO VERIFICADO — requer psql + DESTINO_URL",
+      "G8_remocoes_destrutivas": "NÃO VERIFICADO — requer /tmp/catalog.new.json (psql + DESTINO_URL)",
+      "G9_runtime_config": "NÃO VERIFICADO — requer conexão direta ao banco (DESTINO_URL)",
+      "G10_realtime_subscriptions": "NÃO VERIFICADO — dependência 'typescript' ausente no PATH do container",
+      "G11_grants_fresh": "NÃO VERIFICADO — requer grants_fresco.json (psql + DESTINO_URL)",
+      "motivo_unico_para_G1_G6_G9_G11": "todas dependem da env var DESTINO_URL (string de conexão direta psql), que é um secret de repositório não exposto a sessões cloud deste ambiente; G8/G11 adicionalmente dependem de arquivos intermediários (/tmp/catalog.new.json, grants_fresco.json) gerados por essas mesmas conexões psql. Confirmado em 3 tentativas nesta sessão (01/11 e 08/11) — não é falha pontual, é limitação estrutural do ambiente de execução cloud vs. o ambiente local (WSL do Joaquim) para o qual as guardas foram escritas."
+    }
+  },
   "encerramento_20261101": {
     "timestamp": "2026-11-01T23:55Z",
     "leituras_obrigatorias_evidenciadas": {
@@ -256,170 +316,10 @@
   "secao2_drift_evidencia": {"total_migrations":1064,"null_statements":65,"empty_statements":0,"primeira":"20251215024517","ultima":"20261030110000","achado":"65 statements=NULL viola regra7 CLAUDE.md","repo_vs_db_from_refs":121,"repo_vs_db_db_tables":204,"repo_vs_db_orphan_frontend_real":0,"repo_vs_db_nota":"talkx_campaign_metrics e team_message_read_state sao VIEWS (confirmado pg_views)","git_history_scan":"LIMPO — nenhum secret real; VITE_SUPABASE_PUBLISHABLE_KEY=anon key (publica by design); pk.w5-fake-mapbox-token (fake de teste)","repo_rpc_vs_db":"82 rpc() calls no repo; 69 em SECURITY DEFINER; 11 em non-SECDEF; 2 ORFAOS: get_search_insights (DB tem search_insights sem prefixo get_) e log_search_event (inexistente no DB)","orfaos_rpc_detalhes":{"get_search_insights":{"arquivo":"src/hooks/admin/useSearchInsights.ts:89","db_real":"search_insights(p_days integer)","impacto":"admin panel search insights falha em producao"},"log_search_event":{"arquivo":"src/components/inbox/useGlobalSearchData.ts:111","db_real":"INEXISTENTE","impacto":"logging de eventos de busca silenciosamente quebrado"}}},
   "secao1_inventario_re_executado_em": "2026-10-31T04:30Z",
   "secao1_inventario_evidencia": {"tabelas":204,"views":13,"funcoes":478,"migrations":1064,"ultima_migration":"20261030110000","crons":24,"policies":505,"buckets":9,"auth_users":10,"db_tables_query_rows":204,"db_views_confirmadas":["talkx_campaign_metrics","team_message_read_state","channel_connections_safe","password_reset_requests_safe","whatsapp_connections_safe"],"repo_vs_db_orphan_frontend_refs":0,"repo_vs_db_views_nao_tabelas":["talkx_campaign_metrics","team_message_read_state"]},
-  "projeto": "tnnnlkbymytvtqngbbqh",
-  "iniciado_em": "2026-10-30",
-  "postgres_version": "17.6",
-  "total_migrations": 1064,
-  "baseline_capturado_em": "2026-10-30T22:28:26Z",
-  "baseline": {
-    "migrations": 1064,
-    "latest_version": "20261030110000",
-    "cron_jobs": 24,
-    "policies": 544,
-    "tables": 204,
-    "buckets": 9
-  },
-  "after_state_capturado_em": "2026-10-30T22:36:12Z",
-  "after_state": {
-    "migrations": 1064,
-    "latest_version": "20261030110000",
-    "active_crons": 24,
-    "policies": 544,
-    "tables": 204,
-    "buckets": 9,
-    "delta": "ZERO — produção inalterada"
-  },
-  "per_object_after_state_capturado_em": "2026-10-30T22:51:15Z",
-  "per_object_after_state": {
-    "migrations": 1064,
-    "latest_version": "20261030110000",
-    "active_crons": 24,
-    "public_policies": 505,
-    "tables": 204,
-    "buckets": 9,
-    "security_definer_fns": 399,
-    "public_indexes": 723,
-    "delta": "ZERO — 8 objetos verificados"
-  },
-  "pg_stat_statements_top20_capturado_em": "2026-10-30T22:50:00Z",
-  "crons_30d_capturado_em": "2026-10-30T22:51:00Z",
-  "crons_per_job_capturado_em": "2026-10-30T23:58Z",
-  "crons_per_job_evidencia": {
-    "talkx-scheduler-1min": "43179 runs; 4347 fail (10%); 1983 timeout; last_status=connecting — CRITICO",
-    "tasks-notify-due": "43179 runs; 1992 fail (4.6%); 1989 timeout — ALTO",
-    "expire-stale-agent-presence": "21591 runs; 1026 fail (4.7%); 1024 timeout",
-    "multiplix-send-trigger": "21590 runs; 996 fail (4.6%); 994 timeout",
-    "ai-jobs-tick-1min": "40158 runs; 1721 fail (4.3%); 1719 timeout",
-    "dispatch-scheduled-messages": "10648 runs; 692 fail (6.5%); 691 timeout",
-    "gmail-incremental-sync": "8636 runs; 454 fail (5.3%); 452 timeout",
-    "connection-health-check": "8635 runs; 438 fail (5.1%); 436 timeout",
-    "talkx-scheduler-total_non_timeout_fail": "4347-1983=2364 falhas nao-timeout em talkx — anomalia extra",
-    "jobs_sem_falha_30d": "crm-sync-outbox-cleanup, expire-orphan-user-sessions, purge-qr-attempts, reconnection-logs-retention-30d, search-events-retention, searchbox-budget-alert, user-sessions-expire-diario — OK"
-  },
-  "rls_matrix_status": "NÃO VERIFICADO — constraint 'Postgres temporário só via scripts/db-audit/replay-local.sh' (CLAUDE.md seção 0) não satisfeita: Docker daemon não disponível no container (/var/run/docker.sock ausente). Execução prévia em PostgreSQL 16 local ad-hoc não conta como verificação conforme o critério desta auditoria.",
-  "secao12_lacunas_chat_em": "2026-10-31T00:28Z",
-  "secao12_lacunas_chat_evidencia": {
-    "backup_pitr": "NAO_VERIFICADO — requer dashboard Supabase",
-    "staging": "ausente — replay-local.sh serve como banco local temporario",
-    "trilha_auditoria": "parcial — audit_logs cobre login/client_error, sem DDL trail",
-    "retencao_lgpd": "ausente formal — sem trigger de deleção PII por prazo",
-    "alertas": "sem alerta automatico para incidente de cron (10369 timeouts sem notificacao)",
-    "testes_rls_ci": "parcial — db-guard cobre policies, nao matriz tenant A×B",
-    "edge_logs_7d": "NAO_VERIFICADO — requer Logflare",
-    "advisors": "NAO_VERIFICADO — requer dashboard",
-    "types_ts_diff": "NAO_VERIFICADO — requer supabase gen types",
-    "edge_published_vs_repo": "NAO_VERIFICADO — requer supabase functions list CLI"
-  },
-  "secao11_rls_chat_em": "2026-10-31T00:26Z",
-  "secao11_rls_chat_evidencia": {
-    "rls_messages": "habilitado, policy messages_select_policy por contact_id do agente",
-    "rls_contacts": "habilitado, policy contacts_select_policy por can_edit_contact()",
-    "rls_user_roles": "habilitado",
-    "matrix_8x8_pass": "8/8 PASS em Postgres 16 local com migrations reais do repo",
-    "update_sem_with_check": 39,
-    "nao_verificado_jwt_producao": "BEGIN/SET LOCAL role nao suportado via MCP"
-  },
-  "secao10_logs_chat_em": "2026-10-31T00:24Z",
-  "secao10_logs_chat_evidencia": {
-    "audit_logs_7d_login": 2879,
-    "audit_logs_7d_client_error": 4,
-    "cron_startup_timeout_7d": 4664,
-    "cron_connection_failed_7d": 13,
-    "cron_statement_timeout_7d": 9,
-    "top_jobs_fail_7d": "tasks-notify-due(695) dispatch-scheduled-messages(692) talkx-scheduler-1min(681) ai-jobs-tick-1min(678)",
-    "edge_logs_7d": "NAO_VERIFICADO — requer Supabase Logs/Logflare"
-  },
-  "secao9_auth_storage_realtime_chat_em": "2026-10-31T00:22Z",
-  "secao9_auth_storage_realtime_chat_evidencia": {
-    "buckets": 9,
-    "buckets_publicos": ["audio-memes","custom-emojis","stickers"],
-    "storage_policies": 34,
-    "storage_anon_policies": 0,
-    "realtime_tables": 37,
-    "realtime_contacts_rls_off": "contacts em Realtime com RLS desligado — ALTO",
-    "realtime_whatsapp_connections": "instance_token_secret_id no realtime — MEDIO (so ID, nao valor)",
-    "auth_config": "NAO_VERIFICADO — requer dashboard Supabase Authentication settings"
-  },
-  "secao5_performance_chat_em": "2026-10-31T00:20Z",
-  "secao5_performance_chat_evidencia": {
-    "top5_total_exec": "WAL(42ms) mcp_exec(1536ms 41079blks) inbox_unread(1068ms) RPC_generico(2519ms) talkx_tick(2427ms 4383blks)",
-    "user_roles_seq_scan": 2967007,
-    "user_roles_idx_scan": 1558,
-    "email_threads_seq_scan": 1568,
-    "profiles_seq_scan": 42689,
-    "idx_sem_uso": 637,
-    "idx_duplicados": 0
-  },
-  "secao4_integridade_chat_em": "2026-10-31T00:18Z",
-  "secao4_integridade_chat_evidencia": {
-    "fks_sem_indice": 32,
-    "tabelas_sem_pk": 1,
-    "tabelas_sem_pk_lista": ["_zapp_fn_before (tabela interna de migration)"],
-    "sequences_perto_limite": 0,
-    "sequences_max_pct": "0.00% — sem risco"
-  },
-  "secao3_seguranca_chat_em": "2026-10-31T00:15Z",
-  "secao3_seguranca_chat_evidencia": {
-    "rls_off_tabelas": ["agent_stats","contacts","csat_surveys","global_settings","team_messages","user_settings","webauthn_challenges"],
-    "using_true_authenticated": 28,
-    "using_true_service_role": 8,
-    "anon_insert_grants": 1,
-    "anon_truncate_grants": 97,
-    "anon_total_write_grants": 98,
-    "update_sem_with_check": 39,
-    "security_definer_fns": 399,
-    "anon_secdef_execute": 0,
-    "views_sem_rls": "channel_connections_safe e gmail_accounts_safe expõem dados sensíveis sem filtro adicional",
-    "talkx_campaign_segments_roles_public": "5 policies com roles={public} sem JWT formal — achado S03 confirmado"
-  },
-  "secao2_drift_chat_em": "2026-10-31T00:12Z",
-  "secao2_drift_chat_evidencia": {
-    "migrations_repo": 1064,
-    "migrations_banco": 1064,
-    "paridade": "OK",
-    "statements_null": 65,
-    "observacao": "65 migrations sem SQL real no ledger — drift de qualidade, nao de schema"
-  },
-  "secao1_inventario_chat_em": "2026-10-31T00:10Z",
-  "secao1_inventario_chat_evidencia": {
-    "tables": 204, "views": 13, "functions": 478, "triggers": 161,
-    "enums": 10, "sequences": 4, "extensions": 8, "policies": 505,
-    "indexes": 723, "crons": 24, "buckets": 9, "migrations": 1064,
-    "buckets_publicos": ["audio-memes","custom-emojis","stickers"],
-    "realtime_tables": 37,
-    "extensoes": "pg_cron 1.6.4, pg_net 0.20.4, pg_stat_statements 1.11, pg_trgm 1.6, pgcrypto 1.3, plpgsql 1.0, supabase_vault 0.3.1, uuid-ossp 1.1"
-  },
   "secao8_per_edge_capturado_em": "2026-10-31T00:05Z",
-  "secao8_per_edge_evidencia": {
-    "total_no_repo": 85,
-    "total_verify_jwt_false": 15,
-    "verify_jwt_false_list": ["evolution-webhook","whatsapp-webhook","gmail-webhook","gmail-cron-sync","connection-health-check","batch-fetch-avatars","elevenlabs-webhook","public-api","auth-login","message-delivery","crm-integration","csp-report","talkx-link","searchbox-budget-alert","sync-call-records"],
-    "public_api_status": "DESATIVADA — retorna 410 Gone",
-    "talkx_link_legacy_date": "DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL='2026-10-20' expirou — assinatura legada bloqueada por design",
-    "message_delivery_status": "verify_jwt=false, auth nao auditada completamente — NAO_VERIFICADO",
-    "nao_verificado_logs_7d": "Requer Supabase Logs/Logflare — inacessivel via MCP"
-  },
+  "secao8_per_edge_evidencia": {"total_no_repo":85,"total_verify_jwt_false":15,"verify_jwt_false_list":["evolution-webhook","whatsapp-webhook","gmail-webhook","gmail-cron-sync","connection-health-check","batch-fetch-avatars","elevenlabs-webhook","public-api","auth-login","message-delivery","crm-integration","csp-report","talkx-link","searchbox-budget-alert","sync-call-records"],"public_api_status":"DESATIVADA — retorna 410 Gone","talkx_link_legacy_date":"DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL='2026-10-20' expirou — assinatura legada bloqueada por design","message_delivery_status":"verify_jwt=false, auth nao auditada completamente — NAO_VERIFICADO","nao_verificado_logs_7d":"Requer Supabase Logs/Logflare — inacessivel via MCP"},
   "secao7_per_function_capturado_em": "2026-10-31T00:02Z",
-  "secao7_per_function_evidencia": {
-    "mcp_exec_grants": "EXECUTE apenas postgres+service_role — 0 grants anon/PUBLIC — CORRETO",
-    "is_admin_or_supervisor_grants": "EXECUTE authenticated+postgres+service_role — causa recursao RLS S05-001",
-    "app_bootstrap_grants": "EXECUTE authenticated+postgres — OK, search_path fixo",
-    "search_contacts_grants": "EXECUTE authenticated+postgres+service_role — OK",
-    "talkx_audience_query_grants": "EXECUTE postgres+service_role — OK",
-    "trigger_talkx_engine_tick": "SECURITY DEFINER, 165460 blks/call — CRITICO S05-002",
-    "anon_execute_secdef_fns": "0 — nenhuma funcao SECURITY DEFINER exposta a anon",
-    "decrypt_gmail_token": "NAO e SECURITY DEFINER — le vault.decrypted_secret diretamente"
-  },
+  "secao7_per_function_evidencia": {"mcp_exec_grants":"EXECUTE apenas postgres+service_role — 0 grants anon/PUBLIC — CORRETO","is_admin_or_supervisor_grants":"EXECUTE authenticated+postgres+service_role — causa recursao RLS S05-001","app_bootstrap_grants":"EXECUTE authenticated+postgres — OK, search_path fixo","search_contacts_grants":"EXECUTE authenticated+postgres+service_role — OK","talkx_audience_query_grants":"EXECUTE postgres+service_role — OK","trigger_talkx_engine_tick":"SECURITY DEFINER, 165460 blks/call — CRITICO S05-002","anon_execute_secdef_fns":"0 — nenhuma funcao SECURITY DEFINER exposta a anon","decrypt_gmail_token":"NAO e SECURITY DEFINER — le vault.decrypted_secret diretamente"},
   "explain_top20_executado_em": "2026-10-30T23:35Z",
   "explain_evidencias": {
     "rank1_realtime_wal": "Nested Loop catalog syscache — cost 0 blks; system query",

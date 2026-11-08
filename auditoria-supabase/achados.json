@@ -15,7 +15,8 @@
       "correcao-2026-11-01T21:22Z (ZW-0002: reclassificado CRITICO→ALTO — indexes user_roles_user_id_role_key e idx_user_roles_user_id EXISTEM em prod; seq_scan dominante por tabela pequena, não ausência de índice; proposta inválida removida. ZW-0003: reclassificado CRITICO→MEDIO — sem grant anon em talkx_campaign_segments confirmado em prod; roles=public no catálogo não equivale a acesso anon. Contagem corrigida CRITICO:2→0 ALTO:3→4 MEDIO:15→17)",
       "reverificacao-2026-11-08T21:30Z (ZW-0002 reclassificado ALTO→BAIXO: reltuples=4/relpages=1 confirmado, seq scan é ótimo, hipótese de causalidade com ZW-0004 refutada; ZW-0004: padrão de 24h mudou de crescente para 1 incidente isolado simultâneo, causa raiz ainda não identificada — contagem ALTO:4→3)",
       "reverificacao-2026-11-08T22:48Z (ZW-0007: update_sem_withcheck 42->29 em producao, reducao nao vinda de PR; ZW-0009: confirmado sem guarda de timeout, inalterado)",
-      "correcao-2026-11-08T23:05Z (_meta.contagem.MEDIO corrigido 17->16 — nao batia com a contagem real do array achados, que sempre somou 47; nenhum achado alterado, so o contador)"
+      "correcao-2026-11-08T23:05Z (_meta.contagem.MEDIO corrigido 17->16 — nao batia com a contagem real do array achados, que sempre somou 47; nenhum achado alterado, so o contador)",
+      "reverificacao-2026-11-08T23:15Z (MEDIOs do top10 reexecutados em producao via db_query: ZW-0003 inalterado; ZW-0012 null_statements 65->64; ZW-0013 ACL mcp_exec inalterada; ZW-0015 CORRIGIDO - apenas 2 das 7 funcoes de credenciais tem EXECUTE para authenticated, nao todas 7; ZW-0016 inalterado count=4; ZW-0017 RESOLVIDO - todas as 13 views de public agora tem security_invoker; ZW-0018 inalterado count=2 - contagem MEDIO:16->15 RESOLVIDO:11->12)"
     ],
     "guardas_A14": {
       "G1_database_identity": "NÃO VERIFICADO — módulo compartilhado (database-identity.mjs), não standalone; usado internamente por check-manifest-fresh e check-catalog-fresh; requer DESTINO_URL (secret indisponível no container)",
@@ -34,10 +35,10 @@
     "contagem": {
       "CRITICO": 0,
       "ALTO": 3,
-      "MEDIO": 16,
+      "MEDIO": 15,
       "BAIXO": 4,
       "INFO": 13,
-      "RESOLVIDO": 11
+      "RESOLVIDO": 12
     }
   },
   "achados": [
@@ -82,7 +83,7 @@
       "objeto": "public.talkx_campaign_segments (5 policies com roles=public no catálogo)",
       "guarda": "nenhuma",
       "estado": "aberto",
-      "evidencia": "policies_role_public=5 — 2026-11-01T18:19Z; grants confirmados em prod 2026-11-01T21:20Z: apenas authenticated/postgres/service_role — NÃO há grant para anon; roles=public no catálogo de policies não equivale a acesso anônimo (tabela sem grant anon)",
+      "evidencia": "policies_role_public=5 — 2026-11-01T18:19Z; grants confirmados em prod 2026-11-01T21:20Z: apenas authenticated/postgres/service_role — NÃO há grant para anon; roles=public no catálogo de policies não equivale a acesso anônimo (tabela sem grant anon); reverificação 2026-11-08T23:12Z: policies_role_public=5 (inalterado), anon_grants=0 (inalterado) — achado confirmado sem alteração",
       "pr": null,
       "impacto": "Policies sem restricao de ownership permitem que qualquer usuário AUTENTICADO leia/modifique segmentos de outro tenant; acesso ANÔNIMO descartado (sem grant anon na tabela). Reclassificado de CRÍTICO para MÉDIO.",
       "classe": "APROVAÇÃO",
@@ -223,7 +224,7 @@
       "objeto": "supabase_migrations.schema_migrations (65 versões com statements=NULL)",
       "guarda": "verify-ledger-statements",
       "estado": "aberto",
-      "evidencia": "count(null_statements)=65 — invariante desde 31/10 (2026-11-01T17:03Z)",
+      "evidencia": "count(null_statements)=65 — invariante desde 31/10 (2026-11-01T17:03Z); reverificação 2026-11-08T23:12Z: count=64 — reduziu 1, migration reconciliada por outra sessão; 64 permanecem sem SQL real no ledger",
       "pr": null,
       "impacto": "65 migrations no ledger sem SQL real — replay local falha e drift não pode ser revertido automaticamente",
       "classe": "APROVAÇÃO",
@@ -238,7 +239,7 @@
       "objeto": "public.mcp_exec / mcp_exec_many (SECURITY DEFINER, uso em produção)",
       "guarda": "check-mcp-exec-acl.sql",
       "estado": "aberto",
-      "evidencia": "3º maior consumidor de blocos (479993 blks/call, 2026-10-30T22:50Z); ACL só service_role — correto",
+      "evidencia": "3º maior consumidor de blocos (479993 blks/call, 2026-10-30T22:50Z); ACL só service_role — correto; reverificação 2026-11-08T23:12Z: count(grantee NOT IN ('postgres','service_role')) em mcp_exec/mcp_exec_many = 0 — ACL confirmada inalterada",
       "pr": null,
       "impacto": "MCP executa SQL arbitrário com service_role em produção; risco alto se ACL for alterada",
       "classe": "APROVAÇÃO",
@@ -267,10 +268,10 @@
       "tipo": "SEGURANÇA",
       "objeto": "7 funções de credenciais SECURITY DEFINER (get_channel_credentials, get_gmail_tokens...)",
       "guarda": "check-secdef-public-execute.sql",
-      "estado": "aberto",
-      "evidencia": "EXECUTE authenticated+service_role; leem vault.decrypted_secret sem search_path fix extra (2026-10-31T04:32Z)",
+      "estado": "aberto_reverificado",
+      "evidencia": "EXECUTE authenticated+service_role; leem vault.decrypted_secret sem search_path fix extra (2026-10-31T04:32Z); reverificação 2026-11-08T23:14Z via information_schema.role_routine_grants: só 2 das 7 funções têm EXECUTE para 'authenticated' (get_channel_credentials_safe e set_voip_profile_credentials) — get_channel_credentials, get_gmail_tokens, get_instance_token, get_voip_profile_credentials e store_gmail_tokens estão restritas a postgres+service_role (NÃO authenticated); claim original de que todas as 7 tinham grant authenticated estava desatualizado/incorreto",
       "pr": null,
-      "impacto": "Credenciais de WhatsApp, Gmail, VoIP acessíveis para qualquer usuário authenticated sem checagem de departamento",
+      "impacto": "REDUZIDO (2026-11-08): apenas get_channel_credentials_safe (já é a versão 'safe', por design) e set_voip_profile_credentials são acessíveis para qualquer authenticated; as 5 funções de leitura de credenciais cruas (gmail tokens, instance token, voip profile) já estão restritas a service_role — exposição real é menor que o achado original descrevia",
       "classe": "APROVAÇÃO",
       "esforco": "M"
     },
@@ -282,8 +283,8 @@
       "tipo": "SEGURANÇA",
       "objeto": "4 funções com SQL dinâmico + EXCEPTION WHEN OTHERS THEN NULL",
       "guarda": "nenhuma",
-      "estado": "aberto",
-      "evidencia": "confirmado em sessão 2026-10-31T04:36Z",
+      "estado": "aberto_reverificado",
+      "evidencia": "confirmado em sessão 2026-10-31T04:36Z; reverificação 2026-11-08T23:12Z via pg_proc (prosrc ILIKE '%EXECUTE%' AND '%WHEN OTHERS%' em SECURITY DEFINER de public): count=4 — inalterado",
       "pr": null,
       "impacto": "Erros de SQL dinâmico engolidos silenciosamente; dificulta diagnóstico de problemas",
       "classe": "APROVAÇÃO",
@@ -293,16 +294,17 @@
       "id": "ZW-0017",
       "origem": "S03-007",
       "secao": "A.3",
-      "severidade": "MEDIO",
+      "severidade": "RESOLVIDO",
       "tipo": "SEGURANÇA",
       "objeto": "12 views sem security_invoker (channel_connections_safe, gmail_accounts_safe...)",
       "guarda": "nenhuma",
-      "estado": "aberto",
-      "evidencia": "pg_views sem security_invoker confirmado 2026-10-31T04:32Z",
+      "estado": "resolvido_reverificado",
+      "resolucao": "todas as 13 views de public agora têm security_invoker definido (12 'security_invoker=true', 1 'security_invoker=on' em catalog_send_stats) — corrigido por migration de outra sessão entre 01/11 e 08/11",
+      "evidencia": "pg_views sem security_invoker confirmado 2026-10-31T04:32Z; reverificação 2026-11-08T23:15Z via pg_class.reloptions (todas as 13 views de public): 100% têm 'security_invoker=true' ou 'security_invoker=on' — 0 views sem a opção. Lista: catalog_send_stats, channel_connections_safe, gmail_accounts_safe, password_reset_requests_safe, profiles_public, searchbox_usage_daily, talkx_campaign_metrics, talkx_campaign_optouts, talkx_engine_health, team_message_read_state, whatsapp_connections_agent, whatsapp_connections_public, whatsapp_connections_safe",
       "pr": null,
-      "impacto": "Views com SECURITY DEFINER implícito podem expor mais dados do que o caller deveria ver",
+      "impacto": "RESOLVIDO — nenhuma view de public roda mais com SECURITY DEFINER implícito do dono; todas respeitam RLS do caller",
       "classe": "APROVAÇÃO",
-      "esforco": "M"
+      "esforco": "NENHUM"
     },
     {
       "id": "ZW-0018",
@@ -313,7 +315,7 @@
       "objeto": "public.e2e_cleanup / e2e_cleanup_conversation_closures (SECURITY DEFINER em produção)",
       "guarda": "nenhuma",
       "estado": "aberto",
-      "evidencia": "prosecdef=true em produção (2026-10-31T04:36Z)",
+      "evidencia": "prosecdef=true em produção (2026-10-31T04:36Z); reverificação 2026-11-08T23:12Z: count(prosecdef=true) para e2e_cleanup+e2e_cleanup_conversation_closures = 2 — inalterado, ambas ainda presentes e SECURITY DEFINER em produção",
       "pr": null,
       "impacto": "Funções de limpeza de testes podem ser chamadas em produção acidentalmente e apagar dados reais",
       "classe": "APROVAÇÃO",
