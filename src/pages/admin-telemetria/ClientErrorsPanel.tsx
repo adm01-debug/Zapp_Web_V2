@@ -170,7 +170,7 @@ export function ClientErrorsPanel() {
                       <td className="p-3 text-xs truncate max-w-[420px]" title={g.message}>{g.message}</td>
                       <td className="p-3 text-xs text-muted-foreground truncate max-w-[200px]" title={g.route}>{g.route}</td>
                       <td className="p-3 text-right">
-                        <Badge variant="outline" className="text-[10px] tabular-nums">{g.count}</Badge>
+                        <Badge variant="outline" className="text-3xs tabular-nums">{g.count}</Badge>
                       </td>
                       <td className="p-3 text-right text-xs tabular-nums text-muted-foreground">{g.sessions || '-'}</td>
                       <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">
