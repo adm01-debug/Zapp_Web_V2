@@ -96,7 +96,7 @@ export async function resolveScope(scope, manifestPath, readFileImpl = readFile)
 function pathnamePredicate(slug) {
   const pathname = `/functions/v1/${validateSlug(slug)}`;
   return `(log_attributes['request.pathname'] = '${pathname}' OR ` +
-    `startsWith(log_attributes['request.pathname'], '${pathname}/'))`;
+    `startsWith(log_attributes['request.pathname'], '${pathname}/'))` ;
 }
 
 export function buildLogsSql(slugs) {
@@ -203,9 +203,6 @@ export async function runHealthCheck(args, {
   logger = console,
   readFileImpl = readFile,
 } = {}) {
-  const token = env.SUPABASE_ACCESS_TOKEN;
-  if (typeof token !== 'string' || !token.trim()) throw new Error('SUPABASE_ACCESS_TOKEN ausente');
-
   const slugs = await resolveScope(args.scope, args.manifestPath, readFileImpl);
   const scopeName = args.scope || 'all';
 
@@ -214,6 +211,9 @@ export async function runHealthCheck(args, {
     logger.log('[health-check] Dry run: sem espera e sem chamada à API.');
     return { status: 'dry-run' };
   }
+
+  const token = env.SUPABASE_ACCESS_TOKEN;
+  if (typeof token !== 'string' || !token.trim()) throw new Error('SUPABASE_ACCESS_TOKEN ausente');
 
   if (args.waitMs > 0) {
     logger.log(`[health-check] Aguardando ${Math.round(args.waitMs / 60_000)} min para os logs estabilizarem…`);
@@ -259,7 +259,14 @@ export async function runHealthCheck(args, {
 }
 
 export async function main(argv = process.argv.slice(2), dependencies) {
-  const outcome = await runHealthCheck(parseArgs(argv), dependencies);
+  let args;
+  try {
+    args = parseArgs(argv);
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
+  const outcome = await runHealthCheck(args, dependencies);
   if (outcome.status === 'failed') process.exitCode = 1;
   return outcome;
 }

@@ -804,5 +804,5 @@ export const runSuite = options => runLogin({ ...options, scope: 'suite' });
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv[2] === 'login' && process.argv.length === 4) process.exitCode = await runLogin({ outputDirectory: process.argv[3] });
   else if (process.argv[2] === 'suite' && process.argv.length === 5) process.exitCode = await runSuite({ group: process.argv[3], outputDirectory: process.argv[4] });
-  else throw new Error('usage: run.mjs login <output-directory> | suite <group> <output-directory>');
+  else { process.stderr.write('usage: run.mjs login <output-directory> | suite <group> <output-directory>\n'); process.exit(2); }
 }

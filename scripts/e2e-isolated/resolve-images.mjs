@@ -74,7 +74,7 @@ export function resolveImages(lock, command = spawnSync) {
 }
 
 export function main(args = process.argv.slice(2)) {
-  if (args.length !== 1) throw new Error('usage: resolve-images.mjs <report.json>');
+  if (args.length !== 1) { process.stderr.write('usage: resolve-images.mjs <report.json>\n'); process.exit(2); }
   const destination = resolve(args[0]);
   mkdirSync(dirname(destination), { recursive: true });
   let report;

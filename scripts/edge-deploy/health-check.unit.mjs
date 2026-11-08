@@ -223,6 +223,12 @@ test('runHealthCheck só degrada falhas transitórias e exige token', async () =
   );
 });
 
+test('runHealthCheck dry-run não exige SUPABASE_ACCESS_TOKEN', async () => {
+  const dryArgs = { ...baseArgs, dryRun: true, waitMs: 0 };
+  const outcome = await runHealthCheck(dryArgs, { env: {}, readFileImpl, logger: silentLogger });
+  assert.equal(outcome.status, 'dry-run');
+});
+
 test('runHealthCheck aplica limiar e não espera quando waitMs é zero', async () => {
   let slept = false;
   const outcome = await runHealthCheck(baseArgs, {
