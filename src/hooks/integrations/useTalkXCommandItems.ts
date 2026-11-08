@@ -33,7 +33,7 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void, open?:
   const enabled = !!open;
 
   const campaignsQuery = useQuery({
-    queryKey: ['talkx-campaigns'],
+    queryKey: ['talkx-campaigns-palette'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_campaigns')
@@ -48,7 +48,7 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void, open?:
   });
 
   const segmentsQuery = useQuery({
-    queryKey: ['talkx-segments'],
+    queryKey: ['talkx-segments-palette'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_segments')
@@ -63,7 +63,7 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void, open?:
   });
 
   const templatesQuery = useQuery({
-    queryKey: ['talkx-templates'],
+    queryKey: ['talkx-templates-palette'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_templates')
