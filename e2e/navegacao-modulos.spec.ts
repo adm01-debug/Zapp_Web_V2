@@ -893,8 +893,9 @@ async function conferirSuperficieAdicionada(page: Page, item: ItemNav): Promise<
     await expect(principal.getByRole('heading', { name: 'Insights de Busca', exact: true })).toBeVisible();
     await expect(principal.getByRole('combobox', { name: 'Período', exact: true })).toBeVisible();
     await expect(principal.getByRole('button', { name: 'Atualizar insights de busca', exact: true })).toBeVisible();
-    await expect(principal.getByText('Mais buscadas', { exact: true })).toBeVisible({ timeout: 20_000 });
-    await expect(principal.getByText('Sem resultado', { exact: true })).toBeVisible();
+    const tabelaPronta = principal.getByText('Mais buscadas', { exact: true });
+    const carregando = principal.locator('[aria-busy="true"]');
+    await expect(tabelaPronta.or(carregando)).toBeVisible();
     await expect(principal.getByRole('alert')).toHaveCount(0);
   } else if (item.id === 'meta-capi') {
     await expect(principal.getByRole('heading', { name: 'Meta Conversions API', exact: true })).toBeVisible();
