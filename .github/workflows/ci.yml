@@ -175,6 +175,12 @@ jobs:
       - name: 📦 Validar manifesto de edge functions
         run: node scripts/edge-deploy/generate-manifest.mjs --check
 
+      - name: 🛡️ Exposição de erro interno nas edge functions
+        run: node scripts/ci/check-edge-error-exposure.mjs
+
+      - name: 🛡️ src/ não lê VITE_SUPABASE_URL/PUBLISHABLE_KEY via import.meta.env
+        run: node scripts/ci/check-supabase-url-import-meta.mjs
+
   edge-contracts:
     name: 🦕 Edge contracts
     runs-on: ubuntu-24.04
@@ -246,6 +252,9 @@ jobs:
 
       - name: 📏 Enforce initial bundle budget (performance-budget.json)
         run: node scripts/ci/bundle-budget.mjs
+
+      - name: 🛡️ Bundle publicado não expõe JWT service_role
+        run: node scripts/ci/check-bundle-secrets.mjs
 
       - name: 📐 Report bundle size
         run: |
@@ -336,6 +345,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: 🛡️ Pins de Action resolvem para o commit real da tag
+        run: node scripts/ci/check-workflow-pins-resolvem.mjs
 
       - name: 📦 Instalar actionlint e shellcheck (versao + sha256 pinados)
         run: |
