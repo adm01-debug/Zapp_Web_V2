@@ -14,7 +14,8 @@
       "reverificacao-2026-11-01T21:20Z (ZW-0002: seq_scan=79 idx_scan=0 pct_seq=100% AGRAVOU; ZW-0003: 5 policies roles=public CONFIRMADO; ZW-0007: update_sem_withcheck=39 CONFIRMADO; ZW-0004: 73 falhas/24h em 10 jobs AGRAVOU; vault.secrets=13 novos_30d=0; baseline: mig=1072 tab=211 pol=520 crons=24 INALTERADO)",
       "correcao-2026-11-01T21:22Z (ZW-0002: reclassificado CRITICO→ALTO — indexes user_roles_user_id_role_key e idx_user_roles_user_id EXISTEM em prod; seq_scan dominante por tabela pequena, não ausência de índice; proposta inválida removida. ZW-0003: reclassificado CRITICO→MEDIO — sem grant anon em talkx_campaign_segments confirmado em prod; roles=public no catálogo não equivale a acesso anon. Contagem corrigida CRITICO:2→0 ALTO:3→4 MEDIO:15→17)",
       "reverificacao-2026-11-08T21:30Z (ZW-0002 reclassificado ALTO→BAIXO: reltuples=4/relpages=1 confirmado, seq scan é ótimo, hipótese de causalidade com ZW-0004 refutada; ZW-0004: padrão de 24h mudou de crescente para 1 incidente isolado simultâneo, causa raiz ainda não identificada — contagem ALTO:4→3)",
-      "reverificacao-2026-11-08T22:48Z (ZW-0007: update_sem_withcheck 42->29 em producao, reducao nao vinda de PR; ZW-0009: confirmado sem guarda de timeout, inalterado)"
+      "reverificacao-2026-11-08T22:48Z (ZW-0007: update_sem_withcheck 42->29 em producao, reducao nao vinda de PR; ZW-0009: confirmado sem guarda de timeout, inalterado)",
+      "correcao-2026-11-08T23:05Z (_meta.contagem.MEDIO corrigido 17->16 — nao batia com a contagem real do array achados, que sempre somou 47; nenhum achado alterado, so o contador)"
     ],
     "guardas_A14": {
       "G1_database_identity": "NÃO VERIFICADO — módulo compartilhado (database-identity.mjs), não standalone; usado internamente por check-manifest-fresh e check-catalog-fresh; requer DESTINO_URL (secret indisponível no container)",
@@ -33,7 +34,7 @@
     "contagem": {
       "CRITICO": 0,
       "ALTO": 3,
-      "MEDIO": 17,
+      "MEDIO": 16,
       "BAIXO": 4,
       "INFO": 13,
       "RESOLVIDO": 11
