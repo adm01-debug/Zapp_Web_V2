@@ -96,14 +96,25 @@ function exigirHeader(headers, name, expected) {
 const REQUEST_TIMEOUT_MS = 15_000;
 
 async function resposta(fetchImpl, url, kind, requestTimeoutMs) {
-  const res = await fetchImpl(url, {
-    cache: 'no-store',
-    redirect: 'error',
-    signal: AbortSignal.timeout(requestTimeoutMs),
-    headers: { 'cache-control': 'no-cache', 'user-agent': 'zapp-release-targets/1' },
-  });
-  if (!res || res.status !== 200) throw new Error(`${kind} HTTP ${res?.status ?? 'sem resposta'}`);
-  return res;
+  // AbortSignal.timeout() usa timer unref'd; usar AbortController+setTimeout (ref'd)
+  // garante que o temporizador mantenha o event loop vivo até disparar.
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(new DOMException('The operation timed out', 'TimeoutError')),
+    requestTimeoutMs,
+  );
+  try {
+    const res = await fetchImpl(url, {
+      cache: 'no-store',
+      redirect: 'error',
+      signal: controller.signal,
+      headers: { 'cache-control': 'no-cache', 'user-agent': 'zapp-release-targets/1' },
+    });
+    if (!res || res.status !== 200) throw new Error(`${kind} HTTP ${res?.status ?? 'sem resposta'}`);
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeoutMs }) {
