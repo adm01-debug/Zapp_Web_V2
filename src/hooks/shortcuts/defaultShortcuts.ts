@@ -22,8 +22,6 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   // `M` local do player (`useVolumeRocker`, E16): o registry captura na janela e
   // faz `stopPropagation`, então o toque chega uma vez só.
   { id: 'audio-toggle-mute', name: 'Silenciar áudio em reprodução', description: 'Silencia ou retoma o áudio que está tocando', defaultKey: 'm', defaultModifiers: {}, category: 'chat' },
-  // CV-056 — painel flutuante RADAR Fase 6
-  { id: 'radar-toggle', name: 'Painel RADAR', description: 'Abre ou fecha o painel RADAR de análise de vendas', defaultKey: 'R', defaultModifiers: { ctrlKey: true, shiftKey: true }, category: 'chat' },
   // Navigation shortcuts
   { id: 'global-search', name: 'Busca global', description: 'Abre a busca global', defaultKey: 'k', defaultModifiers: { ctrlKey: true }, category: 'navigation' },
   { id: 'next-conversation', name: 'Próxima conversa', description: 'Navega para a próxima conversa', defaultKey: 'ArrowDown', defaultModifiers: { altKey: true }, category: 'navigation' },
@@ -93,7 +91,6 @@ export const SHORTCUTS_SOMENTE_INFORMATIVOS: readonly string[] = [
   'focus-input',
   'emoji-picker',
   'attach-file',
-  'radar-toggle',
   // navegação
   'next-conversation',
   'prev-conversation',
