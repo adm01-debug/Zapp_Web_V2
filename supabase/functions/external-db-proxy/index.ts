@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1'
+import { createClient } from 'npm:@supabase/supabase-js@2.87.1'
 import { getCorsHeaders, handleCors, internalErrorResponse } from '../_shared/validation.ts'
 
 const READ_TABLES = new Set(['evolution_contacts', 'evolution_messages', 'media_quarantine'])
@@ -16,16 +16,13 @@ function validIdentifier(value: unknown): value is string {
   return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value)
 }
 
-// PostgREST/Postgres error codes that signal "external DB not properly wired"
-// rather than a real query problem. When these appear, callers should stop
-// polling silently instead of showing a red network error in DevTools.
 function isInfraError(err: { code?: string; message?: string }) {
   const code = err.code ?? ''
   const msg = (err.message ?? '').toLowerCase()
   return (
-    code === 'PGRST116' ||       // PostgREST: relation not found in schema cache
-    code === '42P01' ||          // PostgreSQL: undefined table
-    code === '42501' ||          // PostgreSQL: permission denied (misconfigured key)
+    code === 'PGRST116' ||
+    code === '42P01' ||
+    code === '42501' ||
     msg.includes('schema cache') ||
     msg.includes('does not exist') ||
     msg.includes('permission denied')
@@ -58,16 +55,9 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
       return json({ error: 'Unauthorized' }, 401, corsHeaders)
     }
 
-    // Dedicated secret names (not EXTERNAL_SUPABASE_*): that prefix is
-    // owned by crm-integration's deploy-functions.yml preflight, which
-    // overwrites EXTERNAL_SUPABASE_URL on every crm-integration/full deploy.
-    // Sharing it here silently pointed this proxy at the CRM project while
-    // still using the self-hosted (Evolution VPS) anon key, producing 502s.
     const url = Deno.env.get('EVOLUTION_VPS_SUPABASE_URL')
     const key = Deno.env.get('EVOLUTION_VPS_SUPABASE_ANON_KEY')
 
-    // If external DB is not configured, return empty result gracefully
-    // (avoids 503 errors that break the UI when the integration is optional)
     if (!url || !key || url.includes('PLACEHOLDER') || !url.startsWith('https://')) {
       return json({ data: [], count: 0, notConfigured: true }, 200, corsHeaders)
     }
@@ -88,18 +78,11 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
       return json({ error: 'Table is not allowed' }, 400, corsHeaders)
     }
 
-    // SEC-EDGE_FUNCTIONS-02 (P0): a credencial externa é do SERVIDOR (anon key
-    // da VPS Evolution, fora da RLS local), então TODA operação — leitura
-    // inclusive — exige papel. A checagem saiu de dentro do `if (action ===
-    // 'update')` e passou a valer nas duas pontas. Nenhum consumidor legítimo
-    // não-admin foi confirmado (ver relato); o único caminho de `evolution_*`
-    // é um hook legado desligado. Falha no RPC nega (fecha).
     const { data: isAdminOrSupervisor, error: roleError } = await canonical.rpc('is_admin_or_supervisor', {
       _user_id: userData.user.id,
     })
     const canManageExternalDb = !roleError && isAdminOrSupervisor === true
 
-    // Mutation: update
     if (action === 'update') {
       if (table !== 'media_quarantine' || !data || typeof data !== 'object' || Array.isArray(data) ||
           !match || typeof match !== 'object' || Array.isArray(match)) {
@@ -118,7 +101,6 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
       let q = ext.from(table).update(update)
       for (const [k, v] of Object.entries(matcher)) q = q.eq(k, v as string)
       const { data: result, error } = await q.select()
-      // Z018: não expor código interno de erro PostgREST/Postgres ao cliente.
       if (error) return json({ error: 'External update failed' }, 502, corsHeaders)
       return json({ data: result }, 200, corsHeaders)
     }
@@ -130,7 +112,6 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
     if (typeof select !== 'undefined' && typeof select !== 'string') {
       return json({ error: 'Invalid select parameter' }, 400, corsHeaders)
     }
-    // Z018: rejeitar `select` com `(` previne injeção de função PostgREST.
     if (typeof select === 'string' && select.includes('(')) {
       return json({ error: 'Invalid select parameter' }, 400, corsHeaders)
     }
@@ -138,7 +119,6 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
       return json({ error: 'Invalid count mode' }, 400, corsHeaders)
     }
 
-    // Mesmo papel exigido para LEITURA: sem ele, nada é montado nem consultado.
     if (!canManageExternalDb) return json({ error: 'Forbidden' }, 403, corsHeaders)
 
     let query = ext.from(table).select((select as string) || '*', {
@@ -152,9 +132,6 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
         if (!validIdentifier(f.column) || typeof f.operator !== 'string' || !FILTER_OPERATORS.has(f.operator)) {
           return json({ error: 'Invalid filter' }, 400, corsHeaders)
         }
-        // PostgREST 'in' requires the value wrapped in parentheses:
-        // .filter(col, 'in', '(a,b)'). A raw array serializes to 'a,b' and the
-        // upstream DB rejects it with 400 "failed to parse filter (in.a,b)".
         const value = f.operator === 'in' && Array.isArray(f.value)
           ? `(${f.value.join(',')})`
           : f.value
@@ -182,13 +159,9 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
     const { data: queryData, error: queryError, count } = await query
 
     if (queryError) {
-      // Infra-level errors (table/schema missing, permission denied on key) →
-      // treat as "not configured" so the browser DevTools stay clean and callers
-      // disable polling silently.
       if (isInfraError(queryError)) {
         return json({ data: [], count: 0, notConfigured: true }, 200, corsHeaders)
       }
-      // Z018: não expor código interno de erro PostgREST/Postgres ao cliente.
       return json({ error: 'External query failed' }, 502, corsHeaders)
     }
 
@@ -198,8 +171,6 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
     }, 200, corsHeaders)
 
   } catch (error) {
-    // Z020: usar internalErrorResponse — isola logServerError da construção da
-    // Response (CodeQL js/stack-trace-exposure) e alinha ao padrão compartilhado.
     return internalErrorResponse(error, req)
   }
 }
