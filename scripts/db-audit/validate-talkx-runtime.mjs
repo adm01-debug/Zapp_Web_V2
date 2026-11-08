@@ -4,7 +4,13 @@ if (!process.env.RUNTIME_JSON) {
   process.stderr.write('Uso: RUNTIME_JSON=<json> node validate-talkx-runtime.mjs\n');
   process.exit(2);
 }
-const proof = JSON.parse(process.env.RUNTIME_JSON);
+let proof;
+try {
+  proof = JSON.parse(process.env.RUNTIME_JSON);
+} catch {
+  process.stderr.write('FALHA: RUNTIME_JSON nao e um JSON valido\n');
+  process.exit(2);
+}
 const ok = proof.server_major === 17
   && proof.database === 'postgres'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
