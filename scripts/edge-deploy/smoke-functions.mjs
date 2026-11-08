@@ -40,7 +40,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${key}`);
   }
   for (const required of ['baseUrl', 'outputPath', 'gitSha', 'runId']) {
-    if (!args[required]) throw new Error(`Missing required argument: ${required}`);
+    if (!args[required]) { process.stderr.write(`Missing required argument: ${required}\n`); process.exit(2); }
   }
   if (!Number.isInteger(args.concurrency) || args.concurrency < 1 || args.concurrency > 20) {
     throw new Error('concurrency must be an integer between 1 and 20');

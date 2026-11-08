@@ -127,7 +127,7 @@ export async function main() {
     console.error('sem ela toda rota cai em /auth e a medicao nao vale nada.');
     console.error('  npx playwright open --save-storage=.auth/state.json ' + BASE_URL);
     console.error('  STORAGE_STATE=.auth/state.json node scripts/ui-audit/width-regression.mjs');
-    process.exit(1);
+    process.exit(2);
   }
 
   const browser = await chromium.launch({
