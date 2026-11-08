@@ -21,6 +21,10 @@ const { state } = vi.hoisted(() => ({
   },
 }));
 
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: false, isLoading: false }),
+}));
+
 vi.mock('@/lib/supabaseHelpers', () => {
   const fromTable = () => {
     let selected = '';
