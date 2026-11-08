@@ -35,6 +35,8 @@ import { fillQuickReplyVariables } from './template-utils';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
 const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
+// CV-051–060 — painel flutuante RADAR Fase 6
+const RadarPhase6Panel = lazy(() => import('@/components/copilot/RadarPhase6Panel').then(m => ({ default: m.RadarPhase6Panel })));
 
 if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
   (window as Window).requestIdleCallback(() => {
@@ -523,6 +525,14 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
         messages={messages} contactId={conversation.contact.id}
         contactName={conversation.contact.name} onSelectSuggestion={(text) => handlers.setInputValue(text)}
       />
+
+      {/* CV-051–060 — painel flutuante RADAR Fase 6 */}
+      <Suspense fallback={null}>
+        <RadarPhase6Panel
+          conversationId={conversation.id}
+          contactName={conversation.contact.name}
+        />
+      </Suspense>
     </div>
   );
 }
