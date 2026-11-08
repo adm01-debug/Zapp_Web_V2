@@ -11,9 +11,10 @@ import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
  */
 const PRIORITY_STYLES: Record<Priority, string> = {
   low:    'bg-muted/60 text-muted-foreground border-border/40',
-  medium: 'bg-primary/15 text-primary border-primary/30',
-  high:   'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
-  urgent: 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  medium: 'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/30',
+  // D12: escada Baixa→Média→Alta→Urgente = muted→âmbar→vermelho(borda)→vermelho(/20+borda cheia)
+  high:   'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  urgent: 'bg-destructive/20 text-[hsl(var(--destructive-text))] border-destructive',
 };
 
 interface Props {
