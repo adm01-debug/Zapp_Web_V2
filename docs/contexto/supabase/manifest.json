@@ -7,7 +7,7 @@
       "section": "db_stats.auth"
     }
   ],
-  "gerado_em": "2026-11-08T15:58:47Z",
+  "gerado_em": "2026-11-08T17:03:55Z",
   "gerador": "scripts/supabase_snapshot/snapshot.py",
   "produtor": "supabase-snapshot"
 }
