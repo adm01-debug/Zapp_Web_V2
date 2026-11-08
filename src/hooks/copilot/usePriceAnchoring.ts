@@ -56,17 +56,20 @@ export function usePriceAnchoring({
     if (!messages?.length && !clientText) return;
     setAiLoading(true);
     setAiError(null);
-    const { data, error } = await invokeEdge<AiPriceAnchoringResult>('ai-price-anchor', {
-      body: {
-        messages: messages ?? [{ content: clientText, sender: 'contact', created_at: new Date().toISOString() }],
-      },
-    });
-    if (error || !data) {
-      setAiError(error?.message ?? 'Erro ao analisar âncora de preço');
-    } else {
-      setAiResult(data);
+    try {
+      const { data, error } = await invokeEdge<AiPriceAnchoringResult>('ai-price-anchor', {
+        body: {
+          messages: messages ?? [{ content: clientText, sender: 'contact', created_at: new Date().toISOString() }],
+        },
+      });
+      if (error || !data) {
+        setAiError(error?.message ?? 'Erro ao analisar âncora de preço');
+      } else {
+        setAiResult(data);
+      }
+    } finally {
+      setAiLoading(false);
     }
-    setAiLoading(false);
   }, [clientText, messages]);
 
   const active = aiResult ?? local;

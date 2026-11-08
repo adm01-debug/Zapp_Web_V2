@@ -35,29 +35,32 @@ export function useImageAnalysis(): ImageAnalysisResult & {
   const analyze = useCallback(async (imageUrl: string, conversationContext?: string) => {
     setIsLoading(true);
     setError(null);
-    const { data, error: invokeError } = await invokeEdge<{
-      description: string;
-      extractedText: string[];
-      dominantColors: string[];
-      keyElements: string[];
-      brandingOpportunity: string;
-      suggestedReply: string;
-      confidence: number;
-    }>('ai-multimodal-analysis', {
-      body: { imageUrl, conversationContext },
-    });
-    if (invokeError || !data) {
-      setError(invokeError?.message ?? 'Erro ao analisar imagem');
-    } else {
-      setDescription(data.description);
-      setExtractedText(data.extractedText ?? []);
-      setDominantColors(data.dominantColors ?? []);
-      setKeyElements(data.keyElements ?? []);
-      setBrandingOpportunity(data.brandingOpportunity ?? '');
-      setSuggestedReply(data.suggestedReply ?? '');
-      setConfidence(data.confidence ?? 0);
+    try {
+      const { data, error: invokeError } = await invokeEdge<{
+        description: string;
+        extractedText: string[];
+        dominantColors: string[];
+        keyElements: string[];
+        brandingOpportunity: string;
+        suggestedReply: string;
+        confidence: number;
+      }>('ai-multimodal-analysis', {
+        body: { imageUrl, conversationContext },
+      });
+      if (invokeError || !data) {
+        setError(invokeError?.message ?? 'Erro ao analisar imagem');
+      } else {
+        setDescription(data.description);
+        setExtractedText(data.extractedText ?? []);
+        setDominantColors(data.dominantColors ?? []);
+        setKeyElements(data.keyElements ?? []);
+        setBrandingOpportunity(data.brandingOpportunity ?? '');
+        setSuggestedReply(data.suggestedReply ?? '');
+        setConfidence(data.confidence ?? 0);
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   return { description, extractedText, dominantColors, keyElements, brandingOpportunity, suggestedReply, confidence, isLoading, error, analyze };

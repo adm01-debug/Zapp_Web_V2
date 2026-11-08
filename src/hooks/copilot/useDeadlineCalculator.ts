@@ -100,5 +100,6 @@ export function useDeadlineCalculator({
     }
   }, [messages, eventDate, productType]);
 
-  return { ...local, aiResult, aiLoading, aiError, analyze };
+  const active = aiResult ?? local;
+  return { ...active, aiResult, aiLoading, aiError, analyze };
 }

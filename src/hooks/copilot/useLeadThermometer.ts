@@ -61,16 +61,20 @@ export function useLeadThermometer({
     if (!messages.length) return;
     setAiLoading(true);
     setAiError(null);
-    const { data, error } = await invokeEdge<AiLeadThermometerResult>('ai-lead-temperature', {
-      body: { messages },
-    });
-    if (error || !data) {
-      setAiError(error?.message ?? 'Erro ao calcular temperatura do lead');
-    } else {
-      setAiResult(data);
+    try {
+      const { data, error } = await invokeEdge<AiLeadThermometerResult>('ai-lead-temperature', {
+        body: { messages },
+      });
+      if (error || !data) {
+        setAiError(error?.message ?? 'Erro ao calcular temperatura do lead');
+      } else {
+        setAiResult(data);
+      }
+    } finally {
+      setAiLoading(false);
     }
-    setAiLoading(false);
   }, [messages]);
 
-  return { ...local, aiResult, aiLoading, aiError, analyze };
+  const active = aiResult ?? local;
+  return { ...active, aiResult, aiLoading, aiError, analyze };
 }
