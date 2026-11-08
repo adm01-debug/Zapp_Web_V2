@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "cc73806b2ec094fcc71b44479a30391bf0879749",
+  "sha": "478f4bc49827f4e86cfebecd9f9b63a00ee1af48",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 14:53 UTC",
+  "generated_at": "2026-11-08 17:47 UTC",
   "files_total": 8156,
   "code_files": 6014,
   "code_lines": 1043784
@@ -383520,10 +383520,28 @@
   }
  },
  "git": {
-  "sha": "cc73806b2ec094fcc71b44479a30391bf0879749",
+  "sha": "478f4bc49827f4e86cfebecd9f9b63a00ee1af48",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "478f4bc",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix: elimina 20 violações tipográficas residuais (#2803)",
+    "files": [
+     "src/components/admin/AdminCRMDashboard.tsx",
+     "src/components/inbox/ConversationListSidebar.tsx",
+     "src/components/inbox/InboxEmptyChat.tsx",
+     "src/components/inbox/InboxSavedFiltersMenu.tsx",
+     "src/components/security/AuditLogDashboard.tsx",
+     "src/components/talkx/TalkXCampaignScheduled.tsx",
+     "src/components/talkx/TalkXMessagePreview.tsx",
+     "src/components/talkx/kit/ActiveCampaignIndicator.tsx",
+     "src/components/tasks/board/BoardColumn.tsx",
+     "src/pages/admin-telemetria/ClientErrorsPanel.tsx"
+    ]
+   },
    {
     "sha": "cc73806",
     "date": "2026-11-08",
@@ -383884,18 +383902,6 @@
      "scripts/ia/ensaio-provisionamento.mjs",
      "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
     ]
-   },
-   {
-    "sha": "bd8091e",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "chore(db): sincroniza artefatos derivados do banco (#2769)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/grants-baseline.json",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-catalog.json"
-    ]
    }
   ],
   "hot_files": [
@@ -383928,16 +383934,44 @@
     2
    ],
    [
-    "docs/DB-INVENTORY.md",
-    2
+    "src/components/admin/AdminCRMDashboard.tsx",
+    1
    ],
    [
-    "src/integrations/supabase/types.ts",
-    2
+    "src/components/inbox/ConversationListSidebar.tsx",
+    1
    ],
    [
-    "supabase/schema-catalog.json",
-    2
+    "src/components/inbox/InboxEmptyChat.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/InboxSavedFiltersMenu.tsx",
+    1
+   ],
+   [
+    "src/components/security/AuditLogDashboard.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/TalkXCampaignScheduled.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/TalkXMessagePreview.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/kit/ActiveCampaignIndicator.tsx",
+    1
+   ],
+   [
+    "src/components/tasks/board/BoardColumn.tsx",
+    1
+   ],
+   [
+    "src/pages/admin-telemetria/ClientErrorsPanel.tsx",
+    1
    ],
    [
     "docs/telefonia/CAPACIDADES.md",
@@ -383949,34 +383983,6 @@
    ],
    [
     "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
-    1
-   ],
-   [
-    "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
-    1
-   ],
-   [
-    "tests/contracts/contraste-aa-componentes.contract.test.ts",
-    1
-   ],
-   [
-    "tests/contracts/contraste-balao-midia.contract.test.ts",
-    1
-   ],
-   [
-    "tests/contracts/cors-origins.contract.test.ts",
-    1
-   ],
-   [
-    "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
-    1
-   ],
-   [
-    "tests/contracts/evolution-private-storage-url.test.ts",
-    1
-   ],
-   [
-    "tests/contracts/ia055-custo-no-relatorio.test.ts",
     1
    ]
   ]

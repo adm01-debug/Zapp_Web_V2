@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "cc73806b2ec094fcc71b44479a30391bf0879749",
+  "commit": "478f4bc49827f4e86cfebecd9f9b63a00ee1af48",
   "branch": "main",
-  "data_commit": "2026-11-08T11:51:07-03:00",
+  "data_commit": "2026-11-08T14:46:00-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "478f4bc",
+    "data": "2026-11-08",
+    "assunto": "fix: elimina 20 violações tipográficas residuais (#2803)"
+   },
    {
     "sha": "cc73806",
     "data": "2026-11-08",
@@ -126,18 +131,13 @@
     "sha": "effd6b0",
     "data": "2026-11-07",
     "assunto": "chore: instruções enxutas para agentes (#2762)"
-   },
-   {
-    "sha": "51d456a",
-    "data": "2026-11-07",
-    "assunto": "chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)"
    }
   ],
-  "arquivos_mudados_7d": 1103,
+  "arquivos_mudados_7d": 1108,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 675
+    "mudancas": 678
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 257
+    "mudancas": 260
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -184,12 +184,12 @@
     "mudancas": 105
    },
    {
-    "pasta": "src/hooks/chat",
+    "pasta": "src/components/tasks",
     "mudancas": 104
    },
    {
-    "pasta": "src/components/tasks",
-    "mudancas": 103
+    "pasta": "src/hooks/chat",
+    "mudancas": 104
    },
    {
     "pasta": "src/components/settings",
