@@ -83,6 +83,8 @@ if kind=="deno":
             assert other["role"]=="authenticated" and other["sub"]=="20000000-0000-4000-8000-0000000000aa"
         assert "--frozen" in args and "--allow-net=127.0.0.1,"+parsed.hostname+":3000" in args
         assert len([arg for arg in args if arg.startswith("--allow-net")])==1
+        assert parsed.hostname in os.environ.get("NO_PROXY","").split(",")
+        assert parsed.hostname in os.environ.get("no_proxy","").split(",")
         assert Path(args[-1]).is_file()
     except Exception: out(3,"local runtime precondition mismatch")
     event("deno",file=Path(args[-1]).name,count=count,url=url,role="service_role")
@@ -248,6 +250,12 @@ function assertResult(result, passed, options = {}) {
   assert.deepEqual(result.state.foreign_removed, []);
   if (!options.allowLeftovers) assert.equal(Object.values(result.state.resources).filter(item => item.owner === 'ours').length, 0);
 }
+
+test('V02 bypassa o proxy somente para o PostgREST privado validado', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'scripts/db-audit/talkx-transition-overload-postgrest.test.sh'), 'utf8');
+  assert.match(source, /curl --noproxy '\*' -sf "http:\/\/\$pgrst_ip:3000\/"/);
+  assert.match(source, /NO_PROXY="\$pgrst_no_proxy" no_proxy="\$pgrst_no_proxy"/);
+});
 
 for (const kind of ['x034', 'gmail']) {
   test(`${kind}: Bash real confirma guardas, JWTs locais, contagem e cleanup`, () => {
