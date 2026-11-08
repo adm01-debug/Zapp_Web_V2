@@ -3,8 +3,13 @@
  *
  * Detecta tipo de objeção no texto do cliente e retorna roteiro de resposta.
  * Metodologia B·R·I·N·D·E: acolher → perguntar causa → responder com valor → checar.
+ *
+ * Funciona em dois modos:
+ *  - Local (síncrono): `useMemo` sobre OBJECTION_TRIGGERS — zero latência, sem custo.
+ *  - AI (assíncrono): `analyze()` chama `ai-objection-handler` para resultado richer.
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+import { invokeEdge } from '@/lib/invokeEdge';
 
 export type ObjeçãoType =
   | 'preco'
@@ -22,6 +27,12 @@ export interface ObjectionResult {
   isSmokescreen: boolean;
   treatmentSteps: string[];
   suggestedReply: string;
+}
+
+export interface AiObjectionResult extends ObjectionResult {
+  confidence?: number;
+  brindeLetter?: 'B' | 'R' | 'I' | 'N' | 'D' | 'E';
+  coaching?: string;
 }
 
 const OBJECTION_TRIGGERS: Record<ObjeçãoType, string[]> = {
@@ -72,21 +83,53 @@ const OBJECTION_SCRIPTS: Record<ObjeçãoType, { steps: string[]; reply: string 
 
 const SMOKESCREEN_SIGNALS = ['gostei', 'legal', 'bonito', 'quero sim', 'me interessei', 'pode ser', 'aprovamos', 'exatamente', 'perfeito', 'ótimo'];
 
-export function useObjectionHandler({ clientText }: { clientText: string }): ObjectionResult {
-  return useMemo(() => {
+export function useObjectionHandler({
+  clientText,
+  messages,
+}: {
+  clientText: string;
+  messages?: Array<{ content: string; sender: string; created_at?: string }>;
+}): ObjectionResult & {
+  aiResult: AiObjectionResult | null;
+  aiLoading: boolean;
+  aiError: string | null;
+  analyze: () => Promise<void>;
+} {
+  const [aiResult, setAiResult] = useState<AiObjectionResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const local = useMemo((): ObjectionResult => {
     if (!clientText) return { detected: false, type: null, isSmokescreen: false, treatmentSteps: [], suggestedReply: '' };
     const lower = clientText.toLowerCase();
-
     let detectedType: ObjeçãoType | null = null;
     for (const [type, triggers] of Object.entries(OBJECTION_TRIGGERS) as [ObjeçãoType, string[]][]) {
       if (triggers.some((t) => lower.includes(t))) { detectedType = type; break; }
     }
-
     if (!detectedType) return { detected: false, type: null, isSmokescreen: false, treatmentSteps: [], suggestedReply: '' };
-
     const hasBuySignal = SMOKESCREEN_SIGNALS.some((s) => lower.includes(s));
     const isSmokescreen = detectedType === 'generica' && hasBuySignal;
     const script = OBJECTION_SCRIPTS[detectedType];
     return { detected: true, type: detectedType, isSmokescreen, treatmentSteps: script.steps, suggestedReply: script.reply };
   }, [clientText]);
+
+  const analyze = useCallback(async () => {
+    if (!messages?.length && !clientText) return;
+    setAiLoading(true);
+    setAiError(null);
+    const { data, error } = await invokeEdge<AiObjectionResult>('ai-objection-handler', {
+      body: {
+        messages: messages ?? [{ content: clientText, sender: 'contact', created_at: new Date().toISOString() }],
+      },
+    });
+    if (error || !data) {
+      setAiError(error?.message ?? 'Erro ao analisar objeção');
+    } else {
+      setAiResult(data);
+    }
+    setAiLoading(false);
+  }, [clientText, messages]);
+
+  const active = aiResult ?? local;
+  return { ...active, aiResult, aiLoading, aiError, analyze };
 }

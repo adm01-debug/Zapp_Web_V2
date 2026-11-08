@@ -1,7 +1,11 @@
 /**
  * CV-083 — Calculadora de prazo real.
+ *
+ * Local: cálculo deterministico por data/produto. AI: `analyze()` chama `ai-deadline-calculator`
+ * para extração de data da conversa + mensagem contextualizada.
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+import { invokeEdge } from '@/lib/invokeEdge';
 
 export type DeadlineFeasibility = 'ok' | 'tight' | 'impossible';
 
@@ -14,12 +18,41 @@ export interface DeadlineResult {
   alternatives: string[];
 }
 
+export interface AiDeadlineResult {
+  feasibility: DeadlineFeasibility;
+  productionDays: number;
+  daysUntilEvent: number | null;
+  lastOrderDate: string | null;
+  message: string;
+  alternatives: string[];
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+}
+
 const PRODUCTION_DAYS: Record<string, number> = {
   caneta: 5, caneca: 7, camiseta: 10, squeeze: 8, mochila: 12, default: 10,
 };
 
-export function useDeadlineCalculator({ eventDate, productType = 'default', today = new Date() }: { eventDate: Date | null; productType?: string; today?: Date }): DeadlineResult {
-  return useMemo(() => {
+export function useDeadlineCalculator({
+  eventDate,
+  productType = 'default',
+  today = new Date(),
+  messages,
+}: {
+  eventDate: Date | null;
+  productType?: string;
+  today?: Date;
+  messages?: Array<{ content: string; sender: string; created_at?: string }>;
+}): DeadlineResult & {
+  aiResult: AiDeadlineResult | null;
+  aiLoading: boolean;
+  aiError: string | null;
+  analyze: () => Promise<void>;
+} {
+  const [aiResult, setAiResult] = useState<AiDeadlineResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const local = useMemo((): DeadlineResult => {
     if (!eventDate) return { feasibility: 'ok', productionDays: 0, lastOrderDate: null, daysUntilEvent: null, message: 'Informe a data do evento para calcular o prazo.', alternatives: [] };
     const prodDays = PRODUCTION_DAYS[productType] ?? PRODUCTION_DAYS.default;
     const msPerDay = 86_400_000;
@@ -44,4 +77,25 @@ export function useDeadlineCalculator({ eventDate, productType = 'default', toda
     }
     return { feasibility, productionDays: prodDays, lastOrderDate, daysUntilEvent, message, alternatives };
   }, [eventDate, productType, today]);
+
+  const analyze = useCallback(async () => {
+    if (!messages?.length) return;
+    setAiLoading(true);
+    setAiError(null);
+    const { data, error } = await invokeEdge<AiDeadlineResult>('ai-deadline-calculator', {
+      body: {
+        messages,
+        eventDate: eventDate?.toISOString().split('T')[0],
+        productType: productType !== 'default' ? productType : undefined,
+      },
+    });
+    if (error || !data) {
+      setAiError(error?.message ?? 'Erro ao calcular prazo');
+    } else {
+      setAiResult(data);
+    }
+    setAiLoading(false);
+  }, [messages, eventDate, productType]);
+
+  return { ...local, aiResult, aiLoading, aiError, analyze };
 }
