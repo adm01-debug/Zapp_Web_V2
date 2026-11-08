@@ -1,10 +1,9 @@
 /**
- * copilot-live — Edge Function stub (CV-141)
+ * copilot-live — Edge Function (CV-141)
  *
- * Recebe um tick do RADAR (contexto da conversa) e devolve insights
- * calculados no servidor. Hoje retorna resposta estática para que o
- * front possa ser deployado sem dependência de LLM; a lógica real
- * será adicionada iterativamente.
+ * Recebe um tick do RADAR (contexto da conversa), cria/atualiza a sessão
+ * do copiloto e gera uma sugestão em tempo real via generateWithRouting.
+ * Persiste o insight em copilot_insights para consumo via realtime pelo front.
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
