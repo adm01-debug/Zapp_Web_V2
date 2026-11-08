@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-08 05:52 UTC
+
+- **functions** alterado (1): `public.search_insights(p_days integer)`
+
 ## 2026-11-08 01:15 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_11`

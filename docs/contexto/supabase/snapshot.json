@@ -62343,11 +62343,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/admin/useSearchInsights.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261016013134_search_events.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
