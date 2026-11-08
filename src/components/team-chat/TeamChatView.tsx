@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTeamConversations } from '@/hooks/chat/useTeamChat';
 import { TeamConversationList } from './TeamConversationList';
 import { TeamChatPanel } from './TeamChatPanel';
@@ -20,6 +20,18 @@ export function TeamChatView() {
   // só publica a conversa em foco para o listener suprimir o alerta dela — e limpa ao
   // desmontar, para voltar a alertar quando o atendente sai da tela.
   useActiveTeamChatConversation(selectedId);
+
+  // Deep-link: se a URL tiver ?cid=<uuid>, seleciona a conversa automaticamente.
+  // Roda uma vez após as conversas carregarem — cid inválido ou não encontrado é ignorado.
+  useEffect(() => {
+    if (conversationsLoading || conversations.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get('cid');
+    if (!cid) return;
+    if (conversations.some(c => c.id === cid)) {
+      setSelectedId(cid);
+    }
+  }, [conversations, conversationsLoading]);
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
 

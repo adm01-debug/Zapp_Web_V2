@@ -240,7 +240,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           showBrowserNotification(
             `💬 Teams: ${senderName}`,
             body,
-            { tag: `team-msg-${msg.conversation_id}`, onClick: () => navigateToView('team-chat') },
+            { tag: `team-msg-${msg.conversation_id}`, onClick: () => navigateToView('team-chat', { cid: msg.conversation_id }) },
           );
 
           log.debug('Team chat notification sent for message:', msg.id);
@@ -271,7 +271,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
       if (mensagem.data?.type !== 'team_chat') return;
       if (typeof mensagem.data.conversationId !== 'string') return;
       window.focus();
-      navigateToView('team-chat');
+      navigateToView('team-chat', { cid: mensagem.data.conversationId });
     };
 
     navigator.serviceWorker.addEventListener('message', aoReceberMensagem);
