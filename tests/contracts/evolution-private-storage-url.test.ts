@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resolvePrivateBucketUrl } from '../../supabase/functions/_shared/evolution-api-proxy.ts';
 
 const ORIGIN = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
+const POLICY = { trustedOrigins: [ORIGIN], hostSuffixes: [] };
 
 describe('Evolution private storage URL resolution', () => {
   const createSignedUrl = vi.fn();
@@ -30,7 +31,8 @@ describe('Evolution private storage URL resolution', () => {
         supabase,
         input,
         ['audio-messages'],
-        ORIGIN
+        ORIGIN,
+        POLICY,
       );
 
       expect(from).toHaveBeenCalledWith('audio-messages');
@@ -46,8 +48,9 @@ describe('Evolution private storage URL resolution', () => {
       supabase,
       input,
       ['audio-messages'],
-      ORIGIN
-    )).resolves.toBe(input);
+      ORIGIN,
+      POLICY,
+    )).rejects.toThrow('media_url de host não permitido');
     expect(createSignedUrl).not.toHaveBeenCalled();
   });
 
@@ -58,7 +61,8 @@ describe('Evolution private storage URL resolution', () => {
       supabase,
       input,
       ['audio-messages'],
-      ORIGIN
+      ORIGIN,
+      POLICY,
     )).resolves.toBe(input);
     expect(createSignedUrl).not.toHaveBeenCalled();
   });
@@ -70,7 +74,8 @@ describe('Evolution private storage URL resolution', () => {
       supabase,
       input,
       ['audio-messages'],
-      ORIGIN
+      ORIGIN,
+      POLICY,
     )).resolves.toBe(input);
     expect(createSignedUrl).not.toHaveBeenCalled();
   });
@@ -83,7 +88,8 @@ describe('Evolution private storage URL resolution', () => {
       supabase,
       input,
       ['audio-messages'],
-      ORIGIN
+      ORIGIN,
+      POLICY,
     )).rejects.toThrow('signing failed');
   });
 });

@@ -99,11 +99,6 @@ const CHAVE_EN: readonly Finding[] = [
     what: 'switch de sentimento chaveado EN; recebe conversation.sentiment (pt-BR) → sempre neutro',
   },
   {
-    file: 'src/components/inbox/SentimentIndicator.tsx',
-    pattern: /export type SentimentLevel = 'positive' \| 'neutral' \| 'negative' \| 'critical';/,
-    what: 'vocabulário EN local, sem passar pelo canônico (componente sem chamadores hoje)',
-  },
-  {
     file: 'src/components/contacts/ContactAdvancedFilters.tsx',
     pattern: /value: 'positive', label: 'Positivo'/,
     what: 'opções de filtro EN, mas o prop setFilterSentiment nunca é passado → filtro morto',
@@ -117,11 +112,6 @@ const CHAVE_EN: readonly Finding[] = [
     file: 'src/components/dashboard/AIStatsWidget.tsx',
     pattern: /type SentimentType = 'positive' \| 'negative' \| 'neutral';/,
     what: 'tipo/dataKey EN (consistente com useAIStats, mas herda o contador morto)',
-  },
-  {
-    file: 'src/components/inbox/SentimentIndicator.tsx',
-    pattern: /if \(score >= 70\) return 'positive';/,
-    what: 'limiares de score → nível EN, duplicando a semântica de faixa fora do canônico',
   },
 ];
 
@@ -181,10 +171,17 @@ describe('IA-SENTIMENT-001 — consumidores do Dashboard corrigidos', () => {
     expect(src).not.toMatch(/r\.sentiment === 'negativo'/);
   });
 
-  it('SentimentHelpers classifica pela classe canônica, sem `else` → neutro', () => {
+  it('SentimentHelpers classifica o score numérico sem comparar vocabulário textual cru', () => {
     const src = stripComments(read('src/components/dashboard/SentimentHelpers.tsx'));
-    expect(src).toMatch(/classifySentiment\(/);
+    expect(src).toMatch(/score\s*>=\s*0\.3/);
+    expect(src).toMatch(/score\s*>=\s*-0\.3/);
     expect(src).not.toMatch(/a\.sentiment === 'negativo'/);
+  });
+
+  it('SentimentIndicator traduz o valor cru pelo mapeador canônico de nível', () => {
+    const src = stripComments(read('src/components/inbox/SentimentIndicator.tsx'));
+    expect(src).toMatch(/import\s*\{[^}]*sentimentLevel[^}]*\}\s*from\s*'@\/lib\/sentiment-level'/);
+    expect(src).not.toMatch(/export type SentimentLevel\s*=\s*'positive'/);
   });
 });
 
