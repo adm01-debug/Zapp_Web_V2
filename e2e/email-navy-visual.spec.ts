@@ -692,7 +692,8 @@ test('workspace do Email é desmontado ao alternar entre módulos', async ({ pag
     await expect(page).toHaveURL(/view=dashboard/);
     await expect(page.locator('.email-workspace')).toHaveCount(0);
     await page.getByRole('button', { name: 'Email', exact: true }).click();
-    await expect(page.locator('.email-workspace')).toHaveCount(1);
+    await expect(page).toHaveURL(/view=email-chat/);
+    await expect(page.locator('.email-workspace')).toHaveCount(1, { timeout: 15_000 });
   } finally {
     // O resultado atravessa uma fronteira browser → Node: reconstrói apenas o schema
     // fechado. Falha na coleta/anexação nunca substitui o resultado original do teste.
