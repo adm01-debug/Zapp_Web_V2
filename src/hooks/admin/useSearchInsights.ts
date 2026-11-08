@@ -42,16 +42,6 @@ function toCount(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-function toTerms(value: unknown): SearchInsightTerm[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((row) => {
-    if (!row || typeof row !== 'object') return [];
-    const { term, count } = row as { term?: unknown; count?: unknown };
-    if (typeof term !== 'string' || term.length === 0) return [];
-    return [{ term, count: toCount(count) }];
-  });
-}
-
 /** Normaliza a linha agregada da RPC canônica. */
 export function parseSearchInsights(raw: unknown, days: number): SearchInsights {
   const row = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
