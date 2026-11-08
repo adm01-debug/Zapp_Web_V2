@@ -182,7 +182,7 @@ const SECOES: SecaoNav[] = [
  * aba já dizia outra coisa.
  */
 const TITULO_BASE = PRODUCT_NAME;
-const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: tarefas, chatbot)';
+const PLACEHOLDER_BUSCA = 'Buscar ou digitar comando... (⌘K)';
 const MENU_DESKTOP = 'Menu de navegação principal';
 const MENU_CELULAR = 'Menu de navegação';
 const NAV_INFERIOR = 'Navegação principal';
