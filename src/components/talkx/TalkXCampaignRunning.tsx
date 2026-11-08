@@ -6,7 +6,11 @@ import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme
 import {
   ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
-import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -602,21 +606,23 @@ interface Props {
 
 export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId }: Props) {
   const {
-    campaigns, updateCampaign, updateCampaignLimits,
+    campaigns, updateCampaign, updateCampaignLimits, pauseCampaign, cancelCampaign, startCampaign,
     refetchCampaigns, isLoading: campaignsLoading, isFetching: campaignsFetching,
     isError: campaignsIsError, error: campaignsError,
   } = useTalkX();
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
-  const lifecycle = useTalkXLifecycle();
-
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
   const [activeTab, setActiveTab] = useState<RunTab>('overview');
+  const [pauseOpen, setPauseOpen] = useState(false);
+  const [pauseReason, setPauseReason] = useState('');
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [limitsOpen, setLimitsOpen] = useState(false);
   // E78/X154: limites editaveis — o rascunho do formulario vive aqui e o modal
   // (tracking/TalkXLimitsDialog) so desenha e monta o payload.
   const [limitsDraft, setLimitsDraft] = useState<TalkXLimitsDraft>(EMPTY_LIMITS_DRAFT);
   const [lSaving, setLSaving] = useState(false);
+  const [resuming, setResuming] = useState(false);
 
   // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
@@ -642,7 +648,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       // no-op silencioso (guard `if (!campaign) return`), e o modal nunca fecha.
       toast.info('Campanha concluída ou cancelada.');
       setSelectedId(null);
-      lifecycle.close();
+      setPauseOpen(false);
+      setCancelOpen(false);
       setLimitsOpen(false);
     }
   }, [campaign, sending, selectedId]);
@@ -747,6 +754,40 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     }
   }, [campaign, updateCampaignLimits]);
 
+  const handlePause = useCallback(async () => {
+    if (!campaign) return;
+    setPauseOpen(false);
+    try {
+      await pauseCampaign(campaign.id, pauseReason.trim() || undefined);
+      setPauseReason('');
+      toast.info('Campanha pausada.');
+    } catch {
+      toast.error('Erro ao pausar a campanha.');
+    }
+  }, [campaign, pauseCampaign, pauseReason]);
+
+  const handleCancel = useCallback(async () => {
+    if (!campaign) return;
+    setCancelOpen(false);
+    try {
+      await cancelCampaign(campaign.id);
+      toast.warning('Campanha cancelada.');
+      onBack();
+    } catch {
+      toast.error('Erro ao cancelar a campanha.');
+    }
+  }, [campaign, cancelCampaign, onBack]);
+
+  const handleResume = useCallback(async () => {
+    if (!campaign) return;
+    setResuming(true);
+    try {
+      // startCampaign aguarda o invoke e mostra toasts internamente
+      await startCampaign(campaign.id);
+    } catch {
+      toast.error('Erro ao retomar campanha.');
+    } finally { setResuming(false); }
+  }, [campaign, startCampaign]);
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -841,12 +882,12 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             {/* Card Ações + Configurações Atuais (X154) */}
             <TalkXCampaignActionsCard
               campaign={campaign}
-              onPause={() => lifecycle.request({ kind: 'pause', target: { id: campaign.id, name: campaign.name } })}
-              onResume={() => lifecycle.request({ kind: 'resume', target: { id: campaign.id, name: campaign.name } })}
-              onCancel={() => lifecycle.request({ kind: 'cancel', target: { id: campaign.id, name: campaign.name } })}
+              onPause={() => setPauseOpen(true)}
+              onResume={() => { void handleResume(); }}
+              onCancel={() => setCancelOpen(true)}
               onEditLimits={handleOpenLimits}
               onViewMonitor={() => onViewMonitor(campaign.id)}
-              resuming={lifecycle.isPending && lifecycle.intent?.kind === 'resume'}
+              resuming={resuming}
             />
           </>
         ) : null}
@@ -863,8 +904,43 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
         saving={lSaving}
       />
 
-      {/* Diálogo unificado de ciclo de vida (pausa / cancelar / retomar) — X051 */}
-      <TalkXLifecycleDialog controller={lifecycle} />
+      {/* Modal: Pausar */}
+      <AlertDialog open={pauseOpen} onOpenChange={setPauseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pausar campanha?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O envio será interrompido até você retomar. Mensagens em voo continuarão sendo entregues.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <textarea
+            className="w-full min-h-[64px] rounded-md border border-border bg-background px-3 py-2 text-sm"
+            placeholder="Motivo da pausa (opcional)"
+            value={pauseReason}
+            onChange={(e) => setPauseReason(e.target.value)}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePause} className="bg-warning text-warning-foreground hover:bg-warning/90">Pausar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal: Cancelar */}
+      <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar campanha?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. Os destinatários restantes não receberão a mensagem.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancel} className="bg-destructive text-white hover:bg-destructive/90">Confirmar cancelamento</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
