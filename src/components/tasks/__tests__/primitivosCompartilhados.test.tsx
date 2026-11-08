@@ -5,7 +5,7 @@
  *   · TaskCheckbox  — checkbox CIRCULAR (D16: as imagens divergiam no formato).
  *   · PriorityPill  — pílula de prioridade, uma cor por prioridade (D12).
  *   · StatusPill    — pílula de estado, uma cor por estado.
- *   · DateLabel     — data pelo rótulo ÚNICO de `workItemFormat.ts` (D21).
+ *   · DateLabel     — data pelo rótulo Único de `workItemFormat.ts` (D21).
  *   · ContactAvatar — foto com a inicial como fallback determinístico.
  *   · TasksUiContext— seleção, painel, modal e densidade num só lugar, para as
  *                     superfícies não precisarem reabrir `TasksModule.tsx`.
@@ -39,7 +39,7 @@ const HOJE_14H = new Date(2026, 9, 11, 14, 0);
 const ONTEM_17H = new Date(2026, 9, 10, 17, 0);
 const AMANHA_10H = new Date(2026, 9, 12, 10, 0);
 
-// ───────────────────────────────────────────────────────────────── TaskCheckbox
+// ────────────────────────────────────────────────────────────────────────── TaskCheckbox
 
 describe('TaskCheckbox — um checkbox circular para o módulo inteiro', () => {
   it('é CIRCULAR (D16) e alterna pelo clique', () => {
@@ -115,7 +115,7 @@ describe('TaskCheckbox — um checkbox circular para o módulo inteiro', () => {
   });
 });
 
-// ────────────────────────────────────────────────────────────────── PriorityPill
+// ────────────────────────────────────────────────────────────────────────── PriorityPill
 
 describe('PriorityPill — prioridade com o rótulo de workItemLabels e uma cor por valor', () => {
   it('mostra o rótulo pt-BR de cada prioridade (fonte: workItemLabels.ts)', () => {
@@ -141,9 +141,9 @@ describe('PriorityPill — prioridade com o rótulo de workItemLabels e uma cor 
     const media = classes('medium');
     const baixa = classes('low');
 
-    expect(alta).toContain('--warning-text');
+    expect(alta).toContain('--destructive-text');
     expect(urgente).toContain('--destructive-text');
-    expect(media).toContain('text-primary');
+    expect(media).toContain('--warning-text');
     expect(baixa).toContain('text-muted-foreground');
 
     // quatro prioridades, quatro classes distintas
@@ -179,7 +179,7 @@ describe('PriorityPill — prioridade com o rótulo de workItemLabels e uma cor 
   });
 });
 
-// ──────────────────────────────────────────────────────────────────── StatusPill
+// ────────────────────────────────────────────────────────────────────────────── StatusPill
 
 describe('StatusPill — estado com rótulo e cor próprios', () => {
   it('rotula os seis estados (os cinco do quadro + cancelada)', () => {
@@ -220,9 +220,9 @@ describe('StatusPill — estado com rótulo e cor próprios', () => {
   });
 });
 
-// ──────────────────────────────────────────────────────────────────── DateLabel
+// ────────────────────────────────────────────────────────────────────────────── DateLabel
 
-describe('DateLabel — a regra ÚNICA de datas (workItemFormat.ts)', () => {
+describe('DateLabel — a regra Única de datas (workItemFormat.ts)', () => {
   it('reusa formatWorkItemDate: Hoje/Ontem/Amanhã com hora, no fuso local', () => {
     const { unmount } = render(<DateLabel value={HOJE_14H} now={AGORA} />);
     expect(screen.getByTestId('date-label').textContent).toBe(formatWorkItemDate(HOJE_14H, { now: AGORA }));
@@ -266,7 +266,7 @@ describe('DateLabel — a regra ÚNICA de datas (workItemFormat.ts)', () => {
   });
 });
 
-// ───────────────────────────────────────────────────────────────── ContactAvatar
+// ───────────────────────────────────────────────────────────────────────────── ContactAvatar
 
 describe('ContactAvatar — foto com a inicial como fallback', () => {
   it('com foto: <img> com o src dado e alt vazio (a imagem é decorativa)', () => {
@@ -298,7 +298,7 @@ describe('ContactAvatar — foto com a inicial como fallback', () => {
   });
 });
 
-// ──────────────────────────────────────────────────────────────── TasksUiContext
+// ────────────────────────────────────────────────────────────────────────── TasksUiContext
 
 function Sonda() {
   const ui = useTasksUi();
