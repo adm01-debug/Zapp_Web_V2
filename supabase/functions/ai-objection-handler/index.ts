@@ -130,7 +130,7 @@ ${context ? `Contexto adicional: ${context}` : ''}`;
 
     log.done(200);
     return jsonResponse(
-      { ...validated.data, requestId: requestId ?? undefined },
+      { ...validated.data, treatmentSteps: validated.data.script, requestId: requestId ?? undefined },
       200,
       req,
     );

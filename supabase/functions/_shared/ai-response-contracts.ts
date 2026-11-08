@@ -178,7 +178,7 @@ export const ObjectionHandlerEnvelope = z.object({
   isSmokescreen: z.boolean(),
   confidence: z.number().min(0).max(1),
   brindeLetter: z.enum(['B', 'R', 'I', 'N', 'D', 'E']).optional(),
-  script: z.string().min(1),
+  script: z.array(z.string().min(1)).min(1),
   suggestedReply: z.string().min(1),
   coaching: z.string().optional(),
 });

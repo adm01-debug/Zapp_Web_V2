@@ -117,17 +117,20 @@ export function useObjectionHandler({
     if (!messages?.length && !clientText) return;
     setAiLoading(true);
     setAiError(null);
-    const { data, error } = await invokeEdge<AiObjectionResult>('ai-objection-handler', {
-      body: {
-        messages: messages ?? [{ content: clientText, sender: 'contact', created_at: new Date().toISOString() }],
-      },
-    });
-    if (error || !data) {
-      setAiError(error?.message ?? 'Erro ao analisar objeção');
-    } else {
-      setAiResult(data);
+    try {
+      const { data, error } = await invokeEdge<AiObjectionResult>('ai-objection-handler', {
+        body: {
+          messages: messages ?? [{ content: clientText, sender: 'contact', created_at: new Date().toISOString() }],
+        },
+      });
+      if (error || !data) {
+        setAiError(error?.message ?? 'Erro ao analisar objeção');
+      } else {
+        setAiResult(data);
+      }
+    } finally {
+      setAiLoading(false);
     }
-    setAiLoading(false);
   }, [clientText, messages]);
 
   const active = aiResult ?? local;

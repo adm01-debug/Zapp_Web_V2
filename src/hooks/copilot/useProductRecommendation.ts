@@ -49,19 +49,22 @@ export function useProductRecommendation(): ProductRecommendationResult & {
     if (!params.messages.length) return;
     setIsLoading(true);
     setError(null);
-    const { data, error: invokeError } = await invokeEdge<{
-      recommendations: ProductRecommendationItem[];
-      topPick: string;
-      upsellOpportunity: string;
-    }>('ai-product-recommendation', { body: params });
-    if (invokeError || !data) {
-      setError(invokeError?.message ?? 'Erro ao buscar recomendações');
-    } else {
-      setRecommendations(data.recommendations ?? []);
-      setTopPick(data.topPick ?? '');
-      setUpsellOpportunity(data.upsellOpportunity ?? '');
+    try {
+      const { data, error: invokeError } = await invokeEdge<{
+        recommendations: ProductRecommendationItem[];
+        topPick: string;
+        upsellOpportunity: string;
+      }>('ai-product-recommendation', { body: params });
+      if (invokeError || !data) {
+        setError(invokeError?.message ?? 'Erro ao buscar recomendações');
+      } else {
+        setRecommendations(data.recommendations ?? []);
+        setTopPick(data.topPick ?? '');
+        setUpsellOpportunity(data.upsellOpportunity ?? '');
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   return { recommendations, topPick, upsellOpportunity, isLoading, error, recommend };
