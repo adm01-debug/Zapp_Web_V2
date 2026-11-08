@@ -1405,9 +1405,9 @@
   {
    "arquivo": "scripts/ci/edge-http-harness.unit.mjs",
    "tipo": "unit",
-   "linhas": 529,
+   "linhas": 537,
    "testa": [],
-   "casos": 14
+   "casos": 15
   },
   {
    "arquivo": "scripts/ci/email-en088-medicao-docs.unit.mjs",

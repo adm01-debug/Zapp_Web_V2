@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e028887387f334021f5f6c9423b6dc26b7c8b91d",
+  "commit": "62c069a7c3f1ebfa5c12bd8ac58cf0d7d76677fa",
   "branch": "main",
-  "data_commit": "2026-11-08T04:44:31Z",
+  "data_commit": "2026-11-08T05:13:39Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "62c069a",
+    "data": "2026-11-08",
+    "assunto": "fix(db-audit): isola PostgREST privado do proxy nos contratos (#2796)"
+   },
    {
     "sha": "e028887",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "b67ef0c",
     "data": "2026-11-07",
     "assunto": "fix(db): fecha RLS multi-tenant do Copilot (#2763)"
-   },
-   {
-    "sha": "761ab3b",
-    "data": "2026-11-07",
-    "assunto": "fix: deep-link de tipo no inbox prevalece sobre preferência salva (PK-14)"
    }
   ],
-  "arquivos_mudados_7d": 1072,
+  "arquivos_mudados_7d": 1073,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -180,16 +180,16 @@
     "mudancas": 116
    },
    {
-    "pasta": "src/components/tasks",
-    "mudancas": 114
-   },
-   {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
     "mudancas": 105
    },
    {
     "pasta": "src/hooks/chat",
     "mudancas": 104
+   },
+   {
+    "pasta": "src/components/tasks",
+    "mudancas": 103
    },
    {
     "pasta": "src/components/settings",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8312,
   "arquivos_codigo": 4748,
-  "linhas_codigo": 877221,
+  "linhas_codigo": 877229,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -612,7 +612,7 @@
   },
   "scripts/ci": {
    "arquivos": 206,
-   "linhas": 42572
+   "linhas": 42580
   },
   "scripts/db-audit": {
    "arquivos": 81,

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "e028887387f334021f5f6c9423b6dc26b7c8b91d",
+  "sha": "62c069a7c3f1ebfa5c12bd8ac58cf0d7d76677fa",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 05:11 UTC",
+  "generated_at": "2026-11-08 05:36 UTC",
   "files_total": 8153,
   "code_files": 6012,
-  "code_lines": 1043400
+  "code_lines": 1043408
  },
  "version": "1.3.2",
- "facts_hash": "c629b5b98b568a50",
+ "facts_hash": "4277a53d34ec1b4a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67947,7 +67947,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 87807,
+   "lines": 87815,
    "tables": [
     "a",
     "alem_do_limite",
@@ -74161,6 +74161,9 @@
     "scripts/ai-context/cenarios.mjs",
     "src/components/errors/ErrorBoundary.tsx",
     "src/components/team-chat/TeamChatPanel.tsx"
+   ],
+   "NO_PROXY": [
+    "scripts/ci/edge-http-harness.unit.mjs"
    ],
    "PATH": [
     "scripts/ci/branch-hygiene-workflow.unit.mjs",
@@ -263740,9 +263743,10 @@
   },
   "scripts/ci/edge-http-harness.unit.mjs": {
    "path": "scripts/ci/edge-http-harness.unit.mjs",
-   "lines": 529,
+   "lines": 537,
    "env": [
     "HARNESS_TEST_STATE",
+    "NO_PROXY",
     "TALKX_ENGINE_ANON_JWT"
    ],
    "rule_comments": [
@@ -383440,10 +383444,22 @@
   }
  },
  "git": {
-  "sha": "e028887387f334021f5f6c9423b6dc26b7c8b91d",
+  "sha": "62c069a7c3f1ebfa5c12bd8ac58cf0d7d76677fa",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "62c069a",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): isola PostgREST privado do proxy nos contratos (#2796)",
+    "files": [
+     "scripts/ci/edge-http-harness.unit.mjs",
+     "scripts/db-audit/gmail-cas-postgrest.test.sh",
+     "scripts/db-audit/talkx-engine-provider.test.sh",
+     "scripts/db-audit/talkx-transition-overload-postgrest.test.sh"
+    ]
+   },
    {
     "sha": "e028887",
     "date": "2026-11-08",
@@ -383896,117 +383912,6 @@
      "supabase/migrations/20261026240300_drop_bkp_261023.sql",
      "supabase/migrations/_superseded/README.md"
     ]
-   },
-   {
-    "sha": "7f3c259",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)",
-    "files": [
-     "scripts/ci/deno-reproducibility.unit.mjs",
-     "scripts/ci/deno.json",
-     "scripts/ci/deno.lock",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/__tests__/gmail-cursor-cas-db.test.ts",
-     "supabase/functions/_shared/__tests__/gmail-history-cas-db.test.ts",
-     "supabase/functions/_shared/ai-audio-authz.ts",
-     "supabase/functions/_shared/ai-budget.ts",
-     "supabase/functions/_shared/ai-circuit.ts",
-     "supabase/functions/_shared/ai-conversation-pipeline.ts",
-     "supabase/functions/_shared/ai-feature-flags.ts",
-     "supabase/functions/_shared/ai-generate.ts",
-     "supabase/functions/_shared/ai-guards.ts",
-     "supabase/functions/_shared/ai-jobs.ts",
-     "supabase/functions/_shared/ai-response-contracts.ts",
-     "supabase/functions/_shared/ai-usage.ts",
-     "supabase/functions/_shared/deno-types.ts",
-     "supabase/functions/_shared/effect-reconcile.ts",
-     "supabase/functions/_shared/gmail-helpers.ts",
-     "supabase/functions/_shared/observability.ts",
-     "supabase/functions/_shared/rate-limit-log.ts",
-     "supabase/functions/_shared/schemas.ts",
-     "supabase/functions/_shared/validation.ts",
-     "supabase/functions/ai-auto-tag/index.ts",
-     "supabase/functions/ai-churn-analysis/index.ts",
-     "supabase/functions/ai-classify-tickets/index.ts",
-     "supabase/functions/ai-conversation-analysis/index.ts",
-     "supabase/functions/ai-conversation-summary/index.ts",
-     "supabase/functions/ai-jobs-worker/index.test.ts",
-     "supabase/functions/ai-jobs-worker/index.ts",
-     "supabase/functions/ai-kb-ingest/index.test.ts",
-     "supabase/functions/ai-kb-ingest/index.ts",
-     "supabase/functions/ai-proxy/index.ts",
-     "supabase/functions/ai-suggest-reply/index.ts",
-     "supabase/functions/ai-transcribe-audio/index.ts",
-     "supabase/functions/approve-password-reset/index.ts",
-     "supabase/functions/auth-login/index.ts",
-     "supabase/functions/auto-close-conversations/index.ts",
-     "supabase/functions/batch-fetch-avatars/index.ts",
-     "supabase/functions/bitrix-api/index.ts",
-     "supabase/functions/chatbot-l1/index.ts",
-     "supabase/functions/cleanup-rate-limit-logs/index.ts",
-     "supabase/functions/connection-health-check/index.ts",
-     "supabase/functions/copilot-live/index.ts",
-     "supabase/functions/create-user/index.ts",
-     "supabase/functions/crm-integration/index.ts",
-     "supabase/functions/detect-new-device/index.ts",
-     "supabase/functions/elevenlabs-voice-design/index.ts",
-     "supabase/functions/elevenlabs-webhook/index.ts",
-     "supabase/functions/evolution-api/index.ts",
-     "supabase/functions/evolution-sync/index.ts",
-     "supabase/functions/evolution-webhook/index.ts",
-     "supabase/functions/external-db-bridge/index.test.ts",
-     "supabase/functions/external-db-bridge/index.ts",
-     "supabase/functions/external-db-proxy/index.ts",
-     "supabase/functions/fetch-link-preview/index.ts",
-     "supabase/functions/get-call-recording/index.ts",
-     "supabase/functions/get-sip-password/index.ts",
-     "supabase/functions/gmail-cron-sync/index.ts",
-     "supabase/functions/gmail-oauth/index.ts",
-     "supabase/functions/gmail-send/index.ts",
-     "supabase/functions/gmail-sync/gmail-labels-mutation.test.ts",
-     "supabase/functions/gmail-sync/index.ts",
-     "supabase/functions/gmail-webhook/index.ts",
-     "supabase/functions/health/index.ts",
-     "supabase/functions/invite-user/index.ts",
-     "supabase/functions/message-delivery/index.ts",
-     "supabase/functions/metrics/index.ts",
-     "supabase/functions/migrate-media-storage/index.ts",
-     "supabase/functions/multiplix-audience/index.ts",
-     "supabase/functions/multiplix-dispatch/actions/audience.ts",
-     "supabase/functions/multiplix-dispatch/actions/blocks.ts",
-     "supabase/functions/multiplix-dispatch/actions/inspect.ts",
-     "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
-     "supabase/functions/multiplix-dispatch/actions/listing.ts",
-     "supabase/functions/multiplix-dispatch/index.ts",
-     "supabase/functions/multiplix-send/index.ts",
-     "supabase/functions/multiplix-voices/index.ts",
-     "supabase/functions/promogifts-catalog/index.ts",
-     "supabase/functions/recover-corrupted-audios/index.ts",
-     "supabase/functions/recover-message-media/index.ts",
-     "supabase/functions/revoke-auth-sessions/index.ts",
-     "supabase/functions/searchbox-budget-alert/index.ts",
-     "supabase/functions/send-email/index.ts",
-     "supabase/functions/send-rate-limit-alert/index.ts",
-     "supabase/functions/send-scheduled-report/index.ts",
-     "supabase/functions/sentiment-alert/index.ts",
-     "supabase/functions/sync-call-records/index.ts",
-     "supabase/functions/talkx-ai/index.test.ts",
-     "supabase/functions/talkx-ai/index.ts",
-     "supabase/functions/talkx-link/index.test.ts",
-     "supabase/functions/talkx-link/index.ts",
-     "supabase/functions/talkx-report/index.test.ts",
-     "supabase/functions/talkx-report/index.ts",
-     "supabase/functions/talkx-scheduler/index.ts",
-     "supabase/functions/talkx-send/index.ts",
-     "supabase/functions/talkx-send/n118-send-weekdays-wiring.test.ts",
-     "supabase/functions/talkx-send/process-recipient.ts",
-     "supabase/functions/talkx-storage-purge/index.ts",
-     "supabase/functions/voice-copilot-action/index.ts",
-     "supabase/functions/webauthn/index.ts",
-     "supabase/functions/webhook-diagnostic/index.ts",
-     "supabase/functions/whatsapp-webhook/index.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384021,18 +383926,6 @@
    [
     "src/integrations/supabase/types.ts",
     3
-   ],
-   [
-    "supabase/deployment-manifest.json",
-    2
-   ],
-   [
-    "supabase/functions/cleanup-rate-limit-logs/index.ts",
-    2
-   ],
-   [
-    "supabase/functions/external-db-proxy/index.ts",
-    2
    ],
    [
     "scripts/ci/verify-release-targets-timeout.unit.mjs",
@@ -384063,6 +383956,34 @@
     2
    ],
    [
+    "scripts/ci/edge-http-harness.unit.mjs",
+    1
+   ],
+   [
+    "scripts/db-audit/gmail-cas-postgrest.test.sh",
+    1
+   ],
+   [
+    "scripts/db-audit/talkx-engine-provider.test.sh",
+    1
+   ],
+   [
+    "scripts/db-audit/talkx-transition-overload-postgrest.test.sh",
+    1
+   ],
+   [
+    "supabase/deployment-manifest.json",
+    1
+   ],
+   [
+    "supabase/functions/cleanup-rate-limit-logs/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/external-db-proxy/index.ts",
+    1
+   ],
+   [
     "e2e/talkx-kit.spec.ts",
     1
    ],
@@ -384072,22 +383993,6 @@
    ],
    [
     "src/components/compliance/LGPDComplianceView.tsx",
-    1
-   ],
-   [
-    "src/components/compliance/__tests__/LGPDComplianceView.test.tsx",
-    1
-   ],
-   [
-    "supabase/schema-manifest.json",
-    1
-   ],
-   [
-    ".github/workflows/branch-hygiene-audit.yml",
-    1
-   ],
-   [
-    ".github/workflows/contexto.yml",
     1
    ]
   ]

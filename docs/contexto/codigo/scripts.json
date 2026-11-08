@@ -1424,7 +1424,7 @@
   {
    "arquivo": "scripts/db-audit/gmail-cas-postgrest.test.sh",
    "descricao": "Gmail CAS — 7 casos de cursor + 1 reset HTTP com Postgres/PostgREST descartáveis. Usa os handlers/testes reais e as migrations selecionadas; respostas Gmail",
-   "linhas": 335,
+   "linhas": 342,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -2656,7 +2656,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-engine-provider.test.sh",
    "descricao": "X034 — integração do MOTOR Talk X com provedor falso. Sobe um PostgreSQL 17 descartável, aplica as MIGRATIONS REAIS do repo que",
-   "linhas": 583,
+   "linhas": 590,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -3121,7 +3121,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-transition-overload-postgrest.test.sh",
    "descricao": "V02 (PLANO_TALKX_V3_100_ETAPAS_2026-09-29): prova, contra um PostgREST REAL e sem nenhum mock, que:",
-   "linhas": 295,
+   "linhas": 299,
    "env": [],
    "npm_scripts": [],
    "workflows": [
