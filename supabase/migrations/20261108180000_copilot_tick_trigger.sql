@@ -1,6 +1,6 @@
 -- CV-141: Trigger enfileira tick do copiloto quando nova mensagem de CONTATO chega
 -- Debounce de 4 s via ai_jobs — evita spam de ticks em rajada de mensagens.
--- Só enfileira quando há sessão ativa para a conversa (last_tick_at não nulo).
+-- Só enfileira quando há sessão ativa para o contato (closed_at IS NULL).
 
 CREATE OR REPLACE FUNCTION public.enqueue_copilot_tick_on_contact_message()
 RETURNS trigger
@@ -9,18 +9,19 @@ SECURITY DEFINER
 SET search_path TO 'public', 'pg_temp'
 AS $$
 DECLARE
-  v_session_id  uuid;
-  v_scheduled   timestamptz;
+  v_session_id      uuid;
+  v_conversation_id uuid;
+  v_scheduled       timestamptz;
 BEGIN
-  -- Só dispara para mensagens recebidas do contato (from_me = false).
-  IF NEW.from_me IS NOT FALSE THEN
+  -- Só dispara para mensagens recebidas do contato (sender = 'contact').
+  IF NEW.sender != 'contact' THEN
     RETURN NEW;
   END IF;
 
-  -- Verificar se existe sessão ativa do copiloto para esta conversa.
-  SELECT id INTO v_session_id
+  -- Verificar se existe sessão ativa do copiloto para este contato.
+  SELECT id, conversation_id INTO v_session_id, v_conversation_id
   FROM public.copilot_sessions
-  WHERE conversation_id = NEW.conversation_id
+  WHERE contact_id = NEW.contact_id
     AND closed_at IS NULL
   LIMIT 1;
 
@@ -29,20 +30,22 @@ BEGIN
   END IF;
 
   -- Debounce: agendar 4 s à frente; jobs duplicados no mesmo intervalo são
-  -- ignorados via ON CONFLICT DO NOTHING (chave idempotente por session_id).
+  -- ignorados via ON CONFLICT (chave idempotente por session_id).
   v_scheduled := now() + interval '4 seconds';
 
   INSERT INTO public.ai_jobs (
-    job_type,
+    kind,
+    function_name,
     payload,
-    scheduled_at,
+    available_at,
     idempotency_key
   )
   VALUES (
     'copilot_tick',
+    'copilot-live',
     jsonb_build_object(
       'session_id',       v_session_id,
-      'conversation_id',  NEW.conversation_id,
+      'conversation_id',  v_conversation_id,
       'message_id',       NEW.id
     ),
     v_scheduled,
@@ -50,7 +53,7 @@ BEGIN
   )
   ON CONFLICT (idempotency_key)
   DO UPDATE SET
-    scheduled_at = EXCLUDED.scheduled_at,
+    available_at = EXCLUDED.available_at,
     payload      = EXCLUDED.payload;
 
   RETURN NEW;
