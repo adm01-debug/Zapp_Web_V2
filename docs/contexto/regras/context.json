@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f93fad943769756f6f34c07674916a9a968029e9",
+  "sha": "ab963642422b45427e4764dc3e7acc2b329f1355",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 02:20 UTC",
+  "generated_at": "2026-11-08 02:51 UTC",
   "files_total": 8153,
   "code_files": 6012,
   "code_lines": 1043377
@@ -383441,10 +383441,19 @@
   }
  },
  "git": {
-  "sha": "f93fad943769756f6f34c07674916a9a968029e9",
+  "sha": "ab963642422b45427e4764dc3e7acc2b329f1355",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ab96364",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "docs(talkx): regenera matriz de estados (#2791)",
+    "files": [
+     "docs/talkx/ESTADOS.md"
+    ]
+   },
    {
     "sha": "f93fad9",
     "date": "2026-11-07",
@@ -384006,15 +384015,6 @@
      "supabase/functions/ai-usage-outbox-drain/index.ts",
      "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql"
     ]
-   },
-   {
-    "sha": "c0e5118",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: evita posição absoluta na navegação da paleta (teste flaky)",
-    "files": [
-     "src/components/keyboard/__tests__/paleta-unica.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -384029,6 +384029,10 @@
    [
     "src/integrations/supabase/types.ts",
     3
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    2
    ],
    [
     "scripts/ci/vercel-env-cleanup.mjs",
@@ -384065,10 +384069,6 @@
    [
     "supabase/deployment-manifest.json",
     2
-   ],
-   [
-    "docs/talkx/ESTADOS.md",
-    1
    ],
    [
     "e2e/talkx-kit.spec.ts",

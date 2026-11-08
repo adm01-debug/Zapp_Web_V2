@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f93fad943769756f6f34c07674916a9a968029e9",
+  "commit": "ab963642422b45427e4764dc3e7acc2b329f1355",
   "branch": "main",
-  "data_commit": "2026-11-07T23:17:22-03:00",
+  "data_commit": "2026-11-07T23:40:30-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ab96364",
+    "data": "2026-11-07",
+    "assunto": "docs(talkx): regenera matriz de estados (#2791)"
+   },
    {
     "sha": "f93fad9",
     "data": "2026-11-07",
@@ -126,11 +131,6 @@
     "sha": "5b62b93",
     "data": "2026-11-07",
     "assunto": "fix: torna Vercel Cleanup fail-closed em 403 (#2758)"
-   },
-   {
-    "sha": "0601e3b",
-    "data": "2026-11-07",
-    "assunto": "fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)"
    }
   ],
   "arquivos_mudados_7d": 1110,
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/ui",
-    "mudancas": 132
+    "mudancas": 129
    },
    {
     "pasta": "src/hooks/integrations",
