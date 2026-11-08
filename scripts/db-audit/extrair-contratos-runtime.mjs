@@ -1,16 +1,14 @@
 // E62: extrai os contratos de runtime que hoje vivem embutidos no passo
 // "Provar estado runtime antes do push" do db-migrate.yml.
 //
-// O passo e um `case "$TARGET_VERSION"` com um braco por versao de migration. Cada
-// braco monta uma consulta que extrai o fingerprint do estado runtime daquele alvo
-// (`runtime_sha256`), e o valor e comparado ao CONFIRM_RUNTIME_SHA256 (composicao da
-// E64). Reduzir o workflow a ~150 linhas so e seguro se cada braco virar um ARQUIVO
-// DE CONTRATO executado por um runner generico -- a equivalencia se prova comparando
-// o texto extraido com o braco de origem.
-//
-// Este script e so a metade aditiva: escreve os arquivos de contrato e o documento de
-// evidencia, e NAO toca no workflow. A reducao do workflow e o passo seguinte.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// Originalmente o passo era um `case "$TARGET_VERSION"` com um braco por versao de
+// migration. Cada braco montava uma consulta que extraia o fingerprint do estado runtime
+// daquele alvo (`runtime_sha256`), e o valor era comparado ao CONFIRM_RUNTIME_SHA256
+// (composicao da E64). Os contratos foram extraidos para `scripts/db-audit/contracts/`
+// em 01/10/2026 (E62), e o workflow foi refatorado para delegar a execucao ao
+// `run-runtime-contract.mjs`. Este script e idempotente: relata os contratos existentes
+// se a extracao ja foi concluida; caso contrario tenta extrair do formato atual.
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
@@ -20,6 +18,27 @@ const SAIDA = 'scripts/db-audit/contracts';
 const EVIDENCIA = 'docs/audits/evidence/db-migrate-contratos-historicos.md';
 
 const sha256 = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
+
+// Verificar se a extracao ja foi concluida anteriormente.
+// O workflow foi refatorado de `case "$TARGET_VERSION"` para Node.js `if/else if`
+// em 01/10/2026, delegando a execucao aos arquivos `.sql` em SAIDA.
+// Se os contratos existem, reportar e sair com sucesso.
+if (existsSync(SAIDA)) {
+  const sqls = readdirSync(SAIDA).filter((f) => f.endsWith('.sql'));
+  if (sqls.length > 0) {
+    sqls.sort();
+    const totalBytes = sqls.reduce((acc, f) => {
+      try { return acc + statSync(join(SAIDA, f)).size; } catch { return acc; }
+    }, 0);
+    console.log(`[E62] extracao ja concluida: ${sqls.length} contratos em ${SAIDA}`);
+    console.log(`total: ${totalBytes} bytes`);
+    for (const f of sqls.slice(0, 6)) console.log(`  ${f}`);
+    if (sqls.length > 6) console.log(`  ... e mais ${sqls.length - 6}`);
+    if (existsSync(EVIDENCIA)) console.log(`evidencia: ${EVIDENCIA}`);
+    process.exit(0);
+  }
+}
+
 const linhas = readFileSync(FONTE, 'utf8').split('\n');
 
 // 1. delimita o passo: do `- name:` ate o proximo `      - name:` no mesmo nivel.
@@ -30,13 +49,22 @@ while (fim < linhas.length && !linhas[fim].startsWith('      - name:')) fim += 1
 const bloco = linhas.slice(inicio, fim);
 const offset = inicio + 1; // 1-based
 
-// 2. cada braco comeca numa linha `            <14 digitos>)`.
+// 2. cada braco comeca numa linha `            <14 digitos>)` (formato shell case).
+// Tambem suporta o formato Node.js: `if (process.env.TARGET_VERSION === '<14 digitos>') {`
 const bracos = [];
 bloco.forEach((l, i) => {
-  const m = /^ {12}(\d{14})\)\s*$/.exec(l);
-  if (m) bracos.push({ versao: m[1], i });
+  const mShell = /^ {12}(\d{14})\)\s*$/.exec(l);
+  if (mShell) { bracos.push({ versao: mShell[1], i, formato: 'shell' }); return; }
+  const mNode = /TARGET_VERSION\s*===?\s*['"](\d{14})['"]/.exec(l);
+  if (mNode) bracos.push({ versao: mNode[1], i, formato: 'node' });
 });
-if (bracos.length === 0) throw new Error('nenhum braco de versao encontrado');
+if (bracos.length === 0) {
+  throw new Error(
+    'nenhum braco de versao encontrado em ' + PASSO + '\n' +
+    'O workflow pode ter sido refatorado. Se os contratos ja existem em ' + SAIDA +
+    ', a extracao foi concluida e este script nao precisa ser re-executado.',
+  );
+}
 
 mkdirSync(SAIDA, { recursive: true });
 const registros = [];
