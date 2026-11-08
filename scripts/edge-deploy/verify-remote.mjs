@@ -17,7 +17,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${key}`);
   }
   for (const required of ['manifestPath', 'remotePath', 'outputPath', 'gitSha', 'runId', 'deploymentScope']) {
-    if (!args[required]) throw new Error(`Missing required argument: ${required}`);
+    if (!args[required]) { process.stderr.write(`Missing required argument: ${required}\n`); process.exit(2); }
   }
   return args;
 }

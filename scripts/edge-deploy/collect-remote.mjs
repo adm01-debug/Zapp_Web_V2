@@ -12,7 +12,7 @@ async function main() {
     if (!allowed.has(argv[i]) || !argv[i + 1] || argv[i + 1].startsWith('--')) throw new Error('Invalid collector arguments');
     args[argv[i].slice(2)] = argv[++i];
   }
-  if (!args.manifest || !args.output) throw new Error('Manifest and output required');
+  if (!args.manifest || !args.output) { process.stderr.write('Manifest and output required\n'); process.exit(2); }
   const manifest = JSON.parse(await readFile(args.manifest, 'utf8'));
   verifyManifestDigest(manifest);
   if (manifest.project_ref !== CANONICAL_PROJECT || process.env.PROJECT_REF !== CANONICAL_PROJECT) throw new Error('Canonical project required');

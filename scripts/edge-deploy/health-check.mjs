@@ -57,9 +57,9 @@ export function parseArgs(argv) {
     else throw new Error(`Argumento desconhecido: ${key}`);
   }
 
-  if (!args.projectRef) throw new Error('--project-ref obrigatório');
+  if (!args.projectRef) { process.stderr.write('--project-ref obrigatório\n'); process.exit(2); }
   if (args.projectRef !== CANONICAL_PROJECT) throw new Error('Apenas o projeto canônico é aceito');
-  if (!args.manifestPath) throw new Error('--manifest obrigatório');
+  if (!args.manifestPath) { process.stderr.write('--manifest obrigatório\n'); process.exit(2); }
   if (!Number.isFinite(args.threshold) || args.threshold < 0 || args.threshold > 1) {
     throw new Error('--threshold deve estar entre 0 e 1');
   }
@@ -96,7 +96,7 @@ export async function resolveScope(scope, manifestPath, readFileImpl = readFile)
 function pathnamePredicate(slug) {
   const pathname = `/functions/v1/${validateSlug(slug)}`;
   return `(log_attributes['request.pathname'] = '${pathname}' OR ` +
-    `startsWith(log_attributes['request.pathname'], '${pathname}/'))`;
+    `startsWith(log_attributes['request.pathname'], '${pathname}/'))` ;
 }
 
 export function buildLogsSql(slugs) {
