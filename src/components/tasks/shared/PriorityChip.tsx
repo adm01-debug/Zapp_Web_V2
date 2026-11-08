@@ -3,13 +3,14 @@ import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   low:    'bg-muted/60 text-muted-foreground border-border/40',
-  medium: 'bg-primary/15 text-primary border-primary/30',
+  medium: 'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/30',
   // Etapa 80 (E.3): `text-warning`/`text-destructive` são cor de PREENCHIMENTO — como
   // texto davam 2,1:1 (âmbar no claro) e 2,6:1 (vermelho no escuro). O par de texto
   // (`--warning-text`/`--destructive-text`, em tokens.css) fecha ≥4,5:1 nos dois modos
   // sem mexer em preenchimento nem borda.
-  high:   'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
-  urgent: 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  // D12: escada Baixa→Média→Alta→Urgente = muted→âmbar→vermelho(borda)→vermelho(/20+borda cheia)
+  high:   'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  urgent: 'bg-destructive/20 text-[hsl(var(--destructive-text))] border-destructive',
 };
 
 /** Fase F2 (auditoria): prioridade nula ou fora do mapa não pode derrubar o card
