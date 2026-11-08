@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `62c069a7c3` · branch `main` · 2026-11-08 05:36 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `c6c7697af1` · branch `main` · 2026-11-08 05:44 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -468,7 +468,6 @@
 | rpc | RPC `fn_servico` chamada mas não definida nas migrations/types | `scripts/ci/inventario-rotas.unit.mjs` |
 | rpc | RPC `get_companies_by_phones_batch` chamada mas não definida nas migrations/types | `supabase/functions/crm-integration/index.ts` |
 | rpc | RPC `get_contact_360_by_phone` chamada mas não definida nas migrations/types | `scripts/ci/crm-integration-contract.unit.mjs`<br>`supabase/functions/crm-integration/index.ts` |
-| rpc | RPC `get_search_insights` chamada mas não definida nas migrations/types | `src/hooks/admin/useSearchInsights.ts` |
 | rpc | RPC `ghost_rpc` chamada mas não definida nas migrations/types | `scripts/ai-context/gerar.unit.mjs` |
 | rpc | RPC `log_event` chamada mas não definida nas migrations/types | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | rpc | RPC `multiplix_count_audience` chamada mas não definida nas migrations/types | `supabase/functions/multiplix-audience/index.ts`<br>`supabase/functions/multiplix-dispatch/actions/audience.ts`<br>`tests/contracts/multiplix-audience.contract.test.ts` |

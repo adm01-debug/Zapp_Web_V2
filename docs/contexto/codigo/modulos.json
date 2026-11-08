@@ -388,6 +388,7 @@
     "get_inbox_contact_summaries",
     "get_own_gmail_accounts",
     "log_audit_event",
+    "search_insights",
     "user_has_permission"
    ],
    "buckets": [],
@@ -4080,6 +4081,7 @@
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
+    "search_insights",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -8126,8 +8128,8 @@
   {
    "modulo": "hooks/admin",
    "arquivos": 2,
-   "testes": 1,
-   "linhas": 366,
+   "testes": 2,
+   "linhas": 348,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -8146,7 +8148,9 @@
     "profiles",
     "queues"
    ],
-   "rpcs": [],
+   "rpcs": [
+    "search_insights"
+   ],
    "buckets": [],
    "canais_realtime": [],
    "env": [
@@ -8161,7 +8165,9 @@
      "profiles",
      "queues"
     ],
-    "rpcs": []
+    "rpcs": [
+     "search_insights"
+    ]
    },
    "importado_por_outros_modulos": [
     "components/admin"
@@ -12274,6 +12280,7 @@
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
+    "search_insights",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -14452,6 +14459,7 @@
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
+    "search_insights",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -15685,6 +15693,7 @@
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
+    "search_insights",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",

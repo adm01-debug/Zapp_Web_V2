@@ -1091,6 +1091,7 @@
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
+    "search_insights",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -6324,7 +6325,9 @@
     "useSearchInsights"
    ],
    "tabelas": [],
-   "rpcs": [],
+   "rpcs": [
+    "search_insights"
+   ],
    "edges": [],
    "canais_realtime": [],
    "flags": [],

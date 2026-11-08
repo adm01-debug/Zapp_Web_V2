@@ -32176,6 +32176,11 @@
    "usada_em": 1
   },
   {
+   "nome": "search_insights",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "search_knowledge_base",
    "definida": true,
    "usada_em": 4

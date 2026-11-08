@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1945)",
+   "co-localizado (__tests__) (1946)",
    "outro (217)",
    "co-localizado (*.test) (168)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)",
    "fix(db-audit): isola PostgREST privado do proxy nos contratos (#2796)",
    "fix(edge): Z018 injeção PostgREST + Z020 stack trace nas edges external-db-proxy e cleanup-rate-limit-logs (#2794)",
    "test(e2e): alinha contrato isolado dos insights (#2790)",
-   "fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado",
-   "docs(talkx): regenera matriz de estados (#2791)"
+   "fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

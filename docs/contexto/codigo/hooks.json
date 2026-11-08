@@ -1901,10 +1901,12 @@
    "hooks_exportados": [
     "useSearchInsights"
    ],
-   "linhas": 101,
+   "linhas": 83,
    "dominio": "hooks/admin",
    "tabelas": [],
-   "rpcs": [],
+   "rpcs": [
+    "search_insights"
+   ],
    "edges": [],
    "hooks_internos": [
     "useQuery"
@@ -1914,7 +1916,7 @@
    "usado_por_arquivos": [
     "src/components/admin/SearchInsightsView.tsx"
    ],
-   "coberto_por_testes": 0
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/admin/useSupervisorQueue.ts",

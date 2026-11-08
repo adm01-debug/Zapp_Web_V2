@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "62c069a7c3f1ebfa5c12bd8ac58cf0d7d76677fa",
+  "commit": "c6c7697af1a4fa7a3468f64f9e49506ceb6a7b2c",
   "branch": "main",
-  "data_commit": "2026-11-08T05:13:39Z",
+  "data_commit": "2026-11-08T05:42:11Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c6c7697",
+    "data": "2026-11-08",
+    "assunto": "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)"
+   },
    {
     "sha": "62c069a",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "a9c9835",
     "data": "2026-11-07",
     "assunto": "fix(db): protege streak e resoluções por usuário autenticado (#2766)"
-   },
-   {
-    "sha": "b67ef0c",
-    "data": "2026-11-07",
-    "assunto": "fix(db): fecha RLS multi-tenant do Copilot (#2763)"
    }
   ],
-  "arquivos_mudados_7d": 1073,
+  "arquivos_mudados_7d": 1076,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8312,
-  "arquivos_codigo": 4748,
-  "linhas_codigo": 877229,
+  "arquivos_total": 8313,
+  "arquivos_codigo": 4749,
+  "linhas_codigo": 877237,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,7 +332,7 @@
   "tabelas": 217,
   "migrations": 1092,
   "cron_jobs": 26,
-  "testes": 2592,
+  "testes": 2593,
   "workflows": 21,
   "scripts": 420,
   "docs_md": 1070
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368187
+   "linhas": 368173
   },
   "src/config": {
    "arquivos": 3,
@@ -723,8 +723,8 @@
    "linhas": 3298
   },
   "src/hooks": {
-   "arquivos": 980,
-   "linhas": 159643
+   "arquivos": 981,
+   "linhas": 159665
   },
   "src/i18n": {
    "arquivos": 2,

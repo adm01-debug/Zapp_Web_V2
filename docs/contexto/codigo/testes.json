@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2592,
+ "total": 2593,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2301
+  "unit": 2302
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1945
+   "arquivos": 1946
   },
   {
    "padrao": "outro",
@@ -3078,7 +3078,7 @@
   {
    "arquivo": "src/components/admin/__tests__/SearchInsightsView.test.tsx",
    "tipo": "unit",
-   "linhas": 129,
+   "linhas": 115,
    "testa": [
     "src/components/admin/SearchInsightsView.tsx"
    ],
@@ -15250,6 +15250,15 @@
    "casos": 11
   },
   {
+   "arquivo": "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+   "tipo": "unit",
+   "linhas": 40,
+   "testa": [
+    "src/hooks/admin/useSearchInsights.ts"
+   ],
+   "casos": 2
+  },
+  {
    "arquivo": "src/hooks/admin/__tests__/useSupervisorQueue.test.tsx",
    "tipo": "unit",
    "linhas": 488,
@@ -24433,6 +24442,7 @@
   "src/features/talk-me/TalkMeView.tsx": 1,
   "src/features/talk-me/types.ts": 2,
   "src/features/talk-me/useTalkMeQueue.ts": 2,
+  "src/hooks/admin/useSearchInsights.ts": 1,
   "src/hooks/admin/useSupervisorQueue.ts": 1,
   "src/hooks/agents/useAgentRecentSends.ts": 1,
   "src/hooks/analytics/useAIStats.ts": 2,
@@ -25160,7 +25170,6 @@
    "src/components/ui/use-toast.ts",
    "src/components/ui/visually-hidden.tsx",
    "src/components/voice/usePhaseColors.ts",
-   "src/hooks/admin/useSearchInsights.ts",
    "src/hooks/agents/useAgentPendingCounts.ts",
    "src/hooks/analytics/useActiveAIProvider.ts",
    "src/hooks/auth/useSecureProfile.ts",

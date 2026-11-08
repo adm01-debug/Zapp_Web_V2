@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "62c069a7c3f1ebfa5c12bd8ac58cf0d7d76677fa",
+  "sha": "c6c7697af1a4fa7a3468f64f9e49506ceb6a7b2c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 05:36 UTC",
-  "files_total": 8153,
-  "code_files": 6012,
-  "code_lines": 1043408
+  "generated_at": "2026-11-08 05:44 UTC",
+  "files_total": 8154,
+  "code_files": 6013,
+  "code_lines": 1043416
  },
  "version": "1.3.2",
- "facts_hash": "4277a53d34ec1b4a",
+ "facts_hash": "b1d2c02489fedffe",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,7 +314,7 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1866,
+   ".ts": 1867,
    ".sql": 1292,
    ".mjs": 416,
    ".py": 119,
@@ -68276,7 +68276,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368187,
+   "lines": 368173,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68611,8 +68611,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 980,
-   "lines": 159643,
+   "files": 981,
+   "lines": 159665,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -75017,9 +75017,6 @@
     "src/components/admin/GmailWebhookMonitor.tsx",
     "src/hooks/integrations/useGmail.ts"
    ],
-   "get_search_insights": [
-    "src/hooks/admin/useSearchInsights.ts"
-   ],
    "get_talkx_cron_secret": [
     "supabase/functions/talkx-send/index.ts"
    ],
@@ -75326,6 +75323,9 @@
    ],
    "search_email_threads": [
     "src/hooks/integrations/useGmail.ts"
+   ],
+   "search_insights": [
+    "src/hooks/admin/useSearchInsights.ts"
    ],
    "search_knowledge_base": [
     "src/__tests__/security-and-performance.test.ts",
@@ -90199,7 +90199,7 @@
    },
    {
     "file": "src/hooks/admin/useSearchInsights.ts",
-    "text": "* Sem PII: a RPC lê apenas `search_events.term_normalized` (nada de contato,"
+    "text": "de termos ficam vazias; somente métricas agregadas são exibidas."
    },
    {
     "file": "src/hooks/admin/useSupervisorQueue.ts",
@@ -130733,7 +130733,7 @@
    },
    {
     "file": "src/components/admin/__tests__/SearchInsightsView.test.tsx",
-    "name": "mostra os KPIs e as duas tabelas a partir da RPC, na janela de 30 dias"
+    "name": "mostra os KPIs a partir da RPC canônica, na janela de 30 dias"
    },
    {
     "file": "src/components/admin/__tests__/SearchInsightsView.test.tsx",
@@ -174754,6 +174754,18 @@
    {
     "file": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
     "name": "handles one API call failing while other succeeds"
+   },
+   {
+    "file": "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+    "name": "parseSearchInsights"
+   },
+   {
+    "file": "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+    "name": "mapeia o contrato canônico e calcula a taxa de cliques"
+   },
+   {
+    "file": "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+    "name": "normaliza linha ausente sem inventar termos ou dividir por zero"
    },
    {
     "file": "src/hooks/admin/__tests__/useSupervisorQueue.test.tsx",
@@ -256423,13 +256435,6 @@
    },
    {
     "kind": "rpc",
-    "msg": "RPC `get_search_insights` chamada mas não definida nas migrations/types",
-    "where": [
-     "src/hooks/admin/useSearchInsights.ts"
-    ]
-   },
-   {
-    "kind": "rpc",
     "msg": "RPC `ghost_rpc` chamada mas não definida nas migrations/types",
     "where": [
      "scripts/ai-context/gerar.unit.mjs"
@@ -272400,7 +272405,7 @@
   },
   "src/components/admin/__tests__/SearchInsightsView.test.tsx": {
    "path": "src/components/admin/__tests__/SearchInsightsView.test.tsx",
-   "lines": 129,
+   "lines": 115,
    "is_test": true,
    "errors": [
     " com opção de tentar de novo.\n */\nimport { describe, it, expect, vi, beforeEach } from ",
@@ -272408,7 +272413,7 @@
    ],
    "tests": [
     "SearchInsightsView — números da busca global (HZ1-06)",
-    "mostra os KPIs e as duas tabelas a partir da RPC, na janela de 30 dias",
+    "mostra os KPIs a partir da RPC canônica, na janela de 30 dias",
     "não oferece exportar, baixar, imprimir nem copiar (a informação não sai do sistema)",
     "mostra o erro da RPC em alert e refaz a consulta em ",
     "estado vazio: sem busca no período, mostra 0 e a mensagem própria (não ",
@@ -318209,7 +318214,7 @@
   },
   "src/hooks/admin/useSearchInsights.ts": {
    "path": "src/hooks/admin/useSearchInsights.ts",
-   "lines": 101,
+   "lines": 83,
    "exports": [
     "type SearchInsightsPeriod",
     "const SEARCH_INSIGHTS_PERIODS",
@@ -318222,7 +318227,7 @@
     "function useSearchInsights"
    ],
    "rpc": [
-    "get_search_insights"
+    "search_insights"
    ],
    "params": [
     {
@@ -318231,9 +318236,9 @@
     }
    ],
    "rule_comments": [
-    "* Sem PII: a RPC lê apenas `search_events.term_normalized` (nada de contato,"
+    "de termos ficam vazias; somente métricas agregadas são exibidas."
    ],
-   "doc": "useSearchInsights HZ1-06: números da busca global para a tela de admin \"Insights de Busca\". Faz UMA consulta à RPC `get_search_insights(p_days)` (migration 20261016112552, trilha irmã) e normaliza o jsonb para a tela. Sem PII: a RPC lê apenas `search_events.term_normalized` (nada de contato, telefon …",
+   "doc": "useSearchInsights HZ1-06: números da busca global para a tela de admin \"Insights de Busca\". Faz UMA consulta à RPC canônica `search_insights(p_days)` (migration 20261016013134) e normaliza a linha retornada para a tela. Sem PII: `search_events` não persiste os termos buscados. Por isso as listas de …",
    "hooks": [
     "useSearchInsights"
    ]
@@ -318314,6 +318319,16 @@
    "pagination": [
     "1000",
     "500"
+   ]
+  },
+  "src/hooks/admin/__tests__/useSearchInsights.test.ts": {
+   "path": "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+   "lines": 40,
+   "is_test": true,
+   "tests": [
+    "parseSearchInsights",
+    "mapeia o contrato canônico e calcula a taxa de cliques",
+    "normaliza linha ausente sem inventar termos ou dividir por zero"
    ]
   },
   "src/hooks/admin/__tests__/useSupervisorQueue.test.tsx": {
@@ -383444,10 +383459,21 @@
   }
  },
  "git": {
-  "sha": "62c069a7c3f1ebfa5c12bd8ac58cf0d7d76677fa",
+  "sha": "c6c7697af1a4fa7a3468f64f9e49506ceb6a7b2c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c6c7697",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)",
+    "files": [
+     "src/components/admin/__tests__/SearchInsightsView.test.tsx",
+     "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+     "src/hooks/admin/useSearchInsights.ts"
+    ]
+   },
    {
     "sha": "62c069a",
     "date": "2026-11-08",
@@ -383897,21 +383923,6 @@
      "scripts/ci/vercel-env-cleanup.mjs",
      "scripts/ci/vercel-env-cleanup.unit.mjs"
     ]
-   },
-   {
-    "sha": "0601e3b",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix: reconcilia DB Live Guard sem repetir DROP destrutivo (#2756)",
-    "files": [
-     "docs/MIGRATIONS.md",
-     "scripts/db-audit/README.md",
-     "scripts/db-audit/check-migration-drift.mjs",
-     "scripts/db-audit/check-migration-drift.test.mjs",
-     "scripts/db-audit/migration-evidence.json",
-     "supabase/migrations/20261026240300_drop_bkp_261023.sql",
-     "supabase/migrations/_superseded/README.md"
-    ]
    }
   ],
   "hot_files": [
@@ -383921,7 +383932,7 @@
    ],
    [
     "scripts/db-audit/migration-evidence.json",
-    4
+    3
    ],
    [
     "src/integrations/supabase/types.ts",
@@ -383956,6 +383967,18 @@
     2
    ],
    [
+    "src/components/admin/__tests__/SearchInsightsView.test.tsx",
+    1
+   ],
+   [
+    "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+    1
+   ],
+   [
+    "src/hooks/admin/useSearchInsights.ts",
+    1
+   ],
+   [
     "scripts/ci/edge-http-harness.unit.mjs",
     1
    ],
@@ -383981,18 +384004,6 @@
    ],
    [
     "supabase/functions/external-db-proxy/index.ts",
-    1
-   ],
-   [
-    "e2e/talkx-kit.spec.ts",
-    1
-   ],
-   [
-    "playwright.config.ts",
-    1
-   ],
-   [
-    "src/components/compliance/LGPDComplianceView.tsx",
     1
    ]
   ]
