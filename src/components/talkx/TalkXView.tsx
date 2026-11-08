@@ -56,7 +56,7 @@ const TalkXCampaignPaused = lazyWithRetry(() => import('./TalkXCampaignPaused').
 /** X194 — enquanto o chunk da tela chega, o módulo mostra a estrutura (esqueleto). */
 function TalkXScreenFallback() {
   return (
-    <div className="p-4" role="status" aria-live="polite" aria-busy="true">
+    <div role="status" aria-live="polite" aria-busy="true">
       <TalkXSkeletonRows rows={4} />
     </div>
   );
@@ -439,7 +439,7 @@ export default function TalkXView() {
       // (antes: um texto solto, que parecia carga infinita ou tela vazia).
       return (
         <div
-          className="min-h-full w-full min-w-0 bg-background p-6"
+          className="min-h-full w-full min-w-0 bg-background"
           role="status" aria-live="polite" aria-busy="true" data-talkx-query="loading"
         >
           <span className="sr-only">Carregando conteúdo…</span>
