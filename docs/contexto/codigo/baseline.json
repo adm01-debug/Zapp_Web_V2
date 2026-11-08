@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2ebe682c138c4d578afe178f97d32ddab415cc57",
+  "commit": "b5e89bb0f012672714da7995536f6f00573cfc7f",
   "branch": "main",
-  "data_commit": "2026-11-08T10:27:17-03:00",
+  "data_commit": "2026-11-08T10:53:50-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b5e89bb",
+    "data": "2026-11-08",
+    "assunto": "fix(test): restaura imports Deno nos contratos"
+   },
    {
     "sha": "2ebe682",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "c759630",
     "data": "2026-11-07",
     "assunto": "chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)"
-   },
-   {
-    "sha": "f77653b",
-    "data": "2026-11-07",
-    "assunto": "fix: alinha labels dos controles rápidos no spec de volume (#2776)"
    }
   ],
-  "arquivos_mudados_7d": 1092,
+  "arquivos_mudados_7d": 1093,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -198,12 +198,12 @@
   ],
   "arquivos_mais_mudados_90d": [
    {
-    "arquivo": ".github/workflows/ci.yml",
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 18
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 18
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 17
    },
    {
     "arquivo": "CLAUDE.md",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8315,
   "arquivos_codigo": 4750,
-  "linhas_codigo": 877515,
+  "linhas_codigo": 877522,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -800,7 +800,7 @@
   },
   "vitest.contracts.config.ts": {
    "arquivos": 1,
-   "linhas": 36
+   "linhas": 43
   }
  },
  "maiores_arquivos": [

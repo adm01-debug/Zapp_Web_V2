@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(test): restaura imports Deno nos contratos",
    "fix(typecheck): remove contratos obsoletos da inbox",
    "fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)",
    "fix(talkx): corrige erros TypeScript X054 — ModuleBreadcrumb onItemClick + action optional chaining (#2793)",
-   "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)",
-   "fix(db-audit): isola PostgREST privado do proxy nos contratos (#2796)"
+   "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

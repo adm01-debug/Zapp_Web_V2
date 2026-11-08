@@ -69,7 +69,7 @@
    "typecheck": "tsc -b --force"
   },
   "dependencias": 69,
-  "dev_dependencias": 31,
+  "dev_dependencias": 32,
   "principais": {
    "@supabase/supabase-js": "^2.117.3",
    "@tanstack/react-query": "^5.105.0",
