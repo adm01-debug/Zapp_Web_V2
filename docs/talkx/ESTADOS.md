@@ -17,7 +17,7 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXAnalytics.tsx` | `300` | `298`, `383` | `295` | — | — | — |
 | `src/components/talkx/TalkXAudienceFilters.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXCampaignPaused.tsx` | `177` | `174` | `170` | — | — | — |
-| `src/components/talkx/TalkXCampaignRunning.tsx` | — | `176`, `477`, `568`, `834` | `170`, `323`, `473`, `562`, `830` | — | — | — |
+| `src/components/talkx/TalkXCampaignRunning.tsx` | — | `172`, `473`, `564`, `792` | `166`, `319`, `469`, `558`, `788` | — | — | — |
 | `src/components/talkx/TalkXCampaignScheduled.tsx` | `121` | `118` | `114` | — | — | — |
 | `src/components/talkx/TalkXCampaignWizard.tsx` | — | — | — | — | `424` | — |
 | `src/components/talkx/TalkXContactSelector.tsx` | — | — | — | — | — | — |
@@ -31,10 +31,10 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXScheduleTimeline.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXSegments.tsx` | `488`, `490` | `413`, `486`, `595` | `423`, `482` | — | — | — |
 | `src/components/talkx/TalkXSettings.tsx` | — | `32` | `28` | — | — | — |
-| `src/components/talkx/TalkXSuppression.tsx` | `616`, `618` | `614`, `694`, `856` | `610` | — | — | — |
+| `src/components/talkx/TalkXSuppression.tsx` | `616`, `618` | `614`, `694`, `857` | `610` | — | — | — |
 | `src/components/talkx/TalkXTemplateEditor.tsx` | — | `519` | `515` | — | — | — |
 | `src/components/talkx/TalkXTemplates.tsx` | `322`, `326`, `333` | `293`, `320`, `362`, `396` | `316` | — | — | — |
-| `src/components/talkx/TalkXView.tsx` | — | `59`, `443` | — | — | `584` | — |
+| `src/components/talkx/TalkXView.tsx` | — | `60`, `446` | — | — | `590` | — |
 | `src/components/talkx/TalkXWizardDelivery.tsx` | — | — | — | — | `65` | — |
 
 ## Resumo
