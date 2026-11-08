@@ -112,7 +112,7 @@ export function BoardColumn({
       ].join(' ')}>
         <span className="min-w-0 shrink-0 truncate text-[13px] font-semibold">{col.label}</span>
         {/* Etapa 080: o subtítulo curto fica à vista; a política longa continua no tooltip do ⓘ. */}
-        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{col.subtitle}</span>
+        <span className="min-w-0 flex-1 truncate text-2xs text-muted-foreground">{col.subtitle}</span>
         {headerCount && (
           <span className={`shrink-0 text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
             {headerCount}
@@ -185,7 +185,7 @@ export function BoardColumn({
             {dragDisabled && (
               <p
                 data-testid="board-longpress-hint"
-                className="px-1 pb-1 text-[11px] text-muted-foreground"
+                className="px-1 pb-1 text-2xs text-muted-foreground"
               >
                 {pressao.armado ? 'Arraste o cartão' : 'Pressione e segure para arrastar'}
               </p>
@@ -195,7 +195,7 @@ export function BoardColumn({
             {snapshot.isDraggingOver && (
               <p
                 data-testid="board-drop-target"
-                className="rounded-lg border border-primary/40 bg-primary/10 px-2 py-1 text-[11px] font-medium text-foreground"
+                className="rounded-lg border border-primary/40 bg-primary/10 px-2 py-1 text-2xs font-medium text-foreground"
               >
                 {dicaSolta}
               </p>
@@ -227,7 +227,7 @@ export function BoardColumn({
                     {/* Etapa 092: no Concluído, cada cartão traz o check verde e a
                         data da conclusão (a mesma regra de dia do módulo). */}
                     {status === 'done' && (
-                      <div data-testid="done-stamp" className="flex items-center gap-1 px-1 pb-1 text-[11px]">
+                      <div data-testid="done-stamp" className="flex items-center gap-1 px-1 pb-1 text-2xs">
                         <Check className="h-3 w-3 shrink-0 text-success" aria-hidden="true" />
                         <span className="text-muted-foreground">
                           {formatWorkItemDate(item.completed_at, { format: 'day' }) ?? 'Concluída'}
@@ -288,7 +288,7 @@ export function BoardColumn({
         <div data-testid="capture-card" className="border-t border-border/50 p-2">
           <div className="rounded-xl border border-dashed border-border/70 bg-card/50 p-2">
             <QuickAdd onAdd={onCreate} defaultStatus="backlog" compact placeholder="Capturar tarefa…" />
-            <p className="px-1 pt-1 text-[11px] text-muted-foreground">Pressione Enter para criar</p>
+            <p className="px-1 pt-1 text-2xs text-muted-foreground">Pressione Enter para criar</p>
           </div>
         </div>
       )}
@@ -297,7 +297,7 @@ export function BoardColumn({
       {limit.hard != null && (
         <div
           data-testid={`col-limit-footer-${status}`}
-          className="flex items-center gap-1.5 border-t border-border/50 px-3 py-2 text-[11px] text-muted-foreground"
+          className="flex items-center gap-1.5 border-t border-border/50 px-3 py-2 text-2xs text-muted-foreground"
         >
           <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>Seu limite é de {limit.hard} tarefas em execução.</span>

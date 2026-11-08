@@ -458,7 +458,7 @@ export function PhoneFrame({
         <DialogContent aria-describedby={undefined} className="max-w-none w-auto bg-transparent border-0 shadow-none p-0">
           <DialogTitle className="sr-only">Prévia da mensagem em tela cheia</DialogTitle>
           <div data-testid="talkx-preview-fullscreen-content">
-            <FrameBody {...frameProps} width={320} height={640} radius={40} textSize="text-[11px]" />
+            <FrameBody {...frameProps} width={320} height={640} radius={40} textSize="text-2xs" />
           </div>
         </DialogContent>
       </Dialog>

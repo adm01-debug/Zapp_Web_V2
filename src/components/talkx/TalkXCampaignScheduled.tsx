@@ -366,7 +366,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               <p className="text-2xs text-muted-foreground">{campaign.description}</p>
             ) : null}
           </div>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-info/15 text-info border border-info/30 font-medium hidden sm:inline">
+          <span className="text-2xs px-2 py-0.5 rounded-full bg-info/15 text-info border border-info/30 font-medium hidden sm:inline">
             Talk X · Agendamento de campanha
           </span>
         </div>
