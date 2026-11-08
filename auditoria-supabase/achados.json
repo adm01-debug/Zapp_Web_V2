@@ -16,7 +16,8 @@
       "reverificacao-2026-11-08T21:30Z (ZW-0002 reclassificado ALTO→BAIXO: reltuples=4/relpages=1 confirmado, seq scan é ótimo, hipótese de causalidade com ZW-0004 refutada; ZW-0004: padrão de 24h mudou de crescente para 1 incidente isolado simultâneo, causa raiz ainda não identificada — contagem ALTO:4→3)",
       "reverificacao-2026-11-08T22:48Z (ZW-0007: update_sem_withcheck 42->29 em producao, reducao nao vinda de PR; ZW-0009: confirmado sem guarda de timeout, inalterado)",
       "correcao-2026-11-08T23:05Z (_meta.contagem.MEDIO corrigido 17->16 — nao batia com a contagem real do array achados, que sempre somou 47; nenhum achado alterado, so o contador)",
-      "reverificacao-2026-11-08T23:15Z (MEDIOs do top10 reexecutados em producao via db_query: ZW-0003 inalterado; ZW-0012 null_statements 65->64; ZW-0013 ACL mcp_exec inalterada; ZW-0015 CORRIGIDO - apenas 2 das 7 funcoes de credenciais tem EXECUTE para authenticated, nao todas 7; ZW-0016 inalterado count=4; ZW-0017 RESOLVIDO - todas as 13 views de public agora tem security_invoker; ZW-0018 inalterado count=2 - contagem MEDIO:16->15 RESOLVIDO:11->12)"
+      "reverificacao-2026-11-08T23:15Z (MEDIOs do top10 reexecutados em producao via db_query: ZW-0003 inalterado; ZW-0012 null_statements 65->64; ZW-0013 ACL mcp_exec inalterada; ZW-0015 CORRIGIDO - apenas 2 das 7 funcoes de credenciais tem EXECUTE para authenticated, nao todas 7; ZW-0016 inalterado count=4; ZW-0017 RESOLVIDO - todas as 13 views de public agora tem security_invoker; ZW-0018 inalterado count=2 - contagem MEDIO:16->15 RESOLVIDO:11->12)",
+      "reconciliacao-ledger-2026-11-08T23:40Z (atribuicao definitiva do diff de baseline via supabase_migrations.schema_migrations.statements, nao arquivos de repo: secdef+5 RECONCILIADO 100%; crons+3 explicado 2/3; policies+33 explicado apenas 10/33 pelo ledger - 23 nao rastreaveis em nenhuma migration, confirmado que nao sao null_statements - novo achado ZW-0048 MEDIO; descoberta extra: 3 migrations do repo 20261108201000/202000/203000 nunca aplicadas ao banco - contagem total_zw 47->48 MEDIO:16)"
     ],
     "guardas_A14": {
       "G1_database_identity": "NÃO VERIFICADO — módulo compartilhado (database-identity.mjs), não standalone; usado internamente por check-manifest-fresh e check-catalog-fresh; requer DESTINO_URL (secret indisponível no container)",
@@ -31,11 +32,11 @@
       "G10_realtime_subscriptions": "NÃO VERIFICADO — check-realtime-subscriptions.mjs: dependência 'typescript' ausente no PATH do container",
       "G11_grants_fresh": "NÃO VERIFICADO — check-grants-fresh.mjs requer grants_fresco.json (gerado por psql + DESTINO_URL)"
     },
-    "total_zw": 47,
+    "total_zw": 48,
     "contagem": {
       "CRITICO": 0,
       "ALTO": 3,
-      "MEDIO": 15,
+      "MEDIO": 16,
       "BAIXO": 4,
       "INFO": 13,
       "RESOLVIDO": 12
@@ -685,6 +686,21 @@
       "evidencia": "grantee=anon write_grants=1 (apenas INSERT) — 2026-11-01T17:03Z",
       "pr": null,
       "classe": "AUTÔNOMA"
+    },
+    {
+      "id": "ZW-0048",
+      "origem": "novo-2026-11-08-reconciliacao-ledger",
+      "secao": "A.2",
+      "severidade": "MEDIO",
+      "tipo": "LACUNA",
+      "objeto": "23 de 33 policies criadas entre 01/11-08/11 não rastreáveis em nenhuma migration do ledger",
+      "guarda": "nenhuma",
+      "estado": "aberto",
+      "evidencia": "2026-11-08T23:40Z: delta real de pg_policies no período = +33 (520→553); reconciliação via supabase_migrations.schema_migrations.statements (21 migrations aplicadas no período, todas com statements preenchidos, 0 com statements=NULL) explica apenas +10 líquido (42 CREATE POLICY - 32 DROP POLICY); os 23 restantes não aparecem em nenhuma migration do ledger nesta janela — não é o padrão usual de drift (ZW-0012 null_statements=0 nesta janela, confirmado). Também confirmado: 3 arquivos de migration do repo (20261108201000/202000/203000, talkx analytics/template/queue) NÃO existem no ledger — drift arquivo-sem-aplicação, padrão já coberto por ZW-0012/ZW-0026.",
+      "pr": null,
+      "impacto": "~70% das novas policies desta janela foram criadas por SQL executado fora do fluxo migration→PR→CI — sem rastreabilidade de quem/quando/por quê; db-guard.yml não teria capturado essa mudança pois ela nunca passou por PR",
+      "classe": "APROVAÇÃO",
+      "esforco": "M"
     },
     {
       "id": "ZW-0047",
