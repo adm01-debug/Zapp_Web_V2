@@ -948,11 +948,11 @@
   {
    "arquivo": "scripts/ci/db-migrate-contratos.unit.mjs",
    "tipo": "unit",
-   "linhas": 338,
+   "linhas": 411,
    "testa": [
     "scripts/db-audit/run-runtime-contract.mjs"
    ],
-   "casos": 14
+   "casos": 21
   },
   {
    "arquivo": "scripts/ci/db-migrate-workflow.unit.mjs",
@@ -2376,11 +2376,11 @@
   {
    "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
    "tipo": "unit",
-   "linhas": 239,
+   "linhas": 245,
    "testa": [
     "scripts/edge-deploy/health-check.mjs"
    ],
-   "casos": 8
+   "casos": 9
   },
   {
    "arquivo": "scripts/edge-deploy/log-injection.unit.mjs",

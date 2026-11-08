@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "81a8cd9797db45d77858b8582b17fa14c22afa08",
+  "commit": "edd2ae3df35628feacaa3f2c48e4f5fc284c38ae",
   "branch": "main",
-  "data_commit": "2026-11-08T06:25:03Z",
+  "data_commit": "2026-11-08T06:43:53Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "edd2ae3",
+    "data": "2026-11-08",
+    "assunto": "fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)"
+   },
    {
     "sha": "81a8cd9",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "343971b",
     "data": "2026-11-07",
     "assunto": "fix: fecha colisões e corridas no ensaio sintético (#2759)"
-   },
-   {
-    "sha": "bd8091e",
-    "data": "2026-11-07",
-    "assunto": "chore(db): sincroniza artefatos derivados do banco (#2769)"
    }
   ],
-  "arquivos_mudados_7d": 1080,
+  "arquivos_mudados_7d": 1092,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -177,7 +177,7 @@
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 116
+    "mudancas": 113
    },
    {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
@@ -274,6 +274,10 @@
     "mudancas": 7
    },
    {
+    "arquivo": "scripts/e2e-isolated/run.mjs",
+    "mudancas": 7
+   },
+   {
     "arquivo": "supabase/functions/deno.json",
     "mudancas": 7
    },
@@ -291,10 +295,6 @@
    },
    {
     "arquivo": "scripts/ci/check-test-inventory.mjs",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 6
    }
   ],
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8314,
+  "arquivos_total": 8315,
   "arquivos_codigo": 4750,
-  "linhas_codigo": 877357,
+  "linhas_codigo": 877516,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -612,11 +612,11 @@
   },
   "scripts/ci": {
    "arquivos": 206,
-   "linhas": 42580
+   "linhas": 42653
   },
   "scripts/db-audit": {
    "arquivos": 81,
-   "linhas": 15322
+   "linhas": 15377
   },
   "scripts/db-tests": {
    "arquivos": 3,
@@ -632,7 +632,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
-   "linhas": 4457
+   "linhas": 4488
   },
   "scripts/eslint": {
    "arquivos": 1,
@@ -907,7 +907,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 410,
+  "console_log": 415,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,
@@ -1371,8 +1371,7 @@
    "VoiceDictationButton"
   ],
   "scripts_orfaos": [
-   "scripts/db-audit/n118-window-open-proof.test.sql",
-   "scripts/db-audit/validate-talkx-runtime.mjs"
+   "scripts/db-audit/n118-window-open-proof.test.sql"
   ],
   "env_usadas_nao_declaradas": [
    "DEV",

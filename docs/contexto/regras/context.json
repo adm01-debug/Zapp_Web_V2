@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "81a8cd9797db45d77858b8582b17fa14c22afa08",
+  "sha": "edd2ae3df35628feacaa3f2c48e4f5fc284c38ae",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 06:26 UTC",
-  "files_total": 8155,
+  "generated_at": "2026-11-08 06:49 UTC",
+  "files_total": 8156,
   "code_files": 6014,
-  "code_lines": 1043536
+  "code_lines": 1043695
  },
  "version": "1.3.2",
- "facts_hash": "0811fae61005d6ba",
+ "facts_hash": "73ea30d523878d58",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67947,7 +67947,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 87815,
+   "lines": 87974,
    "tables": [
     "a",
     "alem_do_limite",
@@ -74617,6 +74617,7 @@
     "scripts/db-audit/verify-ledger-statements.mjs"
    ],
    "TARGET_VERSION": [
+    "scripts/db-audit/extrair-contratos-runtime.mjs",
     "scripts/db-audit/validate-runtime-proof.mjs",
     "scripts/db-audit/verify-ledger-statements.mjs"
    ],
@@ -80968,10 +80969,6 @@
    },
    {
     "file": "scripts/db-audit/export-targeted-ledger-evidence.mjs",
-    "msg": "DESTINO_URL ausente"
-   },
-   {
-    "file": "scripts/db-audit/export-targeted-ledger-evidence.mjs",
     "msg": "TARGET_VERSIONS possui duplicatas"
    },
    {
@@ -81028,7 +81025,7 @@
    },
    {
     "file": "scripts/db-audit/extrair-contratos-runtime.mjs",
-    "msg": "nenhum braco de versao encontrado"
+    "msg": "nenhum braco de versao encontrado em "
    },
    {
     "file": "scripts/db-audit/extrair-contratos-runtime.mjs",
@@ -81327,10 +81324,6 @@
     "msg": "nonlocal-docker-context"
    },
    {
-    "file": "scripts/e2e-isolated/resolve-images.mjs",
-    "msg": "usage: resolve-images.mjs <report.json>"
-   },
-   {
     "file": "scripts/e2e-isolated/results.mjs",
     "msg": "PLAYWRIGHT_REPORT_"
    },
@@ -81491,10 +81484,6 @@
     "msg": "unsafe-work-mount-target"
    },
    {
-    "file": "scripts/e2e-isolated/run.mjs",
-    "msg": "usage: run.mjs login <output-directory> | suite <group> <output-directory>"
-   },
-   {
     "file": "scripts/e2e-isolated/runtime-contract.mjs",
     "msg": "[e2e-isolated/"
    },
@@ -81541,14 +81530,6 @@
    {
     "file": "scripts/edge-deploy/collect-remote.mjs",
     "msg": "Canonical project required"
-   },
-   {
-    "file": "scripts/edge-deploy/collect-remote.mjs",
-    "msg": "Invalid collector arguments"
-   },
-   {
-    "file": "scripts/edge-deploy/collect-remote.mjs",
-    "msg": "Manifest and output required"
    },
    {
     "file": "scripts/edge-deploy/deployment-record.mjs",
@@ -81772,15 +81753,7 @@
    },
    {
     "file": "scripts/edge-deploy/serialize-scope.mjs",
-    "msg": "GITHUB_TOKEN, GITHUB_REPOSITORY e GITHUB_RUN_ID obrigatorios"
-   },
-   {
-    "file": "scripts/edge-deploy/serialize-scope.mjs",
     "msg": "GitHub API ${response.status} em ${path.split("
-   },
-   {
-    "file": "scripts/edge-deploy/smoke-functions.mjs",
-    "msg": "Missing required argument: ${required}"
    },
    {
     "file": "scripts/edge-deploy/smoke-functions.mjs",
@@ -81845,10 +81818,6 @@
    {
     "file": "scripts/edge-deploy/talkx-preflight.mjs",
     "msg": "Projeto não-canônico no manifesto: ${manifestoCommitado.project_ref}"
-   },
-   {
-    "file": "scripts/edge-deploy/verify-remote.mjs",
-    "msg": "Missing required argument: ${required}"
    },
    {
     "file": "scripts/edge-deploy/verify-remote.mjs",
@@ -262766,7 +262735,7 @@
   },
   "scripts/ci/db-migrate-contratos.unit.mjs": {
    "path": "scripts/ci/db-migrate-contratos.unit.mjs",
-   "lines": 338,
+   "lines": 411,
    "rule_comments": [
     "Teste unitario nunca deve alcancar banco: mesmo que o runner/CI tenha",
     "O aviso nao pode ir para o stdout: e' la que o workflow faz JSON.parse."
@@ -266328,7 +266297,7 @@
   },
   "scripts/db-audit/export-targeted-ledger-evidence.mjs": {
    "path": "scripts/db-audit/export-targeted-ledger-evidence.mjs",
-   "lines": 199,
+   "lines": 204,
    "exports": [
     "function parseTargetVersions",
     "function buildLedgerQuery",
@@ -266344,7 +266313,6 @@
     "TARGET_VERSIONS"
    ],
    "errors": [
-    "DESTINO_URL ausente",
     "TARGET_VERSIONS possui duplicatas",
     "TARGET_VERSIONS possui version invalida",
     "envelope de evidencia invalido",
@@ -266403,9 +266371,12 @@
   },
   "scripts/db-audit/extrair-contratos-runtime.mjs": {
    "path": "scripts/db-audit/extrair-contratos-runtime.mjs",
-   "lines": 98,
+   "lines": 126,
+   "env": [
+    "TARGET_VERSION"
+   ],
    "errors": [
-    "nenhum braco de versao encontrado",
+    "nenhum braco de versao encontrado em ",
     "passo nao encontrado: "
    ],
    "params": [
@@ -266426,7 +266397,7 @@
      "value": "'docs/audits/evidence/db-migrate-contratos-historicos.md'"
     }
    ],
-   "doc": "E62: extrai os contratos de runtime que hoje vivem embutidos no passo \"Provar estado runtime antes do push\" do db-migrate.yml. O passo e um `case \"$TARGET_VERSION\"` com um braco por versao de migration. Cada braco monta uma consulta que extrai o fingerprint do estado runtime daquele alvo (`runtime_s …"
+   "doc": "E62: extrai os contratos de runtime que hoje vivem embutidos no passo \"Provar estado runtime antes do push\" do db-migrate.yml. Originalmente o passo era um `case \"$TARGET_VERSION\"` com um braco por versao de migration. Cada braco montava uma consulta que extraia o fingerprint do estado runtime daque …"
   },
   "scripts/db-audit/generic-migration-runtime.sql": {
    "path": "scripts/db-audit/generic-migration-runtime.sql",
@@ -267492,7 +267463,7 @@
   },
   "scripts/db-audit/validate-runtime-proof.mjs": {
    "path": "scripts/db-audit/validate-runtime-proof.mjs",
-   "lines": 638,
+   "lines": 650,
    "env": [
     "APPLY_BUNDLE",
     "GITHUB_SHA",
@@ -267509,7 +267480,7 @@
   },
   "scripts/db-audit/validate-talkx-runtime.mjs": {
    "path": "scripts/db-audit/validate-talkx-runtime.mjs",
-   "lines": 30,
+   "lines": 40,
    "env": [
     "RUNTIME_JSON"
    ],
@@ -268236,8 +268207,7 @@
     "invalid-image-lock",
     "invalid-image-reference",
     "missing-or-ambiguous-image-digest",
-    "nonlocal-docker-context",
-    "usage: resolve-images.mjs <report.json>"
+    "nonlocal-docker-context"
    ],
    "calc_fns": [
     {
@@ -268349,8 +268319,7 @@
     "tls-boot-proof-invalid",
     "tls-origin-mismatch",
     "unexpected-migration-failure",
-    "unsafe-work-mount-target",
-    "usage: run.mjs login <output-directory> | suite <group> <output-directory>"
+    "unsafe-work-mount-target"
    ],
    "rule_comments": [
     "* Full-suite warmup must compile every tracked, active Edge entrypoint. */",
@@ -268754,9 +268723,7 @@
    ],
    "errors": [
     "Before snapshot, immutable SHA, run and scope required",
-    "Canonical project required",
-    "Invalid collector arguments",
-    "Manifest and output required"
+    "Canonical project required"
    ],
    "doc": "!/usr/bin/env node"
   },
@@ -268812,7 +268779,7 @@
   },
   "scripts/edge-deploy/generate-manifest.mjs": {
    "path": "scripts/edge-deploy/generate-manifest.mjs",
-   "lines": 68,
+   "lines": 74,
    "exports": [
     "function runGenerateManifest"
    ],
@@ -268832,7 +268799,7 @@
   },
   "scripts/edge-deploy/health-check.mjs": {
    "path": "scripts/edge-deploy/health-check.mjs",
-   "lines": 273,
+   "lines": 280,
    "exports": [
     "const CANONICAL_PROJECT",
     "const MGMT_BASE",
@@ -268931,7 +268898,7 @@
   },
   "scripts/edge-deploy/health-check.unit.mjs": {
    "path": "scripts/edge-deploy/health-check.unit.mjs",
-   "lines": 239,
+   "lines": 245,
    "errors": [
     "network secret"
    ]
@@ -269096,7 +269063,6 @@
    ],
    "errors": [
     "Deploy ${me.scope} ainda conflita com run(s) ${blocking.map((r) => ",
-    "GITHUB_TOKEN, GITHUB_REPOSITORY e GITHUB_RUN_ID obrigatorios",
     "GitHub API ${response.status} em ${path.split("
    ],
    "params": [
@@ -269116,13 +269082,12 @@
   },
   "scripts/edge-deploy/smoke-functions.mjs": {
    "path": "scripts/edge-deploy/smoke-functions.mjs",
-   "lines": 206,
+   "lines": 212,
    "exports": [
     "function smokeFunction",
     "function runSmokeSuite"
    ],
    "errors": [
-    "Missing required argument: ${required}",
     "Unknown argument: ${key}",
     "concurrency must be an integer between 1 and 20",
     "retries must be an integer between 1 and 5"
@@ -269241,12 +269206,11 @@
   },
   "scripts/edge-deploy/verify-remote.mjs": {
    "path": "scripts/edge-deploy/verify-remote.mjs",
-   "lines": 48,
+   "lines": 54,
    "exports": [
     "function runVerifyRemote"
    ],
    "errors": [
-    "Missing required argument: ${required}",
     "Unknown argument: ${key}"
    ],
    "doc": "!/usr/bin/env node"
@@ -383543,10 +383507,35 @@
   }
  },
  "git": {
-  "sha": "81a8cd9797db45d77858b8582b17fa14c22afa08",
+  "sha": "edd2ae3df35628feacaa3f2c48e4f5fc284c38ae",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "edd2ae3",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)",
+    "files": [
+     "docs/talkx/recovery/evidence/X023/preflight-2026-11-08.json",
+     "scripts/ci/db-migrate-contratos.unit.mjs",
+     "scripts/db-audit/export-targeted-ledger-evidence.mjs",
+     "scripts/db-audit/extrair-contratos-runtime.mjs",
+     "scripts/db-audit/validate-runtime-proof.mjs",
+     "scripts/db-audit/validate-talkx-runtime.mjs",
+     "scripts/e2e-isolated/resolve-images.mjs",
+     "scripts/e2e-isolated/run.mjs",
+     "scripts/edge-deploy/collect-remote.mjs",
+     "scripts/edge-deploy/generate-manifest.mjs",
+     "scripts/edge-deploy/health-check.mjs",
+     "scripts/edge-deploy/health-check.unit.mjs",
+     "scripts/edge-deploy/serialize-scope.mjs",
+     "scripts/edge-deploy/smoke-functions.mjs",
+     "scripts/edge-deploy/unchanged-from-log.mjs",
+     "scripts/edge-deploy/verify-remote.mjs",
+     "scripts/ui-audit/width-regression.mjs"
+    ]
+   },
    {
     "sha": "81a8cd9",
     "date": "2026-11-08",
@@ -383904,123 +383893,15 @@
      "analise/dossies/lote2-10-feat-copiloto-cv011-020-migrations-261016-1930.md",
      "analise/progresso.json"
     ]
-   },
-   {
-    "sha": "e900ae3",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)",
-    "files": [
-     ".github/workflows/e2e-logado-isolado.yml",
-     ".github/workflows/e2e-logado.yml",
-     "docs/ci/README.md",
-     "e2e/README.md",
-     "e2e/auth-diagnostics.ts",
-     "e2e/catalog.spec.ts",
-     "e2e/conexoes.spec.ts",
-     "e2e/contacts-crud.spec.ts",
-     "e2e/contacts-views.spec.ts",
-     "e2e/conversation.spec.ts",
-     "e2e/ct94-ui-429.spec.ts",
-     "e2e/dialog-rodape-viewport.spec.ts",
-     "e2e/email-link-contato.spec.ts",
-     "e2e/files-tab.spec.ts",
-     "e2e/fixtures/arquivos-local/dados.ts",
-     "e2e/fixtures/arquivos-local/seed.ts",
-     "e2e/fixtures/e2e-contact.ts",
-     "e2e/fixtures/isolated-qr.ts",
-     "e2e/fixtures/mapa-mocks.ts",
-     "e2e/fixtures/onboarding-isolated.ts",
-     "e2e/fixtures/supabase-env.ts",
-     "e2e/fixtures/talkx-demo.ts",
-     "e2e/inbox-contact-sidebar.spec.ts",
-     "e2e/location-picker.spec.ts",
-     "e2e/media-volume.spec.ts",
-     "e2e/monitoring.spec.ts",
-     "e2e/multiplix.spec.ts",
-     "e2e/navegacao-modulos.spec.ts",
-     "e2e/onboarding-dispensar.spec.ts",
-     "e2e/reactions.spec.ts",
-     "e2e/skins-e2e.spec.ts",
-     "e2e/talkx-demo.spec.ts",
-     "e2e/talkx-launch.spec.ts",
-     "e2e/talkx-visual.spec.ts",
-     "e2e/talkx.spec.ts",
-     "e2e/telefonia.spec.ts",
-     "scripts/ci/e2e-isolated-alert.unit.mjs",
-     "scripts/ci/e2e-isolated-collection.unit.mjs",
-     "scripts/ci/e2e-isolated-fixture-access.unit.mjs",
-     "scripts/ci/e2e-isolated-fixtures.unit.mjs",
-     "scripts/ci/e2e-isolated-force-online.unit.mjs",
-     "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",
-     "scripts/ci/e2e-isolated-network-proof.unit.mjs",
-     "scripts/ci/e2e-isolated-qr.unit.mjs",
-     "scripts/ci/e2e-isolated-results.unit.mjs",
-     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/ci/e2e-isolated-suite.unit.mjs",
-     "scripts/ci/e2e-isolated-tls.unit.mjs",
-     "scripts/ci/e2e-isolated-workflow.unit.mjs",
-     "scripts/ci/e2e-media-volume-fixture.unit.mjs",
-     "scripts/ci/e2e-recovery.unit.mjs",
-     "scripts/ci/eslint-baseline.json",
-     "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/collection.mjs",
-     "scripts/e2e-isolated/force-online.mjs",
-     "scripts/e2e-isolated/main/index.ts",
-     "scripts/e2e-isolated/main/memory-pressure.ts",
-     "scripts/e2e-isolated/network-proof-browser.mjs",
-     "scripts/e2e-isolated/results.mjs",
-     "scripts/e2e-isolated/routine-ownership.mjs",
-     "scripts/e2e-isolated/run.mjs",
-     "scripts/e2e-isolated/runtime-contract.mjs",
-     "scripts/e2e-isolated/runtime-skips.md",
-     "scripts/e2e-isolated/seed-qr.mjs",
-     "scripts/e2e-isolated/stack.mjs",
-     "scripts/e2e-isolated/tls-probe.mjs",
-     "scripts/e2e-isolated/vite.config.ts",
-     "src/adapters/__tests__/evolutionAdapter.test.ts",
-     "src/adapters/__tests__/inboxAdapter.test.ts",
-     "src/adapters/evolutionAdapter.ts",
-     "src/adapters/inboxAdapter.ts",
-     "src/components/inbox/MediaVolumeControl.tsx",
-     "src/components/inbox/MessageReactions.tsx",
-     "src/components/inbox/__tests__/MessageReactions.aria.test.tsx",
-     "src/components/notifications/SoundVolumeControl.tsx",
-     "src/components/ui/__tests__/VolumeTriggerButton.test.tsx",
-     "src/components/ui/__tests__/command-palette.a11y.test.tsx",
-     "src/components/ui/__tests__/progress.test.tsx",
-     "src/components/ui/__tests__/sonner-offset-mobile.test.tsx",
-     "src/components/ui/command-palette.tsx",
-     "src/components/ui/progress.tsx",
-     "src/components/ui/sonner.tsx",
-     "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
-     "src/hooks/business/useWarRoomAlerts.ts",
-     "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
-     "src/hooks/chat/useMessageReactions.ts",
-     "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
-     "src/hooks/integrations/useCatalogContactSearch.ts",
-     "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
-     "src/hooks/reactions/useReactionMutations.ts",
-     "src/hooks/ui/useVolumeRocker.ts",
-     "src/integrations/supabase/types.ts",
-     "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
-     "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
-     "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-     "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
-     "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
-     "supabase/tests/goal_notifications_own_insert_policy.sql"
-    ]
    }
   ],
   "hot_files": [
    [
-    "e2e/navegacao-modulos.spec.ts",
-    4
+    "docs/talkx/ESTADOS.md",
+    3
    ],
    [
-    "docs/talkx/ESTADOS.md",
+    "e2e/navegacao-modulos.spec.ts",
     3
    ],
    [
@@ -384028,8 +383909,12 @@
     3
    ],
    [
-    "src/integrations/supabase/types.ts",
-    3
+    "scripts/edge-deploy/health-check.mjs",
+    2
+   ],
+   [
+    "scripts/edge-deploy/health-check.unit.mjs",
+    2
    ],
    [
     "scripts/ci/verify-release-targets-timeout.unit.mjs",
@@ -384044,55 +383929,51 @@
     2
    ],
    [
+    "src/integrations/supabase/types.ts",
+    2
+   ],
+   [
     "supabase/schema-catalog.json",
     2
    ],
    [
-    "src/components/CommandPalette.tsx",
+    "docs/talkx/recovery/evidence/X023/preflight-2026-11-08.json",
     1
    ],
    [
-    "src/components/keyboard/CommandPaletteHost.tsx",
+    "scripts/ci/db-migrate-contratos.unit.mjs",
     1
    ],
    [
-    "src/components/talkx/TalkXView.tsx",
+    "scripts/db-audit/export-targeted-ledger-evidence.mjs",
     1
    ],
    [
-    "src/components/talkx/kit/primitives.tsx",
+    "scripts/db-audit/extrair-contratos-runtime.mjs",
     1
    ],
    [
-    "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+    "scripts/db-audit/validate-runtime-proof.mjs",
     1
    ],
    [
-    "src/hooks/integrations/useTalkXCommandItems.ts",
+    "scripts/db-audit/validate-talkx-runtime.mjs",
     1
    ],
    [
-    "src/components/admin/__tests__/SearchInsightsView.test.tsx",
+    "scripts/e2e-isolated/resolve-images.mjs",
     1
    ],
    [
-    "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+    "scripts/e2e-isolated/run.mjs",
     1
    ],
    [
-    "src/hooks/admin/useSearchInsights.ts",
+    "scripts/edge-deploy/collect-remote.mjs",
     1
    ],
    [
-    "scripts/ci/edge-http-harness.unit.mjs",
-    1
-   ],
-   [
-    "scripts/db-audit/gmail-cas-postgrest.test.sh",
-    1
-   ],
-   [
-    "scripts/db-audit/talkx-engine-provider.test.sh",
+    "scripts/edge-deploy/generate-manifest.mjs",
     1
    ]
   ]

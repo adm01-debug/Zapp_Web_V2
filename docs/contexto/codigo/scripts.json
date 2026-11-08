@@ -1301,8 +1301,8 @@
   },
   {
    "arquivo": "scripts/db-audit/export-targeted-ledger-evidence.mjs",
-   "descricao": "Fallback (sem LEDGER_EVIDENCE_OUTPUT): diretorio privado por execucao (0700) via mkdtemp, em vez de um caminho fixo e previsivel em /tmp (S5443).",
-   "linhas": 199,
+   "descricao": null,
+   "linhas": 204,
    "env": [
     "DESTINO_URL",
     "LEDGER_EVIDENCE_OUTPUT",
@@ -1328,8 +1328,10 @@
   {
    "arquivo": "scripts/db-audit/extrair-contratos-runtime.mjs",
    "descricao": "E62: extrai os contratos de runtime que hoje vivem embutidos no passo \"Provar estado runtime antes do push\" do db-migrate.yml.",
-   "linhas": 98,
-   "env": [],
+   "linhas": 126,
+   "env": [
+    "TARGET_VERSION"
+   ],
    "npm_scripts": [],
    "workflows": [],
    "orfao": false
@@ -3484,7 +3486,7 @@
   {
    "arquivo": "scripts/db-audit/validate-runtime-proof.mjs",
    "descricao": "W28 (2026-10-01): extrai a validacao de proof do heredoc inline do db-migrate.yml. Lê RUNTIME_JSON, TARGET_VERSION, NEEDS_APPLY do env; saída:",
-   "linhas": 638,
+   "linhas": 650,
    "env": [
     "APPLY_BUNDLE",
     "GITHUB_SHA",
@@ -3501,13 +3503,13 @@
   {
    "arquivo": "scripts/db-audit/validate-talkx-runtime.mjs",
    "descricao": "W28 (2026-10-01): extrai a validacao do bundle Talk X do heredoc inline do db-migrate.yml. Lê RUNTIME_JSON do env. Exit != 0 se o proof divergir do contrato.",
-   "linhas": 30,
+   "linhas": 40,
    "env": [
     "RUNTIME_JSON"
    ],
    "npm_scripts": [],
    "workflows": [],
-   "orfao": true
+   "orfao": false
   },
   {
    "arquivo": "scripts/db-audit/verify-ledger-statements.mjs",
@@ -4130,7 +4132,7 @@
   {
    "arquivo": "scripts/edge-deploy/generate-manifest.mjs",
    "descricao": null,
-   "linhas": 68,
+   "linhas": 74,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -4142,7 +4144,7 @@
   {
    "arquivo": "scripts/edge-deploy/health-check.mjs",
    "descricao": "W65: pós-deploy health check — consulta a API atual de logs do Supabase e bloqueia regressões 5xx. Somente indisponibilidade transitória de",
-   "linhas": 273,
+   "linhas": 280,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4213,7 +4215,7 @@
   {
    "arquivo": "scripts/edge-deploy/smoke-functions.mjs",
    "descricao": "W61: origens canônicas lidas de allowed-origins.json (sincronizado com validation.ts) verify_jwt=false is required for cron callers that cannot mint a user JWT,",
-   "linhas": 206,
+   "linhas": 212,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -4253,7 +4255,7 @@
   {
    "arquivo": "scripts/edge-deploy/verify-remote.mjs",
    "descricao": null,
-   "linhas": 48,
+   "linhas": 54,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
