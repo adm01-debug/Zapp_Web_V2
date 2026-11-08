@@ -195,7 +195,7 @@ export type ParseModelOutputResult<T> =
  * Valida a saída crua do modelo contra um schema, sem coagir nada:
  * - sucesso  → `{ ok: true, data }` com o valor já tipado;
  * - falha    → `{ ok: false, errors }`, cada erro com `path` achatado
- *   (`resultado.error.issues[i].path.join('.')`).
+ *   (`resultado.error.issues[i].path.join('.')`). 
  *
  * O `path` achatado é o que permite apontar o índice exato de um array
  * (`keyPoints.5`) em vez do genérico `keyPoints`.
@@ -260,3 +260,63 @@ export function buildAiEnvelope<T = unknown>(
 
   return envelope;
 }
+
+// ─── Capacidade: copiloto de vendas ao vivo (CV-010) ─────────
+
+export const SALE_STAGE_VALUES = [
+  "novo_contato",
+  "qualificando",
+  "apresentando",
+  "negociando",
+  "fechando",
+  "pos_venda",
+  "perdido",
+] as const;
+
+export const DECISION_ROLE_VALUES = [
+  "buyer",
+  "user",
+  "approver",
+  "intermediary",
+  "unknown",
+] as const;
+
+export const KEY_MOMENT_VALUES = [
+  "price_request",
+  "objection",
+  "buy_signal",
+  "competitor_mention",
+] as const;
+
+/** Delta B·R·I·N·D·E — somente os campos que o modelo identificou neste tick. */
+export const BrindeDeltaSchema = z.object({
+  budget:      z.string().min(1).optional(),
+  responsible: z.string().min(1).optional(),
+  intention:   z.string().min(1).optional(),
+  quantity:    z.number().int().positive().optional(),
+  deadline:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  delivery:    z.string().min(1).optional(),
+  meter:       z.number().int().min(0).max(6).optional(),
+});
+
+export const StakeholderSchema = z.object({
+  name: z.string().min(1),
+  role: z.string().optional(),
+});
+
+/** Saída esperada de `copilot-live` a cada tick. */
+export const CopilotLiveOutputSchema = z.object({
+  insight_type:  z.enum(["suggestion", "warning", "info", "celebration"]),
+  content:       z.string().min(1).max(500),
+  brinde_delta:  BrindeDeltaSchema.optional(),
+  sale_stage:    z.enum(asEnumValues(SALE_STAGE_VALUES)).optional(),
+  temperature:   z.number().int().min(0).max(100).optional(),
+  key_moments:   z.array(z.enum(asEnumValues(KEY_MOMENT_VALUES))).max(4).optional(),
+  occasion:      z.string().min(1).optional(),
+  comm_style:    z.array(z.string().min(1)).max(5).optional(),
+  decision_role: z.enum(asEnumValues(DECISION_ROLE_VALUES)).optional(),
+  stakeholders:  z.array(StakeholderSchema).max(10).optional(),
+});
+
+export type CopilotLiveOutput = z.infer<typeof CopilotLiveOutputSchema>;
+export type BrindeDelta = z.infer<typeof BrindeDeltaSchema>;
