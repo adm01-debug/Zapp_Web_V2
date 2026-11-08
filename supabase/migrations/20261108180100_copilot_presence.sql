@@ -23,9 +23,14 @@ CREATE INDEX IF NOT EXISTS idx_copilot_presence_expires
 
 ALTER TABLE public.copilot_presence ENABLE ROW LEVEL SECURITY;
 
+-- Idempotência: DROP antes de CREATE (Supabase pode re-aplicar migration em branch reset).
+DROP POLICY IF EXISTS "own_presence" ON public.copilot_presence;
 CREATE POLICY "own_presence" ON public.copilot_presence
-  FOR ALL USING (profile_id = auth.uid());
+  FOR ALL
+  USING     (profile_id = auth.uid())
+  WITH CHECK (profile_id = auth.uid());
 
+DROP POLICY IF EXISTS "service_role_presence" ON public.copilot_presence;
 CREATE POLICY "service_role_presence" ON public.copilot_presence
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
@@ -80,10 +85,14 @@ GRANT EXECUTE ON FUNCTION public.copilot_has_presence(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.copilot_has_presence(uuid) TO service_role;
 
 -- Job cron para limpeza de registros expirados (roda de 5 em 5 min).
--- Requer pg_cron; falha silenciosa se não estiver disponível.
+-- Idempotência: unschedule antes de recriar para evitar jobs duplicados.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    BEGIN
+      PERFORM cron.unschedule('copilot-presence-cleanup');
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
     PERFORM cron.schedule(
       'copilot-presence-cleanup',
       '*/5 * * * *',

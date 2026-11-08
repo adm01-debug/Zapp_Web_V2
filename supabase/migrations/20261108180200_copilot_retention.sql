@@ -19,11 +19,18 @@ CREATE TABLE IF NOT EXISTS public.copilot_retention_aggregates (
 CREATE INDEX IF NOT EXISTS idx_copilot_retention_profile_date
   ON public.copilot_retention_aggregates (profile_id, agg_date DESC);
 
+-- Índice em copilot_insights.created_at para o JOIN diário de retenção.
+CREATE INDEX IF NOT EXISTS idx_copilot_insights_created_at
+  ON public.copilot_insights (created_at);
+
 ALTER TABLE public.copilot_retention_aggregates ENABLE ROW LEVEL SECURITY;
 
+-- Idempotência: DROP antes de CREATE.
+DROP POLICY IF EXISTS "own_retention" ON public.copilot_retention_aggregates;
 CREATE POLICY "own_retention" ON public.copilot_retention_aggregates
   FOR SELECT USING (profile_id = auth.uid());
 
+DROP POLICY IF EXISTS "service_role_retention" ON public.copilot_retention_aggregates;
 CREATE POLICY "service_role_retention" ON public.copilot_retention_aggregates
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
@@ -51,8 +58,14 @@ BEGIN
     s.profile_id,
     v_target_date,
     COUNT(DISTINCT s.id)                                           AS sessions_opened,
-    COUNT(DISTINCT i.id)                                           AS ticks_processed,
-    COUNT(DISTINCT i.id) FILTER (WHERE i.id IS NOT NULL)           AS insights_gen,
+    -- ticks_processed: ai_jobs de kind 'copilot_tick' enfileirados p/ a sessão no dia
+    (SELECT COUNT(*)
+       FROM public.ai_jobs j
+      WHERE j.payload->>'session_id' = s.id::text
+        AND j.kind = 'copilot_tick'
+        AND j.available_at >= v_target_date
+        AND j.available_at <  v_target_date + 1)                  AS ticks_processed,
+    COUNT(DISTINCT i.id)                                           AS insights_gen,
     COUNT(DISTINCT s.id) FILTER (WHERE s.brinde_meter = 6)         AS brinde_complete,
     AVG(s.temperature)                                             AS avg_temperature
   FROM public.copilot_sessions s
@@ -78,9 +91,14 @@ REVOKE ALL ON FUNCTION public.run_copilot_retention() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.run_copilot_retention() TO service_role;
 
 -- Agendar execução diária às 02:00 UTC.
+-- Idempotência: unschedule antes de recriar para evitar jobs duplicados em re-apply.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    BEGIN
+      PERFORM cron.unschedule('copilot-retention-daily');
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
     PERFORM cron.schedule(
       'copilot-retention-daily',
       '0 2 * * *',
