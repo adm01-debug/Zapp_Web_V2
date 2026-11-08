@@ -1,4 +1,4 @@
- import { Suspense, useCallback, forwardRef, lazy, useMemo } from 'react';
+import { Suspense, useCallback, forwardRef, lazy, useMemo } from 'react';
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
  import { VoiceActionBridge } from '@/components/layout/VoiceActionBridge';
 import { ActiveCallBar } from '@/components/calls/ActiveCallBar';
@@ -67,8 +67,8 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   }, [startTransition, setCurrentView]);
 
   const layoutContextValue = useMemo(
-    () => ({ hidePageBreadcrumbs: !isMobile && !isZen, isZen, toggleZen }),
-    [isMobile, isZen, toggleZen]
+    () => ({ hidePageBreadcrumbs: false, isZen, toggleZen }),
+    [isZen, toggleZen]
   );
   useNavShortcuts(handleViewChange);
 
