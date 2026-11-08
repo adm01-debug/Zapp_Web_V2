@@ -55,7 +55,7 @@ const bracos = [];
 bloco.forEach((l, i) => {
   const mShell = /^ {12}(\d{14})\)\s*$/.exec(l);
   if (mShell) { bracos.push({ versao: mShell[1], i, formato: 'shell' }); return; }
-  const mNode = /TARGET_VERSION\s*===?\s*['"](\d{14})['"]/.exec(l);
+  const mNode = /TARGET_VERSION\s*===?\s*['"]( \d{14})['"]/.exec(l);
   if (mNode) bracos.push({ versao: mNode[1], i, formato: 'node' });
 });
 if (bracos.length === 0) {

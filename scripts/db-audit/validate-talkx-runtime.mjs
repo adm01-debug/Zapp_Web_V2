@@ -1,5 +1,9 @@
 // W28 (2026-10-01): extrai a validacao do bundle Talk X do heredoc inline do db-migrate.yml.
 // Lê RUNTIME_JSON do env. Exit != 0 se o proof divergir do contrato.
+if (!process.env.RUNTIME_JSON) {
+  process.stderr.write('Uso: RUNTIME_JSON=<json> node validate-talkx-runtime.mjs\n');
+  process.exit(2);
+}
 const proof = JSON.parse(process.env.RUNTIME_JSON);
 const ok = proof.server_major === 17
   && proof.database === 'postgres'

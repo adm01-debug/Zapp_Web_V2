@@ -9,6 +9,12 @@ import { fileURLToPath } from 'node:url';
 import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const VERSION_RE = /^\d{14}$/u;
+
+if (!process.env.DESTINO_URL) {
+  process.stderr.write('FALHA: DESTINO_URL ausente\nUso: DESTINO_URL=postgres://... node export-targeted-ledger-evidence.mjs\n');
+  process.exit(2);
+}
+
 // Fallback (sem LEDGER_EVIDENCE_OUTPUT): diretorio privado por execucao (0700)
 // via mkdtemp, em vez de um caminho fixo e previsivel em /tmp (S5443).
 const OUTPUT_PATH = process.env.LEDGER_EVIDENCE_OUTPUT
