@@ -1679,7 +1679,7 @@
     "CommandPalette"
    ],
    "export_default": null,
-   "linhas": 140,
+   "linhas": 123,
    "dominio": "components",
    "hooks_locais": [
     "useUserRole"
@@ -7810,7 +7810,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "orfao": false
   },
   {
@@ -10656,7 +10656,7 @@
     "Th"
    ],
    "export_default": null,
-   "linhas": 145,
+   "linhas": 154,
    "dominio": "components/talkx",
    "hooks_locais": [],
    "tabelas": [],
@@ -11273,9 +11273,10 @@
     "TalkXView"
    ],
    "export_default": "TalkXView",
-   "linhas": 633,
+   "linhas": 639,
    "dominio": "components/talkx",
    "hooks_locais": [
+    "useGlobalKeyboard",
     "useTalkX",
     "useTalkXSegments",
     "useTalkXServiceStatus",

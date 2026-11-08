@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `c6c7697af1` · branch `main` · 2026-11-08 05:44 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `81a8cd9797` · branch `main` · 2026-11-08 06:26 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4121,6 +4121,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `src/hooks/integrations/useEmailThreadForContact.ts` |
 | 200 | `src/hooks/integrations/useGmail.ts` |
 | 100 | `src/hooks/integrations/useMetaCAPIData.ts` |
+| 50 | `src/hooks/integrations/useTalkXCommandItems.ts` |
 | 50 | `src/hooks/integrations/useTalkXEvents.ts` |
 | 500 | `src/hooks/integrations/useTalkXInsights.ts` |
 | 2000 | `src/hooks/integrations/useTalkXMonitor.ts` |
@@ -4553,7 +4554,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21153 testes em 2245 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21158 testes em 2246 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4857,7 +4858,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx` | 16 | etapa 094 — polimento do arrastar · o cartão levantado ganha o overlay elevado e o lugar da soltura fica tracejado · no toque o arrasto só pega depois da pressão longa; toque curto desarma · etapas 095/096 — alvo de soltura … |
 | `src/hooks/__tests__/useActionFeedback.test.ts` | 16 | useActionFeedback · initializes without error · exposes success function · exposes error function … |
 | `src/hooks/integrations/__tests__/useTalkXCampaignList.test.ts` | 16 | useTalkXCampaignList — paginação no servidor (X078) · página 3 com 10 por página pede o intervalo 20–29 e traz colunas nomeadas com count exato · com 1.200 campanhas a 2ª página devolve 10 linhas e o total é 1.200 · ordenação e filtros (status, segmento, criador, período) vão na consulta … |
-| … +1945 linhas — lista completa em `context.json` | | |
+| … +1946 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

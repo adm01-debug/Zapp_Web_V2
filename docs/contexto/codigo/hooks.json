@@ -911,9 +911,10 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_arquivos": [
     "src/App.tsx",
+    "src/components/talkx/TalkXView.tsx",
     "src/pages/Index.tsx"
    ],
    "coberto_por_testes": 4
@@ -8379,7 +8380,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 21,
+   "usado_por": 20,
    "usado_por_arquivos": [
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/TalkXCampaignPaused.tsx",
@@ -8400,8 +8401,7 @@
     "src/components/talkx/useCampaignRowActions.tsx",
     "src/components/talkx/useTalkXLifecycle.tsx",
     "src/hooks/integrations/index.ts",
-    "src/hooks/integrations/useTalkXCampaignList.ts",
-    "src/hooks/integrations/useTalkXCommandItems.ts"
+    "src/hooks/integrations/useTalkXCampaignList.ts"
    ],
    "coberto_por_testes": 23
   },
@@ -8500,21 +8500,25 @@
    "hooks_exportados": [
     "useTalkXCommandItems"
    ],
-   "linhas": 105,
+   "linhas": 146,
    "dominio": "hooks/integrations",
-   "tabelas": [],
+   "tabelas": [
+    "talkx_campaigns",
+    "talkx_segments",
+    "talkx_templates"
+   ],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
     "useMemo",
-    "useQueryClient"
+    "useQuery"
    ],
    "canais_realtime": [],
    "usado_por": 1,
    "usado_por_arquivos": [
     "src/components/keyboard/CommandPaletteHost.tsx"
    ],
-   "coberto_por_testes": 0
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXConnectionStatus.ts",

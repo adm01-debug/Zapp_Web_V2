@@ -6296,6 +6296,7 @@
   ],
   "src/components/talkx/TalkXView.tsx": [
    "src/components/dashboard/overview/DashboardCard.tsx",
+   "src/components/keyboard/GlobalKeyboardProvider.tsx",
    "src/components/talkx/TalkXAnalytics.tsx",
    "src/components/talkx/TalkXCampaignPaused.tsx",
    "src/components/talkx/TalkXCampaignRunning.tsx",
@@ -8895,7 +8896,7 @@
   "src/hooks/integrations/useTalkXCommandItems.ts": [
    "src/components/talkx/talkxRoute.ts",
    "src/components/ui/command-palette-data.tsx",
-   "src/hooks/integrations/useTalkX.ts"
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/integrations/useTalkXConnectionStatus.ts": [
    "src/integrations/supabase/client.ts"

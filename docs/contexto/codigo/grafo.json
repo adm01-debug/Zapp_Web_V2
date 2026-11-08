@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "nos": 2247,
- "arestas": 7797,
+ "arestas": 7798,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 406
+   "importado_por": 407
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -117,12 +117,12 @@
    "importado_por": 44
   },
   {
-   "arquivo": "src/hooks/integrations/useTalkX.ts",
+   "arquivo": "src/lib/localDay.ts",
    "importado_por": 44
   },
   {
-   "arquivo": "src/lib/localDay.ts",
-   "importado_por": 44
+   "arquivo": "src/hooks/integrations/useTalkX.ts",
+   "importado_por": 43
   },
   {
    "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",

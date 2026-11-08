@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "c6c7697af1a4fa7a3468f64f9e49506ceb6a7b2c",
+  "sha": "81a8cd9797db45d77858b8582b17fa14c22afa08",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 05:44 UTC",
-  "files_total": 8154,
-  "code_files": 6013,
-  "code_lines": 1043416
+  "generated_at": "2026-11-08 06:26 UTC",
+  "files_total": 8155,
+  "code_files": 6014,
+  "code_lines": 1043536
  },
  "version": "1.3.2",
- "facts_hash": "b1d2c02489fedffe",
+ "facts_hash": "0811fae61005d6ba",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,7 +314,7 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1867,
+   ".ts": 1868,
    ".sql": 1292,
    ".mjs": 416,
    ".py": 119,
@@ -68276,7 +68276,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368173,
+   "lines": 368171,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68611,8 +68611,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 981,
-   "lines": 159665,
+   "files": 982,
+   "lines": 159787,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -68692,9 +68692,11 @@
     "talkx_campaigns",
     "talkx_link_clicks",
     "talkx_recipients",
+    "talkx_segments",
     "talkx_settings",
     "talkx_template_variants",
     "talkx_template_versions",
+    "talkx_templates",
     "team_conversation_members",
     "team_conversations",
     "team_message_reactions",
@@ -72111,6 +72113,7 @@
      "src/components/talkx/TalkXLiveMonitor.tsx",
      "src/hooks/integrations/useTalkX.ts",
      "src/hooks/integrations/useTalkXCampaignList.ts",
+     "src/hooks/integrations/useTalkXCommandItems.ts",
      "src/hooks/integrations/useTalkXInsights.ts",
      "supabase/functions/_shared/effect-reconcile.ts",
      "supabase/functions/connection-health-check/index.ts",
@@ -72155,6 +72158,11 @@
      "supabase/functions/talkx-send/index.ts"
     ]
    },
+   "talkx_segments": {
+    "select": [
+     "src/hooks/integrations/useTalkXCommandItems.ts"
+    ]
+   },
    "talkx_settings": {
     "select": [
      "src/hooks/integrations/useTalkXSettings.ts",
@@ -72189,6 +72197,7 @@
    },
    "talkx_templates": {
     "select": [
+     "src/hooks/integrations/useTalkXCommandItems.ts",
      "supabase/functions/talkx-send/index.ts",
      "supabase/functions/talkx-send/process-recipient.ts"
     ]
@@ -73433,6 +73442,10 @@
     "status",
     "variant_id"
    ],
+   "talkx_segments": [
+    "id",
+    "name"
+   ],
    "talkx_settings": [
     "description",
     "key",
@@ -73465,7 +73478,8 @@
    ],
    "talkx_templates": [
     "content",
-    "id"
+    "id",
+    "name"
    ],
    "talkx_test_send_claims": [
     "provider_message_id",
@@ -76371,7 +76385,6 @@
    "talkx_segment_fields",
    "talkx_segment_library_history",
    "talkx_segment_versions",
-   "talkx_segments",
    "talkx_storage_purge_queue",
    "team_chat_media_acl_r2_db_020_rb",
    "team_message_receipts",
@@ -183564,6 +183577,26 @@
     "name": "isUnavailable é false quando enabled=true e o resumo vem mesmo do servidor"
    },
    {
+    "file": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+    "name": "useTalkXCommandItems"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+    "name": "mapeia status "
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+    "name": "action de campanha grava ?campaign= na URL"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+    "name": "action de segmento grava ?segment= e ?tab=segments"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+    "name": "retorna lista vazia quando open=false (enabled=false)"
+   },
+   {
     "file": "src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx",
     "name": "#223 — insights elegem por taxa e contam as concluídas"
    },
@@ -233123,6 +233156,10 @@
     "limit": "100"
    },
    {
+    "file": "src/hooks/integrations/useTalkXCommandItems.ts",
+    "limit": "50"
+   },
+   {
     "file": "src/hooks/integrations/useTalkXEvents.ts",
     "limit": "50"
    },
@@ -270797,7 +270834,7 @@
   },
   "src/components/CommandPalette.tsx": {
    "path": "src/components/CommandPalette.tsx",
-   "lines": 140,
+   "lines": 123,
    "params": [
     {
      "name": "MAX_RECENT",
@@ -304363,7 +304400,7 @@
   },
   "src/components/talkx/TalkXView.tsx": {
    "path": "src/components/talkx/TalkXView.tsx",
-   "lines": 633,
+   "lines": 639,
    "exports": [
     "type TalkXTopView",
     "function TalkXView"
@@ -308235,7 +308272,7 @@
   },
   "src/components/talkx/kit/primitives.tsx": {
    "path": "src/components/talkx/kit/primitives.tsx",
-   "lines": 145,
+   "lines": 154,
    "exports": [
     "function IconTile",
     "function ModuleBreadcrumb",
@@ -332401,12 +332438,44 @@
   },
   "src/hooks/integrations/useTalkXCommandItems.ts": {
    "path": "src/hooks/integrations/useTalkXCommandItems.ts",
-   "lines": 105,
+   "lines": 146,
    "exports": [
     "function useTalkXCommandItems"
    ],
+   "tables": [
+    {
+     "table": "talkx_campaigns",
+     "op": "select"
+    },
+    {
+     "table": "talkx_segments",
+     "op": "select"
+    },
+    {
+     "table": "talkx_templates",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "talkx_campaigns": [
+     "id",
+     "name",
+     "status"
+    ],
+    "talkx_segments": [
+     "id",
+     "name"
+    ],
+    "talkx_templates": [
+     "id",
+     "name"
+    ]
+   },
    "hooks": [
     "useTalkXCommandItems"
+   ],
+   "pagination": [
+    "50"
    ]
   },
   "src/hooks/integrations/useTalkXConnectionStatus.ts": {
@@ -334533,6 +334602,21 @@
     "resposta ausente ou inválida do servidor nunca vira NaN na tela",
     "isUnavailable é true quando enabled=false (crm360 ou origem sem filtro)",
     "isUnavailable é false quando enabled=true e o resumo vem mesmo do servidor"
+   ]
+  },
+  "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts": {
+   "path": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+   "lines": 81,
+   "is_test": true,
+   "rule_comments": [
+    "Sem dados no cache e queries desabilitadas — não deve disparar fetch"
+   ],
+   "tests": [
+    "useTalkXCommandItems",
+    "mapeia status ",
+    "action de campanha grava ?campaign= na URL",
+    "action de segmento grava ?segment= e ?tab=segments",
+    "retorna lista vazia quando open=false (enabled=false)"
    ]
   },
   "src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx": {
@@ -383459,10 +383543,25 @@
   }
  },
  "git": {
-  "sha": "c6c7697af1a4fa7a3468f64f9e49506ceb6a7b2c",
+  "sha": "81a8cd9797db45d77858b8582b17fa14c22afa08",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "81a8cd9",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix(talkx): corrige erros TypeScript X054 — ModuleBreadcrumb onItemClick + action optional chaining (#2793)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "src/components/CommandPalette.tsx",
+     "src/components/keyboard/CommandPaletteHost.tsx",
+     "src/components/talkx/TalkXView.tsx",
+     "src/components/talkx/kit/primitives.tsx",
+     "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+     "src/hooks/integrations/useTalkXCommandItems.ts"
+    ]
+   },
    {
     "sha": "c6c7697",
     "date": "2026-11-08",
@@ -383913,22 +384012,16 @@
      "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
      "supabase/tests/goal_notifications_own_insert_policy.sql"
     ]
-   },
-   {
-    "sha": "5b62b93",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix: torna Vercel Cleanup fail-closed em 403 (#2758)",
-    "files": [
-     "scripts/ci/vercel-env-cleanup.mjs",
-     "scripts/ci/vercel-env-cleanup.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "e2e/navegacao-modulos.spec.ts",
     4
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    3
    ],
    [
     "scripts/db-audit/migration-evidence.json",
@@ -383947,24 +384040,36 @@
     2
    ],
    [
-    "docs/talkx/ESTADOS.md",
-    2
-   ],
-   [
-    "scripts/ci/vercel-env-cleanup.mjs",
-    2
-   ],
-   [
-    "scripts/ci/vercel-env-cleanup.unit.mjs",
-    2
-   ],
-   [
     "docs/DB-INVENTORY.md",
     2
    ],
    [
     "supabase/schema-catalog.json",
     2
+   ],
+   [
+    "src/components/CommandPalette.tsx",
+    1
+   ],
+   [
+    "src/components/keyboard/CommandPaletteHost.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/TalkXView.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/kit/primitives.tsx",
+    1
+   ],
+   [
+    "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+    1
+   ],
+   [
+    "src/hooks/integrations/useTalkXCommandItems.ts",
+    1
    ],
    [
     "src/components/admin/__tests__/SearchInsightsView.test.tsx",
@@ -383988,22 +384093,6 @@
    ],
    [
     "scripts/db-audit/talkx-engine-provider.test.sh",
-    1
-   ],
-   [
-    "scripts/db-audit/talkx-transition-overload-postgrest.test.sh",
-    1
-   ],
-   [
-    "supabase/deployment-manifest.json",
-    1
-   ],
-   [
-    "supabase/functions/cleanup-rate-limit-logs/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/external-db-proxy/index.ts",
     1
    ]
   ]

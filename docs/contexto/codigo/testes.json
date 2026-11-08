@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2593,
+ "total": 2594,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2302
+  "unit": 2303
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1946
+   "arquivos": 1947
   },
   {
    "padrao": "outro",
@@ -17541,6 +17541,15 @@
    "casos": 7
   },
   {
+   "arquivo": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+   "tipo": "unit",
+   "linhas": 81,
+   "testa": [
+    "src/hooks/integrations/useTalkXCommandItems.ts"
+   ],
+   "casos": 4
+  },
+  {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx",
    "tipo": "unit",
    "linhas": 172,
@@ -24646,6 +24655,7 @@
   "src/hooks/integrations/useTalkXCampaignList.ts": 1,
   "src/hooks/integrations/useTalkXCampaignSummary.ts": 1,
   "src/hooks/integrations/useTalkXCampaignTimeline.ts": 1,
+  "src/hooks/integrations/useTalkXCommandItems.ts": 1,
   "src/hooks/integrations/useTalkXEvents.ts": 1,
   "src/hooks/integrations/useTalkXInsights.ts": 4,
   "src/hooks/integrations/useTalkXLinks.ts": 2,
@@ -25238,7 +25248,6 @@
    "src/hooks/integrations/useMetaCAPIData.ts",
    "src/hooks/integrations/useQuarantineForMessage.ts",
    "src/hooks/integrations/useSyncToCRM.ts",
-   "src/hooks/integrations/useTalkXCommandItems.ts",
    "src/hooks/integrations/useTalkXConnectionStatus.ts",
    "src/hooks/integrations/useTalkXMediaUrl.ts",
    "src/hooks/integrations/useTalkXServiceStatus.ts",

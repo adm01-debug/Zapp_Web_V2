@@ -25053,7 +25053,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "_shared",
     "connection-health-check",
@@ -27039,14 +27039,14 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [
     "talkx_segments_usage_guard",
     "update_talkx_segments_updated_at"
    ],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "talkx_settings": {
    "colunas": {
@@ -27739,7 +27739,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "talkx-send"
    ],
