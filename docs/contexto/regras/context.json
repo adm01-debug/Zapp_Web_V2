@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "b5ad544ec05fdb1383603e1ca006af957d1c29c9",
+  "sha": "babb270fc5b8d7d00d27e3248e1f047a26f67839",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-07 23:38 UTC",
+  "generated_at": "2026-11-08 01:29 UTC",
   "files_total": 8152,
   "code_files": 6011,
   "code_lines": 1043316
@@ -260055,6 +260055,7 @@
     "await expect(avisos, `${etapa}: aviso não saiu da tela`).toHaveCount(0, { timeout: 15_000 });",
     "await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });",
     "await expect(nudge, `${etapa}: o aviso de 2FA continuou na tela`).toBeHidden({ timeout: 15_000 });",
+    "await expect(principal.getByText('Mais buscadas', { exact: true })).toBeVisible({ timeout: 20_000 });",
     "await mais.click({ timeout: 10_000 });",
     "await menu.getByRole('button', { name: item.label, exact: true }).first().click({ timeout: 10_000 });",
     "await page.goto('/auth', { timeout: 90_000, waitUntil: 'domcontentloaded' });",
@@ -383417,10 +383418,19 @@
   }
  },
  "git": {
-  "sha": "b5ad544ec05fdb1383603e1ca006af957d1c29c9",
+  "sha": "babb270fc5b8d7d00d27e3248e1f047a26f67839",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "babb270",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "test(e2e): aguarda readiness dos insights de busca (#2787)",
+    "files": [
+     "e2e/navegacao-modulos.spec.ts"
+    ]
+   },
    {
     "sha": "b5ad544",
     "date": "2026-11-07",
@@ -383984,18 +383994,6 @@
      "analise-prs/prs.json",
      "analise-prs/regras-de-negocio.md"
     ]
-   },
-   {
-    "sha": "3886f4b",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: endurecer provisionamento sintético de IA (#2750)",
-    "files": [
-     "docs/ia/IA-010-ambiente-de-ensaio.md",
-     "scripts/ia/README.md",
-     "scripts/ia/ensaio-provisionamento.mjs",
-     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384004,23 +384002,11 @@
     4
    ],
    [
+    "e2e/navegacao-modulos.spec.ts",
+    3
+   ],
+   [
     "src/integrations/supabase/types.ts",
-    3
-   ],
-   [
-    "docs/ia/IA-010-ambiente-de-ensaio.md",
-    3
-   ],
-   [
-    "scripts/ia/README.md",
-    3
-   ],
-   [
-    "scripts/ia/ensaio-provisionamento.mjs",
-    3
-   ],
-   [
-    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
     3
    ],
    [
@@ -384040,7 +384026,19 @@
     2
    ],
    [
-    "e2e/navegacao-modulos.spec.ts",
+    "docs/ia/IA-010-ambiente-de-ensaio.md",
+    2
+   ],
+   [
+    "scripts/ia/README.md",
+    2
+   ],
+   [
+    "scripts/ia/ensaio-provisionamento.mjs",
+    2
+   ],
+   [
+    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
     2
    ],
    [

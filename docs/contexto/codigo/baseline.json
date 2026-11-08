@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b5ad544ec05fdb1383603e1ca006af957d1c29c9",
+  "commit": "babb270fc5b8d7d00d27e3248e1f047a26f67839",
   "branch": "main",
-  "data_commit": "2026-11-07T23:31:13Z",
+  "data_commit": "2026-11-07T22:19:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "babb270",
+    "data": "2026-11-07",
+    "assunto": "test(e2e): aguarda readiness dos insights de busca (#2787)"
+   },
    {
     "sha": "b5ad544",
     "data": "2026-11-07",
@@ -126,18 +131,13 @@
     "sha": "7f3c259",
     "data": "2026-11-07",
     "assunto": "infra: migra imports esm.sh para npm specifiers nas edge functions (#2753)"
-   },
-   {
-    "sha": "636880b",
-    "data": "2026-11-07",
-    "assunto": "fix: blindar plano sintético contra IDs externos (#2757)"
    }
   ],
   "arquivos_mudados_7d": 1109,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 705
+    "mudancas": 675
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 277
+    "mudancas": 255
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -157,23 +157,23 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 146
+    "mudancas": 144
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 139
+    "mudancas": 134
    },
    {
     "pasta": "src/components/ui",
-    "mudancas": 138
+    "mudancas": 132
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 128
+    "mudancas": 122
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 119
+    "mudancas": 118
    },
    {
     "pasta": "src/lib/__tests__",
@@ -181,19 +181,19 @@
    },
    {
     "pasta": "src/components/tasks",
-    "mudancas": 115
-   },
-   {
-    "pasta": "src/hooks/chat",
-    "mudancas": 107
+    "mudancas": 114
    },
    {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
     "mudancas": 105
    },
    {
+    "pasta": "src/hooks/chat",
+    "mudancas": 104
+   },
+   {
     "pasta": "src/components/settings",
-    "mudancas": 102
+    "mudancas": 96
    }
   ],
   "arquivos_mais_mudados_90d": [
@@ -226,10 +226,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
@@ -242,6 +238,10 @@
     "mudancas": 10
    },
    {
+    "arquivo": "ESTADO.md",
+    "mudancas": 10
+   },
+   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 10
    },
@@ -250,11 +250,11 @@
     "mudancas": 10
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 10
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 9
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 9
    },
    {
@@ -278,6 +278,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
+    "mudancas": 6
+   },
+   {
     "arquivo": "e2e/telefonia.spec.ts",
     "mudancas": 6
    },
@@ -291,10 +295,6 @@
    },
    {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 6
    }
   ],
