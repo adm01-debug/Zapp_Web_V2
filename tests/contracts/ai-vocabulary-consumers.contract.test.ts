@@ -86,6 +86,34 @@ function rawSentimentUses(source: string): string[] {
   )) {
     if (SENTIMENT_LITERALS.includes(match[1].toLowerCase())) push(match[0]);
   }
+
+  // Mapas de nível em inglês são seguros somente quando a chave vem do
+  // adaptador `sentimentLevel`. Indexar pelo campo cru ou pelo valor canônico
+  // pt-BR de `normalizeSentiment` nunca casa com `negative`/`positive`.
+  const normalizedLevelVariables = new Set(
+    Array.from(clean.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*sentimentLevel\s*\(/g), (match) => match[1]),
+  );
+  const safeLevelIndex = (expression: string) => {
+    const index = expression.trim();
+    return normalizedLevelVariables.has(index) || /^sentimentLevel\s*\(/.test(index);
+  };
+  const hasEnglishLevelKey = (body: string) =>
+    /\b(?:positive|negative|neutral|critical)\s*:/.test(body);
+
+  const englishLevelMaps = new Set<string>();
+  for (const declaration of clean.matchAll(
+    /\bconst\s+(\w+)[^=]*=\s*\{([\s\S]*?)\}\s*;/g,
+  )) {
+    if (hasEnglishLevelKey(declaration[2])) englishLevelMaps.add(declaration[1]);
+  }
+  for (const access of clean.matchAll(/\b(\w+)\s*\[([^\]]+)\]/g)) {
+    if (englishLevelMaps.has(access[1]) && !safeLevelIndex(access[2])) push(access[0]);
+  }
+  for (const inline of clean.matchAll(
+    /\{([^{}]*\b(?:positive|negative|neutral|critical)\s*:[^{}]*)\}\s*\[([^\]]+)\]/g,
+  )) {
+    if (!safeLevelIndex(inline[2])) push(inline[0]);
+  }
   return hits;
 }
 
@@ -158,6 +186,9 @@ describe('os detectores pegam a reintrodução da comparação crua', () => {
     "if (sentiment === 'positive') s += 25;",
     "} else if (contact.ai_sentiment === 'neutral') {",
     "if (contact.ai_sentiment === 'critical') {",
+    "const SCORE = { negative: 30 }; SCORE[contact.ai_sentiment];",
+    "const value = normalizeSentiment(contact.ai_sentiment).value; const SCORE = { negative: 30 }; SCORE[value];",
+    "const score = { negative: 30 }[contact.ai_sentiment];",
     "const isHighPriority = conversation.contact.ai_priority === 'urgent';",
     "if (priority === 'high') {",
   ];
@@ -174,6 +205,8 @@ describe('os detectores pegam a reintrodução da comparação crua', () => {
       "const isHighPriority = priority.value === 'high';",
       "const level = score >= 80 ? 'critical' : 'low';",
       "if (risk.riskLevel === 'critical') total += 1;",
+      "const level = sentimentLevel(contact.ai_sentiment); const SCORE = { negative: 30 }; SCORE[level];",
+      "const score = { negative: 30 }[sentimentLevel(contact.ai_sentiment)];",
     ];
     for (const source of CLEAN) {
       expect(rawSentimentUses(source), source).toEqual([]);
