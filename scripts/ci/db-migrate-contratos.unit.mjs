@@ -172,13 +172,13 @@ test('E62: o corpo do -c e string bash — escapes desfeitos e expansao recusada
     '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
     `${corpo}\n` +
     '              ")';
-  // Oraculo do bash: dentro de aspas duplas \" \\\\ \\$ voltam a ser " \\ $.
+  // Oraculo do bash: dentro de aspas duplas \" \\ \$ voltam a ser " \ $.
   const [inv] = extrairInvocacoes(
-    contrato(String.raw`SELECT 'a\"b', 'c\\\\d', '\\$e'`),
+    contrato(String.raw`SELECT 'a\"b', 'c\\d', '\$e'`),
     '20260101000000',
     'sintetico',
   );
-  assert.equal(inv.sql, `SELECT 'a"b', 'c\\\\d', '$e'`, 'escapes de aspas duplas tem de ser desfeitos');
+  assert.equal(inv.sql, `SELECT 'a"b', 'c\\d', '$e'`, 'escapes de aspas duplas tem de ser desfeitos');
   // e tudo que o bash expandiria (ou escape que ele nao define) e' recusado
   for (const corpo of [
     'SELECT $A',
