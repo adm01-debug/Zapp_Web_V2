@@ -19,6 +19,7 @@ import {
   type TalkXReportRecipientRow,
 } from './talkxReportData';
 import type {
+  TalkXReportFunnelSegment,
   TalkXReportFunnelStep,
   TalkXReportGranularity,
   TalkXReportHeatmapMetric,
@@ -80,7 +81,23 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const [granularity, setGranularity] = useState<TalkXReportGranularity>('day');
   const [heatmapMetric, setHeatmapMetric] = useState<TalkXReportHeatmapMetric>('replied');
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [segmentId, setSegmentId] = useState<string | null>(null);
   const { canDownload } = useDownloadPermission();
+
+  const segmentQuery = useQuery({
+    queryKey: ['talkx-campaign-queue-segment', campaign.id],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)('talkx_campaign_queue_by_segment', { p_campaign_id: campaign.id });
+      if (error) throw error;
+      return data as unknown as { by_segment: Array<{ segment_id: string; segment_name: string }> } | null;
+    },
+    staleTime: 60_000,
+  });
+  const funnelSegments = useMemo<TalkXReportFunnelSegment[]>(
+    () => (segmentQuery.data?.by_segment ?? []).map((s) => ({ id: s.segment_id, name: s.segment_name })),
+    [segmentQuery.data],
+  );
 
   const reportQuery = useQuery({
     queryKey: ['talkx-campaign-report', campaign.id],
@@ -281,7 +298,7 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
             hasConversionSource={false}
           />
 
-          <TalkXReportFunnel steps={funnelSteps} segments={[]} segmentId={null} onSegmentChange={() => {}} />
+          <TalkXReportFunnel steps={funnelSteps} segments={funnelSegments} segmentId={segmentId} onSegmentChange={setSegmentId} />
 
           <TalkXReportHeatmap matrix={heatmap} metric={heatmapMetric} onMetricChange={handleMetric} />
 

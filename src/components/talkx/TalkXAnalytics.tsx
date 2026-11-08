@@ -199,7 +199,30 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     [campaigns, selectedCampaignId]
   );
 
-  const topCampaigns = useMemo(() => [...filtered].sort((a, b) => b.sent_count - a.sent_count).slice(0, 5), [filtered]);
+  const { data: rankingRows } = useQuery({
+    queryKey: ['talkx-campaign-ranking'],
+    queryFn: async () => {
+      type RankRow = { campaign_id: string; campaign_name: string; total_recipients: number; delivery_rate_pct: number; reply_rate_pct: number };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)('talkx_campaign_ranking', { p_limit: 5, p_metric: 'reply_rate' });
+      if (error) throw error;
+      return ((data as unknown as { campaigns?: RankRow[] } | null)?.campaigns ?? []);
+    },
+    staleTime: 300_000,
+  });
+
+  const { data: topSegmentsRows } = useQuery({
+    queryKey: ['talkx-top-segments'],
+    queryFn: async () => {
+      type SegRow = { segment_id: string; segment_name: string; campaign_count: number; total_recipients: number; avg_delivery_rate_pct: number; avg_reply_rate_pct: number };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)('talkx_top_segments', { p_limit: 5 });
+      if (error) throw error;
+      return ((data as unknown as { segments?: SegRow[] } | null)?.segments ?? []);
+    },
+    enabled: canFilterTeam,
+    staleTime: 300_000,
+  });
 
   // X186: degraus do funil da campanha. Conversão por mensagem ainda não é medida pela
   // plataforma (etapa de banco X073): a fonte entra como `null` e a tela mostra "sem dados
@@ -497,23 +520,59 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
         </div>
       </section>
 
-      {topCampaigns.length > 0 && (
+      {(rankingRows ?? []).length > 0 && (
         <section className="rounded-2xl bg-card border border-border/70 p-4">
-          <p className="text-[15px] font-bold text-foreground mb-3">Campanhas com melhor resultado</p>
+          <div className="flex items-center gap-2 mb-3">
+            <IconTile icon={TrendingUp} color="green" size={36} />
+            <div>
+              <p className="text-[15px] font-bold text-foreground">Ranking de campanhas</p>
+              <p className="text-xs text-foreground-secondary">Top 5 por taxa de resposta (90 dias)</p>
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse">
               <thead><tr>
-                {['#','Campanha','Canal','Enviadas','Taxa de entrega','Falhas'].map((h) => <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
+                {['#','Campanha','Destinatários','Entrega','Resposta'].map((h) => <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
               </tr></thead>
               <tbody>
-                {topCampaigns.map((c, i) => (
-                  <tr key={c.id} className="border-t border-border/40 hover:bg-muted/20">
+                {(rankingRows ?? []).map((c, i) => (
+                  <tr key={c.campaign_id} className="border-t border-border/40 hover:bg-muted/20">
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
-                    <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.id ? null : c.id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></button></td>
-                    <td className="px-3 py-2.5"><span className="text-xs text-whatsapp">WhatsApp</span></td>
-                    <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
-                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count > 0 ? fmtPct(c.delivered_count, c.sent_count) : '—'}</td>
-                    <td className="px-3 py-2.5 text-[13px] text-foreground-secondary">{c.failed_count > 0 ? fmtInt(c.failed_count) : '—'}</td>
+                    <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.campaign_id ? null : c.campaign_id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.campaign_name}</p></button></td>
+                    <td className="px-3 py-2.5 text-[13px] text-foreground tabular-nums">{fmtInt(c.total_recipients)}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold tabular-nums">{c.delivery_rate_pct != null ? `${c.delivery_rate_pct}%` : '—'}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-primary font-semibold tabular-nums">{c.reply_rate_pct != null ? `${c.reply_rate_pct}%` : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {canFilterTeam && (topSegmentsRows ?? []).length > 0 && (
+        <section className="rounded-2xl bg-card border border-border/70 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <IconTile icon={Users} color="violet" size={36} />
+            <div>
+              <p className="text-[15px] font-bold text-foreground">Top segmentos</p>
+              <p className="text-xs text-foreground-secondary">Maior taxa de resposta média (90 dias)</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[500px] border-collapse">
+              <thead><tr>
+                {['#','Segmento','Campanhas','Destinatários','Entrega','Resposta'].map((h) => <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {(topSegmentsRows ?? []).map((s, i) => (
+                  <tr key={s.segment_id} className="border-t border-border/40 hover:bg-muted/20">
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
+                    <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground truncate max-w-[200px]">{s.segment_name ?? '—'}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-foreground tabular-nums">{fmtInt(s.campaign_count)}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-foreground tabular-nums">{fmtInt(s.total_recipients)}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold tabular-nums">{s.avg_delivery_rate_pct != null ? `${s.avg_delivery_rate_pct}%` : '—'}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-primary font-semibold tabular-nums">{s.avg_reply_rate_pct != null ? `${s.avg_reply_rate_pct}%` : '—'}</td>
                   </tr>
                 ))}
               </tbody>
