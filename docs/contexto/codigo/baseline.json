@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "edd2ae3df35628feacaa3f2c48e4f5fc284c38ae",
+  "commit": "2ebe682c138c4d578afe178f97d32ddab415cc57",
   "branch": "main",
-  "data_commit": "2026-11-08T06:43:53Z",
+  "data_commit": "2026-11-08T10:27:17-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2ebe682",
+    "data": "2026-11-08",
+    "assunto": "fix(typecheck): remove contratos obsoletos da inbox"
+   },
    {
     "sha": "edd2ae3",
     "data": "2026-11-08",
@@ -126,11 +131,6 @@
     "sha": "f77653b",
     "data": "2026-11-07",
     "assunto": "fix: alinha labels dos controles rápidos no spec de volume (#2776)"
-   },
-   {
-    "sha": "343971b",
-    "data": "2026-11-07",
-    "assunto": "fix: fecha colisões e corridas no ensaio sintético (#2759)"
    }
   ],
   "arquivos_mudados_7d": 1092,
@@ -219,7 +219,7 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 12
+    "mudancas": 11
    },
    {
     "arquivo": "RELATORIO_CI.md",
@@ -242,15 +242,15 @@
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 10
-   },
-   {
     "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 9
    },
    {
     "arquivo": "ESTADO.md",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 9
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8315,
   "arquivos_codigo": 4750,
-  "linhas_codigo": 877516,
+  "linhas_codigo": 877515,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368171
+   "linhas": 368170
   },
   "src/config": {
    "arquivos": 3,

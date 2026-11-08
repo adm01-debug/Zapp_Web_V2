@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "edd2ae3df35628feacaa3f2c48e4f5fc284c38ae",
+  "sha": "2ebe682c138c4d578afe178f97d32ddab415cc57",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 06:49 UTC",
+  "generated_at": "2026-11-08 13:28 UTC",
   "files_total": 8156,
   "code_files": 6014,
-  "code_lines": 1043695
+  "code_lines": 1043694
  },
  "version": "1.3.2",
- "facts_hash": "73ea30d523878d58",
+ "facts_hash": "d01adf8d975f745c",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68276,7 +68276,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368171,
+   "lines": 368170,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -299609,7 +299609,7 @@
   },
   "src/components/queues/QueueAlertsDisplay.tsx": {
    "path": "src/components/queues/QueueAlertsDisplay.tsx",
-   "lines": 106,
+   "lines": 105,
    "exports": [
     "function QueueAlertsDisplay"
    ],
@@ -383507,10 +383507,20 @@
   }
  },
  "git": {
-  "sha": "edd2ae3df35628feacaa3f2c48e4f5fc284c38ae",
+  "sha": "2ebe682c138c4d578afe178f97d32ddab415cc57",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2ebe682",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix(typecheck): remove contratos obsoletos da inbox",
+    "files": [
+     "src/components/queues/QueueAlertsDisplay.tsx",
+     "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx"
+    ]
+   },
    {
     "sha": "edd2ae3",
     "date": "2026-11-08",
@@ -383863,36 +383873,6 @@
     "files": [
      "src/hooks/inbox/useInboxFilters.ts"
     ]
-   },
-   {
-    "sha": "529389d",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)",
-    "files": [
-     "analise/dossies/claude-confident-babbage-ivgmmn.md",
-     "analise/dossies/codex-docs-email-navy-plan-100-20261002.md",
-     "analise/dossies/codex-talk-me-carousel-refinement-20260930.md",
-     "analise/dossies/dia-2026-10-07.md",
-     "analise/dossies/docs-plano-contatos-cabecalho-botao-50-etapas-2026-09-30.md",
-     "analise/dossies/docs-plano-ordem-banner-20-etapas-2026-09-30.md",
-     "analise/dossies/hermes-a11y-aria-hidden-focus-2610021746e07a.md",
-     "analise/dossies/hermes-mapa-f4-p3-observabilidade-2610011830d2a2.md",
-     "analise/dossies/hermes-plano-volume-50-etapas-finalizacao-2610011018e48d.md",
-     "analise/dossies/hermes-sonar-s7773-number-parseint-2610022025ac4f.md",
-     "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
-     "analise/dossies/lote2-01-dia-2026-10-08.md",
-     "analise/dossies/lote2-02-backup-dia-2026-10-13.md",
-     "analise/dossies/lote2-03-backup-dia-2026-10-14.md",
-     "analise/dossies/lote2-04-w21-classificar-migration-drift.md",
-     "analise/dossies/lote2-05-w10-mutacao-mapa-so-pr.md",
-     "analise/dossies/lote2-06-cors-zappweb-app-br.md",
-     "analise/dossies/lote2-07-fix-ci-reativar-suites-261016-1530.md",
-     "analise/dossies/lote2-08-lote-2026-10-16-880-cards.md",
-     "analise/dossies/lote2-09-codex-sincronizacao-ledger-20261016.md",
-     "analise/dossies/lote2-10-feat-copiloto-cv011-020-migrations-261016-1930.md",
-     "analise/progresso.json"
-    ]
    }
   ],
   "hot_files": [
@@ -383937,6 +383917,14 @@
     2
    ],
    [
+    "src/components/queues/QueueAlertsDisplay.tsx",
+    1
+   ],
+   [
+    "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+    1
+   ],
+   [
     "docs/talkx/recovery/evidence/X023/preflight-2026-11-08.json",
     1
    ],
@@ -383966,14 +383954,6 @@
    ],
    [
     "scripts/e2e-isolated/run.mjs",
-    1
-   ],
-   [
-    "scripts/edge-deploy/collect-remote.mjs",
-    1
-   ],
-   [
-    "scripts/edge-deploy/generate-manifest.mjs",
     1
    ]
   ]

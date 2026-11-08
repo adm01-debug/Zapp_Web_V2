@@ -9090,7 +9090,7 @@
     "QueueAlertsDisplay"
    ],
    "export_default": null,
-   "linhas": 106,
+   "linhas": 105,
    "dominio": "components/queues",
    "hooks_locais": [],
    "tabelas": [],

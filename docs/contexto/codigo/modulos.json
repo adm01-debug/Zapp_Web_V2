@@ -6065,7 +6065,7 @@
    "modulo": "components/queues",
    "arquivos": 16,
    "testes": 14,
-   "linhas": 2250,
+   "linhas": 2249,
    "itens_menu": [
     "Filas",
     "SLA"
