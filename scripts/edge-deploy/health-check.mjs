@@ -203,9 +203,6 @@ export async function runHealthCheck(args, {
   logger = console,
   readFileImpl = readFile,
 } = {}) {
-  const token = env.SUPABASE_ACCESS_TOKEN;
-  if (typeof token !== 'string' || !token.trim()) throw new Error('SUPABASE_ACCESS_TOKEN ausente');
-
   const slugs = await resolveScope(args.scope, args.manifestPath, readFileImpl);
   const scopeName = args.scope || 'all';
 
@@ -214,6 +211,9 @@ export async function runHealthCheck(args, {
     logger.log('[health-check] Dry run: sem espera e sem chamada à API.');
     return { status: 'dry-run' };
   }
+
+  const token = env.SUPABASE_ACCESS_TOKEN;
+  if (typeof token !== 'string' || !token.trim()) throw new Error('SUPABASE_ACCESS_TOKEN ausente');
 
   if (args.waitMs > 0) {
     logger.log(`[health-check] Aguardando ${Math.round(args.waitMs / 60_000)} min para os logs estabilizarem…`);

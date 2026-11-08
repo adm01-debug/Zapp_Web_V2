@@ -185,7 +185,13 @@ export async function runSmokeSuite(args) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
   const evidence = await runSmokeSuite(args);
   for (const result of evidence.results) {
     console.log(`${result.passed ? 'PASS' : 'FAIL'} ${result.name}`);

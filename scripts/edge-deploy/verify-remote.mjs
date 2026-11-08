@@ -31,7 +31,13 @@ export async function runVerifyRemote(args) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
   const attestation = await runVerifyRemote(args);
   console.log(
     `Remote manifest OK: ${attestation.function_count} functions, ` +
