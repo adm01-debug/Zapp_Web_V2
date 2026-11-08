@@ -22767,9 +22767,9 @@
   {
    "arquivo": "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
    "tipo": "contrato",
-   "linhas": 233,
+   "linhas": 230,
    "testa": [],
-   "casos": 13
+   "casos": 14
   },
   {
    "arquivo": "tests/contracts/a11y-contraste-gate.contract.test.ts",
@@ -22964,11 +22964,11 @@
   {
    "arquivo": "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
    "tipo": "contrato",
-   "linhas": 199,
+   "linhas": 247,
    "testa": [
     "src/lib/ai-vocabulary.ts"
    ],
-   "casos": 10
+   "casos": 13
   },
   {
    "arquivo": "tests/contracts/ai-vocabulary-parity.contract.test.ts",
@@ -23080,7 +23080,7 @@
   {
    "arquivo": "tests/contracts/cors-origins.contract.test.ts",
    "tipo": "contrato",
-   "linhas": 107,
+   "linhas": 111,
    "testa": [
     "supabase/functions/_shared/cors-origins.ts"
    ],
@@ -23107,7 +23107,7 @@
   {
    "arquivo": "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
    "tipo": "contrato",
-   "linhas": 114,
+   "linhas": 142,
    "testa": [],
    "casos": 4
   },
@@ -23174,7 +23174,7 @@
   {
    "arquivo": "tests/contracts/evolution-private-storage-url.test.ts",
    "tipo": "contrato",
-   "linhas": 90,
+   "linhas": 96,
    "testa": [
     "supabase/functions/_shared/evolution-api-proxy.ts"
    ],

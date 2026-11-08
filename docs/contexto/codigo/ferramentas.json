@@ -2516,6 +2516,10 @@
     "arquivos": 1
    },
    {
+    "host": "ww.zappweb.app.br",
+    "arquivos": 1
+   },
+   {
     "host": "www.exemplo.com",
     "arquivos": 1
    },
@@ -2529,6 +2533,10 @@
    },
    {
     "host": "www.radix-ui.com",
+    "arquivos": 1
+   },
+   {
+    "host": "www.zappweb.app.br.evil.example",
     "arquivos": 1
    },
    {

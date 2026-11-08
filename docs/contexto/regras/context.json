@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9fd0fe4a795d0313785b71be8bd74d61e47698b4",
+  "sha": "cc73806b2ec094fcc71b44479a30391bf0879749",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 14:23 UTC",
+  "generated_at": "2026-11-08 14:53 UTC",
   "files_total": 8156,
   "code_files": 6014,
-  "code_lines": 1043701
+  "code_lines": 1043784
  },
  "version": "1.3.2",
- "facts_hash": "5f34ac3705fc1ec2",
+ "facts_hash": "ed11888de7d58f08",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -70069,7 +70069,7 @@
   {
    "module": "tests",
    "files": 95,
-   "lines": 20803,
+   "lines": 20886,
    "tables": [
     "audit_logs",
     "conversation_analyses",
@@ -74245,7 +74245,8 @@
    "PLAYWRIGHT_BASE_URL": [
     "e2e/fixtures/e2e-contact.ts",
     "playwright.config.ts",
-    "scripts/ci/e2e-auth-setup.unit.mjs"
+    "scripts/ci/e2e-auth-setup.unit.mjs",
+    "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts"
    ],
    "POSTGRES_TEST_IMAGE": [
     "scripts/db-audit/sla-first-response-delivery-contract.test.mjs",
@@ -206711,7 +206712,11 @@
    },
    {
     "file": "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
-    "name": "SentimentHelpers classifica pela classe canônica, sem "
+    "name": "SentimentHelpers classifica o score numérico sem comparar vocabulário textual cru"
+   },
+   {
+    "file": "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
+    "name": "SentimentIndicator traduz o valor cru pelo mapeador canônico de nível"
    },
    {
     "file": "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
@@ -208867,6 +208872,10 @@
    },
    {
     "file": "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
+    "name": "ChurnPredictionDashboard delega o cálculo ao consumidor canônico churnRisk"
+   },
+   {
+    "file": "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
     "name": "os detectores pegam a reintrodução da comparação crua"
    },
    {
@@ -209463,7 +209472,7 @@
    },
    {
     "file": "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
-    "name": "apaga as reações do usuário logado APENAS no contato fixture"
+    "name": "apaga as reações do usuário logado APENAS nas mensagens do contato fixture"
    },
    {
     "file": "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
@@ -380669,7 +380678,7 @@
   },
   "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts": {
    "path": "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
-   "lines": 233,
+   "lines": 230,
    "is_test": true,
    "rule_comments": [
     "não pode voltar. A normalização é pela classe canônica, não por comparação crua.",
@@ -380686,7 +380695,8 @@
     "IA-SENTIMENT-001 — consumidores do Dashboard corrigidos",
     "useAIStats classifica pela classe canônica em vez do literal EN",
     "useRecentSentimentAlerts normaliza o sentimento canônico",
-    "SentimentHelpers classifica pela classe canônica, sem ",
+    "SentimentHelpers classifica o score numérico sem comparar vocabulário textual cru",
+    "SentimentIndicator traduz o valor cru pelo mapeador canônico de nível",
     "PR-1 — defeitos corrigidos (o padrão defeituoso não pode voltar)",
     "voice-copilot-action filtra pelo vocabulário canônico pt-BR",
     "crm-integration não inventa ",
@@ -381767,15 +381777,10 @@
   },
   "tests/contracts/ai-vocabulary-consumers.contract.test.ts": {
    "path": "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
-   "lines": 199,
+   "lines": 247,
    "is_test": true,
-   "params": [
-    {
-     "name": "VOCAB_MODULE",
-     "value": "'@/lib/ai-vocabulary'"
-    }
-   ],
    "rule_comments": [
+    "Mapas de nível em inglês são seguros somente quando a chave vem do",
     "`very_negative` NÃO pode ser adivinhado como 'negativo' (não há intensidade"
    ],
    "tests": [
@@ -381784,6 +381789,7 @@
     "$path não compara sentimento com literal em inglês",
     "$path não compara prioridade com literal cru",
     "useTalkXSegments oferece exatamente as opções canônicas de filtro",
+    "ChurnPredictionDashboard delega o cálculo ao consumidor canônico churnRisk",
     "os detectores pegam a reintrodução da comparação crua",
     "detecta: %s",
     "não marca o código correto (comparação com o valor já normalizado)",
@@ -382077,7 +382083,7 @@
   },
   "tests/contracts/cors-origins.contract.test.ts": {
    "path": "tests/contracts/cors-origins.contract.test.ts",
-   "lines": 107,
+   "lines": 111,
    "is_test": true,
    "params": [
     {
@@ -382087,6 +382093,10 @@
     {
      "name": "CANONICO_DOMINIO",
      "value": "'https://zappweb.app.br'"
+    },
+    {
+     "name": "CANONICO_WWW",
+     "value": "'https://www.zappweb.app.br'"
     },
     {
      "name": "FALLBACK_ORIGIN",
@@ -382155,11 +382165,14 @@
   },
   "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts": {
    "path": "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
-   "lines": 114,
+   "lines": 142,
    "is_test": true,
+   "env": [
+    "PLAYWRIGHT_BASE_URL"
+   ],
    "params": [
     {
-     "name": "OUTRO_CONTATO",
+     "name": "OUTRA_MENSAGEM",
      "value": "'526f9eeb-a645-44da-af4d-dc719d940c70'"
     }
    ],
@@ -382168,7 +382181,7 @@
    ],
    "tests": [
     "cleanupE2EReactions — escopo do DELETE (R2-INF-006)",
-    "apaga as reações do usuário logado APENAS no contato fixture",
+    "apaga as reações do usuário logado APENAS nas mensagens do contato fixture",
     "não emite filtro global (só user_id) que alcançaria outras conversas",
     "resolve o profile do usuário logado (não usa id fixo) antes de apagar",
     "não apaga nada quando o profile do caller não é resolvido"
@@ -382308,7 +382321,7 @@
   },
   "tests/contracts/evolution-private-storage-url.test.ts": {
    "path": "tests/contracts/evolution-private-storage-url.test.ts",
-   "lines": 90,
+   "lines": 96,
    "is_test": true,
    "params": [
     {
@@ -383507,10 +383520,28 @@
   }
  },
  "git": {
-  "sha": "9fd0fe4a795d0313785b71be8bd74d61e47698b4",
+  "sha": "cc73806b2ec094fcc71b44479a30391bf0879749",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "cc73806",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "test(contracts): sincroniza ratchets com arquitetura atual (#2802)",
+    "files": [
+     "docs/telefonia/CAPACIDADES.md",
+     "docs/telefonia/CONTRATO.md",
+     "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
+     "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
+     "tests/contracts/contraste-aa-componentes.contract.test.ts",
+     "tests/contracts/contraste-balao-midia.contract.test.ts",
+     "tests/contracts/cors-origins.contract.test.ts",
+     "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
+     "tests/contracts/evolution-private-storage-url.test.ts",
+     "tests/contracts/ia055-custo-no-relatorio.test.ts"
+    ]
+   },
    {
     "sha": "9fd0fe4",
     "date": "2026-11-08",
@@ -383865,15 +383896,6 @@
      "src/integrations/supabase/types.ts",
      "supabase/schema-catalog.json"
     ]
-   },
-   {
-    "sha": "a9c9835",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(db): protege streak e resoluções por usuário autenticado (#2766)",
-    "files": [
-     "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -383918,43 +383940,43 @@
     2
    ],
    [
-    "bun.lock",
+    "docs/telefonia/CAPACIDADES.md",
     1
    ],
    [
-    "package.json",
+    "docs/telefonia/CONTRATO.md",
     1
    ],
    [
-    "vitest.contracts.config.ts",
+    "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
     1
    ],
    [
-    "src/components/queues/QueueAlertsDisplay.tsx",
+    "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
     1
    ],
    [
-    "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+    "tests/contracts/contraste-aa-componentes.contract.test.ts",
     1
    ],
    [
-    "docs/talkx/recovery/evidence/X023/preflight-2026-11-08.json",
+    "tests/contracts/contraste-balao-midia.contract.test.ts",
     1
    ],
    [
-    "scripts/ci/db-migrate-contratos.unit.mjs",
+    "tests/contracts/cors-origins.contract.test.ts",
     1
    ],
    [
-    "scripts/db-audit/export-targeted-ledger-evidence.mjs",
+    "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
     1
    ],
    [
-    "scripts/db-audit/extrair-contratos-runtime.mjs",
+    "tests/contracts/evolution-private-storage-url.test.ts",
     1
    ],
    [
-    "scripts/db-audit/validate-runtime-proof.mjs",
+    "tests/contracts/ia055-custo-no-relatorio.test.ts",
     1
    ]
   ]

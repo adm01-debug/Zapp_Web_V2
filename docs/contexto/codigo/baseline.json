@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9fd0fe4a795d0313785b71be8bd74d61e47698b4",
+  "commit": "cc73806b2ec094fcc71b44479a30391bf0879749",
   "branch": "main",
-  "data_commit": "2026-11-08T11:17:14-03:00",
+  "data_commit": "2026-11-08T11:51:07-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "cc73806",
+    "data": "2026-11-08",
+    "assunto": "test(contracts): sincroniza ratchets com arquitetura atual (#2802)"
+   },
    {
     "sha": "9fd0fe4",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "51d456a",
     "data": "2026-11-07",
     "assunto": "chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)"
-   },
-   {
-    "sha": "43fb734",
-    "data": "2026-11-07",
-    "assunto": "fix(db): reconciliar ledger da migration 20261010062941 (#2775)"
    }
   ],
-  "arquivos_mudados_7d": 1093,
+  "arquivos_mudados_7d": 1103,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8315,
   "arquivos_codigo": 4750,
-  "linhas_codigo": 877522,
+  "linhas_codigo": 877605,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -788,7 +788,7 @@
   },
   "tests/contracts": {
    "arquivos": 95,
-   "linhas": 20803
+   "linhas": 20886
   },
   "vite.config.ts": {
    "arquivos": 1,

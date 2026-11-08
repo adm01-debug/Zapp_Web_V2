@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9fd0fe4a79` · branch `main` · 2026-11-08 14:23 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `cc73806b2e` · branch `main` · 2026-11-08 14:53 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4554,7 +4554,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21158 testes em 2246 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21160 testes em 2246 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4806,6 +4806,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/calls/__tests__/duration.test.ts` | 18 | talkSeconds · usa talk_seconds quando existe · respeita talk_seconds = 0 (não recalcula pelos timestamps) · calcula answered_at → ended_at quando talk_seconds é null … |
 | `supabase/functions/ai-transcribe-audio/index.test.ts` | 18 | SL-195a: magic bytes vencem metadado divergente — OGG servido como audio/mpeg vai como audio/ogg · SL-195a: magic bytes vencem metadado divergente — MPEG servido como audio/ogg vai como audio/mpeg · SL-195a: assinatura não reconhecida mantém o fallback do metadado declarado (não regride) · SL-195a: resolveTranscriptionAudioFormat marca a fonte da decisão … |
 | `supabase/functions/gmail-oauth/index.test.ts` | 18 | get-auth-url sem state responde 400 e não registra tentativa · get-auth-url com state registra a tentativa vinculada ao usuário e devolve a URL · exchange-code sem state responde 400 sem tocar no Google · exchange-code com state divergente/não registrado responde 403 sem tocar no Google … |
+| `tests/contracts/_adv_vocabulary-consumers-gaps.test.ts` | 18 | ADVERSARIAL — defeitos de consumidor (comparação morta / ausência → valor) · $file :: $what · ADVERSARIAL — chaves de vocabulário EN fora do módulo canônico · $file :: $what … |
 | `tests/contracts/ai-endpoints-auth.contract.test.ts` | 18 | endpoints de IA — ordem entre autenticação e gasto de provedor (IA-011) · ${fn} autentica o chamador antes de chamar o provedor · o contrato não confunde import com chamada (guarda do próprio teste) · cliente do voice-agent — credencial da sessão (IA-011, regressão A1) … |
 | `tests/contracts/crm-sentiment-boundary.contract.test.ts` | 18 | sentimentForExternalCrm — mapa canônico pt-BR → domínio EN do CRM · cobre exatamente os 4 canônicos (nem a mais, nem a menos) · aceita variação de caixa/espaço do valor canônico · ausência não vira token — nunca inventa sentimento … |
 | `src/components/admin/__tests__/adminDownloadPermission.test.ts` | 17 | useAdminData - can_download no handleSaveUser · envia can_download no payload de update · envia can_download=false quando desabilitado · UserWithRole interface … |
@@ -4839,7 +4840,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts` | 17 | requestId válido é aceito nos quatro schemas · requestId malformado é rejeitado (não é ecoado como lixo) · cliente ANTIGO (sem requestId/contextVersion) continua aceito — compatibilidade · periodKey (nome canônico do frontend) é aceito como apelido da versão de contexto … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
-| `tests/contracts/_adv_vocabulary-consumers-gaps.test.ts` | 17 | ADVERSARIAL — defeitos de consumidor (comparação morta / ausência → valor) · $file :: $what · ADVERSARIAL — chaves de vocabulário EN fora do módulo canônico · $file :: $what … |
 | `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
 | `tests/contracts/ai-vision-modality.contract.test.ts` | 17 | IA-033 — texto puro segue o caminho de hoje (padrão por finalidade) · sem  · IA-033 — visão resolve no provedor que declara a modalidade · um candidato ativo declarando vision resolve NELE, mesmo sem is_default … |
 | `e2e/quick-controls-volume.spec.ts` | 16 | controles de volume da sidebar — prova local autenticada · B1: o clique comum abre o painel dos ALERTAS com −, +, Silenciar e o valor em % · B4: o painel do FONE abre com o nome completo e o valor em % · S11: os botões − e + andam de 5 em 5 e o rótulo acompanha … |
