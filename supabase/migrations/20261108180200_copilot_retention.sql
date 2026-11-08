@@ -84,7 +84,7 @@ BEGIN
     PERFORM cron.schedule(
       'copilot-retention-daily',
       '0 2 * * *',
-      $$SELECT public.run_copilot_retention();$$
+      $cmd$SELECT public.run_copilot_retention();$cmd$
     );
   END IF;
 END;

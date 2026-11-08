@@ -13,9 +13,10 @@ CREATE TABLE IF NOT EXISTS public.copilot_presence (
   UNIQUE (profile_id, conversation_id)
 );
 
+-- Índice simples sobre conversation_id (now() é VOLATILE e não pode ser usado
+-- em predicado de índice parcial; filtro de expiração deve ser feito na query).
 CREATE INDEX IF NOT EXISTS idx_copilot_presence_conversation
-  ON public.copilot_presence (conversation_id)
-  WHERE expires_at > now();
+  ON public.copilot_presence (conversation_id);
 
 CREATE INDEX IF NOT EXISTS idx_copilot_presence_expires
   ON public.copilot_presence (expires_at);
@@ -86,7 +87,7 @@ BEGIN
     PERFORM cron.schedule(
       'copilot-presence-cleanup',
       '*/5 * * * *',
-      $$DELETE FROM public.copilot_presence WHERE expires_at < now() - interval '5 minutes';$$
+      $cmd$DELETE FROM public.copilot_presence WHERE expires_at < now() - interval '5 minutes';$cmd$
     );
   END IF;
 END;
