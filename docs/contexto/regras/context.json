@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "478f4bc49827f4e86cfebecd9f9b63a00ee1af48",
+  "sha": "fea93e2c73405eb55ca303b90e75b4803da0be07",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 17:47 UTC",
+  "generated_at": "2026-11-08 19:31 UTC",
   "files_total": 8156,
   "code_files": 6014,
   "code_lines": 1043784
  },
  "version": "1.3.2",
- "facts_hash": "ed11888de7d58f08",
+ "facts_hash": "6bdd1c08464829c2",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -166088,11 +166088,11 @@
    },
    {
     "file": "src/components/tasks/__tests__/zen.tarefas.test.tsx",
-    "name": "sem zen (desktop): a sidebar está na tela e a trilha NÃO aparece — é o zen que a traz"
+    "name": "sem zen (desktop): a sidebar está na tela e a trilha aparece (barra global removida em #599)"
    },
    {
     "file": "src/components/tasks/__tests__/zen.tarefas.test.tsx",
-    "name": "Esc sai do zen: a sidebar volta, a trilha sai de cena e a preferência é gravada"
+    "name": "Esc sai do zen: a sidebar volta, a trilha permanece e a preferência é gravada"
    },
    {
     "file": "src/components/tasks/board/__tests__/BoardColumn.politica-coluna.test.tsx",
@@ -310767,8 +310767,8 @@
    "tests": [
     "modo zen — módulo de Tarefas (CP-H / etapa 83)",
     "com o zen ligado: a sidebar sai, a trilha do módulo volta e o módulo segue inteiro",
-    "sem zen (desktop): a sidebar está na tela e a trilha NÃO aparece — é o zen que a traz",
-    "Esc sai do zen: a sidebar volta, a trilha sai de cena e a preferência é gravada"
+    "sem zen (desktop): a sidebar está na tela e a trilha aparece (barra global removida em #599)",
+    "Esc sai do zen: a sidebar volta, a trilha permanece e a preferência é gravada"
    ]
   },
   "src/components/tasks/agenda/TasksAgendaMode.tsx": {
@@ -383520,10 +383520,20 @@
   }
  },
  "git": {
-  "sha": "478f4bc49827f4e86cfebecd9f9b63a00ee1af48",
+  "sha": "fea93e2c73405eb55ca303b90e75b4803da0be07",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "fea93e2",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix(layout): restaura trilha de navegação no desktop (#2819)",
+    "files": [
+     "src/components/layout/AppShell.tsx",
+     "src/components/tasks/__tests__/zen.tarefas.test.tsx"
+    ]
+   },
    {
     "sha": "478f4bc",
     "date": "2026-11-08",
@@ -383890,18 +383900,6 @@
     "files": [
      "e2e/quick-controls-volume.spec.ts"
     ]
-   },
-   {
-    "sha": "343971b",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix: fecha colisões e corridas no ensaio sintético (#2759)",
-    "files": [
-     "docs/ia/IA-010-ambiente-de-ensaio.md",
-     "scripts/ia/README.md",
-     "scripts/ia/ensaio-provisionamento.mjs",
-     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -383932,6 +383930,14 @@
    [
     "scripts/vercel/verify-release-targets.mjs",
     2
+   ],
+   [
+    "src/components/layout/AppShell.tsx",
+    1
+   ],
+   [
+    "src/components/tasks/__tests__/zen.tarefas.test.tsx",
+    1
    ],
    [
     "src/components/admin/AdminCRMDashboard.tsx",
@@ -383975,14 +383981,6 @@
    ],
    [
     "docs/telefonia/CAPACIDADES.md",
-    1
-   ],
-   [
-    "docs/telefonia/CONTRATO.md",
-    1
-   ],
-   [
-    "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
     1
    ]
   ]

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `478f4bc49827f4e86cfebecd9f9b63a00ee1af48` (2026-11-08T14:46:00-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `fea93e2c73405eb55ca303b90e75b4803da0be07` (2026-11-08T16:30:07-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56171 nós · 115823 arestas · 4171 comunidades · grafo do commit `478f4bc4`
+- 56171 nós · 115823 arestas · 4171 comunidades · grafo do commit `fea93e2c`
 - comunidades maiores: lucide-react (752), react (699), TalkXSuppression.tsx (673), button.tsx (640), useAuth (609), vitest (575), DashboardView.tsx (506), validation.ts (404), ref_https (382), cn (360), ref_node_fs (340), ref_node_assert (318)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-08 `fea93e2` fix(layout): restaura trilha de navegação no desktop (#2819)
 - 2026-11-08 `478f4bc` fix: elimina 20 violações tipográficas residuais (#2803)
 - 2026-11-08 `cc73806` test(contracts): sincroniza ratchets com arquitetura atual (#2802)
 - 2026-11-08 `9fd0fe4` test(e2e): alinha placeholder da paleta única (#2799)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-07 `d4a7252` fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado
 - 2026-11-07 `ab96364` docs(talkx): regenera matriz de estados (#2791)
 - 2026-11-07 `f93fad9` feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)
-- 2026-11-07 `babb270` test(e2e): aguarda readiness dos insights de busca (#2787)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

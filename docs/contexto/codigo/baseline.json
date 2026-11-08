@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "478f4bc49827f4e86cfebecd9f9b63a00ee1af48",
+  "commit": "fea93e2c73405eb55ca303b90e75b4803da0be07",
   "branch": "main",
-  "data_commit": "2026-11-08T14:46:00-03:00",
+  "data_commit": "2026-11-08T16:30:07-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "fea93e2",
+    "data": "2026-11-08",
+    "assunto": "fix(layout): restaura trilha de navegação no desktop (#2819)"
+   },
    {
     "sha": "478f4bc",
     "data": "2026-11-08",
@@ -126,11 +131,6 @@
     "sha": "fb328a6",
     "data": "2026-11-07",
     "assunto": "fix(db): registra formatação divergente da migration 20261107153000 (#2781)"
-   },
-   {
-    "sha": "effd6b0",
-    "data": "2026-11-07",
-    "assunto": "chore: instruções enxutas para agentes (#2762)"
    }
   ],
   "arquivos_mudados_7d": 1108,
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/components/tasks",
-    "mudancas": 104
+    "mudancas": 105
    },
    {
     "pasta": "src/hooks/chat",
