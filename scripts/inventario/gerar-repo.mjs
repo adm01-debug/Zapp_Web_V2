@@ -62,7 +62,14 @@ writeFileSync(join(OUT, 'edges.json'), JSON.stringify({ gerado_em: new Date().to
 console.log(`edges: ${edges.length} | sem chamador no repo (src/migrations/edges): ${semChamador.length}`);
 
 if (!process.stdin.isTTY) {
-  const nomes = readFileSync(0, 'utf8').split(/\s+/).filter(Boolean);
+  let entrada = '';
+  try {
+    entrada = readFileSync(0, 'utf8');
+  } catch (erro) {
+    if (erro?.code !== 'EAGAIN') throw erro;
+    entrada = '';
+  }
+  const nomes = entrada.split(/\s+/).filter(Boolean);
   if (nomes.length > 0) {
     const uso = {};
     for (const t of nomes) {
