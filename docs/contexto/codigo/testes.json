@@ -5,10 +5,10 @@
   "vitest",
   "playwright"
  ],
- "total": 2591,
+ "total": 2592,
  "por_tipo": {
   "contrato": 113,
-  "e2e": 75,
+  "e2e": 76,
   "pytest": 3,
   "qa": 8,
   "unit": 2301
@@ -32,7 +32,7 @@
   },
   {
    "padrao": "e2e/",
-   "arquivos": 75
+   "arquivos": 76
   }
  ],
  "arquivos": [
@@ -539,6 +539,13 @@
    "linhas": 44,
    "testa": [],
    "casos": 1
+  },
+  {
+   "arquivo": "e2e/talkx-kit.spec.ts",
+   "tipo": "e2e",
+   "linhas": 61,
+   "testa": [],
+   "casos": 2
   },
   {
    "arquivo": "e2e/talkx-launch.spec.ts",

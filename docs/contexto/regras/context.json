@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "babb270fc5b8d7d00d27e3248e1f047a26f67839",
+  "sha": "f93fad943769756f6f34c07674916a9a968029e9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 01:29 UTC",
-  "files_total": 8152,
-  "code_files": 6011,
-  "code_lines": 1043316
+  "generated_at": "2026-11-08 02:20 UTC",
+  "files_total": 8153,
+  "code_files": 6012,
+  "code_lines": 1043377
  },
  "version": "1.3.2",
- "facts_hash": "52e3caa6f430ab5a",
+ "facts_hash": "9078041a46935645",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,7 +314,7 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1865,
+   ".ts": 1866,
    ".sql": 1292,
    ".mjs": 416,
    ".py": 119,
@@ -67792,8 +67792,8 @@
   },
   {
    "module": "e2e",
-   "files": 78,
-   "lines": 18328,
+   "files": 79,
+   "lines": 18389,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -67822,8 +67822,8 @@
     "a11y-fab-cabecalho.spec.ts: Toque no FAB de Contatos + geometria da pilha flutuante (390x844). Sessão FALSA, backend mockado, rede real barrada. Sem login, sem secrets. Fecha duas lacunas dos fixtures antigos: 1. RPC `app_bootstrap` (src/hooks/system/useAppBootstrap.ts) — sem ela o ProtectedRoute fica em \"Verificando permissõe …",
     "a11y-tarefas-dashboard.spec.ts: N-079 — E2E a11y: button-name e aria-progressbar-name em ?view=tasks e ?view=dashboard em 390 e 1280. Spec mockada (sessão falsa, app shell mockado, rede real bloqueada). O teste falha sem a correção (Y16: aria-label em botões e progressbar) e passa com ela (zero violações).",
     "inbox-contraste.spec.ts: E100-2 · contraste do inbox, medido no NAVEGADOR REAL. O teste de a11y do banner (`EvolutionDisconnectBanner.a11y.test.tsx`) roda em jsdom, que nao tem layout e portanto nao calcula contraste — a regra `color-contrast` fica de fora por limitacao tecnica. Resultado: o banner era testado em tudo, meno …",
-    "catalog.ts: Fixtures E2E do módulo Catálogo (`?view=catalog`) — CT-81. Contato: NÃO duplicar o id. O contato fixo de produção já está versionado em `./e2e-contact` (`E2E_FIXTURE_CONTACT_ID`, `[E2E] Contato de teste`) e é reaproveitado aqui por import/re-export. Produto: o plano CT-81 citava o produto fixo `PO-1 …",
-    "seed-files-tab.mjs: !/usr/bin/env node"
+    "talkx-kit.spec.ts: X055 — Prancha de referência TalkXKit: smoke E2E. Requer `VITE_TALKX_KIT=1` no ambiente de build (já definido no CI via `e2e-talkx.yml` para runs de E2E). Em DEV a trava abre automaticamente.",
+    "catalog.ts: Fixtures E2E do módulo Catálogo (`?view=catalog`) — CT-81. Contato: NÃO duplicar o id. O contato fixo de produção já está versionado em `./e2e-contact` (`E2E_FIXTURE_CONTACT_ID`, `[E2E] Contato de teste`) e é reaproveitado aqui por import/re-export. Produto: o plano CT-81 citava o produto fixo `PO-1 …"
    ],
    "deps": [
     "@playwright/test",
@@ -67895,6 +67895,7 @@
     "e2e/skins-e2e.spec.ts",
     "e2e/talk-me.spec.ts",
     "e2e/talkx-demo.spec.ts",
+    "e2e/talkx-kit.spec.ts",
     "e2e/talkx-launch.spec.ts",
     "e2e/talkx-visual.spec.ts",
     "e2e/talkx.spec.ts",
@@ -127458,6 +127459,14 @@
    {
     "file": "e2e/talkx-demo.spec.ts",
     "name": "Visão geral renderiza o mock e bloqueia escrita não prevista"
+   },
+   {
+    "file": "e2e/talkx-kit.spec.ts",
+    "name": "TalkXKit — prancha principal renderiza e exibe todas as seções"
+   },
+   {
+    "file": "e2e/talkx-kit.spec.ts",
+    "name": "TalkXKit — estado forçado "
    },
    {
     "file": "e2e/talkx-launch.spec.ts",
@@ -260329,6 +260338,20 @@
     "Visão geral renderiza o mock e bloqueia escrita não prevista"
    ]
   },
+  "e2e/talkx-kit.spec.ts": {
+   "path": "e2e/talkx-kit.spec.ts",
+   "lines": 61,
+   "is_test": true,
+   "doc": "X055 — Prancha de referência TalkXKit: smoke E2E. Requer `VITE_TALKX_KIT=1` no ambiente de build (já definido no CI via `e2e-talkx.yml` para runs de E2E). Em DEV a trava abre automaticamente.",
+   "temporal": [
+    "await expect(forcado).toBeVisible({ timeout: 10_000 });",
+    "await expect(prancha).toBeVisible({ timeout: 10_000 });"
+   ],
+   "tests": [
+    "TalkXKit — prancha principal renderiza e exibe todas as seções",
+    "TalkXKit — estado forçado "
+   ]
+  },
   "e2e/talkx-launch.spec.ts": {
    "path": "e2e/talkx-launch.spec.ts",
    "lines": 245,
@@ -383418,10 +383441,20 @@
   }
  },
  "git": {
-  "sha": "babb270fc5b8d7d00d27e3248e1f047a26f67839",
+  "sha": "f93fad943769756f6f34c07674916a9a968029e9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f93fad9",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "e2e/talkx-kit.spec.ts"
+    ]
+   },
    {
     "sha": "babb270",
     "date": "2026-11-07",
@@ -383982,18 +384015,6 @@
     "files": [
      "src/components/keyboard/__tests__/paleta-unica.test.tsx"
     ]
-   },
-   {
-    "sha": "37822ce",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "chore: recupera inventario B10 e atualiza auditorias (prs.json, prs.csv, regras) (#2752)",
-    "files": [
-     "analise-prs/auditorias-anteriores.md",
-     "analise-prs/prs.csv",
-     "analise-prs/prs.json",
-     "analise-prs/regras-de-negocio.md"
-    ]
    }
   ],
   "hot_files": [
@@ -384046,6 +384067,14 @@
     2
    ],
    [
+    "docs/talkx/ESTADOS.md",
+    1
+   ],
+   [
+    "e2e/talkx-kit.spec.ts",
+    1
+   ],
+   [
     "playwright.config.ts",
     1
    ],
@@ -384067,14 +384096,6 @@
    ],
    [
     ".github/workflows/contexto.yml",
-    1
-   ],
-   [
-    "docs/REALTIME-CHANNELS-INVENTORY.md",
-    1
-   ],
-   [
-    "scripts/ci/check-audit-pdf-determinism.mjs",
     1
    ]
   ]

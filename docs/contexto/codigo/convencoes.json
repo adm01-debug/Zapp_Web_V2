@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)",
    "test(e2e): aguarda readiness dos insights de busca (#2787)",
    "fix(ci): corrige escopo do cleanup de variáveis Vercel (#2786)",
    "fix(e2e): exclui talkx-visual do projeto chromium-authenticated (#2785)",
-   "fix: não aninhar <div> dentro de <p> na tela LGPD (#2779)",
-   "fix(db): registra replay seguro da migration 20261107170000 (#2784)"
+   "fix: não aninhar <div> dentro de <p> na tela LGPD (#2779)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
