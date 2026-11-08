@@ -5,6 +5,8 @@ import { Message } from '@/types/chat';
 import { GhostTextOverlay, GhostTextHint } from '@/components/copilot/GhostTextOverlay';
 // CV-063..070 — painel RADAR da Fase 7 (respostas sugeridas, ditado, sugestão de anexo)
 import { RadarPhase7Panel } from '@/components/copilot/RadarPhase7Panel';
+// CV-071..150 — painel RADAR das Fases 8-15 (objeções, catálogo, termômetro, coaching)
+import { RadarPhase8to15Panel } from '@/components/copilot/RadarPhase8to15Panel';
 import type { QuickReplyTemplate } from '@/hooks/chat/useQuickReplies';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -207,6 +209,16 @@ export function ChatInputArea(props: ChatInputAreaProps) {
           saleContext={{ contactName, lastClientMessage }}
           quickReplyTemplates={radarTemplates}
           onDraftText={(text) => setNativeValue(inputRef, text)}
+        />
+      )}
+
+      {!logic.isMobile && !editingMessage && (
+        <RadarPhase8to15Panel
+          className="px-4 pt-1"
+          lastClientMessage={lastClientMessage ?? ''}
+          draftText={inputValue}
+          onInsertText={(text) => setNativeValue(inputRef, text)}
+          clientName={contactName}
         />
       )}
 
