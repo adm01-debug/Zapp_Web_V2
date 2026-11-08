@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Clock } from 'lucide-react';
 import {
   CommandDialog,
@@ -57,6 +57,12 @@ function pushRecent(id: string) {
     if (next) setRecent(getRecent());
     setOpen(next);
   };
+
+  useEffect(() => {
+    const openPalette = () => { setRecent(getRecent()); setOpen(true); };
+    document.addEventListener('open-global-search', openPalette);
+    return () => document.removeEventListener('open-global-search', openPalette);
+  }, []);
 
    const recentItems = useMemo(
      () => recent.map(id => allItems.find(i => i.id === id)).filter((i): i is NonNullable<typeof i> => Boolean(i)),
