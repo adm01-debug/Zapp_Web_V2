@@ -1,6 +1,9 @@
 /**
- * Barrel de componentes do Copiloto de Vendas (RADAR) — Fases 7–13.
+ * Barrel de componentes do Copiloto de Vendas (RADAR) — Fases 6–13.
  */
+// CV-051–060 — Fase 6: painel flutuante
+export { RadarPhase6Panel } from './RadarPhase6Panel';
+export type { RadarPhase6PanelProps } from './RadarPhase6Panel';
 export { GhostTextOverlay, GhostTextHint } from './GhostTextOverlay';
 export { CopilotFeedback } from './CopilotFeedback';
 export type { CopilotFeedbackProps } from './CopilotFeedback';
