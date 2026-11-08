@@ -2,11 +2,11 @@
  * useSearchInsights
  *
  * HZ1-06: números da busca global para a tela de admin "Insights de Busca".
- * Faz UMA consulta à RPC `get_search_insights(p_days)` (migration
- * 20261016112552, trilha irmã) e normaliza o jsonb para a tela.
+ * Faz UMA consulta à RPC canônica `search_insights(p_days)` (migration
+ * 20261016013134) e normaliza a linha retornada para a tela.
  *
- * Sem PII: a RPC lê apenas `search_events.term_normalized` (nada de contato,
- * telefone ou conteúdo de conversa).
+ * Sem PII: `search_events` não persiste os termos buscados. Por isso as listas
+ * de termos ficam vazias; somente métricas agregadas são exibidas.
  * Visibilidade: quem barra é a própria RPC — ela nega quem não é admin/supervisor
  * (42501). O hook não acrescenta nem contorna recorte de papel.
  */
@@ -42,31 +42,21 @@ function toCount(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-function toTerms(value: unknown): SearchInsightTerm[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((row) => {
-    if (!row || typeof row !== 'object') return [];
-    const { term, count } = row as { term?: unknown; count?: unknown };
-    if (typeof term !== 'string' || term.length === 0) return [];
-    return [{ term, count: toCount(count) }];
-  });
-}
-
-/** Normaliza o jsonb da RPC: campo ausente ou de tipo inesperado vira 0/[] em vez de quebrar a tela. */
-export function parseSearchInsights(raw: unknown): SearchInsights {
-  const data = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const clickRate = typeof data.click_rate === 'number' && Number.isFinite(data.click_rate)
-    ? data.click_rate
-    : 0;
+/** Normaliza a linha agregada da RPC canônica. */
+export function parseSearchInsights(raw: unknown, days: number): SearchInsights {
+  const row = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const total = toCount(row.total_searches);
+  const clicks = toCount(row.searches_with_click);
 
   return {
-    days: toCount(data.days),
-    total: toCount(data.total),
-    noResults: toCount(data.no_results),
-    clicks: toCount(data.clicks),
-    clickRate,
-    topQueries: toTerms(data.top_queries),
-    noResultTerms: toTerms(data.no_result_terms),
+    days,
+    total,
+    noResults: toCount(row.searches_without_results),
+    clicks,
+    clickRate: total > 0 ? clicks / total : 0,
+    // O schema canônico preserva privacidade e não armazena termos.
+    topQueries: [],
+    noResultTerms: [],
   };
 }
 
@@ -78,17 +68,9 @@ export class SearchInsightsError extends Error {
 }
 
 async function fetchSearchInsights(days: number): Promise<SearchInsights> {
-  // A RPC nasce na migration irmã 20261016112552 (HZ1-06) e ainda não está no
-  // types.ts gerado. O contrato fica replicado aqui até o artefato ser
-  // ressincronizado — então esta ponte vira um `supabase.rpc('get_search_insights', …)`.
-  const rpc = supabase.rpc.bind(supabase) as unknown as (
-    fn: 'get_search_insights',
-    args: { p_days: number },
-  ) => Promise<{ data: unknown; error: { message: string } | null }>;
-
-  const { data, error } = await rpc('get_search_insights', { p_days: days });
+  const { data, error } = await supabase.rpc('search_insights', { p_days: days });
   if (error) throw new SearchInsightsError(error.message);
-  return parseSearchInsights(data);
+  return parseSearchInsights(data?.[0], days);
 }
 
 export function useSearchInsights(days: SearchInsightsPeriod = DEFAULT_SEARCH_INSIGHTS_PERIOD) {
