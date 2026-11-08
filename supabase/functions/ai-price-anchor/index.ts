@@ -33,8 +33,10 @@ export async function handleAiPriceAnchor(
     const parsed = parseBody(AiPriceAnchorSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { clientText, messages, productType, unitPrice, context } = parsed.data;
+    const { messages, context, productType, unitPrice } = parsed.data;
     const requestId = parsed.data.requestId ?? null;
+    const clientText = parsed.data.clientText ??
+      messages.filter((m) => m.sender !== 'agent').map((m) => m.content).join(' ').trim().slice(0, 500);
 
     const systemPrompt = `Você é um especialista em técnicas de ancoragem de preço para vendas B2B de brindes corporativos.
 
@@ -45,7 +47,7 @@ TÉCNICAS DISPONÍVEIS:
 4. Comparação de valor: compare com o impacto de marca gerado
 5. Valor agregado: destaque o que está incluso no preço
 
-${unitPrice ? `Preço unitário: R$ ${unitPrice}` : ''}
+${unitPrice != null ? `Preço unitário: R$ ${unitPrice}` : ''}
 ${productType ? `Tipo de produto: ${productType}` : ''}
 ${context ? `Contexto: ${context}` : ''}
 

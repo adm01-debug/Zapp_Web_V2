@@ -160,6 +160,9 @@ export const AiObjectionHandlerSchema = z.object({
 
 export const AiPriceAnchorSchema = z.object({
   messages: z.array(MessageSchema).max(50),
+  clientText: z.string().max(2000).optional(),
+  productType: z.string().max(100).optional(),
+  unitPrice: z.number().min(0).optional(),
   context: z.string().max(500).optional(),
   requestId: z.string().uuid().optional(),
 });
