@@ -176,8 +176,8 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
 
   it('o texto dos chips de prioridade usa o par de TEXTO (não a cor de preenchimento)', () => {
     const { container: high } = render(<PriorityChip priority="high" />);
-    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
-    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-warning(\s|$)/);
+    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
+    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
 
     const { container: urgent } = render(<PriorityChip priority="urgent" />);
     expect(urgent.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
@@ -202,7 +202,7 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
     const css = utilities.replace(/\s+/g, ' ');
     expect(css).toMatch(/\[data-testid="tasks-module"\] \.text-destructive \{ color: hsl\(var\(--destructive-text\)\); \}/);
     expect(css).toMatch(/\[data-testid="tasks-module"\] \.text-warning, \[data-testid="tasks-module"\] \.text-warning\\\/80 \{ color: hsl\(var\(--warning-text\)\); \}/);
-    // Política da coluna vazia / "Coluna vazia" / atalho N: /70 e /60 caíam a 3,0:1 e 2,5:1.
+    // Política da coluna vazia / "Coluna vazia" / atalho N: /70 e /60 caíiam a 3,0:1 e 2,5:1.
     expect(css).toMatch(/\[data-testid="tasks-module"\] :is\(\.text-muted-foreground\\\/70, \.text-muted-foreground\\\/60\) \{ color: hsl\(var\(--muted-foreground\)\); \}/);
     expect(razao(claro['muted-foreground'], claro.card)).toBeGreaterThanOrEqual(MIN_TEXTO);
     expect(razao(escuro['muted-foreground'], escuro.card)).toBeGreaterThanOrEqual(MIN_TEXTO);
