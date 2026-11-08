@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ab963642422b45427e4764dc3e7acc2b329f1355",
+  "sha": "d4a7252e768a8e67c4bce9745b136e1cbe885964",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 02:51 UTC",
+  "generated_at": "2026-11-08 03:06 UTC",
   "files_total": 8153,
   "code_files": 6012,
-  "code_lines": 1043377
+  "code_lines": 1043394
  },
  "version": "1.3.2",
- "facts_hash": "9078041a46935645",
+ "facts_hash": "74d32277a8d4f4e4",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67947,7 +67947,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 87790,
+   "lines": 87807,
    "tables": [
     "a",
     "alem_do_limite",
@@ -265349,7 +265349,7 @@
   },
   "scripts/ci/verify-release-targets-timeout.unit.mjs": {
    "path": "scripts/ci/verify-release-targets-timeout.unit.mjs",
-   "lines": 23
+   "lines": 29
   },
   "scripts/ci/volume-e2e-evidence-honesty.unit.mjs": {
    "path": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
@@ -270260,7 +270260,7 @@
   },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
-   "lines": 199,
+   "lines": 210,
    "exports": [
     "const TARGETS",
     "function parseArgs",
@@ -383441,10 +383441,20 @@
   }
  },
  "git": {
-  "sha": "ab963642422b45427e4764dc3e7acc2b329f1355",
+  "sha": "d4a7252e768a8e67c4bce9745b136e1cbe885964",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d4a7252",
+    "date": "2026-11-07",
+    "author": "adm01-debug",
+    "subject": "fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado",
+    "files": [
+     "scripts/ci/verify-release-targets-timeout.unit.mjs",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "ab96364",
     "date": "2026-11-07",
@@ -383999,22 +384009,6 @@
     "files": [
      "scripts/e2e-isolated/migrations.mjs"
     ]
-   },
-   {
-    "sha": "4ac4bd4",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: cron do drain de ai_usage_outbox e comentario do CodeQL (#2707)",
-    "files": [
-     ".github/workflows/codeql.yml",
-     "ESTADO.md",
-     "scripts/edge-deploy/smoke-functions.mjs",
-     "supabase/config.toml",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/ai-usage-outbox-drain/index.test.ts",
-     "supabase/functions/ai-usage-outbox-drain/index.ts",
-     "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -384029,6 +384023,14 @@
    [
     "src/integrations/supabase/types.ts",
     3
+   ],
+   [
+    "scripts/ci/verify-release-targets-timeout.unit.mjs",
+    2
+   ],
+   [
+    "scripts/vercel/verify-release-targets.mjs",
+    2
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -384067,10 +384069,6 @@
     2
    ],
    [
-    "supabase/deployment-manifest.json",
-    2
-   ],
-   [
     "e2e/talkx-kit.spec.ts",
     1
    ],
@@ -384092,10 +384090,6 @@
    ],
    [
     ".github/workflows/branch-hygiene-audit.yml",
-    1
-   ],
-   [
-    ".github/workflows/contexto.yml",
     1
    ]
   ]

@@ -1975,7 +1975,7 @@
   {
    "arquivo": "scripts/ci/verify-release-targets-timeout.unit.mjs",
    "tipo": "unit",
-   "linhas": 23,
+   "linhas": 29,
    "testa": [
     "scripts/vercel/verify-release-targets.mjs"
    ],
