@@ -100,6 +100,15 @@ export function useDeadlineCalculator({
     }
   }, [messages, eventDate, productType]);
 
-  const active = aiResult ?? local;
+  const active: DeadlineResult = aiResult
+    ? {
+        feasibility: aiResult.feasibility,
+        productionDays: aiResult.productionDays,
+        daysUntilEvent: aiResult.daysUntilEvent,
+        lastOrderDate: aiResult.lastOrderDate ? new Date(aiResult.lastOrderDate) : null,
+        message: aiResult.message,
+        alternatives: aiResult.alternatives,
+      }
+    : local;
   return { ...active, aiResult, aiLoading, aiError, analyze };
 }

@@ -75,6 +75,13 @@ export function useLeadThermometer({
     }
   }, [messages]);
 
-  const active = aiResult ?? local;
+  const active: LeadThermometerResult = aiResult
+    ? {
+        temperature: aiResult.temperatureLabel,
+        score: aiResult.temperature,
+        signals: aiResult.signals,
+        recommendedAction: aiResult.recommendedAction,
+      }
+    : local;
   return { ...active, aiResult, aiLoading, aiError, analyze };
 }
