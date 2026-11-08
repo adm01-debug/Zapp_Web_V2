@@ -9,7 +9,7 @@
 // R2-INF-016: a falha da consulta devolvia `new Response(JSON.stringify({ erro: error.message }),
 // { status: 500 })` — detalhe interno do banco no corpo. Passa pelo helper sanitizante
 // `internalErrorResponse`, e o handler e exportado para o teste provar isso com erro sintetico.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, internalErrorResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { timingSafeStringEqual, unauthorizedResponse } from "../_shared/cron-secret-auth.ts";
 

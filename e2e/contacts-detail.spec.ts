@@ -27,6 +27,6 @@ test.describe('Contatos — painel de detalhe', () => {
 
     await panel.getByRole('button', { name: /Conversar/ }).click();
     await expect(page).toHaveURL(/[?&]view=inbox/);
-    await expect(page.getByRole('heading', { level: 3, name })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { level: 2, name })).toBeVisible({ timeout: 15_000 });
   });
 });

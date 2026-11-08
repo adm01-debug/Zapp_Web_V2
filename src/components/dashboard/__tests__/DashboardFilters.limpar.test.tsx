@@ -81,7 +81,7 @@ describe('DashboardFilters — selo de filtros ativos com Limpar', () => {
     expect(screen.getByRole('button', { name: 'Limpar filtros (1 ativo)' })).toBe(selo);
   });
 
-  it('não conta fila e agente quando o filtro de time está oculto (agent/special_agent)', () => {
+  it('não conta fila e agente quando o filtro de time está oculto (agent)', () => {
     renderComFiltros(
       { ...semFiltro, queueId: 'q-1', agentId: 'a-1' },
       { showTeamFilters: false },

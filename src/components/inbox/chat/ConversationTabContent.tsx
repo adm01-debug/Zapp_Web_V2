@@ -69,12 +69,10 @@ interface ConversationTabContentProps {
   children: ReactNode;
   /** "Usar resposta" (aba IA) — leva o texto para o input do Chat e troca de aba. */
   onUseSuggestion?: (text: string) => void;
-  /** Perfil do agente logado — a SalesView grava como `created_by` nas compras. */
-  profileId?: string | null;
 }
 
 export function ConversationTabContent({
-  activeTab, onTabChange, conversation, messages, children, onUseSuggestion, profileId,
+  activeTab, onTabChange, conversation, messages, children, onUseSuggestion,
 }: ConversationTabContentProps) {
   const contactId = conversation.contact.id;
 
@@ -167,7 +165,7 @@ export function ConversationTabContent({
       {activeTab === 'orders' && (
         <Panel name="SalesView" tab="orders">
           {/* `onTabChange` é obrigatório aqui: sem ele o "Ver no CRM" do Resumo comercial fica inerte. */}
-          <SalesViewTab contactId={contactId} profileId={profileId ?? null} onTabChange={onTabChange} />
+          <SalesViewTab contactId={contactId} onTabChange={onTabChange} />
         </Panel>
       )}
 

@@ -27,7 +27,7 @@
  * participam do fluxo em teste.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, cleanup, screen, act } from '@testing-library/react';
+import { render, cleanup, screen, act, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -53,11 +53,16 @@ vi.mock('@/hooks/auth/useAuth', () => ({
     signOut: vi.fn(),
   }),
 }));
+const onboarding = vi.hoisted(() => ({
+  complete: true,
+  loading: false,
+  completeOnboarding: vi.fn(),
+}));
 vi.mock('@/hooks/ui/useOnboarding', () => ({
   useOnboarding: () => ({
-    hasCompletedOnboarding: true,
-    loading: false,
-    completeOnboarding: vi.fn(),
+    hasCompletedOnboarding: onboarding.complete,
+    loading: onboarding.loading,
+    completeOnboarding: onboarding.completeOnboarding,
   }),
 }));
 vi.mock('@/hooks/ui/useOnboardingChecklist', () => ({
@@ -95,7 +100,11 @@ vi.mock('@/components/notifications/SLANotificationProvider', () => ({
 }));
 
 // Painéis secundários do shell (todos lazy no `Index`): fora do escopo.
-vi.mock('@/components/onboarding/WelcomeModal', () => ({ WelcomeModal: () => null }));
+vi.mock('@/components/onboarding/WelcomeModal', () => ({
+  WelcomeModal: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => isOpen
+    ? <div role="dialog" aria-label="Boas-vindas"><button onClick={onClose}>Fechar boas-vindas</button></div>
+    : null,
+}));
 vi.mock('@/components/ui/offline-indicator', () => ({
   OfflineIndicator: () => null,
   ConnectionToast: () => null,
@@ -208,6 +217,31 @@ describe('#447 — Ctrl+2 troca a view do shell para dashboard', () => {
 
     expect(viewNoShell()).toBe('inbox');
     expect(viewNaUrl()).toBe('inbox');
+  });
+});
+
+describe('boas-vindas do onboarding', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    onboarding.complete = false;
+    onboarding.loading = false;
+  });
+
+  afterEach(() => {
+    cleanup();
+    onboarding.complete = true;
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('abre para usuário pendente e permanece fechada após dispensar', async () => {
+    window.history.replaceState(null, '', '/?view=inbox');
+    await montarShell('/?view=inbox');
+
+    expect(await screen.findByRole('dialog', { name: 'Boas-vindas' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar boas-vindas' }));
+    expect(screen.queryByRole('dialog', { name: 'Boas-vindas' })).toBeNull();
+    expect(onboarding.completeOnboarding).toHaveBeenCalledTimes(1);
   });
 });
 

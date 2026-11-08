@@ -17,7 +17,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${key}`);
   }
   for (const required of ['manifestPath', 'remotePath', 'outputPath', 'gitSha', 'runId', 'deploymentScope']) {
-    if (!args[required]) throw new Error(`Missing required argument: ${required}`);
+    if (!args[required]) { process.stderr.write(`Missing required argument: ${required}\n`); process.exit(2); }
   }
   return args;
 }
@@ -31,7 +31,13 @@ export async function runVerifyRemote(args) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
   const attestation = await runVerifyRemote(args);
   console.log(
     `Remote manifest OK: ${attestation.function_count} functions, ` +

@@ -32,7 +32,11 @@ describe('resolveLocalSupabase', () => {
       'https://tnnnlkbymytvtqngbbqh.supabase.co',
       'http://127.0.0.1.evil.example:54321',
       'http://192.168.0.10:54321',
-      'https://localhost:54321',
+      'https://127.0.0.1.evil.example:54321',
+      'https://192.168.0.10:54321',
+      'https://[::1]:54321',
+      'wss://localhost:54321',
+      'ftp://localhost:54321',
       'nao-e-url',
     ]) {
       expect(
@@ -43,6 +47,24 @@ describe('resolveLocalSupabase', () => {
       ).toBeNull();
     }
   });
+
+  for (const host of ['127.0.0.1', 'localhost']) {
+    for (const port of ['', ':5173', ':23794', ':54321', ':65535']) {
+      it(`aceita HTTPS local em DEV na origem https://${host}${port}`, () => {
+        const url = `https://${host}${port}`;
+        expect(resolveLocalSupabase({
+          VITE_ZAPP_LOCAL_SUPABASE_URL: `${url}/storage/v1`,
+          VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY: ` ${KEY} `,
+        })).toEqual({ url, anonKey: KEY });
+        expect(resolveLocalSupabase({
+          PROD: true,
+          VITE_ZAPP_LOCAL_SUPABASE_URL: url,
+          VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY: KEY,
+        })).toBeNull();
+        expect(resolveLocalSupabase({ VITE_ZAPP_LOCAL_SUPABASE_URL: url })).toBeNull();
+      });
+    }
+  }
 
   it('recusa URL local sem a chave, para não misturar a chave de produção com o banco local', () => {
     expect(resolveLocalSupabase({ VITE_ZAPP_LOCAL_SUPABASE_URL: 'http://127.0.0.1:54321' })).toBeNull();

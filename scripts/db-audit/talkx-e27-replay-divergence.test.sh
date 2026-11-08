@@ -5,9 +5,8 @@ set -Eeuo pipefail
 #
 # O E27 publicou tres tabelas do Talk X (talkx_campaign_events, talkx_segments,
 # talkx_templates) em `supabase_realtime` e essa intencao ficou em DOIS arquivos com o
-# mesmo conteudo: 20260927500001 e 20260927570000. No replay o segundo nao aplica
-# (`already member of publication`), e ele esta na lista de falhas esperadas
-# (replay-known-failures.json / falhas-esperadas.txt do banco local).
+# mesmo conteudo: 20260927500001 e 20260927570000. O segundo foi movido para
+# `_superseded` e retirado do replay e do allowlist: este teste guarda essa decisao.
 #
 # Decisao da caixa 20261001-114300-7eb1: NAO editar a migration aplicada para ficar
 # idempotente (a guarda recusa `modified`); registrar a divergencia e, SO SE PRECISAR,
@@ -22,9 +21,8 @@ set -Eeuo pipefail
 #   C) estado final: a publicacao tem as TRES tabelas do E27 -> o efeito pretendido esta
 #      intacto, nada ficou faltando e NENHUMA migration nova e necessaria (uma versao
 #      posterior nao desfaz a falha do arquivo anterior, e nao ha intencao perdida).
-#   D) registro: a entrada existe e aponta a causa real (irma duplicada), e o
-#      classificador do replay trata a falha como esperada (VERDE) e uma falha fora da
-#      lista como drift novo (VERMELHO).
+#   D) registro: a duplicata nao pode voltar ao diretorio ativo nem ao allowlist;
+#      se reaparecer como falha do replay, o classificador sinaliza drift novo.
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 postgres_image="${TALKX_E27_REPLAY_DIVERGENCE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
@@ -44,9 +42,12 @@ command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao acessivel'
 
 duplicada="$repo_root/supabase/migrations/20260927500001_talkx_e27_realtime_campaign_events.sql"
-segunda="$repo_root/supabase/migrations/20260927570000_talkx_e27_realtime_campaign_events.sql"
+segunda="$repo_root/supabase/migrations/_superseded/20260927570000_talkx_e27_realtime_campaign_events.sql"
 [[ -f "$duplicada" ]] || fail 'migration 20260927500001 (irma duplicada) nao existe'
-[[ -f "$segunda" ]] || fail 'migration 20260927570000 nao existe'
+[[ -f "$segunda" ]] || fail 'migration 20260927570000 arquivada nao existe'
+[[ ! -f "$repo_root/supabase/migrations/$(basename "$segunda")" ]] \
+  || fail 'migration 20260927570000 voltou ao diretorio ativo'
+grep -q '^-- SUPERSEDED' "$segunda" || fail 'migration arquivada perdeu marcador SUPERSEDED'
 allowlist="$repo_root/scripts/db-audit/replay-known-failures.json"
 [[ -f "$allowlist" ]] || fail 'replay-known-failures.json nao existe'
 
@@ -99,31 +100,23 @@ publicadas="$(tabelas_na_publicacao)"
   || fail "C: publicacao incompleta apos os dois arquivos: $publicadas"
 docker rm -f "$container_name" >/dev/null
 
-# ---- D) registro: entrada honesta + classificador do replay -----------------------
+# ---- D) arquivo arquivado fora do allowlist + classificador do replay --------------
 python3 - "$allowlist" "$segunda" <<'PY'
 import json, sys
 caminho, arquivo = sys.argv[1], sys.argv[2].rsplit('/', 1)[-1]
 esperadas = json.load(open(caminho, encoding='utf-8'))['esperadas']
-entrada = esperadas.get(arquivo)
-if entrada is None:
-    sys.exit(f"D: '{arquivo}' NAO esta registrado em replay-known-failures.json")
-if entrada.get('categoria') != 'ordem-idempotencia':
-    sys.exit(f"D: categoria inesperada: {entrada.get('categoria')!r}")
-motivo = entrada.get('motivo', '')
-irma = '20260927500001'
-if irma not in motivo:
-    sys.exit(
-        'D: o motivo registrado nao aponta a causa real (a irma duplicada '
-        f'{irma}); medido: sozinha a migration aplica. motivo atual: {motivo!r}'
-    )
+if arquivo in esperadas:
+    sys.exit(f"D: '{arquivo}' arquivado ainda mascara falhas no replay-known-failures.json")
 PY
 
 tmpdir="$(mktemp -d)"
 trap 'cleanup; rm -rf "$tmpdir"' EXIT INT TERM
-printf '%s\tsyntax error at or near "x"\n' "$(basename "$segunda")" > "$tmpdir/erros-esperados.tsv"
-saida="$(python3 "$repo_root/scripts/db-audit/replay-classify.py" "$tmpdir/erros-esperados.tsv" "$allowlist" 2>&1)"
-printf '%s' "$saida" | grep -q 'REPLAY=verde' \
-  || fail "D: a falha do E27 nao foi classificada como esperada: $saida"
+printf '%s\tduplicate_object\n' "$(basename "$segunda")" > "$tmpdir/erro-arquivado.tsv"
+if python3 "$repo_root/scripts/db-audit/replay-classify.py" "$tmpdir/erro-arquivado.tsv" "$allowlist" >"$tmpdir/arquivado.out" 2>&1; then
+  fail 'D: falha do E27 arquivado foi aceita como esperada no replay'
+fi
+grep -q 'REPLAY=VERMELHO' "$tmpdir/arquivado.out" \
+  || fail "D: falha do E27 arquivado nao saiu como VERMELHO: $(cat "$tmpdir/arquivado.out")"
 
 printf '%s\n%s\tfailure novo\n' "$(basename "$segunda")" '00000000000000_inexistente.sql' > "$tmpdir/erros-novos.tsv"
 if python3 "$repo_root/scripts/db-audit/replay-classify.py" "$tmpdir/erros-novos.tsv" "$allowlist" >"$tmpdir/novos.out" 2>&1; then
@@ -132,4 +125,4 @@ fi
 grep -q 'REPLAY=VERMELHO' "$tmpdir/novos.out" \
   || fail "D: falha inesperada nao saiu como VERMELHO: $(cat "$tmpdir/novos.out")"
 
-printf '[OK] Talk X E27 (#464): divergencia medida e registrada — 20260927570000 falha em 42710 por causa da irma duplicada 20260927500001; a publicacao termina com as 3 tabelas do E27 e nenhuma migration nova e necessaria.\n'
+printf '[OK] Talk X E27 (#464): duplicata arquivada fora do replay e allowlist; 20260927500001 publica as 3 tabelas, e falha da antiga e drift novo.\n'

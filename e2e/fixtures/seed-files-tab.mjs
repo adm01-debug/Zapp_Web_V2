@@ -1,6 +1,9 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
+
 // Seed LOCAL da fixture da aba Arquivos (etapas 47/49 do
 // PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS).
+// Também fornece a amostra canônica de áudio para a prova de volume no stack isolado.
 //
 // POR QUE ESTE ARQUIVO EXISTE. As migrations
 // `20261003182707_fixture_e2e_aba_arquivos_midia.sql` e
@@ -65,6 +68,11 @@ const PNG = Buffer.from(
 );
 const FILE_1 = 'e2e-files-tab-1791054089114.png';
 const FILE_2 = 'e2e-files-tab-2.png';
+const AUDIO_FILE = 'e2e-media-volume.ogg';
+const AUDIO_ID = 'e2e65100-0000-4000-a000-000000000903';
+// Tom sintético mono de 440 Hz/0,35 s, Ogg/Opus; bytes decodificados offline com FFmpeg.
+const AUDIO_SHA256 = '285b8fe264b12fa014a45e57f5a1620eebcb75b7226fbbc7cc42de3ae02750d1';
+const AUDIO = Buffer.from('T2dnUwACAAAAAAAAAAAAAAAAAAAAAAIotXIBE09wdXNIZWFkAQE4AYC7AAAAAABPZ2dTAAAAAAAAAAAAAAAAAAABAAAASZW+VAEuT3B1c1RhZ3MGAAAAZmZtcGVnAQAAABQAAABlbmNvZGVyPUxhdmMgbGlib3B1c09nZ1MABNhCAAAAAAAAAAAAAAIAAADdBDkMEl9COzg+PkI9PzkzNDY1MDEsVniBp11snpmsAAAICuBa1RGcRDEVBXs95n4cuPkNWVlfIdC6OqWOdTg8Ghgfufrxatn11XCRTws4Gv6YQ7C1Q6rwWWvi9DUODQBlxA0S4eFybEGNMpE4sshIlIDlpeoEeJ9nAef8lU1OqhinGd/lXFnf+26hM2X1qKVJDeRXd4ePCkLQkkaR/R/UO3A/99WXqDhWglIlcAu6ljwcD09B94m9eJqy33Wc/Es6RX4oWnKHxoOIOxxHKhYoGBNEAf+6D5PCseF12KP8lNFsToFxtvMgI6ef9dbn9yzdfAV4mrLfdZz8Re3XM58TY98QE9kP78C3oXi8J2i5ib9or8iK8NkHMqPIoenVHibH38UOrXdvWUsTTHiast91nPxJM79K9yUjaEQfEQz8Zg0v1o9uXfol6aU938s+qy0HU27utEvhaM+hXZ12JWGMmmnf4GgPSeUEeJqN8rCSoFAtabDlQwj3Y4qr+5MhrjOu6B2sKlGVvnxCyyglkpdintiRSqoEdvgP8iSZ1yQLatUbouwu7E14mjqfcy3SLe9fVPbGqbf24ZJRJ5b+A+yN/Xn1aPHNcwq0rv4mjkq3vWBf3p20FODo0wBgId1PVrddSphTFeBPQQR4mjqfdZz8SzpFedcuwqsRjTrLsfAQLnnnYy+AdB9NmAneqi4SnMfqlYaLzi5ZbWVOB0Zk13dYHtLf6MAEeJo6n3Wc/EXt135IUce5YQAbr0yJWk0lpB+OaXWjCPYxg8+4W+fkLwqkv9EOZr7mic8XTLVoFPTtd6JknvsMSJnCX3Mt0jEzsiciVpcpFh9wH7NrmpAqI5tz32aLJEKnqVQJF/QEIc+YRtIEQu7m6Ia8SIzWuBfUSJnCX3Wc/EkLXqYaYfKDh5TCfVa4rpXBzJYgWo17eDkqek03Odpo5qsT55y0tE6gfGRQSJnCX3Mt0jFKL8GI7K8lCm7GI1vqr9X3Qwuug8y3ilh0x079/LZnJMkJbbZGbBwp2CY4+EiZSh91nPxLOk2XRMzBqHIk2EJh6iQB3oBpbWo9hPbwmegpaaCDsk2lPt8ZT2Y9J9XEz/ALGEiZSh91nPxJSjdu541PPqXB9fLN4236/psxTbJETTlOi8/f5yIL5vClpmzazVZmwouei02ASJlKH3Mt0jNVEtoR9cbKmLKsyJ3MYmm7FzLZrreYozSujbdjwyUMkHD6eg8OTJRASJlKH3Wc/EtTQUa80Mui9hTUobqxrejE1e3IDxFssNxB6Ma6PadRz2nsaalfYV7FEEiZSh9zLdIt70zi63ZbeEXqGvxs658BYwW0i1oV2iP0MVkqbqQrYAXYAojYSJnbEyU1Yqt75gj8w8gq8nA/FKvuWQrooAmWuTkpfZqeWPcPFo9L2NCQheblW6Gbp+lcnCnyiYB+U3zgN6abxg7PNVaUhBj4nxiX9neNhNUfUqPK+9Q=', 'base64');
 
 const svc = { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json' };
 const comLegado = process.argv.includes('--com-legado');
@@ -216,6 +224,71 @@ for (const row of rows) {
   if (!ins.ok) abort(`insert da linha ${row.media_filename} falhou: HTTP ${ins.status} ${JSON.stringify(ins.data)}`);
   console.log(`[seed-files-tab] linha criada: ${row.media_filename}`);
 }
+
+// 6) áudio no MESMO contato: a identidade, os PNGs e seu proprietário permanecem.
+// O JWT do usuário faz upload/assinatura/leitura; 409 sozinho não comprova a fixture.
+async function seedAudioFixture() {
+  if (AUDIO.length !== 1250 || createHash('sha256').update(AUDIO).digest('hex') !== AUDIO_SHA256) {
+    abort('bytes da amostra de áudio divergentes');
+  }
+  const audioPath = `${CONTACT_ID}/${AUDIO_FILE}`;
+  const signedPath = `/storage/v1/object/sign/whatsapp-media/${audioPath}`;
+  const request = (path, options = {}) => fetch(`${API}${path}`, {
+    ...options, redirect: 'error', signal: AbortSignal.timeout(15_000),
+  });
+  const uploaded = await request(`/storage/v1/object/whatsapp-media/${audioPath}`, {
+    method: 'POST', headers: { ...auth, 'Content-Type': 'audio/ogg' }, body: AUDIO,
+  });
+  if (![200, 201, 409].includes(uploaded.status)) abort(`upload do áudio falhou: HTTP ${uploaded.status}`);
+
+  const signedResponse = await request(signedPath, {
+    method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expiresIn: 60 }),
+  });
+  if (signedResponse.status !== 200) abort(`assinatura do áudio falhou: HTTP ${signedResponse.status}`);
+  const signedData = await signedResponse.json();
+  if (typeof signedData?.signedURL !== 'string') abort('assinatura do áudio ausente');
+  const signed = new URL(`${API}/storage/v1${signedData.signedURL}`);
+  if (signed.origin !== new URL(API).origin || signed.pathname !== signedPath ||
+      signed.username || signed.password || signed.hash || !signed.searchParams.get('token')) {
+    abort('assinatura do áudio fora do locator canônico');
+  }
+  const downloaded = await request(signed.pathname + signed.search);
+  if (downloaded.status !== 200 || downloaded.headers.get('content-type')?.split(';')[0].trim() !== 'audio/ogg') {
+    abort(`leitura do áudio falhou: HTTP ${downloaded.status} ou tipo divergente`);
+  }
+  const bytes = Buffer.from(await downloaded.arrayBuffer());
+  if (bytes.length !== AUDIO.length || !bytes.equals(AUDIO) ||
+      createHash('sha256').update(bytes).digest('hex') !== AUDIO_SHA256) {
+    abort('conteúdo do áudio no Storage diverge da amostra');
+  }
+
+  const row = {
+    id: AUDIO_ID, contact_id: CONTACT_ID, sender: 'contact',
+    content: '[Áudio] fixture local de volume das mídias', message_type: 'audio',
+    media_url: locator(audioPath), media_type: 'audio', media_mimetype: 'audio/ogg',
+    media_filename: AUDIO_FILE, media_size: AUDIO.length, ptt: false, is_deleted: false,
+  };
+  const query = `/rest/v1/messages?contact_id=eq.${CONTACT_ID}&media_filename=eq.${AUDIO_FILE}&select=${Object.keys(row).join(',')}`;
+  const matches = value => value && Object.entries(row).every(([key, expected]) => value[key] === expected);
+  const existing = await json(await request(query, { headers: svc }));
+  if (existing.status !== 200 || !Array.isArray(existing.data) || existing.data.length > 1 ||
+      (existing.data.length === 1 && !matches(existing.data[0]))) {
+    abort('linha canônica de áudio ausente de leitura válida, duplicada ou divergente');
+  }
+  if (existing.data.length === 0) {
+    const inserted = await request('/rest/v1/messages', {
+      method: 'POST', headers: { ...svc, Prefer: 'return=minimal' }, body: JSON.stringify([row]),
+    });
+    if (inserted.status !== 201) abort(`insert do áudio falhou: HTTP ${inserted.status}`);
+  }
+  const visible = await json(await request(query, { headers: auth }));
+  if (visible.status !== 200 || !Array.isArray(visible.data) || visible.data.length !== 1 || !matches(visible.data[0])) {
+    abort('áudio canônico não está único e íntegro pela RLS do usuário');
+  }
+  console.log(`[seed-files-tab] áudio canônico e RLS verificados (${AUDIO.length} bytes)`);
+}
+await seedAudioFixture();
 
 console.log(`[seed-files-tab] locator canônico: ${locator(canonicalPath)}`);
 console.log(`[seed-files-tab] usuário: ${EMAIL} / senha: ${PASSWORD}`);

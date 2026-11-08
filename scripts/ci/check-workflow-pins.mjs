@@ -11,7 +11,7 @@ const IMAGE_DIGEST = /@sha256:[a-f0-9]{64}/u;
 // string EXATA usada no YAML (por exemplo "24", "1.24.x"), para a comparação ser de
 // igualdade e não de faixa.
 export const TOOLCHAIN_PATH = ".github/toolchain.json";
-export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "zizmor"];
+export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "shellcheck-version", "shellcheck-sha256", "zizmor"];
 
 const SCALAR = /^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u;
 const TOOLCHAIN_VERSION_INPUT = /^\s*(?:-\s*)?["']?(bun|deno|node|go)-version["']?\s*:\s*(.*)$/u;
@@ -22,6 +22,8 @@ const PLAYWRIGHT_PIN = /playwright@([0-9][0-9A-Za-z.-]*)/gu;
 // W88: padrões para binários baixados via curl e pip em scripts de workflow
 const ACTIONLINT_VERSION_LINE = /^\s*actionlint_version=["']?([0-9][^\s"']*)["']?/u;
 const ACTIONLINT_SHA256_LINE = /^\s*actionlint_sha256=["']?([0-9a-f]{64})["']?/u;
+const SHELLCHECK_VERSION_LINE = /^\s*shellcheck_version=["']?([0-9][^\s"']*)["']?/u;
+const SHELLCHECK_SHA256_LINE = /^\s*shellcheck_sha256=["']?([0-9a-f]{64})["']?/u;
 const ZIZMOR_PIP_LINE = /\bzizmor==([0-9][^\s"']*)/u;
 
 /** Valor literal de um escalar YAML; `null` quando é expressão do Actions ou valor multilinha. */
@@ -158,6 +160,12 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
 
     const actionlintHash = line.match(ACTIONLINT_SHA256_LINE);
     if (actionlintHash) { report("actionlint-sha256-linux-amd64", actionlintHash[1]); continue; }
+
+    const shellcheckVer = line.match(SHELLCHECK_VERSION_LINE);
+    if (shellcheckVer) { report("shellcheck-version", shellcheckVer[1]); continue; }
+
+    const shellcheckHash = line.match(SHELLCHECK_SHA256_LINE);
+    if (shellcheckHash) { report("shellcheck-sha256", shellcheckHash[1]); continue; }
 
     const zizmorVer = line.match(ZIZMOR_PIP_LINE);
     if (zizmorVer) { report("zizmor", zizmorVer[1]); }

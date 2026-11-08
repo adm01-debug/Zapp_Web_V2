@@ -133,7 +133,7 @@ function tableBuilder(spec: EdgeSpec, table: string, opts: MockOpts): any {
   const b: Record<string, any> = {};
   const chain = () => b;
   b.select = chain; b.eq = chain; b.neq = chain; b.or = chain; b.is = chain;
-  b.in = chain; b.not = chain; b.update = chain; b.insert = chain;
+  b.in = chain; b.not = chain; b.like = chain; b.update = chain; b.insert = chain;
   b.delete = chain; b.lt = chain; b.order = chain; b.limit = chain;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   b.single = () => Promise.resolve(rows() as any);

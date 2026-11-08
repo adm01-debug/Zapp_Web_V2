@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, internalErrorResponse } from "../_shared/validation.ts";
 import { ScheduledReportSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";

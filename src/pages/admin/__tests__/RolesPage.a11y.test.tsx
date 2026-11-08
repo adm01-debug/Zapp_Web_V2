@@ -41,7 +41,7 @@ vi.mock('@/pages/admin/useRolesPageState', () => ({
     updating: false,
     handleAddRole: vi.fn(),
     handleRemoveRole: vi.fn(),
-    groupedUsers: { admin: [], supervisor: [], agent: [], special_agent: [] },
+    groupedUsers: { admin: [], supervisor: [], agent: [] },
   }),
 }));
 vi.mock('@/components/permissions/PermissionMatrix', () => ({ PermissionMatrix: () => null }));

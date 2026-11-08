@@ -143,8 +143,8 @@ test('workspace do Email não introduz violações axe', async ({ page }) => {
   await abrirEmail(page);
   await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await freezeVisualTransitions(page);
-  await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
+  await waitForAppliedTheme(page, 'dark');
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & {
       axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
@@ -152,11 +152,42 @@ test('workspace do Email não introduz violações axe', async ({ page }) => {
     // O app roda @axe-core/react em DEV sobre a MESMA instancia global `window.axe` desta
     // spec: esperar a instancia ficar livre no mesmo frame que dispara o nosso run evita o
     // "Axe is already running" intermitente, sem mexer em nenhuma assercao.
-    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
-    const result = await axe.run('.email-workspace', {
-      rules: {
-        'color-contrast': { enabled: true },
-      },
+    const result = await new Promise<AxeViolationResult>((resolve, reject) => {
+      let anterior: Element | null = null;
+      let frame = 0;
+      const limpar = () => {
+        window.clearTimeout(limite);
+        window.cancelAnimationFrame(frame);
+      };
+      const falhar = (erro: unknown) => { limpar(); reject(erro); };
+      const limite = window.setTimeout(() => {
+        falhar(new Error('Email não estabilizou para o axe em 10 s (tema, visibilidade, opacidade ou axe ocupado).'));
+      }, 10_000);
+      const verificar = () => {
+        try {
+          const vazio = document.querySelector('[data-testid="email-workspace"] [data-testid="conversation-empty-state"]');
+          const rect = vazio?.getBoundingClientRect();
+          let pronto = Boolean(vazio?.isConnected && rect && rect.width > 0 && rect.height > 0
+            && document.documentElement.classList.contains('dark')
+            && !document.documentElement.classList.contains('theme-transitioning')
+            && !document.body.classList.contains('theme-transitioning')
+            && !axe._running);
+          for (let node = vazio; pronto && node; node = node.parentElement) {
+            const css = getComputedStyle(node);
+            pronto = Number(css.opacity) === 1 && css.display !== 'none' && css.visibility === 'visible';
+          }
+          if (pronto && vazio === anterior) {
+            limpar();
+            axe.run('.email-workspace', {
+              rules: { 'color-contrast': { enabled: true } },
+            }).then(resolve, reject);
+            return;
+          }
+          anterior = pronto ? vazio : null;
+          frame = window.requestAnimationFrame(verificar);
+        } catch (erro) { falhar(erro); }
+      };
+      frame = window.requestAnimationFrame(verificar);
     });
     return result.violations.map(violation => ({
       id: violation.id,
@@ -479,7 +510,7 @@ test('corpus extremo com texto sem quebra e muitos anexos não cria overflow glo
   expect(overflow).toBeLessThanOrEqual(2);
 });
 
-test('alto contraste e movimento reduzido mantêm o workspace acessível', async ({ page }) => {
+test('alto contraste e movimento reduzido mantêm o workspace acessível', async ({ page }, testInfo) => {
   await page.addInitScript(() => {
     localStorage.setItem('highContrast', 'true');
     localStorage.setItem('reducedMotion', 'true');
@@ -497,30 +528,204 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   // acima usa antes de medir — e só então congela e mede.
   await waitForAppliedTheme(page, 'dark');
   await freezeVisualTransitions(page);
+  // Aguarda o primeiro elemento text-muted-foreground do workspace ter luminância > 0,3 (cinza
+  // claro do modo escuro ≈ 0,47) antes de executar o axe — garante que as variáveis CSS do tema
+  // foram commitadas no paint após o freeze, sem ler cores interpoladas da transição.
+  await page.waitForFunction(() => {
+    const el = document.querySelector('.email-workspace .text-muted-foreground');
+    if (!el) return true;
+    const c = getComputedStyle(el).color;
+    const [r, g, b] = (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    const lin = (v: number) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.3;
+  });
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
-  const violations = await page.evaluate(async () => {
+  const medicao = await page.evaluate(async () => {
     const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
+    const estado = (targets: string[] = []) => {
+      const style = (element: Element | null) => {
+        if (!element) return null;
+        const computed = getComputedStyle(element);
+        return {
+          color: computed.color,
+          backgroundColor: computed.backgroundColor,
+          transitionProperty: computed.transitionProperty,
+          animationName: computed.animationName,
+        };
+      };
+      const root = document.documentElement;
+      return {
+        at: performance.now(),
+        classes: root.className,
+        themeTransitioning: root.classList.contains('theme-transitioning'),
+        activeAnimations: document.getAnimations().filter(animation => animation.playState === 'running').length,
+        inlineBackground: root.style.getPropertyValue('--background'),
+        inlineForeground: root.style.getPropertyValue('--foreground'),
+        body: style(document.body),
+        workspace: style(document.querySelector('.email-workspace')),
+        targets: targets.slice(0, 10).map(selector => {
+          let element: Element | null = null;
+          try { element = document.querySelector(selector); } catch { /* axe pode retornar seletor não CSS */ }
+          return { selector, style: style(element) };
+        }),
+      };
+    };
     // O app roda @axe-core/react em DEV sobre a MESMA instancia global `window.axe` desta
     // spec: esperar a instancia ficar livre no mesmo frame que dispara o nosso run evita o
     // "Axe is already running" intermitente, sem mexer em nenhuma assercao.
     while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
-    return (await axe.run('.email-workspace')).violations.map(item => ({
+    const antes = estado();
+    const violations = (await axe.run('.email-workspace')).violations.map(item => ({
       id: item.id,
       impact: item.impact,
       nodes: item.nodes.map(node => ({ target: node.target, failureSummary: node.failureSummary })),
     }));
+    const depois = estado(violations.flatMap(item => item.nodes.map(node => node.target[0]).filter(Boolean)));
+    return { violations, antes, depois };
   });
-  expect(violations).toEqual([]);
+  if (medicao.violations.length > 0) {
+    // Mede novamente somente na falha: a primeira leitura conserva a asserção original,
+    // enquanto a segunda mostra se o contraste ruim sobrevive ao fim da transição.
+    await page.waitForTimeout(600);
+    const aposAssentar = await page.evaluate(async () => {
+      const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
+      while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
+      const violations = (await axe.run('.email-workspace')).violations;
+      return {
+        at: performance.now(),
+        classes: document.documentElement.className,
+        bodyColor: getComputedStyle(document.body).color,
+        bodyBackground: getComputedStyle(document.body).backgroundColor,
+        violations: violations.map(item => ({ id: item.id, targets: item.nodes.map(node => node.target) })),
+      };
+    });
+    await testInfo.attach('email-contrast-state.json', {
+      body: Buffer.from(JSON.stringify({ ...medicao, aposAssentar }, null, 2)),
+      contentType: 'application/json',
+    });
+  }
+  expect(medicao.violations).toEqual([]);
 });
 
-test('workspace do Email é desmontado ao alternar entre módulos', async ({ page }) => {
-  await abrirEmail(page);
-  await expect(page.locator('.email-workspace')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
-  await expect(page).toHaveURL(/view=dashboard/);
-  await expect(page.locator('.email-workspace')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Email', exact: true }).click();
-  await expect(page.locator('.email-workspace')).toHaveCount(1);
+test('workspace do Email é desmontado ao alternar entre módulos', async ({ page }, testInfo) => {
+  // Diagnóstico passivo: não altera a navegação, o DOM nem o orçamento das asserções.
+  let installationFailed = false;
+  try {
+    await page.addInitScript(() => {
+      if (window.top !== window) return;
+      type Kind = 'init' | 'state' | 'click-dashboard' | 'click-email' | 'navigate-dashboard' | 'navigate-email' | 'final';
+      type Snapshot = { view: 'dashboard' | 'email-chat' | 'other' | 'unknown'; active: 'dashboard' | 'email-chat' | 'both' | 'none'; workspace_count: number; email_loading: boolean; visibility: 'visible' | 'hidden' | 'other' };
+      const records: Array<Snapshot & { kind: Kind; ms: number }> = [];
+      const started = performance.now();
+      const nativeViewTransition = typeof document.startViewTransition === 'function';
+      let dropped = 0, collectionErrors = 0, lastMs = 0, lastState = '', finished = false;
+      const error = () => { collectionErrors = Math.min(9999, collectionErrors + 1); };
+      const sample = (kind: Kind) => {
+        if (finished) return;
+        try {
+          const rawView = new URLSearchParams(window.location.search).get('view');
+          const emailActive = !!document.querySelector('nav[aria-label="Menu de navegação principal"] button[data-tour="email-chat"][aria-current="page"]');
+          const dashboardActive = !!document.querySelector('nav[aria-label="Menu de navegação principal"] button[data-tour="dashboard"][aria-current="page"]');
+          const state: Snapshot = {
+            view: rawView === null ? 'unknown' : rawView === 'email-chat' || rawView === 'dashboard' ? rawView : 'other',
+            active: emailActive && dashboardActive ? 'both' : emailActive ? 'email-chat' : dashboardActive ? 'dashboard' : 'none',
+            workspace_count: Math.min(3, document.querySelectorAll('.email-workspace').length),
+            email_loading: !!document.querySelector('section[aria-label="Carregando Email"]'),
+            visibility: document.visibilityState === 'visible' || document.visibilityState === 'hidden' ? document.visibilityState : 'other',
+          };
+          const signature = JSON.stringify(state);
+          if (kind === 'state' && signature === lastState) return;
+          const elapsed = performance.now() - started;
+          if (!Number.isFinite(elapsed)) { error(); return; }
+          lastMs = Math.min(120_000, Math.max(lastMs, Math.round(elapsed), 0));
+          lastState = signature;
+          if (records.length === 48) { records.splice(1, 1); dropped = Math.min(9999, dropped + 1); }
+          records.push({ kind, ms: lastMs, ...state });
+        } catch { error(); }
+      };
+      const onClick = (event: MouseEvent) => {
+        try {
+          if (!(event.target instanceof Element)) return;
+          const button = event.target.closest('button[data-tour]');
+          if (!button?.closest('nav[aria-label="Menu de navegação principal"]')) return;
+          const id = button.getAttribute('data-tour');
+          if (id === 'dashboard') sample('click-dashboard');
+          if (id === 'email-chat') sample('click-email');
+        } catch { error(); }
+      };
+      const onNavigate = (event: Event) => {
+        try {
+          const view = (event as CustomEvent<{ view?: unknown }>).detail?.view;
+          if (view === 'dashboard') sample('navigate-dashboard');
+          if (view === 'email-chat') sample('navigate-email');
+        } catch { error(); }
+      };
+      const onVisibility = () => sample('state');
+      const observer = new MutationObserver(() => sample('state'));
+      sample('init');
+      observer.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-current', 'aria-label'] });
+      document.addEventListener('click', onClick, true);
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('zapp:navigate', onNavigate);
+      (window as Window & { __zappEmailReturnDiagnostics?: { finish: () => unknown } }).__zappEmailReturnDiagnostics = {
+        finish: () => {
+          if (!finished) {
+            sample('final');
+            finished = true;
+            for (const cleanup of [
+              () => observer.disconnect(),
+              () => document.removeEventListener('click', onClick, true),
+              () => document.removeEventListener('visibilitychange', onVisibility),
+              () => window.removeEventListener('zapp:navigate', onNavigate),
+            ]) { try { cleanup(); } catch { error(); } }
+          }
+          return { schema: 1, status: collectionErrors ? 'partial' : 'ok', native_view_transition: nativeViewTransition, dropped, collection_errors: collectionErrors, records: records.map(record => ({ ...record })) };
+        },
+      };
+    });
+  } catch { installationFailed = true; }
+
+  try {
+    await abrirEmail(page);
+    await expect(page.locator('.email-workspace')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+    await expect(page).toHaveURL(/view=dashboard/);
+    await expect(page.locator('.email-workspace')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Email', exact: true }).click();
+    await expect(page.locator('.email-workspace')).toHaveCount(1);
+  } finally {
+    // O resultado atravessa uma fronteira browser → Node: reconstrói apenas o schema
+    // fechado. Falha na coleta/anexação nunca substitui o resultado original do teste.
+    const unavailable = (reason: 'install-failed' | 'collection-failed' | 'collector-missing' | 'invalid-payload') => ({ schema: 1, status: 'unavailable', reason });
+    let report: unknown = unavailable(installationFailed ? 'install-failed' : 'collection-failed');
+    if (!installationFailed) {
+      try {
+        const raw = await page.evaluate(() => (window as Window & { __zappEmailReturnDiagnostics?: { finish: () => unknown } }).__zappEmailReturnDiagnostics?.finish() ?? null);
+        const exact = (value: unknown, keys: string[]): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && Object.keys(value).every(key => keys.includes(key));
+        const integer = (value: unknown, maximum: number): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= maximum;
+        const enumValue = (value: unknown, values: string[]) => typeof value === 'string' && values.includes(value);
+        report = raw === null ? unavailable('collector-missing') : unavailable('invalid-payload');
+        if (exact(raw, ['schema', 'status', 'native_view_transition', 'dropped', 'collection_errors', 'records'])) {
+          const header = { schema: raw.schema, status: raw.status, native_view_transition: raw.native_view_transition, dropped: raw.dropped, collection_errors: raw.collection_errors };
+          if (header.schema === 1 && typeof header.native_view_transition === 'boolean' && integer(header.dropped, 9999) && integer(header.collection_errors, 9999) && header.status === (header.collection_errors ? 'partial' : 'ok') && Array.isArray(raw.records) && raw.records.length <= 48) {
+            const rows: Array<Record<string, unknown>> = [];
+            let valid = true, previousMs = 0;
+            for (const input of raw.records) {
+              if (!exact(input, ['kind', 'ms', 'view', 'active', 'workspace_count', 'email_loading', 'visibility'])) { valid = false; break; }
+              const row = { kind: input.kind, ms: input.ms, view: input.view, active: input.active, workspace_count: input.workspace_count, email_loading: input.email_loading, visibility: input.visibility };
+              if (!enumValue(row.kind, ['init', 'state', 'click-dashboard', 'click-email', 'navigate-dashboard', 'navigate-email', 'final']) || !integer(row.ms, 120_000) || row.ms < previousMs || !enumValue(row.view, ['dashboard', 'email-chat', 'other', 'unknown']) || !enumValue(row.active, ['dashboard', 'email-chat', 'both', 'none']) || !integer(row.workspace_count, 3) || typeof row.email_loading !== 'boolean' || !enumValue(row.visibility, ['visible', 'hidden', 'other'])) { valid = false; break; }
+              previousMs = row.ms;
+              rows.push(row);
+            }
+            if (header.status === 'ok' && (rows.length < 2 || rows[0]?.kind !== 'init' || rows.at(-1)?.kind !== 'final')) valid = false;
+            if (header.dropped > 0 && rows.length !== 48) valid = false;
+            if (valid) report = { ...header, records: rows };
+          }
+        }
+      } catch { report = unavailable('collection-failed'); }
+    }
+    try { await testInfo.attach('email-return-diagnostics.json', { body: JSON.stringify(report), contentType: 'application/json' }); } catch { /* O diagnóstico não altera o resultado da prova. */ }
+  }
 });
 
 test('consumidor Omnichannel incorpora Email sem duplicar o cabeçalho autônomo', async ({ page }) => {

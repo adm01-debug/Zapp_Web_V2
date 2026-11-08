@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
+import { SUPABASE_URL, SUPABASE_STORAGE_KEY } from './supabase-env';
 
 /**
  * Backend fake do Talk X para E2E determinístico (plano V4, etapa X003).
@@ -9,7 +10,7 @@ import type { Page, Route } from '@playwright/test';
  * e intercepta, via `page.route`, as chamadas do módulo:
  *   - `rest/v1/talkx_*`            → GET devolve a fixture da tela; escrita → 403
  *   - `rest/v1/rpc/talkx_*`        → escrita não prevista (403)
- *   - `functions/v1/talkx-*`       → escrita não prevista (403)
+ *   - `functions/v1/talkx-*        → escrita não prevista (403)
  *
  * Qualquer escrita não prevista é bloqueada com o corpo `{ "message": "escrita não prevista" }`
  * — o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)
@@ -18,7 +19,7 @@ import type { Page, Route } from '@playwright/test';
  * Contrato de crescimento (X003/X004): a fixture cresce junto com cada etapa de
  * tela — a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no
  * JSON da tela correspondente. Enquanto a tela não tem fixture, o arquivo é `{}`
- * e a régua a PULA (não captura, não falha). Referenciar uma fixture `{}` lança
+ * e a régua a PULA (não captura, não falha). Referenciar uma fixtura `{}` lança
  * `FixtureVaziaError` em vez de renderizar uma tela vazia em silêncio
  * (ver e2e/README.md e docs/talkx/v4/etapas/F00-regua-e-governanca.md).
  *
@@ -113,6 +114,103 @@ function emptyJson(route: Route) {
 
 const isRead = (m: string) => m === 'GET' || m === 'HEAD';
 
+type DemoCampaign = {
+  status?: string;
+  started_at?: string | null;
+  failed_count?: number | null;
+  outcome_unknown_count?: number | null;
+};
+
+type DemoRecipient = {
+  contact_id?: string | null;
+  sent_at?: string | null;
+  delivered_at?: string | null;
+  replied_at?: string | null;
+};
+
+function inWindow(value: string | null | undefined, from: number, to: number): boolean {
+  if (!value) return false;
+  const time = Date.parse(value);
+  return Number.isFinite(time) && time >= from && time < to;
+}
+
+function localDay(value: number, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(value));
+}
+
+function zeroFilledDays(from: number, to: number, timeZone: string): string[] {
+  if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) return [];
+  const first = localDay(from, timeZone);
+  const last = localDay(to - 1, timeZone);
+  const cursor = new Date(`${first}T00:00:00.000Z`);
+  const end = new Date(`${last}T00:00:00.000Z`);
+  const days: string[] = [];
+  while (cursor <= end) {
+    days.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return days;
+}
+
+/**
+ * Resposta mínima fiel à RPC `talkx_overview_stats` consumida pela Visão geral.
+ * Os números saem da própria fixture e respeitam a janela pedida pelo cliente;
+ * assim o demo não consulta o banco nem inventa o KPI que pretende validar.
+ */
+export function overviewStatsFromFixture(data: TalkXDemoData, body: unknown) {
+  const params = body && typeof body === 'object' ? body as Record<string, unknown> : {};
+  const from = Date.parse(String(params.p_from ?? '2020-01-01T00:00:00.000Z'));
+  const to = Date.parse(String(params.p_to ?? '2100-01-01T00:00:00.000Z'));
+  const timeZone = typeof params.p_timezone === 'string' && params.p_timezone
+    ? params.p_timezone
+    : 'America/Sao_Paulo';
+  const campaigns = (data.talkx_campaigns ?? []) as DemoCampaign[];
+  const recipients = (data.talkx_recipients ?? []) as DemoRecipient[];
+  const currentCampaigns = campaigns.filter((campaign) => inWindow(campaign.started_at, from, to));
+  const sent = recipients.filter((recipient) => inWindow(recipient.sent_at, from, to));
+  const delivered = recipients.filter((recipient) => inWindow(recipient.delivered_at, from, to));
+  const replied = recipients.filter((recipient) => inWindow(recipient.replied_at, from, to));
+  const contactsReached = new Set(sent.map((recipient) => recipient.contact_id).filter(Boolean)).size;
+  const active = campaigns.filter((campaign) =>
+    campaign.status === 'sending' || campaign.status === 'scheduled' || campaign.status === 'paused'
+  ).length;
+  const daily = zeroFilledDays(from, to, timeZone).map((day) => ({
+    day,
+    sent: sent.filter((recipient) => localDay(Date.parse(recipient.sent_at!), timeZone) === day).length,
+    delivered: delivered.filter((recipient) => localDay(Date.parse(recipient.delivered_at!), timeZone) === day).length,
+    replied: replied.filter((recipient) => localDay(Date.parse(recipient.replied_at!), timeZone) === day).length,
+  }));
+
+  return {
+    period: {
+      from: new Date(from).toISOString(),
+      to: new Date(to).toISOString(),
+      timezone: timeZone,
+    },
+    current: {
+      campaigns_sent: currentCampaigns.length,
+      completed: currentCampaigns.filter((campaign) => campaign.status === 'completed').length,
+      contacts_reached: contactsReached,
+      sent: sent.length,
+      delivered: delivered.length,
+      replied: replied.length,
+      failed: currentCampaigns.reduce((total, campaign) => total + (campaign.failed_count ?? 0), 0),
+      unknown: currentCampaigns.reduce((total, campaign) => total + (campaign.outcome_unknown_count ?? 0), 0),
+      delivery_rate_pct: sent.length > 0 ? Number(((delivered.length / sent.length) * 100).toFixed(1)) : 0,
+      reply_rate_pct: sent.length > 0 ? Number(((replied.length / sent.length) * 100).toFixed(1)) : 0,
+      active,
+    },
+    previous: null,
+    active,
+    daily,
+  };
+}
+
 export async function mockTalkXBackend(page: Page, tela: string) {
   const data = loadDemoData(tela);
 
@@ -127,8 +225,21 @@ export async function mockTalkXBackend(page: Page, tela: string) {
     });
   });
 
-  // RPCs talkx_* e edge functions talkx-*: o demo nunca dispara envio/escrita.
-  await page.route(/\/rest\/v1\/rpc\/talkx_[a-z_]+/, writeBlocked);
+  // A Visão geral lê seus KPIs por RPC. Ela é uma leitura determinística da
+  // fixture; as demais RPCs talkx_* continuam bloqueadas como escrita imprevista.
+  await page.route(/\/rest\/v1\/rpc\/talkx_[a-z_]+/, async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (pathname.endsWith('/talkx_overview_stats') && route.request().method() === 'POST') {
+      let body: unknown = {};
+      try { body = route.request().postDataJSON(); } catch { /* corpo inválido usa a janela padrão */ }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(overviewStatsFromFixture(data, body)),
+      });
+    }
+    return writeBlocked(route);
+  });
   await page.route(/\/functions\/v1\/talkx-[a-z-]+/, writeBlocked);
 
   // Criadores (get_team_profiles) e contatos (insights) respondem vazios para o
@@ -147,7 +258,7 @@ export async function mockTalkXBackend(page: Page, tela: string) {
 
 export const FAKE_USER_ID = '00000000-0000-4000-8000-000000000001';
 const FAKE_EMAIL = 'visual@test.local';
-const AUTH_STORAGE_KEY = 'sb-tnnnlkbymytvtqngbbqh-auth-token';
+const AUTH_STORAGE_KEY = SUPABASE_STORAGE_KEY;
 const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z — nunca expira no teste
 
 function b64url(value: unknown): string {
@@ -170,7 +281,7 @@ const FAKE_SESSION = {
     aud: 'authenticated',
     exp: FAKE_EXP,
     iat: 0,
-    iss: 'https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1',
+    iss: SUPABASE_URL + '/auth/v1',
   }),
   refresh_token: 'fake-refresh-token',
   expires_at: FAKE_EXP,
@@ -219,7 +330,7 @@ export async function mockTalkXAuth(page: Page) {
   // (`data = data[0]`), então array serve para os dois formatos de leitura.
   // Responder objeto quebra quem LISTA `profiles` sem filtro de id (passo 1 do
   // wizard de campanha, V25: `.select('id,name,email').eq('is_active', true)`):
-  // o array vira objeto, `(ed.owners ?? []).map` estoura TypeError e a tela cai
+  // o array vira objeto, `(ed.owners ?? []).map` estoura TypeError a tela cai
   // no error boundary ("Erro ao carregar Campanhas") em vez de renderizar.
   await page.route(/\/rest\/v1\/profiles/, (route) => {
     if (!isRead(route.request().method())) return writeBlocked(route);
@@ -276,6 +387,19 @@ export async function mockTalkXAuth(page: Page) {
     contentType: 'application/json',
     body: JSON.stringify([{ onboarding_completed: true }]),
   }));
+
+  // GoTrue auth: JWT com assinatura falsa não passa na validação do servidor local;
+  // mocamos /auth/v1/user e /auth/v1/token para o app não receber 403 bad_jwt.
+  await page.route(/\/auth\/v1\/user/, (route) =>
+    isRead(route.request().method())
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FAKE_SESSION.user) })
+      : writeBlocked(route),
+  );
+  await page.route(/\/auth\/v1\/token/, (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FAKE_SESSION) })
+      : writeBlocked(route),
+  );
 }
 
 /**

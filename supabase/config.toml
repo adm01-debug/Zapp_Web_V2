@@ -88,3 +88,10 @@ verify_jwt = true
 # chama via supabase.functions.invoke, que ja manda o JWT da sessao.
 [functions.invite-user]
 verify_jwt = true
+
+# IA-TIMEOUT-001: o pg_cron drena public.ai_usage_outbox sem JWT. A função só
+# aceita x-cron-secret igual ao segredo dedicado do Vault
+# (ai_usage_outbox_drain_cron_secret). Sem o header certo responde 401 e não
+# lê a fila. O smoke trata esta função como auth interna (espera 401 anônimo).
+[functions.ai-usage-outbox-drain]
+verify_jwt = false

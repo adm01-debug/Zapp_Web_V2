@@ -5,8 +5,8 @@
  * `NavigationService.canAccess(view, roles, permissions)`. Este spec prova as DUAS
  * pontas: com papel `admin` o painel Evolution monta (com dados reais de fixture,
  * não no estado vazio) e sem papel de admin o ViewRouter barra com "Acesso restrito".
- * Trocar só a resposta de `user_roles` é o que distingue os dois cenários — é a
- * regra de papel que está sob teste.
+ * Trocar o papel nas respostas de bootstrap e `user_roles` é o que distingue os
+ * dois cenários — é a regra de papel que está sob teste.
  *
  * Metodologia: sessão fake + backend mockado (mapa-mocks.ts, talkx-demo.ts), sem
  * secrets e sem banco — mesmo padrão de e2e/a11y-inbox-teams.spec.ts (N-078).
@@ -109,9 +109,9 @@ async function montarMonitoramento(page: Page, registro: Registro, papel: 'admin
   // segurança para o que escapar — mesmo ordem de `a11y-inbox-teams.spec.ts`.
   await bloquearRedeReal(page, registro);
   await installFakeSession(page);
-  await mockAppShell(page, registro);
-  // Registrado DEPOIS do mockAppShell: a última rota vence. É o papel do usuário
-  // que o `ViewRouter` lê via `useUserRole` → `user_roles.select('role')`.
+  await mockAppShell(page, registro, { role: papel });
+  // Mantém também a leitura legada coerente com o bootstrap. Registrado DEPOIS do
+  // mockAppShell porque a última rota vence.
   await page.route(/\/rest\/v1\/user_roles/, (route) =>
     json(route, querObjetoUnico(route) ? { role: papel } : [{ role: papel }]),
   );

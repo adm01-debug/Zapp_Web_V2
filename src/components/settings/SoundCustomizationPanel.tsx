@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,6 +82,7 @@ const isSoundType = (valor: string): valor is SoundTypeOption =>
 export function SoundCustomizationPanel() {
   const { settings, updateSettings } = useNotificationSettings();
   const [playingSound, setPlayingSound] = useState<string | null>(null);
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Guardado só para mostrar que o arquivo foi ENVIADO — enviado não é aplicado.
   const [uploadedSoundPath, setUploadedSoundPath] = useState<string | null>(null);
 
@@ -90,8 +91,16 @@ export function SoundCustomizationPanel() {
     if (!settings.soundEnabled) return;
     previewSound(soundId, settings.soundVolume);
     setPlayingSound(`${categoria}-${soundId}`);
-    setTimeout(() => setPlayingSound(null), 500);
+    if (previewTimer.current) clearTimeout(previewTimer.current);
+    previewTimer.current = setTimeout(() => {
+      previewTimer.current = null;
+      setPlayingSound(null);
+    }, 500);
   };
+
+  useEffect(() => () => {
+    if (previewTimer.current) clearTimeout(previewTimer.current);
+  }, []);
 
   /** Mapeia a categoria da tela para o campo do hook canônico e grava nele. */
   const aplicarSom = (category: CategoryKey, soundId: SoundTypeOption) => {

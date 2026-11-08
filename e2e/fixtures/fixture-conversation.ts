@@ -61,14 +61,13 @@ export function pickFixtureConversationIndex(names: readonly string[], displayNa
 /**
  * Nome exibido em cada item da lista, na ordem do DOM.
  *
- * O escopo e o nome do contato (`span.font-semibold`, o mesmo elemento que
- * VirtualizedRealtimeList renderiza como `nickname || primeiro nome`), nunca o
- * texto inteiro do item: o preview da ultima mensagem pode conter o mesmo token
- * da fixture e um contato alheio passaria a casar.
+ * O atributo identifica somente o nome exibido por VirtualizedRealtimeList
+ * (apelido ou primeiro nome, com companhia quando presente). Avatar e preview
+ * podem compartilhar classes ou texto com a fixture; nunca sao identidade.
  */
 export async function conversationItemNames(items: Locator): Promise<string[]> {
   return items.evaluateAll((elements) =>
-    elements.map((el) => el.querySelector('span.font-semibold')?.textContent?.trim() ?? '')
+    elements.map((el) => el.querySelector('[data-testid="conversation-contact-name"]')?.textContent?.trim() ?? '')
   );
 }
 

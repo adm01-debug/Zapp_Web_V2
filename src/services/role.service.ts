@@ -1,6 +1,6 @@
  import { supabase } from '@/integrations/supabase/client';
 
- export type AppRole = 'admin' | 'supervisor' | 'agent' | 'special_agent';
+ export type AppRole = 'admin' | 'supervisor' | 'agent';
 
 // Deduplicate concurrent role fetches: multiple useUserRole instances mount
 // simultaneously and would otherwise each trigger an identical DB query and

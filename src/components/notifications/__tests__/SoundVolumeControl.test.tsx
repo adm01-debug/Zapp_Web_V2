@@ -362,4 +362,155 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
     const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
     expect(await axe(painel)).toHaveNoViolations();
   });
+
+  // S15: componente, Popover e FocusScope reais. Observar a saída efetiva evita
+  // aprovar apenas o foco síncrono do hook antes do autofocus tardio do Radix.
+  // O evento vem do FocusScope 1.3.1 do lock; o teste nunca o dispara manualmente.
+  function observarSaida(painel: HTMLElement) {
+    const conteudo = painel.closest('[data-state]');
+    if (!conteudo) throw new Error('Content real do Popover não encontrado');
+    const saiu = vi.fn();
+    conteudo.addEventListener('focusScope.autoFocusOnUnmount', saiu, { once: true });
+    return saiu;
+  }
+
+  for (const abertura of ['teclado', 'clique', 'sequência de toque'] as const) {
+    it(`S15: Escape devolve foco ao gatilho após abrir por ${abertura}`, async () => {
+      renderControl();
+      const gatilho = botao();
+      act(() => gatilho.focus());
+      if (abertura === 'teclado') fireEvent.keyDown(gatilho, { key: 'Enter' });
+      else {
+        if (abertura === 'sequência de toque') {
+          fireEvent.pointerDown(gatilho, { pointerType: 'touch', pointerId: 1 });
+          fireEvent.pointerUp(gatilho, { pointerType: 'touch', pointerId: 1 });
+        }
+        fireEvent.click(gatilho);
+      }
+
+      const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+      const aumentar = screen.getByRole('button', { name: 'Aumentar Volume dos alertas em 5%' });
+      const saiu = observarSaida(painel);
+      act(() => aumentar.focus());
+      expect(aumentar).toHaveFocus();
+      expect(gatilho).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.keyDown(aumentar, { key: 'Escape' });
+
+      await waitFor(() => expect(saiu).toHaveBeenCalledTimes(1));
+      expect(painel).not.toBeInTheDocument();
+      expect(gatilho).toHaveAttribute('aria-expanded', 'false');
+      expect(gatilho).toHaveFocus();
+      expect(h.updateSettings).not.toHaveBeenCalled();
+    });
+  }
+
+  it('S15: Escape no dial também devolve foco sem alterar o volume', async () => {
+    renderControl();
+    const gatilho = botao();
+    act(() => gatilho.focus());
+    fireEvent.keyDown(gatilho, { key: 'Enter' });
+    const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+    const dial = screen.getByRole('slider', { name: 'Volume dos alertas' });
+    const saiu = observarSaida(painel);
+    act(() => dial.focus());
+    expect(dial).toHaveFocus();
+
+    fireEvent.keyDown(dial, { key: 'Escape' });
+
+    await waitFor(() => expect(saiu).toHaveBeenCalledTimes(1));
+    expect(painel).not.toBeInTheDocument();
+    expect(gatilho).toHaveFocus();
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('S15: Escape após long press conserva a mesma devolução de foco', async () => {
+    renderControl();
+    const gatilho = botao();
+    act(() => gatilho.focus());
+    fireEvent.pointerDown(gatilho);
+    const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+    fireEvent.pointerUp(gatilho);
+    fireEvent.click(gatilho);
+    const aumentar = screen.getByRole('button', { name: 'Aumentar Volume dos alertas em 5%' });
+    const saiu = observarSaida(painel);
+    act(() => aumentar.focus());
+    expect(aumentar).toHaveFocus();
+
+    fireEvent.keyDown(aumentar, { key: 'Escape' });
+
+    await waitFor(() => expect(saiu).toHaveBeenCalledTimes(1));
+    expect(painel).not.toBeInTheDocument();
+    expect(gatilho).toHaveFocus();
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('S15: foco deliberado em outro campo fecha sem retornar ao gatilho', async () => {
+    render(
+      <TooltipProvider>
+        <SoundVolumeControl />
+        <input aria-label="Destino do foco" />
+      </TooltipProvider>,
+    );
+    abrirPainel();
+    const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+    const saiu = observarSaida(painel);
+    const destino = screen.getByRole('textbox', { name: 'Destino do foco' });
+    act(() => destino.focus());
+
+    await waitFor(() => expect(saiu).toHaveBeenCalledTimes(1));
+    expect(painel).not.toBeInTheDocument();
+    expect(destino).toHaveFocus();
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('S15: clique fora preserva o destino depois da desmontagem do painel', async () => {
+    render(
+      <TooltipProvider>
+        <SoundVolumeControl />
+        <button type="button">Destino do clique</button>
+      </TooltipProvider>,
+    );
+    abrirPainel();
+    const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+    const saiu = observarSaida(painel);
+    const destino = screen.getByRole('button', { name: 'Destino do clique' });
+    fireEvent.pointerDown(destino, { button: 0 });
+    act(() => destino.focus());
+    fireEvent.pointerUp(destino, { button: 0 });
+    fireEvent.click(destino);
+
+    await waitFor(() => expect(saiu).toHaveBeenCalledTimes(1));
+    expect(painel).not.toBeInTheDocument();
+    expect(destino).toHaveFocus();
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('S15: uma reabertura imediata preserva o foco do novo painel', async () => {
+    renderControl();
+    const gatilho = botao();
+    act(() => gatilho.focus());
+    fireEvent.keyDown(gatilho, { key: 'Enter' });
+    const anterior = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+    const saiu = observarSaida(anterior);
+    const aumentar = screen.getByRole('button', { name: 'Aumentar Volume dos alertas em 5%' });
+    act(() => aumentar.focus());
+    fireEvent.keyDown(aumentar, { key: 'Escape' });
+    expect(anterior).not.toBeInTheDocument();
+    expect(saiu).not.toHaveBeenCalled();
+
+    // Eventos normais na mesma tarefa, sem flushSync nem relógio controlado.
+    fireEvent.click(gatilho);
+    const novo = screen.getByRole('dialog', { name: 'Volume dos alertas' });
+    expect(novo).not.toBe(anterior);
+    const novoAumentar = screen.getByRole('button', { name: 'Aumentar Volume dos alertas em 5%' });
+    act(() => novoAumentar.focus());
+    expect(novoAumentar).toHaveFocus();
+
+    await waitFor(() => expect(saiu).toHaveBeenCalledTimes(1));
+    expect(novo).toBeInTheDocument();
+    expect(gatilho).toHaveAttribute('aria-expanded', 'true');
+    expect(novoAumentar).toHaveFocus();
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
 });

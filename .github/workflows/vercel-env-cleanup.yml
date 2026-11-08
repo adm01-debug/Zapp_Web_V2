@@ -6,6 +6,9 @@
 
 name: V043-V065 Vercel Env Cleanup
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash --noprofile --norc -euo pipefail {0}

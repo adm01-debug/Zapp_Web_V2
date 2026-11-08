@@ -28,7 +28,7 @@
  * resposta completos. É a única diferença de estilo entre as duas funções.
  */
 import { jsonResponse, errorResponse, Logger, createAuthedClient } from "./validation.ts";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { generateWithRouting } from "./ai-generate.ts";
 import type { AiPurpose } from "./ai-routing.ts";
 import { parseJsonObject } from "./ai-json.ts";

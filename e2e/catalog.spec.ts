@@ -1,5 +1,6 @@
 import { dispensarOnboarding } from './fixtures/onboarding';
 import { test, expect, type Page } from '@playwright/test';
+import { SUPABASE_URL, SUPABASE_ANON_KEY as FIXTURE_SUPABASE_ANON_KEY } from './fixtures/supabase-env';
 import {
   E2E_CATALOG_FIXTURE_MARKER,
   E2E_CATALOG_MESSAGES_TABLE,
@@ -8,12 +9,9 @@ import {
   E2E_CATALOG_PRODUCT_SKU_VERIFIED,
   E2E_CATALOG_SEND_EVENTS_TABLE,
   E2E_CATALOG_TEMPLATE_INFORMAL,
-  E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   E2E_FIXTURE_CONTACT_ID,
+  E2E_FIXTURE_CONTACT_NAME,
 } from './fixtures/catalog';
-
-// A URL do projeto é pública (aparece em todo o repo, inclusive nos workflows).
-const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
 
 // A chave pública do projeto NÃO é literal neste arquivo: vem do ambiente —
 // `VITE_SUPABASE_PUBLISHABLE_KEY` (o mesmo secret que o `ci.yml` entrega ao app)
@@ -24,7 +22,8 @@ const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
 // ACHADO (não corrigido aqui): `e2e/fixtures/e2e-contact.ts:7` e
 // `e2e/fixtures/contacts-page.ts:5` ainda mantêm o literal da anon key.
 const SUPABASE_ANON_KEY =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.E2E_SUPABASE_ANON_KEY ?? '';
+  process.env.ZAPP_E2E_LOCAL === '1' ? FIXTURE_SUPABASE_ANON_KEY :
+    (process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.E2E_SUPABASE_ANON_KEY ?? '');
 
 // `Record<string, string>` (em vez de interface fechada) porque o tipo de
 // `headers` do `page.request` é `{ [key: string]: string }`.
@@ -263,13 +262,25 @@ test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
     await sendDialog.getByRole('button', { name: 'Selecionar Contato', exact: true }).click();
     const buscaContato = sendDialog.getByPlaceholder(/Buscar contato por nome ou telefone/);
     await expect(buscaContato).toBeVisible();
-    await buscaContato.fill(E2E_FIXTURE_CONTACT_DISPLAY_NAME);
+    const buscaConcluida = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'GET' &&
+        url.pathname.endsWith('/rest/v1/contacts') &&
+        (url.searchParams.get('or') ?? '').includes(E2E_FIXTURE_CONTACT_NAME);
+    });
+    await buscaContato.fill(E2E_FIXTURE_CONTACT_NAME);
+    const respostaBusca = await buscaConcluida;
+    expect(respostaBusca.ok(), `busca do contato fixture: HTTP ${respostaBusca.status()}`).toBe(true);
     const contato = sendDialog
       .getByRole('radio')
-      .filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME })
-      .first();
+      .filter({ hasText: E2E_FIXTURE_CONTACT_NAME });
+    await expect(contato).toHaveCount(1);
     await expect(contato).toBeVisible({ timeout: 20_000 });
-    await contato.click();
+    // A lista troca "recentes" pelo resultado pesquisado quando o debounce
+    // termina. Pressionar Espaço no radio exerce a interação acessível sem
+    // disputar o hit-target com o grid durante essa troca de layout.
+    await contato.press('Space');
+    await expect(contato).toHaveAttribute('aria-checked', 'true');
 
     // 9) "Enviar agora" — o rótulo real é "Enviar para <contato>". O botão só
     // habilita depois da checagem de prontidão (conexão WhatsApp ativa + contato

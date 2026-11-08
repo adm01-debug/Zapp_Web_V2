@@ -12,7 +12,7 @@
  * Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
  */
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleExternalDbBridge, type ExternalDbBridgeInjected } from "./index.ts";
 
 const SUPABASE_URL = "https://projeto.supabase.co";

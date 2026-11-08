@@ -20,4 +20,15 @@ describe('mapMessageRowToMessage', () => {
 
     expect(message.location).toBeUndefined();
   });
+
+  it('normaliza a nota de voz ptt para o player canonico de audio', () => {
+    const message = mapMessageRowToMessage({
+      id: 'message-ptt', content: 'Nota de voz', message_type: 'ptt', sender: 'contact',
+      created_at: '2026-10-06T10:02:00.000Z', media_url: 'https://storage.test/voz.ogg',
+      external_id: null, is_deleted: false,
+    } as never);
+
+    expect(message.type).toBe('audio');
+    expect(message.mediaUrl).toBe('https://storage.test/voz.ogg');
+  });
 });

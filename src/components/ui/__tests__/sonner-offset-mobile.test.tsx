@@ -64,6 +64,42 @@ function emPx(declaracao: string, insetDaAreaSegura: number): number {
 }
 
 describe('sonner — offset no celular (U1-04)', () => {
+  it('usa fundo sólido e foreground contrastante no toast de sucesso', async () => {
+    render(<Toaster />);
+    act(() => {
+      toast.success('Meta alcançada', { description: '54 de 50 contatos atendidos' });
+    });
+
+    const aviso = await waitFor(() => {
+      const elemento = document.querySelector<HTMLElement>('[data-sonner-toast][data-type="success"]');
+      expect(elemento).not.toBeNull();
+      return elemento!;
+    });
+    expect(aviso.className).toContain('!bg-success');
+    expect(aviso.className).toContain('!text-success-foreground');
+    expect(aviso.className).toContain('[&_[data-description]]:!text-success-foreground');
+  });
+
+  it.each([
+    ['error', () => toast.error('Falha de conexao'), 'destructive', '!text-[hsl(var(--destructive-text))]'],
+    ['warning', () => toast.warning('Atencao'), 'warning', '!text-[hsl(var(--warning-text))]'],
+    ['info', () => toast.info('Informacao'), 'info', '!text-foreground'],
+  ] as const)('usa o card solido e texto contrastante no toast %s', async (tipo, emitir, token, foreground) => {
+    render(<Toaster />);
+    act(() => { emitir(); });
+
+    const aviso = await waitFor(() => {
+      const elemento = document.querySelector<HTMLElement>(`[data-sonner-toast][data-type="${tipo}"]`);
+      expect(elemento).not.toBeNull();
+      return elemento!;
+    });
+    expect(aviso.className).toContain('!bg-card');
+    expect(aviso.className).not.toContain(`!bg-${token}/10`);
+    expect(aviso.className).toContain(foreground);
+    expect(aviso.className).toContain(`[&_[data-title]]:${foreground}`);
+    expect(aviso.className).toContain(`[&_[data-description]]:${foreground}`);
+  });
+
   it('aplica --mobile-offset-bottom em calc() com a área segura e preserva as laterais', async () => {
     const toaster = await toasterMontado();
 

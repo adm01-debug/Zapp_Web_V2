@@ -214,9 +214,9 @@ export function RealtimeInboxView() {
   const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
   // Badge da aba SalesView vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
   const { data: crm360ForOrdersBadge } = useContactCrm360(inbox.selectedContactId);
-  // Badge da SalesView = compras + propostas em aberto — a aba mostra as duas coisas.
+  // Badge da SalesView = propostas em aberto (módulo de compras removido em 2026-11-03).
   const tabExtraCounts = {
-    orders: (crm360ForOrdersBadge?.purchases.length ?? 0) + (crm360ForOrdersBadge?.openDeals.length ?? 0),
+    orders: crm360ForOrdersBadge?.openDeals.length ?? 0,
   };
   // U03 — e-mails não lidos do contato (client-side, hook U02). O chip da barra de
   // abas só aparece com count > 0; o clique abre o módulo E-mail na conversa do
@@ -448,7 +448,6 @@ export function RealtimeInboxView() {
                     conversation={inbox.legacyConversation}
                     messages={inbox.legacyMessages}
                     onUseSuggestion={handleUseSuggestion}
-                    profileId={inbox.profile?.id ?? null}
                   >
                   <SectionErrorBoundary sectionName="Chat" className="h-full">
                     <ChatPanel

@@ -32,7 +32,7 @@
 // mesmo se a Evolution falhar. Tipos fora de image/video/audio/document e
 // mensagem apagada (`is_deleted`) são recusados.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import {
   handleCors,
   jsonResponse,

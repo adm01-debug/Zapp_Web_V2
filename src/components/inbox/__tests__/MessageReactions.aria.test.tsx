@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { QuickReactionBar } from '../MessageReactions';
+
+const hookState = { isReacting: false };
 
 vi.mock('@/hooks/chat/useMessageReactions', () => ({
   useMessageReactions: () => ({
@@ -11,6 +13,7 @@ vi.mock('@/hooks/chat/useMessageReactions', () => ({
     removeReaction: vi.fn(),
     hasReacted: () => false,
     currentProfileId: 'p1',
+    isReacting: hookState.isReacting,
   }),
 }));
 
@@ -42,8 +45,21 @@ vi.mock('framer-motion', async (importOriginal) => {
 });
 
 describe('QuickReactionBar — botão "mais reações" com nome acessível (A11Y-13)', () => {
+  beforeEach(() => { hookState.isReacting = false; });
+
   it('nomeia o botão que abre o seletor de reações', () => {
     render(<QuickReactionBar messageId="m1" />);
     expect(screen.getByRole('button', { name: 'Mais reações' })).toBeInTheDocument();
+  });
+
+  it('bloqueia atalhos, trigger e picker estendido durante qualquer mutation compartilhada', () => {
+    hookState.isReacting = true;
+    render(<QuickReactionBar messageId="m1" />);
+
+    expect(screen.getByTestId('quick-reaction-bar')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('button', { name: 'Mais reações' })).toBeDisabled();
+    for (const button of screen.getAllByRole('button', { name: /^Reagir com / })) {
+      expect(button).toBeDisabled();
+    }
   });
 });

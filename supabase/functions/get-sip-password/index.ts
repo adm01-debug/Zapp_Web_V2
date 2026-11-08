@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, enforceRateLimit, getClientIP, requireAuth } from "../_shared/validation.ts";
 
 // T15: o front não conhece mais a linha — host/usuário/porta vêm daqui. Os

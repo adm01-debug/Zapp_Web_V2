@@ -1,149 +1,157 @@
 # Testes E2E (Playwright)
 
-## Fixture de autenticação
+## Execução isolada
 
-`e2e/auth.setup.ts` é o único teste do project `setup` (ver
-`playwright.config.ts`): faz login de verdade via UI (mesmo fluxo de
-`e2e/auth.spec.ts`: tab "Entrar" → e-mail → senha → botão "Entrar") e salva a
-sessão em `e2e/.auth/user.json`. Esse arquivo **nunca** é commitado (está no
-`.gitignore`).
+Os testes autenticados usam um ambiente descartável com Auth, PostgreSQL,
+PostgREST, Storage, Realtime e Edge Runtime reais. O controller cria credenciais
+sintéticas por execução, prepara os dados e confere isolamento e HTTPS antes de
+ler as credenciais no login. O navegador não recebe a chave `service_role`.
+A rede do conjunto fica restrita ao loopback, sem acesso ao backend oficial,
+mensagens externas ou serviços de IA pagos.
 
-Os projects `chromium-authenticated` e `chromium-e2e-core` declaram
-`dependencies: ['setup']`, então `auth.setup.ts` só roda (e só exige as
-variáveis abaixo) quando algum teste de um desses projects é executado, e
-consume o `storageState` resultante.
-
-O project `chromium` (usado só por `auth.spec.ts`, que testa a própria tela
-de login deslogada) **não** depende de `setup` — continua funcionando sem
-`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` definidas, inclusive rodando sozinho via
-`npx playwright test --project=chromium`.
-
-### Variáveis necessárias
-
-| Variável | Descrição |
-|---|---|
-| `E2E_TEST_EMAIL` | E-mail de um usuário de teste real, já cadastrado no ambiente alvo |
-| `E2E_TEST_PASSWORD` | Senha desse usuário |
-
-Sem as duas, `e2e/auth.setup.ts` lança um erro explicativo e só os projects
-que dependem de `setup` falham (propositalmente — não há fallback silencioso
-nem bypass de auth); `chromium` (`auth.spec.ts`) continua passando
-normalmente porque não depende de `setup`.
-
-Existe um usuário de teste dedicado, com perfil de supervisor (enxerga
-"Campanhas"/Talk X), e as credenciais estão nos secrets do repositório
-(`E2E_TEST_EMAIL` e `E2E_TEST_PASSWORD`). Para rodar localmente, peça as
-credenciais ao dono do projeto.
-
-### Configuração local
-
-Criar um `.env` (já ignorado pelo git) na raiz do repo, ou exportar no shell
-antes de rodar os testes:
+O contrato completo, os requisitos Linux/Docker/Bun/OpenSSL/NSS, os digests das
+imagens e os arquivos publicáveis estão em
+[`scripts/e2e-isolated/README.md`](../scripts/e2e-isolated/README.md).
 
 ```bash
-export E2E_TEST_EMAIL="usuario-de-teste@exemplo.com"
-export E2E_TEST_PASSWORD="senha-do-usuario-de-teste"
-npm run test:e2e
+bun install --frozen-lockfile --ignore-scripts
+# Cada destino precisa estar vazio e fora do checkout.
+bash scripts/e2e-isolated/run.sh login /tmp/e2e-isolated-login
+bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-authenticated-1
+bash scripts/e2e-isolated/run.sh suite authenticated-2-of-3 /tmp/e2e-isolated-authenticated-2
+bash scripts/e2e-isolated/run.sh suite authenticated-3-of-3 /tmp/e2e-isolated-authenticated-3
+bash scripts/e2e-isolated/run.sh suite deslogado-principal /tmp/e2e-isolated-deslogado-principal
+bash scripts/e2e-isolated/run.sh suite deslogado-secundario /tmp/e2e-isolated-deslogado-secundario
 ```
 
-### Configuração no GitHub Actions
+`login` executa somente `setup/authenticate`. Esse resultado não aprova os demais
+projetos. Cada grupo da suíte usa coleta `--list` separada e a mesma seleção,
+shard e concorrência na execução. Todos usam `--workers 1`: os três shards
+autenticados distribuem os casos `1/3`, `2/3` e `3/3` em backends descartáveis
+independentes, sem concorrência sobre as mesmas fixtures. Não há parâmetro livre
+para ignorar dependências, escolher comandos ou apontar um backend externo. O
+resultado completo depende da execução nativa dos cinco grupos, não das
+simulações locais de controle.
 
-- `.github/workflows/ci.yml` (job `E2E Tests (Playwright)`, roda em PR):
-  projects `chromium`, `firefox-auth` e `webkit-auth` — todos exercitam
-  `auth.spec.ts` deslogado (sem `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`).
-  Workflows de PR não podem referenciar esses secrets (regra em
-  `scripts/ci/check-pr-workflow-secrets.mjs`), então os testes autenticados
-  ficam em `e2e-logado.yml`.
-- `.github/workflows/e2e-logado.yml`: roda depois de cada merge na `main` e
-  sob demanda (Actions → E2E logado → Run workflow). Numa única invocação:
-  `--project=setup --project=chromium-e2e-core --project=chromium-authenticated
-  --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx
-  --project=firefox-conversation
-  --project=webkit-conversation`. `setup` gera `e2e/.auth/user.json` uma vez;
-  todos os projects com `dependencies: ['setup']` reutilizam o mesmo arquivo de
-  sessão — o `storageState` gerado pelo Chrome é browser-agnostic e funciona
-  igualmente no Firefox e no WebKit.
+## Fixture de autenticação
 
-`chromium-e2e-core` cobre só `conversation.spec.ts` e `messaging.spec.ts`
-(`testMatch` dedicado em `playwright.config.ts`) — passar os 2 arquivos como
-path no CLI junto de `--project` quebra a resolução de `dependencies` (o filtro
-de arquivo vale para todos os projects da invocação, então `setup` roda com
-0 testes e nunca gera `e2e/.auth/user.json`; foi exatamente esse bug na
-primeira tentativa, run 36247270724). Rodar `setup` e os specs em 2
-invocações separadas do CLI evita esse bug mas sobe 2 `vite` dev server do
-zero (um por invocação) — sem o `setup` aquecer o bundle antes, a 1ª
-navegação real do job cai num vite frio e estoura o timeout de 30s
-(confirmado na run 36249048738). O project dedicado com `dependencies` resolve
-os dois problemas numa invocação só.
+`e2e/auth.setup.ts` é o único teste do projeto `setup`. Faz login real pela UI
+(tab "Entrar" → e-mail → senha → botão "Entrar") e salva a sessão em
+`e2e/.auth/user.json`, em mount efêmero. Esse arquivo nunca é commitado nem
+publicado como artifact. Projetos com `dependencies: ['setup']` reutilizam o
+`storageState`; a seleção explícita conserva essa dependência em todos os
+browsers.
 
-`chromium-authenticated` (mesma dependência de `setup`, mas com
-`testIgnore` cobrindo auth, os 2 specs acima e as 3 specs do módulo MAPA) é
-invocado pelo `e2e-logado.yml` junto de `chromium-e2e-core` — uma única
-chamada do Playwright com os projects explícitos (`setup`,
-`chromium-e2e-core`, `chromium-authenticated`, `chromium-mapa`).
-`talkx.spec.ts` roda sob este project: o usuário de teste é supervisor e
-enxerga "Campanhas".
+| Variável | Origem no ambiente descartável |
+|---|---|
+| `E2E_TEST_EMAIL` | Usuário sintético criado e confirmado no Auth local |
+| `E2E_TEST_PASSWORD` | Senha sintética desta execução |
+| `VITE_ZAPP_LOCAL_SUPABASE_URL` e `VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY` | Origem HTTPS de loopback e chave local `anon` geradas pelo controller |
+| `E2E_SUPABASE_URL_OVERRIDE` e `E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE` | Mesmo par local, usado pelas fixtures |
 
-`chromium-mapa` cobre só as specs do módulo MAPA (`location-picker.spec.ts` —
-E71/E72, `contact-address.spec.ts` — E73, `contact-map-pin.spec.ts` — E74).
-Diferente de `chromium-e2e-core`/`chromium-authenticated`, **não** declara
-`dependencies: ['setup']` nem `storageState`: essas specs autenticam por sessão
-FALSA (`installFakeSession`) com REST/RPC e Mapbox mockados, então rodam sem
-`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` — nenhum secret novo no `e2e-logado.yml`.
+A admissão exige prova recente em `/run/zapp-e2e/proof.json`, namespace sem rede
+externa e coincidência entre origem, chave e configuração efetiva do Vite. Ela
+valida esses dados antes de ler e-mail/senha e novamente após a observação no
+browser. Exportar somente credenciais ou usar frontend em localhost não satisfaz
+esse contrato. Não é necessário obter secrets do repositório para essa execução.
 
-## Fixture de dados (contato seedado)
+Os projetos públicos deslogados continuam independentes de `setup`. O projeto
+`chromium` do CI público inclui os casos R1 de Tarefas: os três cenários, suas
+asserções e a guarda deslogada são preservados; a seleção sai somente do catch-all
+autenticado.
+Essa cobertura pública não deve ser contada novamente entre os projetos abaixo.
 
-`conversation.spec.ts` e `messaging.spec.ts` dependem de um contato real já
-seedado em produção — `e2e/fixtures/e2e-contact.ts` documenta o id e expõe
-`ensureFixtureConversationOpen()`. Em `conversation.spec.ts`, o `beforeEach`
-navega para `/` primeiro (chamar `ensureFixtureConversationOpen` antes
-de qualquer navegação lança `SecurityError` ao ler `localStorage` numa
-página ainda em `about:blank`), reabre a conversa (a suíte roda contra
-produção via `e2e-logado.yml`, então o teste de resolução precisa reverter o
-próprio efeito colateral a cada execução; o FSM em
-`enforce_conversation_status_transition` permite `resolved -> open`) e só
-depois clica no chip "Todas" — o chip padrão ("Em atendimento") depende do
-feature flag `inbox.status-fsm` e de `assigned_to` bater com o profile
-logado, enquanto "Todas" não filtra por isso. `messaging.spec.ts` (que não
-mexe no status da conversa) faz só a navegação + clique em "Todas" no
-`beforeEach`. O contato ("[E2E] Contato de teste - nao apagar", atribuído ao
-usuário de teste, sem fila) é o único item visível no inbox desse usuário —
-nunca apagar essa linha do banco.
+## Grupos e GitHub Actions
 
-`talkx.spec.ts` tem 7 specs cobrindo navegação/render do módulo Talk X e roda
-automaticamente em `e2e-logado.yml` via `chromium-authenticated` (Chrome),
-`firefox-talkx` (Firefox) e `webkit-talkx` (Safari/WebKit) — cobertura
-cross-browser completa do módulo. Para rodar localmente: `npx playwright test
---project=setup --project=chromium-authenticated` com
-`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` do usuário de teste (supervisor).
+A interface do controller conserva 15 projetos distintos. A seleção autenticada
+de nove projetos é repetida em três backends e o Playwright atribui cada caso a
+exatamente um dos shards fechados:
 
-`conversation.spec.ts` e `messaging.spec.ts` ganham cobertura cross-browser via
-`firefox-conversation` e `webkit-conversation` (ambos com `dependencies: ['setup']`
-e o mesmo `storageState` do Chrome), rodando junto dos outros projects no
-`e2e-logado.yml`. Esses dois projects novos completam a paridade Firefox/WebKit
-para todos os specs autenticados do módulo de inbox.
+| Grupo | Projetos |
+|---|---|
+| `authenticated-1-of-3` (`--shard 1/3`) | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `authenticated-2-of-3` (`--shard 2/3`) | os mesmos nove projetos, em backend próprio |
+| `authenticated-3-of-3` (`--shard 3/3`) | os mesmos nove projetos, em backend próprio |
+| `deslogado-principal` | `chromium-mapa`, `firefox-auth`, `webkit-auth` |
+| `deslogado-secundario` | `chromium-telefonia`, `firefox-telefonia`, `webkit-telefonia` |
 
-## Fixture de dados Talk X (segmento e conexão)
+`.github/workflows/e2e-logado-isolado.yml` é o ponto de prova sobre a branch sem
+secrets de produção. O workflow autenticado anterior só deve ser reativado com a
+substituição validada pelo mesmo controller e pelos mesmos grupos. Publicar ou
+obter sucesso do modo login não comprova a execução da suíte completa.
 
-`talkx.spec.ts` usa fixtures de produção documentadas em
-`e2e/fixtures/e2e-talkx.ts`:
+`chromium-e2e-core` cobre `conversation.spec.ts` e `messaging.spec.ts` por
+`testMatch`; `chromium-authenticated` cobre os demais specs selecionados, com
+suas exclusões explícitas. Não acrescente um filtro de arquivo à chamada de grupo:
+esse filtro também afeta `setup` e pode retirar a criação de sessão da execução.
+Os projetos de Talk X, conversa e catálogo reutilizam a sessão através das
+respectivas dependências, preservando os casos cross-browser.
 
-| Fixture | ID | Observação |
-|---|---|---|
-| Conexão WhatsApp | `3b0f7f2e-887a-4c00-97de-012313649f9b` | "Promo Brindes WhatsApp (551146375517)"; pode estar disconnected — o wizard só exige selecionar |
-| Segmento | `621521f3-e9c9-49c2-834e-cea07545d476` | "[E2E] Segmento de Teste"; semeado em 2026-09-27 para o usuário de teste (supervisor) |
+`chromium-mapa` não depende de `setup`: seus três specs usam sessão simulada,
+REST/RPC e Mapbox controlados. As fixtures usam a origem configurada do conjunto;
+um mock da API não pode interceptar a navegação do frontend.
 
-**NUNCA apagar o segmento `621521f3-e9c9-49c2-834e-cea07545d476` do banco** —
-ele é necessário para o spec de avanço para step 2 ("wizard advances to step 2
-(Mensagem)") selecionar um segmento e habilitar "Continuar".
+## Fixture de dados: conversa e entrega
 
-O 7º spec (`wizard advances to step 2`) preenche o formulário completo do
-step 1 (nome, conexão WhatsApp, segmento) e verifica que "Continuar" fica
-habilitado e o wizard avança para o step 2. Isso dispara o autosave do
-`useCampaignEditor` (~3s após o preenchimento do nome), criando um rascunho
-real em produção. O `afterAll` do arquivo chama `cleanupE2EDraftCampaigns()`
-(também em `e2e/fixtures/e2e-talkx.ts`) para remover todos os drafts com
-nome iniciando em `[E2E]` após cada run — mantendo o banco limpo.
+`e2e/fixtures/e2e-contact.ts` conserva o identificador que
+`conversation.spec.ts` e `messaging.spec.ts` procuram. Os seeds de Arquivos criam
+esse contato no banco descartável. `seed-suite.mjs` preserva seu proprietário:
+a atribuição permanece com o agente de Arquivos. O supervisor sintético precisa
+ler a conversa por RLS com seu JWT real. Não é necessário preparar nem limpar
+uma linha no backend oficial.
+
+Em `conversation.spec.ts`, a navegação ocorre antes de
+`ensureFixtureConversationOpen()` para que `localStorage` exista. A fixture
+reabre a conversa local entre os cenários e clica em "Todas", preservando o teste
+do FSM e sua restauração. `messaging.spec.ts` navega e escolhe a conversa sem
+substituir o envio por uma inserção artificial.
+
+No ramo `ZAPP_E2E_LOCAL=1`, a mesma mensagem fresca
+`[E2E fixture setup]` é criada pelo helper Node
+`scripts/e2e-isolated/fixture-access.mjs`. O guard de proveniência do banco
+recusa `sender='contact'` com JWT `authenticated`; o helper mantém essa
+proteção e usa a chave sintética `service_role` somente depois de comprovar
+origem fixa, prova do controlador, namespace, interfaces e identidade do
+gateway, e de ler o contato canônico com o JWT real do usuário. Após cada
+espera de rede, reconfirma a mesma execução, SHA e hash da chave anon. A chave
+privilegiada nunca passa por `page.evaluate`, pela página ou pelo retorno da
+função.
+
+O POST aceita somente os quatro campos fixos da mensagem de texto e exige
+uma única linha coerente. Em seguida, o helper lê o ID recém-criado com
+anon + JWT do usuário: privilégio de preparo não substitui a prova de RLS.
+Esse texto mantém o comportamento de `conversation`, `reactions`,
+`inbox-contact-sidebar` e `media-volume`; a mensagem canônica de áudio e o
+fluxo de envio real continuam independentes. As rotinas de limpeza e o ramo
+legado mantêm seu comportamento. Se o POST for aceito e a leitura seguinte
+falhar, o preparo reprova e pode deixar uma linha no banco descartável;
+não há promessa de rollback. A conclusão dos testes nativos depende de uma
+nova execução autenticada e de seu resumo estrito.
+
+`assertIsolatedFixtureEnvironment({ baseURL, anonKey })` reutiliza a mesma
+admissão Node para outros preparos: retorna `Promise<void>`, não navega a
+página, não lê a service key e não expõe um mutador genérico.
+
+Antes de liberar os specs, a prontidão prova `enqueue_outbound_message` →
+`message-delivery` → provider local → linha real de `messages` visível com RLS.
+Texto, imagem do catálogo e mídia privada do Storage precisam completar o fluxo.
+O provider só emite recibo depois de baixar os bytes HTTPS; a URL assinada é
+produzida pelo worker real. Uma contraprova HTTP precisa ser recusada por `22023`
+sem persistir mensagem. Essa preparação não conta como aprovação das assertions
+Playwright, que continuam obrigatórias.
+
+## Fixture de dados Talk X
+
+`e2e/fixtures/e2e-talkx.ts` conserva os identificadores de conexão e segmento
+usados pelos specs. O seed isolado cria esses recursos com dados sintéticos;
+a conexão aponta para Evolution GO no namespace local e o token vive no Vault
+descartável. O supervisor precisa ler o segmento e a conexão com seu JWT antes
+de começar o navegador.
+
+O cenário que avança o wizard para "Mensagem" continua preenchendo nome,
+conexão e segmento e exercita o autosave real. O rascunho é criado no banco local.
+`cleanupE2EDraftCampaigns()` continua limpando os drafts de fixture nesse mesmo
+ambiente. Não se remove nem se reutiliza um recurso do backend oficial.
 
 ## Fixture de demonstração determinística (plano V4 · X003)
 
@@ -269,24 +277,18 @@ há `storageState`, credencial real, fixture remota nem URL de Supabase externo.
 
 ### Como rodar
 
+Os três grupos `authenticated-*-of-3` executam os seeds de Arquivos em backends
+independentes. Para reproduzir o shard que contém o caso, rode a matriz completa;
+cada comando prepara Auth/Storage reais e valida seus proprietários:
+
 ```bash
-# 0) env do conjunto local (portas e chaves LOCAIS)
-zapp-db-local env . <nome-do-conjunto> > .tmp/local-env.raw   # API_URL, DB_URL, ANON_KEY, SERVICE_ROLE_KEY
-#    além do env da ferramenta, o app precisa dos dois desvios locais:
-#      VITE_ZAPP_LOCAL_SUPABASE_URL=$API_URL
-#      VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY=$ANON_KEY
-
-# 1) semear o estado sintético no banco/Storage LOCAIS (idempotente)
-set -a; . ./.tmp/local-env.sh; set +a
-bun e2e/fixtures/arquivos-local/seed.ts
-
-# 2) servir o app apontando para o conjunto local
-npx vite --host 127.0.0.1 --port 5318 --strictPort
-
-# 3) rodar o spec (o projeto autenticado do repo depende de `setup`/secrets;
-#    --no-deps isola esta suíte, que faz o login real pela UI no GoTrue local)
-PLAYWRIGHT_BASE_URL=http://127.0.0.1:5318 npx playwright test e2e/files-tab.spec.ts --no-deps
+bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-arquivos-1
+bash scripts/e2e-isolated/run.sh suite authenticated-2-of-3 /tmp/e2e-isolated-arquivos-2
+bash scripts/e2e-isolated/run.sh suite authenticated-3-of-3 /tmp/e2e-isolated-arquivos-3
 ```
+
+Não substitui os dados por respostas fixas nem ignora `setup`. O usuário e os
+objetos abaixo continuam sendo criados pelos seeds versionados no ambiente local.
 
 O seed cria **só no ambiente local** e imprime o resumo: usuário
 `e2e.arquivos@example.com` (domínio reservado RFC 2606, senha sintética que vive
@@ -310,11 +312,12 @@ decodifica (`naturalWidth > 0`) a partir de `/storage/v1/object/sign/...`.
 
 ### Local-only por construção
 
-O spec se declara fora de escopo quando falta o conjunto local
-(`test.skip(!CONJUNTO_LOCAL)` com `VITE_ZAPP_LOCAL_SUPABASE_URL`/`ANON_KEY`): o
-`e2e-logado.yml` do CI roda o projeto autenticado sem conjunto local e ali o spec
-não pode autenticar um usuário sintético que não existe. Sem conjunto local nada
-roda; com ele, roda tudo.
+A guarda histórica `test.skip(!CONJUNTO_LOCAL)` continua no spec. O controller
+fornece os dois overrides locais e exige os dados e o usuário reais: faltar essa
+fixture reprova a preparação ou o resumo estrito, não torna a execução verde.
+Os dois skips de plataforma previamente revisados de `conversation.spec.ts` são
+outra categoria, vinculada à identidade e fonte exatas e nunca contada como pass.
+Fixmes estáticos continuam registrados como pendências, sem ampliar essa exceção.
 
 ### Prova negativa de segurança
 
@@ -352,3 +355,60 @@ mesma tabela), e nas duas formas testadas — `route.abort()` e `route.fulfill(5
 `files-query-error` não apareceu em 20 s (com `abort`, o fetch do supabase-js entra
 em retry). Medição registrada no cartão; a faixa de erro em si tem prova unitária
 em `src/components/inbox/tabs/__tests__/FilesContent.test.tsx`.
+
+## Diagnóstico do setup e limites de execução remota
+
+O setup registra somente origem do endpoint, status HTTP, ocorrência de falha de
+transporte do POST de `auth-login` e presença de marcadores específicos de recusa
+na UI. Não lê nem imprime corpo, headers, credenciais, tokens ou conteúdo do
+storageState para diagnosticar uma falha.
+
+O toast "Login temporariamente indisponível" também pode resultar de CORS/fetch;
+ele não comprova timeout, HTTP 5xx/429 nem senha incorreta. O diagnóstico distingue
+origem incompatível com a política CORS oficial, transporte sem resposta, recusa
+de autenticação, HTTP 429/5xx e resposta 2xx sem sessão/app shell confirmada.
+O título exato "Acesso bloqueado" encerra a espera como bloqueio observado pelo
+app; HTTP 403 isolado é recusa da requisição, sem atribuir senha inválida ou uma
+regra de rede específica. O setup observa apenas a presença desse título, sem
+ler o corpo da resposta nem a descrição do toast.
+Respostas tardias de uma tentativa anterior não alimentam a tentativa seguinte.
+O diagnóstico controla somente o laço interno de tentativas do setup; os retries
+do projeto Playwright (`RETRIES_LOGADOS`) permanecem como estavam.
+
+Quando `PLAYWRIGHT_BASE_URL` indica um servidor HTTPS remoto, a configuração não
+inicia Vite local. Projetos públicos continuam disponíveis. A guarda específica
+de `auth.setup.ts` recusa a suíte autenticada nesse alvo **antes** de ler/enviar
+credenciais: os testes contêm encerramento de conversas, gravação/limpeza de
+fixtures, drafts e enfileiramento de mensagens reais. Usuário dedicado e limpeza
+posterior não isolam o backend.
+
+O ambiente descartável usa a configuração de desenvolvimento explícita; sem
+esse par, o app usa o backend oficial. Por isso, o controller e a admissão
+conferem a configuração efetiva e o namespace antes das credenciais. Não é
+necessário alterar CORS, permissões ou dados do backend oficial.
+
+O preparo, os seeds e os providers isolados estão em `scripts/e2e-isolated/`.
+O aceite exige o inventário e a execução nativa dos grupos sobre o mesmo checkout,
+com os limites e pendências discriminados. Preflight verde, login aprovado ou
+spec pulada não bastam. O resumo distingue passes, falhas, skips históricos
+estritamente vinculados à fonte, fixmes, casos ausentes e dependentes não
+executados; nenhuma dessas pendências é convertida em pass.
+
+Simulação offline, sem credenciais e sem endpoints reais (Node 24+):
+
+```sh
+node --test scripts/ci/e2e-auth-*.unit.mjs
+```
+
+## Regressões de SIP, sessão, QR e busca de contatos
+
+As regressões de `navegacao-modulos.spec.ts` instalam os observadores antes do gatilho de boot/navegação e exigem POST e corpo concluídos. A barreira do helper `function-completion.ts` tem um prazo total de 30 segundos a partir de `completed()`, depois do gatilho; uma segunda chamada não reinicia esse prazo. Ausência, fechamento da página, transporte falho, JSON inválido e timeout reprovam.
+
+SIP conserva no ambiente isolado somente o contrato explícito 503/`SIP_NOT_CONFIGURED`; 401 não recebe tolerância. A regressão de dispositivo exige o resultado 200 real no boot. A prova concorrente cria outra sessão Auth do mesmo usuário sintético, conserva o dispositivo já conhecido, inicia duas requisições antes de aguardá-las e exige o mesmo ID canônico, uma linha ativa e readback com RLS. Isso comprova convergência das duas chamadas; não afirma ter forçado uma colisão interna de INSERT. O cenário de corrida forçada do handler continua sendo evidência separada.
+
+`conexoes.spec.ts` usa a fixture `isolated-qr.ts` para o fluxo de QR. Administrador, conexão, token e limpeza têm identidades próprias; os detalhes e limites estão no README de `scripts/e2e-isolated/`. Os quatro testes anteriores de Conexões continuam independentes. Nenhum pareamento ou envio externo é necessário.
+
+A paleta Ctrl+K consulta contatos pela mesma RPC autorizada do serviço de contatos, com limite de oito resultados e escape dos curingas de busca. A seleção usa o UUID e o evento existente de abertura da conversa. Catálogo e contatos têm orçamento de cinco segundos por fonte; a expiração de contatos produz um item de indisponibilidade e não retém indefinidamente os produtos já encontrados. O prazo limita a espera da paleta: não afirma aborto do transporte nem acrescenta retry. Debounce, tamanho mínimo da consulta e proteção contra respostas antigas continuam pertencendo à paleta.
+
+O E2E da busca mantém sessão e API simuladas. Ele exige a resposta da pesquisa concluída, seleciona o segundo contato de mesmo nome, observa a leitura de seu UUID e verifica o chat montado, por clique ou teclado, a partir de Inbox e Dashboard. Isso prova a integração da interface, serviço e navegação com a fronteira HTTP controlada; não equivale a Auth ou RLS nativos.
+

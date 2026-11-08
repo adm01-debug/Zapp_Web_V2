@@ -1,3 +1,0 @@
-=== TYPECHECK ===
-error: script "typecheck" was terminated by signal SIGABRT (Abort)
-EXIT: 0

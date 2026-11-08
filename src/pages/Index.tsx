@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef, forwardRef, memo, useM
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { SLANotificationProvider } from '@/components/notifications/SLANotificationProvider';
 import { GoalNotificationProvider } from '@/components/notifications/GoalNotificationProvider';
 import { TourProvider, DEFAULT_ONBOARDING_STEPS, useTour } from '@/components/onboarding/OnboardingTour';
@@ -45,10 +44,8 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
   });
 
   const setCurrentView = useCallback((viewId: string) => {
-    startTransition(() => {
-      navDirectionRef.current = 'forward';
-      rawNavigateTo(viewId);
-    });
+    navDirectionRef.current = 'forward';
+    rawNavigateTo(viewId);
   }, [rawNavigateTo]);
 
   const goBack = useCallback(() => {
@@ -65,7 +62,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
     });
   }, [rawGoForward]);
 
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
 
   const { registerNavigationHandler, unregisterNavigationHandler } = useGlobalKeyboard();
 
@@ -103,11 +100,8 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
   // abre canal (`enabled`).
   const unreadTotal = useInboxUnreadTotal(!!user);
 
-  useEffect(() => {
-    if (!loadingOnboarding && hasCompletedOnboarding === false && user) {
-      setShowWelcome(true);
-    }
-  }, [loadingOnboarding, hasCompletedOnboarding, user]);
+  const showWelcome = !welcomeDismissed && !loadingOnboarding
+    && hasCompletedOnboarding === false && !!user;
 
   if (!user) return <LoadingSplash />;
 
@@ -142,9 +136,9 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
           <HotRoutePrefetcher />
           <WelcomeModal
             isOpen={showWelcome}
-            onClose={() => { setShowWelcome(false); completeOnboarding(); }}
+            onClose={() => { setWelcomeDismissed(true); completeOnboarding(); }}
             onStartTour={() => {
-              setShowWelcome(false);
+              setWelcomeDismissed(true);
               setTimeout(() => startTour(DEFAULT_ONBOARDING_STEPS), 400);
             }}
             userName={profile?.name}

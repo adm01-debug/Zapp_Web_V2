@@ -1,12 +1,12 @@
 import { useMemo, useState, lazy, Suspense } from 'react';
 import {
-  Calendar, BarChart3, MessageSquare, Circle, Building2, Target, ShoppingBag,
+  Calendar, BarChart3, MessageSquare, Circle, Building2, Target,
   FileText, Zap, TrendingUp, History as HistoryIcon,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { formatBRL, formatRelativeTime } from '@/lib/formatters';
+import { formatRelativeTime } from '@/lib/formatters';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { useContactCrm360, useContactLeadScore, useAdvanceDealStage } from '@/hooks/crm/useContactCrm360';
 import { useContactEnrichedQuery } from '@/hooks/crm/useContactEnrichedData';
@@ -17,7 +17,6 @@ import type { ConversationTab } from '../chat/ConversationTabs';
 import { KpiStrip } from './KpiStrip';
 import { SectionCard } from './SectionCard';
 import { OpenDealsList } from './OpenDealsList';
-import { EmptyState } from '@/components/ui/empty-state';
 import { buildEditContactShape } from '../contact-details/editContactShape';
 
 const EditContactDialog = lazy(() =>
@@ -25,13 +24,6 @@ const EditContactDialog = lazy(() =>
 
 const STATUS_LABEL: Record<string, string> = {
   open: 'Aberta', waiting: 'Aguardando', resolved: 'Resolvida', archived: 'Arquivada',
-};
-
-const PURCHASE_STATUS_PILL: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Pendente', className: 'bg-warning/15 text-warning border-warning/30' },
-  approved: { label: 'Aprovado', className: 'bg-success/15 text-success border-success/30' },
-  completed: { label: 'Concluído', className: 'bg-primary/15 text-primary border-primary/30' },
-  cancelled: { label: 'Cancelado', className: 'bg-destructive/15 text-destructive border-destructive/30' },
 };
 
 interface Crm360TabProps {
@@ -198,43 +190,8 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" headerRight={<button type="button" onClick={() => onTabChange('orders')} className="h-7 px-3 rounded-lg bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-semibold hover:bg-primary/25 transition-colors">Ver no SalesView →</button>}>
-          {!crm360 || crm360.purchases.length === 0 ? (
-            <EmptyState icon={ShoppingBag} title="Nenhuma compra registrada" description="Compras deste contato aparecerão aqui." size="sm" />
-          ) : (
-            <ul className="space-y-2">
-              {crm360.purchases.slice(0, 3).map((p) => {
-                const pill = PURCHASE_STATUS_PILL[p.status ?? ''] ?? PURCHASE_STATUS_PILL.pending;
-                return (
-                  <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-2.5">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{p.title}</p>
-                      <p className="text-xs text-muted-foreground">{p.purchased_at ? format(new Date(p.purchased_at), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {p.amount != null && <span className="text-sm font-semibold tabular-nums">{formatBRL(p.amount)}</span>}
-                      <span className={cn('h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center', pill.className)}>{pill.label}</span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </SectionCard>
-
         <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
           <OpenDealsList deals={crm360?.openDeals ?? []} limit={3} />
-        </SectionCard>
-
-        <SectionCard icon={BarChart3} title="Ticket médio" tone="green">
-          <div className="flex items-center gap-3">
-            <p className="text-2xl font-bold tabular-nums">{crm360?.ticketMedio != null ? formatBRL(crm360.ticketMedio) : '—'}</p>
-            {crm360?.ticketDeltaPct != null && (
-              <span className={cn('h-6 px-2 rounded-full text-2xs font-semibold inline-flex items-center', crm360.ticketDeltaPct >= 0 ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive')}>
-                {crm360.ticketDeltaPct >= 0 ? '+' : ''}{crm360.ticketDeltaPct.toFixed(0)}%
-              </span>
-            )}
-          </div>
         </SectionCard>
 
         <SectionCard icon={Target} title="Produtos de interesse">

@@ -37,10 +37,10 @@
 | `docs/reconciliation/FINDINGS.md` completo (104 achados) | Arquivo lido parcialmente (OTH-001 a OTH-007); restante (OTH-008 a OTH-104) não capturado por limite de leitura |
 | `TRIAGEM-PRS-GITHUB-261031.md` seções 3–5 | Arquivo truncado no preview; seção 1–2 lida |
 | `~/arquitetura-v2/` (scripts da fábrica) | Diretório referenciado mas não varrido; lido apenas via handoffs |
-| `_arquivo/fabrica-hermes/` | Movido em 29/10 para `~/_arquivo/`; não lido — auditoras, evidências, handoffs do OmniRoute |
-| `quarentena-zapp-2026-10-24/clone-55GB-A-PROCESSAR/analise-prs/` | Existência confirmada via branch `chore/analise-prs-261024-2325`; conteúdo não lido |
+| `_arquivo/fabrica-hermes/` | Movido em 29/10 para `~/_arquivo/`; não lido — auditorias, evidências, handoffs do OmniRoute |
+| `quarentena-zapp-2026-10-24/clone-55GB-A-PROCESSAR/analise-prs/` | **B10 RECUPERADA** — `prs.json`, `prs.csv` e `regras-de-negocio.md` publicados na `main` via PR desta sessão, copiados da branch `chore/analise-prs-261024-2325` (tree `1c871e471dc8eb36be4085beae833b7b9105c155`) |
 | `docs/reconciliation/MASTER_LEDGER.json` + `FINDINGS.json` | Arquivos JSON não lidos (referenciados em D04/D05) |
-| `ESTADO.md` (branch `chore/analise-prs-261024-2325`) | Arquivo na branch remota; não lido |
+| `ESTADO.md` (branch `chore/analise-prs-261024-2325`) | **B10 RECUPERADA** — permanece na branch remota (não publicado na `main`; não estava entre os 3 arquivos recuperados) |
 
 ---
 
@@ -92,7 +92,7 @@ Out 31    — Este documento [D01, D02, D03]
 | SEG-06 | D08 (30/09) | `tcm_insert_member`: membro comum pode inscrever terceiro | **CONFIRMADO PENDENTE** | Reproduzido [D08 §7 item 3]; nenhum PR identificado |
 | SEG-07 | D08 (30/09) | Policy `Members can insert own receipts`: repo tem versão fraca, produção tem versão estrita | **CONFIRMADO PENDENTE** | Nenhum harness assere a versão estrita [D08 §7 item 4] |
 | SEG-08 | D12 (18/10) | `anon` tem INSERT/UPDATE/DELETE em 117 tabelas (violação de menor privilégio) | **CONFIRMADO PENDENTE** | Verificado: 1 policy `USING (true)` sem `TO` [D12 §1.2]; Z002 do plano Z-series não executada |
-| SEG-09 | D12 (18/10) | `enforceRateLimit` quebrado: usa `ctx` ausente da assinatura em `_shared/validation.ts:359-370` | **CONFIRMADO PENDENTE** | Todo 429 vira 500 nas 32 edges [D12]; nenhum PR de correção localizado |
+| SEG-09 | D12 (18/10) | `enforceRateLimit` quebrado: usa `ctx` ausente da assinatura em `_shared/validation.ts:359-370` | **SUPERADO / NÃO PROCEDE** | Não se reproduz na `main`: `enforceRateLimit` (`_shared/validation.ts` 365-401) monta HTTP 429 com `Retry-After`, preservado por `errorResponse` (validation.ts 144-161, `Retry-After` na linha 154); 123 chamadores de edge function mapeados montam 429 — D12 "429 vira 500" não reproduzido |
 | SEG-10 | D12 (18/10) | E2E escreve em banco de produção (`e2e/fixtures/supabase-env.ts:40-47` usa `.env.production`) | **PARCIALMENTE CORRIGIDO** | W74 (PR #1953) removeu `SUPABASE_SERVICE_ROLE_KEY` do `e2e-logado.yml` e aplicou migration; `supabase-env.ts` como fonte primária não confirmado resolvido [D13] |
 | SEG-11 | D07 (Jun 2026) | Self-hosted Supabase (`supabase-mcp.atomicabr.com.br`) com 513 tabelas, RLS desatualizada | **SUPERADO** | Banco migrado para `tnnnlkbymytvtqngbbqh.supabase.co` [D07 nota topo] |
 
@@ -133,7 +133,7 @@ Out 31    — Este documento [D01, D02, D03]
 |---|---|---|---|---|
 | DB-01 | D07 (Jun 2026) | 16 índices redundantes removidos, 6 criados, realtime: 50→24 tabelas | **CORRIGIDO VERIFICADO** | Executado em junho 2026 [D07] |
 | DB-02 | D12 (18/10) | 51 migrations com campo `sql-sha256` não previsto no `check-migration-drift.mjs` | **NÃO VERIFICADO** | DB-01/02/03 do plano 500 commits; status após PR #2182 não confirmado |
-| DB-03 | D12 (18/10) | `enforceRateLimit` em `_shared/validation.ts`: usa `ctx` ausente (duplicado de SEG-09) | **CONFIRMADO PENDENTE** | Todo 429 → 500 nas 32 edges [D12] |
+| DB-03 | D12 (18/10) | `enforceRateLimit` em `_shared/validation.ts`: usa `ctx` ausente (duplicado de SEG-09) | **SUPERADO / NÃO PROCEDE** | Mesma evidência de SEG-09: `errorResponse` (validation.ts 144-161, linha 154) preserva `Retry-After`; `enforceRateLimit` (365-401) monta HTTP 429 — achado D12 não se reproduz |
 | DB-04 | D08 (30/09) | `transfer_team_conversation_department`: SECURITY DEFINER sem verificar vínculo | **NÃO VERIFICADO** | Pendente revisão [D08 §7 item 5] |
 | DB-05 | D12 (18/10) | Migration `20261015200000_e2e_cleanup_security_definer` não aplicada em produção | **CORRIGIDO VERIFICADO** | Aplicada em sessão de 15/10 [D13]: função existe em `pg_proc`, ledger tem version, ACL correta |
 
@@ -209,9 +209,9 @@ Out 31    — Este documento [D01, D02, D03]
 |---|---|---|---|
 | B01 | Corrigir SEG-04/SEG-05/SEG-06: guards TalkX fail-open, `mark_team_conversation_read` cross-team, `tcm_insert_member` | CRÍTICO — furos de segurança confirmados com PoC de exploit | Médio: 3 migrations + harnesses |
 | B02 | Aplicar proteção de branch na `main` (CI-01): ao menos `required checks` para CI verde | ALTO — todo merge é sem portão hoje | Baixo: 1 PR + 1 clique Joaquim |
-| B03 | Corrigir `enforceRateLimit` em `_shared/validation.ts:359-370` (SEG-09) | ALTO — todo 429 → 500 nas 32 edges; limitador de abuso desligado | Baixo: 1 linha de código |
+| B03 | Corrigir `enforceRateLimit` em `_shared/validation.ts:359-370` (SEG-09) — **NÃO PROCEDE** | ~~ALTO — todo 429 → 500 nas 32 edges; limitador de abuso desligado~~ Refutado pela evidência de SEG-09 (verificação 06/11/2026) | Baixo: 1 linha de código — **não necessário** |
 | B04 | Criar enviador de `scheduled_messages` (FE-12): cartão AG2 do plano paridade | ALTO — mensagens agendadas nunca disparam em produção | Médio: 1 edge + 1 job pg_cron |
-| B05 | Push das 4.110 branches sem tracking (INF-01) + bundle de backup | ALTO — risco de perda permanente se disco WSL falhar | Baixo: script de push em lote |
+| B05 | Push das 4.110 branches sem tracking (INF-01) + bundle de backup | ALTO — risco de perda de história se disco WSL falhar | Médio: script push + bundle |
 | B06 | Commitar 2 WIPs em `_a-processar` e fazer push (INF-03) | MÉDIO — 2 arquivos de teste perdem-se com a pasta | Baixo: `git add + commit + push` |
 | B07 | Verificar e renovar chave do provedor Hermes (INF-06: expira 10/11 ou já expirou) | MÉDIO — Hermes para de funcionar sem aviso | Baixo: verificar no painel |
 | B08 | Corrigir OTH-001 (Encaminhar omite arquivos) e OTH-003 (Gmail toast falso de sucesso) | MÉDIO — bugs P1 em fluxos críticos de usuário | Médio: 2 PRs |

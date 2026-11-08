@@ -77,6 +77,22 @@ test(
   1
 );
 
+// T5: SHA anterior ausente do checkout nao pode pular o build.
+test(
+  'T5: base invalida → fail-open (builda)',
+  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: 'deadbeef' }, 1, tmpRepo),
+  1
+);
+
+// T6: .env.production contem VITE_* incorporadas pelo Vite e precisa rebuildar.
+writeFileSync(join(tmpRepo, '.env.production'), 'VITE_FEATURE_AUDIT=true\n');
+execSync('git -C "' + tmpRepo + '" add . && git -C "' + tmpRepo + '" commit -q -m "env production change"', { shell: true });
+test(
+  'T6: .env.production mudou → builda',
+  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: head2 }, 1, tmpRepo),
+  1
+);
+
 rmSync(tmpRepo, { recursive: true, force: true });
 
 console.log(`\n${passed} passou(aram), ${failed} falhou(aram).\n`);

@@ -37,8 +37,8 @@
  * credencial/assinatura HMAC da edge `multiplix-audience` — nenhuma ponte nova.
  */
 
-import { z } from 'https://esm.sh/zod@3.23.8';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { z } from 'npm:zod@3.23.8';
+import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { errorResponse, jsonResponse, requireEnv } from '../../_shared/validation.ts';
 import { isExpectedExternalServerKey, isExpectedExternalUrl } from '../../_shared/crm-integration-contract.ts';
 import { fromSinguEligibility } from '../../_shared/multiplix-eligibility.ts';

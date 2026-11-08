@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -206,6 +206,14 @@ describe('AnalyticsFunnel — degraus proporcionais (X186)', () => {
 });
 
 describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
+  beforeEach(() => {
+    vi.setSystemTime(new Date('2026-10-20T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const campaign = {
     id: 'c1',
     name: 'Campanha de outubro',

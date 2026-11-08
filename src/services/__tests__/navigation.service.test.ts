@@ -174,7 +174,6 @@ describe('Visao supervisao — ferramentas do supervisor fora do gate ADMIN_ONLY
     expect(NavigationService.canAccess('supervisao', ['supervisor'])).toBe(true);
     expect(NavigationService.canAccess('supervisao', ['admin'])).toBe(true);
     expect(NavigationService.canAccess('supervisao', ['agent'])).toBe(false);
-    expect(NavigationService.canAccess('supervisao', ['special_agent'])).toBe(false);
   });
 
   it('a entrada aparece no menu do supervisor (filterNavItems) e some para o atendente', () => {

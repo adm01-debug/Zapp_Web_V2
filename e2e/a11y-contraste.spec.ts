@@ -14,19 +14,29 @@ async function violacoes(page: import('@playwright/test').Page, seletor: string,
   return page.evaluate(
     async ([sel, ids]) => {
       const axe = (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; impact: string; nodes: { target: string[]; html: string; failureSummary?: string }[] }[] }> } }).axe;
-      const r = await axe.run(sel === 'body' ? document.body : (document.querySelector(sel) ?? document.body), {
-        runOnly: { type: 'rule', values: ids },
-      });
-      return r.violations.map((v) => ({
-        id: v.id,
-        impact: v.impact,
-        nos: v.nodes.length,
-        alvos: v.nodes.map((node) => ({
-          seletor: node.target.join(' '),
-          html: node.html,
-          motivo: node.failureSummary ?? '',
-        })),
-      }));
+      const ctx = sel === 'body' ? document.body : (document.querySelector(sel) ?? document.body);
+      const opts = { runOnly: { type: 'rule', values: ids } };
+      // @axe-core/react pode estar rodando automaticamente no bundle de dev; aguardamos (GR-016).
+      for (let i = 0; i < 10; i++) {
+        try {
+          const r = await axe.run(ctx, opts);
+          return r.violations.map((v) => ({
+            id: v.id,
+            impact: v.impact,
+            nos: v.nodes.length,
+            alvos: v.nodes.map((node) => ({
+              seletor: node.target.join(' '),
+              html: node.html,
+              motivo: node.failureSummary ?? '',
+            })),
+          }));
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          if (!msg.includes('already running')) throw e;
+          await new Promise<void>((res) => setTimeout(res, 200 * (i + 1)));
+        }
+      }
+      throw new Error('axe: @axe-core/react bloqueando apos 10 tentativas (GR-016)');
     },
     [seletor, regras] as const,
   );

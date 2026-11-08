@@ -46,4 +46,21 @@ describe('PageHeader — trilha própria', () => {
     renderHeader(true, { breadcrumbs: [] });
     expect(screen.getByRole('heading', { name: 'Painel' })).toBeDefined();
   });
+
+  it.each([
+    { origem: 'implícito', trilha: breadcrumbs },
+    { origem: 'explícito', trilha: [{ label: 'Início' }, ...breadcrumbs] },
+  ])('Início $origem: separadores e itens são irmãos no ol, sem li aninhado', ({ trilha }) => {
+    renderHeader(false, { breadcrumbs: trilha });
+    const nav = screen.getByRole('navigation', { name: 'breadcrumb' });
+    const lista = nav.querySelector('ol');
+    expect(lista).not.toBeNull();
+    expect(nav.querySelectorAll('li li')).toHaveLength(0);
+    const separadores = nav.querySelectorAll('li[role="presentation"][aria-hidden="true"]');
+    expect(separadores).toHaveLength(2);
+    for (const separador of separadores) expect(separador.parentElement).toBe(lista);
+    expect(lista?.children).toHaveLength(5);
+    expect(screen.getAllByRole('link', { name: 'Início' })).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Vendas' })).toHaveAttribute('aria-current', 'page');
+  });
 });

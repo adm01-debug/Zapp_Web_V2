@@ -28,7 +28,7 @@
  * service_role), que remove buraco/duplicata em `(dispatch_id, block_order)`.
  */
 
-import { z } from 'https://esm.sh/zod@3.23.8';
+import { z } from 'npm:zod@3.23.8';
 import { type ActionContext, DispatchError, resolveOwnerScope } from '../index.ts';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
 
