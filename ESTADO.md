@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-20`. 85 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-20`. 92 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -21,12 +21,12 @@ partir do código e falha quando:
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
+| A | 59 |
 | B | 1 |
 | C | 4 |
 | D | 6 |
-| E | 20 |
-| **total** | **85** |
+| E | 22 |
+| **total** | **92** |
 
 ## Tabela
 
@@ -37,9 +37,16 @@ partir do código e falha quando:
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
+| `ai-deadline-calculator` | A | `src/hooks/copilot/useDeadlineCalculator.ts:85` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
+| `ai-lead-temperature` | A | `src/hooks/copilot/useLeadThermometer.ts:64` |
+| `ai-loss-risk` | A | `src/hooks/copilot/useLossRiskDetector.ts:97` |
+| `ai-multimodal-analysis` | E | — sem chamador no repositório — |
+| `ai-objection-handler` | A | `src/hooks/copilot/useObjectionHandler.ts:120` |
+| `ai-price-anchor` | A | `src/hooks/copilot/usePriceAnchoring.ts:59` |
+| `ai-product-recommendation` | E | — sem chamador no repositório — |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
@@ -64,7 +71,7 @@ partir do código e falha quando:
 | `elevenlabs-agent-token` | E | — sem chamador no repositório — |
 | `elevenlabs-dialogue` | A | `src/components/voice/ElevenLabsDialogue.tsx:63` |
 | `elevenlabs-scribe-token` | A | `src/components/inbox/RealtimeTranscription.tsx:88` · `src/hooks/communication/useVoiceAgent.ts:307` |
-| `elevenlabs-sfx` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:31` |
+| `elevenlabs-sfx` | A | `src/components/inbox/chat/AIGenerateDialog.tsx:31` |
 | `elevenlabs-sts` | A | `src/components/inbox/VoiceChanger.tsx:81` |
 | `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:113` |
 | `elevenlabs-tts-stream` | A | `src/hooks/voice/playTtsAudio.ts:165` |
@@ -118,7 +125,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfós (20) — GATE B
+## Órfós (22) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador ext de
@@ -128,6 +135,8 @@ As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guard
 mantém a lista honesta.
 
 - `ai-auto-tag`
+- `ai-multimodal-analysis`
+- `ai-product-recommendation`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
 - `copilot-live`
