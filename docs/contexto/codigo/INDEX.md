@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b5e89bb0f012672714da7995536f6f00573cfc7f` (2026-11-08T10:53:50-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `9fd0fe4a795d0313785b71be8bd74d61e47698b4` (2026-11-08T11:17:14-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56169 nós · 115819 arestas · 4099 comunidades · grafo do commit `b5e89bb0`
+- 56169 nós · 115819 arestas · 4099 comunidades · grafo do commit `9fd0fe4a`
 - comunidades maiores: cn (835), client.ts (809), button.tsx (585), validation.ts (506), @testing-library/react (455), ref_https (421), badge.tsx (401), TalkXSuppression.tsx (380), vitest (344), @tanstack/react-query (310), ref_node_fs (309), ref_node_url (275)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-08 `9fd0fe4` test(e2e): alinha placeholder da paleta única (#2799)
 - 2026-11-08 `b5e89bb` fix(test): restaura imports Deno nos contratos
 - 2026-11-08 `2ebe682` fix(typecheck): remove contratos obsoletos da inbox
 - 2026-11-08 `edd2ae3` fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-07 `babb270` test(e2e): aguarda readiness dos insights de busca (#2787)
 - 2026-11-07 `b5ad544` fix(ci): corrige escopo do cleanup de variáveis Vercel (#2786)
 - 2026-11-07 `b8244e0` fix(e2e): exclui talkx-visual do projeto chromium-authenticated (#2785)
-- 2026-11-07 `a03ef62` fix: não aninhar <div> dentro de <p> na tela LGPD (#2779)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

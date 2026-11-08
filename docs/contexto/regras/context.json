@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "b5e89bb0f012672714da7995536f6f00573cfc7f",
+  "sha": "9fd0fe4a795d0313785b71be8bd74d61e47698b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 13:54 UTC",
+  "generated_at": "2026-11-08 14:23 UTC",
   "files_total": 8156,
   "code_files": 6014,
   "code_lines": 1043701
@@ -260039,7 +260039,7 @@
    "params": [
     {
      "name": "PLACEHOLDER_BUSCA",
-     "value": "'Buscar módulo… (ex: tarefas, chatbot)'"
+     "value": "'Buscar ou digitar comando... (⌘K)'"
     },
     {
      "name": "MENU_DESKTOP",
@@ -383507,10 +383507,19 @@
   }
  },
  "git": {
-  "sha": "b5e89bb0f012672714da7995536f6f00573cfc7f",
+  "sha": "9fd0fe4a795d0313785b71be8bd74d61e47698b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9fd0fe4",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "test(e2e): alinha placeholder da paleta única (#2799)",
+    "files": [
+     "e2e/navegacao-modulos.spec.ts"
+    ]
+   },
    {
     "sha": "b5e89bb",
     "date": "2026-11-08",
@@ -383865,25 +383874,15 @@
     "files": [
      "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
     ]
-   },
-   {
-    "sha": "b67ef0c",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(db): fecha RLS multi-tenant do Copilot (#2763)",
-    "files": [
-     "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
-     "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
-    ]
    }
   ],
   "hot_files": [
    [
-    "docs/talkx/ESTADOS.md",
-    3
+    "e2e/navegacao-modulos.spec.ts",
+    4
    ],
    [
-    "e2e/navegacao-modulos.spec.ts",
+    "docs/talkx/ESTADOS.md",
     3
    ],
    [

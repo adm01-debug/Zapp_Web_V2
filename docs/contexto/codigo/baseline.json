@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b5e89bb0f012672714da7995536f6f00573cfc7f",
+  "commit": "9fd0fe4a795d0313785b71be8bd74d61e47698b4",
   "branch": "main",
-  "data_commit": "2026-11-08T10:53:50-03:00",
+  "data_commit": "2026-11-08T11:17:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9fd0fe4",
+    "data": "2026-11-08",
+    "assunto": "test(e2e): alinha placeholder da paleta única (#2799)"
+   },
    {
     "sha": "b5e89bb",
     "data": "2026-11-08",
@@ -126,11 +131,6 @@
     "sha": "43fb734",
     "data": "2026-11-07",
     "assunto": "fix(db): reconciliar ledger da migration 20261010062941 (#2775)"
-   },
-   {
-    "sha": "c759630",
-    "data": "2026-11-07",
-    "assunto": "chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)"
    }
   ],
   "arquivos_mudados_7d": 1093,
@@ -258,15 +258,15 @@
     "mudancas": 9
    },
    {
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
+    "mudancas": 8
+   },
+   {
     "arquivo": "AGENTS.md",
     "mudancas": 7
    },
    {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 7
    },
    {
