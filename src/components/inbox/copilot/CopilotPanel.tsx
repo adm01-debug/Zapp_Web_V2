@@ -17,7 +17,7 @@ interface CopilotPanelProps {
 export function CopilotPanel({ conversation, messages, className }: CopilotPanelProps) {
   const { session, insights, isLoading, isTicking, tick } = useCopilotSession(conversation.id);
 
-  const lastClientMessage = messages.findLast((m) => m.sender === 'contact')?.content;
+  const lastClientMessage = [...messages].reverse().find((m: Message) => m.sender === 'contact')?.content;
 
   const handleTick = () => {
     tick({ contactId: conversation.contact.id, lastClientMessage });

@@ -12,7 +12,6 @@
     "verify_jwt_true": 70,
     "verify_jwt_false": 15
   },
-  "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -91,8 +90,8 @@
     },
     {
       "path": "supabase/functions/_shared/ai-response-contracts.ts",
-      "bytes": 10709,
-      "sha256": "0f6bee031d5d791cd22c7b50b09294af7daacd12283b0aa63db7d6e6f911179b"
+      "bytes": 12677,
+      "sha256": "ccf2e9b95962192d8600fc43282d76a82d191b177cb8e8bf63ec7a30cbdefa7e"
     },
     {
       "path": "supabase/functions/_shared/ai-routing.ts",
@@ -516,8 +515,8 @@
     },
     {
       "path": "supabase/functions/copilot-live/index.ts",
-      "bytes": 8420,
-      "sha256": "aba269084e4b0989b474e1edb9deb0e6aaa37879426bc5e2b060a04cd8907074"
+      "bytes": 16208,
+      "sha256": "359a2622e7c40128c2516722ed58222b47852158fe8ef9f118b65a87d9ad69a5"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -865,7 +864,7 @@
       "name": "ai-auto-tag",
       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4b653e4c1e8401d44078321553636b0e44cca90e2716f7256bacd4faf8609130",
+      "source_sha256": "d3c46e38b83069a363de8b78dd8f0d65a4664743c0f3aa0c409a077326a25f39",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -938,7 +937,7 @@
       "name": "ai-conversation-analysis",
       "entrypoint": "supabase/functions/ai-conversation-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e925b5f9446e50b4f84b1b6fbe2b5cd91d8bf5edaa010a925a644898b22202d1",
+      "source_sha256": "c2888769a6b39d3079a0a73cc622d4eea300b8dac4c9b7f50439b18d22f7a162",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -969,7 +968,7 @@
       "name": "ai-conversation-summary",
       "entrypoint": "supabase/functions/ai-conversation-summary/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d43a071ccf574dbbd6dff993f75f2d0613c48c1915f497e7371723a4ed9343c2",
+      "source_sha256": "0992767be4aa5e7fb0dbdc4dcb8b026837fce6c2f65841d7277af277d5f219df",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1096,7 +1095,7 @@
       "name": "ai-suggest-reply",
       "entrypoint": "supabase/functions/ai-suggest-reply/index.ts",
       "verify_jwt": true,
-      "source_sha256": "53e1b49d6ec9a996828c0574d488e69505d37beb4bbcfb39892cdcd4c9dfb65c",
+      "source_sha256": "b83dfa9ad9f052ea032e7ed667256f1911340f0066a9aa556fff34613c2fda95",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1272,7 +1271,7 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "cb34a561f6c8adc1e1474f0d2ba713858e75c6c7aa9d39d4460efdcdab4f3049",
+      "source_sha256": "7197172f3fb5c796e50962a5c59afd768c5e5b54c2b8e1b62f41bec4d51c69e6",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1423,9 +1422,25 @@
       "name": "copilot-live",
       "entrypoint": "supabase/functions/copilot-live/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a7902730998ceaa802a2d11d761114d31ba77004b28229566f078f07e565d8cd",
+      "source_sha256": "ae609b94e99f4134f443384ef4cbdd6ac6e7a15d1f6b69a21d04c6157b5645bb",
       "source_files": [
+        "supabase/functions/_shared/ai-budget.ts",
+        "supabase/functions/_shared/ai-capabilities.ts",
+        "supabase/functions/_shared/ai-circuit.ts",
+        "supabase/functions/_shared/ai-feature-flags.ts",
+        "supabase/functions/_shared/ai-generate.ts",
+        "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-providers.ts",
+        "supabase/functions/_shared/ai-response-contracts.ts",
+        "supabase/functions/_shared/ai-routing.ts",
+        "supabase/functions/_shared/ai-usage.ts",
+        "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/cors-origins.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/rate-limit-log.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/validation.ts",
         "supabase/functions/copilot-live/index.ts"
       ]
     },
@@ -2534,5 +2549,5 @@
       ]
     }
   ],
-  "manifest_sha256": "236f44753fac2ec85843e9cfd9e536109ef1b53f9ebe5a4ed5fb07c9155cef70"
+  "manifest_sha256": "331714c48358f26ebeff5cbcd9fd5288fd84e6560c1b9594a1ec4c547a8ed2fa"
 }

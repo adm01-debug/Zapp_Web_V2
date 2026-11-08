@@ -300,8 +300,7 @@ Omita chaves sem valor. brinde_delta s√≥ inclui campos com valor concreto extra√
       ],
       system: systemPrompt,
       need: {
-        maxTokens: 400,
-        jsonMode: true,
+        outputTokens: 400,
       },
       temperature: tier2 ? 0.3 : 0.5,
     });

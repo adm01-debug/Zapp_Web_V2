@@ -2,7 +2,7 @@ import { Lightbulb, AlertTriangle, Info, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { CopilotInsight } from './useCopilotSession';
+import type { CopilotInsight } from '@/hooks/chat/useCopilotSession';
 
 const INSIGHT_CONFIG = {
   suggestion:  { icon: Lightbulb,    className: 'bg-primary/10 border-primary/30 text-primary' },

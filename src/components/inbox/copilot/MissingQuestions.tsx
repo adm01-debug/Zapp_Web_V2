@@ -1,6 +1,6 @@
 import { HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { CopilotSession } from './useCopilotSession';
+import type { CopilotSession } from '@/hooks/chat/useCopilotSession';
 
 const BRINDE_QUESTIONS: Array<{
   key: keyof Pick<CopilotSession, 'brinde_budget' | 'brinde_responsible' | 'brinde_intention' | 'brinde_quantity' | 'brinde_deadline' | 'brinde_delivery'>;
