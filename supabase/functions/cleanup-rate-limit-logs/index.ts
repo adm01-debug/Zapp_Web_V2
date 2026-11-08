@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, internalErrorResponse } from "../_shared/validation.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 
 /**
@@ -128,7 +128,9 @@ export async function handleCleanupRateLimitLogs(
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     log.error("Cleanup error", { error: msg });
-    return errorResponse(msg, 500, req);
+    // Z020: usar internalErrorResponse — isola logServerError da construção da
+    // Response (CodeQL js/stack-trace-exposure) e alinha ao padrão compartilhado.
+    return internalErrorResponse(error, req);
   }
 }
 

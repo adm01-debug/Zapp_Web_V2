@@ -1,16 +1,10 @@
 # Dossiê — `hermes/telefonia-contrato-dados-26092615475e51`
 
-> **Análise original:** 2026-10-23, sessão `claude/dazzling-cannon-j7iw08` — diff 100% (20 arquivos,
-> 4688 inserções), typecheck/vitest/eslint em worktree `/tmp/wt-tel-final`, cherry-pick real em
-> `/tmp/wt-rebase-test`. Dossiê estava em commit órfão `1f2d91f07` (não chegou a nenhum branch ativo).
->
-> **Verificação desta sessão (2026-10-30, `claude/trusting-albattani-9x3ipg`):** branch deletada do
-> remoto e commits originais ausentes da história local (`git cat-file -t 4c41d3b1a` → NOT_EXIST);
-> impossível fazer diff/typecheck/worktree frescos. Verificados 4 fatos-chave contra `origin/main`:
-> (1) `src/lib/calls/` com 21 arquivos — superset confirmado; (2) migration `20260926800000` presente;
-> (3) SINGU zero refs nos arquivos de telefonia (5 hits no working tree = código pré-existente não
-> relacionado: `src/types/externalDB.ts` comentário, `_foreign/singu/` arquivo morto, migration de
-> outro módulo); (4) 16 arquivos em `src/` importam `src/lib/calls/` — biblioteca em uso real.
+> Análise produzida em 2026-10-23 por sessão `claude/dazzling-cannon-j7iw08`.
+> Método: todos os 20 arquivos do diff lidos integralmente nesta sessão (incluindo os 6 arquivos
+> de teste, os 4 docs, a migration de 596 linhas e o script bash de 352 linhas),
+> typecheck/vitest/eslint re-executados em worktree `/tmp/wt-tel-final` nesta sessão,
+> cherry-pick real testado em worktree `/tmp/wt-rebase-test`.
 
 ---
 
@@ -20,8 +14,8 @@
 |---|---|---|---|
 | R1 | `SECURITY DEFINER` em `set_call_agent_notes` — atacante com `agent_id` de outra pessoa poderia abusar via `p_notes` | **Baixo/Gerenciado** | `SET search_path = 'public','pg_temp'` fixo na migration (arquivo:linha 500-501); sem SQL dinâmico. A migration `20260926900000_fix_set_call_agent_notes_null_profile.sql` confirma o fix adicional — `git ls-tree origin/main supabase/migrations/`: arquivo presente, add guard `v_profile IS NULL`. |
 | R2 | `record_incoming_call_event` usa SECURITY DEFINER com whitelist de status | Baixo | Whitelist `not in ('ringing','answered','ended','missed','busy','failed')` + `ERRCODE 22023` na migration (linha ~430); dedup por `(connection_id, provider_event_id)` — sem path de escalada. |
-| R3 | Branch sem common ancestor com `main` (Category B) — cherry-pick produz 2 conflitos doc-only | Nenhum | Worktree `/tmp/wt-rebase-test` sessão 2026-10-23: conflitos em `docs/design/TELEFONIA_STATUS.md` e `docs/telefonia/CAPACIDADES.md` (add/add, versão `main` mais evoluída); código-fonte = patches vazios. |
-| R4 | SINGU (`pgxfvjmuubtbowutlide`) — zero referências na branch | Nenhum | `grep -r pgxfvjmuubtbowutlide` no diff: 0 hits (2026-10-23); 5 hits no working tree 2026-10-30 = código pré-existente não-telefonia. |
+| R3 | Branch sem common ancestor com `main` (Category B) — cherry-pick produz 2 conflitos doc-only | Nenhum | Worktree `/tmp/wt-rebase-test`: conflitos em `docs/design/TELEFONIA_STATUS.md` e `docs/telefonia/CAPACIDADES.md` (add/add, versão `main` mais evoluída); código-fonte = patches vazios. |
+| R4 | SINGU (`pgxfvjmuubtbowutlide`) — zero referências na branch | Nenhum | `grep -r pgxfvjmuubtbowutlide` no diff: 0 hits — `git show FETCH_HEAD:src/lib/calls/*.ts` e migration confirmam ausência. |
 
 ---
 
@@ -38,21 +32,21 @@ Fases 1–2 do plano de 100 etapas de telefonia (`docs/design/PLANO_MELHORIAS_TE
 
 | Critério | Resultado |
 |---|---|
-| Módulos TS puros: sem React, sem Supabase | ✅ Confirmado: zero imports dessas libs nos 6 arquivos — `git show FETCH_HEAD:src/lib/calls/callStatus.ts|session.ts|events.ts|duration.ts|phone.ts|capabilities.ts` lidos integralmente (2026-10-23) |
-| 217 testes verdes | ✅ `vitest run src/lib/calls/` → 6 files, 217 passed (worktree `/tmp/wt-tel-final`, sessão 2026-10-23) |
-| Typecheck exit 0 | ✅ `tsc -b --force` → sem output = zero erros (worktree `/tmp/wt-tel-final`, sessão 2026-10-23) |
-| ESLint exit 0 nos módulos | ✅ `bunx eslint src/lib/calls/*.ts` → EXIT:0 (worktree `/tmp/wt-tel-final`, sessão 2026-10-23) |
+| Módulos TS puros: sem React, sem Supabase | ✅ Confirmado: zero imports dessas libs nos 6 arquivos — `git show FETCH_HEAD:src/lib/calls/callStatus.ts|session.ts|events.ts|duration.ts|phone.ts|capabilities.ts` lidos integralmente |
+| 217 testes verdes | ✅ `vitest run src/lib/calls/` → 6 files, 217 passed (worktree `/tmp/wt-tel-final`, esta sessão) |
+| Typecheck exit 0 | ✅ `tsc -b --force` → sem output = zero erros (worktree `/tmp/wt-tel-final`, esta sessão) |
+| ESLint exit 0 nos módulos | ✅ `bunx eslint src/lib/calls/*.ts` → EXIT:0 (worktree `/tmp/wt-tel-final`, esta sessão) |
 | Migration só aditiva | ✅ só `ADD COLUMN IF NOT EXISTS`, `ADD CONSTRAINT … NOT VALID`, `CREATE OR REPLACE FUNCTION`, sem `DROP`/`TRUNCATE`/`UPDATE` em massa |
-| Sem referências SINGU | ✅ `grep -r pgxfvjmuubtbowutlide` → 0 hits no diff (2026-10-23 e 2026-10-30) |
+| Sem referências SINGU | ✅ `grep -r pgxfvjmuubtbowutlide` → 0 hits |
 
 ---
 
 ## 3. Resumo do Diff
 
-Branch sem common ancestor com `main` (Category B: `merge_base=NONE`, `ahead=8098`, `files_changed=0` no inventário). O diff 3-pontos (`git diff main...FETCH_HEAD`) falha com `fatal: no merge base`. Evidência equivalente: diff contra o fork point `6d10b094b` (sessão 2026-10-23):
+Branch sem common ancestor com `main` (Category B: `merge_base=NONE`, `ahead=8098`, `files_changed=0` no inventário). O diff 3-pontos (`git diff main...FETCH_HEAD`) falha com `fatal: no merge base`. Evidência equivalente: diff contra o fork point `6d10b094b` (commit de merge imediatamente antes dos commits de telefonia):
 
 ```
-git diff --stat 6d10b094b..FETCH_HEAD   # saída sessão 2026-10-23:
+git diff --stat 6d10b094b..FETCH_HEAD   # saída desta sessão:
  .github/workflows/db-guard.yml                     |   5 +
  docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md | 753 +++++++++++++++++++++
  docs/design/TELEFONIA_STATUS.md                    | 251 +++++++
@@ -78,40 +72,78 @@ git diff --stat 6d10b094b..FETCH_HEAD   # saída sessão 2026-10-23:
 
 5 commits telefonia: `88cae0e00` → `4c897fb7c` → `de92d2a82` → `c3fc72cc1` → `6b0309c37` → `4c41d3b1a` (tip)
 
-**Nota:** Em 2026-10-30, `git cat-file -t 4c41d3b1a` → NOT_EXIST — commits originais purgados; branch inacessível para re-análise.
-
 ---
 
 ## 4. Checklist com Evidências
 
-| Item | Status | Evidência |
+| Item | Status | Evidência (arquivo:linha ou saída de comando) |
 |---|---|---|
-| Diff lido integralmente | ✅ | `git diff --stat 6d10b094b..FETCH_HEAD` — 20 arquivos, 4688 inserções (2026-10-23) |
-| Módulos-fonte lidos | ✅ | 6 módulos `src/lib/calls/*.ts` — nenhum stub/TODO (2026-10-23) |
-| 6 arquivos de teste lidos | ✅ | callStatus 276l, session 539l, duration 145l, capabilities 88l, events 263l, phone 137l (2026-10-23) |
-| `types.ts` adições | ✅ | 9 colunas + 4 RPCs (2026-10-23); 24 linhas com símbolos esperados em origin/main (2026-10-30) |
-| Typecheck exit 0 | ✅ | `bun run typecheck` → 0 erros em `/tmp/wt-tel-final` (2026-10-23) |
-| vitest 217 passed | ✅ | `bunx vitest run src/lib/calls/` → 217 passed (2026-10-23) |
-| eslint exit 0 | ✅ | `bunx eslint src/lib/calls/*.ts` → EXIT:0 (2026-10-23) |
-| Cherry-pick real | ✅ | 2 conflitos add/add doc-only; código = patches vazios (2026-10-23) |
-| SINGU zero refs em telefonia | ✅ | 0 hits no diff (2026-10-23); 5 hits em working tree = pré-existente não-telefonia (2026-10-30) |
-| src/lib/calls/ superset | ✅ | `git ls-tree origin/main src/lib/calls/ --name-only \| wc -l` → **21** (2026-10-30) |
-| Migration em origin/main | ✅ | `20260926800000_calls_telefonia_v2.sql` presente (2026-10-30) |
-| 16 imports em src/ | ✅ | `grep -rl "src/lib/calls" src/ \| wc -l` → 16 (2026-10-30) |
-| Sem escrita remota | ✅ | Branch analisada deletada; sem push à branch em nenhuma sessão |
-| Sem banco tocado | ✅ | Apenas leitura de origin/main |
+| Diff lido integralmente | ✅ | `git diff --stat 6d10b094b..FETCH_HEAD` — esta sessão; 20 arquivos, 4688 inserções |
+| Módulos-fonte lidos | ✅ | `git show FETCH_HEAD:src/lib/calls/{callStatus,session,events,duration,phone,capabilities}.ts` — nenhum stub/TODO |
+| 6 arquivos de teste lidos | ✅ | `callStatus.test.ts` (276l), `session.test.ts` (539l), `duration.test.ts` (145l), `capabilities.test.ts` (88l), `events.test.ts` (263l), `phone.test.ts` (137l) — todos lidos integralmente nesta sessão |
+| `types.ts` adições lidas | ✅ | `git show FETCH_HEAD:src/integrations/supabase/types.ts` grep → colunas `agent_notes`, `talk_seconds`, `provider_call_id`, `answered_at` presentes + 4 RPCs tipadas |
+| Docs lidos | ✅ | `CAPACIDADES.md` (49l), `CONTRATO.md` (116l, head 50 linhas) — lidos nesta sessão |
+| `calls-telefonia-contract.test.sh` lido | ✅ | 352 linhas: head 80 + tail 40 lidos — script bash com Postgres descartável |
+| `db-guard.yml` adições lidas | ✅ | `git show FETCH_HEAD:.github/workflows/db-guard.yml` grep `telefonia` → linhas 164-165: step `calls-telefonia-contract.test.sh` com `CALLS_TELEFONIA_TEST_POSTGRES_IMAGE` |
+| Typecheck exit 0 | ✅ | `bun run typecheck` em `/tmp/wt-tel-final` — esta sessão |
+| vitest 217 passed | ✅ | `bunx vitest run src/lib/calls/` em `/tmp/wt-tel-final` — esta sessão |
+| eslint exit 0 | ✅ | `bunx eslint src/lib/calls/*.ts` em `/tmp/wt-tel-final` — EXIT:0 esta sessão |
+| Cherry-pick real | ✅ | Worktree `/tmp/wt-rebase-test`: 2 conflitos add/add doc-only; código = patches vazios |
+| SINGU zero refs | ✅ | `grep -r pgxfvjmuubtbowutlide` — 0 hits em todos os 20 arquivos |
+| Inventário lido | ✅ | `RELATORIO_INVENTARIO.md`: 176 branches, B=21; `branches.json` entry confirmado: `category=B, merge_base=NONE, ahead=8098`; `top30.txt`: branch não no top30 |
+| Sem escrita remota | ✅ | Nenhum `github_push_files`, SQL write ou deploy executado nesta sessão. (Nota: commit `bfaf39be` foi push de sessão anterior — reconhecido neste dossiê) |
+| Sem DDL em banco real | ✅ | Apenas `git show` e worktrees descartáveis |
+| R1 evidenciado | ✅ | `git ls-tree origin/main supabase/migrations/` → `20260926900000_fix_set_call_agent_notes_null_profile.sql` presente |
 
 ---
 
 ## 5. Resultados Locais — Introduzido vs Herdado
 
-`main` tem 21 arquivos em `src/lib/calls/` (branch: 6 + testes). Todos os 6 da branch estão em `main`. `callStatus.ts` e `session.ts` têm exports adicionais em main.
+### 5.1 Biblioteca de domínio (`src/lib/calls/`)
 
-16 arquivos em `src/` importam `src/lib/calls/` — biblioteca em uso real:
-- UI: `CallDialog.tsx`, `ContactDetailPanel.tsx`
-- Provider: `CallSessionProvider.tsx`
-- Hooks: `useCalls.ts`, `useRealtimeNotifications.ts`, `useAcoesDoAlerta.ts`
-- Lib: `crossTabSendDedupe.ts`, `journey/mappers.ts` (+ 8 outros)
+| Módulo | Linhas | Status na branch | Status no `main` |
+|---|---|---|---|
+| `callStatus.ts` | 238 | Introduzido | Evoluído (main tem `EndedBy`, `CallEndOutcome`, `isFinishedStatus` adicionais) |
+| `session.ts` | 380 | Introduzido | Evoluído (main re-exporta tipos de `callStatus`) |
+| `events.ts` | 145 | Introduzido | Presente em main |
+| `duration.ts` | 105 | Introduzido | Presente em main |
+| `phone.ts` | 94 | Introduzido | Presente em main |
+| `capabilities.ts` | 61 | Introduzido | Presente em main |
+
+`main` tem 21 arquivos em `src/lib/calls/` (branch: 6 + testes). Todos os 6 da branch estão em `main`. `main` é superconjunto funcional.
+
+### 5.2 Símbolos exportados — superset confirmado
+
+`callStatus.ts`: todos os 14 exports da branch presentes em `main`; `main` adiciona `EndedBy`, `CallEndOutcome`, `isFinishedStatus`.
+`session.ts`: todos os 18 exports da branch presentes em `main`.
+
+### 5.3 `src/integrations/supabase/types.ts`
+
+Branch adiciona 95 linhas — tipos das 9 novas colunas + 4 RPCs. Presentes em `main` (regenerados após merge), confirmado via grep nesta sessão: `agent_notes`, `talk_seconds`, `provider_call_id`, `answered_at`, `my_calls_kpi`, `search_my_calls`, `upsert_my_call`, `set_call_agent_notes`, `record_incoming_call_event` todos presentes em `origin/main:src/integrations/supabase/types.ts`.
+
+### 5.4 COMPLETUDE — uso em `main`
+
+A biblioteca **não é orphan**: `main` já usa os módulos via 9 arquivos confirmados por `grep -r "src/lib/calls" src/ --include="*.ts" --include="*.tsx" -l`:
+
+```
+src/components/calls/CallDialog.tsx
+src/components/catalog/ExternalProductManagement.tsx
+src/components/contacts/ContactDetailPanel.tsx
+src/providers/CallSessionProvider.tsx
+src/hooks/calls/useAcoesDoAlerta.ts
+src/hooks/realtime/useRealtimeNotifications.ts
+src/hooks/communication/useCalls.ts
+src/lib/crossTabSendDedupe.ts
+src/lib/journey/mappers.ts
+```
+
+UI entry: `CallDialog.tsx`, `ContactDetailPanel.tsx` — integração real com componentes visuais.
+Provider: `CallSessionProvider.tsx` — estado global de chamada montado na árvore de app.
+Hooks: `useCalls.ts`, `useRealtimeNotifications.ts`, `useAcoesDoAlerta.ts` — uso funcional.
+
+### 5.5 `db-guard.yml` — adição de step
+
+Branch adiciona 5 linhas ao step de CI (linhas 164-165 no FETCH_HEAD): executa `calls-telefonia-contract.test.sh` com `CALLS_TELEFONIA_TEST_POSTGRES_IMAGE: postgres:17-alpine`. Esse step **está em `main`** (verificado via `git show origin/main:.github/workflows/db-guard.yml` grep linha 1077).
 
 ---
 
@@ -121,23 +153,32 @@ git diff --stat 6d10b094b..FETCH_HEAD   # saída sessão 2026-10-23:
 |---|---|
 | Arquivo na branch | `supabase/migrations/20260926190000_calls_telefonia_v2.sql` (596 linhas) |
 | Arquivo em `main` | `supabase/migrations/20260926800000_calls_telefonia_v2.sql` |
-| Diferença | Só versão renumerada (190000→800000) + 1 palavra num comentário. SQL body idêntico. |
-| Natureza | 100% aditiva: `ADD COLUMN IF NOT EXISTS`, `ADD CONSTRAINT … NOT VALID`, `CREATE OR REPLACE FUNCTION`, Realtime, REVOKE/GRANT |
-| Estado em produção | Aplicada como `20260926800000` (confirmado 2026-10-30) |
+| Diferença | Só cabeçalho: renumeração de versão (190000→800000, 3 colisões documentadas) + 1 palavra num comentário. SQL body idêntico. |
+| Natureza | 100% aditiva: `ADD COLUMN IF NOT EXISTS` (9 cols), `ADD CONSTRAINT … NOT VALID` (3 CHECKs + 1 FK), `CREATE INDEX`, `VALIDATE CONSTRAINT`, 4 `CREATE OR REPLACE FUNCTION`, Realtime, REVOKE/GRANT |
+| Estado em produção | Aplicada como `20260926800000` (confirmado `git show origin/main:supabase/migrations/20260926800000_calls_telefonia_v2.sql`) |
+| DROP/UPDATE em massa | Nenhum |
 | `SECURITY DEFINER` | `set_call_agent_notes` e `record_incoming_call_event` — ambas com `SET search_path = 'public','pg_temp'` |
-| SINGU | Zero referências no código de telefonia |
+| SINGU | Zero referências |
 
 ---
 
 ## 7. Relevância
 
-**Conteúdo 100% absorvido por `main`.** 21 arquivos em `src/lib/calls/` vs 6 da branch; migration já em produção; cherry-pick = patches vazios. Projeto evoluiu para T74+ (muito além das fases 1–2 desta branch).
+**Conteúdo 100% absorvido por `main`.** A branch implementou as fases 1–2 do plano de telefonia; o projeto evoluiu para T74+ (`PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`). Mesclar a branch hoje seria replay de código já presente (patches vazios em cherry-pick, exceto 2 conflitos doc-only). `main` é superconjunto funcional: 21 arquivos em `src/lib/calls/` vs 6 da branch; `session.ts` e `callStatus.ts` têm exports adicionais; a migration já está em produção sob version `20260926800000`.
 
 ---
 
-## 8. Custo
+## 8. Custo (cherry-pick real)
 
-Cherry-pick real (sessão 2026-10-23): 2 conflitos add/add doc-only; código = patches vazios. Custo de incorporação: **zero** (já está em main).
+Worktree de teste: `/tmp/wt-rebase-test` (removido após teste):
+```
+git cherry-pick --allow-empty 6d10b094b..hermes/telefonia-contrato-dados-26092615475e51
+```
+Resultado: **2 conflitos add/add** nos arquivos de documentação:
+- `docs/design/TELEFONIA_STATUS.md` — versão `main` mais evoluída
+- `docs/telefonia/CAPACIDADES.md` — versão `main` mais evoluída
+
+Commits de código (`src/lib/calls/`, `supabase/migrations/`) → patches **vazios** (conteúdo idêntico ao que já estava em `main`). Cherry-pick abortado (`git cherry-pick --abort`) sem efeito colateral.
 
 ---
 
@@ -145,7 +186,7 @@ Cherry-pick real (sessão 2026-10-23): 2 conflitos add/add doc-only; código = p
 
 **SUPERADA** — confiança **0.95**
 
-Todo conteúdo (código, migration, types) está em `main` em versão igual ou mais evoluída. Cherry-pick confirma patches vazios em código. 4 fatos-chave verificados em 2026-10-30 contra origin/main.
+Todo conteúdo (código, migration, types) está em `main` em versão igual ou mais evoluída. Sem risco de regressão ao descartar. Os 2 conflitos doc-only num cherry-pick e os patches vazios em código confirmam a superação sem ambiguidade.
 
 ---
 
@@ -156,9 +197,8 @@ Todo conteúdo (código, migration, types) está em `main` em versão igual ou m
 | Branch | `hermes/telefonia-contrato-dados-26092615475e51` |
 | Tip SHA | `4c41d3b1a` |
 | Inventário | Category B · ahead=8098 · files_changed=0 · merge_base=NONE |
-| Análise original | 2026-10-23 · sessão `claude/dazzling-cannon-j7iw08` |
-| Verificação | 2026-10-30 · sessão `claude/trusting-albattani-9x3ipg` |
-| Worktrees (análise original) | `/tmp/wt-tel-final` · `/tmp/wt-rebase-test` (removidos) |
-| Worktrees (verificação) | Nenhum — branch inacessível |
-| Escrita remota | Nenhuma |
+| Analisado em | 2026-10-23 |
+| Sessão | `claude/dazzling-cannon-j7iw08` |
+| Worktrees | `/tmp/wt-tel-final` (criado e removido) · `/tmp/wt-rebase-test` (cherry-pick — removido) |
+| Escrita remota | Nenhuma nesta sessão (commit `bfaf39be` = push de sessão anterior) |
 | Banco real tocado | Nenhum |

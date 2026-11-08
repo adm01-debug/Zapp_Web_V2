@@ -117,11 +117,11 @@ export function InboxEmptyChat({ waitingCount, unreadCount, onNewConversation }:
                     <div key={shortcut.id} className="flex items-center gap-1.5">
                       {keys.map((key, index) => (
                         <span key={`${shortcut.id}-${index}`} className="flex items-center gap-1">
-                          <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm">
+                          <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-2xs font-semibold text-foreground shadow-sm">
                             {key}
                           </kbd>
                           {index < keys.length - 1 && (
-                            <span className="text-[10px] text-muted-foreground">+</span>
+                            <span className="text-3xs text-muted-foreground">+</span>
                           )}
                         </span>
                       ))}

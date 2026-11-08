@@ -5,14 +5,12 @@ const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Admin',
   supervisor: 'Supervisor',
   agent: 'Agente',
-  special_agent: 'Agente+',
 };
 
 const ROLE_VARIANTS: Record<AppRole, 'default' | 'secondary' | 'outline' | 'success'> = {
   admin: 'default',
   supervisor: 'secondary',
   agent: 'outline',
-  special_agent: 'success',
 };
 
 export function RoleBadge({ role, className }: { role: AppRole; className?: string }) {

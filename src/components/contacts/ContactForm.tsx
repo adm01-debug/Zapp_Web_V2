@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -155,7 +155,9 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
   // #263/R2-AUTH-039: o endereço que está no formulário AGORA. Comparado com o endereço consultado
   // quando a resposta chega — o ref acompanha o estado mais recente, sem closure velha.
   const enderecoVigenteRef = useRef(assinaturaEndereco(values));
-  useEffect(() => { enderecoVigenteRef.current = assinaturaEndereco(values); }, [values]);
+  useLayoutEffect(() => {
+    enderecoVigenteRef.current = assinaturaEndereco(values);
+  });
   const recalcularCoordenada = async () => {
     const alvo = [
       values.address,

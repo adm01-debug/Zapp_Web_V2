@@ -27,15 +27,9 @@ describe('Paridade V3 -> V2 (doc 06) — itens aguardando cartão integrado', ()
     'C8 (sem cartão): debounce do save de configurações (useDebouncedSaveSettings) — a V2 salva só no clique do botão, não há debounce a testar',
   );
   it.todo(
-    'PK-16 (hugo): insert de compra com erro mostra feedback — hoje ContactPurchasesPanel engole o erro (só trata !error)',
-  );
-  it.todo(
     'PK-07 (hugo): useNextBestAction com VÁRIAS linhas de SLA — hoje lê uma única linha de conversation_sla por contato',
   );
   it.todo(
     'PK-05 (workersql): política de UPDATE do sussurro / marcação de lido limita ao autor',
-  );
-  it.todo(
-    'PK-15 (workersql): RLS de contact_purchases pela regra nova do cartão (prova de enforcement com papel real em scripts/db-audit)',
   );
 });

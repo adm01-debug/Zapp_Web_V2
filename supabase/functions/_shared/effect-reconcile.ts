@@ -39,7 +39,7 @@
  * automação e fica para o humano — nunca se presume exactly-once.
  */
 
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { AiJobInfraError, type AiJob } from "./ai-jobs.ts";
 import { evoFetch, extractMessageId } from "./evolution-send.ts";
 

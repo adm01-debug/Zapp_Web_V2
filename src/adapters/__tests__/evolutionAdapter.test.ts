@@ -79,4 +79,10 @@ describe('derivedToConversationContact', () => {
     // Contato derivado do WhatsApp nao esta no cadastro: nunca recebeu o selo VIP.
     expect(conversation.contact.is_vip).toBe(false);
   });
+
+  it('espelha o telefone normalizado da coluna gerada de contacts', () => {
+    const [conversation] = buildExternalConversations([externalMessage]);
+
+    expect(conversation.contact.phone_search_digits).toBe('5511999999999');
+  });
 });

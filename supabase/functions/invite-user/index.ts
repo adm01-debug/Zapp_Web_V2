@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
+import { z } from "npm:zod@3.23.8";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
 /**
@@ -54,7 +54,7 @@ export interface InviteUserDeps {
   admin?: InviteUserAdminClient;
 }
 
-const INVITABLE_ROLES = ["admin", "supervisor", "agent", "special_agent"] as const;
+const INVITABLE_ROLES = ["admin", "supervisor", "agent"] as const;
 
 const bodySchema = z.object({
   email: z.string().email("Email inválido").max(255),

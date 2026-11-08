@@ -47,13 +47,13 @@ console.log(JSON.stringify(out));
 // roda sem nenhuma flag de permissão.
 function denoEval(program) {
   try {
-    return execFileSync('deno', ['eval', program, edgeModule, frontModule, fixtureJson], {
+    return execFileSync('deno', ['eval', '--sloppy-imports', program, edgeModule, frontModule, fixtureJson], {
       encoding: 'utf8',
       maxBuffer: 16 * 1024 * 1024,
     });
   } catch (err) {
     throw new Error(
-      `falha ao rodar "deno eval" (o deno precisa estar no PATH): ${err instanceof Error ? err.message : String(err)}`,
+      `falha ao rodar "deno eval" (verifique o executável e os imports): ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 }
@@ -104,7 +104,7 @@ console.log(JSON.stringify({ edgeText, frontText }));
 `;
   const raw = execFileSync(
     'deno',
-    ['eval', denoProgramDates, edgeModule, frontModule],
+    ['eval', '--sloppy-imports', denoProgramDates, edgeModule, frontModule],
     { encoding: 'utf8' },
   );
   const { edgeText, frontText } = JSON.parse(raw.trim().split('\n').pop());

@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs } from './index.ts';
+import { handleConnectionHealthCheck, decideReconnect, RECONNECT_EXHAUSTED_REASON, PHANTOM_SESSION_REASON, CONFIRMED_DOWN_REASON, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs, decideEscalation, levelDedupeKey } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -46,6 +46,10 @@ interface ConnRow {
   id: string;
   instance_id: string;
   phone_number: string | null;
+  retry_count?: number;
+  auto_reconnect_enabled?: boolean;
+  reconnect_max_attempts?: number;
+  reconnect_interval_seconds?: number;
 }
 
 interface Fake {
@@ -79,6 +83,16 @@ interface Fake {
   insertTables: string[];
   calls: Array<{ path: string; apikey: string | null }>;
   rpcCalls: string[];
+  /** papéis (user_roles) — destinatários obrigatórios da escalada */
+  roleRows: Array<{ user_id: string; role: string }>;
+  /** created_at do alerta de warroom aberto (início do episódio) */
+  episodeStartedAt: string | null;
+  /** campanhas pausadas por connection_lost na conexão (talkx_campaigns) */
+  pausedCampaigns: Array<{ id: string }>;
+  /** Resend recusa (500) quando true */
+  resendDown: boolean;
+  /** connection_alert_preferences (cartão "Alertas de Conexão") */
+  prefRows: Array<Record<string, unknown>>;
   fetchImpl: (call: { path: string; apikey: string | null }) => Response | Promise<Response>;
 }
 
@@ -102,6 +116,11 @@ function baseFake(): Fake {
     insertTables: [],
     calls: [],
     rpcCalls: [],
+    roleRows: [],
+    episodeStartedAt: null,
+    pausedCampaigns: [],
+    resendDown: false,
+    prefRows: [],
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
   };
 }
@@ -125,6 +144,7 @@ function result(
   pending: Row | null,
   filters: Array<[string, string]>,
   orExpr: string,
+  likePattern = '',
 ): { data: unknown; error: unknown } {
   if (table === 'whatsapp_connections' && op === 'update' && pending) {
     fake.connUpdates.push(pending);
@@ -141,6 +161,11 @@ function result(
   if (table === 'connection_health_logs' && op === 'insert' && pending) {
     fake.insertTables.push(table);
     fake.healthLogs.push(pending);
+    return { data: null, error: null };
+  }
+  if (table === 'reconnection_logs' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
+    fake.auditLogs.push({ __reconnect: true, ...pending });
     return { data: null, error: null };
   }
   if (table === 'audit_logs' && op === 'insert' && pending) {
@@ -180,9 +205,45 @@ function result(
     return { data: fake.adminProfiles, error: null };
   }
   if (table === 'notifications' && op === 'insert' && pending) {
+    // ux_notifications_user_dedupe_key: (user_id, dedupe_key) único quando a chave existe.
+    const dup = pending.dedupe_key && fake.pushNotifications.some((n) => {
+      const r = n as Row;
+      return r.user_id === pending.user_id && r.dedupe_key === pending.dedupe_key;
+    });
+    if (dup) return { data: null, error: { code: '23505', message: 'duplicate' } };
     fake.insertTables.push(table);
     fake.pushNotifications.push(pending);
     return { data: null, error: null };
+  }
+  if (table === 'notifications' && op === 'select') {
+    const u = filters.find(([c]) => c === 'user_id')?.[1];
+    const k = filters.find(([c]) => c === 'dedupe_key')?.[1];
+    const hit = fake.pushNotifications.find((n) => (n as Row).user_id === u && (n as Row).dedupe_key === k);
+    return { data: hit ? { id: 'n' } : null, error: null };
+  }
+  if (table === 'connection_alert_preferences' && op === 'select') {
+    return { data: fake.prefRows, error: null };
+  }
+  if (table === 'talkx_campaigns' && op === 'select') {
+    return { data: fake.pausedCampaigns, error: null };
+  }
+  if (table === 'notifications' && op === 'update' && pending) {
+    const pattern = likePattern ? new RegExp('^' + likePattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*') + '$') : null;
+    for (const n of fake.pushNotifications) {
+      if (!pattern || pattern.test(String((n as Row).dedupe_key))) Object.assign(n as Row, pending);
+    }
+    return { data: null, error: null };
+  }
+  if (table === 'user_roles' && op === 'select') {
+    const roleFilter = filters.find(([c]) => c === 'role')?.[1];
+    const allowed: string[] | null = roleFilter ? JSON.parse(roleFilter) : null;
+    return { data: fake.roleRows.filter((r) => !allowed || allowed.includes(r.role)), error: null };
+  }
+  if (table === 'warroom_alerts' && op === 'select') {
+    if (fake.episodeStartedAt) return { data: { created_at: fake.episodeStartedAt }, error: null };
+    const k = filters.find(([c]) => c === 'dedupe_key')?.[1];
+    const aberto = fake.alerts.find((a) => a.dedupe_key === k);
+    return { data: aberto ? { created_at: String(aberto.created_at ?? new Date().toISOString()) } : null, error: null };
   }
   if (table === 'global_settings' && op === 'select') {
     return { data: null, error: null };
@@ -213,6 +274,11 @@ function builder(fake: Fake, table: string): Row {
   self.select = chain;
   self.neq = chain;
   self.not = chain;
+  let likePattern = '';
+  self.like = (_c: string, v: string) => {
+    likePattern = v;
+    return self;
+  };
   self.lt = chain;
   self.limit = chain;
   self.order = chain;
@@ -246,7 +312,7 @@ function builder(fake: Fake, table: string): Row {
     op = 'delete';
     return self;
   };
-  const done = () => Promise.resolve(result(fake, table, op, pending, filters, orExpr));
+  const done = () => Promise.resolve(result(fake, table, op, pending, filters, orExpr, likePattern));
   self.single = done;
   self.maybeSingle = done;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,6 +340,10 @@ function makeDeps(fake: Fake): any {
         // PE-87: dentro/fora do horário comercial (contracheque da "caixa muda").
         if (name === 'is_within_business_hours') {
           return Promise.resolve({ data: fake.withinHours, error: null });
+        }
+        if (name === 'transition_talkx_campaign') {
+          fake.rpcCalls.push(`transition:${String(params?.p_campaign_id)}:${String(params?.p_action)}`);
+          return Promise.resolve({ data: null, error: null });
         }
         return Promise.resolve({ data: null, error: null });
       },
@@ -784,4 +854,313 @@ Deno.test('1C: usuário com dois papéis recebe uma vez só', () => {
   const prefs = buildConnectionAlertPrefs(['u1', 'u1', 'u2'], []);
   const pushQueda = prefs.filter((p) => p.channel === 'push' && p.alert_type === 'disconnected');
   if (pushQueda.length !== 2) throw new Error(`esperado 2 destinatários, veio ${pushQueda.length}`);
+});
+
+// ─────────────────────── Reconexão automática ──────────────────────────────
+
+Deno.test('reconexão: decideReconnect respeita política, limite e intervalo', () => {
+  const now = new Date('2026-11-01T12:00:00Z');
+  const base = { enabled: true, attempts: 0, maxAttempts: 3, intervalSeconds: 60, lastAttemptAt: null, now };
+  assert(decideReconnect({ ...base, enabled: false }) === 'disabled', 'política desligada não tenta');
+  assert(decideReconnect(base) === 'attempt', 'primeira queda tenta');
+  assert(decideReconnect({ ...base, attempts: 3 }) === 'exhausted', 'no limite para');
+  assert(decideReconnect({ ...base, attempts: 1, lastAttemptAt: new Date('2026-11-01T11:59:30Z') }) === 'wait',
+    'dentro do intervalo espera');
+  assert(decideReconnect({ ...base, attempts: 1, lastAttemptAt: new Date('2026-11-01T11:58:00Z') }) === 'attempt',
+    'passado o intervalo tenta de novo');
+});
+
+Deno.test('reconexão: conexão caída com política ligada chama /instance/reconnect e registra a tentativa', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = ({ path }) => path.includes('/instance/reconnect')
+    ? jsonResponse({ message: 'success' })
+    : jsonResponse({ instance: { state: 'close' } });
+
+  const res = await run(fake);
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const reconnects = fake.calls.filter((c) => c.path.includes('/instance/reconnect'));
+  assert(reconnects.length === 1, `esperada 1 tentativa, veio ${reconnects.length}`);
+  const log = fake.auditLogs.find((l) => l.__reconnect);
+  assert(log && log.attempt === 1 && log.result === 'success' && log.connection_id === 'c1', `log de tentativa inválido: ${JSON.stringify(log)}`);
+  assert(fake.connUpdates.some((u) => u.retry_count === 1), 'retry_count deve ir para 1');
+});
+
+Deno.test('reconexão: política desligada (ou ausente) não tenta', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(!fake.calls.some((c) => c.path.includes('/instance/reconnect')), 'não deveria tentar reconectar');
+  assert(!fake.insertTables.includes('reconnection_logs'), 'não deveria registrar tentativa');
+});
+
+Deno.test('reconexão: esgotadas as tentativas, para e pede o QR no motivo de saúde', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(!fake.calls.some((c) => c.path.includes('/instance/reconnect')), 'esgotado não tenta');
+  assert(fake.connUpdates.some((u) => u.health_reason === RECONNECT_EXHAUSTED_REASON), 'motivo de saúde deve pedir QR');
+});
+
+Deno.test('reconexão: conexão que volta zera o contador e o motivo', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 2, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert(fake.connUpdates.some((u) => u.retry_count === 0 && u.health_reason === null), 'deve zerar retry_count e health_reason');
+});
+
+// ───────────────────── regra dos três níveis (regras.md §4.2) ─────────────────────
+
+Deno.test('3 níveis: decideEscalation — rápida=0, esgotada/fantasma/15min=1, 1h=2, degraded só ≥30min', () => {
+  const now = new Date('2026-11-03T12:30:00Z');
+  const ago = (min: number) => new Date(now.getTime() - min * 60_000);
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(5), now }) === 0, 'esperado nível 0: { kind: disconnected, reason: null, exhausted: false, episodeStart: ago');
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(5), now }) === 1, 'esperado nível 1: { kind: disconnected, reason: null, exhausted: true, episodeStart: ago(');
+  assert(decideEscalation({ kind: 'disconnected', reason: 'phantom_session', exhausted: false, episodeStart: null, now }) === 1, 'esperado nível 1: { kind: disconnected, reason: phantom_session, exhausted: false, epis');
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(15), now }) === 1, 'esperado nível 1: { kind: disconnected, reason: null, exhausted: false, episodeStart: ago');
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(60), now }) === 2, 'esperado nível 2: { kind: disconnected, reason: null, exhausted: true, episodeStart: ago(');
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(29), now }) === 0, 'esperado nível 0: { kind: degraded, reason: webhook_silent, exhausted: false, episodeSt');
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(30), now }) === 1, 'esperado nível 1: { kind: degraded, reason: webhook_silent, exhausted: false, episodeSt');
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(600), now }) === 1, 'degraded nunca sobe a nível 2');
+  assert(levelDedupeKey(1, 'disconnected', 'c1', now) === 'conn-l1:v1:disconnected:c1', 'chave do nível 1 leva o tipo');
+  assert(levelDedupeKey(1, 'degraded', 'c1', now) !== levelDedupeKey(1, 'disconnected', 'c1', now), 'degraded e disconnected não dividem chave');
+  assert(levelDedupeKey(2, 'disconnected', 'c1', now) === levelDedupeKey(2, 'disconnected', 'c1', ago(20)), 'nível 2 repete por hora cheia');
+  assert(levelDedupeKey(2, 'disconnected', 'c1', now) !== levelDedupeKey(2, 'disconnected', 'c1', ago(60)), 'hora seguinte = chave nova');
+});
+
+Deno.test('3 níveis: queda rápida (nível 0) grava o warroom mas NÃO manda push nem e-mail a ninguém', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(fake.alerts.some((a) => a.dedupe_key === 'conn-down:v1:c1'), 'warroom (tela) deve registrar a queda');
+  assert(fake.pushNotifications.length === 0, `nível 0 não manda push: ${JSON.stringify(fake.pushNotifications)}`);
+  assert(!fake.calls.some((c) => c.path.includes('/emails')), 'nível 0 não manda e-mail');
+});
+
+Deno.test('3 níveis: reconexão esgotada (nível 1) avisa admin E supervisor por push+e-mail, mesmo sem opt-in, uma vez por episódio', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }, { user_id: 'ag', role: 'agent' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }, { user_id: 'sup', email: 'sup@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    await run(fake);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+  // admin e supervisor são obrigatórios; o agente entra pelo opt-in padrão (1C: ligado
+  // até desligar no cartão) — preferência só ACRESCENTA gente. Uma vez por episódio.
+  const pushes = fake.pushNotifications.filter((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1');
+  const users = pushes.map((n) => (n as Row).user_id).sort();
+  assert(JSON.stringify(users) === JSON.stringify(['adm', 'ag', 'sup']), `push uma vez para cada destinatário: ${JSON.stringify(users)}`);
+  const emailMarks = fake.pushNotifications.filter((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1:email').map((n) => (n as Row).user_id).sort();
+  assert(JSON.stringify(emailMarks) === JSON.stringify(['adm', 'sup']), `marcador de e-mail só para quem tem e-mail no perfil: ${JSON.stringify(emailMarks)}`);
+  const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
+  assert(emails === 2, `e-mail uma vez para cada perfil com e-mail (adm, sup), veio ${emails}`);
+});
+
+Deno.test('3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }];
+  fake.episodeStartedAt = new Date(Date.now() - 2 * 60 * 60_000).toISOString();
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  // Primeira sonda elegível já depois de 1 h: o nível 1 (admin+supervisor) sai ANTES do nível 2 (só admin).
+  const l1 = fake.pushNotifications.filter((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1').map((n) => (n as Row).user_id).sort();
+  const l2 = fake.pushNotifications.filter((n) => String((n as Row).dedupe_key).startsWith('conn-l2:') && !String((n as Row).dedupe_key).endsWith(':email')).map((n) => (n as Row).user_id);
+  assert(JSON.stringify(l1) === JSON.stringify(['adm', 'sup']), `nível 1 implícito para admin+supervisor: ${JSON.stringify(l1)}`);
+  assert(JSON.stringify(l2) === JSON.stringify(['adm']), `nível 2 só admin: ${JSON.stringify(l2)}`);
+  assert(String((fake.pushNotifications.find((n) => String((n as Row).dedupe_key).startsWith('conn-l2:')) as Row).dedupe_key).startsWith('conn-l2:v1:disconnected:c1:'), 'chave horária do nível 2');
+});
+
+Deno.test('3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)', () => {
+  const now = new Date();
+  const ev = evaluateOpenConnectionHealth({ owner: { known: true, ownerJid: null }, lastActivityAt: null, now });
+  assert(ev.reason === 'phantom_session', 'owner conhecido sem jid = sessão fantasma');
+  assert(decideEscalation({ kind: 'disconnected', reason: ev.reason, exhausted: false, episodeStart: now, now }) === 1, 'fantasma é nível 1 imediato');
+  assert(PHANTOM_SESSION_REASON.includes('QR Code'), 'motivo de saúde deve pedir QR');
+});
+
+Deno.test('3 níveis: e-mail recusado pelo Resend não grava o marcador — a próxima sonda tenta de novo', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  let resendDown = true;
+  fake.fetchImpl = ({ path }) => path.includes('/emails')
+    ? (resendDown ? new Response('down', { status: 500 }) : jsonResponse({ id: 'mail' }))
+    : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    const pushKeys = () => fake.pushNotifications.map((n) => String((n as Row).dedupe_key));
+    assert(pushKeys().includes('conn-l1:v1:disconnected:c1'), 'push obrigatório sai mesmo com o Resend fora (5xx)');
+    assert(!pushKeys().includes('conn-l1:v1:disconnected:c1:email'), 'e-mail com 5xx não grava marcador');
+    resendDown = false;
+    await run(fake);
+    assert(pushKeys().includes('conn-l1:v1:disconnected:c1:email'), 'na sonda seguinte, e-mail aceito → marcador de e-mail');
+    await run(fake);
+    const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
+    assert(emails === 2, `duas tentativas de e-mail (1 recusada + 1 aceita), nunca uma terceira: veio ${emails}`);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+});
+
+Deno.test('3 níveis: recuperação já gravada pelo webhook ainda retoma campanhas e libera as chaves de nível', async () => {
+  const fake = baseFake();
+  // O webhook já deixou status='connected'; a sonda não transiciona nada (CAS não entra).
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0 }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.pausedCampaigns = [{ id: 'camp-1' }];
+  fake.pushNotifications = [{ user_id: 'adm', dedupe_key: 'conn-l1:v1:disconnected:c1' }];
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert(fake.rpcCalls.includes('transition:camp-1:start'), `campanha pausada por queda deve retomar: ${JSON.stringify(fake.rpcCalls)}`);
+  assert((fake.pushNotifications[0] as Row).dedupe_key === null, 'chave de nível liberada para a próxima queda');
+  assert(fake.alertUpdates.some((u) => u.filters.some(([c, v]) => c === 'dedupe_key' && v === 'conn-down:v1:c1')), 'warroom da queda encerrado mesmo com recuperação vinda do webhook');
+});
+
+Deno.test('3 níveis: sem linha no warroom, a sonda cria o registro e o relógio do episódio começa (não fica em zero)', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: false }];
+  fake.statusById = { c1: 'disconnected' }; // já caída antes, sem alerta gravado
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(fake.alerts.some((a) => a.dedupe_key === 'conn-down:v1:c1'), 'episódio sem registro deve ser criado pela sonda');
+});
+
+Deno.test('3 níveis: degradação encerrada (sonda saudável) libera só a chave degraded; a de queda fica intacta até a conexão voltar', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0 }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.lastInbound = [{ created_at: new Date().toISOString() }]; // mensagem recente = healthy
+  fake.pushNotifications = [
+    { user_id: 'adm', dedupe_key: 'conn-l1:v1:degraded:c1' },
+    { user_id: 'adm', dedupe_key: 'conn-l1:v1:disconnected:c1' },
+  ];
+  fake.alerts = [{ source: 'connection-health-check', dedupe_key: 'conn-degraded:v1:c1', created_at: new Date().toISOString() }];
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert((fake.pushNotifications[0] as Row).dedupe_key === null, 'chave degraded liberada ao ficar saudável');
+  assert((fake.pushNotifications[1] as Row).dedupe_key === null, 'conexão connected também libera a chave de queda (recuperação idempotente)');
+  assert(fake.alerts[0].dedupe_key === null, 'alerta de warroom da degradação encerrado');
+});
+
+Deno.test('3 níveis: queda confirmada só pelo tempo (sem reconexão automática) grava motivo que pede QR — composer vermelho', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: false }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.episodeStartedAt = new Date(Date.now() - 20 * 60_000).toISOString();
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(fake.connUpdates.some((u) => u.health_reason === CONFIRMED_DOWN_REASON), 'queda confirmada pelo tempo grava o motivo');
+  assert(fake.pushNotifications.some((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'admin avisado no nível 1');
+});
+
+Deno.test('3 níveis: quem só optou por e-mail recebe o e-mail (marcador lido em tela), sem push', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'ag', role: 'agent' }];
+  fake.adminProfiles = [{ user_id: 'ag', email: 'ag@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    // connection_alert_preferences: push desligado, e-mail ligado
+    fake.prefRows = [{ user_id: 'ag', push_enabled: false, email_enabled: true, alert_on_degraded: true, alert_on_disconnected: true }];
+    await run(fake);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+  const keys = fake.pushNotifications.map((n) => String((n as Row).dedupe_key));
+  assert(!keys.includes('conn-l1:v1:disconnected:c1'), 'sem push para quem desligou push');
+  assert(keys.includes('conn-l1:v1:disconnected:c1:email'), 'marcador de e-mail gravado');
+  assert((fake.pushNotifications[0] as Row).is_read === true, 'marcador de e-mail nasce lido (não é push)');
+  assert(fake.calls.some((c) => c.path.includes('/emails')), 'e-mail enviado');
+});
+
+Deno.test('3 níveis: recusa definitiva do Resend (4xx) marca o e-mail e não repete a cada sonda', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? new Response('bad address', { status: 422 }) : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    await run(fake);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+  const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
+  assert(emails === 1, `4xx é final: uma tentativa só, veio ${emails}`);
+  assert(fake.pushNotifications.some((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'push obrigatório sai mesmo assim');
+});
+
+Deno.test('3 níveis: 429 do Resend é transitório — sem marcador, o e-mail sai na sonda seguinte', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  let limited = true;
+  fake.fetchImpl = ({ path }) => path.includes('/emails')
+    ? (limited ? new Response('rate limited', { status: 429 }) : jsonResponse({ id: 'mail' }))
+    : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    const keys = () => fake.pushNotifications.map((n) => String((n as Row).dedupe_key));
+    assert(!keys().includes('conn-l1:v1:disconnected:c1:email'), '429 não grava marcador de e-mail');
+    limited = false;
+    await run(fake);
+    assert(keys().includes('conn-l1:v1:disconnected:c1:email'), 'depois do 429, e-mail aceito e marcado');
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
 });

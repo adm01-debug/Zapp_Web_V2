@@ -85,22 +85,45 @@ export function parseBadges(tsx) {
   if (entries.length === 0) throw new Error('nenhum badge encontrado em contactTypeConfig.tsx');
 
   return entries.map(({ key, label, badgeClass }) => {
-    const light = badgeClass.match(/(?:^|\s)text-\[hsl\((\d+)_(\d+)%_(\d+)%\)\]/);
-    const dark = badgeClass.match(/ dark:text-\[hsl\((\d+)_(\d+)%_(\d+)%\)\]/);
-    const bg = badgeClass.match(/bg-\[rgba\((\d+),(\d+),(\d+),([\d.]+)\)\]/);
-    if (!light || !dark || !bg) {
+    const lightLiteral = badgeClass.match(/(?:^|\s)text-\[hsl\((\d+)_(\d+)%_(\d+)%\)\]/);
+    const darkLiteral = badgeClass.match(/(?:^|\s)dark:text-\[hsl\((\d+)_(\d+)%_(\d+)%\)\]/);
+    const bgLiteral = badgeClass.match(/(?:^|\s)bg-\[rgba\((\d+),(\d+),(\d+),([\d.]+)\)\]/);
+    const lightToken = badgeClass.match(/(?:^|\s)text-\[hsl\(var\(--([a-z0-9-]+)\)\)\]/);
+    const darkToken = badgeClass.match(/(?:^|\s)dark:text-\[hsl\(var\(--([a-z0-9-]+)\)\)\]/);
+    const bgToken = badgeClass.match(/(?:^|\s)bg-([a-z0-9-]+)\/(\d{1,3})(?=\s|$)/);
+    const darkBgToken = badgeClass.match(/(?:^|\s)dark:bg-([a-z0-9-]+)\/(\d{1,3})(?=\s|$)/);
+    const receitaLiteral = lightLiteral && darkLiteral && bgLiteral;
+    const receitaToken = lightToken && bgToken;
+    if (!receitaLiteral && !receitaToken) {
       throw new Error(
-        `badge ${key} sem receita esperada (texto claro+escuro e fundo rgba): ${badgeClass}`,
+        `badge ${key} sem receita esperada (tokens CSS ou texto HSL + fundo RGBA): ${badgeClass}`,
       );
     }
     const hsl = (m) => [Number(m[1]), Number(m[2]), Number(m[3])];
+    if (receitaLiteral) {
+      return {
+        key,
+        label,
+        lightText: hsl(lightLiteral),
+        darkText: hsl(darkLiteral),
+        bgRgb: [Number(bgLiteral[1]) / 255, Number(bgLiteral[2]) / 255, Number(bgLiteral[3]) / 255],
+        bgAlpha: Number(bgLiteral[4]),
+      };
+    }
+    const opacidade = (m) => {
+      const alpha = Number(m[2]) / 100;
+      if (alpha < 0 || alpha > 1) throw new Error(`badge ${key} com opacidade inválida: ${m[2]}`);
+      return alpha;
+    };
     return {
       key,
       label,
-      lightText: hsl(light),
-      darkText: hsl(dark),
-      bgRgb: [Number(bg[1]) / 255, Number(bg[2]) / 255, Number(bg[3]) / 255],
-      bgAlpha: Number(bg[4]),
+      lightTextToken: lightToken[1],
+      darkTextToken: (darkToken ?? lightToken)[1],
+      bgToken: bgToken[1],
+      bgAlpha: opacidade(bgToken),
+      darkBgToken: (darkBgToken ?? bgToken)[1],
+      darkBgAlpha: opacidade(darkBgToken ?? bgToken),
     };
   });
 }
@@ -109,18 +132,34 @@ export function measureBadges(themes, badges) {
   return badges.flatMap((badge) =>
     Object.entries(themes).map(([theme, vars]) => {
       const card = hslToRgb(vars.card);
-      const bg = badge.bgRgb.map((c, i) => c * badge.bgAlpha + card[i] * (1 - badge.bgAlpha));
-      const text = theme === 'escuro' ? badge.darkText : badge.lightText;
+      const escuro = theme === 'escuro';
+      let text;
+      let bgBase;
+      let bgAlpha;
+      if (badge.lightTextToken) {
+        const textToken = escuro ? badge.darkTextToken : badge.lightTextToken;
+        const bgToken = escuro ? badge.darkBgToken : badge.bgToken;
+        if (!vars[textToken]) throw new Error(`--${textToken} ausente (${theme}, badge ${badge.key})`);
+        if (!vars[bgToken]) throw new Error(`--${bgToken} ausente (${theme}, badge ${badge.key})`);
+        text = hslToRgb(vars[textToken]);
+        bgBase = hslToRgb(vars[bgToken]);
+        bgAlpha = escuro ? badge.darkBgAlpha : badge.bgAlpha;
+      } else {
+        text = hslToRgb(escuro ? badge.darkText : badge.lightText);
+        bgBase = badge.bgRgb;
+        bgAlpha = badge.bgAlpha;
+      }
+      const bg = bgBase.map((c, i) => c * bgAlpha + card[i] * (1 - bgAlpha));
       return {
-        label: `Badge ${badge.label} (texto sobre bg-rgba/${badge.bgAlpha * 100})`,
+        label: `Badge ${badge.label} (texto sobre fundo/${bgAlpha * 100})`,
         theme,
-        ratio: contrast(hslToRgb(text), bg),
+        ratio: contrast(text, bg),
       };
     }),
   );
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const themes = parseThemes(readFileSync(path.join(ROOT, 'src/styles/tokens.css'), 'utf8'));
   const rows = [
     ...measure(themes),

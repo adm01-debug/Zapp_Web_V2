@@ -50,7 +50,7 @@ const CONTATO_E2E = {
   assigned_to: FAKE_USER_ID, queue_id: null, tags: [], notes: null, created_at: NOW,
   updated_at: NOW, deleted_at: null, is_lid_legacy: false, channel_type: 'whatsapp',
   channel_connection_id: null, whatsapp_connection_id: null, lead_origin: null, lead_score: null,
-  risk_score: null, ai_priority: null, ai_sentiment: null, ai_projection_analysis_id: null,
+  risk_score: null, ai_priority: null, ai_projection_analysis_id: null,
   ai_projection_updated_at: null, avatar_fetch_attempted_at: null, consent_status: null,
   group_category: null, address: null, address_number: null, city: null, state: null,
   neighborhood: null, postal_code: null, latitude: null, longitude: null, surname: null,
@@ -186,6 +186,15 @@ async function abrirDiscador(page: Page) {
 
   await expect(telView).toBeVisible({ timeout: BOOT_DEADLINE_MS });
   await expect(page.getByRole('heading', { name: 'Telefonia' })).toBeVisible();
+  // GR-012: aguarda teclado totalmente renderizado antes de retornar (Firefox)
+  await expect(teclado(page)).toBeVisible();
+  // A view pode aparecer antes de a sondagem SIP terminar. No Firefox, clicar nesse
+  // intervalo permite que a atualização tardia remonte o painel e apague o primeiro
+  // dígito. O motivo fechado prova que o estado assíncrono da fixture já estabilizou.
+  await expect(page.getByTestId('tel-dial-reason')).toHaveText(
+    'Telefone não configurado nesta conta',
+    { timeout: BOOT_DEADLINE_MS },
+  );
   return page.getByTestId('tel-new-call-panel');
 }
 
@@ -231,9 +240,17 @@ test.describe('Y11 · Telefonia', () => {
     await expect(page.getByTestId('tel-dial-button')).toBeDisabled();
 
     // Apagar dígito volta o painel ao estado inicial (nem número, nem aviso).
-    await page.getByRole('button', { name: 'Apagar dígito' }).click();
-    await page.getByRole('button', { name: 'Apagar dígito' }).click();
-    await page.getByRole('button', { name: 'Apagar dígito' }).click();
+    // GR-012: aguarda estado intermediário entre cada clique — Firefox não processa
+    // três cliques consecutivos sem renderizar entre eles.
+    const btnApagar = page.getByRole('button', { name: 'Apagar dígito' });
+    await btnApagar.click();
+    await expect(page.getByTestId('tel-number-display')).toContainText('11');
+    // GR-012: hover antes do segundo clique — Firefox headless ignora clique
+    // consecutivo no mesmo elemento sem movimento de mouse entre eles.
+    await btnApagar.hover();
+    await btnApagar.click();
+    await expect(page.getByTestId('tel-number-display')).not.toContainText('11');
+    await btnApagar.click();
     await expect(page.getByTestId('tel-number-display')).toContainText('Digite o número');
     await expect(page.getByTestId('tel-number-incomplete')).toHaveCount(0);
   });
@@ -255,7 +272,16 @@ test.describe('Y11 · Telefonia', () => {
 
     // Mesmo número do teste anterior, agora com o código do país: o DDI 55 é absorvido e a
     // tela mostra a MESMA forma E.164 — e nunca "55" sobrando no DDD.
-    await digitarNaTela(page, '5511999999204');
+    const digitos = '5511999999204';
+    const progresso = [
+      '5', '55', '551', '5511', '55119', '551199', '5511999', '55119999', '551199999',
+      '+55 (55) 1199-9999', '+55 (55) 11999-9992', '+55 (11) 99999-9920', '+55 (11) 99999-9204',
+    ];
+    const visor = page.getByTestId('tel-number-display').locator('[aria-live="polite"]');
+    for (let i = 0; i < digitos.length; i++) {
+      await teclado(page).getByRole('button', { name: digitos[i], exact: true }).click();
+      await expect(visor, `visor após o dígito ${i + 1}`).toHaveText(progresso[i]);
+    }
     await expect(page.getByTestId('tel-number-display')).toContainText('+55 (11) 99999-9204');
     await expect(page.getByTestId('tel-number-incomplete')).toHaveCount(0);
   });

@@ -9,14 +9,6 @@ import { fileURLToPath } from 'node:url';
 import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const VERSION_RE = /^\d{14}$/u;
-// Fallback (sem LEDGER_EVIDENCE_OUTPUT): diretorio privado por execucao (0700)
-// via mkdtemp, em vez de um caminho fixo e previsivel em /tmp (S5443).
-const OUTPUT_PATH = process.env.LEDGER_EVIDENCE_OUTPUT
-  || path.join(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'zapp-ledger-evidence-')),
-    'targeted-ledger-evidence.json',
-  );
-const PSQL_BIN = process.env.PSQL_BIN || 'psql';
 
 function sha256(input) {
   return crypto.createHash('sha256').update(input).digest('hex');
@@ -150,7 +142,20 @@ function safeError(stderr, connectionString) {
 
 function main() {
   const connectionString = process.env.DESTINO_URL;
-  if (!connectionString) throw new Error('DESTINO_URL ausente');
+  if (!connectionString) {
+    process.stderr.write('FALHA: DESTINO_URL ausente\nUso: DESTINO_URL=postgres://... node export-targeted-ledger-evidence.mjs\n');
+    process.exit(2);
+  }
+
+  // Fallback (sem LEDGER_EVIDENCE_OUTPUT): diretorio privado por execucao (0700)
+  // via mkdtemp, em vez de um caminho fixo e previsivel em /tmp (S5443).
+  const outputPath = process.env.LEDGER_EVIDENCE_OUTPUT
+    || path.join(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'zapp-ledger-evidence-')),
+      'targeted-ledger-evidence.json',
+    );
+  const psqlBin = process.env.PSQL_BIN || 'psql';
+
   const versions = parseTargetVersions(process.env.TARGET_VERSIONS);
   const publicKeyPem = Buffer.from(
     process.env.LEDGER_EVIDENCE_PUBLIC_KEY_BASE64 || '',
@@ -160,7 +165,7 @@ function main() {
 
   let raw;
   try {
-    raw = withPsqlEnvironment(connectionString, (env) => execFileSync(PSQL_BIN, [
+    raw = withPsqlEnvironment(connectionString, (env) => execFileSync(psqlBin, [
       '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--tuples-only', '--no-align',
       '--quiet', '--command', buildLedgerQuery(versions),
     ], {
@@ -177,7 +182,7 @@ function main() {
   }
 
   const records = parseLedger(raw, versions);
-  const output = path.resolve(OUTPUT_PATH);
+  const output = path.resolve(outputPath);
   const temporary = `${output}.tmp-${process.pid}`;
   fs.writeFileSync(temporary, `${JSON.stringify(encryptEvidence(records, publicKeyPem), null, 2)}\n`, {
     encoding: 'utf8', mode: 0o600, flag: 'wx',

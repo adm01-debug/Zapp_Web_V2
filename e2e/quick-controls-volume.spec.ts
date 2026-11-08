@@ -405,29 +405,35 @@ test.describe('controles de volume da sidebar — prova local autenticada', () =
     await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
   });
 
-  // S15 — o foco de volta ao gatilho NÃO é provado aqui de propósito: no navegador
-  // real o Radix Popover devolve o foco ao <body>. O gatilho aqui é um `PopoverAnchor`
-  // (não um `PopoverTrigger`), então o `onCloseAutoFocus` do Radix não tem a quem
-  // devolver e o `focus()` do hook (useVolumeRocker) é sobrescrito no commit de
-  // desmontagem do conteúdo. Medido nas duas vias (clique e teclado): activeElement =
-  // BODY. O caminho do hook continua coberto em jsdom por
-  // `src/hooks/ui/__tests__/useVolumeRocker.test.tsx` (S14/S15). Mesmo tratamento já
-  // usado em `e2e/busca-global-paleta.spec.ts:320` para o mesmo comportamento do Radix.
-  test.fixme('S15: ao fechar, o foco volta ao gatilho', async () => {
+  // S15 — o FocusScope restaura foco durante a desmontagem. A espera pelo evento
+  // real impede aprovar apenas o foco transitório do hook antes do autofocus final.
+  // O mesmo contrato é coberto nos testes reais de SoundVolumeControl.
+  test('S15: ao fechar, o foco volta ao gatilho', async () => {
     await irParaInicio(page);
     await garantirExpandida(page);
 
     const gatilho = gatilhoSom(page);
     const painel = painelSom(page);
 
-    await gatilho.focus();
-    await page.keyboard.press('Enter');
+    await gatilho.press('Enter');
     await expect(painel).toBeVisible();
-    await painel.getByRole('button', { name: 'Aumentar Volume dos alertas em 5%' }).focus();
-    await page.keyboard.press('Escape');
-    await expect(painel).toBeHidden();
-
-    await expect(gatilho).toBeFocused();
+    const saida = await painel.evaluateHandle((element) => {
+      const conteudo = element.closest('[data-state]');
+      if (!conteudo) throw new Error('Content real do Popover não encontrado');
+      const desmontou = new Promise<void>((resolve) => {
+        conteudo.addEventListener('focusScope.autoFocusOnUnmount', () => resolve(), { once: true });
+      });
+      return { desmontou };
+    });
+    try {
+      await painel.getByRole('button', { name: 'Aumentar Volume dos alertas em 5%' }).press('Escape');
+      await saida.evaluate(({ desmontou }) => desmontou);
+      await expect(painel).toHaveCount(0);
+      await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
+      await expect(gatilho).toBeFocused();
+    } finally {
+      await saida.dispose();
+    }
   });
 
   test('B2: no TOQUE o painel abre e NÃO fecha ao soltar o dedo', async () => {
@@ -465,8 +471,11 @@ test.describe('controles de volume da sidebar — prova local autenticada', () =
   // recebe o ponteiro e a dica dele nem chega a abrir (medido no 2º botão).
   // Hover e foco ficam em testes SEPARADOS: no foco, o blur fecha a dica anterior.
   const dicasDaSidebar = (p: Page) => [
-    { botao: p.getByRole('button', { name: /^(Ativar|Desativar) proteção de tela$/ }), texto: /proteção de tela/ },
-    { botao: p.getByRole('button', { name: /^(Ativar|Desativar) todas as notificações$/ }), texto: /todas as notificações/ },
+    // Os dois primeiros seguem o padrão "Nome: estado — ação" (plano D03), igual aos
+    // volumes; o regex antigo (`^(Ativar|Desativar) …$`) ficou para trás no lote de
+    // 16/10 e reprovava os 9 casos que dependem desta lista.
+    { botao: p.getByRole('button', { name: /^Proteção de tela: (ligada|desligada)/ }), texto: /Proteção de tela:/ },
+    { botao: p.getByRole('button', { name: /^Notificações: (ligadas|desligadas)/ }), texto: /Notificações:/ },
     { botao: gatilhoSom(p), texto: /Volume dos alertas|Sons de alerta mudos/ },
     { botao: gatilhoMidia(p), texto: /Volume dos áudios e vídeos|Áudios e vídeos mudos/ },
     { botao: p.getByRole('button', { name: /^Modo (claro|escuro)$/ }), texto: /Modo (claro|escuro)/ },

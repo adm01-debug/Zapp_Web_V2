@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { assertBlocking, conditionOf, jobOf, onlyStep, permission, shellCode, stepsOf } from './workflow-test-support.mjs';
 import { readFileSync } from 'node:fs';
 import {
   agregar,
@@ -81,18 +82,22 @@ test('E79: a tabela traz as colunas pedidas e o total', () => {
   assert.match(tabelaLentos([]), /nenhum job/);
 });
 
-test.skip('E79: o workflow semanal chama o KPI com as permissoes que ele precisa', () => {
+test('E79: o workflow semanal chama o KPI com as permissoes que ele precisa', () => {
   const y = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
-  assert.match(y, /node scripts\/ci\/actions-kpi\.mjs/, 'o workflow tem de rodar o KPI');
+  const job = jobOf(y, 'audit');
+  const step = onlyStep(stepsOf(job), (s) => /^\s*node scripts\/ci\/actions-kpi\.mjs\s*$/m.test(shellCode(s)), 'KPI');
+  assert.equal(conditionOf(job, 4), 'success()');
+  assert.equal(conditionOf(step), 'success()');
+  assertBlocking(job, 4);
+  assertBlocking(step);
   // O zizmor reprova `write` no nivel do WORKFLOW (excessive-permissions, severidade
   // alta): o escopo vale para todos os jobs. As permissoes extras ficam no job, onde
   // o escopo e exatamente o que ele usa -- foi o que o CI pegou no primeiro PR.
   const topo = y.slice(0, y.indexOf('jobs:'));
-  assert.doesNotMatch(topo, /issues:\s*write/, 'write no nivel do workflow o zizmor reprova');
-  assert.doesNotMatch(topo, /actions:\s*read/, 'nem actions: read deve ficar no topo');
-  const job = y.slice(y.indexOf('jobs:'));
-  assert.match(job, /actions:\s*read/, 'listar runs exige actions: read (no job)');
-  assert.match(job, /issues:\s*write/, 'publicar a issue semanal exige issues: write (no job)');
+  assert.notEqual(permission(topo, 'issues', 0), 'write', 'escrita fica no job');
+  assert.equal(permission(topo, 'actions', 0), undefined);
+  assert.equal(permission(job, 'actions'), 'read');
+  assert.equal(permission(job, 'issues'), 'write');
 });
 
 // ---------------------------------------------------------------- #365

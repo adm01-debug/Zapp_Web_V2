@@ -77,7 +77,7 @@ function tokensDoBloco(css: string, seletor: string): Record<string, Rgb> {
         if (nivel === 0) {
           const corpo = limpo.slice(abre + 1, j);
           for (const t of Array.from(
-            corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
+            corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g),
           )) {
             tokens[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
           }
@@ -223,7 +223,7 @@ function tokensDoBlocoExato(css: string, cabecalho: string): Record<string, Rgb>
         for (const t of Array.from(
           limpo
             .slice(abre + 1, j)
-            .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
+            .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g),
         )) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }

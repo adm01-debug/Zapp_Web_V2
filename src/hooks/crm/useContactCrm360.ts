@@ -1,14 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface Crm360Purchase {
-  id: string;
-  title: string;
-  amount: number | null;
-  purchased_at: string | null;
-  status: string | null;
-}
-
 export interface Crm360Deal {
   id: string;
   title: string;
@@ -43,19 +35,16 @@ export interface Crm360Event {
 export interface Crm360Interaction {
   id: string;
   at: string;
-  kind: 'purchase' | 'deal_activity' | 'event';
+  kind: 'deal_activity' | 'event';
   text: string;
   color: 'primary' | 'success' | 'warning' | 'muted';
 }
 
 export interface Crm360Result {
-  purchases: Crm360Purchase[];
   openDeals: Crm360Deal[];
   stages: Crm360Stage[];
   currentStage: Crm360Stage | null;
   currentDeal: Crm360Deal | null;
-  ticketMedio: number | null;
-  ticketDeltaPct: number | null;
   interesses: string[];
   pipeline: {
     propostas: { total: number; count: number };
@@ -64,49 +53,27 @@ export interface Crm360Result {
   };
   interacoes: Crm360Interaction[];
   resumo: {
-    comprasTotal: number;
-    comprasCount: number;
     propostas: number;
     emAberto: number;
   };
 }
 
-const COMPLETED_STATUSES = ['completed', 'approved'];
-const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
-
 /** Agregações puras do CRM 360 — sem I/O, testável com dataset sintético. */
 export function aggregateCrm360(
   input: {
-    purchases: Crm360Purchase[];
     deals: Crm360Deal[];
     stages: Crm360Stage[];
     tagNames: string[];
     activities: Crm360Activity[];
     events: Crm360Event[];
   },
-  now: Date = new Date(),
 ): Crm360Result {
-  const { purchases, deals, stages, tagNames, activities, events } = input;
+  const { deals, stages, tagNames, activities, events } = input;
 
   const openDeals = deals.filter((d) => d.status === 'open');
   const currentDeal = [...openDeals].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))[0] ?? null;
   const sortedStages = [...stages].sort((a, b) => a.position - b.position);
   const currentStage = currentDeal ? sortedStages.find((s) => s.id === currentDeal.stage_id) ?? null : null;
-
-  const completedPurchases = purchases.filter((p) => p.status && COMPLETED_STATUSES.includes(p.status));
-  const nowMs = now.getTime();
-  const recentWindow = completedPurchases.filter((p) => p.purchased_at && nowMs - new Date(p.purchased_at).getTime() <= SIX_MONTHS_MS);
-  const priorWindow = completedPurchases.filter((p) => p.purchased_at && nowMs - new Date(p.purchased_at).getTime() > SIX_MONTHS_MS && nowMs - new Date(p.purchased_at).getTime() <= SIX_MONTHS_MS * 2);
-
-  const avg = (list: Crm360Purchase[]) => (list.length ? list.reduce((s, p) => s + (p.amount ?? 0), 0) / list.length : null);
-
-  const ticketMedio = avg(completedPurchases);
-  let ticketDeltaPct: number | null = null;
-  if (recentWindow.length > 0 && priorWindow.length > 0) {
-    const recentAvg = avg(recentWindow) as number;
-    const priorAvg = avg(priorWindow) as number;
-    ticketDeltaPct = priorAvg > 0 ? ((recentAvg - priorAvg) / priorAvg) * 100 : null;
-  }
 
   const interesses = [...new Set(tagNames)].slice(0, 3);
 
@@ -125,13 +92,6 @@ export function aggregateCrm360(
       text: a.description || a.activity_type,
       color: 'primary',
     })),
-    ...purchases.map((p): Crm360Interaction => ({
-      id: `purchase-${p.id}`,
-      at: p.purchased_at ?? '',
-      kind: 'purchase',
-      text: `Compra realizada — ${p.title}`,
-      color: 'success',
-    })),
     ...events
       .filter((e) => ['transfer', 'close', 'reopen'].includes(e.event_type))
       .map((e): Crm360Interaction => ({
@@ -147,13 +107,10 @@ export function aggregateCrm360(
     .slice(0, 4);
 
   return {
-    purchases,
     openDeals,
     stages: sortedStages,
     currentStage,
     currentDeal,
-    ticketMedio,
-    ticketDeltaPct,
     interesses,
     pipeline: {
       propostas: { total: sum(propostas), count: propostas.length },
@@ -162,8 +119,6 @@ export function aggregateCrm360(
     },
     interacoes,
     resumo: {
-      comprasTotal: completedPurchases.reduce((s, p) => s + (p.amount ?? 0), 0),
-      comprasCount: completedPurchases.length,
       propostas: propostas.length + negociacao.length,
       emAberto: openDeals.length,
     },
@@ -177,13 +132,11 @@ export function useContactCrm360(contactId: string | null | undefined) {
     queryKey: contactCrm360Key(contactId),
     queryFn: async (): Promise<Crm360Result> => {
       const cid = contactId as string;
-      const [purchasesRes, dealsRes, stagesRes, tagsRes] = await Promise.all([
-        supabase.from('contact_purchases').select('id, title, amount, purchased_at, status').eq('contact_id', cid),
+      const [dealsRes, stagesRes, tagsRes] = await Promise.all([
         supabase.from('sales_deals').select('id, title, value, status, stage_id, expected_close_date, updated_at').eq('contact_id', cid),
         supabase.from('sales_pipeline_stages').select('id, name, position, is_active').order('position'),
         supabase.from('contacts').select('tags').eq('id', cid).maybeSingle(),
       ]);
-      if (purchasesRes.error) throw purchasesRes.error;
       if (dealsRes.error) throw dealsRes.error;
       if (stagesRes.error) throw stagesRes.error;
       if (tagsRes.error) throw tagsRes.error;
@@ -207,7 +160,6 @@ export function useContactCrm360(contactId: string | null | undefined) {
       const tagNames = ((tagsRes.data?.tags || []) as string[]).filter(Boolean);
 
       return aggregateCrm360({
-        purchases: (purchasesRes.data ?? []) as Crm360Purchase[],
         deals,
         stages: (stagesRes.data ?? []) as Crm360Stage[],
         tagNames,

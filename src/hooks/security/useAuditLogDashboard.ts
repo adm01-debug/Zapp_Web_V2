@@ -232,20 +232,5 @@ export function useAuditLogDashboard({
     void carregar();
   }, [carregar]);
 
-  // Inserção nova em audit_logs atualiza totais e lista sem recarregar a página.
-  // `audit_logs` está na publicação supabase_realtime
-  // (supabase/migrations/20260828190000_realtime_publish_subscribed_tables.sql).
-  useEffect(() => {
-    const canal = supabase
-      .channel('audit-logs-dashboard')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, () => {
-        void carregar();
-      })
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(canal);
-    };
-  }, [carregar]);
-
   return { stats, logs, nomesPorUsuario, loading, error, recarregar: carregar };
 }

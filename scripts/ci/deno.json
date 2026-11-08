@@ -6,5 +6,5 @@
     "path": "./deno.lock",
     "frozen": true
   },
-  "nodeModulesDir": "none"
+  "nodeModulesDir": "auto"
 }

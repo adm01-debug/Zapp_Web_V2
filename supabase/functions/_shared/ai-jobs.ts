@@ -37,7 +37,7 @@
  * NUNCA um endereço/segredo fixo.
  */
 
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 
 /** Prefixo do módulo nos logs (mesmo padrão de `[ai-budget]`/`[ai-usage]`). */
 const LOG_PREFIX = "[ai-jobs]";

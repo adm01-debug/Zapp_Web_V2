@@ -31,7 +31,7 @@
  * service role nem o corpo do erro de infraestrutura.
  */
 
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { isAuthorizedCronOrUser, unauthorizedResponse } from "../_shared/cron-secret-auth.ts";
 import { bootEdge, type EdgeInjected } from "../_shared/edge-boot.ts";
 import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";

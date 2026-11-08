@@ -54,7 +54,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const [entrada, saida] = process.argv.slice(2);
   if (!entrada || !saida) {
     console.error('Uso: node unchanged-from-log.mjs <log-do-deploy> <saida.json>');
-    process.exitCode = 1;
+    process.exitCode = 2;
   } else {
     const slugs = extractUnchangedSlugs(readFileSync(entrada, 'utf8'));
     writeFileSync(saida, `${JSON.stringify(slugs)}\n`);

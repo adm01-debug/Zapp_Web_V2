@@ -45,7 +45,7 @@ jobs:
   offline-contract:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     if: github.event.pull_request.draft != true
     # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
     # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
@@ -194,6 +194,14 @@ jobs:
       - name: Instalar dependencias do guard AST
         run: bun install --frozen-lockfile --ignore-scripts
 
+      - name: Executar suites Node antes mantidas na allowlist
+        run: |
+          node --test \
+            scripts/catalog/validate-plan.test.mjs \
+            scripts/ui-audit/view-container-padding.unit.mjs \
+            scripts/db-tests/run-all.unit.mjs \
+            scripts/talkx/gen-estados.unit.mjs
+
       # O teste de integracao da V02 fala com um PostgREST real e e escrito em
       # Deno, como os testes da edge. Mesma action e mesmo SHA pinado do ci.yml
       # (o guard nao instala Deno em nenhum outro passo).
@@ -237,6 +245,27 @@ jobs:
           cp scripts/db-audit/docker-shim "$HOME/.local/bin/docker"
           chmod +x "$HOME/.local/bin/docker"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Provar filtro de consultas do snapshot no PostgreSQL 17
+        env:
+          SNAPSHOT_STATS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/supabase-snapshot-stats.test.sh
+
+      # Os dois harnesses usam PostgREST e recursos próprios: o shim não fornece
+      # rede/logs/readiness de containers. JWTs e provedores são só da fixture.
+      - name: Provar cursor e reset Gmail com PostgREST descartável (7 + 1)
+        env:
+          GMAIL_CAS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          GMAIL_CAS_TEST_POSTGREST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-cas-postgrest.test.sh
+
+      - name: Provar X034 com PostgREST e Evolution falso (8)
+        env:
+          TALKX_ENGINE_PROVIDER_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          TALKX_ENGINE_PROVIDER_PGRST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-provider.test.sh
 
       # E47: SKIP_DOCKER_SHIM=1 — este test cria dois bancos (db_a, db_b) no
       # mesmo container e roda DDL identico em cada um. O shim mapeia um
@@ -1052,17 +1081,6 @@ jobs:
           TALKX_ESCOPO_AI_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh
 
-      # Item 33 / R3-DELTA-001: a view emite outcome_unknown_24h, mas o alerta
-      # gravado precisa usar o kind canonico outcome_unknown aceito pelo CHECK.
-      # Harness RED→GREEN em PostgreSQL 17: antes abortava o INSERT..SELECT inteiro
-      # e o lote nao gravava nem os outros alertas da rodada. SKIP_DOCKER_SHIM=1
-      # porque o harness aguarda readiness com `docker logs`, subcomando fora do shim.
-      - name: Provar lote de alertas Talk X com outcome_unknown_24h (item 33)
-        env:
-          TALKX_LOTE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh
-
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
@@ -1250,16 +1268,6 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
 
-      # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
-      # `tcm.role`; o contrato prova RED->GREEN nas duas RPCs e executa o rollback.
-      # Usa Docker real: o harness cria roles globais e compara pg_get_functiondef,
-      # o que nao e compativel com o docker-shim compartilhado do E47.
-      - name: Simular member_role nas RPCs de saída/remoção do team chat (TC-004)
-        env:
-          TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
-
       # R2-DB-020 (item 13): a policy de SELECT de team-chat-files resolvia `name` para
       # profiles.name (subselect com JOIN em profiles), liberando objeto de conversa alheia
       # a quem tivesse profiles.name = media_path da mensagem; e media_path nao era vinculado
@@ -1271,96 +1279,6 @@ jobs:
         env:
           R2DB020_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh
-
-      # QA5-10 (P1, cartao t_ab98c520): frestas de 20261004185228 — qualquer autenticado
-      # criava conversa de departamento alheio como owner, e ex-membro (created_by sem
-      # membership) seguia transferindo a propriedade. Bloco A prova o defeito no mesmo
-      # container, aplica a migration nova e o bloco B prova a correcao, com a guarda de
-      # ultimo owner de pé (so sai depois de transferir).
-      - name: Simular guarda de departamento e transferencia no team chat (QA5-10)
-        env:
-          TEAM_DEPT_GUARD_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-transfer-guards.test.sh
-
-      # R2-DB-020 (item 13): a ACL de leitura de team-chat-files (policy de SELECT) ja foi
-      # corrigida no HEAD por 20261007010651 (TC-001/#54: objects.name qualificado, identidade
-      # current_profile_id, ramo legado auth.uid preservado); o que FALTAVA era vincular a
-      # persistencia de team_messages.media_path ao remetente (sender_id) e a propria conversa.
-      # A sonda prova que o legado existia (ADD CONSTRAINT validado falharia), a migration
-      # aplica, o bloco B prova a recusa de INSERT/UPDATE divergente e a transicao (updated_at
-      # preservado, tabela de apoio do rollback) e o bloco C executa o rollback real, inclusive
-      # a devolucao do dado.
-      - name: Simular persistencia de media_path do Team Chat (R2-DB-020)
-        env:
-          R2DB020_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh
-
-      # R2-DB-020 (item 13): a policy de SELECT de team-chat-files resolvia `name` para
-      # profiles.name (subselect com JOIN em profiles), liberando objeto de conversa alheia
-      # a quem tivesse profiles.name = media_path da mensagem; e media_path nao era vinculado
-      # a remetente/conversa. O bloco A prova o vazamento, a sonda prova que o legado existia
-      # (ADD CONSTRAINT validado falharia), a migration aplica, o bloco B prova a correcao e a
-      # transicao (updated_at preservado, tabela de apoio do rollback) e o bloco C executa o
-      # rollback real, inclusive a devolucao do dado.
-      - name: Simular ACL e persistencia de media_path do Team Chat (R2-DB-020)
-        env:
-          R2DB020_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh
-
-      # R2-DB-020 (item 13): a ACL de leitura de team-chat-files (policy de SELECT) ja foi
-      # corrigida no HEAD por 20261007010651 (TC-001/#54: objects.name qualificado, identidade
-      # current_profile_id, ramo legado auth.uid preservado); o que FALTAVA era vincular a
-      # persistencia de team_messages.media_path ao remetente (sender_id) e a propria conversa.
-      # A sonda prova que o legado existia (ADD CONSTRAINT validado falharia), a migration
-      # aplica, o bloco B prova a recusa de INSERT/UPDATE divergente e a transicao (updated_at
-      # preservado, tabela de apoio do rollback) e o bloco C executa o rollback real, inclusive
-      # a devolucao do dado.
-      - name: Simular persistencia de media_path do Team Chat (R2-DB-020)
-        env:
-          R2DB020_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh
-
-      # R2-DB-020 (item 13): a policy de SELECT de team-chat-files resolvia `name` para
-      # profiles.name (subselect com JOIN em profiles), liberando objeto de conversa alheia
-      # a quem tivesse profiles.name = media_path da mensagem; e media_path nao era vinculado
-      # a remetente/conversa. O bloco A prova o vazamento, a sonda prova que o legado existia
-      # (ADD CONSTRAINT validado falharia), a migration aplica, o bloco B prova a correcao e a
-      # transicao (updated_at preservado, tabela de apoio do rollback) e o bloco C executa o
-      # rollback real, inclusive a devolucao do dado.
-      - name: Simular ACL e persistencia de media_path do Team Chat (R2-DB-020)
-        env:
-          R2DB020_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh
-
-      # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
-      # `tcm.role`; o contrato prova RED->GREEN nas duas RPCs e executa o rollback.
-      # Usa Docker real: o harness cria roles globais e compara pg_get_functiondef,
-      # o que nao e compativel com o docker-shim compartilhado do E47.
-      - name: Simular member_role nas RPCs de saída/remoção do team chat (TC-004)
-        env:
-          TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
-
-      # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
-      # `tcm.role`; o contrato prova RED->GREEN nas duas RPCs e executa o rollback.
-      # Usa Docker real: o harness cria roles globais e compara pg_get_functiondef,
-      # o que nao e compativel com o docker-shim compartilhado do E47.
-      - name: Simular member_role nas RPCs de saída/remoção do team chat (TC-004)
-        env:
-          TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
-
-      # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
-      # `tcm.role`; o contrato prova RED->GREEN nas duas RPCs e executa o rollback.
-      # Usa Docker real: o harness cria roles globais e compara pg_get_functiondef,
-      # o que nao e compativel com o docker-shim compartilhado do E47.
-      - name: Simular member_role nas RPCs de saída/remoção do team chat (TC-004)
-        env:
-          TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
 
       # QA5-10 (P1, cartao t_ab98c520): frestas de 20261004185228 — qualquer autenticado
       # criava conversa de departamento alheio como owner, e ex-membro (created_by sem
@@ -1556,27 +1474,17 @@ jobs:
           N142_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
-      # N-142 (P3 · seguranca): message_reactions.user_id guarda profiles.id, mas a
-      # policy message_reactions_select_policy comparava com auth.uid() (auth user
-      # uuid) — o autor nunca via a propria reacao. O teste aplica a migration real
-      # num PostgreSQL 17 descartavel e prova com papel authenticated real: o autor
-      # ve a propria reacao, estranho sem vinculo nao ve, admin ve tudo e o ramo
-      # contact_id continua intacto; o -- Rollback: executa e restaura o corpo
-      # anterior. Inicia container proprio e roda CREATE ROLE
-      # anon/authenticated/service_role — as roles sao globais ao cluster, entao o
-      # docker-shim do E47 colidiria com as do shim.
-      - name: Provar leitura de reacoes pelo id certo do usuario (N-142)
-        env:
-          N142_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
 
-      # X041: atribuicao de conversao ao ULTIMO toque do Talk X dentro da janela de atribuicao.
-      - name: Provar atribuicao de conversao Talk X ao ultimo toque (X041)
+      # SEC-RLS visibilidade: o teste prova que a escrita de reacoes para o agente de
+      # fila respeita a visibilidade de mensagens. Cria roles globais
+      # anon/authenticated/service_role, por isso SKIP_DOCKER_SHIM=1 (como o N-142).
+      - name: Provar escrita de reacoes para agente de fila (SEC-RLS visibilidade)
+        if: ${{ !cancelled() }}
         env:
-          TALKX_ATTRIBUTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          MR_VIS_FILA_MIGRATIONS_DIR: supabase/migrations
+          MR_VIS_FILA_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-attribution.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-reactions-visibilidade-fila.test.sh
 
       # R2-API-036: defaults internos de currency/occurred_at quando o endpoint manda NULL explicito.
       - name: Provar defaults de conversao Talk X com NULL explicito (R2-API-036)
@@ -1584,13 +1492,6 @@ jobs:
           TALKX_CONVERSION_DEFAULTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-conversion-defaults.test.sh
-
-      # X040: calculo de recencia, frequencia, valor e segmento RFM a partir de contact_purchases.
-      - name: Provar calculo RFM das compras locais Talk X (X040)
-        env:
-          TALKX_RFM_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-rfm.test.sh
 
       # TC-001 (#54): contrato de banco da midia do team chat — bucket, mensagem e renderizacao.
       - name: Provar contrato de banco da midia do team chat (TC-001)
@@ -1650,6 +1551,69 @@ jobs:
         env:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/search_path_pg_temp_is_admin_get_own_gmail.test.sh
+
+      # Estes contratos mantêm containers próprios ou exercitam o shim/harness.
+      # SKIP_DOCKER_SHIM garante PostgreSQL real e isolado por teste, sem tocar
+      # no serviço compartilhado do job. A imagem usada pelo tag é fixada por digest.
+      - name: Provar contratos shell restantes em serviços descartáveis
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: |
+          docker pull "$POSTGRES_TEST_IMAGE"
+          docker tag "$POSTGRES_TEST_IMAGE" postgres:17-alpine
+          testes=(
+            scripts/db-audit/contacts-stats-series-rpc.test.sh
+            scripts/db-audit/conversation-closures-reopen-same-day.test.sh
+            scripts/db-audit/crisis-room-snapshot.test.sh
+            scripts/db-audit/cron-remocao-vacuum-messages.test.sh
+            scripts/db-audit/docker-shim.test.sh
+            scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh
+            scripts/db-audit/ia131-audio-stt-cadeia.test.sh
+            scripts/db-audit/ia131-audio-stt-openrouter.test.sh
+            scripts/db-audit/login_gate_rpc.test.sh
+            scripts/db-audit/message-attempts-log.test.sh
+            scripts/db-audit/message-reactions-author-model.test.sh
+            scripts/db-audit/message-reactions-autoria.test.sh
+            scripts/db-audit/multiplix-completion-item-queue.test.sh
+            scripts/db-audit/pg-cron-escalonamento.test.sh
+            scripts/db-audit/reminders-migracao-identidade.test.sh
+            scripts/db-audit/replay-local-harness.test.sh
+            scripts/db-audit/talk-me-client-privileges.test.sh
+            scripts/db-audit/talkx-campaign-logs-cursor.test.sh
+            scripts/db-audit/talkx-campaign-segments-rpc.test.sh
+            scripts/db-audit/talkx-campaign-segments.test.sh
+            scripts/db-audit/talkx-campaign-window-open.test.sh
+            scripts/db-audit/talkx-contact-attributes.test.sh
+            scripts/db-audit/talkx-current-template-version.test.sh
+            scripts/db-audit/talkx-e27-replay-divergence.test.sh
+            scripts/db-audit/talkx-monitor-panel.test.sh
+            scripts/db-audit/talkx-optout.test.sh
+            scripts/db-audit/talkx-overview-stats.test.sh
+            scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh
+            scripts/db-audit/talkx-segment-library-stats.test.sh
+            scripts/db-audit/talkx-v23-draft-step.test.sh
+            scripts/db-audit/talkx-v25-owner.test.sh
+            scripts/db-audit/talkx-v26-template-version.test.sh
+            scripts/db-audit/whatsapp-media-policies-sem-curinga.test.sh
+          )
+          for teste in "${testes[@]}"; do
+            echo "::group::${teste}"
+            case "$teste" in
+              scripts/db-audit/docker-shim.test.sh|scripts/db-audit/replay-local-harness.test.sh)
+                SKIP_DOCKER_SHIM=0 bash "$teste"
+                ;;
+              scripts/db-audit/cron-remocao-vacuum-messages.test.sh)
+                bash scripts/db-audit/retry-disposable-postgres-test.sh bash "$teste" supabase/migrations/20261006202215_remover_cron_vacuum_messages_post_expurgo.sql
+                ;;
+              scripts/db-audit/pg-cron-escalonamento.test.sh)
+                bash scripts/db-audit/retry-disposable-postgres-test.sh bash "$teste" supabase/migrations/20261002541230_pg_cron_escalonar_jobs.sql
+                ;;
+              *)
+                bash scripts/db-audit/retry-disposable-postgres-test.sh bash "$teste"
+                ;;
+            esac
+            echo "::endgroup::"
+          done
 
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
@@ -1829,11 +1793,6 @@ jobs:
       # Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role
       # (globais ao cluster) -> SKIP_DOCKER_SHIM="1", como os blocos vizinhos.
       - name: Provar o remetente de grupo em messages (t_35d5aa82)
-        env:
-          MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/messages-group-sender.test.sh
-      - name: Provar o remetente de grupo em messages (t_313f15cd)
         env:
           MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"

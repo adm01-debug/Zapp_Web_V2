@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import {
   handleCors,
   errorResponse,
@@ -9,7 +9,7 @@ import {
   getClientIP,
   internalErrorResponse,
 } from "../_shared/validation.ts";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { z } from "npm:zod@3.23.8";
 import { parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 // R2-AUTH-004 (item 6): endpoint único de mutação para revogação de sessões Auth.
@@ -162,10 +162,10 @@ export async function recordRevocationAudit(
   return error ? { ok: false, error: error.message } : { ok: true, error: null };
 }
 
-/** Papéis canônicos do app (public.app_role). Precedência: admin > supervisor > special_agent > agent. */
-export type AppRole = "admin" | "supervisor" | "special_agent" | "agent";
+/** Papéis canônicos do app (public.app_role). Precedência: admin > supervisor > agent. */
+export type AppRole = "admin" | "supervisor" | "agent";
 
-const KNOWN_ROLES: readonly AppRole[] = ["admin", "supervisor", "special_agent", "agent"];
+const KNOWN_ROLES: readonly AppRole[] = ["admin", "supervisor", "agent"];
 
 /** Normaliza o valor de `effective_role`/`user_roles.role`. Desconhecido -> null (fail-closed). */
 export function normalizeRole(value: unknown): AppRole | null {
@@ -174,7 +174,7 @@ export function normalizeRole(value: unknown): AppRole | null {
 }
 
 /** Papéis que um supervisor PODE atingir ao revogar a sessão de um terceiro. */
-export const SUPERVISOR_MAY_TARGET: readonly AppRole[] = ["agent", "special_agent"];
+export const SUPERVISOR_MAY_TARGET: readonly AppRole[] = ["agent"];
 
 export interface ThirdPartyRevocationInput {
   /** alvo é o próprio chamador? então qualquer um revoga a própria sessão. */
@@ -194,7 +194,7 @@ export interface ThirdPartyDecision {
 /**
  * Matriz de papéis da revogação de sessões de TERCEIRO (a própria sessão nunca é barrada):
  * - admin        -> revoga a sessão de administrador, supervisor ou agente.
- * - supervisor   -> SÓ revoga a de agentes (`agent`/`special_agent`); NUNCA a de admin
+ * - supervisor   -> SÓ revoga a de agentes (`agent`); NUNCA a de admin
  *                   nem a de outro supervisor.
  * - agent/outros -> 403 (só a própria sessão).
  * Papel desconhecido/ausente nega (fail-closed), inclusive o alvo de um supervisor.

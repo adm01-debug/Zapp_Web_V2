@@ -559,31 +559,31 @@ export function ConversationListSidebar({
                 {filtersHideAll && hasShortcuts && (
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2" data-testid="inbox-empty-shortcuts">
                     {canShowWaiting && (
-                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-2xs"
                         onClick={() => inboxFilters.setChipTab('waiting')}>
                         Ver aguardando ({countWaiting})
                       </Button>
                     )}
                     {canShowAttending && (
-                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-2xs"
                         onClick={() => inboxFilters.setChipTab('attending')}>
                         Ver atendendo ({countAttending})
                       </Button>
                     )}
                     {canShowUnread && (
-                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-2xs"
                         onClick={() => inboxFilters.setChipTab('unread')}>
                         Ver não lidas ({countUnread})
                       </Button>
                     )}
                     {canShowAllAgents && (
-                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-2xs"
                         onClick={() => inboxFilters.setShowAll(true)}>
                         Ver todos os atendentes
                       </Button>
                     )}
                     {canClearTypeFilter && (
-                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-2xs"
                         onClick={() => inboxFilters.handleContactTypeChange(null)}>
                         Limpar filtro de tipo
                       </Button>

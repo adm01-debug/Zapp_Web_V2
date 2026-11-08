@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { E2E_FIXTURE_CONTACT_ID, E2E_FIXTURE_CONTACT_DISPLAY_NAME } from './fixtures/e2e-contact';
-import { SUPABASE_URL } from './fixtures/supabase-env';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './fixtures/supabase-env';
+import { assertIsolatedFixtureEnvironment } from '../scripts/e2e-isolated/fixture-access.mjs';
 
 // L08 — ponta a ponta de "abrir o e-mail do contato" (C03).
 //
@@ -11,8 +12,9 @@ import { SUPABASE_URL } from './fixtures/supabase-env';
 // por REST com a SERVICE_ROLE_KEY **do conjunto local** — as policies finais
 // bloqueiam INSERT em `gmail_accounts`/`email_threads`/`email_messages` para
 // `authenticated` (só a Edge Function, que usa service role, cria esse dado em
-// produção). Nada toca produção: se a URL não for 127.0.0.1/localhost o spec se
-// auto-pula. A SERVICE_ROLE_KEY sai de `zapp-db-local env` (só existe no local).
+// produção). A escrita exige a prova do controlador descartável, origem HTTPS
+// fixa e chave sintética local, lida somente após a admissão. Fora do modo
+// isolado, os casos permanecem pulados; configuração isolada inválida reprova.
 //
 // Fluxo exercitado (igual ao EmailChatInbox.contato.test.tsx, agora no app real):
 //  - painel de detalhes do contato no inbox → tile "E-mail";
@@ -30,27 +32,29 @@ const ASSUNTO = '[E2E] Conversa do contato L08';
 const CORPO = 'corpo-semeado-l08';
 const MSG_SETUP = '[E2E L08 setup] mensagem para abrir a conversa';
 
+const LOCAL_ORIGIN = 'https://127.0.0.1:5173';
 const API_URL = process.env.API_URL ?? SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SERVICE_ROLE_KEY ?? '';
+const IS_LOCAL = process.env.ZAPP_E2E_LOCAL === '1';
 
-const HOST_LOCAL = (() => {
-  try {
-    return ['127.0.0.1', 'localhost', '::1'].includes(new URL(API_URL).hostname);
-  } catch {
-    return false;
+function requireLocalConfiguration(): void {
+  if (process.env.ZAPP_E2E_LOCAL !== '1' || API_URL !== LOCAL_ORIGIN ||
+      SUPABASE_URL !== LOCAL_ORIGIN || process.env.API_URL !== LOCAL_ORIGIN) {
+    throw new Error('[e2e-email/local-configuration]');
   }
-})();
+}
 
-const IS_LOCAL =
-  process.env.ZAPP_E2E_LOCAL === '1' &&
-  HOST_LOCAL &&
-  SERVICE_ROLE_KEY.length > 0 &&
-  /^http:\/\/(127\.0\.0\.1|localhost):/.test(SUPABASE_URL);
+if (IS_LOCAL) requireLocalConfiguration();
+test.skip(!IS_LOCAL, 'L08 exige o backend HTTPS descartável comprovado pelo controlador isolado.');
 
-test.skip(
-  !IS_LOCAL,
-  'Só roda sob `zapp-e2e-local` com `zapp-db-local env` exportado (banco local). Escrever no Supabase fora do conjunto local é proibido.',
-);
+async function admitLocalFixture(): Promise<void> {
+  requireLocalConfiguration();
+  try {
+    await assertIsolatedFixtureEnvironment({ baseURL: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY });
+  } catch {
+    throw new Error('[e2e-email/admission]');
+  }
+  requireLocalConfiguration();
+}
 
 async function getSession(page: Page): Promise<{ accessToken: string; userId: string }> {
   const session = await page.evaluate(() => {
@@ -77,23 +81,53 @@ async function getSession(page: Page): Promise<{ accessToken: string; userId: st
   return { accessToken: session.access_token, userId: session.user_id };
 }
 
-/** REST no conjunto LOCAL com service role (bypassa RLS). Base da semeadura. */
+/** REST Node no backend descartável; nenhuma service key entra no browser. */
 async function restAdmin(
   method: string,
   path: string,
   data?: unknown,
   extra: Record<string, string> = {},
 ): Promise<Response> {
-  return fetch(`${API_URL}/rest/v1/${path}`, {
-    method,
-    headers: {
-      apikey: SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-      'Content-Type': 'application/json',
-      ...extra,
-    },
-    body: data === undefined ? undefined : JSON.stringify(data),
-  });
+  if (!['POST', 'PATCH', 'DELETE'].includes(method) ||
+      !/^(?:contacts|messages|gmail_accounts|email_threads|email_messages)(?:\?|$)/.test(path) ||
+      Object.keys(extra).some(field => field !== 'Prefer') ||
+      (extra.Prefer !== undefined && !['return=minimal', 'return=representation'].includes(extra.Prefer))) {
+    throw new Error('[e2e-email/request-shape]');
+  }
+  await admitLocalFixture();
+  // Ler só depois da prova/identidade; o alias é emitido pelo mesmo controlador.
+  const key = process.env.SERVICE_ROLE_KEY;
+  try {
+    const expectedKey = process.env.E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY;
+    if (!key || !expectedKey || !Object.is(key, expectedKey)) throw new Error();
+    const parts = key.split('.');
+    if (parts.length !== 3 || parts.some(part => !/^[A-Za-z0-9_-]+$/.test(part))) throw new Error();
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+    const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    if (header?.alg !== 'HS256' || claims?.role !== 'service_role' || claims?.iss !== 'supabase' ||
+        !Number.isFinite(claims.exp) || claims.exp * 1000 <= Date.now()) throw new Error();
+  } catch {
+    throw new Error('[e2e-email/service-credential]');
+  }
+  let response: Response;
+  try {
+    response = await fetch(`${LOCAL_ORIGIN}/rest/v1/${path}`, {
+      method,
+      redirect: 'error',
+      signal: AbortSignal.timeout(10_000),
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        ...extra,
+      },
+      body: data === undefined ? undefined : JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('[e2e-email/request-failed]');
+  }
+  if (!response.ok || response.redirected) throw new Error('[e2e-email/http-failed]');
+  return response;
 }
 
 /** Apaga tudo o que este spec semeia e zera o e-mail do contato fixo. */
@@ -175,17 +209,34 @@ async function criarConversaDoContato(accountId: string): Promise<void> {
   expect(msgRes.ok, `INSERT email_messages falhou: HTTP ${msgRes.status} ${await msgRes.text().catch(() => '')}`).toBeTruthy();
 }
 
-/**
- * Abre a conversa do contato fixo no inbox SEM depender de `ensureFixtureConversationOpen`
- * (que grava `sender: 'contact'`, reprovado pelo trigger de proveniência r2_db_022:
- * de usuário autenticado só passa `sender: 'agent'`). Grava uma mensagem do agente
- * marcada com MSG_SETUP para o contato aparecer na janela do inbox.
- */
-async function garantirConversaAberta() {
-  await restAdmin('POST', 'rpc/set_conversation_status', {
-    p_contact_id: E2E_FIXTURE_CONTACT_ID,
-    p_status: 'open',
-  });
+/** Reabre com o usuário real e cria somente o texto de preparo próprio de L08. */
+async function garantirConversaAberta(page: Page) {
+  await admitLocalFixture();
+  const { accessToken } = await getSession(page);
+  await admitLocalFixture();
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+  let rpc: Response;
+  let contact: Response;
+  try {
+    rpc = await fetch(`${LOCAL_ORIGIN}/rest/v1/rpc/set_conversation_status`, {
+      method: 'POST', headers, redirect: 'error', signal: AbortSignal.timeout(10_000),
+      body: JSON.stringify({ p_contact_id: E2E_FIXTURE_CONTACT_ID, p_next: 'open' }),
+    });
+    if (!rpc.ok || rpc.redirected) throw new Error();
+    contact = await fetch(`${LOCAL_ORIGIN}/rest/v1/contacts?id=eq.${E2E_FIXTURE_CONTACT_ID}&select=id,conversation_status`, {
+      method: 'GET', headers, redirect: 'error', signal: AbortSignal.timeout(10_000),
+    });
+    if (!contact.ok || contact.redirected) throw new Error();
+    const rows = await contact.json() as Array<{ id: string; conversation_status: string }>;
+    if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.id !== E2E_FIXTURE_CONTACT_ID ||
+        rows[0].conversation_status !== 'open') throw new Error();
+  } catch {
+    throw new Error('[e2e-email/conversation-prepare]');
+  }
   const res = await restAdmin(
     'POST',
     'messages',
@@ -198,7 +249,7 @@ async function garantirConversaAberta() {
 /** Abre o painel de detalhes do contato fixo no inbox e espera o tile de e-mail. */
 async function abrirPainelDoContato(page: Page) {
   await page.goto('/');
-  await garantirConversaAberta();
+  await garantirConversaAberta(page);
   await page.reload();
   await expect(page.getByTestId('status-chip-all')).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('status-chip-all').click();
@@ -213,7 +264,7 @@ async function abrirPainelDoContato(page: Page) {
 function tileEmail(page: Page) {
   return page
     .getByTestId('contact-panel')
-    .locator('button[data-testid="contact-action-tile"][aria-label="E-mail"]');
+    .locator('button[data-testid="contact-action-tile"][aria-label^="E-mail"]');
 }
 
 test.describe('Abrir o e-mail do contato a partir do painel (C03) — ponta a ponta', () => {

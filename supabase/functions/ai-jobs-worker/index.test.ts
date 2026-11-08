@@ -22,7 +22,7 @@
 // Run with: deno test --allow-read supabase/functions/ai-jobs-worker/index.test.ts
 
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import type { AiJob } from "../_shared/ai-jobs.ts";
 import { resolveDefaultTimeoutMs } from "../_shared/ai-generate.ts";
 import { AI_PURPOSES } from "../_shared/ai-routing.ts";

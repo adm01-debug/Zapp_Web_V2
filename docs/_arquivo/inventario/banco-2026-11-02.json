@@ -1,0 +1,64 @@
+{
+ "medido_em": "2026-11-02T13:12:00Z",
+ "fonte": "MCP SUPABASE - ZAPP WEB V2 - MCP (db_query, so leitura), projeto tnnnlkbymytvtqngbbqh",
+ "resumo": {
+  "postgres": "17.6",
+  "tabelas_public": 211,
+  "tabelas_sem_rls": 0,
+  "policies": 521,
+  "funcoes_sql_public": 481,
+  "views": 13,
+  "triggers": 161,
+  "cron_jobs": 24,
+  "cron_ativos": 24,
+  "ledger_registros": 1075,
+  "ledger_versao_max": "20261102012200"
+ },
+ "tabelas_orfas": {
+  "criterio": "0 linhas + nenhum .from() em src/ ou supabase/functions/ + nao citada em funcao SQL, view ou trigger",
+  "lista": [
+   "_rb_message_reactions_contato_20261007001008", "_zapp_fn_before", "_zapp_mig133_log",
+   "ai_usage_outbox", "campaign_ab_variants", "campaign_contacts", "catalog_rate_limits",
+   "copilot_conversation_scores", "copilot_help_requests", "copilot_learning_moments",
+   "copilot_objection_catalog", "copilot_outcomes", "copilot_seller_settings", "copilot_usage",
+   "crisis_room_alerts", "department_invites", "entity_versions", "mfa_sessions", "outbox_events",
+   "sicoob_contact_mapping", "talkx_data_jobs", "team_chat_media_acl_r2_db_020_rb", "webhook_failures"
+  ],
+  "quase_orfas_so_com_trigger": ["email_signatures", "payment_links", "sla_alert_preferences"]
+ },
+ "cron": {
+  "jobs": [
+   {"nome": "ai-jobs-tick-1min", "agenda": "1-59 * * * *", "alvo": "trigger_ai_jobs_tick()", "falhas_48h": 35},
+   {"nome": "dispatch-scheduled-messages", "agenda": "* * * * *", "alvo": "dispatch_scheduled_messages()", "falhas_48h": 34},
+   {"nome": "tasks-notify-due", "agenda": "* * * * *", "alvo": "notify_due_tasks()", "falhas_48h": 34},
+   {"nome": "talkx-scheduler-1min", "agenda": "* * * * *", "alvo": "trigger_talkx_engine_tick() -> edge talkx-scheduler", "falhas_48h": 27},
+   {"nome": "crm-sync-outbox", "agenda": "1-59/2 * * * *", "alvo": "trigger_crm_sync_outbox()", "falhas_48h": 19},
+   {"nome": "expire-stale-agent-presence", "agenda": "1-59/2 * * * *", "alvo": "expire_stale_agent_presence()", "falhas_48h": 19},
+   {"nome": "csat-reply-capture-tick", "agenda": "*/2 * * * *", "alvo": "fn_capture_csat_replies()", "falhas_48h": 15},
+   {"nome": "multiplix-send-trigger", "agenda": "0-58/2 * * * *", "alvo": "trigger_pending_multiplix_dispatches()", "falhas_48h": 15},
+   {"nome": "close-stale-calls", "agenda": "*/5 * * * *", "alvo": "close_stale_calls()", "falhas_48h": 10},
+   {"nome": "gmail-incremental-sync", "agenda": "0-55/5 * * * *", "alvo": "edge gmail-cron-sync", "falhas_48h": 10},
+   {"nome": "connection-health-check", "agenda": "2-57/5 * * * *", "alvo": "edge connection-health-check", "falhas_48h": 6},
+   {"nome": "cleanup-edge-rate-limits", "agenda": "7-52/15 * * * *", "alvo": "DELETE edge_rate_limits", "falhas_48h": 3},
+   {"nome": "avatars-refresh", "agenda": "7 * * * *", "alvo": "edge batch-fetch-avatars", "falhas_48h": 1},
+   {"nome": "voice-changer-tmp-purge", "agenda": "17 * * * *", "alvo": "purge_voice_changer_tmp(24,200)", "falhas_48h": 1},
+   {"nome": "security-acl-score", "agenda": "23 * * * *", "alvo": "score_security_acl()", "falhas_48h": 0},
+   {"nome": "searchbox-budget-alert", "agenda": "0 12 * * *", "alvo": "searchbox_budget_alert_tick()", "falhas_48h": 0},
+   {"nome": "cleanup-link-preview-cache", "agenda": "12 3 * * *", "alvo": "cleanup_link_preview_cache()", "falhas_48h": 0},
+   {"nome": "user-sessions-expire-diario", "agenda": "17 3 * * *", "alvo": "expire_user_sessions()", "falhas_48h": 0},
+   {"nome": "expire-orphan-user-sessions", "agenda": "23 3 * * *", "alvo": "expire_orphan_user_sessions()", "falhas_48h": 0},
+   {"nome": "purge-qr-attempts", "agenda": "25 3 * * *", "alvo": "purge_qr_attempts()", "falhas_48h": 0},
+   {"nome": "vacuum-contacts-daily", "agenda": "42 3 * * *", "alvo": "VACUUM ANALYZE contacts", "falhas_48h": 0},
+   {"nome": "search-events-retention", "agenda": "10 4 * * *", "alvo": "purge_old_search_events()", "falhas_48h": 0},
+   {"nome": "crm-sync-outbox-cleanup", "agenda": "17 4 * * *", "alvo": "run_crm_sync_outbox_cleanup()", "falhas_48h": 0},
+   {"nome": "reconnection-logs-retention-30d", "agenda": "30 4 * * *", "alvo": "DELETE reconnection_logs > 30d", "falhas_48h": 0}
+  ],
+  "observacao": "Todas as falhas das ultimas 48 h sao 'job startup timeout' (pg_cron sem worker livre). 4 jobs rodam a cada minuto e 4 a cada 2 min; o timeout concentra-se neles."
+ },
+ "whatsapp": {
+  "conexao_padrao": {"nome": "Promo Brindes WhatsApp", "instance_id": "PRINCIPAL", "status": "disconnected", "ultimo_update": "2026-11-02T13:12:02Z"},
+  "fixture_e2e": {"nome": "[E2E] Conexao WhatsApp Teste", "instance_id": "E2E_FIXTURE", "status": "connected"},
+  "health_check_recente": ["disconnected 13:12:02Z", "disconnected 13:07:02Z"],
+  "mensagens_ultimos_7_dias": 4
+ }
+}

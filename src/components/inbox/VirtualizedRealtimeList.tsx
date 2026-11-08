@@ -589,7 +589,7 @@ const ConversationRow = memo(({
           <div className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <span className="font-semibold text-foreground truncate text-[15px]">
+                <span data-testid="conversation-contact-name" className="font-semibold text-foreground truncate text-[15px]">
                   {(() => {
                     const firstName = (conversation.contact.name || 'Sem nome').split(' ')[0];
                     const displayName = conversation.contact.nickname?.trim() || firstName;

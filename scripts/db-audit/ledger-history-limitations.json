@@ -82,6 +82,150 @@
       "filename": "20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql",
       "local_file_sha256": "324f24c01f3cde3593befc86317206f8e4544c18cbbcbdb151fc248e614f19f2",
       "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261015230338",
+      "filename": "20261015230338_voice_command_logs_lgpd.sql",
+      "local_file_sha256": "b2a32772edbd2c008dc91e22987f76c715fac6a391c04b8c6d249c0f2f8a08d9",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261015232316",
+      "filename": "20261015232316_rpc_queue_goal_metrics.sql",
+      "local_file_sha256": "0bc3bc4b7fdb4c5e5b28284658e883e683407bc19d7be40d0d48dcb2c2ad4110",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261015232546",
+      "filename": "20261015232546_profiles_self_update_sensitive_columns.sql",
+      "local_file_sha256": "7a66fd2f60c477d33741d73accf35b5f1fa91df9589b3d2cda5cb4b55b0d76d8",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016001136",
+      "filename": "20261016001136_audio_memes_bucket_limits_admin_delete.sql",
+      "local_file_sha256": "efdb0da84f1c016d6073fca73915f218ee8888d24ec2c2e017b912d3cf14f0fd",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016002012",
+      "filename": "20261016002012_my_network_status.sql",
+      "local_file_sha256": "a04dba878b2f632f5136324123084fdf99d5d213aa0bc27f8142c5c91357ef36",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016005650",
+      "filename": "20261016005650_admin_unlock_login.sql",
+      "local_file_sha256": "7b18fd29bc96e718ec5cc230fac80b255bd5042e666d7615d88a27ddecc24dc2",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016005752",
+      "filename": "20261016005752_passkey_credentials_hardening.sql",
+      "local_file_sha256": "f5c13639c3d877cb9404411c4ce3f25fbb12fab3463d98bbe54139613f469ad6",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016010011",
+      "filename": "20261016010011_set_conversation_status_waiting_para_archived.sql",
+      "local_file_sha256": "f4a96f130a0b38b8a760bdd12e3842b83a13b1e997c6a31ec7d88546213e4183",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016010744",
+      "filename": "20261016010744_consent_status_guard.sql",
+      "local_file_sha256": "34798a3398dd57bbc874a56da0c2cc845629419e2575da9b34076702edeae225",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016011302",
+      "filename": "20261016011302_crm_sync_outbox_cron.sql",
+      "local_file_sha256": "3a4a85e4ca06e79eff133c52448d1dba6274dfa1108d448b7a4cb90176113c1e",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016013134",
+      "filename": "20261016013134_search_events.sql",
+      "local_file_sha256": "ddb6cd21d88de217fd04033421af7735505df120f87e7facb5314ead94ed128a",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016013528",
+      "filename": "20261016013528_scheduled_messages_state_machine.sql",
+      "local_file_sha256": "74e97ae571e4e40790863aa1126ae59afc4b8baf21a4de5bdd20a0fa19df1d71",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016015438",
+      "filename": "20261016015438_whisper_mark_read_policy.sql",
+      "local_file_sha256": "42e06763c210227cbce9284156a7ddc3d82ec974acaea6bf5fec4b59fafc0559",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016023444",
+      "filename": "20261016023444_inbox_wait_summary.sql",
+      "local_file_sha256": "e7eb605e410708d5c796926ba55d704b40f40bed0936206b480810ca4abe36e0",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016030109",
+      "filename": "20261016030109_tasks_contact_visibility.sql",
+      "local_file_sha256": "94b91679c39142deeecfa8437083c34113f246c9c2e2b10ad073e87471db24fe",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016030211",
+      "filename": "20261016030211_messages_transcribed_at.sql",
+      "local_file_sha256": "aecab9469fd6ba6888ccd9c7ab162cf2e19a37994dbe968d39069b6636186419",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016033451",
+      "filename": "20261016033451_purge_gmail_account_data.sql",
+      "local_file_sha256": "b5c51b5132e01fa79d7d9a04d4cd028e5fa02327c7a481d830b59bcd2a19d4c2",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016050617",
+      "filename": "20261016050617_messages_trgm_busca.sql",
+      "local_file_sha256": "1703e664e22a69ce1ef51fff65b0ba22bf649e4cb73eb3c188cbae5861494f1b",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016102054",
+      "filename": "20261016102054_team_chat_files_limit.sql",
+      "local_file_sha256": "b6ff41aebb819cabffab50e3baf0eeddcde902ba63fd007461b8ba2e4c4a5378",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016102337",
+      "filename": "20261016102337_get_team_birthdays.sql",
+      "local_file_sha256": "5df1f0495d872fecee7641e9c3979b19b06194e87c2d6afc3b0d20b7530b8485",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016102541",
+      "filename": "20261016102541_delivery_stats_rpc.sql",
+      "local_file_sha256": "fb87e780df18e4d4b5de378523b513f73733434098f4145726ef0cc1c73b2c54",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016105108",
+      "filename": "20261016105108_n011_storage_drop_duplicate_avatar_policies.sql",
+      "local_file_sha256": "d990bcbd7645fd8bca65eb7dd0197be2332e95a19c8220f8daf8039f8e3184d3",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016112802",
+      "filename": "20261016112802_whisper_audio_path.sql",
+      "local_file_sha256": "57e7e0205cfad8d9836dcb8a2503013d37d6655381dc17293357cf0946325673",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20261016115413",
+      "filename": "20261016115413_realtime_publication_agent_achievements.sql",
+      "local_file_sha256": "26735d3f1222f8e67b1a55a42edf18c1ef17616f5edf7931ab3fe5c1d9de5904",
+      "evidence_class": "name-and-file-pinned"
     }
   ]
 }

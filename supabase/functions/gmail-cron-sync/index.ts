@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger, requireEnv, internalErrorResponse } from "../_shared/validation.ts";
 import { claimGmailAccountSync, ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, selectGmailAccountsDue, syncMessageIds, type GmailSyncClaim } from "../_shared/gmail-helpers.ts";
 

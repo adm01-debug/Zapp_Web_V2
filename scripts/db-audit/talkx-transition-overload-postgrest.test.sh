@@ -101,7 +101,8 @@ assert_eq() {
 
 assert_deno() {
   local label="$1" expect_ambiguous="$2"
-  TALKX_EXPECT_AMBIGUOUS="$expect_ambiguous" \
+  NO_PROXY="$pgrst_no_proxy" no_proxy="$pgrst_no_proxy" \
+    TALKX_EXPECT_AMBIGUOUS="$expect_ambiguous" \
     TALKX_POSTGREST_URL="http://$pgrst_ip:3000" \
     TALKX_POSTGREST_JWT="$jwt" \
     TALKX_CAMPAIGN_ID="$campaign_id" \
@@ -239,13 +240,16 @@ docker run --rm -d --name "$pgrst_name" --network "$net_name" \
   "$pgrst_image" >/dev/null
 
 pgrst_ip="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$pgrst_name")"
+pgrst_no_proxy="${NO_PROXY:-${no_proxy:-}}"
+[[ -z "$pgrst_no_proxy" ]] || pgrst_no_proxy+=','
+pgrst_no_proxy+="$pgrst_ip"
 postgrest_ready=false
 for _ in $(seq 1 60); do
   # http:// aqui e o proprio objeto sob teste: o PostgREST e descartavel, numa
   # rede docker isolada criada por este script, sem dado de cliente e sem
   # credencial real (segredo e senha sao literais de teste, gerados no run).
   # Nao ha comparador TLS a testar: o alvo e a ambiguidade do overload na RPC.
-  if curl -sf "http://$pgrst_ip:3000/" >/dev/null 2>&1; then # NOSONAR
+  if curl --noproxy '*' -sf "http://$pgrst_ip:3000/" >/dev/null 2>&1; then # NOSONAR
     postgrest_ready=true
     break
   fi

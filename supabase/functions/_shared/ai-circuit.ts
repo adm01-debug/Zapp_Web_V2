@@ -43,7 +43,7 @@
  *    real, no mesmo padrão de `ai-budget`/`ai-guards`.
  */
 
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { sharedRateLimit } from "./ai-guards.ts";
 
 const LOG_PREFIX = "[ai-circuit]";

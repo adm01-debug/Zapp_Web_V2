@@ -17,12 +17,15 @@
  * A credencial de banco (service role) fica DENTRO do reprocessador; este
  * handler nunca monta cliente privilegiado a partir do que o chamador manda.
  *
- * Proteção — igual à das demais funções de cron:
+ * Proteção — segredo dedicado no Vault (padrão Multiplix / L5), não o
+ * `CRON_SECRET` compartilhado de três cópias:
  *   - só o header `x-cron-secret` autoriza, conferido em TEMPO CONSTANTE contra
- *     o `CRON_SECRET` do ambiente;
- *   - `anon`/JWT de usuário/`apikey` NÃO autorizam;
- *   - fail-closed: segredo ausente/vazio ou header ausente ⇒ 401 e a fila não é
- *     lida nem tocada.
+ *     `vault.secrets.ai_usage_outbox_drain_cron_secret` (RPC
+ *     `get_ai_usage_outbox_drain_cron_secret`, só service_role);
+ *   - `anon`/JWT de usuário/`apikey`/`CRON_SECRET` NÃO autorizam;
+ *   - fail-closed: segredo ausente, RPC fora ou header ausente ⇒ 401 e a fila
+ *     não é lida nem tocada.
+ * O teste injeta `deps.cronSecret` e não toca no Vault.
  *
  * Lote limitado: o corpo aceita `{"limite": n}`, preso a [1, 500], padrão 50 —
  * a fila drena em pedaços, sem um run gigante reprocessando o backlog inteiro.
@@ -35,7 +38,7 @@ import {
   type ResultadoReprocessamentoLogEssencial,
 } from "../_shared/ai-usage.ts";
 import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
-import { errorResponse, internalErrorResponse, jsonResponse } from "../_shared/validation.ts";
+import { errorResponse, handleCors, internalErrorResponse, jsonResponse } from "../_shared/validation.ts";
 
 /** Tamanho do lote quando a requisição não pede outro. */
 export const LIMITE_PADRAO = 50;
@@ -45,8 +48,40 @@ export const LIMITE_MAXIMO = 500;
 export interface AiUsageOutboxDrainDeps {
   /** Reprocessador. O teste troca por um espião; produção usa o real. */
   reprocessar?: (limite: number) => Promise<ResultadoReprocessamentoLogEssencial>;
-  /** Override do `CRON_SECRET` (o teste não mexe no env do processo). */
+  /**
+   * Segredo já resolvido. O teste injeta; produção lê o Vault.
+   * String vazia força o fail-closed sem consultar o Vault.
+   */
   cronSecret?: string;
+}
+
+/**
+ * Lê o segredo dedicado. Qualquer falha (env ausente, RPC inexistente, rede)
+ * devolve "" — o handler trata como não autorizado e não toca na fila.
+ */
+async function lerSegredoDoVault(): Promise<string> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return "";
+  try {
+    const resp = await fetch(
+      `${url.replace(/\/+$/, "")}/rest/v1/rpc/get_ai_usage_outbox_drain_cron_secret`,
+      {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      },
+    );
+    if (!resp.ok) return "";
+    const data: unknown = await resp.json();
+    return typeof data === "string" ? data : "";
+  } catch {
+    return "";
+  }
 }
 
 /** `limite` → inteiro em [1, 500]; qualquer coisa ilegível vira o padrão. */
@@ -73,10 +108,12 @@ export async function handleAiUsageOutboxDrain(
   req: Request,
   deps: AiUsageOutboxDrainDeps = {},
 ): Promise<Response> {
+  const cors = handleCors(req);
+  if (cors) return cors;
   // ── Autorização primeiro: sem credencial de cron não se toca na fila ──
   const cronSecret = deps.cronSecret !== undefined
     ? deps.cronSecret
-    : (Deno.env.get("CRON_SECRET") ?? "");
+    : await lerSegredoDoVault();
   const headerDoCron = req.headers.get("x-cron-secret");
   // Fail-closed: segredo do ambiente vazio não autoriza nada.
   const autorizado = cronSecret !== "" && headerDoCron !== null &&

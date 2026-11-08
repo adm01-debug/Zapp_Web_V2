@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, isValidUUID, Logger } from "../_shared/validation.ts";
 import { ElevenLabsWebhookV1Schema, ElevenLabsWebhookV2Schema, validationErrorResponse } from "../_shared/schemas.ts";
 import { parseVersioned } from "../_shared/contracts.ts";

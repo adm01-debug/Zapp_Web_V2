@@ -401,7 +401,11 @@ export function QuickReactionBar({
             <button
               data-testid="quick-reaction-more"
               aria-label="Mais reações"
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
+              disabled={isReacting}
+              className={cn(
+                'w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]',
+                isReacting && 'opacity-50 cursor-not-allowed',
+              )}
             >
               <SmilePlus className="w-4 h-4" />
             </button>
@@ -418,9 +422,11 @@ export function QuickReactionBar({
                   key={emoji}
                   aria-label={`Reagir com ${emoji}`}
                   aria-pressed={hasReacted(emoji)}
+                  disabled={isReacting}
                   onClick={() => handleReact(emoji)}
                   className={cn(
                     'w-8 h-8 flex items-center justify-center rounded-md text-lg hover:bg-muted transition-all hover:scale-110',
+                    isReacting && 'opacity-50 cursor-not-allowed',
                     hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
                   )}
                 >

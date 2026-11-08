@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BASE36_MAIUSCULO, secureRandomChars } from '../../lib/secureRandom';
 import { queryKeys } from './queryKeys';
 
 export interface DepartmentProfile {
@@ -52,19 +51,15 @@ export function toDepartmentWhatsAppMode(raw: unknown): DepartmentWhatsAppCreden
 }
 
 /**
- * Codigo do convite de departamento — credencial: quem digita entra no departamento.
- * PRNG previsivel aqui e vulnerabilidade (typescript:S2245), nao enfeite.
- *
- * O formato e CONTRATO do banco: `department_invites.code` e `text NOT NULL
- * UNIQUE` (migration 20260927400000) e a RPC `accept_department_invite` procura
- * por `code = upper(trim(p_code))`. `secureRandomChars(8, BASE36_MAIUSCULO)`
- * sorteia 8 caracteres do MESMO alfabeto de 36 do codigo antigo
- * ('A-Z0-9'), sem vies de modulo — formato preservado byte a byte, agora sem
- * codigo adivinhavel.
+ * Convite de departamento: o codigo e uma credencial (quem digita entra no
+ * departamento). Ele nasce e e consumido no banco, na MESMA tabela:
+ * `create_department_invite` sorteia o codigo (gen_random_bytes) e grava em
+ * `department_invitations`, e `accept_department_invite` procura nela. A tabela
+ * antiga `department_invites` nao e lida pela RPC de aceite — convite gravado la
+ * nunca era aceito.
  */
-function generateInviteCode(): string {
-  return secureRandomChars(8, BASE36_MAIUSCULO);
-}
+const INVITE_MAX_USES = 1;
+const INVITE_EXPIRES_HOURS = 7 * 24;
 
 export function useDepartmentProfiles() {
   return useQuery<DepartmentProfile[]>({
@@ -103,9 +98,10 @@ export function useDepartmentInvites(departmentId: string) {
     queryKey: queryKeys.departments.invites(departmentId),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('department_invites')
-        .select('*')
+        .from('department_invitations')
+        .select('id, department_id, code, created_by, expires_at, created_at')
         .eq('department_id', departmentId)
+        .eq('status', 'pending')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (error) {
@@ -134,22 +130,17 @@ export function useDepartmentWhatsAppCredentials(departmentId: string) {
 export function useCreateDepartmentInvite(departmentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (actorName: string) => {
-      const code = generateInviteCode();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error: inviteErr } = await supabase
-        .from('department_invites')
-        .insert({ department_id: departmentId, code, expires_at: expiresAt, created_by: user?.id ?? null });
-      if (inviteErr) throw inviteErr;
-      await supabase.from('department_audit_logs').insert({
-        department_id: departmentId,
-        action: 'create_invite',
-        profile_id: user?.id ?? null,
-        // O código é uma credencial de entrada. Ele já fica em department_invites;
-        // não o copie para a trilha de auditoria, visível a mais perfis.
-        details: { profile_name: actorName },
+    // A RPC decide a permissao, grava criador (perfil) e auditoria
+    // `invite_created` sem o codigo. Responde {ok:false, error} com HTTP 200.
+    mutationFn: async (_actorName: string) => {
+      const { data, error } = await supabase.rpc('create_department_invite', {
+        p_department_id: departmentId,
+        p_max_uses: INVITE_MAX_USES,
+        p_expires_hours: INVITE_EXPIRES_HOURS,
       });
+      if (error) throw error;
+      const result = (data ?? null) as { ok?: boolean; error?: string } | null;
+      if (!result?.ok) throw new Error(result?.error ?? 'create_department_invite_failed');
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.departments.invites(departmentId) });
@@ -163,7 +154,7 @@ export function useDeleteDepartmentInvite(departmentId: string) {
   return useMutation({
     mutationFn: async ({ inviteId, actorName }: { inviteId: string; actorName: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('department_invites').delete().eq('id', inviteId);
+      const { error } = await supabase.from('department_invitations').delete().eq('id', inviteId);
       if (error) throw error;
       await supabase.from('department_audit_logs').insert({
         department_id: departmentId,

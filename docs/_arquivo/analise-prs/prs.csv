@@ -1,0 +1,295 @@
+number,title,state,draft,verdict,merge_sha,ci_gate,notes
+1930,feat(db-audit): adiciona --classificar e --json ao check-migration-drift,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+1975,ci: reativa 8 suites de teste removidas do CI mínimo,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+1979,docs: plano de correções dos workflows em FAILURE — 200 etapas (2026-10-16),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+1991,fix: corrige nomes de workflows no notificador e cancelamento de scroll programá,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+1997,feat: CV-010–020 Fase 2 RADAR copilot migrations,closed,,DECISAO_HUMANA,,see_dossier,sessão anterior
+1998,feat: CV-021–030 Motor copilot-live edge function,closed,,DECISAO_HUMANA,,see_dossier,sessão anterior
+2000,feat: RADAR Fase 4 Inteligência B·R·I·N·D·E CV-031–040,closed,,DECISAO_HUMANA,,see_dossier,sessão anterior
+2002,feat: RADAR CV-041–050 Sugestões ao vivo,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2003,feat: CV-051–060 RADAR painel flutuante,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2013,"feat: CV-071–080 RADAR objeções, battlecard",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2022,"feat: RADAR copilot Phase 9 — Catalog, Budget, Timeline (CV-081–090)",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2024,feat: RADAR copilot Phase 10 — Engajamento e Velocidade de Resposta (CV-091–100),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2025,feat: RADAR copilot Phase 11 — Multimodal (CV-101–110),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2026,feat: RADAR copilot Phase 12 — Guardrails e LGPD (CV-111–120),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2029,"feat: RADAR Phase 13 — Supervisor, coaching e treinamento CV-121–130",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2030,feat: RADAR copiloto CV-131–140 — Aprendizado contínuo Fase 14,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2032,"feat: RADAR Copiloto — Fase 15: Custos, Piloto e Rollout (CV-141–150)",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2034,fix(ci): GA02 + GA10 — guarda CLAUDE.md no CI e contrato de nomes,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2035,fix: mock global @/lib/logger no Vitest — desbloqueia CI,closed,,BLOQUEADO_CI,,see_dossier,sessão anterior
+2036,fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2037,fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL s,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2040,fix(e2e-logado): restaura W71 — workflow_run em vez de push na main,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2042,ci(W94+W32): talkx-status-regen concurrency + MIGRATIONS daily lote,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2044,ci(W49+W50+W39): comentários ci.yml/codeql.yml + playwright dinâmico,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2046,ci: skip draft PRs nos required CI jobs (W72),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2051,ci: Playwright 1.64.1 + OpenSSF Scorecard + dependency-review + Bun cache,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2054,"fix(ci+security): Z011–Z032 — requireAuth, timingSafeEqual, node-scripts split, ",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2056,ci: auto-update-pr-branch rewrite (fila-merge.mjs) + settings-guard.yml,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2057,feat(ci): lint-ratchet --base <ref> para lint recortado por PR,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2058,fix(tests/F1a): adiciona createLogger aos logger mocks,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2059,fix(ConnectionCard): ReferenceError handleDisconnectDialogOpenChange,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2060,fix(tests/F1a): mock de useCustomEmojis segundo .order() ausente,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2062,fix(test): VoiceChangerPicker.aria — adiciona useReducedMotion ao mock framer-mo,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2063,fix(tests/F1a): useAuth/AuthProvider ausentes em 2 test files,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2064,fix(test): useChatMediaSending.audio-meme-falha — mock channel/getPublicUrl,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2065,fix(test): AgentsView.capacidade + pendencias — mock channel/removeChannel,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2066,fix(storage): useAudioMemes — prefixo user.id no caminho de upload (PK-16/PK-17),merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2067,fix(test): adiciona exports createLogger e LOCAL_VOICE_ID nos mocks de arquivos-,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2068,fix(test): adiciona AUDIT_PAGE_SIZE e MIN_PASSWORD_LENGTH ao mock de AdminView,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2069,fix(test): adiciona range/gte/lte ao mock de supabase em useAdminData.select.tes,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2070,fix(admin): corrige assinatura de avatares em fetchData('users') e migra mock pa,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2071,chore: remove hook morto useTalkXSuppression (list hook) e teste associado,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2072,"fix(talkx): corrige 3 bugs em useTalkXSegments (rpc.bind, lead_origin, real_sect",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2073,fix(knowledge): expõe erro de useKnowledgeBase ao invés de silenciar,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2074,"fix(a11y): adiciona role=""alert"" ao overlay de useScreenProtection",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2075,fix(warroom): notificações desktop passavam por caminho de Service Worker desabi,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2076,fix(test): adiciona useReducedMotion e MotionConfig ao mock de framer-motion em ,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2077,chore(security): remove mutations.test.tsx de gamificação (RPCs de escrita inten,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2078,chore(ci): altera scripts/ci/github-settings-baseline.json para strict=false,closed,,DECISAO_HUMANA,,see_dossier,sessão anterior
+2079,fix(test): corrige índice de canal errado em teste de useTeamMessages,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2080,"fix(teamchat): corrige 3 bugs em useTeamChatNotifications (canal recriado, SW pa",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2081,fix: contagem de whatsapp_connections lançava e derrubava toda a coleta de diagn,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2082,fix: falha de leitura em useUserSettings ficava invisível (C-1),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2083,fix: NPSDashboard não expunha erro de leitura nem aviso de teto,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2084,fix: Leaderboard não distinguia RPC caída de ranking vazio,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2085,fix(ux): WhatsAppTemplatesManager — gate isAdmin para ações de escrita,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2086,fix(a11y): QueueCard — botão remover visível em touch (N-180.6),merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2087,fix(test): GmailInboxView.paginacao — mock rpc search_email_threads + channel,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2088,fix(tests/F1a): safe-area/scrollbar-none CSS mock,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2089,fix(audio): chat.service — resolveAudioFormat substitui webm hardcoded,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2090,fix(auth): limpar fila offline no logout + extrair authSession.ts,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2091,fix(edge/Z011-B+C): comparação timing-safe em 2 edge functions,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2092,fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p),closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2093,"fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2094,fix(db): FASE 2 — REVOKE anon write grants todas as tabelas (Z054-Z055),closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2095,fix(edge/Z018+Z020): segurança em edge functions [ANOMALIA],closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2096,feat(vercel): plano de correções Vercel 190 etapas — execução V001-V180,merged,,JÁ_MERGEADA,,see_dossier,sessão anterior
+2097,fix: corrige falhas pré-existentes nos Unit Tests (useKnowledgeBase + useTalkXSe,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2098,"fix: corrigir falhas de CI — testes, a11y, bundle e motion (261019)",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2099,chore(deps): Bump github/codeql-action from 4.38.3 to 4.39.0,merged,,JÁ_MERGEADA,,see_dossier,sessão anterior
+2100,"fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2101,"chore(deps): Bump actions-misc group (setup-node, upload-artifact, github-script",merged,,JÁ_MERGEADA,,see_dossier,sessão anterior
+2102,deps: Bump the deps-semanal group with 11 updates,merged,,JÁ_MERGEADA,,see_dossier,sessão anterior
+2103,"fix(ci): GA02/GA04/GA08/GA10/GA62/GA75/GA76/GA77 — guard GraphQL merge.*, CLAUDE",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2104,fix(ci): PGUSER postgres + GA75 endpoint + GA77 sem auto-restore + TS2322 + secu,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2105,docs: plano de integração de branches em 300 etapas (153 branches → só main),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2106,NÃO EXISTE,closed,,NÃO_EXISTE,,see_dossier,sessão anterior
+2107,docs(g9): absorver planos de docs ausentes da main — E274,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2108,fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditor,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2109,fix(test): mock useCustomEmojis.upload suporta duplo .order(),closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2110,fix(tests): add createLogger to vi.mock('@/lib/logger') em 20 testes,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2111,PR #2111,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2112,PR #2112,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2113,"fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2116,"feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to (plano V",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2119,PR #2119,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2120,PR #2120,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2121,PR #2121,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2123,PR #2123,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2124,PR #2124,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2125,PR #2125,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2126,PR #2126,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2127,PR #2127,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2128,PR #2128,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2129,PR #2129,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2135,PR #2135,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2137,PR #2137,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2138,"fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB G",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2139,PR #2139,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2141,PR #2141,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2142,PR #2142,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2143,PR #2143,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2144,PR #2144,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2145,PR #2145,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2146,PR #2146,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2147,PR #2147,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2148,PR #2148,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2149,PR #2149,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2151,PR #2151,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2152,PR #2152,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2155,PR #2155,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2157,Add Dependency Review Action workflow,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2159,Add Bearer workflow for code scanning,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2160,Add Hadolint workflow for Dockerfile linting,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2161,Add puppet-lint GitHub Actions workflow,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2162,Add PHPMD workflow for PHP code analysis,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2163,Add lintr workflow for R code analysis,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2164,Add GitHub Actions workflow for rust-clippy analysis,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2165,Add PMD code scanning workflow,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2166,Add GitHub Actions workflow for Deno,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2167,Add GitHub Actions workflow for Node.js with Webpack,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2168,Add SLSA generic generator workflow,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2169,Add Node.js CI workflow for testing,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2170,Add GitHub Actions workflow for npm package publishing,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2171,Add Docker publish workflow configuration,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2172,Add Docker Image CI workflow,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2173,Add GitHub Actions workflow for npm publishing,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2174,Add GitHub Actions workflow for Python package publishing,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2175,Add GitHub Actions workflow for Python package with Conda,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2176,Add Django CI workflow for testing on multiple Python versions,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2177,PR #2177,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2178,PR #2178,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2179,PR #2179,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2181,PR #2181,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2183,PR #2183,closed,,DESCONHECIDO,,see_dossier,sessão anterior
+2185,docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2186,fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + lo,closed,,DECISAO_HUMANA,,see_dossier,sessão anterior
+2187,"fix(tests): corrige falhas de testes no baseline main — mocks, lógica e código m",closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2190,fix: corrige 9 falhas de CI que mantinham a main vermelha,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2191,"fix: auth.setup não clica mais na aba ""Entrar""",closed,,BLOQUEADO_CI,,see_dossier,sessão anterior
+2195,fix: crash cachedConversations undefined + this-binding rpc metas de fila,closed,,BLOQUEADO_CI_E_BEHIND,,see_dossier,sessão anterior
+2196,PR #2196,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2197,PR #2197,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2199,fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2200,analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2206,fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato ,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2208,PR #2208,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2209,PR #2209,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2211,PR #2211,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2213,PR #2213,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2214,PR #2214,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2215,PR #2215,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2216,PR #2216,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2217,PR #2217,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2218,fix(talkx+ci): X094 TalkXTemplateEditor + guards useTalkXSegments + PK-14 + fixe,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2219,PR #2219,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2221,PR #2221,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2222,PR #2222,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2223,feat(tasks): NewTaskDialog lazy load + testes de criação/descarte/coerência,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2225,PR #2225,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2226,PR #2226,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2228,PR #2228,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2229,PR #2229,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2230,chore: remove hook morto useTalkXSuppression,closed,,COMPLETAR,,see_dossier,sessão anterior
+2231,feat(contacts): contact_notes is_pinned + edição inline + testes RLS,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2232,fix(test): SummaryResult — selector h-6×w-6 → h-8×w-8,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2233,PR #2233,closed,,**BLOQUEADO_CI**,,see_dossier,sessão anterior
+2234,feat(ui): GreetingBanner — streak chip pluralização + acessibilidade,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2235,feat(db): migration IP2 — instance_pauses investigation columns + function,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2236,"feat(monitoring): MonitoringInboxSilence — aba ""Entrada muda""",merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2237,"fix(a11y): aria-busy, motion-safe, aria-hidden",merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2238,PR #2238,closed,,**DECISAO_HUMANA**,,see_dossier,sessão anterior
+2239,feat(ui): GoalsDashboard — seletor de período + skeleton de loading,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2240,feat(talkx): X115 — TalkXSegments filtros persistem em URL,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2241,PR #2241,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2242,PR #2242,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2244,fix(types): 9 RPCs + offline queue userId + m4a,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2245,PR #2245,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2246,fix(ci+docs): TC-009 + ChatMessagesArea + fila-merge + PK-14 + deployment-manife,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2247,docs: resgate-validacao command,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2248,fix(test): destrava o CI Gate da main (136 → 1 arquivo vermelho),closed,,DECISAO_HUMANA,,see_dossier,sessão anterior
+2249,PR #2249,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2250,PR #2250,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2255,PR #2255,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2261,PR #2261,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2263,fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving),closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2265,PR #2265,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2266,PR #2266,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2267,PR #2267,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2268,PR #2268,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2269,PR #2269,closed,,**BLOQUEADO_CI_E_BEHIND**,,see_dossier,sessão anterior
+2270,chore(ci): codeql-action SHA bump v4.39.0 → v4.39.1,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2271,chore(deps): Dependabot bun.lock + package.json bump (15 pacotes),merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2272,chore(infra): preview-egress-proxy Dockerfile — golang SHA bump,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2273,fix(test+ci): fila-merge retry + correção de mocks em 4 test files,merged,,MERGEAR_SE_CI_VERDE,,see_dossier,sessão anterior
+2274,"fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502",closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2275,fix: corrige 5 falhas de testes unitários (CI verde),closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2276,chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2277,chore(db) GOAL backend — storage audit + manifest + migrations docs,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2278,fix(ci): atualiza guarda dashboard_kpi para migration 20261026210000,closed,,CI_BLOQUEADO,,see_dossier,sessão anterior
+2279,PR #2279,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2283,MERGEADA,merged,,MERGEADA,6271b716,pass,run 40574770535
+2284,analise-prs: entregáveis de sessão anterior,closed,,SUPERSEDED,,see_dossier,sessão anterior
+2286,fix(edge-deploy): E09 — timestampBumped como evidência,closed,,CI_BLOQUEADO,,see_dossier,sessão anterior
+2295,feat(ci): skip heavy jobs em draft PRs (E71),closed,,SKIP_PROHIBITED,,see_dossier,sessão anterior
+2297,PR #2297,closed,,DECISÃO_HUMANA,,see_dossier,sessão anterior
+2298,feat(e75): centraliza versões de toolchain em toolchain.json,closed,,SKIP_PROHIBITED,,see_dossier,sessão anterior
+2305,docs(mapa): USO_SEARCHBOX,closed,,CI_BLOQUEADO,,see_dossier,sessão anterior
+2340,docs(consolidacao): registra types-sync integrado,merged,,MERGEADA,,see_dossier,sessão anterior
+2417,BLOQUEADO_CI,closed,,BLOQUEADO_CI,,see_dossier,sessão anterior
+2418,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2426,BLOQUEADO_CONFLITO,closed,,BLOQUEADO_CONFLITO,,see_dossier,sessão anterior
+2428,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2431,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2445,DRAFT_SKIP,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2447,MERGEADA,merged,,MERGEADA,3617a2ac,pass,run 41337427133
+2457,INCOMPLETO,closed,,INCOMPLETO,,see_dossier,sessão anterior
+2460,BLOQUEADO_DDL_FALTANDO,closed,,BLOQUEADO_DDL_FALTANDO,,see_dossier,sessão anterior
+2461,feat(db): 7 tabelas copiloto fases 13-15 (CV-121–CV-150),merged,,MERGEAR,,see_dossier,sessão anterior
+2462,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2463,fix: MediaMigrationTool acessa dados via service (no-restricted-imports),merged,,MERGEAR,,see_dossier,sessão anterior
+2465,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2466,BLOQUEADO_AGUARDANDO_APROVACAO,closed,,BLOQUEADO_AGUARDANDO_APROVACAO,,see_dossier,sessão anterior
+2468,SUPERSEDIDA,closed,,SUPERSEDIDA,,see_dossier,sessão anterior
+2469,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2471,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2472,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2473,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2475,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2476,BLOQUEADO_AGUARDANDO_APROVACAO,closed,,BLOQUEADO_AGUARDANDO_APROVACAO,,see_dossier,sessão anterior
+2478,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2479,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2480,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2481,fix(rls): WITH CHECK explícito em 8 políticas UPDATE críticas,open,,SUPERSEDIDA,,unknown,CONFLICT add/add migration 20261101213000 já em main via #2482
+2482,MERGEADA,merged,,MERGEADA,3b5f8a96,pass,run 41343946533
+2483,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2484,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2485,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2486,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2487,BLOQUEADO_AGUARDANDO_APROVACAO,closed,,BLOQUEADO_AGUARDANDO_APROVACAO,,see_dossier,sessão anterior
+2489,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2491,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2492,BLOQUEADO_CONFLITO,closed,,BLOQUEADO_CONFLITO,,see_dossier,sessão anterior
+2493,BLOQUEADO_FALSO_CLAUDE_MD,closed,,BLOQUEADO_FALSO_CLAUDE_MD,,see_dossier,sessão anterior
+2494,chore(db): sincronizar artefatos derivados do banco,open,,DECISAO_HUMANA_DDL,,unknown,CLEAN_MERGE; aguarda confirmação DDL copilot_*
+2495,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2496,feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estáve,open,,FEATURE_FREEZE_VIOLACAO,,unknown,feature nova PD-79 + CONFLICT deployment-manifest.json
+2497,SKIP_WORKFLOWS,closed,,SKIP_WORKFLOWS,,see_dossier,sessão anterior
+2498,fix(admin): corrige RPC get_search_insights → search_insights + consolidação aud,open,,BLOQUEADO_CONFLITO,,unknown,CONFLICT grants-baseline.json; RPC rename válido
+2499,SKIP_WORKFLOWS,closed,,SKIP_WORKFLOWS,,see_dossier,sessão anterior
+2500,DRAFT_SKIP,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2501,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2502,DRAFT_SKIP,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2503,SKIP_WORKFLOWS,closed,,SKIP_WORKFLOWS,,see_dossier,sessão anterior
+2504,AGUARDANDO_CI,closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2505,DRAFT_SKIP,closed,,DRAFT_SKIP,,see_dossier,sessão anterior
+2522,PR #2522,merged,,MERGEADA,4b5c6e79,pass,run 41393445297
+2526,fix(ci): deno check --config + waitForAppliedTheme corrigem deploy-functions e E,open,,REGRA8_WORKFLOW,,unknown,CONFLICT .github/workflows/deploy-functions.yml
+2533,chore: arquivo de reconciliação migration 20261030145126 (copilot_fases13_15_tab,open,,REGRA8_MIGRATION,,unknown,CONFLICT add/add migration 20261030145126
+2536,fix(e2e): workers sempre 2 — elimina timeout do Email fixture no CI (GR-016),open,,SUPERSEDED,,unknown,supersedida por #2560 (mesmo fix mais limpo)
+2539,"fix: reconcilia migrations 20261026 — arquivo 240300, replay-known-failures, TC-",open,True,DRAFT_CONFLICTING,,unknown,CONFLICT replay-known-failures.json
+2542,fix: N-008 DB Guard — N008_POSTGRES_IMAGE ausente causava falha de pull,open,,REGRA8_WORKFLOW,,unknown,CONFLICT PENDENCIAS.md + test.sh; workflow
+2543,fix: E2E alto-contraste e N-008 healthcheck,merged,,MERGEADA,3e6ed32a,pass,run 41387517970
+2545,PR #2545,merged,,MERGEADA,c16f3c69,flake_preexistente,docs only; flake pré-existente run 41380773345
+2547,PR #2547,merged,,MERGEADA,3066fac0,pass,run 41376578021
+2549,PR #2549,merged,,MERGEADA,dfef2487,pass_pr_red_pos_merge,CI Gate PR ✅; deploy edge NÃO VERIFICADO run 41394672177
+2551,PR #2551,closed,,**BLOQUEADO_RLS_SEM_TESTE**,,see_dossier,sessão anterior
+2552,PR #2552,merged,,**FECHADA_SEM_MERGE**,,see_dossier,sessão anterior
+2553,feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050),open,True,DRAFT_SKIP,,unknown,TalkX V4 X050 draft — feature freeze
+2555,feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051),open,True,DRAFT_SKIP,,unknown,TalkX V4 draft — feature freeze
+2556,feat: E2E reload test para preservação de rota URL (X052),open,True,DRAFT_SKIP,,unknown,TalkX V4 X052 draft — feature freeze
+2557,fix(docs): atualiza required checks no CLAUDE.md (GR-011),closed,,AGUARDANDO_CI,,see_dossier,sessão anterior
+2558,feat(talkx): trilha de navegação clicável no monitor (X053),open,True,DRAFT_SKIP,,unknown,TalkX V4 X053 draft — feature freeze
+2559,PR #2559,closed,,**AGUARDANDO_CI**,,see_dossier,sessão anterior
+2560,PR #2560,merged,,MERGEADA,a7a53f56,pass,run 41379237707
+2561,fix(rls): department_invites DDL + frontend hook,closed,,BLOQUEADO_AGUARDANDO_APROVACAO,,see_dossier,sessão anterior
+2562,feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias,open,,FEATURE_FREEZE_VIOLACAO,,unknown,feature nova lgpd — não é fluxo crítico
+2563,PR #2563,closed,,**BLOQUEADO_CONFLITO**,,see_dossier,sessão anterior
+2564,PR #2564,closed,,**AGUARDANDO_CI**,,see_dossier,sessão anterior
+2565,CLAUDE.md (versão alternativa),merged,,MERGEADA,ac04c5c0,pass,run 41396210357
+2566,fix(ci): mocks de supabase + workflow_run no e2e-logado,merged,,FECHADA_SEM_MERGE,,see_dossier,sessão anterior
+2567,fix(ci): deno install --frozen=false,merged,,MERGEADA,8ba0b436,pass,run 41385347360
+2569,fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029,merged,,MERGEADA,50ca61a6,pass,run 41390035434
+2570,fix: RLS department_invites restringe escrita a admins,merged,,MERGEADA,d45033e8,pass,run 41397424005
+2571,fix(contacts): race condition enderecoVigenteRef via useLayoutEffect,closed,,BLOQUEADO_CONFLITO,,see_dossier,sessão anterior
+2576,fix(contacts): substituir useEffect por useLayoutEffect para eliminar race condi,open,,BLOQUEADO_CONFLITO,,unknown,CONFLICT ContactForm.tsx; não é minha branch
+2583,fix(edge): CORS preflight em ai-usage-outbox-drain e copilot-live (smoke 83/85→8,merged,,MERGEADA_POS_SESSAO,e92a0901,pass,2026-11-02T08:10Z
+2589,fix(db): alinhar 20261102012200 com ledger — gen_random_bytes sem prefixo extens,closed,,FECHADA_OUTRA_SESSAO,,unknown,fechada 2026-11-02T08:46Z — sem drift confirmado
+2590,fix(ci): timeout e non-fatal no preflight PromoGifts do deploy-functions,merged,,MERGEADA_POS_SESSAO,946565d4,pass,2026-11-02
+2592,fix(e2e): GR-012 — waits intermediários entre cliques de apagar no Firefox,merged,,MERGEADA_POS_SESSAO,6d14ac06,pass,2026-11-02T08:19Z
+2593,fix: regex !important nos 10 testes de contraste a11y quebrados pelo #2587,merged,,MERGEADA_POS_SESSAO,5911a25d,pass,2026-11-02T07:59Z
+2594,fix(tests): aceita !important nos tokens CSS nos testes de contraste a11y,closed,,FECHADA_SUPERSEDIDA,,unknown,supersedida por #2593
+2603,fix(db): adicionar arquivo migration 20261102012200 ausente da main (drift),open,,REGRA8_MIGRATION,,unknown,"drift: arquivo ausente, DDL no banco; Rule 8"
+2606,chore(db): move 2 migrations não-aplicadas para _superseded/,open,,REGRA8_MIGRATION,,in_progress,move migrations to _superseded; auto_merge; Rule 8

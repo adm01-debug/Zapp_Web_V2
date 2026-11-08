@@ -195,13 +195,8 @@ Deno.test("matriz: supervisor → agente é permitido", () => {
   if (!d.allowed) fail("supervisor deve poder revogar a sessão de um agente");
 });
 
-Deno.test("matriz: supervisor → special_agent é permitido", () => {
-  const d = decision("supervisor", "special_agent");
-  if (!d.allowed) fail("special_agent é tier de agente: supervisor pode revogar");
-});
-
 Deno.test("matriz: admin → qualquer é permitido (admin/supervisor/agent)", () => {
-  for (const alvo of ["admin", "supervisor", "special_agent", "agent"]) {
+  for (const alvo of ["admin", "supervisor", "agent"]) {
     const d = decision("admin", alvo);
     if (!d.allowed) fail(`admin deve poder revogar a sessão de ${alvo}`);
   }
@@ -214,7 +209,7 @@ Deno.test("matriz: agente → outro agente é 403 (só a própria)", () => {
 });
 
 Deno.test("matriz: a própria sessão nunca é barrada, de qualquer papel", () => {
-  for (const caller of ["admin", "supervisor", "special_agent", "agent", null]) {
+  for (const caller of ["admin", "supervisor", "agent", null]) {
     if (!decision(caller, "admin", true).allowed) fail(`self de ${caller} deveria ser permitido`);
   }
 });
@@ -227,7 +222,7 @@ Deno.test("matriz: papel desconhecido nega (fail-closed) nos dois lados", () => 
 
 Deno.test("normalizeRole aceita só os papéis canônicos", () => {
   if (normalizeRole("admin") !== "admin") fail("admin deveria normalizar");
-  if (normalizeRole("special_agent") !== "special_agent") fail("special_agent deveria normalizar");
+  if (normalizeRole("supervisor") !== "supervisor") fail("supervisor deveria normalizar");
   if (normalizeRole("superuser") !== null) fail("papel desconhecido deveria virar null");
   if (normalizeRole(undefined) !== null) fail("undefined deveria virar null");
 });
