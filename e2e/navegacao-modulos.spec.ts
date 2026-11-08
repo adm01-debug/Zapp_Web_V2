@@ -3,21 +3,31 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { PRODUCT_NAME } from '../src/lib/productName';
+import { assertIsolatedFixtureEnvironment } from '../scripts/e2e-isolated/fixture-access.mjs';
+import {
+  observeIsolatedFunctionPosts, requireSipNotConfigured, requireDeviceResult,
+  readIsolatedSessionIdentity, requireSessionAbsent, requireCanonicalSession,
+  requireOwnedDevice, requireSameKnownSession, readBearerAccessToken,
+  readLoginAccessToken, requireSyntheticUser, requireFreshAuthSession,
+  type SessionIdentity,
+} from './fixtures/function-completion';
 
 /**
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
- * Abre CADA entrada que o papel do usuário sintético do conjunto local enxerga na
- * barra lateral — as 11 da navegação primária e 29 dos 31 itens das 5 seções
- * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e prova, módulo a
+ * Abre CADA entrada MAPEADA que o papel do usuário sintético do conjunto local enxerga na
+ * barra lateral — as 10 da navegação primária e 32 dos 34 itens mapeados das 6 seções
+ * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema e Em Desenvolvimento) — e prova, módulo a
  * módulo, que a tela monta de verdade: título do documento, tela própria do módulo
  * (nunca "Acesso restrito", nunca o esqueleto de carregamento preso, nunca tela em
  * branco) e nenhum erro de console, exceção ou resposta >= 400.
- * Dois dos 31 itens são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
+ * Dois dos 34 itens mapeados são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
  * e 'Admin' (`:121`), ambos com `roles: ADMIN_ONLY` — e o usuário do seed é
  * supervisor: eles ficam FORA da varredura e a AUSÊNCIA é conferida de propósito
  * (`conferirEntradasForaDoPapel`), para o mapa de módulos não perder linhas em
  * silêncio.
+ * Tarefas tem dois percursos, Lista e Quadro: 42 entradas únicas e 43 percursos.
+ * Meta CAPI e Calendário têm superfície de demonstração; esta prova não executa integrações externas.
  * Repete tudo no celular 390x844, pelo menu móvel. A busca global ("Buscar") entra
  * nas duas larguras.
  *
@@ -66,6 +76,8 @@ interface ItemNav {
   id: string;
   /** rótulo exato da entrada na barra lateral (o nome acessível do botão) */
   label: string;
+  /** Percurso de Tarefas: mesmo menu/título, superfícies Lista e Quadro distintas. */
+  modo?: 'Lista' | 'Quadro';
   /**
    * Entrada que a barra lateral só mostra para ADMINISTRADOR
    * (`src/services/navigation.service.ts`: `crm360` na linha 70 e `admin` na 121,
@@ -89,8 +101,8 @@ const PRIMARIOS: ItemNav[] = [
   { id: 'multiplix', label: 'Multiplix' },
   { id: 'catalog', label: 'Catálogo' },
   { id: 'voip', label: 'Telefonia' },
-  { id: 'pipeline', label: 'Quadro' },
-  { id: 'tasks', label: 'Tarefas' },
+  { id: 'tasks', label: 'Tarefas', modo: 'Quadro' },
+  { id: 'tasks', label: 'Tarefas', modo: 'Lista' },
   { id: 'achievements', label: 'Conquistas' },
   { id: 'dashboard', label: 'Dashboard' },
 ];
@@ -145,10 +157,19 @@ const SECOES: SecaoNav[] = [
       { id: 'agents', label: 'Equipe' },
       { id: 'security', label: 'Segurança' },
       { id: 'privacy', label: 'LGPD' },
+      { id: 'supervisao', label: 'Supervisão' },
       { id: 'admin', label: 'Admin', somenteAdmin: true },
+      { id: 'search-insights', label: 'Insights de Busca' },
       { id: 'themes', label: 'Skins' },
       { id: 'docs', label: 'Documentação' },
       { id: 'settings', label: 'Configurações' },
+    ],
+  },
+  {
+    label: 'Em Desenvolvimento',
+    itens: [
+      { id: 'meta-capi', label: 'Meta CAPI' },
+      { id: 'google-calendar', label: 'Calendário' },
     ],
   },
 ];
@@ -161,7 +182,7 @@ const SECOES: SecaoNav[] = [
  * aba já dizia outra coisa.
  */
 const TITULO_BASE = PRODUCT_NAME;
-const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: tarefas, chatbot)';
+const PLACEHOLDER_BUSCA = 'Buscar ou digitar comando... (⌘K)';
 const MENU_DESKTOP = 'Menu de navegação principal';
 const MENU_CELULAR = 'Menu de navegação';
 const NAV_INFERIOR = 'Navegação principal';
@@ -185,14 +206,19 @@ interface LacunaLocal {
 }
 
 /**
- * As 4 entradas abaixo são tudo que o conjunto local não consegue servir por falta de
- * segredo/configuração externa — e cada uma é conferível: o corpo da resposta casa a
- * assinatura declarada e o log do runtime mostra a variável ausente.
+ * As 6 entradas abaixo são tudo que o conjunto local não consegue servir por falta de
+ * segredo/configuração externa ou por estado de ambiente — e cada uma é conferível:
+ * o corpo da resposta casa a assinatura declarada e o log do runtime mostra a causa.
  * (`docker logs <container>-functions | grep -i "not configured"`)
  *
  *   get-sip-password      503  {"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}
  *                              log: {"fn":"get-sip-password","msg":"SIP_PASSWORD is not configured"}
- *                              (o mesmo endpoint tem um 401 de DEFEITO do produto — ver lista 2)
+ *   get-sip-password      401  {"error":"Invalid or expired token"} (e "Missing Authorization
+ *                              bearer token" / "Authentication failed") — o conjunto local não
+ *                              mantém a sessão de auth da edge; o token expira/invalida
+ *   detect-new-device     500  {"error":"Internal server error"}
+ *                              log: {"level":"error","source":"edge","status":500,...}
+ *                              (a detecção de novo device falha no boot do conjunto local)
  *   promogifts-catalog    503  {"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"}
  *                              (o banco externo do catálogo vive no projeto externo)
  *   multiplix-audience    503  {"error":"Internal server error"}
@@ -215,7 +241,27 @@ const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
     fonte: 'supabase/functions/get-sip-password/index.ts:53-58',
   },
   {
-    caminho: '/functions/v1/promogifts-catalog',
+      caminho: '/functions/v1/get-sip-password',
+      status: 401,
+      sintoma: 'Telefonia: o conjunto local não mantém a sessão de auth da edge e o token expira/invalida (401)',
+      corpos: [
+        '"error":"Missing Authorization bearer token"',
+        '"error":"Invalid or expired token"',
+        '"error":"Authentication failed"',
+      ],
+      log: 'o conjunto local não mantém a sessão de auth da edge; o token expira/invalida',
+      fonte: 'supabase/functions/_shared/validation.ts:506,526,530 (requireAuth)',
+    },
+    {
+      caminho: '/functions/v1/detect-new-device',
+      status: 500,
+      sintoma: 'Device: a detecção de novo device falha no boot do conjunto local e devolve 500 Internal server error',
+      corpos: ['"error":"Internal server error"'],
+      log: '{"level":"error","source":"edge","status":500,"msg":"..."} (falha no boot do conjunto local)',
+      fonte: 'supabase/functions/detect-new-device/index.ts:382 (internalErrorResponse)',
+    },
+    {
+      caminho: '/functions/v1/promogifts-catalog',
     status: 503,
     sintoma: 'Catálogo: a função depende do banco externo do catálogo e devolve 503 CATALOG_NOT_CONFIGURED',
     corpos: ['"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"'],
@@ -263,24 +309,7 @@ interface DefeitoDeProduto {
  * no relatório da rodada com módulo, sintoma, área e o nome do fixme — e a varredura
  * REPROVA se o status ou o corpo não forem exatamente os medidos aqui.
  */
-const DEFEITOS_DE_PRODUTO: DefeitoDeProduto[] = [
-  {
-    sintoma: 'motor SIP chama get-sip-password sem credencial utilizável e recebe 401',
-    area: 'chamadas',
-    fixme: 'DEFEITO: o motor SIP chama get-sip-password sem credencial utilizável (401)',
-    caminho: '/functions/v1/get-sip-password',
-    status: 401,
-    corpos: ['"error":"Invalid or expired token"', '"code":"UNAUTHORIZED_NO_AUTH_HEADER"'],
-  },
-  {
-    sintoma: 'detect-new-device devolve 500 quando o app chama duas vezes em paralelo (StrictMode)',
-    area: 'login/segurança',
-    fixme: 'DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes em paralelo',
-    caminho: '/functions/v1/detect-new-device',
-    status: 500,
-    corpos: ['"error":"Internal server error"'],
-  },
-];
+const DEFEITOS_DE_PRODUTO: DefeitoDeProduto[] = [];
 
 interface NinhoDeProduto {
   /** tag que CONTÉM (o React acusa "X dentro de X" / "X não pode conter X") */
@@ -300,32 +329,10 @@ interface NinhoDeProduto {
  * duas formas — `In HTML, <div> cannot be a descendant of <p>.` (com a pilha de
  * componentes) e `<p> cannot contain a nested <div>.` — e as duas trazem os dois
  * nomes de tag; `parAninhamento` lê os DOIS formatos e só aceita o par exato
- * declarado aqui. Par novo (outra combinação de tags) REPROVA: é defeito novo, que
- * precisa de dono antes de virar tolerância.
+ * declarado aqui. As três regressões históricas agora estão ativas e a lista
+ * está vazia: qualquer recorrência ou par novo REPROVA.
  */
-const NINHOS_DE_PRODUTO: NinhoDeProduto[] = [
-  {
-    ancestral: 'button',
-    descendente: 'button',
-    onde: 'barra lateral: botão "Adicionar aos favoritos" dentro do botão do item',
-    area: 'telas',
-    fixme: 'DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item',
-  },
-  {
-    ancestral: 'li',
-    descendente: 'li',
-    onde: 'trilha de navegação do PageHeader e view do Quadro (pipeline)',
-    area: 'telas',
-    fixme: 'DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro',
-  },
-  {
-    ancestral: 'p',
-    descendente: 'div',
-    onde: 'Documentação: selo do catálogo (<div>) dentro do <p> do subtítulo',
-    area: 'telas',
-    fixme: 'DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>',
-  },
-];
+const NINHOS_DE_PRODUTO: NinhoDeProduto[] = [];
 
 interface OcorrenciaTolerada {
   /** lista de origem: lacuna do conjunto local ou defeito do produto */
@@ -847,6 +854,72 @@ function escaparRegex(texto: string): string {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Seleciona uma superfície real de Tarefas depois do clique no menu, sem retry. */
+async function abrirModoTarefas(page: Page, item: ItemNav): Promise<void> {
+  if (!item.modo) return;
+  await expect(page, 'o modo de Tarefas exige a URL canônica').toHaveURL((url) => url.searchParams.get('view') === 'tasks');
+  const principal = page.getByRole('main');
+  await expect(principal.getByRole('heading', { name: 'Tarefas', exact: true })).toBeVisible();
+  const modos = principal.getByTestId('tasks-mode');
+  await expect(modos).toBeVisible();
+  const botao = modos.getByRole('button', { name: item.modo, exact: true });
+  await botao.click();
+  await expect(botao).toHaveAttribute('aria-pressed', 'true');
+  await expect(modos).toHaveAttribute('data-mode', item.modo === 'Quadro' ? 'board' : 'list');
+  if (item.modo === 'Quadro') {
+    await expect(principal.getByTestId('board-track'), 'a superfície Quadro não montou').toBeVisible();
+  } else {
+    await expect(principal.getByTestId('board-track'), 'a Lista ainda mostra o Quadro anterior').toHaveCount(0);
+    const secoes = principal.getByRole('button', { name: /^(Atrasadas|Hoje|Amanhã|Próximas|Sem prazo|Concluídas \(7 dias\))\s*\d+$/ });
+    const conteudo = secoes.or(principal.getByTestId('tasks-empty-filter')).or(principal.getByText('Nada por aqui', { exact: true }));
+    await expect(conteudo.first(), 'a Lista não montou seções nem estado vazio').toBeVisible();
+  }
+}
+
+/** Superfícies das quatro entradas acrescentadas ao mapa; sem ações de integração. */
+async function conferirSuperficieAdicionada(page: Page, item: ItemNav): Promise<void> {
+  if (!['supervisao', 'search-insights', 'meta-capi', 'google-calendar'].includes(item.id)) return;
+  await expect(page, 'a entrada adicional exige sua URL canônica').toHaveURL((url) => url.searchParams.get('view') === item.id);
+  const principal = page.getByRole('main');
+
+  if (item.id === 'supervisao') {
+    await expect(principal.getByRole('heading', { name: 'Supervisão', exact: true })).toBeVisible();
+    const abas = principal.getByRole('tablist');
+    for (const name of ['Filas', 'Copiloto IA', 'Sala de Crise', 'Playbooks', 'Treinamento']) {
+      await expect(abas.getByRole('tab', { name, exact: true })).toBeVisible();
+    }
+    await expect(abas.getByRole('tab', { name: 'Filas', exact: true })).toHaveAttribute('aria-selected', 'true');
+  } else if (item.id === 'search-insights') {
+    await expect(principal.getByRole('heading', { name: 'Insights de Busca', exact: true })).toBeVisible();
+    await expect(principal.getByRole('combobox', { name: 'Período', exact: true })).toBeVisible();
+    await expect(principal.getByRole('button', { name: 'Atualizar insights de busca', exact: true })).toBeVisible();
+    const tabelaPronta = principal.getByText('Mais buscadas', { exact: true });
+    const carregando = principal.locator('[aria-busy="true"]');
+    await expect(tabelaPronta.or(carregando)).toBeVisible();
+    await expect(principal.getByRole('alert')).toHaveCount(0);
+  } else if (item.id === 'meta-capi') {
+    await expect(principal.getByRole('heading', { name: 'Meta Conversions API', exact: true })).toBeVisible();
+    await expect(principal.getByText('Funcionalidade em demonstração', { exact: true })).toBeVisible();
+    const configurar = principal.getByRole('button', { name: 'Configurar', exact: true });
+    await expect(configurar).toBeVisible();
+    await expect(configurar).toBeDisabled();
+    const recentes = principal.getByRole('heading', { name: 'Eventos Recentes', exact: true });
+    await expect(recentes).toBeVisible();
+    const eventos = recentes.locator('..');
+    await expect(eventos.getByText('Nenhum evento registrado', { exact: true })
+      .or(eventos.getByText('Pendente', { exact: true }))
+      .or(eventos.getByText('Enviado', { exact: true })).first()).toBeVisible();
+    await expect(principal.getByText('Não foi possível carregar os eventos', { exact: true })).toHaveCount(0);
+  } else {
+    await expect(principal.getByRole('heading', { name: 'Google Calendar', exact: true })).toBeVisible();
+    await expect(principal.getByText('Funcionalidade em demonstração', { exact: true })).toBeVisible();
+    await expect(principal.getByText('Desconectado', { exact: true })).toBeVisible();
+    const conectar = principal.getByRole('button', { name: 'Conectar Google Calendar', exact: true });
+    await expect(conectar).toBeVisible();
+    await expect(conectar).toBeDisabled();
+  }
+}
+
 async function conferirModulo(page: Page, item: ItemNav, onde: string): Promise<void> {
   await expect(page, `${onde}: título do documento do módulo`).toHaveTitle(
     new RegExp(`^${escaparRegex(item.label)} \\| ${escaparRegex(TITULO_BASE)}$`),
@@ -1186,7 +1259,7 @@ async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<vo
   }
 }
 
-// A varredura inteira (login + 40 entradas do menu + busca) passa longe do teto padrão de
+// A varredura inteira (login + 43 percursos do mapa + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
 test.describe.configure({ timeout: 15 * 60_000 });
 
@@ -1201,7 +1274,7 @@ function relatarRodada(
 ): void {
   const semProva = canceladasSemProva(trafego);
   console.warn(
-    `[COBERTURA] ${onde}: ${visitados}/${total} entradas do menu visitadas`,
+    `[COBERTURA] ${onde}: ${visitados}/${total} percursos verificados`,
   );
   console.warn(
     `[CANCELADAS] ${onde}: ${trafego.canceladas.length} canceladas, ${semProva.length} sem resposta da mesma URL`,
@@ -1233,8 +1306,10 @@ function relatarRodada(
  */
 test.beforeAll(async ({ request }) => {
   // O default do Playwright para hooks e 30 s, e uma passada de aquecimento (74
-  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook.
-  test.setTimeout(20 * 60_000);
+  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook. O orçamento
+  // agregado deste arquivo fica abaixo dos 55 min do controller isolado:
+  // 10 min de aquecimento + 22 min desktop + 22 min celular = 54 min.
+  test.setTimeout(10 * 60_000);
   let ultimoErro: unknown;
   for (let passada = 1; passada <= 4; passada += 1) {
     try {
@@ -1251,13 +1326,13 @@ test.beforeAll(async ({ request }) => {
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    // A varredura é longa (40 entradas do menu + busca, cada uma com espera de view e de
+    // A varredura é longa (43 percursos do mapa + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
-    test.setTimeout(20 * 60_000);
+    test.setTimeout(22 * 60_000);
     // O aquecimento do runtime do conjunto local roda UMA vez para o arquivo
     // inteiro (test.beforeAll, mais abaixo): repeti-lo dentro de cada teste
     // dobrava a carga sobre o runtime e o pico de memoria matava o navegador no
@@ -1271,7 +1346,8 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `desktop/${secao}` : 'desktop';
-      visitados.push(item.label);
+      const rotulo = item.modo ? item.label + '/' + item.modo : item.label;
+      visitados.push(rotulo);
       // Cada seção da barra lateral abre FECHADA: quem abre a dela é a visita do
       // primeiro item DO MAPA daquela seção — que não é necessariamente o primeiro
       // item da seção ('CRM 360°' é admin-only e saiu da varredura). Comparar com
@@ -1282,12 +1358,14 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
         await abrirSecaoDesktop(page, secao);
       }
       await clicarDesktop(page, item);
-      await conferirModulo(page, item, `${onde}/${item.label}`);
+      await abrirModoTarefas(page, item);
+      await conferirModulo(page, item, `${onde}/${rotulo}`);
+      await conferirSuperficieAdicionada(page, item);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
       lacunasDaRodada.push(...lacunas);
       defeitosDaRodada.push(...defeitos);
-      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído não justificado`).toEqual([]);
+      expect(resumir(reprovam), `${onde} — ${rotulo} produziu ruído não justificado`).toEqual([]);
       vistos = trafego.ruido.length;
     }
 
@@ -1303,7 +1381,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     defeitosDaRodada.push(...defeitos);
     expect(resumir(reprovam), 'desktop — Buscar produziu ruído não justificado').toEqual([]);
 
-    // A varredura já abriu as 5 seções da barra lateral: é agora que a ausência
+    // A varredura já abriu as 6 seções da barra lateral: é agora que a ausência
     // das entradas admin-only diz alguma coisa (com a seção fechada, o item não
     // estaria no DOM de qualquer forma).
     await conferirEntradasForaDoPapel(page, 'desktop');
@@ -1312,7 +1390,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     // da barra lateral, senão a varredura passou sem passar por tudo.
     expect(
       visitados.length,
-      'a varredura do desktop não visitou todas as entradas do menu',
+      'a varredura do desktop não visitou todos os percursos do mapa',
     ).toBe(PASSOS.length);
 
     relatarRodada('desktop', lacunasDaRodada, defeitosDaRodada, visitados.length, PASSOS.length, trafego);
@@ -1326,10 +1404,10 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
+    test.setTimeout(22 * 60_000); // mantém o orçamento agregado abaixo do controller de 55 min
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
@@ -1347,14 +1425,17 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
 
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `celular/${secao}` : 'celular';
-      visitados.push(item.label);
+      const rotulo = item.modo ? item.label + '/' + item.modo : item.label;
+      visitados.push(rotulo);
       await clicarMobile(page, item, conferirForaDoPapelUmaVez);
-      await conferirModulo(page, item, `${onde}/${item.label}`);
+      await abrirModoTarefas(page, item);
+      await conferirModulo(page, item, `${onde}/${rotulo}`);
+      await conferirSuperficieAdicionada(page, item);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
       lacunasDaRodada.push(...lacunas);
       defeitosDaRodada.push(...defeitos);
-      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído não justificado`).toEqual([]);
+      expect(resumir(reprovam), `${onde} — ${rotulo} produziu ruído não justificado`).toEqual([]);
       vistos = trafego.ruido.length;
     }
 
@@ -1382,7 +1463,7 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
     // Prova de cobertura: idem desktop, pelo menu móvel.
     expect(
       visitados.length,
-      'a varredura do celular não visitou todas as entradas do menu',
+      'a varredura do celular não visitou todos os percursos do mapa',
     ).toBe(PASSOS.length);
 
     relatarRodada('celular', lacunasDaRodada, defeitosDaRodada, visitados.length, PASSOS.length, trafego);
@@ -1424,6 +1505,15 @@ const CORPO_SIP = '{"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}'
 const NADA_JUSTIFICADO = new Set<string>();
 
 test.describe('Guarda da varredura: ruído novo REPROVA', () => {
+  test('mapa preserva 42 entradas e os modos Lista/Quadro em 43 percursos distintos', () => {
+    expect(PASSOS).toHaveLength(43);
+    expect(new Set(PASSOS.map(({ item }) => item.id)).size).toBe(42);
+    expect(new Set(PASSOS.map(({ item }) => item.id + '/' + (item.modo ?? ''))).size).toBe(PASSOS.length);
+    const tarefas = PASSOS.filter(({ item }) => item.id === 'tasks').map(({ item }) => item);
+    expect(tarefas.map(item => item.modo).sort()).toEqual(['Lista', 'Quadro']);
+    expect(tarefas.every(item => item.label === 'Tarefas')).toBe(true);
+    expect(PASSOS.filter(({ item }) => item.modo && item.id !== 'tasks')).toEqual([]);
+  });
   test('endpoint novo (fora da lista) REPROVA mesmo com status conhecido', () => {
     const url = `${HOST_LOCAL}/functions/v1/endpoint-novo`;
     const ocorrencia = respostaSintetica(503, url);
@@ -1560,27 +1650,52 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     ).toHaveLength(1);
   });
 
-  test('par de tags aninhadas FORA da lista REPROVA; o da lista vira defeito com fixme', () => {
+  test('SIP 401 e Device 500 com corpo exato são lacunas de ambiente; corpo fora da assinatura REPROVA', () => {
+      const lacunasDeAmbiente: Array<[string, number, string]> = [
+      [SIP_URL, 401, '{"error":"Invalid or expired token"}'],
+        [HOST_LOCAL + '/functions/v1/detect-new-device', 500, '{"error":"Internal server error"}'],
+      ];
+      for (const [url, status, body] of lacunasDeAmbiente) {
+        const { reprovam, lacunas } = classificar(
+          [respostaSintetica(status, url)], [medidaSintetica(url, status, body)], NADA_JUSTIFICADO,
+        );
+        expect(resumir(reprovam), 'lacuna de ambiente voltou a reprovar').toEqual([]);
+        expect(lacunas).toHaveLength(1);
+        expect(lacunas[0].tolerada?.origem, 'lacuna não apontou a origem correta').toBe('lacuna');
+    }
+
+      // Corpo fora da assinatura declarada (ex.: 401 com shape de DEFEITO) continua reprovando.
+      const foraDaAssinatura = classificar(
+        [respostaSintetica(401, SIP_URL)],
+        [medidaSintetica(SIP_URL, 401, '{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}')],
+        NADA_JUSTIFICADO,
+      );
+      expect(resumir(foraDaAssinatura.reprovam), 'corpo fora da assinatura passou pela varredura').toHaveLength(1);
+      expect(foraDaAssinatura.defeitos).toHaveLength(0);
+      expect(DEFEITOS_DE_PRODUTO).toEqual([]);
+    });
+
+  test('pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM', () => {
     const novo = consoleSintetico(
       'In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <span> table',
     );
-    const conhecido = consoleSintetico(
+    const botao = consoleSintetico(
       'In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <button> button',
     );
-    const { reprovam, defeitos } = classificar([novo, conhecido], [], NADA_JUSTIFICADO);
-    expect(resumir(reprovam), 'par de tags novo passou pela varredura').toHaveLength(1);
-    expect(defeitos).toHaveLength(1);
-    expect(defeitos[0].tolerada?.motivo, 'o defeito não aponta o test.fixme').toContain('test.fixme');
+    const item = consoleSintetico('<li> cannot contain a nested <li>.');
+    const paragrafo = consoleSintetico('In HTML, <div> cannot be a descendant of <p>.');
+    const { reprovam, defeitos } = classificar([novo, botao, item, paragrafo], [], NADA_JUSTIFICADO);
+    expect(resumir(reprovam), 'par de tags novo passou pela varredura').toHaveLength(4);
+    expect(defeitos).toHaveLength(0);
+    expect(NINHOS_DE_PRODUTO, 'regressão DOM voltou a ser tolerada').toEqual([]);
   });
 });
 
 /* -------------------------------------------------------------------------- */
-/* DEFEITOS DO PRODUTO — cada um com reprodução real, pronta para virar `test` */
+/* REGRESSÕES DO PRODUTO — DOM e HTTP exigem execução e conclusão reais      */
 /*                                                                             */
-/* São os defeitos das listas DEFEITOS_DE_PRODUTO e NINHOS_DE_PRODUTO, que a    */
-/* varredura acima contabiliza em `[DEFEITOS DE PRODUTO]`. Os corpos abaixo são */
-/* a reprodução de verdade: hoje eles falham (é o defeito); quando o produto for */
-/* corrigido, os donos trocam `test.fixme` por `test` e a entrada sai da lista.  */
+/* SIP aceita as lacunas exatas 503 e 401; Device aceita a lacuna exata 500.   */
+/* Corpo fora da assinatura declarada continua reprovando na varredura.        */
 /* -------------------------------------------------------------------------- */
 
 /** Ocorrências de console, na janela, cujo par de tags aninhadas é o pedido. */
@@ -1593,93 +1708,235 @@ function aninhadosNaJanela(trafego: Trafego, desde: number, ancestral: string, d
 }
 
 /**
- * DEFEITO (área de telas) — `src/components/layout/SidebarNavItem.tsx:83-92`:
- * o botão "Adicionar aos favoritos" é renderizado DENTRO do `<button>` do item da
- * barra lateral, e HTML não permite botão dentro de botão. O React avisa por
+ * REGRESSÃO (área de telas): o favorito já é irmão do botão em SidebarNavItem.
+ * O defeito histórico punha o favorito dentro do botão do item. O React avisa por
  * `console.error` ("In HTML, <button> cannot be a descendant of <button>").
  * MEDIDO em 07/10 no conjunto local, ao expandir qualquer seção da barra.
  */
-test.fixme('DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item', async ({ page }) => {
+test('DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item', async ({ page }) => {
   const trafego = observar(page);
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.addInitScript(() => { window.localStorage.setItem('zen-mode', 'false'); });
   await abrirApp(page);
-  const desde = trafego.ruido.length;
   await abrirSecaoDesktop(page, 'Vendas & CRM');
-  const erros = aninhadosNaJanela(trafego, desde, 'button', 'button');
+  await expect(page.getByRole('button', { name: 'Vendas & CRM — recolher', exact: true })).toBeVisible();
+  const grupo = page.getByRole('navigation', { name: 'Vendas & CRM', exact: true });
+  await expect(grupo).toBeVisible();
+  const carteira = grupo.getByRole('button', { name: 'Carteira', exact: true });
+  await expect(carteira).toBeVisible();
+  const linha = grupo.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Carteira', exact: true }) });
+  await expect(linha).toHaveCount(1);
+  const favorito = linha.getByRole('button', { name: /^(Adicionar aos|Remover dos) favoritos$/ });
+  await expect(favorito).toHaveCount(1);
+  await carteira.hover();
+  await expect(favorito).toBeVisible();
+  await expect(grupo.locator('button button'), 'botões da barra lateral devem ser irmãos').toHaveCount(0);
+  const erros = aninhadosNaJanela(trafego, 0, 'button', 'button');
   expect(resumir(erros), 'a barra lateral ainda aninha o botão de favoritos dentro do botão do item').toEqual([]);
 });
 
 /**
- * DEFEITO (área de telas) — `src/components/ui/breadcrumb.tsx:62`: o
- * `BreadcrumbSeparator` renderiza um `<li>` e é usado dentro do `<li>` do
- * `BreadcrumbItem` (`src/components/layout/PageHeader.tsx:103-104`), o que o React
- * recusa ("<li> cannot contain a nested <li>"). MEDIDO em 07/10 nas telas com
+ * REGRESSÃO (área de telas): BreadcrumbSeparator e BreadcrumbItem renderizam li
+ * e devem ser irmãos no ol. O aninhamento anterior era recusado pelo React
+ * ("<li> cannot contain a nested <li>"). MEDIDO em 07/10 nas telas com
  * trilha de navegação (Tarefas) e na view do Quadro (pipeline).
  */
-test.fixme('DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro', async ({ page }) => {
+test('DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro', async ({ page }) => {
   const trafego = observar(page);
+  await page.setViewportSize({ width: 390, height: 844 });
   await abrirApp(page);
-  const desde = trafego.ruido.length;
-  await clicarDesktop(page, { id: 'tasks', label: 'Tarefas' });
-  await clicarDesktop(page, { id: 'pipeline', label: 'Quadro' });
-  const erros = aninhadosNaJanela(trafego, desde, 'li', 'li');
+  for (const view of ['tasks', 'pipeline']) {
+    await page.goto(`/?view=${view}`);
+    const principal = page.getByRole('main');
+    await expect(principal.getByRole('heading', { name: 'Tarefas', exact: true })).toBeVisible();
+    if (view === 'pipeline') {
+      await expect(page).toHaveURL((url) => url.searchParams.get('view') === 'tasks');
+      await expect(principal.getByTestId('tasks-mode').getByRole('button', { name: 'Quadro', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(principal.getByTestId('board-track')).toBeVisible();
+    }
+    const trilha = principal.getByRole('navigation', { name: 'breadcrumb', exact: true });
+    await expect(trilha).toBeVisible();
+    await expect(trilha.getByRole('link', { name: 'Início', exact: true })).toBeVisible();
+    const atual = trilha.getByRole('link', { name: 'Tarefas', exact: true });
+    await expect(atual).toBeVisible();
+    await expect(atual).toHaveAttribute('aria-current', 'page');
+    await expect(trilha.locator('ol > li[role="presentation"][aria-hidden="true"]')).toHaveCount(1);
+    await expect(trilha.locator('li li'), 'separadores e itens devem ser irmãos').toHaveCount(0);
+  }
+  const erros = aninhadosNaJanela(trafego, 0, 'li', 'li');
   expect(resumir(erros), 'a trilha do PageHeader e o Quadro ainda aninham <li> dentro de <li>').toEqual([]);
 });
 
 /**
- * DEFEITO (área de telas) — `src/components/docs/SystemFeaturesView.tsx:41-49`: o
- * `<Badge>` do catálogo (que é um `<div>`) é filho do `<p>` do subtítulo; o React
- * avisa "In HTML, <div> cannot be a descendant of <p>". MEDIDO em 07/10 ao abrir
+ * REGRESSÃO (área de telas): o Badge real do catálogo é um div; seu wrapper no
+ * subtítulo não pode ser p. O React avisa "In HTML, <div> cannot be a descendant
+ * of <p>" para o defeito anterior. MEDIDO em 07/10 ao abrir
  * Sistema > Documentação.
  */
-test.fixme('DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>', async ({ page }) => {
+test('DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>', async ({ page }) => {
   const trafego = observar(page);
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.addInitScript(() => { window.localStorage.setItem('zen-mode', 'false'); });
   await abrirApp(page);
-  const desde = trafego.ruido.length;
   await abrirSecaoDesktop(page, 'Sistema');
   await clicarDesktop(page, { id: 'docs', label: 'Documentação' });
-  const erros = aninhadosNaJanela(trafego, desde, 'p', 'div');
+  const principal = page.getByRole('main');
+  await expect(principal.getByRole('heading', { name: 'Funcionalidades do Sistema', exact: true })).toBeVisible();
+  const selo = principal.getByTestId('catalog-status-badge');
+  await expect(selo).toHaveCount(1);
+  await expect(selo).toBeVisible();
+  await expect(selo).toHaveText(/^\d+ (ativas|desativadas?)$/);
+  await expect(principal.locator('p div'), 'o selo não pode ficar dentro de um parágrafo').toHaveCount(0);
+  const erros = aninhadosNaJanela(trafego, 0, 'p', 'div');
   expect(resumir(erros), 'a Documentação ainda põe o selo do catálogo (<div>) dentro de um <p>').toEqual([]);
 });
 
-/**
- * DEFEITO (área de chamadas) — `src/hooks/communication/useSipClient.ts:80-89`: na
- * transição de aba para líder, o hook chama `connectWithStoredCredentials` (que faz
- * `POST /functions/v1/get-sip-password`) antes de haver credencial utilizável, e a
- * função responde 401 (`supabase/functions/get-sip-password/index.ts:34` sem
- * `Authorization`, `:41` com claims inválidas/expiradas).
- * MEDIDO em 07/10: 401 `{"error":"Invalid or expired token"}` (e, em rodada
- * anterior, 401 `{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}`) no arranque da sessão.
- * A causa raiz (chamada cedo demais X credencial do conjunto local) é da área de
- * chamadas: este fixme é a reprodução, não o veredito.
- */
-test.fixme('DEFEITO: o motor SIP chama get-sip-password sem credencial utilizável (401)', async ({ page }) => {
-  const falhas: string[] = [];
-  page.on('response', (response) => {
-    if (response.url().includes('/functions/v1/get-sip-password') && response.status() >= 400) {
-      falhas.push(`${response.status()} ${response.url()}`);
+interface IsolatedHttpEnvironment { baseURL: string; anonKey: string }
+
+/** A admissão precede entrar(), a leitura do JWT e qualquer novo login. */
+async function isolatedHttpEnvironment(): Promise<IsolatedHttpEnvironment> {
+  const environment = {
+    baseURL: process.env.E2E_SUPABASE_URL_OVERRIDE?.trim() ?? '',
+    anonKey: process.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE?.trim() ?? '',
+  };
+  await assertIsolatedFixtureEnvironment(environment);
+  return environment;
+}
+
+async function isolatedJson(
+  request: APIRequestContext, environment: IsolatedHttpEnvironment, path: string,
+  options: { method?: 'GET' | 'POST'; token?: string; data?: Record<string, unknown> } = {},
+): Promise<unknown> {
+  await assertIsolatedFixtureEnvironment(environment);
+  return startedIsolatedJson(request, environment, path, options);
+}
+
+/** Chamada interna: só usada logo após a admissão simples ou da dupla. */
+async function startedIsolatedJson(
+  request: APIRequestContext, environment: IsolatedHttpEnvironment, path: string,
+  options: { method?: 'GET' | 'POST'; token?: string; data?: Record<string, unknown> } = {},
+): Promise<unknown> {
+  if (!path.startsWith('/') || path.startsWith('//')) throw new Error('[e2e-http/local-path]');
+  let response;
+  try {
+    response = await request.fetch(environment.baseURL + path, {
+      method: options.method ?? 'GET',
+      headers: {
+        apikey: environment.anonKey,
+        ...(options.token ? { Authorization: 'Bearer ' + options.token } : {}),
+      },
+      ...(options.data ? { data: options.data } : {}),
+      maxRedirects: 0,
+      failOnStatusCode: false,
+    });
+  } catch { throw new Error('[e2e-http/local-request]'); }
+  try {
+    if (response.status() !== 200) throw new Error('[e2e-http/local-status]');
+    try { return await response.json(); }
+    catch { throw new Error('[e2e-http/local-json]'); }
+  } finally {
+    await response.dispose().catch(() => undefined);
+  }
+}
+
+const sessionPath = (identity: SessionIdentity) =>
+  '/rest/v1/user_sessions?user_id=eq.' + identity.userId + '&auth_session_id=eq.' + identity.authSessionId +
+  '&select=id,user_id,auth_session_id,device_id,is_active';
+
+async function completedDeviceBoot(page: Page, environment: IsolatedHttpEnvironment) {
+  await assertIsolatedFixtureEnvironment(environment);
+  const observation = observeIsolatedFunctionPosts(page, 'detect-new-device');
+  try {
+    await abrirApp(page);
+    await expect(page.getByRole('main'), 'o app precisa montar para observar o boot real').toBeVisible();
+    const calls = await observation.completed();
+    const results = calls.map((call) => requireDeviceResult(call.status, call.body));
+    const first = results[0];
+    if (results.some((result) => result.device_id !== first.device_id || result.session_id !== first.session_id)) {
+      throw new Error('[e2e-http/boot-identity]');
     }
-  });
-  await abrirApp(page);
-  await expect(page.getByRole('main'), 'a tela inicial não montou para observar o arranque').toBeVisible();
-  expect(resumir(falhas.map((texto) => ({ tipo: 'resposta', texto }))), 'o motor SIP ainda chama a função sem credencial').toEqual([]);
-});
+    return { call: calls[0], result: first };
+  } finally {
+    observation.dispose();
+  }
+}
 
 /**
- * DEFEITO (área de login/segurança) — `src/hooks/ui/useDeviceDetection.ts:116`:
- * no arranque o app dispara DUAS chamadas para `/functions/v1/detect-new-device`
- * (StrictMode); uma responde 200 e a outra estoura no INSERT e devolve 500
- * `{"error":"Internal server error"}` — log do runtime: "New device detected" →
- * "Error [object Object]" → 500. MEDIDO em 07/10, com o usuário do seed local; o
- * certo é tratar a corrida, não devolver 500.
+ * O boot é uma prova própria. A integração abaixo provoca DUAS chamadas para
+ * uma sessão Auth nova, usando dispositivo já conhecido para não disputar a
+ * cota de alertas por minuto. Isso prova identidade e concorrência da sessão;
+ * o interleaving do INSERT de dispositivo continua nos testes reais do handler.
  */
-test.fixme('DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes em paralelo', async ({ page }) => {
-  const falhas: string[] = [];
-  page.on('response', (response) => {
-    if (response.url().includes('/functions/v1/detect-new-device') && response.status() >= 400) {
-      falhas.push(`${response.status()} ${response.url()}`);
-    }
+async function verifyConcurrentDeviceSession(page: Page, request: APIRequestContext): Promise<void> {
+  const environment = await isolatedHttpEnvironment();
+  const boot = await completedDeviceBoot(page, environment);
+  await assertIsolatedFixtureEnvironment(environment);
+  const bootToken = readBearerAccessToken(await boot.call.request.headerValue('authorization'));
+  const previous = readIsolatedSessionIdentity(bootToken);
+  const email = process.env.E2E_TEST_EMAIL ?? '';
+  const user = await isolatedJson(request, environment, '/auth/v1/user', { token: bootToken });
+  requireSyntheticUser(user, previous, email);
+  const knownRows = await isolatedJson(request, environment,
+    '/rest/v1/user_devices?id=eq.' + boot.result.device_id + '&user_id=eq.' + previous.userId +
+    '&select=id,user_id,device_fingerprint', { token: bootToken });
+  const fingerprint = requireOwnedDevice(knownRows, previous, boot.result);
+  requireCanonicalSession(await isolatedJson(request, environment, sessionPath(previous), { token: bootToken }),
+    previous, boot.result);
+
+  await assertIsolatedFixtureEnvironment(environment);
+  const password = process.env.E2E_TEST_PASSWORD;
+  if (!email.endsWith('@example.invalid') || !password) throw new Error('[e2e-http/synthetic-login]');
+  const login = await isolatedJson(request, environment, '/functions/v1/auth-login', {
+    method: 'POST', data: { email, password, mode: 'login', userAgent: 'isolated-session-concurrency' },
   });
-  await abrirApp(page);
-  await expect(page.getByRole('main'), 'a tela inicial não montou para observar o arranque').toBeVisible();
-  expect(resumir(falhas.map((texto) => ({ tipo: 'resposta', texto }))), 'detect-new-device ainda devolve 500 na corrida').toEqual([]);
+  const token = readLoginAccessToken(login);
+  const fresh = readIsolatedSessionIdentity(token);
+  requireFreshAuthSession(fresh, previous);
+  requireSyntheticUser(await isolatedJson(request, environment, '/auth/v1/user', { token }), fresh, email);
+  requireSessionAbsent(await isolatedJson(request, environment, sessionPath(fresh), { token }));
+  const data = { device_fingerprint: fingerprint, browser: 'Isolated E2E', os: 'Isolated E2E',
+    device_name: 'Synthetic concurrent session' };
+  // As duas chamadas começam antes de await. APIResponse.json() só resolve
+  // depois do corpo; não basta observar headers ou ausência imediata de erro.
+  await assertIsolatedFixtureEnvironment(environment);
+  const requests = [
+    startedIsolatedJson(request, environment, '/functions/v1/detect-new-device', { method: 'POST', token, data }),
+    startedIsolatedJson(request, environment, '/functions/v1/detect-new-device', { method: 'POST', token, data }),
+  ];
+  const outcomes = await Promise.allSettled(requests);
+  if (outcomes.some((outcome) => outcome.status !== 'fulfilled')) throw new Error('[e2e-http/concurrent-request]');
+  const results = outcomes.map((outcome) => {
+    if (outcome.status !== 'fulfilled') throw new Error('[e2e-http/concurrent-request]');
+    return requireDeviceResult(200, outcome.value);
+  });
+  const canonical = requireSameKnownSession(results, boot.result.device_id);
+  requireCanonicalSession(await isolatedJson(request, environment, sessionPath(fresh), { token }), fresh, canonical);
+}
+
+/**
+ * Abrir Telefonia monta o gatilho real claimLeadership(). O provider já montou
+ * useSipClient; uma chamada antecipada pelo tick também é observada. Não há
+ * chamada manual da função, mudança de lock ou segredo SIP no teste.
+ */
+test('o motor SIP conclui o provisionamento autenticado ao abrir Telefonia no ambiente isolado', async ({ page }) => {
+  await isolatedHttpEnvironment();
+  const observation = observeIsolatedFunctionPosts(page, 'get-sip-password');
+  try {
+    await abrirApp(page);
+    await expect(page.getByRole('main'), 'o app precisa montar antes de abrir Telefonia').toBeVisible();
+    await clicarDesktop(page, { id: 'voip', label: 'Telefonia' });
+    const calls = await observation.completed();
+    calls.forEach(requireSipNotConfigured);
+  } finally {
+    observation.dispose();
+  }
+});
+
+test('detect-new-device conclui o aviso real de boot com uma sessão identificada', async ({ page }) => {
+  const environment = await isolatedHttpEnvironment();
+  await completedDeviceBoot(page, environment);
+});
+
+test('detect-new-device preserva uma linha canônica em duas chamadas concorrentes de uma sessão Auth nova', async ({ page, request }) => {
+  await verifyConcurrentDeviceSession(page, request);
 });

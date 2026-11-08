@@ -149,7 +149,7 @@ export function resetRateLimitLogClient(): void {
 /** Client service_role para o INSERT (lazy + cacheado por isolate). */
 function getRateLimitLogClient(): Promise<RateLimitLogClient> {
   if (!clientPromise) {
-    clientPromise = import("https://esm.sh/@supabase/supabase-js@2.87.1")
+    clientPromise = import("npm:@supabase/supabase-js@2.87.1")
       .then(({ createClient }) => {
         const url = Deno.env.get("SUPABASE_URL");
         const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");

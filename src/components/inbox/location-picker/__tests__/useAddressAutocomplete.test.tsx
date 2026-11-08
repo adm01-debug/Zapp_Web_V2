@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import type { GeoSuggestion, GeoSearchPlace } from '@/lib/mapboxGeocode';
+import type { GeoSuggestion, GeoSearchPlace, GeoProximity } from '@/lib/mapboxGeocode';
 
 const h = vi.hoisted(() => ({
   suggestPlaces: vi.fn(),
@@ -94,6 +94,96 @@ describe('useAddressAutocomplete', () => {
 
   const setup = (overrides?: Partial<Parameters<typeof useAddressAutocomplete>[0]>) =>
     renderHook(() => useAddressAutocomplete({ token: 'tok', enabled: true, ...overrides }));
+
+  describe('proximidade depende das coordenadas, não da identidade do objeto', () => {
+    it.each(['suggest', 'forward'] as const)('%s: centro equivalente conserva destaque e seleção sem repetir a busca', async (source) => {
+      h.suggestPlaces.mockResolvedValue(source === 'suggest'
+        ? { ok: true, suggestions: [suggestionA] }
+        : { ok: false, kind: 'http' });
+      h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardA] });
+      h.retrievePlaceResult.mockResolvedValue({ ok: true, place: forwardA });
+      const proximity = { lat: -23.5, lng: -46.6 };
+      const { result, rerender } = renderHook(
+        ({ proximity }: { proximity: GeoProximity }) => useAddressAutocomplete({ token: 'tok', enabled: true, proximity }),
+        { initialProps: { proximity } },
+      );
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(result.current.status).toBe('ok');
+      const suggestions = result.current.suggestions;
+      // O /suggest pode reentregar o MESMO array cacheado; o fallback /forward não é cacheado.
+      h.peekSearchSession.mockReturnValue('session-1');
+      if (source === 'suggest') h.getCachedSuggest.mockReturnValue(suggestions);
+      act(() => { result.current.onKeyDown(fakeKeyEvent('ArrowDown')); });
+      expect(result.current.highlightedIndex).toBe(0);
+
+      rerender({ proximity: { ...proximity } });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.suggestions).toBe(suggestions);
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+      expect(h.noteSuggestCall).toHaveBeenCalledTimes(1);
+      expect(h.getCachedSuggest).not.toHaveBeenCalled();
+      expect(h.searchPlaces).toHaveBeenCalledTimes(source === 'forward' ? 1 : 0);
+      let selected: GeoSearchPlace | null = null;
+      await act(async () => { selected = await result.current.select(result.current.highlightedIndex); });
+      expect(selected).toEqual(forwardA);
+      expect(h.retrievePlaceResult).toHaveBeenCalledTimes(source === 'suggest' ? 1 : 0);
+      expect(h.endSearchSession).toHaveBeenCalledTimes(1);
+    });
+
+    it('novo objeto com coordenadas zero não aborta nem substitui a consulta em voo', async () => {
+      let resolveSuggest: (value: { ok: true; suggestions: GeoSuggestion[] }) => void = () => {};
+      const pending = new Promise<{ ok: true; suggestions: GeoSuggestion[] }>((resolve) => { resolveSuggest = resolve; });
+      h.suggestPlaces.mockReturnValue(pending);
+      const { result, rerender } = renderHook(
+        ({ proximity }: { proximity: GeoProximity }) => useAddressAutocomplete({ token: 'tok', enabled: true, proximity }),
+        { initialProps: { proximity: { lat: 0, lng: 0 } } },
+      );
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      const request = h.suggestPlaces.mock.calls[0][2] as { signal: AbortSignal; proximity: GeoProximity };
+      expect(request.proximity).toEqual({ lat: 0, lng: 0 });
+
+      rerender({ proximity: { lat: 0, lng: 0 } });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+      expect(request.signal.aborted).toBe(false);
+      await act(async () => { resolveSuggest({ ok: true, suggestions: [suggestionB] }); });
+      expect(result.current.suggestions).toEqual([suggestionB]);
+      expect(result.current.status).toBe('ok');
+    });
+
+    it.each([
+      { name: 'latitude', initial: { lat: -23.5, lng: -46.6 }, next: { lat: -23.6, lng: -46.6 } },
+      { name: 'longitude', initial: { lat: -23.5, lng: -46.6 }, next: { lat: -23.5, lng: -46.7 } },
+      { name: 'ambas as coordenadas', initial: { lat: -23.5, lng: -46.6 }, next: { lat: -23.6, lng: -46.7 } },
+      { name: 'centro definido', initial: undefined, next: { lat: 0, lng: 0 } },
+      { name: 'centro removido', initial: { lat: 0, lng: 0 }, next: undefined },
+    ])('$name: mudança real continua buscando e invalida o destaque da lista anterior', async ({ initial, next }) => {
+      h.suggestPlaces
+        .mockResolvedValueOnce({ ok: true, suggestions: [suggestionA] })
+        .mockResolvedValueOnce({ ok: true, suggestions: [suggestionB] });
+      const { result, rerender } = renderHook(
+        ({ proximity }: { proximity: GeoProximity | undefined }) => useAddressAutocomplete({ token: 'tok', enabled: true, proximity }),
+        { initialProps: { proximity: initial } },
+      );
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      act(() => { result.current.onKeyDown(fakeKeyEvent('ArrowDown')); });
+      expect(result.current.highlightedIndex).toBe(0);
+
+      rerender({ proximity: next });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(2);
+      expect(h.suggestPlaces.mock.calls[1][2].proximity).toEqual(next);
+      expect(result.current.suggestions).toEqual([suggestionB]);
+      expect(result.current.highlightedIndex).toBe(-1);
+    });
+  });
 
   // F2: digita o termo, deixa o debounce correr e seleciona o 1º item — o fluxo que todos os
   // casos de cascata repetem (digitar → esperar → selecionar) fica num lugar só.

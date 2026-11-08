@@ -3,7 +3,7 @@
 Fonte de verdade do módulo Telefonia (`?view=voip`) do ZAPP WEB V2.
 Deriva da seção 2.7 do plano `docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md`, com as
 divergências medidas no banco oficial em 26/09/2026 (registradas em `docs/design/TELEFONIA_STATUS.md`).
-**Revisado em 10/10/2026** contra o código da ponta do dia (`dia/2026-10-10`, commit `e859c7ff5`) — etapa T92 (reaplicada no commit local do SL-242):
+**Revisado em 16/10/2026** contra o código reaplicado no commit `025d0258dc` — etapa T92 do SL-242:
 as medições de banco seguem datadas de 26/09 (nenhum agente acessa o banco de produção); o resto do
 documento casa com o código citado.
 

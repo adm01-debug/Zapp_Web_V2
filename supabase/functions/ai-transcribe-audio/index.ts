@@ -26,7 +26,7 @@ import { detectMediaKind } from "../_shared/messaging/media.ts";
 import {
   createClient,
   type SupabaseClient,
-} from "https://esm.sh/@supabase/supabase-js@2.87.1";
+} from "npm:@supabase/supabase-js@2.87.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
 /** G4 — teto do download do objeto do Storage (o proxy corta em 60 s). */

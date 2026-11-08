@@ -1,0 +1,38 @@
+[
+  {
+    "repository": "supabase/supabase",
+    "commit": "4a9b2b6860805d11b76b59ff29b8803925f2ec38",
+    "path": "docker/volumes/db/roles.sql",
+    "git_blob": "8f7161a6db66d75288722b60577ed30c81cc4f62",
+    "sha256": "3ad717b225daa38aa982da26750f35641eb404e1eb5e69a763c22236ab96c1b2",
+    "bytes": 379,
+    "url": "https://github.com/supabase/supabase/blob/4a9b2b6860805d11b76b59ff29b8803925f2ec38/docker/volumes/db/roles.sql"
+  },
+  {
+    "repository": "supabase/supabase",
+    "commit": "4a9b2b6860805d11b76b59ff29b8803925f2ec38",
+    "path": "docker/volumes/db/jwt.sql",
+    "git_blob": "09a728366624abe35e2a54cdda333a5c5d5f3ebe",
+    "sha256": "c1d3f5c01e44646c2e533c5a1c111821cc49cb5a4c2534e08cddad61d8fb0339",
+    "bytes": 98,
+    "url": "https://github.com/supabase/supabase/blob/4a9b2b6860805d11b76b59ff29b8803925f2ec38/docker/volumes/db/jwt.sql"
+  },
+  {
+    "repository": "supabase/supabase",
+    "commit": "4a9b2b6860805d11b76b59ff29b8803925f2ec38",
+    "path": "docker/volumes/db/realtime.sql",
+    "git_blob": "4d4b9ffb912b9312dd78257956c180f12913264d",
+    "sha256": "7e9e442e7fc4dae05544c07b67bede37a00d84644304dfce4d937134cb4c8f88",
+    "bytes": 117,
+    "url": "https://github.com/supabase/supabase/blob/4a9b2b6860805d11b76b59ff29b8803925f2ec38/docker/volumes/db/realtime.sql"
+  },
+  {
+    "repository": "supabase/supabase",
+    "commit": "4a9b2b6860805d11b76b59ff29b8803925f2ec38",
+    "path": "docker/volumes/db/webhooks.sql",
+    "git_blob": "fe273decb89efc18c75e6f4a77953402c8f36555",
+    "sha256": "05a61316b899374253891cbba66ce073d9273f33983c3f47961eda3aa26c2823",
+    "bytes": 9070,
+    "url": "https://github.com/supabase/supabase/blob/4a9b2b6860805d11b76b59ff29b8803925f2ec38/docker/volumes/db/webhooks.sql"
+  }
+]

@@ -17,7 +17,7 @@ test.describe('Contatos — criar, editar e excluir', () => {
 
   test('ciclo completo some da lista e do banco', async ({ page }) => {
     await gotoContacts(page);
-    const search = page.getByPlaceholder(/Buscar por nome, telefone/);
+    const search = page.getByPlaceholder(/^Buscar por nome, (?:telefone, email|apelido) ou empresa…$/);
 
     await page.getByTestId('contact-create-fab').click();
     const addDialog = page.getByRole('dialog', { name: 'Adicionar Contato' });
@@ -33,9 +33,7 @@ test.describe('Contatos — criar, editar e excluir', () => {
     const row = page.getByTestId('contact-card').filter({ hasText: name });
     await expect(row).toBeVisible({ timeout: 15_000 });
 
-    await row.hover();
-    await row.locator('button[aria-haspopup="menu"]').click();
-    await page.getByRole('menuitem', { name: /Editar/ }).click();
+    await row.getByRole('button', { name: 'Editar' }).click();
     const editDialog = page.getByRole('dialog', { name: 'Editar Contato' });
     await editDialog.locator('#name').fill(edited);
     await editDialog.getByRole('button', { name: 'Salvar' }).click();

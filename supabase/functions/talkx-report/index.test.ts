@@ -1,5 +1,5 @@
 import { handleTalkxReport, escHtml } from "./index.ts";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { flushSync } from 'react-dom';
 
 /**
  * Hook that wraps navigation actions in the View Transitions API
@@ -12,7 +13,9 @@ export function useViewTransition() {
     };
 
     if (doc.startViewTransition) {
-      const transition = doc.startViewTransition(callback);
+      // A API captura o DOM assim que o callback termina. A navegacao precisa
+      // estar aplicada nesse instante, inclusive sob contenção do WebKit.
+      const transition = doc.startViewTransition(() => flushSync(callback));
       // Silently swallow aborted transitions — these are harmless and happen when
       // a new transition starts before the previous one finishes (rapid navigation).
       transition.finished.catch(() => {});

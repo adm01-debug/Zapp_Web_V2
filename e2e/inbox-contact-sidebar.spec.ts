@@ -37,6 +37,7 @@ async function installSidebarMocks(page: import('@playwright/test').Page, sideba
   await page.route(FLAGS_ROUTE, async (route) => {
     const response = await route.fetch();
     const flags = await response.json() as Array<Record<string, unknown>>;
+    // eslint-disable-next-line local/no-secret-compare -- `key` é a chave pública da feature flag, não credencial.
     const next = flags.filter((flag) => flag.key !== 'crm.integration');
     next.push({ key: 'crm.integration', enabled: true, description: 'E2E', updated_at: '2026-10-03T12:00:00Z' });
     await route.fulfill({ response, json: next });
@@ -58,8 +59,12 @@ async function installSidebarMocks(page: import('@playwright/test').Page, sideba
 async function openContactPanel(page: import('@playwright/test').Page) {
   await page.getByTestId('status-chip-all').click();
   await page.getByTestId('conversation-item').filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME }).first().click();
-  await page.getByRole('button', { name: 'Detalhes do contato' }).first().click();
-  await expect(page.getByTestId('contact-panel')).toBeVisible();
+  const panel = page.getByTestId('contact-panel');
+  // No desktop o estado inicial intencional é aberto. ContactDetailsResponsive
+  // chega por lazy-load: consultar isVisible() imediatamente após selecionar a
+  // conversa observava o intervalo antes da montagem e o clique de fallback
+  // alternava showDetails de true para false. Espere a montagem real.
+  await expect(panel).toBeVisible({ timeout: 20_000 });
 }
 
 // e2e/inbox-contact-sidebar.spec.ts — etapa 90 do plano

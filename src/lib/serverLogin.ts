@@ -81,36 +81,16 @@ export function parseRetryAfterSeconds(headers: Headers, now: number = Date.now(
 }
 
 /**
- * Regiao da invocacao da edge `auth-login` (T06).
- *
- * A edge faz ~5 round-trips ao banco/GoTrue (2x consume_rate_limit,
- * is_account_locked, signInWithPassword, clear_login_attempts) e o projeto esta
- * em us-west-2. Por padrao o Supabase executa a funcao na regiao mais proxima do
- * USUARIO: um login brasileiro roda em sa-east-1 e cada salto cruza o continente.
- * Medido nas ultimas 24h: p50 de 925ms em sa-east-1 contra 101ms em us-east-1
- * (perto do banco). Fixar a regiao elimina ~4 saltos transcontinentais.
- *
- * Usamos o query param `forceFunctionRegion` e NAO o header `x-region` porque
- * esta chamada sai do browser: o header cairia no preflight CORS, e a lista
- * `Access-Control-Allow-Headers` do _shared/validation.ts nao o inclui. O query
- * param e o caminho documentado pelo Supabase para chamadas de browser/webhook.
- *
- * Trade-off documentado: uma invocacao com regiao fixada NAO e re-roteada
- * automaticamente em caso de indisponibilidade da regiao.
- */
-const AUTH_LOGIN_REGION = 'us-west-2';
-
-/**
  * Teto de espera da invocacao. A edge faz ~5 round-trips ao banco/GoTrue e sem
  * este limite um banco indisponivel deixa a promise pendurada para sempre: o
  * usuario fica no spinner ("Entrando...") sem erro e sem resposta.
  *
- * 12s e ~100x o p50 medido (101ms com a regiao fixada) — nao corta login
- * legitimo em rede ruim e ainda assim limita a espera. O resultado da expiracao
- * entra no caminho de `unavailable`, entao a falha continua FECHADA (nunca cai
- * no GoTrue direto) e o lockout segue sendo aplicado pela Edge.
+ * 30s cobre cold starts do Deno (medidos em 15-25s); ~300x o p50 em condicoes
+ * normais — nao corta login legitimo em rede ruim.
+ * O resultado da expiracao entra no caminho de `unavailable`, entao a falha
+ * continua FECHADA (nunca cai no GoTrue direto) e o lockout segue sendo aplicado.
  */
-export const AUTH_LOGIN_TIMEOUT_MS = 12_000;
+export const AUTH_LOGIN_TIMEOUT_MS = 30_000;
 
 function parseLock(body: Record<string, unknown>): ServerLoginLock {
   if (typeof body.isLocked !== 'boolean') return NO_LOCK;
@@ -146,7 +126,7 @@ export async function serverLogin(
   const timeoutId = setTimeout(() => controller.abort(), AUTH_LOGIN_TIMEOUT_MS);
   try {
     response = await fetch(
-      `${SUPABASE_URL}/functions/v1/auth-login?forceFunctionRegion=${AUTH_LOGIN_REGION}`,
+      `${SUPABASE_URL}/functions/v1/auth-login`,
       {
       method: 'POST',
       headers: {

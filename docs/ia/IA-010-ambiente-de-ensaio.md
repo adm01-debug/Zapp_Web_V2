@@ -66,7 +66,7 @@ representados (ver §3).
       como condição de ensaio.
 - [~] Provisionamento — **artefato versionado pronto; execução pendente de autorização**. O gerador
       `scripts/ia/ensaio-provisionamento.mjs` (cartão SL-059) produz, de forma determinística, o DML
-      aditivo, idempotente e reversível por prefixo **dos dados da §2 — departamentos, filas,
+      aditivo, idempotente e reversível por IDs e marcadores canônicos **dos dados da §2 — departamentos, filas,
       contatos e mensagens** —, e **não fala com banco nenhum**: a única aplicação autorizada a um
       agente é no banco LOCAL da cópia de trabalho
       (`bun scripts/ia/ensaio-provisionamento.mjs --sql | zapp-db-local psql <cópia> [nome]`).
@@ -80,7 +80,7 @@ representados (ver §3).
 ## 6. Estado do provisionamento em 08/10/2026 (ponta de dia) — cartão SL-059
 
 **Artefato:** `scripts/ia/ensaio-provisionamento.mjs` (gerador, determinístico, sem acesso a banco) e o
-contrato `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` (13 conferências do plano, do
+contrato `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` (18 conferências do plano, do
 DML e dos marcadores contra este documento, contra `supabase/schema-manifest.json` e contra a paleta
 real do sistema).
 
@@ -121,8 +121,14 @@ real do sistema).
 **Propriedades travadas pelo contrato:** todo nome/fila/contato nasce com o prefixo `ENSAIO-`; todo
 e-mail é do domínio de teste; telefone fora de faixa real; nenhum CPF/CNPJ; cores de fila restritas à
 paleta que o sistema já tem (`src/components/queues/queueColors.ts` — a fonte única dos tokens do
-seletor de cor de fila, que o `CreateQueueDialog` apenas importa); todo `insert` traz
-`on conflict`; toda remoção (`--remover`) filtra por prefixo; **a reversão apaga só tabelas que o
+seletor de cor de fila, que o `CreateQueueDialog` apenas importa); o plano inteiro, inclusive IDs,
+vocabulários e totais, é canônico e profundamente imutável; invariantes independentes recusam
+regressões do próprio gerador; a reaplicação idêntica usa `on conflict (id) do nothing`, enquanto
+qualquer divergência em ID reservado aborta a transação em vez de sobrescrever o registro;
+provisionamento e reversão compartilham um advisory lock transacional, travam as quatro tabelas e
+as linhas reservadas, e repetem automaticamente o preflight se o PostgreSQL detectar deadlock; toda
+remoção (`--remover`) exige o ID, o marcador e a igualdade integral de todos os campos canônicos;
+**a reversão apaga só tabelas que o
 provisionamento escreve** (paridade, com lista de exceções deliberadas vazia); o DML não menciona
 `conversation_analyses` nem `conversation_memory` (os casos "conversa sem análise" e "contato sem
 memória" valem por omissão provada); e o gerador recusa host de banco que não seja local

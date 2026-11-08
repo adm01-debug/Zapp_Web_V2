@@ -42,7 +42,7 @@ export function SystemFeaturesView() {
               <h1 className="text-2xl font-display font-bold text-foreground">
                 Funcionalidades do Sistema
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <div className="text-sm text-muted-foreground mt-1">
                 <span className="font-semibold text-primary">{totalFeatures}+</span> funcionalidades em{' '}
                 <span className="font-semibold text-primary">34</span> seções •{' '}
                 {summary.disabled === 0 ? (
@@ -54,7 +54,7 @@ export function SystemFeaturesView() {
                     {summary.disabled} desativada{summary.disabled === 1 ? '' : 's'}
                   </Badge>
                 )}
-              </p>
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Catálogo histórico de produto — o estado de cada item vem da configuração ativa do sistema.
               </p>

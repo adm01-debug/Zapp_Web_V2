@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { assertBlocking, conditionOf, jobOf, onlyStep, permission, shellCode, stepsOf } from './workflow-test-support.mjs';
 import {
   executar,
   lerEquivalentes,
@@ -160,12 +161,20 @@ test('CLI: sempre exit 0; aviso ::warning:: quando não gera comando', () => {
   assert.match(r.stdout, /Comando não gerado/);
 });
 
-test.skip('o workflow chama o script e nunca executa a poda', () => {
+test('o workflow chama o script e nunca executa a poda', () => {
   const wf = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
-  assert.match(wf, /node scripts\/ci\/branch-podaveis\.mjs/);
-  assert.match(wf, /branch-equivalentes\.tsv/);
-  const linhasExecutaveis = wf.split('\n').map((l) => l.trim()).filter((l) => !l.startsWith('#'));
-  const executaveis = linhasExecutaveis.join('\n');
-  assert.ok(!linhasExecutaveis.some((l) => /^git push\b/.test(l)), 'o workflow não pode apagar branch (W98 = só comando pronto)');
-  assert.doesNotMatch(executaveis, /git\/refs\/heads[^\n]*-X\s*DELETE|--method\s+DELETE/, 'nem pela API');
+  const job = jobOf(wf, 'audit');
+  const steps = stepsOf(job);
+  const step = onlyStep(steps, (s) => /^\s*node scripts\/ci\/branch-podaveis\.mjs\b/m.test(shellCode(s)), 'comandos W98');
+  assert.equal(permission(job, 'contents'), 'read');
+  assert.equal(permission(job, 'pull-requests'), 'read');
+  assert.equal(conditionOf(step), 'success()');
+  assertBlocking(step);
+  const code = shellCode(step);
+  assert.match(code, /--equivalentes "\$RUNNER_TEMP\/branch-equivalentes\.tsv"/);
+  assert.match(code, /--prs "\$PRS" --protegidas "\$PROTEGIDAS" --limite-prs "\$LIMITE_PRS"/);
+  assert.match(code, /gh api --paginate[^\n]*branches\?protected=true/);
+  const executaveis = steps.map(shellCode).join('\n');
+  assert.doesNotMatch(executaveis, /\bgit\s+push\b/, 'o workflow não pode apagar branch (W98 = só comando pronto)');
+  assert.doesNotMatch(executaveis, /(?:-X|--method)\s+DELETE\b/, 'nem pela API');
 });

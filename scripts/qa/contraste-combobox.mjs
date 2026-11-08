@@ -38,7 +38,7 @@ function bloco(css, seletor) {
 /** `--token: H S% L%;` → { token: [H, S, L] }. */
 function vars(texto) {
   return Object.fromEntries(
-    [...texto.matchAll(/--([a-z0-9-]+):\s*([0-9.]+)\s+([0-9.]+)%\s+([0-9.]+)%\s*;/g)]
+    [...texto.matchAll(/--([a-z0-9-]+):\s*([0-9.]+)\s+([0-9.]+)%\s+([0-9.]+)%\s*(?:!important\s*)?;/g)]
       .map(([, nome, h, s, l]) => [nome, [Number(h), Number(s), Number(l)]]),
   );
 }
@@ -97,7 +97,7 @@ export function medir(temas) {
   return linhas;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const tokens = readFileSync(path.join(ROOT, 'src/styles/tokens.css'), 'utf8');
   const a11y = readFileSync(path.join(ROOT, 'src/styles/accessibility.css'), 'utf8');
   const rows = medir(parseTemas(tokens, a11y));

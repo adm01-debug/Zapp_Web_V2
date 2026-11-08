@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
+import { SUPABASE_URL } from './supabase-env';
 
 /**
  * Setup comum das specs E2E do módulo Mapa (E71/E72 picker do inbox, E73 cadastro de
@@ -23,7 +24,7 @@ import type { Page, Route } from '@playwright/test';
 const FIXTURES_MAPBOX = join(import.meta.dirname, '..', '..', 'src', 'lib', '__fixtures__', 'mapbox');
 
 /** Host do projeto Supabase usado pelas fixtures do repo (mesmo de `e2e/fixtures/contacts-page.ts`). */
-export const SUPABASE_HOST = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
+export const SUPABASE_HOST = SUPABASE_URL;
 
 export type Registro = {
   /** Escritas que o app tentou fazer no backend (método + path). */
@@ -78,22 +79,35 @@ export function querObjetoUnico(route: Route): boolean {
  * Identidade + RPCs + edge do app shell. Registre este ANTES das rotas específicas da
  * sua spec (a última registrada vence, então as suas têm prioridade).
  */
-export async function mockAppShell(page: Page, registro: Registro): Promise<void> {
+export async function mockAppShell(
+  page: Page,
+  registro: Registro,
+  options: { role?: 'admin' | 'agent'; onboardingCompleted?: boolean } = {},
+): Promise<void> {
+  const role = options.role ?? 'admin';
+  const onboardingCompleted = options.onboardingCompleted ?? true;
+  const bootstrapBase = role === 'admin'
+    ? BOOT_FAKE
+    : { ...BOOT_FAKE, roles: [role], role_permissions: [] };
+  const bootstrap = {
+    ...bootstrapBase,
+    user_settings: { ...bootstrapBase.user_settings, onboarding_completed: onboardingCompleted },
+  };
   await page.route(/\/rest\/v1\/profiles/, (route) =>
     json(route, querObjetoUnico(route) ? PERFIL_FAKE : [PERFIL_FAKE]));
   await page.route(/\/rest\/v1\/user_roles/, (route) =>
-    json(route, querObjetoUnico(route) ? { role: 'admin' } : [{ role: 'admin' }]));
+    json(route, querObjetoUnico(route) ? { role } : [{ role }]));
   await page.route(/\/rest\/v1\/user_settings/, (route) =>
     json(route, querObjetoUnico(route)
-      ? { onboarding_completed: true }
-      : [{ onboarding_completed: true }]));
+      ? { onboarding_completed: onboardingCompleted }
+      : [{ onboarding_completed: onboardingCompleted }]));
 
   // RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
   await page.route(/\/rest\/v1\/rpc\/count_searchbox_sessions_this_month/, (route) => json(route, 0));
   await page.route(/\/rest\/v1\/rpc\/(?!user_has_permission|count_searchbox_sessions_this_month)/, (route) => json(route, null));
   // A última rota registrada vence: responder o bootstrap depois do catch-all.
-  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => json(route, BOOT_FAKE));
+  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => json(route, bootstrap));
 
   // Edge functions: só o token do Mapbox importa; o resto é bloqueado.
   await page.route(/\/functions\/v1\/get-mapbox-token/, (route) => json(route, { token: 'pk.e2e-mapa' }));
@@ -152,7 +166,7 @@ export async function mockMapboxSearchbox(
  */
 export async function bloquearRedeReal(page: Page, registro: Registro): Promise<void> {
   const barrado = () => (registro.redeBarrada ??= []);
-  await page.route(`**/tnnnlkbymytvtqngbbqh.supabase.co/**`, (route) => {
+  await page.route((url) => url.origin === SUPABASE_HOST && /^\/(?:auth|rest|storage|realtime|functions)\/v1(?:\/|$)/.test(url.pathname), (route) => {
     barrado().push(route.request().url());
     return json(route, { message: 'rede real bloqueada no E2E' }, 403);
   });

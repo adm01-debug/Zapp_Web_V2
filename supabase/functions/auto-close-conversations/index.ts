@@ -15,7 +15,7 @@
  *   - Execução manual: JWT válido de admin/supervisor, verificado pela RPC canônica
  *     `is_admin_or_supervisor`.
  */
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, jsonResponse, errorResponse, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 

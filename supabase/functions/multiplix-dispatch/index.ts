@@ -17,8 +17,8 @@
  * As demais acoes do bloco (F45-F52) vivem em ./actions/*.ts e sao ligadas aqui.
  */
 
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
-import { z } from 'https://esm.sh/zod@3.23.8';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.87.1';
+import { z } from 'npm:zod@3.23.8';
 import {
   enforceRateLimit,
   errorResponse,

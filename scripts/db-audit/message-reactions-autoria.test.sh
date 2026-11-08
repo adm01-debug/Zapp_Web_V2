@@ -118,8 +118,20 @@ for attempt in 1 2 3; do
   docker rm -f "$container_name" >/dev/null 2>&1 || true
   if docker run -d --name "$container_name" -e POSTGRES_PASSWORD=autoria_test_only "$postgres_image" >/dev/null 2>&1; then
     ready=false
-    for _ in $(seq 1 30); do
-      if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then ready=true; break; fi
+    ready_checks=0
+    for _ in $(seq 1 90); do
+      if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+        ready_checks=$((ready_checks + 1))
+        if (( ready_checks >= 2 )); then
+          ready=true
+          break
+        fi
+      else
+        # A imagem oficial inicia uma instância temporária durante o initdb e a
+        # encerra antes de subir o servidor definitivo. Uma sonda isolada pode
+        # acertar essa primeira janela; qualquer falha reinicia a confirmação.
+        ready_checks=0
+      fi
       sleep 1
     done
     [[ "$ready" == true ]] && break

@@ -1,158 +1,279 @@
 #!/usr/bin/env node
-// W65: pós-deploy health check — 5 min após deploy, consulta logs de erro pela
-// Management API e falha com ::error:: se a taxa de 5xx superar o limiar.
-// Degradação controlada: falha de transporte ou API indisponível → ::warning::,
-// nunca ::error:: — o check não pode derrubar deploys por indisponibilidade de
-// observabilidade.
+// W65: pós-deploy health check — consulta a API atual de logs do Supabase e
+// bloqueia regressões 5xx. Somente indisponibilidade transitória de
+// observabilidade (transporte, timeout ou HTTP 5xx) degrada para warning.
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const CANONICAL_PROJECT = 'tnnnlkbymytvtqngbbqh';
-const MGMT_BASE = 'https://api.supabase.com';
-const DEFAULT_THRESHOLD = 0.10; // 10% de 5xx = falha
-const DEFAULT_WAIT_MS = 5 * 60 * 1000; // 5 min
-const WINDOW_MINUTES = 5;
+export const CANONICAL_PROJECT = 'tnnnlkbymytvtqngbbqh';
+export const MGMT_BASE = 'https://api.supabase.com';
+export const DEFAULT_THRESHOLD = 0.10;
+export const DEFAULT_WAIT_MS = 5 * 60 * 1000;
+export const MAX_WAIT_MS = 15 * 60 * 1000;
+export const WINDOW_MS = 5 * 60 * 1000;
+export const MAX_LOG_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-function parseArgs(argv) {
+const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
+
+export class TransientAnalyticsError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'TransientAnalyticsError';
+  }
+}
+
+function optionValue(argv, index, name) {
+  const value = argv[index + 1];
+  if (value === undefined || value.startsWith('--')) throw new Error(`${name} exige um valor`);
+  return value;
+}
+
+export function validateSlug(value) {
+  if (typeof value !== 'string' || !SLUG_PATTERN.test(value)) {
+    throw new Error(`slug de função inválido: ${String(value)}`);
+  }
+  return value;
+}
+
+export function parseArgs(argv) {
   const args = {
     threshold: DEFAULT_THRESHOLD,
     waitMs: DEFAULT_WAIT_MS,
     dryRun: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i] === '--project-ref') args.projectRef = argv[++i];
-    else if (argv[i] === '--scope') args.scope = argv[++i];
-    else if (argv[i] === '--threshold') args.threshold = parseFloat(argv[++i]);
-    else if (argv[i] === '--wait-ms') args.waitMs = parseInt(argv[++i], 10);
-    else if (argv[i] === '--no-wait') args.waitMs = 0;
-    else if (argv[i] === '--dry-run') args.dryRun = true;
-    else if (argv[i] === '--manifest') args.manifestPath = argv[++i];
-    else throw new Error(`Argumento desconhecido: ${argv[i]}`);
+    const key = argv[i];
+    if (key === '--project-ref') args.projectRef = optionValue(argv, i++, key);
+    else if (key === '--scope') args.scope = optionValue(argv, i++, key);
+    else if (key === '--threshold') args.threshold = Number(optionValue(argv, i++, key));
+    else if (key === '--wait-ms') {
+      const raw = optionValue(argv, i++, key);
+      if (!/^(?:0|[1-9]\d*)$/.test(raw)) throw new Error('--wait-ms deve ser um inteiro não negativo');
+      args.waitMs = Number(raw);
+    } else if (key === '--no-wait') args.waitMs = 0;
+    else if (key === '--dry-run') args.dryRun = true;
+    else if (key === '--manifest') args.manifestPath = optionValue(argv, i++, key);
+    else throw new Error(`Argumento desconhecido: ${key}`);
   }
-  if (!args.projectRef) throw new Error('--project-ref obrigatorio');
-  if (args.projectRef !== CANONICAL_PROJECT) throw new Error('Apenas o projeto canonico e aceito');
+
+  if (!args.projectRef) throw new Error('--project-ref obrigatório');
+  if (args.projectRef !== CANONICAL_PROJECT) throw new Error('Apenas o projeto canônico é aceito');
+  if (!args.manifestPath) throw new Error('--manifest obrigatório');
+  if (!Number.isFinite(args.threshold) || args.threshold < 0 || args.threshold > 1) {
+    throw new Error('--threshold deve estar entre 0 e 1');
+  }
+  if (!Number.isSafeInteger(args.waitMs) || args.waitMs < 0 || args.waitMs > MAX_WAIT_MS) {
+    throw new Error(`--wait-ms deve estar entre 0 e ${MAX_WAIT_MS}`);
+  }
+  if (args.scope && args.scope !== 'all') validateSlug(args.scope);
   return args;
 }
 
-// Retorna lista de slugs a verificar: escopo "all" → todas as funções do manifesto;
-// caso contrário, só a função nomeada.
-async function resolveScope(scope, manifestPath) {
-  if (scope && scope !== 'all') return [scope];
-  if (manifestPath) {
-    const raw = JSON.parse(await readFile(manifestPath, 'utf8'));
-    return (raw.functions ?? []).map((fn) => fn.name).filter(Boolean);
+function parseManifest(raw) {
+  let manifest;
+  try {
+    manifest = JSON.parse(raw);
+  } catch {
+    throw new Error('Manifesto Edge não contém JSON válido');
   }
-  return [];
+  if (!manifest || !Array.isArray(manifest.functions) || manifest.functions.length === 0) {
+    throw new Error('Manifesto Edge sem lista de funções');
+  }
+  const slugs = manifest.functions.map((fn) => validateSlug(fn?.name));
+  if (new Set(slugs).size !== slugs.length) throw new Error('Manifesto Edge contém funções duplicadas');
+  return slugs;
 }
 
-// Monta a SQL de análise de logs de edge para a janela configurada.
-// A API de analytics do Supabase usa BigQuery-flavored SQL contra a tabela
-// `edge_logs`. O campo de status HTTP fica em metadata[offset(0)].response.statusCode
-// (array UNNEST necessário porque metadata é REPEATED).
-function buildLogsSql(slugs, windowMinutes) {
-  const slugFilter = slugs.length > 0
-    ? `AND m.function IN (${slugs.map((s) => `'${s}'`).join(', ')})`
-    : '';
+export async function resolveScope(scope, manifestPath, readFileImpl = readFile) {
+  const slugs = parseManifest(await readFileImpl(manifestPath, 'utf8'));
+  if (!scope || scope === 'all') return slugs;
+  validateSlug(scope);
+  if (!slugs.includes(scope)) throw new Error(`Função fora do manifesto: ${scope}`);
+  return [scope];
+}
+
+function pathnamePredicate(slug) {
+  const pathname = `/functions/v1/${validateSlug(slug)}`;
+  return `(log_attributes['request.pathname'] = '${pathname}' OR ` +
+    `startsWith(log_attributes['request.pathname'], '${pathname}/'))` ;
+}
+
+export function buildLogsSql(slugs) {
+  if (!Array.isArray(slugs) || slugs.length === 0) throw new Error('Escopo de logs vazio');
+  const unique = [...new Set(slugs.map(validateSlug))];
+  const scopeFilter = unique.map(pathnamePredicate).join(' OR ');
   return (
     `SELECT ` +
-    `  COUNT(1) AS total, ` +
-    `  COUNTIF(CAST(m.response.statusCode AS INT64) >= 500) AS errors ` +
-    `FROM edge_logs ` +
-    `  CROSS JOIN UNNEST(metadata) AS m ` +
-    `WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${windowMinutes} MINUTE) ` +
-    slugFilter
-  ).trim();
+    `count() AS total, ` +
+    `countIf(toInt32OrZero(log_attributes['response.status_code']) BETWEEN 500 AND 599) AS errors ` +
+    `FROM logs ` +
+    `WHERE source = 'function_edge_logs' ` +
+    `AND (${scopeFilter})`
+  );
 }
 
-// Chama a Management API de analytics do Supabase.
-// Lança se o HTTP não for 2xx; devolve null se a resposta não tiver linhas.
-async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
-  const url = `${MGMT_BASE}/v1/projects/${projectRef}/analytics/endpoints/logs.all`;
-  const res = await fetchImpl(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ sql }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) {
-    // Não logar o corpo da resposta: pode conter detalhes de autenticação.
-    throw new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
-  }
-  const json = await res.json();
-  // A API retorna { result: [{ total: N, errors: N }] } quando bem-sucedida.
-  if (!Array.isArray(json.result) || json.result.length === 0) return null;
-  return json.result[0];
+function isoTimestamp(value, label) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) throw new Error(`${label} inválido`);
+  return date.toISOString();
 }
 
-async function main() {
-  const args = parseArgs(process.argv.slice(2));
-  const token = process.env.SUPABASE_ACCESS_TOKEN;
-  if (!token?.trim()) {
-    console.error('::warning::SUPABASE_ACCESS_TOKEN ausente — health check ignorado');
-    return;
+function parseCount(value, label) {
+  if (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value)) {
+    throw new Error(`Resposta de logs contém ${label} inválido`);
+  }
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error(`Resposta de logs contém ${label} inválido`);
+  }
+  return parsed;
+}
+
+export async function queryAnalytics({
+  projectRef,
+  token,
+  sql,
+  start,
+  end,
+  fetchImpl = fetch,
+  timeoutSignal = () => AbortSignal.timeout(30_000),
+}) {
+  if (projectRef !== CANONICAL_PROJECT) throw new Error('Projeto de logs inválido');
+  if (typeof token !== 'string' || !token.trim()) throw new Error('SUPABASE_ACCESS_TOKEN ausente');
+  if (typeof sql !== 'string' || !sql.trim()) throw new Error('SQL de logs ausente');
+
+  const startMs = new Date(start).getTime();
+  const endMs = new Date(end).getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    throw new Error('Janela de logs inválida');
+  }
+  if (endMs - startMs > MAX_LOG_WINDOW_MS) throw new Error('Janela de logs excede 24 horas');
+
+  const url = new URL(`${MGMT_BASE}/v1/projects/${projectRef}/analytics/endpoints/logs`);
+  url.searchParams.set('sql', sql);
+  url.searchParams.set('iso_timestamp_start', isoTimestamp(start, 'Início da janela'));
+  url.searchParams.set('iso_timestamp_end', isoTimestamp(end, 'Fim da janela'));
+
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      signal: timeoutSignal(),
+    });
+  } catch {
+    throw new TransientAnalyticsError('transporte ou timeout ao consultar logs');
   }
 
-  const slugs = await resolveScope(args.scope, args.manifestPath);
-  const nomeScope = args.scope || 'all';
+  if (response.status >= 500) {
+    throw new TransientAnalyticsError(`Management API indisponível (HTTP ${response.status})`);
+  }
+  if (!response.ok) {
+    throw new Error(`Management API recusou a consulta de logs (HTTP ${response.status})`);
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error('Management API retornou JSON inválido');
+  }
+  if (!payload || !Array.isArray(payload.result)) {
+    throw new Error('Contrato inválido na resposta da Management API');
+  }
+  if (payload.result.length === 0) return null;
+  if (payload.result.length !== 1 || !payload.result[0] || typeof payload.result[0] !== 'object') {
+    throw new Error('Contrato inválido na agregação de logs');
+  }
+  const total = parseCount(payload.result[0].total, 'total');
+  const errors = parseCount(payload.result[0].errors, 'errors');
+  if (errors > total) throw new Error('Resposta de logs contém mais erros que invocações');
+  return { total, errors };
+}
+
+export async function runHealthCheck(args, {
+  env = process.env,
+  fetchImpl = fetch,
+  now = () => Date.now(),
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  logger = console,
+  readFileImpl = readFile,
+} = {}) {
+  const slugs = await resolveScope(args.scope, args.manifestPath, readFileImpl);
+  const scopeName = args.scope || 'all';
 
   if (args.dryRun) {
-    console.log(`[health-check] Ensaio — escopo: ${nomeScope}; funções: ${slugs.length || '(todas)'}`);
-    console.log('[health-check] Dry run: sem espera e sem chamada à API.');
-    return;
+    logger.log(`[health-check] Ensaio — escopo: ${scopeName}; funções: ${slugs.length}`);
+    logger.log('[health-check] Dry run: sem espera e sem chamada à API.');
+    return { status: 'dry-run' };
   }
+
+  const token = env.SUPABASE_ACCESS_TOKEN;
+  if (typeof token !== 'string' || !token.trim()) throw new Error('SUPABASE_ACCESS_TOKEN ausente');
 
   if (args.waitMs > 0) {
-    const minutos = Math.round(args.waitMs / 60_000);
-    console.log(`[health-check] Aguardando ${minutos} min para os logs de pós-deploy estabilizarem…`);
-    await new Promise((resolve) => setTimeout(resolve, args.waitMs));
+    logger.log(`[health-check] Aguardando ${Math.round(args.waitMs / 60_000)} min para os logs estabilizarem…`);
+    await sleep(args.waitMs);
   }
 
-  const sql = buildLogsSql(slugs, WINDOW_MINUTES);
+  const end = new Date(now());
+  const start = new Date(end.getTime() - WINDOW_MS);
   let row;
   try {
     row = await queryAnalytics({
       projectRef: args.projectRef,
       token,
-      sql,
+      sql: buildLogsSql(slugs),
+      start,
+      end,
+      fetchImpl,
     });
-  } catch (err) {
-    // Falha de transporte ou API indisponível → warning, não bloqueia o deploy.
-    console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
-    return;
+  } catch (error) {
+    if (!(error instanceof TransientAnalyticsError)) throw error;
+    logger.error(`::warning::Health check sem observabilidade transitória: ${error.message}. Prosseguindo.`);
+    return { status: 'warning', reason: error.message };
   }
 
-  if (row === null) {
-    console.log('[health-check] Nenhum log na janela de observação — sem invocações recentes ou logs ainda não propagados.');
-    return;
+  if (row === null || row.total === 0) {
+    logger.log('[health-check] Zero invocações na janela — sem tráfego suficiente para medir taxa de erro.');
+    return { status: 'no-traffic', total: 0, errors: 0 };
   }
 
-  const total = Number(row.total ?? 0);
-  const errors = Number(row.errors ?? 0);
-
-  if (total === 0) {
-    console.log('[health-check] Zero invocações na janela — sem tráfego suficiente para medir taxa de erro.');
-    return;
-  }
-
-  const errorRate = errors / total;
+  const errorRate = row.errors / row.total;
   const pct = (errorRate * 100).toFixed(1);
-  console.log(`[health-check] Escopo: ${nomeScope} | invocações: ${total} | erros 5xx: ${errors} | taxa: ${pct}%`);
-
+  logger.log(`[health-check] Escopo: ${scopeName} | invocações: ${row.total} | erros 5xx: ${row.errors} | taxa: ${pct}%`);
   if (errorRate > args.threshold) {
-    const limiar = (args.threshold * 100).toFixed(0);
-    console.error(
-      `::error::Health check FALHOU — taxa de 5xx (${pct}%) supera o limiar de ${limiar}% ` +
-        `nas últimas ${WINDOW_MINUTES} min. Verifique os logs da função e considere o rollback ` +
-        `(dispatch com rollback_to_last_success=true).`
+    const thresholdPct = (args.threshold * 100).toFixed(0);
+    logger.error(
+      `::error::Health check FALHOU — taxa de 5xx (${pct}%) supera o limiar de ${thresholdPct}% ` +
+      `nas últimas ${WINDOW_MS / 60_000} min.`,
     );
-    process.exitCode = 1;
-  } else {
-    console.log(`[health-check] OK — taxa de 5xx (${pct}%) dentro do limiar.`);
+    return { status: 'failed', total: row.total, errors: row.errors, errorRate };
   }
+  logger.log(`[health-check] OK — taxa de 5xx (${pct}%) dentro do limiar.`);
+  return { status: 'passed', total: row.total, errors: row.errors, errorRate };
 }
 
-main().catch((err) => {
-  console.error(`::warning::health-check.mjs falhou inesperadamente: ${err.message}. Prosseguindo.`);
-});
+export async function main(argv = process.argv.slice(2), dependencies) {
+  let args;
+  try {
+    args = parseArgs(argv);
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
+  const outcome = await runHealthCheck(args, dependencies);
+  if (outcome.status === 'failed') process.exitCode = 1;
+  return outcome;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch((error) => {
+    console.error(`::error::health-check.mjs falhou: ${error.message}`);
+    process.exitCode = 1;
+  });
+}

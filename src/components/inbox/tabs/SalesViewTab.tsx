@@ -1,5 +1,4 @@
-import { CircleDollarSign, FileText, ShoppingBag } from 'lucide-react';
-import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
+import { CircleDollarSign, FileText } from 'lucide-react';
 import { OpenDealsList } from './OpenDealsList';
 import { SectionCard } from './SectionCard';
 import { CommercialSummaryStrip } from './CommercialSummaryStrip';
@@ -8,25 +7,22 @@ import type { ConversationTab } from '../chat/ConversationTabs';
 
 interface SalesViewTabProps {
   contactId: string;
-  /** Perfil do agente logado — o ContactPurchasesPanel grava como `created_by`. */
-  profileId: string | null;
   /** Troca de aba no chat (origem: ConversationTabContent). "Ver no CRM →" usa `onTabChange('crm')`. */
   onTabChange: (tab: ConversationTab) => void;
 }
 
 /**
- * Aba SalesView — resumo comercial, compras e propostas do contato.
- * Os três blocos ficam sempre montados: o ContactPurchasesPanel detém o botão
- * "+ Novo", e sem ele um contato sem compras não teria onde registrar a primeira.
+ * Aba SalesView — resumo comercial e propostas do contato.
+ * O módulo de compras foi removido em 2026-11-03 (decisão do dono).
  */
-export function SalesViewTab({ contactId, profileId, onTabChange }: SalesViewTabProps) {
+export function SalesViewTab({ contactId, onTabChange }: SalesViewTabProps) {
   const { data: crm360, isLoading } = useContactCrm360(contactId);
 
   return (
     <div className="flex flex-col gap-4" data-testid="orders-tab">
       <header>
         <h2 className="text-xl font-bold text-foreground">SalesView</h2>
-        <p className="text-sm text-muted-foreground">Resumo comercial, compras e propostas deste contato.</p>
+        <p className="text-sm text-muted-foreground">Resumo comercial e propostas deste contato.</p>
       </header>
 
       <SectionCard
@@ -36,10 +32,6 @@ export function SalesViewTab({ contactId, profileId, onTabChange }: SalesViewTab
         action={{ label: 'Ver no CRM →', onClick: () => onTabChange('crm') }}
       >
         <CommercialSummaryStrip contactId={contactId} />
-      </SectionCard>
-
-      <SectionCard icon={ShoppingBag} title="Compras e propostas" tone="blue">
-        <ContactPurchasesPanel contactId={contactId} profileId={profileId} />
       </SectionCard>
 
       <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">

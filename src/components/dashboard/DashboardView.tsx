@@ -86,7 +86,7 @@ const DASHBOARD_TABS: DashboardTabDef[] = [
   { value: 'reports', label: 'Relatórios', icon: FileText },
 ];
 
-// Agent/special_agent veem so as abas pessoais — RLS ja escopa os dados dele,
+// Agent veem so as abas pessoais — RLS ja escopa os dados dele,
 // mas Analytics/Equipe/Sentimento/Relatorios sao paineis de gestao da operacao inteira.
 const AGENT_TAB_VALUES = new Set(['overview', 'goals', 'satisfaction']);
 

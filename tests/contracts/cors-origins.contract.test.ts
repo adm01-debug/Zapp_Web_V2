@@ -19,6 +19,7 @@ const require = createRequire(import.meta.url);
  */
 const CANONICO_VERCEL = 'https://zapp-web-v2.vercel.app';
 const CANONICO_DOMINIO = 'https://zappweb.app.br';
+const CANONICO_WWW = 'https://www.zappweb.app.br';
 
 import { allowedOriginFor } from '../../supabase/functions/_shared/cors-origins.ts';
 
@@ -44,6 +45,7 @@ describe('CORS das edge functions — endereços canônicos de produção', () =
   it('allowed-origins.json contém todos os canônicos (W61)', () => {
     expect(allowedOriginsJson.exact).toContain(CANONICO_VERCEL);
     expect(allowedOriginsJson.exact).toContain(CANONICO_DOMINIO);
+    expect(allowedOriginsJson.exact).toContain(CANONICO_WWW);
   });
 
   it('não aceita nenhum host do Lovable na allow-list', () => {
@@ -90,13 +92,15 @@ describe('CORS das edge functions — endereços canônicos de produção', () =
     const req = (origin?: string) =>
       new Request('https://edge.invalid/x', origin ? { headers: { origin } } : undefined);
     expect(allowedOriginFor(req(CANONICO_DOMINIO))).toBe(CANONICO_DOMINIO);
+    expect(allowedOriginFor(req(CANONICO_WWW))).toBe(CANONICO_WWW);
     expect(allowedOriginFor(req(CANONICO_VERCEL))).toBe(CANONICO_VERCEL);
     expect(allowedOriginFor(undefined)).toBe(CANONICO_VERCEL);
     expect(allowedOriginFor(req())).toBe(CANONICO_VERCEL);
     for (const o of [
       'https://zappweb.app.br.evil.example',
       'https://evilzappweb.app.br',
-      'https://www.zappweb.app.br',
+      'https://www.zappweb.app.br.evil.example',
+      'https://ww.zappweb.app.br',
       'http://zappweb.app.br',
       'https://zappweb.app.br:8443',
     ]) {

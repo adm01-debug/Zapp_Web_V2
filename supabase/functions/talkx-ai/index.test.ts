@@ -15,7 +15,7 @@
  *  5. o prompt capturado não contém os dígitos de telefone da fixture
  */
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleTalkxAi, sanitizarPrompt, type RespostaDoProxy, type TalkxAiDeps } from "./index.ts";
 
 type Linha = Record<string, unknown>;

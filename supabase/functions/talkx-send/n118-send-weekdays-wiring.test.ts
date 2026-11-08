@@ -6,7 +6,7 @@
 // separa o certo do errado: com o select sem as colunas, o dia proibido some e
 // a campanha ENVIA (vermelho); com as colunas, ela pausa (verde).
 import { assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleTalkxSend } from "./index.ts";
 import {
   processRecipient,

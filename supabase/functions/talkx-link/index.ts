@@ -6,7 +6,7 @@
  *
  * O worker é stateless; toda a lógica de persistência fica em RPCs seguras (SECURITY DEFINER).
  */
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
 import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
 import {

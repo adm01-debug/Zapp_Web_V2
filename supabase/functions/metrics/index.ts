@@ -14,7 +14,7 @@
  * Leitura que falha NÃO vira 200 silencioso: devolve 503 com `zapp_edge_up 0`, que é
  * o sinal que o scrape registra como `up=0` — o mesmo caminho de falha do `health`.
  */
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { getCorsHeaders, handleCors, requireEnv } from '../_shared/validation.ts';
 import {
   authorizeObservability,

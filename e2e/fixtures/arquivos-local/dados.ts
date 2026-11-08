@@ -88,7 +88,7 @@ export const E2E_ARQUIVOS = {
       mediaType: 'application/pdf',
       mimetype: 'application/pdf',
       filename: 'e2e-arquivos-documento.pdf',
-      // sender=agent: exercita o rótulo "Atendente" e o item "Excluir" do painel.
+      // sender=agent do usuário logado: exercita o rótulo "Você" e o item "Excluir" do painel.
       sender: 'agent',
       ptt: false,
       content: 'Documento sintético do fixture local',

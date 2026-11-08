@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# IA-131 / IA-AUDIO-001 — prova que a migration de audio_stt do OpenRouter
-# acrescenta somente a modalidade nova, preserva modalidades/capacidades existentes,
-# cria capabilities quando ausente e tem rollback que remove apenas audio_stt.
+# IA-131 / IA-AUDIO-001 — prova o estado real da cadeia ia033 -> ia131: o JSON
+# declara vision antes do audio_stt; text ja vem do tipo openai_compatible em
+# declaredCapabilities, nao do array. Confere tambem chaves irmas, idempotencia,
+# o comportamento sem capabilities e o rollback documentado da migration aplicada.
 
 set -Eeuo pipefail
 
@@ -44,20 +45,16 @@ rollback_sql() {
   python3 - "$migration" <<'PY'
 from pathlib import Path
 import sys
-# Formato exigido pelo fechar: "-- Rollback (SQL executável...):" seguido do SQL em
-# linhas comentadas "--   <sql>". O teste executa exatamente essas linhas.
+# A migration aplicada documenta o rollback em uma unica linha "-- Rollback:".
+# Executar essa linha, sem inventar SQL alternativo no teste.
 linhas = Path(sys.argv[1]).read_text(encoding='utf-8').splitlines()
-inicio = next((i for i, l in enumerate(linhas) if l.startswith('-- Rollback (SQL execut')), None)
-if inicio is None:
-    raise SystemExit('Bloco -- Rollback (SQL executavel) nao encontrado')
-sql = []
-for l in linhas[inicio + 1:]:
-    if not l.startswith('--   '):
-        break
-    sql.append(l.removeprefix('--   ').strip())
-if not sql or not any(sql):
-    raise SystemExit('Rollback vazio')
-print('\n'.join(sql))
+linha = next((l for l in linhas if l.startswith('-- Rollback: ')), None)
+if linha is None:
+    raise SystemExit('Linha -- Rollback: nao encontrada')
+sql = linha.removeprefix('-- Rollback: ').strip()
+if not sql.lower().startswith('update public.ai_providers set ') or ' where id = ' not in sql.lower() or sql.count(';') != 1 or not sql.endswith(';'):
+    raise SystemExit('Rollback nao e UPDATE unico e delimitado de ai_providers')
+print(sql)
 PY
 }
 
@@ -99,7 +96,7 @@ INSERT INTO public.ai_providers (id, name, config) VALUES
     'OpenRouter',
     jsonb_build_object(
       'headers', jsonb_build_object('x', 'y'),
-      'capabilities', jsonb_build_object('modalities', jsonb_build_array('vision', 'text'), 'other', 'keep'),
+      'capabilities', jsonb_build_object('modalities', jsonb_build_array('vision'), 'other', 'keep'),
       'routing', 'keep'
     )
   ),
@@ -112,8 +109,8 @@ INSERT INTO public.ai_providers (id, name, config) VALUES
 
 apply_migration
 expect_value 'modalidade existente vision preservada' 't' "SELECT config->'capabilities'->'modalities' ? 'vision' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
-expect_value 'modalidade existente text preservada' 't' "SELECT config->'capabilities'->'modalities' ? 'text' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 expect_value 'audio_stt acrescentado' 't' "SELECT config->'capabilities'->'modalities' ? 'audio_stt' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
+expect_value 'conjunto declarado e vision mais audio_stt' 't' "SELECT (config #> '{capabilities,modalities}') = '[\"vision\",\"audio_stt\"]'::jsonb FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 expect_value 'chave irmã dentro de capabilities preservada' 'keep' "SELECT config #>> '{capabilities,other}' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 expect_value 'chave top-level preservada' 'keep' "SELECT config ->> 'routing' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 expect_value 'outro provedor intocado' '["vision"]' "SELECT config #> '{capabilities,modalities}' FROM public.ai_providers WHERE id = '11111111-1111-1111-1111-111111111111';"
@@ -123,12 +120,13 @@ expect_value 'migration idempotente: audio_stt aparece uma vez' '1' "SELECT coun
 
 apply_rollback
 expect_value 'rollback remove audio_stt' 'f' "SELECT config->'capabilities'->'modalities' ? 'audio_stt' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
-expect_value 'rollback preserva modalidade text' 't' "SELECT config->'capabilities'->'modalities' ? 'text' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
+expect_value 'rollback restaura somente vision declarada' 't' "SELECT (config #> '{capabilities,modalities}') = '[\"vision\"]'::jsonb FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 expect_value 'rollback preserva chave irmã' 'keep' "SELECT config #>> '{capabilities,other}' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 
 psql_sql "UPDATE public.ai_providers SET config = jsonb_build_object('headers', jsonb_build_object('x', 'y'), 'routing', 'keep') WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';" >/dev/null
 apply_migration
-expect_value 'migration cria capabilities quando ausente' 't' "SELECT config->'capabilities'->'modalities' ? 'audio_stt' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
+expect_value 'sem capabilities, audio_stt nao e declarado' 'f' "SELECT coalesce(config->'capabilities'->'modalities' ? 'audio_stt', false) FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
+expect_value 'jsonb_set nao cria o pai capabilities ausente' 'f' "SELECT config ? 'capabilities' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 expect_value 'migration com capabilities ausente preserva chave top-level' 'keep' "SELECT config ->> 'routing' FROM public.ai_providers WHERE id = 'f99209ea-294d-4124-b480-b3ecf60c9049';"
 
-printf '[PASS] ia131-audio-stt-openrouter: migration e rollback preservam capacidades existentes\n'
+printf '[PASS] ia131-audio-stt-openrouter: cadeia real, chaves irmas, idempotencia e rollback validados\n'

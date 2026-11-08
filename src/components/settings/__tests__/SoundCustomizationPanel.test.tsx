@@ -291,6 +291,32 @@ describe('SoundCustomizationPanel — grava no hook canônico dos alertas', () =
     await waitFor(() => expect(h.previewSound).toHaveBeenCalledWith('chime', 60));
   });
 
+  it('o timer do preview é cancelado ao desmontar o painel', async () => {
+    const painel = renderPainel();
+    await esperarPainelCarregado();
+    vi.useFakeTimers();
+    const timeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+    try {
+      const timeoutCallsBeforePreview = timeoutSpy.mock.calls.length;
+      const clearCallsBeforePreview = clearTimeoutSpy.mock.calls.length;
+      fireEvent.click(botoesPlay()[0]);
+      expect(h.previewSound).toHaveBeenCalledWith('chime', 60);
+      const previewTimer = timeoutSpy.mock.results
+        .slice(timeoutCallsBeforePreview)
+        .find((_, index) => timeoutSpy.mock.calls[timeoutCallsBeforePreview + index]?.[1] === 500)?.value;
+      expect(previewTimer).toBeDefined();
+
+      painel.unmount();
+      expect(clearTimeoutSpy.mock.calls.slice(clearCallsBeforePreview)).toContainEqual([previewTimer]);
+      vi.advanceTimersByTime(500);
+    } finally {
+      timeoutSpy.mockRestore();
+      clearTimeoutSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it('8. com "Sons habilitados" desligado o preview não toca nada', async () => {
     h.row = { ...LINHA_SINTETICA, sound_enabled: false };
     renderPainel();

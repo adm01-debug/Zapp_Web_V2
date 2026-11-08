@@ -1,5 +1,5 @@
 import { handleTalkxLink, mergeUtm } from "./index.ts";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { encodeTalkxRecipientToken } from "../_shared/talkx-tracking-token.ts";
 
 function assert(condition: unknown, message: string): asserts condition {

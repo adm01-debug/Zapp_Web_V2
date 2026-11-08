@@ -236,10 +236,18 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
   // Mesma cadeia do nome para as iniciais (ordem idêntica: contact.name →
   // last_from_name → last_from_address → contact.email)
   const initialsSource = thread.contact?.name || thread.last_from_name || thread.last_from_address || thread.contact?.email || undefined;
+  // A opacidade do botão também atenua o texto: durante a entrada, o WebKit chegou a
+  // medir contraste insuficiente com alto contraste ativo. Mostrar a linha já no estado final
+  // quando o usuário pede contraste ou menos movimento preserva o contraste desde o mount.
+  const showImmediately = typeof document !== 'undefined' && (
+    document.documentElement.classList.contains('high-contrast') ||
+    document.documentElement.classList.contains('reduced-motion') ||
+    (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  );
 
   return (
     <motion.button
-      initial={{ opacity: 0 }}
+      initial={showImmediately ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       onClick={onClick}
       className={cn(

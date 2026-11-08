@@ -145,7 +145,7 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
         400,
         JSON.stringify({
           error:
-            "Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'",
+            "Invalid enum value. Expected 'admin' | 'supervisor' | 'agent', received 'chefe'",
         })
       )
     );
