@@ -1,16 +1,18 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { Megaphone, Users, FileText } from 'lucide-react';
 import React from 'react';
 import type { CommandItem } from '@/components/ui/command-palette-data';
-import type { TalkXCampaign } from './useTalkX';
+import { supabase } from '@/integrations/supabase/client';
 import { replaceTalkXOpenRoute, replaceTalkXRoute, replaceTalkXTabRoute } from '@/components/talkx/talkxRoute';
 
+interface TalkXCampaignSlim { id: string; name: string; status: string }
 interface TalkXSegment { id: string; name: string }
 interface TalkXTemplate { id: string; name: string }
 
+// Chaves canônicas de CAMPAIGN_STATUS (kit/constants.ts) — `sending`, não `running`
 const STATUS_LABEL: Record<string, string> = {
-  draft: 'Rascunho', scheduled: 'Agendada', running: 'Em andamento',
+  draft: 'Rascunho', scheduled: 'Agendada', sending: 'Em andamento',
   paused: 'Pausada', completed: 'Concluída', cancelled: 'Cancelada',
 };
 
@@ -27,18 +29,58 @@ function openTalkXItem(onNavigate: ((view: string) => void) | undefined, route: 
   if (jaNoTalkX) window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
-export function useTalkXCommandItems(onNavigate?: (view: string) => void): CommandItem[] {
-  const queryClient = useQueryClient();
+export function useTalkXCommandItems(onNavigate?: (view: string) => void, open?: boolean): CommandItem[] {
+  const enabled = !!open;
 
-  // Track cache freshness so the memo recomputes when TalkX data loads
-  const campaignsUpdatedAt = queryClient.getQueryState(['talkx-campaigns'])?.dataUpdatedAt ?? 0;
-  const segmentsUpdatedAt = queryClient.getQueryState(['talkx-segments'])?.dataUpdatedAt ?? 0;
-  const templatesUpdatedAt = queryClient.getQueryState(['talkx-templates'])?.dataUpdatedAt ?? 0;
+  const campaignsQuery = useQuery({
+    queryKey: ['talkx-campaigns'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('talkx_campaigns')
+        .select('id, name, status')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as TalkXCampaignSlim[];
+    },
+    enabled,
+    staleTime: 60_000,
+  });
+
+  const segmentsQuery = useQuery({
+    queryKey: ['talkx-segments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('talkx_segments')
+        .select('id, name')
+        .order('updated_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as TalkXSegment[];
+    },
+    enabled,
+    staleTime: 60_000,
+  });
+
+  const templatesQuery = useQuery({
+    queryKey: ['talkx-templates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('talkx_templates')
+        .select('id, name')
+        .order('use_count', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as TalkXTemplate[];
+    },
+    enabled,
+    staleTime: 60_000,
+  });
 
   return useMemo(() => {
-    const campaigns = queryClient.getQueryData<TalkXCampaign[]>(['talkx-campaigns']) ?? [];
-    const segments = queryClient.getQueryData<TalkXSegment[]>(['talkx-segments']) ?? [];
-    const templates = queryClient.getQueryData<TalkXTemplate[]>(['talkx-templates']) ?? [];
+    const campaigns = (campaignsQuery.data as TalkXCampaignSlim[] | undefined) ?? [];
+    const segments = (segmentsQuery.data as TalkXSegment[] | undefined) ?? [];
+    const templates = (templatesQuery.data as TalkXTemplate[] | undefined) ?? [];
 
     const campaignItems: CommandItem[] = campaigns.map((c) => ({
       id: `talkx-campaign-${c.id}`,
@@ -99,6 +141,5 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void): Comma
     }));
 
     return [...campaignItems, ...segmentItems, ...templateItems];
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryClient, campaignsUpdatedAt, segmentsUpdatedAt, templatesUpdatedAt, onNavigate]);
+  }, [campaignsQuery.data, segmentsQuery.data, templatesQuery.data, onNavigate]);
 }
