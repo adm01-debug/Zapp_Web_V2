@@ -4,13 +4,13 @@
  "presente": true,
  "como_gerar": "uvx --from \"graphifyy[sql]\" graphify update .  (ou: bun run graph:update); saída em graphify-out/ — graph.json e graph.html NÃO são versionados (dezenas de MB); use `graphify query/path/explain` localmente",
  "relatorio": null,
- "commit_do_grafo": "85fb0a5bab90237d46a9100303882d06dfaa7206",
+ "commit_do_grafo": "e028887387f334021f5f6c9423b6dc26b7c8b91d",
  "grafo_atual": true,
  "nos": 56163,
- "arestas": 115802,
+ "arestas": 115806,
  "comunidades_total": 4115,
  "relacoes": {
-  "calls": 14760,
+  "calls": 14762,
   "case_of": 12,
   "cites": 26,
   "contains": 43148,
@@ -18,7 +18,7 @@
   "dynamic_import": 526,
   "extends": 1,
   "implements": 4,
-  "imports": 20306,
+  "imports": 20308,
   "imports_from": 21369,
   "indexes": 1116,
   "indirect_call": 896,
@@ -31,7 +31,7 @@
   "triggers": 300
  },
  "origem": {
-  "EXTRACTED": 107984,
+  "EXTRACTED": 107988,
   "INFERRED": 7818
  },
  "comunidades": [
@@ -1698,6 +1698,13 @@
    "comunidade": "chat.ts"
   },
   {
+   "id": "ref_https",
+   "rotulo": "ref_https",
+   "arquivo": null,
+   "grau": 135,
+   "comunidade": "ref_https"
+  },
+  {
    "id": "supabase_functions_shared_schemas",
    "rotulo": "schemas.ts",
    "arquivo": "supabase/functions/_shared/schemas.ts",
@@ -1710,13 +1717,6 @@
    "arquivo": "src/components/catalog/ExternalProductManagement.tsx",
    "grau": 134,
    "comunidade": "TalkXSuppression.tsx"
-  },
-  {
-   "id": "ref_https",
-   "rotulo": "ref_https",
-   "arquivo": null,
-   "grau": 133,
-   "comunidade": "ref_https"
   },
   {
    "id": "src_components_talkx_talkxcampaignwizard",
@@ -1879,15 +1879,15 @@
    "chamadas": 24
   },
   {
+   "simbolo": "internalErrorResponse() (supabase/functions/_shared/validation.ts)",
+   "chamadas": 24
+  },
+  {
    "simbolo": "fail() (scripts/e2e-isolated/runtime-contract.mjs)",
    "chamadas": 22
   },
   {
    "simbolo": "getAvatarColor() (src/lib/avatar-colors.ts)",
-   "chamadas": 22
-  },
-  {
-   "simbolo": "internalErrorResponse() (supabase/functions/_shared/validation.ts)",
    "chamadas": 22
   },
   {

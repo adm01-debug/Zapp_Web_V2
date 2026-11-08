@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(edge): Z018 injeção PostgREST + Z020 stack trace nas edges external-db-proxy e cleanup-rate-limit-logs (#2794)",
    "test(e2e): alinha contrato isolado dos insights (#2790)",
    "fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado",
    "docs(talkx): regenera matriz de estados (#2791)",
-   "feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)",
-   "test(e2e): aguarda readiness dos insights de busca (#2787)"
+   "feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

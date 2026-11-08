@@ -940,7 +940,7 @@
    "nome": "cleanup-rate-limit-logs",
    "entrada": "supabase/functions/cleanup-rate-limit-logs/index.ts",
    "arquivos": 1,
-   "linhas": 138,
+   "linhas": 140,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -1632,7 +1632,7 @@
    "nome": "external-db-proxy",
    "entrada": "supabase/functions/external-db-proxy/index.ts",
    "arquivos": 1,
-   "linhas": 205,
+   "linhas": 208,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [],

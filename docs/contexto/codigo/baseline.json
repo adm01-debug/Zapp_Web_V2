@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "85fb0a5bab90237d46a9100303882d06dfaa7206",
+  "commit": "e028887387f334021f5f6c9423b6dc26b7c8b91d",
   "branch": "main",
-  "data_commit": "2026-11-08T00:15:58-03:00",
+  "data_commit": "2026-11-08T04:44:31Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e028887",
+    "data": "2026-11-08",
+    "assunto": "fix(edge): Z018 injeção PostgREST + Z020 stack trace nas edges external-db-proxy e cleanup-rate-limit-logs (#2794)"
+   },
    {
     "sha": "85fb0a5",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "761ab3b",
     "data": "2026-11-07",
     "assunto": "fix: deep-link de tipo no inbox prevalece sobre preferência salva (PK-14)"
-   },
-   {
-    "sha": "529389d",
-    "data": "2026-11-07",
-    "assunto": "chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)"
    }
   ],
-  "arquivos_mudados_7d": 1108,
+  "arquivos_mudados_7d": 1072,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -214,11 +214,11 @@
     "mudancas": 14
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 13
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 14
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
+    "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 13
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8312,
   "arquivos_codigo": 4748,
-  "linhas_codigo": 877216,
+  "linhas_codigo": 877221,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -780,7 +780,7 @@
   },
   "supabase/functions": {
    "arquivos": 380,
-   "linhas": 115638
+   "linhas": 115643
   },
   "tailwind.config.ts": {
    "arquivos": 1,

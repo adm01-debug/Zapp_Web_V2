@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "85fb0a5bab90237d46a9100303882d06dfaa7206",
+  "sha": "e028887387f334021f5f6c9423b6dc26b7c8b91d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 03:28 UTC",
+  "generated_at": "2026-11-08 05:11 UTC",
   "files_total": 8153,
   "code_files": 6012,
-  "code_lines": 1043395
+  "code_lines": 1043400
  },
  "version": "1.3.2",
- "facts_hash": "5487537449105efe",
+ "facts_hash": "c629b5b98b568a50",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -69643,7 +69643,7 @@
   {
    "module": "supabase/functions",
    "files": 380,
-   "lines": 115638,
+   "lines": 115643,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -364404,7 +364404,7 @@
   },
   "supabase/functions/cleanup-rate-limit-logs/index.ts": {
    "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
-   "lines": 138,
+   "lines": 140,
    "exports": [
     "interface CleanupRateLimitLogsDeps",
     "function handleCleanupRateLimitLogs"
@@ -366795,7 +366795,7 @@
   },
   "supabase/functions/external-db-proxy/index.ts": {
    "path": "supabase/functions/external-db-proxy/index.ts",
-   "lines": 205,
+   "lines": 208,
    "exports": [
     "function handleExternalDbProxy"
    ],
@@ -383440,10 +383440,21 @@
   }
  },
  "git": {
-  "sha": "85fb0a5bab90237d46a9100303882d06dfaa7206",
+  "sha": "e028887387f334021f5f6c9423b6dc26b7c8b91d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e028887",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "fix(edge): Z018 injeção PostgREST + Z020 stack trace nas edges external-db-proxy e cleanup-rate-limit-logs (#2794)",
+    "files": [
+     "supabase/deployment-manifest.json",
+     "supabase/functions/cleanup-rate-limit-logs/index.ts",
+     "supabase/functions/external-db-proxy/index.ts"
+    ]
+   },
    {
     "sha": "85fb0a5",
     "date": "2026-11-08",
@@ -383996,18 +384007,6 @@
      "supabase/functions/webhook-diagnostic/index.ts",
      "supabase/functions/whatsapp-webhook/index.ts"
     ]
-   },
-   {
-    "sha": "636880b",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix: blindar plano sintético contra IDs externos (#2757)",
-    "files": [
-     "docs/ia/IA-010-ambiente-de-ensaio.md",
-     "scripts/ia/README.md",
-     "scripts/ia/ensaio-provisionamento.mjs",
-     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384022,6 +384021,18 @@
    [
     "src/integrations/supabase/types.ts",
     3
+   ],
+   [
+    "supabase/deployment-manifest.json",
+    2
+   ],
+   [
+    "supabase/functions/cleanup-rate-limit-logs/index.ts",
+    2
+   ],
+   [
+    "supabase/functions/external-db-proxy/index.ts",
+    2
    ],
    [
     "scripts/ci/verify-release-targets-timeout.unit.mjs",
@@ -384052,22 +384063,6 @@
     2
    ],
    [
-    "docs/ia/IA-010-ambiente-de-ensaio.md",
-    2
-   ],
-   [
-    "scripts/ia/README.md",
-    2
-   ],
-   [
-    "scripts/ia/ensaio-provisionamento.mjs",
-    2
-   ],
-   [
-    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-    2
-   ],
-   [
     "e2e/talkx-kit.spec.ts",
     1
    ],
@@ -384089,6 +384084,10 @@
    ],
    [
     ".github/workflows/branch-hygiene-audit.yml",
+    1
+   ],
+   [
+    ".github/workflows/contexto.yml",
     1
    ]
   ]
