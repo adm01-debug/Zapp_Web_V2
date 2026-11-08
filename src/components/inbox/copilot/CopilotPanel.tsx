@@ -1,6 +1,6 @@
 import { Brain, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCopilotSession } from './useCopilotSession';
+import { useCopilotSession } from '@/hooks/chat/useCopilotSession';
 import { BrindeMeter } from './BrindeMeter';
 import { StageIndicator } from './StageIndicator';
 import { InsightCard } from './InsightCard';
