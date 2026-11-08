@@ -166,9 +166,13 @@ export function classifyProviderFailure(status: number, body: unknown): Delivery
   // a requisição antes de retornar — efeito INCERTO, reconciliar.
   if (status === 408 || status === 425) return unconfirmedReceiptFailure();
 
-  // Verificar conteúdo do body ANTES dos early-returns de 429/5xx: um body com
-  // invalid_number ou auth_failed em resposta a qualquer status é definitivo
-  // (sem ambiguidade), e um 429 com body de instância fora do ar é instance_unavailable.
+  // 5xx: falha do lado do provedor; o body não é confiável para disambiguar.
+  if (status >= 500) {
+    return { status: 502, code: 'provider_unavailable', retryable: false, ambiguous: true };
+  }
+
+  // Para 429 e 4xx: inspecionar body antes do early-return de 429 —
+  // um 429 com cue de instância fora do ar é instance_unavailable, não rate_limited.
   const text = providerBodyText(body);
   if (INSTANCE_DOWN_CUES.some((cue) => text.includes(cue))) {
     return { status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false };
@@ -182,9 +186,6 @@ export function classifyProviderFailure(status: number, body: unknown): Delivery
   }
 
   if (status === 429) return EDGE_RATE_LIMITED_FAILURE;
-  if (status >= 500) {
-    return { status: 502, code: 'provider_unavailable', retryable: false, ambiguous: true };
-  }
   return PROMPT_REJECTED_FAILURE;
 }
 
