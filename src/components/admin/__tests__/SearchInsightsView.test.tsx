@@ -2,10 +2,10 @@
  * HZ1-06 — tela "Insights de Busca" (admin/supervisor).
  *
  * O que esta prova cobre:
- *  - os KPIs vêm da RPC `get_search_insights` (janela de 30 dias por padrão) e a
- *    taxa exibida é a FRAÇÃO devolvida pela RPC virando porcentagem (0.42 → 42,0%),
- *    inclusive a parcela de buscas sem resultado, calculada sobre o total;
- *  - as duas tabelas (mais buscadas / sem resultado) mostram os termos normalizados;
+ *  - os KPIs vêm da RPC canônica `search_insights` (janela de 30 dias por padrão) e
+ *    a taxa de clique é calculada pelo hook (clicks / total), inclusive a parcela de
+ *    buscas sem resultado calculada sobre o total pelo componente;
+ *  - as listas de termos ficam sempre vazias (privacidade preservada pela RPC);
  *  - a tela não oferece NENHUMA forma de exportar/baixar/imprimir (informação não sai);
  *  - o erro da RPC (a RPC nega não-admin/não-supervisor com 42501) aparece em
  *    `role=alert` com opção de tentar de novo.
@@ -22,16 +22,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 import { SearchInsightsView } from '@/components/admin/SearchInsightsView';
 
 const PAYLOAD = {
-  days: 30,
-  total: 1234,
-  no_results: 308,
-  clicks: 518,
-  click_rate: 0.42,
-  top_queries: [
-    { term: 'placa de obra', count: 210 },
-    { term: 'caneca personalizada', count: 140 },
-  ],
-  no_result_terms: [{ term: 'azulejo', count: 90 }],
+  total_searches: 1234,
+  searches_without_results: 308,
+  searches_with_click: 518,
 };
 
 function renderView() {
@@ -48,23 +41,24 @@ beforeEach(() => {
 });
 
 describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
-  it('mostra os KPIs e as duas tabelas a partir da RPC, na janela de 30 dias', async () => {
-    rpcMock.mockResolvedValue({ data: PAYLOAD, error: null });
+  it('mostra os KPIs a partir da RPC canônica, na janela de 30 dias', async () => {
+    rpcMock.mockResolvedValue({ data: [PAYLOAD], error: null });
     renderView();
 
     expect(await screen.findByText('1.234')).toBeInTheDocument();
-    expect(screen.getByText('42,0%')).toBeInTheDocument();          // taxa de clique (0.42)
+    expect(screen.getByText('42,0%')).toBeInTheDocument();          // taxa de clique (518/1234)
     expect(screen.getByText('25,0%')).toBeInTheDocument();          // 308/1234 sem resultado
     expect(screen.getByText('518 clique(s)')).toBeInTheDocument();
-    expect(screen.getByText('placa de obra')).toBeInTheDocument();
-    expect(screen.getByText('210')).toBeInTheDocument();
-    expect(screen.getByText('azulejo')).toBeInTheDocument();
 
-    expect(rpcMock).toHaveBeenCalledWith('get_search_insights', { p_days: 30 });
+    // listas sempre vazias (privacidade: RPC canônica não armazena termos)
+    expect(screen.getByText('Nenhum termo registrado no período.')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum termo sem resultado no período.')).toBeInTheDocument();
+
+    expect(rpcMock).toHaveBeenCalledWith('search_insights', { p_days: 30 });
   });
 
   it('não oferece exportar, baixar, imprimir nem copiar (a informação não sai do sistema)', async () => {
-    rpcMock.mockResolvedValue({ data: PAYLOAD, error: null });
+    rpcMock.mockResolvedValue({ data: [PAYLOAD], error: null });
     renderView();
     await screen.findByText('1.234');
 
@@ -80,7 +74,7 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
     expect(alert).toHaveTextContent('Não foi possível carregar os insights de busca');
     expect(alert).toHaveTextContent('permission denied for function (42501)');
 
-    rpcMock.mockResolvedValue({ data: PAYLOAD, error: null });
+    rpcMock.mockResolvedValue({ data: [PAYLOAD], error: null });
     fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
 
     expect(await screen.findByText('1.234')).toBeInTheDocument();
@@ -89,7 +83,7 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
 
   it('estado vazio: sem busca no período, mostra 0 e a mensagem própria (não "sem dados")', async () => {
     rpcMock.mockResolvedValue({
-      data: { days: 30, total: 0, no_results: 0, clicks: 0, click_rate: 0, top_queries: [], no_result_terms: [] },
+      data: [{ total_searches: 0, searches_without_results: 0, searches_with_click: 0 }],
       error: null,
     });
     renderView();
@@ -101,15 +95,7 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
 
   it('melhor caso: taxa de clique e sem resultado em 100% (fração 1) não viram NaN', async () => {
     rpcMock.mockResolvedValue({
-      data: {
-        days: 7,
-        total: 10,
-        no_results: 10,
-        clicks: 10,
-        click_rate: 1,
-        top_queries: [{ term: 'caneta', count: 10 }],
-        no_result_terms: [{ term: 'caneta', count: 10 }],
-      },
+      data: [{ total_searches: 10, searches_without_results: 10, searches_with_click: 10 }],
       error: null,
     });
     renderView();
@@ -119,7 +105,7 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
   });
 
   it('abre na janela padrão de 30 dias (o seletor mostra o rótulo do período)', async () => {
-    rpcMock.mockResolvedValue({ data: PAYLOAD, error: null });
+    rpcMock.mockResolvedValue({ data: [PAYLOAD], error: null });
     renderView();
 
     await screen.findByText('1.234');
