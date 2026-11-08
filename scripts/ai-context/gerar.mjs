@@ -44,7 +44,12 @@ const sortObj = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => (
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
 const countLines = (s) => (s ? s.split('\n').length : 0);
 const git = (...args) => { try { return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).trim(); } catch { return ''; } };
-const stripComments = (s) => s.replace(/(?<!['"`/])\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\'"`])\/\/[^\n]*/g, '$1');
+// (?<!/) impede o caso que de fato quebrava: um "//" dentro de string (ex.: uma URL
+// postgres://) virava abertura de comentario de bloco e o [\s\S]*? engolia o codigo ate
+// o proximo */ real. Nao se pode excluir tambem aspas e backtick: um comentario legitimo
+// colado num literal ("x"/* ... */) deixaria de ser removido e um supabase.from()
+// comentado entraria no inventario como tabela real.
+const stripComments = (s) => s.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\'"`])\/\/[^\n]*/g, '$1');
 const cap = (arr, n = 200) => arr.slice(0, n);
 const allMatches = (re, s, g = 1) => { const out = []; re.lastIndex = 0; let m; while ((m = re.exec(s))) out.push(m[g]); return out; };
 const byCount = (arr) => Object.entries(arr.reduce((a, k) => { a[k] = (a[k] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
