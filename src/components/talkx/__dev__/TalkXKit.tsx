@@ -33,11 +33,11 @@ import {
 const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? 'dev';
 
 /** Linha de demonstração da galeria de tabela. */
-interface LinhaDemo { id: string; nome: string; status: string; enviados: number }
+interface LinhaDemo { id: string; nome: string; status: string; enviados: number; segment?: string }
 
 const LINHAS_DEMO: LinhaDemo[] = [
-  { id: 'demo-1', nome: 'Promoção Setembro', status: 'sending', enviados: 1280 },
-  { id: 'demo-2', nome: 'Reativação Outubro', status: 'scheduled', enviados: 0 },
+  { id: 'demo-1', nome: 'Promoção Setembro', status: 'sending', enviados: 1280, segment: 'vip' },
+  { id: 'demo-2', nome: 'Reativação Outubro', status: 'scheduled', enviados: 0, segment: 'vip' },
   { id: 'demo-3', nome: 'Pesquisa de satisfação', status: 'completed', enviados: 640 },
 ];
 
@@ -115,6 +115,8 @@ export function TalkXKit() {
     if (search && !r.nome.toLowerCase().includes(search.toLowerCase())) return false;
     const sf = filterValues.status;
     if (sf && sf !== 'all' && r.status !== sf) return false;
+    const seg = filterValues.segment;
+    if (seg && seg !== 'all' && r.segment !== seg) return false;
     return true;
   });
 
@@ -259,7 +261,7 @@ export function TalkXKit() {
                 onClear={() => { setSearch(''); setFilterValues({}); }}
                 hasActive={hasActive}
               />
-              <p className="text-2xs text-muted-foreground px-1">
+              <p data-testid="talkx-kit-filtros-contador" className="text-2xs text-muted-foreground px-1">
                 {linhasFiltradas.length} de {LINHAS_DEMO.length} resultado{LINHAS_DEMO.length !== 1 ? 's' : ''}
                 {hasActive ? ' (filtrado)' : ''}
               </p>
@@ -307,7 +309,11 @@ export function TalkXKit() {
                 columns={COLUNAS_DEMO}
                 rows={linhasFiltradas}
                 getId={(r) => r.id}
-                emptyState={<TalkXEmptyState preset="emptyCampaigns" />}
+                emptyState={
+                  hasActive
+                    ? <TalkXEmptyState preset="filtered" onClearFilters={() => { setSearch(''); setFilterValues({}); }} />
+                    : <TalkXEmptyState preset="emptyCampaigns" />
+                }
               />
             </div>
           </section>
