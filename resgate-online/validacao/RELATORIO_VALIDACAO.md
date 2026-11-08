@@ -19,7 +19,7 @@ Gerado em 2026-11-08, sessão `session_01Gd4dBfJk6eTncDSU7yvJVb`. Coordenação 
 | MEDIUM | 1 |
 | LOW | 2 |
 | INFO | 4 |
-| NÃO VERIFICADO (motivo documentado, dentro de HIGH acima) | 1 |
+| NÃO VERIFICADO (dentro de HIGH acima) | 1 |
 
 ## Achados HIGH (lista completa com evidência)
 
@@ -49,13 +49,13 @@ Nenhum dos 5 agentes teve acesso de escrita ao GitHub (só leitura via `GITHUB -
 
 ## Limitações honestas (NÃO VERIFICADO)
 
-- Cobertura de todo commit "próprio" de cada tag de cluster: verificada **por amostragem** nos pontos de maior risco (equivalências alegadas, D12), não exaustivamente commit a commit das ~40 tags.
-- `gitleaks` (varredura de segredos no range do resgate): binário real bloqueado pelo classificador de permissões do ambiente; pacote npm "gitleaks" é impostor sem CLI. **NÃO VERIFICADO.**
-- Logs de CI de outubro: retenção expirada (HTTP 410) para a maioria dos runs — causa exata de algumas falhas herdadas não pôde ser citada linha a linha, só o nome do step.
-- C098 (#2231) e C303 (#2236): não há prova de que o CI Gate completo rodou especificamente nesses SHAs (provavelmente superados por push seguinte no mesmo dia) — não classificado como falha, só lacuna de verificação.
+- Cobertura de todo commit "próprio" de cada tag de cluster: verificada **por amostragem** nos pontos de maior risco, não exaustivamente commit a commit das ~40 tags.
+- `gitleaks`: binário real bloqueado pelo classificador de permissões do ambiente; pacote npm "gitleaks" é impostor sem CLI. **NÃO VERIFICADO.**
+- Logs de CI de outubro: retenção expirada (HTTP 410) para a maioria dos runs.
+- C098 (#2231) e C303 (#2236): não há prova de que o CI Gate completo rodou especificamente nesses SHAs (provavelmente superados por push seguinte no mesmo dia).
 
 ## Próximos passos
 
 1. **Decidir o destino de C130** — reimplementar a feature de seletor de período em Metas (nunca chegou à produção) ou descartar formalmente · dashboard de Metas · frontend
-2. **Investigar a reescrita de histórico do `main`** — determinar quando/por que nenhum merge commit do resgate é ancestral do HEAD atual, antes que isso invalide outras auditorias · repositório GitHub
-3. **Decidir sobre o grant morto de `anon` em `saved_filters`** — limpeza de segurança de baixo risco, não urgente (RLS já bloqueia) · banco de produção
+2. **Investigar a reescrita de histórico do `main`** — determinar quando/por que nenhum merge commit do resgate é ancestral do HEAD atual · repositório GitHub
+3. **Decidir sobre o grant morto de `anon` em `saved_filters`** — limpeza de segurança de baixo risco, não urgente · banco de produção
