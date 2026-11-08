@@ -315,10 +315,17 @@ if not isinstance(rows, list) or len(rows) != 1 or rows[0].get("user_id") != "20
 PY
 pass 'PostgREST da rede interna autenticado com profile sintético'
 
+pgrst_host="${pgrest_url#http://}"
+pgrst_host="${pgrst_host%%:*}"
+pgrst_no_proxy="${NO_PROXY:-${no_proxy:-}}"
+[[ -z "$pgrst_no_proxy" ]] || pgrst_no_proxy+=','
+pgrst_no_proxy+="$pgrst_host"
+
 for spec in gmail-cursor-cas-db:7 gmail-history-cas-db:1; do
   name="${spec%:*}"
   expected="${spec#*:}"
-  GMAIL_CAS_POSTGREST_URL="$pgrest_url" GMAIL_CAS_JWT="$jwt" \
+  NO_PROXY="$pgrst_no_proxy" no_proxy="$pgrst_no_proxy" \
+    GMAIL_CAS_POSTGREST_URL="$pgrest_url" GMAIL_CAS_JWT="$jwt" \
     deno test --config "$repo_root/scripts/ci/deno.json" --frozen \
       --junit-path "$run_dir/$name.xml" \
       --allow-env --allow-read --allow-net="127.0.0.1,${pgrest_url#http://}" \
