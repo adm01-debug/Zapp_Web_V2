@@ -17,6 +17,7 @@ DECLARE
   v_conn_ok           boolean;
   v_blockers          text[] := '{}';
   v_window_open       boolean := true;
+  v_suppressed        integer := 0;
   v_tz                text;
   v_local             timestamp;
   v_local_min         integer;
@@ -102,15 +103,27 @@ BEGIN
   END IF;
 
   -- ── 3. Destinatários pendentes suprimidos ────────────────────────────────
-  -- A tabela de supressão (X070) ainda não existe no schema; retorna 0.
-  -- Quando talkx_suppression_reasons for criada, adicionar a contagem aqui.
+  -- Conta destinatários pending desta campanha cujo contato está na blacklist
+  -- ativa (removed_at IS NULL = supressão vigente). Fonte: talkx_blacklist,
+  -- que existe em produção desde 20260910090000_talkx_blacklist_v2.sql.
+  SELECT count(*) INTO v_suppressed
+    FROM public.talkx_recipients r
+    JOIN public.talkx_blacklist bl
+         ON bl.contact_id = r.contact_id
+        AND bl.removed_at IS NULL
+   WHERE r.campaign_id = p_campaign_id
+     AND r.status = 'pending';
+
+  IF v_suppressed > 0 THEN
+    v_blockers := v_blockers || ARRAY['recipients_suppressed'];
+  END IF;
 
   RETURN jsonb_build_object(
     'can_resume',                    cardinality(v_blockers) = 0,
     'blockers',                      to_jsonb(v_blockers),
     'connection_status',             v_conn_status,
     'window_open',                   v_window_open,
-    'suppressed_pending_recipients', 0
+    'suppressed_pending_recipients', v_suppressed
   );
 END;
 $$;
