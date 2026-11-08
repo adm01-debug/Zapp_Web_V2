@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { SUPABASE_URL } from '@/config/supabase';
 
 export interface CopilotSession {
   id: string;
@@ -77,7 +78,7 @@ export function useCopilotSession(conversationId: string | undefined) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/copilot-live`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/copilot-live`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
