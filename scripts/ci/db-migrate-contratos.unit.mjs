@@ -172,13 +172,13 @@ test('E62: o corpo do -c e string bash — escapes desfeitos e expansao recusada
     '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
     `${corpo}\n` +
     '              ")';
-  // Oraculo do bash: dentro de aspas duplas \" \\ \$ voltam a ser " \ $.
+  // Oraculo do bash: dentro de aspas duplas \" \\\\ \\$ voltam a ser " \\ $.
   const [inv] = extrairInvocacoes(
-    contrato(String.raw`SELECT 'a\"b', 'c\\d', '\$e'`),
+    contrato(String.raw`SELECT 'a\"b', 'c\\\\d', '\\$e'`),
     '20260101000000',
     'sintetico',
   );
-  assert.equal(inv.sql, `SELECT 'a"b', 'c\\d', '$e'`, 'escapes de aspas duplas tem de ser desfeitos');
+  assert.equal(inv.sql, `SELECT 'a"b', 'c\\\\d', '$e'`, 'escapes de aspas duplas tem de ser desfeitos');
   // e tudo que o bash expandiria (ou escape que ele nao define) e' recusado
   for (const corpo of [
     'SELECT $A',
@@ -334,4 +334,77 @@ test('E62: o parser recusa SQL sem ON_ERROR_STOP, shell sem SQL e continuacao de
   assert.throws(() => resolverInvocacao('abc'), /versao alvo invalida/);
   // Continuacao de linha do bash (barra + newline) tem de sumir, como no bash.
   assert.equal(desfazerAspasDuplasBash('linha1\\\nlinha2', 'sintetico'), 'linha1linha2');
+});
+
+// ---------------------------------------------------------------------------
+// W28: validate-runtime-proof.mjs e validate-talkx-runtime.mjs — cobertura
+// dos caminhos de guardas de entrada (exit 2) sem precisar de banco.
+// ---------------------------------------------------------------------------
+
+const VALIDADORES = {
+  'validate-runtime-proof.mjs': new URL('../../scripts/db-audit/validate-runtime-proof.mjs', import.meta.url).pathname,
+  'validate-talkx-runtime.mjs': new URL('../../scripts/db-audit/validate-talkx-runtime.mjs', import.meta.url).pathname,
+};
+
+const rodar = (script, env) =>
+  spawnSync(process.execPath, [script], { cwd: RAIZ, encoding: 'utf8', env });
+
+test('W28: validate-talkx-runtime — RUNTIME_JSON ausente sai com 2 e avisa no stderr', () => {
+  const env = { ...process.env };
+  delete env.RUNTIME_JSON;
+  const r = rodar(VALIDADORES['validate-talkx-runtime.mjs'], env);
+  assert.equal(r.status, 2, 'exit 2 quando RUNTIME_JSON ausente');
+  assert.match(r.stderr, /Uso:.*validate-talkx-runtime\.mjs/, 'mensagem de uso no stderr');
+  assert.equal(r.stdout, '', 'stdout vazio');
+});
+
+test('W28: validate-talkx-runtime — RUNTIME_JSON invalido sai com 2 e mensagem clara', () => {
+  const env = { ...process.env, RUNTIME_JSON: 'isto-nao-e-json' };
+  const r = rodar(VALIDADORES['validate-talkx-runtime.mjs'], env);
+  assert.equal(r.status, 2, 'exit 2 quando RUNTIME_JSON invalido');
+  assert.match(r.stderr, /FALHA: RUNTIME_JSON nao e um JSON valido/, 'mensagem clara no stderr');
+  assert.equal(r.stdout, '', 'stdout vazio');
+});
+
+test('W28: validate-talkx-runtime — JSON valido mas contrato errado sai com 1', () => {
+  const env = { ...process.env, RUNTIME_JSON: JSON.stringify({ server_major: 99 }) };
+  const r = rodar(VALIDADORES['validate-talkx-runtime.mjs'], env);
+  assert.equal(r.status, 1, 'exit 1 quando proof diverge do contrato');
+  assert.match(r.stderr, /divergiu do contrato/, 'mensagem de divergencia no stderr');
+});
+
+test('W28: validate-runtime-proof — RUNTIME_JSON ausente sai com 2 e avisa no stderr', () => {
+  const env = { ...process.env, TARGET_VERSION: '20260830170000' };
+  delete env.RUNTIME_JSON;
+  const r = rodar(VALIDADORES['validate-runtime-proof.mjs'], env);
+  assert.equal(r.status, 2, 'exit 2 quando RUNTIME_JSON ausente');
+  assert.match(r.stderr, /Uso:.*validate-runtime-proof\.mjs/, 'mensagem de uso no stderr');
+  assert.equal(r.stdout, '', 'stdout vazio');
+});
+
+test('W28: validate-runtime-proof — TARGET_VERSION ausente sai com 2', () => {
+  const env = { ...process.env, RUNTIME_JSON: '{}' };
+  delete env.TARGET_VERSION;
+  const r = rodar(VALIDADORES['validate-runtime-proof.mjs'], env);
+  assert.equal(r.status, 2, 'exit 2 quando TARGET_VERSION ausente');
+  assert.match(r.stderr, /Uso:.*validate-runtime-proof\.mjs/, 'mensagem de uso no stderr');
+});
+
+test('W28: validate-runtime-proof — RUNTIME_JSON invalido sai com 2 e mensagem clara', () => {
+  const env = { ...process.env, RUNTIME_JSON: '{invalido', TARGET_VERSION: '20260830170000' };
+  const r = rodar(VALIDADORES['validate-runtime-proof.mjs'], env);
+  assert.equal(r.status, 2, 'exit 2 quando RUNTIME_JSON invalido');
+  assert.match(r.stderr, /FALHA: RUNTIME_JSON nao e um JSON valido/, 'mensagem clara no stderr');
+  assert.equal(r.stdout, '', 'stdout vazio');
+});
+
+test('W28: validate-runtime-proof — JSON valido mas proof errado sai com 1', () => {
+  const env = {
+    ...process.env,
+    RUNTIME_JSON: JSON.stringify({ server_major: 99, database: 'mysql' }),
+    TARGET_VERSION: '20260830170000',
+  };
+  const r = rodar(VALIDADORES['validate-runtime-proof.mjs'], env);
+  assert.equal(r.status, 1, 'exit 1 quando proof diverge do contrato');
+  assert.match(r.stderr, /runtime inesperado|migration cancelada/, 'mensagem de divergencia no stderr');
 });
