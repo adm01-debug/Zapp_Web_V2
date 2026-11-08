@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d4a7252e768a8e67c4bce9745b136e1cbe885964` (2026-11-07T23:53:43-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `85fb0a5bab90237d46a9100303882d06dfaa7206` (2026-11-08T00:15:58-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8312 |
 | arquivos_codigo | 4748 |
-| linhas_codigo | 877215 |
+| linhas_codigo | 877216 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56163 nós · 115802 arestas · 4115 comunidades · grafo do commit `d4a7252e`
+- 56163 nós · 115802 arestas · 4115 comunidades · grafo do commit `85fb0a5b`
 - comunidades maiores: cn (916), lucide-react (830), react (778), vitest (576), ref_node_fs (517), TalkXSuppression.tsx (479), DashboardView.tsx (475), dialog.tsx (458), @tanstack/react-query (417), e2e-isolated-runtime.unit.mjs (359), validation.ts (346), ref_node_child_process (319)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -397,9 +397,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/ci/README.md (14)
 - .github/workflows/db-guard.yml (13)
 - supabase/deployment-manifest.json (13)
-- src/integrations/supabase/types.ts (12)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
+- src/integrations/supabase/types.ts (11)
 - .github/workflows/e2e-logado.yml (10)
 - ESTADO.md (10)
 - scripts/ci/ci-docs-baseline.unit.mjs (10)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-08 `85fb0a5` test(e2e): alinha contrato isolado dos insights (#2790)
 - 2026-11-07 `d4a7252` fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado
 - 2026-11-07 `ab96364` docs(talkx): regenera matriz de estados (#2791)
 - 2026-11-07 `f93fad9` feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-07 `ea6c809` fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)
 - 2026-11-07 `fb328a6` fix(db): registra formatação divergente da migration 20261107153000 (#2781)
 - 2026-11-07 `effd6b0` chore: instruções enxutas para agentes (#2762)
-- 2026-11-07 `51d456a` chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

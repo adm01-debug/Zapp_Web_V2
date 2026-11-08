@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d4a7252e768a8e67c4bce9745b136e1cbe885964",
+  "sha": "85fb0a5bab90237d46a9100303882d06dfaa7206",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 03:06 UTC",
+  "generated_at": "2026-11-08 03:28 UTC",
   "files_total": 8153,
   "code_files": 6012,
-  "code_lines": 1043394
+  "code_lines": 1043395
  },
  "version": "1.3.2",
- "facts_hash": "74d32277a8d4f4e4",
+ "facts_hash": "5487537449105efe",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67793,7 +67793,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18389,
+   "lines": 18390,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -259999,7 +259999,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "path": "e2e/navegacao-modulos.spec.ts",
-   "lines": 1942,
+   "lines": 1943,
    "is_test": true,
    "env": [
     "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE",
@@ -260064,7 +260064,6 @@
     "await expect(avisos, `${etapa}: aviso não saiu da tela`).toHaveCount(0, { timeout: 15_000 });",
     "await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });",
     "await expect(nudge, `${etapa}: o aviso de 2FA continuou na tela`).toBeHidden({ timeout: 15_000 });",
-    "await expect(principal.getByText('Mais buscadas', { exact: true })).toBeVisible({ timeout: 20_000 });",
     "await mais.click({ timeout: 10_000 });",
     "await menu.getByRole('button', { name: item.label, exact: true }).first().click({ timeout: 10_000 });",
     "await page.goto('/auth', { timeout: 90_000, waitUntil: 'domcontentloaded' });",
@@ -383441,10 +383440,19 @@
   }
  },
  "git": {
-  "sha": "d4a7252e768a8e67c4bce9745b136e1cbe885964",
+  "sha": "85fb0a5bab90237d46a9100303882d06dfaa7206",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "85fb0a5",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "test(e2e): alinha contrato isolado dos insights (#2790)",
+    "files": [
+     "e2e/navegacao-modulos.spec.ts"
+    ]
+   },
    {
     "sha": "d4a7252",
     "date": "2026-11-07",
@@ -384000,25 +384008,16 @@
      "scripts/ia/ensaio-provisionamento.mjs",
      "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
     ]
-   },
-   {
-    "sha": "a5043f9",
-    "date": "2026-11-06",
-    "author": "adm01-debug",
-    "subject": "fix: registra migration do ai_usage_outbox_drain_cron no REVIEWED_VAULT do e2e-isolated (#2754)",
-    "files": [
-     "scripts/e2e-isolated/migrations.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
-    "scripts/db-audit/migration-evidence.json",
+    "e2e/navegacao-modulos.spec.ts",
     4
    ],
    [
-    "e2e/navegacao-modulos.spec.ts",
-    3
+    "scripts/db-audit/migration-evidence.json",
+    4
    ],
    [
     "src/integrations/supabase/types.ts",

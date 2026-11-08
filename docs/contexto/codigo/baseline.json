@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d4a7252e768a8e67c4bce9745b136e1cbe885964",
+  "commit": "85fb0a5bab90237d46a9100303882d06dfaa7206",
   "branch": "main",
-  "data_commit": "2026-11-07T23:53:43-03:00",
+  "data_commit": "2026-11-08T00:15:58-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "85fb0a5",
+    "data": "2026-11-08",
+    "assunto": "test(e2e): alinha contrato isolado dos insights (#2790)"
+   },
    {
     "sha": "d4a7252",
     "data": "2026-11-07",
@@ -126,14 +131,9 @@
     "sha": "529389d",
     "data": "2026-11-07",
     "assunto": "chore(analise): auditoria de branches — lote 1 e 2 (21 branches, 18 deletadas) (#2761)"
-   },
-   {
-    "sha": "e900ae3",
-    "data": "2026-11-07",
-    "assunto": "fix(e2e): estabilizar seed QR e suíte autenticada isolada (#2755)"
    }
   ],
-  "arquivos_mudados_7d": 1110,
+  "arquivos_mudados_7d": 1108,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -172,12 +172,12 @@
     "mudancas": 120
    },
    {
-    "pasta": "src/components/contacts",
-    "mudancas": 118
-   },
-   {
     "pasta": "src/lib/__tests__",
     "mudancas": 117
+   },
+   {
+    "pasta": "src/components/contacts",
+    "mudancas": 116
    },
    {
     "pasta": "src/components/tasks",
@@ -222,15 +222,15 @@
     "mudancas": 13
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 12
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 11
    },
    {
@@ -266,6 +266,10 @@
     "mudancas": 7
    },
    {
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
+    "mudancas": 7
+   },
+   {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 7
    },
@@ -275,10 +279,6 @@
    },
    {
     "arquivo": "e2e/email-navy-visual.spec.ts",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 6
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8312,
   "arquivos_codigo": 4748,
-  "linhas_codigo": 877215,
+  "linhas_codigo": 877216,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -508,7 +508,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "arquivos": 1,
-   "linhas": 1942
+   "linhas": 1943
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "arquivos": 1,
