@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "fea93e2c73405eb55ca303b90e75b4803da0be07",
+  "sha": "7beecdb788e8dfedc479b345c1b89d9be7d22cb3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 19:31 UTC",
+  "generated_at": "2026-11-08 19:58 UTC",
   "files_total": 8156,
   "code_files": 6014,
-  "code_lines": 1043784
+  "code_lines": 1043786
  },
  "version": "1.3.2",
- "facts_hash": "6bdd1c08464829c2",
+ "facts_hash": "2564d1bd37a759eb",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68276,7 +68276,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368170,
+   "lines": 368172,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -165728,7 +165728,7 @@
    },
    {
     "file": "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
-    "name": "DateLabel — a regra ÚNICA de datas (workItemFormat.ts)"
+    "name": "DateLabel — a regra Única de datas (workItemFormat.ts)"
    },
    {
     "file": "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
@@ -310600,7 +310600,7 @@
     "rotula os seis estados (os cinco do quadro + cancelada)",
     "cada estado tem a sua cor e ",
     "sem violação de acessibilidade (axe)",
-    "DateLabel — a regra ÚNICA de datas (workItemFormat.ts)",
+    "DateLabel — a regra Única de datas (workItemFormat.ts)",
     "reusa formatWorkItemDate: Hoje/Ontem/Amanhã com hora, no fuso local",
     "format=",
     "vazio vira ",
@@ -311096,7 +311096,7 @@
   },
   "src/components/tasks/shared/PriorityChip.tsx": {
    "path": "src/components/tasks/shared/PriorityChip.tsx",
-   "lines": 30,
+   "lines": 31,
    "exports": [
     "function PriorityChip"
    ],
@@ -311106,7 +311106,7 @@
   },
   "src/components/tasks/shared/PriorityPill.tsx": {
    "path": "src/components/tasks/shared/PriorityPill.tsx",
-   "lines": 53,
+   "lines": 54,
    "exports": [
     "function PriorityPill"
    ],
@@ -383520,10 +383520,22 @@
   }
  },
  "git": {
-  "sha": "fea93e2c73405eb55ca303b90e75b4803da0be07",
+  "sha": "7beecdb788e8dfedc479b345c1b89d9be7d22cb3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7beecdb",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)",
+    "files": [
+     "src/components/tasks/__tests__/movimentoEContraste.test.tsx",
+     "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
+     "src/components/tasks/shared/PriorityChip.tsx",
+     "src/components/tasks/shared/PriorityPill.tsx"
+    ]
+   },
    {
     "sha": "fea93e2",
     "date": "2026-11-08",
@@ -383891,15 +383903,6 @@
     "files": [
      "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-11-07.md"
     ]
-   },
-   {
-    "sha": "f77653b",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix: alinha labels dos controles rápidos no spec de volume (#2776)",
-    "files": [
-     "e2e/quick-controls-volume.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -383930,6 +383933,22 @@
    [
     "scripts/vercel/verify-release-targets.mjs",
     2
+   ],
+   [
+    "src/components/tasks/__tests__/movimentoEContraste.test.tsx",
+    1
+   ],
+   [
+    "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
+    1
+   ],
+   [
+    "src/components/tasks/shared/PriorityChip.tsx",
+    1
+   ],
+   [
+    "src/components/tasks/shared/PriorityPill.tsx",
+    1
    ],
    [
     "src/components/layout/AppShell.tsx",
@@ -383965,22 +383984,6 @@
    ],
    [
     "src/components/talkx/TalkXMessagePreview.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/kit/ActiveCampaignIndicator.tsx",
-    1
-   ],
-   [
-    "src/components/tasks/board/BoardColumn.tsx",
-    1
-   ],
-   [
-    "src/pages/admin-telemetria/ClientErrorsPanel.tsx",
-    1
-   ],
-   [
-    "docs/telefonia/CAPACIDADES.md",
     1
    ]
   ]

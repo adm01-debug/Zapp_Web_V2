@@ -11901,7 +11901,7 @@
     "PriorityChip"
    ],
    "export_default": null,
-   "linhas": 30,
+   "linhas": 31,
    "dominio": "components/tasks",
    "hooks_locais": [],
    "tabelas": [],
@@ -11915,7 +11915,7 @@
     "PriorityPill"
    ],
    "export_default": null,
-   "linhas": 53,
+   "linhas": 54,
    "dominio": "components/tasks",
    "hooks_locais": [],
    "tabelas": [],

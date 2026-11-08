@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)",
    "fix(layout): restaura trilha de navegação no desktop (#2819)",
    "fix: elimina 20 violações tipográficas residuais (#2803)",
    "test(contracts): sincroniza ratchets com arquitetura atual (#2802)",
-   "test(e2e): alinha placeholder da paleta única (#2799)",
-   "fix(test): restaura imports Deno nos contratos"
+   "test(e2e): alinha placeholder da paleta única (#2799)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "fea93e2c73405eb55ca303b90e75b4803da0be07",
+  "commit": "7beecdb788e8dfedc479b345c1b89d9be7d22cb3",
   "branch": "main",
-  "data_commit": "2026-11-08T16:30:07-03:00",
+  "data_commit": "2026-11-08T16:55:03-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7beecdb",
+    "data": "2026-11-08",
+    "assunto": "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)"
+   },
    {
     "sha": "fea93e2",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "ea6c809",
     "data": "2026-11-07",
     "assunto": "fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)"
-   },
-   {
-    "sha": "fb328a6",
-    "data": "2026-11-07",
-    "assunto": "fix(db): registra formatação divergente da migration 20261107153000 (#2781)"
    }
   ],
-  "arquivos_mudados_7d": 1108,
+  "arquivos_mudados_7d": 1110,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -180,11 +180,11 @@
     "mudancas": 113
    },
    {
-    "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
-    "mudancas": 105
+    "pasta": "src/components/tasks",
+    "mudancas": 109
    },
    {
-    "pasta": "src/components/tasks",
+    "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
     "mudancas": 105
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8315,
   "arquivos_codigo": 4750,
-  "linhas_codigo": 877605,
+  "linhas_codigo": 877607,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368170
+   "linhas": 368172
   },
   "src/config": {
    "arquivos": 3,
