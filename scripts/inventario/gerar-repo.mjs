@@ -4,7 +4,7 @@
 //  - tabelas: para cada nome recebido em stdin (uma por linha), quantos .from('tabela') ha em src/ e supabase/functions/
 // Uso: node scripts/inventario/gerar-repo.mjs            -> escreve inventario/estado/edges.json
 //      node scripts/inventario/gerar-repo.mjs < tabelas.txt -> tambem escreve inventario/estado/tabelas-uso.json
-import { readdirSync, readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readdirSync, readFileSync, readSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
@@ -61,15 +61,40 @@ const semChamador = Object.entries(inventario).filter(([, v]) => v.sem_chamador)
 writeFileSync(join(OUT, 'edges.json'), JSON.stringify({ gerado_em: new Date().toISOString(), total: edges.length, sem_chamador_no_repo: semChamador, edge_functions: inventario }) + '\n');
 console.log(`edges: ${edges.length} | sem chamador no repo (src/migrations/edges): ${semChamador.length}`);
 
-if (!process.stdin.isTTY) {
-  let entrada = '';
-  try {
-    entrada = readFileSync(0, 'utf8');
-  } catch (erro) {
-    if (erro?.code !== 'EAGAIN') throw erro;
-    entrada = '';
+// Le o fd 0 em laco proprio: sob runners que deixam o stdin em modo nao-bloqueante
+// (ex. `node --test`), um unico `readFileSync(0)` pode lancar EAGAIN mesmo com dados
+// reais ainda chegando no pipe -- e um catch que tratasse isso como "stdin vazio"
+// descartaria esses dados em silencio. Em EAGAIN, espera um pouco (espera de
+// verdade via Atomics.wait, sem busy-loop) e tenta de novo; só desiste depois de
+// varias tentativas sem nenhum byte novo.
+function lerStdinSync() {
+  const pedacos = [];
+  const buf = Buffer.alloc(65536);
+  const relogio = new Int32Array(new SharedArrayBuffer(4));
+  let tentativasSemDados = 0;
+  const MAX_TENTATIVAS_SEM_DADOS = 50; // ~1s de espera total (20ms x 50)
+  for (;;) {
+    let lidos;
+    try {
+      lidos = readSync(0, buf, 0, buf.length, null);
+    } catch (erro) {
+      if (erro?.code === 'EAGAIN') {
+        if (++tentativasSemDados > MAX_TENTATIVAS_SEM_DADOS) break;
+        Atomics.wait(relogio, 0, 0, 20);
+        continue;
+      }
+      if (erro?.code === 'EOF') break;
+      throw erro;
+    }
+    if (lidos === 0) break;
+    tentativasSemDados = 0;
+    pedacos.push(Buffer.from(buf.subarray(0, lidos)));
   }
-  const nomes = entrada.split(/\s+/).filter(Boolean);
+  return Buffer.concat(pedacos).toString('utf8');
+}
+
+if (!process.stdin.isTTY) {
+  const nomes = lerStdinSync().split(/\s+/).filter(Boolean);
   if (nomes.length > 0) {
     const uso = {};
     for (const t of nomes) {
