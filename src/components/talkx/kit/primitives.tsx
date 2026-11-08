@@ -51,7 +51,12 @@ export function ModuleBreadcrumb({ items, className, onItemClick }: { items: str
         <Fragment key={`${i}-${item}`}>
           {i > 0 && <span aria-hidden="true" className="text-border">›</span>}
           {onItemClick && i < items.length - 1 ? (
-            <button type="button" onClick={() => onItemClick(i)} className="h-9 px-2 inline-flex items-center rounded-lg hover:bg-muted/50 hover:text-foreground truncate transition-colors">{item}</button>
+            <button
+              type="button"
+              onClick={() => onItemClick(i)}
+              aria-label={i === items.length - 2 ? `Voltar à ${item.toLowerCase()}` : undefined}
+              className="h-9 px-2 inline-flex items-center rounded-lg hover:bg-muted/50 hover:text-foreground truncate transition-colors"
+            >{item}</button>
           ) : (
             <span className={i === items.length - 1 ? 'text-foreground font-medium truncate' : 'truncate'}>{item}</span>
           )}
