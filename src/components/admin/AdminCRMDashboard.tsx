@@ -114,7 +114,7 @@ function MetricCard({ label, table, icon: Icon, color }: {
               <p className="text-xl font-bold">
                 {indisponivel ? '—' : (count > 1000 ? `${(count / 1000).toFixed(1)}k` : count.toLocaleString('pt-BR'))}
               </p>
-              {indisponivel && <p className="text-[10px] text-muted-foreground/80">Dados não disponíveis</p>}
+              {indisponivel && <p className="text-3xs text-muted-foreground/80">Dados não disponíveis</p>}
             </>
           )}
           <p className="text-xs text-muted-foreground">{label}</p>

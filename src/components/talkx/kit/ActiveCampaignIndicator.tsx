@@ -57,7 +57,7 @@ export function ActiveCampaignIndicator({ campaigns, onOpen, live = false }: {
           />
           <span className="flex flex-col leading-tight min-w-0">
             <span className={cn('text-2xs font-semibold', topPaused ? 'text-warning' : 'text-success')}>{topLabel}</span>
-            <span className="text-[11px] text-foreground truncate max-w-[160px]">{top.name}</span>
+            <span className="text-2xs text-foreground truncate max-w-[160px]">{top.name}</span>
           </span>
           <span className="text-2xs text-muted-foreground hidden sm:inline whitespace-nowrap">Iniciada às {fmtTime(top.started_at)}</span>
           <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
