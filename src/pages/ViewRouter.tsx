@@ -138,7 +138,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
       return <ViewLoadingFallback noPadding />;
     }
     if (!authorized) {
-      if (currentView === 'talkx' || currentView === TALKX_KIT_VIEW_ID) {
+      if (currentView === 'talkx') {
         return <TalkXNoPermissionState />;
       }
       return <RestrictedView onNavigateTo={onNavigateTo} />;
