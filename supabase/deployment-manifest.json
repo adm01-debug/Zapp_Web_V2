@@ -506,8 +506,8 @@
     },
     {
       "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
-      "bytes": 5965,
-      "sha256": "7da121c5ba44f9176c5cbaa72b699e6a3adcd131e430e0cfd86033306511d1b4"
+      "bytes": 6172,
+      "sha256": "6f851c4c4500137cfa90a5ccdb2598db77d0758f1bf8e866f674e0a74c2ad082"
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
@@ -611,8 +611,8 @@
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
-      "bytes": 9240,
-      "sha256": "8c15e7a9e67d8ac5de48f8b69a3f245bd4eacd007869a7cd20b861ce994f4f43"
+      "bytes": 9437,
+      "sha256": "dd393b85fd6c4e1137117c66d0681be6e4b35fd1ca89b72298127a19a21ee202"
     },
     {
       "path": "supabase/functions/fetch-link-preview/index.ts",
@@ -1388,7 +1388,7 @@
       "name": "cleanup-rate-limit-logs",
       "entrypoint": "supabase/functions/cleanup-rate-limit-logs/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d53cf2578171cfd5d82a8ae46af97af3c9602277832bdde51f8aa3acbd57a3e8",
+      "source_sha256": "619d4d5cf4e75be5d3db4cec2520e229e113b277a140bdda177376d3c051f5ca",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1764,7 +1764,7 @@
       "name": "external-db-proxy",
       "entrypoint": "supabase/functions/external-db-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f37c96ccb3b6ba5bace6ba487126b72e6c97b4e35f1bfe90f30b57c6f20fb1de",
+      "source_sha256": "c5322e13014873737140c8c070584df8b61a09207bb13d7d14690d900496a143",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2534,5 +2534,5 @@
       ]
     }
   ],
-  "manifest_sha256": "43bc8877c7d3e877bf5bf2e18de5bf92e94c4a5d8ce8f9580a046f848babf5f2"
+  "manifest_sha256": "236f44753fac2ec85843e9cfd9e536109ef1b53f9ebe5a4ed5fb07c9155cef70"
 }
