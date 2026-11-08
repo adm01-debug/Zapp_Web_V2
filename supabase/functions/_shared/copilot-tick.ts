@@ -20,7 +20,6 @@
  */
 import { z } from "https://esm.sh/zod@3.23.8";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { parseModelOutput } from "./ai-response-contracts.ts";
 
 export const COPILOT_TICK_KIND = "copilot.tick";
 export const COPILOT_FUNCTION_NAME = "copilot-live";
@@ -466,9 +465,10 @@ export async function handleCopilotTick(input: CopilotTickInput, deps: CopilotTi
   if (!raw1) throw new CopilotTickError("COPILOT_TIER1_FAILED");
   let parsed1: unknown;
   try { parsed1 = JSON.parse(raw1); } catch { throw new CopilotTickError("COPILOT_TIER1_CONTRACT"); }
-  const p1 = parseModelOutput(CopilotTier1Schema, parsed1);
-  if (!p1.ok) throw new CopilotTickError("COPILOT_TIER1_CONTRACT");
-  const out1 = p1.data;
+  // safeParse evita TS2589 (type instantiation excessively deep) com schemas Zod aninhados
+  const r1 = CopilotTier1Schema.safeParse(parsed1);
+  if (!r1.success) throw new CopilotTickError("COPILOT_TIER1_CONTRACT");
+  const out1: CopilotTier1Output = r1.data;
   // Sanitiza deadline inválida antes de usar em patch ou prompt tier2.
   if (out1.brinde?.deadline && !isRealDate(out1.brinde.deadline)) {
     delete (out1.brinde as Record<string, unknown>).deadline;
@@ -499,8 +499,9 @@ export async function handleCopilotTick(input: CopilotTickInput, deps: CopilotTi
       if (raw2) {
         try {
           const parsed2 = JSON.parse(raw2);
-          const p2 = parseModelOutput(CopilotTier2Schema, parsed2);
-          if (p2.ok) out2 = p2.data;
+          // safeParse evita TS2589 — tier2 inválido não perde o tier1
+          const r2 = CopilotTier2Schema.safeParse(parsed2);
+          if (r2.success) out2 = r2.data;
         } catch { /* tier2 inválido — não perde o tier1 */ }
       }
     }
