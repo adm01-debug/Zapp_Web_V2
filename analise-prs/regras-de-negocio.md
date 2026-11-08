@@ -1,81 +1,45 @@
-# Regras de Negócio — Classificação de PRs
+# Regras de Negócio — Análise de PRs (2026-11-08)
 
-**Fonte canônica:** `CLAUDE.md` do repositório `adm01-debug/Zapp_Web_V2`  
-**Aplicadas na análise de 2026-11-01**  
-**SHA de main ao início:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
+## Feature Freeze
 
----
+**Status**: ATIVO (desde PR #2545)
 
-## Regra 8 — DECISAO_HUMANA (não mergear sem aprovação)
+Apenas correções de fluxo crítico são permitidas. PRs com prefixo `feat(` ou `feat:` são bloqueadas
+pelo Feature Freeze até decisão contrária do Joaquim.
 
-**Fonte:** user preferences → "Fluxo Git → regra 8"
+## Critérios de Elegibilidade para Merge
 
-PR entra na Regra 8 quando toca qualquer um destes escopos:
+1. **NÃO-DRAFT** — PRs em rascunho (draft) não são mergeadas
+2. **NÃO-REGRA8** — PRs que tocam CI/workflows `.github/`, migrations DDL destrutivas, segredos,
+   Dockerfile, infraestrutura ou deleção de dados em massa precisam de aprovação humana do Joaquim
+3. **NÃO-FEATURE_FREEZE** — PRs com `feat(` / `feat:` bloqueadas durante o congelamento
+4. **CI VERDE** — Todos os 6 required checks devem passar:
+   - 🏗️ Build
+   - 🔎 TypeCheck  
+   - ✅ CI Gate (inclui Unit Tests, E2E, Security Audit, Contrato DB offline)
+5. **SEM CONFLITO** — Sem `mergeable_state: dirty`
+6. **ESCOPO VÁLIDO** — Apenas mudanças no escopo descrito (sem alargamento de scope)
 
-| Escopo | Evidência no CLAUDE.md |
-|---|---|
-| **Migration/DDL em produção** | Seção 1, regras 1–8: "Toda mudança de DDL = arquivo em supabase/migrations/"; environment `producao-ddl` exige aprovação humana |
-| **`.github/workflows/`** | User preferences regra 8: "CI/workflows, segredos, Dockerfile, stack/Swarm, Traefik" |
-| **Secrets / env vars críticos** | User preferences regra 8: "segredos" |
-| **Deleção destrutiva de dados** | User preferences regra 8: "deleção de dado, mudança de arquitetura ou custo" |
-| **Edge functions (lógica crítica)** | CLAUDE.md seção "Deploy e edge functions": deploy automático em `producao-edge-functions`; edge functions com lógica de negócio crítica ficam na regra 8 |
-| **Conflito com PR de outro agente** | User preferences regra 8: "conflito com PR de outro agente" |
+## Classificações de Veredito
 
----
+| Veredito | Significado | Ação |
+|---|---|---|
+| `ELEGIVEL` | Pode ser mergeada se CI verde | Merge via squash |
+| `FEATURE_FREEZE` | Feature bloqueada durante congelamento | Não mergear |
+| `REGRA8` | Precisa aprovação humana | Aguardar Joaquim |
+| `DRAFT` | Rascunho incompleto | Não mergear |
+| `SUPERSEDIDA` | Corrigida por outra PR (ex: #2864) | Será fechada automaticamente quando a superior mergear |
+| `BOT_CHORE` | PR automática de bot (types-sync, inventário) | Merge se CI verde e sem conflito |
 
-## MERGE_OK — pode mergear automaticamente
+## Restrições de Escopo
 
-Critérios simultâneos exigidos:
-1. PR não é DRAFT
-2. PR não está fechada (`state=open`)
-3. Sem migration (`supabase/migrations/`)
-4. Sem `.github/workflows/`
-5. Sem deploy de edge function com lógica crítica não revisada
-6. Sem conflito de merge (`mergeable_state ≠ dirty`)
-7. Não escreve no banco SINGU (read-only: `pgxfvjmuubtbowutlide`, `doufsxqlfjyuvxuezpln`)
+- **SINGU** (pgxfvjmuubutbowutlide, doufsxqlfjyuvxuezpln): READ-ONLY, nenhuma PR que escreva neles
+- **Main branch**: nunca commit direto, force-push ou edição de workflows
+- **Edge functions**: deploy automático via `deploy-functions.yml` após merge em main
+- **Banco de produção**: migrations só pelo fluxo arquivo → PR → merge → db-migrate.yml
 
-`MERGE_OK_AUTO_MERGE_PENDING` = critérios acima satisfeitos + `auto_merge=true` habilitado + CI ainda rodando.
+## Ordem de Merge
 
----
-
-## MERGEAR — docs/planos sem risco técnico
-
-PRs que alteram apenas documentação (`docs/`, `*.md`) ou arquivos de configuração sem efeito em produção. Sem migration, sem workflow, sem edge function.
-
----
-
-## MERGEAR_COM_RESSALVA — OK mas com caveats
-
-PRs elegíveis para merge mas com conflito potencial entre si (ex: #2417 e #2431 tocam o mesmo `src/test/setup.ts`). Mergear uma pode invalida a outra.
-
----
-
-## CONFLITO — rebase necessário
-
-`mergeable_state=dirty` retornado pela API do GitHub. Autor da branch deve fazer `git rebase origin/main`.
-
----
-
-## AGUARDANDO_APROVACAO
-
-PR body contém sinalização explícita de aguardar aprovação humana, ou PR tem migration de alto impacto (ex: 57 índices FK).
-
----
-
-## DRAFT — não mergear
-
-`draft=true` na API do GitHub. Drafts não são mergeados independente do conteúdo.
-
----
-
-## IMPOSSIVEL_MERGE
-
-PR com `rebaseable=false` (GitHub não consegue rebasear automaticamente) e muito atrás do main. Requer intervenção manual complexa.
-
----
-
-## Fontes consultadas
-
-- `CLAUDE.md` (seções 0, 1, 3 — banco, migrations, repo)
-- User preferences → "Fluxo Git" (regras 1–11)
-- PR bodies e dossiers individuais em `analise-prs/dossies/`
+1. PR #2864 (restaurar test suite — desbloqueia CI de todas as outras PRs)
+2. PRs de fix urgentes não-conflitantes em paralelo
+3. PRs de chore/docs em paralelo após CI verde

@@ -1,20 +1,69 @@
-numero,titulo,branch,autor,draft,veredito,auto_merge,mergeable,mergeable_state,motivo_bloqueio,toca_workflow,toca_migration,toca_edge_function,diff_verificado,valida,ja_no_main,tem_regressao,regra_negocio_ok,acao
-2494,"chore(db): sincronizar artefatos derivados do banco",automation/types-sync,bot,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
-2504,"fix(e2e): workers CI 1→4 + timeouts explícitos","claude/fix-e2e-workers-timeout-tests-011101-1800",claude,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
-2543,"fix: E2E alto-contraste e N-008 healthcheck","claude/fix-e2e-a11y-contrast-db-guard-n008-011126-2310",claude,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
-2545,"chore: congela features e define os 9 fluxos críticos","claude/chore-congelamento-features-261101-2035",claude,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
-2527,"fix: auto-update branch target",claude/fix-auto-update-branch-target,claude,false,REGRA8_WORKFLOW,desabilitado,true,mergeable,REGRA8 - toca deploy-functions.yml,true,false,false,true,true,false,false,true,decisão humana (Joaquim)
-2542,"fix: N-008 DB Guard N008_POSTGRES_IMAGE",claude/fix-db-guard-n008-postgres-image,claude,false,REGRA8_WORKFLOW,desabilitado,true,mergeable,REGRA8 - toca db-guard.yml,true,false,false,true,true,false,false,true,decisão humana (Joaquim)
-2547,"infra: E2E logado timeout 45 min",claude/infra-e2e-logado-timeout,claude,false,REGRA8_WORKFLOW,desabilitado,true,mergeable,REGRA8 - toca e2e-logado.yml,true,false,false,true,true,false,false,true,decisão humana (Joaquim)
-2549,"fix: reconexão automática WhatsApp via health check","claude/fix-reconexao-automatica-whatsapp-261101-2100",claude,false,REGRA8_EDGE_FUNCTION,desabilitado,true,mergeable,REGRA8 - edge function sem deno test,false,false,true,true,true,false,false,true,"decisão humana (Joaquim) - CRÍTICO: flows 2/3/4 quebrados"
-2539,"fix: reconcilia migrations 20261026",claude/fix-reconcile-migrations-20261026,claude,true,DRAFT_MIGRATION_RECONCILE,não ativado,true,a verificar,"DRAFT + ci.yml + DROP migration",true,true,false,false,NÃO VERIFICADO,false,NÃO VERIFICADO,NÃO VERIFICADO,DRAFT - não mergear
-2548,"feat: TalkX X048 estados WA/CRM","claude/feat-talkx-x048-estados-servico-261101-2100",claude,true,DRAFT_FEATURE_FREEZE,não ativado,true,mergeable,DRAFT + feature freeze,false,false,false,true,true,false,false,true,DRAFT + feature freeze
-2515,"fix: multiplix deno cache pre-warm",claude/fix-multiplix-deno-cache,claude,true,DRAFT,não ativado,true,a verificar,DRAFT,false,false,false,true,true,false,false,true,DRAFT - não mergear
-2517,"feat(talkx): X070 catálogo motivos de supressão",claude/feat-talkx-x070-suppression-reasons,claude,true,DRAFT_REGRA8_DESTRUCTIVE,não ativado,true,a verificar,"DRAFT + DROP TYPE + ALTER TYPE + UPDATE massa",false,true,false,true,NÃO MERGEAR,false,RISCO,true,DRAFT + destrutiva - não mergear
-2519,"fix: corrige 6 falhas de CI + bloqueios pré-existentes",não identificado,claude,true,DRAFT_REGRA8_WORKFLOW_MIGRATION,não ativado,true,a verificar,"DRAFT + db-guard.yml + edita migration existente",true,true,false,true,PARCIALMENTE,false,RISCO,PARCIALMENTE,DRAFT + múltiplas REGRA8 - não mergear
-2523,"chore: análise de PRs (sessão de auditoria)","claude_05/awesome-ramanujan-ufxolu",claude,true,DRAFT_SESSAO_ANALISE,não ativado,true,a verificar,DRAFT - PR desta sessão,false,false,false,false,true,false,false,true,DRAFT - esta sessão
-2525,"fix: reconcilia migrations 20261031170000 e 20261101213000","claude_04/gifted-ride-xq3mj4",claude,true,DRAFT_REGRA8_MIGRATION,ativo,true,a verificar,"DRAFT + migrations aditivas (FK indexes + RLS ALTER POLICY)",false,true,false,true,true,false,false,true,DRAFT + REGRA8_MIGRATION
-2529,"feat(talkx): X074 analytics RPCs",não identificado,claude,true,DRAFT_REGRA8_MIGRATION_FEATURE_FREEZE,não ativado,true,a verificar,DRAFT + feature freeze + migration funções,false,true,false,true,true,false,false,true,DRAFT + feature freeze
-2530,"feat(talkx): X086 template metrics RPCs",não identificado,claude,true,DRAFT_REGRA8_MIGRATION_FEATURE_FREEZE,não ativado,true,a verificar,DRAFT + feature freeze + migration funções,false,true,false,true,true,false,false,true,DRAFT + feature freeze
-2531,"feat(talkx): X058 campaign queue by segment RPC",não identificado,claude,true,DRAFT_REGRA8_MIGRATION_FEATURE_FREEZE,não ativado,true,a verificar,DRAFT + feature freeze + migration função,false,true,false,true,true,false,false,true,DRAFT + feature freeze
-2534,"fix: bulkArchive - erro RLS mostra aviso neutro",não identificado,claude,true,DRAFT,não ativado,true,a verificar,DRAFT,false,false,false,true,true,false,false,true,DRAFT - fix válido aguardando conversão
+number,title,draft,verdict,sha,created_at,url
+2496,feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO,False,FEATURE_FREEZE,d6a2ad50,2026-11-01,https://github.com/adm01-debug/Zapp_Web_V2/pull/2496
+2508,fix(ci): corrige typecheck das edges — npm instala @types/node que deno não instala sem import real (W101),False,ELEGIVEL,e5e03afa,2026-11-01,https://github.com/adm01-debug/Zapp_Web_V2/pull/2508
+2533,chore: arquivo de reconciliação migration 20261030145126 (copilot_fases13_15_tabelas),False,REGRA8,2388e1ac,2026-11-01,https://github.com/adm01-debug/Zapp_Web_V2/pull/2533
+2553,feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050),False,FEATURE_FREEZE,4773dd25,2026-11-02,https://github.com/adm01-debug/Zapp_Web_V2/pull/2553
+2555,feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051),False,FEATURE_FREEZE,34094e1b,2026-11-02,https://github.com/adm01-debug/Zapp_Web_V2/pull/2555
+2556,feat: E2E reload test para preservação de rota URL (X052),False,FEATURE_FREEZE,9a0b6761,2026-11-02,https://github.com/adm01-debug/Zapp_Web_V2/pull/2556
+2558,feat(talkx): trilha de navegação clicável no monitor (X053),True,DRAFT,21be44c6,2026-11-02,https://github.com/adm01-debug/Zapp_Web_V2/pull/2558
+2788,"feat: ⌘K palette owner único — useQuery com enabled, botão Buscar e listener duplicado removido (X054)",True,DRAFT,2bbbe224,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2788
+2805,fix(ui): Badge não trunca texto longo — overflow quebrava layout,False,ELEGIVEL,4fec977b,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2805
+2806,feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter,False,FEATURE_FREEZE,c5f12cd9,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2806
+2808,fix(chat): guard de scroll programático evita cancelamento do scrollToIndex,False,ELEGIVEL,e90cc8a6,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2808
+2809,feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150),False,FEATURE_FREEZE,a8b510c1,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2809
+2810,feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050),False,FEATURE_FREEZE,61b32d72,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2810
+2811,fix(gmail-oauth): remove exposição de access_token no refresh,True,DRAFT,21d19430,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2811
+2812,feat(talkx): integrar useTalkXLifecycle em TalkXCampaignRunning (X051),False,FEATURE_FREEZE,5b892e94,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2812
+2813,fix(inbox): toast neutro em RLS e undo dois passos no bulk archive,True,DRAFT,90aa7785,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2813
+2815,feat(copilot): adiciona brinde_state em copilot_sessions (CV-026),False,FEATURE_FREEZE,e987c590,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2815
+2816,feat(admin): extrai lógica de banco do MediaMigrationTool para serviço,False,FEATURE_FREEZE,ab8e7b7c,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2816
+2817,feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text,True,DRAFT,53167b3b,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2817
+2818,fix(team-chat): deep-link ?cid= abre conversa correta ao clicar na notificação,False,ELEGIVEL,597d7618,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2818
+2820,feat(copilot): renderiza painéis RADAR fases 8-15 no ChatInputArea,False,FEATURE_FREEZE,d1d75036,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2820
+2821,fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward,False,ELEGIVEL,8a860874,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2821
+2822,feat(monitoring): painel investigação de pausas de instância (IP2),True,DRAFT,1eb3390c,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2822
+2823,feat(talkx): filtro por segmento na tabela de destinatários (#2190),False,FEATURE_FREEZE,e39026cf,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2823
+2825,feat(copilot): painel flutuante RADAR Fase 6 (CV-051–060),False,FEATURE_FREEZE,0c1eab00,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2825
+2826,fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete,False,ELEGIVEL,80340eb6,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2826
+2827,fix(db): corrige search_path de create_department_invite (S3-01-FIX),False,REGRA8,09c38d8a,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2827
+2828,feat(copilot): motor e telas RADAR Copiloto CV-021–060,False,FEATURE_FREEZE,dd50f0c0,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2828
+2829,fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json,False,REGRA8,4bf43ebb,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2829
+2831,feat(copilot): motor RADAR ao vivo B·R·I·N·D·E,False,FEATURE_FREEZE,eec0c20b,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2831
+2832,fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox,False,ELEGIVEL,ba8d5371,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2832
+2834,feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002,True,DRAFT,d4ce84e9,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2834
+2835,"chore(scripts): READMEs, renomear .test→.unit, testes ausentes",False,ELEGIVEL,a90cd425,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2835
+2836,fix(test): corrige títulos lowercase em TalkXCampaignRunning.remote-completion (R2-MOD-032),False,ELEGIVEL,43a574df,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2836
+2837,fix(shortcuts): corrige defaultKey do radar-toggle para 'a' (CV-056),False,ELEGIVEL,5e3e828c,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2837
+2838,chore(inventario): atualiza edges.json e rotas.json via auditoria de scripts,False,ELEGIVEL,77fb7eb4,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2838
+2839,chore(ci): atualiza baseline do lint-ratchet,False,REGRA8,bd949f98,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2839
+2840,chore(docs): documenta geração de contexto no AGENTS.md,False,ELEGIVEL,71fe1790,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2840
+2841,security(ci): fecha injeção de comando e fail-open no guard GA02,False,REGRA8,ddcb360b,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2841
+2842,"chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs",False,ELEGIVEL,6fc7dcfa,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2842
+2844,chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase,False,ELEGIVEL,395f7680,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2844
+2845,fix(talkx): placeholder test suite em TalkXCampaignReport.test.tsx,False,SUPERSEDIDA,be0a4f5d,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2845
+2846,chore(ci): guard GA02 passa a checar referência órfã e skills idênticos,False,REGRA8,15d6b755,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2846
+2847,"feat(talkx): conectar RPCs analytics ao front — ranking, top segmentos e segmentos do relatório",False,FEATURE_FREEZE,59fbb76a,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2847
+2848,chore: inventário do estado real (semanal),False,BOT_CHORE,3774e7f2,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2848
+2850,ci: registra 4 guards de segurança existentes como steps do CI,False,REGRA8,72994383,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2850
+2851,fix(talkx): restaura testes do relatório de campanha apagados no #2550,False,SUPERSEDIDA,2bb863a7,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2851
+2852,docs(migration): regenera matriz edge × tabela (estava desatualizada),False,ELEGIVEL,04df317c,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2852
+2853,chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121,True,DRAFT,889c9446,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2853
+2854,fix(contexto): tipo de coluna truncado e tabelas de outros schemas no gerador de regras,True,DRAFT,07ea4281,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2854
+2855,fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check,False,ELEGIVEL,16abcba5,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2855
+2856,feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057),True,DRAFT,c52e06e5,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2856
+2857,chore(db): sincronizar artefatos derivados do banco,False,BOT_CHORE,a7461664,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2857
+2858,ci: pull_request do ci.yml também dispara em ready_for_review,False,REGRA8,a07e1796,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2858
+2859,fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas,True,DRAFT,c99d692f,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2859
+2860,"fix: inventário de edges não confunde prefixo de nome, vê invoke com template e segredos de helpers",False,ELEGIVEL,1de12e24,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2860
+2861,test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message),True,DRAFT,828e3019,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2861
+2862,fix(edges): corrige regressão esm.sh → npm: em external-db-proxy e cleanup-rate-limit-logs,False,ELEGIVEL,db7fc375,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2862
+2863,docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta,False,ELEGIVEL,c3892e9c,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2863
+2864,fix: restaurar test suite TalkXCampaignReport apagado no PR #2550,False,ELEGIVEL,784bb18a,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2864
+2865,fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes,False,ELEGIVEL,db4c3cf7,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2865
+2866,fix(talkx): isola queryKeys da palette do Ctrl+K das telas completas,False,ELEGIVEL,d64b521f,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2866
+2867,ci(db-audit): corrige DB Guard offline e DB Live Guard,True,DRAFT,3f28efcc,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2867
+2868,fix(edges): substitui esm.sh por npm: em external-db-proxy e cleanup-rate-limit-logs,False,ELEGIVEL,67390c40,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2868
+2869,fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning,True,DRAFT,ea9d3b04,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2869
+2870,fix: restaura TalkXCampaignReport.test.tsx — No test suite found quebra CI,True,DRAFT,47f93669,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2870
+2871,docs: atualizar RELATORIO_CI.md e PENDENCIAS.md com estado real pós-PR #2543,True,DRAFT,54f2994f,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2871
+2872,fix(radar): CV-056 atalho Ctrl+Shift+A e 5 erros de lint da Fase 6,False,ELEGIVEL,4c63335e,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2872
