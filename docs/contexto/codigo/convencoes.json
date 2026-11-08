@@ -17,7 +17,7 @@
    "src/contexts (2)"
   ],
   "servicos_logica": [
-   "src/lib (145)",
+   "src/lib (147)",
    "src/services (17)",
    "src/utils (8)"
   ],
@@ -42,7 +42,7 @@
  "nomenclatura": {
   "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
-  "servicos": "camelCase (75%)",
+  "servicos": "camelCase (76%)",
   "edge_functions": "kebab-case (95%)",
   "tabelas": "snake_case (92%)"
  },
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)",
    "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)",
    "fix(layout): restaura trilha de navegação no desktop (#2819)",
    "fix: elimina 20 violações tipográficas residuais (#2803)",
-   "test(contracts): sincroniza ratchets com arquitetura atual (#2802)",
-   "test(e2e): alinha placeholder da paleta única (#2799)"
+   "test(contracts): sincroniza ratchets com arquitetura atual (#2802)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

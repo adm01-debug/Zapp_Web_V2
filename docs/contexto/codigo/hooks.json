@@ -8380,7 +8380,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 20,
+   "usado_por": 22,
    "usado_por_arquivos": [
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/TalkXCampaignPaused.tsx",
@@ -8401,7 +8401,9 @@
     "src/components/talkx/useCampaignRowActions.tsx",
     "src/components/talkx/useTalkXLifecycle.tsx",
     "src/hooks/integrations/index.ts",
-    "src/hooks/integrations/useTalkXCampaignList.ts"
+    "src/hooks/integrations/useTalkXCampaignList.ts",
+    "src/lib/talkxCsv.ts",
+    "src/lib/talkxReportPdf.ts"
    ],
    "coberto_por_testes": 23
   },
@@ -10041,12 +10043,13 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 7,
    "usado_por_arquivos": [
     "src/components/catalog/SendProductDialog.tsx",
     "src/components/inbox/ImagePreview.tsx",
     "src/components/inbox/MediaPreview.tsx",
     "src/components/inbox/tabs/FilesTab.tsx",
+    "src/components/talkx/report/TalkXCampaignReport.tsx",
     "src/hooks/integrations/useGmail.ts",
     "src/hooks/system/index.ts"
    ],

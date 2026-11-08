@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2247,
- "arestas": 7798,
+ "nos": 2249,
+ "arestas": 7806,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -113,16 +113,16 @@
    "importado_por": 47
   },
   {
+   "arquivo": "src/hooks/integrations/useTalkX.ts",
+   "importado_por": 45
+  },
+  {
    "arquivo": "src/hooks/integrations/useGmail.ts",
    "importado_por": 44
   },
   {
    "arquivo": "src/lib/localDay.ts",
    "importado_por": 44
-  },
-  {
-   "arquivo": "src/hooks/integrations/useTalkX.ts",
-   "importado_por": 43
   },
   {
    "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
@@ -544,7 +544,7 @@
  "modulos_mais_acoplados": [
   {
    "modulo": "lib",
-   "depende_de": 11,
+   "depende_de": 12,
    "importado_por": 102
   },
   {

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7beecdb788e8dfedc479b345c1b89d9be7d22cb3",
+  "commit": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
   "branch": "main",
-  "data_commit": "2026-11-08T16:55:03-03:00",
+  "data_commit": "2026-11-08T17:37:41-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e6e467b",
+    "data": "2026-11-08",
+    "assunto": "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)"
+   },
    {
     "sha": "7beecdb",
     "data": "2026-11-08",
@@ -126,14 +131,9 @@
     "sha": "cc39387",
     "data": "2026-11-07",
     "assunto": "fix(e2e): tolera ruído de ambiente SIP 401 e Device 500 no guard de varredura (#2777)"
-   },
-   {
-    "sha": "ea6c809",
-    "data": "2026-11-07",
-    "assunto": "fix(db): alinha RLS de escrita de message_reactions à visibilidade de mensagens (#2778)"
    }
   ],
-  "arquivos_mudados_7d": 1110,
+  "arquivos_mudados_7d": 1114,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 260
+    "mudancas": 262
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8315,
-  "arquivos_codigo": 4750,
-  "linhas_codigo": 877607,
+  "arquivos_total": 8317,
+  "arquivos_codigo": 4752,
+  "linhas_codigo": 877693,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368172
+   "linhas": 368080
   },
   "src/config": {
    "arquivos": 3,
@@ -735,8 +735,8 @@
    "linhas": 15560
   },
   "src/lib": {
-   "arquivos": 281,
-   "linhas": 38808
+   "arquivos": 283,
+   "linhas": 38986
   },
   "src/main.tsx": {
    "arquivos": 1,

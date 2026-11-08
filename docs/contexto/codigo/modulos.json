@@ -6790,7 +6790,7 @@
    "modulo": "components/talkx",
    "arquivos": 100,
    "testes": 145,
-   "linhas": 23507,
+   "linhas": 23552,
    "itens_menu": [
     "Campanhas"
    ],
@@ -6818,6 +6818,7 @@
     "useCustomShortcuts",
     "useDebounce",
     "useDebouncedValue",
+    "useDownloadPermission",
     "useExclusiveAudio",
     "useExternalContact360Batch",
     "useFeatureFlag",
@@ -7006,6 +7007,7 @@
     "components/catalog",
     "components/multiplix",
     "hooks/integrations",
+    "lib",
     "pages"
    ],
    "depende_de_modulos": [
@@ -13267,9 +13269,9 @@
   },
   {
    "modulo": "lib",
-   "arquivos": 110,
+   "arquivos": 112,
    "testes": 0,
-   "linhas": 10580,
+   "linhas": 10758,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -13290,6 +13292,8 @@
     "useRealtimeNotifications",
     "useRealtimeReconnectingNotice",
     "useRealtimeStatus",
+    "useTalkX",
+    "useTalkXOverviewStats",
     "useTeamAlertsPreference",
     "useToast"
    ],
@@ -13301,7 +13305,8 @@
     "crm-integration",
     "detect-new-device",
     "external-db-proxy",
-    "get-mapbox-token"
+    "get-mapbox-token",
+    "talkx-send"
    ],
    "tabelas": [
     "ai_conversation_tags",
@@ -13317,6 +13322,8 @@
     "messages",
     "profiles",
     "security_alerts",
+    "talkx_campaigns",
+    "talkx_recipients",
     "user_roles",
     "user_settings"
    ],
@@ -13333,6 +13340,7 @@
     "log_audit_event",
     "search_contacts",
     "search_email_threads",
+    "talkx_overview_stats",
     "user_has_permission"
    ],
    "buckets": [],
@@ -13469,6 +13477,7 @@
    ],
    "depende_de_modulos": [
     "components/inbox",
+    "components/talkx",
     "components/ui",
     "config",
     "hooks/crm",
@@ -13488,6 +13497,8 @@
     "date-fns",
     "dompurify",
     "framer-motion",
+    "jspdf",
+    "jspdf-autotable",
     "mapbox-gl",
     "pdfjs-dist",
     "sonner",

@@ -1,14 +1,14 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 191,
+ "total": 193,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
   "data": 1,
   "integrations": 3,
-  "lib": 145,
+  "lib": 147,
   "providers": 1,
   "python": 9,
   "segments": 1,
@@ -2231,10 +2231,11 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 4,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/catalog",
     "components/mfa",
+    "components/talkx",
     "hooks/integrations"
    ],
    "coberto_por_testes": 1,
@@ -4882,6 +4883,57 @@
    "usado_por_modulos": [
     "components/ui",
     "features/talk-me"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/talkxCsv.ts",
+   "camada": "lib",
+   "exports": [
+    "TalkXCsvKpis",
+    "buildTalkXCampaignCsvBlob"
+   ],
+   "export_default": null,
+   "linhas": 93,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 2,
+   "usado_por_modulos": [
+    "components/talkx",
+    "lib"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/talkxReportPdf.ts",
+   "camada": "lib",
+   "exports": [
+    "buildTalkXCampaignPdfBlob"
+   ],
+   "export_default": null,
+   "linhas": 85,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [
+    "jspdf",
+    "jspdf-autotable"
+   ],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "components/talkx"
    ],
    "coberto_por_testes": 0,
    "orfao": false

@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-08 21:48 UTC
+
+- **functions** adicionado (6): `public.talkx_campaign_heatmap(p_campaign_id uuid)`, `public.talkx_campaign_queue_by_segment(p_campaign_id uuid)`, `public.talkx_campaign_ranking(p_limit integer, p_metric text)`, `public.talkx_template_library_kpis()`, `public.talkx_template_metrics(p_template_id uuid)`, `public.talkx_top_segments(p_limit integer)`
+- **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
+
 ## 2026-11-08 05:52 UTC
 
 - **functions** alterado (1): `public.search_insights(p_days integer)`

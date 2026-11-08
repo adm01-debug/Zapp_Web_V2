@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7beecdb788e8dfedc479b345c1b89d9be7d22cb3",
+  "sha": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 19:58 UTC",
-  "files_total": 8156,
-  "code_files": 6014,
-  "code_lines": 1043786
+  "generated_at": "2026-11-08 21:54 UTC",
+  "files_total": 8158,
+  "code_files": 6016,
+  "code_lines": 1043872
  },
  "version": "1.3.2",
- "facts_hash": "2564d1bd37a759eb",
+ "facts_hash": "a00c628885b05804",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,7 +314,7 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1868,
+   ".ts": 1870,
    ".sql": 1292,
    ".mjs": 416,
    ".py": 119,
@@ -68276,7 +68276,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368172,
+   "lines": 368080,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68927,8 +68927,8 @@
   },
   {
    "module": "src/lib",
-   "files": 281,
-   "lines": 38808,
+   "files": 283,
+   "lines": 38986,
    "tables": [
     "contacts",
     "security_alerts"
@@ -92705,6 +92705,10 @@
     "text": "* Ordem de avaliação (top-down). A PRIMEIRA regra satisfeita define o nível."
    },
    {
+    "file": "src/lib/talkxReportPdf.ts",
+    "text": "Lança exceção em caso de falha no import dinâmico — o chamador deve tratar."
+   },
+   {
     "file": "src/lib/urlSafety.ts",
     "text": "(CRM/Singu). Aceita apenas http(s) absoluto — nunca renderizar URL que não"
    },
@@ -106780,6 +106784,16 @@
     "file": "src/lib/stickerImage.ts",
     "name": "QUALIDADE_WEBP",
     "value": "0.85"
+   },
+   {
+    "file": "src/lib/talkxCsv.ts",
+    "name": "BOM",
+    "value": "'﻿'"
+   },
+   {
+    "file": "src/lib/talkxCsv.ts",
+    "name": "SEP",
+    "value": "';'"
    },
    {
     "file": "src/lib/teamChatRules.ts",
@@ -163821,26 +163835,6 @@
    {
     "file": "src/components/talkx/kit/__tests__/useFilterState.test.ts",
     "name": "(extra) período e busca persistem; custom é válido"
-   },
-   {
-    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    "name": "talkxReportData — agrupamento no fuso da campanha (X164)"
-   },
-   {
-    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    "name": "serie diaria: um balde por dia, com enviados/entregues/respostas do dia"
-   },
-   {
-    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    "name": "mapa de calor 7x24: linha 0 = segunda, hora no fuso da campanha"
-   },
-   {
-    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    "name": "TalkXCampaignReport — tela do relatorio de campanha concluida (X164)"
-   },
-   {
-    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    "name": "abre com Resumo e os TRES graficos; sem a serie Conversoes (sem fonte)"
    },
    {
     "file": "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx",
@@ -308531,7 +308525,7 @@
   },
   "src/components/talkx/report/TalkXCampaignReport.tsx": {
    "path": "src/components/talkx/report/TalkXCampaignReport.tsx",
-   "lines": 261,
+   "lines": 306,
    "exports": [
     "interface TalkXCampaignReportProps",
     "function TalkXCampaignReport"
@@ -308644,18 +308638,8 @@
   },
   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx": {
    "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-   "lines": 199,
-   "is_test": true,
-   "rule_comments": [
-    "Nenhuma hora fora do horario local deve receber o envio."
-   ],
-   "tests": [
-    "talkxReportData — agrupamento no fuso da campanha (X164)",
-    "serie diaria: um balde por dia, com enviados/entregues/respostas do dia",
-    "mapa de calor 7x24: linha 0 = segunda, hora no fuso da campanha",
-    "TalkXCampaignReport — tela do relatorio de campanha concluida (X164)",
-    "abre com Resumo e os TRES graficos; sem a serie Conversoes (sem fonte)"
-   ]
+   "lines": 62,
+   "is_test": true
   },
   "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx": {
    "path": "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx",
@@ -345209,6 +345193,36 @@
     "function getTagDisplayName",
     "function filterCustomTags"
    ]
+  },
+  "src/lib/talkxCsv.ts": {
+   "path": "src/lib/talkxCsv.ts",
+   "lines": 93,
+   "exports": [
+    "interface TalkXCsvKpis",
+    "function buildTalkXCampaignCsvBlob"
+   ],
+   "params": [
+    {
+     "name": "BOM",
+     "value": "'﻿'"
+    },
+    {
+     "name": "SEP",
+     "value": "';'"
+    }
+   ],
+   "doc": "X164 / TL-080 — exportação CSV do relatório de campanha. UTF-8 BOM + separador `;` (padrão do Excel BR) + guard contra injeção CSV (células que começam com `=`, `+`, `-`, `@`, TAB ou CR recebem prefixo `'`). Seções do arquivo: 1. Metadados da campanha (nome, objetivo, fuso) 2. KPIs consolidados do R …"
+  },
+  "src/lib/talkxReportPdf.ts": {
+   "path": "src/lib/talkxReportPdf.ts",
+   "lines": 85,
+   "exports": [
+    "function buildTalkXCampaignPdfBlob"
+   ],
+   "rule_comments": [
+    "Lança exceção em caso de falha no import dinâmico — o chamador deve tratar."
+   ],
+   "doc": "X164 / TL-080 — exportação PDF do relatório de campanha. Usa jsPDF v4 + jspdf-autotable v5 via `import()` dinâmico para não inflar o bundle principal (~1 MB somados). O PDF inclui metadados da campanha e a tabela de KPIs consolidados do RPC `talkx_campaign_report`."
   },
   "src/lib/teamChatDraftSession.ts": {
    "path": "src/lib/teamChatDraftSession.ts",
@@ -383520,10 +383534,22 @@
   }
  },
  "git": {
-  "sha": "7beecdb788e8dfedc479b345c1b89d9be7d22cb3",
+  "sha": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e6e467b",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)",
+    "files": [
+     "src/components/talkx/report/TalkXCampaignReport.tsx",
+     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+     "src/lib/talkxCsv.ts",
+     "src/lib/talkxReportPdf.ts"
+    ]
+   },
    {
     "sha": "7beecdb",
     "date": "2026-11-08",
@@ -383894,15 +383920,6 @@
     "files": [
      "scripts/db-audit/migration-evidence.json"
     ]
-   },
-   {
-    "sha": "c759630",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "chore(docs): reauditoria mensal GitHub Actions — 2026-11-07 (#2768)",
-    "files": [
-     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-11-07.md"
-    ]
    }
   ],
   "hot_files": [
@@ -383933,6 +383950,22 @@
    [
     "scripts/vercel/verify-release-targets.mjs",
     2
+   ],
+   [
+    "src/components/talkx/report/TalkXCampaignReport.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+    1
+   ],
+   [
+    "src/lib/talkxCsv.ts",
+    1
+   ],
+   [
+    "src/lib/talkxReportPdf.ts",
+    1
    ],
    [
     "src/components/tasks/__tests__/movimentoEContraste.test.tsx",
@@ -383968,22 +384001,6 @@
    ],
    [
     "src/components/inbox/InboxEmptyChat.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/InboxSavedFiltersMenu.tsx",
-    1
-   ],
-   [
-    "src/components/security/AuditLogDashboard.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/TalkXCampaignScheduled.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/TalkXMessagePreview.tsx",
     1
    ]
   ]

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7beecdb788` · branch `main` · 2026-11-08 19:58 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e6e467b96f` · branch `main` · 2026-11-08 21:54 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3737,7 +3737,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
 | `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
 | `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
-| … +617 linhas — lista completa em `context.json` | | |
+| … +619 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4554,7 +4554,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21160 testes em 2246 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21155 testes em 2245 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4858,7 +4858,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx` | 16 | etapa 094 — polimento do arrastar · o cartão levantado ganha o overlay elevado e o lugar da soltura fica tracejado · no toque o arrasto só pega depois da pressão longa; toque curto desarma · etapas 095/096 — alvo de soltura … |
 | `src/hooks/__tests__/useActionFeedback.test.ts` | 16 | useActionFeedback · initializes without error · exposes success function · exposes error function … |
 | `src/hooks/integrations/__tests__/useTalkXCampaignList.test.ts` | 16 | useTalkXCampaignList — paginação no servidor (X078) · página 3 com 10 por página pede o intervalo 20–29 e traz colunas nomeadas com count exato · com 1.200 campanhas a 2ª página devolve 10 linhas e o total é 1.200 · ordenação e filtros (status, segmento, criador, período) vão na consulta … |
-| … +1946 linhas — lista completa em `context.json` | | |
+| … +1945 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5360,4 +5360,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
 | estático que some no mesmo prazo. Em ambos os casos `onDone` avisa o fim para | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
 | * Prazo do realce (2 pulsos), em ms. */ | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
-| … +1650 linhas — lista completa em `context.json` | |
+| … +1651 linhas — lista completa em `context.json` | |

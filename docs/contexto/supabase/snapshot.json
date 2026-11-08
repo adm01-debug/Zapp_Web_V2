@@ -56547,9 +56547,12 @@
             "public.talk_me_list_queues",
             "public.talk_me_list_waiting",
             "public.talkx_benchmarks",
+            "public.talkx_campaign_heatmap",
             "public.talkx_campaign_launch_checks",
             "public.talkx_campaign_logs",
             "public.talkx_campaign_pace",
+            "public.talkx_campaign_queue_by_segment",
+            "public.talkx_campaign_ranking",
             "public.talkx_campaign_recipients_page",
             "public.talkx_campaign_reply_stats",
             "public.talkx_campaign_segment_progress",
@@ -56563,6 +56566,9 @@
             "public.talkx_suppression_activity",
             "public.talkx_suppression_list",
             "public.talkx_suppression_stats",
+            "public.talkx_template_library_kpis",
+            "public.talkx_template_metrics",
+            "public.talkx_top_segments",
             "public.talkx_upsert_link",
             "public.transfer_team_conversation_ownership",
             "public.update_agent_streak",
@@ -63915,6 +63921,36 @@
       {
         "args": "p_campaign_id uuid",
         "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "27d84dc1dfca8efb",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_campaign_heatmap",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
+        "args": "p_campaign_id uuid",
+        "callers": {
           "code": [
             {
               "file": "supabase/migrations/20261010042500_talkx_campaign_launch_checks.sql",
@@ -64013,6 +64049,66 @@
         "language": "plpgsql",
         "leakproof": false,
         "name": "talkx_campaign_pace",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
+        "args": "p_campaign_id uuid",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "b74ab020a01edf2d",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_campaign_queue_by_segment",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
+        "args": "p_limit integer, p_metric text",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "406b6d19443ff976",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_campaign_ranking",
         "owner": "postgres",
         "returns": "jsonb",
         "schema": "public",
@@ -65450,6 +65546,96 @@
         "security_definer": true,
         "strict": false,
         "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "a85717bac7eeb8c9",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_template_library_kpis",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
+        "args": "p_template_id uuid",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "0ed97566adaf5453",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_template_metrics",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
+        "args": "p_limit integer",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "320310a72730a049",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_top_segments",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
       },
       {
         "args": "p_campaign_id uuid, p_label text, p_target_url text, p_link_id uuid, p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text",

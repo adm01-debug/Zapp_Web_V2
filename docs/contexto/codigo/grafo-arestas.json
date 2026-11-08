@@ -6469,7 +6469,11 @@
    "src/components/talkx/report/talkxReportData.ts",
    "src/components/talkx/talkxShared.ts",
    "src/hooks/integrations/useTalkX.ts",
-   "src/lib/supabaseHelpers.ts"
+   "src/hooks/system/useDownloadPermission.ts",
+   "src/lib/downloadFile.ts",
+   "src/lib/supabaseHelpers.ts",
+   "src/lib/talkxCsv.ts",
+   "src/lib/talkxReportPdf.ts"
   ],
   "src/components/talkx/report/TalkXReportFunnel.tsx": [
    "src/components/talkx/report/talkxReportCharts.ts",
@@ -9872,6 +9876,14 @@
   ],
   "src/lib/talkme/telemetry.ts": [
    "src/lib/logger.ts"
+  ],
+  "src/lib/talkxCsv.ts": [
+   "src/components/talkx/report/talkxReportData.ts",
+   "src/hooks/integrations/useTalkX.ts"
+  ],
+  "src/lib/talkxReportPdf.ts": [
+   "src/hooks/integrations/useTalkX.ts",
+   "src/lib/talkxCsv.ts"
   ],
   "src/lib/web-vitals.ts": [
    "performance-budget.json",
