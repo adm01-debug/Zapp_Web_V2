@@ -82,19 +82,22 @@ export function useDeadlineCalculator({
     if (!messages?.length) return;
     setAiLoading(true);
     setAiError(null);
-    const { data, error } = await invokeEdge<AiDeadlineResult>('ai-deadline-calculator', {
-      body: {
-        messages,
-        eventDate: eventDate?.toISOString().split('T')[0],
-        productType: productType !== 'default' ? productType : undefined,
-      },
-    });
-    if (error || !data) {
-      setAiError(error?.message ?? 'Erro ao calcular prazo');
-    } else {
-      setAiResult(data);
+    try {
+      const { data, error } = await invokeEdge<AiDeadlineResult>('ai-deadline-calculator', {
+        body: {
+          messages,
+          eventDate: eventDate?.toISOString().split('T')[0],
+          productType: productType !== 'default' ? productType : undefined,
+        },
+      });
+      if (error || !data) {
+        setAiError(error?.message ?? 'Erro ao calcular prazo');
+      } else {
+        setAiResult(data);
+      }
+    } finally {
+      setAiLoading(false);
     }
-    setAiLoading(false);
   }, [messages, eventDate, productType]);
 
   return { ...local, aiResult, aiLoading, aiError, analyze };

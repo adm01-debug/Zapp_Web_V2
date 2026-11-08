@@ -94,18 +94,21 @@ export function useLossRiskDetector({
     if (!messages?.length && !clientText) return;
     setAiLoading(true);
     setAiError(null);
-    const { data, error } = await invokeEdge<AiLossRiskResult>('ai-loss-risk', {
-      body: {
-        messages: messages ?? [{ content: clientText, sender: 'contact', created_at: new Date().toISOString() }],
-        daysSinceLastContact,
-      },
-    });
-    if (error || !data) {
-      setAiError(error?.message ?? 'Erro ao analisar risco de perda');
-    } else {
-      setAiResult(data);
+    try {
+      const { data, error } = await invokeEdge<AiLossRiskResult>('ai-loss-risk', {
+        body: {
+          messages: messages ?? [{ content: clientText, sender: 'contact', created_at: new Date().toISOString() }],
+          daysSinceLastContact,
+        },
+      });
+      if (error || !data) {
+        setAiError(error?.message ?? 'Erro ao analisar risco de perda');
+      } else {
+        setAiResult(data);
+      }
+    } finally {
+      setAiLoading(false);
     }
-    setAiLoading(false);
   }, [clientText, messages, daysSinceLastContact]);
 
   const active = aiResult ?? local;
