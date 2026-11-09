@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "18b719670da6fca8cb8d8267956cf613bbfc6740",
+  "sha": "77dd764175e2b0f8634b9d398eacda5566ba76d0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 22:42 UTC",
+  "generated_at": "2026-11-09 23:24 UTC",
   "files_total": 8167,
   "code_files": 6021,
-  "code_lines": 1044864
+  "code_lines": 1044882
  },
  "version": "1.3.2",
- "facts_hash": "b871c3ac8d285b1b",
+ "facts_hash": "146ff1c83ad703ef",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67261,7 +67261,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 88130,
+   "lines": 88148,
    "tables": [
     "a",
     "alem_do_limite",
@@ -268224,7 +268224,7 @@
   },
   "scripts/edge-deploy/health-check.mjs": {
    "path": "scripts/edge-deploy/health-check.mjs",
-   "lines": 283,
+   "lines": 292,
    "exports": [
     "const CANONICAL_PROJECT",
     "const MGMT_BASE",
@@ -268323,7 +268323,7 @@
   },
   "scripts/edge-deploy/health-check.unit.mjs": {
    "path": "scripts/edge-deploy/health-check.unit.mjs",
-   "lines": 246,
+   "lines": 255,
    "errors": [
     "network secret"
    ]
@@ -383016,10 +383016,20 @@
   }
  },
  "git": {
-  "sha": "18b719670da6fca8cb8d8267956cf613bbfc6740",
+  "sha": "77dd764175e2b0f8634b9d398eacda5566ba76d0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "77dd764",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes",
+    "files": [
+     "scripts/edge-deploy/health-check.mjs",
+     "scripts/edge-deploy/health-check.unit.mjs"
+    ]
+   },
    {
     "sha": "18b7196",
     "date": "2026-11-09",
@@ -383331,16 +383341,6 @@
     "files": [
      "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
     ]
-   },
-   {
-    "sha": "c545e5b",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "security(ci): fecha injeção de comando e fail-open no guard GA02",
-    "files": [
-     "scripts/ci/check-claude-md-integrity.mjs",
-     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -383357,8 +383357,12 @@
     3
    ],
    [
-    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    3
+    "scripts/edge-deploy/health-check.mjs",
+    2
+   ],
+   [
+    "scripts/edge-deploy/health-check.unit.mjs",
+    2
    ],
    [
     ".github/workflows/e2e-logado-isolado.yml",
@@ -383393,12 +383397,12 @@
     2
    ],
    [
-    "src/hooks/inbox/useInboxFilterPresets.ts",
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
     2
    ],
    [
-    "scripts/edge-deploy/health-check.unit.mjs",
-    1
+    "src/hooks/inbox/useInboxFilterPresets.ts",
+    2
    ],
    [
     "docs/PRONTO_PRODUCAO.md",
@@ -383406,10 +383410,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-workflow.unit.mjs",
-    1
-   ],
-   [
-    "scripts/edge-deploy/health-check.mjs",
     1
    ],
    [

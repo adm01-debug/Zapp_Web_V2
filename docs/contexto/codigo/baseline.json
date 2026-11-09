@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "18b719670da6fca8cb8d8267956cf613bbfc6740",
+  "commit": "77dd764175e2b0f8634b9d398eacda5566ba76d0",
   "branch": "main",
-  "data_commit": "2026-11-09T19:32:39-03:00",
+  "data_commit": "2026-11-09T20:13:25-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "77dd764",
+    "data": "2026-11-09",
+    "assunto": "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes"
+   },
    {
     "sha": "18b7196",
     "data": "2026-11-09",
@@ -126,11 +131,6 @@
     "sha": "0e0bdc4",
     "data": "2026-11-09",
     "assunto": "ci(db-audit): corrige DB Guard offline e DB Live Guard (#2867)"
-   },
-   {
-    "sha": "1c3535a",
-    "data": "2026-11-09",
-    "assunto": "chore: inventário do estado real (semanal) (#2848)"
    }
   ],
   "arquivos_mudados_7d": 646,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8326,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878271,
+  "linhas_codigo": 878289,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
-   "linhas": 4492
+   "linhas": 4510
   },
   "scripts/eslint": {
    "arquivos": 1,

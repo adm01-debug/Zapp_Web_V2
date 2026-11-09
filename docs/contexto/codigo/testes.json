@@ -2372,11 +2372,11 @@
   {
    "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
    "tipo": "unit",
-   "linhas": 246,
+   "linhas": 255,
    "testa": [
     "scripts/edge-deploy/health-check.mjs"
    ],
-   "casos": 9
+   "casos": 10
   },
   {
    "arquivo": "scripts/edge-deploy/log-injection.unit.mjs",
