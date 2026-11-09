@@ -151,18 +151,21 @@ export async function queryAnalytics({
   if (endMs - startMs > MAX_LOG_WINDOW_MS) throw new Error('Janela de logs excede 24 horas');
 
   const url = new URL(`${MGMT_BASE}/v1/projects/${projectRef}/analytics/endpoints/logs`);
-  url.searchParams.set('sql', sql);
-  url.searchParams.set('iso_timestamp_start', isoTimestamp(start, 'Início da janela'));
-  url.searchParams.set('iso_timestamp_end', isoTimestamp(end, 'Fim da janela'));
 
   let response;
   try {
     response = await fetchImpl(url, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        sql,
+        iso_timestamp_start: isoTimestamp(start, 'Início da janela'),
+        iso_timestamp_end: isoTimestamp(end, 'Fim da janela'),
+      }),
       signal: timeoutSignal(),
     });
   } catch {
