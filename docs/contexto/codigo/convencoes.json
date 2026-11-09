@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco",
    "fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7",
    "fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)",
    "fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)",
-   "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)",
-   "fix(ci): torna scripts de qualidade executáveis (#2891)"
+   "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

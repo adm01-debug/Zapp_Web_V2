@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a3f3e8c1e2` · branch `main` · 2026-11-09 14:42 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a15fdfb812` · branch `main` · 2026-11-09 15:03 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -8,7 +8,7 @@
 | Termo | Significado / valores | Tamanho | Origem |
 |---|---|---|---|
 | `_rb_message_reactions_contato_20261007001008` | [RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação. | 2 colunas | migration |
-| `_rb_message_reactions_one_per_agent_20261107121000` | Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem. | 6 colunas | migration |
+| `_rb_message_reactions_one_per_agent_20261107121000` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | types.ts |
 | `_zapp_fn_before` | _(sem COMMENT ON TABLE — significado não documentado)_ | 2 colunas | types.ts |
 | `_zapp_mig133_log` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | types.ts |
 | `agent_achievements` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
@@ -592,7 +592,7 @@
 - `whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 173/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
+- 174/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a3f3e8c1e2104e2b702fb031d23eee27bdff09cd` (2026-11-09T11:36:27-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a15fdfb812944cc5e4d28bf8a801590690a8a6c7` (2026-11-09T11:58:07-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `a3f3e8c1`
+- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `a15fdfb8`
 - comunidades maiores: framer-motion (838), cn (809), react (796), lucide-react (690), TalkXSuppression.tsx (635), vitest (617), validation.ts (450), ExternalProductManagement.tsx (442), ref_https (420), @tanstack/react-query (401), ref_node_fs (359), framer-motion (316)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -404,8 +404,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - scripts/ci/ci-docs-baseline.unit.mjs (10)
 - supabase/schema-manifest.json (10)
 - .github/workflows/deploy-functions.yml (9)
+- ESTADO.md (9)
 - scripts/db-audit/migration-evidence.json (9)
-- ESTADO.md (8)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `a15fdfb` chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco
 - 2026-11-09 `a3f3e8c` fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7
 - 2026-11-09 `17a43dd` fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)
 - 2026-11-09 `5214e86` fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `c806b53` fix(hooks): expõe isError em 9 hooks sem estado de erro (#2873)
 - 2026-11-09 `8f7a8ee` test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)
 - 2026-11-09 `568d3f9` feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData
-- 2026-11-09 `c545e5b` security(ci): fecha injeção de comando e fail-open no guard GA02
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

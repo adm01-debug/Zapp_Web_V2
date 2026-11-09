@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a3f3e8c1e2104e2b702fb031d23eee27bdff09cd",
+  "commit": "a15fdfb812944cc5e4d28bf8a801590690a8a6c7",
   "branch": "main",
-  "data_commit": "2026-11-09T11:36:27-03:00",
+  "data_commit": "2026-11-09T11:58:07-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a15fdfb",
+    "data": "2026-11-09",
+    "assunto": "chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco"
+   },
    {
     "sha": "a3f3e8c",
     "data": "2026-11-09",
@@ -126,11 +131,6 @@
     "sha": "2ebe682",
     "data": "2026-11-08",
     "assunto": "fix(typecheck): remove contratos obsoletos da inbox"
-   },
-   {
-    "sha": "edd2ae3",
-    "data": "2026-11-08",
-    "assunto": "fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)"
    }
   ],
   "arquivos_mudados_7d": 663,
@@ -250,15 +250,19 @@
     "mudancas": 9
    },
    {
+    "arquivo": "ESTADO.md",
+    "mudancas": 9
+   },
+   {
     "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 9
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 8
    },
    {
-    "arquivo": "e2e/navegacao-modulos.spec.ts",
+    "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 8
    },
    {
@@ -271,10 +275,6 @@
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 7
    },
    {

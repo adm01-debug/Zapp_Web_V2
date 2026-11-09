@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a3f3e8c1e2104e2b702fb031d23eee27bdff09cd",
+  "sha": "a15fdfb812944cc5e4d28bf8a801590690a8a6c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 14:42 UTC",
+  "generated_at": "2026-11-09 15:03 UTC",
   "files_total": 8167,
   "code_files": 6021,
-  "code_lines": 1044835
+  "code_lines": 1044796
  },
  "version": "1.3.2",
- "facts_hash": "2089b39412b2e582",
+ "facts_hash": "d5e55ba8dee15462",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -17661,56 +17661,6 @@
     "comment": "",
     "origin": "migration"
    },
-   "_rb_message_reactions_one_per_agent_20261107121000": {
-    "columns": [
-     {
-      "name": "id",
-      "type": "uuid PRIMARY KEY",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
-     },
-     {
-      "name": "message_id",
-      "type": "uuid NOT NULL",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
-     },
-     {
-      "name": "user_id",
-      "type": "uuid",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
-     },
-     {
-      "name": "contact_id",
-      "type": "uuid",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
-     },
-     {
-      "name": "emoji",
-      "type": "text NOT NULL",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
-     },
-     {
-      "name": "created_at",
-      "type": "timestamptz NOT NULL",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
-     }
-    ],
-    "constraints": [],
-    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-    "comment": "Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem.",
-    "origin": "migration"
-   },
    "auth.users": {
     "columns": [
      {
@@ -17886,6 +17836,56 @@
     "src": "supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql",
     "comment": "",
     "origin": "migration"
+   },
+   "_rb_message_reactions_one_per_agent_20261107121000": {
+    "columns": [
+     {
+      "name": "contact_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "created_at",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "emoji",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "id",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "message_id",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "user_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     }
+    ],
+    "constraints": [],
+    "src": "src/integrations/supabase/types.ts",
+    "comment": "",
+    "origin": "types.ts"
    },
    "_zapp_fn_before": {
     "columns": [
@@ -42547,12 +42547,12 @@
     "src": "supabase/migrations/20261031170000_high3-fk-indexes.sql"
    },
    {
-    "name": "idx_contacts_phone_search_digits_trgm",
+    "name": "contacts_phone_search_digits_trgm_idx",
     "table": "contacts",
     "columns": "phone_search_digits extensions.gin_trgm_ops",
     "unique": false,
     "where": "",
-    "src": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql"
+    "src": "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql"
    },
    {
     "name": "idx_ai_conversation_tags_contact_id",
@@ -43894,8 +43894,8 @@
    "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
    "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql",
    "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
-   "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-   "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
+   "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql",
+   "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql",
    "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
    "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
    "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql",
@@ -56728,8 +56728,8 @@
     "privs": "all",
     "object": "_rb_message_reactions_one_per_agent_20261107121000",
     "objkind": "table",
-    "roles": "PUBLIC, anon, authenticated, service_role",
-    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql"
    },
    {
     "kind": "grant",
@@ -62248,9 +62248,7 @@
    "column:copilot_sessions.comm_style": "CV-037 — etiquetas de estilo de comunicação do cliente.",
    "column:copilot_sessions.decision_role": "CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…).",
    "column:copilot_sessions.occasion": "CV-035/036 — ocasião comercial detectada (natal, sipat, outubro_rosa, …).",
-   "column:copilot_sessions.stakeholders": "CV-039 — pessoas citadas na conversa que participam da decisão.",
-   "table:_rb_message_reactions_one_per_agent_20261107121000": "Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem.",
-   "column:contacts.phone_search_digits": "Somente dígitos de phone, gerados para busca consistente sem alterar o formato exibido."
+   "column:copilot_sessions.stakeholders": "CV-039 — pessoas citadas na conversa que participam da decisão."
   },
   "types_file": "src/integrations/supabase/types.ts"
  },
@@ -70134,7 +70132,7 @@
   {
    "module": "supabase/migrations",
    "files": 1096,
-   "lines": 105238,
+   "lines": 105199,
    "tables": [
     "audit_logs",
     "departments",
@@ -103888,26 +103886,6 @@
     "rule": "default now()"
    },
    {
-    "table": "_rb_message_reactions_one_per_agent_20261107121000",
-    "column": "id",
-    "rule": "PK"
-   },
-   {
-    "table": "_rb_message_reactions_one_per_agent_20261107121000",
-    "column": "message_id",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "_rb_message_reactions_one_per_agent_20261107121000",
-    "column": "emoji",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "_rb_message_reactions_one_per_agent_20261107121000",
-    "column": "created_at",
-    "rule": "obrigatório"
-   },
-   {
     "table": "auth.users",
     "column": "id",
     "rule": "PK"
@@ -103955,6 +103933,26 @@
    {
     "table": "prova_hz503_asserts",
     "column": "marcador",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "created_at",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "emoji",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "id",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "_rb_message_reactions_one_per_agent_20261107121000",
+    "column": "message_id",
     "rule": "obrigatório"
    },
    {
@@ -241247,7 +241245,6 @@
    "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
    "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
    "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql",
-   "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
    "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
@@ -254272,8 +254269,8 @@
     "privs": "all",
     "object": "_rb_message_reactions_one_per_agent_20261107121000",
     "objkind": "table",
-    "roles": "PUBLIC, anon, authenticated, service_role",
-    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql"
    },
    {
     "kind": "grant",
@@ -255733,9 +255730,6 @@
    "copilot_conversation_scores": [
     "updated_at"
    ],
-   "_rb_message_reactions_one_per_agent_20261107121000": [
-    "created_at"
-   ],
    "auth.users": [],
    "storage.buckets": [],
    "storage.objects": [],
@@ -255744,6 +255738,9 @@
    "tags": [],
    "prova_hz503_asserts": [],
    "vault.decrypted_secrets": [],
+   "_rb_message_reactions_one_per_agent_20261107121000": [
+    "created_at"
+   ],
    "_zapp_fn_before": [],
    "_zapp_mig133_log": [],
    "instance_pauses": [
@@ -257601,7 +257598,7 @@
    "`whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "173/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
+   "174/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -380307,14 +380304,13 @@
     "BETWEEN (date_trunc('month', current_date) - interval '1 month')::date"
    ]
   },
-  "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql": {
-   "path": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-   "lines": 65,
-   "uses_service_role": true
+  "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql": {
+   "path": "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql",
+   "lines": 37
   },
-  "supabase/migrations/20261107122000_contacts_phone_search_digits.sql": {
-   "path": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
-   "lines": 21
+  "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql": {
+   "path": "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql",
+   "lines": 10
   },
   "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql": {
    "path": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
@@ -384217,10 +384213,24 @@
   }
  },
  "git": {
-  "sha": "a3f3e8c1e2104e2b702fb031d23eee27bdff09cd",
+  "sha": "a15fdfb812944cc5e4d28bf8a801590690a8a6c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a15fdfb",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco",
+    "files": [
+     "ESTADO.md",
+     "scripts/db-audit/replay-known-failures.json",
+     "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+     "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql",
+     "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
+     "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql"
+    ]
+   },
    {
     "sha": "a3f3e8c",
     "date": "2026-11-09",
@@ -384567,15 +384577,6 @@
      "supabase/functions/cleanup-rate-limit-logs/index.ts",
      "supabase/functions/external-db-proxy/index.ts"
     ]
-   },
-   {
-    "sha": "85fb0a5",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "test(e2e): alinha contrato isolado dos insights (#2790)",
-    "files": [
-     "e2e/navegacao-modulos.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384596,8 +384597,28 @@
     2
    ],
    [
-    "e2e/navegacao-modulos.spec.ts",
-    2
+    "ESTADO.md",
+    1
+   ],
+   [
+    "scripts/db-audit/replay-known-failures.json",
+    1
+   ],
+   [
+    "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+    1
+   ],
+   [
+    "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql",
+    1
+   ],
+   [
+    "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
+    1
+   ],
+   [
+    "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql",
+    1
    ],
    [
     ".github/workflows/e2e-logado.yml",
@@ -384637,26 +384658,6 @@
    ],
    [
     ".github/workflows/ci.yml",
-    1
-   ],
-   [
-    "scripts/db-audit/known-violations.json",
-    1
-   ],
-   [
-    "src/integrations/supabase/types.ts",
-    1
-   ],
-   [
-    "supabase/schema-manifest.json",
-    1
-   ],
-   [
-    "resgate-online/validacao/RELATORIO_VALIDACAO.md",
-    1
-   ],
-   [
-    "resgate-online/validacao/achados.json",
     1
    ]
   ]

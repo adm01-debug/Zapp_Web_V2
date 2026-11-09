@@ -1974,50 +1974,7 @@
    "nao_usada": true
   },
   "_rb_message_reactions_one_per_agent_20261107121000": {
-   "colunas": {
-    "contact_id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "created_at": {
-     "tipo": "timestamptz",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "emoji": {
-     "tipo": "text",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": true,
-     "default": null,
-     "ref": null
-    },
-    "message_id": {
-     "tipo": "uuid",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "user_id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    }
-   },
+   "colunas": {},
    "rls": true,
    "policies": [
     {
@@ -2029,7 +1986,7 @@
    ],
    "indices": [],
    "fks": [],
-   "criada_em": "20261107121000_message_reactions_one_per_agent.sql",
+   "criada_em": "20261107121000_message_reactions_one_per_agent_constraint.sql",
    "colunas_types": {
     "contact_id": "string | null",
     "created_at": "string",
@@ -2037,10 +1994,6 @@
     "id": "string",
     "message_id": "string",
     "user_id": "string | null"
-   },
-   "drift": {
-    "so_na_migration": [],
-    "so_no_types": []
    },
    "usada_no_front": 0,
    "usada_em_edges": [],
@@ -8080,6 +8033,11 @@
    ],
    "indices": [
     {
+     "nome": "contacts_phone_search_digits_trgm_idx",
+     "colunas": "phone_search_digits extensions.gin_trgm_ops",
+     "unico": false
+    },
+    {
      "nome": "idx_contacts_ai_projection_analysis_id",
      "colunas": "ai_projection_analysis_id",
      "unico": false
@@ -8142,11 +8100,6 @@
     {
      "nome": "idx_contacts_name_asc",
      "colunas": "name",
-     "unico": false
-    },
-    {
-     "nome": "idx_contacts_phone_search_digits_trgm",
-     "colunas": "phone_search_digits extensions.gin_trgm_ops",
      "unico": false
     },
     {
