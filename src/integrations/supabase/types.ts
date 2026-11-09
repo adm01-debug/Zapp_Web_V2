@@ -14801,6 +14801,7 @@ export type Database = {
         Args: { p_days?: number; p_limit?: number }
         Returns: Json
       }
+      talkx_campaign_heatmap: { Args: { p_campaign_id: string }; Returns: Json }
       talkx_campaign_launch_checks: {
         Args: { p_campaign_id: string }
         Returns: Json
@@ -14827,6 +14828,14 @@ export type Database = {
         }[]
       }
       talkx_campaign_pace: { Args: { p_campaign_id: string }; Returns: Json }
+      talkx_campaign_queue_by_segment: {
+        Args: { p_campaign_id: string }
+        Returns: Json
+      }
+      talkx_campaign_ranking: {
+        Args: { p_limit?: number; p_metric?: string }
+        Returns: Json
+      }
       talkx_campaign_recipients_page: {
         Args: {
           p_campaign_id: string
@@ -15050,6 +15059,9 @@ export type Database = {
         Args: { p_campaign_id: string; p_segment_ids: string[] }
         Returns: undefined
       }
+      talkx_template_library_kpis: { Args: never; Returns: Json }
+      talkx_template_metrics: { Args: { p_template_id: string }; Returns: Json }
+      talkx_top_segments: { Args: { p_limit?: number }; Returns: Json }
       talkx_upsert_link: {
         Args: {
           p_campaign_id: string
