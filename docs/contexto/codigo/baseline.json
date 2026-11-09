@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "17a43ddeaaaabcdf6ea46f3b126ba791fc2e91ef",
+  "commit": "a3f3e8c1e2104e2b702fb031d23eee27bdff09cd",
   "branch": "main",
-  "data_commit": "2026-11-09T14:15:01Z",
+  "data_commit": "2026-11-09T11:36:27-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a3f3e8c",
+    "data": "2026-11-09",
+    "assunto": "fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7"
+   },
    {
     "sha": "17a43dd",
     "data": "2026-11-09",
@@ -126,18 +131,13 @@
     "sha": "edd2ae3",
     "data": "2026-11-08",
     "assunto": "fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)"
-   },
-   {
-    "sha": "81a8cd9",
-    "data": "2026-11-08",
-    "assunto": "fix(talkx): corrige erros TypeScript X054 — ModuleBreadcrumb onItemClick + action optional chaining (#2793)"
    }
   ],
-  "arquivos_mudados_7d": 665,
+  "arquivos_mudados_7d": 663,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 669
+    "mudancas": 666
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -177,11 +177,11 @@
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 113
+    "mudancas": 110
    },
    {
     "pasta": "src/components/tasks",
-    "mudancas": 108
+    "mudancas": 107
    },
    {
     "pasta": "src/hooks/chat",
@@ -290,11 +290,11 @@
     "mudancas": 7
    },
    {
-    "arquivo": "e2e/email-navy-visual.spec.ts",
+    "arquivo": "e2e/telefonia.spec.ts",
     "mudancas": 6
    },
    {
-    "arquivo": "e2e/telefonia.spec.ts",
+    "arquivo": "scripts/ci/check-test-inventory.mjs",
     "mudancas": 6
    }
   ],

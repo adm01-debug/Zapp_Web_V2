@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "17a43ddeaaaabcdf6ea46f3b126ba791fc2e91ef",
+  "sha": "a3f3e8c1e2104e2b702fb031d23eee27bdff09cd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 14:16 UTC",
+  "generated_at": "2026-11-09 14:42 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044835
@@ -384217,10 +384217,17 @@
   }
  },
  "git": {
-  "sha": "17a43ddeaaaabcdf6ea46f3b126ba791fc2e91ef",
+  "sha": "a3f3e8c1e2104e2b702fb031d23eee27bdff09cd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a3f3e8c",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7",
+    "files": []
+   },
    {
     "sha": "17a43dd",
     "date": "2026-11-09",
@@ -384568,16 +384575,6 @@
     "subject": "test(e2e): alinha contrato isolado dos insights (#2790)",
     "files": [
      "e2e/navegacao-modulos.spec.ts"
-    ]
-   },
-   {
-    "sha": "d4a7252",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado",
-    "files": [
-     "scripts/ci/verify-release-targets-timeout.unit.mjs",
-     "scripts/vercel/verify-release-targets.mjs"
     ]
    }
   ],
