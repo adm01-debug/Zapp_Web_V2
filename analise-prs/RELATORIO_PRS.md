@@ -192,8 +192,8 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 
 ## ORDEM DE MERGE (quando CI descongestionar)
 
-1. **Primeiro:** mergear #2851 ou #2864 (qualquer que passar CI primeiro) — desbloqueiam o CI gate
-2. **Depois:** verificar CI de todas as 39 restantes AGUARDANDO_CI e mergear as verdes
+1. **Primeiro:** mergear #2825, #2836, #2847, #2851 ou #2864 (qualquer que passar CI primeiro) — desbloqueiam o CI gate
+2. **Depois:** verificar CI de todas as 37 restantes AGUARDANDO_CI elegíveis e mergear as verdes
 3. **REGRA8_MIGRATION e REGRA8_WORKFLOW:** aguardam decisão do Joaquim
 4. **DRAFT:** aguardam author marcar ready for review
 
