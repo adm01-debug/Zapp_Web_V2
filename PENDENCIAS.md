@@ -78,6 +78,32 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 
 ---
 
+## 5. CI Queue — fila de runners GitHub (sessão 2026-11-09)
+
+| Campo | Valor |
+|---|---|
+| PR | [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) — branch `claude_05/brave-mccarthy-zvzky4` |
+| HEAD atual | `18a87133405024eabc720b8b64dffa8207daaa38` |
+| Run CI/CD Pipeline | [42542650389](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650389) — `pending` desde 2026-11-09T00:53:53Z |
+| Run DB Guard | [42542650448](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650448) — `pending` desde 2026-11-09T00:53:53Z |
+| Run E2E | [42542650490](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650490) — `pending` desde 2026-11-09T00:53:53Z |
+| Causa | Fila global de runners do GitHub (status `pending` = fila de infra, não concorrência). Múltiplas sessões de agentes competem por runners simultaneamente (~96 runs observadas em 00:12Z). |
+| Risco extra | PRs #2851 e #2864 de outras sessões também corrigem `TalkXCampaignReport.test.tsx`; se mergear antes do nosso PR, pode gerar conflito em `558f4a9a`. |
+| Ação do dono | Nenhuma — condição temporária. Runs iniciarão quando runners ficarem disponíveis. Se após 4h ainda `pending`, verificar se existe run stuck bloqueando o grupo de concorrência. |
+
+**Histórico de runs canceladas (HEAD anteriores):**
+
+| Run ID | HEAD | Status |
+|---|---|---|
+| [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) | `76a6072f` | `queued` → cancelada |
+| [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) | `76a6072f` | cancelled |
+| [42540034065](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540034065) | `cb292233` | cancelled |
+| [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) | `cb292233` | cancelled |
+| [42541991611](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991611) | `558f4a9a` | cancelled |
+| [42541991641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991641) | `558f4a9a` | cancelled |
+
+---
+
 ## 4. Branch Hygiene Audit — SLA de alertas de code scanning
 
 | Campo | Valor |
@@ -93,16 +119,3 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
 2. Para cada alerta: corrigir o código (PR de fix) ou dispensar com justificativa se for falso positivo.
 3. Após fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
-
----
-
-## 5. CI Queue — histórico de runs (sessão 2026-11-09)
-
-| Campo | Valor |
-|---|---|
-| PR | [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) — branch `claude_05/brave-mccarthy-zvzky4` |
-| Runs HEAD `9183f0f6` (canceladas) | [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) (CI) · [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) (DB Guard) — canceladas pelo push de `cb292233` |
-| Runs HEAD `cb292233` (pending → canceladas) | [42540034065](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540034065) (CI) · [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) (DB Guard) — `pending` desde 00:24:46Z; canceladas pelo push deste commit |
-| Fix aplicado neste commit | `TalkXCampaignReport.test.tsx` — corrige `No test suite found in file` no shard 2/3 (causa raiz da falha CI/CD Pipeline na main HEAD `9183f0f6`) |
-| Causa original do bloqueio | Concorrência com PRs #2838 e #2857 que ocupavam os slots; condição temporária resolvida |
-| Próximo passo | Aguardar as novas runs disparadas por este commit; confirmar os 6 checks verdes antes de mergear |
