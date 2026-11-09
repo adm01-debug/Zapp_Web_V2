@@ -232,6 +232,8 @@ describe('Ctrl+K — contatos pelo serviço e navegação compartilhados', () =>
         search_term: '[E2E]', page_size: 8, page_offset: 0, sort_field: 'name', sort_direction: 'asc',
       }));
 
+      // O helper real troca a view e despacha o evento. A Inbox não é montada
+      // nesta suíte: este listener controla apenas a confirmação do consumidor.
       const delivered = vi.fn();
       const appWindow = window as Window & { __pendingOpenContactId?: string };
       const consume = (event: Event) => {
