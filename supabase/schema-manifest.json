@@ -5546,7 +5546,8 @@
         "f:save_talkx_template(p_template_id uuid, p_expected_updated_at timestamp with time zone, p_name text, p_content text, p_category text, p_status text, p_media_url text, p_media_type text, p_tags text[], p_custom_variables text[], p_note text)": "9027076604f9d9fe9e4c602ab6c02600",
         "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer, include_legacy boolean)": "eab66d92116ec93a23b0f38d117fb302",
         "f:update_talkx_template_with_snapshot(p_template_id uuid, p_expected_updated_at timestamp with time zone, p_name text, p_description text, p_category text, p_content text, p_media_url text, p_media_type text, p_tags text[], p_status text, p_custom_variables text[])": "fe009a24af1fdcc656fba92596d78572",
-        "f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)": "483d49e7d457277e8f5a7417986fcf80"
+        "f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)": "483d49e7d457277e8f5a7417986fcf80",
+        "f:talkx_campaign_resume_precheck(p_campaign_id uuid)": "fa5ee79baa13c136366507dbaab3c07c"
     },
     "constraints": {
         "relation:calls.calls_pkey": "320872fb04c41e267f0bee9cce9b650e",
@@ -7642,7 +7643,9 @@
         "f:update_talkx_template_with_snapshot(p_template_id uuid, p_expected_updated_at timestamp with time zone, p_name text, p_description text, p_category text, p_content text, p_media_url text, p_media_type text, p_tags text[], p_status text, p_custom_variables text[])|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
+        "f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:talkx_campaign_resume_precheck(p_campaign_id uuid)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:talkx_campaign_resume_precheck(p_campaign_id uuid)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
     "relation_grants": {
         "r:public.calls|anon|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",

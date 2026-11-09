@@ -35,5 +35,5 @@
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
     "service_role_execute_count": 398,
-    "authenticated_execute_count": 228
+    "authenticated_execute_count": 229
 }
