@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "861877059b4507db3946bc9c34bb010609a7b5c2",
+  "commit": "ff90439057894d8729de0d4bf9e9db4300b08f5f",
   "branch": "main",
-  "data_commit": "2026-11-09T14:43:02-03:00",
+  "data_commit": "2026-11-09T17:54:12Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ff90439",
+    "data": "2026-11-09",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2902)"
+   },
    {
     "sha": "8618770",
     "data": "2026-11-09",
@@ -126,11 +131,6 @@
     "sha": "c545e5b",
     "data": "2026-11-09",
     "assunto": "security(ci): fecha injeção de comando e fail-open no guard GA02"
-   },
-   {
-    "sha": "9183f0f",
-    "data": "2026-11-08",
-    "assunto": "feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)"
    }
   ],
   "arquivos_mudados_7d": 659,
@@ -160,12 +160,12 @@
     "mudancas": 143
    },
    {
-    "pasta": "src/components/dashboard",
-    "mudancas": 130
-   },
-   {
     "pasta": "src/components/ui",
     "mudancas": 128
+   },
+   {
+    "pasta": "src/components/dashboard",
+    "mudancas": 127
    },
    {
     "pasta": "src/hooks/integrations",
@@ -214,11 +214,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 13
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 12
    },
    {
@@ -226,11 +226,11 @@
     "mudancas": 12
    },
    {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 11
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 12
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
    {
@@ -254,11 +254,15 @@
     "mudancas": 9
    },
    {
-    "arquivo": "e2e/navegacao-modulos.spec.ts",
-    "mudancas": 8
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 9
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 8
    },
    {
@@ -267,10 +271,6 @@
    },
    {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 8
    },
    {
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 284
+    "commits": 283
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 9
+    "commits": 10
    },
    {
     "autor": "dependabot[bot]",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8326,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878263,
+  "linhas_codigo": 878267,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15572
+   "linhas": 15576
   },
   "src/lib": {
    "arquivos": 283,
@@ -802,7 +802,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15499
+   "linhas": 15503
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",

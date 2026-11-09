@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(db): sincronizar artefatos derivados do banco (#2902)",
    "fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto",
    "chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck",
    "fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)",
-   "ci: pull_request do ci.yml também dispara em ready_for_review (#2858)",
-   "⬆️ ci: Bump the actions-misc group across 1 directory with 3 updates (#2893)"
+   "ci: pull_request do ci.yml também dispara em ready_for_review (#2858)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

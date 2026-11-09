@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `861877059b4507db3946bc9c34bb010609a7b5c2` (2026-11-09T14:43:02-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `ff90439057894d8729de0d4bf9e9db4300b08f5f` (2026-11-09T17:54:12Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8326 |
 | arquivos_codigo | 4753 |
-| linhas_codigo | 878263 |
+| linhas_codigo | 878267 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `86187705`
+- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `ff904390`
 - comunidades maiores: framer-motion (838), cn (809), react (796), lucide-react (690), TalkXSuppression.tsx (635), vitest (617), validation.ts (450), ExternalProductManagement.tsx (442), ref_https (420), @tanstack/react-query (401), ref_node_fs (359), framer-motion (316)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -394,17 +394,17 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/ci.yml (16)
 - CLAUDE.md (13)
 - docs/ci/README.md (13)
+- src/integrations/supabase/types.ts (13)
 - docs/DB-INVENTORY.md (12)
-- src/integrations/supabase/types.ts (12)
 - supabase/deployment-manifest.json (12)
+- supabase/schema-manifest.json (12)
 - RELATORIO_CI.md (11)
-- supabase/schema-manifest.json (11)
 - .github/workflows/db-guard.yml (10)
 - .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
 - ESTADO.md (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
-- e2e/navegacao-modulos.spec.ts (8)
+- scripts/db-audit/grants-baseline.json (9)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `ff90439` chore(db): sincronizar artefatos derivados do banco (#2902)
 - 2026-11-09 `8618770` fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto
 - 2026-11-09 `0142702` chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck
 - 2026-11-09 `d0e624b` fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `5214e86` fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)
 - 2026-11-09 `a6c3519` feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)
 - 2026-11-09 `d73156d` fix(ci): torna scripts de qualidade executáveis (#2891)
-- 2026-11-09 `b430f82` fix(ci): adicionar --fail nos curl do workflow-lint (#2887)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

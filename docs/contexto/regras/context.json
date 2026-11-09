@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "861877059b4507db3946bc9c34bb010609a7b5c2",
+  "sha": "ff90439057894d8729de0d4bf9e9db4300b08f5f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 17:44 UTC",
+  "generated_at": "2026-11-09 18:00 UTC",
   "files_total": 8167,
   "code_files": 6021,
-  "code_lines": 1044856
+  "code_lines": 1044860
  },
  "version": "1.3.2",
- "facts_hash": "af0e84cd6563ae70",
+ "facts_hash": "771c3a2a31320d8b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68218,7 +68218,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15572,
+   "lines": 15576,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -342272,7 +342272,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15499,
+   "lines": 15503,
    "exports": [
     "type Json",
     "type Database",
@@ -383016,10 +383016,23 @@
   }
  },
  "git": {
-  "sha": "861877059b4507db3946bc9c34bb010609a7b5c2",
+  "sha": "ff90439057894d8729de0d4bf9e9db4300b08f5f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ff90439",
+    "date": "2026-11-09",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#2902)",
+    "files": [
+     "scripts/db-audit/grants-baseline.json",
+     "scripts/db-audit/known-violations.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "8618770",
     "date": "2026-11-09",
@@ -383343,24 +383356,6 @@
      "src/components/tasks/board/BoardColumn.tsx",
      "src/pages/admin-telemetria/ClientErrorsPanel.tsx"
     ]
-   },
-   {
-    "sha": "cc73806",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "test(contracts): sincroniza ratchets com arquitetura atual (#2802)",
-    "files": [
-     "docs/telefonia/CAPACIDADES.md",
-     "docs/telefonia/CONTRATO.md",
-     "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
-     "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
-     "tests/contracts/contraste-aa-componentes.contract.test.ts",
-     "tests/contracts/contraste-balao-midia.contract.test.ts",
-     "tests/contracts/cors-origins.contract.test.ts",
-     "tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts",
-     "tests/contracts/evolution-private-storage-url.test.ts",
-     "tests/contracts/ia055-custo-no-relatorio.test.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -383369,19 +383364,27 @@
     4
    ],
    [
-    "docs/DB-INVENTORY.md",
-    2
-   ],
-   [
     "scripts/db-audit/grants-baseline.json",
-    2
+    3
    ],
    [
     "supabase/schema-catalog.json",
-    2
+    3
    ],
    [
     "supabase/schema-manifest.json",
+    3
+   ],
+   [
+    "scripts/db-audit/known-violations.json",
+    2
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    2
+   ],
+   [
+    "docs/DB-INVENTORY.md",
     2
    ],
    [
@@ -383434,14 +383437,6 @@
    ],
    [
     ".github/workflows/talkx-status-regen.yml",
-    1
-   ],
-   [
-    ".github/workflows/types-sync.yml",
-    1
-   ],
-   [
-    ".github/workflows/codeql.yml",
     1
    ]
   ]
