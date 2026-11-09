@@ -56555,6 +56555,7 @@
             "public.talkx_campaign_ranking",
             "public.talkx_campaign_recipients_page",
             "public.talkx_campaign_reply_stats",
+            "public.talkx_campaign_resume_precheck",
             "public.talkx_campaign_segment_progress",
             "public.talkx_campaign_window_open",
             "public.talkx_delete_link",
@@ -64236,6 +64237,41 @@
         "security_definer": false,
         "strict": false,
         "volatility": "stable"
+      },
+      {
+        "args": "p_campaign_id uuid",
+        "callers": {
+          "code": [
+            {
+              "file": "src/hooks/integrations/useTalkXServerResumePrecheck.ts",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "a42dcbf0830e9fb2",
+        "execute_api_roles": "authenticated",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_campaign_resume_precheck",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
       },
       {
         "args": "p_campaign uuid",
@@ -88311,6 +88347,26 @@
         "statements": 6,
         "statements_sha": "c5d02659b1fada72",
         "version": "20261107170000"
+      },
+      {
+        "name": null,
+        "statements": null,
+        "version": "20261108201000"
+      },
+      {
+        "name": null,
+        "statements": null,
+        "version": "20261108202000"
+      },
+      {
+        "name": null,
+        "statements": null,
+        "version": "20261108203000"
+      },
+      {
+        "name": null,
+        "statements": null,
+        "version": "20261108211000"
       }
     ],
     "policies": [

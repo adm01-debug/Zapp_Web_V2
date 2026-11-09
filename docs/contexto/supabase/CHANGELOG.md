@@ -2,6 +2,12 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-09 16:17 UTC
+
+- **functions** adicionado (1): `public.talkx_campaign_resume_precheck(p_campaign_id uuid)`
+- **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
+- **migrations** adicionado (4): `20261108201000_`, `20261108202000_`, `20261108203000_`, `20261108211000_`
+
 ## 2026-11-09 13:48 UTC
 
 - **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
