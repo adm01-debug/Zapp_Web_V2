@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "5214e8646c8d5ed0471bc43f781fcf609aff03a4",
+  "sha": "17a43ddeaaaabcdf6ea46f3b126ba791fc2e91ef",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 13:57 UTC",
+  "generated_at": "2026-11-09 14:16 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044835
@@ -384217,10 +384217,19 @@
   }
  },
  "git": {
-  "sha": "5214e8646c8d5ed0471bc43f781fcf609aff03a4",
+  "sha": "17a43ddeaaaabcdf6ea46f3b126ba791fc2e91ef",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "17a43dd",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)",
+    "files": [
+     ".github/workflows/e2e-logado.yml"
+    ]
+   },
    {
     "sha": "5214e86",
     "date": "2026-11-09",
@@ -384570,15 +384579,6 @@
      "scripts/ci/verify-release-targets-timeout.unit.mjs",
      "scripts/vercel/verify-release-targets.mjs"
     ]
-   },
-   {
-    "sha": "ab96364",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "docs(talkx): regenera matriz de estados (#2791)",
-    "files": [
-     "docs/talkx/ESTADOS.md"
-    ]
    }
   ],
   "hot_files": [
@@ -384603,8 +384603,8 @@
     2
    ],
    [
-    "docs/talkx/ESTADOS.md",
-    2
+    ".github/workflows/e2e-logado.yml",
+    1
    ],
    [
     "src/components/alerts/EvolutionDisconnectBanner.tsx",

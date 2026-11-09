@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5214e8646c8d5ed0471bc43f781fcf609aff03a4` (2026-11-09T13:55:14Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `17a43ddeaaaabcdf6ea46f3b126ba791fc2e91ef` (2026-11-09T14:15:01Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `5214e864`
+- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `17a43dde`
 - comunidades maiores: framer-motion (838), cn (809), react (796), lucide-react (690), TalkXSuppression.tsx (635), vitest (617), validation.ts (450), ExternalProductManagement.tsx (442), ref_https (420), @tanstack/react-query (401), ref_node_fs (359), framer-motion (316)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -395,12 +395,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/ci.yml (16)
 - CLAUDE.md (14)
 - docs/ci/README.md (14)
-- supabase/deployment-manifest.json (14)
+- supabase/deployment-manifest.json (13)
 - src/integrations/supabase/types.ts (12)
 - .github/workflows/db-guard.yml (11)
+- .github/workflows/e2e-logado.yml (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
-- .github/workflows/e2e-logado.yml (10)
 - scripts/ci/ci-docs-baseline.unit.mjs (10)
 - supabase/schema-manifest.json (10)
 - .github/workflows/deploy-functions.yml (9)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `17a43dd` fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)
 - 2026-11-09 `5214e86` fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)
 - 2026-11-09 `a6c3519` feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)
 - 2026-11-09 `d73156d` fix(ci): torna scripts de qualidade executáveis (#2891)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `568d3f9` feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData
 - 2026-11-09 `c545e5b` security(ci): fecha injeção de comando e fail-open no guard GA02
 - 2026-11-08 `9183f0f` feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)
-- 2026-11-08 `e6e467b` feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

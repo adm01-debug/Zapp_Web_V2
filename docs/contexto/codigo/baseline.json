@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5214e8646c8d5ed0471bc43f781fcf609aff03a4",
+  "commit": "17a43ddeaaaabcdf6ea46f3b126ba791fc2e91ef",
   "branch": "main",
-  "data_commit": "2026-11-09T13:55:14Z",
+  "data_commit": "2026-11-09T14:15:01Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "17a43dd",
+    "data": "2026-11-09",
+    "assunto": "fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)"
+   },
    {
     "sha": "5214e86",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "81a8cd9",
     "data": "2026-11-08",
     "assunto": "fix(talkx): corrige erros TypeScript X054 — ModuleBreadcrumb onItemClick + action optional chaining (#2793)"
-   },
-   {
-    "sha": "c6c7697",
-    "data": "2026-11-08",
-    "assunto": "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)"
    }
   ],
-  "arquivos_mudados_7d": 1074,
+  "arquivos_mudados_7d": 665,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -215,7 +215,7 @@
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 14
+    "mudancas": 13
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -226,16 +226,16 @@
     "mudancas": 11
    },
    {
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 11
+   },
+   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 11
-   },
-   {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 10
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
