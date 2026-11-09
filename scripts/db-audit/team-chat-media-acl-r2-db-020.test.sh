@@ -360,11 +360,6 @@ expect_error 'L1 ADD CONSTRAINT validado equivalente falha com linha legada' \
 psql_sql "ALTER TABLE public.team_messages DROP CONSTRAINT IF EXISTS probe_r2db020_canonical;" >/dev/null
 printf '[PASS] sonda removida (probe_r2db020_canonical)\n'
 
-# Linha legada inserida APÓS a sonda L1 para não contaminar o seed canônico:
-# 1º segmento = auth.uid de Bob (22222222-...) ≠ sender_id profile_id (b0000000-...).
-# A migration reconcilia esta linha (anula media_bucket, guarda na tabela de apoio).
-psql_sql "INSERT INTO public.team_messages (conversation_id, sender_id, content, message_type, media_bucket, media_path, updated_at) VALUES ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','b0000000-0000-0000-0000-000000000001','legacy auth file','image','team-chat-files','22222222-2222-2222-2222-222222222222/legacy.png','$LEGACY_TS');" >/dev/null
-
 echo
 echo '── Aplicando a migration ─────────────────────────────────────────────────────────'
 psql_file "$migration"
