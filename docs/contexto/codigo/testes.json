@@ -2372,7 +2372,7 @@
   {
    "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
    "tipo": "unit",
-   "linhas": 245,
+   "linhas": 246,
    "testa": [
     "scripts/edge-deploy/health-check.mjs"
    ],

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d7bdb705b7f5e65dc0d807b959ab80e1cd732be0",
+  "sha": "18b719670da6fca8cb8d8267956cf613bbfc6740",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 22:22 UTC",
+  "generated_at": "2026-11-09 22:42 UTC",
   "files_total": 8167,
   "code_files": 6021,
-  "code_lines": 1044863
+  "code_lines": 1044864
  },
  "version": "1.3.2",
- "facts_hash": "b4c3293aa87216ea",
+ "facts_hash": "b871c3ac8d285b1b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67261,7 +67261,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 88129,
+   "lines": 88130,
    "tables": [
     "a",
     "alem_do_limite",
@@ -268323,7 +268323,7 @@
   },
   "scripts/edge-deploy/health-check.unit.mjs": {
    "path": "scripts/edge-deploy/health-check.unit.mjs",
-   "lines": 245,
+   "lines": 246,
    "errors": [
     "network secret"
    ]
@@ -383016,10 +383016,19 @@
   }
  },
  "git": {
-  "sha": "d7bdb705b7f5e65dc0d807b959ab80e1cd732be0",
+  "sha": "18b719670da6fca8cb8d8267956cf613bbfc6740",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "18b7196",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414",
+    "files": [
+     "scripts/edge-deploy/health-check.unit.mjs"
+    ]
+   },
    {
     "sha": "d7bdb70",
     "date": "2026-11-09",
@@ -383332,17 +383341,6 @@
      "scripts/ci/check-claude-md-integrity.mjs",
      "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
     ]
-   },
-   {
-    "sha": "9183f0f",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)",
-    "files": [
-     "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
-     "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
-     "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -383399,6 +383397,10 @@
     2
    ],
    [
+    "scripts/edge-deploy/health-check.unit.mjs",
+    1
+   ],
+   [
     "docs/PRONTO_PRODUCAO.md",
     1
    ],
@@ -383420,10 +383422,6 @@
    ],
    [
     "scripts/ai-context/gerar.unit.mjs",
-    1
-   ],
-   [
-    "scripts/regras_negocio/generate.py",
     1
    ]
   ]
