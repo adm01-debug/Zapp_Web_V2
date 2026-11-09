@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a15fdfb812944cc5e4d28bf8a801590690a8a6c7",
+  "commit": "af47ad6f46c9ee5880ae36a176b790ef33583219",
   "branch": "main",
-  "data_commit": "2026-11-09T11:58:07-03:00",
+  "data_commit": "2026-11-09T12:15:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "af47ad6",
+    "data": "2026-11-09",
+    "assunto": "fix(ci): vercel-env-cleanup sai com exit 0 em 403"
+   },
    {
     "sha": "a15fdfb",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "b5e89bb",
     "data": "2026-11-08",
     "assunto": "fix(test): restaura imports Deno nos contratos"
-   },
-   {
-    "sha": "2ebe682",
-    "data": "2026-11-08",
-    "assunto": "fix(typecheck): remove contratos obsoletos da inbox"
    }
   ],
-  "arquivos_mudados_7d": 663,
+  "arquivos_mudados_7d": 660,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8326,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878216,
+  "linhas_codigo": 878218,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 206,
-   "linhas": 42744
+   "linhas": 42746
   },
   "scripts/db-audit": {
    "arquivos": 81,
