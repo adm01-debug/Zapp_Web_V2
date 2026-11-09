@@ -277,6 +277,19 @@ export async function mockTalkXAuth(page: Page) {
     contentType: 'application/json',
     body: JSON.stringify([{ onboarding_completed: true }]),
   }));
+
+  // GoTrue auth: JWT com assinatura falsa não passa na validação do servidor local;
+  // mocamos /auth/v1/user e /auth/v1/token para o app não receber 403 bad_jwt.
+  await page.route(/\/auth\/v1\/user/, (route) =>
+    isRead(route.request().method())
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FAKE_SESSION.user) })
+      : writeBlocked(route),
+  );
+  await page.route(/\/auth\/v1\/token/, (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FAKE_SESSION) })
+      : writeBlocked(route),
+  );
 }
 
 /**
