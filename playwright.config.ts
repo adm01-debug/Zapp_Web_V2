@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test';
-import { usesExternalHttpsServer } from './e2e/auth-diagnostics';
 
 // E87: quarentena formal. Schema em e2e/quarantine.js; a validacao da forma e a cobranca
 // do prazo vivem em scripts/ci/check-quarantine.mjs.
@@ -33,8 +32,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
   retries: 0,
-  // GR-016: 2 workers em todos os ambientes (CI e local).
-  workers: 2,
+  // W75: 1 worker no CI (estabilidade), 2 localmente (velocidade).
+  // The Email fixture boots a full Vite app and captures visual artifacts. A
+  // bounded local pool prevents cold-start starvation that made otherwise
+  // independent specs observe the module-loading fallback after five seconds.
+  workers: process.env.CI ? 1 : 2,
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
@@ -57,11 +59,12 @@ export default defineConfig({
   },
   projects: [
     {
-      // Casos Chromium deslogados: auth.spec.ts e tarefas-quadro.spec.ts.
-      // Tarefas usa sessão falsa e a guarda R1 exige coletor sem storageState
-      // nem setup. Ambos continuam executáveis no CI público sem credenciais.
+      // auth.spec.ts exercita a tela de login deslogada (tabs, validação de
+      // formulário) e nunca deve depender do projeto "setup" — rodar só este
+      // projeto (ex: npx playwright test --project=chromium) precisa continuar
+      // funcionando mesmo sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD definidas.
       name: 'chromium',
-      testMatch: [/auth\.spec\.ts/, /tarefas-quadro\.spec\.ts/],
+      testMatch: /auth\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -131,7 +134,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|talkx-visual\.spec\.ts|telefonia\.spec\.ts|tarefas-quadro\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -150,7 +153,7 @@ export default defineConfig({
       // arrastar a dependência do login real (etapa E75 do plano MAPA).
       name: 'chromium-mapa',
       testMatch: [/location-picker\.spec\.ts/, /contact-address\.spec\.ts/, /contact-map-pin\.spec\.ts/],
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], geolocation: { latitude: 0, longitude: 0 }, permissions: ['geolocation'] },
     },
     {
       // Etapa 90 do plano de Contatos: screenshots de referência com sessão FALSA e
@@ -349,9 +352,6 @@ export default defineConfig({
     // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
     // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
     const alvo = process.env.PLAYWRIGHT_BASE_URL;
-    // Projetos públicos podem usar um deployment HTTPS explícito sem subir Vite.
-    // O setup autenticado tem sua própria guarda antes de ler credenciais.
-    if (usesExternalHttpsServer(alvo)) return undefined;
     const url = alvo ?? 'http://127.0.0.1:5173';
     const porta = new URL(url).port || '5173';
     return {
@@ -360,6 +360,7 @@ export default defineConfig({
       // Fixture tests exercise both sides of the runtime kill switch.  This is
       // test-server-only; production still requires the build env and the
       // feature flag.  Without it, a complete CRM fixture can never reach the
+      // panel and falsely validates only the disabled state.  Without it, a complete CRM fixture can never reach the
       // panel and falsely validates only the disabled state.
       command: `VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,
