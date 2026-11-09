@@ -200,6 +200,7 @@ Agentes não-admin/supervisor podem enviar **apenas** via conexões das filas a 
 
 ---
 
+
 ## 11. Checklist B·R·I·N·D·E (Copiloto RADAR)
 
 **Fonte:** `src/hooks/copilot/useConversationScore.ts:20-27`
