@@ -4319,7 +4319,7 @@
   {
    "arquivo": "scripts/inventario/gerar-repo.mjs",
    "descricao": "Inventario gerado do lado do repositorio (sem acesso ao banco):  - edge functions: linhas, segredos lidos (Deno.env.get) e quem as invoca (src, migrations, outras edges, e2e, CI)",
-   "linhas": 81,
+   "linhas": 95,
    "env": [],
    "npm_scripts": [],
    "workflows": [

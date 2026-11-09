@@ -1517,9 +1517,9 @@
   {
    "arquivo": "scripts/ci/inventario-repo.unit.mjs",
    "tipo": "unit",
-   "linhas": 93,
+   "linhas": 121,
    "testa": [],
-   "casos": 3
+   "casos": 4
   },
   {
    "arquivo": "scripts/ci/inventario-rotas.unit.mjs",
