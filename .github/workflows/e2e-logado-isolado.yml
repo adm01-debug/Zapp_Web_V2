@@ -1,17 +1,17 @@
 # docs:
 #   gatilho: pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts
-#   prova: login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário
-#   falha: isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada
-#   avisa: autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada
-# PR continua com um teste setup. A suíte completa exige dispatch explícito;
-# o workflow legado permanece desativado até a prova nativa dos cinco grupos.
-name: E2E isolado - login e suíte completa
+#   prova: login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canario
+#   falha: isolamento, TLS, testes, protocolo ou limpeza invalidos bloqueiam; somente network-proof exige dummy previamente carregada
+#   avisa: autor e revisor via check; relatorios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suite autenticada
+# PR continua com um teste setup. A suite completa exige dispatch explicito;
+# o workflow legado permanece desativado ate a prova nativa dos cinco grupos.
+name: E2E isolado - login e suite completa
 
 on:
   workflow_dispatch:
     inputs:
       scope:
-        description: Escopo da prova no backend descartável
+        description: Escopo da prova no backend descartavel
         type: choice
         required: false
         default: login
@@ -60,16 +60,16 @@ jobs:
             pull_request) scope=login ;;
             workflow_dispatch)
               scope="${REQUEST_SCOPE:-login}"
-              case "$scope" in login|full-suite|network-proof|network-proof-contexts) ;; *) echo '::error::Escopo de execução inválido.'; exit 1 ;; esac
+              case "$scope" in login|full-suite|network-proof|network-proof-contexts) ;; *) echo '::error::Escopo de execucao invalido.'; exit 1 ;; esac
               ;;
-            *) echo '::error::Evento não permitido neste workflow.'; exit 1 ;;
+            *) echo '::error::Evento nao permitido neste workflow.'; exit 1 ;;
           esac
           if [[ ! "$CHECKOUT_SHA" =~ ^[0-9a-f]{40}$ || "$CHECKOUT_SHA" == 0000000000000000000000000000000000000000 ]]; then
-            echo '::error::SHA de checkout inválido.'
+            echo '::error::SHA de checkout invalido.'
             exit 1
           fi
           printf 'scope=%s\nsha=%s\n' "$scope" "$CHECKOUT_SHA" >> "$GITHUB_OUTPUT"
-      - name: Checkout do código da revisão
+      - name: Checkout do codigo da revisao
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -90,18 +90,18 @@ jobs:
           if-no-files-found: error
 
   bootstrap-login:
-    name: Bootstrap e login real no ambiente descartável
+    name: Bootstrap e login real no ambiente descartavel
     needs: image-metadata
     if: needs.image-metadata.result == 'success' && needs.image-metadata.outputs.scope == 'login'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - name: Checkout do código da revisão
+      - name: Checkout do codigo da revisao
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ needs.image-metadata.outputs.sha }}
-      - name: Preparar Bun da versão do repositório
+          ref: ${{ github.sha }}
+      - name: Preparar Bun da versao do repositorio
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
@@ -111,7 +111,7 @@ jobs:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ github.ref }}-
-      - name: Instalar dependências antes do ambiente sem saída de rede
+      - name: Instalar dependencias antes do ambiente sem saida de rede
         shell: bash
         run: |
           set -euo pipefail
@@ -122,13 +122,13 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y openssl libnss3-tools
-      - name: Executar bootstrap, admissão e login reais
+      - name: Executar bootstrap, admissao e login reais
         id: bootstrap
         shell: bash
         run: |
           set -euo pipefail
           bash scripts/e2e-isolated/run.sh login "$RUNNER_TEMP/e2e-isolated-login"
-      - name: Publicar somente o diagnóstico redigido do ambiente local
+      - name: Publicar somente o diagnostico redigido do ambiente local
         if: always() && steps.bootstrap.outputs.report_ready == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -138,7 +138,7 @@ jobs:
           if-no-files-found: error
 
   full-suite:
-    name: Suíte isolada (${{ matrix.name }})
+    name: Suite isolada (${{ matrix.name }})
     needs: image-metadata
     if: github.event_name == 'workflow_dispatch' && needs.image-metadata.result == 'success' && needs.image-metadata.outputs.scope == 'full-suite'
     runs-on: ubuntu-24.04
@@ -147,9 +147,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Cada shard autenticado recebe backend próprio e executa workers1:
-          # as fixtures compartilham estado dentro de um backend. A seleção e a
-          # execução usam o mesmo shard fechado pelo controller.
+          # Cada shard autenticado recebe backend proprio e executa workers1:
+          # as fixtures compartilham estado dentro de um backend. A selecao e a
+          # execucao usam o mesmo shard fechado pelo controller.
           - name: authenticated-1-of-3
             projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
             timeout-minutes: 75
@@ -166,12 +166,12 @@ jobs:
             projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
             timeout-minutes: 45
     steps:
-      - name: Checkout do SHA validado da revisão
+      - name: Checkout do SHA validado da revisao
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ needs.image-metadata.outputs.sha }}
-      - name: Preparar Bun da versão do repositório
+          ref: ${{ github.sha }}
+      - name: Preparar Bun da versao do repositorio
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
@@ -181,7 +181,7 @@ jobs:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ github.ref }}-
-      - name: Instalar dependências antes do ambiente sem saída de rede
+      - name: Instalar dependencias antes do ambiente sem saida de rede
         shell: bash
         run: |
           set -euo pipefail
@@ -192,7 +192,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y openssl libnss3-tools
-      - name: Validar grupo e executar a suíte no backend descartável
+      - name: Validar grupo e executar a suite no backend descartavel
         id: suite
         shell: bash
         env:
@@ -206,11 +206,11 @@ jobs:
           const group = process.env.E2E_GROUP;
           const expected = process.env.E2E_PROJECTS?.split(' ');
           if (!Object.hasOwn(GROUPS, group) || JSON.stringify(expected) !== JSON.stringify(GROUPS[group].map(name => '--project=' + name))) {
-            throw new Error('Grupo e inventário de projetos divergentes.');
+            throw new Error('Grupo e inventario de projetos divergentes.');
           }
           NODE
           bash scripts/e2e-isolated/run.sh suite "$E2E_GROUP" "$E2E_OUTPUT"
-      - name: Publicar somente o diagnóstico redigido do grupo
+      - name: Publicar somente o diagnostico redigido do grupo
         if: always() && steps.suite.outputs.report_ready == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -220,7 +220,7 @@ jobs:
           if-no-files-found: error
 
   network-proof:
-    name: Medir conectividade nativa sem aplicação ou banco
+    name: Medir conectividade nativa sem aplicacao ou banco
     needs: image-metadata
     if: github.event_name == 'workflow_dispatch' && needs.image-metadata.result == 'success' && (needs.image-metadata.outputs.scope == 'network-proof' || needs.image-metadata.outputs.scope == 'network-proof-contexts')
     runs-on: ubuntu-24.04
@@ -230,8 +230,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ needs.image-metadata.outputs.sha }}
-      - name: Preparar Bun para instalar dependências pinadas
+          ref: ${{ github.sha }}
+      - name: Preparar Bun para instalar dependencias pinadas
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
@@ -241,12 +241,12 @@ jobs:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ github.ref }}-
-      - name: Instalar dependências antes do isolamento
+      - name: Instalar dependencias antes do isolamento
         shell: bash
         run: |
           set -euo pipefail
           bun install --frozen-lockfile --ignore-scripts
-      - name: Validar políticas e protocolo antes da prova nativa
+      - name: Validar politicas e protocolo antes da prova nativa
         shell: bash
         run: |
           set -euo pipefail
@@ -257,20 +257,20 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y openssl libnss3-tools iproute2
-      - name: Executar corte nativo Node e três engines
+      - name: Executar corte nativo Node e tres engines
         id: network
         shell: bash
         env:
           ZAPP_PROOF_SCOPE: ${{ needs.image-metadata.outputs.scope }}
-          ZAPP_PROOF_SHA: ${{ needs.image-metadata.outputs.sha }}
+          ZAPP_PROOF_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           case "$ZAPP_PROOF_SCOPE" in
             network-proof) node scripts/e2e-isolated/network-proof.mjs "$RUNNER_TEMP/e2e-network-proof/report.json" ;;
             network-proof-contexts) node scripts/e2e-isolated/network-contexts.mjs "$RUNNER_TEMP/e2e-network-proof/report.json" ;;
-            *) echo '::error::Escopo de prova de rede inválido.'; exit 1 ;;
+            *) echo '::error::Escopo de prova de rede invalido.'; exit 1 ;;
           esac
-      - name: Publicar somente relatório fechado após limpeza
+      - name: Publicar somente relatorio fechado apos limpeza
         if: always() && steps.network.outputs.report_ready == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
