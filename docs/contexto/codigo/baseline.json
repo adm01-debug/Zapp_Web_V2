@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d73156d89178a100d9a8475cb83b8eca65e83cfe",
+  "commit": "a6c3519bed037cfb5a17c166795246a08b97d225",
   "branch": "main",
-  "data_commit": "2026-11-09T10:17:25-03:00",
+  "data_commit": "2026-11-09T13:40:09Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a6c3519",
+    "data": "2026-11-09",
+    "assunto": "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)"
+   },
    {
     "sha": "d73156d",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "62c069a",
     "data": "2026-11-08",
     "assunto": "fix(db-audit): isola PostgREST privado do proxy nos contratos (#2796)"
-   },
-   {
-    "sha": "e028887",
-    "data": "2026-11-08",
-    "assunto": "fix(edge): Z018 injeção PostgREST + Z020 stack trace nas edges external-db-proxy e cleanup-rate-limit-logs (#2794)"
    }
   ],
-  "arquivos_mudados_7d": 1073,
+  "arquivos_mudados_7d": 1074,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 132
+    "mudancas": 130
    },
    {
     "pasta": "src/components/ui",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8325,
+  "arquivos_total": 8326,
   "arquivos_codigo": 4753,
   "linhas_codigo": 878215,
   "rotas": 18,
@@ -326,7 +326,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1095,
+  "migrations": 1096,
   "cron_jobs": 26,
   "testes": 2595,
   "workflows": 21,
@@ -1275,7 +1275,6 @@
    "record_incoming_call_event",
    "should_send_away_message",
    "sync_interaction_from_zapp",
-   "talkx_campaign_resume_precheck",
    "zapp_catalog_stats"
   ],
   "componentes_orfaos": [

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d73156d891` · branch `main` · 2026-11-09 13:20 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a6c3519bed` · branch `main` · 2026-11-09 13:41 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1192,7 +1192,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `duplicate_talkx_campaign` | authentication_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | active_profile_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
-| … +654 linhas — lista completa em `context.json` | | |
+| … +657 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 

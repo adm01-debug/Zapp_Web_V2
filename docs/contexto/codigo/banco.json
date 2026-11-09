@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1095,
+ "migrations": 1096,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -530,6 +530,7 @@
   "talkx_campaign_recipients_page",
   "talkx_campaign_reply_stats",
   "talkx_campaign_report",
+  "talkx_campaign_resume_precheck",
   "talkx_campaign_revenue",
   "talkx_campaign_segment_progress",
   "talkx_campaign_timeline_page",
@@ -32288,7 +32289,7 @@
   },
   {
    "nome": "talkx_campaign_resume_precheck",
-   "definida": false,
+   "definida": true,
    "usada_em": 1
   },
   {

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d73156d89178a100d9a8475cb83b8eca65e83cfe",
+  "sha": "a6c3519bed037cfb5a17c166795246a08b97d225",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 13:20 UTC",
-  "files_total": 8166,
-  "code_files": 6020,
-  "code_lines": 1044700
+  "generated_at": "2026-11-09 13:41 UTC",
+  "files_total": 8167,
+  "code_files": 6021,
+  "code_lines": 1044834
  },
  "version": "1.3.2",
- "facts_hash": "d753432e8b4bf56a",
+ "facts_hash": "cc38cb07c3f0d6a4",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -315,7 +315,7 @@
   "languages": {
    ".tsx": 2319,
    ".ts": 1871,
-   ".sql": 1295,
+   ".sql": 1296,
    ".mjs": 416,
    ".py": 119,
    ".cjs": 19,
@@ -34823,6 +34823,32 @@
      "v_totals"
     ]
    },
+   "talkx_campaign_resume_precheck": {
+    "args": "p_campaign_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_campaign public.talkx_campaigns%ROWTYPE; v_conn_status text; v_conn_ok boolean; v_blockers text[] := '{}'; v_window_open boolean := true; v_suppressed integer := 0; v_tz text; v_local timestamp; v_local_min integer; v_win_start_min integer; v_win_end_min integer; v_bh jsonb; v_bh_start text; v_bh_end text; v_bh_start_min integer; v_bh_end_min integer; v_bh_days jsonb; v_dow integer; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501 …",
+    "raises": [
+     "authentication_required",
+     "talkx_campaign_role_required",
+     "talkx_campaign_not_found"
+    ],
+    "tables": [
+     "talkx_blacklist",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "talkx_settings",
+     "v_bh",
+     "v_campaign",
+     "v_conn_status",
+     "v_local",
+     "v_suppressed",
+     "whatsapp_connections"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -43879,6 +43905,7 @@
    "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
    "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
    "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
+   "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -56753,6 +56780,22 @@
     "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_campaign_resume_precheck",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated, service_role",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_resume_precheck",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -61809,6 +61852,21 @@
     "function": "talkx_campaign_queue_by_segment",
     "msg": "not found",
     "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
+   },
+   {
+    "function": "talkx_campaign_resume_precheck",
+    "msg": "authentication_required",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
+    "function": "talkx_campaign_resume_precheck",
+    "msg": "talkx_campaign_role_required",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
+    "function": "talkx_campaign_resume_precheck",
+    "msg": "talkx_campaign_not_found",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
    },
    {
     "function": "espera_contem",
@@ -70075,8 +70133,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1095,
-   "lines": 105104,
+   "files": 1096,
+   "lines": 105238,
    "tables": [
     "audit_logs",
     "departments",
@@ -227704,6 +227762,32 @@
      "v_totals"
     ]
    },
+   "talkx_campaign_resume_precheck": {
+    "args": "p_campaign_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_campaign public.talkx_campaigns%ROWTYPE; v_conn_status text; v_conn_ok boolean; v_blockers text[] := '{}'; v_window_open boolean := true; v_suppressed integer := 0; v_tz text; v_local timestamp; v_local_min integer; v_win_start_min integer; v_win_end_min integer; v_bh jsonb; v_bh_start text; v_bh_end text; v_bh_start_min integer; v_bh_end_min integer; v_bh_days jsonb; v_dow integer; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501 …",
+    "raises": [
+     "authentication_required",
+     "talkx_campaign_role_required",
+     "talkx_campaign_not_found"
+    ],
+    "tables": [
+     "talkx_blacklist",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "talkx_settings",
+     "v_bh",
+     "v_campaign",
+     "v_conn_status",
+     "v_local",
+     "v_suppressed",
+     "whatsapp_connections"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -233088,6 +233172,21 @@
     "function": "talkx_campaign_queue_by_segment",
     "msg": "not found",
     "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
+   },
+   {
+    "function": "talkx_campaign_resume_precheck",
+    "msg": "authentication_required",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
+    "function": "talkx_campaign_resume_precheck",
+    "msg": "talkx_campaign_role_required",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
+    "function": "talkx_campaign_resume_precheck",
+    "msg": "talkx_campaign_not_found",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
    },
    {
     "function": "espera_contem",
@@ -241151,6 +241250,7 @@
    "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
    "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
+   "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -241572,6 +241672,7 @@
    "talkx_campaign_ranking",
    "talkx_campaign_recipients_page",
    "talkx_campaign_reply_stats",
+   "talkx_campaign_resume_precheck",
    "talkx_campaign_segment_progress",
    "talkx_campaign_timeline_page",
    "talkx_campaign_window_open",
@@ -254223,6 +254324,22 @@
     "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_campaign_resume_precheck",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated, service_role",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_resume_precheck",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -257049,13 +257166,6 @@
     "where": [
      "scripts/ci/crm-integration-contract.unit.mjs",
      "supabase/functions/crm-integration/index.ts"
-    ]
-   },
-   {
-    "kind": "rpc",
-    "msg": "RPC `talkx_campaign_resume_precheck` chamada mas não definida nas migrations/types",
-    "where": [
-     "src/hooks/integrations/useTalkXServerResumePrecheck.ts"
     ]
    },
    {
@@ -380250,6 +380360,11 @@
    "path": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
    "lines": 65
   },
+  "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql": {
+   "path": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
+   "lines": 134,
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -384102,10 +384217,19 @@
   }
  },
  "git": {
-  "sha": "d73156d89178a100d9a8475cb83b8eca65e83cfe",
+  "sha": "a6c3519bed037cfb5a17c166795246a08b97d225",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a6c3519",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)",
+    "files": [
+     "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+    ]
+   },
    {
     "sha": "d73156d",
     "date": "2026-11-09",
@@ -384456,25 +384580,12 @@
      "docs/talkx/ESTADOS.md",
      "e2e/talkx-kit.spec.ts"
     ]
-   },
-   {
-    "sha": "babb270",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "test(e2e): aguarda readiness dos insights de busca (#2787)",
-    "files": [
-     "e2e/navegacao-modulos.spec.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
     4
-   ],
-   [
-    "e2e/navegacao-modulos.spec.ts",
-    3
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -384491,6 +384602,14 @@
    [
     "src/hooks/inbox/useInboxFilterPresets.ts",
     2
+   ],
+   [
+    "e2e/navegacao-modulos.spec.ts",
+    2
+   ],
+   [
+    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
+    1
    ],
    [
     "scripts/ci/lint-ratchet.mjs",
@@ -384542,10 +384661,6 @@
    ],
    [
     "resgate-online/validacao/escopo.json",
-    1
-   ],
-   [
-    "resgate-online/validacao/progresso.json",
     1
    ]
   ]

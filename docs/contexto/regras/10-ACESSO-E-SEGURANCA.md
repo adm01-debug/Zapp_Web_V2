@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d73156d891` · branch `main` · 2026-11-09 13:20 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a6c3519bed` · branch `main` · 2026-11-09 13:41 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -253,7 +253,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 747 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 748 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -405,7 +405,7 @@
 - `supabase/functions/_shared/request-policy.ts`
 - `supabase/functions/_shared/talkx-reply.ts`
 - `supabase/functions/_shared/validation.ts`
-- … +597 (lista completa em `context.json`)
+- … +598 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -736,6 +736,7 @@
 - `talkx_campaign_ranking`
 - `talkx_campaign_recipients_page`
 - `talkx_campaign_reply_stats`
+- `talkx_campaign_resume_precheck`
 - `talkx_campaign_segment_progress`
 - `talkx_campaign_timeline_page`
 - `talkx_campaign_window_open`
@@ -859,7 +860,7 @@ Middleware matcher (Next.js): nenhum
 | grant | anon, authenticated, service_role | all | `talkx_settings` |
 | grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `auth.uid`, `auth.uid` |
 | grant | authenticated | delete | `multiplix_recipients` |
-| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +155 |
+| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +156 |
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
@@ -895,7 +896,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
 | revoke | PUBLIC, anon, authenticated | execute | `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `reschedule_talkx_recipient`, `transition_talkx_campaign`, `expire_stale_agent_presence`, `handle_message_gamification`, `handle_conversation_closure_gamification`, `get_department_whatsapp_credentials`, `get_department_whatsapp_api_key`, `record_incoming_call_event`, `sanitize_reset_request`, `team_receipts_fill_conversation_id`, `team_reactions_force_conversation_id`, `sanitize_reset_request` … +20 |
 | revoke | PUBLIC, anon, authenticated | truncate, references, trigger | `public` |
-| revoke | PUBLIC, anon, authenticated, service_role | all | `talkx_template_variants`, `talkx_template_versions`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `supabase_migrations.version_reservations`, `supabase_migrations.reserve_migration_version`, `contact_deletion_audit`, `apply_zapp_cron_secrets_l5`, `apply_zapp_cron_secrets_l5`, `resolve_contact_guard_actor`, `prevent_contact_queue_hijack`, `prevent_contact_assignee_hijack`, `increment_talkx_template_use`, `multiplix_events`, `message_reactions_normalize_author` … +10 |
+| revoke | PUBLIC, anon, authenticated, service_role | all | `talkx_template_variants`, `talkx_template_versions`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `supabase_migrations.version_reservations`, `supabase_migrations.reserve_migration_version`, `contact_deletion_audit`, `apply_zapp_cron_secrets_l5`, `apply_zapp_cron_secrets_l5`, `resolve_contact_guard_actor`, `prevent_contact_queue_hijack`, `prevent_contact_assignee_hijack`, `increment_talkx_template_use`, `multiplix_events`, `message_reactions_normalize_author` … +11 |
 | revoke | PUBLIC, anon, authenticated, service_role | execute | `audit_contact_deletion_change`, `audit_contact_address_change`, `audit_role_changes`, `audit_role_permissions_changes`, `department_audit_logs_fill_profile_name`, `record_talkx_campaign_lifecycle_event`, `set_talkx_recipient_status_changed_at`, `conversation_task_rearm_on_remind_change`, `audit_contact_block_change`, `sanitize_reset_request`, `rate_limit_reset_requests` |
 | revoke | PUBLIC, anon, service_role | all | `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients`, `save_talkx_campaign_draft`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `enqueue_outbound_message`, `log_unauthorized_inbox_scope`, `enqueue_group_outbound_message`, `admin_list_cron_jobs`, `admin_toggle_cron_job`, `set_contact_blocked`, `crisis_room_snapshot` |
 | revoke | anon | all | `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs`, `multiplix_dispatches` … +30 |

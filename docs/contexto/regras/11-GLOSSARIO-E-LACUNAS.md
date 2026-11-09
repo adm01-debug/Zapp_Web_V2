@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d73156d891` · branch `main` · 2026-11-09 13:20 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a6c3519bed` · branch `main` · 2026-11-09 13:41 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -482,7 +482,6 @@
 | rpc | RPC `same_day_rpc` chamada mas não definida nas migrations/types | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | rpc | RPC `should_send_away_message` chamada mas não definida nas migrations/types | `supabase/functions/_shared/evolution-webhook-messages.ts` |
 | rpc | RPC `sync_interaction_from_zapp` chamada mas não definida nas migrations/types | `scripts/ci/crm-integration-contract.unit.mjs`<br>`supabase/functions/crm-integration/index.ts` |
-| rpc | RPC `talkx_campaign_resume_precheck` chamada mas não definida nas migrations/types | `src/hooks/integrations/useTalkXServerResumePrecheck.ts` |
 | rpc | RPC `tools_rpc` chamada mas não definida nas migrations/types | `scripts/ai-context/gerar.unit.mjs` |
 | rpc | RPC `x` chamada mas não definida nas migrations/types | `scripts/inventario/gerar-rotas.mjs` |
 | rpc | RPC `y` chamada mas não definida nas migrations/types | `scripts/db-audit/supabase-usage-guard.mjs` |
