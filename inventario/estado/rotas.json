@@ -5,7 +5,7 @@
     "urls": 18,
     "telas": 55,
     "itens_de_menu": 53,
-    "hooks_distintos": 354,
+    "hooks_distintos": 359,
     "problemas": 2
   },
   "urls": [
@@ -574,7 +574,7 @@
         "atalho": "Alt+A",
         "layout": null
       },
-      "arquivos_lidos": 83,
+      "arquivos_lidos": 84,
       "hooks": [
         {
           "nome": "useAuth",
@@ -880,7 +880,7 @@
         "atalho": "Alt+O",
         "layout": null
       },
-      "arquivos_lidos": 143,
+      "arquivos_lidos": 142,
       "hooks": [
         {
           "nome": "useActionFeedback",
@@ -1065,7 +1065,6 @@
         "catalog_send_events",
         "contact_custom_fields",
         "contact_notes",
-        "contact_purchases",
         "contacts",
         "conversation_events",
         "conversation_sla",
@@ -1911,7 +1910,7 @@
         "atalho": "Alt+C",
         "layout": "full"
       },
-      "arquivos_lidos": 483,
+      "arquivos_lidos": 484,
       "hooks": [
         {
           "nome": "useAddressAutocomplete",
@@ -2006,6 +2005,10 @@
           "arquivo": "src/hooks/chat/useChatSearch.ts"
         },
         {
+          "nome": "useConnectionHealthBanner",
+          "arquivo": "src/hooks/inbox/useConnectionHealthBanner.ts"
+        },
+        {
           "nome": "useContactCrm360",
           "arquivo": "src/hooks/crm/useContactCrm360.ts"
         },
@@ -2044,10 +2047,6 @@
         {
           "nome": "useContactNotes",
           "arquivo": "src/hooks/crm/useContactNotes.ts"
-        },
-        {
-          "nome": "useContactPurchases",
-          "arquivo": "src/hooks/crm/useContactPurchases.ts"
         },
         {
           "nome": "useContactQuickActions",
@@ -2582,7 +2581,6 @@
         "catalog_send_events",
         "contact_custom_fields",
         "contact_notes",
-        "contact_purchases",
         "contacts",
         "conversation_analyses",
         "conversation_closures",
@@ -2853,7 +2851,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 38,
+      "arquivos_lidos": 39,
       "hooks": [
         {
           "nome": "useConfirmMultiplixDispatch",
@@ -2977,7 +2975,7 @@
         "atalho": null,
         "layout": "full"
       },
-      "arquivos_lidos": 155,
+      "arquivos_lidos": 156,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
@@ -3030,6 +3028,10 @@
         {
           "nome": "useChatSearch",
           "arquivo": "src/hooks/chat/useChatSearch.ts"
+        },
+        {
+          "nome": "useConnectionHealthBanner",
+          "arquivo": "src/hooks/inbox/useConnectionHealthBanner.ts"
         },
         {
           "nome": "useContactNotes",
@@ -3231,7 +3233,6 @@
         "channel_connections_safe",
         "contact_custom_fields",
         "contact_notes",
-        "contact_purchases",
         "contacts",
         "conversation_analyses",
         "conversation_events",
@@ -3657,7 +3658,7 @@
       "buckets": [],
       "edges": [],
       "rpcs": [
-        "get_search_insights"
+        "search_insights"
       ],
       "tabelas": [],
       "imports_quebrados": []
@@ -4241,11 +4242,15 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 166,
+      "arquivos_lidos": 188,
       "hooks": [
         {
           "nome": "useActiveDepartments",
           "arquivo": "src/hooks/team-chat/useActiveDepartments.ts"
+        },
+        {
+          "nome": "useAppBootstrap",
+          "arquivo": "src/hooks/system/useAppBootstrap.ts"
         },
         {
           "nome": "useAudienceEstimate",
@@ -4264,6 +4269,10 @@
           "arquivo": "src/components/talkx/useCampaignRowActions.tsx"
         },
         {
+          "nome": "useCatalogQuickSearch",
+          "arquivo": "src/hooks/integrations/useCatalogQuickSearch.ts"
+        },
+        {
           "nome": "useContactCustomFields",
           "arquivo": "src/hooks/crm/useContactCustomFields.ts"
         },
@@ -4274,6 +4283,10 @@
         {
           "nome": "useCRMIntegrationEnabled",
           "arquivo": "src/hooks/system/useCRMIntegrationEnabled.ts"
+        },
+        {
+          "nome": "useCustomShortcuts",
+          "arquivo": "src/hooks/ui/useCustomShortcuts.ts"
         },
         {
           "nome": "useDebounce",
@@ -4288,8 +4301,20 @@
           "arquivo": "src/hooks/system/useFeatureFlag.ts"
         },
         {
+          "nome": "useGlobalKeyboard",
+          "arquivo": "src/components/keyboard/GlobalKeyboardProvider.tsx"
+        },
+        {
+          "nome": "useGlobalKeyboardShortcuts",
+          "arquivo": "src/hooks/ui/useGlobalKeyboardShortcuts.ts"
+        },
+        {
           "nome": "useMessageUpdateBatcher",
           "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
+        },
+        {
+          "nome": "useModuleCommandItems",
+          "arquivo": "src/hooks/integrations/useModuleCommandItems.ts"
         },
         {
           "nome": "useNotificationSettings",
@@ -4314,6 +4339,10 @@
         {
           "nome": "useTalkXCampaignSummary",
           "arquivo": "src/hooks/integrations/useTalkXCampaignSummary.ts"
+        },
+        {
+          "nome": "useTalkXCommandItems",
+          "arquivo": "src/hooks/integrations/useTalkXCommandItems.ts"
         },
         {
           "nome": "useTalkXConfirm",
@@ -4410,6 +4439,10 @@
         {
           "nome": "useTeamProfiles",
           "arquivo": "src/hooks/crm/useTeamProfiles.ts"
+        },
+        {
+          "nome": "useUserRole",
+          "arquivo": "src/hooks/system/useUserRole.ts"
         }
       ],
       "buckets": [
@@ -4421,10 +4454,12 @@
         "detect-new-device",
         "external-db-proxy",
         "message-delivery",
+        "promogifts-catalog",
         "talkx-link",
         "talkx-send"
       ],
       "rpcs": [
+        "app_bootstrap",
         "can_delete_contacts",
         "contacts_count_by_type",
         "delete_talkx_campaign",
@@ -4457,7 +4492,8 @@
         "talkx_template_stats",
         "talkx_upsert_link",
         "update_talkx_campaign_limits",
-        "update_talkx_template_with_snapshot"
+        "update_talkx_template_with_snapshot",
+        "user_has_permission"
       ],
       "tabelas": [
         "ai_conversation_tags",
@@ -4485,6 +4521,7 @@
         "talkx_template_variants",
         "talkx_template_versions",
         "talkx_templates",
+        "user_roles",
         "user_settings",
         "whatsapp_connections"
       ],
@@ -4520,7 +4557,7 @@
         "atalho": "Alt+K",
         "layout": "full"
       },
-      "arquivos_lidos": 109,
+      "arquivos_lidos": 110,
       "hooks": [
         {
           "nome": "useAuth",
@@ -5577,6 +5614,7 @@
         "security",
         "settings",
         "supervisao",
+        "talkx",
         "voip",
         "wa-templates"
       ]
@@ -5762,6 +5800,12 @@
         "inbox"
       ]
     },
+    "useCatalogQuickSearch": {
+      "arquivo": "src/hooks/integrations/useCatalogQuickSearch.ts",
+      "telas": [
+        "talkx"
+      ]
+    },
     "useCatalogRecentSends": {
       "arquivo": "src/hooks/integrations/useCatalogRecentSends.ts",
       "telas": [
@@ -5872,6 +5916,13 @@
         "connections"
       ]
     },
+    "useConnectionHealthBanner": {
+      "arquivo": "src/hooks/inbox/useConnectionHealthBanner.ts",
+      "telas": [
+        "inbox",
+        "omni-inbox"
+      ]
+    },
     "useConnectionIncidents": {
       "arquivo": "src/components/monitoring/hooks/useConnectionIncidents.ts",
       "telas": [
@@ -5966,12 +6017,6 @@
         "email-chat",
         "inbox",
         "omni-inbox"
-      ]
-    },
-    "useContactPurchases": {
-      "arquivo": "src/hooks/crm/useContactPurchases.ts",
-      "telas": [
-        "inbox"
       ]
     },
     "useContactQuickActions": {
@@ -6124,7 +6169,8 @@
       "arquivo": "src/hooks/ui/useCustomShortcuts.ts",
       "telas": [
         "inbox",
-        "settings"
+        "settings",
+        "talkx"
       ]
     },
     "useDailyMetricsKpis": {
@@ -6486,6 +6532,18 @@
         "security"
       ]
     },
+    "useGlobalKeyboard": {
+      "arquivo": "src/components/keyboard/GlobalKeyboardProvider.tsx",
+      "telas": [
+        "talkx"
+      ]
+    },
+    "useGlobalKeyboardShortcuts": {
+      "arquivo": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+      "telas": [
+        "talkx"
+      ]
+    },
     "useGlobalSearchData": {
       "arquivo": "src/components/inbox/useGlobalSearchData.ts",
       "telas": [
@@ -6790,6 +6848,12 @@
       "arquivo": "src/hooks/auth/useMFA.ts",
       "telas": [
         "security"
+      ]
+    },
+    "useModuleCommandItems": {
+      "arquivo": "src/hooks/integrations/useModuleCommandItems.ts",
+      "telas": [
+        "talkx"
       ]
     },
     "useMonitoringActions": {
@@ -7458,6 +7522,12 @@
         "talkx"
       ]
     },
+    "useTalkXCommandItems": {
+      "arquivo": "src/hooks/integrations/useTalkXCommandItems.ts",
+      "telas": [
+        "talkx"
+      ]
+    },
     "useTalkXConfirm": {
       "arquivo": "src/components/talkx/kit/useTalkXConfirm.tsx",
       "telas": [
@@ -7772,6 +7842,7 @@
         "security",
         "settings",
         "supervisao",
+        "talkx",
         "voip",
         "wa-templates"
       ]
