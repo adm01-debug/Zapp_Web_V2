@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0c191b6b141efc259972756117aba795e18e1bb3",
+  "commit": "e9e38d8fc5c21785ce585102100537b9c56bee4d",
   "branch": "main",
-  "data_commit": "2026-11-09T12:55:14-03:00",
+  "data_commit": "2026-11-09T16:07:01Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e9e38d8",
+    "data": "2026-11-09",
+    "assunto": "⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates (#2892)"
+   },
    {
     "sha": "0c191b6",
     "data": "2026-11-09",
@@ -126,18 +131,13 @@
     "sha": "cc73806",
     "data": "2026-11-08",
     "assunto": "test(contracts): sincroniza ratchets com arquitetura atual (#2802)"
-   },
-   {
-    "sha": "9fd0fe4",
-    "data": "2026-11-08",
-    "assunto": "test(e2e): alinha placeholder da paleta única (#2799)"
    }
   ],
   "arquivos_mudados_7d": 662,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 666
+    "mudancas": 663
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -290,18 +290,18 @@
     "mudancas": 7
    },
    {
-    "arquivo": "e2e/telefonia.spec.ts",
+    "arquivo": ".github/workflows/codeql.yml",
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/ci/check-test-inventory.mjs",
+    "arquivo": "e2e/telefonia.spec.ts",
     "mudancas": 6
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 286
+    "commits": 285
    },
    {
     "autor": "github-actions[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 5
+    "commits": 6
    }
   ]
  },

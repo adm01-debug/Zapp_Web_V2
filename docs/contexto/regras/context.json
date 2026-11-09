@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "0c191b6b141efc259972756117aba795e18e1bb3",
+  "sha": "e9e38d8fc5c21785ce585102100537b9c56bee4d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 15:56 UTC",
+  "generated_at": "2026-11-09 16:08 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044811
@@ -384213,10 +384213,19 @@
   }
  },
  "git": {
-  "sha": "0c191b6b141efc259972756117aba795e18e1bb3",
+  "sha": "e9e38d8fc5c21785ce585102100537b9c56bee4d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e9e38d8",
+    "date": "2026-11-09",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates (#2892)",
+    "files": [
+     ".github/workflows/codeql.yml"
+    ]
+   },
    {
     "sha": "0c191b6",
     "date": "2026-11-09",
@@ -384563,17 +384572,6 @@
      "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
      "src/hooks/integrations/useTalkXCommandItems.ts"
     ]
-   },
-   {
-    "sha": "c6c7697",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)",
-    "files": [
-     "src/components/admin/__tests__/SearchInsightsView.test.tsx",
-     "src/hooks/admin/__tests__/useSearchInsights.test.ts",
-     "src/hooks/admin/useSearchInsights.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384592,6 +384590,10 @@
    [
     "src/hooks/inbox/useInboxFilterPresets.ts",
     2
+   ],
+   [
+    ".github/workflows/codeql.yml",
+    1
    ],
    [
     "supabase/migrations/20261026220300_classificar_rls_sem_policy.sql",
@@ -384651,10 +384653,6 @@
    ],
    [
     "scripts/ci/lint-ratchet.unit.mjs",
-    1
-   ],
-   [
-    "scripts/graphify/setup.sh",
     1
    ]
   ]
