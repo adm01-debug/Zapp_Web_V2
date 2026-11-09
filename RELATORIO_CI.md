@@ -200,3 +200,49 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 | Workflows com falha na main | 3 (deploy-functions, e2e-logado, db-live-guard) | 4 bloqueados (documentados em PENDENCIAS.md §1 §2 §3 §4) — §4 (branch-hygiene) é condição temporal pré-existente, não introduzida nesta sessão |
 
 **Nenhuma regressão de código introduzida nesta sessão.**
+
+---
+
+## 6. Sessão 2026-11-09 — PR #2881 (`claude_05/brave-mccarthy-zvzky4`)
+
+> Sessão: `https://claude.ai/code/session_01ERPZLui4ik38jdekvdzwft`
+
+### 6.1 Baseline local (nesta sessão)
+
+| Verificação | Resultado |
+|---|---|
+| `npx eslint src/ --ext .ts,.tsx` | ✅ LINT_EXIT:0 (735 problemas pré-existentes; 0 novos introduzidos nesta sessão) |
+| `node --test scripts/ci/*.unit.mjs` | ✅ 5916/5918 pass, 0 fail, exit 0 |
+| `npx tsc --noEmit -p tsconfig.app.json` | ⚠️ SIGABRT no container (memória insuficiente ~2 GB); sem erro de tipo no CI (runners com 8–16 GB); não é regressão |
+
+### 6.2 is:failure na main (consulta nesta sessão — 2026-11-09)
+
+Consulta: `list_workflow_runs(branch=main, status=failure)` executada em 2026-11-09.
+
+| Workflow | Run | SHA | Motivo |
+|---|---|---|---|
+| CI/CD Pipeline | [#42535699337](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42535699337) | `9183f0f6` | `🧪 Unit Tests (2/3)`: `No test suite found in file` — `TalkXCampaignReport.test.tsx` (61 linhas com imports/mocks, sem `describe`/`it`) |
+| DB Live Guard | ver §4.2 | — | Drift migrations produção (DDL pré-existente) — PENDENCIAS.md §2 |
+| Deploy Edge Functions | ver §4.1 | — | Manifesto desatualizado (bloqueado por PR #2707 com DDL) — PENDENCIAS.md §1 |
+| E2E logado | ver §4.3 | — | browser-suite-failed no job `authenticated` — PENDENCIAS.md §3 |
+| Branch Hygiene Audit | ver §4.4 | — | SLA CodeQL — condição temporal pré-existente — PENDENCIAS.md §4 |
+
+### 6.3 Fix aplicado neste commit
+
+| Arquivo | Mudança |
+|---|---|
+| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | Adicionado bloco `describe('TalkXCampaignReport')` com 2 `it.todo` — corrige "No test suite found in file" no shard 2/3 |
+
+**Causa raiz**: arquivo herdado da `main` em HEAD `9183f0f6` com 61 linhas de imports e mocks mas sem nenhum caso de teste declarado. Não é regressão introduzida por este PR (o arquivo não existia nesta branch antes deste commit).
+
+### 6.4 Histórico de runs do PR #2881
+
+| Run | Workflow | Observação |
+|---|---|---|
+| [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) | CI/CD Pipeline | `queued` em HEAD `9183f0f6` → cancelada pelo push de `cb292233` |
+| [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) | DB Guard | `queued` em HEAD `9183f0f6` → cancelada pelo push de `cb292233` |
+| [42540034065](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540034065) | CI/CD Pipeline | `pending` em `cb292233` → cancelada pelo push deste commit |
+| [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) | DB Guard | `pending` em `cb292233` → cancelada pelo push deste commit |
+| (novas runs) | CI/CD Pipeline + DB Guard | Criadas após este commit — ver tabela abaixo |
+
+> Tabela final de `conclusion=success` para os 6 checks obrigatórios será preenchida após as runs concluírem.

@@ -59,3 +59,9 @@ vi.mock('@/lib/supabaseHelpers', () => {
     invokeEdge: vi.fn().mockResolvedValue({ data: null, error: null }),
   };
 });
+
+// Testes pendentes — estrutura e mocks prontos; casos a implementar (X164/TL-080)
+describe('TalkXCampaignReport', () => {
+  it.todo('renderiza os três gráficos para campanha concluída');
+  it.todo('oculta série Conversões quando não há fonte de conversão');
+});

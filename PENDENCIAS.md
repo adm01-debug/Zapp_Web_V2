@@ -96,13 +96,13 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 
 ---
 
-## 5. CI Queue — concorrência bloqueada (sessão 2026-11-09)
+## 5. CI Queue — histórico de runs (sessão 2026-11-09)
 
 | Campo | Valor |
 |---|---|
 | PR | [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) — branch `claude_05/brave-mccarthy-zvzky4` |
-| Run CI/CD Pipeline | [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) — `queued` desde 2026-11-09T00:08:45Z |
-| Run DB Guard | [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) — `queued` desde 2026-11-09T00:08:45Z |
-| Runs bloqueadoras | [42531317440](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42531317440) (ci.yml, PR #2838, `in_progress` desde 22:39Z) · [42533641695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42533641695) (db-guard.yml, PR #2857, `in_progress` desde 23:07Z) |
-| Causa | Grupos de concorrência em `ci.yml` e `db-guard.yml` permitem apenas 1 run ativo por grupo. Runs de outros PRs ocupam os slots; nossas runs aguardam liberação automática. |
-| Ação do dono | Nenhuma — condição temporária. Quando as runs bloqueadoras terminarem, as runs 42538584418 e 42538584548 iniciarão automaticamente. Se após 4h ainda estiverem `queued`, verificar se as runs bloqueadoras trancaram (stuck). |
+| Runs HEAD `9183f0f6` (canceladas) | [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) (CI) · [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) (DB Guard) — canceladas pelo push de `cb292233` |
+| Runs HEAD `cb292233` (pending → canceladas) | [42540034065](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540034065) (CI) · [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) (DB Guard) — `pending` desde 00:24:46Z; canceladas pelo push deste commit |
+| Fix aplicado neste commit | `TalkXCampaignReport.test.tsx` — corrige `No test suite found in file` no shard 2/3 (causa raiz da falha CI/CD Pipeline na main HEAD `9183f0f6`) |
+| Causa original do bloqueio | Concorrência com PRs #2838 e #2857 que ocupavam os slots; condição temporária resolvida |
+| Próximo passo | Aguardar as novas runs disparadas por este commit; confirmar os 6 checks verdes antes de mergear |
