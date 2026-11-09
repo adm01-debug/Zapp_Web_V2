@@ -751,8 +751,8 @@
     },
     {
       "path": "supabase/functions/searchbox-budget-alert/index.ts",
-      "bytes": 3536,
-      "sha256": "058a54232ba25efe76dd83a2a526431f758fbaf4d75e87d714753c790d64267b"
+      "bytes": 3580,
+      "sha256": "bc577dbac26ea1e709f6e56c7d9dc89e4b6c7c22a08285a0cf673588cbad22cc"
     },
     {
       "path": "supabase/functions/send-email/index.ts",
@@ -851,8 +851,8 @@
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "bytes": 11465,
-      "sha256": "5d4c2305b9eee8afd4e3b716ee04288d69c239b19d5988704c754502491821dc"
+      "bytes": 11575,
+      "sha256": "1202643c25b96797968d7117b13cc87ebb4d92f027e1d7a7bc5914c578b0a5db"
     }
   ],
   "functions": [
@@ -2177,7 +2177,7 @@
       "name": "searchbox-budget-alert",
       "entrypoint": "supabase/functions/searchbox-budget-alert/index.ts",
       "verify_jwt": false,
-      "source_sha256": "4a3190a6a0168b30139b56bd00cf6c4e8321847c1cc8efdaff18366f19c1f859",
+      "source_sha256": "e01c265e1226b11d112ff4b0803fd6e41662eef33144c4e329aa12b5a592db4e",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -2501,9 +2501,10 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "b83f0f694ea5d0dbd6ec75de616b28abc655cd7355725f6bcf886be1c8f33fec",
+      "source_sha256": "fe2f09a4831e05406132eb5b6da20ba6bf8e62691a99e7cdcf1bbe6a68996f01",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
+        "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -2518,5 +2519,5 @@
       ]
     }
   ],
-  "manifest_sha256": "42fcdc0b3046b16ee740b3ec41ec6ff675087b215442e10d2ec4693011feca8f"
+  "manifest_sha256": "eed101899eb520246569e034ded7e12b68409b9ee1e01a8ecb57ba7323f42c8b"
 }

@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Keyboard, Brain, Target, Timer, Zap, Star, Trophy, RotateCcw } from 'lucide-react';
-import { TYPING_PHRASES, QUIZ_QUESTIONS, EMOJI_CHALLENGES } from './miniGamesData';
+import { TYPING_PHRASES, QUIZ_QUESTIONS, EMOJI_CHALLENGES, xpDoSpeedTyping, xpDoQuiz, xpDoEmojiDecode } from './miniGamesData';
 import { secureRandomFloat } from '../../lib/secureRandom';
 
 interface GameDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onComplete: (score: number) => void;
+  /** `xp` é o que a partida rendeu; quem credita (e o servidor, que limita) é o pai. */
+  onComplete: (score: number, xp: number) => void;
 }
 
 export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps) {
@@ -44,7 +45,7 @@ export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps
     }
     if (partidaEncerrada.current) return;
     partidaEncerrada.current = true;
-    onComplete(score);
+    onComplete(score, xpDoSpeedTyping(score));
   }, [isOpen, isActive, timeLeft, score, onComplete]);
 
   const handleInputChange = (value: string) => {
@@ -101,7 +102,7 @@ export function QuizGame({ isOpen, onClose, onComplete }: GameDialogProps) {
     if (index === question.correct) setScore(s => s + 20);
     setTimeout(() => {
       if (currentQuestion < QUIZ_QUESTIONS.length - 1) { setCurrentQuestion(c => c + 1); setAnswered(null); }
-      else { setShowResult(true); onComplete(score + (index === question.correct ? 20 : 0)); }
+      else { setShowResult(true); const final = score + (index === question.correct ? 20 : 0); onComplete(final, xpDoQuiz(final)); }
     }, 1000);
   };
 
@@ -153,7 +154,7 @@ export function EmojiDecodeGame({ isOpen, onClose, onComplete }: GameDialogProps
     const isCorrect = userGuess.toLowerCase().includes(challenge.answer.toLowerCase()) || challenge.answer.toLowerCase().includes(userGuess.toLowerCase());
     if (isCorrect) setScore(s => s + (showHint ? 10 : 20));
     if (currentChallenge < EMOJI_CHALLENGES.length - 1) { setCurrentChallenge(c => c + 1); setUserGuess(''); setShowHint(false); }
-    else { onComplete(score + (isCorrect ? (showHint ? 10 : 20) : 0)); }
+    else { const final = score + (isCorrect ? (showHint ? 10 : 20) : 0); onComplete(final, xpDoEmojiDecode(final)); }
   };
 
   return (
