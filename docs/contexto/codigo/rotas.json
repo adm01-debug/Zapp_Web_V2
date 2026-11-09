@@ -3,7 +3,7 @@
  "format_version": 2,
  "resumo": {
   "urls": 18,
-  "rotas_http_backend": 12,
+  "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "lazy": 151
@@ -2866,27 +2866,6 @@
     "VITE_C",
     "VITE_FEATURE_X",
     "X"
-   ]
-  },
-  {
-   "metodo": "GET",
-   "caminho": "/items",
-   "arquivo": "scripts/ai-context/gerar.unit.mjs",
-   "tabelas": [
-    "contacts",
-    "dashboard_table",
-    "emails",
-    "fixture_table",
-    "ghost_table",
-    "payments",
-    "runtime_table",
-    "tools_runtime"
-   ],
-   "env": [
-    "DB_URL",
-    "RESEND_API_KEY",
-    "VITE_ANON",
-    "VITE_SUPABASE_URL"
    ]
   },
   {

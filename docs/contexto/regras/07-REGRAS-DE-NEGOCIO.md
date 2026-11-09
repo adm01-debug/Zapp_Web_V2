@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `014270223c` · branch `main` · 2026-11-09 17:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `861877059b` · branch `main` · 2026-11-09 17:44 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -725,7 +725,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `gmail_accounts` | `sync_status` | obrigatório |
 | `gmail_accounts` | `updated_at` | obrigatório |
 | `saved_filters` | `id` | PK; default gen_random_uuid() |
-| … +1353 linhas — lista completa em `context.json` | | |
+| … +1354 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -1269,15 +1269,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `copilot_insights` | `state_version` | **livre (sem enum/CHECK)** | `1` |
 | `copilot_objection_catalog` | `status` | **livre (sem enum/CHECK)** | `pending_review` |
 | `_zapp_mig133_log` | `status` | **livre (sem enum/CHECK)** |  |
-| `channel_connections_safe` | `status` | **livre (sem enum/CHECK)** |  |
-| `gmail_accounts_safe` | `sync_status` | **livre (sem enum/CHECK)** |  |
-| `password_reset_requests_safe` | `status` | **livre (sem enum/CHECK)** |  |
-| `talkx_campaign_metrics` | `status` | **livre (sem enum/CHECK)** |  |
-| `talkx_engine_health` | `status` | **livre (sem enum/CHECK)** |  |
-| `whatsapp_connections_agent` | `status` | **livre (sem enum/CHECK)** |  |
-| `whatsapp_connections_public` | `status` | **livre (sem enum/CHECK)** |  |
-| `whatsapp_connections_safe` | `health_status` | **livre (sem enum/CHECK)** |  |
-| `whatsapp_connections_safe` | `status` | **livre (sem enum/CHECK)** |  |
 
 ### E.2 Mapas de transição declarados no código
 

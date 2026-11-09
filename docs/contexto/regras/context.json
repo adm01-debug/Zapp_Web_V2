@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "014270223cc89fb9be81eccf2290717dde2e131e",
+  "sha": "861877059b4507db3946bc9c34bb010609a7b5c2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 17:18 UTC",
+  "generated_at": "2026-11-09 17:44 UTC",
   "files_total": 8167,
   "code_files": 6021,
-  "code_lines": 1044811
+  "code_lines": 1044856
  },
  "version": "1.3.2",
- "facts_hash": "4a560d28b0d6dbf6",
+ "facts_hash": "af0e84cd6563ae70",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -6178,7 +6178,7 @@
      },
      {
       "name": "search_vector",
-      "type": "tsvector GENERATED ALWAYS AS ( setweight(to_tsvector('portuguese'",
+      "type": "tsvector GENERATED ALWAYS AS ( setweight(to_tsvector('portuguese', coalesce(title, ''))",
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20260318134952_fa1e464a-2f91-42df-a9cd-3a5ead79c2ba.sql"
@@ -17199,7 +17199,7 @@
      },
      {
       "name": "decision_role",
-      "type": "text CHECK (decision_role IN ('buyer'",
+      "type": "text CHECK (decision_role IN ('buyer','user','approver','intermediary','unknown'))",
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20261031120000_copilot_phase4_brinde_intelligence.sql"
@@ -18283,943 +18283,6 @@
      {
       "name": "vault_secret_id",
       "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "catalog_send_stats": {
-    "columns": [
-     {
-      "name": "chave",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "enviados",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "falhas",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "grao",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "parciais",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "rotulo",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "taxa_falha",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "taxa_parcial",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "total",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "channel_connections_safe": {
-    "columns": [
-     {
-      "name": "channel_type",
-      "type": "Database[\"public\"][\"Enums\"][\"channel_type\"] | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_by",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "external_account_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "external_page_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_active",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "name",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "updated_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "webhook_url",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "whatsapp_connection_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "gmail_accounts_safe": {
-    "columns": [
-     {
-      "name": "created_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "email_address",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_active",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "last_error",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "last_sync_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "sync_status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "token_expires_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "updated_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "user_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "password_reset_requests_safe": {
-    "columns": [
-     {
-      "name": "created_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "email",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "ip_address",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "reason",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "rejection_reason",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "reviewed_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "reviewed_by",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "token_expires_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "updated_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "user_agent",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "user_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "profiles_public": {
-    "columns": [
-     {
-      "name": "avatar_url",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "department",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_active",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "job_title",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "name",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "user_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "searchbox_usage_daily": {
-    "columns": [
-     {
-      "name": "degradacoes",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "dia",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "sessoes",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "ultimo_evento_em",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "talkx_campaign_metrics": {
-    "columns": [
-     {
-      "name": "campaign_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "campaign_name",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "completed_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "delivered_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "delivery_rate_pct",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "duration_secs",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "outcome_unknown_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "replied_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "reply_rate_pct",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "segment_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "sent_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "started_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "template_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "total_recipients",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "talkx_campaign_optouts": {
-    "columns": [
-     {
-      "name": "auto_optout_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "campaign_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "last_optout_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "optout_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "talkx_engine_health": {
-    "columns": [
-     {
-      "name": "campaign_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "detail",
-      "type": "Json | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "kind",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "metric_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "metric_rate",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "observed_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "recipient_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "return_message",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "team_message_read_state": {
-    "columns": [
-     {
-      "name": "all_read",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "conversation_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "member_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "message_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "read_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "whatsapp_connections_agent": {
-    "columns": [
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_default",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "name",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "phone_number",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "whatsapp_connections_public": {
-    "columns": [
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_default",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "name",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "whatsapp_connections_safe": {
-    "columns": [
-     {
-      "name": "battery_level",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_by",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "farewell_enabled",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "farewell_message",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "health_reason",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "health_response_ms",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "health_status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "instance_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_default",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "is_plugged",
-      "type": "boolean | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "last_health_check",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "max_retries",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "name",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "phone_number",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "qr_code",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "retry_count",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "updated_at",
-      "type": "string | null",
       "fk": "",
       "generated": "",
       "src": "src/integrations/supabase/types.ts"
@@ -68198,7 +67261,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 88081,
+   "lines": 88126,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68232,6 +67295,9 @@
     "t",
     "t1",
     "tabela",
+    "tabela_depois_da_url",
+    "tabela_fantasma",
+    "tabela_normal",
     "tabela_viva",
     "tools_runtime",
     "tx",
@@ -68242,7 +67308,7 @@
     "x_novo"
    ],
    "exports": [
-    "gerar.unit.mjs: AppRoutes, useContacts",
+    "gerar.unit.mjs: AppRoutes, useContacts, depois, normal",
     "a11y-button-name-ratchet.mjs: readTagEnd, listSourceFiles, scanFile, scanAll, runRatchet, main",
     "a11y-button-name-ratchet.unit.mjs: IconButton, SearchSelect, TabsDemo, TabsDemo, IconButton, IconButton",
     "actions-kpi.mjs: duracaoMinutos, runsNaJanela, agregar, paginaTemMais, maisLentos, tabela",
@@ -72334,6 +71400,21 @@
      "scripts/ci/gerar-matriz-edge-tabela.mjs",
      "scripts/inventario/gerar-banco.mjs",
      "scripts/inventario/gerar-repo.mjs"
+    ]
+   },
+   "tabela_depois_da_url": {
+    "select": [
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
+   "tabela_fantasma": {
+    "select": [
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
+   "tabela_normal": {
+    "select": [
+     "scripts/ai-context/gerar.unit.mjs"
     ]
    },
    "tabela_viva": {
@@ -76568,6 +75649,9 @@
    "t",
    "t1",
    "tabela",
+   "tabela_depois_da_url",
+   "tabela_fantasma",
+   "tabela_normal",
    "tabela_viva",
    "tools_runtime",
    "tx",
@@ -76594,7 +75678,6 @@
    "campaigns",
    "catalog_rate_limit_hits",
    "catalog_rate_limits",
-   "catalog_send_stats",
    "contact_block_audit",
    "contact_deletion_audit",
    "contact_protection_policy",
@@ -76611,7 +75694,6 @@
    "edge_rate_limits",
    "email_signatures",
    "entity_versions",
-   "gmail_accounts_safe",
    "hermes_change_log",
    "instance_pauses",
    "link_preview_cache_metrics",
@@ -76624,7 +75706,6 @@
    "objects",
    "optout_call_log",
    "outbox_events",
-   "profiles_public",
    "prova_anterior",
    "prova_hz503_asserts",
    "qr_attempts",
@@ -76639,13 +75720,11 @@
    "sla_alert_preferences",
    "tags",
    "talkx_alerts",
-   "talkx_campaign_optouts",
    "talkx_campaign_segments",
    "talkx_contact_attributes",
    "talkx_conversions",
    "talkx_data_jobs",
    "talkx_ddd_regions",
-   "talkx_engine_health",
    "talkx_help_views",
    "talkx_segment_fields",
    "talkx_segment_library_history",
@@ -76657,9 +75736,7 @@
    "version_reservations",
    "voice_command_logs",
    "voip_profile_credentials",
-   "webhook_failures",
-   "whatsapp_connections_agent",
-   "whatsapp_connections_public"
+   "webhook_failures"
   ],
   "columns_unknown": [
    {
@@ -103644,6 +102721,11 @@
     "table": "copilot_sessions",
     "column": "comm_style",
     "rule": "default '{}'"
+   },
+   {
+    "table": "copilot_sessions",
+    "column": "decision_role",
+    "rule": "CHECK decision_role IN ('buyer','user','approver','intermediary','unknown')"
    },
    {
     "table": "copilot_sessions",
@@ -234609,78 +233691,6 @@
      "allowed": [],
      "default": "",
      "type": "string not null"
-    },
-    {
-     "table": "channel_connections_safe",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "gmail_accounts_safe",
-     "column": "sync_status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "password_reset_requests_safe",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "talkx_campaign_metrics",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "talkx_engine_health",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "whatsapp_connections_agent",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "whatsapp_connections_public",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "whatsapp_connections_safe",
-     "column": "health_status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "whatsapp_connections_safe",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
     }
    ],
    "usage": {
@@ -237957,13 +236967,6 @@
     "UPDATE": [],
     "DELETE": []
    },
-   "catalog_send_stats": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "channel_connections": {
     "rls": "enabled",
     "SELECT": [
@@ -237978,13 +236981,6 @@
     "DELETE": [
      "authenticated: has_role(auth.uid(), 'admin')"
     ]
-   },
-   "channel_connections_safe": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
    },
    "channel_routing_rules": {
     "rls": "enabled",
@@ -238757,13 +237753,6 @@
      "authenticated: false"
     ]
    },
-   "gmail_accounts_safe": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "gmail_oauth_states": {
     "rls": "enabled",
     "SELECT": [],
@@ -239209,13 +238198,6 @@
      "authenticated: public.has_role(auth.uid(), 'admin')"
     ]
    },
-   "password_reset_requests_safe": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "performance_snapshots": {
     "rls": "enabled",
     "SELECT": [
@@ -239307,13 +238289,6 @@
      "authenticated: auth.uid() = user_id",
      "authenticated: is_admin_or_supervisor(auth.uid()) OR ( role = (SELECT p.role FROM profiles p WHERE p.user_id = auth.uid()) AND access_level "
     ],
-    "DELETE": []
-   },
-   "profiles_public": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
     "DELETE": []
    },
    "prova_anterior": {
@@ -239613,13 +238588,6 @@
     "UPDATE": [],
     "DELETE": []
    },
-   "searchbox_usage_daily": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "security_acl_alerts": {
     "rls": "enabled",
     "SELECT": [
@@ -239831,20 +238799,6 @@
     "UPDATE": [],
     "DELETE": []
    },
-   "talkx_campaign_metrics": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
-   "talkx_campaign_optouts": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "talkx_campaign_segments": {
     "rls": "enabled",
     "SELECT": [
@@ -239918,13 +238872,6 @@
     "SELECT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
-   "talkx_engine_health": {
-    "rls": "não encontrado",
-    "SELECT": [],
     "INSERT": [],
     "UPDATE": [],
     "DELETE": []
@@ -240171,13 +239118,6 @@
      "authenticated: profile_id = public.current_profile_id()"
     ]
    },
-   "team_message_read_state": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "team_message_receipts": {
     "rls": "enabled",
     "SELECT": [
@@ -240419,27 +239359,6 @@
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ]
    },
-   "whatsapp_connections_agent": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
-   "whatsapp_connections_public": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
-   "whatsapp_connections_safe": {
-    "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "whatsapp_flows": {
     "rls": "enabled",
     "SELECT": [
@@ -240518,14 +239437,6 @@
     "files": []
    },
    {
-    "table": "channel_connections_safe",
-    "issue": "acessada do front (2 arquivo(s)) sem RLS (não encontrado)",
-    "files": [
-     "src/components/omnichannel/OmnichannelInbox.tsx",
-     "src/components/omnichannel/OmnichannelManager.tsx"
-    ]
-   },
-   {
     "table": "gmail_oauth_states",
     "issue": "RLS ligado sem nenhuma política → só service_role acessa",
     "files": []
@@ -240543,13 +239454,6 @@
     ]
    },
    {
-    "table": "password_reset_requests_safe",
-    "issue": "acessada do front (1 arquivo(s)) sem RLS (não encontrado)",
-    "files": [
-     "src/hooks/security/usePasswordResetRequests.ts"
-    ]
-   },
-   {
     "table": "query_telemetry",
     "issue": "front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários",
     "files": [
@@ -240557,32 +239461,9 @@
     ]
    },
    {
-    "table": "talkx_campaign_metrics",
-    "issue": "acessada do front (2 arquivo(s)) sem RLS (não encontrado)",
-    "files": [
-     "src/hooks/integrations/useTalkXInsights.ts",
-     "src/hooks/integrations/useTalkXTemplatesConversion.ts"
-    ]
-   },
-   {
     "table": "talkx_test_send_claims",
     "issue": "RLS ligado sem nenhuma política → só service_role acessa",
     "files": []
-   },
-   {
-    "table": "team_message_read_state",
-    "issue": "acessada do front (1 arquivo(s)) sem RLS (não encontrado)",
-    "files": [
-     "src/hooks/team-chat/useTeamReadState.ts"
-    ]
-   },
-   {
-    "table": "whatsapp_connections_safe",
-    "issue": "acessada do front (2 arquivo(s)) sem RLS (não encontrado)",
-    "files": [
-     "src/components/omnichannel/OmnichannelManager.tsx",
-     "src/services/evolution.service.ts"
-    ]
    },
    {
     "table": "whisper_messages",
@@ -255041,18 +253922,6 @@
    [
     "talkx_optout_keywords",
     "active"
-   ],
-   [
-    "channel_connections_safe",
-    "is_active"
-   ],
-   [
-    "gmail_accounts_safe",
-    "is_active"
-   ],
-   [
-    "profiles_public",
-    "is_active"
    ]
   ],
   "audit": {
@@ -255756,35 +254625,6 @@
    "voip_profile_credentials": [
     "created_at",
     "updated_at"
-   ],
-   "catalog_send_stats": [],
-   "channel_connections_safe": [
-    "created_at",
-    "created_by",
-    "updated_at"
-   ],
-   "gmail_accounts_safe": [
-    "created_at",
-    "updated_at"
-   ],
-   "password_reset_requests_safe": [
-    "created_at",
-    "updated_at"
-   ],
-   "profiles_public": [],
-   "searchbox_usage_daily": [],
-   "talkx_campaign_metrics": [
-    "created_at"
-   ],
-   "talkx_campaign_optouts": [],
-   "talkx_engine_health": [],
-   "team_message_read_state": [],
-   "whatsapp_connections_agent": [],
-   "whatsapp_connections_public": [],
-   "whatsapp_connections_safe": [
-    "created_at",
-    "created_by",
-    "updated_at"
    ]
   },
   "pii": [
@@ -255867,14 +254707,6 @@
    [
     "department_invitations",
     "email"
-   ],
-   [
-    "password_reset_requests_safe",
-    "email"
-   ],
-   [
-    "password_reset_requests_safe",
-    "ip_address"
    ]
   ],
   "money_float": [],
@@ -255963,26 +254795,6 @@
     "copilot_feedback",
     "feedback_type",
     "TEXT"
-   ],
-   [
-    "catalog_send_stats",
-    "taxa_falha",
-    "number"
-   ],
-   [
-    "catalog_send_stats",
-    "taxa_parcial",
-    "number"
-   ],
-   [
-    "catalog_send_stats",
-    "total",
-    "number"
-   ],
-   [
-    "talkx_campaign_metrics",
-    "total_recipients",
-    "number"
    ]
   ]
  },
@@ -256788,6 +255600,27 @@
    },
    {
     "kind": "tabela",
+    "msg": "tabela `tabela_depois_da_url` usada no código não existe nas migrations/types do repo",
+    "where": [
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
+   {
+    "kind": "tabela",
+    "msg": "tabela `tabela_fantasma` usada no código não existe nas migrations/types do repo",
+    "where": [
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
+   {
+    "kind": "tabela",
+    "msg": "tabela `tabela_normal` usada no código não existe nas migrations/types do repo",
+    "where": [
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
+   {
+    "kind": "tabela",
     "msg": "tabela `tabela_viva` usada no código não existe nas migrations/types do repo",
     "where": [
      "scripts/ci/check-remocoes-destrutivas.unit.mjs"
@@ -256843,14 +255676,6 @@
    },
    {
     "kind": "rls",
-    "msg": "`channel_connections_safe`: acessada do front (2 arquivo(s)) sem RLS (não encontrado)",
-    "where": [
-     "src/components/omnichannel/OmnichannelInbox.tsx",
-     "src/components/omnichannel/OmnichannelManager.tsx"
-    ]
-   },
-   {
-    "kind": "rls",
     "msg": "`gmail_oauth_states`: RLS ligado sem nenhuma política → só service_role acessa",
     "where": []
    },
@@ -256868,13 +255693,6 @@
    },
    {
     "kind": "rls",
-    "msg": "`password_reset_requests_safe`: acessada do front (1 arquivo(s)) sem RLS (não encontrado)",
-    "where": [
-     "src/hooks/security/usePasswordResetRequests.ts"
-    ]
-   },
-   {
-    "kind": "rls",
     "msg": "`query_telemetry`: front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários",
     "where": [
      "src/pages/AdminTelemetriaPage.tsx"
@@ -256882,31 +255700,8 @@
    },
    {
     "kind": "rls",
-    "msg": "`talkx_campaign_metrics`: acessada do front (2 arquivo(s)) sem RLS (não encontrado)",
-    "where": [
-     "src/hooks/integrations/useTalkXInsights.ts",
-     "src/hooks/integrations/useTalkXTemplatesConversion.ts"
-    ]
-   },
-   {
-    "kind": "rls",
     "msg": "`talkx_test_send_claims`: RLS ligado sem nenhuma política → só service_role acessa",
     "where": []
-   },
-   {
-    "kind": "rls",
-    "msg": "`team_message_read_state`: acessada do front (1 arquivo(s)) sem RLS (não encontrado)",
-    "where": [
-     "src/hooks/team-chat/useTeamReadState.ts"
-    ]
-   },
-   {
-    "kind": "rls",
-    "msg": "`whatsapp_connections_safe`: acessada do front (2 arquivo(s)) sem RLS (não encontrado)",
-    "where": [
-     "src/components/omnichannel/OmnichannelManager.tsx",
-     "src/services/evolution.service.ts"
-    ]
    },
    {
     "kind": "rls",
@@ -257589,16 +256384,7 @@
    "`copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`channel_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`gmail_accounts_safe.sync_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`password_reset_requests_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`talkx_campaign_metrics.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`talkx_engine_health.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`whatsapp_connections_agent.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "174/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
+   "161/221 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -262094,7 +260880,7 @@
   },
   "scripts/ai-context/gerar.mjs": {
    "path": "scripts/ai-context/gerar.mjs",
-   "lines": 924,
+   "lines": 929,
    "env": [
     "AI_CONTEXT_DIR",
     "AI_CONTEXT_PUBLICACAO",
@@ -262120,10 +260906,12 @@
   },
   "scripts/ai-context/gerar.unit.mjs": {
    "path": "scripts/ai-context/gerar.unit.mjs",
-   "lines": 361,
+   "lines": 395,
    "exports": [
     "function AppRoutes",
-    "function useContacts"
+    "function useContacts",
+    "const depois",
+    "const normal"
    ],
    "tables": [
     {
@@ -262156,6 +260944,18 @@
     },
     {
      "table": "dashboard_table",
+     "op": "select"
+    },
+    {
+     "table": "tabela_fantasma",
+     "op": "select"
+    },
+    {
+     "table": "tabela_depois_da_url",
+     "op": "select"
+    },
+    {
+     "table": "tabela_normal",
      "op": "select"
     }
    ],
@@ -262229,6 +261029,9 @@
    ],
    "guards": [
     "ProtectedRoute"
+   ],
+   "rule_comments": [
+    "Comentario de bloco: o \"//\" de uma URL dentro de string nao pode abrir comentario (o"
    ],
    "doc": "Teste do gerador de contexto (scripts/ai-context/gerar.mjs). Monta um repositório sintético em pasta temporária cobrindo os casos que o gerador precisa entender (rotas aninhadas, lazy, menu, hooks, edge functions, migrations em ordem, barrel re-export, backend HTTP, Python, nested tsconfig) e confer …",
    "hooks": [
@@ -270318,7 +269121,7 @@
   },
   "scripts/regras_negocio/generate.py": {
    "path": "scripts/regras_negocio/generate.py",
-   "lines": 2138,
+   "lines": 2144,
    "exports": [
     "def is_app_code",
     "def log",
@@ -384213,10 +383016,21 @@
   }
  },
  "git": {
-  "sha": "014270223cc89fb9be81eccf2290717dde2e131e",
+  "sha": "861877059b4507db3946bc9c34bb010609a7b5c2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "8618770",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto",
+    "files": [
+     "scripts/ai-context/gerar.mjs",
+     "scripts/ai-context/gerar.unit.mjs",
+     "scripts/regras_negocio/generate.py"
+    ]
+   },
    {
     "sha": "0142702",
     "date": "2026-11-09",
@@ -384547,15 +383361,6 @@
      "tests/contracts/evolution-private-storage-url.test.ts",
      "tests/contracts/ia055-custo-no-relatorio.test.ts"
     ]
-   },
-   {
-    "sha": "9fd0fe4",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "test(e2e): alinha placeholder da paleta única (#2799)",
-    "files": [
-     "e2e/navegacao-modulos.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384592,6 +383397,18 @@
     2
    ],
    [
+    "scripts/ai-context/gerar.mjs",
+    1
+   ],
+   [
+    "scripts/ai-context/gerar.unit.mjs",
+    1
+   ],
+   [
+    "scripts/regras_negocio/generate.py",
+    1
+   ],
+   [
     ".github/workflows/e2e-logado-isolado.yml",
     1
    ],
@@ -384625,18 +383442,6 @@
    ],
    [
     ".github/workflows/codeql.yml",
-    1
-   ],
-   [
-    "supabase/migrations/20261026220300_classificar_rls_sem_policy.sql",
-    1
-   ],
-   [
-    "supabase/migrations/20261026230300_decidir_schemas_backup.sql",
-    1
-   ],
-   [
-    "scripts/ci/vercel-env-cleanup.mjs",
     1
    ]
   ]

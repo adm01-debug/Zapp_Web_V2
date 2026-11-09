@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `014270223c` · branch `main` · 2026-11-09 17:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `861877059b` · branch `main` · 2026-11-09 17:44 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -44,9 +44,7 @@
 | `catalog_rate_limit_hits` | [RLS-sem-policy: intencional] Hits de rate limiting do catálogo de produtos. Gerenciado pela edge function promogifts-catalog via service_role. | 4 colunas | migration |
 | `catalog_rate_limits` | [RLS-sem-policy: intencional] Configuração de rate limits do catálogo. Gerenciado pela edge function promogifts-catalog via service_role. | 4 colunas | migration |
 | `catalog_send_events` | Log append-only de envios de produto do catálogo (E28). Uma linha por envio, com status  | 13 colunas | migration |
-| `catalog_send_stats` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | types.ts |
 | `channel_connections` | _(sem COMMENT ON TABLE — significado não documentado)_ | 14 colunas | migration |
-| `channel_connections_safe` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | types.ts |
 | `channel_routing_rules` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `chatbot_executions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
 | `chatbot_flows` | _(sem COMMENT ON TABLE — significado não documentado)_ | 15 colunas | migration |
@@ -103,7 +101,6 @@
 | `geo_blocking_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
 | `global_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `gmail_accounts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 16 colunas | migration |
-| `gmail_accounts_safe` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | types.ts |
 | `gmail_oauth_states` | [RLS-sem-policy: intencional] Estados temporários do fluxo OAuth do Gmail (PKCE/state). Criados e consumidos pela edge function gmail-oauth (service_role). Expiração automática. | 6 colunas | migration |
 | `goals_configurations` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
 | `instance_pauses` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | types.ts |
@@ -139,14 +136,12 @@
 | `outbox_events` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | types.ts |
 | `passkey_credentials` | _(sem COMMENT ON TABLE — significado não documentado)_ | 11 colunas | migration |
 | `password_reset_requests` | _(sem COMMENT ON TABLE — significado não documentado)_ | 13 colunas | migration |
-| `password_reset_requests_safe` | _(sem COMMENT ON TABLE — significado não documentado)_ | 13 colunas | types.ts |
 | `performance_snapshots` | _(sem COMMENT ON TABLE — significado não documentado)_ | 14 colunas | migration |
 | `permissions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
 | `pinned_conversations` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
 | `playbooks` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `products` | _(sem COMMENT ON TABLE — significado não documentado)_ | 14 colunas | migration |
 | `profiles` | Perfil de atendente ligado a auth.users: nome, avatar, departamento e role em cache (fonte de verdade de permissao = user_roles + role_permissions). | 21 colunas | migration |
-| `profiles_public` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | types.ts |
 | `prova_anterior` | _(sem COMMENT ON TABLE — significado não documentado)_ | 2 colunas | migration |
 | `prova_hz503_asserts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 1 colunas | migration |
 | `qr_attempts` | Historico de tentativas de conexao por QR Code. Escrita so pelo service_role (Edge Function); leitura por quem enxerga a conexao. Apagado aos 30 dias pelo job purge-qr-attempts. | 5 colunas | migration |
@@ -170,7 +165,6 @@
 | `search_events` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | types.ts |
 | `searchbox_budget_alert_cron` | [RLS-sem-policy: intencional] Controle de execução do cron searchbox-budget-alert. Só service_role via pg_cron. | 4 colunas | migration |
 | `searchbox_budget_alert_emails` | [RLS-sem-policy: intencional] Destinatários dos alertas de budget. Só service_role via edge function searchbox-budget-alert. | 9 colunas | migration |
-| `searchbox_usage_daily` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | types.ts |
 | `security_acl_alerts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | types.ts |
 | `security_alerts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
 | `sicoob_contact_mapping` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
@@ -186,8 +180,6 @@
 | `talkx_alerts` | X033: alertas do motor Talk X. Um alerta aberto por (tipo, campanha); fechado sozinho quando o sinal deixa de disparar (resolved_at). Escrito por talkx_engine_alerts (service_role), lido por admin/supervisor. | 6 colunas | migration |
 | `talkx_blacklist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
 | `talkx_campaign_events` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
-| `talkx_campaign_metrics` | _(sem COMMENT ON TABLE — significado não documentado)_ | 17 colunas | types.ts |
-| `talkx_campaign_optouts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | types.ts |
 | `talkx_campaign_segments` | Talk X (X057): segmentos de uma campanha, em ordem (position 1..10). A ordem define qual segmento "ganha" quando o mesmo contato aparece em mais de um. | 7 colunas | migration |
 | `talkx_campaigns` | _(sem COMMENT ON TABLE — significado não documentado)_ | 72 colunas | migration |
 | `talkx_contact_attributes` | Talk X · projeção de atributos comerciais por contato (X037). Nesta leva só as colunas de compra/RFM (X040); as colunas de CRM entram por ALTER nas ondas de banco. | 23 colunas | migration |
@@ -195,7 +187,6 @@
 | `talkx_data_jobs` | Talk X · trilha de dados: catálogo dos jobs (X036). Leitura só admin/supervisor; escrita só service_role. | 7 colunas | migration |
 | `talkx_ddd_regions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 3 colunas | migration |
 | `talkx_delivery_log` | X033: log por destinatario do motor Talk X (etapa/tentativa/resultado/duracao). SEM telefone e SEM texto de mensagem — so ids, codigos e metricas. Escrita service_role (edge talkx-send), leitura admin/supervisor; expurgo de 30 dias pelo purge_talkx_expired_data. | 11 colunas | migration |
-| `talkx_engine_health` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | types.ts |
 | `talkx_help_views` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `talkx_link_clicks` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `talkx_links` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
@@ -216,7 +207,6 @@
 | `team_conversation_members` | Members of a team conversation with read/mute state | 9 colunas | migration |
 | `team_conversations` | Chat conversations between team members (direct, group, department) | 11 colunas | migration |
 | `team_message_reactions` | Emoji reactions on team messages (one per user per emoji per message) | 6 colunas | migration |
-| `team_message_read_state` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | types.ts |
 | `team_message_receipts` | Delivery and read receipts for team messages | 7 colunas | migration |
 | `team_messages` | Messages within a team conversation | 15 colunas | migration |
 | `training_sessions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 11 colunas | migration |
@@ -234,9 +224,6 @@
 | `webhook_rate_limits` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `whatsapp_connection_queues` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `whatsapp_connections` | Instancias da Evolution GO conectadas (instance_id unico), status da sessao e configuracao de webhook. | 25 colunas | migration |
-| `whatsapp_connections_agent` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | types.ts |
-| `whatsapp_connections_public` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | types.ts |
-| `whatsapp_connections_safe` | _(sem COMMENT ON TABLE — significado não documentado)_ | 20 colunas | types.ts |
 | `whatsapp_flows` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
 | `whatsapp_groups` | _(sem COMMENT ON TABLE — significado não documentado)_ | 11 colunas | migration |
 | `whatsapp_templates` | _(sem COMMENT ON TABLE — significado não documentado)_ | 14 colunas | migration |
@@ -307,7 +294,20 @@
 | `DocumentFamily` (TS) | pdf \| sheet \| doc \| ppt \| archive \| generic |  | `src/components/inbox/tabs/fileDisplay.ts` |
 | `GlowToken` (TS) | primary \| success \| warning \| info \| muted |  | `src/components/inbox/tabs/journey/motion/presets.ts` |
 | `TimePeriod` (TS) | 1h \| 6h \| 12h \| 24h \| 7d |  | `src/components/monitoring/hooks/types.ts` |
-| … +347 linhas — lista completa em `context.json` | | | |
+| `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
+| `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
+| `PeriodOption` (TS) | 7d \| 14d \| 30d \| custom |  | `src/components/queues/PeriodSelector.tsx` |
+| `ProviderType` (TS) | lovable_ai \| openai_compatible \| google_gemini \| custom_webhook \| custom_agent |  | `src/components/settings/ai-providers/types.ts` |
+| `MediaType` (TS) | stickers \| audio_memes \| custom_emojis |  | `src/components/settings/media-library/useMediaLibrary.ts` |
+| `PRESET_FIXED_OVERRIDES` (TS) | 'gradient-success' |  | `src/components/settings/theme/presets.ts` |
+| `AudienceFilterKey` (TS) | contact_status \| company \| funnel_stage \| seller \| rfm \| location |  | `src/components/talkx/TalkXAudienceFilters.tsx` |
+| `TalkXPreviewMode` (TS) | raw \| resolved |  | `src/components/talkx/TalkXMessagePreview.tsx` |
+| `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused |  | `src/components/talkx/TalkXView.tsx` |
+| `AnalyticsPeriod` (TS) | 7d \| 30d \| 90d \| month \| custom |  | `src/components/talkx/talkxAnalyticsFilters.ts` |
+| `TalkxInteractiveButtonType` (TS) | reply \| link |  | `src/components/talkx/talkxInteractive.ts` |
+| `TalkxInteractiveMode` (TS) | none \| buttons \| poll |  | `src/components/talkx/talkxInteractive.ts` |
+| `TalkXScreen` (TS) | monitor \| scheduled \| running \| paused |  | `src/components/talkx/talkxRoute.ts` |
+| … +334 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -429,6 +429,9 @@
 | tabela | tabela `t` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs`<br>`scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | tabela | tabela `t1` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs`<br>`scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `tabela` usada no código não existe nas migrations/types do repo | `scripts/ci/gerar-matriz-edge-tabela.mjs`<br>`scripts/inventario/gerar-banco.mjs`<br>`scripts/inventario/gerar-repo.mjs` |
+| tabela | tabela `tabela_depois_da_url` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
+| tabela | tabela `tabela_fantasma` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
+| tabela | tabela `tabela_normal` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `tabela_viva` usada no código não existe nas migrations/types do repo | `scripts/ci/check-remocoes-destrutivas.unit.mjs` |
 | tabela | tabela `tools_runtime` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `tx` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
@@ -437,16 +440,11 @@
 | tabela | tabela `x` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs`<br>`scripts/db-audit/supabase-usage-guard.mjs` |
 | tabela | tabela `x_novo` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | rls | `ai_jobs`: RLS ligado sem nenhuma política → só service_role acessa |  |
-| rls | `channel_connections_safe`: acessada do front (2 arquivo(s)) sem RLS (não encontrado) | `src/components/omnichannel/OmnichannelInbox.tsx`<br>`src/components/omnichannel/OmnichannelManager.tsx` |
 | rls | `gmail_oauth_states`: RLS ligado sem nenhuma política → só service_role acessa |  |
 | rls | `link_preview_cache`: RLS ligado sem nenhuma política → só service_role acessa |  |
 | rls | `messages`: front faz DELETE mas nenhuma política RLS permite DELETE → vai falhar/retornar vazio para usuários | `src/components/monitoring/hooks/useMonitoringActions.ts` |
-| rls | `password_reset_requests_safe`: acessada do front (1 arquivo(s)) sem RLS (não encontrado) | `src/hooks/security/usePasswordResetRequests.ts` |
 | rls | `query_telemetry`: front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários | `src/pages/AdminTelemetriaPage.tsx` |
-| rls | `talkx_campaign_metrics`: acessada do front (2 arquivo(s)) sem RLS (não encontrado) | `src/hooks/integrations/useTalkXInsights.ts`<br>`src/hooks/integrations/useTalkXTemplatesConversion.ts` |
 | rls | `talkx_test_send_claims`: RLS ligado sem nenhuma política → só service_role acessa |  |
-| rls | `team_message_read_state`: acessada do front (1 arquivo(s)) sem RLS (não encontrado) | `src/hooks/team-chat/useTeamReadState.ts` |
-| rls | `whatsapp_connections_safe`: acessada do front (2 arquivo(s)) sem RLS (não encontrado) | `src/components/omnichannel/OmnichannelManager.tsx`<br>`src/services/evolution.service.ts` |
 | rls | `whisper_messages`: front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `src/components/inbox/WhisperMode.tsx` |
 | edge | edge function `dashboard-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
 | edge | edge function `edge-a` invocada mas não existe em supabase/functions/ | `scripts/ci/inventario-rotas.unit.mjs` |
@@ -583,16 +581,7 @@
 - `copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `channel_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `gmail_accounts_safe.sync_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `password_reset_requests_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `talkx_campaign_metrics.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `talkx_engine_health.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `whatsapp_connections_agent.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 174/234 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
+- 161/221 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

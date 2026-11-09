@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "014270223cc89fb9be81eccf2290717dde2e131e",
+  "commit": "861877059b4507db3946bc9c34bb010609a7b5c2",
   "branch": "main",
-  "data_commit": "2026-11-09T14:16:26-03:00",
+  "data_commit": "2026-11-09T14:43:02-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "8618770",
+    "data": "2026-11-09",
+    "assunto": "fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto"
+   },
    {
     "sha": "0142702",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "9183f0f",
     "data": "2026-11-08",
     "assunto": "feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)"
-   },
-   {
-    "sha": "e6e467b",
-    "data": "2026-11-08",
-    "assunto": "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)"
    }
   ],
-  "arquivos_mudados_7d": 661,
+  "arquivos_mudados_7d": 659,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,9 +316,9 @@
  "contagens": {
   "arquivos_total": 8326,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878218,
+  "linhas_codigo": 878263,
   "rotas": 18,
-  "rotas_http_backend": 12,
+  "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 142,
@@ -600,7 +600,7 @@
   },
   "scripts/ai-context": {
    "arquivos": 3,
-   "linhas": 1458
+   "linhas": 1497
   },
   "scripts/catalog": {
    "arquivos": 2,
@@ -656,7 +656,7 @@
   },
   "scripts/regras_negocio": {
    "arquivos": 3,
-   "linhas": 2539
+   "linhas": 2545
   },
   "scripts/supabase_snapshot": {
    "arquivos": 2,
@@ -806,7 +806,7 @@
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
-   "linhas": 2138
+   "linhas": 2144
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 416,
+  "console_log": 415,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,
@@ -918,13 +918,13 @@
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linha": 188,
+   "linha": 193,
    "tipo": "TODO",
    "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(line); if (m) todos.push({ linha: ln, tipo: m[1], text"
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linha": 222,
+   "linha": 227,
    "tipo": "TODO",
    "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(l); return m ? { linha: i + 1, tipo: m[1], texto: m[2]"
   },

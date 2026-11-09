@@ -1676,16 +1676,16 @@
     "arquivos": 12
    },
    {
-    "host": "api.resend.com",
-    "arquivos": 12
-   },
-   {
     "host": "exemplo.com",
     "arquivos": 12
    },
    {
     "host": "signed.test",
     "arquivos": 12
+   },
+   {
+    "host": "api.resend.com",
+    "arquivos": 11
    },
    {
     "host": "local.test",
@@ -1756,10 +1756,6 @@
     "arquivos": 6
    },
    {
-    "host": "x.supabase.co",
-    "arquivos": 6
-   },
-   {
     "host": "cdn.exemplo.com",
     "arquivos": 5
    },
@@ -1781,6 +1777,10 @@
    },
    {
     "host": "x.com",
+    "arquivos": 5
+   },
+   {
+    "host": "x.supabase.co",
     "arquivos": 5
    },
    {
@@ -2674,7 +2674,7 @@
    },
    {
     "papel": "admin",
-    "ocorrencias": 69
+    "ocorrencias": 68
    },
    {
     "papel": "agent",
@@ -3309,7 +3309,7 @@
   "tabelas_sem_rls": []
  },
  "feature_flags": {
-  "total": 17,
+  "total": 16,
   "flags": [
    {
     "flag": "ENABLE_ANALYTICS",
@@ -3369,10 +3369,6 @@
    },
    {
     "flag": "nova-tela",
-    "arquivos": 1
-   },
-   {
-    "flag": "novo-inbox",
     "arquivos": 1
    },
    {

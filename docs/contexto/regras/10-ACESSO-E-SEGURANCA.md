@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `014270223c` · branch `main` · 2026-11-09 17:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `861877059b` · branch `main` · 2026-11-09 17:44 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -53,9 +53,7 @@
 | `catalog_rate_limit_hits` | enabled | — | — | — | — |
 | `catalog_rate_limits` | enabled | — | — | — | — |
 | `catalog_send_events` | enabled | authenticated: agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | — | — |
-| `catalog_send_stats` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `channel_connections` | enabled | authenticated: has_role(auth.uid(), 'admin') | authenticated: has_role(auth.uid(), 'admin') | authenticated: has_role(auth.uid(), 'admin') | authenticated: has_role(auth.uid(), 'admin') |
-| `channel_connections_safe` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `channel_routing_rules` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `chatbot_executions` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `chatbot_flows` | enabled | authenticated: true<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) |
@@ -112,7 +110,6 @@
 | `geo_blocking_settings` | enabled | authenticated: true<br>authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `global_settings` | enabled | authenticated: is_admin(auth.uid())<br>authenticated: is_admin(auth.uid()) OR ( is_admin_or_supervisor(auth.uid()) AND key !~ '(_api_key\|_secret\|_token)$' ) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `gmail_accounts` | enabled | authenticated: user_id = auth.uid() | authenticated: false | authenticated: false | authenticated: false |
-| `gmail_accounts_safe` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `gmail_oauth_states` | enabled | — | — | — | — |
 | `goals_configurations` | enabled | authenticated: profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())<br>authenticated: profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) |
 | `instance_pauses` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | — | — | — |
@@ -148,14 +145,12 @@
 | `outbox_events` | enabled | service_role: true | service_role: true | service_role: true | service_role: true |
 | `passkey_credentials` | enabled | authenticated: user_id = auth.uid() | — | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `password_reset_requests` | enabled | authenticated: false | anon: user_id IS NOT NULL AND status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL AND rejection_reason IS NULL AND token_expi<br>authenticated: user_id = auth.uid() | authenticated: has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
-| `password_reset_requests_safe` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `performance_snapshots` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | — | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `permissions` | enabled | authenticated: is_admin(auth.uid())<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `pinned_conversations` | enabled | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) |
 | `playbooks` | enabled | authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `products` | enabled | authenticated: true<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `profiles` | enabled | authenticated: is_admin_or_supervisor(auth.uid())<br>authenticated: user_id = auth.uid() | authenticated: auth.uid() = user_id AND (role IS NULL OR role = 'agent') AND (access_level IS NULL OR access_level = 'basic') AND (permissio | authenticated: is_admin_or_supervisor(auth.uid())<br>authenticated: auth.uid() = user_id<br>authenticated: is_admin_or_supervisor(auth.uid()) OR ( role = (SELECT p.role FROM profiles p WHERE p.user_id = auth.uid()) AND access_level  | — |
-| `profiles_public` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `prova_anterior` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `prova_hz503_asserts` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `qr_attempts` | enabled | authenticated: exists ( select 1 from public.whatsapp_connections c where c.id = qr_attempts.connection_id ) | — | — | — |
@@ -179,7 +174,6 @@
 | `search_events` | enabled | — | — | — | — |
 | `searchbox_budget_alert_cron` | enabled | — | — | — | — |
 | `searchbox_budget_alert_emails` | enabled | — | — | — | — |
-| `searchbox_usage_daily` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `security_acl_alerts` | enabled | authenticated: public.is_admin(auth.uid()) | — | — | — |
 | `security_alerts` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `sicoob_contact_mapping` | enabled | — | authenticated: is_admin_or_supervisor(auth.uid()) | — | — |
@@ -195,8 +189,6 @@
 | `talkx_alerts` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | — | — | — |
 | `talkx_blacklist` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: false |
 | `talkx_campaign_events` | enabled | authenticated: EXISTS (SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = talkx_campaign_events.campaign_id AND (tc.created_by = (SELECT  | authenticated: event_type IN ('note', 'checklist', 'segments_reviewed') AND ( EXISTS (SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id =  | — | — |
-| `talkx_campaign_metrics` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
-| `talkx_campaign_optouts` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `talkx_campaign_segments` | enabled | public: public.is_admin_or_supervisor(auth.uid())<br>public: exists ( select 1 from public.talkx_campaigns c where c.id = campaign_id and c.created_by = (select p.id from public.profiles p wher | public: public.is_admin_or_supervisor(auth.uid()) and exists ( select 1 from public.talkx_campaigns c where c.id = campaign_id and c.created | public: exists ( select 1 from public.talkx_campaigns c where c.id = campaign_id and c.created_by = (select p.id from public.profiles p wher | public: exists ( select 1 from public.talkx_campaigns c where c.id = campaign_id and c.created_by = (select p.id from public.profiles p wher |
 | `talkx_campaigns` | enabled | authenticated: created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1)<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) AND public.is_admin_or_supervisor(auth.uid() | authenticated: created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) AND public.is_admin_or_supervisor(auth.uid() | authenticated: created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) AND public.is_admin_or_supervisor(auth.uid() |
 | `talkx_contact_attributes` | enabled | authenticated: public.can_manage_contacts(auth.uid()) OR public.is_contact_visible_to_user(contact_id, auth.uid()) | — | — | — |
@@ -204,7 +196,6 @@
 | `talkx_data_jobs` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | — | — | — |
 | `talkx_ddd_regions` | enabled | authenticated, service_role: true | — | — | — |
 | `talkx_delivery_log` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | — | — | — |
-| `talkx_engine_health` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `talkx_help_views` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | — | — |
 | `talkx_link_clicks` | enabled | authenticated: link_id IN ( SELECT tl.id FROM public.talkx_links tl JOIN public.talkx_campaigns tc ON tc.id = tl.campaign_id WHERE tc.create | — | — | — |
 | `talkx_links` | enabled | authenticated: is_admin_or_supervisor(auth.uid())<br>authenticated: campaign_id IN ( SELECT tc.id FROM public.talkx_campaigns tc WHERE tc.created_by = (SELECT p.id FROM public.profiles p WHERE  | — | — | — |
@@ -225,7 +216,6 @@
 | `team_conversation_members` | enabled | authenticated: public.is_team_conversation_member(auth.uid(), team_conversation_members.conversation_id) | authenticated: public.can_insert_team_conversation_member( team_conversation_members.conversation_id, team_conversation_members.profile_id,  | authenticated: profile_id = public.current_profile_id() | authenticated: ( profile_id = public.current_profile_id() OR public.is_admin_or_supervisor(auth.uid()) ) AND NOT public.is_last_team_convers |
 | `team_conversations` | enabled | authenticated: public.is_team_conversation_member(auth.uid(), id) OR created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth | authenticated: created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1) | authenticated: created_by = public.current_profile_id() | authenticated: created_by = current_profile_id() OR is_admin_or_supervisor(auth.uid()) |
 | `team_message_reactions` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.team_messages tm JOIN public.team_conversation_members tcm ON tcm.conversation_id = tm.conversa<br>authenticated: EXISTS (SELECT 1 FROM public.team_conversation_members tcm JOIN public.team_messages tm ON tm.id = team_message_reactions.mes | authenticated: EXISTS ( SELECT 1 FROM public.profiles p WHERE p.id = team_message_reactions.profile_id AND p.user_id = auth.uid() ) AND EXIS | — | authenticated: EXISTS ( SELECT 1 FROM public.profiles p WHERE p.id = team_message_reactions.profile_id AND p.user_id = auth.uid() )<br>authenticated: profile_id = public.current_profile_id() |
-| `team_message_read_state` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `team_message_receipts` | enabled | authenticated: is_team_conversation_member(auth.uid(), conversation_id) | authenticated: profile_id = current_profile_id() | authenticated: profile_id = public.current_profile_id() | — |
 | `team_messages` | enabled | authenticated: public.is_team_conversation_member(auth.uid(), conversation_id) | authenticated: public.is_team_conversation_member(auth.uid(), conversation_id) AND sender_id = (SELECT p.id FROM public.profiles p WHERE p.u | authenticated: sender_id = current_profile_id() | authenticated: sender_id = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1) |
 | `training_sessions` | enabled | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) |
@@ -243,9 +233,6 @@
 | `webhook_rate_limits` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `whatsapp_connection_queues` | enabled | authenticated: true<br>authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `whatsapp_connections` | enabled | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
-| `whatsapp_connections_agent` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
-| `whatsapp_connections_public` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
-| `whatsapp_connections_safe` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `whatsapp_flows` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `whatsapp_groups` | enabled | public: true<br>authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: true<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | public: true<br>authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | public: true<br>authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | public: true<br>authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `whatsapp_templates` | enabled | authenticated: true<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) |
@@ -950,16 +937,11 @@ Middleware matcher (Next.js): nenhum
 | Tabela | Problema | Arquivos |
 |---|---|---|
 | `ai_jobs` | RLS ligado sem nenhuma política → só service_role acessa |  |
-| `channel_connections_safe` | acessada do front (2 arquivo(s)) sem RLS (não encontrado) | `src/components/omnichannel/OmnichannelInbox.tsx`<br>`src/components/omnichannel/OmnichannelManager.tsx` |
 | `gmail_oauth_states` | RLS ligado sem nenhuma política → só service_role acessa |  |
 | `link_preview_cache` | RLS ligado sem nenhuma política → só service_role acessa |  |
 | `messages` | front faz DELETE mas nenhuma política RLS permite DELETE → vai falhar/retornar vazio para usuários | `src/components/monitoring/hooks/useMonitoringActions.ts` |
-| `password_reset_requests_safe` | acessada do front (1 arquivo(s)) sem RLS (não encontrado) | `src/hooks/security/usePasswordResetRequests.ts` |
 | `query_telemetry` | front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários | `src/pages/AdminTelemetriaPage.tsx` |
-| `talkx_campaign_metrics` | acessada do front (2 arquivo(s)) sem RLS (não encontrado) | `src/hooks/integrations/useTalkXInsights.ts`<br>`src/hooks/integrations/useTalkXTemplatesConversion.ts` |
 | `talkx_test_send_claims` | RLS ligado sem nenhuma política → só service_role acessa |  |
-| `team_message_read_state` | acessada do front (1 arquivo(s)) sem RLS (não encontrado) | `src/hooks/team-chat/useTeamReadState.ts` |
-| `whatsapp_connections_safe` | acessada do front (2 arquivo(s)) sem RLS (não encontrado) | `src/components/omnichannel/OmnichannelManager.tsx`<br>`src/services/evolution.service.ts` |
 | `whisper_messages` | front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `src/components/inbox/WhisperMode.tsx` |
 
 ## Multi-tenancy
@@ -1002,9 +984,6 @@ Middleware matcher (Next.js): nenhum
 | `talkx_segments` | `archived_at` |
 | `talkx_templates` | `archived_at` |
 | `talkx_optout_keywords` | `active` |
-| `channel_connections_safe` | `is_active` |
-| `gmail_accounts_safe` | `is_active` |
-| `profiles_public` | `is_active` |
 
 ## Auditoria (colunas de rastreio)
 
@@ -1195,11 +1174,6 @@ Middleware matcher (Next.js): nenhum
 | `outbox_events` | `created_at` |
 | `search_events` | `created_at` |
 | `voip_profile_credentials` | `created_at`, `updated_at` |
-| `channel_connections_safe` | `created_at`, `created_by`, `updated_at` |
-| `gmail_accounts_safe` | `created_at`, `updated_at` |
-| `password_reset_requests_safe` | `created_at`, `updated_at` |
-| `talkx_campaign_metrics` | `created_at` |
-| `whatsapp_connections_safe` | `created_at`, `created_by`, `updated_at` |
 
 ## Dados pessoais / sensíveis (LGPD — cuidado em logs, exports, prompts de IA)
 
@@ -1225,8 +1199,6 @@ Middleware matcher (Next.js): nenhum
 | `rate_limit_logs` | `ip_address` |
 | `security_alerts` | `ip_address` |
 | `department_invitations` | `email` |
-| `password_reset_requests_safe` | `email` |
-| `password_reset_requests_safe` | `ip_address` |
 
 ## Colunas de dinheiro (tipo importa: numeric ✅ / float ❌)
 
@@ -1249,7 +1221,3 @@ Middleware matcher (Next.js): nenhum
 | `talkx_contact_attributes` | `total_spent` | `number` |
 | `talkx_segment_library_history` | `total_segments` | `integer` |
 | `copilot_feedback` | `feedback_type` | `TEXT` |
-| `catalog_send_stats` | `taxa_falha` | `number` |
-| `catalog_send_stats` | `taxa_parcial` | `number` |
-| `catalog_send_stats` | `total` | `number` |
-| `talkx_campaign_metrics` | `total_recipients` | `number` |
