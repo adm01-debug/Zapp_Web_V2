@@ -96,7 +96,7 @@ test('buildLogsSql usa ClickHouse, fonte correta e pathname fechado', () => {
   assert.throws(() => buildLogsSql([]), /vazio/);
 });
 
-test('queryAnalytics usa GET, endpoint atual, SQL e janela ISO sem expor token na URL', async () => {
+test('queryAnalytics usa POST, endpoint atual, SQL e janela ISO sem expor token na URL', async () => {
   const calls = [];
   const start = new Date('2026-11-07T12:00:00.000Z');
   const end = new Date('2026-11-07T12:05:00.000Z');
@@ -115,14 +115,15 @@ test('queryAnalytics usa GET, endpoint atual, SQL e janela ISO sem expor token n
 
   assert.deepEqual(result, { total: 12, errors: 2 });
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].init.method, 'GET');
-  assert.equal(calls[0].init.body, undefined);
+  assert.equal(calls[0].init.method, 'POST');
+  assert.equal(calls[0].init.headers['Content-Type'], 'application/json');
   assert.equal(calls[0].init.signal, 'signal');
   assert.equal(calls[0].init.headers.Authorization, 'Bearer management-token-secret');
   assert.equal(calls[0].url.pathname, `/v1/projects/${CANONICAL_PROJECT}/analytics/endpoints/logs`);
-  assert.equal(calls[0].url.searchParams.get('iso_timestamp_start'), start.toISOString());
-  assert.equal(calls[0].url.searchParams.get('iso_timestamp_end'), end.toISOString());
-  assert.match(calls[0].url.searchParams.get('sql'), /FROM logs/);
+  const body = JSON.parse(calls[0].init.body);
+  assert.match(body.sql, /FROM logs/);
+  assert.equal(body.iso_timestamp_start, start.toISOString());
+  assert.equal(body.iso_timestamp_end, end.toISOString());
   assert.doesNotMatch(calls[0].url.href, /management-token-secret/);
 });
 
