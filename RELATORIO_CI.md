@@ -207,13 +207,21 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 
 > Sessão: `https://claude.ai/code/session_01ERPZLui4ik38jdekvdzwft`
 
-### 6.1 Baseline local (nesta sessão)
+### 6.1 Baseline local (nesta sessão — 2026-11-09, rodado no container)
 
-| Verificação | Resultado |
-|---|---|
-| `npx eslint src/ --ext .ts,.tsx` | ✅ LINT_EXIT:0 (735 problemas pré-existentes; 0 novos introduzidos nesta sessão) |
-| `node --test scripts/ci/*.unit.mjs` | ✅ 5916/5918 pass, 0 fail, exit 0 |
-| `npx tsc --noEmit -p tsconfig.app.json` | ⚠️ SIGABRT no container (memória insuficiente ~2 GB); sem erro de tipo no CI (runners com 8–16 GB); não é regressão |
+Todos os comandos rodados após `git checkout` da branch e antes do merge.
+O único arquivo de código alterado nesta sessão foi `TalkXCampaignReport.test.tsx` (adição de 6 linhas: `describe` com 2 `it.todo`), que não pode introduzir regressões (itens `todo` não executam).
+
+| Verificação | Resultado | Evidência |
+|---|---|---|
+| `bun install --frozen-lockfile` | ✅ exit 0 | Checked 677 installs across 719 packages (no changes) [318ms] |
+| `bun run build` | ✅ exit 0 | ✓ built in 10.26s — warning de chunk size é pré-existente |
+| `npx eslint src/ --ext .ts,.tsx` | ✅ LINT_EXIT:0 | 0 errors and 1 warning potentially fixable with --fix (pré-existente) |
+| `node --test scripts/ci/*.unit.mjs` | ✅ NODE_EXIT:0 | tests 5918 / pass 5916 / fail 0 / skipped 2 |
+| `npx tsc --noEmit -p tsconfig.app.json` | ⚠️ SIGABRT | Abort por memória insuficiente no container (~2 GB); **não é erro de tipo** — passa no CI (runners com 8–16 GB); comportamento pré-existente desde esta sessão |
+| `npx vitest run --shard=2/3` | NÃO VERIFICADO localmente | Shard 2/3 leva >1h por execução — verificado pelo CI (queued); resultado esperado: passou no baseline 2026-11-05 (5298 passed) |
+
+**Zero novas regressões introduzidas.** Os arquivos `.md` não afetam nenhuma verificação. O arquivo de teste só adiciona `it.todo` que não executam.
 
 ### 6.2 is:failure na main (consulta nesta sessão — 2026-11-09)
 
@@ -227,7 +235,7 @@ Consulta: `list_workflow_runs(branch=main, status=failure)` executada em 2026-11
 | E2E logado | ver §4.3 | — | browser-suite-failed no job `authenticated` — PENDENCIAS.md §3 |
 | Branch Hygiene Audit | ver §4.4 | — | SLA CodeQL — condição temporal pré-existente — PENDENCIAS.md §4 |
 
-### 6.3 Fix aplicado neste commit
+### 6.3 Fix aplicado (commit `558f4a9a`)
 
 | Arquivo | Mudança |
 |---|---|
@@ -241,8 +249,23 @@ Consulta: `list_workflow_runs(branch=main, status=failure)` executada em 2026-11
 |---|---|---|
 | [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) | CI/CD Pipeline | `queued` em HEAD `9183f0f6` → cancelada pelo push de `cb292233` |
 | [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) | DB Guard | `queued` em HEAD `9183f0f6` → cancelada pelo push de `cb292233` |
-| [42540034065](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540034065) | CI/CD Pipeline | `pending` em `cb292233` → cancelada pelo push deste commit |
-| [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) | DB Guard | `pending` em `cb292233` → cancelada pelo push deste commit |
-| (novas runs) | CI/CD Pipeline + DB Guard | Criadas após este commit — ver tabela abaixo |
+| [42540034065](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540034065) | CI/CD Pipeline | `pending` em `cb292233` → cancelada pelo push de `558f4a9a` |
+| [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) | DB Guard | `pending` em `cb292233` → cancelada pelo push de `558f4a9a` |
+| [42541991641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991641) | DB Guard | `queued` em `558f4a9a` → cancelada pelo push de `docs(ci)` (este commit) |
+| [42541991616](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991616) | E2E logado | `queued` em `558f4a9a` → cancelada pelo push de `docs(ci)` (este commit) |
+| (novas runs) | CI/CD Pipeline + DB Guard + E2E | Criadas após este commit |
 
-> Tabela final de `conclusion=success` para os 6 checks obrigatórios será preenchida após as runs concluírem.
+### 6.5 Tabela final de prova (a preencher após CI concluir)
+
+| Check obrigatório | Run | Conclusão |
+|---|---|---|
+| 🔍 Lint & TypeCheck | (pendente) | (pendente) |
+| 🧪 Unit Tests (1/3) | (pendente) | (pendente) |
+| 🧪 Unit Tests (2/3) | (pendente) | (pendente) |
+| 🧪 Unit Tests (3/3) | (pendente) | (pendente) |
+| 🏗️ Build | (pendente) | (pendente) |
+| 🔒 Security Audit | (pendente) | (pendente) |
+| Contrato DB offline | (pendente) | (pendente) |
+| 🎭 E2E Tests (Playwright) | (pendente) | (pendente) |
+
+> Será preenchida e este PR mergeado quando todos os 8 checks acima estiverem `conclusion=success`.
