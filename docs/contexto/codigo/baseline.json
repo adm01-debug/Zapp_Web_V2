@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "fe6c6b0bf83dbeeec257016e85013314d7d9ff93",
+  "commit": "3a8161c7e70b442fb8f19e96ada5f401f8f9d63a",
   "branch": "main",
-  "data_commit": "2026-11-09T15:52:50-03:00",
+  "data_commit": "2026-11-09T17:46:39-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "3a8161c",
+    "data": "2026-11-09",
+    "assunto": "fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções"
+   },
    {
     "sha": "fe6c6b0",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "8f7a8ee",
     "data": "2026-11-09",
     "assunto": "test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)"
-   },
-   {
-    "sha": "568d3f9",
-    "data": "2026-11-09",
-    "assunto": "feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData"
    }
   ],
-  "arquivos_mudados_7d": 657,
+  "arquivos_mudados_7d": 653,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -189,7 +189,7 @@
    },
    {
     "pasta": "src/hooks/chat",
-    "mudancas": 105
+    "mudancas": 104
    },
    {
     "pasta": "src/components/settings",
@@ -214,11 +214,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 13
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 12
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 12
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8326,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878267,
+  "linhas_codigo": 878270,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
-   "linhas": 4488
+   "linhas": 4491
   },
   "scripts/eslint": {
    "arquivos": 1,

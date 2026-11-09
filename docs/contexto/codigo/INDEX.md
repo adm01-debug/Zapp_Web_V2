@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `fe6c6b0bf83dbeeec257016e85013314d7d9ff93` (2026-11-09T15:52:50-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `3a8161c7e70b442fb8f19e96ada5f401f8f9d63a` (2026-11-09T17:46:39-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8326 |
 | arquivos_codigo | 4753 |
-| linhas_codigo | 878267 |
+| linhas_codigo | 878270 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `fe6c6b0b`
+- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `3a8161c7`
 - comunidades maiores: framer-motion (838), cn (809), react (796), lucide-react (690), TalkXSuppression.tsx (635), vitest (617), validation.ts (450), ExternalProductManagement.tsx (442), ref_https (420), @tanstack/react-query (401), ref_node_fs (359), framer-motion (316)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -394,8 +394,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/ci.yml (16)
 - CLAUDE.md (13)
 - docs/ci/README.md (13)
-- src/integrations/supabase/types.ts (13)
 - docs/DB-INVENTORY.md (12)
+- src/integrations/supabase/types.ts (12)
 - supabase/deployment-manifest.json (12)
 - supabase/schema-manifest.json (12)
 - RELATORIO_CI.md (11)
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `3a8161c` fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções
 - 2026-11-09 `fe6c6b0` fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos
 - 2026-11-09 `ff90439` chore(db): sincronizar artefatos derivados do banco (#2902)
 - 2026-11-09 `8618770` fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `a3f3e8c` fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7
 - 2026-11-09 `17a43dd` fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)
 - 2026-11-09 `5214e86` fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)
-- 2026-11-09 `a6c3519` feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
