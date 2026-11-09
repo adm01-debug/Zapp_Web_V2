@@ -18,6 +18,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    # ready_for_review: sem ele, um draft (unit-tests e build pulados) marcado como pronto
+    # ficava mergeavel com o SHA sem Vitest nem build; db-guard.yml ja tinha o mesmo type.
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 # W49: VITE_* movido para os jobs build (step-level) e e2e (job-level); sem vazamento para lint/test/security.
