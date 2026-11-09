@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1c3535a04783d99ca372236210057a314fba8078",
+  "commit": "0e0bdc4f407d110da091eea2659e24a6f48c8d8b",
   "branch": "main",
-  "data_commit": "2026-11-09T11:18:55Z",
+  "data_commit": "2026-11-09T11:37:34Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0e0bdc4",
+    "data": "2026-11-09",
+    "assunto": "ci(db-audit): corrige DB Guard offline e DB Live Guard (#2867)"
+   },
    {
     "sha": "1c3535a",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "f93fad9",
     "data": "2026-11-07",
     "assunto": "feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)"
-   },
-   {
-    "sha": "babb270",
-    "data": "2026-11-07",
-    "assunto": "test(e2e): aguarda readiness dos insights de busca (#2787)"
    }
   ],
-  "arquivos_mudados_7d": 1084,
+  "arquivos_mudados_7d": 1085,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -226,15 +226,15 @@
     "mudancas": 11
    },
    {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
+   },
+   {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
    },
    {
@@ -270,6 +270,10 @@
     "mudancas": 7
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 7
+   },
+   {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 7
    },
@@ -282,19 +286,15 @@
     "mudancas": 7
    },
    {
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 7
+   },
+   {
     "arquivo": "e2e/email-navy-visual.spec.ts",
     "mudancas": 6
    },
    {
     "arquivo": "e2e/telefonia.spec.ts",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "playwright.config.ts",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/ci/check-test-inventory.mjs",
     "mudancas": 6
    }
   ],

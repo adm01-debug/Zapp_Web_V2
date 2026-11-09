@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "1c3535a04783d99ca372236210057a314fba8078",
+  "sha": "0e0bdc4f407d110da091eea2659e24a6f48c8d8b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 11:27 UTC",
+  "generated_at": "2026-11-09 11:40 UTC",
   "files_total": 8162,
   "code_files": 6020,
   "code_lines": 1044647
@@ -384097,10 +384097,22 @@
   }
  },
  "git": {
-  "sha": "1c3535a04783d99ca372236210057a314fba8078",
+  "sha": "0e0bdc4f407d110da091eea2659e24a6f48c8d8b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "0e0bdc4",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "ci(db-audit): corrige DB Guard offline e DB Live Guard (#2867)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
+     "supabase/schema-catalog.json"
+    ]
+   },
    {
     "sha": "1c3535a",
     "date": "2026-11-09",
@@ -384436,18 +384448,6 @@
     "files": [
      "scripts/db-audit/migration-evidence.json"
     ]
-   },
-   {
-    "sha": "5fec88f",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "chore(db): sincroniza artefatos derivados e inventário (#2783)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-catalog.json",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
@@ -384462,6 +384462,22 @@
    [
     "docs/talkx/ESTADOS.md",
     3
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    1
+   ],
+   [
+    "scripts/db-audit/grants-baseline.json",
+    1
+   ],
+   [
+    "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
+    1
+   ],
+   [
+    "supabase/schema-catalog.json",
+    1
    ],
    [
     "inventario/estado/banco.json",
@@ -384513,22 +384529,6 @@
    ],
    [
     "src/hooks/sla/useSLARules.ts",
-    1
-   ],
-   [
-    "src/hooks/team-chat/useTeamReadState.ts",
-    1
-   ],
-   [
-    "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
-    1
-   ],
-   [
-    "scripts/ci/check-claude-md-integrity.mjs",
-    1
-   ],
-   [
-    "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
     1
    ]
   ]

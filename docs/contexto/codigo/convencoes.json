@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "ci(db-audit): corrige DB Guard offline e DB Live Guard (#2867)",
    "chore: inventário do estado real (semanal) (#2848)",
    "fix(inventario): corrige detecção de edges — prefixo, template invoke e segredos de helpers",
    "fix(hooks): expõe isError em 9 hooks sem estado de erro (#2873)",
-   "test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)",
-   "feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData"
+   "test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

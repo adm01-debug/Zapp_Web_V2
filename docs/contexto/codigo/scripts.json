@@ -3320,7 +3320,7 @@
   {
    "arquivo": "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
    "descricao": "R2-DB-020 (P1). Contrato de autorização da mídia do Team Chat — a ACL de leitura de storage.objects (bucket team-chat-files) e a persistência de",
-   "linhas": 541,
+   "linhas": 536,
    "env": [],
    "npm_scripts": [],
    "workflows": [
