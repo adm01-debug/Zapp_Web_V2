@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "af47ad6f46c9ee5880ae36a176b790ef33583219",
+  "commit": "0c191b6b141efc259972756117aba795e18e1bb3",
   "branch": "main",
-  "data_commit": "2026-11-09T12:15:14-03:00",
+  "data_commit": "2026-11-09T12:55:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0c191b6",
+    "data": "2026-11-09",
+    "assunto": "fix(migrations): IF EXISTS guards em migrations 220300 e 230300 para E2E"
+   },
    {
     "sha": "af47ad6",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "9fd0fe4",
     "data": "2026-11-08",
     "assunto": "test(e2e): alinha placeholder da paleta única (#2799)"
-   },
-   {
-    "sha": "b5e89bb",
-    "data": "2026-11-08",
-    "assunto": "fix(test): restaura imports Deno nos contratos"
    }
   ],
-  "arquivos_mudados_7d": 660,
+  "arquivos_mudados_7d": 662,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -214,11 +214,11 @@
     "mudancas": 14
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 12
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
