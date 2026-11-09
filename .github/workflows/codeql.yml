@@ -14,7 +14,9 @@
 name: CodeQL
 
 on:
-  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura semanal + dispatch.
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR.
+  # A varredura continua DIARIA (30 9 * * * = 06:30 BRT). Semanal deixaria ate
+  # 6 dias sem SAST, e este workflow nao roda mais em pull request.
   # W50: permite reexecutar a varredura completa apos triagem sem precisar de PR novo.
   workflow_dispatch:
   schedule:
@@ -51,7 +53,7 @@ jobs:
           persist-credentials: false
 
       - name: 🧬 Initialize CodeQL
-        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           languages: javascript-typescript
           build-mode: none
@@ -59,7 +61,7 @@ jobs:
           config-file: .github/codeql/codeql-config.yml
 
       - name: 🔬 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: '/language:javascript-typescript'
 
@@ -83,12 +85,12 @@ jobs:
           persist-credentials: false
 
       - name: 🧬 Initialize CodeQL
-        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           languages: actions
           build-mode: none
 
       - name: 🔬 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: '/language:actions'

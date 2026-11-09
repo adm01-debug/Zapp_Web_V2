@@ -13,7 +13,13 @@ const DEFAULT_ALLOWED_ORIGIN = CANONICAL_ORIGINS[0]; // fallback para testes uni
 const DEFAULT_DENIED_ORIGIN = _allowedOriginsConfig.denied_example ?? 'https://edge-smoke.invalid';
 // verify_jwt=false is required for cron callers that cannot mint a user JWT,
 // but these functions still enforce authentication inside their handler.
-const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration', 'connection-health-check', 'batch-fetch-avatars']);
+const INTERNAL_AUTH_FUNCTIONS = new Set([
+  'crm-integration',
+  'connection-health-check',
+  'batch-fetch-avatars',
+  // verify_jwt=false para o pg_cron; sem o segredo do Vault tem de continuar 401.
+  'ai-usage-outbox-drain',
+]);
 const DISABLED_FUNCTIONS = new Map([['public-api', 410]]);
 
 function parseArgs(argv) {
@@ -34,7 +40,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${key}`);
   }
   for (const required of ['baseUrl', 'outputPath', 'gitSha', 'runId']) {
-    if (!args[required]) throw new Error(`Missing required argument: ${required}`);
+    if (!args[required]) { process.stderr.write(`Missing required argument: ${required}\n`); process.exit(2); }
   }
   if (!Number.isInteger(args.concurrency) || args.concurrency < 1 || args.concurrency > 20) {
     throw new Error('concurrency must be an integer between 1 and 20');
@@ -179,7 +185,13 @@ export async function runSmokeSuite(args) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
   const evidence = await runSmokeSuite(args);
   for (const result of evidence.results) {
     console.log(`${result.passed ? 'PASS' : 'FAIL'} ${result.name}`);

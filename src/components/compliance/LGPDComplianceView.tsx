@@ -93,12 +93,12 @@ export function LGPDComplianceView() {
                   <CircleSlash className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" aria-hidden="true" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-medium text-foreground flex flex-wrap items-center gap-2">
                     {right.title}
                     {!right.available && (
                       <Badge variant="secondary" className="text-3xs">indisponível</Badge>
                     )}
-                  </p>
+                  </div>
                   <p className="text-xs text-muted-foreground">{right.desc}</p>
                 </div>
               </div>

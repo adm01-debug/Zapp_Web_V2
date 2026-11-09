@@ -18,7 +18,7 @@
  * `audio-messages` corresponde ao userId do JWT do chamador.
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { isValidUUID, requireEnv } from './validation.ts';
 
 export type AudioObjectAuthzResult =

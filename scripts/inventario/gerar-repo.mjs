@@ -14,17 +14,34 @@ const OUT = join(RAIZ, 'inventario/estado');
 mkdirSync(OUT, { recursive: true });
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-function rgCount(pattern, paths) {
+function executarRg(args) {
   try {
-    const out = execFileSync('rg', ['-c', '--no-messages', pattern, ...paths.map((p) => join(RAIZ, p))], { encoding: 'utf8' });
-    return out.split('\n').filter(Boolean).reduce((n, l) => n + Number(l.slice(l.lastIndexOf(':') + 1)), 0);
-  } catch { return 0; }
+    return execFileSync('rg', args, { encoding: 'utf8' });
+  } catch (erro) {
+    // O ripgrep usa exit 1 para "nenhum resultado"; isso não é falha da busca.
+    if (erro?.status === 1) return '';
+    if (erro?.code === 'ENOENT') {
+      throw new Error('ripgrep (rg) não encontrado; o inventário não pode ser gerado com segurança.', { cause: erro });
+    }
+    const status = Number.isInteger(erro?.status) ? erro.status : 'desconhecido';
+    throw new Error(`ripgrep (rg) falhou com exit ${status}; o inventário não foi gerado.`, { cause: erro });
+  }
+}
+function rgCount(pattern, paths) {
+  const out = executarRg(['-c', '--no-messages', pattern, ...paths.map((p) => join(RAIZ, p))]);
+  return out.split('\n').filter(Boolean).reduce((n, l) => n + Number(l.slice(l.lastIndexOf(':') + 1)), 0);
 }
 function rgFiles(pattern, paths) {
-  try {
-    return execFileSync('rg', ['-l', '--no-messages', pattern, ...paths.map((p) => join(RAIZ, p))], { encoding: 'utf8' })
-      .split('\n').filter(Boolean).map((f) => f.slice(RAIZ.length));
-  } catch { return []; }
+  return executarRg(['-l', '--no-messages', pattern, ...paths.map((p) => join(RAIZ, p))])
+    .split('\n').filter(Boolean).map((f) => f.slice(RAIZ.length));
+}
+
+function arquivosTs(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
+    const p = join(dir, d.name);
+    if (d.isDirectory()) return arquivosTs(p);
+    return d.name.endsWith('.ts') && !d.name.endsWith('.test.ts') ? [p] : [];
+  });
 }
 
 const edges = readdirSync(FDIR, { withFileTypes: true })
@@ -35,10 +52,16 @@ const inventario = {};
 for (const f of edges) {
   const q = esc(f);
   const code = readFileSync(join(FDIR, f, 'index.ts'), 'utf8');
-  const envs = [...new Set([...code.matchAll(/Deno\.env\.get\(\s*['"]([A-Z0-9_]+)['"]/g)].map((m) => m[1]))].sort();
-  const src = rgFiles(`(functions\\.invoke\\(\\s*['"\`]${q}['"\`]|functions/v1/${q}\\b|['"\`]${q}['"\`]\\s*[,)])`, ['src']);
-  const migrations = rgFiles(`functions/v1/${q}\\b`, ['supabase/migrations']);
-  const outrasEdges = rgFiles(`functions/v1/${q}\\b|['"\`]${q}['"\`]`, ['supabase/functions']).filter((p) => !p.startsWith(`supabase/functions/${f}/`));
+  // Segredos: todos os .ts da pasta da edge (helpers em subpastas também), não só o index.ts.
+  const fontes = arquivosTs(join(FDIR, f)).map((p) => readFileSync(p, 'utf8')).join('\n');
+  const envs = [...new Set([...fontes.matchAll(/Deno\.env\.get\(\s*['"`]([A-Z0-9_]+)['"`]/g)].map((m) => m[1]))].sort();
+  // `\b` deixava `foo` casar `/functions/v1/foo-bar`; o fim do nome exige um não-[A-Za-z0-9_-] ou fim de linha.
+  const fimNome = '([^A-Za-z0-9_-]|$)';
+  const url = `functions/v1/${q}${fimNome}`;
+  // Aspa de fechamento OU `/` logo após o nome: cobre invoke(`nome/${acao}`).
+  const src = rgFiles(`(functions\\.invoke\\(\\s*['"\`]${q}(['"\`]|/)|${url}|['"\`]${q}['"\`]\\s*[,)])`, ['src']);
+  const migrations = rgFiles(url, ['supabase/migrations']);
+  const outrasEdges = rgFiles(`${url}|['"\`]${q}['"\`]`, ['supabase/functions']).filter((p) => !p.startsWith(`supabase/functions/${f}/`));
   const e2e = rgFiles(q, ['e2e']);
   const ci = rgFiles(q, ['.github/workflows', 'supabase/config.toml']);
   inventario[f] = {
@@ -54,16 +77,18 @@ console.log(`edges: ${edges.length} | sem chamador no repo (src/migrations/edges
 
 if (!process.stdin.isTTY) {
   const nomes = readFileSync(0, 'utf8').split(/\s+/).filter(Boolean);
-  const uso = {};
-  for (const t of nomes) {
-    const q = esc(t);
-    uso[t] = {
-      from_src: rgCount(`\\.from\\(\\s*['"\`]${q}['"\`]`, ['src']),
-      from_edges: rgCount(`\\.from\\(\\s*['"\`]${q}['"\`]`, ['supabase/functions']),
-      em_types_ts: rgCount(`^\\s+${q}: \\{`, ['src/integrations/supabase/types.ts']) > 0,
-    };
+  if (nomes.length > 0) {
+    const uso = {};
+    for (const t of nomes) {
+      const q = esc(t);
+      uso[t] = {
+        from_src: rgCount(`\\.from\\(\\s*['"\`]${q}['"\`]`, ['src']),
+        from_edges: rgCount(`\\.from\\(\\s*['"\`]${q}['"\`]`, ['supabase/functions']),
+        em_types_ts: rgCount(`^\\s+${q}: \\{`, ['src/integrations/supabase/types.ts']) > 0,
+      };
+    }
+    const semFrom = Object.entries(uso).filter(([, v]) => v.from_src + v.from_edges === 0).map(([k]) => k);
+    writeFileSync(join(OUT, 'tabelas-uso.json'), JSON.stringify({ gerado_em: new Date().toISOString(), total: nomes.length, sem_from_em_src_nem_edges: semFrom, tabelas: uso }) + '\n');
+    console.log(`tabelas: ${nomes.length} | sem .from() em src nem edges: ${semFrom.length}`);
   }
-  const semFrom = Object.entries(uso).filter(([, v]) => v.from_src + v.from_edges === 0).map(([k]) => k);
-  writeFileSync(join(OUT, 'tabelas-uso.json'), JSON.stringify({ gerado_em: new Date().toISOString(), total: nomes.length, sem_from_em_src_nem_edges: semFrom, tabelas: uso }) + '\n');
-  console.log(`tabelas: ${nomes.length} | sem .from() em src nem edges: ${semFrom.length}`);
 }

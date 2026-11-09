@@ -123,6 +123,39 @@ class SnapshotFixture(unittest.TestCase):
 
 
 class SnapshotSQLRecoveryTests(SnapshotFixture):
+    def test_output_marker_is_created_preserved_and_recovers_legacy_snapshot(self):
+        self.out.mkdir()  # diretório existente e vazio também é um alvo novo válido.
+        self.assertEqual(self.collect(), 0)
+        marker = self.out / self.snapshot.OUTPUT_MARKER
+        self.assertEqual(marker.read_text(encoding="utf-8"), self.snapshot.OUTPUT_MARKER_CONTENT)
+        marker.unlink()  # snapshot.json v2 identifica uma saída legítima anterior ao marcador.
+        self.assertEqual(self.collect(), 0)
+        self.assertEqual(marker.read_text(encoding="utf-8"), self.snapshot.OUTPUT_MARKER_CONTENT)
+
+    def test_unowned_nonempty_output_is_rejected_before_collection(self):
+        unowned = pathlib.Path(self.temp.name) / "unowned"
+        unowned.mkdir()
+        sentinel = unowned / "user.txt"
+        sentinel.write_text("não apagar", encoding="utf-8")
+        self.snapshot.OUT = unowned
+        with mock.patch.object(self.snapshot, "introspect_db", side_effect=AssertionError("coleta proibida")):
+            with contextlib.redirect_stderr(io.StringIO()) as stderr:
+                self.assertEqual(self.snapshot.main(), 2)
+        self.assertIn("sem marcador/snapshot válido", stderr.getvalue())
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "não apagar")
+        self.assertFalse((unowned / self.snapshot.OUTPUT_MARKER).exists())
+
+    def test_broad_output_paths_are_rejected_before_collection(self):
+        cwd = pathlib.Path.cwd().resolve()
+        unsafe = {pathlib.Path(cwd.anchor).resolve(), pathlib.Path.home().resolve(), cwd, cwd.parent}
+        for path in unsafe:
+            with self.subTest(path=path):
+                self.snapshot.OUT = path
+                with mock.patch.object(self.snapshot, "introspect_db", side_effect=AssertionError("coleta proibida")):
+                    with contextlib.redirect_stderr(io.StringIO()) as stderr:
+                        self.assertEqual(self.snapshot.main(), 2)
+                self.assertIn("SNAPSHOT_DIR inseguro", stderr.getvalue())
+
     def test_successful_collection_writes_full_sql_with_compact_metadata(self):
         self.assertEqual(self.collect(), 0)
         self.assertEqual(self.function_sql().read_text().strip(), function()["definition"])
@@ -785,6 +818,29 @@ class SnapshotDBStatsTests(SnapshotFixture):
         stats, _, errors = self.stats(failure="database")
         self.assertIsNone(stats)
         self.assertEqual(errors, {"db_stats"})
+
+
+class SnapshotConfigurationTests(unittest.TestCase):
+    def test_invalid_integer_environment_is_reported_without_traceback(self):
+        script = pathlib.Path(__file__).with_name("snapshot.py")
+        for key, value in (("CRON_RUNS_PER_JOB", "x"), ("STAT_STATEMENTS_TOP", "1.5"),
+                           ("CODE_SCAN_MAX_FILES", "")):
+            with self.subTest(key=key):
+                driver = types.ModuleType("psycopg")
+                driver.connect = mock.Mock(side_effect=AssertionError("conexão proibida"))
+                rows = types.ModuleType("psycopg.rows")
+                rows.dict_row = object()
+                spec = importlib.util.spec_from_file_location(f"snapshot_invalid_{key}", script)
+                snapshot = importlib.util.module_from_spec(spec)
+                env = {"SUPABASE_DB_URL": "offline-fixture", key: value}
+                with mock.patch.dict(sys.modules, {"psycopg": driver, "psycopg.rows": rows}):
+                    with mock.patch.dict(os.environ, env, clear=True):
+                        spec.loader.exec_module(snapshot)
+                with contextlib.redirect_stderr(io.StringIO()) as stderr:
+                    self.assertEqual(snapshot.main(), 2)
+                message = stderr.getvalue()
+                self.assertIn(f"Configuração inválida: {key}", message)
+                self.assertNotIn("Traceback", message)
 
 
 def db_stats_case(method, *args):

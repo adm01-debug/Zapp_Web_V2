@@ -43,14 +43,23 @@ export function IconTile({ icon: Icon, color = 'blue', size = 40, glow = false, 
  * montava a sua à mão e as cópias divergiam. `aria-label` fixo para a trilha ser
  * localizável por leitor de tela e por teste; o último item é o ponto atual.
  */
-export function ModuleBreadcrumb({ items, className }: { items: string[]; className?: string }) {
+export function ModuleBreadcrumb({ items, className, onItemClick }: { items: string[]; className?: string; onItemClick?: (index: number) => void }) {
   if (items.length === 0) return null;
   return (
     <nav aria-label="Trilha de navegação" className={cn('flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5 flex-wrap min-w-0', className)}>
       {items.map((item, i) => (
         <Fragment key={`${i}-${item}`}>
           {i > 0 && <span aria-hidden="true" className="text-border">›</span>}
-          <span className={i === items.length - 1 ? 'text-foreground font-medium truncate' : 'truncate'}>{item}</span>
+          {onItemClick && i < items.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => onItemClick(i)}
+              aria-label={i === items.length - 2 ? `Voltar à ${item.toLowerCase()}` : undefined}
+              className="h-9 px-2 inline-flex items-center rounded-lg hover:bg-muted/50 hover:text-foreground truncate transition-colors"
+            >{item}</button>
+          ) : (
+            <span className={i === items.length - 1 ? 'text-foreground font-medium truncate' : 'truncate'}>{item}</span>
+          )}
         </Fragment>
       ))}
     </nav>

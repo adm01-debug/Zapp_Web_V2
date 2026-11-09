@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";

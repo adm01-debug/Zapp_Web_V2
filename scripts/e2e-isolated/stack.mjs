@@ -81,16 +81,18 @@ export function serviceConfiguration({ credentials: c, runId, sourceSha, fullSui
     ...(fullSuite ? { provider: {
       env: { ...shared, ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha,
         EVOLUTION_API_KEY: c.evolutionKey, EVOLUTION_DEFAULT_INSTANCE_TOKEN: c.instanceToken,
-        PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: c.catalogKey },
+        PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: c.catalogKey, E2E_QR_INSTANCE_TOKEN: c.qrInstanceToken },
       args: ['node', '/work/scripts/e2e-isolated/providers.mjs'],
     } } : {}),
     vite: {
       env: {
         ...shared, NODE_ENV: 'development', HOME: '/tmp', GITHUB_SHA: sourceSha,
+        ZAPP_E2E_FORCE_ONLINE: '1',
         VITE_ZAPP_LOCAL_SUPABASE_URL: ORIGIN, VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY: c.anonKey,
         VITE_CRM_INTEGRATION_ENABLED: 'true',
       },
-      args: ['bun', 'run', 'dev', '--', '--host', '127.0.0.1', '--port', '5174', '--strictPort'],
+      args: ['bun', 'run', 'dev', '--', '--config', 'scripts/e2e-isolated/vite.config.ts',
+        '--host', '127.0.0.1', '--port', '5174', '--strictPort'],
     },
     driver: {
       env: {
@@ -103,7 +105,8 @@ export function serviceConfiguration({ credentials: c, runId, sourceSha, fullSui
         E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY: c.serviceRoleKey,
         E2E_TEST_EMAIL: c.email, E2E_TEST_PASSWORD: c.password,
         ...(fullSuite ? { DB_URL: database('supabase_admin'), EVOLUTION_DEFAULT_INSTANCE_TOKEN: c.instanceToken,
-          E2E_CATALOG_PRODUCT_SKU: CATALOG_SKU } : {}),
+          E2E_CATALOG_PRODUCT_SKU: CATALOG_SKU, E2E_QR_TEST_EMAIL: c.qrEmail,
+          E2E_QR_TEST_PASSWORD: c.qrPassword, E2E_QR_INSTANCE_TOKEN: c.qrInstanceToken } : {}),
         CAPTURA_DIR: '/output/captures', PLAYWRIGHT_HTML_OPEN: 'never',
       },
       args: ['node', '-e', 'setInterval(() => {}, 1000)'],

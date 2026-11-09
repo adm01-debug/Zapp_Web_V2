@@ -55,6 +55,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Verificar atualizacoes da toolchain
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/bump-toolchain.mjs
+
       - name: KPI do GitHub Actions
         # E79: mede o proprio uso do Actions -- runs/semana por workflow, taxa de
         # cancelamento, taxa de falha, minutos e os 5 jobs mais lentos. Publica no Job

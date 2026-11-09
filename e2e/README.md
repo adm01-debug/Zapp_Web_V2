@@ -17,17 +17,21 @@ imagens e os arquivos publicáveis estão em
 bun install --frozen-lockfile --ignore-scripts
 # Cada destino precisa estar vazio e fora do checkout.
 bash scripts/e2e-isolated/run.sh login /tmp/e2e-isolated-login
-bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-authenticated
+bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-authenticated-1
+bash scripts/e2e-isolated/run.sh suite authenticated-2-of-3 /tmp/e2e-isolated-authenticated-2
+bash scripts/e2e-isolated/run.sh suite authenticated-3-of-3 /tmp/e2e-isolated-authenticated-3
 bash scripts/e2e-isolated/run.sh suite deslogado-principal /tmp/e2e-isolated-deslogado-principal
 bash scripts/e2e-isolated/run.sh suite deslogado-secundario /tmp/e2e-isolated-deslogado-secundario
 ```
 
 `login` executa somente `setup/authenticate`. Esse resultado não aprova os demais
-projetos. Cada grupo da suíte usa coleta `--list` separada, a mesma seleção na
-execução e `--workers 1`, porque as fixtures existentes compartilham recursos.
-Não há parâmetro livre para ignorar dependências, escolher comandos ou apontar
-um backend externo. O resultado completo depende da execução nativa de cada
-grupo, não das simulações locais de controle.
+projetos. Cada grupo da suíte usa coleta `--list` separada e a mesma seleção,
+shard e concorrência na execução. Todos usam `--workers 1`: os três shards
+autenticados distribuem os casos `1/3`, `2/3` e `3/3` em backends descartáveis
+independentes, sem concorrência sobre as mesmas fixtures. Não há parâmetro livre
+para ignorar dependências, escolher comandos ou apontar um backend externo. O
+resultado completo depende da execução nativa dos cinco grupos, não das
+simulações locais de controle.
 
 ## Fixture de autenticação
 
@@ -59,11 +63,15 @@ Essa cobertura pública não deve ser contada novamente entre os projetos abaixo
 
 ## Grupos e GitHub Actions
 
-A interface do controller conserva a seleção explícita de 9 + 3 + 3 projetos:
+A interface do controller conserva 15 projetos distintos. A seleção autenticada
+de nove projetos é repetida em três backends e o Playwright atribui cada caso a
+exatamente um dos shards fechados:
 
 | Grupo | Projetos |
 |---|---|
-| `authenticated` | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `authenticated-1-of-3` (`--shard 1/3`) | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `authenticated-2-of-3` (`--shard 2/3`) | os mesmos nove projetos, em backend próprio |
+| `authenticated-3-of-3` (`--shard 3/3`) | os mesmos nove projetos, em backend próprio |
 | `deslogado-principal` | `chromium-mapa`, `firefox-auth`, `webkit-auth` |
 | `deslogado-secundario` | `chromium-telefonia`, `firefox-telefonia`, `webkit-telefonia` |
 
@@ -97,6 +105,32 @@ Em `conversation.spec.ts`, a navegação ocorre antes de
 reabre a conversa local entre os cenários e clica em "Todas", preservando o teste
 do FSM e sua restauração. `messaging.spec.ts` navega e escolhe a conversa sem
 substituir o envio por uma inserção artificial.
+
+No ramo `ZAPP_E2E_LOCAL=1`, a mesma mensagem fresca
+`[E2E fixture setup]` é criada pelo helper Node
+`scripts/e2e-isolated/fixture-access.mjs`. O guard de proveniência do banco
+recusa `sender='contact'` com JWT `authenticated`; o helper mantém essa
+proteção e usa a chave sintética `service_role` somente depois de comprovar
+origem fixa, prova do controlador, namespace, interfaces e identidade do
+gateway, e de ler o contato canônico com o JWT real do usuário. Após cada
+espera de rede, reconfirma a mesma execução, SHA e hash da chave anon. A chave
+privilegiada nunca passa por `page.evaluate`, pela página ou pelo retorno da
+função.
+
+O POST aceita somente os quatro campos fixos da mensagem de texto e exige
+uma única linha coerente. Em seguida, o helper lê o ID recém-criado com
+anon + JWT do usuário: privilégio de preparo não substitui a prova de RLS.
+Esse texto mantém o comportamento de `conversation`, `reactions`,
+`inbox-contact-sidebar` e `media-volume`; a mensagem canônica de áudio e o
+fluxo de envio real continuam independentes. As rotinas de limpeza e o ramo
+legado mantêm seu comportamento. Se o POST for aceito e a leitura seguinte
+falhar, o preparo reprova e pode deixar uma linha no banco descartável;
+não há promessa de rollback. A conclusão dos testes nativos depende de uma
+nova execução autenticada e de seu resumo estrito.
+
+`assertIsolatedFixtureEnvironment({ baseURL, anonKey })` reutiliza a mesma
+admissão Node para outros preparos: retorna `Promise<void>`, não navega a
+página, não lê a service key e não expõe um mutador genérico.
 
 Antes de liberar os specs, a prontidão prova `enqueue_outbound_message` →
 `message-delivery` → provider local → linha real de `messages` visível com RLS.
@@ -243,11 +277,14 @@ há `storageState`, credencial real, fixture remota nem URL de Supabase externo.
 
 ### Como rodar
 
-O grupo `authenticated` do controller executa os seeds existentes de Arquivos,
-prepara Auth/Storage reais e valida seus proprietários antes de abrir o browser:
+Os três grupos `authenticated-*-of-3` executam os seeds de Arquivos em backends
+independentes. Para reproduzir o shard que contém o caso, rode a matriz completa;
+cada comando prepara Auth/Storage reais e valida seus proprietários:
 
 ```bash
-bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-arquivos
+bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-arquivos-1
+bash scripts/e2e-isolated/run.sh suite authenticated-2-of-3 /tmp/e2e-isolated-arquivos-2
+bash scripts/e2e-isolated/run.sh suite authenticated-3-of-3 /tmp/e2e-isolated-arquivos-3
 ```
 
 Não substitui os dados por respostas fixas nem ignora `setup`. O usuário e os
@@ -362,3 +399,16 @@ Simulação offline, sem credenciais e sem endpoints reais (Node 24+):
 ```sh
 node --test scripts/ci/e2e-auth-*.unit.mjs
 ```
+
+## Regressões de SIP, sessão, QR e busca de contatos
+
+As regressões de `navegacao-modulos.spec.ts` instalam os observadores antes do gatilho de boot/navegação e exigem POST e corpo concluídos. A barreira do helper `function-completion.ts` tem um prazo total de 30 segundos a partir de `completed()`, depois do gatilho; uma segunda chamada não reinicia esse prazo. Ausência, fechamento da página, transporte falho, JSON inválido e timeout reprovam.
+
+SIP conserva no ambiente isolado somente o contrato explícito 503/`SIP_NOT_CONFIGURED`; 401 não recebe tolerância. A regressão de dispositivo exige o resultado 200 real no boot. A prova concorrente cria outra sessão Auth do mesmo usuário sintético, conserva o dispositivo já conhecido, inicia duas requisições antes de aguardá-las e exige o mesmo ID canônico, uma linha ativa e readback com RLS. Isso comprova convergência das duas chamadas; não afirma ter forçado uma colisão interna de INSERT. O cenário de corrida forçada do handler continua sendo evidência separada.
+
+`conexoes.spec.ts` usa a fixture `isolated-qr.ts` para o fluxo de QR. Administrador, conexão, token e limpeza têm identidades próprias; os detalhes e limites estão no README de `scripts/e2e-isolated/`. Os quatro testes anteriores de Conexões continuam independentes. Nenhum pareamento ou envio externo é necessário.
+
+A paleta Ctrl+K consulta contatos pela mesma RPC autorizada do serviço de contatos, com limite de oito resultados e escape dos curingas de busca. A seleção usa o UUID e o evento existente de abertura da conversa. Catálogo e contatos têm orçamento de cinco segundos por fonte; a expiração de contatos produz um item de indisponibilidade e não retém indefinidamente os produtos já encontrados. O prazo limita a espera da paleta: não afirma aborto do transporte nem acrescenta retry. Debounce, tamanho mínimo da consulta e proteção contra respostas antigas continuam pertencendo à paleta.
+
+O E2E da busca mantém sessão e API simuladas. Ele exige a resposta da pesquisa concluída, seleciona o segundo contato de mesmo nome, observa a leitura de seu UUID e verifica o chat montado, por clique ou teclado, a partir de Inbox e Dashboard. Isso prova a integração da interface, serviço e navegação com a fronteira HTTP controlada; não equivale a Auth ou RLS nativos.
+

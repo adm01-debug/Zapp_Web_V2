@@ -32,7 +32,7 @@ export function startMemoryPressureLoop(): void {
       const workingSetBytes = Math.max(0, currentBytes - inactiveFileBytes)
       // Logged once so operators (and test-container-logs.sh) can confirm monitoring is on.
       if (!activeReported) {
-        console.log(`Memory pressure monitor active (limit ${limitBytes} bytes)`)
+        console.warn(`Memory pressure monitor active (limit ${limitBytes} bytes)`)
         activeReported = true
       }
 

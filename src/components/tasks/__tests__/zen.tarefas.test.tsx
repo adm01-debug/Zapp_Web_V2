@@ -11,9 +11,9 @@
  * 'zen-mode') e chega ao módulo por dois caminhos:
  *
  *   1. a sidebar do desktop sai (`!isMobile && !isZen`) — sobra a área de trabalho;
- *   2. o `LayoutContext` passa `hidePageBreadcrumbs: !isMobile && !isZen`, então o
- *      `PageHeader` do PRÓPRIO módulo volta a desenhar a trilha ("Início /
- *      Tarefas") — é o caminho de navegação que resta com a sidebar fora.
+ *   2. o `LayoutContext` passa `hidePageBreadcrumbs: false` (fixado em #606),
+ *      então o `PageHeader` do PRÓPRIO módulo sempre desenha a trilha ("Início /
+ *      Tarefas") — tanto com zen quanto sem.
  *
  * O `TasksModule` não tem chrome próprio de zen: o que ele precisa garantir é
  * entregar as breadcrumbs dessa trilha e continuar inteiro quando o zen está
@@ -162,20 +162,20 @@ describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
     expect(screen.getByTestId('work-item-card')).toBeTruthy();
   });
 
-  it('sem zen (desktop): a sidebar está na tela e a trilha NÃO aparece — é o zen que a traz', async () => {
+  it('sem zen (desktop): a sidebar está na tela e a trilha aparece (barra global removida em #599)', async () => {
     const { container } = renderTarefas();
 
     await screen.findByTestId('tasks-module', {}, ESPERA_MOUNT);
     await screen.findByText('Ligar para o cliente', {}, ESPERA_MOUNT);
 
     expect(screen.getByTestId('shell-sidebar')).toBeTruthy();
-    expect(trilha(container)).toBeNull();
+    expect(trilha(container)).not.toBeNull();
     // o módulo é o mesmo nas duas situações: o zen só troca a casca e o topo.
     expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeTruthy();
     expect(screen.getByTestId('work-item-card')).toBeTruthy();
   });
 
-  it('Esc sai do zen: a sidebar volta, a trilha sai de cena e a preferência é gravada', async () => {
+  it('Esc sai do zen: a sidebar volta, a trilha permanece e a preferência é gravada', async () => {
     localStorage.setItem(ZEN_KEY, 'true');
 
     const { container } = renderTarefas();
@@ -189,7 +189,7 @@ describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
     });
 
     await waitFor(() => expect(screen.getByTestId('shell-sidebar')).toBeTruthy(), ESPERA_MOUNT);
-    expect(trilha(container)).toBeNull();
+    expect(trilha(container)).not.toBeNull();
     expect(localStorage.getItem(ZEN_KEY)).toBe('false');
     expect(screen.getByTestId('tasks-module')).toBeTruthy();
   });

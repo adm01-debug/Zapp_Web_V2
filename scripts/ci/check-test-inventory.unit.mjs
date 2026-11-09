@@ -10,6 +10,7 @@ import {
   casaPadrao,
   orfaosNode,
   padroesNodeDeWorkflow,
+  suitesCobertasPorImport,
   suitesNodeOrfas,
 } from './check-test-inventory.mjs';
 
@@ -77,6 +78,31 @@ test('R2-INF-013: suite Node fora dos blocos run vira orfa — e a allowlist a a
     orfaosNode(suites, padroes, new Set(['scripts/qa/prova-visao-classificadores.unit.mjs'])),
     [],
   );
+});
+
+test('agregador coberto alcança imports estáticos, inclusive transitivos, mas não comentários', () => {
+  const suites = [
+    'scripts/ci/agregador.unit.mjs',
+    'scripts/qa/contraste.unit.mjs',
+    'scripts/vercel/producao.unit.mjs',
+    'scripts/qa/orfao.unit.mjs',
+  ];
+  const fontes = new Map([
+    ['scripts/ci/agregador.unit.mjs', "import '../qa/contraste.unit.mjs';\n// import '../qa/orfao.unit.mjs';\n"],
+    ['scripts/qa/contraste.unit.mjs', "import '../vercel/producao.unit.mjs';\n"],
+    ['scripts/vercel/producao.unit.mjs', ''],
+  ]);
+  const cobertas = suitesCobertasPorImport(
+    suites,
+    ['scripts/ci/*.unit.mjs'],
+    (arquivo) => fontes.get(arquivo) ?? '',
+  );
+  assert.deepEqual([...cobertas].sort(), [
+    'scripts/ci/agregador.unit.mjs',
+    'scripts/qa/contraste.unit.mjs',
+    'scripts/vercel/producao.unit.mjs',
+  ]);
+  assert.equal(cobertas.has('scripts/qa/orfao.unit.mjs'), false);
 });
 
 test('R2-INF-013: a arvore atual nao tem suite Node fora dos workflows nem da ALLOWLIST_NODE', () => {

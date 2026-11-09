@@ -11,7 +11,7 @@
  * de infraestrutura — não é endpoint público. A correlação (034) ecoa o id no
  * envelope de erro e no log.
  */
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { handleCors, jsonResponse, requireEnv } from '../_shared/validation.ts';
 import {
   authorizeObservability,

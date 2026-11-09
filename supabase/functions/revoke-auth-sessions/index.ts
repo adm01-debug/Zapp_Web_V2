@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import {
   handleCors,
   errorResponse,
@@ -9,7 +9,7 @@ import {
   getClientIP,
   internalErrorResponse,
 } from "../_shared/validation.ts";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { z } from "npm:zod@3.23.8";
 import { parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 // R2-AUTH-004 (item 6): endpoint único de mutação para revogação de sessões Auth.

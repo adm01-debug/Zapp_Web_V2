@@ -22,6 +22,19 @@ const digitar = (input: HTMLElement, texto: string) =>
   fireEvent.change(input, { target: { value: texto } });
 
 describe('CommandPalette — campo e lista anunciados (combobox/listbox)', () => {
+  it('não duplica option/id quando um acesso rápido também está nos recentes', () => {
+    localStorage.setItem('zapp-recent-modules', JSON.stringify(['chat']));
+    try {
+      renderPalette();
+      const options = screen.getAllByRole('option');
+      const ids = options.map((option) => option.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(options.filter((option) => option.textContent?.includes('Inbox'))).toHaveLength(1);
+    } finally {
+      localStorage.removeItem('zapp-recent-modules');
+    }
+  });
+
   it('o campo é combobox nomeado que aponta para a lista e para o item ativo', () => {
     const { input } = renderPalette();
 
@@ -182,13 +195,12 @@ describe('CommandPalette — devolução de foco sem DialogTrigger', () => {
     props: Omit<React.ComponentProps<typeof CommandPalette>, 'open' | 'onOpenChange'> = {},
     strict = false,
   ) {
-    let view: ReturnType<typeof render>;
-    const setOpen = (open: boolean) => view.rerender(tree(open));
-    const tree = (open: boolean) => {
+    function setOpen(open: boolean) { view.rerender(tree(open)); }
+    function tree(open: boolean) {
       const palette = <CommandPalette {...props} open={open} onOpenChange={setOpen} />;
       return strict ? <React.StrictMode>{palette}</React.StrictMode> : palette;
-    };
-    view = render(tree(false));
+    }
+    const view = render(tree(false));
     return {
       setOpen,
       open() {

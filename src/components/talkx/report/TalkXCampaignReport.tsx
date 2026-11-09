@@ -1,9 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ExternalLink, FileBarChart2, Lightbulb } from 'lucide-react';
+import { ChevronLeft, Download, ExternalLink, FileBarChart2, FileText, Lightbulb } from 'lucide-react';
 
 import { fromTable, supabase } from '@/lib/supabaseHelpers';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { downloadFileWithPermission } from '@/lib/downloadFile';
+import { buildTalkXCampaignCsvBlob } from '@/lib/talkxCsv';
+import { buildTalkXCampaignPdfBlob } from '@/lib/talkxReportPdf';
 import { IconTile, MetaRow, RailCard, TalkXQueryBoundary, TalkXSkeletonRows, fmtDurationShort, fmtInt, type TalkXQueryLike } from '../talkxShared';
 import { TalkXReportFunnel } from './TalkXReportFunnel';
 import { TalkXReportHeatmap } from './TalkXReportHeatmap';
@@ -75,6 +79,8 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const timeZone = campaign.schedule_timezone || DEFAULT_TIMEZONE;
   const [granularity, setGranularity] = useState<TalkXReportGranularity>('day');
   const [heatmapMetric, setHeatmapMetric] = useState<TalkXReportHeatmapMetric>('replied');
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const { canDownload } = useDownloadPermission();
 
   const reportQuery = useQuery({
     queryKey: ['talkx-campaign-report', campaign.id],
@@ -150,6 +156,22 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const handleGranularity = useCallback((next: TalkXReportGranularity) => setGranularity(next), []);
   const handleMetric = useCallback((next: TalkXReportHeatmapMetric) => setHeatmapMetric(next), []);
 
+  const handleCsvExport = useCallback(() => {
+    const blob = buildTalkXCampaignCsvBlob(campaign, kpis, recipients);
+    downloadFileWithPermission(blob, `relatorio-${campaign.id}.csv`, { canDownload });
+  }, [campaign, kpis, recipients, canDownload]);
+
+  const handlePdfExport = useCallback(async () => {
+    if (pdfLoading) return;
+    setPdfLoading(true);
+    try {
+      const blob = await buildTalkXCampaignPdfBlob(campaign, kpis);
+      downloadFileWithPermission(blob, `relatorio-${campaign.id}.pdf`, { canDownload });
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [campaign, kpis, canDownload, pdfLoading]);
+
   const boundaryQuery: TalkXQueryLike = {
     isLoading: reportQuery.isLoading,
     isFetching: reportQuery.isFetching,
@@ -184,16 +206,39 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
             <p className="text-xs text-foreground-secondary truncate">{campaign.name}</p>
           </div>
         </div>
-        {onViewMonitor && (
-          <button
-            type="button"
-            onClick={() => onViewMonitor(campaign.id)}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Abrir Monitor
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {kpis && (
+            <>
+              <button
+                type="button"
+                onClick={handleCsvExport}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50"
+              >
+                <Download className="w-4 h-4" />
+                CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => { void handlePdfExport(); }}
+                disabled={pdfLoading}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 disabled:opacity-50"
+              >
+                <FileText className="w-4 h-4" />
+                {pdfLoading ? 'PDF…' : 'PDF'}
+              </button>
+            </>
+          )}
+          {onViewMonitor && (
+            <button
+              type="button"
+              onClick={() => onViewMonitor(campaign.id)}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Abrir Monitor
+            </button>
+          )}
+        </div>
       </div>
 
       <TalkXQueryBoundary
