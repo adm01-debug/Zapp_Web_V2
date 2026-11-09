@@ -12577,9 +12577,9 @@
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
    "tipo": "unit",
-   "linhas": 62,
+   "linhas": 64,
    "testa": [],
-   "casos": 0
+   "casos": 1
   },
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx",

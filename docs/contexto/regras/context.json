@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+  "sha": "c545e5b63643d569fca4b41c041cc0732a32697b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 23:22 UTC",
+  "generated_at": "2026-11-09 05:33 UTC",
   "files_total": 8161,
   "code_files": 6019,
-  "code_lines": 1044178
+  "code_lines": 1044221
  },
  "version": "1.3.2",
- "facts_hash": "1466a921242be792",
+ "facts_hash": "601c6d9583aaa844",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68142,7 +68142,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 87974,
+   "lines": 88015,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68471,7 +68471,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368080,
+   "lines": 368082,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -73930,6 +73930,9 @@
    "CI": [
     "playwright.config.ts",
     "scripts/ci/playwright-config-e81.unit.mjs"
+   ],
+   "CLAUDE_MD_ALLOW_NO_BASE": [
+    "scripts/ci/check-claude-md-integrity.mjs"
    ],
    "CLAUDE_MD_BASE": [
     "scripts/ci/check-claude-md-integrity.mjs"
@@ -164038,6 +164041,10 @@
    {
     "file": "src/components/talkx/kit/__tests__/useFilterState.test.ts",
     "name": "(extra) período e busca persistem; custom é válido"
+   },
+   {
+    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+    "name": "X164 / TL-080 — implementar testes de talkxReportData e TalkXCampaignReport"
    },
    {
     "file": "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx",
@@ -262449,8 +262456,9 @@
   },
   "scripts/ci/check-claude-md-integrity.mjs": {
    "path": "scripts/ci/check-claude-md-integrity.mjs",
-   "lines": 122,
+   "lines": 163,
    "env": [
+    "CLAUDE_MD_ALLOW_NO_BASE",
     "CLAUDE_MD_BASE"
    ],
    "params": [
@@ -262464,15 +262472,15 @@
     },
     {
      "name": "SHRINK_THRESHOLD",
-     "value": "0.30"
+     "value": "0.3"
     },
     {
      "name": "FILE_SHRINK_THRESHOLD",
-     "value": "0.50"
+     "value": "0.5"
     }
    ],
    "rule_comments": [
-    "100)}% vs ${BASE} (atual: ${agora} bytes, base: ${naBase} bytes); limite por arquivo e ${Math.round(FILE_SHRINK_THRESHOLD * 100)}%.`);"
+    "100)}% vs ${BASE} (atual: ${agora} bytes, base: ${naBase} bytes); limite por arquivo e ${Math.round(FILE_SHRINK_THRESHOLD * 100)}%.`"
    ],
    "doc": "!/usr/bin/env node",
    "percents": [
@@ -309039,8 +309047,11 @@
   },
   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx": {
    "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-   "lines": 62,
-   "is_test": true
+   "lines": 64,
+   "is_test": true,
+   "tests": [
+    "X164 / TL-080 — implementar testes de talkxReportData e TalkXCampaignReport"
+   ]
   },
   "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx": {
    "path": "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx",
@@ -383953,10 +383964,20 @@
   }
  },
  "git": {
-  "sha": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+  "sha": "c545e5b63643d569fca4b41c041cc0732a32697b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c545e5b",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "security(ci): fecha injeção de comando e fail-open no guard GA02",
+    "files": [
+     "scripts/ci/check-claude-md-integrity.mjs",
+     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+    ]
+   },
    {
     "sha": "9183f0f",
     "date": "2026-11-08",
@@ -384332,15 +384353,6 @@
      "scripts/ci/docs-deploy-coerencia.unit.mjs",
      "scripts/ci/front-release-targets.unit.mjs"
     ]
-   },
-   {
-    "sha": "51d456a",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "chore(db): reconciliar RLS department_invites e department_audit_logs [20261107143000] (#2764)",
-    "files": [
-     "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -384351,6 +384363,14 @@
    [
     "docs/talkx/ESTADOS.md",
     3
+   ],
+   [
+    "scripts/ci/check-claude-md-integrity.mjs",
+    2
+   ],
+   [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+    2
    ],
    [
     "scripts/edge-deploy/health-check.mjs",
@@ -384389,10 +384409,6 @@
     1
    ],
    [
-    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    1
-   ],
-   [
     "src/lib/talkxCsv.ts",
     1
    ],
@@ -384418,10 +384434,6 @@
    ],
    [
     "src/components/layout/AppShell.tsx",
-    1
-   ],
-   [
-    "src/components/tasks/__tests__/zen.tarefas.test.tsx",
     1
    ]
   ]

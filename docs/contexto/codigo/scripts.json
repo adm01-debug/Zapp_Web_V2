@@ -145,8 +145,9 @@
   {
    "arquivo": "scripts/ci/check-claude-md-integrity.mjs",
    "descricao": "* GA02: garante que as instrucoes para agentes nao foram apagadas ou esvaziadas por outra sessao.",
-   "linhas": 122,
+   "linhas": 163,
    "env": [
+    "CLAUDE_MD_ALLOW_NO_BASE",
     "CLAUDE_MD_BASE"
    ],
    "npm_scripts": [],

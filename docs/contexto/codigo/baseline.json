@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+  "commit": "c545e5b63643d569fca4b41c041cc0732a32697b",
   "branch": "main",
-  "data_commit": "2026-11-08T18:44:55-03:00",
+  "data_commit": "2026-11-09T01:02:10-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c545e5b",
+    "data": "2026-11-09",
+    "assunto": "security(ci): fecha injeção de comando e fail-open no guard GA02"
+   },
    {
     "sha": "9183f0f",
     "data": "2026-11-08",
@@ -126,18 +131,13 @@
     "sha": "5fec88f",
     "data": "2026-11-07",
     "assunto": "chore(db): sincroniza artefatos derivados e inventário (#2783)"
-   },
-   {
-    "sha": "7991a1f",
-    "data": "2026-11-07",
-    "assunto": "fix: endurecer scripts e automatizar guardas residuais (#2773)"
    }
   ],
-  "arquivos_mudados_7d": 1117,
+  "arquivos_mudados_7d": 1099,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 676
+    "mudancas": 671
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 262
+    "mudancas": 263
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -226,15 +226,15 @@
     "mudancas": 11
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
    },
    {
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8320,
   "arquivos_codigo": 4752,
-  "linhas_codigo": 877693,
+  "linhas_codigo": 877736,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -612,7 +612,7 @@
   },
   "scripts/ci": {
    "arquivos": 206,
-   "linhas": 42653
+   "linhas": 42694
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368080
+   "linhas": 368082
   },
   "src/config": {
    "arquivos": 3,
@@ -907,7 +907,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 415,
+  "console_log": 416,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,

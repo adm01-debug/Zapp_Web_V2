@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `9183f0f6fa4296cd07c585602bc5ea88ada5d98d` (2026-11-08T18:44:55-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c545e5b63643d569fca4b41c041cc0732a32697b` (2026-11-09T01:02:10-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8320 |
 | arquivos_codigo | 4752 |
-| linhas_codigo | 877693 |
+| linhas_codigo | 877736 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56194 nós · 115860 arestas · 4114 comunidades · grafo do commit `9183f0f6`
+- 56194 nós · 115860 arestas · 4114 comunidades · grafo do commit `c545e5b6`
 - comunidades maiores: lucide-react (833), TalkXSuppression.tsx (756), vitest (663), react (616), client.ts (550), ExternalProductManagement.tsx (469), validation.ts (423), ref_https (403), cn (397), DashboardView.tsx (384), useTeamChatPanel.ts (361), inspect.ts (326)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -398,9 +398,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (14)
 - .github/workflows/db-guard.yml (11)
 - RELATORIO_CI.md (11)
-- docs/DB-INVENTORY.md (11)
 - src/integrations/supabase/types.ts (11)
 - .github/workflows/e2e-logado.yml (10)
+- docs/DB-INVENTORY.md (10)
 - scripts/ci/ci-docs-baseline.unit.mjs (10)
 - .github/workflows/deploy-functions.yml (9)
 - ESTADO.md (9)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `c545e5b` security(ci): fecha injeção de comando e fail-open no guard GA02
 - 2026-11-08 `9183f0f` feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)
 - 2026-11-08 `e6e467b` feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)
 - 2026-11-08 `7beecdb` feat(tasks): implementa escada de cores D12 nas prioridades (#2478)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-08 `c6c7697` fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)
 - 2026-11-08 `62c069a` fix(db-audit): isola PostgREST privado do proxy nos contratos (#2796)
 - 2026-11-08 `e028887` fix(edge): Z018 injeção PostgREST + Z020 stack trace nas edges external-db-proxy e cleanup-rate-limit-logs (#2794)
-- 2026-11-08 `85fb0a5` test(e2e): alinha contrato isolado dos insights (#2790)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
