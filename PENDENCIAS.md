@@ -83,13 +83,13 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 | Campo | Valor |
 |---|---|
 | PR | [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) — branch `claude_05/brave-mccarthy-zvzky4` |
-| HEAD atual | `18a87133405024eabc720b8b64dffa8207daaa38` |
-| Run CI/CD Pipeline | [42542650389](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650389) — `pending` desde 2026-11-09T00:53:53Z |
-| Run DB Guard | [42542650448](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650448) — `pending` desde 2026-11-09T00:53:53Z |
-| Run E2E | [42542650490](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650490) — `pending` desde 2026-11-09T00:53:53Z |
-| Causa | Fila global de runners do GitHub (status `pending` = fila de infra, não concorrência). Múltiplas sessões de agentes competem por runners simultaneamente (~96 runs observadas em 00:12Z). |
-| Risco extra | PRs #2851 e #2864 de outras sessões também corrigem `TalkXCampaignReport.test.tsx`; se mergear antes do nosso PR, pode gerar conflito em `558f4a9a`. |
-| Ação do dono | Nenhuma — condição temporária. Runs iniciarão quando runners ficarem disponíveis. Se após 4h ainda `pending`, verificar se existe run stuck bloqueando o grupo de concorrência. |
+| HEAD atual | `2fc7053f553bba83f184034f593d6a8f0ebcf134` |
+| Run CI/CD Pipeline | [42543039375](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42543039375) — `pending` desde 2026-11-09T00:58:25Z |
+| Run DB Guard | [42543039418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42543039418) — `pending` desde 2026-11-09T00:58:25Z |
+| Run E2E | [42543039370](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42543039370) — `pending` desde 2026-11-09T00:58:25Z |
+| Causa | Fila global de runners do GitHub (status `pending` = fila de infra, não concorrência). Múltiplas sessões de agentes competem por runners simultaneamente. |
+| Check-in armado | Trigger `trig_019uUbVo8NyetZNRjJZ4Qrdi` — verificação programada para 2026-11-09T02:03Z |
+| Ação do dono | Nenhuma — condição temporária. Runs iniciarão quando runners ficarem disponíveis. Se após 02:03Z ainda `pending`, verificar se existe run stuck bloqueando o grupo de concorrência. |
 
 **Histórico de runs canceladas (HEAD anteriores):**
 
@@ -101,6 +101,9 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 | [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) | `cb292233` | cancelled |
 | [42541991611](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991611) | `558f4a9a` | cancelled |
 | [42541991641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991641) | `558f4a9a` | cancelled |
+| [42542650389](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650389) | `18a87133` | cancelled |
+| [42542650448](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650448) | `18a87133` | cancelled |
+| [42542650490](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650490) | `18a87133` | cancelled |
 
 ---
 
