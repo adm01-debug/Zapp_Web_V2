@@ -21,7 +21,7 @@ export function useContactSummaryNote(contactId: string | null | undefined) {
   const queryClient = useQueryClient();
   const queryKey = contactSummaryNoteKey(contactId);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey,
     queryFn: async () => {
       const { data, error } = await supabase.from('contacts').select('notes').eq('id', contactId as string).maybeSingle();
@@ -58,5 +58,5 @@ export function useContactSummaryNote(contactId: string | null | undefined) {
     [contactId, queryClient],
   );
 
-  return { summary: data ?? '', isLoading, save, isSaving };
+  return { summary: data ?? '', isLoading, isError, save, isSaving };
 }
