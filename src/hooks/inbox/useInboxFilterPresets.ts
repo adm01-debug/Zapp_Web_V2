@@ -31,7 +31,7 @@ export const INBOX_FILTER_PRESETS_QUERY_KEY = [
 ] as const;
 
 // eslint-disable-next-line no-control-regex
-const CONTROL_CHARS = /[\u0000-\u001F\u007F\u200B-\u200D\uFEFF]/;
+const CONTROL_CHARS = /[\u0000-\u001F\u007F​-‍﻿]/;
 
 /** Marcador do id otimista, antes de o servidor devolver o id real. */
 const PENDING_PRESET_PREFIX = 'pending_';
@@ -182,7 +182,7 @@ export function useInboxFilterPresets() {
   const queryClient = useQueryClient();
   const queryKey = INBOX_FILTER_PRESETS_QUERY_KEY;
 
-  const { data: presets = [], isLoading } = useQuery({
+  const { data: presets = [], isLoading, isError } = useQuery({
     queryKey,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -339,6 +339,7 @@ export function useInboxFilterPresets() {
   return {
     presets,
     isLoading,
+    isError,
     savePreset: saveMutation.mutateAsync,
     deletePreset: deleteMutation.mutateAsync,
     isSaving: saveMutation.isPending,
