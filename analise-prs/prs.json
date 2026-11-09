@@ -610,5 +610,95 @@
     "sha": "4c63335e",
     "created_at": "2026-11-08",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2872"
+  },
+  {
+    "number": 2873,
+    "title": "fix(hooks): expõe isError em 9 hooks sem estado de erro",
+    "draft": false,
+    "verdict": "ELEGIVEL",
+    "sha": "6eac3dfd",
+    "created_at": "2026-11-08",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2873"
+  },
+  {
+    "number": 2874,
+    "title": "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck",
+    "draft": true,
+    "verdict": "REGRA8",
+    "sha": "103c305e",
+    "created_at": "2026-11-08",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2874"
+  },
+  {
+    "number": 2875,
+    "title": "fix(banner): não apaga estado ao falhar query de conexões desconectadas",
+    "draft": true,
+    "verdict": "DRAFT",
+    "sha": "90ed0361",
+    "created_at": "2026-11-08",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2875"
+  },
+  {
+    "number": 2877,
+    "title": "fix(external-db-bridge): valida coluna e operador antes de executar filtro",
+    "draft": false,
+    "verdict": "ELEGIVEL",
+    "sha": "44b78601",
+    "created_at": "2026-11-08",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2877"
+  },
+  {
+    "number": 2878,
+    "title": "fix(edges): substitui esm.sh por npm: em external-db-proxy e cleanup-rate-limit-logs",
+    "draft": false,
+    "verdict": "ELEGIVEL",
+    "sha": "60514eca",
+    "created_at": "2026-11-08",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2878"
+  },
+  {
+    "number": 2879,
+    "title": "fix(edge): valida coluna e operador em external-db-bridge para fechar SQL injection",
+    "draft": false,
+    "verdict": "SUPERSEDIDA",
+    "sha": "3abbd232",
+    "created_at": "2026-11-08",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2879"
+  },
+  {
+    "number": 2880,
+    "title": "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send",
+    "draft": true,
+    "verdict": "DRAFT",
+    "sha": "ff0bacb2",
+    "created_at": "2026-11-09",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2880"
+  },
+  {
+    "number": 2881,
+    "title": "fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit",
+    "draft": false,
+    "verdict": "ELEGIVEL",
+    "sha": "2fc7053f",
+    "created_at": "2026-11-09",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2881"
+  },
+  {
+    "number": 2882,
+    "title": "fix(talkx): restaura suites de teste TalkXCampaignReport removidas no PR #2830",
+    "draft": false,
+    "verdict": "SUPERSEDIDA",
+    "sha": "3ff302c6",
+    "created_at": "2026-11-09",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2882"
+  },
+  {
+    "number": 2883,
+    "title": "fix: habilitar geolocation no projeto chromium-mapa do Playwright",
+    "draft": false,
+    "verdict": "ELEGIVEL",
+    "sha": "16b8e050",
+    "created_at": "2026-11-09",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2883"
   }
 ]

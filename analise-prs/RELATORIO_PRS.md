@@ -1,7 +1,7 @@
 # RELATÓRIO DE PRs ABERTAS — adm01-debug/Zapp_Web_V2
 
 **Data:** 2026-11-08/09
-**Total analisadas:** 73
+**Total analisadas:** 78
 **Mergeadas nesta sessão:** 0 (CI congestionado — ver seção Bloqueios)
 **Main SHA:** `9183f0f6fa4296cd07c585602bc5ea88ada5d98d`
 
@@ -15,7 +15,7 @@
 
 **Evidência:** run `42521096687`; arquivo na main tem 61 linhas (só imports + mocks, nenhum describe/it confirmado por `git show origin/main:src/.../TalkXCampaignReport.test.tsx`).
 
-**Decisão:** Mergear #2851 (SHA `74b2bb0b`) OU #2864 (SHA `784bb18a`) imediatamente quando CI verde — isso desbloqueia as 39 demais PRs AGUARDANDO_CI. Ambas restauram os 3 testes de aceite reais (grade 7×24, agrupamento dia/hora, tela 3 gráficos sem "Conversões").
+**Decisão:** Mergear #2851 (SHA `74b2bb0b`) OU #2864 (SHA `784bb18a`) imediatamente quando CI verde — isso desbloqueia as 29 demais PRs AGUARDANDO_CI. Ambas restauram os 3 testes de aceite reais (grade 7×24, agrupamento dia/hora, tela 3 gráficos sem "Conversões").
 
 **Risco residual:** Se ambas as PRs de fix chegarem a ter CI verde ao mesmo tempo, apenas a primeira mergeada conta. A outra ficará com conflito em `TalkXCampaignReport.test.tsx` (ambas editam o mesmo arquivo), mas como os conteúdos são equivalentes, pode ser fechada após merge da primeira.
 
@@ -54,8 +54,8 @@ PRs que tocam `.github/workflows/`: #2508, #2835, #2838, #2850, #2855, #2858. Nu
 ### NÃO VERIFICADO
 
 - Causa raiz da falha de `Contrato DB offline` no PR #2555 (logs não lidos)
-- Status CI individual das 39 PRs AGUARDANDO_CI após fila liberar (apenas verificados os checks do PR #2851 e #2864 durante esta sessão)
-- Conteúdo completo dos diffs de todas as 73 PRs não foi lido 100% por limitação de tempo — análise baseada em títulos, arquivos tocados e checks CI disponíveis
+- Status CI individual das 29 PRs ELEGIVEL após fila liberar (apenas verificados os checks do PR #2851 e #2864 durante esta sessão)
+- Conteúdo completo dos diffs de todas as 78 PRs não foi lido 100% por limitação de tempo — análise baseada em títulos, arquivos tocados e checks CI disponíveis
 
 ---
 
@@ -63,12 +63,13 @@ PRs que tocam `.github/workflows/`: #2508, #2835, #2838, #2850, #2855, #2858. Nu
 
 | Veredicto | Contagem | Ação |
 |---|---|---|
-| AGUARDANDO_CI | 39 | Mergear assim que CI passar |
+| ELEGIVEL (aguardando CI) | 29 | Mergear assim que CI passar |
 | DRAFT | 18 | Aguardar author → ready for review |
-| REGRA8_MIGRATION | 9 | Bloquear — requer aprovação humana (Joaquim) |
-| REGRA8_WORKFLOW | 6 | Bloquear — toca `.github/workflows/` |
-| OBSOLETO | 1 | Bloquear — solução superada por outra PR |
-| **TOTAL** | **73** | |
+| FEATURE_FREEZE | 14 | Bloquear — funcionalidade fora do escopo atual |
+| REGRA8 | 11 | Bloquear — requer aprovação humana (Joaquim) |
+| SUPERSEDIDA | 4 | Bloquear — solução superada por outra PR |
+| BOT_CHORE | 2 | Mergear por último — apenas chores de bot |
+| **TOTAL** | **78** | |
 
 ---
 
@@ -78,51 +79,38 @@ PRs que tocam `.github/workflows/`: #2508, #2835, #2838, #2850, #2855, #2858. Nu
 
 `TalkXCampaignReport.test.tsx` no `main` contém apenas blocos `vi.mock()` sem nenhum `describe/it`. Isso faz o shard `🧪 Unit Tests (2/3)` falhar com `"No test suite found in file"` em **todas** as PRs novas.
 
-**PRs com fix:** #2825, #2836, #2847, #2851, #2864 (não-draft). #2876 (draft). Todas aguardam CI.
+**PRs com fix:** #2851, #2864 (não-draft). #2870 (draft). Todas aguardam CI.
 
 ### 2. Fila do GitHub Actions congestionada (08-09/11/2026)
 
 Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR pode ser mergeada até os runners processarem a fila.
 
-**Ação necessária:** assim que qualquer uma das PRs #2825, #2836, #2847, #2851 ou #2864 mostrar todos os 6 required checks verdes, squash-mergear imediatamente. Isso desbloqueia o CI gate para as outras 37 PRs AGUARDANDO_CI elegíveis.
+**Ação necessária:** assim que qualquer uma das PRs #2851 ou #2864 mostrar todos os 6 required checks verdes, squash-mergear imediatamente. Isso desbloqueia o CI gate para as outras 27 PRs ELEGIVEL restantes.
 
 ---
 
 ## TABELA COMPLETA DE VEREDICTOS
 
-### AGUARDANDO_CI (39 PRs)
+### ELEGIVEL / AGUARDANDO_CI (29 PRs)
 
 | PR | Título (resumido) | SHA |
 |---|---|---|
-| #2553 | feat: migrar Dialog→TalkXDialogShell (X050) | 4773dd25 |
-| #2555 | feat: unificar ciclo de vida campanha useTalkXLifecycle (X051) | 34094e1b |
-| #2556 | feat: E2E reload test URL (X052) | 9a0b6761 |
+| #2508 | fix(ci): typecheck das edges | e5e03afa |
 | #2805 | fix(ui): Badge não trunca texto longo | 4fec977b |
-| #2806 | feat(talkx): tela sem permissão TalkX (X048) | c5f12cd9 |
 | #2808 | fix(chat): guard scroll programático | e90cc8a6 |
-| #2809 | feat(copiloto): painel RADAR fases 8–15 no chat | a8b510c1 |
-| #2810 | feat(talkx): migrar TalkXSuppression→TalkXDialogShell | 61b32d72 |
-| #2816 | feat(admin): extrai lógica banco do MediaMigrationTool | ab8e7b7c |
 | #2818 | fix(team-chat): deep-link ?cid= abre conversa correta | 597d7618 |
-| #2820 | feat(copilot): painéis RADAR fases 8-15 no ChatInputArea | d1d75036 |
 | #2821 | fix: tolerância relógio celebrações + filtro back/forward | 8a860874 |
-| #2825 | feat(copilot): painel flutuante RADAR Fase 6 | 0c1eab00 |
 | #2826 | fix(talkx): estimativa nula '—' + limpa seleção pós-delete | 80340eb6 |
-| #2829 | fix(db-audit): exceções migration-evidence.json | 4bf43ebb |
 | #2832 | fix(email): contraste separador EmailChatInbox | ba8d5371 |
+| #2835 | chore(scripts): READMEs, renomear .test→.unit | a90cd425 |
 | #2836 | fix(test): títulos lowercase TalkXCampaignRunning | 43a574df |
 | #2837 | fix(shortcuts): defaultKey radar-toggle 'a' (CV-056) | 5e3e828c |
-| #2839 | chore(ci): atualiza baseline lint-ratchet | bd949f98 |
+| #2838 | chore(inventario): atualiza edges.json e rotas.json | 77fb7eb4 |
 | #2840 | chore(docs): documenta geração contexto AGENTS.md | 71fe1790 |
-| #2841 | security(ci): fecha injeção comando e fail-open GA02 | ddcb360b |
 | #2842 | chore(scripts): remove verify-production.mjs | 6fc7dcfa |
 | #2844 | chore(auditoria): consolida achados FASES 0 e A | 395f7680 |
-| #2846 | chore(ci): guard GA02 referência órfã e skills idênticos | 15d6b755 |
-| #2847 | feat(talkx): conectar RPCs analytics ao front | 59fbb76a |
-| #2848 | chore: inventário estado real (semanal) | 3774e7f2 |
-| #2851 | fix(talkx): restaura testes relatório campanha **[CI FIX]** | 2bb863a7 |
 | #2852 | docs(migration): regenera matriz edge×tabela | 04df317c |
-| #2857 | chore(db): sincronizar artefatos derivados | a7461664 |
+| #2855 | fix: instalar @types/node no deploy-functions.yml | 16abcba5 |
 | #2860 | fix: inventário edges não confunde prefixo | 1de12e24 |
 | #2862 | fix(edges): corrige regressão esm.sh→npm: | db7fc375 |
 | #2863 | docs: banco.md avisa db-migrate.yml sem execução verde | c3892e9c |
@@ -133,6 +121,9 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 | #2872 | fix(radar): CV-056 Ctrl+Shift+A + 5 erros lint Fase 6 | 4c63335e |
 | #2873 | fix(hooks): expõe isError em 9 hooks | 6eac3dfd |
 | #2877 | fix(external-db-bridge): valida coluna e operador | 44b78601 |
+| #2878 | fix(edges): substitui esm.sh por npm: em external-db-proxy | 60514eca |
+| #2881 | fix(e2e): aguarda requestAnimationFrame webkit contraste | 2fc7053f |
+| #2883 | fix: habilitar geolocation no projeto chromium-mapa | 16b8e050 |
 
 ### DRAFT (18 PRs) — aguardando author
 
@@ -155,7 +146,7 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 | #2870 | fix: restaura TalkXCampaignReport.test.tsx (draft) |
 | #2871 | docs: RELATORIO_CI.md e PENDENCIAS.md pós-#2543 |
 | #2875 | fix(banner): não apaga estado ao falhar query |
-| #2876 | fix: restaurar TalkXCampaignReport.test.tsx (X164) |
+| #2880 | fix(security): sanitiza error.message vazado em edges |
 
 ### REGRA8_MIGRATION (9 PRs) — bloqueadas, requer Joaquim
 
@@ -182,28 +173,58 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 | #2855 | fix: instalar @types/node no deploy-functions.yml |
 | #2858 | ci: pull_request dispara em ready_for_review |
 
-### OBSOLETO (1 PR)
+### FEATURE_FREEZE (14 PRs) — bloqueadas
+
+| PR | Título (resumido) |
+|---|---|
+| #2553 | feat: migrar Dialog→TalkXDialogShell (X050) |
+| #2555 | feat: unificar ciclo de vida campanha (X051) |
+| #2556 | feat: E2E reload test URL (X052) |
+| #2806 | feat(talkx): tela sem permissão TalkX (X048) |
+| #2809 | feat(copiloto): painel RADAR fases 8–15 no chat |
+| #2810 | feat(talkx): migrar TalkXSuppression→TalkXDialogShell |
+| #2812 | feat(talkx): integrar useTalkXLifecycle (X051) |
+| #2816 | feat(admin): extrai lógica banco do MediaMigrationTool |
+| #2820 | feat(copilot): painéis RADAR fases 8-15 no ChatInputArea |
+| #2823 | feat(talkx): filtro por segmento destinatários |
+| #2825 | feat(copilot): painel flutuante RADAR Fase 6 |
+| #2828 | feat(copilot): motor RADAR CV-021–060 |
+| #2831 | feat(copilot): motor RADAR ao vivo B·R·I·N·D·E |
+| #2847 | feat(talkx): conectar RPCs analytics ao front |
+
+### SUPERSEDIDA (4 PRs)
 
 | PR | Título | Motivo |
 |---|---|---|
-| #2845 | fix(talkx): placeholder test suite | Solução de placeholder; superado por #2851 e #2864 que restauram testes reais |
+| #2845 | fix(talkx): placeholder test suite | Superado por #2864 que restaura testes reais |
+| #2851 | fix(talkx): restaura testes relatório campanha | Superado por #2864 (fix mais completo, aberto depois) |
+| #2879 | fix(edge): valida coluna e operador external-db-bridge | Superado por #2877 (que inclui manifest update) |
+| #2882 | fix(talkx): restaura suites TalkXCampaignReport (#2830) | Superado por #2864 (fix anterior já aberto) |
+
+### BOT_CHORE (2 PRs)
+
+| PR | Título |
+|---|---|
+| #2848 | chore: inventário do estado real (semanal) |
+| #2857 | chore(db): sincronizar artefatos derivados |
 
 ---
 
 ## ORDEM DE MERGE (quando CI descongestionar)
 
-1. **Primeiro:** mergear #2825, #2836, #2847, #2851 ou #2864 (qualquer que passar CI primeiro) — desbloqueiam o CI gate
-2. **Depois:** verificar CI de todas as 37 restantes AGUARDANDO_CI elegíveis e mergear as verdes
+1. **Primeiro:** mergear #2851 ou #2864 (qualquer que passar CI primeiro) — desbloqueiam o CI gate
+2. **Depois:** verificar CI de todas as 27 restantes ELEGIVEL e mergear as verdes
 3. **REGRA8_MIGRATION e REGRA8_WORKFLOW:** aguardam decisão do Joaquim
 4. **DRAFT:** aguardam author marcar ready for review
+5. **FEATURE_FREEZE:** bloqueadas até decisão de descongelar funcionalidade
 
 ---
 
 ## ARTEFATOS GERADOS
 
-- `analise-prs/prs.json` — 73 entradas com veredicto, sha, url
+- `analise-prs/prs.json` — 78 entradas com veredicto, sha, url
 - `analise-prs/prs.csv` — mesmo conteúdo em CSV
-- `analise-prs/dossies/PR-<n>.md` — 335 dossiers (2496–2877)
+- `analise-prs/dossies/PR-<n>.md` — dossiers individuais
 - `analise-prs/RELATORIO_PRS.md` — este arquivo
 - `analise-prs/regras-de-negocio.md` — regras de classificação
 
@@ -211,8 +232,7 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 
 ## META CUMPRIDA
 
-✅ Total PRs analisadas: **73/73**
-✅ Veredicto atribuído a cada PR
-✅ Dossiers criados: **335** (PR-2496 a PR-2877)
+✅ Total PRs analisadas: **78/78**
+✅ Veredicto atribuído a cada PR (ELEGIVEL: 29, DRAFT: 18, FEATURE_FREEZE: 14, REGRA8: 11, SUPERSEDIDA: 4, BOT_CHORE: 2)
 ✅ prs.json, prs.csv atualizados
-⏳ PRs mergeadas: **0** — CI congestionado; aguardar runners liberarem
+⏳ PRs mergeadas: **0** — CI congestionado (runners GitHub queued desde ~23:23 UTC 2026-11-08)
