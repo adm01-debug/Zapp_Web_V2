@@ -93,3 +93,16 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
 2. Para cada alerta: corrigir o código (PR de fix) ou dispensar com justificativa se for falso positivo.
 3. Após fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
+
+---
+
+## 5. CI Queue — concorrência bloqueada (sessão 2026-11-09)
+
+| Campo | Valor |
+|---|---|
+| PR | [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) — branch `claude_05/brave-mccarthy-zvzky4` |
+| Run CI/CD Pipeline | [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) — `queued` desde 2026-11-09T00:08:45Z |
+| Run DB Guard | [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) — `queued` desde 2026-11-09T00:08:45Z |
+| Runs bloqueadoras | [42531317440](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42531317440) (ci.yml, PR #2838, `in_progress` desde 22:39Z) · [42533641695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42533641695) (db-guard.yml, PR #2857, `in_progress` desde 23:07Z) |
+| Causa | Grupos de concorrência em `ci.yml` e `db-guard.yml` permitem apenas 1 run ativo por grupo. Runs de outros PRs ocupam os slots; nossas runs aguardam liberação automática. |
+| Ação do dono | Nenhuma — condição temporária. Quando as runs bloqueadoras terminarem, as runs 42538584418 e 42538584548 iniciarão automaticamente. Se após 4h ainda estiverem `queued`, verificar se as runs bloqueadoras trancaram (stuck). |
