@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "e9e38d8fc5c21785ce585102100537b9c56bee4d",
+  "sha": "49af49e25081f5f03f6e84a452797e71fe39ed21",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 16:08 UTC",
+  "generated_at": "2026-11-09 16:23 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044811
@@ -384213,10 +384213,25 @@
   }
  },
  "git": {
-  "sha": "e9e38d8fc5c21785ce585102100537b9c56bee4d",
+  "sha": "49af49e25081f5f03f6e84a452797e71fe39ed21",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "49af49e",
+    "date": "2026-11-09",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ ci: Bump the actions-misc group across 1 directory with 3 updates (#2893)",
+    "files": [
+     ".github/workflows/contexto.yml",
+     ".github/workflows/db-live-guard.yml",
+     ".github/workflows/db-migrate.yml",
+     ".github/workflows/deploy-functions.yml",
+     ".github/workflows/inventario-estado-semanal.yml",
+     ".github/workflows/talkx-status-regen.yml",
+     ".github/workflows/types-sync.yml"
+    ]
+   },
    {
     "sha": "e9e38d8",
     "date": "2026-11-09",
@@ -384557,21 +384572,6 @@
      "scripts/edge-deploy/verify-remote.mjs",
      "scripts/ui-audit/width-regression.mjs"
     ]
-   },
-   {
-    "sha": "81a8cd9",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "fix(talkx): corrige erros TypeScript X054 — ModuleBreadcrumb onItemClick + action optional chaining (#2793)",
-    "files": [
-     "docs/talkx/ESTADOS.md",
-     "src/components/CommandPalette.tsx",
-     "src/components/keyboard/CommandPaletteHost.tsx",
-     "src/components/talkx/TalkXView.tsx",
-     "src/components/talkx/kit/primitives.tsx",
-     "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
-     "src/hooks/integrations/useTalkXCommandItems.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384590,6 +384590,34 @@
    [
     "src/hooks/inbox/useInboxFilterPresets.ts",
     2
+   ],
+   [
+    ".github/workflows/contexto.yml",
+    1
+   ],
+   [
+    ".github/workflows/db-live-guard.yml",
+    1
+   ],
+   [
+    ".github/workflows/db-migrate.yml",
+    1
+   ],
+   [
+    ".github/workflows/deploy-functions.yml",
+    1
+   ],
+   [
+    ".github/workflows/inventario-estado-semanal.yml",
+    1
+   ],
+   [
+    ".github/workflows/talkx-status-regen.yml",
+    1
+   ],
+   [
+    ".github/workflows/types-sync.yml",
+    1
    ],
    [
     ".github/workflows/codeql.yml",
@@ -384625,34 +384653,6 @@
    ],
    [
     "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql",
-    1
-   ],
-   [
-    "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
-    1
-   ],
-   [
-    "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql",
-    1
-   ],
-   [
-    ".github/workflows/e2e-logado.yml",
-    1
-   ],
-   [
-    "src/components/alerts/EvolutionDisconnectBanner.tsx",
-    1
-   ],
-   [
-    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
-    1
-   ],
-   [
-    "scripts/ci/lint-ratchet.mjs",
-    1
-   ],
-   [
-    "scripts/ci/lint-ratchet.unit.mjs",
     1
    ]
   ]

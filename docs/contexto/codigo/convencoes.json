@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "⬆️ ci: Bump the actions-misc group across 1 directory with 3 updates (#2893)",
    "⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates (#2892)",
    "fix(migrations): IF EXISTS guards em migrations 220300 e 230300 para E2E",
    "fix(ci): vercel-env-cleanup sai com exit 0 em 403",
-   "chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco",
-   "fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7"
+   "chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
