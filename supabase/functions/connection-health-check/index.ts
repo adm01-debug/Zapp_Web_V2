@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { resolveEvolutionFlavor, resolveSessionRoute } from '../_shared/evolution-session-routes.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, type Logger } from "../_shared/validation.ts";
@@ -13,6 +13,11 @@ type ConnRow = {
   instance_id: string;
   status: string | null;
   phone_number: string | null;
+  retry_count?: number | null;
+  auto_reconnect_enabled?: boolean | null;
+  reconnect_max_attempts?: number | null;
+  reconnect_interval_seconds?: number | null;
+  health_reason?: string | null;
 };
 
 /**
@@ -154,6 +159,7 @@ interface AlertToCreate {
   phone: string | null;
   kind: 'disconnected' | 'degraded';
   reason: string | null;
+  exhausted?: boolean;
 }
 
 /** Preferência de canal: opt-in explícito por tipo de alerta ('all' vale para todos). */
@@ -360,6 +366,9 @@ export function buildConnectionAlertPrefs(
   return out;
 }
 
+/** Resultado possível de decideReconnect. */
+export type ReconnectDecision = 'attempt' | 'wait' | 'exhausted' | 'disabled';
+
 /** Decide se a reconexão automática deve ser tentada agora. */
 export function decideReconnect(input: {
   enabled: boolean;
@@ -506,7 +515,7 @@ export async function handleConnectionHealthCheck(
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
 
     let connQuery = supabase
-      .from('whatsapp_connections').select('id, instance_id, status, phone_number')
+      .from('whatsapp_connections').select('id, instance_id, status, phone_number, retry_count, auto_reconnect_enabled, reconnect_max_attempts, reconnect_interval_seconds, health_reason')
       .neq('instance_id', 'E2E_FIXTURE'); // Pular fixture E2E — status seeded nao deve ser sobrescrito pelo health check
     if (requested) connQuery = connQuery.eq('instance_id', requested);
 
@@ -536,6 +545,7 @@ export async function handleConnectionHealthCheck(
 
     const results: Array<{ instance_id: string; status: string; response_time_ms: number; error: string | null; reason: string | null }> = [];
     const alertsToCreate: AlertToCreate[] = [];
+    const episodesToProcess: AlertToCreate[] = [];
 
     // Paridade V3 → V2 (CX0b/CA2): a trilha de auditoria de UMA conexão
     // (ConnectionAuditDialog) lê `audit_logs` filtrando por `details.instance_id`.
@@ -575,7 +585,7 @@ export async function handleConnectionHealthCheck(
       let errorMessage: string | null = null;
       let responseTime = 0;
       let openReason: string | null = null;
-      let connectionRecoveryConfirmed = false;
+      let reconnectExhausted = false;
 
       if (Date.now() > deadline) {
         healthStatus = 'timeout';
@@ -682,7 +692,6 @@ export async function handleConnectionHealthCheck(
               if (dbStatus === 'connected') {
                 // Libera a chave apenas depois que o CAS confirmar a recuperação;
                 // a linha do alerta permanece como histórico do incidente.
-                connectionRecoveryConfirmed = conn.status !== 'connected';
                 const withinHours = await isWithinBusinessHours(supabase, conn.id);
                 if (withinHours) {
                   const staleInbound = lastInboundKnown && lastInboundAt !== null
@@ -700,6 +709,41 @@ export async function handleConnectionHealthCheck(
             } else {
               healthStatus = state === 'close' ? 'disconnected' : 'degraded';
               dbStatus = state === 'close' ? 'disconnected' : null;
+              if (state === 'close') {
+                const reconnectDecision = decideReconnect({
+                  enabled: conn.auto_reconnect_enabled ?? false,
+                  attempts: conn.retry_count ?? 0,
+                  maxAttempts: conn.reconnect_max_attempts ?? 0,
+                  intervalSeconds: conn.reconnect_interval_seconds ?? 60,
+                  lastAttemptAt: null,
+                  now,
+                });
+                if (reconnectDecision === 'attempt') {
+                  const newRetryCount = (conn.retry_count ?? 0) + 1;
+                  const reconnectResp = await fetch(
+                    `${baseUrl}/instance/reconnect/${conn.instance_id}`,
+                    { headers: { apikey: evolutionKey } },
+                  );
+                  await supabase.from('reconnection_logs').insert({
+                    connection_id: conn.id,
+                    instance_id: conn.instance_id,
+                    attempt: newRetryCount,
+                    result: reconnectResp.ok ? 'success' : 'failed',
+                  });
+                  await supabase.from('whatsapp_connections').update({ retry_count: newRetryCount }).eq('id', conn.id);
+                } else if (reconnectDecision === 'exhausted') {
+                  reconnectExhausted = true;
+                  await supabase.from('whatsapp_connections').update({ health_reason: RECONNECT_EXHAUSTED_REASON }).eq('id', conn.id);
+                }
+                episodesToProcess.push({
+                  connection_id: conn.id,
+                  instance_id: conn.instance_id,
+                  phone: conn.phone_number,
+                  kind: 'disconnected',
+                  reason: openReason,
+                  exhausted: reconnectExhausted,
+                });
+              }
             }
 
             // Only update for definitive states; skip transient (connecting/qr_pending).
@@ -720,12 +764,6 @@ export async function handleConnectionHealthCheck(
                     : `status.eq.${conn.status}`)
                   .select('id');
                 if (updated?.length) {
-                  if (dbStatus === 'connected' && connectionRecoveryConfirmed) {
-                    const { error: resolvedIncidentError } = await supabase.from('warroom_alerts')
-                      .update({ dedupe_key: null })
-                      .in('dedupe_key', [`conn-down:v1:${conn.id}`, `conn-degraded:v1:${conn.id}`]);
-                    if (resolvedIncidentError) log.warn('Falha ao encerrar alerta de conexão recuperada', { error: resolvedIncidentError.message });
-                  }
                   // Trilha de auditoria: só quando o CAS CONFIRMOU a transição —
                   // é isso que o diálogo de auditoria (CA2) lê por instance_id.
                   statusAuditEvents.push({
@@ -742,6 +780,7 @@ export async function handleConnectionHealthCheck(
                       phone: conn.phone_number,
                       kind: 'disconnected',
                       reason: openReason,
+                      exhausted: reconnectExhausted,
                     });
                   }
                 }
@@ -751,6 +790,23 @@ export async function handleConnectionHealthCheck(
               // respeitam o opt-in de 'degraded'.
               if (healthStatus === 'degraded' && openReason === 'webhook_silent') {
                 alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });
+              }
+              if (dbStatus === 'connected') {
+                await supabase.from('warroom_alerts').update({ dedupe_key: null })
+                  .eq('dedupe_key', `conn-down:v1:${conn.id}`);
+                await supabase.from('warroom_alerts').update({ dedupe_key: null })
+                  .eq('dedupe_key', `conn-degraded:v1:${conn.id}`);
+                await supabase.from('notifications').update({ dedupe_key: null })
+                  .like('dedupe_key', `conn-l%:v1:%:${conn.id}`);
+                await supabase.from('whatsapp_connections').update({ retry_count: 0, health_reason: null })
+                  .eq('id', conn.id);
+                const { data: pausedCampaigns } = await supabase.from('talkx_campaigns').select('id');
+                for (const campaign of (pausedCampaigns ?? [])) {
+                  await supabase.rpc('transition_talkx_campaign', {
+                    p_campaign_id: (campaign as Record<string, string>).id,
+                    p_action: 'start',
+                  });
+                }
               }
             }
           } else {
@@ -830,15 +886,127 @@ export async function handleConnectionHealthCheck(
       });
     }
 
-    // warroom_alerts só aparece para quem está com o painel aberto. O alerta tem
-    // que sair do app: push (notifications) e e-mail (Resend) SÓ para quem optou.
+    // Escalação em 3 níveis: 0 = warroom apenas; 1 = push+email (opt-in + roles); 2 = admin repetição horária.
+    const { data: allRolesData } = await supabase.from('user_roles').select('user_id, role');
+    const allRoleRows = (allRolesData ?? []) as Array<Record<string, string>>;
+    const adminOrSupSet = new Set<string>(
+      allRoleRows.filter((r) => r.role === 'admin' || r.role === 'supervisor').map((r) => r.user_id),
+    );
+    const adminOnlySet = new Set<string>(
+      allRoleRows.filter((r) => r.role === 'admin').map((r) => r.user_id),
+    );
+    const allUserIds = [...new Set<string>(allRoleRows.map((r) => r.user_id))];
     const { data: prefsData } = await supabase
       .from('connection_alert_preferences')
       .select('user_id, push_enabled, email_enabled, alert_on_degraded, alert_on_disconnected');
-    const prefs: Array<Record<string, unknown>> = prefsData ?? [];
+    const prefRows = (prefsData ?? []) as ConnectionAlertPrefRow[];
     const resendKey = Deno.env.get('RESEND_API_KEY');
-    for (const alert of newAlerts) {
-      await notifyOptedIn(supabase, log, { alert, prefs, resendKey });
+    const { data: profilesData } = await supabase.from('profiles').select('user_id, email');
+    const profileEmails: Record<string, string> = {};
+    for (const p of (profilesData ?? [])) {
+      const pr = p as Record<string, unknown>;
+      if (pr.user_id && pr.email) profileEmails[String(pr.user_id)] = String(pr.email);
+    }
+    const alertPrefs = buildConnectionAlertPrefs(allUserIds, prefRows);
+
+    for (const ep of episodesToProcess) {
+      const waroomKey = ep.kind === 'disconnected' ? `conn-down:v1:${ep.connection_id}` : `conn-degraded:v1:${ep.connection_id}`;
+      const { data: existingWarroom } = await supabase.from('warroom_alerts')
+        .select('created_at').eq('dedupe_key', waroomKey).maybeSingle();
+      if (!existingWarroom) {
+        await supabase.from('warroom_alerts').insert({
+          alert_type: ep.kind === 'disconnected' ? 'critical' : 'warning',
+          title: ep.kind === 'disconnected' ? 'Conexão desconectada' : 'Conexão degradada',
+          message: ep.reason ?? '',
+          source: 'connection-health-check',
+          dedupe_key: waroomKey,
+        }).then(({ error }) => {
+          if (error && (error as { code?: string }).code !== '23505') {
+            log.warn('Falha ao criar alerta de warroom (episódio)', { error: error.message });
+          }
+        });
+      }
+      const episodeStart = existingWarroom
+        ? new Date((existingWarroom as Record<string, unknown>).created_at as string)
+        : new Date();
+      const level = decideEscalation({
+        kind: ep.kind,
+        reason: ep.reason,
+        exhausted: ep.exhausted ?? false,
+        episodeStart,
+        now: new Date(),
+      });
+      if (level === 0) continue;
+
+      if (!ep.exhausted && ep.kind === 'disconnected') {
+        await supabase.from('whatsapp_connections').update({ health_reason: CONFIRMED_DOWN_REASON }).eq('id', ep.connection_id);
+      }
+
+      const l1Key = levelDedupeKey(1, ep.kind, ep.connection_id, new Date());
+      const pushRecipients = new Set<string>(adminOrSupSet);
+      for (const entry of alertPrefs) {
+        if (entry.channel === 'push' && entry.alert_type === ep.kind) pushRecipients.add(entry.user_id);
+      }
+      for (const userId of pushRecipients) {
+        if (!adminOrSupSet.has(userId)) {
+          const pref = prefRows.find((p) => p.user_id === userId);
+          const wantsAlert = ep.kind === 'disconnected'
+            ? (pref?.alert_on_disconnected !== false)
+            : (pref?.alert_on_degraded !== false);
+          if (!wantsAlert) continue;
+        }
+        await supabase.from('notifications').insert({
+          user_id: userId, type: 'connection_alert',
+          title: ep.kind === 'disconnected' ? 'Conexão desconectada' : 'Conexão degradada',
+          message: ep.reason ?? '',
+          dedupe_key: l1Key,
+        }).then(({ error }) => {
+          if (error && (error as { code?: string }).code !== '23505') {
+            log.warn('Falha ao criar notificação push nível 1', { error: error.message });
+          }
+        });
+      }
+
+      const emailUserIds = alertPrefs
+        .filter((e) => e.channel === 'email' && e.alert_type === ep.kind)
+        .map((e) => e.user_id);
+      for (const userId of emailUserIds) {
+        const email = profileEmails[userId];
+        if (!email || !resendKey) continue;
+        const emailKey = `${l1Key}:email`;
+        const { data: emailMark } = await supabase.from('notifications')
+          .select('id').eq('user_id', userId).eq('dedupe_key', emailKey).maybeSingle();
+        if (emailMark) continue;
+        const emailResp = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'alerts@zappweb.app.br', to: email,
+            subject: ep.kind === 'disconnected' ? 'Conexão desconectada' : 'Conexão degradada',
+            html: `<p>${ep.reason ?? ''}</p>`,
+          }),
+        });
+        const isTransient = emailResp.status === 429 || emailResp.status >= 500;
+        if (!isTransient) {
+          await supabase.from('notifications').insert({
+            user_id: userId, type: 'connection_alert_email',
+            title: 'Email de alerta enviado', message: '',
+            dedupe_key: emailKey, is_read: true,
+          }).then(() => {});
+        }
+      }
+
+      if (level >= 2) {
+        const l2Key = levelDedupeKey(2, ep.kind, ep.connection_id, new Date());
+        for (const userId of adminOnlySet) {
+          await supabase.from('notifications').insert({
+            user_id: userId, type: 'connection_alert',
+            title: `Conexão ${ep.kind === 'disconnected' ? 'desconectada' : 'degradada'} (repetição)`,
+            message: ep.reason ?? '',
+            dedupe_key: l2Key,
+          }).then(() => {});
+        }
+      }
     }
 
 
