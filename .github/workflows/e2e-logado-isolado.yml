@@ -110,7 +110,7 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-
+          restore-keys: bun-${{ github.ref }}-
       - name: Instalar dependências antes do ambiente sem saída de rede
         shell: bash
         run: |
@@ -180,7 +180,7 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-
+          restore-keys: bun-${{ github.ref }}-
       - name: Instalar dependências antes do ambiente sem saída de rede
         shell: bash
         run: |
@@ -240,7 +240,7 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-
+          restore-keys: bun-${{ github.ref }}-
       - name: Instalar dependências antes do isolamento
         shell: bash
         run: |
