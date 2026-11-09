@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "3a8161c7e70b442fb8f19e96ada5f401f8f9d63a",
+  "commit": "32129d82b82b5609b3f226e5d7199ea952014af0",
   "branch": "main",
-  "data_commit": "2026-11-09T17:46:39-03:00",
+  "data_commit": "2026-11-09T18:38:34-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "32129d8",
+    "data": "2026-11-09",
+    "assunto": "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70"
+   },
    {
     "sha": "3a8161c",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "c806b53",
     "data": "2026-11-09",
     "assunto": "fix(hooks): expõe isError em 9 hooks sem estado de erro (#2873)"
-   },
-   {
-    "sha": "8f7a8ee",
-    "data": "2026-11-09",
-    "assunto": "test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)"
    }
   ],
-  "arquivos_mudados_7d": 653,
+  "arquivos_mudados_7d": 647,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -218,10 +218,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 12
-   },
-   {
     "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
@@ -231,6 +227,10 @@
    },
    {
     "arquivo": "RELATORIO_CI.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 11
    },
    {
@@ -274,6 +274,10 @@
     "mudancas": 8
    },
    {
+    "arquivo": ".github/workflows/e2e-logado-isolado.yml",
+    "mudancas": 7
+   },
+   {
     "arquivo": "AGENTS.md",
     "mudancas": 7
    },
@@ -287,10 +291,6 @@
    },
    {
     "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 6
-   },
-   {
-    "arquivo": ".github/workflows/e2e-logado-isolado.yml",
     "mudancas": 6
    },
    {

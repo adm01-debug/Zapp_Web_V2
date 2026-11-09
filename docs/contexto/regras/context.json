@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "3a8161c7e70b442fb8f19e96ada5f401f8f9d63a",
+  "sha": "32129d82b82b5609b3f226e5d7199ea952014af0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 20:57 UTC",
+  "generated_at": "2026-11-09 21:49 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044863
@@ -383016,10 +383016,20 @@
   }
  },
  "git": {
-  "sha": "3a8161c7e70b442fb8f19e96ada5f401f8f9d63a",
+  "sha": "32129d82b82b5609b3f226e5d7199ea952014af0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "32129d8",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70",
+    "files": [
+     ".github/workflows/e2e-logado-isolado.yml",
+     "scripts/ci/e2e-isolated-workflow.unit.mjs"
+    ]
+   },
    {
     "sha": "3a8161c",
     "date": "2026-11-09",
@@ -383336,18 +383346,6 @@
      "src/lib/talkxCsv.ts",
      "src/lib/talkxReportPdf.ts"
     ]
-   },
-   {
-    "sha": "7beecdb",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)",
-    "files": [
-     "src/components/tasks/__tests__/movimentoEContraste.test.tsx",
-     "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
-     "src/components/tasks/shared/PriorityChip.tsx",
-     "src/components/tasks/shared/PriorityPill.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -383366,6 +383364,10 @@
    [
     "supabase/schema-manifest.json",
     3
+   ],
+   [
+    ".github/workflows/e2e-logado-isolado.yml",
+    2
    ],
    [
     "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
@@ -383400,6 +383402,10 @@
     2
    ],
    [
+    "scripts/ci/e2e-isolated-workflow.unit.mjs",
+    1
+   ],
+   [
     "scripts/edge-deploy/health-check.mjs",
     1
    ],
@@ -383420,15 +383426,7 @@
     1
    ],
    [
-    ".github/workflows/e2e-logado-isolado.yml",
-    1
-   ],
-   [
     ".github/workflows/contexto.yml",
-    1
-   ],
-   [
-    ".github/workflows/db-live-guard.yml",
     1
    ]
   ]

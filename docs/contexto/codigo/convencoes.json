@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70",
    "fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções",
    "fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos",
    "chore(db): sincronizar artefatos derivados do banco (#2902)",
-   "fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto",
-   "chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck"
+   "fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
