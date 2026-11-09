@@ -51,9 +51,9 @@ function ShellFalso({ onNavigate }: { onNavigate: (view: string) => void }) {
 function montar() {
   const onNavigate = vi.fn();
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  client.setQueryData(['talkx-campaigns'], [{ id: CAMPANHA_ID, name: 'Black Friday Zeta', status: 'running' }]);
-  client.setQueryData(['talkx-segments'], [{ id: SEGMENTO_ID, name: 'Público Quente' }]);
-  client.setQueryData(['talkx-templates'], [{ id: TEMPLATE_ID, name: 'Modelo Aurora' }]);
+  client.setQueryData(['talkx-campaigns', 'cmd-palette'], [{ id: CAMPANHA_ID, name: 'Black Friday Zeta', status: 'running' }]);
+  client.setQueryData(['talkx-segments', 'cmd-palette'], [{ id: SEGMENTO_ID, name: 'Público Quente' }]);
+  client.setQueryData(['talkx-templates', 'cmd-palette'], [{ id: TEMPLATE_ID, name: 'Modelo Aurora' }]);
   render(
     <MemoryRouter>
       <QueryClientProvider client={client}>
@@ -232,8 +232,6 @@ describe('Ctrl+K — contatos pelo serviço e navegação compartilhados', () =>
         search_term: '[E2E]', page_size: 8, page_offset: 0, sort_field: 'name', sort_direction: 'asc',
       }));
 
-      // O helper real troca a view e despacha o evento. A Inbox não é montada
-      // nesta suíte: este listener controla apenas a confirmação do consumidor.
       const delivered = vi.fn();
       const appWindow = window as Window & { __pendingOpenContactId?: string };
       const consume = (event: Event) => {
