@@ -347,11 +347,11 @@ jobs:
           shellcheck_version="0.10.0"
           shellcheck_sha256="6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87"
           mkdir -p "$HOME/.local/bin"
-          curl --proto '=https' --tlsv1.2 --silent --show-error --location --output /tmp/actionlint.tar.gz \
+          curl --proto '=https' --tlsv1.2 --silent --show-error --location --fail --output /tmp/actionlint.tar.gz \
             "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/actionlint_${actionlint_version}_linux_amd64.tar.gz"
           echo "${actionlint_sha256}  /tmp/actionlint.tar.gz" | sha256sum -c -
           tar -xzf /tmp/actionlint.tar.gz -C "$HOME/.local/bin" actionlint
-          curl --proto '=https' --tlsv1.2 --silent --show-error --location --output /tmp/shellcheck.tar.xz \
+          curl --proto '=https' --tlsv1.2 --silent --show-error --location --fail --output /tmp/shellcheck.tar.xz \
             "https://github.com/koalaman/shellcheck/releases/download/v${shellcheck_version}/shellcheck-v${shellcheck_version}.linux.x86_64.tar.xz"
           echo "${shellcheck_sha256}  /tmp/shellcheck.tar.xz" | sha256sum -c -
           tar -xJf /tmp/shellcheck.tar.xz -C /tmp "shellcheck-v${shellcheck_version}/shellcheck"

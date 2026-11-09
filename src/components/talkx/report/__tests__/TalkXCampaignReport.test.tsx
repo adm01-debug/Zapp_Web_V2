@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { talkxReportSeriesFromRows, talkxReportHeatmapFromTimestamps } from '../talkxReportData';
 import { TalkXCampaignReport } from '../TalkXCampaignReport';
 
@@ -116,13 +117,31 @@ describe('talkxReportData', () => {
 });
 
 describe('TalkXCampaignReport', () => {
-  const campaign = {
+  const campaign: TalkXCampaign = {
     id: 'camp-test-1',
     name: 'Campanha Teste',
+    message_template: 'Olá, {{nome}}!',
+    variables_config: ['nome'],
+    typing_delay_min: 1,
+    typing_delay_max: 2,
+    send_interval_min: 3,
+    send_interval_max: 5,
+    status: 'completed',
+    total_recipients: 100,
     schedule_timezone: 'America/Sao_Paulo',
     sent_count: 100,
+    failed_count: 0,
     delivered_count: 90,
     replied_count: 10,
+    whatsapp_connection_id: null,
+    created_by: null,
+    started_at: '2026-10-05T10:00:00Z',
+    completed_at: '2026-10-05T10:05:00Z',
+    created_at: '2026-10-05T09:00:00Z',
+    updated_at: '2026-10-05T10:05:00Z',
+    media_url: null,
+    media_type: null,
+    scheduled_at: null,
   };
 
   beforeEach(() => {
@@ -134,7 +153,7 @@ describe('TalkXCampaignReport', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={qc}>
-        <TalkXCampaignReport campaign={campaign as any} onBack={vi.fn()} />
+        <TalkXCampaignReport campaign={campaign} onBack={vi.fn()} />
       </QueryClientProvider>,
     );
   }
