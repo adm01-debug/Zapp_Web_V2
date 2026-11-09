@@ -63,6 +63,7 @@
   "supabase/functions/_shared/__tests__/evolution-webhook-alert-dedup.test.ts",
   "supabase/functions/_shared/__tests__/evolution-webhook-connection-risk.test.ts",
   "supabase/functions/_shared/__tests__/evolution-webhook-event-coverage.test.ts",
+  "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
   "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
   "supabase/functions/_shared/__tests__/evolution-webhook-messages.test.ts",
   "supabase/functions/_shared/__tests__/f58-item-receipts.test.ts",

@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1947)",
+   "co-localizado (__tests__) (1948)",
    "outro (217)",
    "co-localizado (*.test) (168)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)",
    "feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData",
    "security(ci): fecha injeção de comando e fail-open no guard GA02",
    "feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)",
-   "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)",
-   "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)"
+   "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

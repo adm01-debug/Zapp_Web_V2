@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2594,
+ "total": 2595,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2303
+  "unit": 2304
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1947
+   "arquivos": 1948
   },
   {
    "padrao": "outro",
@@ -21204,6 +21204,16 @@
    "casos": 4
   },
   {
+   "arquivo": "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+   "tipo": "unit",
+   "linhas": 266,
+   "testa": [
+    "supabase/functions/_shared/evolution-types.ts",
+    "supabase/functions/_shared/evolution-webhook-messages.ts"
+   ],
+   "casos": 5
+  },
+  {
    "arquivo": "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
    "tipo": "unit",
    "linhas": 500,
@@ -25030,9 +25040,9 @@
   "supabase/functions/_shared/evolution-send.ts": 4,
   "supabase/functions/_shared/evolution-session-routes.ts": 1,
   "supabase/functions/_shared/evolution-sync-actions.ts": 2,
-  "supabase/functions/_shared/evolution-types.ts": 22,
+  "supabase/functions/_shared/evolution-types.ts": 23,
   "supabase/functions/_shared/evolution-webhook-handlers.ts": 10,
-  "supabase/functions/_shared/evolution-webhook-messages.ts": 8,
+  "supabase/functions/_shared/evolution-webhook-messages.ts": 9,
   "supabase/functions/_shared/evolution-webhook-msg-handlers.ts": 5,
   "supabase/functions/_shared/gmail-helpers.ts": 5,
   "supabase/functions/_shared/gmail-mime.ts": 1,

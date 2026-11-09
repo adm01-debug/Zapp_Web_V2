@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "568d3f932667f97c6a1f4dcd96b147b4142daaf4",
+  "commit": "8f7a8ee77f6dc447150f264cebb677cd3fd61fbf",
   "branch": "main",
-  "data_commit": "2026-11-09T02:42:22-03:00",
+  "data_commit": "2026-11-09T10:08:30Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "8f7a8ee",
+    "data": "2026-11-09",
+    "assunto": "test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)"
+   },
    {
     "sha": "568d3f9",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "a03ef62",
     "data": "2026-11-07",
     "assunto": "fix: não aninhar <div> dentro de <p> na tela LGPD (#2779)"
-   },
-   {
-    "sha": "f103a30",
-    "data": "2026-11-07",
-    "assunto": "fix(db): registra replay seguro da migration 20261107170000 (#2784)"
    }
   ],
-  "arquivos_mudados_7d": 1092,
+  "arquivos_mudados_7d": 1081,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -153,7 +153,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 201
+    "mudancas": 202
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8320,
-  "arquivos_codigo": 4752,
-  "linhas_codigo": 877848,
+  "arquivos_total": 8321,
+  "arquivos_codigo": 4753,
+  "linhas_codigo": 878114,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 217,
   "migrations": 1095,
   "cron_jobs": 26,
-  "testes": 2594,
+  "testes": 2595,
   "workflows": 21,
   "scripts": 420,
   "docs_md": 1070
@@ -775,8 +775,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 380,
-   "linhas": 115643
+   "arquivos": 381,
+   "linhas": 115909
   },
   "tailwind.config.ts": {
    "arquivos": 1,

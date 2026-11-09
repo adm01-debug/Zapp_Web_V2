@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "568d3f932667f97c6a1f4dcd96b147b4142daaf4",
+  "sha": "8f7a8ee77f6dc447150f264cebb677cd3fd61fbf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 06:15 UTC",
-  "files_total": 8161,
-  "code_files": 6019,
-  "code_lines": 1044333
+  "generated_at": "2026-11-09 10:12 UTC",
+  "files_total": 8162,
+  "code_files": 6020,
+  "code_lines": 1044599
  },
  "version": "1.3.2",
- "facts_hash": "003f5891e6c6b36d",
+ "facts_hash": "56b9ea458250184b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,7 +314,7 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1870,
+   ".ts": 1871,
    ".sql": 1295,
    ".mjs": 416,
    ".py": 119,
@@ -69839,8 +69839,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 380,
-   "lines": 115643,
+   "files": 381,
+   "lines": 115909,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -200521,6 +200521,26 @@
    {
     "file": "supabase/functions/_shared/__tests__/evolution-webhook-event-coverage.test.ts",
     "name": "SL-149 comportamento: cada evento enumerado é despachado pelo roteador real (e só os de log param no rate-limit)"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+    "name": "F3-1: caminho feliz — ingest_inbound_message recebe args corretos e downstream é chamado"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+    "name": "F3-2: idempotência — webhook duplicado (outcome=duplicate) NÃO dispara downstream"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+    "name": "F3-3: mensagem de grupo (@g.us) é ignorada ANTES de qualquer acesso ao banco"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+    "name": "F3-4: texto vazio não chega ao banco — early-exit antes de ingest_inbound_message"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+    "name": "F3-5: payload sem remoteJid — JID não resolvível, early-exit sem chamar banco"
    },
    {
     "file": "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
@@ -361263,6 +361283,23 @@
    ],
    "uses_service_role": true
   },
+  "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+   "lines": 266,
+   "is_test": true,
+   "rule_comments": [
+    "disparado apenas depois.",
+    "downstream deve ter sido disparado",
+    "ingest deve ter sido chamado normalmente"
+   ],
+   "tests": [
+    "F3-1: caminho feliz — ingest_inbound_message recebe args corretos e downstream é chamado",
+    "F3-2: idempotência — webhook duplicado (outcome=duplicate) NÃO dispara downstream",
+    "F3-3: mensagem de grupo (@g.us) é ignorada ANTES de qualquer acesso ao banco",
+    "F3-4: texto vazio não chega ao banco — early-exit antes de ingest_inbound_message",
+    "F3-5: payload sem remoteJid — JID não resolvível, early-exit sem chamar banco"
+   ]
+  },
   "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts": {
    "path": "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
    "lines": 500,
@@ -384039,10 +384076,19 @@
   }
  },
  "git": {
-  "sha": "568d3f932667f97c6a1f4dcd96b147b4142daaf4",
+  "sha": "8f7a8ee77f6dc447150f264cebb677cd3fd61fbf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "8f7a8ee",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)",
+    "files": [
+     "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts"
+    ]
+   },
    {
     "sha": "568d3f9",
     "date": "2026-11-09",
@@ -384406,15 +384452,6 @@
      "scripts/db-audit/message-reactions-visibilidade-fila.test.sh",
      "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
     ]
-   },
-   {
-    "sha": "fb328a6",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(db): registra formatação divergente da migration 20261107153000 (#2781)",
-    "files": [
-     "scripts/db-audit/migration-evidence.json"
-    ]
    }
   ],
   "hot_files": [
@@ -384447,8 +384484,8 @@
     2
    ],
    [
-    "scripts/db-audit/migration-evidence.json",
-    2
+    "supabase/functions/_shared/__tests__/evolution-webhook-inbound-ingest.test.ts",
+    1
    ],
    [
     "scripts/ci/check-claude-md-integrity.mjs",
