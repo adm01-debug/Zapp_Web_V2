@@ -1,7 +1,7 @@
 # Graph Report - Zapp_Web_V2  (2026-11-09)
 
 ## Corpus Check
-- 7236 files · ~8,982,956 words
+- 7236 files · ~8,983,288 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 94 file(s) not represented in the graph (top: .tsv 32, .csv 13, (none) 12)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ff904390`
+- Built from commit: `fe6c6b0b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -2951,7 +2951,7 @@
 - idx_talkx_segments_published_by
 - idx_talkx_templates_current_version_id
 - idx_team_message_receipts_conversation_id
-- 20261107121000_message_reactions_one_per_agent_constraint.sql
+- 20261107121000_message_reactions_one_per_agent.sql
 - chatbot_flows_ai_l1.sql
 - messages_trgm_busca.sql
 - my_network_status.sql

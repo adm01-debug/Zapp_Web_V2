@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ff90439057894d8729de0d4bf9e9db4300b08f5f",
+  "commit": "fe6c6b0bf83dbeeec257016e85013314d7d9ff93",
   "branch": "main",
-  "data_commit": "2026-11-09T17:54:12Z",
+  "data_commit": "2026-11-09T15:52:50-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "fe6c6b0",
+    "data": "2026-11-09",
+    "assunto": "fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos"
+   },
    {
     "sha": "ff90439",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "568d3f9",
     "data": "2026-11-09",
     "assunto": "feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData"
-   },
-   {
-    "sha": "c545e5b",
-    "data": "2026-11-09",
-    "assunto": "security(ci): fecha injeção de comando e fail-open no guard GA02"
    }
   ],
-  "arquivos_mudados_7d": 659,
+  "arquivos_mudados_7d": 657,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -258,15 +258,15 @@
     "mudancas": 9
    },
    {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 9
+   },
+   {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
    },
    {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 8
    },
    {

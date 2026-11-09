@@ -1986,7 +1986,7 @@
    ],
    "indices": [],
    "fks": [],
-   "criada_em": "20261107121000_message_reactions_one_per_agent_constraint.sql",
+   "criada_em": "20261107121000_message_reactions_one_per_agent.sql",
    "colunas_types": {
     "contact_id": "string | null",
     "created_at": "string",
