@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData",
    "security(ci): fecha injeção de comando e fail-open no guard GA02",
    "feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)",
    "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)",
-   "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)",
-   "fix(layout): restaura trilha de navegação no desktop (#2819)"
+   "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

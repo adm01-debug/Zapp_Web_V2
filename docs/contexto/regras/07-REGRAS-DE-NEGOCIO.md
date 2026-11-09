@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `c545e5b636` · branch `main` · 2026-11-09 05:33 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `568d3f9326` · branch `main` · 2026-11-09 06:15 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4554,7 +4554,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21156 testes em 2246 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21171 testes em 2246 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4854,10 +4854,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` | 16 | R2-MOD-024 — resposta atrasada não contamina o template seguinte · variantes: resposta lenta de A não sobrescreve o painel de B · histórico: resposta lenta de A não sobrescreve o histórico de B · loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento … |
 | `src/components/talkx/__tests__/segmentValidation.test.ts` | 16 | segmentValidation · nome (X099) · recusa nome menor que o mínimo · aceita nome no mínimo, ignorando espaços nas pontas · recusa nome maior que o máximo … |
 | `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` | 16 | TalkXQueryBoundary (matriz de estados — X047) · carregando: mostra o esqueleto e marca aria-busy · erro: mostra o erro e NUNCA o vazio (nem com a lista vazia) · vazio sem erro: mostra o vazio … |
+| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 16 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx` | 16 | WorkItemSheet — etapas 137–140 (Planejamento) · 137: a seção traz os dois cartões e o Prazo mostra data e hora visíveis · 137: limpar o Prazo zera também a hora · 137: o Lembrete mostra a data e a hora agendadas … |
 | `src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx` | 16 | etapa 094 — polimento do arrastar · o cartão levantado ganha o overlay elevado e o lugar da soltura fica tracejado · no toque o arrasto só pega depois da pressão longa; toque curto desarma · etapas 095/096 — alvo de soltura … |
 | `src/hooks/__tests__/useActionFeedback.test.ts` | 16 | useActionFeedback · initializes without error · exposes success function · exposes error function … |
-| `src/hooks/integrations/__tests__/useTalkXCampaignList.test.ts` | 16 | useTalkXCampaignList — paginação no servidor (X078) · página 3 com 10 por página pede o intervalo 20–29 e traz colunas nomeadas com count exato · com 1.200 campanhas a 2ª página devolve 10 linhas e o total é 1.200 · ordenação e filtros (status, segmento, criador, período) vão na consulta … |
 | … +1946 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)

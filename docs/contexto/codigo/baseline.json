@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c545e5b63643d569fca4b41c041cc0732a32697b",
+  "commit": "568d3f932667f97c6a1f4dcd96b147b4142daaf4",
   "branch": "main",
-  "data_commit": "2026-11-09T01:02:10-03:00",
+  "data_commit": "2026-11-09T02:42:22-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "568d3f9",
+    "data": "2026-11-09",
+    "assunto": "feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData"
+   },
    {
     "sha": "c545e5b",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "f103a30",
     "data": "2026-11-07",
     "assunto": "fix(db): registra replay seguro da migration 20261107170000 (#2784)"
-   },
-   {
-    "sha": "5fec88f",
-    "data": "2026-11-07",
-    "assunto": "chore(db): sincroniza artefatos derivados e inventário (#2783)"
    }
   ],
-  "arquivos_mudados_7d": 1099,
+  "arquivos_mudados_7d": 1092,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 263
+    "mudancas": 264
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 287
+    "commits": 288
    },
    {
     "autor": "github-actions[bot]",
@@ -310,17 +310,13 @@
    {
     "autor": "dependabot[bot]",
     "commits": 5
-   },
-   {
-    "autor": "devin-ai-integration[bot]",
-    "commits": 1
    }
   ]
  },
  "contagens": {
   "arquivos_total": 8320,
   "arquivos_codigo": 4752,
-  "linhas_codigo": 877736,
+  "linhas_codigo": 877848,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -704,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368082
+   "linhas": 368194
   },
   "src/config": {
    "arquivos": 3,
@@ -906,7 +902,7 @@
   }
  ],
  "qualidade": {
-  "any": 349,
+  "any": 350,
   "console_log": 416,
   "ts_ignore": 0,
   "eslint_disable": 1,
