@@ -1059,10 +1059,10 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261026130300 | [copilot_feedback](migrations/20261026130300_copilot_feedback.sql) | 4 |
 | 20261026140300 | [copilot_feedback_rls_fix](migrations/20261026140300_copilot_feedback_rls_fix.sql) | 5 |
 | 20261026150300 | [copilot_feedback_created_by_nullable](migrations/20261026150300_copilot_feedback_created_by_nullable.sql) | 1 |
-| 20261026160000 | [restore_rls_security_alerts_talkx_blacklist](migrations/20261026160000_restore_rls_security_alerts_talkx_blacklist.sql) | 0 |
+| 20261026160000 | [restore_rls_security_alerts_talkx_blacklist](migrations/20261026160000_restore_rls_security_alerts_talkx_blacklist.sql) | 1 |
 | 20261026190300 | [saved_filters_inbox_limites](migrations/20261026190300_saved_filters_inbox_limites.sql) | 5 |
-| 20261026200000 | [contact_notes_pinned](migrations/20261026200000_contact_notes_pinned.sql) | 0 |
-| 20261026210000 | [dashboard_kpi_periodo_aditivo](migrations/20261026210000_dashboard_kpi_periodo_aditivo.sql) | 0 |
+| 20261026200000 | [contact_notes_pinned](migrations/20261026200000_contact_notes_pinned.sql) | 1 |
+| 20261026210000 | [dashboard_kpi_periodo_aditivo](migrations/20261026210000_dashboard_kpi_periodo_aditivo.sql) | 1 |
 | 20261026210300 | [reconcile_team_reactions_force_conversation_id_trig](migrations/20261026210300_reconcile_team_reactions_force_conversation_id_trig.sql) | 3 |
 | 20261026220300 | [classificar_rls_sem_policy](migrations/20261026220300_classificar_rls_sem_policy.sql) | 19 |
 | 20261026230300 | [decidir_schemas_backup](migrations/20261026230300_decidir_schemas_backup.sql) | 11 |

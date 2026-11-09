@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-09 10:54 UTC
+
+- **migrations** alterado (3): `20261026160000_restore_rls_security_alerts_talkx_blacklist`, `20261026200000_contact_notes_pinned`, `20261026210000_dashboard_kpi_periodo_aditivo`
+
 ## 2026-11-09 04:09 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_12`

@@ -88092,7 +88092,8 @@
       },
       {
         "name": "restore_rls_security_alerts_talkx_blacklist",
-        "statements": null,
+        "statements": 1,
+        "statements_sha": "d0328de0cecc881b",
         "version": "20261026160000"
       },
       {
@@ -88103,12 +88104,14 @@
       },
       {
         "name": "contact_notes_pinned",
-        "statements": null,
+        "statements": 1,
+        "statements_sha": "11539c1b1c403751",
         "version": "20261026200000"
       },
       {
         "name": "dashboard_kpi_periodo_aditivo",
-        "statements": null,
+        "statements": 1,
+        "statements_sha": "9c71834ec094ebc9",
         "version": "20261026210000"
       },
       {

@@ -1,1 +1,1 @@
--- (sem statements registrados)
+-- sql-sha256: 7f209e5ba7477a24b621303d4def2f3c580ca0b5bfd0ec86fbd3334ccdb7c3ca
