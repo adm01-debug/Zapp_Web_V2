@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d0e624b44cd402fdd276aa0804eb5ea21567600f",
+  "commit": "014270223cc89fb9be81eccf2290717dde2e131e",
   "branch": "main",
-  "data_commit": "2026-11-09T16:50:05Z",
+  "data_commit": "2026-11-09T14:16:26-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0142702",
+    "data": "2026-11-09",
+    "assunto": "chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck"
+   },
    {
     "sha": "d0e624b",
     "data": "2026-11-09",
@@ -126,18 +131,13 @@
     "sha": "e6e467b",
     "data": "2026-11-08",
     "assunto": "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)"
-   },
-   {
-    "sha": "7beecdb",
-    "data": "2026-11-08",
-    "assunto": "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)"
    }
   ],
   "arquivos_mudados_7d": 661,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 656
+    "mudancas": 652
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 265
+    "mudancas": 263
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -153,11 +153,11 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 202
+    "mudancas": 199
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 144
+    "mudancas": 143
    },
    {
     "pasta": "src/components/dashboard",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 124
+    "mudancas": 123
    },
    {
     "pasta": "src/lib/__tests__",
@@ -203,15 +203,19 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 14
+    "mudancas": 13
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 14
+    "mudancas": 13
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 12
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -222,31 +226,23 @@
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 11
-   },
-   {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 11
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 11
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 10
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 10
    },
    {
@@ -254,7 +250,7 @@
     "mudancas": 9
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 9
    },
    {
@@ -262,19 +258,23 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 8
+   },
+   {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 8
    },
    {
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 8
+   },
+   {
     "arquivo": "AGENTS.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 7
    },
    {
@@ -286,15 +286,15 @@
     "mudancas": 7
    },
    {
-    "arquivo": "supabase/schema-catalog.json",
-    "mudancas": 7
-   },
-   {
     "arquivo": ".github/workflows/codeql.yml",
     "mudancas": 6
    },
    {
     "arquivo": ".github/workflows/e2e-logado-isolado.yml",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     "mudancas": 6
    }
   ],

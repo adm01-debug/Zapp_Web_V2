@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "d0e624b44cd402fdd276aa0804eb5ea21567600f",
+  "sha": "014270223cc89fb9be81eccf2290717dde2e131e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 16:51 UTC",
+  "generated_at": "2026-11-09 17:18 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044811
@@ -384213,10 +384213,22 @@
   }
  },
  "git": {
-  "sha": "d0e624b44cd402fdd276aa0804eb5ea21567600f",
+  "sha": "014270223cc89fb9be81eccf2290717dde2e131e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "0142702",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "d0e624b",
     "date": "2026-11-09",
@@ -384544,17 +384556,6 @@
     "files": [
      "e2e/navegacao-modulos.spec.ts"
     ]
-   },
-   {
-    "sha": "b5e89bb",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "fix(test): restaura imports Deno nos contratos",
-    "files": [
-     "bun.lock",
-     "package.json",
-     "vitest.contracts.config.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384563,11 +384564,23 @@
     4
    ],
    [
-    ".github/workflows/ci.yml",
+    "docs/DB-INVENTORY.md",
     2
    ],
    [
-    "package.json",
+    "scripts/db-audit/grants-baseline.json",
+    2
+   ],
+   [
+    "supabase/schema-catalog.json",
+    2
+   ],
+   [
+    "supabase/schema-manifest.json",
+    2
+   ],
+   [
+    ".github/workflows/ci.yml",
     2
    ],
    [
@@ -384624,18 +384637,6 @@
    ],
    [
     "scripts/ci/vercel-env-cleanup.mjs",
-    1
-   ],
-   [
-    "scripts/ci/vercel-env-cleanup.unit.mjs",
-    1
-   ],
-   [
-    "ESTADO.md",
-    1
-   ],
-   [
-    "scripts/db-audit/replay-known-failures.json",
     1
    ]
   ]
