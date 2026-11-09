@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-08 23:22 UTC
+
+- **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
+- **migrations** alterado (2): `20261007010129_multiplix_drain_enum_cast`, `20261009011641_multiplix_drain_enum_cast`
+
 ## 2026-11-08 21:48 UTC
 
 - **functions** adicionado (6): `public.talkx_campaign_heatmap(p_campaign_id uuid)`, `public.talkx_campaign_queue_by_segment(p_campaign_id uuid)`, `public.talkx_campaign_ranking(p_limit integer, p_metric text)`, `public.talkx_template_library_kpis()`, `public.talkx_template_metrics(p_template_id uuid)`, `public.talkx_top_segments(p_limit integer)`

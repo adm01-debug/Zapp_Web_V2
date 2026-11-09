@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e6e467b96f` · branch `main` · 2026-11-08 21:54 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9183f0f6fa` · branch `main` · 2026-11-08 23:22 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1192,7 +1192,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `duplicate_talkx_campaign` | authentication_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | active_profile_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
-| … +647 linhas — lista completa em `context.json` | | |
+| … +654 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -4043,7 +4043,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes' AND delivered_at IS NOT NULL),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +69 linhas — lista completa em `context.json` | |
+| … +71 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 

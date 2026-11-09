@@ -848,14 +848,14 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261007001008 | [message_reactions_agente_sem_chave_de_contato](migrations/20261007001008_message_reactions_agente_sem_chave_de_contato.sql) | 0 |
 | 20261007004252 | [talkx_engine_window_contract](migrations/20261007004252_talkx_engine_window_contract.sql) | 0 |
 | 20261007004545 | [secd_caller_check_13](migrations/20261007004545_secd_caller_check_13.sql) | 0 |
-| 20261007010129 | [multiplix_drain_enum_cast](migrations/20261007010129_multiplix_drain_enum_cast.sql) | 0 |
+| 20261007010129 | [multiplix_drain_enum_cast](migrations/20261007010129_multiplix_drain_enum_cast.sql) | 2 |
 | 20261007010651 | [team_chat_media_contract_locators](migrations/20261007010651_team_chat_media_contract_locators.sql) | 0 |
 | 20261007012808 | [department_invite_contract_audit_vocabulary](migrations/20261007012808_department_invite_contract_audit_vocabulary.sql) | 14 |
 | 20261007013217 | [conversation_closures_reopen_same_day](migrations/20261007013217_conversation_closures_reopen_same_day.sql) | 0 |
 | 20261007034219 | [mini_game_xp_daily_limit](migrations/20261007034219_mini_game_xp_daily_limit.sql) | 0 |
 | 20261008210159 | [ia_usage_outbox_duravel](migrations/20261008210159_ia_usage_outbox_duravel.sql) | 0 |
 | 20261009000118 | [revoke_whatsapp_connections_anon_grants](migrations/20261009000118_revoke_whatsapp_connections_anon_grants.sql) | 0 |
-| 20261009011641 | [multiplix_drain_enum_cast](migrations/20261009011641_multiplix_drain_enum_cast.sql) | 0 |
+| 20261009011641 | [multiplix_drain_enum_cast](migrations/20261009011641_multiplix_drain_enum_cast.sql) | 2 |
 | 20261009012702 | [ia_outbox_stats_hmac](migrations/20261009012702_ia_outbox_stats_hmac.sql) | 0 |
 | 20261009031223 | [talkx_multiplix_consumo_compartilhado](migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql) | 0 |
 | 20261009031958 | [talkx_v4_x041_atribuicao_negocio_ganho_receita_roi](migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql) | 0 |

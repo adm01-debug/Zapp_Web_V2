@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e6e467b96f` · branch `main` · 2026-11-08 21:54 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9183f0f6fa` · branch `main` · 2026-11-08 23:22 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -728,9 +728,12 @@
 - `talkx_benchmarks`
 - `talkx_blacklist_audit_trigger`
 - `talkx_blacklist_no_delete`
+- `talkx_campaign_heatmap`
 - `talkx_campaign_launch_checks`
 - `talkx_campaign_logs`
 - `talkx_campaign_pace`
+- `talkx_campaign_queue_by_segment`
+- `talkx_campaign_ranking`
 - `talkx_campaign_recipients_page`
 - `talkx_campaign_reply_stats`
 - `talkx_campaign_segment_progress`
@@ -760,6 +763,9 @@
 - `talkx_set_campaign_investment`
 - `talkx_suppress_contact`
 - `talkx_sync_campaign_segments`
+- `talkx_template_library_kpis`
+- `talkx_template_metrics`
+- `talkx_top_segments`
 - `talkx_upsert_link`
 - `talkx_validate_template_variant_weights`
 - `team_message_receipts_update_guard`
@@ -853,7 +859,7 @@ Middleware matcher (Next.js): nenhum
 | grant | anon, authenticated, service_role | all | `talkx_settings` |
 | grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `auth.uid`, `auth.uid` |
 | grant | authenticated | delete | `multiplix_recipients` |
-| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +149 |
+| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +155 |
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |

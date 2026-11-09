@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
+  "commit": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
   "branch": "main",
-  "data_commit": "2026-11-08T17:37:41-03:00",
+  "data_commit": "2026-11-08T18:44:55-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9183f0f",
+    "data": "2026-11-08",
+    "assunto": "feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)"
+   },
    {
     "sha": "e6e467b",
     "data": "2026-11-08",
@@ -126,18 +131,13 @@
     "sha": "7991a1f",
     "data": "2026-11-07",
     "assunto": "fix: endurecer scripts e automatizar guardas residuais (#2773)"
-   },
-   {
-    "sha": "cc39387",
-    "data": "2026-11-07",
-    "assunto": "fix(e2e): tolera ruído de ambiente SIP 401 e Device 500 no guard de varredura (#2777)"
    }
   ],
-  "arquivos_mudados_7d": 1114,
+  "arquivos_mudados_7d": 1117,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 678
+    "mudancas": 676
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 286
+    "commits": 287
    },
    {
     "autor": "github-actions[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 6
+    "commits": 5
    },
    {
     "autor": "devin-ai-integration[bot]",
@@ -318,7 +318,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8317,
+  "arquivos_total": 8320,
   "arquivos_codigo": 4752,
   "linhas_codigo": 877693,
   "rotas": 18,
@@ -330,7 +330,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1092,
+  "migrations": 1095,
   "cron_jobs": 26,
   "testes": 2594,
   "workflows": 21,

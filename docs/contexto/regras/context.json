@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
+  "sha": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-08 21:54 UTC",
-  "files_total": 8158,
-  "code_files": 6016,
-  "code_lines": 1043872
+  "generated_at": "2026-11-08 23:22 UTC",
+  "files_total": 8161,
+  "code_files": 6019,
+  "code_lines": 1044178
  },
  "version": "1.3.2",
- "facts_hash": "a00c628885b05804",
+ "facts_hash": "1466a921242be792",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -315,7 +315,7 @@
   "languages": {
    ".tsx": 2319,
    ".ts": 1870,
-   ".sql": 1292,
+   ".sql": 1295,
    ".mjs": 416,
    ".py": 119,
    ".cjs": 19,
@@ -34714,6 +34714,115 @@
      "vault"
     ]
    },
+   "talkx_campaign_heatmap": {
+    "args": "p_campaign_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_tz text := 'America/Sao_Paulo'; v_result jsonb; BEGIN v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1); IF NOT EXISTS ( SELECT 1 FROM public.talkx_campaigns c WHERE c.id = p_campaign_id AND (c.created_by = v_profile_id OR public.is_admin_or_supervisor(auth.uid())) ) THEN RAISE EXCEPTION 'not found' USING ERRCODE = '42501'; END IF; SELECT jsonb_build_object( 'campaign_id', p_campaign_id, 'tz', v_tz, 'cells', COALESCE( jsonb_agg( jsonb_build_object('dow', dow, 'hour', hour, 'sent', sent, 'delivered', delivered, 'replied', replied) ORDER BY dow, hour ), '[]'::jsonb ) ) INTO v_result FROM ( SELECT EXTRACT(DOW FROM sent_at AT TIME ZO …",
+    "raises": [
+     "not found"
+    ],
+    "tables": [
+     "profiles",
+     "sent_at",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "v_result"
+    ]
+   },
+   "talkx_top_segments": {
+    "args": "p_limit int DEFAULT 10",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin required' USING ERRCODE = '42501'; END IF; SELECT COALESCE(jsonb_agg(row ORDER BY avg_reply_rate_pct DESC), '[]'::jsonb) INTO v_result FROM ( SELECT jsonb_build_object( 'segment_id', cm.segment_id, 'segment_name', s.name, 'campaign_count', COUNT(*), 'total_recipients', SUM(cm.total_recipients), 'avg_delivery_rate_pct', ROUND(AVG(cm.delivery_rate_pct)::numeric, 1), 'avg_reply_rate_pct', ROUND(AVG(cm.reply_rate_pct)::numeric, 1) ) AS row, ROUND(AVG(cm.reply_rate_pct)::numeric, 1) AS avg_reply_rate_pct FROM public.talkx_campaign_metrics c …",
+    "raises": [
+     "admin required"
+    ],
+    "tables": [
+     "talkx_campaign_metrics",
+     "talkx_segments",
+     "v_result"
+    ]
+   },
+   "talkx_campaign_ranking": {
+    "args": "p_limit int DEFAULT 20, p_metric text DEFAULT 'reply_rate'",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1); IF p_metric NOT IN ('reply_rate', 'delivery_rate', 'recipients', 'duration') THEN RAISE EXCEPTION 'invalid metric: %', p_metric USING ERRCODE = '22023'; END IF; SELECT COALESCE(jsonb_agg(row ORDER BY score DESC), '[]'::jsonb) INTO v_result FROM ( SELECT jsonb_build_object( 'campaign_id', cm.campaign_id, 'campaign_name', cm.campaign_name, 'total_recipients', cm.total_recipients, 'delivery_rate_pct', cm.delivery_rate_pct, 'reply_rate_pct', cm.reply_rate_pct, 'duration_secs', cm.duration_secs, 'completed_at', cm …",
+    "raises": [
+     "invalid metric: %"
+    ],
+    "tables": [
+     "profiles",
+     "talkx_campaign_metrics",
+     "talkx_campaigns",
+     "v_result"
+    ]
+   },
+   "talkx_template_metrics": {
+    "args": "p_template_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin required' USING ERRCODE = '42501'; END IF; IF NOT EXISTS (SELECT 1 FROM public.talkx_templates WHERE id = p_template_id) THEN RAISE EXCEPTION 'template not found' USING ERRCODE = '42501'; END IF; SELECT jsonb_build_object( 'template_id', p_template_id, 'window_days', 90, 'as_of', now(), 'campaign_count', COUNT(DISTINCT cm.campaign_id), 'total_recipients', COALESCE(SUM(cm.total_recipients), 0), 'avg_delivery_rate_pct', ROUND(COALESCE(AVG(cm.delivery_rate_pct), 0)::numeric, 1), 'avg_reply_rate_pct', ROUND(COALESCE(AVG(cm.reply_rate_pct), …",
+    "raises": [
+     "admin required",
+     "template not found"
+    ],
+    "tables": [
+     "talkx_campaign_metrics",
+     "talkx_templates",
+     "v_result"
+    ]
+   },
+   "talkx_template_library_kpis": {
+    "args": "",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin required' USING ERRCODE = '42501'; END IF; SELECT COALESCE(jsonb_agg(row ORDER BY avg_reply_rate_pct DESC), '[]'::jsonb) INTO v_result FROM ( SELECT jsonb_build_object( 'template_id', t.id, 'template_name', t.name, 'campaign_count', COUNT(DISTINCT cm.campaign_id), 'total_recipients', COALESCE(SUM(cm.total_recipients), 0), 'avg_delivery_rate_pct', ROUND(COALESCE(AVG(cm.delivery_rate_pct), 0)::numeric, 1), 'avg_reply_rate_pct', ROUND(COALESCE(AVG(cm.reply_rate_pct), 0)::numeric, 1) ) AS row, ROUND(COALESCE(AVG(cm.reply_rate_pct), 0)::num …",
+    "raises": [
+     "admin required"
+    ],
+    "tables": [
+     "talkx_campaign_metrics",
+     "talkx_templates",
+     "v_result"
+    ]
+   },
+   "talkx_campaign_queue_by_segment": {
+    "args": "p_campaign_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_totals jsonb; v_by_segment jsonb; BEGIN v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1); IF NOT EXISTS ( SELECT 1 FROM public.talkx_campaigns c WHERE c.id = p_campaign_id AND (c.created_by = v_profile_id OR public.is_admin_or_supervisor(auth.uid())) ) THEN RAISE EXCEPTION 'not found' USING ERRCODE = '42501'; END IF; SELECT jsonb_build_object( 'pending', COUNT(*) FILTER (WHERE status = 'pending'), 'sending', COUNT(*) FILTER (WHERE status = 'sending'), 'sent', COUNT(*) FILTER (WHERE status = 'sent'), 'delivered', COUNT(*) FILTER (WHERE delivered_at IS NOT NULL), 'replied', COUNT(*) FILTER (WHERE replied_at IS NOT NULL), 'failed', …",
+    "raises": [
+     "not found"
+    ],
+    "tables": [
+     "profiles",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "talkx_segments",
+     "v_by_segment",
+     "v_totals"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -43767,6 +43876,9 @@
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
    "supabase/migrations/20261107170000_fix_message_reactions_rls.sql",
+   "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+   "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+   "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -56594,6 +56706,54 @@
    },
    {
     "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_heatmap",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_top_segments",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_ranking",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_template_metrics",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_template_library_kpis",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_queue_by_segment",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
+   },
+   {
+    "kind": "grant",
     "privs": "select",
     "object": "profiles",
     "objkind": "table",
@@ -61614,6 +61774,41 @@
     "function": "increment_agent_resolutions",
     "msg": "permission denied",
     "src": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
+   },
+   {
+    "function": "talkx_campaign_heatmap",
+    "msg": "not found",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "function": "talkx_top_segments",
+    "msg": "admin required",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "function": "talkx_campaign_ranking",
+    "msg": "invalid metric: %",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "function": "talkx_template_metrics",
+    "msg": "admin required",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "function": "talkx_template_metrics",
+    "msg": "template not found",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "function": "talkx_template_library_kpis",
+    "msg": "admin required",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "function": "talkx_campaign_queue_by_segment",
+    "msg": "not found",
+    "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
    },
    {
     "function": "espera_contem",
@@ -69880,8 +70075,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1092,
-   "lines": 104798,
+   "files": 1095,
+   "lines": 105104,
    "tables": [
     "audit_logs",
     "departments",
@@ -125743,6 +125938,14 @@
    {
     "file": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
     "line": "BETWEEN (date_trunc('month', current_date) - interval '1 month')::date"
+   },
+   {
+    "file": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    "line": "v_cutoff timestamptz := now() - interval '90 days';"
+   },
+   {
+    "file": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+    "line": "v_cutoff timestamptz := now() - interval '90 days';"
    },
    {
     "file": "supabase-export/BLOCO_01_schema_completo.sql",
@@ -227292,6 +227495,115 @@
      "vault"
     ]
    },
+   "talkx_campaign_heatmap": {
+    "args": "p_campaign_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_tz text := 'America/Sao_Paulo'; v_result jsonb; BEGIN v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1); IF NOT EXISTS ( SELECT 1 FROM public.talkx_campaigns c WHERE c.id = p_campaign_id AND (c.created_by = v_profile_id OR public.is_admin_or_supervisor(auth.uid())) ) THEN RAISE EXCEPTION 'not found' USING ERRCODE = '42501'; END IF; SELECT jsonb_build_object( 'campaign_id', p_campaign_id, 'tz', v_tz, 'cells', COALESCE( jsonb_agg( jsonb_build_object('dow', dow, 'hour', hour, 'sent', sent, 'delivered', delivered, 'replied', replied) ORDER BY dow, hour ), '[]'::jsonb ) ) INTO v_result FROM ( SELECT EXTRACT(DOW FROM sent_at AT TIME ZO …",
+    "raises": [
+     "not found"
+    ],
+    "tables": [
+     "profiles",
+     "sent_at",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "v_result"
+    ]
+   },
+   "talkx_top_segments": {
+    "args": "p_limit int DEFAULT 10",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin required' USING ERRCODE = '42501'; END IF; SELECT COALESCE(jsonb_agg(row ORDER BY avg_reply_rate_pct DESC), '[]'::jsonb) INTO v_result FROM ( SELECT jsonb_build_object( 'segment_id', cm.segment_id, 'segment_name', s.name, 'campaign_count', COUNT(*), 'total_recipients', SUM(cm.total_recipients), 'avg_delivery_rate_pct', ROUND(AVG(cm.delivery_rate_pct)::numeric, 1), 'avg_reply_rate_pct', ROUND(AVG(cm.reply_rate_pct)::numeric, 1) ) AS row, ROUND(AVG(cm.reply_rate_pct)::numeric, 1) AS avg_reply_rate_pct FROM public.talkx_campaign_metrics c …",
+    "raises": [
+     "admin required"
+    ],
+    "tables": [
+     "talkx_campaign_metrics",
+     "talkx_segments",
+     "v_result"
+    ]
+   },
+   "talkx_campaign_ranking": {
+    "args": "p_limit int DEFAULT 20, p_metric text DEFAULT 'reply_rate'",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1); IF p_metric NOT IN ('reply_rate', 'delivery_rate', 'recipients', 'duration') THEN RAISE EXCEPTION 'invalid metric: %', p_metric USING ERRCODE = '22023'; END IF; SELECT COALESCE(jsonb_agg(row ORDER BY score DESC), '[]'::jsonb) INTO v_result FROM ( SELECT jsonb_build_object( 'campaign_id', cm.campaign_id, 'campaign_name', cm.campaign_name, 'total_recipients', cm.total_recipients, 'delivery_rate_pct', cm.delivery_rate_pct, 'reply_rate_pct', cm.reply_rate_pct, 'duration_secs', cm.duration_secs, 'completed_at', cm …",
+    "raises": [
+     "invalid metric: %"
+    ],
+    "tables": [
+     "profiles",
+     "talkx_campaign_metrics",
+     "talkx_campaigns",
+     "v_result"
+    ]
+   },
+   "talkx_template_metrics": {
+    "args": "p_template_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin required' USING ERRCODE = '42501'; END IF; IF NOT EXISTS (SELECT 1 FROM public.talkx_templates WHERE id = p_template_id) THEN RAISE EXCEPTION 'template not found' USING ERRCODE = '42501'; END IF; SELECT jsonb_build_object( 'template_id', p_template_id, 'window_days', 90, 'as_of', now(), 'campaign_count', COUNT(DISTINCT cm.campaign_id), 'total_recipients', COALESCE(SUM(cm.total_recipients), 0), 'avg_delivery_rate_pct', ROUND(COALESCE(AVG(cm.delivery_rate_pct), 0)::numeric, 1), 'avg_reply_rate_pct', ROUND(COALESCE(AVG(cm.reply_rate_pct), …",
+    "raises": [
+     "admin required",
+     "template not found"
+    ],
+    "tables": [
+     "talkx_campaign_metrics",
+     "talkx_templates",
+     "v_result"
+    ]
+   },
+   "talkx_template_library_kpis": {
+    "args": "",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_cutoff timestamptz := now() - interval '90 days'; v_result jsonb; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin required' USING ERRCODE = '42501'; END IF; SELECT COALESCE(jsonb_agg(row ORDER BY avg_reply_rate_pct DESC), '[]'::jsonb) INTO v_result FROM ( SELECT jsonb_build_object( 'template_id', t.id, 'template_name', t.name, 'campaign_count', COUNT(DISTINCT cm.campaign_id), 'total_recipients', COALESCE(SUM(cm.total_recipients), 0), 'avg_delivery_rate_pct', ROUND(COALESCE(AVG(cm.delivery_rate_pct), 0)::numeric, 1), 'avg_reply_rate_pct', ROUND(COALESCE(AVG(cm.reply_rate_pct), 0)::numeric, 1) ) AS row, ROUND(COALESCE(AVG(cm.reply_rate_pct), 0)::num …",
+    "raises": [
+     "admin required"
+    ],
+    "tables": [
+     "talkx_campaign_metrics",
+     "talkx_templates",
+     "v_result"
+    ]
+   },
+   "talkx_campaign_queue_by_segment": {
+    "args": "p_campaign_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_totals jsonb; v_by_segment jsonb; BEGIN v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1); IF NOT EXISTS ( SELECT 1 FROM public.talkx_campaigns c WHERE c.id = p_campaign_id AND (c.created_by = v_profile_id OR public.is_admin_or_supervisor(auth.uid())) ) THEN RAISE EXCEPTION 'not found' USING ERRCODE = '42501'; END IF; SELECT jsonb_build_object( 'pending', COUNT(*) FILTER (WHERE status = 'pending'), 'sending', COUNT(*) FILTER (WHERE status = 'sending'), 'sent', COUNT(*) FILTER (WHERE status = 'sent'), 'delivered', COUNT(*) FILTER (WHERE delivered_at IS NOT NULL), 'replied', COUNT(*) FILTER (WHERE replied_at IS NOT NULL), 'failed', …",
+    "raises": [
+     "not found"
+    ],
+    "tables": [
+     "profiles",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "talkx_segments",
+     "v_by_segment",
+     "v_totals"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -232641,6 +232953,41 @@
     "function": "increment_agent_resolutions",
     "msg": "permission denied",
     "src": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
+   },
+   {
+    "function": "talkx_campaign_heatmap",
+    "msg": "not found",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "function": "talkx_top_segments",
+    "msg": "admin required",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "function": "talkx_campaign_ranking",
+    "msg": "invalid metric: %",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "function": "talkx_template_metrics",
+    "msg": "admin required",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "function": "talkx_template_metrics",
+    "msg": "template not found",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "function": "talkx_template_library_kpis",
+    "msg": "admin required",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "function": "talkx_campaign_queue_by_segment",
+    "msg": "not found",
+    "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
    },
    {
     "function": "espera_contem",
@@ -241117,9 +241464,12 @@
    "talkx_benchmarks",
    "talkx_blacklist_audit_trigger",
    "talkx_blacklist_no_delete",
+   "talkx_campaign_heatmap",
    "talkx_campaign_launch_checks",
    "talkx_campaign_logs",
    "talkx_campaign_pace",
+   "talkx_campaign_queue_by_segment",
+   "talkx_campaign_ranking",
    "talkx_campaign_recipients_page",
    "talkx_campaign_reply_stats",
    "talkx_campaign_segment_progress",
@@ -241149,6 +241499,9 @@
    "talkx_set_campaign_investment",
    "talkx_suppress_contact",
    "talkx_sync_campaign_segments",
+   "talkx_template_library_kpis",
+   "talkx_template_metrics",
+   "talkx_top_segments",
    "talkx_upsert_link",
    "talkx_validate_template_variant_weights",
    "team_message_receipts_update_guard",
@@ -253720,6 +254073,54 @@
     "objkind": "table",
     "roles": "PUBLIC, anon, authenticated, service_role",
     "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_heatmap",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_top_segments",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_ranking",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_template_metrics",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_template_library_kpis",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_queue_by_segment",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
    },
    {
     "kind": "grant",
@@ -379682,6 +380083,24 @@
    "path": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql",
    "lines": 139
   },
+  "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql": {
+   "path": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+   "lines": 153,
+   "temporal": [
+    "v_cutoff timestamptz := now() - interval '90 days';"
+   ]
+  },
+  "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql": {
+   "path": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+   "lines": 88,
+   "temporal": [
+    "v_cutoff timestamptz := now() - interval '90 days';"
+   ]
+  },
+  "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql": {
+   "path": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
+   "lines": 65
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -383534,10 +383953,21 @@
   }
  },
  "git": {
-  "sha": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
+  "sha": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9183f0f",
+    "date": "2026-11-08",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)",
+    "files": [
+     "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+     "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+     "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
+    ]
+   },
    {
     "sha": "e6e467b",
     "date": "2026-11-08",
@@ -383911,15 +384341,6 @@
     "files": [
      "supabase/migrations/20261107143000_reconciliar_rls_department_policies.sql"
     ]
-   },
-   {
-    "sha": "43fb734",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(db): reconciliar ledger da migration 20261010062941 (#2775)",
-    "files": [
-     "scripts/db-audit/migration-evidence.json"
-    ]
    }
   ],
   "hot_files": [
@@ -383929,10 +384350,6 @@
    ],
    [
     "docs/talkx/ESTADOS.md",
-    3
-   ],
-   [
-    "scripts/db-audit/migration-evidence.json",
     3
    ],
    [
@@ -383950,6 +384367,22 @@
    [
     "scripts/vercel/verify-release-targets.mjs",
     2
+   ],
+   [
+    "scripts/db-audit/migration-evidence.json",
+    2
+   ],
+   [
+    "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
+    1
+   ],
+   [
+    "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
+    1
+   ],
+   [
+    "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
+    1
    ],
    [
     "src/components/talkx/report/TalkXCampaignReport.tsx",
@@ -383989,18 +384422,6 @@
    ],
    [
     "src/components/tasks/__tests__/zen.tarefas.test.tsx",
-    1
-   ],
-   [
-    "src/components/admin/AdminCRMDashboard.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/ConversationListSidebar.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/InboxEmptyChat.tsx",
     1
    ]
   ]
