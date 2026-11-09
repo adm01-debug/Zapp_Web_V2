@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "49af49e25081f5f03f6e84a452797e71fe39ed21",
+  "sha": "b2fed615c008f25dba601e16389fcb6e90af39b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 16:23 UTC",
+  "generated_at": "2026-11-09 16:39 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044811
@@ -384213,10 +384213,19 @@
   }
  },
  "git": {
-  "sha": "49af49e25081f5f03f6e84a452797e71fe39ed21",
+  "sha": "b2fed615c008f25dba601e16389fcb6e90af39b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b2fed61",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "ci: pull_request do ci.yml também dispara em ready_for_review (#2858)",
+    "files": [
+     ".github/workflows/ci.yml"
+    ]
+   },
    {
     "sha": "49af49e",
     "date": "2026-11-09",
@@ -384547,37 +384556,16 @@
      "src/components/queues/QueueAlertsDisplay.tsx",
      "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx"
     ]
-   },
-   {
-    "sha": "edd2ae3",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)",
-    "files": [
-     "docs/talkx/recovery/evidence/X023/preflight-2026-11-08.json",
-     "scripts/ci/db-migrate-contratos.unit.mjs",
-     "scripts/db-audit/export-targeted-ledger-evidence.mjs",
-     "scripts/db-audit/extrair-contratos-runtime.mjs",
-     "scripts/db-audit/validate-runtime-proof.mjs",
-     "scripts/db-audit/validate-talkx-runtime.mjs",
-     "scripts/e2e-isolated/resolve-images.mjs",
-     "scripts/e2e-isolated/run.mjs",
-     "scripts/edge-deploy/collect-remote.mjs",
-     "scripts/edge-deploy/generate-manifest.mjs",
-     "scripts/edge-deploy/health-check.mjs",
-     "scripts/edge-deploy/health-check.unit.mjs",
-     "scripts/edge-deploy/serialize-scope.mjs",
-     "scripts/edge-deploy/smoke-functions.mjs",
-     "scripts/edge-deploy/unchanged-from-log.mjs",
-     "scripts/edge-deploy/verify-remote.mjs",
-     "scripts/ui-audit/width-regression.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
     4
+   ],
+   [
+    ".github/workflows/ci.yml",
+    2
    ],
    [
     "package.json",
@@ -384649,10 +384637,6 @@
    ],
    [
     "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-    1
-   ],
-   [
-    "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql",
     1
    ]
   ]

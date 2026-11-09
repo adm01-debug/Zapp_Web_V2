@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "49af49e25081f5f03f6e84a452797e71fe39ed21",
+  "commit": "b2fed615c008f25dba601e16389fcb6e90af39b4",
   "branch": "main",
-  "data_commit": "2026-11-09T16:20:53Z",
+  "data_commit": "2026-11-09T16:37:17Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b2fed61",
+    "data": "2026-11-09",
+    "assunto": "ci: pull_request do ci.yml também dispara em ready_for_review (#2858)"
+   },
    {
     "sha": "49af49e",
     "data": "2026-11-09",
@@ -126,11 +131,6 @@
     "sha": "fea93e2",
     "data": "2026-11-08",
     "assunto": "fix(layout): restaura trilha de navegação no desktop (#2819)"
-   },
-   {
-    "sha": "478f4bc",
-    "data": "2026-11-08",
-    "assunto": "fix: elimina 20 violações tipográficas residuais (#2803)"
    }
   ],
   "arquivos_mudados_7d": 663,
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 16
+    "mudancas": 17
    },
    {
     "arquivo": "CLAUDE.md",
