@@ -3,7 +3,7 @@
     "number": 2496,
     "title": "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO",
     "draft": false,
-    "verdict": "FEATURE_FREEZE",
+    "verdict": "REGRA8",
     "sha": "d6a2ad50",
     "created_at": "2026-11-01",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2496"
@@ -147,7 +147,7 @@
     "number": 2815,
     "title": "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026)",
     "draft": false,
-    "verdict": "FEATURE_FREEZE",
+    "verdict": "REGRA8",
     "sha": "e987c590",
     "created_at": "2026-11-08",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2815"

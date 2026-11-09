@@ -1,5 +1,5 @@
 number,title,draft,verdict,sha,created_at,url
-2496,"feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO",false,AGUARDANDO_CI,d6a2ad50,2026-11-01,https://github.com/adm01-debug/Zapp_Web_V2/pull/2496
+2496,"feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO",false,REGRA8_MIGRATION,d6a2ad50,2026-11-01,https://github.com/adm01-debug/Zapp_Web_V2/pull/2496
 2508,"fix(ci): corrige typecheck das edges — npm instala @types/node que deno não instala sem import real (W101)",false,REGRA8_WORKFLOW,e5e03afa,2026-11-01,https://github.com/adm01-debug/Zapp_Web_V2/pull/2508
 2533,"chore: arquivo de reconciliação migration 20261030145126 (copilot_fases13_15_tabelas)",false,REGRA8_MIGRATION,2388e1ac,2026-11-01,https://github.com/adm01-debug/Zapp_Web_V2/pull/2533
 2553,"feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050)",false,AGUARDANDO_CI,4773dd25,2026-11-02,https://github.com/adm01-debug/Zapp_Web_V2/pull/2553
@@ -15,7 +15,7 @@ number,title,draft,verdict,sha,created_at,url
 2811,"fix(gmail-oauth): remove exposição de access_token no refresh",true,DRAFT,21d19430,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2811
 2812,"feat(talkx): integrar useTalkXLifecycle em TalkXCampaignRunning (X051)",false,REGRA8_MIGRATION,5b892e94,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2812
 2813,"fix(inbox): toast neutro em RLS e undo dois passos no bulk archive",true,DRAFT,90aa7785,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2813
-2815,"feat(copilot): adiciona brinde_state em copilot_sessions (CV-026)",false,AGUARDANDO_CI,e987c590,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2815
+2815,"feat(copilot): adiciona brinde_state em copilot_sessions (CV-026)",false,REGRA8_MIGRATION,e987c590,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2815
 2816,"feat(admin): extrai lógica de banco do MediaMigrationTool para serviço",false,AGUARDANDO_CI,ab8e7b7c,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2816
 2817,"feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text",true,DRAFT,53167b3b,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2817
 2818,"fix(team-chat): deep-link ?cid= abre conversa correta ao clicar na notificação",false,AGUARDANDO_CI,597d7618,2026-11-08,https://github.com/adm01-debug/Zapp_Web_V2/pull/2818
