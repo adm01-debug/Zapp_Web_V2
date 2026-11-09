@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "32129d82b82b5609b3f226e5d7199ea952014af0",
+  "sha": "d7bdb705b7f5e65dc0d807b959ab80e1cd732be0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 21:49 UTC",
+  "generated_at": "2026-11-09 22:22 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044863
@@ -383016,10 +383016,19 @@
   }
  },
  "git": {
-  "sha": "32129d82b82b5609b3f226e5d7199ea952014af0",
+  "sha": "d7bdb705b7f5e65dc0d807b959ab80e1cd732be0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d7bdb70",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "docs: documenta db-live-guard verde e ledger normalizado",
+    "files": [
+     "docs/PRONTO_PRODUCAO.md"
+    ]
+   },
    {
     "sha": "32129d8",
     "date": "2026-11-09",
@@ -383334,25 +383343,9 @@
      "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
      "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
     ]
-   },
-   {
-    "sha": "e6e467b",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)",
-    "files": [
-     "src/components/talkx/report/TalkXCampaignReport.tsx",
-     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-     "src/lib/talkxCsv.ts",
-     "src/lib/talkxReportPdf.ts"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-    4
-   ],
    [
     "scripts/db-audit/grants-baseline.json",
     3
@@ -383363,6 +383356,10 @@
    ],
    [
     "supabase/schema-manifest.json",
+    3
+   ],
+   [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
     3
    ],
    [
@@ -383402,6 +383399,10 @@
     2
    ],
    [
+    "docs/PRONTO_PRODUCAO.md",
+    1
+   ],
+   [
     "scripts/ci/e2e-isolated-workflow.unit.mjs",
     1
    ],
@@ -383423,10 +383424,6 @@
    ],
    [
     "scripts/regras_negocio/generate.py",
-    1
-   ],
-   [
-    ".github/workflows/contexto.yml",
     1
    ]
   ]

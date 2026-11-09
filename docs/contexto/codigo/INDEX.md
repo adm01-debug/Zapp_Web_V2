@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `32129d82b82b5609b3f226e5d7199ea952014af0` (2026-11-09T18:38:34-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d7bdb705b7f5e65dc0d807b959ab80e1cd732be0` (2026-11-09T19:15:29-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `32129d82`
-- comunidades maiores: framer-motion (838), cn (809), react (796), lucide-react (690), TalkXSuppression.tsx (635), vitest (617), validation.ts (450), ExternalProductManagement.tsx (442), ref_https (420), @tanstack/react-query (401), ref_node_fs (359), framer-motion (316)
+- 56224 nós · 115903 arestas · 4138 comunidades · grafo do commit `d7bdb705`
+- comunidades maiores: cn (842), lucide-react (771), react (703), TalkXSuppression.tsx (582), DashboardCard.tsx (512), input.tsx (485), ref_https (448), validation.ts (413), audience.ts (315), multiplix-send/index.ts (296), ref_node_fs (290), ai-generate.ts (283)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -398,10 +398,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (12)
 - supabase/schema-manifest.json (12)
 - RELATORIO_CI.md (11)
-- src/integrations/supabase/types.ts (11)
 - .github/workflows/db-guard.yml (10)
 - .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
+- src/integrations/supabase/types.ts (10)
 - ESTADO.md (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/db-audit/grants-baseline.json (9)
@@ -487,7 +487,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/PROJECT_TEMPLATE.md` — 🏗️ Template de Projeto Base - WhatsApp CRM (875 linhas)
 - `docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md` — PROMPT PARA LOVABLE — Integração completa CRM 360° no zapp-web (222 linhas)
 - `docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md` — PROMPT LOVABLE — Integração do Painel de Inteligência Comercial (96 linhas)
-- `docs/PRONTO_PRODUCAO.md` — Pronto para produção — fluxos críticos do Zapp Web V2 (49 linhas)
+- `docs/PRONTO_PRODUCAO.md` — Pronto para produção — fluxos críticos do Zapp Web V2 (73 linhas)
 - `docs/README.md` — 📚 ZAPP-WEB Documentation (98 linhas)
 - `docs/REALTIME-CHANNELS-INVENTORY.md` — Inventário dos canais Realtime — Zapp Web V2 (145 linhas)
 - `docs/SLA-ESCALATION-CRON.md` — SLA Escalation Cron — Documentação Técnica (273 linhas)
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `d7bdb70` docs: documenta db-live-guard verde e ledger normalizado
 - 2026-11-09 `32129d8` fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70
 - 2026-11-09 `3a8161c` fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções
 - 2026-11-09 `fe6c6b0` fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `af47ad6` fix(ci): vercel-env-cleanup sai com exit 0 em 403
 - 2026-11-09 `a15fdfb` chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco
 - 2026-11-09 `a3f3e8c` fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7
-- 2026-11-09 `17a43dd` fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "32129d82b82b5609b3f226e5d7199ea952014af0",
+  "commit": "d7bdb705b7f5e65dc0d807b959ab80e1cd732be0",
   "branch": "main",
-  "data_commit": "2026-11-09T18:38:34-03:00",
+  "data_commit": "2026-11-09T19:15:29-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d7bdb70",
+    "data": "2026-11-09",
+    "assunto": "docs: documenta db-live-guard verde e ledger normalizado"
+   },
    {
     "sha": "32129d8",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "4de9160",
     "data": "2026-11-09",
     "assunto": "fix(inventario): corrige detecção de edges — prefixo, template invoke e segredos de helpers"
-   },
-   {
-    "sha": "c806b53",
-    "data": "2026-11-09",
-    "assunto": "fix(hooks): expõe isError em 9 hooks sem estado de erro (#2873)"
    }
   ],
-  "arquivos_mudados_7d": 647,
+  "arquivos_mudados_7d": 646,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 123
+    "mudancas": 122
    },
    {
     "pasta": "src/lib/__tests__",
@@ -230,10 +230,6 @@
     "mudancas": 11
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 11
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 10
    },
@@ -243,6 +239,10 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 10
    },
    {
