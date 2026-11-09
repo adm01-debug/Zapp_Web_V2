@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "1fb99f80c041563840598149b9b372634d320bfb",
+  "sha": "b430f822c9a824dbd9c2f6557a21bc9487e48732",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 12:37 UTC",
+  "generated_at": "2026-11-09 13:11 UTC",
   "files_total": 8166,
   "code_files": 6020,
   "code_lines": 1044659
@@ -384097,10 +384097,19 @@
   }
  },
  "git": {
-  "sha": "1fb99f80c041563840598149b9b372634d320bfb",
+  "sha": "b430f822c9a824dbd9c2f6557a21bc9487e48732",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b430f82",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(ci): adicionar --fail nos curl do workflow-lint (#2887)",
+    "files": [
+     ".github/workflows/ci.yml"
+    ]
+   },
    {
     "sha": "1fb99f8",
     "date": "2026-11-09",
@@ -384443,15 +384452,6 @@
      "scripts/ci/vercel-env-cleanup.mjs",
      "scripts/ci/vercel-env-cleanup.unit.mjs"
     ]
-   },
-   {
-    "sha": "b8244e0",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): exclui talkx-visual do projeto chromium-authenticated (#2785)",
-    "files": [
-     "playwright.config.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -384466,6 +384466,10 @@
    [
     "docs/talkx/ESTADOS.md",
     3
+   ],
+   [
+    ".github/workflows/ci.yml",
+    1
    ],
    [
     "scripts/db-audit/known-violations.json",
@@ -384529,10 +384533,6 @@
    ],
    [
     "scripts/inventario/gerar-repo.mjs",
-    1
-   ],
-   [
-    "src/hooks/chat/useConversationTabCounts.ts",
     1
    ]
   ]

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ci): adicionar --fail nos curl do workflow-lint (#2887)",
    "chore(db): sincronizar artefatos derivados do banco (#2857)",
    "chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121 (#2853)",
    "ci(db-audit): corrige DB Guard offline e DB Live Guard (#2867)",
-   "chore: inventário do estado real (semanal) (#2848)",
-   "fix(inventario): corrige detecção de edges — prefixo, template invoke e segredos de helpers"
+   "chore: inventário do estado real (semanal) (#2848)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

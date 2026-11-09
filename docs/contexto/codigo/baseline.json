@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1fb99f80c041563840598149b9b372634d320bfb",
+  "commit": "b430f822c9a824dbd9c2f6557a21bc9487e48732",
   "branch": "main",
-  "data_commit": "2026-11-09T12:08:18Z",
+  "data_commit": "2026-11-09T12:47:56Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b430f82",
+    "data": "2026-11-09",
+    "assunto": "fix(ci): adicionar --fail nos curl do workflow-lint (#2887)"
+   },
    {
     "sha": "1fb99f8",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "85fb0a5",
     "data": "2026-11-08",
     "assunto": "test(e2e): alinha contrato isolado dos insights (#2790)"
-   },
-   {
-    "sha": "d4a7252",
-    "data": "2026-11-07",
-    "assunto": "fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado"
    }
   ],
-  "arquivos_mudados_7d": 1070,
+  "arquivos_mudados_7d": 1069,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "CLAUDE.md",
