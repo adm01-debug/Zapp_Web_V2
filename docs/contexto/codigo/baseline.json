@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a6c3519bed037cfb5a17c166795246a08b97d225",
+  "commit": "5214e8646c8d5ed0471bc43f781fcf609aff03a4",
   "branch": "main",
-  "data_commit": "2026-11-09T13:40:09Z",
+  "data_commit": "2026-11-09T13:55:14Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5214e86",
+    "data": "2026-11-09",
+    "assunto": "fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)"
+   },
    {
     "sha": "a6c3519",
     "data": "2026-11-09",
@@ -126,11 +131,6 @@
     "sha": "c6c7697",
     "data": "2026-11-08",
     "assunto": "fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)"
-   },
-   {
-    "sha": "62c069a",
-    "data": "2026-11-08",
-    "assunto": "fix(db-audit): isola PostgREST privado do proxy nos contratos (#2796)"
    }
   ],
   "arquivos_mudados_7d": 1074,
@@ -250,12 +250,12 @@
     "mudancas": 9
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 9
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 9
+    "arquivo": "ESTADO.md",
+    "mudancas": 8
    },
    {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8326,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878215,
+  "linhas_codigo": 878216,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368213
+   "linhas": 368214
   },
   "src/config": {
    "arquivos": 3,

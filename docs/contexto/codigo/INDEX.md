@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a6c3519bed037cfb5a17c166795246a08b97d225` (2026-11-09T13:40:09Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5214e8646c8d5ed0471bc43f781fcf609aff03a4` (2026-11-09T13:55:14Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8326 |
 | arquivos_codigo | 4753 |
-| linhas_codigo | 878215 |
+| linhas_codigo | 878216 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `a6c3519b`
+- 56222 nós · 115901 arestas · 4198 comunidades · grafo do commit `5214e864`
 - comunidades maiores: framer-motion (838), cn (809), react (796), lucide-react (690), TalkXSuppression.tsx (635), vitest (617), validation.ts (450), ExternalProductManagement.tsx (442), ref_https (420), @tanstack/react-query (401), ref_node_fs (359), framer-motion (316)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -404,8 +404,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - scripts/ci/ci-docs-baseline.unit.mjs (10)
 - supabase/schema-manifest.json (10)
 - .github/workflows/deploy-functions.yml (9)
-- ESTADO.md (9)
 - scripts/db-audit/migration-evidence.json (9)
+- ESTADO.md (8)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `5214e86` fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)
 - 2026-11-09 `a6c3519` feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)
 - 2026-11-09 `d73156d` fix(ci): torna scripts de qualidade executáveis (#2891)
 - 2026-11-09 `b430f82` fix(ci): adicionar --fail nos curl do workflow-lint (#2887)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `c545e5b` security(ci): fecha injeção de comando e fail-open no guard GA02
 - 2026-11-08 `9183f0f` feat(talkx): 6 RPCs de analytics — heatmap, ranking, segmentos, templates, fila (#2833)
 - 2026-11-08 `e6e467b` feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)
-- 2026-11-08 `7beecdb` feat(tasks): implementa escada de cores D12 nas prioridades (#2478)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -675,7 +675,7 @@
     "EvolutionDisconnectBanner"
    ],
    "export_default": null,
-   "linhas": 145,
+   "linhas": 146,
    "dominio": "components/alerts",
    "hooks_locais": [
     "useConnectionAlertPreferences",

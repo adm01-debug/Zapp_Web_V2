@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a6c3519bed037cfb5a17c166795246a08b97d225",
+  "sha": "5214e8646c8d5ed0471bc43f781fcf609aff03a4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 13:41 UTC",
+  "generated_at": "2026-11-09 13:57 UTC",
   "files_total": 8167,
   "code_files": 6021,
-  "code_lines": 1044834
+  "code_lines": 1044835
  },
  "version": "1.3.2",
- "facts_hash": "cc38cb07c3f0d6a4",
+ "facts_hash": "2089b39412b2e582",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68529,7 +68529,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 368213,
+   "lines": 368214,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -273725,7 +273725,7 @@
   },
   "src/components/alerts/EvolutionDisconnectBanner.tsx": {
    "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
-   "lines": 145,
+   "lines": 146,
    "exports": [
     "function EvolutionDisconnectBanner"
    ],
@@ -384217,10 +384217,19 @@
   }
  },
  "git": {
-  "sha": "a6c3519bed037cfb5a17c166795246a08b97d225",
+  "sha": "5214e8646c8d5ed0471bc43f781fcf609aff03a4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5214e86",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)",
+    "files": [
+     "src/components/alerts/EvolutionDisconnectBanner.tsx"
+    ]
+   },
    {
     "sha": "a6c3519",
     "date": "2026-11-09",
@@ -384570,26 +384579,12 @@
     "files": [
      "docs/talkx/ESTADOS.md"
     ]
-   },
-   {
-    "sha": "f93fad9",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)",
-    "files": [
-     "docs/talkx/ESTADOS.md",
-     "e2e/talkx-kit.spec.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
     4
-   ],
-   [
-    "docs/talkx/ESTADOS.md",
-    3
    ],
    [
     "package.json",
@@ -384606,6 +384601,14 @@
    [
     "e2e/navegacao-modulos.spec.ts",
     2
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    2
+   ],
+   [
+    "src/components/alerts/EvolutionDisconnectBanner.tsx",
+    1
    ],
    [
     "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
@@ -384657,10 +384660,6 @@
    ],
    [
     "resgate-online/validacao/achados.json",
-    1
-   ],
-   [
-    "resgate-online/validacao/escopo.json",
     1
    ]
   ]

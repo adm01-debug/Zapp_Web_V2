@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)",
    "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)",
    "fix(ci): torna scripts de qualidade executáveis (#2891)",
    "fix(ci): adicionar --fail nos curl do workflow-lint (#2887)",
-   "chore(db): sincronizar artefatos derivados do banco (#2857)",
-   "chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121 (#2853)"
+   "chore(db): sincronizar artefatos derivados do banco (#2857)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
