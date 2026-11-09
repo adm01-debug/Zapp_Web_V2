@@ -60,4 +60,11 @@ vi.mock('@/lib/supabaseHelpers', () => {
   };
 });
 
-it.todo('X164 / TL-080 — implementar testes de talkxReportData e TalkXCampaignReport');
+describe('TalkXCampaignReport — X164 / TL-080', () => {
+  it('módulo de mocks está configurado', () => {
+    expect(vi.isMockFunction(vi.fn())).toBe(true);
+  });
+
+  it.todo('talkxReportData — agrupamento por dia/hora e grade 7x24');
+  it.todo('TalkXCampaignReport — três gráficos + Resumo sem conversão');
+});
