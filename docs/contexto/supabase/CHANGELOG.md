@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-09 20:30 UTC
+
+- **migrations** adicionado (4): `20261108201000_talkx_x074_analytics_rpcs`, `20261108202000_talkx_x086_template_metrics_rpcs`, `20261108203000_talkx_x058_campaign_queue_segment`, `20261108211000_talkx_campaign_resume_precheck`
+- **migrations** removido (4): `20261108201000_`, `20261108202000_`, `20261108203000_`, `20261108211000_`
+
 ## 2026-11-09 16:17 UTC
 
 - **functions** adicionado (1): `public.talkx_campaign_resume_precheck(p_campaign_id uuid)`

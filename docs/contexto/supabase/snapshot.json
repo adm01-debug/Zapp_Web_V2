@@ -88349,23 +88349,27 @@
         "version": "20261107170000"
       },
       {
-        "name": null,
-        "statements": null,
+        "name": "talkx_x074_analytics_rpcs",
+        "statements": 1,
+        "statements_sha": "4844a1fdb65e2946",
         "version": "20261108201000"
       },
       {
-        "name": null,
-        "statements": null,
+        "name": "talkx_x086_template_metrics_rpcs",
+        "statements": 1,
+        "statements_sha": "1bc90a7ca4750738",
         "version": "20261108202000"
       },
       {
-        "name": null,
-        "statements": null,
+        "name": "talkx_x058_campaign_queue_segment",
+        "statements": 1,
+        "statements_sha": "5608aa72facc8a4d",
         "version": "20261108203000"
       },
       {
-        "name": null,
-        "statements": null,
+        "name": "talkx_campaign_resume_precheck",
+        "statements": 1,
+        "statements_sha": "88f1d26dd3389abd",
         "version": "20261108211000"
       }
     ],
