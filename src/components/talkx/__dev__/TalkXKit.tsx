@@ -111,6 +111,7 @@ export function TalkXKit() {
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const hasActive = !!search || Object.values(filterValues).some((v) => v && v !== 'all');
 
+  // X056: busca por nome (case-insensitive) + filtros de status/segmento
   const linhasFiltradas = LINHAS_DEMO.filter((r) => {
     if (search && !r.nome.toLowerCase().includes(search.toLowerCase())) return false;
     const sf = filterValues.status;
