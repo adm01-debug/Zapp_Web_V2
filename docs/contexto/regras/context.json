@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "0e0bdc4f407d110da091eea2659e24a6f48c8d8b",
+  "sha": "6af86abe4baa597fc3620f5eb98f62eae1e60c93",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 11:40 UTC",
-  "files_total": 8162,
+  "generated_at": "2026-11-09 12:01 UTC",
+  "files_total": 8166,
   "code_files": 6020,
   "code_lines": 1044647
  },
@@ -384097,10 +384097,22 @@
   }
  },
  "git": {
-  "sha": "0e0bdc4f407d110da091eea2659e24a6f48c8d8b",
+  "sha": "6af86abe4baa597fc3620f5eb98f62eae1e60c93",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "6af86ab",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121 (#2853)",
+    "files": [
+     "resgate-online/validacao/RELATORIO_VALIDACAO.md",
+     "resgate-online/validacao/achados.json",
+     "resgate-online/validacao/escopo.json",
+     "resgate-online/validacao/progresso.json"
+    ]
+   },
    {
     "sha": "0e0bdc4",
     "date": "2026-11-09",
@@ -384439,15 +384451,6 @@
      "src/components/compliance/LGPDComplianceView.tsx",
      "src/components/compliance/__tests__/LGPDComplianceView.test.tsx"
     ]
-   },
-   {
-    "sha": "f103a30",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix(db): registra replay seguro da migration 20261107170000 (#2784)",
-    "files": [
-     "scripts/db-audit/migration-evidence.json"
-    ]
    }
   ],
   "hot_files": [
@@ -384462,6 +384465,22 @@
    [
     "docs/talkx/ESTADOS.md",
     3
+   ],
+   [
+    "resgate-online/validacao/RELATORIO_VALIDACAO.md",
+    1
+   ],
+   [
+    "resgate-online/validacao/achados.json",
+    1
+   ],
+   [
+    "resgate-online/validacao/escopo.json",
+    1
+   ],
+   [
+    "resgate-online/validacao/progresso.json",
+    1
    ],
    [
     "docs/DB-INVENTORY.md",
@@ -384513,22 +384532,6 @@
    ],
    [
     "src/hooks/crm/useContactSummaryNote.ts",
-    1
-   ],
-   [
-    "src/hooks/inbox/useInboxFilterPresets.ts",
-    1
-   ],
-   [
-    "src/hooks/integrations/useCatalogRecentSends.ts",
-    1
-   ],
-   [
-    "src/hooks/integrations/useKnowledgeBaseSearch.ts",
-    1
-   ],
-   [
-    "src/hooks/sla/useSLARules.ts",
     1
    ]
   ]

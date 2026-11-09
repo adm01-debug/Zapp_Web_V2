@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0e0bdc4f407d110da091eea2659e24a6f48c8d8b",
+  "commit": "6af86abe4baa597fc3620f5eb98f62eae1e60c93",
   "branch": "main",
-  "data_commit": "2026-11-09T11:37:34Z",
+  "data_commit": "2026-11-09T11:51:38Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "6af86ab",
+    "data": "2026-11-09",
+    "assunto": "chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121 (#2853)"
+   },
    {
     "sha": "0e0bdc4",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "ab96364",
     "data": "2026-11-07",
     "assunto": "docs(talkx): regenera matriz de estados (#2791)"
-   },
-   {
-    "sha": "f93fad9",
-    "data": "2026-11-07",
-    "assunto": "feat: prancha de referência TalkXKit, estado forçado por URL e ESTADOS.md (X055) (#2789)"
    }
   ],
-  "arquivos_mudados_7d": 1085,
+  "arquivos_mudados_7d": 1070,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 16
+    "mudancas": 15
    },
    {
     "arquivo": "CLAUDE.md",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8321,
+  "arquivos_total": 8325,
   "arquivos_codigo": 4753,
   "linhas_codigo": 878162,
   "rotas": 18,
@@ -331,7 +331,7 @@
   "testes": 2595,
   "workflows": 21,
   "scripts": 420,
-  "docs_md": 1070
+  "docs_md": 1071
  },
  "por_pasta": {
   "docs/_arquivo": {
