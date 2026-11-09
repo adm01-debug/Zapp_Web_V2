@@ -3,7 +3,6 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "rpc:talkx_campaign_resume_precheck:src/hooks/integrations/useTalkXServerResumePrecheck.ts",
     "rpc:should_send_away_message:supabase/functions/_shared/evolution-webhook-messages.ts",
     "rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts"
   ],
