@@ -3747,7 +3747,7 @@
     "useMessageReactions",
     "useMessagesReactions"
    ],
-   "linhas": 139,
+   "linhas": 140,
    "dominio": "hooks/chat",
    "tabelas": [
     "message_reactions",
@@ -4063,7 +4063,7 @@
    "hooks_exportados": [
     "useSavedFilters"
    ],
-   "linhas": 226,
+   "linhas": 227,
    "dominio": "hooks/chat",
    "tabelas": [
     "saved_filters"
@@ -7350,7 +7350,7 @@
    "hooks_exportados": [
     "useInboxFilterPresets"
    ],
-   "linhas": 350,
+   "linhas": 351,
    "dominio": "hooks/inbox",
    "tabelas": [
     "saved_filters"
@@ -7670,7 +7670,7 @@
    "hooks_exportados": [
     "useCatalogRecentSends"
    ],
-   "linhas": 130,
+   "linhas": 131,
    "dominio": "hooks/integrations",
    "tabelas": [
     "catalog_send_events"
@@ -8110,7 +8110,7 @@
    "hooks_exportados": [
     "useKnowledgeBaseSearch"
    ],
-   "linhas": 65,
+   "linhas": 66,
    "dominio": "hooks/integrations",
    "tabelas": [],
    "rpcs": [
@@ -9643,7 +9643,7 @@
    "hooks_exportados": [
     "useSLARules"
    ],
-   "linhas": 180,
+   "linhas": 181,
    "dominio": "hooks/sla",
    "tabelas": [
     "sla_rules"

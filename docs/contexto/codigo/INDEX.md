@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `8f7a8ee77f6dc447150f264cebb677cd3fd61fbf` (2026-11-09T10:08:30Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c806b535e743cea9733198758927e3c741a4d728` (2026-11-09T10:37:21Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8321 |
 | arquivos_codigo | 4753 |
-| linhas_codigo | 878114 |
+| linhas_codigo | 878120 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56204 nós · 115880 arestas · 4208 comunidades · grafo do commit `8f7a8ee7`
+- 56204 nós · 115880 arestas · 4208 comunidades · grafo do commit `c806b535`
 - comunidades maiores: TalkXSuppression.tsx (892), lucide-react (851), react (849), vitest (573), cn (548), input.tsx (526), utils.ts (515), @tanstack/react-query (416), ref_https (402), validation.ts (385), inspect.ts (385), ref_node_assert (340)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `c806b53` fix(hooks): expõe isError em 9 hooks sem estado de erro (#2873)
 - 2026-11-09 `8f7a8ee` test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)
 - 2026-11-09 `568d3f9` feat(testes): 12 testes reais para TalkXCampaignReport e talkxReportData
 - 2026-11-09 `c545e5b` security(ci): fecha injeção de comando e fail-open no guard GA02
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-08 `2ebe682` fix(typecheck): remove contratos obsoletos da inbox
 - 2026-11-08 `edd2ae3` fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)
 - 2026-11-08 `81a8cd9` fix(talkx): corrige erros TypeScript X054 — ModuleBreadcrumb onItemClick + action optional chaining (#2793)
-- 2026-11-08 `c6c7697` fix(admin): corrige hook e testes SearchInsights para novo RPC search_insights (#2798)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
