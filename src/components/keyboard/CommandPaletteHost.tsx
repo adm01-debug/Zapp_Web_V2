@@ -26,7 +26,7 @@ export function CommandPaletteHost({ open, onOpenChange, onNavigate }: CommandPa
     [searchCatalogProducts],
   );
   const moduleCommands = useModuleCommandItems(onNavigate);
-  const talkxCommands = useTalkXCommandItems(onNavigate);
+  const talkxCommands = useTalkXCommandItems(onNavigate, open);
 
   return (
     <CommandPalette

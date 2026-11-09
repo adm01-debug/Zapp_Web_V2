@@ -90,7 +90,7 @@ async function restAdmin(
 ): Promise<Response> {
   if (!['POST', 'PATCH', 'DELETE'].includes(method) ||
       !/^(?:contacts|messages|gmail_accounts|email_threads|email_messages)(?:\?|$)/.test(path) ||
-      Object.keys(extra).some(key => key !== 'Prefer') ||
+      Object.keys(extra).some(field => field !== 'Prefer') ||
       (extra.Prefer !== undefined && !['return=minimal', 'return=representation'].includes(extra.Prefer))) {
     throw new Error('[e2e-email/request-shape]');
   }
@@ -98,7 +98,8 @@ async function restAdmin(
   // Ler só depois da prova/identidade; o alias é emitido pelo mesmo controlador.
   const key = process.env.SERVICE_ROLE_KEY;
   try {
-    if (!key || key !== process.env.E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY) throw new Error();
+    const expectedKey = process.env.E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY;
+    if (!key || !expectedKey || !Object.is(key, expectedKey)) throw new Error();
     const parts = key.split('.');
     if (parts.length !== 3 || parts.some(part => !/^[A-Za-z0-9_-]+$/.test(part))) throw new Error();
     const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
@@ -263,7 +264,7 @@ async function abrirPainelDoContato(page: Page) {
 function tileEmail(page: Page) {
   return page
     .getByTestId('contact-panel')
-    .locator('button[data-testid="contact-action-tile"][aria-label="E-mail"]');
+    .locator('button[data-testid="contact-action-tile"][aria-label^="E-mail"]');
 }
 
 test.describe('Abrir o e-mail do contato a partir do painel (C03) — ponta a ponta', () => {

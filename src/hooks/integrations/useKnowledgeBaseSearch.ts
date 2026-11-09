@@ -31,7 +31,7 @@ export function useKnowledgeBaseSearch() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
 
-  const { data: articles, isLoading } = useQuery({
+  const { data: articles, isLoading, isError } = useQuery({
     queryKey: ['knowledge-base-search', debouncedQuery],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('search_knowledge_base', {
@@ -59,6 +59,7 @@ export function useKnowledgeBaseSearch() {
     clear,
     articles: articles ?? [],
     isLoading,
+    isError,
     hasResults: (articles?.length ?? 0) > 0,
   };
 }

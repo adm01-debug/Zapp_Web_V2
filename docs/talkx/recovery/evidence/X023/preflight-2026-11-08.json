@@ -1,0 +1,80 @@
+{
+  "schema_version": 2,
+  "project_ref": "tnnnlkbymytvtqngbbqh",
+  "git_sha": null,
+  "created_at": "2026-11-08T04:22:03.978Z",
+  "verificado": {
+    "local": true,
+    "remoto": false,
+    "secrets": false
+  },
+  "verde": false,
+  "funcoes_preflight": [
+    "talkx-send",
+    "talkx-scheduler",
+    "talkx-link",
+    "talkx-report",
+    "evolution-webhook"
+  ],
+  "local": [
+    {
+      "funcao": "talkx-send",
+      "source_sha256": "776c272a325f6ccdc69774f5fe90eccbb5a8ddc816b2e06e5aeb543ef0119d08",
+      "verify_jwt": true,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "talkx-scheduler",
+      "source_sha256": "3bf400cc2133906dff9f8b8a14be9ac35ea0999b6dfb204806e50a1169bc985d",
+      "verify_jwt": true,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "talkx-link",
+      "source_sha256": "a544609ddc639bb525c00e7afd40c5a57ca33ae5807219a216930d3508013fbf",
+      "verify_jwt": false,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "talkx-report",
+      "source_sha256": "adf60638fd44f3d3094bb89ccd6c47fbfd29f28d2fe693de668b4dac42ab3591",
+      "verify_jwt": true,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "evolution-webhook",
+      "source_sha256": "1dfd672ccde1084214a0a33e499f714900835a5dc56171e22524ff9a412f91de",
+      "verify_jwt": false,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    }
+  ],
+  "divergidas": {
+    "local": [],
+    "remoto": null,
+    "total": 0
+  },
+  "secrets": {
+    "exigidos": [
+      "EVOLUTION_API_URL",
+      "EVOLUTION_API_KEY",
+      "EVOLUTION_INSTANCE_TOKEN",
+      "RESEND_API_KEY",
+      "TALKX_LINK_IP_SALT",
+      "TALKX_LINK_BASE_URL"
+    ],
+    "ausentes": null,
+    "missing": null
+  },
+  "vault_e_job": "-- Existência dos segredos do motor no Vault (nomes apenas, nunca os valores):\nSELECT name, created_at\n  FROM vault.secrets\n WHERE name IN ('talkx_cron_secret', 'talkx_send_url', 'talkx_scheduler_url')\n ORDER BY name;\n\n-- Comando do job do tick (deve conter trigger_talkx_engine_tick):\nSELECT jobname, schedule, active, command\n  FROM cron.job\n WHERE jobname = 'talkx-scheduler-1min';",
+  "conclusao": "preflight incompleto — não verificado: remoto e segredos (sem preflight verde do dia)"
+}

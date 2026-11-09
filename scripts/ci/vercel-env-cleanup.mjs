@@ -9,7 +9,6 @@
 import { pathToFileURL } from 'node:url';
 
 export const PROJECT = 'prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp';
-export const TEAM = 'team_QyN41X0q8hrqhW80AwokbFLv';
 
 // Lista de vars a remover — derivada de docs/audits/vercel-snapshot-2026-10-18-antes.json
 // e de docs/plans/PLANO_VERCEL_190_ETAPAS_2026-10-18.execucao.md (V043-V065)
@@ -32,10 +31,10 @@ export const REMOVE = Object.freeze([
   'VITE_ZAPP_LOCAL_SUPABASE_URL', 'VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY',
 ]);
 
-function urlDaApi(path, team) {
-  const url = new URL(path, 'https://api.vercel.com');
-  url.searchParams.set('teamId', team);
-  return url;
+function urlDaApi(path) {
+  // O ID do projeto ja e global e suficiente para autorizar estas rotas.
+  // Forcar teamId faz tokens validos para o projeto receberem 403/404.
+  return new URL(path, 'https://api.vercel.com');
 }
 
 function targetsLegiveis(target) {
@@ -56,7 +55,6 @@ export async function executarCleanup({
   fetchImpl = globalThis.fetch,
   output = console,
   project = PROJECT,
-  team = TEAM,
   remove = REMOVE,
 } = {}) {
   if (!token) {
@@ -71,7 +69,7 @@ export async function executarCleanup({
   async function apiFetch(path, opts = {}) {
     let res;
     try {
-      res = await fetchImpl(urlDaApi(path, team), {
+      res = await fetchImpl(urlDaApi(path), {
         ...opts,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -99,9 +97,9 @@ export async function executarCleanup({
     const { status, ok, networkError, body } = await apiFetch(`${path.pathname}${path.search}`);
     if (!ok) {
       if (status === 403) {
-        output.warn(`\n⚠️  SKIP: VERCEL_READONLY_TOKEN sem acesso ao time ${team} (403).`);
-        output.warn('   Atualize o secret VERCEL_READONLY_TOKEN com um token que tenha acesso ao time juca1');
-        output.warn('   (Vercel Dashboard → Account Settings → Tokens → criar com escopo de time).');
+        output.warn(`\n⚠️  SKIP: VERCEL_READONLY_TOKEN sem acesso ao projeto ${project} (403).`);
+        output.warn('   Atualize o secret VERCEL_READONLY_TOKEN com um token com acesso ao projeto zapp_web_v2.');
+        output.warn('   (Vercel Dashboard → Account Settings → Tokens → criar com escopo do projeto).');
         return 0;
       }
       output.error(networkError ? 'GET envs falhou: erro de rede' : `GET envs falhou: ${status}`);

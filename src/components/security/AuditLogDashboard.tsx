@@ -122,7 +122,7 @@ export function AuditLogDashboard() {
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                   {'hint' in stat && stat.hint ? (
-                    <p className="text-[11px] text-muted-foreground/80">{stat.hint}</p>
+                    <p className="text-2xs text-muted-foreground/80">{stat.hint}</p>
                   ) : null}
                 </div>
               </div>

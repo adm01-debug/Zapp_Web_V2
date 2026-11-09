@@ -120,8 +120,8 @@ describe('useInboxFilters — type pela URL (PK-14)', () => {
 
     act(() => result.current.handleContactTypeChange('grupo'));
     // Outra troca de filtro: passa pelo mesmo setSearchParams e reescreve a query.
-    act(() => result.current.setFilters({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } }));
-    act(() => result.current.setFilters({ status: [], tags: [], agentId: PROFILE, dateRange: { from: null, to: null } }));
+    act(() => result.current.setFilters({ status: [], agentId: null, dateRange: { from: null, to: null } }));
+    act(() => result.current.setFilters({ status: [], agentId: PROFILE, dateRange: { from: null, to: null } }));
 
     expect(routerSearchRef.current).toContain('type=grupo');
     expect(routerSearchRef.current).toContain('agent=p1');

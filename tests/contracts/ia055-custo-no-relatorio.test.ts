@@ -79,7 +79,7 @@ describe('IA-055 — custo pela tarifa vigente, sem inventar numero', () => {
 
 describe('IA-055 — o cliente nao faz conta de custo', () => {
   it('o hook busca o custo no servidor e nao multiplica preco localmente', () => {
-    expect(HOOK).toMatch(/rpc as unknown as/);
+    expect(HOOK).toMatch(/supabase\.rpc\.bind\(supabase\)\s+as unknown as/);
     expect(HOOK).toMatch(/'ai_usage_cost_summary'/);
     // O p_since do CUSTO tem de ser a janela relativa, ancorado na PROPRIA RPC do
     // custo: o regex antigo (/p_since:\s*since/) casava com o `p_since` do resumo

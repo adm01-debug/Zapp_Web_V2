@@ -25,7 +25,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 import { bloquearRedeReal, json, mockAppShell, type Registro } from './fixtures/mapa-mocks';
-import { installFakeSession, FAKE_USER_ID } from './fixtures/talkx-demo';
+import { installFakeSession } from './fixtures/talkx-demo';
 import { dispensarOnboarding, OVERLAY_ONBOARDING } from './fixtures/onboarding';
 
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -34,9 +34,6 @@ test.use({ storageState: { cookies: [], origins: [] } });
 // navegação e leva bem mais que os 30s padrão do Playwright. Sem isto a prova
 // reprova por tempo de build, não pelo defeito.
 test.setTimeout(120_000);
-
-/** Chave que `useOnboarding` lê primeiro; com ela fora, a decisão vem de `user_settings` (null). */
-const CHAVE_TOUR = `onboarding_completed_${FAKE_USER_ID}`;
 
 test.describe('dispensarOnboarding fecha o modal de boas-vindas de verdade', () => {
   let registro: Registro;
@@ -51,13 +48,10 @@ test.describe('dispensarOnboarding fecha o modal de boas-vindas de verdade', () 
     registro = { writesApp: [], mapbox: [], redeBarrada: [] };
     // Registre o guarda ANTES dos mocks: o Playwright casa na ordem inversa.
     await bloquearRedeReal(page, registro);
-    // `user_settings` responde null → o tour ainda não foi concluído → o modal abre.
-    await mockAppShell(page, registro);
+    // A fonte canônica é `user_settings.onboarding_completed`: false simula um
+    // usuário novo e precisa abrir o modal independentemente do localStorage.
+    await mockAppShell(page, registro, { onboardingCompleted: false });
     await installFakeSession(page);
-    // `installFakeSession` marca o tour como concluído (o spec visual do Talk X
-    // depende disso). Aqui o alvo é o contrário — o OVERLAY, que engole o clique —
-    // então a chave local sai logo depois, simulando um navegador novo.
-    await page.addInitScript((chave) => localStorage.removeItem(chave), CHAVE_TOUR);
     // Leitura de contatos da tela: sem isto a tela dispara `contacts` e o guarda
     // de rede a barra (o catch-all do app shell exclui `contacts` de propósito).
     await page.route(/\/rest\/v1\/contacts/, (route) => json(route, []));

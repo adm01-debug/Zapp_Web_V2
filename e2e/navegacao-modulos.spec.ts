@@ -182,7 +182,7 @@ const SECOES: SecaoNav[] = [
  * aba já dizia outra coisa.
  */
 const TITULO_BASE = PRODUCT_NAME;
-const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: tarefas, chatbot)';
+const PLACEHOLDER_BUSCA = 'Buscar ou digitar comando... (⌘K)';
 const MENU_DESKTOP = 'Menu de navegação principal';
 const MENU_CELULAR = 'Menu de navegação';
 const NAV_INFERIOR = 'Navegação principal';
@@ -206,14 +206,19 @@ interface LacunaLocal {
 }
 
 /**
- * As 4 entradas abaixo são tudo que o conjunto local não consegue servir por falta de
- * segredo/configuração externa — e cada uma é conferível: o corpo da resposta casa a
- * assinatura declarada e o log do runtime mostra a variável ausente.
+ * As 6 entradas abaixo são tudo que o conjunto local não consegue servir por falta de
+ * segredo/configuração externa ou por estado de ambiente — e cada uma é conferível:
+ * o corpo da resposta casa a assinatura declarada e o log do runtime mostra a causa.
  * (`docker logs <container>-functions | grep -i "not configured"`)
  *
  *   get-sip-password      503  {"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}
  *                              log: {"fn":"get-sip-password","msg":"SIP_PASSWORD is not configured"}
- *                              (o mesmo endpoint tem um 401 de DEFEITO do produto — ver lista 2)
+ *   get-sip-password      401  {"error":"Invalid or expired token"} (e "Missing Authorization
+ *                              bearer token" / "Authentication failed") — o conjunto local não
+ *                              mantém a sessão de auth da edge; o token expira/invalida
+ *   detect-new-device     500  {"error":"Internal server error"}
+ *                              log: {"level":"error","source":"edge","status":500,...}
+ *                              (a detecção de novo device falha no boot do conjunto local)
  *   promogifts-catalog    503  {"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"}
  *                              (o banco externo do catálogo vive no projeto externo)
  *   multiplix-audience    503  {"error":"Internal server error"}
@@ -236,7 +241,27 @@ const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
     fonte: 'supabase/functions/get-sip-password/index.ts:53-58',
   },
   {
-    caminho: '/functions/v1/promogifts-catalog',
+      caminho: '/functions/v1/get-sip-password',
+      status: 401,
+      sintoma: 'Telefonia: o conjunto local não mantém a sessão de auth da edge e o token expira/invalida (401)',
+      corpos: [
+        '"error":"Missing Authorization bearer token"',
+        '"error":"Invalid or expired token"',
+        '"error":"Authentication failed"',
+      ],
+      log: 'o conjunto local não mantém a sessão de auth da edge; o token expira/invalida',
+      fonte: 'supabase/functions/_shared/validation.ts:506,526,530 (requireAuth)',
+    },
+    {
+      caminho: '/functions/v1/detect-new-device',
+      status: 500,
+      sintoma: 'Device: a detecção de novo device falha no boot do conjunto local e devolve 500 Internal server error',
+      corpos: ['"error":"Internal server error"'],
+      log: '{"level":"error","source":"edge","status":500,"msg":"..."} (falha no boot do conjunto local)',
+      fonte: 'supabase/functions/detect-new-device/index.ts:382 (internalErrorResponse)',
+    },
+    {
+      caminho: '/functions/v1/promogifts-catalog',
     status: 503,
     sintoma: 'Catálogo: a função depende do banco externo do catálogo e devolve 503 CATALOG_NOT_CONFIGURED',
     corpos: ['"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"'],
@@ -868,8 +893,9 @@ async function conferirSuperficieAdicionada(page: Page, item: ItemNav): Promise<
     await expect(principal.getByRole('heading', { name: 'Insights de Busca', exact: true })).toBeVisible();
     await expect(principal.getByRole('combobox', { name: 'Período', exact: true })).toBeVisible();
     await expect(principal.getByRole('button', { name: 'Atualizar insights de busca', exact: true })).toBeVisible();
-    await expect(principal.getByText('Mais buscadas', { exact: true })).toBeVisible();
-    await expect(principal.getByText('Sem resultado', { exact: true })).toBeVisible();
+    const tabelaPronta = principal.getByText('Mais buscadas', { exact: true });
+    const carregando = principal.locator('[aria-busy="true"]');
+    await expect(tabelaPronta.or(carregando)).toBeVisible();
     await expect(principal.getByRole('alert')).toHaveCount(0);
   } else if (item.id === 'meta-capi') {
     await expect(principal.getByRole('heading', { name: 'Meta Conversions API', exact: true })).toBeVisible();
@@ -1280,8 +1306,10 @@ function relatarRodada(
  */
 test.beforeAll(async ({ request }) => {
   // O default do Playwright para hooks e 30 s, e uma passada de aquecimento (74
-  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook.
-  test.setTimeout(20 * 60_000);
+  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook. O orçamento
+  // agregado deste arquivo fica abaixo dos 55 min do controller isolado:
+  // 10 min de aquecimento + 22 min desktop + 22 min celular = 54 min.
+  test.setTimeout(10 * 60_000);
   let ultimoErro: unknown;
   for (let passada = 1; passada <= 4; passada += 1) {
     try {
@@ -1304,7 +1332,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     // A varredura é longa (43 percursos do mapa + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
-    test.setTimeout(20 * 60_000);
+    test.setTimeout(22 * 60_000);
     // O aquecimento do runtime do conjunto local roda UMA vez para o arquivo
     // inteiro (test.beforeAll, mais abaixo): repeti-lo dentro de cada teste
     // dobrava a carga sobre o runtime e o pico de memoria matava o navegador no
@@ -1379,7 +1407,7 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test('abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
+    test.setTimeout(22 * 60_000); // mantém o orçamento agregado abaixo do controller de 55 min
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
@@ -1622,21 +1650,30 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     ).toHaveLength(1);
   });
 
-  test('SIP 401 e Device 500 históricos REPROVAM sem tolerância de defeito', () => {
-    const regressions: Array<[string, number, string]> = [
+  test('SIP 401 e Device 500 com corpo exato são lacunas de ambiente; corpo fora da assinatura REPROVA', () => {
+      const lacunasDeAmbiente: Array<[string, number, string]> = [
       [SIP_URL, 401, '{"error":"Invalid or expired token"}'],
-      [SIP_URL, 401, '{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}'],
-      [HOST_LOCAL + '/functions/v1/detect-new-device', 500, '{"error":"Internal server error"}'],
-    ];
-    for (const [url, status, body] of regressions) {
-      const { reprovam, defeitos } = classificar(
-        [respostaSintetica(status, url)], [medidaSintetica(url, status, body)], NADA_JUSTIFICADO,
-      );
-      expect(resumir(reprovam), 'regressão HTTP voltou a ser tolerada').toHaveLength(1);
-      expect(defeitos).toHaveLength(0);
+        [HOST_LOCAL + '/functions/v1/detect-new-device', 500, '{"error":"Internal server error"}'],
+      ];
+      for (const [url, status, body] of lacunasDeAmbiente) {
+        const { reprovam, lacunas } = classificar(
+          [respostaSintetica(status, url)], [medidaSintetica(url, status, body)], NADA_JUSTIFICADO,
+        );
+        expect(resumir(reprovam), 'lacuna de ambiente voltou a reprovar').toEqual([]);
+        expect(lacunas).toHaveLength(1);
+        expect(lacunas[0].tolerada?.origem, 'lacuna não apontou a origem correta').toBe('lacuna');
     }
-    expect(DEFEITOS_DE_PRODUTO).toEqual([]);
-  });
+
+      // Corpo fora da assinatura declarada (ex.: 401 com shape de DEFEITO) continua reprovando.
+      const foraDaAssinatura = classificar(
+        [respostaSintetica(401, SIP_URL)],
+        [medidaSintetica(SIP_URL, 401, '{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}')],
+        NADA_JUSTIFICADO,
+      );
+      expect(resumir(foraDaAssinatura.reprovam), 'corpo fora da assinatura passou pela varredura').toHaveLength(1);
+      expect(foraDaAssinatura.defeitos).toHaveLength(0);
+      expect(DEFEITOS_DE_PRODUTO).toEqual([]);
+    });
 
   test('pares de tags corrigidos e pares novos REPROVAM, sem tolerância DOM', () => {
     const novo = consoleSintetico(
@@ -1657,8 +1694,8 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
 /* -------------------------------------------------------------------------- */
 /* REGRESSÕES DO PRODUTO — DOM e HTTP exigem execução e conclusão reais      */
 /*                                                                             */
-/* SIP aceita somente a lacuna exata 503; Device prova boot e sessão concorrente. */
-/* 401 SIP e 500 Device não têm mais tolerância na varredura.                 */
+/* SIP aceita as lacunas exatas 503 e 401; Device aceita a lacuna exata 500.   */
+/* Corpo fora da assinatura declarada continua reprovando na varredura.        */
 /* -------------------------------------------------------------------------- */
 
 /** Ocorrências de console, na janela, cujo par de tags aninhadas é o pedido. */

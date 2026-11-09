@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { types } from 'node:util';
 import {
-  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, CATALOG_SKU, assertOwnedContainer,
+  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, GROUP_SHARDS, CATALOG_SKU, assertOwnedContainer,
   assertContainerIsolation, assertSourceSha, assertOfficialHostIsLocal, makeProof, syntheticCredentials, sha256,
 } from './runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from './stack.mjs';
@@ -79,6 +79,42 @@ export function parseFilesSeedDiagnostic(result) {
   return { schema: 1, seed: 'files-volume', available: true, failure: copy(value.failure), ...(value.cleanup ? { cleanup: copy(value.cleanup) } : {}) };
 }
 
+/** The QR seed keeps response bodies private; publish only a closed stage code. */
+const QR_DIAGNOSTIC_DIRECT_CODES = Object.freeze([
+  'bootstrap-proof', 'bootstrap-tls', 'bootstrap-namespace', 'identity-changed',
+  'credential-changed', 'target', 'gateway-identity', 'provider-identity',
+  'bootstrap-credentials', 'existing-connections', 'existing-roles', 'existing-token',
+  'existing-contact', 'maintenance-active', 'fixture-collision', 'admin-identity',
+  'admin-profile', 'admin-role', 'token-store', 'token-readback', 'credential',
+  'admin-login', 'admin-auth', 'admin-rls', 'admin-onboarding', 'provider-state',
+  'provider-evidence', 'provider-used-before-browser', 'existing-fixtures-changed',
+  'seed-proof', 'image-mismatch', 'fixture-row',
+]);
+const QR_DIAGNOSTIC_REQUEST_STAGES = Object.freeze([
+  'gateway-identity', 'provider-identity', 'existing-connections', 'existing-roles',
+  'existing-token', 'existing-contact', 'maintenance', 'fixture-collision',
+  'admin-create', 'admin-profile', 'admin-profile-update', 'admin-role',
+  'admin-onboarding-write', 'connection-create', 'token-store', 'token-readback',
+  'admin-login', 'admin-auth', 'admin-rls', 'connection-rls', 'admin-onboarding',
+  'provider-state', 'provider-evidence',
+]);
+const QR_DIAGNOSTIC_CODES = new Set([
+  ...QR_DIAGNOSTIC_DIRECT_CODES.map(code => 'qr-' + code),
+  ...QR_DIAGNOSTIC_REQUEST_STAGES.flatMap(stage => ['request', 'http', 'json'].map(kind => 'qr-' + stage + '-' + kind)),
+]);
+export function parseQrSeedDiagnostic(result) {
+  if (result.status === 0 && !result.error && !result.signal) return null;
+  const unavailable = reason => ({ schema: 1, seed: 'qr', available: false, reason });
+  if ([result.stdout, result.stderr].some(value => value != null && typeof value !== 'string')) return unavailable('invalid');
+  const matches = [...((result.stdout ?? '') + '\n' + (result.stderr ?? '')).matchAll(/\[e2e-isolated\/(qr-[a-z][a-z0-9-]{0,100})\]/g)]
+    .map(match => match[1]);
+  if (matches.length === 0) return unavailable('missing');
+  if (matches.some(code => !QR_DIAGNOSTIC_CODES.has(code))) return unavailable('invalid');
+  const codes = [...new Set(matches)];
+  if (codes.length !== 1) return unavailable('ambiguous');
+  return { schema: 1, seed: 'qr', available: true, code: codes[0] };
+}
+
 const BROWSER_PROCESS_CODES = new Set(['ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES']);
 const BROWSER_READ_CODES = new Set(['ENOENT', 'EACCES', 'EPERM', 'EISDIR', 'EIO', 'EMFILE', 'ENFILE']);
 const BROWSER_SIGNALS = new Set(['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGHUP', 'SIGABRT',
@@ -146,6 +182,16 @@ export function browserResultDiagnostic(result, observation) {
     }),
     report: safeBrowserReportObservation(observation),
   });
+}
+
+export function browserTimeoutMs(scope, fullSuite) {
+  return scope === 'login' ? 600_000 : fullSuite ? 55 * 60_000 : 15 * 60_000;
+}
+
+export const browserWorkers = () => 1;
+
+export function browserShard(scope, group) {
+  return scope === 'suite' && Object.hasOwn(GROUP_SHARDS, group) ? GROUP_SHARDS[group] : null;
 }
 
 export function assertPinnedImages(lock) {
@@ -260,7 +306,8 @@ function safeCode(error) {
 export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group } = {}) {
   if (!['login', 'suite'].includes(scope) || (scope === 'login' && group !== undefined) ||
       (scope === 'suite' && !Object.hasOwn(GROUPS, group))) throw new Error('invalid-isolated-scope');
-  const fullSuite = scope === 'suite' && group === 'authenticated';
+  const shard = browserShard(scope, group);
+  const fullSuite = shard !== null;
   const projects = scope === 'login' ? ['setup'] : GROUPS[group];
   const reportScope = scope === 'login' ? 'bootstrap-and-login' : fullSuite ? 'authenticated-suite' : group;
   let output = path.resolve(outputDirectory || '');
@@ -376,6 +423,12 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       try {
         const diagnostic = parseFilesSeedDiagnostic(result);
         if (diagnostic) writeJson(path.join(output, 'seed-files-volume-diagnostic.json'), diagnostic);
+      } catch { /* Observation must not replace the original required() failure. */ }
+    }
+    if (code === 'seed-qr') {
+      try {
+        const diagnostic = parseQrSeedDiagnostic(result);
+        if (diagnostic) writeJson(path.join(output, 'qr-seed-diagnostic.json'), diagnostic);
       } catch { /* Observation must not replace the original required() failure. */ }
     }
     return required(result, code);
@@ -628,14 +681,14 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     writeJson(path.join(output, 'readiness.json'), proof);
     phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
     const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
-      ...projects.flatMap(name => ['--project', name]), '--workers', '1'];
-    const inventory = collectPlaywrightInventory({ output, scope, projects,
+      ...projects.flatMap(name => ['--project', name]), ...(shard ? ['--shard', shard] : []), '--workers', String(browserWorkers())];
+    const inventory = collectPlaywrightInventory({ output, scope, projects, ...(shard ? { shard } : {}),
       execute: report => docker(['exec', '-e', 'PLAYWRIGHT_JSON_OUTPUT_FILE=' + report,
         ...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),
     });
     phase(scope === 'login' ? 'real-browser-login' : 'real-browser-suite');
     state.native_e2e = true;
-    const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });
+    const browserResult = docker(inDriver(cli), { timeout: browserTimeoutMs(scope, fullSuite) });
     writeFileSync(path.join(output, scope === 'login' ? 'browser-login.log' : 'browser-suite.log'), redacted(String(browserResult.stdout || '') + String(browserResult.stderr || '')), { mode: 0o600 });
     const { report, observation } = readBrowserReportOnce(() => readFileSync(path.join(output, 'results.json'), 'utf8'));
     try { browserDiagnostic = browserResultDiagnostic(browserResult, observation); }
@@ -713,7 +766,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     // runner. They may contain newly-issued session tokens not known to seed.
     // Only these controlled metadata files and already-redacted logs publish.
     const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'entrypoints.json', 'migration-sources.json', 'migration-results.json',
-      'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
+      'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'qr-seed-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
       'results-summary.json', 'postgres-log-summary.json'];
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     // Never copy the verifier's raw file. Only the closed parsed objects enter
@@ -751,5 +804,5 @@ export const runSuite = options => runLogin({ ...options, scope: 'suite' });
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv[2] === 'login' && process.argv.length === 4) process.exitCode = await runLogin({ outputDirectory: process.argv[3] });
   else if (process.argv[2] === 'suite' && process.argv.length === 5) process.exitCode = await runSuite({ group: process.argv[3], outputDirectory: process.argv[4] });
-  else throw new Error('usage: run.mjs login <output-directory> | suite <group> <output-directory>');
+  else { process.stderr.write('usage: run.mjs login <output-directory> | suite <group> <output-directory>\n'); process.exit(2); }
 }

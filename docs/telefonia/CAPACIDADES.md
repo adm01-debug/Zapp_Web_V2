@@ -1,8 +1,8 @@
 # Telefonia — Matriz de capacidades reais (por canal)
 
 Medido em **26/09/2026** contra o código de `origin/main` (`001fd46`) e o banco oficial
-(Supabase Cloud, via gateway MCP) e **Revisado em 10/10/2026** contra o código da ponta do dia
-(`dia/2026-10-10`, commit `e859c7ff5`) — etapa T92 (reaplicada no commit local do SL-242). As medições de banco continuam datadas de
+(Supabase Cloud, via gateway MCP) e **Revisado em 16/10/2026** contra o código reaplicado no
+commit `025d0258dc` — etapa T92 do SL-242. As medições de banco continuam datadas de
 **26/09/2026**: nenhum agente acessa o banco de produção, então nada de banco foi remedido aqui — só a
 correspondência com o código. Este documento diz o que **existe** e o que
 **não foi comprovado** — é o que a UI tem permissão de prometer.

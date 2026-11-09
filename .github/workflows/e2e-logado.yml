@@ -1,8 +1,8 @@
 # docs:
 #   gatilho: workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main
-#   prova: os mesmos 15 projetos Playwright em três grupos com Supabase descartável e TLS local
+#   prova: os mesmos 15 projetos Playwright em cinco grupos, com três shards autenticados, Supabase descartável e TLS local
 #   falha: preparo, testes e limpeza bloqueiam; publica só diagnóstico redigido e preserva o alerta da suíte
-#   avisa: mesma issue de E2E; fecha somente após sucesso dos três grupos
+#   avisa: mesma issue de E2E; cada execução aprovada reconcilia o alerta existente
 # O checkout fixa o SHA aprovado do workflow_run ou o SHA da main no dispatch.
 # O controller cria credenciais sintéticas, isola a rede, executa e limpa o backend.
 # Scripts de teardown de produção permanecem versionados; este workflow não os chama.
@@ -45,10 +45,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Mesma seleção 9/3/3. O controller usa workers1 porque as fixtures
-          # compartilham estado. O orçamento reserva preparo e limpeza além
-          # dos limites de browser de 45/15/15 minutos.
-          - name: authenticated
+          # Os três shards autenticados repetem a mesma seleção de nove projetos,
+          # mas cada um recebe backend próprio e um terço fechado dos casos. O
+          # controller preserva workers1 porque as fixtures compartilham estado.
+          - name: authenticated-1-of-3
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            timeout-minutes: 75
+          - name: authenticated-2-of-3
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            timeout-minutes: 75
+          - name: authenticated-3-of-3
             projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
             timeout-minutes: 75
           - name: deslogado-principal
@@ -77,7 +83,7 @@ jobs:
           set -euo pipefail
           case "$EVENT_NAME" in
             workflow_run)
-              if [[ "$SOURCE_CONCLUSION" != success || "$SOURCE_EVENT" != push || "$SOURCE_BRANCH" != main || "$SOURCE_REPOSITORY" != "$REPOSITORY" ]]; then
+              if [[  "$SOURCE_CONCLUSION" != success || "$SOURCE_EVENT" != push || "$SOURCE_BRANCH" != main || "$SOURCE_REPOSITORY" != "$REPOSITORY" ]]; then
                 echo '::error::A execução de origem não comprova CI aprovado na main deste repositório.'
                 exit 1
               fi

@@ -53,6 +53,15 @@ const PUBLISH_SCRIPT = runLines.slice(runStart + 1).map((line) => {
   assert.ok(!line.trim() || line.startsWith('          '), 'Indentação inesperada no shell do publisher');
   return line.slice(10);
 }).join('\n');
+const RECOVERY_STEP = steps(job('banco')).find((step) => step.includes('- name: Recuperar snapshot anterior'));
+assert.ok(RECOVERY_STEP, 'Passo de recuperação do snapshot não encontrado');
+const recoveryLines = RECOVERY_STEP.split('\n');
+const recoveryRunStart = recoveryLines.indexOf('        run: |');
+assert.ok(recoveryRunStart >= 0, 'Bloco run da recuperação não encontrado');
+const RECOVERY_SCRIPT = recoveryLines.slice(recoveryRunStart + 1).map((line) => {
+  assert.ok(!line.trim() || line.startsWith('          '), 'Indentação inesperada na recuperação do snapshot');
+  return line.slice(10);
+}).join('\n');
 
 function writeFiles(dir, files) {
   for (const [name, content] of Object.entries(files)) {
@@ -61,6 +70,44 @@ function writeFiles(dir, files) {
     fs.writeFileSync(file, content);
   }
 }
+
+test('regeneração forçada preserva identidade válida sem legitimar diretório alheio', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'contexto-recovery-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const valid = path.join(root, 'valid');
+  const invalid = path.join(root, 'invalid');
+  const unowned = path.join(root, 'unowned');
+  writeFiles(valid, {
+    'snapshot.json': '{"format_version":2,"db":{},"api":{}}\n',
+    'README.md': '# Snapshot anterior\n',
+  });
+  writeFiles(invalid, {
+    'snapshot.json': '{"format_version":1,"db":{},"api":{}}\n',
+    'user.txt': 'não legitimar\n',
+  });
+  writeFiles(unowned, { 'user.txt': 'não pertence ao snapshot\n' });
+
+  const run = (snapshotDir) => spawnSync('bash', ['--noprofile', '--norc', '-euo', 'pipefail', '-c', RECOVERY_SCRIPT], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env, SNAPSHOT_DIR: snapshotDir, FORCE: 'true', CONTEXTO_BRANCH: 'inexistente' },
+  });
+  const validResult = run(valid);
+  assert.equal(validResult.status, 0, `${validResult.stdout}\n${validResult.stderr}`);
+  assert.equal(fs.readFileSync(path.join(valid, '.supabase-snapshot-output'), 'utf8'), 'supabase-snapshot-v2\n');
+  assert.equal(fs.existsSync(path.join(valid, 'snapshot.json')), false);
+  assert.equal(fs.readFileSync(path.join(valid, 'README.md'), 'utf8'), '# Snapshot anterior\n');
+
+  const invalidResult = run(invalid);
+  assert.notEqual(invalidResult.status, 0);
+  assert.equal(fs.existsSync(path.join(invalid, '.supabase-snapshot-output')), false);
+  assert.equal(fs.readFileSync(path.join(invalid, 'user.txt'), 'utf8'), 'não legitimar\n');
+
+  const unownedResult = run(unowned);
+  assert.equal(unownedResult.status, 0, `${unownedResult.stdout}\n${unownedResult.stderr}`);
+  assert.equal(fs.existsSync(path.join(unowned, '.supabase-snapshot-output')), false);
+  assert.equal(fs.readFileSync(path.join(unowned, 'user.txt'), 'utf8'), 'não pertence ao snapshot\n');
+});
 
 function fixture(t, { ageMinutes = 0 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'contexto-publish-'));

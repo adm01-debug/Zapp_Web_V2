@@ -40,11 +40,11 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 209 |
+| Tabelas (`tables`) | 210 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2331 |
-| Funções (`functions`) | 379 |
-| Assinaturas de função (`function_signatures`) | 382 |
+| Colunas (`columns`) | 2338 |
+| Funções (`functions`) | 387 |
+| Assinaturas de função (`function_signatures`) | 390 |
 | Funções de gatilho (`trigger_functions`) | 96 |
 | Restrições de verificação (`check_constraints`) | 244 |
 
@@ -56,6 +56,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | Tabela | Propósito | Status | Consumidores conhecidos |
 |---|---|---|---|
 | `_rb_message_reactions_contato_20261007001008` | Tabela legada de reações de mensagens (snapshot de migração 20261007) | parcial | `scripts/db-audit/message-reactions-author-model.test.sh` |
+| `_rb_message_reactions_one_per_agent_20261107121000` | Rollback privado das duplicatas removidas ao garantir uma reação por agente e mensagem | roadmap | — |
 | `_zapp_fn_before` | Tabela de log de triggers capturados antes de migrações | parcial | `scripts/db-audit/replay-local-harness.test.sh`, `scripts/db-audit/replay-local.sh` |
 | `_zapp_mig133_log` | Log de execução da migration 133 no replay local | parcial | `scripts/db-audit/replay-local.sh` |
 | `agent_achievements` | Conquistas de gamificação do agente (tipo, nome e XP ganho) | ativo | `src/components/gamification/AchievementsSystem.tsx`, `src/components/gamification/__tests__/AchievementToast.test.tsx`, `src/components/gamification/__tests__/AchievementsSystem.test.tsx` … |
@@ -284,4 +285,4 @@ inventário apura hoje:
   `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
-As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 209.
+As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 210.
