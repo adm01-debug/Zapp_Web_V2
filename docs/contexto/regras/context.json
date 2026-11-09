@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "4de9160124c633d37a2f4d14eaf48792574e9567",
+  "sha": "1c3535a04783d99ca372236210057a314fba8078",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 11:18 UTC",
+  "generated_at": "2026-11-09 11:27 UTC",
   "files_total": 8162,
   "code_files": 6020,
   "code_lines": 1044647
@@ -384097,10 +384097,21 @@
   }
  },
  "git": {
-  "sha": "4de9160124c633d37a2f4d14eaf48792574e9567",
+  "sha": "1c3535a04783d99ca372236210057a314fba8078",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1c3535a",
+    "date": "2026-11-09",
+    "author": "github-actions[bot]",
+    "subject": "chore: inventário do estado real (semanal) (#2848)",
+    "files": [
+     "inventario/estado/banco.json",
+     "inventario/estado/edges.json",
+     "inventario/estado/rotas.json"
+    ]
+   },
    {
     "sha": "4de9160",
     "date": "2026-11-09",
@@ -384437,49 +384448,6 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "7991a1f",
-    "date": "2026-11-07",
-    "author": "adm01-debug",
-    "subject": "fix: endurecer scripts e automatizar guardas residuais (#2773)",
-    "files": [
-     ".github/workflows/branch-hygiene-audit.yml",
-     ".github/workflows/contexto.yml",
-     "docs/REALTIME-CHANNELS-INVENTORY.md",
-     "scripts/ci/check-audit-pdf-determinism.mjs",
-     "scripts/ci/check-audit-pdf-determinism.unit.mjs",
-     "scripts/ci/check-test-inventory.mjs",
-     "scripts/ci/check-test-inventory.unit.mjs",
-     "scripts/ci/contexto-publicacao.unit.mjs",
-     "scripts/ci/inventario-repo.unit.mjs",
-     "scripts/ci/medir-tipografia.unit.mjs",
-     "scripts/ci/qa-vercel-auditores.unit.mjs",
-     "scripts/ci/regras-negocio.unit.mjs",
-     "scripts/ci/seed-contatos-redesign-local.unit.mjs",
-     "scripts/ci/toolchain-schedule.unit.mjs",
-     "scripts/ci/verify-release-targets-timeout.unit.mjs",
-     "scripts/db/seed-contatos-redesign-local.sh",
-     "scripts/edge-deploy/health-check.mjs",
-     "scripts/edge-deploy/health-check.unit.mjs",
-     "scripts/inventario/gerar-repo.mjs",
-     "scripts/lib/seguranca-processo.mjs",
-     "scripts/lib/seguranca-processo.test.mjs",
-     "scripts/qa/contatos-redesign-baseline.cjs",
-     "scripts/qa/contatos-redesign-baseline.unit.mjs",
-     "scripts/qa/contraste-auditores.unit.mjs",
-     "scripts/qa/contraste-combobox.mjs",
-     "scripts/qa/contraste-contatos.mjs",
-     "scripts/qa/medir-tipografia.cjs",
-     "scripts/regras_negocio/publish.sh",
-     "scripts/supabase_snapshot/snapshot.py",
-     "scripts/supabase_snapshot/test_snapshot.py",
-     "scripts/vercel/ignore-build.sh",
-     "scripts/vercel/ignore-build.unit.mjs",
-     "scripts/vercel/verify-production.mjs",
-     "scripts/vercel/verify-production.unit.mjs",
-     "scripts/vercel/verify-release-targets.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -384496,28 +384464,24 @@
     3
    ],
    [
+    "inventario/estado/banco.json",
+    1
+   ],
+   [
+    "inventario/estado/edges.json",
+    1
+   ],
+   [
+    "inventario/estado/rotas.json",
+    1
+   ],
+   [
     "scripts/ci/inventario-repo.unit.mjs",
-    2
+    1
    ],
    [
     "scripts/inventario/gerar-repo.mjs",
-    2
-   ],
-   [
-    "scripts/edge-deploy/health-check.mjs",
-    2
-   ],
-   [
-    "scripts/edge-deploy/health-check.unit.mjs",
-    2
-   ],
-   [
-    "scripts/ci/verify-release-targets-timeout.unit.mjs",
-    2
-   ],
-   [
-    "scripts/vercel/verify-release-targets.mjs",
-    2
+    1
    ],
    [
     "src/hooks/chat/useConversationTabCounts.ts",
@@ -384561,6 +384525,10 @@
    ],
    [
     "scripts/ci/check-claude-md-integrity.mjs",
+    1
+   ],
+   [
+    "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
     1
    ]
   ]

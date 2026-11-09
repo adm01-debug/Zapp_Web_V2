@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "4de9160124c633d37a2f4d14eaf48792574e9567",
+  "commit": "1c3535a04783d99ca372236210057a314fba8078",
   "branch": "main",
-  "data_commit": "2026-11-09T08:01:51-03:00",
+  "data_commit": "2026-11-09T11:18:55Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1c3535a",
+    "data": "2026-11-09",
+    "assunto": "chore: inventário do estado real (semanal) (#2848)"
+   },
    {
     "sha": "4de9160",
     "data": "2026-11-09",
@@ -126,11 +131,6 @@
     "sha": "babb270",
     "data": "2026-11-07",
     "assunto": "test(e2e): aguarda readiness dos insights de busca (#2787)"
-   },
-   {
-    "sha": "b5ad544",
-    "data": "2026-11-07",
-    "assunto": "fix(ci): corrige escopo do cleanup de variáveis Vercel (#2786)"
    }
   ],
   "arquivos_mudados_7d": 1084,
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 288
+    "commits": 287
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 7
+    "commits": 8
    },
    {
     "autor": "dependabot[bot]",

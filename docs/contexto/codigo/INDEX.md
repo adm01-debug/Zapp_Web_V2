@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `4de9160124c633d37a2f4d14eaf48792574e9567` (2026-11-09T08:01:51-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1c3535a04783d99ca372236210057a314fba8078` (2026-11-09T11:18:55Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56205 nós · 115882 arestas · 4167 comunidades · grafo do commit `4de91601`
+- 56205 nós · 115882 arestas · 4167 comunidades · grafo do commit `1c3535a0`
 - comunidades maiores: button.tsx (915), TalkXSuppression.tsx (796), lucide-react (678), vitest (560), validation.ts (447), ExternalProductManagement.tsx (441), ref_node_fs (411), dialog.tsx (388), cn (387), ref_node_assert (387), react (373), multiplix-send/index.ts (352)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `1c3535a` chore: inventário do estado real (semanal) (#2848)
 - 2026-11-09 `4de9160` fix(inventario): corrige detecção de edges — prefixo, template invoke e segredos de helpers
 - 2026-11-09 `c806b53` fix(hooks): expõe isError em 9 hooks sem estado de erro (#2873)
 - 2026-11-09 `8f7a8ee` test(webhook): contrato F3 — caminho de entrada (ingest_inbound_message) (#2861)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-08 `9fd0fe4` test(e2e): alinha placeholder da paleta única (#2799)
 - 2026-11-08 `b5e89bb` fix(test): restaura imports Deno nos contratos
 - 2026-11-08 `2ebe682` fix(typecheck): remove contratos obsoletos da inbox
-- 2026-11-08 `edd2ae3` fix(db-audit): corrigir exit codes e guards de env vars em 4 scripts (#2795)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
