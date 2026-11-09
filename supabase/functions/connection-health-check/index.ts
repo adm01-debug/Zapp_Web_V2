@@ -791,22 +791,22 @@ export async function handleConnectionHealthCheck(
               if (healthStatus === 'degraded' && openReason === 'webhook_silent') {
                 alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });
               }
-              if (dbStatus === 'connected') {
-                await supabase.from('warroom_alerts').update({ dedupe_key: null })
-                  .eq('dedupe_key', `conn-down:v1:${conn.id}`);
-                await supabase.from('warroom_alerts').update({ dedupe_key: null })
-                  .eq('dedupe_key', `conn-degraded:v1:${conn.id}`);
-                await supabase.from('notifications').update({ dedupe_key: null })
-                  .like('dedupe_key', `conn-l%:v1:%:${conn.id}`);
-                await supabase.from('whatsapp_connections').update({ retry_count: 0, health_reason: null })
-                  .eq('id', conn.id);
-                const { data: pausedCampaigns } = await supabase.from('talkx_campaigns').select('id');
-                for (const campaign of (pausedCampaigns ?? [])) {
-                  await supabase.rpc('transition_talkx_campaign', {
-                    p_campaign_id: (campaign as Record<string, string>).id,
-                    p_action: 'start',
-                  });
-                }
+            }
+            if (dbStatus === 'connected') {
+              await supabase.from('warroom_alerts').update({ dedupe_key: null })
+                .eq('dedupe_key', `conn-down:v1:${conn.id}`);
+              await supabase.from('warroom_alerts').update({ dedupe_key: null })
+                .eq('dedupe_key', `conn-degraded:v1:${conn.id}`);
+              await supabase.from('notifications').update({ dedupe_key: null })
+                .like('dedupe_key', `conn-l%:v1:%:${conn.id}`);
+              await supabase.from('whatsapp_connections').update({ retry_count: 0, health_reason: null })
+                .eq('id', conn.id);
+              const { data: pausedCampaigns } = await supabase.from('talkx_campaigns').select('id');
+              for (const campaign of (pausedCampaigns ?? [])) {
+                await supabase.rpc('transition_talkx_campaign', {
+                  p_campaign_id: (campaign as Record<string, string>).id,
+                  p_action: 'start',
+                });
               }
             }
           } else {
