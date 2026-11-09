@@ -83,7 +83,7 @@ jobs:
           set -euo pipefail
           case "$EVENT_NAME" in
             workflow_run)
-              if [[ "$SOURCE_CONCLUSION" != success || "$SOURCE_EVENT" != push || "$SOURCE_BRANCH" != main || "$SOURCE_REPOSITORY" != "$REPOSITORY" ]]; then
+              if [[  "$SOURCE_CONCLUSION" != success || "$SOURCE_EVENT" != push || "$SOURCE_BRANCH" != main || "$SOURCE_REPOSITORY" != "$REPOSITORY" ]]; then
                 echo '::error::A execução de origem não comprova CI aprovado na main deste repositório.'
                 exit 1
               fi
@@ -124,17 +124,6 @@ jobs:
 
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
-
-      - name: 🗃️ Cache dos browsers do Playwright
-        id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
-      - name: Instalar browsers do Playwright (cache miss)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Preparar ferramentas TLS antes de gerar certificados ou credenciais
         run: |
