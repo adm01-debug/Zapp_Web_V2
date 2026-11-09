@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: corrige bug crítico de notificação em connection-health-check (#2910)",
    "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes",
    "fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414",
    "docs: documenta db-live-guard verde e ledger normalizado",
-   "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70",
-   "fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções"
+   "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

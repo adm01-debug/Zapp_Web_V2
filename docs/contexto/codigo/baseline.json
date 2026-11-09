@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "77dd764175e2b0f8634b9d398eacda5566ba76d0",
+  "commit": "7c27c1a744734c016bcf4d2121157b9f67b011f9",
   "branch": "main",
-  "data_commit": "2026-11-09T20:13:25-03:00",
+  "data_commit": "2026-11-09T20:32:09-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7c27c1a",
+    "data": "2026-11-09",
+    "assunto": "fix: corrige bug crítico de notificação em connection-health-check (#2910)"
+   },
    {
     "sha": "77dd764",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "6af86ab",
     "data": "2026-11-09",
     "assunto": "chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121 (#2853)"
-   },
-   {
-    "sha": "0e0bdc4",
-    "data": "2026-11-09",
-    "assunto": "ci(db-audit): corrige DB Guard offline e DB Live Guard (#2867)"
    }
   ],
-  "arquivos_mudados_7d": 646,
+  "arquivos_mudados_7d": 647,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "src/lib/__tests__",
-    "mudancas": 117
+    "mudancas": 115
    },
    {
     "pasta": "src/components/contacts",
@@ -214,11 +214,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 12
    },
    {
@@ -242,10 +242,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 9
    },
@@ -264,6 +260,10 @@
    {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
+   },
+   {
+    "arquivo": "ESTADO.md",
+    "mudancas": 8
    },
    {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8326,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878289,
+  "linhas_codigo": 878178,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -776,7 +776,7 @@
   },
   "supabase/functions": {
    "arquivos": 381,
-   "linhas": 115909
+   "linhas": 115798
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -841,10 +841,6 @@
    "linhas": 1165
   },
   {
-   "arquivo": "supabase/functions/connection-health-check/index.ts",
-   "linhas": 1143
-  },
-  {
    "arquivo": "supabase/functions/evolution-api/index.ts",
    "linhas": 1123
   },
@@ -867,6 +863,10 @@
   {
    "arquivo": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
    "linhas": 1040
+  },
+  {
+   "arquivo": "supabase/functions/connection-health-check/index.ts",
+   "linhas": 1032
   },
   {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_report.py",

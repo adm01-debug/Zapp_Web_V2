@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `77dd764175` · branch `main` · 2026-11-09 23:24 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7c27c1a744` · branch `main` · 2026-11-09 23:33 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1399,6 +1399,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `confetti` | compara, escreve | `src/components/effects/Confetti.tsx` |
 | `type` | `connection` | compara, escreve | `src/hooks/chat/useConversationActions.ts`<br>`src/hooks/system/useDiagnosticsData.ts` |
 | `type` | `connection_alert` | escreve | `supabase/functions/connection-health-check/index.ts` |
+| `type` | `connection_alert_email` | escreve | `supabase/functions/connection-health-check/index.ts` |
 | `type` | `contact` | compara, escreve | `src/components/inbox/chat/useChatPanelHandlers.ts`<br>`src/components/inbox/search/GlobalSearchResults.tsx`<br>`src/components/inbox/useGlobalSearchData.ts`<br>`src/hooks/chat/useForwardMedia.ts`<br>`src/hooks/chat/useForwardMessage.ts`<br>… +1 |
 | `type` | `counter` | escreve | `supabase/functions/_shared/observability.ts` |
 | `type` | `cpf` | escreve | `src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
@@ -1608,8 +1609,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `delivered` | compara, escreve, filtra | `src/components/inbox/chat/messageUtils.tsx`<br>`src/hooks/system/useDiagnosticsData.ts`<br>`src/hooks/team-chat/useParticipantStats.ts`<br>`src/hooks/team-chat/useTeamConversations.ts` |
 | `status` | `demo` | compara, escreve | `src/components/integrations/IntegrationsHub.tsx` |
 | `status` | `dialing` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
-| `status` | `disabled` | compara | `src/components/email/EmailContactPanel.tsx`<br>`src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx`<br>`src/components/inbox/contact-details/sidebar/PersonalSection.tsx`<br>`src/components/inbox/contact-details/sidebar/SinguProfileSection.tsx`<br>`src/components/security/SecuritySettingsPanel.tsx` |
-| … +221 linhas — lista completa em `context.json` | | | |
+| … +222 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -3728,7 +3728,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
 | `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
 | `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
-| … +619 linhas — lista completa em `context.json` | | |
+| … +617 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -3929,9 +3929,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `const STALE_SESSION_MS = 6 * 60 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
 | `const WEBHOOK_SILENT_MS = 30 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
 | `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/connection-health-check/index.ts` |
-| `export const LEVEL1_DEGRADED_MS = 30 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
-| `export const LEVEL1_DISCONNECTED_MS = 15 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
-| `export const LEVEL2_MS = 60 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
 | `expires_at: new Date(args.now.getTime() + 24 * 60 * 60 * 1000).toISOString(),` | `supabase/functions/detect-new-device/index.ts` |
 | `await new Promise((r) => setTimeout(r, 1500));` | `supabase/functions/evolution-api/index.ts` |
 | `await new Promise((r) => setTimeout(r, 2000));` | `supabase/functions/evolution-api/index.ts` |
@@ -4034,7 +4031,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes' AND delivered_at IS NOT NULL),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +71 linhas — lista completa em `context.json` | |
+| `count(*) FILTER (WHERE sent_at >= v_now - interval '5 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `v_step := CASE p_bucket WHEN 'hour' THEN interval '1 hour' ELSE interval '1 minute' END;` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `v_yesterday := date_trunc('day', v_today - interval '12 hours', v_tz);` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| … +68 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4477,7 +4477,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | tsc saiu com exit ${status} (falha de CLI, nao lista de diagnosticos): ${snippet(output)} | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} com diagnostico GLOBAL (config/CLI quebrada), que nao e uma  | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} sem nenhum diagnostico TypeScript reconhecivel  | `scripts/ci/implicit-any-ratchet.mjs` |
-| … +1712 linhas — lista completa em `context.json` | |
+| … +1714 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4526,6 +4526,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `service_role` | `supabase/functions/_shared/crm-integration-contract.ts` |
 | `true` | `supabase/functions/ai-kb-ingest/index.ts` |
 | `true` | `supabase/functions/approve-password-reset/index.ts` |
+| `admin` | `supabase/functions/connection-health-check/index.ts` |
+| `supervisor` | `supabase/functions/connection-health-check/index.ts` |
 | `true` | `supabase/functions/elevenlabs-voice-design/index.ts` |
 | `true` | `supabase/functions/external-db-bridge/index.ts` |
 | `admin` | `supabase/functions/invite-user/index.ts` |
@@ -5004,7 +5006,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `.add("link"` | `supabase/functions/_shared/messaging/personalize.ts` |
 | `notify` | `supabase/functions/ai-auto-tag/index.ts` |
 | `notifyError` | `supabase/functions/ai-auto-tag/index.ts` |
-| `notifyEscalation` | `supabase/functions/connection-health-check/index.ts` |
+| `notifyOptedIn` | `supabase/functions/connection-health-check/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/evolution-api/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/message-delivery/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/multiplix-send/index.ts` |
@@ -5351,4 +5353,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
 | estático que some no mesmo prazo. Em ambos os casos `onDone` avisa o fim para | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
 | * Prazo do realce (2 pulsos), em ms. */ | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
-| … +1651 linhas — lista completa em `context.json` | |
+| … +1650 linhas — lista completa em `context.json` | |
