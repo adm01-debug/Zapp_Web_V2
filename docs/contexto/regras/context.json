@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "b2fed615c008f25dba601e16389fcb6e90af39b4",
+  "sha": "d0e624b44cd402fdd276aa0804eb5ea21567600f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-09 16:39 UTC",
+  "generated_at": "2026-11-09 16:51 UTC",
   "files_total": 8167,
   "code_files": 6021,
   "code_lines": 1044811
@@ -384213,10 +384213,19 @@
   }
  },
  "git": {
-  "sha": "b2fed615c008f25dba601e16389fcb6e90af39b4",
+  "sha": "d0e624b44cd402fdd276aa0804eb5ea21567600f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d0e624b",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)",
+    "files": [
+     ".github/workflows/e2e-logado-isolado.yml"
+    ]
+   },
    {
     "sha": "b2fed61",
     "date": "2026-11-09",
@@ -384546,16 +384555,6 @@
      "package.json",
      "vitest.contracts.config.ts"
     ]
-   },
-   {
-    "sha": "2ebe682",
-    "date": "2026-11-08",
-    "author": "adm01-debug",
-    "subject": "fix(typecheck): remove contratos obsoletos da inbox",
-    "files": [
-     "src/components/queues/QueueAlertsDisplay.tsx",
-     "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -384578,6 +384577,10 @@
    [
     "src/hooks/inbox/useInboxFilterPresets.ts",
     2
+   ],
+   [
+    ".github/workflows/e2e-logado-isolado.yml",
+    1
    ],
    [
     ".github/workflows/contexto.yml",
@@ -384633,10 +384636,6 @@
    ],
    [
     "scripts/db-audit/replay-known-failures.json",
-    1
-   ],
-   [
-    "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
     1
    ]
   ]

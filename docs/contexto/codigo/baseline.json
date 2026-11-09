@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b2fed615c008f25dba601e16389fcb6e90af39b4",
+  "commit": "d0e624b44cd402fdd276aa0804eb5ea21567600f",
   "branch": "main",
-  "data_commit": "2026-11-09T16:37:17Z",
+  "data_commit": "2026-11-09T16:50:05Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d0e624b",
+    "data": "2026-11-09",
+    "assunto": "fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)"
+   },
    {
     "sha": "b2fed61",
     "data": "2026-11-09",
@@ -126,18 +131,13 @@
     "sha": "7beecdb",
     "data": "2026-11-08",
     "assunto": "feat(tasks): implementa escada de cores D12 nas prioridades (#2478)"
-   },
-   {
-    "sha": "fea93e2",
-    "data": "2026-11-08",
-    "assunto": "fix(layout): restaura trilha de navegação no desktop (#2819)"
    }
   ],
-  "arquivos_mudados_7d": 663,
+  "arquivos_mudados_7d": 661,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 660
+    "mudancas": 656
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -184,11 +184,11 @@
     "mudancas": 107
    },
    {
-    "pasta": "src/hooks/chat",
-    "mudancas": 107
+    "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
+    "mudancas": 105
    },
    {
-    "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
+    "pasta": "src/hooks/chat",
     "mudancas": 105
    },
    {
@@ -294,7 +294,7 @@
     "mudancas": 6
    },
    {
-    "arquivo": "e2e/telefonia.spec.ts",
+    "arquivo": ".github/workflows/e2e-logado-isolado.yml",
     "mudancas": 6
    }
   ],
