@@ -8405,7 +8405,7 @@
     "src/lib/talkxCsv.ts",
     "src/lib/talkxReportPdf.ts"
    ],
-   "coberto_por_testes": 23
+   "coberto_por_testes": 24
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXAnalytics.ts",

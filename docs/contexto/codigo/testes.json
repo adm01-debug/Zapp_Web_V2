@@ -1557,12 +1557,12 @@
   {
    "arquivo": "scripts/ci/lint-ratchet.unit.mjs",
    "tipo": "unit",
-   "linhas": 779,
+   "linhas": 788,
    "testa": [
     "scripts/ci/lint-ratchet.mjs",
     "scripts/lib/seguranca-processo.mjs"
    ],
-   "casos": 37
+   "casos": 38
   },
   {
    "arquivo": "scripts/ci/mapa-bundle-raw-doc.unit.mjs",
@@ -12577,10 +12577,11 @@
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
    "tipo": "unit",
-   "linhas": 176,
+   "linhas": 195,
    "testa": [
     "src/components/talkx/report/TalkXCampaignReport.tsx",
-    "src/components/talkx/report/talkxReportData.ts"
+    "src/components/talkx/report/talkxReportData.ts",
+    "src/hooks/integrations/useTalkX.ts"
    ],
    "casos": 12
   },
@@ -24660,7 +24661,7 @@
   "src/hooks/integrations/useMultiplixReplies.ts": 1,
   "src/hooks/integrations/usePersonalStickers.ts": 3,
   "src/hooks/integrations/useQuarantineMedia.ts": 4,
-  "src/hooks/integrations/useTalkX.ts": 23,
+  "src/hooks/integrations/useTalkX.ts": 24,
   "src/hooks/integrations/useTalkXAnalytics.ts": 3,
   "src/hooks/integrations/useTalkXCampaignList.ts": 1,
   "src/hooks/integrations/useTalkXCampaignSummary.ts": 1,

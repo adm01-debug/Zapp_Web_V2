@@ -354,9 +354,12 @@
   {
    "arquivo": "scripts/ci/lint-ratchet.mjs",
    "descricao": "Artefatos produzidos por testes nao sao fonte do projeto. O ESLint nao le o .gitignore por padrao em todas as versoes/configuracoes, entao o ratchet os",
-   "linhas": 651,
+   "linhas": 664,
    "env": [],
-   "npm_scripts": [],
+   "npm_scripts": [
+    "lint",
+    "lint:fix"
+   ],
    "workflows": [],
    "orfao": false
   },
@@ -3320,7 +3323,7 @@
   {
    "arquivo": "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
    "descricao": "R2-DB-020 (P1). Contrato de autorização da mídia do Team Chat — a ACL de leitura de storage.objects (bucket team-chat-files) e a persistência de",
-   "linhas": 536,
+   "linhas": 541,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -4274,7 +4277,7 @@
   {
    "arquivo": "scripts/graphify/setup.sh",
    "descricao": "Instala o graphify (grafo de conhecimento do código) e o configura neste clone. Uso: bun run graph:setup   (Linux, macOS ou WSL; precisa de uv ou pipx)",
-   "linhas": 44,
+   "linhas": 45,
    "env": [],
    "npm_scripts": [
     "graph:setup"

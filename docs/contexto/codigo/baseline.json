@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b430f822c9a824dbd9c2f6557a21bc9487e48732",
+  "commit": "d73156d89178a100d9a8475cb83b8eca65e83cfe",
   "branch": "main",
-  "data_commit": "2026-11-09T12:47:56Z",
+  "data_commit": "2026-11-09T10:17:25-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d73156d",
+    "data": "2026-11-09",
+    "assunto": "fix(ci): torna scripts de qualidade executáveis (#2891)"
+   },
    {
     "sha": "b430f82",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "e028887",
     "data": "2026-11-08",
     "assunto": "fix(edge): Z018 injeção PostgREST + Z020 stack trace nas edges external-db-proxy e cleanup-rate-limit-logs (#2794)"
-   },
-   {
-    "sha": "85fb0a5",
-    "data": "2026-11-08",
-    "assunto": "test(e2e): alinha contrato isolado dos insights (#2790)"
    }
   ],
-  "arquivos_mudados_7d": 1069,
+  "arquivos_mudados_7d": 1073,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 264
+    "mudancas": 265
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -181,7 +181,7 @@
    },
    {
     "pasta": "src/components/tasks",
-    "mudancas": 109
+    "mudancas": 108
    },
    {
     "pasta": "src/hooks/chat",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8325,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878174,
+  "linhas_codigo": 878215,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 206,
-   "linhas": 42722
+   "linhas": 42744
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 368194
+   "linhas": 368213
   },
   "src/config": {
    "arquivos": 3,
@@ -902,7 +902,7 @@
   }
  ],
  "qualidade": {
-  "any": 350,
+  "any": 349,
   "console_log": 416,
   "ts_ignore": 0,
   "eslint_disable": 1,

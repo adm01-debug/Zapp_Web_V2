@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b430f822c9a824dbd9c2f6557a21bc9487e48732` (2026-11-09T12:47:56Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d73156d89178a100d9a8475cb83b8eca65e83cfe` (2026-11-09T10:17:25-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8325 |
 | arquivos_codigo | 4753 |
-| linhas_codigo | 878174 |
+| linhas_codigo | 878215 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,8 +385,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56217 nós · 115895 arestas · 4029 comunidades · grafo do commit `b430f822`
-- comunidades maiores: vitest (924), TalkXSuppression.tsx (753), framer-motion (704), utils.ts (684), react (636), cn (438), client.ts (400), ref_https (395), validation.ts (390), ref_node_fs (365), useAuth (358), chat.ts (328)
+- 56217 nós · 115897 arestas · 4022 comunidades · grafo do commit `d73156d8`
+- comunidades maiores: vitest (946), TalkXSuppression.tsx (753), framer-motion (704), utils.ts (684), react (636), cn (438), client.ts (400), useTeamChatPanel.ts (398), ref_https (376), validation.ts (375), ref_node_fs (365), @tanstack/react-query (364)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -434,8 +434,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `dev`: `vite`
 - `build`: `vite build`
 - `build:dev`: `vite build --mode development`
-- `lint`: `eslint .`
-- `lint:fix`: `eslint . --fix`
+- `lint`: `node scripts/ci/lint-ratchet.mjs`
+- `lint:fix`: `node scripts/ci/lint-ratchet.mjs --fix`
 - `test`: `vitest run`
 - `test:watch`: `vitest`
 - `test:coverage`: `vitest run --coverage`
@@ -502,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-09 `d73156d` fix(ci): torna scripts de qualidade executáveis (#2891)
 - 2026-11-09 `b430f82` fix(ci): adicionar --fail nos curl do workflow-lint (#2887)
 - 2026-11-09 `1fb99f8` chore(db): sincronizar artefatos derivados do banco (#2857)
 - 2026-11-09 `6af86ab` chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121 (#2853)
@@ -516,7 +517,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-08 `e6e467b` feat(talkx): exportar CSV e PDF no relatório de campanha (#2550)
 - 2026-11-08 `7beecdb` feat(tasks): implementa escada de cores D12 nas prioridades (#2478)
 - 2026-11-08 `fea93e2` fix(layout): restaura trilha de navegação no desktop (#2819)
-- 2026-11-08 `478f4bc` fix: elimina 20 violações tipográficas residuais (#2803)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

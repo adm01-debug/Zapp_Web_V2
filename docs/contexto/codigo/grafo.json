@@ -114,7 +114,7 @@
   },
   {
    "arquivo": "src/hooks/integrations/useTalkX.ts",
-   "importado_por": 45
+   "importado_por": 46
   },
   {
    "arquivo": "src/hooks/integrations/useGmail.ts",
