@@ -116,6 +116,11 @@ jobs:
         run: |
           set -euo pipefail
           bun install --frozen-lockfile --ignore-scripts
+      - name: Instalar browsers do Playwright
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium firefox webkit
       - name: Preparar ferramentas TLS antes de gerar certificados ou credenciais
         shell: bash
         run: |
@@ -186,6 +191,11 @@ jobs:
         run: |
           set -euo pipefail
           bun install --frozen-lockfile --ignore-scripts
+      - name: Instalar browsers do Playwright
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium firefox webkit
       - name: Preparar ferramentas TLS antes de gerar certificados ou credenciais
         shell: bash
         run: |
