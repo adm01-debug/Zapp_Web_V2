@@ -1,33 +1,26 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02 por sessão `claude_05/festive-carson-ub43wu`._
+_Atualizado em 2026-11-09 por sessão `claude_05/festive-carson-ub43wu`._
 
 ---
 
 ## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)
 
-**Último run com falha:** [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203)  
-**Head SHA:** `532aa09bae6d45b6eeb81670b8240a8ddbc65e24` (2026-11-01T14:54Z)
+**Runs com falha:**
+- [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203) — SHA `532aa09b` (2026-11-01T14:54Z): 3 contratos reais (migrations/ledger, ACL/mcp_exec, runtime-config)
+- [42525294301](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42525294301) — SHA `e6e467b9` (2026-11-08T21:26Z): paridade tripla, catálogo, manifesto, frescor types.ts
+- [42525240682](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42525240682) — SHA `e6e467b9` (2026-11-08T21:27Z): idem
 
-**O que falha:**
-- Step "Consolidar veredito do contrato vivo" — compara o estado do banco de produção com artefatos do repositório (types.ts, schema-catalog.json, schema-manifest.json)
+**Diagnóstico dos runs de Nov/08 (42525294301 / 42525240682):**
+Ambos rodaram sobre SHA `e6e467b96f12dfca1e12bab7847fad6ddef3c397`, que é **anterior ao HEAD atual** da main (`9183f0f6`). Naquele momento o `types.ts` estava stale e catálogo/manifesto fora de sincronia. O `types-sync` rodou com **sucesso** às 21:44 UTC do mesmo dia (run 42526738975) — depois dessas falhas — corrigindo o `types.ts`. Falhas de Nov/08 são **transitórias** no SHA antigo, muito provavelmente resolvidas pelo types-sync subsequente. Próximo run agendado: `13 6 * * *` UTC (≈ 06:13 UTC de 09/11) confirmará o estado atual do HEAD.
 
-**Falhas identificadas no run 41318522203 (3 contratos reais, não deriva transitória):**
-1. **migrations/ledger** — diferença entre migrations no disco (`supabase/migrations/`) e entradas no ledger do banco
-2. **ACL/mcp_exec** — contrato de permissão `mcp_exec` não satisfeito
-3. **configuração runtime** — `runtime-config` com divergência detectada
-
-**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção e exige análise
-das evidências no artifact `db-live-evidence-{run_id}-1` para diagnosticar cada divergência.
-Requer acesso ao banco de produção para comparação e possível migration corretiva. Este
-workflow **não é um required check** — não bloqueia merges na `main`.
+**Run de Nov/01 (41318522203) — 3 contratos reais:**
+Este run falhou com divergências de DDL/migrations/ACL — requer análise do artifact `db-live-evidence-{run_id}-1`. Este workflow **não é required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
-1. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
-2. Se falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo tem diferença real
-3. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`**
-4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration
-   no disco (em `supabase/migrations/`) sem entrada no ledger
+1. Aguardar o run agendado de 06:13 UTC de 09/11 — se verde, confirma que Nov/08 foi transitório
+2. Se ainda falhar: baixar artifact `db-live-evidence-{run_id}-1` e diagnosticar o contrato que diverge
+3. Se "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` em `main`
 
 ---
 
@@ -55,65 +48,82 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 3. Deploy Edge Functions — fix de @types/node tentado (PR #2407) mas ainda falha
+## 3. Deploy Edge Functions — falha transitória HTTP 414 (Nov/08) + @types/node ainda a investigar
 
-**Comportamento esperado:** `deploy-functions.yml` só executa quando o push na `main` altera
-código implantável em `supabase/functions/` ou `supabase/config.toml`. Quando o push toca
-apenas arquivos de frontend, documentação ou configuração de CI, o workflow não é disparado
-(condição `paths:` no trigger).
+**Falha transitória de Nov/08 (run 42448021843):**
+- SHA: `e028887387f334021f5f6c9423b6dc26b7c8b91d` (2026-11-08T04:44Z)
+- Erro: `health-check.mjs falhou: Management API recusou a consulta de logs (HTTP 414)` — URL Too Long na Supabase Management API
+- **Deploy em si SUCEDEU**: 85/85 edge smoke tests passaram
+- Causa: problema transitório na API do Supabase (URL de health-check muito longa), não bug no código
+- Confirmado resolvido: run anterior (2026-11-07, run 42375139178) concluiu `success`
+- **Nenhuma ação necessária para esta ocorrência.**
 
-**Run com falha:** [41338277476](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41338277476) (SHA `3617a2acd5`, 2026-11-01T18:45Z) — executou via `workflow_dispatch` e **ainda falhou** com `Could not find "@types/node"` no step `deno check`. O fix da PR #2407 não foi suficiente para resolver o erro.
-
-**Por que não foi corrigido:** O mecanismo pelo qual `deno check` falha mesmo após a instalação
-npm de `@types/node` requer investigação adicional — provavelmente o path do `node_modules`
-gerado não é o que o `deno check` procura. Este workflow **não é um required check** — não bloqueia merges na `main`.
+**Falha pendente — @types/node (run 41338277476):**
+- SHA `3617a2acd5` (2026-11-01T18:45Z) — executado via `workflow_dispatch`, falhou com `Could not find "@types/node"` no step `deno check`. O fix da PR #2407 não foi suficiente.
+- **Por que não foi corrigido:** O mecanismo pelo qual `deno check` falha mesmo após a instalação
+  npm de `@types/node` requer investigação adicional — provavelmente o path do `node_modules`
+  gerado não é o que o `deno check` procura. Este workflow **não é um required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
 1. Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** com
-   **`dry_run: true`** (ensaio: roda tudo até o deploy exclusive, sem publicar nada e sem
-   reescrever secrets) para diagnosticar o erro `@types/node` sem risco de side-effects
-2. Se falhar, investigar por que a instalação npm de `@types/node` não resolve o `Could not find "@types/node"` do `deno check`; verificar o path do `node_modules` gerado versus o caminho que o Deno resolve
-3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio reescreve secrets e publica
-   as funções imediatamente no ambiente de produção
+   **`dry_run: true`** para diagnosticar o erro `@types/node` sem risco de side-effects
+2. Investigar por que a instalação npm de `@types/node` não resolve o `Could not find "@types/node"` do `deno check`
+3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio publica as funções em produção
 
 ---
 
-## 4. CI/CD Pipeline — 410 testes de integração pré-existentes (ESTADO ATUAL NA MAIN: VERDE ✅)
+## 4. CI/CD Pipeline — `🧪 Unit Tests` falhando na main por arquivo truncado
 
-**Run histórico com falha:** [41328939149](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41328939149) — HEAD SHA `b94be0a2` (2026-11-01T16:57Z)  
-**Último run na `main` (reexecução confirmada):** [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) — HEAD SHA `3b5f8a96` (2026-11-01T19:52Z) — `🧪 Unit Tests` = ✅ **success** (410 skips, **0 failures**)
+**Causa raiz:** O commit `9183f0f6` (PR #2550 / TalkX 6 RPCs, 2026-11-08) truncou
+`src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` de 202 para 61 linhas
+(`+4 −141`). Sobraram apenas blocos `vi.mock()` sem nenhum `describe`/`it`, fazendo o Vitest
+falhar com `Error: No test suite found in file`. Isso derrubou o job `🧪 Unit Tests (2/3)` e o
+`CI Gate` na main ([run 42521096687](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42521096687)).
 
-**O que estava falhando no run histórico:** 410 testes unitários falhavam nos 3 shards do job `🧪 Unit Tests`. As falhas estavam em testes de integração que tentam conectar ao banco Supabase de produção em ambiente de CI (sem `SUPABASE_URL`/`ANON_KEY` configurados nos shards, ou testes que dependem de estado do banco).
+**Fix pendente:**
+- **PR #2851** (`claude/fix-ci-talkx-report-test-261108-2152`, SHA `5c97aa006ae60c012c1014d3353e85ade115e671`)
+  — restaura os 3 testes de aceite (agrupamento por dia/hora, grade 7×24, renderização com 3
+  gráficos sem a série "Conversões"). CI em `queued` por saturação do pool de runners.
+- Verificado localmente antes do push: `npx vitest run <arquivo>` → `Tests 3 passed (3)`,
+  typecheck e lint OK.
 
-**Estado atual baseline × final:** O run 41343946533 (SHA `3b5f8a96`, 2026-11-01T19:52Z) mostra `🧪 Unit Tests` como ✅ success com 410 **skips** (não failures). A diferença entre o run histórico (failure SHA `b94be0a2`) e o atual (success SHA `3b5f8a96`) indica que um commit posterior converteu os 410 `fail` em `skip` — comportamento esperado para testes de integração sem banco disponível no CI. **Sem regressão introduzida por esta sessão** (novas dívidas = 0).
+**Estado dos required checks em PR #2851:** `Contrato DB offline` e `Talk X launch` em `queued`;
+demais checks (Lint, Unit Tests, Build, Security Audit, E2E) ainda aguardando runner.
 
-**Estado atual do required check:** `🧪 Unit Tests` = ✅ **success** no run mais recente da `main`. Este workflow **é** um required check e está verde.
+**Estado atual do required check `🧪 Unit Tests` na main:** ❌ **failure** (CI Gate vermelho no
+HEAD `9183f0f6` desde 2026-11-08T18:49Z).
 
-**O que o Joaquim pode fazer (opcional — 410 skips persistem):**
-1. Verificar quantos dos 410 testes são realmente unitários vs. integração (mock vs. banco real)
-2. Os testes que dependem de banco: ou mockar o cliente Supabase, ou mover para a suite E2E
-3. Alternativamente: criar `SUPABASE_URL` e `SUPABASE_ANON_KEY` como secrets de CI (conta
-   Supabase de testes, não de produção)
+**O que está pendente:** PR #2851 precisa que os 6 required checks fiquem verdes — esperando
+liberação de runners. Auto-merge está ativo na PR (squash), não toca `.github/workflows/`.
 
 ---
 
-## 5. E2E logado — 4 specs falham por geolocation em CI
+## 5. E2E logado — 3 specs falham por geolocation (fix em andamento)
 
-**Último run com falha:** [41240478106](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106)
-**Head SHA:** `b16152f0` (2026-10-31T20:46Z)
+**Specs afetadas:**
+- `location-picker.spec.ts`
+- `contact-address.spec.ts`
+- `contact-map-pin.spec.ts`
 
-**O que falha:** 4 specs da suite E2E autenticada (`e2e-logado.yml`) falham porque o runner
-do CI não tem permissão para usar geolocation da API do browser (erro de permissão de
-geolocation/navigator). Este workflow **é** um required check.
+**Causa raiz:** O projeto `chromium-mapa` do Playwright não tinha `geolocation` nem
+`permissions` configurados no contexto. Por padrão, o Playwright bloqueia
+`navigator.geolocation`, fazendo as 3 specs falharem ao chamar `getCurrentPosition()`.
 
-**Por que não foi corrigido:** Os specs precisam ou de mock de geolocation, ou de remoção da
-dependência de geolocation nos testes. Mudança nos arquivos de spec e/ou fixtures E2E —
-fora do escopo do fix de CI config.
+**Fix criado:**
+- **PR #2883** (`claude/fix-e2e-geolocation-261109-0130`, SHA `16b8e050e590031c754ab4d533f7caf863c4ff38`)
+  — adiciona `geolocation: { latitude: 0, longitude: 0 }, permissions: ['geolocation']`
+  ao projeto `chromium-mapa` em `playwright.config.ts`. PR em estado **draft**.
+- CI em `queued`: vários checks aguardando runner. `🧪 Unit Tests (placeholder)` e
+  `Contrato DB offline` aparecem como `skipped` (provável path filter: playwright.config.ts
+  não está em `src/`, jobs com condição `if: contains(...)` podem não disparar — a serem
+  confirmados quando os runners subirem).
 
-**O que o Joaquim precisa fazer:**
-1. Adicionar `geolocation: { latitude: 0, longitude: 0 }` no `browserContextOptions` do
-   `playwright.config.ts` para o projeto `chromium-authenticated`
-2. Ou remover a dependência de geolocation nos specs que falham
+**Risco:** Se os jobs `🧪 Unit Tests` e `Contrato DB offline` não subirem para os shards reais
+(1/3, 2/3, 3/3) por path filter, os required checks não fecharão como `success` mas como
+`skipped` — que pode ou não ser aceito como "passou" pelo branch protection. A ser verificado
+quando o CI terminar.
+
+**Estado do required check `🎭 E2E Tests (Playwright)` na PR #2883:** `queued`.
 
 ---
 
@@ -180,8 +190,8 @@ não de código. O workflow está correto.
 
 ## 8. types-sync — RESOLVIDO ✅
 
-**Resolvido em:** 2026-11-01T16:16Z  
-**Run com sucesso:** [41325473652](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41325473652) — `conclusion: success` (SHA `789da6ed`, branch `main`)
+**Resolvido em:** 2026-11-08T21:44Z  
+**Run com sucesso:** [42526738975](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42526738975) — `conclusion: success` (branch `main`)
 
 O `types-sync.yml` que estava sendo listado como falha em sessões anteriores passou a funcionar
 corretamente após regeneração dos tipos via `workflow_dispatch`. O `types.ts` está em sincronia
