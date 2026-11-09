@@ -39,9 +39,9 @@
 
 ---
 
-### RISCO 4 — 7 PRs REGRA8_MIGRATION aguardam Joaquim
+### RISCO 4 — 9 PRs REGRA8_MIGRATION aguardam Joaquim
 
-PRs com migrations SQL em `supabase/migrations/`: #2533, #2812, #2823, #2827, #2828, #2831, #2874. Nenhuma deve ser mergeada sem aprovação explícita de Joaquim — incluem DDL que pode impactar produção.
+PRs com migrations SQL em `supabase/migrations/`: #2496, #2533, #2812, #2815, #2823, #2827, #2828, #2831, #2874. Nenhuma deve ser mergeada sem aprovação explícita de Joaquim — incluem DDL que pode impactar produção.
 
 ---
 
@@ -54,7 +54,7 @@ PRs que tocam `.github/workflows/`: #2508, #2835, #2838, #2850, #2855, #2858. Nu
 ### NÃO VERIFICADO
 
 - Causa raiz da falha de `Contrato DB offline` no PR #2555 (logs não lidos)
-- Status CI individual das 41 PRs AGUARDANDO_CI após fila liberar (apenas verificados os checks do PR #2851 e #2864 durante esta sessão)
+- Status CI individual das 39 PRs AGUARDANDO_CI após fila liberar (apenas verificados os checks do PR #2851 e #2864 durante esta sessão)
 - Conteúdo completo dos diffs de todas as 73 PRs não foi lido 100% por limitação de tempo — análise baseada em títulos, arquivos tocados e checks CI disponíveis
 
 ---
@@ -63,9 +63,9 @@ PRs que tocam `.github/workflows/`: #2508, #2835, #2838, #2850, #2855, #2858. Nu
 
 | Veredicto | Contagem | Ação |
 |---|---|---|
-| AGUARDANDO_CI | 41 | Mergear assim que CI passar |
+| AGUARDANDO_CI | 39 | Mergear assim que CI passar |
 | DRAFT | 18 | Aguardar author → ready for review |
-| REGRA8_MIGRATION | 7 | Bloquear — requer aprovação humana (Joaquim) |
+| REGRA8_MIGRATION | 9 | Bloquear — requer aprovação humana (Joaquim) |
 | REGRA8_WORKFLOW | 6 | Bloquear — toca `.github/workflows/` |
 | OBSOLETO | 1 | Bloquear — solução superada por outra PR |
 | **TOTAL** | **73** | |
@@ -78,23 +78,22 @@ PRs que tocam `.github/workflows/`: #2508, #2835, #2838, #2850, #2855, #2858. Nu
 
 `TalkXCampaignReport.test.tsx` no `main` contém apenas blocos `vi.mock()` sem nenhum `describe/it`. Isso faz o shard `🧪 Unit Tests (2/3)` falhar com `"No test suite found in file"` em **todas** as PRs novas.
 
-**PRs com fix:** #2851 (não-draft), #2864 (esta sessão, não-draft), #2876 (draft). Todas aguardam CI.
+**PRs com fix:** #2825, #2836, #2847, #2851, #2864 (não-draft). #2876 (draft). Todas aguardam CI.
 
 ### 2. Fila do GitHub Actions congestionada (08-09/11/2026)
 
 Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR pode ser mergeada até os runners processarem a fila.
 
-**Ação necessária:** assim que qualquer uma das PRs #2851 ou #2864 mostrar todos os 6 required checks verdes, squash-mergear imediatamente. Isso desbloqueia o CI gate para as outras 40 PRs AGUARDANDO_CI.
+**Ação necessária:** assim que qualquer uma das PRs #2825, #2836, #2847, #2851 ou #2864 mostrar todos os 6 required checks verdes, squash-mergear imediatamente. Isso desbloqueia o CI gate para as outras 37 PRs AGUARDANDO_CI elegíveis.
 
 ---
 
 ## TABELA COMPLETA DE VEREDICTOS
 
-### AGUARDANDO_CI (41 PRs)
+### AGUARDANDO_CI (39 PRs)
 
 | PR | Título (resumido) | SHA |
 |---|---|---|
-| #2496 | feat(message-delivery): carimbo POST + código de erro estável | d6a2ad50 |
 | #2553 | feat: migrar Dialog→TalkXDialogShell (X050) | 4773dd25 |
 | #2555 | feat: unificar ciclo de vida campanha useTalkXLifecycle (X051) | 34094e1b |
 | #2556 | feat: E2E reload test URL (X052) | 9a0b6761 |
@@ -103,7 +102,6 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 | #2808 | fix(chat): guard scroll programático | e90cc8a6 |
 | #2809 | feat(copiloto): painel RADAR fases 8–15 no chat | a8b510c1 |
 | #2810 | feat(talkx): migrar TalkXSuppression→TalkXDialogShell | 61b32d72 |
-| #2815 | feat(copilot): brinde_state em copilot_sessions (CV-026) | e987c590 |
 | #2816 | feat(admin): extrai lógica banco do MediaMigrationTool | ab8e7b7c |
 | #2818 | fix(team-chat): deep-link ?cid= abre conversa correta | 597d7618 |
 | #2820 | feat(copilot): painéis RADAR fases 8-15 no ChatInputArea | d1d75036 |
@@ -159,12 +157,14 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 | #2875 | fix(banner): não apaga estado ao falhar query |
 | #2876 | fix: restaurar TalkXCampaignReport.test.tsx (X164) |
 
-### REGRA8_MIGRATION (7 PRs) — bloqueadas, requer Joaquim
+### REGRA8_MIGRATION (9 PRs) — bloqueadas, requer Joaquim
 
 | PR | Título (resumido) | Arquivo migration |
 |---|---|---|
+| #2496 | feat(message-delivery): carimbo POST + código de erro estável | `20261101133000_outbound_post_started.sql` |
 | #2533 | chore: reconciliação migration 20261030145126 | `20261030145126_*.sql` |
 | #2812 | feat(talkx): integrar useTalkXLifecycle (X051) | migration em supabase/migrations/ |
+| #2815 | feat(copilot): brinde_state em copilot_sessions (CV-026) | `20261031140000_copilot_sessions_brinde_state.sql` |
 | #2823 | feat(talkx): filtro por segmento destinatários | migration em supabase/migrations/ |
 | #2827 | fix(db): search_path create_department_invite | migration em supabase/migrations/ |
 | #2828 | feat(copilot): motor RADAR CV-021–060 | migration em supabase/migrations/ |
@@ -192,8 +192,8 @@ Todos os checks de todas as PRs abertas estão em estado `queued`. Nenhuma PR po
 
 ## ORDEM DE MERGE (quando CI descongestionar)
 
-1. **Primeiro:** mergear #2851 ou #2864 (qualquer que passar CI primeiro) — desbloqueiam o CI gate
-2. **Depois:** verificar CI de todas as 39 restantes AGUARDANDO_CI e mergear as verdes
+1. **Primeiro:** mergear #2825, #2836, #2847, #2851 ou #2864 (qualquer que passar CI primeiro) — desbloqueiam o CI gate
+2. **Depois:** verificar CI de todas as 37 restantes AGUARDANDO_CI elegíveis e mergear as verdes
 3. **REGRA8_MIGRATION e REGRA8_WORKFLOW:** aguardam decisão do Joaquim
 4. **DRAFT:** aguardam author marcar ready for review
 

@@ -16,11 +16,14 @@ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx
 
 **Evidência:** run `42521096687` — shard `Unit Tests (2/3)` falhou com esse erro exato.
 
-**PRs com fix (ambas aguardando CI runners):**
-- PR #2851: `claude/fix-ci-talkx-report-test-261108-2152` — SHA `74b2bb0b`
-- PR #2864: `claude/fix-talkx-report-test-suite-261108-2355` — SHA `784bb18a`
+**PRs com fix identificadas (5 no-draft, todas aguardando CI):**
+- PR #2825: `feat(copilot): painel flutuante RADAR Fase 6` — SHA `03e96a70`
+- PR #2836: `fix(test): títulos lowercase TalkXCampaignRunning` — SHA `6081b167`
+- PR #2847: `feat(talkx): conectar RPCs analytics ao front` — SHA `59fbb76a`
+- PR #2851: `fix(talkx): restaura testes relatório campanha [CI FIX]` — SHA `5c97aa00`
+- PR #2864: `fix: restaurar test suite TalkXCampaignReport [CI FIX]` — SHA `784bb18a`
 
-**Desbloqueio:** mergear qualquer uma dessas duas PRs libera o CI gate para as 41 PRs AGUARDANDO_CI.
+**Desbloqueio:** mergear qualquer uma dessas PRs (que restaure o `TalkXCampaignReport.test.tsx`) libera o CI gate para as 39 PRs AGUARDANDO_CI elegíveis.
 
 ---
 
@@ -67,9 +70,9 @@ foram todas em branches separadas, nenhuma mergeada nesta sessão — CI congest
 
 | Veredicto | Contagem |
 |---|---|
-| AGUARDANDO_CI | 41 |
+| AGUARDANDO_CI | 39 |
 | DRAFT | 18 |
-| REGRA8_MIGRATION | 7 |
+| REGRA8_MIGRATION | 9 |
 | REGRA8_WORKFLOW | 6 |
 | OBSOLETO | 1 |
 
