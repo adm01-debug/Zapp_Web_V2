@@ -317,6 +317,101 @@ function dedupeAlerts(alerts: AlertToCreate[]): AlertToCreate[] {
   });
 }
 
+/** Motivos de saúde gravados em `whatsapp_connections.health_reason`. */
+export const RECONNECT_EXHAUSTED_REASON = 'Reconexão automática esgotada — leia o QR Code para reconectar.';
+export const PHANTOM_SESSION_REASON = 'Sessão fantasma detectada — leia o QR Code para reconectar.';
+export const CONFIRMED_DOWN_REASON = 'Conexão confirmada como inativa — leia o QR Code para reconectar.';
+
+/** Linha de `connection_alert_preferences` lida do banco. */
+export interface ConnectionAlertPrefRow {
+  user_id: string;
+  push_enabled?: boolean | null;
+  email_enabled?: boolean | null;
+  alert_on_degraded?: boolean | null;
+  alert_on_disconnected?: boolean | null;
+}
+
+/**
+ * Constrói a lista de destinatários × canal × tipo para os alertas de conexão.
+ * Sem linha de preferência para o usuário, todos os 4 canais ficam ligados (opt-in
+ * padrão: o usuário recebe até desligar no cartão "Alertas de Conexão").
+ */
+export function buildConnectionAlertPrefs(
+  userIds: string[],
+  rows: ConnectionAlertPrefRow[],
+): Array<{ user_id: string; channel: 'push' | 'email'; alert_type: 'disconnected' | 'degraded' }> {
+  const byUser = new Map(rows.map((r) => [r.user_id, r]));
+  const out: Array<{ user_id: string; channel: 'push' | 'email'; alert_type: 'disconnected' | 'degraded' }> = [];
+  const on = (v: boolean | null | undefined) => v !== false;
+  for (const userId of new Set(userIds)) {
+    const r = byUser.get(userId);
+    const kinds: Array<'disconnected' | 'degraded'> = [];
+    if (on(r?.alert_on_disconnected)) kinds.push('disconnected');
+    if (on(r?.alert_on_degraded)) kinds.push('degraded');
+    const channels: Array<'push' | 'email'> = [];
+    if (on(r?.push_enabled)) channels.push('push');
+    if (on(r?.email_enabled)) channels.push('email');
+    for (const alert_type of kinds) {
+      for (const channel of channels) {
+        out.push({ user_id: userId, channel, alert_type });
+      }
+    }
+  }
+  return out;
+}
+
+/** Decide se a reconexão automática deve ser tentada agora. */
+export function decideReconnect(input: {
+  enabled: boolean;
+  attempts: number;
+  maxAttempts: number;
+  intervalSeconds: number;
+  lastAttemptAt: Date | null;
+  now: Date;
+}): 'disabled' | 'attempt' | 'exhausted' | 'wait' {
+  const { enabled, attempts, maxAttempts, intervalSeconds, lastAttemptAt, now } = input;
+  if (!enabled) return 'disabled';
+  if (attempts >= maxAttempts) return 'exhausted';
+  if (lastAttemptAt !== null) {
+    const elapsedMs = now.getTime() - lastAttemptAt.getTime();
+    if (elapsedMs < intervalSeconds * 1000) return 'wait';
+  }
+  return 'attempt';
+}
+
+/** Nível de escalada (0=silencioso, 1=admin+supervisor, 2=só admin por hora). */
+export function decideEscalation(input: {
+  kind: 'disconnected' | 'degraded';
+  reason: string | null;
+  exhausted: boolean;
+  episodeStart: Date | null;
+  now: Date;
+}): 0 | 1 | 2 {
+  const { kind, reason, exhausted, episodeStart, now } = input;
+  const ageMin = episodeStart !== null ? (now.getTime() - episodeStart.getTime()) / 60_000 : 0;
+  if (kind === 'degraded') {
+    return ageMin >= 30 ? 1 : 0;
+  }
+  if (exhausted && ageMin >= 60) return 2;
+  if (exhausted || reason === 'phantom_session' || ageMin >= 15) return 1;
+  return 0;
+}
+
+/** Chave de idempotência para alerta de nível (1=por episódio; 2=por hora cheia UTC). */
+export function levelDedupeKey(
+  level: 1 | 2,
+  kind: 'disconnected' | 'degraded',
+  connectionId: string,
+  now: Date,
+): string {
+  if (level === 1) return `conn-l1:v1:${kind}:${connectionId}`;
+  const y = now.getUTCFullYear();
+  const mo = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(now.getUTCDate()).padStart(2, '0');
+  const h = String(now.getUTCHours()).padStart(2, '0');
+  return `conn-l2:v1:${kind}:${connectionId}:${y}${mo}${d}${h}`;
+}
+
 export async function handleConnectionHealthCheck(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
