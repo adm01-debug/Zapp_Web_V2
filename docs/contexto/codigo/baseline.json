@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "6af86abe4baa597fc3620f5eb98f62eae1e60c93",
+  "commit": "1fb99f80c041563840598149b9b372634d320bfb",
   "branch": "main",
-  "data_commit": "2026-11-09T11:51:38Z",
+  "data_commit": "2026-11-09T12:08:18Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1fb99f8",
+    "data": "2026-11-09",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2857)"
+   },
    {
     "sha": "6af86ab",
     "data": "2026-11-09",
@@ -126,18 +131,13 @@
     "sha": "d4a7252",
     "data": "2026-11-07",
     "assunto": "fix(scripts): corrige AbortSignal unref + ESTADOS.md desatualizado"
-   },
-   {
-    "sha": "ab96364",
-    "data": "2026-11-07",
-    "assunto": "docs(talkx): regenera matriz de estados (#2791)"
    }
   ],
   "arquivos_mudados_7d": 1070,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 670
+    "mudancas": 669
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -218,6 +218,10 @@
     "mudancas": 14
    },
    {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 12
+   },
+   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 11
    },
@@ -230,15 +234,15 @@
     "mudancas": 11
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 11
-   },
-   {
     "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 10
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 10
    },
    {
@@ -251,10 +255,6 @@
    },
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 9
    },
    {
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 287
+    "commits": 286
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 8
+    "commits": 9
    },
    {
     "autor": "dependabot[bot]",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8325,
   "arquivos_codigo": 4753,
-  "linhas_codigo": 878162,
+  "linhas_codigo": 878174,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15560
+   "linhas": 15572
   },
   "src/lib": {
    "arquivos": 283,
@@ -802,7 +802,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15487
+   "linhas": 15499
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
