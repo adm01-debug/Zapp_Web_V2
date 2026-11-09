@@ -169,7 +169,7 @@ export async function queryAnalytics({
     throw new TransientAnalyticsError('transporte ou timeout ao consultar logs');
   }
 
-  if (response.status >= 500) {
+  if (response.status >= 500 || response.status === 414) {
     throw new TransientAnalyticsError(`Management API indisponível (HTTP ${response.status})`);
   }
   if (!response.ok) {
