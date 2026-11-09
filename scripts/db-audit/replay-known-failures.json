@@ -107,26 +107,6 @@
     "20261031100000_copilot_fases13_15_tabelas.sql": {
       "categoria": "nao-idempotente-inerte",
       "motivo": "policy 'copilot_outcomes_insert' (e demais) for table 'copilot_outcomes' already exists. A migration 20261030145126 (remote_only reconciliada) cria as mesmas 7 tabelas e todas as politicas antes desta no replay. CREATE TABLE IF NOT EXISTS e inerte; CREATE POLICY sem IF NOT EXISTS falha com duplicate_object. Canonico: todas as tabelas e politicas existem. Efeito real: nenhum - o objeto esta correto no canonico. Medido em 02/11/2026."
-    },
-    "20261107133000_copilot_tables_rls_policies.sql": {
-      "categoria": "cascata-objeto-existe-no-canonico",
-      "motivo": "column 'profile_id' does not exist em copilot_conversation_scores e copilot_learning_moments no replay: essas tabelas usam session_id como chave de acesso, nao profile_id. No canonico a migration foi aplicada com sucesso e as politicas existem (corrigidas por 20261107163000). Medido via ledger: versao 20261107133000 registrada no canonico em 07/11/2026."
-    },
-    "20261107143000_dept_invites_admin_only_rls.sql": {
-      "categoria": "cascata-objeto-existe-no-canonico",
-      "motivo": "relation 'public.department_audit_log' does not exist no banco zerado. A tabela existe no canonico mas nao e criada pelas migrations do replay. Politicas dept_invites_insert_admin, dept_invites_delete_admin e dept_audit_select_own_dept existem no canonico. Medido via ledger: versao 20261107143000 registrada no canonico em 07/11/2026."
-    },
-    "20261107153000_agent_streak_increment_functions.sql": {
-      "categoria": "arquivo-superado",
-      "motivo": "cannot change return type: update_agent_streak ja existe no banco zerado com assinatura incompativel (criada por migration anterior no replay). CREATE OR REPLACE nao permite mudar return type. No canonico as funcoes existem com return type void e SECURITY DEFINER, restritas a service_role. Medido via ledger: versao 20261107153000 registrada no canonico em 07/11/2026."
-    },
-    "20261107163000_copilot_scores_fix_rls.sql": {
-      "categoria": "cascata-objeto-existe-no-canonico",
-      "motivo": "column 'session_id' does not exist em copilot_conversation_scores ou copilot_learning_moments no replay. A coluna session_id nao e criada pela cadeia de migrations no banco zerado (esquema diferente do canonico). No canonico politicas existem usando session_id via JOIN em copilot_sessions. Medido via ledger: versao 20261107163000 registrada no canonico em 07/11/2026."
-    },
-    "20261107170000_message_reactions_dml_policies.sql": {
-      "categoria": "cascata-objeto-existe-no-canonico",
-      "motivo": "relation 'public.conversations' does not exist no banco zerado do replay. A tabela conversations depende de objetos nao presentes na imagem efemera. No canonico politicas INSERT/UPDATE/DELETE existem em message_reactions. Medido via ledger: versao 20261107170000 registrada no canonico em 07/11/2026."
     }
   }
 }
