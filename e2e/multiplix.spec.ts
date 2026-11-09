@@ -559,7 +559,7 @@ test.describe('Multiplix — E2E do módulo (F90, tela de 3 regiões)', () => {
     // Cabeçalho do monitor + métricas do disparo.
     await expect(page.getByRole('heading', { name: 'E2E Disparo recente' })).toBeVisible();
     await expect(page.getByText('Enviadas')).toBeVisible();
-    await expect(page.getByText('1 de 2')).toBeVisible();
+    await expect(page.getByText('50% concluído · 1 de 2', { exact: true })).toBeVisible();
 
     // O monitor lê o disparo PELO ID (não pela página de recentes) e a lista de
     // destinatários pela ação `recipients.list`.

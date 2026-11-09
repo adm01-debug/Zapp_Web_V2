@@ -50,7 +50,13 @@ export async function runGenerateManifest({ repoRoot, output, check }) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exit(2);
+  }
   const manifest = await runGenerateManifest({ repoRoot: process.cwd(), ...args });
   console.log(
     `Edge manifest OK: ${manifest.summary.function_count} functions, ` +

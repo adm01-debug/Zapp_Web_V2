@@ -53,7 +53,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   }),
 }));
 
-import { useWarRoomAlerts } from '@/hooks/business/useWarRoomAlerts';
+import { slaIncidentKey, useWarRoomAlerts } from '@/hooks/business/useWarRoomAlerts';
 
 let cliente: QueryClient | null = null;
 function createWrapper() {
@@ -179,21 +179,31 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
   let alertas: LinhaAlerta[];
   let violacoes: string[];
   let erroDeLeitura: { code: string; message: string } | null;
+  let erroDeLookup: { code: string; message: string } | null;
   let erroDeInsert: { code: string; message: string } | null;
   let chavesNoBanco: Set<string>;
   let criados: LinhaAlerta[];
   let tentativas: Array<Record<string, unknown>>;
+  let consultasDedupe: string[];
   let erroNoConsole: ReturnType<typeof vi.spyOn>;
 
   function instalarBanco() {
     mockFrom.mockImplementation((tabela: string) => {
       if (tabela === 'warroom_alerts') {
         return {
-          select: () => ({
-            eq: () => ({
+          select: (columns = '*') => ({
+            eq: (_column: string, value: unknown) => ({
               order: () => ({
                 limit: () => Promise.resolve({ data: alertas.slice(0, PAGINA_ALERTAS), error: null }),
               }),
+              limit: () => {
+                const key = String(value);
+                consultasDedupe.push(key);
+                return Promise.resolve({
+                  data: columns === 'id' && chavesNoBanco.has(key) ? [{ id: 'existente' }] : [],
+                  error: erroDeLookup,
+                });
+              },
             }),
           }),
           insert: (payload: Record<string, unknown>) => {
@@ -264,10 +274,12 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
     }));
     violacoes = idsDeViolacao(60);
     erroDeLeitura = null;
+    erroDeLookup = null;
     erroDeInsert = null;
     chavesNoBanco = new Set();
     criados = [];
     tentativas = [];
+    consultasDedupe = [];
     erroNoConsole = vi.spyOn(console, 'error').mockImplementation(() => {});
     instalarBanco();
   });
@@ -296,6 +308,7 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
 
     expect(alertas.slice(0, PAGINA_ALERTAS)).toHaveLength(PAGINA_ALERTAS);
     expect(criados).toHaveLength(1);
+    expect(consultasDedupe.length).toBeGreaterThan(0);
     expect(
       tentativas.every((p) => typeof p.dedupe_key === 'string' && p.dedupe_key.startsWith('sla-monitor:v1:')),
     ).toBe(true);
@@ -313,6 +326,31 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
 
     expect(tentativas[0].dedupe_key).not.toBe(tentativas[1].dedupe_key);
     expect(criados[1].title).toBe('61 SLA(s) Violado(s)');
+  });
+
+  it('não envia POST quando a chave do incidente já existe', async () => {
+    const key = slaIncidentKey(violacoes);
+    chavesNoBanco.add(key);
+
+    renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(consultasDedupe).toContain(key));
+
+    expect(tentativas).toHaveLength(0);
+    expect(criados).toHaveLength(0);
+  });
+
+  it('falha no precheck de dedupe é registrada e nunca vira POST', async () => {
+    erroDeLookup = { code: '42501', message: 'permission denied for warroom_alerts' };
+
+    renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(consultasDedupe).toHaveLength(1));
+
+    expect(tentativas).toHaveLength(0);
+    expect(criados).toHaveLength(0);
+    expect(erroNoConsole).toHaveBeenCalledWith(
+      '[useWarRoomAlerts] falha ao verificar alerta de SLA existente',
+      erroDeLookup,
+    );
   });
 
   it('conta o conjunto inteiro de violações, não só a primeira página de 1000', async () => {

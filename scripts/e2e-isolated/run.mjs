@@ -7,8 +7,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
+import { types } from 'node:util';
 import {
-  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, CATALOG_SKU, assertOwnedContainer,
+  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, GROUP_SHARDS, CATALOG_SKU, assertOwnedContainer,
   assertContainerIsolation, assertSourceSha, assertOfficialHostIsLocal, makeProof, syntheticCredentials, sha256,
 } from './runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from './stack.mjs';
@@ -18,6 +19,7 @@ import { collectPlaywrightInventory } from './collection.mjs';
 import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, installDriverTlsTrust, TLS_ORIGIN, TLS_PUBLIC } from './tls.mjs';
 import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
 import { restoreRoutineOwnership } from './routine-ownership.mjs';
+import { QR_SEED_PATH, validateQrSeedProof } from './qr-contract.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -75,6 +77,121 @@ export function parseFilesSeedDiagnostic(result) {
       !validSeedFailure(value.failure) || (Object.hasOwn(value, 'cleanup') && (!validSeedFailure(value.cleanup) || value.cleanup.stage !== 'db-close'))) return unavailable('invalid');
   const copy = input => Object.fromEntries(['stage', 'error_name', 'code', 'sqlstate', 'http_status'].filter(key => Object.hasOwn(input, key)).map(key => [key, input[key]]));
   return { schema: 1, seed: 'files-volume', available: true, failure: copy(value.failure), ...(value.cleanup ? { cleanup: copy(value.cleanup) } : {}) };
+}
+
+/** The QR seed keeps response bodies private; publish only a closed stage code. */
+const QR_DIAGNOSTIC_DIRECT_CODES = Object.freeze([
+  'bootstrap-proof', 'bootstrap-tls', 'bootstrap-namespace', 'identity-changed',
+  'credential-changed', 'target', 'gateway-identity', 'provider-identity',
+  'bootstrap-credentials', 'existing-connections', 'existing-roles', 'existing-token',
+  'existing-contact', 'maintenance-active', 'fixture-collision', 'admin-identity',
+  'admin-profile', 'admin-role', 'token-store', 'token-readback', 'credential',
+  'admin-login', 'admin-auth', 'admin-rls', 'admin-onboarding', 'provider-state',
+  'provider-evidence', 'provider-used-before-browser', 'existing-fixtures-changed',
+  'seed-proof', 'image-mismatch', 'fixture-row',
+]);
+const QR_DIAGNOSTIC_REQUEST_STAGES = Object.freeze([
+  'gateway-identity', 'provider-identity', 'existing-connections', 'existing-roles',
+  'existing-token', 'existing-contact', 'maintenance', 'fixture-collision',
+  'admin-create', 'admin-profile', 'admin-profile-update', 'admin-role',
+  'admin-onboarding-write', 'connection-create', 'token-store', 'token-readback',
+  'admin-login', 'admin-auth', 'admin-rls', 'connection-rls', 'admin-onboarding',
+  'provider-state', 'provider-evidence',
+]);
+const QR_DIAGNOSTIC_CODES = new Set([
+  ...QR_DIAGNOSTIC_DIRECT_CODES.map(code => 'qr-' + code),
+  ...QR_DIAGNOSTIC_REQUEST_STAGES.flatMap(stage => ['request', 'http', 'json'].map(kind => 'qr-' + stage + '-' + kind)),
+]);
+export function parseQrSeedDiagnostic(result) {
+  if (result.status === 0 && !result.error && !result.signal) return null;
+  const unavailable = reason => ({ schema: 1, seed: 'qr', available: false, reason });
+  if ([result.stdout, result.stderr].some(value => value != null && typeof value !== 'string')) return unavailable('invalid');
+  const matches = [...((result.stdout ?? '') + '\n' + (result.stderr ?? '')).matchAll(/\[e2e-isolated\/(qr-[a-z][a-z0-9-]{0,100})\]/g)]
+    .map(match => match[1]);
+  if (matches.length === 0) return unavailable('missing');
+  if (matches.some(code => !QR_DIAGNOSTIC_CODES.has(code))) return unavailable('invalid');
+  const codes = [...new Set(matches)];
+  if (codes.length !== 1) return unavailable('ambiguous');
+  return { schema: 1, seed: 'qr', available: true, code: codes[0] };
+}
+
+const BROWSER_PROCESS_CODES = new Set(['ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES']);
+const BROWSER_READ_CODES = new Set(['ENOENT', 'EACCES', 'EPERM', 'EISDIR', 'EIO', 'EMFILE', 'ENFILE']);
+const BROWSER_SIGNALS = new Set(['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGHUP', 'SIGABRT',
+  'SIGSEGV', 'SIGBUS', 'SIGILL', 'SIGFPE', 'SIGQUIT', 'SIGPIPE', 'SIGTRAP']);
+const UNKNOWN_BROWSER_FIELD = Object.freeze({ known: false });
+
+function browserDataValue(object, key) {
+  if (object === null || (typeof object !== 'object' && typeof object !== 'function')) return UNKNOWN_BROWSER_FIELD;
+  try {
+    let current = object;
+    for (let depth = 0; current !== null && depth < 8; depth++) {
+      if (types.isProxy(current)) return UNKNOWN_BROWSER_FIELD;
+      const descriptor = Object.getOwnPropertyDescriptor(current, key);
+      if (descriptor) return Object.hasOwn(descriptor, 'value') ? { known: true, value: descriptor.value } : UNKNOWN_BROWSER_FIELD;
+      current = Object.getPrototypeOf(current);
+    }
+    return current === null ? { known: true, value: undefined } : UNKNOWN_BROWSER_FIELD;
+  } catch { return UNKNOWN_BROWSER_FIELD; }
+}
+const closedBrowserRecord = fields => Object.freeze(Object.assign(Object.create(null), fields));
+const unknownBrowserReport = () => closedBrowserRecord({ read: 'unknown', read_error_code: 'unknown', parse: 'unknown' });
+
+/** Read and decode once; keep the original undefined fallback on either failure. */
+export function readBrowserReportOnce(read) {
+  let contents;
+  try { contents = read(); }
+  catch (error) {
+    const field = browserDataValue(error, 'code');
+    const code = field.known && typeof field.value === 'string' && BROWSER_READ_CODES.has(field.value) ? field.value : 'unknown';
+    return { report: undefined, observation: closedBrowserRecord({
+      read: code === 'ENOENT' ? 'missing' : 'failed', read_error_code: code, parse: 'not-attempted',
+    }) };
+  }
+  try { return { report: JSON.parse(contents), observation: closedBrowserRecord({ read: 'ok', read_error_code: null, parse: 'decoded' }) }; }
+  catch { return { report: undefined, observation: closedBrowserRecord({ read: 'ok', read_error_code: null, parse: 'invalid' }) }; }
+}
+
+function safeBrowserReportObservation(observation) {
+  const read = browserDataValue(observation, 'read'), code = browserDataValue(observation, 'read_error_code'), parse = browserDataValue(observation, 'parse');
+  if (!read.known || !code.known || !parse.known) return unknownBrowserReport();
+  if (read.value === 'ok' && code.value === null && ['decoded', 'invalid'].includes(parse.value)) {
+    return closedBrowserRecord({ read: 'ok', read_error_code: null, parse: parse.value });
+  }
+  if (parse.value === 'not-attempted' && ((read.value === 'missing' && code.value === 'ENOENT') ||
+      (read.value === 'failed' && typeof code.value === 'string' && code.value !== 'ENOENT' &&
+       (BROWSER_READ_CODES.has(code.value) || code.value === 'unknown')))) {
+    return closedBrowserRecord({ read: read.value, read_error_code: code.value, parse: 'not-attempted' });
+  }
+  return unknownBrowserReport();
+}
+
+/** Closed observations only: never invoke accessors, Proxy traps or toJSON. */
+export function browserResultDiagnostic(result, observation) {
+  const status = browserDataValue(result, 'status'), signal = browserDataValue(result, 'signal'), error = browserDataValue(result, 'error');
+  const code = error.known && error.value ? browserDataValue(error.value, 'code') : UNKNOWN_BROWSER_FIELD;
+  return closedBrowserRecord({
+    schema: 1,
+    process: closedBrowserRecord({
+      status: status.known && (status.value === null || (Number.isInteger(status.value) && status.value >= 0 && status.value <= 255)) ? status.value : 'unknown',
+      signal: signal.known && (signal.value === null || signal.value === undefined) ? null :
+        signal.known && typeof signal.value === 'string' && BROWSER_SIGNALS.has(signal.value) ? signal.value : 'unknown',
+      error: !error.known ? 'unknown' : error.value ? 'present' : 'none',
+      error_code: error.known && !error.value ? null :
+        code.known && typeof code.value === 'string' && BROWSER_PROCESS_CODES.has(code.value) ? code.value : 'unknown',
+    }),
+    report: safeBrowserReportObservation(observation),
+  });
+}
+
+export function browserTimeoutMs(scope, fullSuite) {
+  return scope === 'login' ? 600_000 : fullSuite ? 55 * 60_000 : 15 * 60_000;
+}
+
+export const browserWorkers = () => 1;
+
+export function browserShard(scope, group) {
+  return scope === 'suite' && Object.hasOwn(GROUP_SHARDS, group) ? GROUP_SHARDS[group] : null;
 }
 
 export function assertPinnedImages(lock) {
@@ -189,7 +306,8 @@ function safeCode(error) {
 export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group } = {}) {
   if (!['login', 'suite'].includes(scope) || (scope === 'login' && group !== undefined) ||
       (scope === 'suite' && !Object.hasOwn(GROUPS, group))) throw new Error('invalid-isolated-scope');
-  const fullSuite = scope === 'suite' && group === 'authenticated';
+  const shard = browserShard(scope, group);
+  const fullSuite = shard !== null;
   const projects = scope === 'login' ? ['setup'] : GROUPS[group];
   const reportScope = scope === 'login' ? 'bootstrap-and-login' : fullSuite ? 'authenticated-suite' : group;
   let output = path.resolve(outputDirectory || '');
@@ -220,7 +338,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   const writable = new Set([output, bundles, bundleCache]);
   let credentials;
   let reportReady = false;
-  let providerCatalog, providerDiagnostic, routineOwnership;
+  let providerCatalog, providerDiagnostic, routineOwnership, browserDiagnostic;
   let failure;
   let cancelled = false;
   let cleaning = false;
@@ -305,6 +423,12 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       try {
         const diagnostic = parseFilesSeedDiagnostic(result);
         if (diagnostic) writeJson(path.join(output, 'seed-files-volume-diagnostic.json'), diagnostic);
+      } catch { /* Observation must not replace the original required() failure. */ }
+    }
+    if (code === 'seed-qr') {
+      try {
+        const diagnostic = parseQrSeedDiagnostic(result);
+        if (diagnostic) writeJson(path.join(output, 'qr-seed-diagnostic.json'), diagnostic);
       } catch { /* Observation must not replace the original required() failure. */ }
     }
     return required(result, code);
@@ -522,6 +646,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       driverRun(['bun', 'e2e/fixtures/arquivos-local/seed.ts'], 'seed-files-volume', 240_000, { recordLog: false });
       driverRun(['node', 'e2e/fixtures/seed-files-tab.mjs'], 'seed-files-canonical', 240_000, { recordLog: false });
       driverRun(['node', 'scripts/e2e-isolated/seed-suite.mjs'], 'seed-suite', 240_000, { recordLog: false });
+      driverRun(['node', 'scripts/e2e-isolated/seed-qr.mjs'], 'seed-qr', 240_000, { recordLog: false });
       // Catalog metadata is observational. Its failure never decides readiness.
       try { providerCatalog = parseCatalog(psql(PROVIDER_CATALOG_SQL, [], CATALOG_EXECUTOR_OPTIONS)); }
       catch { providerCatalog = { available: false, reason: 'query-failed' }; }
@@ -538,6 +663,11 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
         provider = JSON.parse(readFileSync(path.join(output, 'provider-ready.json'), 'utf8'));
       } catch { throw new Error('suite-proof-unreadable'); }
       assertSuiteReadiness(suiteSeed, provider, runId, sourceSha);
+      let qrSeed;
+      try { qrSeed = JSON.parse(readFileSync(path.join(output, path.basename(QR_SEED_PATH)), 'utf8')); }
+      catch { throw new Error('qr-seed-proof-unreadable'); }
+      validateQrSeedProof(qrSeed, { runId, sourceSha, networkNamespace: network.network_namespace,
+        anonHash: sha256(credentials.anonKey) });
       catalogVerified = true;
     }
     const seed = JSON.parse(driverRun(['node', 'scripts/e2e-isolated/runtime-probe.mjs', 'seed'], 'seed-proof'));
@@ -551,17 +681,18 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     writeJson(path.join(output, 'readiness.json'), proof);
     phase(scope === 'login' ? 'collect-real-login-test' : 'collect-real-suite');
     const cli = ['node', 'node_modules/@playwright/test/cli.js', 'test', '--config', 'scripts/e2e-isolated/playwright.config.ts',
-      ...projects.flatMap(name => ['--project', name]), '--workers', '1'];
-    const inventory = collectPlaywrightInventory({ output, scope, projects,
+      ...projects.flatMap(name => ['--project', name]), ...(shard ? ['--shard', shard] : []), '--workers', String(browserWorkers())];
+    const inventory = collectPlaywrightInventory({ output, scope, projects, ...(shard ? { shard } : {}),
       execute: report => docker(['exec', '-e', 'PLAYWRIGHT_JSON_OUTPUT_FILE=' + report,
         ...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),
     });
     phase(scope === 'login' ? 'real-browser-login' : 'real-browser-suite');
     state.native_e2e = true;
-    const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });
+    const browserResult = docker(inDriver(cli), { timeout: browserTimeoutMs(scope, fullSuite) });
     writeFileSync(path.join(output, scope === 'login' ? 'browser-login.log' : 'browser-suite.log'), redacted(String(browserResult.stdout || '') + String(browserResult.stderr || '')), { mode: 0o600 });
-    let report;
-    try { report = JSON.parse(readFileSync(path.join(output, 'results.json'), 'utf8')); } catch { /* Summary records invalid/missing collection explicitly. */ }
+    const { report, observation } = readBrowserReportOnce(() => readFileSync(path.join(output, 'results.json'), 'utf8'));
+    try { browserDiagnostic = browserResultDiagnostic(browserResult, observation); }
+    catch { /* Observation cannot replace the original result. */ }
     const summary = summarizePlaywrightResult(report, { scope: reportScope, expectedProjects: projects, inventory,
       ...(fullSuite ? { conversationPlatformSkips: { sourceSha, sourceBlobs: {
         'e2e/conversation.spec.ts': gitBlob(readFileSync(path.join(ROOT, 'e2e/conversation.spec.ts'))),
@@ -635,12 +766,12 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     // runner. They may contain newly-issued session tokens not known to seed.
     // Only these controlled metadata files and already-redacted logs publish.
     const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'entrypoints.json', 'migration-sources.json', 'migration-results.json',
-      'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
+      'readiness.json', 'seed-ready.json', 'seed-files-volume-diagnostic.json', 'qr-seed-diagnostic.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',
       'results-summary.json', 'postgres-log-summary.json'];
     for (const name of metadata) if (existsSync(path.join(output, name))) cpSync(path.join(output, name), path.join(published, name));
     // Never copy the verifier's raw file. Only the closed parsed objects enter
     // the already-redacted publication path; diagnostic I/O remains best effort.
-    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic], ['routine-ownership.json', routineOwnership]]) {
+    for (const [name, diagnostic] of [['provider-catalog.json', providerCatalog], ['provider-diagnostic.json', providerDiagnostic], ['routine-ownership.json', routineOwnership], ['browser-result-diagnostic.json', browserDiagnostic]]) {
       if (diagnostic) {
         try { writeJson(path.join(published, name), diagnostic); } catch { /* Observation cannot replace the original result. */ }
       }
@@ -673,5 +804,5 @@ export const runSuite = options => runLogin({ ...options, scope: 'suite' });
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv[2] === 'login' && process.argv.length === 4) process.exitCode = await runLogin({ outputDirectory: process.argv[3] });
   else if (process.argv[2] === 'suite' && process.argv.length === 5) process.exitCode = await runSuite({ group: process.argv[3], outputDirectory: process.argv[4] });
-  else throw new Error('usage: run.mjs login <output-directory> | suite <group> <output-directory>');
+  else { process.stderr.write('usage: run.mjs login <output-directory> | suite <group> <output-directory>\n'); process.exit(2); }
 }

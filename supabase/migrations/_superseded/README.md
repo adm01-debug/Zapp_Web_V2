@@ -132,6 +132,18 @@ Confirmação: `SELECT count(*) FROM supabase_migrations.schema_migrations WHERE
 atualizados para 6 parâmetros, então aplicar via `producao-ddl` com aprovação do Joaquim.
 Não mover de volta para `supabase/migrations/`.
 
+### `20261026240300_drop_bkp_261023.sql`
+
+**Registrada no ledger entre os runs `42143639908` e `42270182966` de 06/11/2026.**
+O ledger preserva `DROP SCHEMA _bkp_261023 CASCADE`, mas esse registro isolado não prova o efeito
+no catálogo. O SQL original permanece neste diretório e é fixado por hash na evidência
+`ledger-archive/registered-tombstone`. O schema `_bkp_261023` ainda existia na
+consulta read-only de 07/11/2026; portanto o registro nao e tratado como prova de apply.
+
+Na pasta ativa existe apenas um tombstone de comentários com a mesma versão. Ele mantém a paridade
+arquivos/ledger sem permitir que `db push` ou replay repitam o `DROP` caso o registro do ledger seja
+removido ou reparado. Nunca mover o SQL executável de volta para `supabase/migrations/`.
+
 ## Regra
 
 Nao apagar. Nao reaplicar. Servem como registro historico do schema anterior a migracao.

@@ -294,7 +294,7 @@ export function existeView(nome) {
 // "monitor" sozinho é amplo demais: scripts de auditoria internos (ex.: Talk X Monitor Panel)
 // não medem uptime do front e não podem transformar o SLO de front em REAL/PARCIAL.
 const ARTEFATO_MONITOR_EXTERNO =
-  /(uptime|health[-_.]?check|external[-_.]?monitor|monitor[-_.]?externo|front[-_.]?(monitor|uptime)|monitor[-_.]?front|version[-_.]?json)/i;
+  /(uptime|health[-_.]?check|external[-_.]?monitor|monitor[-_.]?externo|front[-_.]?(monitor|uptime|release[-_.]?targets)|monitor[-_.]?front|version[-_.]?json)/i;
 
 export function nomesIndicamArtefatoMonitor(nomes) {
   return nomes.some((n) => ARTEFATO_MONITOR_EXTERNO.test(n));
@@ -357,14 +357,14 @@ test('o runbook de SLOs fecha os invariantes de honestidade (I1–I6)', () => {
   assert.deepEqual(problemas, [], `docs/runbooks/slo.md:\n- ${problemas.join('\n- ')}`);
 });
 
-test('o runbook continua dizendo que o monitor externo NÃO existe', () => {
+test('o runbook registra o monitor externo horário como cobertura PARCIAL', () => {
   const doc = fs.readFileSync(path.join(RAIZ, DOC), 'utf8');
-  assert.match(doc, /monitor externo de uptime continua n[ãa]o existindo/i);
-  assert.equal(existeArtefatoMonitor(), false, 'surgiu um artefato de monitoramento: atualize o runbook');
+  assert.match(doc, /front-release-targets\.yml[^]*a cada hora/i);
+  assert.equal(existeArtefatoMonitor(), true, 'o monitor documentado precisa existir no repositório');
   const tabela = tabelaDoTitulo(doc, 'SLOs propostos');
   const front = tabela.find(({ celulas }) => /front dispon/i.test(celulas[0]));
   assert.ok(front, 'linha do SLO de front ausente');
-  assert.match(front.celulas[front.celulas.length - 1], /^PENDENTE/, 'SLO de front sem fonte real tem de ser PENDENTE');
+  assert.match(front.celulas[front.celulas.length - 1], /^PARCIAL/, 'monitor horário ainda não mede o SLO por minuto');
 });
 
 // ---------------------------------------------------------------------------
@@ -380,8 +380,8 @@ function mutar(troca, por) {
   return analisar(mutado, AMB_REPO);
 }
 
-test('mutação no documento real: SLO de front de PENDENTE para REAL acusa I3', () => {
-  const problemas = mutar('(HTTP 200 + JSON) a cada 1 min | PENDENTE', '(HTTP 200 + JSON) a cada 1 min | REAL');
+test('mutação do ambiente real: remover o artefato do monitor acusa I3', () => {
+  const problemas = analisar(lerDoc(), { ...AMB_REPO, existeArtefatoMonitor: () => false });
   assert.ok(problemas.some((p) => p.startsWith('I3')), problemas.join('; '));
 });
 

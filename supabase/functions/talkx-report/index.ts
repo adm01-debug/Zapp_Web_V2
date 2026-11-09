@@ -7,7 +7,7 @@
  *             feitas no mesmo instante; `cancelled` e `outcome_unknown` são
  *             reportados explicitamente e nunca inferidos como pendentes.
  */
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 

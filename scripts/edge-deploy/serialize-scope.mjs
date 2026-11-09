@@ -83,7 +83,7 @@ export async function waitForTurn({
 
 async function main() {
   const { GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_RUN_ID, SCOPE } = process.env;
-  if (!GITHUB_TOKEN || !GITHUB_REPOSITORY || !/^\d+$/.test(GITHUB_RUN_ID ?? '')) throw new Error('GITHUB_TOKEN, GITHUB_REPOSITORY e GITHUB_RUN_ID obrigatorios');
+  if (!GITHUB_TOKEN || !GITHUB_REPOSITORY || !/^\d+$/.test(GITHUB_RUN_ID ?? '')) { process.stderr.write('GITHUB_TOKEN, GITHUB_REPOSITORY e GITHUB_RUN_ID obrigatorios\n'); process.exit(2); }
   const me = { id: Number(GITHUB_RUN_ID), scope: SCOPE || 'all' };
   await waitForTurn({ me, repo: GITHUB_REPOSITORY, workflowFile: 'deploy-functions.yml', token: GITHUB_TOKEN });
   console.log(`Sem deploy conflitante em execucao; seguindo com escopo ${me.scope}.`);

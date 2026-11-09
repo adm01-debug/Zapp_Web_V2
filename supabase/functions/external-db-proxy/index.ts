@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1'
-import { getCorsHeaders, handleCors } from '../_shared/validation.ts'
+import { getCorsHeaders, handleCors, internalErrorResponse } from '../_shared/validation.ts'
 
 const READ_TABLES = new Set(['evolution_contacts', 'evolution_messages', 'media_quarantine'])
 const FILTER_OPERATORS = new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike', 'is', 'in'])
@@ -118,7 +118,8 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
       let q = ext.from(table).update(update)
       for (const [k, v] of Object.entries(matcher)) q = q.eq(k, v as string)
       const { data: result, error } = await q.select()
-      if (error) return json({ error: 'External update failed', code: error.code }, 502, corsHeaders)
+      // Z018: não expor código interno de erro PostgREST/Postgres ao cliente.
+      if (error) return json({ error: 'External update failed' }, 502, corsHeaders)
       return json({ data: result }, 200, corsHeaders)
     }
 
@@ -187,7 +188,8 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
       if (isInfraError(queryError)) {
         return json({ data: [], count: 0, notConfigured: true }, 200, corsHeaders)
       }
-      return json({ error: 'External query failed', code: queryError.code }, 502, corsHeaders)
+      // Z018: não expor código interno de erro PostgREST/Postgres ao cliente.
+      return json({ error: 'External query failed' }, 502, corsHeaders)
     }
 
     return json({
@@ -196,8 +198,9 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
     }, 200, corsHeaders)
 
   } catch (error) {
-    console.error('external-db-proxy failed', error instanceof Error ? error.message : String(error))
-    return json({ error: 'Internal proxy error' }, 500, corsHeaders)
+    // Z020: usar internalErrorResponse — isola logServerError da construção da
+    // Response (CodeQL js/stack-trace-exposure) e alinha ao padrão compartilhado.
+    return internalErrorResponse(error, req)
   }
 }
 

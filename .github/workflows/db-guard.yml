@@ -194,6 +194,14 @@ jobs:
       - name: Instalar dependencias do guard AST
         run: bun install --frozen-lockfile --ignore-scripts
 
+      - name: Executar suites Node antes mantidas na allowlist
+        run: |
+          node --test \
+            scripts/catalog/validate-plan.test.mjs \
+            scripts/ui-audit/view-container-padding.unit.mjs \
+            scripts/db-tests/run-all.unit.mjs \
+            scripts/talkx/gen-estados.unit.mjs
+
       # O teste de integracao da V02 fala com um PostgREST real e e escrito em
       # Deno, como os testes da edge. Mesma action e mesmo SHA pinado do ci.yml
       # (o guard nao instala Deno em nenhum outro passo).
@@ -1466,6 +1474,17 @@ jobs:
           N142_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
+
+      # SEC-RLS visibilidade: o teste prova que a escrita de reacoes para o agente de
+      # fila respeita a visibilidade de mensagens. Cria roles globais
+      # anon/authenticated/service_role, por isso SKIP_DOCKER_SHIM=1 (como o N-142).
+      - name: Provar escrita de reacoes para agente de fila (SEC-RLS visibilidade)
+        if: ${{ !cancelled() }}
+        env:
+          MR_VIS_FILA_MIGRATIONS_DIR: supabase/migrations
+          MR_VIS_FILA_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-reactions-visibilidade-fila.test.sh
 
       # R2-API-036: defaults internos de currency/occurred_at quando o endpoint manda NULL explicito.
       - name: Provar defaults de conversao Talk X com NULL explicito (R2-API-036)

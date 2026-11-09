@@ -66,7 +66,7 @@
  *    `false` (a troca explícita de fornecedor é do `ai-proxy`, IA-039).
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import {
   AiRoutingError,
   AI_PURPOSES,

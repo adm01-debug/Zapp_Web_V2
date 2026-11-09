@@ -86,8 +86,12 @@ const toPx = (v) => {
 function walk(dir, acc = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) walk(p, acc);
-    else if (/\.(tsx?|jsx?)$/.test(e.name)) acc.push(p);
+    if (e.isDirectory()) {
+      if (['__tests__', '__fixtures__', 'fixtures', 'test', 'tests'].includes(e.name)) continue;
+      walk(p, acc);
+    } else if (/\.(tsx?|jsx?)$/.test(e.name) && !/\.(?:test|spec|stories)\.[cm]?[jt]sx?$/.test(e.name)) {
+      acc.push(p);
+    }
   }
   return acc;
 }

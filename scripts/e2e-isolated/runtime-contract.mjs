@@ -18,8 +18,18 @@ export function assertOfficialHostIsLocal(hosts) {
 export const OWNER_LABEL = 'zapp.e2e.owner';
 export const PURPOSE_LABEL = 'zapp.e2e.purpose';
 export const PURPOSE = 'isolated-auth';
+const AUTHENTICATED_PROJECTS = Object.freeze(['setup', 'chromium-e2e-core', 'chromium-authenticated',
+  'firefox-talkx', 'webkit-talkx', 'firefox-conversation', 'webkit-conversation', 'firefox-catalog', 'webkit-catalog']);
+export const GROUP_SHARDS = Object.freeze({
+  'authenticated-1-of-3': '1/3',
+  'authenticated-2-of-3': '2/3',
+  'authenticated-3-of-3': '3/3',
+});
+export const isAuthenticatedGroup = group => typeof group === 'string' && Object.hasOwn(GROUP_SHARDS, group);
 export const GROUPS = Object.freeze({
-  authenticated: ['setup', 'chromium-e2e-core', 'chromium-authenticated', 'firefox-talkx', 'webkit-talkx', 'firefox-conversation', 'webkit-conversation', 'firefox-catalog', 'webkit-catalog'],
+  'authenticated-1-of-3': AUTHENTICATED_PROJECTS,
+  'authenticated-2-of-3': AUTHENTICATED_PROJECTS,
+  'authenticated-3-of-3': AUTHENTICATED_PROJECTS,
   'deslogado-principal': ['chromium-mapa', 'firefox-auth', 'webkit-auth'],
   'deslogado-secundario': ['chromium-telefonia', 'firefox-telefonia', 'webkit-telefonia'],
 });
@@ -126,6 +136,9 @@ export function syntheticCredentials(now = Date.now()) {
     evolutionKey: 'e2e-local-' + randomBytes(24).toString('hex'),
     instanceToken: 'e2e-instance-' + randomBytes(24).toString('hex'),
     catalogKey: 'e2e-catalog-' + randomBytes(24).toString('hex'),
+    qrEmail: 'qr.admin.e2e@example.invalid',
+    qrPassword: randomBytes(24).toString('base64url') + '!Aa1',
+    qrInstanceToken: 'e2e-instance-qr-' + randomBytes(24).toString('hex'),
   };
 }
 

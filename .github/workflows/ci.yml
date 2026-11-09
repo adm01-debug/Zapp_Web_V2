@@ -172,6 +172,9 @@ jobs:
       - name: 🧪 Test Vercel ignore-build guard
         run: node scripts/vercel/ignore-build.unit.mjs
 
+      - name: 📦 Validar manifesto de edge functions
+        run: node scripts/edge-deploy/generate-manifest.mjs --check
+
   edge-contracts:
     name: 🦕 Edge contracts
     runs-on: ubuntu-24.04

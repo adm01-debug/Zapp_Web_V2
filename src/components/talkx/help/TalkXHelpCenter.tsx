@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, ChevronRight, HelpCircle, Rocket, Search } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -104,7 +104,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
   // T16-ESC: a Ajuda agora é uma tela roteada, não um Dialog. Mesmo assim, Esc
   // mantém a mesma saída de teclado do modal antigo: fecha a Ajuda e deixa o pai
   // restaurar o foco no botão que abriu a tela.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();

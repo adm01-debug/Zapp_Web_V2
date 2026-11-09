@@ -24,6 +24,33 @@ export type Database = {
         }
         Relationships: []
       }
+      _rb_message_reactions_one_per_agent_20261107121000: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string | null
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id?: string | null
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       _zapp_fn_before: {
         Row: {
           h: string | null
@@ -2388,6 +2415,7 @@ export type Database = {
           nickname: string | null
           notes: string | null
           phone: string
+          phone_search_digits: string | null
           postal_code: string | null
           presence_status: string | null
           presence_updated_at: string | null
@@ -2436,6 +2464,7 @@ export type Database = {
           nickname?: string | null
           notes?: string | null
           phone: string
+          phone_search_digits?: string | null
           postal_code?: string | null
           presence_status?: string | null
           presence_updated_at?: string | null
@@ -2484,6 +2513,7 @@ export type Database = {
           nickname?: string | null
           notes?: string | null
           phone?: string
+          phone_search_digits?: string | null
           postal_code?: string | null
           presence_status?: string | null
           presence_updated_at?: string | null
@@ -13370,6 +13400,7 @@ export type Database = {
         Returns: boolean
       }
       get_ai_jobs_cron_secret: { Args: never; Returns: string }
+      get_ai_usage_outbox_drain_cron_secret: { Args: never; Returns: string }
       get_avatars_refresh_cron_secret: { Args: never; Returns: string }
       get_channel_credentials: {
         Args: { _connection_id: string }

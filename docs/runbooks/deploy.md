@@ -14,8 +14,12 @@
 O deploy é automático: todo merge na `main` dispara build e deploy de produção
 na Vercel (projeto `zapp_web_v2`, team `juca1`).
 
-- **Produção**: `https://zapp-web-v2.vercel.app`
-- **Domínio oficial**: `https://zappweb.app.br` (o `www` redireciona para ele; ver a lista de origens em `supabase/functions/_shared/validation.ts`)
+- **Produção V2**: `https://zapp-web-v2.vercel.app`
+- **Domínio principal**: `https://zappweb.app.br` serve a V3. Ele não comprova deploy deste
+  repositório; o `www` redireciona para o domínio principal. As duas origens continuam na lista de
+  CORS em `supabase/functions/_shared/validation.ts`.
+- **Monitor de releases**: `front-release-targets.yml` mantém checks separados: o alias V2 deve
+  publicar o SHA da `main` deste repositório; o domínio deve publicar uma identidade V3 coerente.
 - **Preview**: cada PR ganha URL própria (`zappwebv2-<hash>-juca1.vercel.app`; alias de
   branch `zappwebv2-git-<branch>-juca1.vercel.app`). O CORS das edges aceita esse padrão
   (`_shared/validation.ts`, `ORIGIN_PATTERNS`).

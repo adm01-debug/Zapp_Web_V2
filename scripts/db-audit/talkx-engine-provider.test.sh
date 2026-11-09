@@ -570,6 +570,13 @@ print((header + b'.' + payload + b'.' + signature).decode())
 PY
 )"
 
+pgrst_host="${pgrest_url#http://}"
+pgrst_host="${pgrst_host%%:*}"
+pgrst_no_proxy="${NO_PROXY:-${no_proxy:-}}"
+[[ -z "$pgrst_no_proxy" ]] || pgrst_no_proxy+=','
+pgrst_no_proxy+="$pgrst_host"
+
+NO_PROXY="$pgrst_no_proxy" no_proxy="$pgrst_no_proxy" \
 TALKX_ENGINE_POSTGREST_URL="$pgrest_url" \
 TALKX_ENGINE_JWT="$jwt" \
 TALKX_ENGINE_ANON_JWT="$anon_jwt" \

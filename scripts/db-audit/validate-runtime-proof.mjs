@@ -3,7 +3,19 @@
 //   - stderr: descrição humana do hash de confirmação
 //   - stdout: o hash (CONFIRMATION_HASH) para o bash comparar com CONFIRM_RUNTIME_SHA256
 // Exit != 0 se o proof for inválido.
-const proof = JSON.parse(process.env.RUNTIME_JSON);
+if (!process.env.RUNTIME_JSON || !process.env.TARGET_VERSION) {
+  process.stderr.write(
+    'Uso: RUNTIME_JSON=<json> TARGET_VERSION=<14 digitos> [NEEDS_APPLY=true] [GITHUB_SHA=<sha>] node validate-runtime-proof.mjs\n',
+  );
+  process.exit(2);
+}
+let proof;
+try {
+  proof = JSON.parse(process.env.RUNTIME_JSON);
+} catch {
+  process.stderr.write('FALHA: RUNTIME_JSON nao e um JSON valido\n');
+  process.exit(2);
+}
 const common = proof.server_major === 17
   && proof.database === 'postgres'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '');

@@ -23,28 +23,37 @@ import {
  * regex quebrado passaria a suíte inteira em silêncio.
  */
 
-const VOCAB_MODULE = '@/lib/ai-vocabulary';
-
 interface Consumer {
   path: string;
-  /** Símbolos que o arquivo precisa importar do vocabulário canônico. */
-  imports: readonly string[];
+  /** Símbolos e módulo canônico (direto ou adaptador de nível de UI). */
+  imports: readonly { module: string; symbols: readonly string[] }[];
 }
 
 const CONSUMERS: readonly Consumer[] = [
   {
     path: 'src/components/inbox/VirtualizedRealtimeList.tsx',
-    imports: ['normalizeSentiment', 'normalizeOperationalPriority'],
+    imports: [
+      { module: '@/lib/ai-vocabulary', symbols: ['normalizeOperationalPriority'] },
+      { module: '@/lib/sentiment-level', symbols: ['sentimentLevel'] },
+    ],
   },
   {
     path: 'src/components/inbox/contact-details/ContactHeaderSection.tsx',
-    imports: ['normalizeSentiment', 'normalizeOperationalPriority'],
+    imports: [{
+      module: '@/lib/ai-vocabulary',
+      symbols: ['normalizeSentiment', 'normalizeOperationalPriority'],
+    }],
   },
-  { path: 'src/components/ai/churnRisk.ts', imports: ['normalizeSentiment'] },
-  { path: 'src/components/ai/ChurnPredictionDashboard.tsx', imports: ['normalizeSentiment'] },
+  {
+    path: 'src/components/ai/churnRisk.ts',
+    imports: [{ module: '@/lib/ai-vocabulary', symbols: ['normalizeSentiment'] }],
+  },
   {
     path: 'src/hooks/integrations/useTalkXSegments.ts',
-    imports: ['SENTIMENT_VALUES', 'OPERATIONAL_PRIORITY_VALUES'],
+    imports: [{
+      module: '@/lib/ai-vocabulary',
+      symbols: ['SENTIMENT_VALUES', 'OPERATIONAL_PRIORITY_VALUES'],
+    }],
   },
 ];
 
@@ -59,8 +68,9 @@ const stripComments = (source: string) =>
 const SENTIMENT_LITERALS = ['positive', 'negative', 'neutral', 'critical'];
 
 /**
- * Usos crus do sentimento em inglês: o literal isolado (`'negative'`, chave de
- * mapa `negative:`) e a comparação (`ai_sentiment === 'critical'`).
+ * Usos crus do sentimento em inglês em comparações
+ * (`ai_sentiment === 'critical'`). Chaves de mapa como `negative:` são válidas
+ * quando indexadas pelo nível já normalizado de `sentiment-level`.
  *
  * `'critical'` só entra na forma COMPARADA: nos arquivos de churn ele também é
  * nível de risco (`riskLevel === 'critical'`), que não é sentimento.
@@ -72,14 +82,37 @@ function rawSentimentUses(source: string): string[] {
     if (!hits.includes(hit)) hits.push(hit);
   };
   for (const match of Array.from(
-    clean.matchAll(/['"](positive|negative|neutral)['"]|\b(positive|negative|neutral)\s*:/gi),
-  )) {
-    push(match[0]);
-  }
-  for (const match of Array.from(
     clean.matchAll(/\w*sentiment\w*\s*(?:===|!==|==|!=)\s*['"]([a-z_]+)['"]/gi),
   )) {
     if (SENTIMENT_LITERALS.includes(match[1].toLowerCase())) push(match[0]);
+  }
+
+  // Mapas de nível em inglês são seguros somente quando a chave vem do
+  // adaptador `sentimentLevel`. Indexar pelo campo cru ou pelo valor canônico
+  // pt-BR de `normalizeSentiment` nunca casa com `negative`/`positive`.
+  const normalizedLevelVariables = new Set(
+    Array.from(clean.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*sentimentLevel\s*\(/g), (match) => match[1]),
+  );
+  const safeLevelIndex = (expression: string) => {
+    const index = expression.trim();
+    return normalizedLevelVariables.has(index) || /^sentimentLevel\s*\(/.test(index);
+  };
+  const hasEnglishLevelKey = (body: string) =>
+    /\b(?:positive|negative|neutral|critical)\s*:/.test(body);
+
+  const englishLevelMaps = new Set<string>();
+  for (const declaration of clean.matchAll(
+    /\bconst\s+(\w+)[^=]*=\s*\{([\s\S]*?)\}\s*;/g,
+  )) {
+    if (hasEnglishLevelKey(declaration[2])) englishLevelMaps.add(declaration[1]);
+  }
+  for (const access of clean.matchAll(/\b(\w+)\s*\[([^\]]+)\]/g)) {
+    if (englishLevelMaps.has(access[1]) && !safeLevelIndex(access[2])) push(access[0]);
+  }
+  for (const inline of clean.matchAll(
+    /\{([^{}]*\b(?:positive|negative|neutral|critical)\s*:[^{}]*)\}\s*\[([^\]]+)\]/g,
+  )) {
+    if (!safeLevelIndex(inline[2])) push(inline[0]);
   }
   return hits;
 }
@@ -98,9 +131,9 @@ function rawPriorityUses(source: string): string[] {
 }
 
 /** Confirma que o símbolo é importado direto do vocabulário canônico. */
-function importsSymbol(source: string, symbol: string): boolean {
+function importsSymbol(source: string, module: string, symbol: string): boolean {
   const pattern = new RegExp(
-    `import\\s*\\{[^}]*\\b${symbol}\\b[^}]*\\}\\s*from\\s*'@/lib/ai-vocabulary'`,
+    `import\\s*\\{[^}]*\\b${symbol}\\b[^}]*\\}\\s*from\\s*'${module}'`,
   );
   return pattern.test(source);
 }
@@ -109,9 +142,14 @@ describe('consumidores de front do vocabulário canônico (IA-021/IA-022)', () =
   it.each(CONSUMERS)('$path lê o vocabulário canônico em vez de literal cru', ({ path, imports }) => {
     const source = read(path);
 
-    expect(source, `${path} não importa de ${VOCAB_MODULE}`).toContain(`'${VOCAB_MODULE}'`);
-    for (const symbol of imports) {
-      expect(importsSymbol(source, symbol), `${path} não importa ${symbol}`).toBe(true);
+    for (const requirement of imports) {
+      expect(source, `${path} não importa de ${requirement.module}`).toContain(`'${requirement.module}'`);
+      for (const symbol of requirement.symbols) {
+        expect(
+          importsSymbol(source, requirement.module, symbol),
+          `${path} não importa ${symbol} de ${requirement.module}`,
+        ).toBe(true);
+      }
     }
   });
 
@@ -133,6 +171,12 @@ describe('consumidores de front do vocabulário canônico (IA-021/IA-022)', () =
       /value: 'ai_priority'[^}]*options: \[\.\.\.OPERATIONAL_PRIORITY_VALUES\]/,
     );
   });
+
+  it('ChurnPredictionDashboard delega o cálculo ao consumidor canônico churnRisk', () => {
+    const source = read('src/components/ai/ChurnPredictionDashboard.tsx');
+    expect(source).toMatch(/import\s*\{\s*computeChurnRisk\s*\}\s*from\s*'\.\/churnRisk'/);
+    expect(source).toMatch(/\.map\(\(contact\)\s*=>\s*computeChurnRisk\(contact, now\)\)/);
+  });
 });
 
 describe('os detectores pegam a reintrodução da comparação crua', () => {
@@ -142,7 +186,9 @@ describe('os detectores pegam a reintrodução da comparação crua', () => {
     "if (sentiment === 'positive') s += 25;",
     "} else if (contact.ai_sentiment === 'neutral') {",
     "if (contact.ai_sentiment === 'critical') {",
-    "const SENTIMENT_LABEL = { positive: 'positivo', neutral: 'neutro' };",
+    "const SCORE = { negative: 30 }; SCORE[contact.ai_sentiment];",
+    "const value = normalizeSentiment(contact.ai_sentiment).value; const SCORE = { negative: 30 }; SCORE[value];",
+    "const score = { negative: 30 }[contact.ai_sentiment];",
     "const isHighPriority = conversation.contact.ai_priority === 'urgent';",
     "if (priority === 'high') {",
   ];
@@ -159,6 +205,8 @@ describe('os detectores pegam a reintrodução da comparação crua', () => {
       "const isHighPriority = priority.value === 'high';",
       "const level = score >= 80 ? 'critical' : 'low';",
       "if (risk.riskLevel === 'critical') total += 1;",
+      "const level = sentimentLevel(contact.ai_sentiment); const SCORE = { negative: 30 }; SCORE[level];",
+      "const score = { negative: 30 }[sentimentLevel(contact.ai_sentiment)];",
     ];
     for (const source of CLEAN) {
       expect(rawSentimentUses(source), source).toEqual([]);

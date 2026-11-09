@@ -15,6 +15,7 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const mediaUrl = ORIGIN + '/__e2e/catalog/product.png';
 const providerEnv = () => ({ ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha,
   EVOLUTION_API_KEY: 'e2e-local-admin-fixture', EVOLUTION_DEFAULT_INSTANCE_TOKEN: 'e2e-instance-fixture',
+  E2E_QR_INSTANCE_TOKEN: 'e2e-instance-qr-' + 'a'.repeat(48),
   PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: 'e2e-catalog-fixture', NODE_EXTRA_CA_CERTS: '/run/zapp-e2e-tls/ca.crt' });
 const interfaces = () => ({ lo: [{ address: '127.0.0.1', internal: true }] });
 const response = (value, status = 200, headers = {}) => new Response(JSON.stringify(value), { status, headers: { 'content-type': 'application/json', ...headers } });

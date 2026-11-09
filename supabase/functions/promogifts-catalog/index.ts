@@ -1,5 +1,5 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
+import { z } from "npm:zod@3.23.8";
 import { getCorsHeaders, handleCors, Logger, markDegraded, degradedCounters } from "../_shared/validation.ts";
 
 const jsonRes = (body: unknown, status = 200, req?: Request) => {

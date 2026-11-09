@@ -1,6 +1,6 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 
-import { bloquearRedeReal, json, mockAppShell, type Registro } from './fixtures/mapa-mocks';
+import { bloquearRedeReal, json, mockAppShell, querObjetoUnico, type Registro } from './fixtures/mapa-mocks';
 import { installFakeSession } from './fixtures/talkx-demo';
 
 /**
@@ -17,9 +17,9 @@ import { installFakeSession } from './fixtures/talkx-demo';
  *     `CommandPaletteHost` e `src/components/ui/command-palette.tsx`;
  *   - o diálogo "Paleta de comandos" mostra cinco acessos rápidos sem consulta,
  *     pesquisa os módulos permitidos, anda com as setas e navega no Enter;
- *   - a busca que consulta CONTATOS/mensagens (`src/components/inbox/GlobalSearch.tsx`,
- *     ligada a `Ctrl+K` por `useGlobalSearchShortcut`) NÃO abre por nenhum caminho —
- *     ver o primeiro `test.fixme` no fim do arquivo, com a causa raiz.
+ *   - a mesma paleta consulta contatos por `ContactService.searchContacts` e
+ *     abre o UUID escolhido pelo consumidor real da Inbox; a RPC e a sessão
+ *     continuam dubladas, sem alegação de RLS real.
  *
  * Locators por papel/rótulo; cada teste navega por conta própria (sem estado
  * compartilhado) e nenhum deles depende de dado semeado em banco: o backend é dublado.
@@ -71,6 +71,43 @@ async function abrirInbox(page: Page) {
   // A coluna de conversas é o marco de "app shell pronto" (a paleta depende do
   // provider global de teclado, montado acima do shell).
   await expect(page.getByPlaceholder('Buscar conversas…')).toBeVisible({ timeout: 60_000 });
+}
+
+const CONTATOS_PALETA = [
+  {
+    id: '11111111-1111-4111-8111-111111111111',
+    name: '[E2E] Contato de teste', phone: '5511999900011', company: 'Empresa A',
+    surname: null, nickname: null, email: null, avatar_url: null, tags: [],
+    created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-01T00:00:00.000Z',
+    assigned_to: null, queue_id: null, conversation_status: 'open', channel_type: 'whatsapp',
+  },
+  {
+    id: '22222222-2222-4222-8222-222222222222',
+    name: '[E2E] Contato de teste', phone: '5511999900022', company: 'Empresa B',
+    surname: null, nickname: null, email: null, avatar_url: null, tags: [],
+    created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-01T00:00:00.000Z',
+    assigned_to: null, queue_id: null, conversation_status: 'open', channel_type: 'whatsapp',
+  },
+];
+
+/** Só a fronteira HTTP é dublada; a paleta, o serviço e o consumidor da Inbox são reais. */
+async function mockarBuscaContatos(page: Page) {
+  await page.route(/\/rest\/v1\/rpc\/search_contacts(?:\?|$)/, (route) => {
+    expect(route.request().method()).toBe('POST');
+    const args = route.request().postDataJSON();
+    expect(args).toMatchObject({ page_size: 8, page_offset: 0, sort_field: 'name', sort_direction: 'asc' });
+    expect(args.include_legacy).toBeUndefined();
+    return json(route, args.search_term === '[E2E]' ? CONTATOS_PALETA : []);
+  });
+  await page.route(/\/rest\/v1\/contacts(?:\?|$)/, (route) => {
+    const request = route.request();
+    const id = new URL(request.url()).searchParams.get('id');
+    // A lista fica vazia: só a leitura por ID da seleção correta abre o chat.
+    if (request.method() === 'GET' && id === 'eq.' + CONTATOS_PALETA[1].id) {
+      return json(route, querObjetoUnico(route) ? CONTATOS_PALETA[1] : [CONTATOS_PALETA[1]]);
+    }
+    return json(route, []);
+  });
 }
 
 test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
@@ -231,31 +268,65 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
   });
 
   /**
-   * BUG (não corrigido neste cartão — só documentado): ⌘K/Ctrl+K abre apenas a busca
-   * de TELAS. A busca que devolve CONTATOS existe, se anuncia com "Pressione Ctrl+K
-   * para abrir a busca" (`src/components/inbox/GlobalSearch.tsx`, título acessível
-   * "Busca de mensagens", consulta `contacts`/`messages` em
-   * `src/components/inbox/useGlobalSearchData.ts`) e pede o atalho em
-   * `src/hooks/ui/useGlobalSearchShortcut.ts` — mas nunca abre:
-   *
-   *  1. `useGlobalKeyboardShortcuts` (captura em `window`) casa `Ctrl+K` com a ação
-   *     `global-search` e chama `event.stopPropagation()`; o listener de `document`
-   *     de `useGlobalSearchShortcut` nunca recebe o evento;
-   *  2. o botão "Buscar" do `MobileShell` despacha `open-global-search`, escutado só
-   *     pelo `CommandPalette` de telas;
-   *  3. `toggleSearch` de `useInboxUIState` (que abriria a busca de mensagens) não é
-   *     chamado por nenhuma tela.
-   *
-   * Quando a busca passar a devolver contatos, este teste vira `test(...)`.
+   * Contrato com sessão/API mockadas: a RPC termina, dois homônimos aparecem e
+   * o consumidor real da Inbox busca o UUID escolhido antes de montar o chat.
+   * Isto não constitui evidência de Auth/RLS real.
    */
-  test.fixme('a busca global também devolve contatos, não só telas', async ({ page }) => {
-    await abrirInbox(page);
-    const paleta = await porAtalho(page);
+  for (const origin of ['inbox', 'dashboard'] as const) {
+    test('a busca global abre o segundo contato homônimo a partir de ' + origin, async ({ page }) => {
+      await mockarBuscaContatos(page);
+      await abrirInbox(page);
+      await expect(page.getByTestId('chat-header-more-actions')).toHaveCount(0);
+      if (origin === 'dashboard') {
+        const navigation = await porAtalho(page);
+        await navigation.getByRole('combobox', { name: CAMPO_PALETA, exact: true }).fill('dashboard');
+        await navigation.getByRole('option', { name: /Dashboard/ }).click();
+        await expect(navigation).toHaveCount(0);
+        await expect.poll(() => new URL(page.url()).searchParams.get('view')).toBe('dashboard');
+      }
 
-    await paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true }).fill('[E2E]');
+      const paleta = await porAtalho(page);
+      const campo = paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true });
+      const searched = page.waitForResponse((response) =>
+        new URL(response.url()).pathname === '/rest/v1/rpc/search_contacts' &&
+        response.request().method() === 'POST' &&
+        response.request().postDataJSON()?.search_term === '[E2E]');
+      await campo.fill('[E2E]');
+      const searchResponse = await searched;
+      expect(searchResponse.status()).toBe(200);
+      expect(await searchResponse.finished()).toBeNull();
+      expect(await searchResponse.json()).toEqual(CONTATOS_PALETA);
 
-    await expect(paleta.getByRole('option', { name: /Contato de teste/ })).toBeVisible();
-  });
+      await expect(paleta.getByRole('option')).toHaveCount(2);
+      const first = paleta.locator('#cmd-opt-contact-' + CONTATOS_PALETA[0].id);
+      const second = paleta.locator('#cmd-opt-contact-' + CONTATOS_PALETA[1].id);
+      await expect(first).toContainText(CONTATOS_PALETA[0].name);
+      await expect(second).toContainText(CONTATOS_PALETA[1].name);
+      await expect(second).toContainText(CONTATOS_PALETA[1].phone);
+      const selectedContact = page.waitForResponse((response) =>
+        response.request().method() === 'GET' &&
+        new URL(response.url()).pathname === '/rest/v1/contacts' &&
+        new URL(response.url()).searchParams.get('id') === 'eq.' + CONTATOS_PALETA[1].id);
+      if (origin === 'dashboard') {
+        await expect(first).toHaveAttribute('aria-selected', 'true');
+        await campo.press('ArrowDown');
+        await expect(second).toHaveAttribute('aria-selected', 'true');
+        await campo.press('Enter');
+      } else {
+        await second.click();
+      }
+
+      const contactResponse = await selectedContact;
+      expect(contactResponse.status()).toBe(200);
+      expect(await contactResponse.finished()).toBeNull();
+      const contactBody = await contactResponse.json();
+      expect(Array.isArray(contactBody) ? contactBody : [contactBody]).toEqual([CONTATOS_PALETA[1]]);
+      await expect(paleta).toHaveCount(0);
+      await expect.poll(() => new URL(page.url()).searchParams.get('view')).toBe('inbox');
+      await expect(page.getByTestId('chat-header-more-actions')).toBeVisible();
+      await expect(page.getByRole('heading', { level: 2, name: CONTATOS_PALETA[1].name, exact: true })).toBeVisible();
+    });
+  }
 
   /**
    * Regressão do primeiro atalho: o provider eager mantém a intenção de abertura

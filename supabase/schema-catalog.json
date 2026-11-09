@@ -17,6 +17,7 @@
     "source": "postgres schema public",
     "tables": [
         "_rb_message_reactions_contato_20261007001008",
+        "_rb_message_reactions_one_per_agent_20261107121000",
         "_zapp_fn_before",
         "_zapp_mig133_log",
         "agent_achievements",
@@ -229,6 +230,12 @@
     "columns": [
         "_rb_message_reactions_contato_20261007001008.reaction_id:uuid:not-null",
         "_rb_message_reactions_contato_20261007001008.contact_id_original:uuid:not-null",
+        "_rb_message_reactions_one_per_agent_20261107121000.id:uuid:not-null",
+        "_rb_message_reactions_one_per_agent_20261107121000.message_id:uuid:not-null",
+        "_rb_message_reactions_one_per_agent_20261107121000.user_id:uuid:nullable",
+        "_rb_message_reactions_one_per_agent_20261107121000.contact_id:uuid:nullable",
+        "_rb_message_reactions_one_per_agent_20261107121000.emoji:text:not-null",
+        "_rb_message_reactions_one_per_agent_20261107121000.created_at:timestamp with time zone:not-null",
         "_zapp_fn_before.k:text:nullable",
         "_zapp_fn_before.h:text:nullable",
         "_zapp_mig133_log.version:text:not-null",
@@ -723,6 +730,7 @@
         "contacts.last_seen_at:timestamp with time zone:nullable",
         "contacts.blocked_at:timestamp with time zone:nullable",
         "contacts.blocked_by:uuid:nullable",
+        "contacts.phone_search_digits:text:nullable",
         "conversation_analyses.id:uuid:not-null",
         "conversation_analyses.contact_id:uuid:not-null",
         "conversation_analyses.analyzed_by:uuid:nullable",
@@ -2677,6 +2685,7 @@
         "fn_send_audio_meme",
         "fn_toggle_user_meme_favorite",
         "get_ai_jobs_cron_secret",
+        "get_ai_usage_outbox_drain_cron_secret",
         "get_avatars_refresh_cron_secret",
         "get_channel_credentials",
         "get_channel_credentials_safe",
@@ -2940,7 +2949,7 @@
         "warroom_agent_today",
         "warroom_queue_stats"
     ],
-    "generated_at": "2026-11-02",
+    "generated_at": "2026-11-07",
     "format_version": 2,
     "check_constraints": [
         "agent_mini_game_xp_daily.agent_mini_game_xp_daily_game_id_check:CHECK ((game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text])))",
@@ -3412,6 +3421,7 @@
         "fn_send_audio_meme(p_meme_id uuid)->audio_memes|kind=f",
         "fn_toggle_user_meme_favorite(p_meme_id uuid)->boolean|kind=f",
         "get_ai_jobs_cron_secret()->text|kind=f",
+        "get_ai_usage_outbox_drain_cron_secret()->text|kind=f",
         "get_avatars_refresh_cron_secret()->text|kind=f",
         "get_channel_credentials(_connection_id uuid)->jsonb|kind=f",
         "get_channel_credentials_safe(p_channel_id uuid)->jsonb|kind=f",

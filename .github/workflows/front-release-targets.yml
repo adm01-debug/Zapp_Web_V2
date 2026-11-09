@@ -1,0 +1,73 @@
+# docs:
+#   gatilho: push na main; schedule de hora em hora (minuto 17); dispatch
+#   prova: V2 no alias Vercel corresponde ao SHA da main e V3 no domínio publica uma release V3 íntegra
+#   falha: a trilha divergente fica vermelha e a automação de falhas abre uma issue
+#   avisa: equipe de operação, por meio do check separado e da issue de falha na main
+
+name: Front release targets (V2/V3)
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: front-release-targets
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+jobs:
+  v2-alias:
+    name: V2 · alias Vercel
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Confirmar release V2 no alias Vercel
+        run: >-
+          node scripts/vercel/verify-release-targets.mjs
+          --target=v2
+          --expected-sha="${GITHUB_SHA}"
+          --attempts=30
+          --interval-ms=10000
+
+  v3-domain:
+    name: V3 · domínio principal
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Confirmar release V3 no domínio principal
+        run: >-
+          node scripts/vercel/verify-release-targets.mjs
+          --target=v3
+          --attempts=3
+          --interval-ms=5000
