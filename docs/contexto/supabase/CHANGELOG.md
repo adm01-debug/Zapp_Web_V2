@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-09 13:48 UTC
+
+- **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
+
 ## 2026-11-09 10:54 UTC
 
 - **migrations** alterado (3): `20261026160000_restore_rls_security_alerts_talkx_blacklist`, `20261026200000_contact_notes_pinned`, `20261026210000_dashboard_kpi_periodo_aditivo`
