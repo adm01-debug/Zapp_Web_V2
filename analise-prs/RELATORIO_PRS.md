@@ -3,6 +3,59 @@
 **Data:** 2026-11-08/09
 **Total analisadas:** 73
 **Mergeadas nesta sessão:** 0 (CI congestionado — ver seção Bloqueios)
+**Main SHA:** `9183f0f6fa4296cd07c585602bc5ea88ada5d98d`
+
+---
+
+## RISCOS E DECISÕES CRÍTICAS
+
+### RISCO 1 — CI Gate quebrado (bloqueante para todas as PRs)
+
+**Causa:** PR #2550 (`claude/fix-talkx-unit-tests-...`) sobrescreveu `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` deixando apenas blocos `vi.mock()` sem `describe`/`it`. Vitest falha com `Error: No test suite found in file` derrubando o shard `🧪 Unit Tests (2/3)`.
+
+**Evidência:** run `42521096687`; arquivo na main tem 61 linhas (só imports + mocks, nenhum describe/it confirmado por `git show origin/main:src/.../TalkXCampaignReport.test.tsx`).
+
+**Decisão:** Mergear #2851 (SHA `74b2bb0b`) OU #2864 (SHA `784bb18a`) imediatamente quando CI verde — isso desbloqueia as 39 demais PRs AGUARDANDO_CI. Ambas restauram os 3 testes de aceite reais (grade 7×24, agrupamento dia/hora, tela 3 gráficos sem "Conversões").
+
+**Risco residual:** Se ambas as PRs de fix chegarem a ter CI verde ao mesmo tempo, apenas a primeira mergeada conta. A outra ficará com conflito em `TalkXCampaignReport.test.tsx` (ambas editam o mesmo arquivo), mas como os conteúdos são equivalentes, pode ser fechada após merge da primeira.
+
+---
+
+### RISCO 2 — Fila de GitHub Actions congestionada
+
+**Estado:** Desde ~23:23 UTC 2026-11-08, todos os checks de todas as PRs estão em `queued`. Nenhuma ação possível no nosso lado — é infraestrutura do GitHub.
+
+**Decisão:** Aguardar runners liberarem. Check-in automático agendado para verificar CI do #2851 a cada 20 min.
+
+---
+
+### RISCO 3 — PR #2555 tem falha real no CI (não só fila)
+
+**Evidência:** Check `Contrato DB offline` = `conclusion: failure` (check run `128887076736`). Não é congestionamento de fila — é uma falha real.
+
+**Decisão:** PR #2555 não pode ser mergeada mesmo após fila liberar. Veredicto deve ser BLOQUEADO_CI, não AGUARDANDO_CI.
+
+**NÃO VERIFICADO:** Causa raiz da falha no `Contrato DB offline` — seria necessário ler os logs do job para diagnóstico completo. A PR modifica `useTalkXLifecycle` que pode depender de coluna/função de banco não existente na main.
+
+---
+
+### RISCO 4 — 7 PRs REGRA8_MIGRATION aguardam Joaquim
+
+PRs com migrations SQL em `supabase/migrations/`: #2533, #2812, #2823, #2827, #2828, #2831, #2874. Nenhuma deve ser mergeada sem aprovação explícita de Joaquim — incluem DDL que pode impactar produção.
+
+---
+
+### RISCO 5 — 6 PRs REGRA8_WORKFLOW aguardam Joaquim
+
+PRs que tocam `.github/workflows/`: #2508, #2835, #2838, #2850, #2855, #2858. Nunca mergear sem aprovação de Joaquim.
+
+---
+
+### NÃO VERIFICADO
+
+- Causa raiz da falha de `Contrato DB offline` no PR #2555 (logs não lidos)
+- Status CI individual das 41 PRs AGUARDANDO_CI após fila liberar (apenas verificados os checks do PR #2851 e #2864 durante esta sessão)
+- Conteúdo completo dos diffs de todas as 73 PRs não foi lido 100% por limitação de tempo — análise baseada em títulos, arquivos tocados e checks CI disponíveis
 
 ---
 
