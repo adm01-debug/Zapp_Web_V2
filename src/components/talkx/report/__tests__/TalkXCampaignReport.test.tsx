@@ -59,3 +59,5 @@ vi.mock('@/lib/supabaseHelpers', () => {
     invokeEdge: vi.fn().mockResolvedValue({ data: null, error: null }),
   };
 });
+
+it.todo('X164 / TL-080 — implementar testes de talkxReportData e TalkXCampaignReport');
