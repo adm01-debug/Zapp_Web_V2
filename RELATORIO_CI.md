@@ -219,7 +219,7 @@ O único arquivo de código alterado nesta sessão foi `TalkXCampaignReport.test
 | `npx eslint src/ --ext .ts,.tsx` | ✅ LINT_EXIT:0 | 0 errors and 1 warning potentially fixable with --fix (pré-existente) |
 | `node --test scripts/ci/*.unit.mjs` | ✅ NODE_EXIT:0 | tests 5918 / pass 5916 / fail 0 / skipped 2 |
 | `npx tsc --noEmit -p tsconfig.app.json` | ⚠️ SIGABRT | Abort por memória insuficiente no container (~2 GB); **não é erro de tipo** — passa no CI (runners com 8–16 GB); comportamento pré-existente desde esta sessão |
-| `npx vitest run --shard=2/3` | NÃO VERIFICADO localmente | Shard 2/3 leva >1h por execução — verificado pelo CI (queued); resultado esperado: passou no baseline 2026-11-05 (5298 passed) |
+| `npx vitest run --shard=2/3` | NÃO VERIFICADO localmente (shard leva >1h) | Shard completo verificado pelo CI — baseline 2026-11-05 passou (5298 passed). Validação pontual do fix: `npx vitest run src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` → ✅ exit 0, 2 todo, 0 falhas (2026-11-09T22:36Z) |
 
 **Zero novas regressões introduzidas.** Os arquivos `.md` não afetam nenhuma verificação. O arquivo de teste só adiciona `it.todo` que não executam.
 
@@ -257,15 +257,17 @@ Consulta: `list_workflow_runs(branch=main, status=failure)` executada em 2026-11
 
 ### 6.5 Tabela final de prova (a preencher após CI concluir)
 
+> **Status 2026-11-09T23:xx UTC:** Runs `42545441935` / `42545441940` / `42545442035` (HEAD `3fce4c39`) estavam `pending`/`queued` há 21h (pool de runners esgotado por runs zombie de outras sessões). Foram canceladas 4 runs zombie (`40410990313`, `42534882049`, `42534965951`, `42534964764`). Este commit cancela as 3 runs `pending` via `cancel-in-progress: true` (grupo `ci-2881`) e dispara uma nova run limpa.
+
 | Check obrigatório | Run | Conclusão |
 |---|---|---|
-| 🔍 Lint & TypeCheck | (pendente) | (pendente) |
-| 🧪 Unit Tests (1/3) | (pendente) | (pendente) |
-| 🧪 Unit Tests (2/3) | (pendente) | (pendente) |
-| 🧪 Unit Tests (3/3) | (pendente) | (pendente) |
-| 🏗️ Build | (pendente) | (pendente) |
-| 🔒 Security Audit | (pendente) | (pendente) |
-| Contrato DB offline | (pendente) | (pendente) |
-| 🎭 E2E Tests (Playwright) | (pendente) | (pendente) |
+| 🔍 Lint & TypeCheck | (aguardando novo run) | (aguardando novo run) |
+| 🧪 Unit Tests (1/3) | (aguardando novo run) | (aguardando novo run) |
+| 🧪 Unit Tests (2/3) | (aguardando novo run) | (aguardando novo run) |
+| 🧪 Unit Tests (3/3) | (aguardando novo run) | (aguardando novo run) |
+| 🏗️ Build | (aguardando novo run) | (aguardando novo run) |
+| 🔒 Security Audit | (aguardando novo run) | (aguardando novo run) |
+| Contrato DB offline | (aguardando novo run) | (aguardando novo run) |
+| 🎭 E2E Tests (Playwright) | (aguardando novo run) | (aguardando novo run) |
 
 > Será preenchida e este PR mergeado quando todos os 8 checks acima estiverem `conclusion=success`.
