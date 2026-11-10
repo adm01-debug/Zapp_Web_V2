@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `be8aa06a1d` · branch `main` · 2026-11-10 00:16 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e2c31f4afc` · branch `main` · 2026-11-10 01:37 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -725,7 +725,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `gmail_accounts` | `sync_status` | obrigatório |
 | `gmail_accounts` | `updated_at` | obrigatório |
 | `saved_filters` | `id` | PK; default gen_random_uuid() |
-| … +1354 linhas — lista completa em `context.json` | | |
+| … +1355 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -1266,6 +1266,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `qr_attempts` | `status` | `connected`, `error`, `expired`, `pending` |  |
 | `copilot_sessions` | `sale_stage` | `apresentando`, `fechando`, `negociando`, `novo_contato`, `perdido`, `pos_venda`, `qualificando` | `novo_contato` |
 | `copilot_sessions` | `state_version` | **livre (sem enum/CHECK)** | `1` |
+| `copilot_sessions` | `brinde_state` | **livre (sem enum/CHECK)** |  |
 | `copilot_insights` | `state_version` | **livre (sem enum/CHECK)** | `1` |
 | `copilot_objection_catalog` | `status` | **livre (sem enum/CHECK)** | `pending_review` |
 | `_zapp_mig133_log` | `status` | **livre (sem enum/CHECK)** |  |

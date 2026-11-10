@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `be8aa06a1d` · branch `main` · 2026-11-10 00:16 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e2c31f4afc` · branch `main` · 2026-11-10 01:37 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -73,7 +73,7 @@
 | `copilot_objection_catalog` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `copilot_outcomes` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `copilot_seller_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 3 colunas | migration |
-| `copilot_sessions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 24 colunas | migration |
+| `copilot_sessions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 25 colunas | migration |
 | `copilot_usage` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `crisis_room_alerts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
 | `crm_contact_links` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
@@ -578,6 +578,7 @@
 - `talkx_ddd_regions.state` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `message_attempts.provider_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_sessions.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
+- `copilot_sessions.brinde_state` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.

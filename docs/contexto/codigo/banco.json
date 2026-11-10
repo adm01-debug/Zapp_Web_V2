@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1096,
+ "migrations": 1097,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -10324,6 +10324,13 @@
      "default": null,
      "ref": null
     },
+    "brinde_state": {
+     "tipo": "jsonb",
+     "nn": true,
+     "pk": false,
+     "default": "'{}'::jsonb",
+     "ref": null
+    },
     "closed_at": {
      "tipo": "timestamptz",
      "nn": false,
@@ -10495,7 +10502,9 @@
     "updated_at": "string"
    },
    "drift": {
-    "so_na_migration": [],
+    "so_na_migration": [
+     "brinde_state"
+    ],
     "so_no_types": []
    },
    "usada_no_front": 0,

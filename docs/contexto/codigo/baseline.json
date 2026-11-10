@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "be8aa06a1df18d9b39945742fd2f07fb1b8790b9",
+  "commit": "e2c31f4afcf721b044bd18f7a76494e92d9620d9",
   "branch": "main",
-  "data_commit": "2026-11-09T23:56:43Z",
+  "data_commit": "2026-11-10T00:55:44Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e2c31f4",
+    "data": "2026-11-10",
+    "assunto": "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)"
+   },
    {
     "sha": "be8aa06",
     "data": "2026-11-09",
@@ -126,14 +131,9 @@
     "sha": "b430f82",
     "data": "2026-11-09",
     "assunto": "fix(ci): adicionar --fail nos curl do workflow-lint (#2887)"
-   },
-   {
-    "sha": "1fb99f8",
-    "data": "2026-11-09",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2857)"
    }
   ],
-  "arquivos_mudados_7d": 648,
+  "arquivos_mudados_7d": 649,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 122
+    "mudancas": 120
    },
    {
     "pasta": "src/lib/__tests__",
@@ -262,10 +262,6 @@
     "mudancas": 9
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 8
-   },
-   {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 8
    },
@@ -279,6 +275,10 @@
    },
    {
     "arquivo": "AGENTS.md",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "ESTADO.md",
     "mudancas": 7
    },
    {
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8327,
+  "arquivos_total": 8328,
   "arquivos_codigo": 4754,
   "linhas_codigo": 878389,
   "rotas": 18,
@@ -326,7 +326,7 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1096,
+  "migrations": 1097,
   "cron_jobs": 26,
   "testes": 2596,
   "workflows": 21,
@@ -1255,6 +1255,7 @@
   ],
   "tabelas_com_drift_migration_vs_types": [
    "app_settings",
+   "copilot_sessions",
    "edge_rate_limits",
    "feature_flags",
    "global_settings",

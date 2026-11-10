@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "be8aa06a1df18d9b39945742fd2f07fb1b8790b9",
+  "sha": "e2c31f4afcf721b044bd18f7a76494e92d9620d9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 00:16 UTC",
-  "files_total": 8168,
-  "code_files": 6022,
-  "code_lines": 1044982
+  "generated_at": "2026-11-10 01:37 UTC",
+  "files_total": 8169,
+  "code_files": 6023,
+  "code_lines": 1044994
  },
  "version": "1.3.2",
- "facts_hash": "7ce73b4a6d7f5954",
+ "facts_hash": "935ac94c2736f418",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -315,7 +315,7 @@
   "languages": {
    ".tsx": 2320,
    ".ts": 1871,
-   ".sql": 1296,
+   ".sql": 1297,
    ".mjs": 416,
    ".py": 119,
    ".cjs": 19,
@@ -17217,6 +17217,13 @@
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20261031120000_copilot_phase4_brinde_intelligence.sql"
+     },
+     {
+      "name": "brinde_state",
+      "type": "jsonb NOT NULL DEFAULT '{}'::jsonb",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql"
      }
     ],
     "constraints": [
@@ -42946,6 +42953,7 @@
    "supabase/migrations/20261031110000_copilot_live_helpers.sql",
    "supabase/migrations/20261031120000_copilot_phase4_brinde_intelligence.sql",
    "supabase/migrations/20261031130000_search_event_rpc.sql",
+   "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql",
    "supabase/migrations/20261031170000_high3-fk-indexes.sql",
    "supabase/migrations/20261101213000_rls_update_with_check_explicit.sql",
    "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql",
@@ -61311,7 +61319,8 @@
    "column:copilot_sessions.comm_style": "CV-037 — etiquetas de estilo de comunicação do cliente.",
    "column:copilot_sessions.decision_role": "CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…).",
    "column:copilot_sessions.occasion": "CV-035/036 — ocasião comercial detectada (natal, sipat, outubro_rosa, …).",
-   "column:copilot_sessions.stakeholders": "CV-039 — pessoas citadas na conversa que participam da decisão."
+   "column:copilot_sessions.stakeholders": "CV-039 — pessoas citadas na conversa que participam da decisão.",
+   "column:copilot_sessions.brinde_state": "CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state()."
   },
   "types_file": "src/integrations/supabase/types.ts"
  },
@@ -69200,8 +69209,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1096,
-   "lines": 105212,
+   "files": 1097,
+   "lines": 105224,
    "tables": [
     "audit_logs",
     "departments",
@@ -102739,6 +102748,11 @@
     "table": "copilot_sessions",
     "column": "stakeholders",
     "rule": "default '[]'"
+   },
+   {
+    "table": "copilot_sessions",
+    "column": "brinde_state",
+    "rule": "default '{}'::jsonb"
    },
    {
     "table": "copilot_sessions",
@@ -233695,6 +233709,14 @@
      "type": "integer NOT NULL DEFAULT 1"
     },
     {
+     "table": "copilot_sessions",
+     "column": "brinde_state",
+     "enum": "",
+     "allowed": [],
+     "default": "",
+     "type": "jsonb NOT NULL DEFAULT '{}'::jsonb"
+    },
+    {
      "table": "copilot_insights",
      "column": "state_version",
      "enum": "",
@@ -256411,6 +256433,7 @@
    "`talkx_ddd_regions.state` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`message_attempts.provider_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_sessions.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
+   "`copilot_sessions.brinde_state` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
@@ -379093,6 +379116,10 @@
    "path": "supabase/migrations/20261031130000_search_event_rpc.sql",
    "lines": 115
   },
+  "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql": {
+   "path": "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql",
+   "lines": 12
+  },
   "supabase/migrations/20261031170000_high3-fk-indexes.sql": {
    "path": "supabase/migrations/20261031170000_high3-fk-indexes.sql",
    "lines": 49
@@ -383067,10 +383094,19 @@
   }
  },
  "git": {
-  "sha": "be8aa06a1df18d9b39945742fd2f07fb1b8790b9",
+  "sha": "e2c31f4afcf721b044bd18f7a76494e92d9620d9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e2c31f4",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)",
+    "files": [
+     "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql"
+    ]
+   },
    {
     "sha": "be8aa06",
     "date": "2026-11-09",
@@ -383378,23 +383414,6 @@
      "scripts/ci/inventario-repo.unit.mjs",
      "scripts/inventario/gerar-repo.mjs"
     ]
-   },
-   {
-    "sha": "c806b53",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(hooks): expõe isError em 9 hooks sem estado de erro (#2873)",
-    "files": [
-     "src/hooks/chat/useConversationTabCounts.ts",
-     "src/hooks/chat/useMessageReactions.ts",
-     "src/hooks/chat/useSavedFilters.ts",
-     "src/hooks/crm/useContactSummaryNote.ts",
-     "src/hooks/inbox/useInboxFilterPresets.ts",
-     "src/hooks/integrations/useCatalogRecentSends.ts",
-     "src/hooks/integrations/useKnowledgeBaseSearch.ts",
-     "src/hooks/sla/useSLARules.ts",
-     "src/hooks/team-chat/useTeamReadState.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -383451,8 +383470,8 @@
     2
    ],
    [
-    "src/hooks/inbox/useInboxFilterPresets.ts",
-    2
+    "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql",
+    1
    ],
    [
     "src/components/inbox/chat/ChatInputArea.tsx",

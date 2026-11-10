@@ -2,6 +2,12 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-10 01:34 UTC
+
+- **functions** alterado (1): `public.merge_brinde_state(p_session_id uuid, p_delta jsonb, p_version integer)`
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_13`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_06`
+
 ## 2026-11-09 20:30 UTC
 
 - **migrations** adicionado (4): `20261108201000_talkx_x074_analytics_rpcs`, `20261108202000_talkx_x086_template_metrics_rpcs`, `20261108203000_talkx_x058_campaign_queue_segment`, `20261108211000_talkx_campaign_resume_precheck`
