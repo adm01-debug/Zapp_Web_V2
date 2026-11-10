@@ -43,7 +43,7 @@ partir do código e falha quando:
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
-| `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:68` · `supabase/config.toml:96` |
+| `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:96` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
 | `auth-login` | A | `src/lib/serverLogin.ts:129` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
@@ -88,7 +88,7 @@ partir do código e falha quando:
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
 | `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:476` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
-| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:164` |
+| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:97` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
