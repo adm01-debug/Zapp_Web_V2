@@ -131,7 +131,8 @@ function isoTimestamp(value, label) {
 }
 
 function parseCount(value, label) {
-  if (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value)) {
+  if ((typeof value !== 'number' && typeof value !== 'string') ||
+      (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value))) {
     throw new Error(`Resposta de logs contém ${label} inválido`);
   }
   const parsed = typeof value === 'number' ? value : Number(value);
