@@ -86,3 +86,56 @@ test("aplica as regras na raiz do alvo reexportado", () => {
   assert.equal(result.status, 1, result.output);
   assert.match(result.output, /VIOLATION \[h-full without w-full\/flex-1\]/);
 });
+
+for (const quote of ["'", '"']) {
+  test(`rejeita view ausente junto de view valida (aspas ${quote})`, () => {
+    const result = runGuard({
+      "src/pages/lazyViews.ts":
+        lazyImport("SafeView") +
+        `export const Missing = lazy(() => import(${quote}@/components/MissingView${quote}));\n`,
+      "src/components/SafeView.tsx":
+        'export function SafeView() {\n  return <main className="w-full">ok</main>;\n}\n',
+    });
+
+    assert.equal(result.status, 1, result.output);
+    assert.match(result.output, /view roteada nao resolvida: @\/components\/MissingView/);
+    assert.doesNotMatch(result.output, /0 violations/);
+  });
+}
+
+test("rejeita diretorio que parece arquivo de view", () => {
+  const result = runGuard({
+    "src/pages/lazyViews.ts": lazyImport("SafeView") + lazyImport("DirectoryView"),
+    "src/components/SafeView.tsx":
+      'export function SafeView() {\n  return <main className="w-full">ok</main>;\n}\n',
+    "src/components/DirectoryView.tsx/irrelevante.txt": "nao e uma view",
+  });
+
+  assert.equal(result.status, 1, result.output);
+  assert.match(result.output, /view roteada nao resolvida: @\/components\/DirectoryView/);
+});
+
+for (const entry of ["index.tsx", "index.ts"]) {
+  test(`audita view resolvida pelo ${entry} do diretorio`, () => {
+    const result = runGuard({
+      "src/pages/lazyViews.ts": lazyImport("DirectoryView"),
+      [`src/components/DirectoryView/${entry}`]:
+        'export function DirectoryView() {\n  return <main className="h-full">erro</main>;\n}\n',
+    });
+
+    assert.equal(result.status, 1, result.output);
+    assert.match(result.output, /VIOLATION \[h-full without w-full\/flex-1\]/);
+    assert.match(result.output, /1 view files/);
+  });
+}
+
+test("audita view com extensao explicita no import", () => {
+  const result = runGuard({
+    "src/pages/lazyViews.ts": lazyImport("ExplicitView.tsx"),
+    "src/components/ExplicitView.tsx":
+      'export function ExplicitView() {\n  return <main className="h-full">erro</main>;\n}\n',
+  });
+
+  assert.equal(result.status, 1, result.output);
+  assert.match(result.output, /VIOLATION \[h-full without w-full\/flex-1\]/);
+});

@@ -99,10 +99,21 @@ function pathnamePredicate(slug) {
     `startsWith(log_attributes['request.pathname'], '${pathname}/'))` ;
 }
 
-export function buildLogsSql(slugs) {
+export function buildLogsSql(slugs, matchAll = false) {
+  if (matchAll) {
+    return (
+      `SELECT ` +
+      `count() AS total, ` +
+      `countIf(toInt32OrZero(log_attributes['response.status_code']) BETWEEN 500 AND 599) AS errors ` +
+      `FROM logs ` +
+      `WHERE source = 'function_edge_logs'`
+    );
+  }
   if (!Array.isArray(slugs) || slugs.length === 0) throw new Error('Escopo de logs vazio');
   const unique = [...new Set(slugs.map(validateSlug))];
-  const scopeFilter = unique.map(pathnamePredicate).join(' OR ');
+  const scopeFilter = unique.length > 20
+    ? `startsWith(log_attributes['request.pathname'], '/functions/v1/')`
+    : unique.map(pathnamePredicate).join(' OR ');
   return (
     `SELECT ` +
     `count() AS total, ` +
@@ -120,7 +131,8 @@ function isoTimestamp(value, label) {
 }
 
 function parseCount(value, label) {
-  if (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value)) {
+  if ((typeof value !== 'number' && typeof value !== 'string') ||
+      (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value))) {
     throw new Error(`Resposta de logs contém ${label} inválido`);
   }
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -224,10 +236,11 @@ export async function runHealthCheck(args, {
   const start = new Date(end.getTime() - WINDOW_MS);
   let row;
   try {
+    const matchAll = !args.scope || args.scope === 'all';
     row = await queryAnalytics({
       projectRef: args.projectRef,
       token,
-      sql: buildLogsSql(slugs),
+      sql: buildLogsSql(slugs, matchAll),
       start,
       end,
       fetchImpl,
