@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox (#2832)",
    "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)",
    "feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)",
    "fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)",
-   "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)",
-   "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)"
+   "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

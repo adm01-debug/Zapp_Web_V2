@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "cf79d70dd03640ee96202be0e057b7d7cc0947c9",
+  "sha": "71dd7238dcd6fdd74ba24db6a2b0dd70add6a35c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 04:00 UTC",
+  "generated_at": "2026-11-10 04:12 UTC",
   "files_total": 8197,
   "code_files": 6051,
   "code_lines": 1048763
@@ -384851,10 +384851,19 @@
   }
  },
  "git": {
-  "sha": "cf79d70dd03640ee96202be0e057b7d7cc0947c9",
+  "sha": "71dd7238dcd6fdd74ba24db6a2b0dd70add6a35c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "71dd723",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox (#2832)",
+    "files": [
+     "src/components/email/EmailChatInbox.tsx"
+    ]
+   },
    {
     "sha": "cf79d70",
     "date": "2026-11-10",
@@ -385168,27 +385177,9 @@
      "scripts/ci/vercel-env-cleanup.mjs",
      "scripts/ci/vercel-env-cleanup.unit.mjs"
     ]
-   },
-   {
-    "sha": "a15fdfb",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco",
-    "files": [
-     "ESTADO.md",
-     "scripts/db-audit/replay-known-failures.json",
-     "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-     "supabase/migrations/20261107121000_message_reactions_one_per_agent_constraint.sql",
-     "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
-     "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "ESTADO.md",
-    2
-   ],
    [
     "scripts/db-audit/migration-evidence.json",
     2
@@ -385206,14 +385197,6 @@
     2
    ],
    [
-    "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-    2
-   ],
-   [
-    "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
-    2
-   ],
-   [
     "scripts/db-audit/grants-baseline.json",
     2
    ],
@@ -385224,6 +385207,14 @@
    [
     "supabase/schema-manifest.json",
     2
+   ],
+   [
+    "src/components/email/EmailChatInbox.tsx",
+    1
+   ],
+   [
+    "ESTADO.md",
+    1
    ],
    [
     "FEATURE_REGISTRY.md",
@@ -385263,6 +385254,10 @@
    ],
    [
     "src/components/inbox/copilot/BrindeMeter.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/DecisionMakerBadge.tsx",
     1
    ]
   ]

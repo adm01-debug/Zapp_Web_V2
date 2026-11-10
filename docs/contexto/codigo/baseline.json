@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "cf79d70dd03640ee96202be0e057b7d7cc0947c9",
+  "commit": "71dd7238dcd6fdd74ba24db6a2b0dd70add6a35c",
   "branch": "main",
-  "data_commit": "2026-11-10T03:58:32Z",
+  "data_commit": "2026-11-10T04:10:26Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "71dd723",
+    "data": "2026-11-10",
+    "assunto": "fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox (#2832)"
+   },
    {
     "sha": "cf79d70",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "d0e624b",
     "data": "2026-11-09",
     "assunto": "fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)"
-   },
-   {
-    "sha": "b2fed61",
-    "data": "2026-11-09",
-    "assunto": "ci: pull_request do ci.yml também dispara em ready_for_review (#2858)"
    }
   ],
-  "arquivos_mudados_7d": 685,
+  "arquivos_mudados_7d": 686,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 265
+    "mudancas": 264
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
