@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)",
    "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)",
    "feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)",
    "fix: corrige bug crítico de notificação em connection-health-check (#2910)",
-   "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes",
-   "fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414"
+   "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

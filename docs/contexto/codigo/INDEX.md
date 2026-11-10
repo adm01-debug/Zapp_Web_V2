@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e2c31f4afcf721b044bd18f7a76494e92d9620d9` (2026-11-10T00:55:44Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f3792ec00cd467ec472c4a755ae18e303594f726` (2026-11-10T02:06:51Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8328 |
 | arquivos_codigo | 4754 |
-| linhas_codigo | 878389 |
+| linhas_codigo | 878360 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56218 nós · 115899 arestas · 4185 comunidades · grafo do commit `e2c31f4a`
-- comunidades maiores: utils.ts (864), lucide-react (848), react (806), cn (512), validation.ts (483), ref_https (445), DashboardView.tsx (424), ref_node_fs (301), lazyViews.ts (300), multiplix-send/index.ts (295), ref_node_url (278), ref_node_assert (278)
+- 56217 nós · 115898 arestas · 4200 comunidades · grafo do commit `f3792ec0`
+- comunidades maiores: react (785), button.tsx (736), cn (592), ref_node_fs (525), useExternalCatalog.ts (514), utils.ts (510), lucide-react (470), validation.ts (468), ref_https (426), useTalkXSegments.ts (415), MessageBubble.tsx (375), catalogShared.tsx (340)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `f3792ec` fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)
 - 2026-11-10 `e2c31f4` feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)
 - 2026-11-09 `be8aa06` feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)
 - 2026-11-09 `7c27c1a` fix: corrige bug crítico de notificação em connection-health-check (#2910)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `0142702` chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck
 - 2026-11-09 `d0e624b` fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)
 - 2026-11-09 `b2fed61` ci: pull_request do ci.yml também dispara em ready_for_review (#2858)
-- 2026-11-09 `49af49e` ⬆️ ci: Bump the actions-misc group across 1 directory with 3 updates (#2893)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

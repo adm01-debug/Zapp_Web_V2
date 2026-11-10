@@ -6965,7 +6965,7 @@
    "hooks_exportados": [
     "useAgentCelebrations"
    ],
-   "linhas": 295,
+   "linhas": 297,
    "dominio": "hooks/gamification",
    "tabelas": [
     "agent_achievements",
@@ -7376,13 +7376,14 @@
    "hooks_exportados": [
     "useInboxFilters"
    ],
-   "linhas": 300,
+   "linhas": 269,
    "dominio": "hooks/inbox",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
     "useCallback",
+    "useEffect",
     "useMemo",
     "useSearchParams",
     "useState",

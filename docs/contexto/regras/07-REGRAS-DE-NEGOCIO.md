@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e2c31f4afc` · branch `main` · 2026-11-10 01:37 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f3792ec00c` · branch `main` · 2026-11-10 02:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1570,7 +1570,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `website` | escreve | `src/components/inbox/LinkPreview.tsx` |
 | `type` | `whatsapp` | escreve | `src/components/inbox/contact-details/ContactActionButtons.tsx` |
 | `consent_status` | `opt_in` | escreve | `src/adapters/evolutionAdapter.ts` |
-| `conversation_status` | `archived` | compara, escreve | `src/components/inbox/ContactDetails.tsx`<br>`src/components/inbox/VirtualizedRealtimeList.tsx`<br>`src/components/inbox/conversation-list/StatusChips.tsx`<br>`src/hooks/inbox/chipCounts.ts`<br>`src/hooks/inbox/conversationArchive.ts`<br>… +2 |
+| `conversation_status` | `archived` | compara, escreve | `src/components/inbox/ContactDetails.tsx`<br>`src/components/inbox/VirtualizedRealtimeList.tsx`<br>`src/components/inbox/conversation-list/StatusChips.tsx`<br>`src/hooks/inbox/chipCounts.ts`<br>`src/hooks/inbox/conversationArchive.ts`<br>… +1 |
 | `conversation_status` | `open` | compara, escreve, filtra | `src/adapters/evolutionAdapter.ts`<br>`src/components/omnichannel/OmnichannelInbox.tsx`<br>`src/features/talk-me/useTalkMeQueue.ts`<br>`src/hooks/analytics/useDashboardData.ts`<br>`src/hooks/business/useQueueAnalytics.ts`<br>… +3 |
 | `conversation_status` | `resolved` | compara, filtra | `src/components/inbox/CloseConversationDialog.tsx`<br>`src/components/inbox/VirtualizedRealtimeList.tsx`<br>`src/hooks/analytics/useGoalNotifications.ts`<br>`src/hooks/analytics/useGoalsDashboard.ts`<br>`src/hooks/business/useQueueAnalytics.ts`<br>… +2 |
 | `conversation_status` | `waiting` | compara, filtra | `src/features/talk-me/useTalkMeQueue.ts`<br>`src/hooks/agents/useAgentPendingCounts.ts`<br>`src/hooks/inbox/chipCounts.ts` |
@@ -3729,7 +3729,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
 | `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
 | `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
-| … +617 linhas — lista completa em `context.json` | | |
+| … +618 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -5354,4 +5354,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
 | estático que some no mesmo prazo. Em ambos os casos `onDone` avisa o fim para | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
 | * Prazo do realce (2 pulsos), em ms. */ | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
-| … +1650 linhas — lista completa em `context.json` | |
+| … +1645 linhas — lista completa em `context.json` | |
