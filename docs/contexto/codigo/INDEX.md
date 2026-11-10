@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `11841dba9c34437603c183c67e539417551e083e` (2026-11-10T02:49:23Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `25e13ff60d7e80a48de7c4c7bc07a195165bc1e6` (2026-11-10T03:12:05Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56401 nós · 116275 arestas · 4175 comunidades · grafo do commit `11841dba`
+- 56401 nós · 116275 arestas · 4175 comunidades · grafo do commit `25e13ff6`
 - comunidades maiores: input.tsx (981), cn (884), lucide-react (846), react (812), vitest (595), DashboardView.tsx (451), @tanstack/react-query (448), validation.ts (410), ref_https (409), ref_node_assert (399), ref_node_fs (382), react-router-dom (344)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -501,6 +501,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `25e13ff` fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)
+- 2026-11-10 `77d5cd4` chore(ci): atualiza baseline do lint-ratchet (#2839)
 - 2026-11-10 `11841db` feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)
 - 2026-11-10 `61335ee` fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)
 - 2026-11-10 `0a6d41e` fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)
@@ -514,8 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `d7bdb70` docs: documenta db-live-guard verde e ledger normalizado
 - 2026-11-09 `32129d8` fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70
 - 2026-11-09 `3a8161c` fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções
-- 2026-11-09 `fe6c6b0` fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos
-- 2026-11-09 `ff90439` chore(db): sincronizar artefatos derivados do banco (#2902)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "11841dba9c34437603c183c67e539417551e083e",
+  "sha": "25e13ff60d7e80a48de7c4c7bc07a195165bc1e6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 02:51 UTC",
+  "generated_at": "2026-11-10 03:13 UTC",
   "files_total": 8195,
   "code_files": 6049,
   "code_lines": 1048602
@@ -384812,10 +384812,28 @@
   }
  },
  "git": {
-  "sha": "11841dba9c34437603c183c67e539417551e083e",
+  "sha": "25e13ff60d7e80a48de7c4c7bc07a195165bc1e6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "25e13ff",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)",
+    "files": [
+     "src/components/ui/badge.tsx"
+    ]
+   },
+   {
+    "sha": "77d5cd4",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "chore(ci): atualiza baseline do lint-ratchet (#2839)",
+    "files": [
+     "scripts/ci/eslint-baseline.json"
+    ]
+   },
    {
     "sha": "11841db",
     "date": "2026-11-09",
@@ -385119,33 +385137,6 @@
     "files": [
      "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
     ]
-   },
-   {
-    "sha": "d73156d",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(ci): torna scripts de qualidade executáveis (#2891)",
-    "files": [
-     "package.json",
-     "scripts/ci/lint-ratchet.mjs",
-     "scripts/ci/lint-ratchet.unit.mjs",
-     "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
-     "scripts/graphify/setup.sh",
-     "src/components/copilot/AttachmentSuggestion.tsx",
-     "src/components/copilot/CopilotFeedback.tsx",
-     "src/components/copilot/GhostTextOverlay.tsx",
-     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-     "src/hooks/inbox/useInboxFilterPresets.ts"
-    ]
-   },
-   {
-    "sha": "b430f82",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(ci): adicionar --fail nos curl do workflow-lint (#2887)",
-    "files": [
-     ".github/workflows/ci.yml"
-    ]
    }
   ],
   "hot_files": [
@@ -385186,8 +385177,12 @@
     2
    ],
    [
-    ".github/workflows/ci.yml",
-    2
+    "src/components/ui/badge.tsx",
+    1
+   ],
+   [
+    "scripts/ci/eslint-baseline.json",
+    1
    ],
    [
     "src/components/inbox/copilot/BrindeMeter.tsx",
@@ -385223,10 +385218,6 @@
    ],
    [
     "src/components/inbox/copilot/RadarPanel.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/StageIndicator.tsx",
     1
    ]
   ]

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)",
+   "chore(ci): atualiza baseline do lint-ratchet (#2839)",
    "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)",
    "fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)",
-   "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)",
-   "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)",
-   "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)"
+   "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "11841dba9c34437603c183c67e539417551e083e",
+  "commit": "25e13ff60d7e80a48de7c4c7bc07a195165bc1e6",
   "branch": "main",
-  "data_commit": "2026-11-10T02:49:23Z",
+  "data_commit": "2026-11-10T03:12:05Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "25e13ff",
+    "data": "2026-11-10",
+    "assunto": "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)"
+   },
+   {
+    "sha": "77d5cd4",
+    "data": "2026-11-10",
+    "assunto": "chore(ci): atualiza baseline do lint-ratchet (#2839)"
+   },
    {
     "sha": "11841db",
     "data": "2026-11-10",
@@ -121,19 +131,9 @@
     "sha": "af47ad6",
     "data": "2026-11-09",
     "assunto": "fix(ci): vercel-env-cleanup sai com exit 0 em 403"
-   },
-   {
-    "sha": "a15fdfb",
-    "data": "2026-11-09",
-    "assunto": "chore(migrations): adiciona 10 arquivos SQL faltantes para alinhar ledger com disco"
-   },
-   {
-    "sha": "a3f3e8c",
-    "data": "2026-11-09",
-    "assunto": "fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7"
    }
   ],
-  "arquivos_mudados_7d": 677,
+  "arquivos_mudados_7d": 678,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/ui",
-    "mudancas": 128
+    "mudancas": 129
    },
    {
     "pasta": "src/components/dashboard",
