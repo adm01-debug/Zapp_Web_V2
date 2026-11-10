@@ -358,3 +358,37 @@ supabase.rpc('dashboard_rpc'); supabase.functions.invoke('dashboard-edge');`);
   assert.deepEqual(orphan.chamada_pelo_front, []);
   assert.deepEqual(orphan.chamada_por_edges, []);
 });
+
+// Comentario de bloco: o "//" de uma URL dentro de string nao pode abrir comentario (o
+// [\s\S]*? engoliria o codigo ate o proximo */ real), e um comentario legitimo colado
+// num literal tem de continuar sendo removido -- senao um supabase.from() comentado
+// entra no inventario como tabela de verdade.
+test('comentarios: URL em string não abre bloco e comentário colado em literal é removido', (t) => {
+  const read = isolatedFixture(t, (dir) => {
+    w(dir, 'src/comentarios.ts', `const colado = "x"/* supabase.from('tabela_fantasma').select('*') */;
+const url = 'psql postgres://usuario:senha@host/banco';
+export const depois = () => supabase.from('tabela_depois_da_url').select('*');
+/** doc real */
+export const normal = () => supabase.from('tabela_normal').select('*');`);
+  });
+  const texto = JSON.stringify(read('banco.json'));
+  assert.ok(!texto.includes('tabela_fantasma'), 'tabela dentro de comentário não pode virar fato');
+  assert.ok(texto.includes('tabela_depois_da_url'), 'código após URL em string não pode ser engolido');
+  assert.ok(texto.includes('tabela_normal'));
+});
+
+test('workflow com CRLF: permissões são lidas como no arquivo com LF', (t) => {
+  const corpo = (fim) => ['name: CRLF', 'on:', '  push:', '    branches: [main]', 'permissions:',
+    '  contents: read', '  pull-requests: write', 'jobs:', '  t:', '    runs-on: ubuntu-latest',
+    '    steps:', '      - run: echo oi', ''].join(fim);
+  const read = isolatedFixture(t, (dir) => {
+    w(dir, '.github/workflows/crlf.yml', corpo('\r\n'));
+    w(dir, '.github/workflows/lf.yml', corpo('\n'));
+  });
+  const workflows = read('ferramentas.json').workflows.filter((x) => x.nome === 'CRLF');
+  assert.equal(workflows.length, 2);
+  for (const wf of workflows) {
+    assert.deepEqual(wf.permissoes, ['contents: read', 'pull-requests: write'], wf.arquivo);
+    assert.deepEqual(wf.gatilhos, ['push'], wf.arquivo);
+  }
+});
