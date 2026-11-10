@@ -66,6 +66,7 @@ async function fetchRecipientsPage(params: {
   cursor: string | null;
   status: string | null;
   search: string | null;
+  segmentId: string | null;
 }): Promise<RecipientsPage> {
   const client = supabase as unknown as RecipientsRpcClient;
   const { data, error } = await client.rpc('talkx_campaign_recipients_page', {
@@ -74,31 +75,38 @@ async function fetchRecipientsPage(params: {
     p_cursor: params.cursor,
     p_status: params.status,
     p_search: params.search,
+    p_segment_id: params.segmentId,
   });
   if (error) throw new Error(error.message);
   return data ?? { rows: [], next_cursor: null, total: 0, kpis: EMPTY_KPIS };
 }
 
+export type SegmentOption = { id: string; name: string };
+
 interface TalkXRecipientsTableProps {
   campaignId: string;
   /** Resolve o nome legível do segmento (coluna "Segmento"); a base ganhou essa coluna. */
   segmentName?: (id: string | null) => string | null;
+  /** Lista de segmentos disponíveis para o filtro de segmento. */
+  segments?: SegmentOption[];
 }
 
-export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipientsTableProps) {
+export function TalkXRecipientsTable({ campaignId, segmentName, segments }: TalkXRecipientsTableProps) {
   const [statusFilter, setStatusFilter] = useState('all');
+  const [segmentFilter, setSegmentFilter] = useState('all');
   const [search, setSearch] = useState('');
   // Cada posição é um cursor pedido; ao entrar um novo, a página anterior continua
   // no cache e as linhas das duas páginas aparecem juntas (accumulate).
   const [cursors, setCursors] = useState<(string | null)[]>([null]);
 
   const status = statusFilter === 'all' ? null : statusFilter;
+  const segmentId = segmentFilter === 'all' ? null : segmentFilter;
   const term = search.trim() || null;
 
   const pages = useQueries({
     queries: cursors.map((cursor) => ({
-      queryKey: ['talkx-recipients-page', campaignId, status, term, cursor],
-      queryFn: () => fetchRecipientsPage({ campaignId, cursor, status, search: term }),
+      queryKey: ['talkx-recipients-page', campaignId, status, segmentId, term, cursor],
+      queryFn: () => fetchRecipientsPage({ campaignId, cursor, status, search: term, segmentId }),
       refetchInterval: 15_000,
       staleTime: 10_000,
     })),
@@ -119,6 +127,7 @@ export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipient
 
   const resetToFirstPage = useCallback(() => { setCursors([null]); }, []);
   const handleStatusChange = useCallback((v: string) => { setStatusFilter(v); resetToFirstPage(); }, [resetToFirstPage]);
+  const handleSegmentChange = useCallback((v: string) => { setSegmentFilter(v); resetToFirstPage(); }, [resetToFirstPage]);
   const handleSearchChange = useCallback((v: string) => { setSearch(v); resetToFirstPage(); }, [resetToFirstPage]);
   const loadMore = useCallback(() => {
     if (nextCursor && !cursors.includes(nextCursor)) setCursors((prev) => [...prev, nextCursor]);
@@ -144,10 +153,21 @@ export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipient
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="all">Todos os status</SelectItem>
             {Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}
           </SelectContent>
         </Select>
+        {segments && segments.length > 0 && (
+          <Select value={segmentFilter} onValueChange={handleSegmentChange}>
+            <SelectTrigger aria-label="Filtrar por segmento" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[140px]">
+              <SelectValue placeholder="Todos os segmentos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os segmentos</SelectItem>
+              {segments.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <p className="text-xs text-foreground-secondary">{`${fmtInt(total)} destinatários`}</p>
       </div>
 

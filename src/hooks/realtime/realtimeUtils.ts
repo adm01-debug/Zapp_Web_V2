@@ -137,7 +137,7 @@ export type NormalizedRealtimeMessage = RealtimeMessage & {
   whatsapp_group_id?: string | null;
   /** JID do participante remetente (mensagens de grupo). */
   sender_participant_jid?: string | null;
-  /** Nome de exibição do remetente (mensagens de grupo). */
+  /** Nome de exibição do participante remetente (mensagens de grupo). */
   sender_display_name?: string | null;
 };
 

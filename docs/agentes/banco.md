@@ -59,8 +59,11 @@ Resumo das regras no `AGENTS.md`; aqui está o detalhe. Errar o banco já causou
    transcreva à mão. O `.github/workflows/db-migrate.yml` (dry-run + hash SHA-256 + aprovação no
    environment `producao-ddl`) é o caminho com aprovação humana; se usar, `apply=false` primeiro,
    depois `apply=true` com o `confirm_runtime_sha256` do dry-run, e se outra sessão aplicar DDL no
-   meio, repita o dry-run. Ele conecta como `postgres`, que não é superuser: `REVOKE` de grant do
-   `supabase_admin` e `CREATE INDEX` em `cron.*` só pelo SQL Editor.
+   meio, repita o dry-run. **NÃO VERIFICADO ponta a ponta:** a falha de 31/10 (`Cannot find project
+   ref`) foi corrigida com `db push --db-url` e a execução de 01/11 recusou corretamente (migrations
+   fora do ledger), mas nenhuma execução verde com `apply=true` foi observada desde a correção — confira
+   o último run antes de contar com ele. Ele conecta como `postgres`, que não é superuser: `REVOKE` de
+   grant do `supabase_admin` e `CREATE INDEX` em `cron.*` só pelo SQL Editor.
 2. **Versão sem colisão:** antes de criar arquivo ou aplicar DDL, no mesmo turno: `SELECT max(version)`
    no ledger, `ls supabase/migrations | tail` e busca de PRs abertas tocando `supabase/migrations/`.
    Para reservar de forma atômica: `SELECT supabase_migrations.reserve_migration_version('<sessao>', '<motivo>')`

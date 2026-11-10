@@ -18,6 +18,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    # ready_for_review: sem ele, um draft (unit-tests e build pulados) marcado como pronto
+    # ficava mergeavel com o SHA sem Vitest nem build; db-guard.yml ja tinha o mesmo type.
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 # W49: VITE_* movido para os jobs build (step-level) e e2e (job-level); sem vazamento para lint/test/security.
@@ -175,6 +178,12 @@ jobs:
       - name: 📦 Validar manifesto de edge functions
         run: node scripts/edge-deploy/generate-manifest.mjs --check
 
+      - name: 🛡️ Exposição de erro interno nas edge functions
+        run: node scripts/ci/check-edge-error-exposure.mjs
+
+      - name: 🛡️ src/ não lê VITE_SUPABASE_URL/PUBLISHABLE_KEY via import.meta.env
+        run: node scripts/ci/check-supabase-url-import-meta.mjs
+
   edge-contracts:
     name: 🦕 Edge contracts
     runs-on: ubuntu-24.04
@@ -246,6 +255,9 @@ jobs:
 
       - name: 📏 Enforce initial bundle budget (performance-budget.json)
         run: node scripts/ci/bundle-budget.mjs
+
+      - name: 🛡️ Bundle publicado não expõe JWT service_role
+        run: node scripts/ci/check-bundle-secrets.mjs
 
       - name: 📐 Report bundle size
         run: |
@@ -337,6 +349,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: 🛡️ Pins de Action resolvem para o commit real da tag
+        run: node scripts/ci/check-workflow-pins-resolvem.mjs
+
       - name: 📦 Instalar actionlint e shellcheck (versao + sha256 pinados)
         run: |
           actionlint_version="1.7.7"
@@ -344,11 +364,11 @@ jobs:
           shellcheck_version="0.10.0"
           shellcheck_sha256="6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87"
           mkdir -p "$HOME/.local/bin"
-          curl --proto '=https' --tlsv1.2 --silent --show-error --location --output /tmp/actionlint.tar.gz \
+          curl --proto '=https' --tlsv1.2 --silent --show-error --location --fail --output /tmp/actionlint.tar.gz \
             "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/actionlint_${actionlint_version}_linux_amd64.tar.gz"
           echo "${actionlint_sha256}  /tmp/actionlint.tar.gz" | sha256sum -c -
           tar -xzf /tmp/actionlint.tar.gz -C "$HOME/.local/bin" actionlint
-          curl --proto '=https' --tlsv1.2 --silent --show-error --location --output /tmp/shellcheck.tar.xz \
+          curl --proto '=https' --tlsv1.2 --silent --show-error --location --fail --output /tmp/shellcheck.tar.xz \
             "https://github.com/koalaman/shellcheck/releases/download/v${shellcheck_version}/shellcheck-v${shellcheck_version}.linux.x86_64.tar.xz"
           echo "${shellcheck_sha256}  /tmp/shellcheck.tar.xz" | sha256sum -c -
           tar -xJf /tmp/shellcheck.tar.xz -C /tmp "shellcheck-v${shellcheck_version}/shellcheck"

@@ -123,6 +123,7 @@ export function useCatalogRecentSends(recentLimit = 5) {
     recent,
     topSent,
     isLoading: recentQuery.isLoading || topQuery.isLoading,
+    isError: recentQuery.isError || topQuery.isError,
     /** Sem nenhum envio a seção inteira do rail fica oculta (E56 item 3). */
     hasData: recent.length > 0,
   };
