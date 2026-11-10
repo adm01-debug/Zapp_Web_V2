@@ -19,7 +19,7 @@ try {
   process.exit(1);
 }
 const md = readFileSync(arquivo, 'utf8'); // NOSONAR(S8707): 'arquivo' vem de resolverCaminhoPermitido(...) acima, que resolve o caminho e recusa (exit 1) tudo fora do repositorio/tmp antes deste read
-const blocks = md.split(/^### (?=E\d{2,3} · )/m).slice(1);
+const blocks = md.split(/^### (?=E\d+ · )/m).slice(1);
 const errors = [];
 const seen = new Set();
 
@@ -30,14 +30,28 @@ const seen = new Set();
 // `**Status:** descartado em AAAA-MM-DD`. Marcador ou status isolados (ou
 // cabecalho sem titulo riscado, ou data invalida) nao criam excecao.
 const CABECALHO_TOMBSTONE = /^E\d{2,3} · ~~.+~~ \(RISCADO\)$/;
-const STATUS_DESCARTAVEL = /^\*\*Status:\*\* descartado em \d{4}-\d{2}-\d{2}/m;
+const STATUS_DESCARTAVEL = /^\*\*Status:\*\* descartado em (\d{4}-\d{2}-\d{2})(?=\s|$)/m;
 function ehTombstone(b) {
-  return CABECALHO_TOMBSTONE.test(b.split('\n', 1)[0]) && STATUS_DESCARTAVEL.test(b);
+  if (!CABECALHO_TOMBSTONE.test(b.split('\n', 1)[0])) return false;
+  const prazo = b.match(STATUS_DESCARTAVEL)?.[1];
+  if (!prazo) return false;
+  const data = new Date(`${prazo}T00:00:00.000Z`);
+  return Number.isFinite(data.getTime()) && data.toISOString().slice(0, 10) === prazo;
 }
 
 for (const b of blocks) {
-  const id = b.match(/^E(\d{2,3})/)[1];
-  seen.add(Number(id));
+  const id = b.match(/^E(\d+)/)[1];
+  const numero = Number(id);
+  if (id.length < 2 || id.length > 3) {
+    errors.push(`E${id}: formato de identificador invalido`);
+    continue;
+  }
+  if (numero < 1 || numero > 100) {
+    errors.push(`E${id}: fora da faixa E01..E100`);
+    continue;
+  }
+  if (seen.has(numero)) errors.push(`E${id}: etapa duplicada`);
+  seen.add(numero);
   if (ehTombstone(b)) continue;
   const steps = b.split('**Checklist**')[0].match(/^\d{1,2}\. /gm) || [];
   if (steps.length !== 10) errors.push(`E${id}: ${steps.length} sub-etapas`);

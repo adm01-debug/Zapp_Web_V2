@@ -169,3 +169,51 @@ test('rejeita marcador RISCADO sem titulo riscado e sem data valida', () => {
   assert.match(result.stderr, /E54: checklist com 0 itens/);
   assert.match(result.stderr, /E54: sem Objetivo/);
 });
+
+for (const id of ['01', '54', '100', '001']) {
+  test(`rejeita a repeticao da etapa numerica E${id}`, () => {
+    const result = executarPlano(planoComChecklistMisto() + '\n' + etapa(id));
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`E${id}: etapa duplicada`));
+  });
+}
+
+test('um tombstone nao pode esconder a repeticao de uma etapa', () => {
+  const result = executarPlano(planoComChecklistMisto() + '\n' + tombstone('54'));
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /E54: etapa duplicada/);
+});
+
+for (const id of ['00', '000', '101', '999', '1', '0001', '1000', '10000']) {
+  test(`rejeita identificador extra invalido E${id} mesmo com as 100 etapas validas`, () => {
+    const result = executarPlano(planoComChecklistMisto() + '\n' + etapa(id));
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`E${id}: (?:fora da faixa|formato de identificador)`));
+  });
+}
+
+for (const data of ['2024-02-29', '2000-02-29', '2026-12-31']) {
+  test(`preserva tombstone com data calendaria valida ${data}`, () => {
+    const result = executarPlano(planoCom(['54'], id => tombstone(id, {
+      status: `**Status:** descartado em ${data} (decisao do produto).`,
+    })));
+    assert.equal(result.status, 0, result.stderr);
+  });
+}
+
+for (const data of ['2026-02-30', '2026-02-29', '1900-02-29', '2026-04-31', '2026-13-01',
+  '2026-00-01', '2026-01-00', '2026-01-32', '2026-01-01fake', '2026-09-24T00:00:00Z']) {
+  test(`data ${data} nao concede dispensa de estrutura ao tombstone`, () => {
+    const result = executarPlano(planoCom(['54'], id => tombstone(id, {
+      status: `**Status:** descartado em ${data}`,
+    })));
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /E54: 0 sub-etapas/);
+  });
+}
+
+test('preserva duas posicoes descartadas distintas sem reduzir as 100 etapas', () => {
+  const result = executarPlano(planoCom(['53', '54'], id => tombstone(id)));
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /etapas: 100\/100 · blocos: 100/);
+});
