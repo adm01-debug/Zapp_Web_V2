@@ -83,6 +83,16 @@ As regressões executam funções reais e o controlador com interfaces Docker, G
 
 A configuração isolada preserva projetos, dependências e assertions. O modo `login` seleciona somente `setup`; os modos abaixo executam a seleção explícita de cada grupo. Sucesso do login não declara os demais casos aprovados. A reativação do workflow autenticado anterior depende da substituição completa e validada.
 
+Na compilação de dependências públicas, o controller projeta somente `proxies.default.httpProxy`,
+`httpsProxy` e `noProxy` do Docker config original em um config temporário privado do compilador.
+Credenciais de registro e seletores de daemon permanecem fora dessa projeção. Valores de proxy,
+inclusive autenticação de rede, ficam nesse config com modo `0600`, fora dos argumentos e relatórios.
+Quando há proxy, a CA pública de `SSL_CERT_FILE` ou `CODEX_PROXY_CERT` é montada somente para leitura
+nesse processo, com verificação TLS habilitada. Arquivo de CA precisa conter somente certificados CA,
+sem chaves privadas. Config malformado ou CA inválida interrompem antes da compilação. Sem proxy
+configurado, a compilação conserva o transporte direto. A stack de aplicação, os probes e os browsers
+continuam com Docker config vazio, namespace isolado e suas CAs sintéticas próprias.
+
 
 ## Suíte em cinco grupos isolados
 

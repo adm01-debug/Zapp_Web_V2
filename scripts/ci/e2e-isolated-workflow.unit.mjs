@@ -146,7 +146,7 @@ test('entrada restrita, permissões de leitura e SHA único para todos os checko
     const checkout = onlyStep(steps, step => /actions\/checkout@/.test(valueOf(step, 'uses') ?? ''), 'checkout');
     assert.equal(nestedValue(checkout, 'with', 'persist-credentials'), 'false');
     assert.equal(nestedValue(checkout, 'with', 'ref'), id === 'image-metadata'
-      ? '${{ steps.request.outputs.sha }}' : '${{ needs.image-metadata.outputs.sha }}');
+      ? '${{ steps.request.outputs.sha }}' : '${{ github.sha }}');
     if (id === 'image-metadata') assert.ok(steps.indexOf(request) < steps.indexOf(checkout));
     else assert.equal(valueOf(job, 'needs', 4), 'image-metadata');
     for (const step of steps) {
