@@ -1972,6 +1972,10 @@
     "arquivos": 2
    },
    {
+    "host": "local.invalid",
+    "arquivos": 2
+   },
+   {
     "host": "loja.com",
     "arquivos": 2
    },
@@ -2249,10 +2253,6 @@
    },
    {
     "host": "linkedin.example",
-    "arquivos": 1
-   },
-   {
-    "host": "local.invalid",
     "arquivos": 1
    },
    {

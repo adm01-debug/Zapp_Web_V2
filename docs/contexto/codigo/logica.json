@@ -175,6 +175,7 @@
    "camada": "python",
    "exports": [
     "analyze_code_file",
+    "artifact_hashes",
     "balanced",
     "detect_stack",
     "dir_tree",
@@ -214,7 +215,7 @@
     "upsert_pointer",
     "walk_repo"
    ],
-   "linhas": 2144,
+   "linhas": 2169,
    "tabelas": [],
    "rpcs": [],
    "edges": [],

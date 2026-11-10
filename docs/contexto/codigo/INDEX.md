@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `893c152cddf51dc49453ea1ce8ec68efd7e76017` (2026-11-10T10:51:35Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `77694900e3e9cb2b746052e5793baa74b4f58595` (2026-11-10T08:39:45-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8356 |
 | arquivos_codigo | 4780 |
-| linhas_codigo | 882144 |
+| linhas_codigo | 882978 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56424 nós · 116320 arestas · 4197 comunidades · grafo do commit `893c152c`
-- comunidades maiores: react (863), button.tsx (757), lucide-react (630), cn (580), ExternalProductManagement.tsx (546), TalkXCampaignWizard.tsx (489), ref_node_assert (436), chat.ts (396), useTalkXSegments.ts (394), ref_https (381), validation.ts (364), ref_node_fs (304)
+- 56460 nós · 116369 arestas · 4128 comunidades · grafo do commit `77694900`
+- comunidades maiores: lucide-react (918), cn (909), TalkXSuppression.tsx (803), react (773), vitest (652), validation.ts (446), uniqueRealtimeTopic (424), dialog.tsx (401), ref_https (384), @tanstack/react-query (381), inspect.ts (375), ref_node_assert (337)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `7769490` fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)
 - 2026-11-10 `893c152` ⬆️ docker: Bump golang from `d200d2d` to `fa3d596` in /infrastructure/preview-egress-proxy (#2895)
 - 2026-11-10 `5892191` fix(conexao): restaura health check anterior à PR 2910 (#2916)
 - 2026-11-10 `d40c053` docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `61335ee` fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)
 - 2026-11-10 `0a6d41e` fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)
 - 2026-11-10 `743d162` fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)
-- 2026-11-10 `f3792ec` fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

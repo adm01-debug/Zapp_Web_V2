@@ -186,7 +186,7 @@
   {
    "arquivo": "scripts/ci/check-quarantine.mjs",
    "descricao": "E87: quarentena formal da suite E2E. Uma quarentena sem prazo e' um `skip` com outro nome: ninguem revisa, o motivo se",
-   "linhas": 99,
+   "linhas": 181,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -633,7 +633,7 @@
   {
    "arquivo": "scripts/db-audit/check-catalog-fresh.mjs",
    "descricao": "* Confere se supabase/schema-catalog.json ainda reflete o banco.",
-   "linhas": 177,
+   "linhas": 179,
    "env": [
     "CATALOG_IDENTITY_PATH",
     "CATALOG_PATH",
@@ -3640,7 +3640,7 @@
   {
    "arquivo": "scripts/db-tests/rpc-envelope.mjs",
    "descricao": "* scripts/db-tests/rpc-envelope.mjs",
-   "linhas": 140,
+   "linhas": 147,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4148,7 +4148,7 @@
   {
    "arquivo": "scripts/edge-deploy/health-check.mjs",
    "descricao": "W65: pós-deploy health check — consulta a API atual de logs do Supabase e bloqueia regressões 5xx. Somente indisponibilidade transitória de",
-   "linhas": 292,
+   "linhas": 293,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4377,7 +4377,7 @@
   {
    "arquivo": "scripts/regras_negocio/generate.py",
    "descricao": null,
-   "linhas": 2144,
+   "linhas": 2169,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -4469,7 +4469,7 @@
   {
    "arquivo": "scripts/ui-audit/layout-guard.mjs",
    "descricao": "* layout-guard.mjs — Etapa 27",
-   "linhas": 179,
+   "linhas": 184,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4530,7 +4530,7 @@
   {
    "arquivo": "scripts/vercel/verify-release-targets.mjs",
    "descricao": null,
-   "linhas": 210,
+   "linhas": 220,
    "env": [],
    "npm_scripts": [],
    "workflows": [

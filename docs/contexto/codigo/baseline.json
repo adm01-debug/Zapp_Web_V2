@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "893c152cddf51dc49453ea1ce8ec68efd7e76017",
+  "commit": "77694900e3e9cb2b746052e5793baa74b4f58595",
   "branch": "main",
-  "data_commit": "2026-11-10T10:51:35Z",
+  "data_commit": "2026-11-10T08:39:45-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7769490",
+    "data": "2026-11-10",
+    "assunto": "fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)"
+   },
    {
     "sha": "893c152",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "fe6c6b0",
     "data": "2026-11-09",
     "assunto": "fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos"
-   },
-   {
-    "sha": "ff90439",
-    "data": "2026-11-09",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2902)"
    }
   ],
-  "arquivos_mudados_7d": 687,
+  "arquivos_mudados_7d": 695,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8356,
   "arquivos_codigo": 4780,
-  "linhas_codigo": 882144,
+  "linhas_codigo": 882978,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -608,15 +608,15 @@
   },
   "scripts/ci": {
    "arquivos": 206,
-   "linhas": 42746
+   "linhas": 43145
   },
   "scripts/db-audit": {
    "arquivos": 81,
-   "linhas": 15377
+   "linhas": 15398
   },
   "scripts/db-tests": {
    "arquivos": 3,
-   "linhas": 442
+   "linhas": 487
   },
   "scripts/docs": {
    "arquivos": 1,
@@ -628,7 +628,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
-   "linhas": 4510
+   "linhas": 4557
   },
   "scripts/eslint": {
    "arquivos": 1,
@@ -656,7 +656,7 @@
   },
   "scripts/regras_negocio": {
    "arquivos": 3,
-   "linhas": 2545
+   "linhas": 2799
   },
   "scripts/supabase_snapshot": {
    "arquivos": 2,
@@ -680,11 +680,11 @@
   },
   "scripts/ui-audit": {
    "arquivos": 7,
-   "linhas": 651
+   "linhas": 709
   },
   "scripts/vercel": {
    "arquivos": 4,
-   "linhas": 513
+   "linhas": 523
   },
   "src/App.tsx": {
    "arquivos": 1,
@@ -806,7 +806,7 @@
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
-   "linhas": 2144
+   "linhas": 2169
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
@@ -903,7 +903,7 @@
  ],
  "qualidade": {
   "any": 351,
-  "console_log": 415,
+  "console_log": 416,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "893c152cddf51dc49453ea1ce8ec68efd7e76017",
+  "sha": "77694900e3e9cb2b746052e5793baa74b4f58595",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 10:59 UTC",
+  "generated_at": "2026-11-10 11:41 UTC",
   "files_total": 8197,
   "code_files": 6051,
-  "code_lines": 1048874
+  "code_lines": 1049708
  },
  "version": "1.3.2",
- "facts_hash": "5c2329eefd1c6107",
+ "facts_hash": "29174dd0ac77d804",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67326,7 +67326,7 @@
   {
    "module": "scripts",
    "files": 446,
-   "lines": 88148,
+   "lines": 88982,
    "tables": [
     "a",
     "alem_do_limite",
@@ -75263,6 +75263,9 @@
    ]
   },
   "external": {
+   "http://127.0.0.1:${address.port}${new": [
+    "scripts/ci/verify-release-targets-timeout.unit.mjs"
+   ],
    "http://127.0.0.1:9": [
     "src/test/guardaDeRede.test.ts"
    ],
@@ -79916,6 +79919,22 @@
     "msg": "), { recursive: true });\n  mkdirSync(path.join(raiz, "
    },
    {
+    "file": "scripts/ci/check-quarantine.mjs",
+    "msg": "${caminho} deve exportar quarentena como lista"
+   },
+   {
+    "file": "scripts/ci/check-quarantine.mjs",
+    "msg": "argumento desconhecido: ${argumento}"
+   },
+   {
+    "file": "scripts/ci/check-quarantine.mjs",
+    "msg": "argumento incompleto: use --hoje=AAAA-MM-DD"
+   },
+   {
+    "file": "scripts/ci/check-quarantine.mjs",
+    "msg": "argumento repetido: --${nome}"
+   },
+   {
     "file": "scripts/ci/check-workflow-pins.mjs",
     "msg": "fonte única de versões ausente ou ilegível em ${TOOLCHAIN_PATH}: ${error.message}"
    },
@@ -80406,6 +80425,10 @@
    {
     "file": "scripts/ci/verify-crm-integration-doc.unit.mjs",
     "msg": "grep falhou: "
+   },
+   {
+    "file": "scripts/ci/verify-release-targets-timeout.unit.mjs",
+    "msg": "cancelamento falhou"
    },
    {
     "file": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
@@ -81193,6 +81216,10 @@
    },
    {
     "file": "scripts/edge-deploy/health-check.unit.mjs",
+    "msg": "coerção não permitida"
+   },
+   {
+    "file": "scripts/edge-deploy/health-check.unit.mjs",
     "msg": "network secret"
    },
    {
@@ -81626,6 +81653,10 @@
    {
     "file": "scripts/ui-audit/layout-guard.mjs",
     "msg": "lazyViews.ts nao rendeu nenhum arquivo — auditoria incompleta"
+   },
+   {
+    "file": "scripts/ui-audit/layout-guard.mjs",
+    "msg": "view roteada nao resolvida: ${spec} — auditoria incompleta"
    },
    {
     "file": "scripts/ui-audit/width-regression.mjs",
@@ -127711,6 +127742,10 @@
    {
     "file": "scripts/db-audit/check-catalog-fresh.test.mjs",
     "name": "falha fechado quando o catalogo contem entrada duplicada"
+   },
+   {
+    "file": "scripts/db-audit/check-catalog-fresh.test.mjs",
+    "name": "valida ${secao} independentemente nos dois catalogos: ${nome}"
    },
    {
     "file": "scripts/db-audit/check-catalog-fresh.test.mjs",
@@ -262564,7 +262599,7 @@
   },
   "scripts/ci/check-quarantine.mjs": {
    "path": "scripts/ci/check-quarantine.mjs",
-   "lines": 99,
+   "lines": 181,
    "exports": [
     "const RAIZ",
     "const CAMINHO_PADRAO",
@@ -262572,6 +262607,12 @@
     "function carregarQuarentena",
     "function validar",
     "function specsEmQuarentena"
+   ],
+   "errors": [
+    "${caminho} deve exportar quarentena como lista",
+    "argumento desconhecido: ${argumento}",
+    "argumento incompleto: use --hoje=AAAA-MM-DD",
+    "argumento repetido: --${nome}"
    ],
    "params": [
     {
@@ -262592,7 +262633,7 @@
   },
   "scripts/ci/check-quarantine.unit.mjs": {
    "path": "scripts/ci/check-quarantine.unit.mjs",
-   "lines": 81,
+   "lines": 247,
    "params": [
     {
      "name": "HOJE",
@@ -265751,7 +265792,19 @@
   },
   "scripts/ci/verify-release-targets-timeout.unit.mjs": {
    "path": "scripts/ci/verify-release-targets-timeout.unit.mjs",
-   "lines": 29
+   "lines": 180,
+   "external_urls": [
+    "http://127.0.0.1:${address.port}${new"
+   ],
+   "errors": [
+    "cancelamento falhou"
+   ],
+   "params": [
+    {
+     "name": "RELEASE",
+     "value": "'a'"
+    }
+   ]
   },
   "scripts/ci/volume-e2e-evidence-honesty.unit.mjs": {
    "path": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
@@ -265927,7 +265980,7 @@
   },
   "scripts/db-audit/check-catalog-fresh.mjs": {
    "path": "scripts/db-audit/check-catalog-fresh.mjs",
-   "lines": 177,
+   "lines": 179,
    "env": [
     "CATALOG_IDENTITY_PATH",
     "CATALOG_PATH",
@@ -265940,7 +265993,7 @@
   },
   "scripts/db-audit/check-catalog-fresh.test.mjs": {
    "path": "scripts/db-audit/check-catalog-fresh.test.mjs",
-   "lines": 245,
+   "lines": 264,
    "is_test": true,
    "params": [
     {
@@ -265964,6 +266017,7 @@
     "retorna 2 quando how_to_regenerate e invalido no catalogo fresco",
     "retorna 1 quando how_to_regenerate e invalido no catalogo commitado",
     "falha fechado quando o catalogo contem entrada duplicada",
+    "valida ${secao} independentemente nos dois catalogos: ${nome}",
     "falha fechado para JSON fresco malformado",
     "rejeita caminho fresco relativo que escapa das raizes permitidas",
     "rejeita CATALOG_PATH absoluto fora das raizes permitidas"
@@ -267965,7 +268019,7 @@
   },
   "scripts/db-tests/rpc-envelope.mjs": {
    "path": "scripts/db-tests/rpc-envelope.mjs",
-   "lines": 140,
+   "lines": 147,
    "exports": [
     "const RESULTADOS",
     "function descreverValor",
@@ -268010,7 +268064,7 @@
   },
   "scripts/db-tests/run-all.unit.mjs": {
    "path": "scripts/db-tests/run-all.unit.mjs",
-   "lines": 211,
+   "lines": 249,
    "env": [
     "STUB_LOG"
    ]
@@ -269187,7 +269241,7 @@
   },
   "scripts/edge-deploy/health-check.mjs": {
    "path": "scripts/edge-deploy/health-check.mjs",
-   "lines": 292,
+   "lines": 293,
    "exports": [
     "const CANONICAL_PROJECT",
     "const MGMT_BASE",
@@ -269286,8 +269340,9 @@
   },
   "scripts/edge-deploy/health-check.unit.mjs": {
    "path": "scripts/edge-deploy/health-check.unit.mjs",
-   "lines": 255,
+   "lines": 301,
    "errors": [
+    "coerção não permitida",
     "network secret"
    ]
   },
@@ -270084,7 +270139,7 @@
   },
   "scripts/regras_negocio/generate.py": {
    "path": "scripts/regras_negocio/generate.py",
-   "lines": 2144,
+   "lines": 2169,
    "exports": [
     "def is_app_code",
     "def log",
@@ -270143,6 +270198,7 @@
     "def render_glossary",
     "def render_integrations",
     "def render_changes",
+    "def artifact_hashes",
     "def upsert_pointer",
     "def main"
    ],
@@ -270210,9 +270266,14 @@
   },
   "scripts/regras_negocio/test_generate.py": {
    "path": "scripts/regras_negocio/test_generate.py",
-   "lines": 164,
+   "lines": 393,
    "exports": [
-    "class CurrentSqlSourcesTests"
+    "class CurrentSqlSourcesTests",
+    "class CacheValidityTests"
+   ],
+   "rule_comments": [
+    "Regra humana\\nO limite é 20.\\n\", encoding=\"utf-8\")",
+    "Regra humana\\nO limite é 20.\\n\")"
    ],
    "doc": "Regressões offline do gerador de regras; não acessam banco nem APIs de LLM.",
    "cron": [
@@ -270222,7 +270283,11 @@
     "\"--profile\", \"regras\", \"--no-pointer\"], check=True, capture_output=True, text=True, timeout=30)",
     "archived = self.write(\"supabase/migrations/_superseded/20250101000000_retention.sql\", \"SELECT now() - interval '365 days';\")",
     "current = self.write(\"supabase/migrations/20260101000000_retention.sql\", \"SELECT now() - interval '7 days';\")",
+    "return subprocess.run([*cmd, *args], capture_output=True, text=True, timeout=30).returncode",
     "self.assertEqual(context[\"rules\"][\"temporal\"], [{\"file\": current, \"line\": \"SELECT now() - interval '7 days';\"}])",
+    "self.assertEqual(subprocess.run([*cmd, \"--check\"], capture_output=True, timeout=30).returncode, 0)",
+    "self.assertEqual(subprocess.run([*cmd, \"--check\"], capture_output=True, timeout=30).returncode, 1)",
+    "self.assertEqual(subprocess.run(cmd, capture_output=True, timeout=30).returncode, 0)",
     "self.write(archived, \"CREATE TABLE public.orders (id uuid, historical_status text);\\nSELECT now() - interval '365 days';\")",
     "self.write(current, \"CREATE TABLE public.orders (id uuid, created_at timestamptz);\\nSELECT now() - interval '7 days';\")"
    ]
@@ -270560,9 +270625,10 @@
   },
   "scripts/ui-audit/layout-guard.mjs": {
    "path": "scripts/ui-audit/layout-guard.mjs",
-   "lines": 179,
+   "lines": 184,
    "errors": [
-    "lazyViews.ts nao rendeu nenhum arquivo — auditoria incompleta"
+    "lazyViews.ts nao rendeu nenhum arquivo — auditoria incompleta",
+    "view roteada nao resolvida: ${spec} — auditoria incompleta"
    ],
    "rule_comments": [
     "Arquivo roteado que o extrator nao conseguiu ler nao pode passar calado:"
@@ -270571,7 +270637,7 @@
   },
   "scripts/ui-audit/layout-guard.unit.mjs": {
    "path": "scripts/ui-audit/layout-guard.unit.mjs",
-   "lines": 89
+   "lines": 142
   },
   "scripts/ui-audit/root-className.mjs": {
    "path": "scripts/ui-audit/root-className.mjs",
@@ -270660,7 +270726,7 @@
   },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
-   "lines": 210,
+   "lines": 220,
    "exports": [
     "const TARGETS",
     "function parseArgs",
@@ -384832,10 +384898,34 @@
   }
  },
  "git": {
-  "sha": "893c152cddf51dc49453ea1ce8ec68efd7e76017",
+  "sha": "77694900e3e9cb2b746052e5793baa74b4f58595",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7769490",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "scripts/ci/check-quarantine.mjs",
+     "scripts/ci/check-quarantine.unit.mjs",
+     "scripts/ci/verify-release-targets-timeout.unit.mjs",
+     "scripts/db-audit/check-catalog-fresh.mjs",
+     "scripts/db-audit/check-catalog-fresh.test.mjs",
+     "scripts/db-tests/rpc-envelope.mjs",
+     "scripts/db-tests/run-all.unit.mjs",
+     "scripts/edge-deploy/health-check.mjs",
+     "scripts/edge-deploy/health-check.unit.mjs",
+     "scripts/regras_negocio/README.md",
+     "scripts/regras_negocio/generate.py",
+     "scripts/regras_negocio/test_generate.py",
+     "scripts/ui-audit/layout-guard.mjs",
+     "scripts/ui-audit/layout-guard.unit.mjs",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "893c152",
     "date": "2026-11-10",
@@ -385142,24 +385232,21 @@
     "files": [
      ".github/workflows/ci.yml"
     ]
-   },
-   {
-    "sha": "49af49e",
-    "date": "2026-11-09",
-    "author": "dependabot[bot]",
-    "subject": "⬆️ ci: Bump the actions-misc group across 1 directory with 3 updates (#2893)",
-    "files": [
-     ".github/workflows/contexto.yml",
-     ".github/workflows/db-live-guard.yml",
-     ".github/workflows/db-migrate.yml",
-     ".github/workflows/deploy-functions.yml",
-     ".github/workflows/inventario-estado-semanal.yml",
-     ".github/workflows/talkx-status-regen.yml",
-     ".github/workflows/types-sync.yml"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/edge-deploy/health-check.mjs",
+    3
+   ],
+   [
+    "scripts/edge-deploy/health-check.unit.mjs",
+    3
+   ],
+   [
+    "scripts/regras_negocio/generate.py",
+    2
+   ],
    [
     "supabase/deployment-manifest.json",
     2
@@ -385170,14 +385257,6 @@
    ],
    [
     "scripts/db-audit/migration-evidence.json",
-    2
-   ],
-   [
-    "scripts/edge-deploy/health-check.mjs",
-    2
-   ],
-   [
-    "scripts/edge-deploy/health-check.unit.mjs",
     2
    ],
    [
@@ -385197,47 +385276,43 @@
     2
    ],
    [
-    "infrastructure/preview-egress-proxy/Dockerfile",
+    "docs/talkx/ESTADOS.md",
     1
    ],
    [
-    "docs/agentes/banco.md",
+    "scripts/ci/check-quarantine.mjs",
     1
    ],
    [
-    "src/components/email/EmailChatInbox.tsx",
+    "scripts/ci/check-quarantine.unit.mjs",
     1
    ],
    [
-    "ESTADO.md",
+    "scripts/ci/verify-release-targets-timeout.unit.mjs",
     1
    ],
    [
-    "FEATURE_REGISTRY.md",
+    "scripts/db-audit/check-catalog-fresh.mjs",
     1
    ],
    [
-    "src/components/admin/MediaMigrationTool.tsx",
+    "scripts/db-audit/check-catalog-fresh.test.mjs",
     1
    ],
    [
-    "src/services/mediaMigration.service.ts",
+    "scripts/db-tests/rpc-envelope.mjs",
     1
    ],
    [
-    "src/components/talkx/TalkXSuppression.tsx",
+    "scripts/db-tests/run-all.unit.mjs",
     1
    ],
    [
-    "src/components/inbox/chat/ChatMessagesArea.tsx",
+    "scripts/regras_negocio/README.md",
     1
    ],
    [
-    "src/components/inbox/chat/__tests__/ChatMessagesArea.scroll-programatico.test.tsx",
-    1
-   ],
-   [
-    "src/pages/ViewRouter.tsx",
+    "scripts/regras_negocio/test_generate.py",
     1
    ]
   ]

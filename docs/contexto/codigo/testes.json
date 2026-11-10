@@ -763,11 +763,11 @@
   {
    "arquivo": "scripts/ci/check-quarantine.unit.mjs",
    "tipo": "unit",
-   "linhas": 81,
+   "linhas": 247,
    "testa": [
     "scripts/ci/check-quarantine.mjs"
    ],
-   "casos": 10
+   "casos": 20
   },
   {
    "arquivo": "scripts/ci/check-remocoes-destrutivas.unit.mjs",
@@ -1971,11 +1971,11 @@
   {
    "arquivo": "scripts/ci/verify-release-targets-timeout.unit.mjs",
    "tipo": "unit",
-   "linhas": 29,
+   "linhas": 180,
    "testa": [
     "scripts/vercel/verify-release-targets.mjs"
    ],
-   "casos": 1
+   "casos": 6
   },
   {
    "arquivo": "scripts/ci/volume-e2e-evidence-honesty.unit.mjs",
@@ -2025,11 +2025,11 @@
   {
    "arquivo": "scripts/db-audit/check-catalog-fresh.test.mjs",
    "tipo": "unit",
-   "linhas": 245,
+   "linhas": 264,
    "testa": [
     "scripts/db-audit/database-identity.mjs"
    ],
-   "casos": 18
+   "casos": 19
   },
   {
    "arquivo": "scripts/db-audit/check-grants-fresh.test.mjs",
@@ -2336,11 +2336,11 @@
   {
    "arquivo": "scripts/db-tests/run-all.unit.mjs",
    "tipo": "unit",
-   "linhas": 211,
+   "linhas": 249,
    "testa": [
     "scripts/db-tests/rpc-envelope.mjs"
    ],
-   "casos": 14
+   "casos": 16
   },
   {
    "arquivo": "scripts/edge-deploy/api-traversal.unit.mjs",
@@ -2372,11 +2372,11 @@
   {
    "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
    "tipo": "unit",
-   "linhas": 255,
+   "linhas": 301,
    "testa": [
     "scripts/edge-deploy/health-check.mjs"
    ],
-   "casos": 10
+   "casos": 13
   },
   {
    "arquivo": "scripts/edge-deploy/log-injection.unit.mjs",
@@ -2542,7 +2542,7 @@
   {
    "arquivo": "scripts/regras_negocio/test_generate.py",
    "tipo": "pytest",
-   "linhas": 164,
+   "linhas": 393,
    "testa": [],
    "casos": 0
   },
@@ -2597,9 +2597,9 @@
   {
    "arquivo": "scripts/ui-audit/layout-guard.unit.mjs",
    "tipo": "unit",
-   "linhas": 89,
+   "linhas": 142,
    "testa": [],
-   "casos": 4
+   "casos": 8
   },
   {
    "arquivo": "scripts/ui-audit/view-container-padding.unit.mjs",
