@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f3792ec00cd467ec472c4a755ae18e303594f726` (2026-11-10T02:06:51Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `743d162641a6f4370d2c9372b0de5cd097031d20` (2026-11-10T02:16:51Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56217 nós · 115898 arestas · 4200 comunidades · grafo do commit `f3792ec0`
+- 56217 nós · 115898 arestas · 4200 comunidades · grafo do commit `743d1626`
 - comunidades maiores: react (785), button.tsx (736), cn (592), ref_node_fs (525), useExternalCatalog.ts (514), utils.ts (510), lucide-react (470), validation.ts (468), ref_https (426), useTalkXSegments.ts (415), MessageBubble.tsx (375), catalogShared.tsx (340)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -401,9 +401,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/db-guard.yml (10)
 - .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
+- scripts/db-audit/migration-evidence.json (10)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/db-audit/grants-baseline.json (9)
-- scripts/db-audit/migration-evidence.json (9)
 - src/integrations/supabase/types.ts (9)
 
 ## Workflows
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `743d162` fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)
 - 2026-11-10 `f3792ec` fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)
 - 2026-11-10 `e2c31f4` feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)
 - 2026-11-09 `be8aa06` feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `8618770` fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto
 - 2026-11-09 `0142702` chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck
 - 2026-11-09 `d0e624b` fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)
-- 2026-11-09 `b2fed61` ci: pull_request do ci.yml também dispara em ready_for_review (#2858)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f3792ec00cd467ec472c4a755ae18e303594f726",
+  "sha": "743d162641a6f4370d2c9372b0de5cd097031d20",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 02:08 UTC",
+  "generated_at": "2026-11-10 02:19 UTC",
   "files_total": 8169,
   "code_files": 6023,
   "code_lines": 1044965
@@ -383064,10 +383064,19 @@
   }
  },
  "git": {
-  "sha": "f3792ec00cd467ec472c4a755ae18e303594f726",
+  "sha": "743d162641a6f4370d2c9372b0de5cd097031d20",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "743d162",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)",
+    "files": [
+     "scripts/db-audit/migration-evidence.json"
+    ]
+   },
    {
     "sha": "f3792ec",
     "date": "2026-11-09",
@@ -383373,17 +383382,6 @@
      "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
      "supabase/schema-catalog.json"
     ]
-   },
-   {
-    "sha": "1c3535a",
-    "date": "2026-11-09",
-    "author": "github-actions[bot]",
-    "subject": "chore: inventário do estado real (semanal) (#2848)",
-    "files": [
-     "inventario/estado/banco.json",
-     "inventario/estado/edges.json",
-     "inventario/estado/rotas.json"
-    ]
    }
   ],
   "hot_files": [
@@ -383398,6 +383396,10 @@
    [
     "supabase/schema-manifest.json",
     3
+   ],
+   [
+    "scripts/db-audit/migration-evidence.json",
+    2
    ],
    [
     "scripts/edge-deploy/health-check.mjs",
@@ -383461,10 +383463,6 @@
    ],
    [
     "src/hooks/realtime/realtimeUtils.ts",
-    1
-   ],
-   [
-    "supabase/deployment-manifest.json",
     1
    ]
   ]

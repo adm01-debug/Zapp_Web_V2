@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f3792ec00cd467ec472c4a755ae18e303594f726",
+  "commit": "743d162641a6f4370d2c9372b0de5cd097031d20",
   "branch": "main",
-  "data_commit": "2026-11-10T02:06:51Z",
+  "data_commit": "2026-11-10T02:16:51Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "743d162",
+    "data": "2026-11-10",
+    "assunto": "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)"
+   },
    {
     "sha": "f3792ec",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "a6c3519",
     "data": "2026-11-09",
     "assunto": "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)"
-   },
-   {
-    "sha": "d73156d",
-    "data": "2026-11-09",
-    "assunto": "fix(ci): torna scripts de qualidade executáveis (#2891)"
    }
   ],
   "arquivos_mudados_7d": 650,
@@ -242,15 +242,15 @@
     "mudancas": 10
    },
    {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 10
+   },
+   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 9
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 9
    },
    {
