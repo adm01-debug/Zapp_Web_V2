@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "743d162641a6f4370d2c9372b0de5cd097031d20",
+  "commit": "0a6d41eec298fe8e38b0e7048f3044ae4423032f",
   "branch": "main",
-  "data_commit": "2026-11-10T02:16:51Z",
+  "data_commit": "2026-11-10T02:28:53Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0a6d41e",
+    "data": "2026-11-10",
+    "assunto": "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)"
+   },
    {
     "sha": "743d162",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "5214e86",
     "data": "2026-11-09",
     "assunto": "fix(banner): não apaga estado ao falhar query de conexões desconectadas (#2875)"
-   },
-   {
-    "sha": "a6c3519",
-    "data": "2026-11-09",
-    "assunto": "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)"
    }
   ],
-  "arquivos_mudados_7d": 650,
+  "arquivos_mudados_7d": 651,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 263
+    "mudancas": 264
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 18
+    "mudancas": 17
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8328,
   "arquivos_codigo": 4754,
-  "linhas_codigo": 878360,
+  "linhas_codigo": 878374,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2156,
-   "linhas": 368425
+   "linhas": 368439
   },
   "src/config": {
    "arquivos": 3,

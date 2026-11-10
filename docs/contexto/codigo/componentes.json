@@ -11178,7 +11178,7 @@
     "TalkXSegments"
    ],
    "export_default": null,
-   "linhas": 787,
+   "linhas": 801,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useAudienceEstimate",

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)",
    "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)",
    "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)",
    "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)",
-   "feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)",
-   "fix: corrige bug crítico de notificação em connection-health-check (#2910)"
+   "feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "743d162641a6f4370d2c9372b0de5cd097031d20",
+  "sha": "0a6d41eec298fe8e38b0e7048f3044ae4423032f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 02:19 UTC",
+  "generated_at": "2026-11-10 02:29 UTC",
   "files_total": 8169,
   "code_files": 6023,
-  "code_lines": 1044965
+  "code_lines": 1044979
  },
  "version": "1.3.2",
- "facts_hash": "5cee8a67927532fc",
+ "facts_hash": "bd9e3fd8762539c7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67605,7 +67605,7 @@
   {
    "module": "src/components",
    "files": 2156,
-   "lines": 368425,
+   "lines": 368439,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -303624,7 +303624,7 @@
   },
   "src/components/talkx/TalkXSegments.tsx": {
    "path": "src/components/talkx/TalkXSegments.tsx",
-   "lines": 787,
+   "lines": 801,
    "exports": [
     "function TalkXSegments"
    ],
@@ -383064,10 +383064,19 @@
   }
  },
  "git": {
-  "sha": "743d162641a6f4370d2c9372b0de5cd097031d20",
+  "sha": "0a6d41eec298fe8e38b0e7048f3044ae4423032f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "0a6d41e",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)",
+    "files": [
+     "src/components/talkx/TalkXSegments.tsx"
+    ]
+   },
    {
     "sha": "743d162",
     "date": "2026-11-09",
@@ -383370,29 +383379,9 @@
      "resgate-online/validacao/escopo.json",
      "resgate-online/validacao/progresso.json"
     ]
-   },
-   {
-    "sha": "0e0bdc4",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "ci(db-audit): corrige DB Guard offline e DB Live Guard (#2867)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/grants-baseline.json",
-     "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
-     "supabase/schema-catalog.json"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "scripts/db-audit/grants-baseline.json",
-    3
-   ],
-   [
-    "supabase/schema-catalog.json",
-    3
-   ],
    [
     "supabase/schema-manifest.json",
     3
@@ -383422,6 +383411,10 @@
     2
    ],
    [
+    "scripts/db-audit/grants-baseline.json",
+    2
+   ],
+   [
     "scripts/db-audit/known-violations.json",
     2
    ],
@@ -383430,7 +383423,7 @@
     2
    ],
    [
-    "docs/DB-INVENTORY.md",
+    "supabase/schema-catalog.json",
     2
    ],
    [
@@ -383438,8 +383431,8 @@
     2
    ],
    [
-    "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
-    2
+    "src/components/talkx/TalkXSegments.tsx",
+    1
    ],
    [
     "src/hooks/gamification/useAgentCelebrations.ts",
@@ -383463,6 +383456,10 @@
    ],
    [
     "src/hooks/realtime/realtimeUtils.ts",
+    1
+   ],
+   [
+    "supabase/deployment-manifest.json",
     1
    ]
   ]

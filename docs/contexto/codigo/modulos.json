@@ -6830,7 +6830,7 @@
    "modulo": "components/talkx",
    "arquivos": 100,
    "testes": 145,
-   "linhas": 23552,
+   "linhas": 23566,
    "itens_menu": [
     "Campanhas"
    ],
