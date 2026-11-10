@@ -620,7 +620,7 @@ def analyze_code_file(p: Path, root: Path) -> dict | None:
 # 4. Schema SQL (migrations / schema.sql / prisma / database.types.ts)
 # --------------------------------------------------------------------------- #
 SQL_CREATE_TABLE_RE = re.compile(r"create\s+(?:unlogged\s+|temp(?:orary)?\s+|global\s+|local\s+)*table\s+(?:if\s+not\s+exists\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s*\(", re.I)
-SQL_ALTER_ADD_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?\"?(\w+)\"?\s+([^,;]+)", re.I)
+SQL_ALTER_ADD_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?\"?(\w+)\"?\s+((?:[^,;(]|\([^)]*\))+)", re.I)
 SQL_ALTER_ADD_CONSTRAINT_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+add\s+constraint\s+\"?(\w+)\"?\s+([^;]+);", re.I)
 SQL_ALTER_COL_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+alter\s+(?:column\s+)?\"?(\w+)\"?\s+(set\s+not\s+null|drop\s+not\s+null|set\s+default\s+[^,;]+|drop\s+default|(?:set\s+data\s+)?type\s+[^,;]+)", re.I)
 SQL_ALTER_DROP_COL_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+drop\s+column\s+(?:if\s+exists\s+)?\"?(\w+)\"?", re.I)
@@ -944,10 +944,16 @@ def parse_sql_schema(root: Path, files: list[Path]) -> dict:
             schema["sources"].append(rel(f, root))
     # database.types.ts (Supabase gen types) — fonte quando migrations não têm a tabela
     for f in files:
-        if f.name in ("types.ts", "database.types.ts", "database.ts", "supabase.ts") and "Tables:" in read_text(f) and "Row:" in read_text(f):
-            txt = read_text(f)
+        if f.name in ("types.ts", "database.types.ts", "database.ts", "supabase.ts") and "Tables:" in read_text(f, 2_000_000) and "Row:" in read_text(f, 2_000_000):
+            txt = read_text(f, 2_000_000)
             schema["types_file"] = rel(f, root)
-            for name, row in re.findall(r"\n\s+(\w+):\s*\{\s*\n\s*Row:\s*\{([^}]*)\}", txt):
+            _public_start = txt.find("\n  public: {")
+            if _public_start < 0:
+                _public_start = txt.find("\n  public:{")
+            _tables_start = txt.find("    Tables:", _public_start) if _public_start >= 0 else txt.find("    Tables:")
+            _tables_end = txt.find("\n    Views:", _tables_start) if _tables_start >= 0 else -1
+            _tables_txt = txt[_tables_start:_tables_end] if _tables_start >= 0 and _tables_end > 0 else txt
+            for name, row in re.findall(r"\n\s+(\w+):\s*\{\s*\n\s*Row:\s*\{([^}]*)\}", _tables_txt):
                 cols = []
                 for line in row.strip().splitlines():
                     cm = re.match(r"\s*(\w+)\??:\s*(.+?)\s*;?$", line)
