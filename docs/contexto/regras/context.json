@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "61335ee424cfda0d65482ade3518b40194044bb3",
+  "sha": "11841dba9c34437603c183c67e539417551e083e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 02:39 UTC",
-  "files_total": 8170,
-  "code_files": 6024,
-  "code_lines": 1045047
+  "generated_at": "2026-11-10 02:51 UTC",
+  "files_total": 8195,
+  "code_files": 6049,
+  "code_lines": 1048602
  },
  "version": "1.3.2",
- "facts_hash": "cf3a28fe61f4e986",
+ "facts_hash": "ead6025703276415",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -313,9 +313,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2320,
-   ".ts": 1871,
-   ".sql": 1298,
+   ".tsx": 2335,
+   ".ts": 1880,
+   ".sql": 1299,
    ".mjs": 416,
    ".py": 119,
    ".cjs": 19,
@@ -17224,6 +17224,27 @@
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql"
+     },
+     {
+      "name": "last_processed_message_at",
+      "type": "timestamptz",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
+     },
+     {
+      "name": "intent",
+      "type": "text",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
+     },
+     {
+      "name": "sentiment",
+      "type": "text",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
      }
     ],
     "constraints": [
@@ -17318,6 +17339,27 @@
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20261030110000_copilot_insights.sql"
+     },
+     {
+      "name": "tier",
+      "type": "smallint NOT NULL DEFAULT 1 CHECK (tier IN (1, 2))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
+     },
+     {
+      "name": "latency_ms",
+      "type": "integer",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
+     },
+     {
+      "name": "data",
+      "type": "jsonb",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
      }
     ],
     "constraints": [],
@@ -42954,6 +42996,7 @@
    "supabase/migrations/20261031120000_copilot_phase4_brinde_intelligence.sql",
    "supabase/migrations/20261031130000_search_event_rpc.sql",
    "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql",
+   "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql",
    "supabase/migrations/20261031170000_high3-fk-indexes.sql",
    "supabase/migrations/20261101213000_rls_update_with_check_explicit.sql",
    "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql",
@@ -64511,7 +64554,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2156,
+  "components_count": 2171,
   "hooks": [
    {
     "name": "useContacts",
@@ -65374,6 +65417,10 @@
     "file": "src/hooks/copilot/useCopilotLearning.ts"
    },
    {
+    "name": "useCopilotSession",
+    "file": "src/hooks/copilot/useCopilotSession.ts"
+   },
+   {
     "name": "useCopilotSupervisor",
     "file": "src/hooks/copilot/useCopilotSupervisor.ts"
    },
@@ -65442,6 +65489,10 @@
     "file": "src/hooks/copilot/useLiveScoring.ts"
    },
    {
+    "name": "useLiveSuggestions",
+    "file": "src/hooks/copilot/useLiveSuggestions.ts"
+   },
+   {
     "name": "useLogoAnalysis",
     "file": "src/hooks/copilot/useLogoAnalysis.ts"
    },
@@ -65508,6 +65559,10 @@
    {
     "name": "useQuoteDraft",
     "file": "src/hooks/copilot/useQuoteDraft.ts"
+   },
+   {
+    "name": "useRadarPanel",
+    "file": "src/hooks/copilot/useRadarPanel.ts"
    },
    {
     "name": "useSilenceDetector",
@@ -67605,8 +67660,8 @@
   },
   {
    "module": "src/components",
-   "files": 2156,
-   "lines": 368439,
+   "files": 2171,
+   "lines": 370420,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -67888,19 +67943,31 @@
   },
   {
    "module": "src/data",
-   "files": 1,
-   "lines": 637,
+   "files": 5,
+   "lines": 974,
    "tables": [],
    "exports": [
-    "emojiDatabase.ts: EmojiEntry, EmojiCategoryData, emojiDatabase, getAllEmojis, searchEmojis, EMOJI_CATEGORY_KEYS"
+    "emojiDatabase.ts: EmojiEntry, EmojiCategoryData, emojiDatabase, getAllEmojis, searchEmojis, EMOJI_CATEGORY_KEYS",
+    "brinde-questions.ts: BrindeLetter, BrindeQuestion, BRINDE_QUESTIONS, getBrindeQuestion, getMissingLetters",
+    "commercial-calendar.ts: CommercialEvent, COMMERCIAL_CALENDAR, daysUntil, getOccasionEvent",
+    "sale-stages.ts: SALE_STAGES, SaleStage, FaseVenda, SALE_STAGE_META, isSaleStage",
+    "winning-plays.ts: PlayCategory, SaleStage, BrindeLetter, WinningPlay, WINNING_PLAYS, getRelevantPlays"
    ],
    "docs": [
-    "emojiDatabase.ts: Comprehensive emoji database with Portuguese keywords for search"
+    "emojiDatabase.ts: Comprehensive emoji database with Portuguese keywords for search",
+    "brinde-questions.ts: CV-033 — Biblioteca de perguntas para letras B·R·I·N·D·E ausentes. Perguntas escolhidas pela fase da venda (início/meio/fim, ver sale-stages.ts), naturais para o contexto. Cada letra tem múltiplas variantes; o componente escolhe pela etapa atual.",
+    "commercial-calendar.ts: CV-036 — Calendário comercial de brindes da Promo Brindes. Datas sazonais com antecedência ideal de pedido por tipo de produto.",
+    "sale-stages.ts: Etapas da venda do RADAR — os valores de `copilot_sessions.sale_stage` (CHECK da migration 20261030100000). Fonte única para rótulo, cor e fase.",
+    "winning-plays.ts: CV-007 / CV-042 — Biblioteca de plays vencedoras para o copilot RADAR. 12 plays mapeadas por etapa e letra B·R·I·N·D·E."
    ],
    "deps": [],
    "imports_modules": [],
    "file_list": [
-    "src/data/emojiDatabase.ts"
+    "src/data/emojiDatabase.ts",
+    "src/data/copilot/brinde-questions.ts",
+    "src/data/copilot/commercial-calendar.ts",
+    "src/data/copilot/sale-stages.ts",
+    "src/data/copilot/winning-plays.ts"
    ]
   },
   {
@@ -67941,8 +68008,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 982,
-   "lines": 159764,
+   "files": 985,
+   "lines": 160179,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -67972,6 +68039,8 @@
     "conversation_snoozes",
     "conversation_tasks",
     "copilot_feedback",
+    "copilot_insights",
+    "copilot_sessions",
     "csat_surveys",
     "custom_emojis",
     "deal_activities",
@@ -68113,6 +68182,7 @@
     "src/adapters",
     "src/components",
     "src/config",
+    "src/data",
     "src/i18n",
     "src/integrations",
     "src/lib",
@@ -68974,8 +69044,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 381,
-   "lines": 115798,
+   "files": 383,
+   "lines": 116563,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -69092,6 +69162,7 @@
     "ai-vocabulary.ts: SENTIMENT_VALUES, Sentiment, URGENCY_VALUES, Urgency, OPERATIONAL_PRIORITY_VALUES, OperationalPriority",
     "contract-kit.ts: VersionedSchemas, SchemaInput, ParseOk, ParseFail, ParseResult, contractHeaders",
     "contracts.ts: ContractVersion, V1_SUNSET, getContractVersion, deprecationHeaders, parseVersioned",
+    "copilot-tick.ts: COPILOT_TICK_KIND, COPILOT_FUNCTION_NAME, COPILOT_CAPABILITY_KEY, MAX_NEW_MESSAGES, MAX_CONTEXT_MESSAGES, CopilotTickError",
     "cors-origins.ts: EXACT_ALLOWED_ORIGINS, FALLBACK_ORIGIN, ORIGIN_PATTERNS, LOCALHOST_PATTERNS, isAllowedOrigin, allowedOriginFor",
     "crm-integration-contract.ts: CRM_RPC_ALLOWLIST, CRM_TABLE_ALLOWLIST, FILTER_OPERATORS, EXPECTED_EXTERNAL_PROJECT_REF, MUTABLE_FIELDS, ValidSyncResult",
     "cron-secret-auth.ts: UserLookupClient, timingSafeStringEqual, CronOrUserAuthOptions, PrivilegedCronOrUserAuthOptions, CronOrUserAuthz, authorizeCronOrUser",
@@ -69108,8 +69179,7 @@
     "evolution-media.ts: isValidMediaBytes, persistMediaToStorage, persistBase64Media, persistMediaViaApi, ParsedMessage, parseMessageContent",
     "evolution-send.ts: evoFetch, extractMessageId, extractBase64Media, extractAvatarUrl, extractConnectionState",
     "evolution-session-routes.ts: EvolutionFlavor, SessionAction, SessionAuth, SessionRoute, resolveEvolutionFlavor, resolveSessionRoute",
-    "evolution-sync-actions.ts: syncContacts, goHistoryNotSupported, syncMessages, syncAllMessages, setupWebhook, cleanupMock",
-    "evolution-types.ts: EvolutionRow, EvolutionDbError, EvolutionQueryResult, EvolutionFilterBuilder, EvolutionTableBuilder, EvolutionStorageBucket"
+    "evolution-sync-actions.ts: syncContacts, goHistoryNotSupported, syncMessages, syncAllMessages, setupWebhook, cleanupMock"
    ],
    "docs": [
     "ai-circuit.test.ts: IA-050 — circuit breaker por provedor de IA no despacho central. Defeito provado na auditoria (IA-CIRCUIT-001): `generateWithRouting` retentava e devolvia erro explícito, mas NUNCA suspendia um provedor que só falha — cada request novo voltava a bater no provedor caído (fetch real + espera + custo). …",
@@ -69153,6 +69223,7 @@
     "supabase/functions/_shared/ai-vocabulary.ts",
     "supabase/functions/_shared/contract-kit.ts",
     "supabase/functions/_shared/contracts.ts",
+    "supabase/functions/_shared/copilot-tick.ts",
     "supabase/functions/_shared/cors-origins.ts",
     "supabase/functions/_shared/crm-integration-contract.ts",
     "supabase/functions/_shared/cron-secret-auth.ts",
@@ -69204,14 +69275,13 @@
     "supabase/functions/_shared/voice-copilot-authz.ts",
     "supabase/functions/_shared/webhook-signature.ts",
     "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts",
-    "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts",
-    "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts"
+    "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts"
    ]
   },
   {
    "module": "supabase/migrations",
-   "files": 1098,
-   "lines": 105292,
+   "files": 1099,
+   "lines": 105349,
    "tables": [
     "audit_logs",
     "departments",
@@ -70200,21 +70270,28 @@
     ]
    },
    "copilot_insights": {
-    "update": [
-     "supabase/functions/copilot-live/index.ts"
+    "select": [
+     "src/hooks/copilot/useLiveSuggestions.ts"
     ],
     "insert": [
+     "supabase/functions/_shared/copilot-tick.ts",
+     "supabase/functions/copilot-live/index.ts"
+    ],
+    "update": [
      "supabase/functions/copilot-live/index.ts"
     ]
    },
    "copilot_sessions": {
-    "insert": [
-     "supabase/functions/copilot-live/index.ts"
-    ],
     "select": [
+     "src/hooks/copilot/useCopilotSession.ts",
+     "supabase/functions/_shared/copilot-tick.ts",
      "supabase/functions/copilot-live/index.ts"
     ],
     "update": [
+     "supabase/functions/_shared/copilot-tick.ts",
+     "supabase/functions/copilot-live/index.ts"
+    ],
+    "insert": [
      "supabase/functions/copilot-live/index.ts"
     ]
    },
@@ -70678,6 +70755,7 @@
      "src/services/contact.service.ts",
      "src/services/realtime.service.ts",
      "supabase/functions/_shared/ai-audio-authz.ts",
+     "supabase/functions/_shared/copilot-tick.ts",
      "supabase/functions/_shared/effect-reconcile.ts",
      "supabase/functions/_shared/evolution-helpers.ts",
      "supabase/functions/_shared/evolution-sync-actions.ts",
@@ -72231,13 +72309,21 @@
     "title"
    ],
    "copilot_insights": [
-    "session_id"
+    "content",
+    "created_at",
+    "data",
+    "dismissed_at",
+    "id",
+    "insight_type",
+    "session_id",
+    "state_version"
    ],
    "copilot_sessions": [
     "contact_id",
     "conversation_id",
     "id",
-    "profile_id"
+    "profile_id",
+    "state_version"
    ],
    "crm_contact_links": [
     "external_contact_id",
@@ -75099,6 +75185,9 @@
    "conversation:${contactId}": [
     "src/components/inbox/collaboration/ViewersIndicator.tsx"
    ],
+   "copilot_insights:${sessionId}": [
+    "src/hooks/copilot/useLiveSuggestions.ts"
+   ],
    "dashboard-realtime": [
     "src/hooks/analytics/useRealtimeDashboard.ts"
    ],
@@ -75918,6 +76007,22 @@
     "name": "ChatbotL1Output",
     "kind": "object",
     "body": "{ handled: z.boolean(), response: z.string().min(1), transfer_to_human: z.boolean(), transfer_reason: z.string().nullable().optional(), confidence: z.number().min(0).max(1).optional(), matched_article: z.string().nullable().optional(), detected_intent: z.string().nullable().optional(), detected_sentiment: sentimentSchema.optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "CopilotTier1Schema",
+    "kind": "object",
+    "body": "{ sale_stage: z.enum(SALE_STAGES).optional(), temperature: z.number().int().min(0).max(100).optional(), brinde: z.object({ budget: texto(120).optional(), responsible: texto(120).optional(), intention: texto(200).optional(), quantity: z.number().int().positive().max(10_000_000).optional(), deadline: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).optional(), delivery: texto(200).optional(), }).partial().optional(), brinde_evidence: z.record(texto(300)).optional(), intent: texto(80).optional(), sentiment: texto(40).optional(), comm_style: texto(80).optional(), decision_role: texto(80).optional(), occasion: texto(120).optional(), stakeholders: z.array(z.object({ name: texto(120).optional(), role: texto(120).optional() })).max(10).optional(), key_moments: z.array(texto(40)).max(10).optional(), risks: …",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "CopilotTier2Schema",
+    "kind": "object",
+    "body": "{ next_action: texto(160).optional(), suggestions: z.array(z.object({ path: z.enum(SUGGESTION_PATHS), text: texto(300), play_name: texto(80).optional(), sources: z.array(z.object({ text: texto(300), letter: z.enum([\"B\", \"R\", \"I\", \"N\", \"D\", \"E\"]).optional(), })).max(6).optional(), split_messages: z.array(texto(300)).max(3).optional(), })).min(1).max(3), }",
     "refines": [],
     "chain": []
    },
@@ -77375,6 +77480,36 @@
     "values": "navigation | action | search | recent | talkx"
    },
    {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "name": "BrindeLetter",
+    "values": "B | R | I | N | D | E"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "name": "FaseVenda",
+    "values": "inicio | meio | fim"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "name": "SALE_STAGES",
+    "values": "'novo_contato', 'qualificando', 'apresentando', 'negociando', 'fechando', 'pos_venda', 'perdido',"
+   },
+   {
+    "file": "src/data/copilot/winning-plays.ts",
+    "name": "PlayCategory",
+    "values": "descoberta | ancoragem | urgencia | fechamento | relacionamento | objection"
+   },
+   {
+    "file": "src/data/copilot/winning-plays.ts",
+    "name": "SaleStage",
+    "values": "E1 | E2 | E3 | E4 | E5 | E6"
+   },
+   {
+    "file": "src/data/copilot/winning-plays.ts",
+    "name": "BrindeLetter",
+    "values": "B | R | I | N | D | E"
+   },
+   {
     "file": "src/hooks/admin/useSupervisorQueue.ts",
     "name": "OPEN_CONVERSATION_STATUSES",
     "values": "'open', 'waiting', 'pending'"
@@ -77580,6 +77715,11 @@
     "values": "accepted | edited | rejected | ignored"
    },
    {
+    "file": "src/hooks/copilot/useCopilotSession.ts",
+    "name": "BrindeLetter",
+    "values": "B | R | I | N | D | E"
+   },
+   {
     "file": "src/hooks/copilot/useCopilotSupervisor.ts",
     "name": "InsightPriority",
     "values": "critical | high | medium | low"
@@ -77603,6 +77743,11 @@
     "file": "src/hooks/copilot/useLearningMoment.ts",
     "name": "LearningMomentType",
     "values": "new_objection | unknown_product | successful_close | missed_upsell | price_negotiation_won | customer_escalation"
+   },
+   {
+    "file": "src/hooks/copilot/useLiveSuggestions.ts",
+    "name": "SuggestionPath",
+    "values": "avancar | descobrir | relacionar"
    },
    {
     "file": "src/hooks/copilot/useLogoAnalysis.ts",
@@ -77633,6 +77778,16 @@
     "file": "src/hooks/copilot/usePIIDetector.ts",
     "name": "PIIType",
     "values": "cpf | cnpj | phone | email | card | address"
+   },
+   {
+    "file": "src/hooks/copilot/useRadarPanel.ts",
+    "name": "RadarMode",
+    "values": "mini | normal | focus"
+   },
+   {
+    "file": "src/hooks/copilot/useRadarPanel.ts",
+    "name": "RADAR_CARD_IDS",
+    "values": "'stage', 'brinde', 'suggestions', 'next_step', 'alerts', 'products', 'decision_maker',"
    },
    {
     "file": "src/hooks/copilot/useSpeedToLead.ts",
@@ -78623,6 +78778,21 @@
     "file": "supabase/functions/_shared/ai-vocabulary.ts",
     "name": "OPERATIONAL_PRIORITY_VALUES",
     "values": "'low', 'medium', 'high', 'urgent'"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "SALE_STAGES",
+    "values": "\"novo_contato\", \"qualificando\", \"apresentando\", \"negociando\", \"fechando\", \"pos_venda\", \"perdido\","
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "DECISION_ROLES",
+    "values": "\"buyer\", \"user\", \"approver\", \"intermediary\", \"unknown\""
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "SUGGESTION_PATHS",
+    "values": "\"avancar\", \"descobrir\", \"relacionar\""
    },
    {
     "file": "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -84083,6 +84253,10 @@
     "msg": "Não foi possível obter token de transcrição. Verifique a configuração da ElevenLabs."
    },
    {
+    "file": "src/hooks/copilot/useLiveSuggestions.ts",
+    "msg": "])\n        .is("
+   },
+   {
     "file": "src/hooks/copilot/useVoiceDictation.ts",
     "msg": "Geração da mensagem falhou."
    },
@@ -85461,6 +85635,34 @@
    {
     "file": "supabase/functions/_shared/ai-usage.ts",
     "msg": "serializarEstatisticasCanonicas: referência circular"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "msg": ", content: risk, data: { risk } });\n  }\n  if (out.next_action) {\n    rows.push({ ...base, insight_type: "
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "msg": "COPILOT_BAD_PAYLOAD"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "msg": "COPILOT_READ_FAILED"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "msg": "COPILOT_SESSION_NOT_FOUND"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "msg": "COPILOT_TIER1_CONTRACT"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "msg": "COPILOT_TIER1_FAILED"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "msg": "COPILOT_WRITE_FAILED"
    },
    {
     "file": "supabase/functions/_shared/crm-integration-contract.ts",
@@ -86965,6 +87167,14 @@
     "value": "supervisor"
    },
    {
+    "file": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+    "value": "intermediary"
+   },
+   {
+    "file": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+    "value": "unknown"
+   },
+   {
     "file": "src/components/monitoring/hooks/useMonitoringNotifications.ts",
     "value": "granted"
    },
@@ -87003,6 +87213,10 @@
    {
     "file": "src/components/security/SecurityView.tsx",
     "value": "admin"
+   },
+   {
+    "file": "src/hooks/copilot/useCopilotSession.ts",
+    "value": "string"
    },
    {
     "file": "src/hooks/gamification/useAgentCelebrations.ts",
@@ -88209,6 +88423,18 @@
    {
     "file": "src/components/inbox/contact-details/sidebar/sidebarSections.ts",
     "text": "2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais,"
+   },
+   {
+    "file": "src/components/inbox/copilot/InsightCard.tsx",
+    "text": "CV-040: cartão sem fontes nunca deve existir — avisa no desenvolvimento */}"
+   },
+   {
+    "file": "src/components/inbox/copilot/MissingQuestions.tsx",
+    "text": "Mostra no máximo 2 sugestões para não poluir o painel"
+   },
+   {
+    "file": "src/components/inbox/copilot/OccasionAlert.tsx",
+    "text": "* CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega."
    },
    {
     "file": "src/components/inbox/interactive-builder/useInteractiveMessage.ts",
@@ -90191,6 +90417,10 @@
     "text": "e objeções tratadas. Proxy da saúde do negócio em tempo real."
    },
    {
+    "file": "src/hooks/copilot/useLiveSuggestions.ts",
+    "text": "(`state_version` máximo), o próximo passo e os alertas. Assina o Realtime de"
+   },
+   {
     "file": "src/hooks/copilot/useMinQuantityAlert.ts",
     "text": "* Quando o cliente pede uma quantidade abaixo do mínimo do produto,"
    },
@@ -90213,6 +90443,10 @@
    {
     "file": "src/hooks/copilot/useMinQuantityAlternative.ts",
     "text": "* Caminhos para chegar ao mínimo sem perder o pedido. */"
+   },
+   {
+    "file": "src/hooks/copilot/useRadarPanel.ts",
+    "text": "Relógio do \"não perturbe\" por tempo: atualizado no clique e quando o prazo vence."
    },
    {
     "file": "src/hooks/copilot/useSmartTemplates.ts",
@@ -92949,6 +93183,14 @@
    {
     "file": "supabase/functions/_shared/contract-kit.ts",
     "text": "* Versão efetivamente aplicada na validação. */"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "text": "* Máximo de mensagens novas enviadas ao modelo por tick. */"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "text": "Sanitiza deadline inválida antes de usar em patch ou prompt tier2."
    },
    {
     "file": "supabase/functions/_shared/cors-origins.ts",
@@ -102781,6 +103023,11 @@
     "rule": "default now()"
    },
    {
+    "table": "copilot_insights",
+    "column": "tier",
+    "rule": "default 1; CHECK tier IN (1, 2)"
+   },
+   {
     "table": "copilot_outcomes",
     "column": "id",
     "rule": "PK; default gen_random_uuid()"
@@ -103686,6 +103933,11 @@
     "file": "src/components/inbox/contact-details/storyUtils.ts",
     "name": "STORY_DURATION_MS",
     "value": "5000"
+   },
+   {
+    "file": "src/components/inbox/copilot/RadarPanel.tsx",
+    "name": "THINKING_TIMEOUT_MS",
+    "value": "8000"
    },
    {
     "file": "src/components/inbox/location-picker/useAddressAutocomplete.ts",
@@ -104891,6 +105143,11 @@
     "file": "src/hooks/copilot/useGhostText.ts",
     "name": "MIN_INPUT_LEN",
     "value": "4"
+   },
+   {
+    "file": "src/hooks/copilot/useLiveSuggestions.ts",
+    "name": "LIMITE",
+    "value": "30"
    },
    {
     "file": "src/hooks/copilot/useLossRiskDetector.ts",
@@ -106756,6 +107013,21 @@
     "file": "supabase/functions/_shared/ai-usage.ts",
     "name": "CAUDA_MAXIMA",
     "value": "16"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "COPILOT_TICK_KIND",
+    "value": "\"copilot.tick\""
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "MAX_NEW_MESSAGES",
+    "value": "20"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "MAX_CONTEXT_MESSAGES",
+    "value": "5"
    },
    {
     "file": "supabase/functions/_shared/cors-origins.ts",
@@ -111328,6 +111600,24 @@
     "kind": "compara"
    },
    {
+    "file": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+    "field": "role",
+    "value": "unknown",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+    "field": "role",
+    "value": "intermediary",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/copilot/InsightCard.tsx",
+    "field": "type",
+    "value": "suggestion",
+    "kind": "escreve"
+   },
+   {
     "file": "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx",
     "field": "type",
     "value": "reply",
@@ -115078,6 +115368,150 @@
     "kind": "compara"
    },
    {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/brinde-questions.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "field": "fase",
+    "value": "inicio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "field": "fase",
+    "value": "meio",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/data/copilot/sale-stages.ts",
+    "field": "fase",
+    "value": "fim",
+    "kind": "escreve"
+   },
+   {
     "file": "src/features/talk-me/TalkMeView.tsx",
     "field": "status",
     "value": "loading",
@@ -115676,6 +116110,18 @@
     "field": "role",
     "value": "primary",
     "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/copilot/useCopilotSession.ts",
+    "field": "sale_stage",
+    "value": "novo_contato",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/copilot/useCopilotSession.ts",
+    "field": "role",
+    "value": "string",
+    "kind": "compara"
    },
    {
     "file": "src/hooks/copilot/useDataMasking.ts",
@@ -119710,6 +120156,96 @@
     "kind": "compara"
    },
    {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "type",
+    "value": "price_request",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "type",
+    "value": "objection",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "type",
+    "value": "buy_signal",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "type",
+    "value": "competitor_mention",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "type",
+    "value": "deadline_request",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "type",
+    "value": "logo_sent",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "type",
+    "value": "unanswered_question",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "status",
+    "value": "succeeded",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "status",
+    "value": "succeeded",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "status",
+    "value": "succeeded",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "status",
+    "value": "succeeded",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "field": "status",
+    "value": "succeeded",
+    "kind": "escreve"
+   },
+   {
     "file": "supabase/functions/_shared/crm-integration-contract.ts",
     "field": "role",
     "value": "anon",
@@ -123456,6 +123992,12 @@
     "body": "const valid: number[] = []; let discarded = 0; for (const raw of values) { if (typeof raw === 'number' && Number.isFinite(raw)) valid.push(raw); else discarded += 1; } if (valid.length === 0) return { average: null, sampleSize: 0, discarded }; const sum = valid.reduce((acc, n) => acc + n, 0); return { average: Math.round((sum / valid.length) * 100) / 100, sampleSize: valid.length, discarded, };"
    },
    {
+    "file": "supabase/functions/_shared/copilot-tick.ts",
+    "name": "shouldUseTier2",
+    "params": "keyMoments: string[]",
+    "body": "return keyMoments.some((m) => TIER2_MOMENTS.has(m));"
+   },
+   {
     "file": "supabase/functions/_shared/crm-integration-contract.ts",
     "name": "validIdentifier",
     "params": "value: unknown",
@@ -124112,6 +124654,10 @@
    {
     "file": "src/hooks/communication/useAudioPlayer.ts",
     "line": "const SIGNED_URL_REFRESH_AFTER_MS = 50 * 60 * 1000;"
+   },
+   {
+    "file": "src/hooks/copilot/useRadarPanel.ts",
+    "line": "update({ dndConversationId: null, dndUntil: now + 30 * 60 * 1000 });"
    },
    {
     "file": "src/hooks/copilot/useWhisperChannel.ts",
@@ -149152,6 +149698,290 @@
    {
     "file": "src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts",
     "name": "sem preferência gravada o delivery já vem aberto no default"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "BrindeMeter CV-032"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "renderiza 6 casinhas"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "chama onLetterClick com a letra e msgId corretos"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "MissingQuestions CV-033"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "nao renderiza quando todas as letras estao preenchidas"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "sugere perguntas para letras ausentes"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "chama onSelectQuestion ao clicar"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "getMissingLetters"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "retorna lista vazia quando todas preenchidas"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "retorna 6 letras quando estado vazio"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "retorna so as letras ausentes"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "InsightCard CV-040"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "exibe aviso quando sources vazio"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+    "name": "exibe botao de justificativa quando ha sources"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "LiveSuggestions CV-041"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "renderiza 3 cartões de sugestão"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "exibe labels de caminho corretos"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "chama onUse com o texto correto ao clicar em Usar"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "exibe play_name quando presente"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "exibe estado de carregamento quando loading=true e sem sugestões"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "exibe estado vazio quando sem sugestões"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "LiveSuggestions CV-049 tone chips"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "renderiza os 5 tone chips"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "alterna chip ativo ao clicar duas vezes"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "LiveSuggestions CV-047 split"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "mostra botão de split para sugestão com split_messages"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "chama onUseSplit ao clicar "
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "getRelevantPlays CV-042"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "filtra por etapa"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "inclui plays sem brindeLetter independente das letras faltando"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+    "name": "retorna no máximo 5 plays"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "toCopilotSessionState"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "mapeia as colunas brinde_* para as letras e a evidência pela chave do motor"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "etapa desconhecida cai em novo_contato"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "splitInsights"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "usa só a rodada mais recente e ordena avançar → descobrir → relacionar"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "RadarLive"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "sem sessão (motor desligado) não renderiza nada"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "com sessão mostra o painel com a etapa real"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "atalhos do RadarPanel"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "Ctrl+Shift+L recolhe e Ctrl+Alt+1 usa a sugestão; Ctrl+1 fica com o navegador"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "etapas reais"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "StageIndicator mostra o rotulo e converte 0–100 em 10 barras"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+    "name": "pergunta B·R·I·N·D·E escolhida pela fase da etapa"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "RadarPanel CV-051"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "renderiza o painel com aria-label "
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "renderiza versão recolhida com botão de expandir"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "chama onToggleCollapsed ao clicar em recolher"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "RadarPanel CV-052 modos"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "renderiza 3 botões de modo"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "modo Mini exibe apenas o card de sugestões resumido"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "modo Normal exibe cartões"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "chama onSetMode ao clicar em Foco"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "RadarPanel CV-053 cartões recolhíveis"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "chama onToggleCard ao clicar no header do cartão Stage"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "cartão recolhido não mostra conteúdo (aria-expanded=false)"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "RadarPanel CV-054 indicador de pensamento"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "exibe ping de carregamento quando suggestionsLoading=true"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "exibe mensagem de timeout após THINKING_TIMEOUT_MS"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "RadarPanel CV-058 DND"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "exibe banner quando isDnd=true"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "botão "
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "botão silenciar chama onEnableDnd com conversationId"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "useRadarPanel CV-052/058"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "modo inicial é normal"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "setMode persiste"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "isDnd=false por padrão"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "enableDnd por conversa ativa isDnd para aquela conversa"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "enableDnd por conversa NÃO ativa isDnd para outra conversa"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "clearDnd desativa isDnd"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "toggleCard adiciona e remove de collapsedCards"
    },
    {
     "file": "src/components/inbox/location-picker/__tests__/LocationPicker.gpsAtrasado.test.tsx",
@@ -198926,6 +199756,50 @@
     "name": "SL-013: nenhum ponto de log de consumo descarta a promessa com "
    },
    {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "capacidade desligada: não chama o provedor nem grava"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "leitura da capacidade falhou: fecha (não gasta)"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "momento-chave de preço: dois andares, sessão e insights gravados"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "só mensagens antes do cursor: nada novo, não chama o provedor"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "sem momento-chave forte: só o andar 1"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "andar 2 inválido não derruba o andar 1"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "trava otimista: outro tick gravou antes → não grava insight nem avança"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "saída do andar 1 fora do contrato vira falha do job com código"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "payload inválido e sessão inexistente são falhas com código"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "patch não apaga o que já se sabia e reconta o medidor"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+    "name": "momentos-chave: só mensagens do contato contam; andar 2 só nos fortes"
+   },
+   {
     "file": "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts",
     "name": "normalizes valid phones and rejects malformed values"
    },
@@ -232726,6 +233600,10 @@
     "limit": "5"
    },
    {
+    "file": "src/hooks/copilot/useCopilotSession.ts",
+    "limit": "1"
+   },
+   {
     "file": "src/hooks/crm/useContactCrm360.ts",
     "limit": "20"
    },
@@ -234273,6 +235151,10 @@
      "whatsapp": [
       "escreve:src/components/inbox/contact-details/ContactActionButtons.tsx"
      ],
+     "suggestion": [
+      "escreve:src/components/inbox/copilot/InsightCard.tsx",
+      "escreve:supabase/functions/copilot-live/index.ts"
+     ],
      "SET_QUERY": [
       "compara:src/components/inbox/location-picker/useAddressAutocomplete.ts",
       "escreve:src/components/inbox/location-picker/useAddressAutocomplete.ts"
@@ -234847,6 +235729,27 @@
       "escreve:supabase/functions/classify-emoji/index.ts",
       "escreve:supabase/functions/classify-sticker/index.ts"
      ],
+     "price_request": [
+      "escreve:supabase/functions/_shared/copilot-tick.ts"
+     ],
+     "objection": [
+      "escreve:supabase/functions/_shared/copilot-tick.ts"
+     ],
+     "buy_signal": [
+      "escreve:supabase/functions/_shared/copilot-tick.ts"
+     ],
+     "competitor_mention": [
+      "escreve:supabase/functions/_shared/copilot-tick.ts"
+     ],
+     "deadline_request": [
+      "escreve:supabase/functions/_shared/copilot-tick.ts"
+     ],
+     "logo_sent": [
+      "escreve:supabase/functions/_shared/copilot-tick.ts"
+     ],
+     "unanswered_question": [
+      "escreve:supabase/functions/_shared/copilot-tick.ts"
+     ],
      "ptt": [
       "escreve:supabase/functions/_shared/evolution-go-routes.ts"
      ],
@@ -234879,9 +235782,6 @@
      ],
      "connection_alert_email": [
       "escreve:supabase/functions/connection-health-check/index.ts"
-     ],
-     "suggestion": [
-      "escreve:supabase/functions/copilot-live/index.ts"
      ],
      "csp-violation": [
       "compara:supabase/functions/csp-report/index.ts",
@@ -235854,6 +236754,7 @@
      ],
      "succeeded": [
       "compara:supabase/functions/crm-integration/index.ts",
+      "escreve:supabase/functions/_shared/copilot-tick.ts",
       "escreve:supabase/functions/_shared/effect-reconcile.ts",
       "escreve:supabase/functions/ai-jobs-worker/index.ts"
      ],
@@ -235922,6 +236823,7 @@
       "escreve:src/hooks/inbox/useObjectionDetector.ts",
       "escreve:src/hooks/ui/useUniversityHelp.ts",
       "escreve:supabase/functions/_shared/ai-conversation-pipeline.ts",
+      "escreve:supabase/functions/_shared/copilot-tick.ts",
       "escreve:supabase/functions/ai-auto-tag/index.ts",
       "escreve:supabase/functions/ai-enhance-message/index.ts",
       "escreve:supabase/functions/ai-proxy/index.ts",
@@ -235960,6 +236862,12 @@
      "region": [
       "escreve:src/components/contacts/ContactActivityTimeline.tsx"
      ],
+     "unknown": [
+      "compara:src/components/inbox/copilot/DecisionMakerBadge.tsx"
+     ],
+     "intermediary": [
+      "compara:src/components/inbox/copilot/DecisionMakerBadge.tsx"
+     ],
      "img": [
       "escreve:src/components/tasks/shared/PriorityPill.tsx"
      ],
@@ -235968,6 +236876,10 @@
      ],
      "primary": [
       "escreve:src/hooks/copilot/useBrandColors.ts"
+     ],
+     "string": [
+      "compara:src/hooks/copilot/useCopilotSession.ts",
+      "compara:supabase/functions/multiplix-dispatch/actions/audience.ts"
      ],
      "follower": [
       "escreve:src/lib/calls/tabLeaderStore.ts"
@@ -235982,9 +236894,6 @@
      ],
      "service_role": [
       "compara:supabase/functions/_shared/crm-integration-contract.ts"
-     ],
-     "string": [
-      "compara:supabase/functions/multiplix-dispatch/actions/audience.ts"
      ]
     },
     "tipo": {
@@ -236378,6 +237287,20 @@
       "compara:src/components/voice/usePhaseColors.ts"
      ]
     },
+    "fase": {
+     "inicio": [
+      "escreve:src/data/copilot/brinde-questions.ts",
+      "escreve:src/data/copilot/sale-stages.ts"
+     ],
+     "meio": [
+      "escreve:src/data/copilot/brinde-questions.ts",
+      "escreve:src/data/copilot/sale-stages.ts"
+     ],
+     "fim": [
+      "escreve:src/data/copilot/brinde-questions.ts",
+      "escreve:src/data/copilot/sale-stages.ts"
+     ]
+    },
     "call_status": {
      "string": [
       "compara:src/hooks/communication/useIncomingCallListener.ts"
@@ -236397,6 +237320,11 @@
      ],
      "string": [
       "compara:supabase/functions/ai-transcribe-audio/index.ts"
+     ]
+    },
+    "sale_stage": {
+     "novo_contato": [
+      "escreve:src/hooks/copilot/useCopilotSession.ts"
      ]
     },
     "connection_status": {
@@ -236461,6 +237389,7 @@
    "customers_own",
    "denied",
    "granted",
+   "intermediary",
    "leader",
    "next",
    "owner",
@@ -236470,6 +237399,7 @@
    "special_agent",
    "string",
    "supervisor",
+   "unknown",
    "value"
   ],
   "role_tables": [
@@ -291796,6 +292726,246 @@
     }
    ]
   },
+  "src/components/inbox/copilot/BrindeMeter.tsx": {
+   "path": "src/components/inbox/copilot/BrindeMeter.tsx",
+   "lines": 75,
+   "exports": [
+    "function BrindeMeter"
+   ],
+   "doc": "CV-032 — Medidor B·R·I·N·D·E do painel RADAR. 6 casinhas que acendem em cinza/amarelo/verde conforme o preenchimento. Clique em uma casinha leva à mensagem de origem (se disponível)."
+  },
+  "src/components/inbox/copilot/DecisionMakerBadge.tsx": {
+   "path": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+   "lines": 42,
+   "exports": [
+    "function DecisionMakerBadge"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "unknown",
+     "kind": "compara"
+    },
+    {
+     "field": "role",
+     "value": "intermediary",
+     "kind": "compara"
+    }
+   ],
+   "role_checks": [
+    "intermediary",
+    "unknown"
+   ],
+   "doc": "CV-038 — Indicador do papel do decisor na compra. Quando \"intermediário\", o painel sugere material para encaminhar."
+  },
+  "src/components/inbox/copilot/InsightCard.tsx": {
+   "path": "src/components/inbox/copilot/InsightCard.tsx",
+   "lines": 110,
+   "exports": [
+    "function InsightCard"
+   ],
+   "status_values": [
+    {
+     "field": "type",
+     "value": "suggestion",
+     "kind": "escreve"
+    }
+   ],
+   "rule_comments": [
+    "CV-040: cartão sem fontes nunca deve existir — avisa no desenvolvimento */}"
+   ],
+   "doc": "CV-040 — Cartão de insight com justificativa (explicabilidade). Todo cartão tem \"por que estou sugerindo isso?\" com evidência."
+  },
+  "src/components/inbox/copilot/LiveSuggestions.tsx": {
+   "path": "src/components/inbox/copilot/LiveSuggestions.tsx",
+   "lines": 232,
+   "exports": [
+    "type LiveTone",
+    "function LiveSuggestions"
+   ],
+   "doc": "CV-041–050 — Painel de sugestões ao vivo do copilot RADAR. Exibe 3 caminhos estratégicos (avançar, descobrir, relacionar) com tone chips, split de mensagem e justificativa de fontes."
+  },
+  "src/components/inbox/copilot/MissingQuestions.tsx": {
+   "path": "src/components/inbox/copilot/MissingQuestions.tsx",
+   "lines": 58,
+   "exports": [
+    "function MissingQuestions"
+   ],
+   "rule_comments": [
+    "Mostra no máximo 2 sugestões para não poluir o painel"
+   ],
+   "doc": "CV-033 — \"O que falta perguntar\" — sugestões de pergunta para letras B·R·I·N·D·E vazias. Nunca sugere pergunta sobre letra já confirmada."
+  },
+  "src/components/inbox/copilot/OccasionAlert.tsx": {
+   "path": "src/components/inbox/copilot/OccasionAlert.tsx",
+   "lines": 45,
+   "exports": [
+    "function OccasionAlert"
+   ],
+   "rule_comments": [
+    "* CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega."
+   ],
+   "doc": "CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega."
+  },
+  "src/components/inbox/copilot/RadarCards.tsx": {
+   "path": "src/components/inbox/copilot/RadarCards.tsx",
+   "lines": 264,
+   "exports": [
+    "function StageCard",
+    "function BrindeCard",
+    "function SuggestionsCard",
+    "function NextStepCard",
+    "function AlertsCard",
+    "function ProductsCard",
+    "function DecisionMakerCard"
+   ],
+   "doc": "CV-053 — Cartões do painel RADAR. Cada cartão é recolhível. Reaproveitam componentes existentes."
+  },
+  "src/components/inbox/copilot/RadarLive.tsx": {
+   "path": "src/components/inbox/copilot/RadarLive.tsx",
+   "lines": 61,
+   "exports": [
+    "interface RadarLiveProps",
+    "function RadarLive"
+   ]
+  },
+  "src/components/inbox/copilot/RadarPanel.tsx": {
+   "path": "src/components/inbox/copilot/RadarPanel.tsx",
+   "lines": 462,
+   "exports": [
+    "interface RadarPanelProps",
+    "function RadarPanel"
+   ],
+   "params": [
+    {
+     "name": "THINKING_TIMEOUT_MS",
+     "value": "8000"
+    }
+   ],
+   "doc": "CV-051–060 — Painel RADAR flutuante. Pop-up encãixado no Chat Panel: arrastável, 3 modos, mobile bottom drawer, \"ãão perturbe\", acessibilidade, atalhos de teclado, indicador de pensamento."
+  },
+  "src/components/inbox/copilot/StageIndicator.tsx": {
+   "path": "src/components/inbox/copilot/StageIndicator.tsx",
+   "lines": 52,
+   "exports": [
+    "function StageIndicator"
+   ],
+   "doc": "CV-034 — Indicador de etapa da venda com temperatura de compra (0–100, em 10 barras)."
+  },
+  "src/components/inbox/copilot/StakeholdersCard.tsx": {
+   "path": "src/components/inbox/copilot/StakeholdersCard.tsx",
+   "lines": 48,
+   "exports": [
+    "function StakeholdersCard"
+   ],
+   "doc": "CV-039 — Mapa de múltiplos interessados mencionados na conversa."
+  },
+  "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx": {
+   "path": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+   "lines": 92,
+   "is_test": true,
+   "doc": "CV-032 — Testes de componente BrindeMeter. CV-033 — Testes do MissingQuestions. CV-040 — InsightCard sem sources mostra \"(justificativa não disponível)\".",
+   "tests": [
+    "BrindeMeter CV-032",
+    "renderiza 6 casinhas",
+    "chama onLetterClick com a letra e msgId corretos",
+    "MissingQuestions CV-033",
+    "nao renderiza quando todas as letras estao preenchidas",
+    "sugere perguntas para letras ausentes",
+    "chama onSelectQuestion ao clicar",
+    "getMissingLetters",
+    "retorna lista vazia quando todas preenchidas",
+    "retorna 6 letras quando estado vazio",
+    "retorna so as letras ausentes",
+    "InsightCard CV-040",
+    "exibe aviso quando sources vazio",
+    "exibe botao de justificativa quando ha sources"
+   ]
+  },
+  "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx": {
+   "path": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+   "lines": 140,
+   "is_test": true,
+   "doc": "CV-041–050 — Testes do componente LiveSuggestions. CV-043 — Caminhos estratégicos (avançar, descobrir, relacionar). CV-047 — Split de mensagem. CV-049 — Tone chips.",
+   "tests": [
+    "LiveSuggestions CV-041",
+    "renderiza 3 cartões de sugestão",
+    "exibe labels de caminho corretos",
+    "chama onUse com o texto correto ao clicar em Usar",
+    "exibe play_name quando presente",
+    "exibe estado de carregamento quando loading=true e sem sugestões",
+    "exibe estado vazio quando sem sugestões",
+    "LiveSuggestions CV-049 tone chips",
+    "renderiza os 5 tone chips",
+    "alterna chip ativo ao clicar duas vezes",
+    "LiveSuggestions CV-047 split",
+    "mostra botão de split para sugestão com split_messages",
+    "chama onUseSplit ao clicar ",
+    "getRelevantPlays CV-042",
+    "filtra por etapa",
+    "inclui plays sem brindeLetter independente das letras faltando",
+    "retorna no máximo 5 plays"
+   ]
+  },
+  "src/components/inbox/copilot/__tests__/RadarLive.test.tsx": {
+   "path": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+   "lines": 120,
+   "is_test": true,
+   "errors": [
+    ", content: "
+   ],
+   "doc": "RADAR Fases 4–6 sobre o esquema atual: conversores das linhas do banco, contêiner sem sessão (motor desligado) e atalhos do painel (sem colidir com o navegador).",
+   "tests": [
+    "toCopilotSessionState",
+    "mapeia as colunas brinde_* para as letras e a evidência pela chave do motor",
+    "etapa desconhecida cai em novo_contato",
+    "splitInsights",
+    "usa só a rodada mais recente e ordena avançar → descobrir → relacionar",
+    "RadarLive",
+    "sem sessão (motor desligado) não renderiza nada",
+    "com sessão mostra o painel com a etapa real",
+    "atalhos do RadarPanel",
+    "Ctrl+Shift+L recolhe e Ctrl+Alt+1 usa a sugestão; Ctrl+1 fica com o navegador",
+    "etapas reais",
+    "StageIndicator mostra o rotulo e converte 0–100 em 10 barras",
+    "pergunta B·R·I·N·D·E escolhida pela fase da etapa"
+   ]
+  },
+  "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx": {
+   "path": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+   "lines": 180,
+   "is_test": true,
+   "doc": "CV-051–060 — Testes do RadarPanel e useRadarPanel. CV-051: floating panel render. CV-052: three display modes. CV-053: collapsible cards. CV-054: thinking indicator + timeout message. CV-056: keyboard shortcuts. CV-058: DND mode.",
+   "tests": [
+    "RadarPanel CV-051",
+    "renderiza o painel com aria-label ",
+    "renderiza versão recolhida com botão de expandir",
+    "chama onToggleCollapsed ao clicar em recolher",
+    "RadarPanel CV-052 modos",
+    "renderiza 3 botões de modo",
+    "modo Mini exibe apenas o card de sugestões resumido",
+    "modo Normal exibe cartões",
+    "chama onSetMode ao clicar em Foco",
+    "RadarPanel CV-053 cartões recolhíveis",
+    "chama onToggleCard ao clicar no header do cartão Stage",
+    "cartão recolhido não mostra conteúdo (aria-expanded=false)",
+    "RadarPanel CV-054 indicador de pensamento",
+    "exibe ping de carregamento quando suggestionsLoading=true",
+    "exibe mensagem de timeout após THINKING_TIMEOUT_MS",
+    "RadarPanel CV-058 DND",
+    "exibe banner quando isDnd=true",
+    "botão ",
+    "botão silenciar chama onEnableDnd com conversationId",
+    "useRadarPanel CV-052/058",
+    "modo inicial é normal",
+    "setMode persiste",
+    "isDnd=false por padrão",
+    "enableDnd por conversa ativa isDnd para aquela conversa",
+    "enableDnd por conversa NÃO ativa isDnd para outra conversa",
+    "clearDnd desativa isDnd",
+    "toggleCard adiciona e remove de collapsedCards"
+   ]
+  },
   "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx": {
    "path": "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx",
    "lines": 25,
@@ -314581,6 +315751,208 @@
    ],
    "doc": "Comprehensive emoji database with Portuguese keywords for search"
   },
+  "src/data/copilot/brinde-questions.ts": {
+   "path": "src/data/copilot/brinde-questions.ts",
+   "lines": 62,
+   "exports": [
+    "type BrindeLetter",
+    "interface BrindeQuestion",
+    "const BRINDE_QUESTIONS",
+    "function getBrindeQuestion",
+    "function getMissingLetters"
+   ],
+   "enums": [
+    {
+     "name": "BrindeLetter",
+     "values": "B | R | I | N | D | E"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    }
+   ],
+   "doc": "CV-033 — Biblioteca de perguntas para letras B·R·I·N·D·E ausentes. Perguntas escolhidas pela fase da venda (início/meio/fim, ver sale-stages.ts), naturais para o contexto. Cada letra tem múltiplas variantes; o componente escolhe pela etapa atual."
+  },
+  "src/data/copilot/commercial-calendar.ts": {
+   "path": "src/data/copilot/commercial-calendar.ts",
+   "lines": 118,
+   "exports": [
+    "interface CommercialEvent",
+    "const COMMERCIAL_CALENDAR",
+    "function daysUntil",
+    "function getOccasionEvent"
+   ],
+   "doc": "CV-036 — Calendário comercial de brindes da Promo Brindes. Datas sazonais com antecedência ideal de pedido por tipo de produto."
+  },
+  "src/data/copilot/sale-stages.ts": {
+   "path": "src/data/copilot/sale-stages.ts",
+   "lines": 25,
+   "exports": [
+    "const SALE_STAGES",
+    "type SaleStage",
+    "type FaseVenda",
+    "const SALE_STAGE_META",
+    "function isSaleStage"
+   ],
+   "enums": [
+    {
+     "name": "FaseVenda",
+     "values": "inicio | meio | fim"
+    },
+    {
+     "name": "SALE_STAGES",
+     "values": "'novo_contato', 'qualificando', 'apresentando', 'negociando', 'fechando', 'pos_venda', 'perdido',"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "inicio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "meio",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    },
+    {
+     "field": "fase",
+     "value": "fim",
+     "kind": "escreve"
+    }
+   ],
+   "doc": "Etapas da venda do RADAR — os valores de `copilot_sessions.sale_stage` (CHECK da migration 20261030100000). Fonte única para rótulo, cor e fase."
+  },
+  "src/data/copilot/winning-plays.ts": {
+   "path": "src/data/copilot/winning-plays.ts",
+   "lines": 132,
+   "exports": [
+    "type PlayCategory",
+    "type SaleStage",
+    "type BrindeLetter",
+    "interface WinningPlay",
+    "const WINNING_PLAYS",
+    "function getRelevantPlays"
+   ],
+   "enums": [
+    {
+     "name": "PlayCategory",
+     "values": "descoberta | ancoragem | urgencia | fechamento | relacionamento | objection"
+    },
+    {
+     "name": "SaleStage",
+     "values": "E1 | E2 | E3 | E4 | E5 | E6"
+    },
+    {
+     "name": "BrindeLetter",
+     "values": "B | R | I | N | D | E"
+    }
+   ],
+   "doc": "CV-007 / CV-042 — Biblioteca de plays vencedoras para o copilot RADAR. 12 plays mapeadas por etapa e letra B·R·I·N·D·E."
+  },
   "src/features/talk-me/TalkMeMedia.tsx": {
    "path": "src/features/talk-me/TalkMeMedia.tsx",
    "lines": 216,
@@ -325166,6 +326538,56 @@
     "useCopilotLearning"
    ]
   },
+  "src/hooks/copilot/useCopilotSession.ts": {
+   "path": "src/hooks/copilot/useCopilotSession.ts",
+   "lines": 128,
+   "exports": [
+    "type BrindeLetter",
+    "interface Stakeholder",
+    "interface CopilotSessionState",
+    "function toCopilotSessionState",
+    "interface UseCopilotSessionResult",
+    "function useCopilotSession"
+   ],
+   "tables": [
+    {
+     "table": "copilot_sessions",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "copilot_sessions": [
+     "contact_id"
+    ]
+   },
+   "enums": [
+    {
+     "name": "BrindeLetter",
+     "values": "B | R | I | N | D | E"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "sale_stage",
+     "value": "novo_contato",
+     "kind": "escreve"
+    },
+    {
+     "field": "role",
+     "value": "string",
+     "kind": "compara"
+    }
+   ],
+   "role_checks": [
+    "string"
+   ],
+   "hooks": [
+    "useCopilotSession"
+   ],
+   "pagination": [
+    "1"
+   ]
+  },
   "src/hooks/copilot/useCopilotSupervisor.ts": {
    "path": "src/hooks/copilot/useCopilotSupervisor.ts",
    "lines": 30,
@@ -325506,6 +326928,60 @@
     "useLiveScoring"
    ]
   },
+  "src/hooks/copilot/useLiveSuggestions.ts": {
+   "path": "src/hooks/copilot/useLiveSuggestions.ts",
+   "lines": 144,
+   "exports": [
+    "type SuggestionPath",
+    "interface LiveSuggestion",
+    "function splitInsights",
+    "interface UseLiveSuggestionsResult",
+    "function useLiveSuggestions"
+   ],
+   "tables": [
+    {
+     "table": "copilot_insights",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "copilot_insights": [
+     "content",
+     "created_at",
+     "data",
+     "dismissed_at",
+     "id",
+     "insight_type",
+     "session_id",
+     "state_version"
+    ]
+   },
+   "channels": [
+    "copilot_insights:${sessionId}"
+   ],
+   "errors": [
+    "])\n        .is("
+   ],
+   "enums": [
+    {
+     "name": "SuggestionPath",
+     "values": "avancar | descobrir | relacionar"
+    }
+   ],
+   "params": [
+    {
+     "name": "LIMITE",
+     "value": "30"
+    }
+   ],
+   "rule_comments": [
+    "(`state_version` máximo), o próximo passo e os alertas. Assina o Realtime de"
+   ],
+   "doc": "CV-041/045 — Sugestões ao vivo do RADAR e o que mais o motor grava por tick. Lê `copilot_insights` da sessão: as sugestões (`insight_type = 'suggestion'`, `data.path` avancar/descobrir/relacionar) da rodada mais recente (`state_version` máximo), o próximo passo e os alertas. Assina o Realtime de `co …",
+   "hooks": [
+    "useLiveSuggestions"
+   ]
+  },
   "src/hooks/copilot/useLogoAnalysis.ts": {
    "path": "src/hooks/copilot/useLogoAnalysis.ts",
    "lines": 86,
@@ -325838,6 +327314,37 @@
    "doc": "CV-086 — Rascunho de proposta. Monta proposta comercial estruturada com base nos dados da conversa.",
    "hooks": [
     "useQuoteDraft"
+   ]
+  },
+  "src/hooks/copilot/useRadarPanel.ts": {
+   "path": "src/hooks/copilot/useRadarPanel.ts",
+   "lines": 143,
+   "exports": [
+    "type RadarMode",
+    "const RADAR_CARD_IDS",
+    "type RadarCardId",
+    "interface UseRadarPanelResult",
+    "function useRadarPanel"
+   ],
+   "enums": [
+    {
+     "name": "RadarMode",
+     "values": "mini | normal | focus"
+    },
+    {
+     "name": "RADAR_CARD_IDS",
+     "values": "'stage', 'brinde', 'suggestions', 'next_step', 'alerts', 'products', 'decision_maker',"
+    }
+   ],
+   "rule_comments": [
+    "Relógio do \"não perturbe\" por tempo: atualizado no clique e quando o prazo vence."
+   ],
+   "doc": "CV-051–058 — Estado do painel RADAR flutuante. Gerencia modo de exibição, collapsed, DND, posição e cards recolhíveis. Persiste por vendedor em localStorage.",
+   "hooks": [
+    "useRadarPanel"
+   ],
+   "temporal": [
+    "update({ dndConversationId: null, dndUntil: now + 30 * 60 * 1000 });"
    ]
   },
   "src/hooks/copilot/useSilenceDetector.ts": {
@@ -356147,6 +357654,219 @@
    ],
    "doc": "Negociação de versão de contrato (webhooks / Edge Functions). v1 (default): envelope leniente — retrocompatibilidade total. v2 (header 'x-contract-version: 2'): schema estrito. Depreciação: definir V1_SUNSET (ISO) → respostas v1 passam a emitir headers Deprecation/Sunset sem quebrar consumidores. Ve …"
   },
+  "supabase/functions/_shared/copilot-tick.ts": {
+   "path": "supabase/functions/_shared/copilot-tick.ts",
+   "lines": 546,
+   "exports": [
+    "const COPILOT_TICK_KIND",
+    "const COPILOT_FUNCTION_NAME",
+    "const COPILOT_CAPABILITY_KEY",
+    "const MAX_NEW_MESSAGES",
+    "const MAX_CONTEXT_MESSAGES",
+    "class CopilotTickError",
+    "const SALE_STAGES",
+    "const DECISION_ROLES",
+    "const CopilotTier1Schema",
+    "type CopilotTier1Output",
+    "const SUGGESTION_PATHS",
+    "const CopilotTier2Schema",
+    "type CopilotTier2Output",
+    "interface TickMessage",
+    "function detectKeyMoments",
+    "function shouldUseTier2",
+    "interface SessionRow",
+    "function buildSessionPatch",
+    "interface InsightRow",
+    "function buildTier1Insights",
+    "function buildTier2Insights",
+    "function buildTier1System",
+    "function buildUserContent",
+    "function buildTier2System",
+    "interface CopilotTickPayload",
+    "function isCopilotTickPayload",
+    "type CopilotGenerate",
+    "interface CopilotTickDeps",
+    "interface CopilotTickInput",
+    "type CopilotTickResult",
+    "function handleCopilotTick"
+   ],
+   "tables": [
+    {
+     "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "copilot_sessions",
+     "op": "select"
+    },
+    {
+     "table": "copilot_sessions",
+     "op": "select,update"
+    },
+    {
+     "table": "copilot_insights",
+     "op": "insert"
+    }
+   ],
+   "table_cols": {
+    "messages": [
+     "contact_id",
+     "content",
+     "created_at",
+     "id",
+     "sender"
+    ],
+    "copilot_sessions": [
+     "id",
+     "state_version"
+    ]
+   },
+   "errors": [
+    ", content: risk, data: { risk } });\n  }\n  if (out.next_action) {\n    rows.push({ ...base, insight_type: ",
+    "COPILOT_BAD_PAYLOAD",
+    "COPILOT_READ_FAILED",
+    "COPILOT_SESSION_NOT_FOUND",
+    "COPILOT_TIER1_CONTRACT",
+    "COPILOT_TIER1_FAILED",
+    "COPILOT_WRITE_FAILED"
+   ],
+   "zod": [
+    {
+     "name": "CopilotTier1Schema",
+     "kind": "object",
+     "body": "{ sale_stage: z.enum(SALE_STAGES).optional(), temperature: z.number().int().min(0).max(100).optional(), brinde: z.object({ budget: texto(120).optional(), responsible: texto(120).optional(), intention: texto(200).optional(), quantity: z.number().int().positive().max(10_000_000).optional(), deadline: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).optional(), delivery: texto(200).optional(), }).partial().optional(), brinde_evidence: z.record(texto(300)).optional(), intent: texto(80).optional(), sentiment: texto(40).optional(), comm_style: texto(80).optional(), decision_role: texto(80).optional(), occasion: texto(120).optional(), stakeholders: z.array(z.object({ name: texto(120).optional(), role: texto(120).optional() })).max(10).optional(), key_moments: z.array(texto(40)).max(10).optional(), risks: …",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "CopilotTier2Schema",
+     "kind": "object",
+     "body": "{ next_action: texto(160).optional(), suggestions: z.array(z.object({ path: z.enum(SUGGESTION_PATHS), text: texto(300), play_name: texto(80).optional(), sources: z.array(z.object({ text: texto(300), letter: z.enum([\"B\", \"R\", \"I\", \"N\", \"D\", \"E\"]).optional(), })).max(6).optional(), split_messages: z.array(texto(300)).max(3).optional(), })).min(1).max(3), }",
+     "refines": [],
+     "chain": []
+    }
+   ],
+   "enums": [
+    {
+     "name": "SALE_STAGES",
+     "values": "\"novo_contato\", \"qualificando\", \"apresentando\", \"negociando\", \"fechando\", \"pos_venda\", \"perdido\","
+    },
+    {
+     "name": "DECISION_ROLES",
+     "values": "\"buyer\", \"user\", \"approver\", \"intermediary\", \"unknown\""
+    },
+    {
+     "name": "SUGGESTION_PATHS",
+     "values": "\"avancar\", \"descobrir\", \"relacionar\""
+    }
+   ],
+   "params": [
+    {
+     "name": "COPILOT_TICK_KIND",
+     "value": "\"copilot.tick\""
+    },
+    {
+     "name": "MAX_NEW_MESSAGES",
+     "value": "20"
+    },
+    {
+     "name": "MAX_CONTEXT_MESSAGES",
+     "value": "5"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "type",
+     "value": "price_request",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "objection",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "buy_signal",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "competitor_mention",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "deadline_request",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "logo_sent",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "unanswered_question",
+     "kind": "escreve"
+    },
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "succeeded",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "succeeded",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "succeeded",
+     "kind": "escreve"
+    },
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "succeeded",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "succeeded",
+     "kind": "escreve"
+    }
+   ],
+   "rule_comments": [
+    "* Máximo de mensagens novas enviadas ao modelo por tick. */",
+    "Sanitiza deadline inválida antes de usar em patch ou prompt tier2."
+   ],
+   "calc_fns": [
+    {
+     "name": "shouldUseTier2",
+     "params": "keyMoments: string[]",
+     "body": "return keyMoments.some((m) => TIER2_MOMENTS.has(m));"
+    }
+   ]
+  },
   "supabase/functions/_shared/cors-origins.ts": {
    "path": "supabase/functions/_shared/cors-origins.ts",
    "lines": 43,
@@ -359721,6 +361441,25 @@
     "SL-013: ",
     "SL-013: o inventário de provedor pago é FECHADO — função nova sem registro falha aqui",
     "SL-013: nenhum ponto de log de consumo descarta a promessa com "
+   ]
+  },
+  "supabase/functions/_shared/__tests__/copilot-tick.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+   "lines": 219,
+   "is_test": true,
+   "doc": "Copiloto RADAR — handler `copilot.tick` (CV-021–045). Cliente Supabase falso em memória: só o encadeamento que o handler usa.",
+   "tests": [
+    "capacidade desligada: não chama o provedor nem grava",
+    "leitura da capacidade falhou: fecha (não gasta)",
+    "momento-chave de preço: dois andares, sessão e insights gravados",
+    "só mensagens antes do cursor: nada novo, não chama o provedor",
+    "sem momento-chave forte: só o andar 1",
+    "andar 2 inválido não derruba o andar 1",
+    "trava otimista: outro tick gravou antes → não grava insight nem avança",
+    "saída do andar 1 fora do contrato vira falha do job com código",
+    "payload inválido e sessão inexistente são falhas com código",
+    "patch não apaga o que já se sabia e reconta o medidor",
+    "momentos-chave: só mensagens do contato contam; andar 2 só nos fortes"
    ]
   },
   "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts": {
@@ -379091,6 +380830,10 @@
    "path": "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql",
    "lines": 12
   },
+  "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql": {
+   "path": "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql",
+   "lines": 57
+  },
   "supabase/migrations/20261031170000_high3-fk-indexes.sql": {
    "path": "supabase/migrations/20261031170000_high3-fk-indexes.sql",
    "lines": 49
@@ -383069,10 +384812,43 @@
   }
  },
  "git": {
-  "sha": "61335ee424cfda0d65482ade3518b40194044bb3",
+  "sha": "11841dba9c34437603c183c67e539417551e083e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "11841db",
+    "date": "2026-11-09",
+    "author": "adm01-debug",
+    "subject": "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)",
+    "files": [
+     "src/components/inbox/copilot/BrindeMeter.tsx",
+     "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+     "src/components/inbox/copilot/InsightCard.tsx",
+     "src/components/inbox/copilot/LiveSuggestions.tsx",
+     "src/components/inbox/copilot/MissingQuestions.tsx",
+     "src/components/inbox/copilot/OccasionAlert.tsx",
+     "src/components/inbox/copilot/RadarCards.tsx",
+     "src/components/inbox/copilot/RadarLive.tsx",
+     "src/components/inbox/copilot/RadarPanel.tsx",
+     "src/components/inbox/copilot/StageIndicator.tsx",
+     "src/components/inbox/copilot/StakeholdersCard.tsx",
+     "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+     "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+     "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+     "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+     "src/data/copilot/brinde-questions.ts",
+     "src/data/copilot/commercial-calendar.ts",
+     "src/data/copilot/sale-stages.ts",
+     "src/data/copilot/winning-plays.ts",
+     "src/hooks/copilot/useCopilotSession.ts",
+     "src/hooks/copilot/useLiveSuggestions.ts",
+     "src/hooks/copilot/useRadarPanel.ts",
+     "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+     "supabase/functions/_shared/copilot-tick.ts",
+     "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
+    ]
+   },
    {
     "sha": "61335ee",
     "date": "2026-11-09",
@@ -383370,24 +385146,9 @@
     "files": [
      ".github/workflows/ci.yml"
     ]
-   },
-   {
-    "sha": "1fb99f8",
-    "date": "2026-11-09",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#2857)",
-    "files": [
-     "scripts/db-audit/known-violations.json",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "supabase/schema-manifest.json",
-    3
-   ],
    [
     "scripts/db-audit/migration-evidence.json",
     2
@@ -383417,15 +385178,11 @@
     2
    ],
    [
-    "scripts/db-audit/known-violations.json",
-    2
-   ],
-   [
-    "src/integrations/supabase/types.ts",
-    2
-   ],
-   [
     "supabase/schema-catalog.json",
+    2
+   ],
+   [
+    "supabase/schema-manifest.json",
     2
    ],
    [
@@ -383433,35 +385190,43 @@
     2
    ],
    [
-    "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql",
+    "src/components/inbox/copilot/BrindeMeter.tsx",
     1
    ],
    [
-    "src/components/talkx/TalkXSegments.tsx",
+    "src/components/inbox/copilot/DecisionMakerBadge.tsx",
     1
    ],
    [
-    "src/hooks/gamification/useAgentCelebrations.ts",
+    "src/components/inbox/copilot/InsightCard.tsx",
     1
    ],
    [
-    "src/hooks/inbox/useInboxFilters.ts",
+    "src/components/inbox/copilot/LiveSuggestions.tsx",
     1
    ],
    [
-    "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql",
+    "src/components/inbox/copilot/MissingQuestions.tsx",
     1
    ],
    [
-    "src/components/inbox/chat/ChatInputArea.tsx",
+    "src/components/inbox/copilot/OccasionAlert.tsx",
     1
    ],
    [
-    "src/components/inbox/chat/__tests__/ChatInputArea.radar-fases8a15.test.tsx",
+    "src/components/inbox/copilot/RadarCards.tsx",
     1
    ],
    [
-    "src/hooks/realtime/realtimeUtils.ts",
+    "src/components/inbox/copilot/RadarLive.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/RadarPanel.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/StageIndicator.tsx",
     1
    ]
   ]

@@ -7,12 +7,12 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (851)",
+   "src/components (862)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (409)",
+   "src/hooks (412)",
    "src/components (72)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1949)",
+   "co-localizado (__tests__) (1954)",
    "outro (217)",
    "co-localizado (*.test) (168)"
   ],
@@ -42,13 +42,13 @@
  "nomenclatura": {
   "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
-  "servicos": "camelCase (76%)",
+  "servicos": "camelCase (74%)",
   "edge_functions": "kebab-case (95%)",
   "tabelas": "snake_case (92%)"
  },
  "barrels_index": 70,
  "extensao_componentes": [
-  ".tsx (885)"
+  ".tsx (896)"
  ],
  "alias_imports": {
   "(raiz)": {
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)",
    "fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)",
    "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)",
    "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)",
-   "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)",
-   "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)"
+   "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

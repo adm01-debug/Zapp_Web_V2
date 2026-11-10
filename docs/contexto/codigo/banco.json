@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1098,
+ "migrations": 1099,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -9799,6 +9799,13 @@
      "default": "now()",
      "ref": null
     },
+    "data": {
+     "tipo": "jsonb",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
     "dismissed_at": {
      "tipo": "timestamptz",
      "nn": false,
@@ -9816,6 +9823,13 @@
     "insight_type": {
      "tipo": "text",
      "nn": true,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "latency_ms": {
+     "tipo": "integer",
+     "nn": false,
      "pk": false,
      "default": null,
      "ref": null
@@ -9857,6 +9871,13 @@
     },
     "state_version": {
      "tipo": "integer",
+     "nn": true,
+     "pk": false,
+     "default": "1",
+     "ref": null
+    },
+    "tier": {
+     "tipo": "smallint",
      "nn": true,
      "pk": false,
      "default": "1",
@@ -9917,11 +9938,16 @@
     "used_at": "string | null"
    },
    "drift": {
-    "so_na_migration": [],
+    "so_na_migration": [
+     "tier",
+     "latency_ms",
+     "data"
+    ],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [
+    "_shared",
     "copilot-live"
    ],
    "triggers": [],
@@ -10339,10 +10365,10 @@
      "ref": null
     },
     "comm_style": {
-     "tipo": "text[]",
-     "nn": true,
+     "tipo": "text",
+     "nn": false,
      "pk": false,
-     "default": "'{}'",
+     "default": "NULL",
      "ref": null
     },
     "contact_id": {
@@ -10380,6 +10406,20 @@
      "default": "gen_random_uuid()",
      "ref": null
     },
+    "intent": {
+     "tipo": "text",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "last_processed_message_at": {
+     "tipo": "timestamptz",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
     "last_tick_at": {
      "tipo": "timestamptz",
      "nn": false,
@@ -10406,6 +10446,13 @@
      "nn": true,
      "pk": false,
      "default": "'novo_contato'",
+     "ref": null
+    },
+    "sentiment": {
+     "tipo": "text",
+     "nn": false,
+     "pk": false,
+     "default": null,
      "ref": null
     },
     "stakeholders": {
@@ -10503,12 +10550,16 @@
    },
    "drift": {
     "so_na_migration": [
-     "brinde_state"
+     "brinde_state",
+     "last_processed_message_at",
+     "intent",
+     "sentiment"
     ],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [
+    "_shared",
     "copilot-live"
    ],
    "triggers": [

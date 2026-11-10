@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 490,
+ "total": 493,
  "hooks": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -2409,7 +2409,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 105,
+   "usado_por": 106,
    "usado_por_arquivos": [
     "src/App.tsx",
     "src/components/auth/ProtectedRoute.tsx",
@@ -2434,13 +2434,13 @@
     "src/components/inbox/collaboration/InternalNotesPanel.tsx",
     "src/components/inbox/collaboration/ViewersIndicator.tsx",
     "src/components/inbox/conversation-list/StatusChips.tsx",
+    "src/components/inbox/copilot/RadarLive.tsx",
     "src/components/inbox/tabs/FilesTab.tsx",
     "src/components/onboarding/OnboardingChecklist.tsx",
     "src/components/security/BlockedIPDialogs.tsx",
     "src/components/security/IPWhitelistPanel.tsx",
     "src/components/security/MfaAdminNudge.tsx",
-    "src/components/security/SecurityOverview.tsx",
-    "src/components/security/SecuritySettingsPanel.tsx"
+    "src/components/security/SecurityOverview.tsx"
    ],
    "coberto_por_testes": 8
   },
@@ -5080,6 +5080,32 @@
    "coberto_por_testes": 0
   },
   {
+   "arquivo": "src/hooks/copilot/useCopilotSession.ts",
+   "hooks_exportados": [
+    "useCopilotSession"
+   ],
+   "linhas": 128,
+   "dominio": "hooks/copilot",
+   "tabelas": [
+    "copilot_sessions"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useEffect",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 3,
+   "usado_por_arquivos": [
+    "src/components/inbox/copilot/RadarCards.tsx",
+    "src/components/inbox/copilot/RadarLive.tsx",
+    "src/components/inbox/copilot/RadarPanel.tsx"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
    "arquivo": "src/hooks/copilot/useCopilotSupervisor.ts",
    "hooks_exportados": [
     "useCopilotSupervisor"
@@ -5433,6 +5459,36 @@
    "coberto_por_testes": 0
   },
   {
+   "arquivo": "src/hooks/copilot/useLiveSuggestions.ts",
+   "hooks_exportados": [
+    "useLiveSuggestions"
+   ],
+   "linhas": 144,
+   "dominio": "hooks/copilot",
+   "tabelas": [
+    "copilot_insights"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useEffect",
+    "useRef",
+    "useState"
+   ],
+   "canais_realtime": [
+    "copilot_insights:${sessionId}"
+   ],
+   "usado_por": 4,
+   "usado_por_arquivos": [
+    "src/components/inbox/copilot/LiveSuggestions.tsx",
+    "src/components/inbox/copilot/RadarCards.tsx",
+    "src/components/inbox/copilot/RadarLive.tsx",
+    "src/components/inbox/copilot/RadarPanel.tsx"
+   ],
+   "coberto_por_testes": 2
+  },
+  {
    "arquivo": "src/hooks/copilot/useLogoAnalysis.ts",
    "hooks_exportados": [
     "useLogoAnalysis"
@@ -5783,6 +5839,30 @@
     "src/components/copilot/QuoteDraftCard.tsx",
     "src/components/copilot/RadarPhase8to15Panel.tsx",
     "src/hooks/copilot/index.ts"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/copilot/useRadarPanel.ts",
+   "hooks_exportados": [
+    "useRadarPanel"
+   ],
+   "linhas": 143,
+   "dominio": "hooks/copilot",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useEffect",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 3,
+   "usado_por_arquivos": [
+    "src/components/inbox/copilot/RadarCards.tsx",
+    "src/components/inbox/copilot/RadarLive.tsx",
+    "src/components/inbox/copilot/RadarPanel.tsx"
    ],
    "coberto_por_testes": 1
   },

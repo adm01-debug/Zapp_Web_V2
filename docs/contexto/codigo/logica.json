@@ -1,12 +1,12 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 193,
+ "total": 197,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
-  "data": 1,
+  "data": 5,
   "integrations": 3,
   "lib": 147,
   "providers": 1,
@@ -569,6 +569,114 @@
    "orfao": false
   },
   {
+   "arquivo": "src/data/copilot/brinde-questions.ts",
+   "camada": "data",
+   "exports": [
+    "BRINDE_QUESTIONS",
+    "BrindeLetter",
+    "BrindeQuestion",
+    "getBrindeQuestion",
+    "getMissingLetters"
+   ],
+   "export_default": null,
+   "linhas": 62,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "components/inbox"
+   ],
+   "coberto_por_testes": 2,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/data/copilot/commercial-calendar.ts",
+   "camada": "data",
+   "exports": [
+    "COMMERCIAL_CALENDAR",
+    "CommercialEvent",
+    "daysUntil",
+    "getOccasionEvent"
+   ],
+   "export_default": null,
+   "linhas": 118,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "components/inbox"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/data/copilot/sale-stages.ts",
+   "camada": "data",
+   "exports": [
+    "FaseVenda",
+    "SALE_STAGES",
+    "SALE_STAGE_META",
+    "SaleStage",
+    "isSaleStage"
+   ],
+   "export_default": null,
+   "linhas": 25,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 5,
+   "usado_por_modulos": [
+    "components/inbox",
+    "data/copilot",
+    "hooks/copilot"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/data/copilot/winning-plays.ts",
+   "camada": "data",
+   "exports": [
+    "BrindeLetter",
+    "PlayCategory",
+    "SaleStage",
+    "WINNING_PLAYS",
+    "WinningPlay",
+    "getRelevantPlays"
+   ],
+   "export_default": null,
+   "linhas": 132,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 0,
+   "usado_por_modulos": [],
+   "coberto_por_testes": 1,
+   "orfao": true
+  },
+  {
    "arquivo": "src/data/emojiDatabase.ts",
    "camada": "data",
    "exports": [
@@ -618,7 +726,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 371,
+   "usado_por": 373,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -5067,7 +5175,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 459,
+   "usado_por": 468,
    "usado_por_modulos": [
     "components",
     "components/a11y",

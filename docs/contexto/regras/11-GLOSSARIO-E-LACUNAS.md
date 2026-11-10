@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `61335ee424` · branch `main` · 2026-11-10 02:39 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `11841dba9c` · branch `main` · 2026-11-10 02:51 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -68,12 +68,12 @@
 | `copilot_conversation_scores` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `copilot_feedback` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
 | `copilot_help_requests` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
-| `copilot_insights` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
+| `copilot_insights` | _(sem COMMENT ON TABLE — significado não documentado)_ | 15 colunas | migration |
 | `copilot_learning_moments` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `copilot_objection_catalog` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `copilot_outcomes` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `copilot_seller_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 3 colunas | migration |
-| `copilot_sessions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 25 colunas | migration |
+| `copilot_sessions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 28 colunas | migration |
 | `copilot_usage` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `crisis_room_alerts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
 | `crm_contact_links` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
@@ -307,7 +307,7 @@
 | `TalkxInteractiveButtonType` (TS) | reply \| link |  | `src/components/talkx/talkxInteractive.ts` |
 | `TalkxInteractiveMode` (TS) | none \| buttons \| poll |  | `src/components/talkx/talkxInteractive.ts` |
 | `TalkXScreen` (TS) | monitor \| scheduled \| running \| paused |  | `src/components/talkx/talkxRoute.ts` |
-| … +334 linhas — lista completa em `context.json` | | | |
+| … +347 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 

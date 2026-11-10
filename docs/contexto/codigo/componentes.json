@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 885,
- "orfaos": 45,
+ "total": 896,
+ "orfaos": 54,
  "nomes_duplicados": {
   "AchievementBadge": [
    "src/components/gamification/AchievementBadge.tsx",
@@ -64,6 +64,10 @@
   "InfoBanner": [
    "src/components/cognitive/FeatureSpotlight.tsx",
    "src/components/cognitive/ProgressiveDisclosure.tsx"
+  ],
+  "InsightCard": [
+   "src/components/inbox/copilot/InsightCard.tsx",
+   "src/components/talkx/kit/insight.tsx"
   ],
   "InternalNotesPanel": [
    "src/components/inbox/collaboration/InternalNotesPanel.tsx",
@@ -6016,6 +6020,174 @@
    ],
    "usado_por": 2,
    "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/BrindeMeter.tsx",
+   "exports": [
+    "BrindeMeter"
+   ],
+   "export_default": null,
+   "linhas": 75,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+   "exports": [
+    "DecisionMakerBadge"
+   ],
+   "export_default": null,
+   "linhas": 42,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/InsightCard.tsx",
+   "exports": [
+    "InsightCard"
+   ],
+   "export_default": null,
+   "linhas": 110,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/LiveSuggestions.tsx",
+   "exports": [
+    "LiveSuggestions",
+    "LiveTone"
+   ],
+   "export_default": null,
+   "linhas": 232,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/MissingQuestions.tsx",
+   "exports": [
+    "MissingQuestions"
+   ],
+   "export_default": null,
+   "linhas": 58,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/OccasionAlert.tsx",
+   "exports": [
+    "OccasionAlert"
+   ],
+   "export_default": null,
+   "linhas": 45,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/RadarCards.tsx",
+   "exports": [
+    "AlertsCard",
+    "BrindeCard",
+    "DecisionMakerCard",
+    "NextStepCard",
+    "ProductsCard",
+    "StageCard",
+    "SuggestionsCard"
+   ],
+   "export_default": null,
+   "linhas": 264,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/RadarLive.tsx",
+   "exports": [
+    "RadarLive",
+    "RadarLiveProps"
+   ],
+   "export_default": "RadarLive",
+   "linhas": 61,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useAuth",
+    "useCopilotSession",
+    "useLiveSuggestions",
+    "useRadarPanel"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/RadarPanel.tsx",
+   "exports": [
+    "RadarPanel",
+    "RadarPanelProps"
+   ],
+   "export_default": null,
+   "linhas": 462,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/StageIndicator.tsx",
+   "exports": [
+    "StageIndicator"
+   ],
+   "export_default": null,
+   "linhas": 52,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/copilot/StakeholdersCard.tsx",
+   "exports": [
+    "StakeholdersCard"
+   ],
+   "export_default": null,
+   "linhas": 48,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 0,
+   "orfao": true
   },
   {
    "arquivo": "src/components/inbox/CRMAutoSync.tsx",
@@ -12790,7 +12962,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 387,
+   "usado_por": 388,
    "orfao": false
   },
   {
@@ -13899,7 +14071,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 97,
+   "usado_por": 98,
    "orfao": false
   },
   {
@@ -14207,7 +14379,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 105,
+   "usado_por": 106,
    "orfao": false
   },
   {

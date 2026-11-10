@@ -3,8 +3,8 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4195)",
-   "SQL (1298)",
+   "TypeScript (4219)",
+   "SQL (1299)",
    "Markdown (1071)",
    "JSON (600)",
    "JavaScript (442)",
@@ -2639,6 +2639,7 @@
    "calls-kpi-realtime",
    "chat-reactions:${messageId}",
    "conversation:${contactId}",
+   "copilot_insights:${sessionId}",
    "diagnostics-realtime-probe",
    "disconnect-banner",
    "gmail-threads-realtime",
@@ -2690,22 +2691,22 @@
    },
    {
     "papel": "user",
-    "ocorrencias": 26
+    "ocorrencias": 27
+   },
+   {
+    "papel": "region",
+    "ocorrencias": 20
+   },
+   {
+    "papel": "button",
+    "ocorrencias": 19
    },
    {
     "papel": "img",
     "ocorrencias": 19
    },
    {
-    "papel": "region",
-    "ocorrencias": 19
-   },
-   {
     "papel": "authenticated",
-    "ocorrencias": 17
-   },
-   {
-    "papel": "button",
     "ocorrencias": 17
    },
    {
@@ -2801,6 +2802,10 @@
     "ocorrencias": 3
    },
    {
+    "papel": "complementary",
+    "ocorrencias": 3
+   },
+   {
     "papel": "grid",
     "ocorrencias": 3
    },
@@ -2837,10 +2842,6 @@
     "ocorrencias": 3
    },
    {
-    "papel": "complementary",
-    "ocorrencias": 2
-   },
-   {
     "papel": "follower",
     "ocorrencias": 2
    },
@@ -2857,6 +2858,10 @@
     "ocorrencias": 2
    },
    {
+    "papel": "string",
+    "ocorrencias": 2
+   },
+   {
     "papel": "switch",
     "ocorrencias": 2
    },
@@ -2866,6 +2871,10 @@
    },
    {
     "papel": "B",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "RH",
     "ocorrencias": 1
    },
    {
@@ -2917,6 +2926,10 @@
     "ocorrencias": 1
    },
    {
+    "papel": "intermediary",
+    "ocorrencias": 1
+   },
+   {
     "papel": "link",
     "ocorrencias": 1
    },
@@ -2953,10 +2966,6 @@
     "ocorrencias": 1
    },
    {
-    "papel": "string",
-    "ocorrencias": 1
-   },
-   {
     "papel": "sup",
     "ocorrencias": 1
    },
@@ -2974,6 +2983,10 @@
    },
    {
     "papel": "timer",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "unknown",
     "ocorrencias": 1
    },
    {

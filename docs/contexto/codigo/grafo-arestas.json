@@ -4001,6 +4001,55 @@
   "src/components/inbox/conversation-list/reopenChip.ts": [
    "src/components/inbox/TicketTabs.tsx"
   ],
+  "src/components/inbox/copilot/BrindeMeter.tsx": [
+   "src/components/ui/tooltip.tsx",
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/DecisionMakerBadge.tsx": [
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/InsightCard.tsx": [
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/LiveSuggestions.tsx": [
+   "src/hooks/copilot/useLiveSuggestions.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/MissingQuestions.tsx": [
+   "src/components/ui/button.tsx",
+   "src/data/copilot/brinde-questions.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/OccasionAlert.tsx": [
+   "src/data/copilot/commercial-calendar.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/RadarCards.tsx": [
+   "src/data/copilot/sale-stages.ts",
+   "src/hooks/copilot/useCopilotSession.ts",
+   "src/hooks/copilot/useLiveSuggestions.ts",
+   "src/hooks/copilot/useRadarPanel.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/RadarLive.tsx": [
+   "src/components/inbox/copilot/RadarPanel.tsx",
+   "src/hooks/auth/useAuth.tsx",
+   "src/hooks/copilot/useCopilotSession.ts",
+   "src/hooks/copilot/useLiveSuggestions.ts",
+   "src/hooks/copilot/useRadarPanel.ts"
+  ],
+  "src/components/inbox/copilot/RadarPanel.tsx": [
+   "src/components/inbox/copilot/RadarCards.tsx",
+   "src/data/copilot/sale-stages.ts",
+   "src/hooks/copilot/useCopilotSession.ts",
+   "src/hooks/copilot/useLiveSuggestions.ts",
+   "src/hooks/copilot/useRadarPanel.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/copilot/StageIndicator.tsx": [
+   "src/data/copilot/sale-stages.ts",
+   "src/lib/utils.ts"
+  ],
   "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx": [
    "src/types/chat.ts"
   ],
@@ -7617,6 +7666,9 @@
    "src/integrations/supabase/types.ts",
    "src/lib/utils.ts"
   ],
+  "src/data/copilot/brinde-questions.ts": [
+   "src/data/copilot/sale-stages.ts"
+  ],
   "src/features/talk-me/TalkMeMedia.tsx": [
    "src/components/ui/dialog.tsx",
    "src/hooks/storage/useResolvedStorageUrl.ts",
@@ -8343,9 +8395,16 @@
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
   ],
+  "src/hooks/copilot/useCopilotSession.ts": [
+   "src/data/copilot/sale-stages.ts",
+   "src/integrations/supabase/client.ts"
+  ],
   "src/hooks/copilot/useGhostText.ts": [
    "src/lib/invokeEdge.ts",
    "src/lib/logger.ts"
+  ],
+  "src/hooks/copilot/useLiveSuggestions.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/copilot/useSmartTemplates.ts": [
    "src/hooks/chat/useQuickReplies.ts"

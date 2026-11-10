@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `61335ee424` · branch `main` · 2026-11-10 02:39 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `11841dba9c` · branch `main` · 2026-11-10 02:51 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -725,7 +725,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `gmail_accounts` | `sync_status` | obrigatório |
 | `gmail_accounts` | `updated_at` | obrigatório |
 | `saved_filters` | `id` | PK; default gen_random_uuid() |
-| … +1355 linhas — lista completa em `context.json` | | |
+| … +1356 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -1383,6 +1383,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `business_hours` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `button` | escreve | `src/types/chat.ts` |
 | `type` | `buttons` | compara | `src/components/inbox/InteractiveMessage.tsx` |
+| `type` | `buy_signal` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `call` | compara, escreve | `src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/InteractiveMessageBuilder.tsx`<br>`src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx`<br>`src/components/inbox/interactive-builder/useInteractiveMessage.ts`<br>`src/lib/journey/mappers.ts`<br>… +1 |
 | `type` | `card` | compara, escreve | `src/components/ui/micro-interactions/skeletons.tsx`<br>`src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
 | `type` | `category` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
@@ -1395,6 +1396,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `cnpj` | escreve | `src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
 | `type` | `code` | compara, escreve | `src/components/inbox/MessagePreview.tsx` |
 | `type` | `company` | compara, escreve | `src/components/contacts/ContactSearchWithSuggestions.tsx` |
+| `type` | `competitor_mention` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `complete_tasks` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `condition` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx`<br>`src/components/chatbot/chatbotNodeConfig.ts` |
 | `type` | `confetti` | compara, escreve | `src/components/effects/Confetti.tsx` |
@@ -1414,6 +1416,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `dashboard` | compara | `src/components/performance/LazyRoutes.tsx` |
 | `type` | `data_unavailable` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `date` | compara, escreve | `src/components/email/EmailChatThread.tsx` |
+| `type` | `deadline_request` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `deal` | escreve | `src/lib/journey/mappers.ts` |
 | `type` | `delay` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx` |
 | `type` | `delete` | compara, escreve | `src/components/team-chat/useTeamChatPanel.ts`<br>`src/hooks/team-chat/useTeamMessages.ts` |
@@ -1472,6 +1475,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `load` | compara, escreve | `src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `loading` | compara, escreve | `src/components/ui/accessible-toast.tsx`<br>`src/components/ui/micro-interactions/feedback.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `location` | compara | `src/components/inbox/ReplyQuote.tsx`<br>`src/components/inbox/chat/MessageBubble.tsx` |
+| `type` | `logo_sent` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `longtask` | escreve | `src/lib/web-vitals.ts` |
 | `type` | `lowStock` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `magiclink` | escreve | `src/hooks/auth/useAuthForm.ts`<br>`supabase/functions/webauthn/index.ts` |
@@ -1490,12 +1494,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `note` | escreve | `src/components/contacts/ContactActivityTimeline.tsx`<br>`src/lib/journey/mappers.ts` |
 | `type` | `number` | escreve | `supabase/functions/ai-conversation-analysis/index.ts`<br>`supabase/functions/ai-conversation-summary/index.ts` |
 | `type` | `object` | escreve | `supabase/functions/_shared/ai-conversation-pipeline.ts`<br>`supabase/functions/ai-conversation-analysis/index.ts`<br>`supabase/functions/ai-conversation-summary/index.ts`<br>`supabase/functions/voice-agent/index.ts` |
+| `type` | `objection` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `onlyInStock` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `ordered-list` | compara | `src/components/inbox/chat/RichTextToolbar.tsx` |
 | `type` | `paint` | escreve | `src/hooks/analytics/usePerformanceOptimizations.ts`<br>`src/lib/web-vitals.ts` |
 | `type` | `party` | compara | `src/components/effects/EasterEggs.tsx` |
 | `type` | `phone` | compara, escreve | `src/components/inbox/InteractiveMessage.tsx`<br>`src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
 | `type` | `price_negotiation_won` | escreve | `src/hooks/copilot/useLearningMoment.ts` |
+| `type` | `price_request` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `prio` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
 | `type` | `ptt` | escreve | `supabase/functions/_shared/evolution-go-routes.ts` |
 | `type` | `ptv` | escreve | `supabase/functions/_shared/evolution-go-routes.ts` |
@@ -1538,7 +1544,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `style` | compara | `src/hooks/performance/useDataOptimization.ts` |
 | `type` | `success` | compara, escreve | `src/components/ui/micro-interactions/feedback.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `successful_close` | escreve | `src/hooks/copilot/useLearningMoment.ts` |
-| `type` | `suggestion` | escreve | `supabase/functions/copilot-live/index.ts` |
+| `type` | `suggestion` | escreve | `src/components/inbox/copilot/InsightCard.tsx`<br>`supabase/functions/copilot-live/index.ts` |
 | `type` | `supplier` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `support` | escreve | `src/components/admin/TrainingMode.tsx` |
 | `type` | `svg` | escreve | `supabase/functions/evolution-api/index.ts` |
@@ -1556,6 +1562,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `totp` | escreve | `src/hooks/auth/useMFA.ts` |
 | `type` | `transcription` | compara, escreve | `src/components/inbox/search/GlobalSearchResults.tsx`<br>`src/components/inbox/useGlobalSearchData.ts` |
 | `type` | `transfer` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx`<br>`src/components/chatbot/chatbotNodeConfig.ts` |
+| `type` | `unanswered_question` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `undo` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `unsupported` | compara | `src/components/inbox/chat/MessageBubble.tsx`<br>`src/components/inbox/chat/MessageBubbleUnsupported.tsx`<br>`src/types/chat.ts` |
 | `type` | `update` | escreve | `src/hooks/team-chat/useTeamMessages.ts` |
@@ -1603,14 +1610,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `completed_with_failures` | compara | `src/components/multiplix/MultiplixMonitor.tsx` |
 | `status` | `connected` | compara, escreve, filtra | `src/components/connections/ConnectionCard.tsx`<br>`src/components/connections/ConnectionsView.tsx`<br>`src/components/dashboard/systemHealth.ts`<br>`src/components/diagnostics/ConnectionHealthPanel.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>… +35 |
 | `status` | `connecting` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/components/connections/ConnectionCard.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>`src/components/inbox/RealtimeTranscription.tsx`<br>… +6 |
-| `status` | `critical` | compara | `src/components/performance/PerformanceMonitor.tsx` |
-| `status` | `declined` | compara, escreve | `src/lib/calls/WhatsAppCallAdapter.ts`<br>`src/lib/calls/callStatus.ts` |
-| `status` | `degraded` | compara, escreve | `src/components/monitoring/MonitoringHealthLogs.tsx`<br>`src/components/ui/supabase-connectivity-banner.tsx`<br>`src/hooks/integrations/useTalkXLiveChannel.ts`<br>`src/hooks/system/useSupabaseConnectivity.ts` |
-| `status` | `deleted` | escreve | `supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`supabase/functions/_shared/evolution-webhook-msg-handlers.ts` |
-| `status` | `delivered` | compara, escreve, filtra | `src/components/inbox/chat/messageUtils.tsx`<br>`src/hooks/system/useDiagnosticsData.ts`<br>`src/hooks/team-chat/useParticipantStats.ts`<br>`src/hooks/team-chat/useTeamConversations.ts` |
-| `status` | `demo` | compara, escreve | `src/components/integrations/IntegrationsHub.tsx` |
-| `status` | `dialing` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
-| … +222 linhas — lista completa em `context.json` | | | |
+| … +235 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -1731,6 +1731,12 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | SlideDirection | left \| right \| up \| down | `src/components/transitions/transitionVariants.ts` |
 | FlipAxis | x \| y | `src/components/transitions/transitionVariants.ts` |
 | CommandCategory | navigation \| action \| search \| recent \| talkx | `src/components/ui/command-palette-data.tsx` |
+| BrindeLetter | B \| R \| I \| N \| D \| E | `src/data/copilot/brinde-questions.ts` |
+| FaseVenda | inicio \| meio \| fim | `src/data/copilot/sale-stages.ts` |
+| SALE_STAGES | 'novo_contato', 'qualificando', 'apresentando', 'negociando', 'fechando', 'pos_venda', 'perdido', | `src/data/copilot/sale-stages.ts` |
+| PlayCategory | descoberta \| ancoragem \| urgencia \| fechamento \| relacionamento \| objection | `src/data/copilot/winning-plays.ts` |
+| SaleStage | E1 \| E2 \| E3 \| E4 \| E5 \| E6 | `src/data/copilot/winning-plays.ts` |
+| BrindeLetter | B \| R \| I \| N \| D \| E | `src/data/copilot/winning-plays.ts` |
 | OPEN_CONVERSATION_STATUSES | 'open', 'waiting', 'pending' | `src/hooks/admin/useSupervisorQueue.ts` |
 | AGENT_PENDING_COUNTS_KEY | 'agents-pending-counts' | `src/hooks/agents/useAgentPendingCounts.ts` |
 | AGENT_RECENT_SENDS_KEY | 'agents-recent-sends' | `src/hooks/agents/useAgentRecentSends.ts` |
@@ -1772,17 +1778,21 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | FeedbackRating | positive \| negative | `src/hooks/copilot/useCopilotFeedback.ts` |
 | FeedbackReason | errou_fato \| tom_errado \| fora_de_hora \| generica | `src/hooks/copilot/useCopilotFeedback.ts` |
 | SuggestionOutcome | accepted \| edited \| rejected \| ignored | `src/hooks/copilot/useCopilotLearning.ts` |
+| BrindeLetter | B \| R \| I \| N \| D \| E | `src/hooks/copilot/useCopilotSession.ts` |
 | InsightPriority | critical \| high \| medium \| low | `src/hooks/copilot/useCopilotSupervisor.ts` |
 | InsightSource | objection \| purchase_signal \| speed_to_lead \| guardrail \| silence \| loss_risk \| discount_guardrail \| deadline | `src/hooks/copilot/useCopilotSupervisor.ts` |
 | DeadlineFeasibility | ok \| tight \| impossible | `src/hooks/copilot/useDeadlineCalculator.ts` |
 | LeadTemperature | cold \| warm \| hot | `src/hooks/copilot/useLeadThermometer.ts` |
 | LearningMomentType | new_objection \| unknown_product \| successful_close \| missed_upsell \| price_negotiation_won \| customer_escalation | `src/hooks/copilot/useLearningMoment.ts` |
+| SuggestionPath | avancar \| descobrir \| relacionar | `src/hooks/copilot/useLiveSuggestions.ts` |
 | LogoFormat | vector \| raster_hq \| raster_lq \| unknown | `src/hooks/copilot/useLogoAnalysis.ts` |
 | LogoComplexity | simple \| medium \| complex | `src/hooks/copilot/useLogoAnalysis.ts` |
 | LossRiskLevel | low \| medium \| high | `src/hooks/copilot/useLossRiskDetector.ts` |
 | PrivacyRisk | none \| low \| medium \| high | `src/hooks/copilot/useMediaPrivacy.ts` |
 | ObjeçãoType | preco \| prazo \| quantidade_minima \| concorrente \| chefe \| qualidade \| frete \| generica | `src/hooks/copilot/useObjectionHandler.ts` |
 | PIIType | cpf \| cnpj \| phone \| email \| card \| address | `src/hooks/copilot/usePIIDetector.ts` |
+| RadarMode | mini \| normal \| focus | `src/hooks/copilot/useRadarPanel.ts` |
+| RADAR_CARD_IDS | 'stage', 'brinde', 'suggestions', 'next_step', 'alerts', 'products', 'decision_maker', | `src/hooks/copilot/useRadarPanel.ts` |
 | ResponseUrgency | ok \| slow \| critical | `src/hooks/copilot/useSpeedToLead.ts` |
 | StallType | thinking \| busy \| silent \| ghosted | `src/hooks/copilot/useStallDetector.ts` |
 | EscalationLevel | none \| high \| critical | `src/hooks/copilot/useUrgencyEscalation.ts` |
@@ -1906,17 +1916,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | PriorityLevel | critical \| high \| medium \| normal | `src/lib/supervisorPriority.ts` |
 | PRIORITY_RULES_TEXT | 'P1 Crítica → sem atendente há 30 min ou mais, ou risco ≥ 80, ou marcação de urgência da IA.', 'P2 Alta → aguardando há 15 min ou mais, ou risco ≥ 60.', 'P3 Média → aguardando há 5 min ou mais, ou risco ≥ 40.', 'P4 Normal → demais conversas em atendimento.', | `src/lib/supervisorPriority.ts` |
 | TeamChatFileSizeError | empty \| too-large | `src/lib/teamChatRules.ts` |
-| AI_JOB_STATUSES | 'queued', 'running', 'partial', 'succeeded', 'failed', 'cancelled', 'outcome_unknown', | `src/lib/aiJobs/status.ts` |
-| AI_JOB_TERMINAL_STATUSES | 'succeeded', 'failed', 'cancelled', 'outcome_unknown', | `src/lib/aiJobs/status.ts` |
-| ExecutorDaAcao | whatsapp \| sip | `src/lib/calls/acaoDoAlerta.ts` |
-| CallChannel | voip \| whatsapp | `src/lib/calls/callStatus.ts` |
-| CallDirection | inbound \| outbound | `src/lib/calls/callStatus.ts` |
-| PersistedStatus | ringing \| answered \| ended \| missed \| busy \| failed \| cancelled \| declined | `src/lib/calls/callStatus.ts` |
-| CallResult | completed \| missed \| no_answer \| busy \| failed \| cancelled \| declined \| in_progress \| ringing | `src/lib/calls/callStatus.ts` |
-| EndReason | completed \| busy \| no_answer \| cancelled \| declined \| failed \| cancelled_remote \| timeout \| busy_here \| hangup_local \| hangup_remote | `src/lib/calls/callStatus.ts` |
-| EndedBy | hangup_local \| hangup_remote \| reject \| cancel_remote \| timeout \| failure | `src/lib/calls/callStatus.ts` |
-| ResultTone | success \| destructive \| warning \| muted \| primary | `src/lib/calls/callStatus.ts` |
-| … +113 linhas — lista completa em `context.json` | | |
+| … +126 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2001,6 +2001,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **ChatbotL1Output** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
   ```ts
   { handled: z.boolean(), response: z.string().min(1), transfer_to_human: z.boolean(), transfer_reason: z.string().nullable().optional(), confidence: z.number().min(0).max(1).optional(), matched_article: z.string().nullable().optional(), detected_intent: z.string().nullable().optional(), detected_sentiment: sentimentSchema.optional(), }
+  ```
+- **CopilotTier1Schema** (`supabase/functions/_shared/copilot-tick.ts`, z.object):
+  ```ts
+  { sale_stage: z.enum(SALE_STAGES).optional(), temperature: z.number().int().min(0).max(100).optional(), brinde: z.object({ budget: texto(120).optional(), responsible: texto(120).optional(), intention: texto(200).optional(), quantity: z.number().int().positive().max(10_000_000).optional(), deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), delivery: texto(200).optional(), }).partial().optional(), brinde_evidence: z.record(texto(300)).optional(), intent: texto(80).optional(), sentiment: texto(40).optional(), comm_style: texto(80).optional(), decision_role: texto(80).optional(), occasion: texto(120).optional(), stakeholders: z.array(z.object({ name: texto(120).optional(), role: texto(120).optional() })).max(10).optional(), key_moments: z.array(texto(40)).max(10).optional(), risks: …
+  ```
+- **CopilotTier2Schema** (`supabase/functions/_shared/copilot-tick.ts`, z.object):
+  ```ts
+  { next_action: texto(160).optional(), suggestions: z.array(z.object({ path: z.enum(SUGGESTION_PATHS), text: texto(300), play_name: texto(80).optional(), sources: z.array(z.object({ text: texto(300), letter: z.enum(["B", "R", "I", "N", "D", "E"]).optional(), })).max(6).optional(), split_messages: z.array(texto(300)).max(3).optional(), })).min(1).max(3), }
   ```
 - **UUIDSchema** (`supabase/functions/_shared/schemas.ts`, z.string):
   ```ts
@@ -3120,6 +3128,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const valid: number[] = []; let discarded = 0; for (const raw of values) { if (typeof raw === 'number' && Number.isFinite(raw)) valid.push(raw); else discarded += 1; } if (valid.length === 0) return { average: null, sampleSize: 0, discarded }; const sum = valid.reduce((acc, n) => acc + n, 0); return { average: Math.round((sum / valid.length) * 100) / 100, sampleSize: valid.length, discarded, };
   ```
+- **shouldUseTier2(keyMoments: string[])** — `supabase/functions/_shared/copilot-tick.ts`
+  ```
+  return keyMoments.some((m) => TIER2_MOMENTS.has(m));
+  ```
 - **validIdentifier(value: unknown)** — `supabase/functions/_shared/crm-integration-contract.ts`
   ```
   return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);
@@ -3519,6 +3531,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `CHAR_LIMIT` | `4096` | `src/components/inbox/chat/useChatInputLogic.ts` |
 | `EDIT_WINDOW_MINUTES` | `15` | `src/components/inbox/chat/useChatPanelHandlers.ts` |
 | `STORY_DURATION_MS` | `5000` | `src/components/inbox/contact-details/storyUtils.ts` |
+| `THINKING_TIMEOUT_MS` | `8000` | `src/components/inbox/copilot/RadarPanel.tsx` |
 | `DEBOUNCE_MS` | `300` | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `RATE_LIMIT_BACKOFF_MS` | `60` | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `SKELETON_ROWS` | `6` | `src/components/inbox/tabs/FilesContent.tsx` |
@@ -3728,8 +3741,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
 | `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
-| `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
-| … +618 linhas — lista completa em `context.json` | | |
+| … +623 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -3851,6 +3863,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/chat/journey/useJourneyActors.ts` |
 | `setTimeout(resolve, 3000);` | `src/hooks/communication/useAudioMemes.ts` |
 | `const SIGNED_URL_REFRESH_AFTER_MS = 50 * 60 * 1000;` | `src/hooks/communication/useAudioPlayer.ts` |
+| `update({ dndConversationId: null, dndUntil: now + 30 * 60 * 1000 });` | `src/hooks/copilot/useRadarPanel.ts` |
 | `const cutoff = Date.now() - 5 * 60 * 1000;` | `src/hooks/copilot/useWhisperChannel.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useAgentsLite.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useCRMAdminAccess.ts` |
@@ -4034,8 +4047,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at >= v_now - interval '5 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `v_step := CASE p_bucket WHEN 'hour' THEN interval '1 hour' ELSE interval '1 minute' END;` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| `v_yesterday := date_trunc('day', v_today - interval '12 hours', v_tz);` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +68 linhas — lista completa em `context.json` | |
+| … +69 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4101,6 +4113,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 20 | `src/hooks/chat/useRecommendedProducts.ts` |
 | 1 | `src/hooks/chat/useTeamChatNotifications.ts` |
 | 5 | `src/hooks/communication/useSipClient.ts` |
+| 1 | `src/hooks/copilot/useCopilotSession.ts` |
 | 20 | `src/hooks/crm/useContactCrm360.ts` |
 | 5000 | `src/hooks/dashboard/useQueueHealth.ts` |
 | 20 | `src/hooks/gamification/useAgentGamification.ts` |
@@ -4478,7 +4491,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | tsc saiu com exit ${status} (falha de CLI, nao lista de diagnosticos): ${snippet(output)} | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} com diagnostico GLOBAL (config/CLI quebrada), que nao e uma  | `scripts/ci/implicit-any-ratchet.mjs` |
 | tsc saiu com exit ${status} sem nenhum diagnostico TypeScript reconhecivel  | `scripts/ci/implicit-any-ratchet.mjs` |
-| … +1714 linhas — lista completa em `context.json` | |
+| … +1722 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4494,6 +4507,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `undefined` | `src/components/contacts/BulkActionsBar.tsx` |
 | `admin` | `src/components/inbox/WhisperMode.tsx` |
 | `supervisor` | `src/components/inbox/WhisperMode.tsx` |
+| `intermediary` | `src/components/inbox/copilot/DecisionMakerBadge.tsx` |
+| `unknown` | `src/components/inbox/copilot/DecisionMakerBadge.tsx` |
 | `granted` | `src/components/monitoring/hooks/useMonitoringNotifications.ts` |
 | `value` | `src/components/multiplix/MultiplixView.tsx` |
 | `denied` | `src/components/notifications/PushNotificationCard.tsx` |
@@ -4504,6 +4519,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `granted` | `src/components/security/SecurityNotificationsPanel.tsx` |
 | `admin` | `src/components/security/SecurityOverview.tsx` |
 | `admin` | `src/components/security/SecurityView.tsx` |
+| `string` | `src/hooks/copilot/useCopilotSession.ts` |
 | `profileId` | `src/hooks/gamification/useAgentCelebrations.ts` |
 | `denied` | `src/hooks/system/usePushNotifications.ts` |
 | `granted` | `src/hooks/system/usePushNotifications.ts` |
@@ -4548,7 +4564,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21180 testes em 2248 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21262 testes em 2253 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4663,6 +4679,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/revoke-auth-sessions/index.test.ts` | 28 | global self: usuário comum pode revogar as próprias sessões sem ser admin · global de terceiro por usuário comum é recusado (403) · global de terceiro por admin é permitido (revoga por user_id) · local exige target_session_id … |
 | `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts` | 28 | (1) ai-audio-input: download AUTENTICADO e limites · baixa o objeto no endpoint autenticado e devolve base64 + formato mp3 · identidade de serviço usa a service role EXPLÍCITA (fluxo interno) · sem storageIdentity falha FECHADO, sem nenhuma rede … |
 | `src/components/catalog/__tests__/useSendProduct.test.tsx` | 27 | useSendToContact — CT-04: caption na primeira foto, texto só sem foto · 3 fotos viram 3 mensagens (não 4), só a primeira com o texto como caption · sem foto, o texto vai como mensagem de texto (1 mensagem) · 1 foto usa o mesmo caminho de 1 mensagem (sem texto solto) … |
+| `src/components/inbox/copilot/__tests__/RadarPanel.test.tsx` | 27 | RadarPanel CV-051 · renderiza o painel com aria-label  · renderiza versão recolhida com botão de expandir · chama onToggleCollapsed ao clicar em recolher … |
 | `src/components/talkx/__tests__/talkxRoute.test.ts` | 27 | Talk X route contract (X052) · sem parâmetros abre a Visão geral e não normaliza nada · lê a aba e a sub-visão gravadas · tab=campaigns é alias de overview … |
 | `src/hooks/analytics/__tests__/useAIStats.test.tsx` | 27 | calculateTrend — variação entre janelas · (%s -> %s) = %s/change %s/%% %s · variação abaixo de 1% é reportada como estável, sem número inventado · anterior zero com atual positivo é alta de 100% (não divisão por zero) … |
 | `src/hooks/crm/__tests__/useContactsSearch.test.tsx` | 27 | useContactsSearch — parâmetros enviados ao banco · primeira carga manda os parâmetros default e NÃO manda include_legacy · trocar de aba vira contact_type_filter e volta para a página 0 · useContactsSearch — paginação e contagem … |
@@ -4813,6 +4830,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/gmail/__tests__/ThreadListItem.test.tsx` | 17 | ThreadListItem · renderiza como button clicável · displayName prioridade 1: contact.name sobrepõe last_from_name · displayName prioridade 2: last_from_name quando sem contact.name … |
 | `src/components/inbox/__tests__/QuickReplyCardList.test.tsx` | 17 | QuickReplyCardList — carregando · mostra três esqueletos de carregamento e nenhum template · QuickReplyCardList — vazio · sem favoritos avisa e não oferece criação … |
 | `src/components/inbox/__tests__/inboxA11yLoteReacoes.test.tsx` | 17 | BulkActionsToolbar — barra do lote · faz a animação de saída: a barra some DEPOIS do AnimatePresence, não de uma vez · expõe a barra como toolbar nomeada e anuncia a contagem · não tem violação de axe com a barra aberta … |
+| `src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx` | 17 | LiveSuggestions CV-041 · renderiza 3 cartões de sugestão · exibe labels de caminho corretos · chama onUse com o texto correto ao clicar em Usar … |
 | `src/components/inbox/tabs/__tests__/FileThumb.test.tsx` | 17 | FileThumb (etapa 26) · loading: mostra skeleton enquanto a URL assinada resolve · ready: imagem do cartão usa object-contain; miniatura usa object-cover · E37: imagem do CF Images recebe srcSet com as variantes; sem srcSet para as demais … |
 | `src/components/inbox/tabs/__tests__/FilesTab.test.tsx` | 17 | FilesTab · etapa 16: a grade vem do mapa literal de colunas, sem breakpoint de viewport · renderiza os chips com as contagens reais por tipo · #144/OTH-002: erro na contagem mostra indisponível, nao um zero confirmado … |
 | `src/components/monitoring/__tests__/useConnectionIncidents.test.ts` | 17 | derivação — uptime 24 h por conexão · calcula o percentual saudável por conexão e ignora check fora da janela · sem nenhum check na janela, o percentual é null (nunca 100%) · derivação — incidentes … |
@@ -4850,9 +4868,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` | 16 | TalkXQueryBoundary (matriz de estados — X047) · carregando: mostra o esqueleto e marca aria-busy · erro: mostra o erro e NUNCA o vazio (nem com a lista vazia) · vazio sem erro: mostra o vazio … |
 | `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 16 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx` | 16 | WorkItemSheet — etapas 137–140 (Planejamento) · 137: a seção traz os dois cartões e o Prazo mostra data e hora visíveis · 137: limpar o Prazo zera também a hora · 137: o Lembrete mostra a data e a hora agendadas … |
-| `src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx` | 16 | etapa 094 — polimento do arrastar · o cartão levantado ganha o overlay elevado e o lugar da soltura fica tracejado · no toque o arrasto só pega depois da pressão longa; toque curto desarma · etapas 095/096 — alvo de soltura … |
-| `src/hooks/__tests__/useActionFeedback.test.ts` | 16 | useActionFeedback · initializes without error · exposes success function · exposes error function … |
-| … +1948 linhas — lista completa em `context.json` | | |
+| … +1953 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5312,6 +5328,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | APENAS risco de churn (nível + motivo) e melhores horários de contato. | `src/components/inbox/contact-details/ContactIntelligencePanel.tsx` |
 | apenas mais um valor conhecido: a chave de storage NÃO muda, então a | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
 | 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais, | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| CV-040: cartão sem fontes nunca deve existir — avisa no desenvolvimento */} | `src/components/inbox/copilot/InsightCard.tsx` |
+| Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
+| * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
 | * E27: a pausa é limite de uso, não ausência de resultado — o aviso diz quanto falta e lembra que | `src/components/inbox/location-picker/SuggestionList.tsx` |
 | expira, o texto cai para o aviso genérico (o hook decide quando tentar de novo). | `src/components/inbox/location-picker/SuggestionList.tsx` |
@@ -5351,7 +5370,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
 | A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias. | `src/components/inbox/tabs/fileDisplay.ts` |
 | * Componente de APRESENTAÇÃO: não consulta banco nem Supabase, não guarda dado de negócio e não | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
-| 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
-| estático que some no mesmo prazo. Em ambos os casos `onDone` avisa o fim para | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
-| * Prazo do realce (2 pulsos), em ms. */ | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
-| … +1645 linhas — lista completa em `context.json` | |
+| … +1652 linhas — lista completa em `context.json` | |

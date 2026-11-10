@@ -2690,9 +2690,9 @@
   },
   {
    "modulo": "components/inbox",
-   "arquivos": 240,
-   "testes": 317,
-   "linhas": 41995,
+   "arquivos": 251,
+   "testes": 321,
+   "linhas": 43444,
    "itens_menu": [
     "Chat"
    ],
@@ -2700,7 +2700,7 @@
     "inbox"
    ],
    "rotas_http": [],
-   "componentes": 199,
+   "componentes": 210,
    "hooks_locais": [
     "useAddressAutocomplete",
     "useAdvanceDealStage",
@@ -2759,6 +2759,7 @@
     "useConversationTabCounts",
     "useConversationViewers",
     "useCopilotFeedback",
+    "useCopilotSession",
     "useCountUp",
     "useCustomEmojis",
     "useCustomShortcuts",
@@ -2804,6 +2805,7 @@
     "useLatestAnalysis",
     "useLayoutContext",
     "useLeadThermometer",
+    "useLiveSuggestions",
     "useLocationPicker",
     "useLossRiskDetector",
     "useMediaElementVolume",
@@ -2845,6 +2847,7 @@
     "useQueues",
     "useQuickReplies",
     "useQuoteDraft",
+    "useRadarPanel",
     "useRateLimitCooldown",
     "useReactionMutations",
     "useReactionsBatch",
@@ -2949,6 +2952,8 @@
     "conversation_snoozes",
     "conversation_tasks",
     "copilot_feedback",
+    "copilot_insights",
+    "copilot_sessions",
     "crm_contact_links",
     "csat_surveys",
     "custom_emojis",
@@ -3022,6 +3027,7 @@
     "agent-presence-changes",
     "chat-reactions:${messageId}",
     "conversation:${contactId}",
+    "copilot_insights:${sessionId}",
     "typing:${conversationId}",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
@@ -3050,6 +3056,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "listbox",
     "log",
     "menu",
@@ -3065,6 +3072,7 @@
     "separator",
     "slider",
     "status",
+    "string",
     "supervisor",
     "system",
     "tab",
@@ -3072,6 +3080,7 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
    "diretos": {
@@ -3134,11 +3143,13 @@
     "components/ui",
     "config",
     "contexts",
+    "data/copilot",
     "features/talk-me",
     "hooks/auth",
     "hooks/business",
     "hooks/chat",
     "hooks/communication",
+    "hooks/copilot",
     "hooks/crm",
     "hooks/gmail",
     "hooks/inbox",
@@ -8097,6 +8108,37 @@
    "pacotes_externos": []
   },
   {
+   "modulo": "data/copilot",
+   "arquivos": 4,
+   "testes": 0,
+   "linhas": 337,
+   "itens_menu": [],
+   "telas": [],
+   "rotas_http": [],
+   "componentes": 0,
+   "hooks_locais": [],
+   "hooks_definidos": [],
+   "edges": [],
+   "tabelas": [],
+   "rpcs": [],
+   "buckets": [],
+   "canais_realtime": [],
+   "env": [],
+   "flags": [],
+   "papeis": [],
+   "diretos": {
+    "edges": [],
+    "tabelas": [],
+    "rpcs": []
+   },
+   "importado_por_outros_modulos": [
+    "components/inbox",
+    "hooks/copilot"
+   ],
+   "depende_de_modulos": [],
+   "pacotes_externos": []
+  },
+  {
    "modulo": "features/talk-me",
    "arquivos": 4,
    "testes": 2,
@@ -9472,9 +9514,9 @@
   },
   {
    "modulo": "hooks/copilot",
-   "arquivos": 59,
+   "arquivos": 62,
    "testes": 11,
-   "linhas": 3692,
+   "linhas": 4107,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -9493,6 +9535,7 @@
     "useConversationScore",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
     "useDataMasking",
@@ -9510,6 +9553,7 @@
     "useLearningMoment",
     "useLgpdFilter",
     "useLiveScoring",
+    "useLiveSuggestions",
     "useLogoAnalysis",
     "useLossRiskDetector",
     "useMediaPrivacy",
@@ -9532,6 +9576,7 @@
     "usePurchaseSignals",
     "useQuickReplies",
     "useQuoteDraft",
+    "useRadarPanel",
     "useRealtimeMessages",
     "useRealtimeNotifications",
     "useRealtimeReconnectingNotice",
@@ -9622,6 +9667,7 @@
     "useConversationScore",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
     "useDataMasking",
@@ -9639,6 +9685,7 @@
     "useLearningMoment",
     "useLgpdFilter",
     "useLiveScoring",
+    "useLiveSuggestions",
     "useLogoAnalysis",
     "useLossRiskDetector",
     "useMediaPrivacy",
@@ -9656,6 +9703,7 @@
     "usePromptVersioning",
     "usePurchaseSignals",
     "useQuoteDraft",
+    "useRadarPanel",
     "useSilenceDetector",
     "useSmartTemplates",
     "useSpeedToLead",
@@ -9677,6 +9725,8 @@
    "tabelas": [
     "contacts",
     "copilot_feedback",
+    "copilot_insights",
+    "copilot_sessions",
     "message_templates",
     "messages",
     "profiles",
@@ -9691,26 +9741,32 @@
     "audio-messages"
    ],
    "canais_realtime": [
-    "chat-reactions:${messageId}"
+    "chat-reactions:${messageId}",
+    "copilot_insights:${sessionId}"
    ],
    "env": [
     "DEV"
    ],
    "flags": [],
    "papeis": [
-    "primary"
+    "primary",
+    "string"
    ],
    "diretos": {
     "edges": [],
     "tabelas": [
-     "copilot_feedback"
+     "copilot_feedback",
+     "copilot_insights",
+     "copilot_sessions"
     ],
     "rpcs": []
    },
    "importado_por_outros_modulos": [
-    "components/copilot"
+    "components/copilot",
+    "components/inbox"
    ],
    "depende_de_modulos": [
+    "data/copilot",
     "hooks/chat",
     "hooks/communication",
     "integrations/supabase",

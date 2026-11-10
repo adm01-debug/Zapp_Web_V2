@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "61335ee424cfda0d65482ade3518b40194044bb3",
+  "commit": "11841dba9c34437603c183c67e539417551e083e",
   "branch": "main",
-  "data_commit": "2026-11-10T02:38:06Z",
+  "data_commit": "2026-11-10T02:49:23Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "11841db",
+    "data": "2026-11-10",
+    "assunto": "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)"
+   },
    {
     "sha": "61335ee",
     "data": "2026-11-10",
@@ -126,18 +131,13 @@
     "sha": "a3f3e8c",
     "data": "2026-11-09",
     "assunto": "fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7"
-   },
-   {
-    "sha": "17a43dd",
-    "data": "2026-11-09",
-    "assunto": "fix(e2e): remover steps de Playwright redundantes (browsers já instalados no runner) (#2889)"
    }
   ],
-  "arquivos_mudados_7d": 652,
+  "arquivos_mudados_7d": 677,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 654
+    "mudancas": 669
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -153,7 +153,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 199
+    "mudancas": 201
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8329,
-  "arquivos_codigo": 4754,
-  "linhas_codigo": 878374,
+  "arquivos_total": 8354,
+  "arquivos_codigo": 4778,
+  "linhas_codigo": 881872,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "modulos": 142,
-  "componentes": 885,
-  "hooks": 490,
+  "modulos": 143,
+  "componentes": 896,
+  "hooks": 493,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1098,
+  "migrations": 1099,
   "cron_jobs": 26,
-  "testes": 2596,
+  "testes": 2601,
   "workflows": 21,
   "scripts": 420,
   "docs_md": 1071
@@ -699,8 +699,8 @@
    "linhas": 616
   },
   "src/components": {
-   "arquivos": 2156,
-   "linhas": 368439
+   "arquivos": 2171,
+   "linhas": 370420
   },
   "src/config": {
    "arquivos": 3,
@@ -711,16 +711,16 @@
    "linhas": 28
   },
   "src/data": {
-   "arquivos": 1,
-   "linhas": 637
+   "arquivos": 5,
+   "linhas": 974
   },
   "src/features": {
    "arquivos": 6,
    "linhas": 3298
   },
   "src/hooks": {
-   "arquivos": 982,
-   "linhas": 159764
+   "arquivos": 985,
+   "linhas": 160179
   },
   "src/i18n": {
    "arquivos": 2,
@@ -775,8 +775,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 381,
-   "linhas": 115798
+   "arquivos": 383,
+   "linhas": 116563
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -902,12 +902,12 @@
   }
  ],
  "qualidade": {
-  "any": 349,
+  "any": 351,
   "console_log": 415,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,
-  "arquivos_acima_500_linhas": 99
+  "arquivos_acima_500_linhas": 100
  },
  "todos": [
   {
@@ -1255,6 +1255,7 @@
   ],
   "tabelas_com_drift_migration_vs_types": [
    "app_settings",
+   "copilot_insights",
    "copilot_sessions",
    "edge_rate_limits",
    "feature_flags",
@@ -1292,6 +1293,15 @@
    "src/components/inbox/AnalysisBadges.tsx",
    "src/components/inbox/BusinessHoursBadge.tsx",
    "src/components/inbox/chat/ChatHeaderToolbar.tsx",
+   "src/components/inbox/copilot/BrindeMeter.tsx",
+   "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+   "src/components/inbox/copilot/InsightCard.tsx",
+   "src/components/inbox/copilot/LiveSuggestions.tsx",
+   "src/components/inbox/copilot/MissingQuestions.tsx",
+   "src/components/inbox/copilot/OccasionAlert.tsx",
+   "src/components/inbox/copilot/RadarLive.tsx",
+   "src/components/inbox/copilot/StageIndicator.tsx",
+   "src/components/inbox/copilot/StakeholdersCard.tsx",
    "src/components/inbox/KeyboardShortcutsHelp.tsx",
    "src/components/inbox/LinkPreview.tsx",
    "src/components/inbox/MessageContextActions.tsx",
@@ -1341,6 +1351,7 @@
    "HandoffDialog",
    "InboxEmptyState",
    "InfoBanner",
+   "InsightCard",
    "InternalNotesPanel",
    "LiveRegion",
    "MagneticButton",
