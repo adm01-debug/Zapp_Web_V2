@@ -21,6 +21,7 @@ import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProv
 import { restoreRoutineOwnership } from './routine-ownership.mjs';
 import { QR_SEED_PATH, validateQrSeedProof } from './qr-contract.mjs';
 import { prepareCompilationNetwork } from './compilation-network.mjs';
+import { pullPinnedImage } from './pull-image.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -304,7 +305,7 @@ function safeCode(error) {
   return /^[a-z][a-z0-9-]{0,100}$/.test(text) ? text : 'isolated-runtime-failed';
 }
 
-export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group, compilationNetwork = prepareCompilationNetwork } = {}) {
+export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group, compilationNetwork = prepareCompilationNetwork, imagePull = pullPinnedImage } = {}) {
   if (!['login', 'suite'].includes(scope) || (scope === 'login' && group !== undefined) ||
       (scope === 'suite' && !Object.hasOwn(GROUPS, group))) throw new Error('invalid-isolated-scope');
   const shard = browserShard(scope, group);
@@ -344,7 +345,8 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   let failure;
   let cancelled = false;
   let cleaning = false;
-  const onCancel = () => { cancelled = true; };
+  const pullCancellation = new AbortController();
+  const onCancel = () => { cancelled = true; pullCancellation.abort(); };
   process.on('SIGTERM', onCancel); process.on('SIGINT', onCancel);
   const execute = (program, args, options = {}) => {
     if (cancelled && !cleaning) throw new Error('run-cancelled');
@@ -460,8 +462,13 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     phase('pull-immutable-images');
     const imageEvidence = {};
     for (const [name, image] of Object.entries(images)) {
-      const result = docker(['pull', image], { timeout: 15 * 60_000 });
-      writeFileSync(path.join(output, 'pull-' + name + '.log'), redacted(String(result.stdout || '') + String(result.stderr || '')), { mode: 0o600 });
+      const result = await imagePull({ image, signal: pullCancellation.signal,
+        command: (reference, options) => docker(['pull', reference], options),
+        onAttempt: (attemptResult, attempt) => writeFileSync(path.join(output, 'pull-' + name + '.log'),
+          (attempt === 1 ? '' : '\n[pull-retry-attempt ' + attempt + ']\n') +
+          redacted(String(attemptResult.stdout || '') + String(attemptResult.stderr || '')),
+          { mode: 0o600, flag: attempt === 1 ? 'w' : 'a' }),
+      });
       required(result, 'pull-' + name + '-failed');
       const digests = JSON.parse(required(docker(['image', 'inspect', image, '--format', '{{json .RepoDigests}}']), 'image-inspect-failed'));
       const expected = image.slice(image.indexOf('@sha256:'));
