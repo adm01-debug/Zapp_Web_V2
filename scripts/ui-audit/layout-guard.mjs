@@ -29,9 +29,14 @@ function routedViewFiles() {
     const spec = m[1];
     if (!spec.startsWith("@/")) continue;
     const base = path.join(SRC, spec.slice(2));
-    for (const ext of [".tsx", ".ts"]) {
-      if (existsSync(base + ext)) { files.add(base + ext); break; }
+    const candidates = path.extname(base)
+      ? [base]
+      : [base + ".tsx", base + ".ts", path.join(base, "index.tsx"), path.join(base, "index.ts")];
+    const file = candidates.find((candidate) => existsSync(candidate) && statSync(candidate).isFile());
+    if (!file) {
+      throw new Error(`view roteada nao resolvida: ${spec} — auditoria incompleta`);
     }
+    files.add(file);
   }
   if (files.size === 0) {
     throw new Error("lazyViews.ts nao rendeu nenhum arquivo — auditoria incompleta");

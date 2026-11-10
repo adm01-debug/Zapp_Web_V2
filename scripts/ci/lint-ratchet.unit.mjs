@@ -19,7 +19,7 @@ import {
 } from "./lint-ratchet.mjs";
 import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
 
-test("ignora artefatos gerados de coverage no comando do ESLint", () => {
+test("ignora artefatos gerados de coverage e mutacao no comando do ESLint", () => {
   assert.deepEqual(eslintCommandArguments("eslint.js"), [
     "eslint.js",
     ".",
@@ -27,6 +27,8 @@ test("ignora artefatos gerados de coverage no comando do ESLint", () => {
     "json",
     "--ignore-pattern",
     "coverage/**",
+    "--ignore-pattern",
+    ".tmp/**",
   ]);
 });
 
@@ -404,7 +406,14 @@ test("CLI retorna falha quando uma nova divida aparece", () => {
 test("eslintCommandArguments aceita alvos e silencia aviso de arquivo ignorado", () => {
   assert.deepEqual(
     eslintCommandArguments("eslint.js", { targets: ["src/a.ts", "src/b.tsx"], noWarnIgnored: true }),
-    ["eslint.js", "src/a.ts", "src/b.tsx", "--format", "json", "--no-warn-ignored", "--ignore-pattern", "coverage/**"],
+    ["eslint.js", "src/a.ts", "src/b.tsx", "--format", "json", "--no-warn-ignored", "--ignore-pattern", "coverage/**", "--ignore-pattern", ".tmp/**"],
+  );
+});
+
+test("eslintCommandArguments habilita correcoes automaticas sem mudar o relatorio JSON", () => {
+  assert.deepEqual(
+    eslintCommandArguments("eslint.js", { fix: true }),
+    ["eslint.js", ".", "--fix", "--fix-type", "problem,suggestion,layout", "--format", "json", "--ignore-pattern", "coverage/**", "--ignore-pattern", ".tmp/**"],
   );
 });
 
