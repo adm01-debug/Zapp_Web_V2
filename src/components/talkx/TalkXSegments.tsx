@@ -190,6 +190,20 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   /* X114 — seleção e ações em massa da biblioteca. O resultado vem POR SEGMENTO
      do hook (RPC guardada): a tela nunca resume o lote como um veredito único. */
+  // Seleção fantasma: segmento apagado (em outra aba ou após bulk delete) some de `segments`
+  // mas permanece em `selectedIds`, criando checkbox marcado sem item visível.
+  // seenInListRef evita falso-positivo na carga inicial (antes do primeiro fetch, segments = []).
+  const seenInListRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const listIds = new Set(segments.map((s) => s.id));
+    segments.forEach((s) => seenInListRef.current.add(s.id));
+    const ghosts = selectedIds.filter((id) => seenInListRef.current.has(id) && !listIds.has(id));
+    if (ghosts.length === 0) return;
+    const stillAlive = selectedIds.filter((id) => listIds.has(id));
+    clearSelection();
+    if (stillAlive.length > 0) selectAll(stillAlive);
+  }, [segments]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const pageIds = paged.map((s) => s.id);
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
   const nameOfSegment = (id: string) => segments.find((s) => s.id === id)?.name ?? id;
@@ -505,7 +519,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                       <Pill label={statusLabel} tone={s.status === 'active' ? 'success' : 'muted'} dot />
                     </div>
                     <p className="text-xs text-foreground-secondary">{rulesFlat.length === 0 ? 'Toda a base' : `${rulesFlat.length} critério${rulesFlat.length === 1 ? '' : 's'}`}</p>
-                    <p className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)} <span className="text-2xs text-foreground-secondary font-normal">contatos</span></p>
+                    <p className="text-sm font-bold text-foreground">{s.estimated_count != null ? fmtInt(s.estimated_count) : '—'} <span className="text-2xs text-foreground-secondary font-normal">contatos</span></p>
                   </div>
                 );
               })}
@@ -537,9 +551,9 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
                         </div>
                       </Td>
-                      <Td><span className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)}</span><span className="text-2xs text-foreground-secondary ml-1">contatos</span></Td>
+                      <Td><span className="text-sm font-bold text-foreground">{s.estimated_count != null ? fmtInt(s.estimated_count) : '—'}</span><span className="text-2xs text-foreground-secondary ml-1">contatos</span></Td>
                       <Td><span className="text-xs text-foreground-secondary">{s.last_used_at ? fmtAgo(s.last_used_at) : 'Nunca'}</span></Td>
-                      <Td><ProgressBar value={Math.min(100, (s.estimated_count / Math.max(...segments.map((x) => x.estimated_count), 1)) * 100)} tone="info" height={6} className="w-[80px]" /></Td>
+                      <Td><ProgressBar value={Math.min(100, ((s.estimated_count ?? 0) / Math.max(...segments.map((x) => x.estimated_count ?? 0), 1)) * 100)} tone="info" height={6} className="w-[80px]" /></Td>
                       <Td className="text-right">
                         <div onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
@@ -770,7 +784,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
             ))}
           </div>
         )}
-        <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
+        <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{est?.count != null ? fmtInt(est.count) : s.estimated_count != null ? fmtInt(s.estimated_count) : '—'} contatos</span>} />
         <MetaRow label="Origem" value={originLabel} />
         <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
         <div className="flex flex-col gap-2 mt-1">
