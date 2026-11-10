@@ -223,8 +223,12 @@
    "scripts_usados": [
     "scripts/ci/audit-prod.mjs",
     "scripts/ci/bundle-budget.mjs",
+    "scripts/ci/check-bundle-secrets.mjs",
     "scripts/ci/check-claude-md-integrity.mjs",
+    "scripts/ci/check-edge-error-exposure.mjs",
+    "scripts/ci/check-supabase-url-import-meta.mjs",
     "scripts/ci/check-test-inventory.mjs",
+    "scripts/ci/check-workflow-pins-resolvem.mjs",
     "scripts/ci/render-workflow-docs.mjs",
     "scripts/ci/typecheck-ratchet.mjs",
     "scripts/edge-deploy/generate-manifest.mjs",
@@ -238,7 +242,8 @@
    ],
    "secrets": [
     "VITE_SUPABASE_PUBLISHABLE_KEY",
-    "VITE_SUPABASE_URL"
+    "VITE_SUPABASE_URL",
+    "mjs"
    ],
    "actions": [
     "actions/cache",

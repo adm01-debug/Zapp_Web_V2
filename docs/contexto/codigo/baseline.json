@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "cb5c3a6cad84f56886e7c77728a4d61994a4adfb",
+  "commit": "384befe83600805bbb02f3419390eb3ab71c74e1",
   "branch": "main",
-  "data_commit": "2026-11-10T15:30:17Z",
+  "data_commit": "2026-11-10T15:44:04Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "384befe",
+    "data": "2026-11-10",
+    "assunto": "ci: registra 4 guards de segurança existentes como steps do CI (#2850)"
+   },
    {
     "sha": "cb5c3a6",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "7c27c1a",
     "data": "2026-11-09",
     "assunto": "fix: corrige bug crítico de notificação em connection-health-check (#2910)"
-   },
-   {
-    "sha": "77dd764",
-    "data": "2026-11-09",
-    "assunto": "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes"
    }
   ],
   "arquivos_mudados_7d": 703,
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 14
+    "mudancas": 15
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 282
+    "commits": 283
    },
    {
     "autor": "github-actions[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 8
+    "commits": 7
    }
   ]
  },

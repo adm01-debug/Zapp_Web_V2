@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "cb5c3a6cad84f56886e7c77728a4d61994a4adfb",
+  "sha": "384befe83600805bbb02f3419390eb3ab71c74e1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 15:35 UTC",
+  "generated_at": "2026-11-10 15:45 UTC",
   "files_total": 8207,
   "code_files": 6058,
   "code_lines": 1051536
@@ -385123,10 +385123,19 @@
   }
  },
  "git": {
-  "sha": "cb5c3a6cad84f56886e7c77728a4d61994a4adfb",
+  "sha": "384befe83600805bbb02f3419390eb3ab71c74e1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "384befe",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "ci: registra 4 guards de segurança existentes como steps do CI (#2850)",
+    "files": [
+     ".github/workflows/ci.yml"
+    ]
+   },
    {
     "sha": "cb5c3a6",
     "date": "2026-11-10",
@@ -385451,17 +385460,6 @@
     "files": [
      "scripts/edge-deploy/health-check.mjs"
     ]
-   },
-   {
-    "sha": "fe6c6b0",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos",
-    "files": [
-     "scripts/db-audit/migration-evidence.json",
-     "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
-     "supabase/migrations/20261107122000_contacts_phone_search_digits.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -385482,8 +385480,8 @@
     2
    ],
    [
-    "scripts/db-audit/migration-evidence.json",
-    2
+    ".github/workflows/ci.yml",
+    1
    ],
    [
     "docs/migration/MATRIZ_EDGE_TABELA.md",

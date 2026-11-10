@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `cb5c3a6cad84f56886e7c77728a4d61994a4adfb` (2026-11-10T15:30:17Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `384befe83600805bbb02f3419390eb3ab71c74e1` (2026-11-10T15:44:04Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,14 +384,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56526 nós · 116600 arestas · 4215 comunidades · grafo do commit `cb5c3a6c`
+- 56526 nós · 116600 arestas · 4215 comunidades · grafo do commit `384befe8`
 - comunidades maiores: lucide-react (953), cn (828), react (723), catalogShared.tsx (480), validation.ts (468), chat.ts (442), useTalkXSegments.ts (406), ref_node_assert (405), ref_https (383), ref_node_fs (312), framer-motion (307), TalkXOverview.tsx (299)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - PENDENCIAS.md (16)
-- .github/workflows/ci.yml (14)
+- .github/workflows/ci.yml (15)
 - supabase/deployment-manifest.json (14)
 - docs/ci/README.md (13)
 - CLAUDE.md (12)
@@ -505,6 +505,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `384befe` ci: registra 4 guards de segurança existentes como steps do CI (#2850)
 - 2026-11-10 `cb5c3a6` docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)
 - 2026-11-10 `fb36e30` fix(scripts): corrige resolução de caminhos e executáveis (#2922)
 - 2026-11-10 `be1c0c7` chore(manutencao): adiciona rotina local isolada e verificavel (#2921)
@@ -519,7 +520,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `31e8df6` feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)
 - 2026-11-10 `f332a29` fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)
 - 2026-11-10 `11efe5f` feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)
-- 2026-11-10 `25e13ff` fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
