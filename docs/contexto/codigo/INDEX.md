@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f332a29796a2be50394f8f03a3b495efd6d54acf` (2026-11-10T03:33:52Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `31e8df612254676c43fd2ddd61518070a941dadb` (2026-11-10T03:45:20Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8355 |
 | arquivos_codigo | 4779 |
-| linhas_codigo | 882042 |
+| linhas_codigo | 882037 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,14 +384,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56411 nós · 116296 arestas · 4144 comunidades · grafo do commit `f332a297`
-- comunidades maiores: vitest (946), TalkXSuppression.tsx (830), react (800), button.tsx (705), client.ts (630), utils.ts (552), cn (518), DashboardView.tsx (492), ExternalProductManagement.tsx (474), useTeamChatPanel.ts (460), @tanstack/react-query (447), chat.ts (404)
+- 56411 nós · 116292 arestas · 4115 comunidades · grafo do commit `31e8df61`
+- comunidades maiores: react (1013), vitest (932), TalkXSuppression.tsx (866), client.ts (608), utils.ts (551), chat.ts (516), useTeamChatPanel.ts (503), DashboardView.tsx (483), cn (469), ExternalProductManagement.tsx (464), @tanstack/react-query (432), useRealtimeMessages.ts (422)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - PENDENCIAS.md (17)
-- .github/workflows/ci.yml (15)
+- .github/workflows/ci.yml (14)
 - docs/ci/README.md (13)
 - supabase/deployment-manifest.json (13)
 - CLAUDE.md (12)
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `31e8df6` feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)
 - 2026-11-10 `f332a29` fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)
 - 2026-11-10 `11efe5f` feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)
 - 2026-11-10 `25e13ff` fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `7c27c1a` fix: corrige bug crítico de notificação em connection-health-check (#2910)
 - 2026-11-09 `77dd764` fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes
 - 2026-11-09 `18b7196` fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414
-- 2026-11-09 `d7bdb70` docs: documenta db-live-guard verde e ledger normalizado
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

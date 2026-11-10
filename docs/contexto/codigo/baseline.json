@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f332a29796a2be50394f8f03a3b495efd6d54acf",
+  "commit": "31e8df612254676c43fd2ddd61518070a941dadb",
   "branch": "main",
-  "data_commit": "2026-11-10T03:33:52Z",
+  "data_commit": "2026-11-10T03:45:20Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "31e8df6",
+    "data": "2026-11-10",
+    "assunto": "feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)"
+   },
    {
     "sha": "f332a29",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "49af49e",
     "data": "2026-11-09",
     "assunto": "⬆️ ci: Bump the actions-misc group across 1 directory with 3 updates (#2893)"
-   },
-   {
-    "sha": "e9e38d8",
-    "data": "2026-11-09",
-    "assunto": "⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates (#2892)"
    }
   ],
-  "arquivos_mudados_7d": 681,
+  "arquivos_mudados_7d": 682,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 264
+    "mudancas": 265
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8355,
   "arquivos_codigo": 4779,
-  "linhas_codigo": 882042,
+  "linhas_codigo": 882037,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2172,
-   "linhas": 370586
+   "linhas": 370581
   },
   "src/config": {
    "arquivos": 3,

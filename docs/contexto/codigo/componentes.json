@@ -10754,7 +10754,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "orfao": false
   },
   {
@@ -11384,7 +11384,7 @@
     "TalkXSuppression"
    ],
    "export_default": null,
-   "linhas": 905,
+   "linhas": 900,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useAuth",
@@ -13137,7 +13137,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 96,
+   "usado_por": 95,
    "orfao": false
   },
   {
