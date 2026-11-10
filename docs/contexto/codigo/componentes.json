@@ -407,14 +407,10 @@
     "MediaMigrationTool"
    ],
    "export_default": null,
-   "linhas": 396,
+   "linhas": 329,
    "dominio": "components/admin",
    "hooks_locais": [],
-   "tabelas": [
-    "audit_logs",
-    "messages",
-    "profiles"
-   ],
+   "tabelas": [],
    "edges": [],
    "usado_por": 1,
    "orfao": false

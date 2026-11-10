@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "31e8df612254676c43fd2ddd61518070a941dadb",
+  "commit": "cf79d70dd03640ee96202be0e057b7d7cc0947c9",
   "branch": "main",
-  "data_commit": "2026-11-10T03:45:20Z",
+  "data_commit": "2026-11-10T03:58:32Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "cf79d70",
+    "data": "2026-11-10",
+    "assunto": "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)"
+   },
    {
     "sha": "31e8df6",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "b2fed61",
     "data": "2026-11-09",
     "assunto": "ci: pull_request do ci.yml também dispara em ready_for_review (#2858)"
-   },
-   {
-    "sha": "49af49e",
-    "data": "2026-11-09",
-    "assunto": "⬆️ ci: Bump the actions-misc group across 1 directory with 3 updates (#2893)"
    }
   ],
-  "arquivos_mudados_7d": 682,
+  "arquivos_mudados_7d": 685,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -262,6 +262,10 @@
     "mudancas": 9
    },
    {
+    "arquivo": "ESTADO.md",
+    "mudancas": 8
+   },
+   {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 8
    },
@@ -275,10 +279,6 @@
    },
    {
     "arquivo": "AGENTS.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "ESTADO.md",
     "mudancas": 7
    },
    {
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8355,
-  "arquivos_codigo": 4779,
-  "linhas_codigo": 882037,
+  "arquivos_total": 8356,
+  "arquivos_codigo": 4780,
+  "linhas_codigo": 882033,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2172,
-   "linhas": 370581
+   "linhas": 370514
   },
   "src/config": {
    "arquivos": 3,
@@ -755,8 +755,8 @@
    "linhas": 393
   },
   "src/services": {
-   "arquivos": 35,
-   "linhas": 5573
+   "arquivos": 36,
+   "linhas": 5636
   },
   "src/styles": {
    "arquivos": 10,

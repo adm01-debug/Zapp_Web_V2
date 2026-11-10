@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4220)",
+   "TypeScript (4221)",
    "SQL (1299)",
    "Markdown (1071)",
    "JSON (600)",
@@ -1095,12 +1095,12 @@
   {
    "arquivo": "ESTADO.md",
    "titulo": "ESTADO.md — o que está ligado e quem chama",
-   "linhas": 150
+   "linhas": 149
   },
   {
    "arquivo": "FEATURE_REGISTRY.md",
    "titulo": "FEATURE_REGISTRY.md — registro das views do V2",
-   "linhas": 90
+   "linhas": 89
   },
   {
    "arquivo": "HANDOFF_NEXT_SESSION.md",

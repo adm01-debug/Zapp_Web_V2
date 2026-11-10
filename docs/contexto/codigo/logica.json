@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 197,
+ "total": 198,
  "por_camada": {
   "adapters": 2,
   "config": 2,
@@ -12,7 +12,7 @@
   "providers": 1,
   "python": 9,
   "segments": 1,
-  "services": 17,
+  "services": 18,
   "utils": 8
  },
  "arquivos": [
@@ -5770,6 +5770,36 @@
    "papeis": [],
    "usado_por": 0,
    "usado_por_modulos": [],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/services/mediaMigration.service.ts",
+   "camada": "services",
+   "exports": [
+    "HISTORY_LIMIT",
+    "MigrationHistoryEntry",
+    "countPendingMedia",
+    "fetchMigrationHistory"
+   ],
+   "export_default": null,
+   "linhas": 63,
+   "tabelas": [
+    "audit_logs",
+    "messages",
+    "profiles"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "components/admin"
+   ],
    "coberto_por_testes": 0,
    "orfao": false
   },

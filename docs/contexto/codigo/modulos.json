@@ -292,7 +292,7 @@
    "modulo": "components/admin",
    "arquivos": 25,
    "testes": 37,
-   "linhas": 5207,
+   "linhas": 5140,
    "itens_menu": [
     "Admin",
     "Consumo IA",
@@ -464,6 +464,7 @@
     "hooks/system",
     "integrations/supabase",
     "lib",
+    "services",
     "types"
    ],
    "pacotes_externos": [
@@ -16103,9 +16104,9 @@
   },
   {
    "modulo": "services",
-   "arquivos": 14,
+   "arquivos": 15,
    "testes": 0,
-   "linhas": 2297,
+   "linhas": 2360,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -16132,6 +16133,7 @@
    ],
    "tabelas": [
     "ai_conversation_tags",
+    "audit_logs",
     "connection_health_logs",
     "contact_custom_fields",
     "contact_notes",
@@ -16171,6 +16173,7 @@
     "edges": [],
     "tabelas": [
      "ai_conversation_tags",
+     "audit_logs",
      "connection_health_logs",
      "contact_custom_fields",
      "contact_notes",
@@ -16199,6 +16202,7 @@
    },
    "importado_por_outros_modulos": [
     "components",
+    "components/admin",
     "components/auth",
     "components/calls",
     "components/catalog",

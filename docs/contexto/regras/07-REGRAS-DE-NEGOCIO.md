@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `31e8df6122` · branch `main` · 2026-11-10 03:46 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `cf79d70dd0` · branch `main` · 2026-11-10 04:00 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3445,8 +3445,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `LIMITE_CHATS_MIN` | `1` | `src/components/admin/AdminView.tsx` |
 | `LIMITE_CHATS_MAX` | `50` | `src/components/admin/AdminView.tsx` |
 | `LIMITE_CHATS_PADRAO` | `5` | `src/components/admin/AdminView.tsx` |
-| `MIGRATION_ACTION` | `'media_migration'` | `src/components/admin/MediaMigrationTool.tsx` |
-| `HISTORY_LIMIT` | `10` | `src/components/admin/MediaMigrationTool.tsx` |
 | `MIN_DETALHE` | `60` | `src/components/admin/TrainingMode.tsx` |
 | `RAMAL_MAX_LENGTH` | `64` | `src/components/admin/VoipRamalField.tsx` |
 | `MAX_ACOES_DISPUTADAS` | `50` | `src/components/admin/dedupeEntreAbas.ts` |
@@ -3741,6 +3739,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
 | `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
+| `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
+| `MIN_CARD_WIDTH` | `168` | `src/hooks/chat/useFilesContainerColumns.ts` |
 | … +623 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo

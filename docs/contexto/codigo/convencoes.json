@@ -18,7 +18,7 @@
   ],
   "servicos_logica": [
    "src/lib (147)",
-   "src/services (17)",
+   "src/services (18)",
    "src/utils (8)"
   ],
   "testes": [
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)",
    "feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)",
    "fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)",
    "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)",
-   "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)",
-   "chore(ci): atualiza baseline do lint-ratchet (#2839)"
+   "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

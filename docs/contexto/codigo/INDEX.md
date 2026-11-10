@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `31e8df612254676c43fd2ddd61518070a941dadb` (2026-11-10T03:45:20Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `cf79d70dd03640ee96202be0e057b7d7cc0947c9` (2026-11-10T03:58:32Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4220), SQL (1299), Markdown (1071), JSON (600), JavaScript (442), Shell (232), Python (119), YAML (29)
+- linguagens: TypeScript (4221), SQL (1299), Markdown (1071), JSON (600), JavaScript (442), Shell (232), Python (119), YAML (29)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8355 |
-| arquivos_codigo | 4779 |
-| linhas_codigo | 882037 |
+| arquivos_total | 8356 |
+| arquivos_codigo | 4780 |
+| linhas_codigo | 882033 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -57,7 +57,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - telas: src/components (54), src/pages (18)
 - componentes: src/components (862), src/pages (26), src/features (2)
 - hooks: src/hooks (412), src/components (72), src/contexts (2)
-- servicos_logica: src/lib (147), src/services (17), src/utils (8)
+- servicos_logica: src/lib (147), src/services (18), src/utils (8)
 - testes: co-localizado (__tests__) (1955), outro (217), co-localizado (*.test) (168)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
@@ -145,7 +145,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | pages | 1 | 16 | 18 | 438 | 49 | 119 |
 | pages/admin | 0 | 2 | 4 | 17 | 2 | 11 |
 | pages/admin-telemetria | 0 | 0 | 6 | 1 | 0 | 1 |
-| services | 0 | 0 | 14 | 11 | 4 | 15 |
+| services | 0 | 0 | 15 | 11 | 4 | 16 |
 | types | 0 | 0 | 12 | 0 | 0 | 0 |
 | utils | 0 | 0 | 8 | 0 | 0 | 0 |
 
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56411 nós · 116292 arestas · 4115 comunidades · grafo do commit `31e8df61`
-- comunidades maiores: react (1013), vitest (932), TalkXSuppression.tsx (866), client.ts (608), utils.ts (551), chat.ts (516), useTeamChatPanel.ts (503), DashboardView.tsx (483), cn (469), ExternalProductManagement.tsx (464), @tanstack/react-query (432), useRealtimeMessages.ts (422)
+- 56413 nós · 116298 arestas · 4194 comunidades · grafo do commit `cf79d70d`
+- comunidades maiores: vitest (899), lucide-react (858), cn (846), react (741), DashboardView.tsx (500), WorkItemSheet.tsx (482), @tanstack/react-query (428), chat.ts (384), ref_node_fs (352), catalogShared.tsx (351), useTalkXSegments.ts (328), framer-motion (312)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -458,8 +458,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `CHANGELOG.md` — Changelog (90 linhas)
 - `CLAUDE.md` (2 linhas)
 - `CONTRIBUTING.md` — Guia de Contribuição — Zapp Web V2 (112 linhas)
-- `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (150 linhas)
-- `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (90 linhas)
+- `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (149 linhas)
+- `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (89 linhas)
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
 - `PENDENCIAS.md` — PENDÊNCIAS DE CI (96 linhas)
 - `README.md` — 🚀 ZAPP-WEB (Pronto Talk Suite) (369 linhas)
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `cf79d70` feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)
 - 2026-11-10 `31e8df6` feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)
 - 2026-11-10 `f332a29` fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)
 - 2026-11-10 `11efe5f` feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-09 `be8aa06` feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)
 - 2026-11-09 `7c27c1a` fix: corrige bug crítico de notificação em connection-health-check (#2910)
 - 2026-11-09 `77dd764` fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes
-- 2026-11-09 `18b7196` fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

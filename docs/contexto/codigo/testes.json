@@ -25388,6 +25388,7 @@
   ],
   "servicos": [
    "src/services/contact-merge.service.ts",
+   "src/services/mediaMigration.service.ts",
    "src/services/queue.service.ts"
   ]
  }

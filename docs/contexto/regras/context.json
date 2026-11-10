@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "31e8df612254676c43fd2ddd61518070a941dadb",
+  "sha": "cf79d70dd03640ee96202be0e057b7d7cc0947c9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 03:46 UTC",
-  "files_total": 8196,
-  "code_files": 6050,
-  "code_lines": 1048767
+  "generated_at": "2026-11-10 04:00 UTC",
+  "files_total": 8197,
+  "code_files": 6051,
+  "code_lines": 1048763
  },
  "version": "1.3.2",
- "facts_hash": "b0fa3622042da173",
+ "facts_hash": "0f1c6bf8cf136c46",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -314,7 +314,7 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2336,
-   ".ts": 1880,
+   ".ts": 1881,
    ".sql": 1299,
    ".mjs": 416,
    ".py": 119,
@@ -67661,7 +67661,7 @@
   {
    "module": "src/components",
    "files": 2172,
-   "lines": 370581,
+   "lines": 370514,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68744,10 +68744,11 @@
   },
   {
    "module": "src/services",
-   "files": 35,
-   "lines": 5573,
+   "files": 36,
+   "lines": 5636,
    "tables": [
     "ai_conversation_tags",
+    "audit_logs",
     "connection_health_logs",
     "contact_custom_fields",
     "contact_notes",
@@ -68771,6 +68772,7 @@
     "contact.service.ts: Contact, CONTACT_NOTES_PAGE_SIZE, SearchContactsParams, ContactService",
     "evolution.service.ts: EvolutionInstance, EvolutionConnectionStatus, EvolutionMessagePayload, getEvolutionInstances, getEvolutionInstanceById, getEvolutionInstanceByName",
     "inbox.service.ts: InboxFilterTag, fetchInboxFilterTags, InboxSilenceConversation, InboxSilenceConnection, fetchInboxSilence",
+    "mediaMigration.service.ts: HISTORY_LIMIT, MigrationHistoryEntry, countPendingMedia, fetchMigrationHistory",
     "navigation.service.ts: NavItem, NavGroup, NavigationService",
     "outbound-message.service.ts: OutboundMessageType, SendOutboundMessageInput, OutboundMessageDeliveryResult, RichOutboundMessageInput, PENDING_ACTION_TTL_MS, drainOfflineSendQueue",
     "queue.service.ts: QueueService",
@@ -68812,6 +68814,7 @@
     "src/services/evolution.service.ts",
     "src/services/inbox.service.ts",
     "src/services/index.ts",
+    "src/services/mediaMigration.service.ts",
     "src/services/navigation.service.ts",
     "src/services/outbound-message.service.ts",
     "src/services/queue.service.ts",
@@ -69728,13 +69731,13 @@
      "src/__tests__/rls-boundary.test.ts"
     ],
     "select": [
-     "src/components/admin/MediaMigrationTool.tsx",
      "src/components/admin/useAdminData.ts",
      "src/hooks/analytics/useAIStats.ts",
      "src/hooks/inbox/useConnectionAuditLogs.ts",
      "src/hooks/security/useAuditLogDashboard.ts",
      "src/hooks/system/useClientErrors.ts",
      "src/hooks/system/useLoginBlockedLog.ts",
+     "src/services/mediaMigration.service.ts",
      "supabase/migrations/20260930370000_revoke_authenticated_on_audit_functions_and_service_role_writes.sql"
     ],
     "ref": [
@@ -70715,7 +70718,6 @@
     "select": [
      "src/__tests__/rls-boundary.test.ts",
      "src/components/admin/CrisisRoom.tsx",
-     "src/components/admin/MediaMigrationTool.tsx",
      "src/components/admin/SupervisorCopilot.tsx",
      "src/components/contacts/ContactActivityTimeline.tsx",
      "src/components/dashboard/ActivityHeatmap.tsx",
@@ -70753,6 +70755,7 @@
      "src/hooks/system/useSystemHealthSignals.ts",
      "src/services/chat.service.ts",
      "src/services/contact.service.ts",
+     "src/services/mediaMigration.service.ts",
      "src/services/realtime.service.ts",
      "supabase/functions/_shared/ai-audio-authz.ts",
      "supabase/functions/_shared/copilot-tick.ts",
@@ -71071,7 +71074,6 @@
     "select": [
      "src/__tests__/rls-boundary.test.ts",
      "src/components/admin/CrisisRoom.tsx",
-     "src/components/admin/MediaMigrationTool.tsx",
      "src/components/admin/SupervisorCopilot.tsx",
      "src/components/admin/TrainingMode.tsx",
      "src/components/admin/VisibilityGrantsManager.tsx",
@@ -71128,6 +71130,7 @@
      "src/pages/admin/useRolesPageState.ts",
      "src/services/auth.service.ts",
      "src/services/contact.service.ts",
+     "src/services/mediaMigration.service.ts",
      "supabase/functions/_shared/ai-usage.ts",
      "supabase/functions/_shared/evolution-webhook-messages.ts",
      "supabase/functions/_shared/validation.ts",
@@ -103505,16 +103508,6 @@
     "value": "5"
    },
    {
-    "file": "src/components/admin/MediaMigrationTool.tsx",
-    "name": "MIGRATION_ACTION",
-    "value": "'media_migration'"
-   },
-   {
-    "file": "src/components/admin/MediaMigrationTool.tsx",
-    "name": "HISTORY_LIMIT",
-    "value": "10"
-   },
-   {
     "file": "src/components/admin/TrainingMode.tsx",
     "name": "MIN_DETALHE",
     "value": "60"
@@ -106758,6 +106751,16 @@
     "file": "src/services/contact.service.ts",
     "name": "DAY_MS",
     "value": "24"
+   },
+   {
+    "file": "src/services/mediaMigration.service.ts",
+    "name": "MIGRATION_ACTION",
+    "value": "'media_migration'"
+   },
+   {
+    "file": "src/services/mediaMigration.service.ts",
+    "name": "HISTORY_LIMIT",
+    "value": "10"
    },
    {
     "file": "src/services/navigation.service.ts",
@@ -271728,50 +271731,9 @@
   },
   "src/components/admin/MediaMigrationTool.tsx": {
    "path": "src/components/admin/MediaMigrationTool.tsx",
-   "lines": 396,
+   "lines": 329,
    "exports": [
     "function MediaMigrationTool"
-   ],
-   "tables": [
-    {
-     "table": "messages",
-     "op": "select"
-    },
-    {
-     "table": "audit_logs",
-     "op": "select"
-    },
-    {
-     "table": "profiles",
-     "op": "select"
-    }
-   ],
-   "table_cols": {
-    "messages": [
-     "id",
-     "media_url"
-    ],
-    "audit_logs": [
-     "action",
-     "created_at",
-     "details",
-     "id",
-     "user_id"
-    ],
-    "profiles": [
-     "name",
-     "user_id"
-    ]
-   },
-   "params": [
-    {
-     "name": "MIGRATION_ACTION",
-     "value": "'media_migration'"
-    },
-    {
-     "name": "HISTORY_LIMIT",
-     "value": "10"
-    }
    ],
    "status_values": [
     {
@@ -354241,6 +354203,57 @@
    "path": "src/services/index.ts",
    "lines": 10
   },
+  "src/services/mediaMigration.service.ts": {
+   "path": "src/services/mediaMigration.service.ts",
+   "lines": 63,
+   "exports": [
+    "const HISTORY_LIMIT",
+    "interface MigrationHistoryEntry",
+    "function countPendingMedia",
+    "function fetchMigrationHistory"
+   ],
+   "tables": [
+    {
+     "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "audit_logs",
+     "op": "select"
+    },
+    {
+     "table": "profiles",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "messages": [
+     "id",
+     "media_url"
+    ],
+    "audit_logs": [
+     "action",
+     "created_at",
+     "details",
+     "id",
+     "user_id"
+    ],
+    "profiles": [
+     "name",
+     "user_id"
+    ]
+   },
+   "params": [
+    {
+     "name": "MIGRATION_ACTION",
+     "value": "'media_migration'"
+    },
+    {
+     "name": "HISTORY_LIMIT",
+     "value": "10"
+    }
+   ]
+  },
   "src/services/navigation.service.ts": {
    "path": "src/services/navigation.service.ts",
    "lines": 217,
@@ -384838,10 +384851,22 @@
   }
  },
  "git": {
-  "sha": "31e8df612254676c43fd2ddd61518070a941dadb",
+  "sha": "cf79d70dd03640ee96202be0e057b7d7cc0947c9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "cf79d70",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)",
+    "files": [
+     "ESTADO.md",
+     "FEATURE_REGISTRY.md",
+     "src/components/admin/MediaMigrationTool.tsx",
+     "src/services/mediaMigration.service.ts"
+    ]
+   },
    {
     "sha": "31e8df6",
     "date": "2026-11-10",
@@ -385157,16 +385182,13 @@
      "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
      "supabase/migrations/20261107122000_contacts_phone_search_digits_column.sql"
     ]
-   },
-   {
-    "sha": "a3f3e8c",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): corrige teste R2-DB-020 — linha legada duplicada causa falha L3/L5/L7",
-    "files": []
    }
   ],
   "hot_files": [
+   [
+    "ESTADO.md",
+    2
+   ],
    [
     "scripts/db-audit/migration-evidence.json",
     2
@@ -385204,6 +385226,18 @@
     2
    ],
    [
+    "FEATURE_REGISTRY.md",
+    1
+   ],
+   [
+    "src/components/admin/MediaMigrationTool.tsx",
+    1
+   ],
+   [
+    "src/services/mediaMigration.service.ts",
+    1
+   ],
+   [
     "src/components/talkx/TalkXSuppression.tsx",
     1
    ],
@@ -385229,22 +385263,6 @@
    ],
    [
     "src/components/inbox/copilot/BrindeMeter.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/DecisionMakerBadge.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/InsightCard.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/LiveSuggestions.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/MissingQuestions.tsx",
     1
    ]
   ]

@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2268,
- "arestas": 7841,
+ "nos": 2269,
+ "arestas": 7842,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -613,14 +613,14 @@
    "importado_por": 12
   },
   {
+   "modulo": "services",
+   "depende_de": 6,
+   "importado_por": 24
+  },
+  {
    "modulo": "hooks/crm",
    "depende_de": 10,
    "importado_por": 19
-  },
-  {
-   "modulo": "services",
-   "depende_de": 6,
-   "importado_por": 23
   },
   {
    "modulo": "components/settings",

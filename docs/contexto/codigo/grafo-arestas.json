@@ -484,8 +484,8 @@
    "src/components/ui/button.tsx",
    "src/components/ui/card.tsx",
    "src/components/ui/progress.tsx",
-   "src/integrations/supabase/client.ts",
-   "src/lib/invokeEdge.ts"
+   "src/lib/invokeEdge.ts",
+   "src/services/mediaMigration.service.ts"
   ],
   "src/components/admin/PlaybooksManager.tsx": [
    "src/components/ui/badge.tsx",
@@ -10381,6 +10381,9 @@
    "src/services/queue.service.ts",
    "src/services/realtime.service.ts",
    "src/services/role.service.ts"
+  ],
+  "src/services/mediaMigration.service.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/services/navigation.service.ts": [
    "src/services/role.service.ts"
