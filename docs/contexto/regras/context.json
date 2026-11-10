@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7ce81c0158ff65c90d56cf127c1a9264ac873551",
+  "sha": "e0a923fd8fcf09aeed69fb89dd8634df9ce42d3e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 17:50 UTC",
-  "files_total": 8221,
-  "code_files": 6068,
-  "code_lines": 1053765
+  "generated_at": "2026-11-10 18:03 UTC",
+  "files_total": 8225,
+  "code_files": 6072,
+  "code_lines": 1054332
  },
  "version": "1.3.2",
- "facts_hash": "d8b07bb1d079bac2",
+ "facts_hash": "c2d2aaca8a4e785d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -320,7 +320,7 @@
    ".tsx": 2337,
    ".ts": 1889,
    ".sql": 1300,
-   ".mjs": 423,
+   ".mjs": 427,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67512,8 +67512,8 @@
   },
   {
    "module": "scripts",
-   "files": 453,
-   "lines": 91185,
+   "files": 457,
+   "lines": 91752,
    "tables": [
     "a",
     "alem_do_limite",
@@ -67726,12 +67726,12 @@
     "scripts/ci/docs-deploy-coerencia.unit.mjs",
     "scripts/ci/docs-design-drift.unit.mjs",
     "scripts/ci/docs-estado-registry-convention.unit.mjs",
+    "scripts/ci/docs-realtime-citations.unit.mjs",
     "scripts/ci/dry-run-plan.unit.mjs",
     "scripts/ci/e2e-auth-diagnostics.unit.mjs",
     "scripts/ci/e2e-auth-isolation.unit.mjs",
     "scripts/ci/e2e-auth-setup.unit.mjs",
-    "scripts/ci/e2e-email-axe-ready.unit.mjs",
-    "scripts/ci/e2e-email-navigation-diagnostics.unit.mjs"
+    "scripts/ci/e2e-email-axe-ready.unit.mjs"
    ]
   },
   {
@@ -129748,6 +129748,30 @@
    {
     "file": "scripts/db-audit/validate-destino.test.mjs",
     "name": "controle: validação bem-sucedida continua saindo 0 com JSON e CSV"
+   },
+   {
+    "file": "scripts/docs/publication.test.mjs",
+    "name": "projecao publication: ${caso.name}"
+   },
+   {
+    "file": "scripts/docs/publication.test.mjs",
+    "name": "CLI publication ${form.name} ${JSON.stringify(newline)}"
+   },
+   {
+    "file": "scripts/docs/publication.test.mjs",
+    "name": "CLI contexto ${form.name} ${JSON.stringify(newline)}"
+   },
+   {
+    "file": "scripts/docs/publication.test.mjs",
+    "name": "CLI falha fechado: ${name}"
+   },
+   {
+    "file": "scripts/docs/publication.test.mjs",
+    "name": "projecao lexical aceita as migrations reais do repositorio"
+   },
+   {
+    "file": "scripts/docs/verificar-docs-realtime.test.mjs",
+    "name": "citação ${formato} ${sufixo || "
    },
    {
     "file": "scripts/lib/seguranca-processo.test.mjs",
@@ -263791,6 +263815,10 @@
     "invoke("
    ]
   },
+  "scripts/ci/docs-realtime-citations.unit.mjs": {
+   "path": "scripts/ci/docs-realtime-citations.unit.mjs",
+   "lines": 3
+  },
   "scripts/ci/dry-run-plan.unit.mjs": {
    "path": "scripts/ci/dry-run-plan.unit.mjs",
    "lines": 160,
@@ -268623,10 +268651,49 @@
     "STUB_LOG"
    ]
   },
+  "scripts/docs/publication.mjs": {
+   "path": "scripts/docs/publication.mjs",
+   "lines": 219,
+   "exports": [
+    "function publicationChanges"
+   ],
+   "params": [
+    {
+     "name": "MAX_EXPANSIONS",
+     "value": "8"
+    }
+   ]
+  },
+  "scripts/docs/publication.test.mjs": {
+   "path": "scripts/docs/publication.test.mjs",
+   "lines": 278,
+   "is_test": true,
+   "temporal": [
+    "{ encoding: 'utf8', timeout: 10_000 });"
+   ],
+   "tests": [
+    "projecao publication: ${caso.name}",
+    "CLI publication ${form.name} ${JSON.stringify(newline)}",
+    "CLI contexto ${form.name} ${JSON.stringify(newline)}",
+    "CLI falha fechado: ${name}",
+    "projecao lexical aceita as migrations reais do repositorio"
+   ]
+  },
   "scripts/docs/verificar-docs-realtime.mjs": {
    "path": "scripts/docs/verificar-docs-realtime.mjs",
-   "lines": 229,
+   "lines": 224,
    "doc": "!/usr/bin/env node"
+  },
+  "scripts/docs/verificar-docs-realtime.test.mjs": {
+   "path": "scripts/docs/verificar-docs-realtime.test.mjs",
+   "lines": 72,
+   "is_test": true,
+   "temporal": [
+    "return spawnSync(process.execPath, [script], { encoding: 'utf8', timeout: 10_000 });"
+   ],
+   "tests": [
+    "citação ${formato} ${sufixo || "
+   ]
   },
   "scripts/e2e-isolated/admission.mjs": {
    "path": "scripts/e2e-isolated/admission.mjs",
@@ -385842,10 +385909,23 @@
   }
  },
  "git": {
-  "sha": "7ce81c0158ff65c90d56cf127c1a9264ac873551",
+  "sha": "e0a923fd8fcf09aeed69fb89dd8634df9ce42d3e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e0a923f",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)",
+    "files": [
+     "scripts/ci/docs-realtime-citations.unit.mjs",
+     "scripts/docs/publication.mjs",
+     "scripts/docs/publication.test.mjs",
+     "scripts/docs/verificar-docs-realtime.mjs",
+     "scripts/docs/verificar-docs-realtime.test.mjs"
+    ]
+   },
    {
     "sha": "7ce81c0",
     "date": "2026-11-10",
@@ -386200,16 +386280,6 @@
     "files": [
      "scripts/db-audit/migration-evidence.json"
     ]
-   },
-   {
-    "sha": "f3792ec",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)",
-    "files": [
-     "src/hooks/gamification/useAgentCelebrations.ts",
-     "src/hooks/inbox/useInboxFilters.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -386232,6 +386302,26 @@
    [
     "scripts/e2e-isolated/run.mjs",
     2
+   ],
+   [
+    "scripts/ci/docs-realtime-citations.unit.mjs",
+    1
+   ],
+   [
+    "scripts/docs/publication.mjs",
+    1
+   ],
+   [
+    "scripts/docs/publication.test.mjs",
+    1
+   ],
+   [
+    "scripts/docs/verificar-docs-realtime.mjs",
+    1
+   ],
+   [
+    "scripts/docs/verificar-docs-realtime.test.mjs",
+    1
    ],
    [
     ".gitattributes",
@@ -386271,26 +386361,6 @@
    ],
    [
     "src/hooks/copilot/useObjectionHandler.ts",
-    1
-   ],
-   [
-    "src/hooks/copilot/usePriceAnchoring.ts",
-    1
-   ],
-   [
-    "src/hooks/copilot/useProductRecommendation.ts",
-    1
-   ],
-   [
-    "supabase/functions/_shared/ai-response-contracts.ts",
-    1
-   ],
-   [
-    "supabase/functions/_shared/schemas.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-deadline-calculator/index.ts",
     1
    ]
   ]

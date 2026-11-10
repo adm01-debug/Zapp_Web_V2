@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2605,
+ "total": 2608,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2314
+  "unit": 2317
  },
  "onde_ficam": [
   {
@@ -20,11 +20,11 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 220
+   "arquivos": 221
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 168
+   "arquivos": 170
   },
   {
    "padrao": "tests/",
@@ -1005,6 +1005,13 @@
    "linhas": 422,
    "testa": [],
    "casos": 17
+  },
+  {
+   "arquivo": "scripts/ci/docs-realtime-citations.unit.mjs",
+   "tipo": "unit",
+   "linhas": 3,
+   "testa": [],
+   "casos": 0
   },
   {
    "arquivo": "scripts/ci/dry-run-plan.unit.mjs",
@@ -2369,6 +2376,22 @@
     "scripts/db-tests/rpc-envelope.mjs"
    ],
    "casos": 16
+  },
+  {
+   "arquivo": "scripts/docs/publication.test.mjs",
+   "tipo": "unit",
+   "linhas": 278,
+   "testa": [
+    "scripts/docs/publication.mjs"
+   ],
+   "casos": 6
+  },
+  {
+   "arquivo": "scripts/docs/verificar-docs-realtime.test.mjs",
+   "tipo": "unit",
+   "linhas": 72,
+   "testa": [],
+   "casos": 1
   },
   {
    "arquivo": "scripts/edge-deploy/api-traversal.unit.mjs",
@@ -23771,6 +23794,7 @@
   "scripts/db-audit/storage-buckets-baseline.js": 1,
   "scripts/db-audit/verify-ledger-statements.mjs": 1,
   "scripts/db-tests/rpc-envelope.mjs": 1,
+  "scripts/docs/publication.mjs": 1,
   "scripts/e2e-isolated/admission.mjs": 5,
   "scripts/e2e-isolated/collection.mjs": 1,
   "scripts/e2e-isolated/compilation-network.mjs": 2,

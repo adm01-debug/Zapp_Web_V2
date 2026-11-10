@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 425,
+ "total": 426,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3688,9 +3688,18 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/docs/publication.mjs",
+   "descricao": "* Projecao lexical de ADD/DROP TABLE declarados para supabase_realtime/public.",
+   "linhas": 219,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/docs/verificar-docs-realtime.mjs",
    "descricao": "* Verificador das páginas de documentação de Realtime/mensagem.",
-   "linhas": 229,
+   "linhas": 224,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

@@ -149,6 +149,12 @@
   "scripts/db-tests/run-all.mjs": [
    "scripts/db-tests/rpc-envelope.mjs"
   ],
+  "scripts/docs/publication.mjs": [
+   "scripts/db-audit/sql-lexer.mjs"
+  ],
+  "scripts/docs/verificar-docs-realtime.mjs": [
+   "scripts/docs/publication.mjs"
+  ],
   "scripts/e2e-isolated/admission.mjs": [
    "src/config/supabase.ts"
   ],

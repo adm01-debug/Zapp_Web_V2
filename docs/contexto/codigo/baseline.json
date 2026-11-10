@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7ce81c0158ff65c90d56cf127c1a9264ac873551",
+  "commit": "e0a923fd8fcf09aeed69fb89dd8634df9ce42d3e",
   "branch": "main",
-  "data_commit": "2026-11-10T17:49:34Z",
+  "data_commit": "2026-11-10T18:00:29Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e0a923f",
+    "data": "2026-11-10",
+    "assunto": "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)"
+   },
    {
     "sha": "7ce81c0",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "25e13ff",
     "data": "2026-11-10",
     "assunto": "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)"
-   },
-   {
-    "sha": "77d5cd4",
-    "data": "2026-11-10",
-    "assunto": "chore(ci): atualiza baseline do lint-ratchet (#2839)"
    }
   ],
-  "arquivos_mudados_7d": 723,
+  "arquivos_mudados_7d": 728,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8379,
-  "arquivos_codigo": 4796,
-  "linhas_codigo": 886905,
+  "arquivos_total": 8383,
+  "arquivos_codigo": 4800,
+  "linhas_codigo": 887472,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,9 +328,9 @@
   "tabelas": 217,
   "migrations": 1100,
   "cron_jobs": 26,
-  "testes": 2605,
+  "testes": 2608,
   "workflows": 21,
-  "scripts": 425,
+  "scripts": 426,
   "docs_md": 1073
  },
  "por_pasta": {
@@ -607,8 +607,8 @@
    "linhas": 313
   },
   "scripts/ci": {
-   "arquivos": 209,
-   "linhas": 43753
+   "arquivos": 210,
+   "linhas": 43756
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -619,8 +619,8 @@
    "linhas": 487
   },
   "scripts/docs": {
-   "arquivos": 1,
-   "linhas": 229
+   "arquivos": 4,
+   "linhas": 793
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
