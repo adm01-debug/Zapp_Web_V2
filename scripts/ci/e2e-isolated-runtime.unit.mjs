@@ -17,6 +17,8 @@ import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
 import { OWNERSHIP_ROUTINES, OWNERSHIP_EXECUTOR_OPTIONS, ownershipSql } from '../e2e-isolated/routine-ownership.mjs';
 import { QR_FIXTURE, QR_SEED_FLAGS } from '../e2e-isolated/qr-contract.mjs';
+import { prepareCompilationNetwork } from '../e2e-isolated/compilation-network.mjs';
+import { rootCertificates } from 'node:tls';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -230,14 +232,24 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const { scope = 'login', group = AUTH_GROUP, manifest = value => value, pullDiagnostic, seedDiagnostic,
-    catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult, browserObservation } = typeof options === 'function' ? { manifest: options } : options;
+    catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult, browserObservation, compilerProxy = false } = typeof options === 'function' ? { manifest: options } : options;
   const fullSeed = scope === 'suite' && isAuthenticatedGroup(group);
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
+  const compilerSource = path.join(temporary, 'compiler-source');
+  const compilerEnvironment = compilerProxy ? { DOCKER_CONFIG: compilerSource, SSL_CERT_FILE: path.join(compilerSource, 'ca.crt') } : {};
+  if (compilerProxy) {
+    mkdirSync(compilerSource);
+    writeFileSync(path.join(compilerSource, 'config.json'), JSON.stringify({
+      proxies: { default: { httpsProxy: 'http://fixture-user:synthetic-proxy-secret@192.0.2.1:8080', noProxy: 'localhost' } },
+      auths: { fixture: { auth: 'synthetic-registry-secret' } }, credsStore: 'foreign', currentContext: 'foreign',
+    }));
+    writeFileSync(compilerEnvironment.SSL_CERT_FILE, rootCertificates[0]);
+  }
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs', 'qr-contract.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs', 'qr-contract.mjs', 'compilation-network.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -312,6 +324,20 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     assert.deepEqual(args.slice(0, 2), ['--host', 'unix:///var/run/docker.sock']);
     assert.deepEqual(Object.keys(options.env).sort(), ['DOCKER_CONFIG', 'PATH']);
     const argv = args.slice(2);
+    if (compilerProxy) {
+      const configFile = path.join(options.env.DOCKER_CONFIG, 'config.json');
+      const clientConfig = existsSync(configFile) ? JSON.parse(readFileSync(configFile, 'utf8')) : {};
+      const compiler = argv[0] === 'run' && valueAfter(argv, '--name')?.includes('-bundle-');
+      assert.deepEqual(Object.keys(clientConfig), compiler ? ['proxies'] : [], 'only compiler Docker client may receive the proxy config');
+      if (compiler) {
+        assert.deepEqual(Object.keys(clientConfig.proxies), ['default']);
+        assert.deepEqual(Object.keys(clientConfig.proxies.default), ['httpsProxy', 'noProxy']);
+        assert.ok(allAfter(argv, '--mount').some(value => value.endsWith(',dst=/run/zapp-e2e-compiler/ca.crt,readonly')));
+        assert.equal(argv.some(value => /synthetic-proxy-secret|synthetic-registry-secret|fixture-user|192\.0\.2\.1/.test(value)), false);
+      } else {
+        assert.equal(argv.some(value => value.includes('/run/zapp-e2e-compiler/')), false, 'runtime, probes, database and browser never mount compiler CA');
+      }
+    }
     if (argv[0] === 'context') return ok(JSON.stringify(fault === 'external-docker' ? 'tcp://external.invalid:2376' : 'unix:///var/run/docker.sock'));
     if (argv[0] === 'pull') {
       const privateDir = path.join(path.dirname(options.env.DOCKER_CONFIG), 'private');
@@ -672,7 +698,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const diagnosticOutput = path.join(temporary, 'github-output');
   if (seedDiagnostic || browserObservation) process.env.GITHUB_OUTPUT = diagnosticOutput;
   let exit;
-  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, ...(scope === 'suite' ? { group } : {}) }); }
+  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, compilationNetwork: ({ directory }) => prepareCompilationNetwork({ directory, environment: compilerEnvironment, homeDirectory: temporary }), ...(scope === 'suite' ? { group } : {}) }); }
   finally {
     restoreBrowserFilesystem?.();
     globalThis.setTimeout = realTimeout;
@@ -836,6 +862,17 @@ for (const role of ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', '
     });
   }
 }
+
+for (const scope of ['login', 'suite']) test('controller real: proxy e CA exclusivos da compilação / ' + scope, async t => {
+  const value = await controllerFixture(t, 'none', { scope, compilerProxy: true });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.success, true);
+  const compilers = value.calls.filter(call => call.program === 'docker' && call.args[2] === 'run' && call.args[call.args.indexOf('--name') + 1]?.includes('-bundle-'));
+  assert.ok(compilers.length >= 3);
+  assert.doesNotMatch(JSON.stringify({ state: value.state, calls: value.calls }), /synthetic-proxy-secret|synthetic-registry-secret|fixture-user/);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
+});
 
 test('controller real: percurso completo com interfaces falsas preserva a ordem e limpa os recursos próprios', async t => {
   const value = await controllerFixture(t, 'none');
