@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "384befe83600805bbb02f3419390eb3ab71c74e1",
+  "commit": "9f943637de2529125ced04dc5c1742c8215ef6db",
   "branch": "main",
-  "data_commit": "2026-11-10T15:44:04Z",
+  "data_commit": "2026-11-10T15:54:12Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9f94363",
+    "data": "2026-11-10",
+    "assunto": "chore(docs): documenta geração de contexto no AGENTS.md (#2840)"
+   },
    {
     "sha": "384befe",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "be8aa06",
     "data": "2026-11-09",
     "assunto": "feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)"
-   },
-   {
-    "sha": "7c27c1a",
-    "data": "2026-11-09",
-    "assunto": "fix: corrige bug crítico de notificação em connection-health-check (#2910)"
    }
   ],
   "arquivos_mudados_7d": 703,
@@ -262,15 +262,15 @@
     "mudancas": 9
    },
    {
+    "arquivo": "AGENTS.md",
+    "mudancas": 8
+   },
+   {
     "arquivo": "ESTADO.md",
     "mudancas": 8
    },
    {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 8
    },
    {
@@ -282,11 +282,11 @@
     "mudancas": 7
    },
    {
-    "arquivo": "AGENTS.md",
+    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "arquivo": "scripts/db-audit/replay-known-failures.json",
     "mudancas": 7
    },
    {
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 283
+    "commits": 284
    },
    {
     "autor": "github-actions[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 7
+    "commits": 6
    }
   ]
  },

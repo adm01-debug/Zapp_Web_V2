@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "384befe83600805bbb02f3419390eb3ab71c74e1",
+  "sha": "9f943637de2529125ced04dc5c1742c8215ef6db",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 15:45 UTC",
+  "generated_at": "2026-11-10 15:58 UTC",
   "files_total": 8207,
   "code_files": 6058,
   "code_lines": 1051536
@@ -385123,10 +385123,19 @@
   }
  },
  "git": {
-  "sha": "384befe83600805bbb02f3419390eb3ab71c74e1",
+  "sha": "9f943637de2529125ced04dc5c1742c8215ef6db",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9f94363",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "chore(docs): documenta geração de contexto no AGENTS.md (#2840)",
+    "files": [
+     "AGENTS.md"
+    ]
+   },
    {
     "sha": "384befe",
     "date": "2026-11-10",
@@ -385451,25 +385460,16 @@
      ".github/workflows/e2e-logado-isolado.yml",
      "scripts/ci/e2e-isolated-workflow.unit.mjs"
     ]
-   },
-   {
-    "sha": "3a8161c",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções",
-    "files": [
-     "scripts/edge-deploy/health-check.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
-    "scripts/edge-deploy/health-check.mjs",
+    "scripts/edge-deploy/health-check.unit.mjs",
     3
    ],
    [
-    "scripts/edge-deploy/health-check.unit.mjs",
-    3
+    "scripts/edge-deploy/health-check.mjs",
+    2
    ],
    [
     "supabase/deployment-manifest.json",
@@ -385478,6 +385478,10 @@
    [
     "supabase/functions/connection-health-check/index.ts",
     2
+   ],
+   [
+    "AGENTS.md",
+    1
    ],
    [
     ".github/workflows/ci.yml",
@@ -385537,10 +385541,6 @@
    ],
    [
     "scripts/catalog/validate-plan.test.mjs",
-    1
-   ],
-   [
-    "scripts/ci/e2e-isolated-compilation-network.unit.mjs",
     1
    ]
   ]
