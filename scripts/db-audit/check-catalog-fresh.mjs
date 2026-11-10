@@ -131,10 +131,10 @@ errosOperacionais += errosDestino.length;
 for (const secao of SECOES) {
   const arrayA = A[secao];
   const arrayB = B[secao];
-  if (!Array.isArray(arrayA) || !arrayA.every((item) => typeof item === 'string')) {
+  const validoA = Array.isArray(arrayA) && arrayA.every((item) => typeof item === 'string');
+  if (!validoA) {
     console.error('[' + secao + '] secao ausente ou invalida no catalogo commitado');
     drifts++;
-    continue;
   }
   if (!Array.isArray(arrayB) || !arrayB.every((item) => typeof item === 'string')) {
     console.error('[' + secao + '] secao ausente ou invalida no catalogo fresco');
@@ -142,20 +142,22 @@ for (const secao of SECOES) {
     continue;
   }
 
-  const setA = new Set(arrayA);
   const setB = new Set(arrayB);
-  const duplicadosA = arrayA.length - setA.size;
   const duplicadosB = arrayB.length - setB.size;
+  errosOperacionais += duplicadosB;
+  if (duplicadosB) console.error('  entradas duplicadas no catalogo fresco: ' + duplicadosB);
+  if (!validoA) continue;
+
+  const setA = new Set(arrayA);
+  const duplicadosA = arrayA.length - setA.size;
   const soNoArquivo = [...setA].filter((x) => !setB.has(x)).sort((a, b) => a.localeCompare(b));
   const soNoBanco = [...setB].filter((x) => !setA.has(x)).sort((a, b) => a.localeCompare(b));
   drifts += soNoArquivo.length + soNoBanco.length + duplicadosA;
-  errosOperacionais += duplicadosB;
   console.log(
     '[' + secao + '] arquivo: ' + setA.size + ' | banco: ' + setB.size +
     ' | so no arquivo: ' + soNoArquivo.length + ' | so no banco: ' + soNoBanco.length,
   );
   if (duplicadosA) console.error('  entradas duplicadas no catalogo commitado: ' + duplicadosA);
-  if (duplicadosB) console.error('  entradas duplicadas no catalogo fresco: ' + duplicadosB);
   if (soNoArquivo.length) console.error('  removidos do banco mas ainda no catalogo: ' + soNoArquivo.join(', '));
   if (soNoBanco.length) console.error('  criados no banco e ausentes do catalogo: ' + soNoBanco.join(', '));
 }

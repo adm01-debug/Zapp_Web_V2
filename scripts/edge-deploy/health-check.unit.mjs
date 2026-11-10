@@ -176,6 +176,52 @@ test('queryAnalytics limita a janela a 24h e valida o contrato agregado', async 
   }
 });
 
+const countCases = [
+  ['zero', 0, true], ['inteiro', 1, true], ['limite seguro', Number.MAX_SAFE_INTEGER, true],
+  ['zero textual', '0', true], ['inteiro textual', '1', true],
+  ['limite seguro textual', String(Number.MAX_SAFE_INTEGER), true],
+  ['null', null, false], ['false', false, false], ['true', true, false],
+  ['array vazio', [], false], ['array zero', [0], false], ['array um', [1], false],
+  ['objeto', {}, false], ['objeto conversível', { valueOf() { throw new Error('coerção não permitida'); } }, false],
+  ['ausente', undefined, false], ['bigint', 0n, false], ['NaN', NaN, false], ['infinito', Infinity, false],
+  ['negativo', -1, false], ['fração', 0.5, false], ['vazio textual', '', false],
+  ['espaço textual', ' 1', false], ['zero inicial', '01', false], ['exponencial', '1e2', false],
+  ['negativo textual', '-1', false], ['hexadecimal', '0x1', false], ['decimal textual', '1.0', false],
+  ['inteiro impreciso', Number.MAX_SAFE_INTEGER + 1, false],
+  ['inteiro textual impreciso', String(Number.MAX_SAFE_INTEGER + 1), false], ['symbol', Symbol('count'), false],
+];
+
+for (const field of ['total', 'errors']) {
+  for (const [label, value, valid] of countCases) {
+    test(`queryAnalytics ${valid ? 'aceita' : 'recusa'} ${field}: ${label}`, async () => {
+      const query = queryAnalytics({
+        projectRef: CANONICAL_PROJECT, token: 'token-local', sql: 'SELECT count() FROM logs',
+        start: new Date('2026-11-07T12:00:00Z'), end: new Date('2026-11-07T12:05:00Z'),
+        fetchImpl: async () => response(200, { result: [{ total: Number.MAX_SAFE_INTEGER, errors: 0, [field]: value }] }),
+      });
+      if (valid) assert.equal((await query)[field], Number(value));
+      else await assert.rejects(query, new RegExp(`${field} inválido`));
+    });
+  }
+}
+
+for (const value of [null, false, true, [], [0], [1]]) {
+  test(`runHealthCheck não aprova contagens inválidas do tipo ${JSON.stringify(value)}`, async () => {
+    await assert.rejects(runHealthCheck(baseArgs, {
+      env: { SUPABASE_ACCESS_TOKEN: 'token-local' }, readFileImpl, logger: silentLogger,
+      fetchImpl: async () => response(200, { result: [{ total: value, errors: 0 }] }),
+    }), /total inválido/);
+  });
+}
+
+test('runHealthCheck conserva no-traffic para contagem zero legítima', async () => {
+  const result = await runHealthCheck(baseArgs, {
+    env: { SUPABASE_ACCESS_TOKEN: 'token-local' }, readFileImpl, logger: silentLogger,
+    fetchImpl: async () => response(200, { result: [{ total: '0', errors: 0 }] }),
+  });
+  assert.deepEqual(result, { status: 'no-traffic', total: 0, errors: 0 });
+});
+
 test('queryAnalytics falha fechado em 4xx e contrato; 5xx e transporte são transitórios', async () => {
   const common = {
     projectRef: CANONICAL_PROJECT,
