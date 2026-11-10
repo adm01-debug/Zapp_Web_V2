@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "09df718116d247a7e04ca001fa0a65d3d1d020dc",
+  "sha": "7ce81c0158ff65c90d56cf127c1a9264ac873551",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 17:43 UTC",
-  "files_total": 8212,
-  "code_files": 6059,
-  "code_lines": 1052061
+  "generated_at": "2026-11-10 17:50 UTC",
+  "files_total": 8221,
+  "code_files": 6068,
+  "code_lines": 1053765
  },
  "version": "1.3.2",
- "facts_hash": "2f784b5cd86468e7",
+ "facts_hash": "d8b07bb1d079bac2",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -317,8 +317,8 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2336,
-   ".ts": 1881,
+   ".tsx": 2337,
+   ".ts": 1889,
    ".sql": 1300,
    ".mjs": 423,
    ".py": 119,
@@ -61795,6 +61795,30 @@
     "idempotency": false
    },
    {
+    "name": "ai-deadline-calculator",
+    "file": "supabase/functions/ai-deadline-calculator/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) — NÃO valida usuário no código",
+    "tables": [
+     "ai_providers",
+     "ai_usage_logs",
+     "feature_flags",
+     "profiles"
+    ],
+    "env": [],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "AI gateway error [${response.status}]"
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
+   },
+   {
     "name": "ai-enhance-message",
     "file": "supabase/functions/ai-enhance-message/index.ts",
     "methods": [
@@ -61877,6 +61901,150 @@
     "side_effects": [],
     "webhook_events": [],
     "idempotency": true
+   },
+   {
+    "name": "ai-lead-temperature",
+    "file": "supabase/functions/ai-lead-temperature/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) — NÃO valida usuário no código",
+    "tables": [
+     "ai_providers",
+     "ai_usage_logs",
+     "feature_flags",
+     "profiles"
+    ],
+    "env": [],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "AI gateway error [${response.status}]"
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
+   },
+   {
+    "name": "ai-loss-risk",
+    "file": "supabase/functions/ai-loss-risk/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) — NÃO valida usuário no código",
+    "tables": [
+     "ai_providers",
+     "ai_usage_logs",
+     "feature_flags",
+     "profiles"
+    ],
+    "env": [],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "AI gateway error [${response.status}]"
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
+   },
+   {
+    "name": "ai-multimodal-analysis",
+    "file": "supabase/functions/ai-multimodal-analysis/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) — NÃO valida usuário no código",
+    "tables": [
+     "ai_providers",
+     "ai_usage_logs",
+     "feature_flags",
+     "profiles"
+    ],
+    "env": [],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "AI gateway error [${response.status}]"
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
+   },
+   {
+    "name": "ai-objection-handler",
+    "file": "supabase/functions/ai-objection-handler/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) — NÃO valida usuário no código",
+    "tables": [
+     "ai_providers",
+     "ai_usage_logs",
+     "feature_flags",
+     "profiles"
+    ],
+    "env": [],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "AI gateway error [${response.status}]"
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
+   },
+   {
+    "name": "ai-price-anchor",
+    "file": "supabase/functions/ai-price-anchor/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) — NÃO valida usuário no código",
+    "tables": [
+     "ai_providers",
+     "ai_usage_logs",
+     "feature_flags",
+     "profiles"
+    ],
+    "env": [],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "AI gateway error [${response.status}]"
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
+   },
+   {
+    "name": "ai-product-recommendation",
+    "file": "supabase/functions/ai-product-recommendation/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) — NÃO valida usuário no código",
+    "tables": [
+     "ai_providers",
+     "ai_usage_logs",
+     "feature_flags",
+     "profiles"
+    ],
+    "env": [],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "AI gateway error [${response.status}]"
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
    },
    {
     "name": "ai-proxy",
@@ -62287,6 +62455,8 @@
     ],
     "auth": "service_role (ignora RLS) + valida JWT do usuário",
     "tables": [
+     "ai_providers",
+     "ai_usage_logs",
      "contacts",
      "copilot_insights",
      "copilot_sessions",
@@ -62298,7 +62468,7 @@
     ],
     "external": [],
     "invokes": [],
-    "doc": "copilot-live — Edge Function stub (CV-141) Recebe um tick do RADAR (contexto da conversa) e devolve insights calculados no servidor. Hoje retorna resposta estática para que o front possa ser deployado sem dependência de LLM; a lógica real será adicionada iterativamente.",
+    "doc": "copilot-live — Edge Function (CV-141) Recebe um tick do RADAR (contexto da conversa), cria/atualiza a sessão do copiloto e gera uma sugestão em tempo real via generateWithRouting. Persiste o insight em copilot_insights para consumo via realtime pelo front.",
     "errors": [],
     "side_effects": [],
     "webhook_events": [],
@@ -64564,7 +64734,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2172,
+  "components_count": 2173,
   "hooks": [
    {
     "name": "useContacts",
@@ -65557,6 +65727,10 @@
    {
     "name": "usePriceAnchoring",
     "file": "src/hooks/copilot/usePriceAnchoring.ts"
+   },
+   {
+    "name": "useProductRecommendation",
+    "file": "src/hooks/copilot/useProductRecommendation.ts"
    },
    {
     "name": "usePromptVersioning",
@@ -67670,8 +67844,8 @@
   },
   {
    "module": "src/components",
-   "files": 2172,
-   "lines": 370534,
+   "files": 2173,
+   "lines": 370740,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68018,8 +68192,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 985,
-   "lines": 160179,
+   "files": 986,
+   "lines": 160538,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -69057,8 +69231,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 383,
-   "lines": 116674,
+   "files": 390,
+   "lines": 117813,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -76043,6 +76217,70 @@
     "chain": []
    },
    {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "ObjectionHandlerEnvelope",
+    "kind": "object",
+    "body": "{ objectionType: z.enum(['preco', 'prazo', 'quantidade_minima', 'concorrente', 'chefe', 'qualidade', 'frete', 'generica']), isSmokescreen: z.boolean(), confidence: z.number().min(0).max(1), brindeLetter: z.enum(['B', 'R', 'I', 'N', 'D', 'E']).optional(), script: z.array(z.string().min(1)).min(1), suggestedReply: z.string().min(1), coaching: z.string().optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "PriceAnchorEnvelope",
+    "kind": "object",
+    "body": "{ triggered: z.boolean(), strategy: z.string().optional(), anchorScript: z.string(), costPerUseScript: z.string(), reframing: z.string().optional(), confidence: z.number().min(0).max(1), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "LossRiskEnvelope",
+    "kind": "object",
+    "body": "{ level: z.enum(['low', 'medium', 'high']), riskScore: z.number().min(0).max(100), signals: z.array(z.string()), recoveryAction: z.string(), script: z.string(), urgency: z.enum(['now', 'today', 'this_week', 'monitor']), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "DeadlineCalculatorEnvelope",
+    "kind": "object",
+    "body": "{ feasibility: z.enum(['ok', 'tight', 'impossible']), productionDays: z.number().int().min(0), daysUntilEvent: z.number().int().nullable(), lastOrderDate: z.string().nullable(), message: z.string().min(1), alternatives: z.array(z.string()), urgencyLevel: z.enum(['low', 'medium', 'high', 'critical']), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "LeadTemperatureEnvelope",
+    "kind": "object",
+    "body": "{ temperature: z.number().min(0).max(100), temperatureLabel: z.enum(['cold', 'warm', 'hot']), interestScore: z.number().min(0).max(100), urgencyScore: z.number().min(0).max(100), capacityScore: z.number().min(0).max(100), signals: z.array(z.string()), recommendedAction: z.string().min(1), nextBestOffer: z.string(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "ProductRecommendationItemSchema",
+    "kind": "object",
+    "body": "{ product: z.string().min(1), category: z.string().min(1), reasoning: z.string(), estimatedPrice: z.string(), confidence: z.number().min(0).max(1), urgency: z.enum(['low', 'medium', 'high']), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "ProductRecommendationEnvelope",
+    "kind": "object",
+    "body": "{ recommendations: z.array(ProductRecommendationItemSchema).min(1).max(3), topPick: z.string().min(1), upsellOpportunity: z.string(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "name": "MultimodalAnalysisEnvelope",
+    "kind": "object",
+    "body": "{ description: z.string().min(1), extractedText: z.array(z.string()), dominantColors: z.array(z.string()), keyElements: z.array(z.string()), brandingOpportunity: z.string(), suggestedReply: z.string().min(1), confidence: z.number().min(0).max(1), }",
+    "refines": [],
+    "chain": []
+   },
+   {
     "file": "supabase/functions/_shared/copilot-tick.ts",
     "name": "CopilotTier1Schema",
     "kind": "object",
@@ -76119,6 +76357,62 @@
     "name": "AiClassifyTicketsSchema",
     "kind": "object",
     "body": "{ limit: z.number().int().min(1).max(200).optional().default(50), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/schemas.ts",
+    "name": "AiObjectionHandlerSchema",
+    "kind": "object",
+    "body": "{ messages: z.array(MessageSchema).max(50), clientText: z.string().max(2000).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/schemas.ts",
+    "name": "AiPriceAnchorSchema",
+    "kind": "object",
+    "body": "{ messages: z.array(MessageSchema).max(50), clientText: z.string().max(2000).optional(), productType: z.string().max(100).optional(), unitPrice: z.number().min(0).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/schemas.ts",
+    "name": "AiLossRiskSchema",
+    "kind": "object",
+    "body": "{ messages: z.array(MessageSchema).max(50), daysSinceLastContact: z.number().int().min(0).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/schemas.ts",
+    "name": "AiDeadlineCalculatorSchema",
+    "kind": "object",
+    "body": "{ messages: z.array(MessageSchema).max(50), eventDate: z.string().optional(), productType: z.string().max(100).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/schemas.ts",
+    "name": "AiLeadTemperatureSchema",
+    "kind": "object",
+    "body": "{ messages: z.array(MessageSchema).max(50), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/schemas.ts",
+    "name": "AiProductRecommendationSchema",
+    "kind": "object",
+    "body": "{ messages: z.array(MessageSchema).max(50), eventType: z.string().max(100).optional(), budget: z.number().min(0).optional(), quantity: z.number().int().min(1).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+    "refines": [],
+    "chain": []
+   },
+   {
+    "file": "supabase/functions/_shared/schemas.ts",
+    "name": "AiMultimodalAnalysisSchema",
+    "kind": "object",
+    "body": "{ imageUrl: z.string().url(), context: z.string().max(500).optional(), conversationContext: z.string().max(1000).optional(), requestId: z.string().uuid().optional(), }",
     "refines": [],
     "chain": []
    },
@@ -76241,66 +76535,6 @@
     "name": "DetectNewDeviceSchema",
     "kind": "object",
     "body": "{ device_fingerprint: z.string().min(1).max(500), browser: z.string().max(200), os: z.string().max(200), device_name: z.string().max(200), }",
-    "refines": [],
-    "chain": []
-   },
-   {
-    "file": "supabase/functions/_shared/schemas.ts",
-    "name": "ScheduledReportSchema",
-    "kind": "object",
-    "body": "{ reportId: z.string().uuid(\"reportId must be a valid UUID\"), }",
-    "refines": [],
-    "chain": []
-   },
-   {
-    "file": "supabase/functions/_shared/schemas.ts",
-    "name": "GmailHeaderValueSchema",
-    "kind": "string",
-    "body": "",
-    "refines": [
-     "Quebra de linha nao permitida em cabecalho"
-    ],
-    "chain": [
-     "refine"
-    ]
-   },
-   {
-    "file": "supabase/functions/_shared/schemas.ts",
-    "name": "GmailSendActionSchema",
-    "kind": "object",
-    "body": "{ action: z.enum(['send', 'reply', 'create-draft', 'update-draft', 'delete-draft', 'modify-labels', 'modify-thread-labels', 'mark-read', 'trash', 'trash-thread']), account_id: z.string().uuid(\"account_id must be a valid UUID\"), to: z.union([GmailHeaderValueSchema, z.array(GmailHeaderValueSchema).max(100)]).optional(), cc: z.array(GmailHeaderValueSchema).max(100).optional(), bcc: z.array(GmailHeaderValueSchema).max(100).optional(), subject: GmailHeaderValueSchema.optional(), text_body: z.string().max(100000).optional(), html_body: z.string().max(500000).optional(), // IDs do Gmail sao interpolados direto na URL (/messages/{id}/modify, // /threads/{id}/trash, etc.) em varios cases do handler — regex fecha // injecao de path (/, ?, #, espaco) na validacao, uma vez, pra todos eles. thread_id: …",
-    "refines": [],
-    "chain": []
-   },
-   {
-    "file": "supabase/functions/_shared/schemas.ts",
-    "name": "GmailOAuthActionSchema",
-    "kind": "object",
-    "body": "{ action: z.enum(['get-auth-url', 'exchange-code', 'refresh-token', 'disconnect', 'list-accounts']), code: z.string().max(2000).optional(), account_id: z.string().uuid().optional(), state: z.string().max(500).optional(), }",
-    "refines": [],
-    "chain": []
-   },
-   {
-    "file": "supabase/functions/_shared/schemas.ts",
-    "name": "WebAuthnActionSchema",
-    "kind": "object",
-    "body": "{ action: z.enum(['registration-options', 'verify-registration', 'authentication-options', 'verify-authentication']), userId: z.string().uuid().optional(), userEmail: z.string().email().optional(), userName: z.string().max(200).optional(), credential: z.record(z.unknown()).optional(), friendlyName: z.string().max(200).optional(), }",
-    "refines": [],
-    "chain": []
-   },
-   {
-    "file": "supabase/functions/_shared/schemas.ts",
-    "name": "ExternalDbBridgeSchema",
-    "kind": "object",
-    "body": "{ // Z019: insert/update/delete removidos — allowlist só permite select/rpc. action: z.enum(['select', 'rpc']), table: z.string().max(100).optional(), rpc: z.string().max(100).optional(), params: z.record(z.unknown()).optional(), limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional(), countMode: z.string().max(20).optional(), }",
-    "refines": [],
-    "chain": []
-   },
-   {
-    "file": "supabase/functions/_shared/schemas.ts",
-    "name": "EvolutionWebhookEnvelopeV1Schema",
-    "kind": "object",
-    "body": "{ event: z.string().min(1, 'event is required').max(200), instance: z.string().min(1, 'instance is required').max(200), data: z.unknown().optional(), }",
     "refines": [],
     "chain": []
    },
@@ -86053,6 +86287,10 @@
     "msg": "AI error: ${response.status}"
    },
    {
+    "file": "supabase/functions/ai-deadline-calculator/index.ts",
+    "msg": "AI gateway error [${response.status}]"
+   },
+   {
     "file": "supabase/functions/ai-enhance-message/index.ts",
     "msg": "Erro ao processar com IA"
    },
@@ -86095,6 +86333,30 @@
    {
     "file": "supabase/functions/ai-kb-ingest/index.ts",
     "msg": "falha ao remover artigo publicado apos erro de vinculo: ${errorMessage(error)}"
+   },
+   {
+    "file": "supabase/functions/ai-lead-temperature/index.ts",
+    "msg": "AI gateway error [${response.status}]"
+   },
+   {
+    "file": "supabase/functions/ai-loss-risk/index.ts",
+    "msg": "AI gateway error [${response.status}]"
+   },
+   {
+    "file": "supabase/functions/ai-multimodal-analysis/index.ts",
+    "msg": "AI gateway error [${response.status}]"
+   },
+   {
+    "file": "supabase/functions/ai-objection-handler/index.ts",
+    "msg": "AI gateway error [${response.status}]"
+   },
+   {
+    "file": "supabase/functions/ai-price-anchor/index.ts",
+    "msg": "AI gateway error [${response.status}]"
+   },
+   {
+    "file": "supabase/functions/ai-product-recommendation/index.ts",
+    "msg": "AI gateway error [${response.status}]"
    },
    {
     "file": "supabase/functions/ai-proxy/index.ts",
@@ -90473,6 +90735,10 @@
     "text": "* CV-083 — Calculadora de prazo real."
    },
    {
+    "file": "src/hooks/copilot/useDeadlineCalculator.ts",
+    "text": "* Local: cálculo deterministico por data/produto. AI: `analyze()` chama `ai-deadline-calculator`"
+   },
+   {
     "file": "src/hooks/copilot/useDiscountGuardrail.ts",
     "text": "* CV-075 — Guardrail de desconto."
    },
@@ -93159,6 +93425,10 @@
    {
     "file": "supabase/functions/_shared/ai-response-contracts.ts",
     "text": "* Regra de ouro deste contrato:"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-response-contracts.ts",
+    "text": "─── Capacidade: calculadora de prazo ────────────────────────"
    },
    {
     "file": "supabase/functions/_shared/ai-routing.ts",
@@ -121176,6 +121446,18 @@
     "kind": "escreve"
    },
    {
+    "file": "supabase/functions/ai-deadline-calculator/index.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-deadline-calculator/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
+   },
+   {
     "file": "supabase/functions/ai-enhance-message/index.ts",
     "field": "role",
     "value": "user",
@@ -121264,6 +121546,90 @@
     "field": "processing_status",
     "value": "completed",
     "kind": "compara"
+   },
+   {
+    "file": "supabase/functions/ai-lead-temperature/index.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-lead-temperature/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-loss-risk/index.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-loss-risk/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-multimodal-analysis/index.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-multimodal-analysis/index.ts",
+    "field": "type",
+    "value": "image_url",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-multimodal-analysis/index.ts",
+    "field": "type",
+    "value": "text",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-multimodal-analysis/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-objection-handler/index.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-objection-handler/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-price-anchor/index.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-price-anchor/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-product-recommendation/index.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-product-recommendation/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
    },
    {
     "file": "supabase/functions/ai-proxy/index.ts",
@@ -121747,8 +122113,8 @@
    },
    {
     "file": "supabase/functions/copilot-live/index.ts",
-    "field": "type",
-    "value": "suggestion",
+    "field": "role",
+    "value": "user",
     "kind": "escreve"
    },
    {
@@ -123556,8 +123922,8 @@
    {
     "file": "src/hooks/copilot/usePriceAnchoring.ts",
     "name": "usePriceAnchoring",
-    "params": "{ clientText }: { clientText: string }",
-    "body": "return useMemo(() => { if (!clientText) return { triggered: false, anchorScript: '', costPerUseScript: '' }; const lower = clientText.toLowerCase(); const triggered = PRICE_SENSITIVITY_TRIGGERS.some((t) => lower.includes(t)); if (!triggered) return { triggered: false, anchorScript: '', costPerUseScript: '' }; return { triggered: true, anchorScript: 'Comparando com o impacto que o brinde vai gerar no evento, o investimento por pessoa fica muito pequeno. Posso mostrar o cálculo?', costPerUseScript …"
+    "params": "{ clientText, messages, }: { clientText: string; messages?: Array<{ content: string; sender: string; created_at?: string",
+    "body": "aiResult: AiPriceAnchoringResult | null; aiLoading: boolean; aiError: string | null; analyze: () => Promise<void>;"
    },
    {
     "file": "src/hooks/copilot/useSmartTemplates.ts",
@@ -124182,6 +124548,12 @@
     "name": "eligibility",
     "params": "recipient: EligibilityRecipient | null | undefined, ctx?: EligibilityContext | null,",
     "body": "const context = ctx ?? {}; const destination = typeof recipient?.destination === \"string\" ? recipient.destination.trim() : \"\"; // 1) Sem destino (ou marcado inválido): nada mais é avaliável. if (destination === \"\") { return { class: \"no_destination\", reason: \"missing_destination\" }; } if (context.destinationValid === false) { return { class: \"no_destination\", reason: \"invalid_destination\" }; } // 2) Opt-out (talkx_blacklist) — bloqueio duro, domina o transitório. if (isBlacklisted(destination, c …"
+   },
+   {
+    "file": "supabase/functions/copilot-live/index.ts",
+    "name": "generateLiveSuggestion",
+    "params": "opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; }",
+    "body": "content: string; modelVersion: string"
    },
    {
     "file": "supabase/functions/crm-integration/index.ts",
@@ -235100,6 +235472,7 @@
       "escreve:src/components/inbox/MessagePreview.tsx",
       "escreve:src/components/inbox/interactive-builder/useInteractiveMessage.ts",
       "escreve:src/types/chat.ts",
+      "escreve:supabase/functions/ai-multimodal-analysis/index.ts",
       "escreve:supabase/functions/classify-audio-meme/index.ts",
       "escreve:supabase/functions/classify-emoji/index.ts",
       "escreve:supabase/functions/classify-sticker/index.ts",
@@ -235314,8 +235687,7 @@
       "escreve:src/components/inbox/contact-details/ContactActionButtons.tsx"
      ],
      "suggestion": [
-      "escreve:src/components/inbox/copilot/InsightCard.tsx",
-      "escreve:supabase/functions/copilot-live/index.ts"
+      "escreve:src/components/inbox/copilot/InsightCard.tsx"
      ],
      "SET_QUERY": [
       "compara:src/components/inbox/location-picker/useAddressAutocomplete.ts",
@@ -235888,6 +236260,7 @@
      ],
      "image_url": [
       "escreve:supabase/functions/_shared/ai-image-input.ts",
+      "escreve:supabase/functions/ai-multimodal-analysis/index.ts",
       "escreve:supabase/functions/classify-emoji/index.ts",
       "escreve:supabase/functions/classify-sticker/index.ts"
      ],
@@ -236164,6 +236537,13 @@
       "escreve:supabase/functions/ai-auto-tag/index.ts",
       "escreve:supabase/functions/ai-conversation-analysis/index.ts",
       "escreve:supabase/functions/ai-conversation-summary/index.ts",
+      "escreve:supabase/functions/ai-deadline-calculator/index.ts",
+      "escreve:supabase/functions/ai-lead-temperature/index.ts",
+      "escreve:supabase/functions/ai-loss-risk/index.ts",
+      "escreve:supabase/functions/ai-multimodal-analysis/index.ts",
+      "escreve:supabase/functions/ai-objection-handler/index.ts",
+      "escreve:supabase/functions/ai-price-anchor/index.ts",
+      "escreve:supabase/functions/ai-product-recommendation/index.ts",
       "escreve:supabase/functions/ai-proxy/index.ts",
       "escreve:supabase/functions/ai-suggest-reply/index.ts",
       "escreve:supabase/functions/ai-transcribe-audio/index.ts",
@@ -236985,7 +237365,14 @@
       "escreve:supabase/functions/_shared/ai-conversation-pipeline.ts",
       "escreve:supabase/functions/_shared/copilot-tick.ts",
       "escreve:supabase/functions/ai-auto-tag/index.ts",
+      "escreve:supabase/functions/ai-deadline-calculator/index.ts",
       "escreve:supabase/functions/ai-enhance-message/index.ts",
+      "escreve:supabase/functions/ai-lead-temperature/index.ts",
+      "escreve:supabase/functions/ai-loss-risk/index.ts",
+      "escreve:supabase/functions/ai-multimodal-analysis/index.ts",
+      "escreve:supabase/functions/ai-objection-handler/index.ts",
+      "escreve:supabase/functions/ai-price-anchor/index.ts",
+      "escreve:supabase/functions/ai-product-recommendation/index.ts",
       "escreve:supabase/functions/ai-proxy/index.ts",
       "escreve:supabase/functions/ai-suggest-reply/index.ts",
       "escreve:supabase/functions/automation-suggest-reply/index.ts",
@@ -236993,6 +237380,7 @@
       "escreve:supabase/functions/classify-audio-meme/index.ts",
       "escreve:supabase/functions/classify-emoji/index.ts",
       "escreve:supabase/functions/classify-sticker/index.ts",
+      "escreve:supabase/functions/copilot-live/index.ts",
       "escreve:supabase/functions/talkx-ai/index.ts",
       "escreve:supabase/functions/voice-agent/index.ts"
      ],
@@ -293052,6 +293440,14 @@
    ],
    "doc": "CV-032 — Medidor B·R·I·N·D·E do painel RADAR. 6 casinhas que acendem em cinza/amarelo/verde conforme o preenchimento. Clique em uma casinha leva à mensagem de origem (se disponível)."
   },
+  "src/components/inbox/copilot/CopilotPanel.tsx": {
+   "path": "src/components/inbox/copilot/CopilotPanel.tsx",
+   "lines": 182,
+   "exports": [
+    "function CopilotPanel"
+   ],
+   "doc": "Painel central do Copiloto B·R·I·N·D·E. Agrega os principais detectores (objeção, perda, âncora de preço, termômetro de lead) e os exibe em seções compactas com fallback local + botão de análise AI para cada dimensão."
+  },
   "src/components/inbox/copilot/DecisionMakerBadge.tsx": {
    "path": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
    "lines": 42,
@@ -294482,7 +294878,7 @@
   },
   "src/components/inbox/tabs/AiTab.tsx": {
    "path": "src/components/inbox/tabs/AiTab.tsx",
-   "lines": 211,
+   "lines": 233,
    "exports": [
     "function AiTab"
    ],
@@ -295018,7 +295414,7 @@
   },
   "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
-   "lines": 90,
+   "lines": 91,
    "is_test": true,
    "tests": [
     "AiTab — falha ao carregar a análise",
@@ -295028,7 +295424,7 @@
   },
   "src/components/inbox/tabs/__tests__/AiTab.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
-   "lines": 100,
+   "lines": 101,
    "is_test": true,
    "tests": [
     "AiTab",
@@ -326996,10 +327392,11 @@
   },
   "src/hooks/copilot/useDeadlineCalculator.ts": {
    "path": "src/hooks/copilot/useDeadlineCalculator.ts",
-   "lines": 48,
+   "lines": 115,
    "exports": [
     "type DeadlineFeasibility",
     "interface DeadlineResult",
+    "interface AiDeadlineResult",
     "function useDeadlineCalculator"
    ],
    "enums": [
@@ -327009,9 +327406,10 @@
     }
    ],
    "rule_comments": [
-    "* CV-083 — Calculadora de prazo real."
+    "* CV-083 — Calculadora de prazo real.",
+    "* Local: cálculo deterministico por data/produto. AI: `analyze()` chama `ai-deadline-calculator`"
    ],
-   "doc": "CV-083 — Calculadora de prazo real.",
+   "doc": "CV-083 — Calculadora de prazo real. Local: cálculo deterministico por data/produto. AI: `analyze()` chama `ai-deadline-calculator` para extração de data da conversa + mensagem contextualizada.",
    "hooks": [
     "useDeadlineCalculator"
    ]
@@ -327141,22 +327539,23 @@
   },
   "src/hooks/copilot/useImageAnalysis.ts": {
    "path": "src/hooks/copilot/useImageAnalysis.ts",
-   "lines": 35,
+   "lines": 68,
    "exports": [
     "interface ImageAnalysisResult",
     "function useImageAnalysis"
    ],
-   "doc": "CV-102 — Análise de imagem (stub).",
+   "doc": "CV-102 — Análise de imagem via AI multimodal. Chama `ai-multimodal-analysis` com a URL da imagem e retorna descrição, texto extraído, cores, oportunidade de branding e resposta sugerida.",
    "hooks": [
     "useImageAnalysis"
    ]
   },
   "src/hooks/copilot/useLeadThermometer.ts": {
    "path": "src/hooks/copilot/useLeadThermometer.ts",
-   "lines": 32,
+   "lines": 88,
    "exports": [
     "type LeadTemperature",
     "interface LeadThermometerResult",
+    "interface AiLeadThermometerResult",
     "function useLeadThermometer"
    ],
    "enums": [
@@ -327165,7 +327564,7 @@
      "values": "cold | warm | hot"
     }
    ],
-   "doc": "CV-091 — Termômetro de lead.",
+   "doc": "CV-091 — Termômetro de lead. Local: score por sinais hot/warm/cold. AI: `analyze()` chama `ai-lead-temperature` para análise multidimensional (interesse, urgência, capacidade).",
    "hooks": [
     "useLeadThermometer"
    ]
@@ -327328,10 +327727,11 @@
   },
   "src/hooks/copilot/useLossRiskDetector.ts": {
    "path": "src/hooks/copilot/useLossRiskDetector.ts",
-   "lines": 78,
+   "lines": 117,
    "exports": [
     "type LossRiskLevel",
     "interface LossRiskResult",
+    "interface AiLossRiskResult",
     "function useLossRiskDetector"
    ],
    "enums": [
@@ -327346,7 +327746,7 @@
      "value": "5"
     }
    ],
-   "doc": "CV-079 — Detector de risco de perda de venda. Identifica sinais de que o cliente pode estar desistindo ou indo para concorrente. Une as duas implementações paralelas do CV-079 (antigo useLossRiskAlert): frases de gatilho das duas, histórico recente opcional e `script` — a mensagem pronta para o clie …",
+   "doc": "CV-079 — Detector de risco de perda de venda. Identifica sinais de que o cliente pode estar desistindo ou indo para concorrente. Local: `useMemo` sobre frases de gatilho. AI: `analyze()` chama `ai-loss-risk`.",
    "hooks": [
     "useLossRiskDetector"
    ]
@@ -327447,10 +327847,11 @@
   },
   "src/hooks/copilot/useObjectionHandler.ts": {
    "path": "src/hooks/copilot/useObjectionHandler.ts",
-   "lines": 93,
+   "lines": 139,
    "exports": [
     "type ObjeçãoType",
     "interface ObjectionResult",
+    "interface AiObjectionResult",
     "function useObjectionHandler"
    ],
    "enums": [
@@ -327459,7 +327860,7 @@
      "values": "preco | prazo | quantidade_minima | concorrente | chefe | qualidade | frete | generica"
     }
    ],
-   "doc": "CV-072 — Tratamento de objeção. Detecta tipo de objeção no texto do cliente e retorna roteiro de resposta. Metodologia B·R·I·N·D·E: acolher → perguntar causa → responder com valor → checar.",
+   "doc": "CV-072 — Tratamento de objeção. Detecta tipo de objeção no texto do cliente e retorna roteiro de resposta. Metodologia B·R·I·N·D·E: acolher → perguntar causa → responder com valor → checar. Funciona em dois modos: - Local (síncrono): `useMemo` sobre OBJECTION_TRIGGERS — zero latência, sem custo. - A …",
    "hooks": [
     "useObjectionHandler"
    ]
@@ -327557,21 +327958,35 @@
   },
   "src/hooks/copilot/usePriceAnchoring.ts": {
    "path": "src/hooks/copilot/usePriceAnchoring.ts",
-   "lines": 32,
+   "lines": 78,
    "exports": [
     "interface PriceAnchoringResult",
+    "interface AiPriceAnchoringResult",
     "function usePriceAnchoring"
    ],
-   "doc": "CV-074 — Âncora de preço. Sugere técnica de ancoragem quando cliente menciona preço alto ou compara valores.",
+   "doc": "CV-074 — Âncora de preço. Sugere técnica de ancoragem quando cliente menciona preço alto ou compara valores. Local: `useMemo` sobre triggers. AI: `analyze()` chama `ai-price-anchor`.",
    "hooks": [
     "usePriceAnchoring"
    ],
    "calc_fns": [
     {
      "name": "usePriceAnchoring",
-     "params": "{ clientText }: { clientText: string }",
-     "body": "return useMemo(() => { if (!clientText) return { triggered: false, anchorScript: '', costPerUseScript: '' }; const lower = clientText.toLowerCase(); const triggered = PRICE_SENSITIVITY_TRIGGERS.some((t) => lower.includes(t)); if (!triggered) return { triggered: false, anchorScript: '', costPerUseScript: '' }; return { triggered: true, anchorScript: 'Comparando com o impacto que o brinde vai gerar no evento, o investimento por pessoa fica muito pequeno. Posso mostrar o cálculo?', costPerUseScript …"
+     "params": "{ clientText, messages, }: { clientText: string; messages?: Array<{ content: string; sender: string; created_at?: string",
+     "body": "aiResult: AiPriceAnchoringResult | null; aiLoading: boolean; aiError: string | null; analyze: () => Promise<void>;"
     }
+   ]
+  },
+  "src/hooks/copilot/useProductRecommendation.ts": {
+   "path": "src/hooks/copilot/useProductRecommendation.ts",
+   "lines": 72,
+   "exports": [
+    "interface ProductRecommendationItem",
+    "interface ProductRecommendationResult",
+    "function useProductRecommendation"
+   ],
+   "doc": "CV-105 — Recomendação de produto por IA. Chama `ai-product-recommendation` com o histórico da conversa e parâmetros opcionais (tipo de evento, orçamento, quantidade) para sugerir até 3 produtos ideais.",
+   "hooks": [
+    "useProductRecommendation"
    ]
   },
   "src/hooks/copilot/usePromptVersioning.ts": {
@@ -357442,7 +357857,7 @@
   },
   "supabase/functions/_shared/ai-response-contracts.ts": {
    "path": "supabase/functions/_shared/ai-response-contracts.ts",
-   "lines": 263,
+   "lines": 351,
    "exports": [
     "const DEPARTMENT_VALUES",
     "const CONVERSATION_STATUS_VALUES",
@@ -357456,12 +357871,26 @@
     "const AutoTagItemSchema",
     "const AutoTagOutput",
     "const ChatbotL1Output",
+    "const ObjectionHandlerEnvelope",
+    "const PriceAnchorEnvelope",
+    "const LossRiskEnvelope",
+    "const DeadlineCalculatorEnvelope",
+    "const LeadTemperatureEnvelope",
+    "const ProductRecommendationEnvelope",
+    "const MultimodalAnalysisEnvelope",
     "type ConversationAnalysisOutput",
     "type ConversationSummaryOutput",
     "type SuggestedRepliesOutput",
     "type AutoTagOutput",
     "type ChatbotL1Output",
     "type AgentPerformance",
+    "type ObjectionHandlerEnvelope",
+    "type PriceAnchorEnvelope",
+    "type LossRiskEnvelope",
+    "type DeadlineCalculatorEnvelope",
+    "type LeadTemperatureEnvelope",
+    "type ProductRecommendationEnvelope",
+    "type MultimodalAnalysisEnvelope",
     "interface ContractIssue",
     "type ParseModelOutputResult",
     "function parseModelOutput",
@@ -357560,6 +357989,62 @@
      "body": "{ handled: z.boolean(), response: z.string().min(1), transfer_to_human: z.boolean(), transfer_reason: z.string().nullable().optional(), confidence: z.number().min(0).max(1).optional(), matched_article: z.string().nullable().optional(), detected_intent: z.string().nullable().optional(), detected_sentiment: sentimentSchema.optional(), }",
      "refines": [],
      "chain": []
+    },
+    {
+     "name": "ObjectionHandlerEnvelope",
+     "kind": "object",
+     "body": "{ objectionType: z.enum(['preco', 'prazo', 'quantidade_minima', 'concorrente', 'chefe', 'qualidade', 'frete', 'generica']), isSmokescreen: z.boolean(), confidence: z.number().min(0).max(1), brindeLetter: z.enum(['B', 'R', 'I', 'N', 'D', 'E']).optional(), script: z.array(z.string().min(1)).min(1), suggestedReply: z.string().min(1), coaching: z.string().optional(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "PriceAnchorEnvelope",
+     "kind": "object",
+     "body": "{ triggered: z.boolean(), strategy: z.string().optional(), anchorScript: z.string(), costPerUseScript: z.string(), reframing: z.string().optional(), confidence: z.number().min(0).max(1), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "LossRiskEnvelope",
+     "kind": "object",
+     "body": "{ level: z.enum(['low', 'medium', 'high']), riskScore: z.number().min(0).max(100), signals: z.array(z.string()), recoveryAction: z.string(), script: z.string(), urgency: z.enum(['now', 'today', 'this_week', 'monitor']), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "DeadlineCalculatorEnvelope",
+     "kind": "object",
+     "body": "{ feasibility: z.enum(['ok', 'tight', 'impossible']), productionDays: z.number().int().min(0), daysUntilEvent: z.number().int().nullable(), lastOrderDate: z.string().nullable(), message: z.string().min(1), alternatives: z.array(z.string()), urgencyLevel: z.enum(['low', 'medium', 'high', 'critical']), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "LeadTemperatureEnvelope",
+     "kind": "object",
+     "body": "{ temperature: z.number().min(0).max(100), temperatureLabel: z.enum(['cold', 'warm', 'hot']), interestScore: z.number().min(0).max(100), urgencyScore: z.number().min(0).max(100), capacityScore: z.number().min(0).max(100), signals: z.array(z.string()), recommendedAction: z.string().min(1), nextBestOffer: z.string(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "ProductRecommendationItemSchema",
+     "kind": "object",
+     "body": "{ product: z.string().min(1), category: z.string().min(1), reasoning: z.string(), estimatedPrice: z.string(), confidence: z.number().min(0).max(1), urgency: z.enum(['low', 'medium', 'high']), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "ProductRecommendationEnvelope",
+     "kind": "object",
+     "body": "{ recommendations: z.array(ProductRecommendationItemSchema).min(1).max(3), topPick: z.string().min(1), upsellOpportunity: z.string(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "MultimodalAnalysisEnvelope",
+     "kind": "object",
+     "body": "{ description: z.string().min(1), extractedText: z.array(z.string()), dominantColors: z.array(z.string()), keyElements: z.array(z.string()), brandingOpportunity: z.string(), suggestedReply: z.string().min(1), confidence: z.number().min(0).max(1), }",
+     "refines": [],
+     "chain": []
     }
    ],
    "enums": [
@@ -357593,7 +358078,8 @@
     }
    ],
    "rule_comments": [
-    "* Regra de ouro deste contrato:"
+    "* Regra de ouro deste contrato:",
+    "─── Capacidade: calculadora de prazo ────────────────────────"
    ]
   },
   "supabase/functions/_shared/ai-routing.ts": {
@@ -360710,7 +361196,7 @@
   },
   "supabase/functions/_shared/schemas.ts": {
    "path": "supabase/functions/_shared/schemas.ts",
-   "lines": 837,
+   "lines": 891,
    "exports": [
     "const UUIDSchema",
     "const EmailSchema",
@@ -360726,6 +361212,13 @@
     "const AiAutoTagSchema",
     "const AiChurnAnalysisSchema",
     "const AiClassifyTicketsSchema",
+    "const AiObjectionHandlerSchema",
+    "const AiPriceAnchorSchema",
+    "const AiLossRiskSchema",
+    "const AiDeadlineCalculatorSchema",
+    "const AiLeadTemperatureSchema",
+    "const AiProductRecommendationSchema",
+    "const AiMultimodalAnalysisSchema",
     "const ELEVENLABS_VOICE_IDS",
     "const ELEVENLABS_TTS_MODEL_IDS",
     "const ELEVENLABS_STS_MODEL_IDS",
@@ -360764,14 +361257,7 @@
     "function revalidateContextBeforeEffect",
     "function contextCancelledEnvelope",
     "interface FieldError",
-    "function toFieldErrors",
-    "function parseBody",
-    "function validationErrorResponse",
-    "const EvolutionWebhookEnvelopeV1Schema",
-    "const EvolutionWebhookEnvelopeV2Schema",
-    "const EvolutionMessagesUpdateStatusSchema",
-    "const ElevenLabsWebhookV1Schema",
-    "const ElevenLabsWebhookV2Schema"
+    "function toFieldErrors"
    ],
    "zod": [
     {
@@ -360827,6 +361313,55 @@
      "name": "AiClassifyTicketsSchema",
      "kind": "object",
      "body": "{ limit: z.number().int().min(1).max(200).optional().default(50), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "AiObjectionHandlerSchema",
+     "kind": "object",
+     "body": "{ messages: z.array(MessageSchema).max(50), clientText: z.string().max(2000).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "AiPriceAnchorSchema",
+     "kind": "object",
+     "body": "{ messages: z.array(MessageSchema).max(50), clientText: z.string().max(2000).optional(), productType: z.string().max(100).optional(), unitPrice: z.number().min(0).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "AiLossRiskSchema",
+     "kind": "object",
+     "body": "{ messages: z.array(MessageSchema).max(50), daysSinceLastContact: z.number().int().min(0).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "AiDeadlineCalculatorSchema",
+     "kind": "object",
+     "body": "{ messages: z.array(MessageSchema).max(50), eventDate: z.string().optional(), productType: z.string().max(100).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "AiLeadTemperatureSchema",
+     "kind": "object",
+     "body": "{ messages: z.array(MessageSchema).max(50), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "AiProductRecommendationSchema",
+     "kind": "object",
+     "body": "{ messages: z.array(MessageSchema).max(50), eventType: z.string().max(100).optional(), budget: z.number().min(0).optional(), quantity: z.number().int().min(1).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }",
+     "refines": [],
+     "chain": []
+    },
+    {
+     "name": "AiMultimodalAnalysisSchema",
+     "kind": "object",
+     "body": "{ imageUrl: z.string().url(), context: z.string().max(500).optional(), conversationContext: z.string().max(1000).optional(), requestId: z.string().uuid().optional(), }",
      "refines": [],
      "chain": []
     },
@@ -360934,59 +361469,6 @@
      "name": "DetectNewDeviceSchema",
      "kind": "object",
      "body": "{ device_fingerprint: z.string().min(1).max(500), browser: z.string().max(200), os: z.string().max(200), device_name: z.string().max(200), }",
-     "refines": [],
-     "chain": []
-    },
-    {
-     "name": "ScheduledReportSchema",
-     "kind": "object",
-     "body": "{ reportId: z.string().uuid(\"reportId must be a valid UUID\"), }",
-     "refines": [],
-     "chain": []
-    },
-    {
-     "name": "GmailHeaderValueSchema",
-     "kind": "string",
-     "body": "",
-     "refines": [
-      "Quebra de linha nao permitida em cabecalho"
-     ],
-     "chain": [
-      "refine"
-     ]
-    },
-    {
-     "name": "GmailSendActionSchema",
-     "kind": "object",
-     "body": "{ action: z.enum(['send', 'reply', 'create-draft', 'update-draft', 'delete-draft', 'modify-labels', 'modify-thread-labels', 'mark-read', 'trash', 'trash-thread']), account_id: z.string().uuid(\"account_id must be a valid UUID\"), to: z.union([GmailHeaderValueSchema, z.array(GmailHeaderValueSchema).max(100)]).optional(), cc: z.array(GmailHeaderValueSchema).max(100).optional(), bcc: z.array(GmailHeaderValueSchema).max(100).optional(), subject: GmailHeaderValueSchema.optional(), text_body: z.string().max(100000).optional(), html_body: z.string().max(500000).optional(), // IDs do Gmail sao interpolados direto na URL (/messages/{id}/modify, // /threads/{id}/trash, etc.) em varios cases do handler — regex fecha // injecao de path (/, ?, #, espaco) na validacao, uma vez, pra todos eles. thread_id: …",
-     "refines": [],
-     "chain": []
-    },
-    {
-     "name": "GmailOAuthActionSchema",
-     "kind": "object",
-     "body": "{ action: z.enum(['get-auth-url', 'exchange-code', 'refresh-token', 'disconnect', 'list-accounts']), code: z.string().max(2000).optional(), account_id: z.string().uuid().optional(), state: z.string().max(500).optional(), }",
-     "refines": [],
-     "chain": []
-    },
-    {
-     "name": "WebAuthnActionSchema",
-     "kind": "object",
-     "body": "{ action: z.enum(['registration-options', 'verify-registration', 'authentication-options', 'verify-authentication']), userId: z.string().uuid().optional(), userEmail: z.string().email().optional(), userName: z.string().max(200).optional(), credential: z.record(z.unknown()).optional(), friendlyName: z.string().max(200).optional(), }",
-     "refines": [],
-     "chain": []
-    },
-    {
-     "name": "ExternalDbBridgeSchema",
-     "kind": "object",
-     "body": "{ // Z019: insert/update/delete removidos — allowlist só permite select/rpc. action: z.enum(['select', 'rpc']), table: z.string().max(100).optional(), rpc: z.string().max(100).optional(), params: z.record(z.unknown()).optional(), limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional(), countMode: z.string().max(20).optional(), }",
-     "refines": [],
-     "chain": []
-    },
-    {
-     "name": "EvolutionWebhookEnvelopeV1Schema",
-     "kind": "object",
-     "body": "{ event: z.string().min(1, 'event is required').max(200), instance: z.string().min(1, 'instance is required').max(200), data: z.unknown().optional(), }",
      "refines": [],
      "chain": []
     }
@@ -364212,6 +364694,29 @@
    ],
    "uses_service_role": true
   },
+  "supabase/functions/ai-deadline-calculator/index.ts": {
+   "path": "supabase/functions/ai-deadline-calculator/index.ts",
+   "lines": 131,
+   "exports": [
+    "interface AiDeadlineCalculatorDeps",
+    "function handleAiDeadlineCalculator"
+   ],
+   "errors": [
+    "AI gateway error [${response.status}]"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    }
+   ]
+  },
   "supabase/functions/ai-enhance-message/index.ts": {
    "path": "supabase/functions/ai-enhance-message/index.ts",
    "lines": 87,
@@ -364485,6 +364990,154 @@
     "true"
    ],
    "uses_service_role": true
+  },
+  "supabase/functions/ai-lead-temperature/index.ts": {
+   "path": "supabase/functions/ai-lead-temperature/index.ts",
+   "lines": 128,
+   "exports": [
+    "interface AiLeadTemperatureDeps",
+    "function handleAiLeadTemperature"
+   ],
+   "errors": [
+    "AI gateway error [${response.status}]"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    }
+   ]
+  },
+  "supabase/functions/ai-loss-risk/index.ts": {
+   "path": "supabase/functions/ai-loss-risk/index.ts",
+   "lines": 122,
+   "exports": [
+    "interface AiLossRiskDeps",
+    "function handleAiLossRisk"
+   ],
+   "errors": [
+    "AI gateway error [${response.status}]"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    }
+   ]
+  },
+  "supabase/functions/ai-multimodal-analysis/index.ts": {
+   "path": "supabase/functions/ai-multimodal-analysis/index.ts",
+   "lines": 134,
+   "exports": [
+    "interface AiMultimodalAnalysisDeps",
+    "function handleAiMultimodalAnalysis"
+   ],
+   "errors": [
+    "AI gateway error [${response.status}]"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "image_url",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "text",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    }
+   ]
+  },
+  "supabase/functions/ai-objection-handler/index.ts": {
+   "path": "supabase/functions/ai-objection-handler/index.ts",
+   "lines": 147,
+   "exports": [
+    "interface AiObjectionHandlerDeps",
+    "function handleAiObjectionHandler"
+   ],
+   "errors": [
+    "AI gateway error [${response.status}]"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    }
+   ]
+  },
+  "supabase/functions/ai-price-anchor/index.ts": {
+   "path": "supabase/functions/ai-price-anchor/index.ts",
+   "lines": 128,
+   "exports": [
+    "interface AiPriceAnchorDeps",
+    "function handleAiPriceAnchor"
+   ],
+   "errors": [
+    "AI gateway error [${response.status}]"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    }
+   ]
+  },
+  "supabase/functions/ai-product-recommendation/index.ts": {
+   "path": "supabase/functions/ai-product-recommendation/index.ts",
+   "lines": 136,
+   "exports": [
+    "interface AiProductRecommendationDeps",
+    "function handleAiProductRecommendation"
+   ],
+   "errors": [
+    "AI gateway error [${response.status}]"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    }
+   ]
   },
   "supabase/functions/ai-proxy/index.test.ts": {
    "path": "supabase/functions/ai-proxy/index.test.ts",
@@ -366608,7 +367261,7 @@
   },
   "supabase/functions/copilot-live/index.ts": {
    "path": "supabase/functions/copilot-live/index.ts",
-   "lines": 225,
+   "lines": 296,
    "tables": [
     {
      "table": "profiles",
@@ -366668,8 +367321,8 @@
    ],
    "status_values": [
     {
-     "field": "type",
-     "value": "suggestion",
+     "field": "role",
+     "value": "user",
      "kind": "escreve"
     }
    ],
@@ -366679,7 +367332,14 @@
     "apenas como última instância — garante NOT NULL sem depender de tabela",
     "Conflito: atualiza apenas campos não-proprietários, ownership guardado"
    ],
-   "doc": "copilot-live — Edge Function stub (CV-141) Recebe um tick do RADAR (contexto da conversa) e devolve insights calculados no servidor. Hoje retorna resposta estática para que o front possa ser deployado sem dependência de LLM; a lógica real será adicionada iterativamente.",
+   "doc": "copilot-live — Edge Function (CV-141) Recebe um tick do RADAR (contexto da conversa), cria/atualiza a sessão do copiloto e gera uma sugestão em tempo real via generateWithRouting. Persiste o insight em copilot_insights para consumo via realtime pelo front.",
+   "calc_fns": [
+    {
+     "name": "generateLiveSuggestion",
+     "params": "opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; }",
+     "body": "content: string; modelVersion: string"
+    }
+   ],
    "uses_service_role": true
   },
   "supabase/functions/create-user/index.test.ts": {
@@ -385182,10 +385842,42 @@
   }
  },
  "git": {
-  "sha": "09df718116d247a7e04ca001fa0a65d3d1d020dc",
+  "sha": "7ce81c0158ff65c90d56cf127c1a9264ac873551",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7ce81c0",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002 (#2834)",
+    "files": [
+     ".gitattributes",
+     "ESTADO.md",
+     "src/components/inbox/copilot/CopilotPanel.tsx",
+     "src/components/inbox/tabs/AiTab.tsx",
+     "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
+     "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
+     "src/hooks/copilot/useDeadlineCalculator.ts",
+     "src/hooks/copilot/useImageAnalysis.ts",
+     "src/hooks/copilot/useLeadThermometer.ts",
+     "src/hooks/copilot/useLossRiskDetector.ts",
+     "src/hooks/copilot/useObjectionHandler.ts",
+     "src/hooks/copilot/usePriceAnchoring.ts",
+     "src/hooks/copilot/useProductRecommendation.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/ai-response-contracts.ts",
+     "supabase/functions/_shared/schemas.ts",
+     "supabase/functions/ai-deadline-calculator/index.ts",
+     "supabase/functions/ai-lead-temperature/index.ts",
+     "supabase/functions/ai-loss-risk/index.ts",
+     "supabase/functions/ai-multimodal-analysis/index.ts",
+     "supabase/functions/ai-objection-handler/index.ts",
+     "supabase/functions/ai-price-anchor/index.ts",
+     "supabase/functions/ai-product-recommendation/index.ts",
+     "supabase/functions/copilot-live/index.ts"
+    ]
+   },
    {
     "sha": "09df718",
     "date": "2026-11-10",
@@ -385518,18 +386210,17 @@
      "src/hooks/gamification/useAgentCelebrations.ts",
      "src/hooks/inbox/useInboxFilters.ts"
     ]
-   },
-   {
-    "sha": "e2c31f4",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)",
-    "files": [
-     "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "ESTADO.md",
+    2
+   ],
+   [
+    "supabase/deployment-manifest.json",
+    2
+   ],
    [
     "scripts/ci/e2e-isolated-runtime.unit.mjs",
     2
@@ -385543,71 +386234,63 @@
     2
    ],
    [
-    "scripts/ci/run-mapa-classificacao.unit.mjs",
+    ".gitattributes",
     1
    ],
    [
-    "scripts/mutation/run-mapa.mjs",
+    "src/components/inbox/copilot/CopilotPanel.tsx",
     1
    ],
    [
-    "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
+    "src/components/inbox/tabs/AiTab.tsx",
     1
    ],
    [
-    "auditoria-supabase/achados.json",
+    "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
     1
    ],
    [
-    "auditoria-supabase/progresso.json",
+    "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
     1
    ],
    [
-    "scripts/ci/qa-vercel-auditores.unit.mjs",
+    "src/hooks/copilot/useDeadlineCalculator.ts",
     1
    ],
    [
-    "scripts/vercel/README.md",
+    "src/hooks/copilot/useImageAnalysis.ts",
     1
    ],
    [
-    "scripts/vercel/verify-production.mjs",
+    "src/hooks/copilot/useLeadThermometer.ts",
     1
    ],
    [
-    "scripts/vercel/verify-production.unit.mjs",
+    "src/hooks/copilot/useLossRiskDetector.ts",
     1
    ],
    [
-    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+    "src/hooks/copilot/useObjectionHandler.ts",
     1
    ],
    [
-    "scripts/e2e-isolated/pull-image.mjs",
+    "src/hooks/copilot/usePriceAnchoring.ts",
     1
    ],
    [
-    ".github/.ci-noop",
+    "src/hooks/copilot/useProductRecommendation.ts",
     1
    ],
    [
-    ".github/workflows/deploy-functions.yml",
+    "supabase/functions/_shared/ai-response-contracts.ts",
     1
    ],
    [
-    "src/components/talkx/TalkXCampaignRunning.tsx",
+    "supabase/functions/_shared/schemas.ts",
     1
    ],
    [
-    "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-    1
-   ],
-   [
-    "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
-    1
-   ],
-   [
-    "AGENTS.md",
+    "supabase/functions/ai-deadline-calculator/index.ts",
     1
    ]
   ]

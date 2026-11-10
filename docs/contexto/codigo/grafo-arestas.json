@@ -4013,6 +4013,16 @@
    "src/components/ui/tooltip.tsx",
    "src/lib/utils.ts"
   ],
+  "src/components/inbox/copilot/CopilotPanel.tsx": [
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/hooks/copilot/useLeadThermometer.ts",
+   "src/hooks/copilot/useLossRiskDetector.ts",
+   "src/hooks/copilot/useObjectionHandler.ts",
+   "src/hooks/copilot/usePriceAnchoring.ts",
+   "src/lib/utils.ts",
+   "src/types/chat.ts"
+  ],
   "src/components/inbox/copilot/DecisionMakerBadge.tsx": [
    "src/lib/utils.ts"
   ],
@@ -4199,11 +4209,15 @@
    "src/components/inbox/AISuggestions.tsx",
    "src/components/inbox/ConversationSummary.tsx",
    "src/components/inbox/ObjectionDetector.tsx",
+   "src/components/inbox/copilot/CopilotPanel.tsx",
+   "src/components/inbox/copilot/LiveSuggestions.tsx",
    "src/components/inbox/tabs/SectionCard.tsx",
    "src/components/ui/empty-state.tsx",
    "src/hooks/chat/useLatestAnalysis.ts",
    "src/hooks/chat/useNextBestAction.ts",
    "src/hooks/chat/useRecommendedProducts.ts",
+   "src/hooks/copilot/useCopilotSession.ts",
+   "src/hooks/copilot/useLiveSuggestions.ts",
    "src/hooks/crm/useContactCrm360.ts",
    "src/lib/ai-vocabulary.ts",
    "src/lib/formatters.ts",
@@ -8407,12 +8421,33 @@
    "src/data/copilot/sale-stages.ts",
    "src/integrations/supabase/client.ts"
   ],
+  "src/hooks/copilot/useDeadlineCalculator.ts": [
+   "src/lib/invokeEdge.ts"
+  ],
   "src/hooks/copilot/useGhostText.ts": [
    "src/lib/invokeEdge.ts",
    "src/lib/logger.ts"
   ],
+  "src/hooks/copilot/useImageAnalysis.ts": [
+   "src/lib/invokeEdge.ts"
+  ],
+  "src/hooks/copilot/useLeadThermometer.ts": [
+   "src/lib/invokeEdge.ts"
+  ],
   "src/hooks/copilot/useLiveSuggestions.ts": [
    "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/copilot/useLossRiskDetector.ts": [
+   "src/lib/invokeEdge.ts"
+  ],
+  "src/hooks/copilot/useObjectionHandler.ts": [
+   "src/lib/invokeEdge.ts"
+  ],
+  "src/hooks/copilot/usePriceAnchoring.ts": [
+   "src/lib/invokeEdge.ts"
+  ],
+  "src/hooks/copilot/useProductRecommendation.ts": [
+   "src/lib/invokeEdge.ts"
   ],
   "src/hooks/copilot/useSmartTemplates.ts": [
    "src/hooks/chat/useQuickReplies.ts"
@@ -10713,6 +10748,14 @@
    "supabase/functions/_shared/validation.ts",
    "supabase/functions/ai-conversation-summary/contact-context.ts"
   ],
+  "supabase/functions/ai-deadline-calculator/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-response-contracts.ts",
+   "supabase/functions/_shared/ai-usage.ts",
+   "supabase/functions/_shared/schemas.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
   "supabase/functions/ai-enhance-message/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
@@ -10731,6 +10774,54 @@
   "supabase/functions/ai-kb-ingest/index.ts": [
    "supabase/functions/_shared/ai-kb-ingest.ts",
    "supabase/functions/_shared/edge-boot.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/ai-lead-temperature/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-response-contracts.ts",
+   "supabase/functions/_shared/ai-usage.ts",
+   "supabase/functions/_shared/schemas.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/ai-loss-risk/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-response-contracts.ts",
+   "supabase/functions/_shared/ai-usage.ts",
+   "supabase/functions/_shared/schemas.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/ai-multimodal-analysis/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-response-contracts.ts",
+   "supabase/functions/_shared/ai-usage.ts",
+   "supabase/functions/_shared/schemas.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/ai-objection-handler/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-response-contracts.ts",
+   "supabase/functions/_shared/ai-usage.ts",
+   "supabase/functions/_shared/schemas.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/ai-price-anchor/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-response-contracts.ts",
+   "supabase/functions/_shared/ai-usage.ts",
+   "supabase/functions/_shared/schemas.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/ai-product-recommendation/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-response-contracts.ts",
+   "supabase/functions/_shared/ai-usage.ts",
+   "supabase/functions/_shared/schemas.ts",
    "supabase/functions/_shared/validation.ts"
   ],
   "supabase/functions/ai-proxy/index.ts": [
@@ -10842,6 +10933,7 @@
    "supabase/functions/_shared/validation.ts"
   ],
   "supabase/functions/copilot-live/index.ts": [
+   "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/cors-origins.ts"
   ],
   "supabase/functions/create-user/index.ts": [

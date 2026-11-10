@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4221)",
+   "TypeScript (4230)",
    "SQL (1300)",
    "Markdown (1073)",
    "JSON (603)",
@@ -1104,7 +1104,7 @@
   {
    "arquivo": "ESTADO.md",
    "titulo": "ESTADO.md — o que está ligado e quem chama",
-   "linhas": 149
+   "linhas": 163
   },
   {
    "arquivo": "FEATURE_REGISTRY.md",
@@ -2695,12 +2695,12 @@
     "ocorrencias": 38
    },
    {
-    "papel": "dialog",
-    "ocorrencias": 30
+    "papel": "user",
+    "ocorrencias": 35
    },
    {
-    "papel": "user",
-    "ocorrencias": 27
+    "papel": "dialog",
+    "ocorrencias": 30
    },
    {
     "papel": "region",

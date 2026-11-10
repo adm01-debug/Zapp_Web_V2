@@ -1,12 +1,12 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2273,
- "arestas": 7846,
+ "nos": 2282,
+ "arestas": 7908,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
-   "importado_por": 470
+   "importado_por": 471
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
@@ -14,15 +14,15 @@
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 392
+   "importado_por": 393
+  },
+  {
+   "arquivo": "src/components/ui/badge.tsx",
+   "importado_por": 218
   },
   {
    "arquivo": "src/lib/logger.ts",
    "importado_por": 218
-  },
-  {
-   "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 217
   },
   {
    "arquivo": "src/components/ui/card.tsx",
@@ -37,12 +37,12 @@
    "importado_por": 164
   },
   {
-   "arquivo": "src/types/chat.ts",
-   "importado_por": 122
+   "arquivo": "supabase/functions/_shared/validation.ts",
+   "importado_por": 128
   },
   {
-   "arquivo": "supabase/functions/_shared/validation.ts",
-   "importado_por": 121
+   "arquivo": "src/types/chat.ts",
+   "importado_por": 123
   },
   {
    "arquivo": "src/hooks/auth/useAuth.tsx",
@@ -85,6 +85,10 @@
    "importado_por": 55
   },
   {
+   "arquivo": "supabase/functions/_shared/schemas.ts",
+   "importado_por": 55
+  },
+  {
    "arquivo": "src/components/talkx/talkxShared.ts",
    "importado_por": 52
   },
@@ -95,10 +99,6 @@
   {
    "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
    "importado_por": 50
-  },
-  {
-   "arquivo": "supabase/functions/_shared/schemas.ts",
-   "importado_por": 48
   },
   {
    "arquivo": "src/components/ui/popover.tsx",
@@ -145,6 +145,10 @@
    "importado_por": 40
   },
   {
+   "arquivo": "supabase/functions/_shared/ai-usage.ts",
+   "importado_por": 39
+  },
+  {
    "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
    "importado_por": 37
   },
@@ -159,10 +163,6 @@
   {
    "arquivo": "src/hooks/system/useNavigationHistory.ts",
    "importado_por": 34
-  },
-  {
-   "arquivo": "src/config/supabase.ts",
-   "importado_por": 32
   }
  ],
  "ciclos": {
@@ -455,7 +455,6 @@
   "src/components/inbox/copilot/BrindeMeter.tsx",
   "src/components/inbox/copilot/DecisionMakerBadge.tsx",
   "src/components/inbox/copilot/InsightCard.tsx",
-  "src/components/inbox/copilot/LiveSuggestions.tsx",
   "src/components/inbox/copilot/MissingQuestions.tsx",
   "src/components/inbox/copilot/OccasionAlert.tsx",
   "src/components/inbox/copilot/RadarLive.tsx",
@@ -505,6 +504,7 @@
   "src/hooks/communication/index.ts",
   "src/hooks/contacts/useContainerColumns.ts",
   "src/hooks/copilot/index.ts",
+  "src/hooks/copilot/useProductRecommendation.ts",
   "src/hooks/crm/index.ts",
   "src/hooks/dashboard/index.ts",
   "src/hooks/evolution/index.ts",

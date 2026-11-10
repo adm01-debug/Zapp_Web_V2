@@ -8777,7 +8777,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
    "tipo": "unit",
-   "linhas": 90,
+   "linhas": 91,
    "testa": [
     "src/components/inbox/tabs/AiTab.tsx",
     "src/types/chat.ts"
@@ -8787,7 +8787,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
    "tipo": "unit",
-   "linhas": 100,
+   "linhas": 101,
    "testa": [
     "src/components/inbox/tabs/AiTab.tsx",
     "src/types/chat.ts"
@@ -25355,6 +25355,7 @@
    "src/hooks/copilot/usePdfExtraction.ts",
    "src/hooks/copilot/usePIIDetector.ts",
    "src/hooks/copilot/usePriceAnchoring.ts",
+   "src/hooks/copilot/useProductRecommendation.ts",
    "src/hooks/copilot/usePromptVersioning.ts",
    "src/hooks/copilot/usePurchaseSignals.ts",
    "src/hooks/copilot/useSilenceDetector.ts",
@@ -25414,7 +25415,14 @@
   ],
   "edges": [
    "ai-classify-tickets",
+   "ai-deadline-calculator",
    "ai-enhance-message",
+   "ai-lead-temperature",
+   "ai-loss-risk",
+   "ai-multimodal-analysis",
+   "ai-objection-handler",
+   "ai-price-anchor",
+   "ai-product-recommendation",
    "batch-fetch-avatars",
    "copilot-live",
    "csp-report",

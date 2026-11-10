@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 896,
- "orfaos": 54,
+ "total": 897,
+ "orfaos": 53,
  "nomes_duplicados": {
   "AchievementBadge": [
    "src/components/gamification/AchievementBadge.tsx",
@@ -6032,6 +6032,25 @@
    "orfao": true
   },
   {
+   "arquivo": "src/components/inbox/copilot/CopilotPanel.tsx",
+   "exports": [
+    "CopilotPanel"
+   ],
+   "export_default": null,
+   "linhas": 182,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useLeadThermometer",
+    "useLossRiskDetector",
+    "useObjectionHandler",
+    "usePriceAnchoring"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
    "exports": [
     "DecisionMakerBadge"
@@ -6071,8 +6090,8 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/inbox/copilot/MissingQuestions.tsx",
@@ -7052,11 +7071,13 @@
     "AiTab"
    ],
    "export_default": null,
-   "linhas": 211,
+   "linhas": 233,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactLeadScore",
+    "useCopilotSession",
     "useLatestAnalysis",
+    "useLiveSuggestions",
     "useNextBestAction",
     "useRecommendedProducts"
    ],
@@ -12922,7 +12943,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 216,
+   "usado_por": 217,
    "orfao": false
   },
   {
@@ -12959,7 +12980,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 388,
+   "usado_por": 389,
    "orfao": false
   },
   {

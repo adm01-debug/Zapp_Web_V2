@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "09df718116d247a7e04ca001fa0a65d3d1d020dc",
+  "commit": "7ce81c0158ff65c90d56cf127c1a9264ac873551",
   "branch": "main",
-  "data_commit": "2026-11-10T17:39:11Z",
+  "data_commit": "2026-11-10T17:49:34Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7ce81c0",
+    "data": "2026-11-10",
+    "assunto": "feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002 (#2834)"
+   },
    {
     "sha": "09df718",
     "data": "2026-11-10",
@@ -126,18 +131,13 @@
     "sha": "77d5cd4",
     "data": "2026-11-10",
     "assunto": "chore(ci): atualiza baseline do lint-ratchet (#2839)"
-   },
-   {
-    "sha": "11841db",
-    "data": "2026-11-10",
-    "assunto": "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)"
    }
   ],
-  "arquivos_mudados_7d": 705,
+  "arquivos_mudados_7d": 723,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 615
+    "mudancas": 619
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -153,7 +153,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 201
+    "mudancas": 203
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -210,15 +210,15 @@
     "mudancas": 13
    },
    {
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 13
+   },
+   {
     "arquivo": "CLAUDE.md",
     "mudancas": 12
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
@@ -270,6 +270,10 @@
     "mudancas": 8
    },
    {
+    "arquivo": "ESTADO.md",
+    "mudancas": 8
+   },
+   {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 8
    },
@@ -283,10 +287,6 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado-isolado.yml",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "ESTADO.md",
     "mudancas": 7
    },
    {
@@ -314,17 +314,17 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8370,
-  "arquivos_codigo": 4787,
-  "linhas_codigo": 885201,
+  "arquivos_total": 8379,
+  "arquivos_codigo": 4796,
+  "linhas_codigo": 886905,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 143,
-  "componentes": 896,
-  "hooks": 493,
-  "edge_functions": 85,
+  "componentes": 897,
+  "hooks": 494,
+  "edge_functions": 92,
   "tabelas": 217,
   "migrations": 1100,
   "cron_jobs": 26,
@@ -703,8 +703,8 @@
    "linhas": 616
   },
   "src/components": {
-   "arquivos": 2172,
-   "linhas": 370534
+   "arquivos": 2173,
+   "linhas": 370740
   },
   "src/config": {
    "arquivos": 3,
@@ -723,8 +723,8 @@
    "linhas": 3298
   },
   "src/hooks": {
-   "arquivos": 985,
-   "linhas": 160179
+   "arquivos": 986,
+   "linhas": 160538
   },
   "src/i18n": {
    "arquivos": 2,
@@ -779,8 +779,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 383,
-   "linhas": 116674
+   "arquivos": 390,
+   "linhas": 117813
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -1218,6 +1218,13 @@
   ],
   "edges_orfas": [
    "ai-auto-tag",
+   "ai-deadline-calculator",
+   "ai-lead-temperature",
+   "ai-loss-risk",
+   "ai-multimodal-analysis",
+   "ai-objection-handler",
+   "ai-price-anchor",
+   "ai-product-recommendation",
    "auto-close-conversations",
    "cleanup-rate-limit-logs",
    "copilot-live",
@@ -1300,7 +1307,6 @@
    "src/components/inbox/copilot/BrindeMeter.tsx",
    "src/components/inbox/copilot/DecisionMakerBadge.tsx",
    "src/components/inbox/copilot/InsightCard.tsx",
-   "src/components/inbox/copilot/LiveSuggestions.tsx",
    "src/components/inbox/copilot/MissingQuestions.tsx",
    "src/components/inbox/copilot/OccasionAlert.tsx",
    "src/components/inbox/copilot/RadarLive.tsx",

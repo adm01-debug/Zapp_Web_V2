@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 493,
+ "total": 494,
  "hooks": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -5097,11 +5097,12 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_arquivos": [
     "src/components/inbox/copilot/RadarCards.tsx",
     "src/components/inbox/copilot/RadarLive.tsx",
-    "src/components/inbox/copilot/RadarPanel.tsx"
+    "src/components/inbox/copilot/RadarPanel.tsx",
+    "src/components/inbox/tabs/AiTab.tsx"
    ],
    "coberto_por_testes": 1
   },
@@ -5170,13 +5171,15 @@
    "hooks_exportados": [
     "useDeadlineCalculator"
    ],
-   "linhas": 48,
+   "linhas": 115,
    "dominio": "hooks/copilot",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useMemo"
+    "useCallback",
+    "useMemo",
+    "useState"
    ],
    "canais_realtime": [],
    "usado_por": 3,
@@ -5359,7 +5362,7 @@
    "hooks_exportados": [
     "useImageAnalysis"
    ],
-   "linhas": 35,
+   "linhas": 68,
    "dominio": "hooks/copilot",
    "tabelas": [],
    "rpcs": [],
@@ -5380,20 +5383,23 @@
    "hooks_exportados": [
     "useLeadThermometer"
    ],
-   "linhas": 32,
+   "linhas": 88,
    "dominio": "hooks/copilot",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useMemo"
+    "useCallback",
+    "useMemo",
+    "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 5,
    "usado_por_arquivos": [
     "src/components/copilot/LeadThermometerBadge.tsx",
     "src/components/copilot/RadarPhase10Panel.tsx",
     "src/components/copilot/RadarPhase8to15Panel.tsx",
+    "src/components/inbox/copilot/CopilotPanel.tsx",
     "src/hooks/copilot/index.ts"
    ],
    "coberto_por_testes": 0
@@ -5479,12 +5485,13 @@
    "canais_realtime": [
     "copilot_insights:${sessionId}"
    ],
-   "usado_por": 4,
+   "usado_por": 5,
    "usado_por_arquivos": [
     "src/components/inbox/copilot/LiveSuggestions.tsx",
     "src/components/inbox/copilot/RadarCards.tsx",
     "src/components/inbox/copilot/RadarLive.tsx",
-    "src/components/inbox/copilot/RadarPanel.tsx"
+    "src/components/inbox/copilot/RadarPanel.tsx",
+    "src/components/inbox/tabs/AiTab.tsx"
    ],
    "coberto_por_testes": 2
   },
@@ -5513,19 +5520,22 @@
    "hooks_exportados": [
     "useLossRiskDetector"
    ],
-   "linhas": 78,
+   "linhas": 117,
    "dominio": "hooks/copilot",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useMemo"
+    "useCallback",
+    "useMemo",
+    "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_arquivos": [
     "src/components/copilot/RadarPhase8Panel.tsx",
     "src/components/copilot/RadarPhase8to15Panel.tsx",
+    "src/components/inbox/copilot/CopilotPanel.tsx",
     "src/hooks/copilot/index.ts"
    ],
    "coberto_por_testes": 2
@@ -5656,21 +5666,24 @@
    "hooks_exportados": [
     "useObjectionHandler"
    ],
-   "linhas": 93,
+   "linhas": 139,
    "dominio": "hooks/copilot",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useMemo"
+    "useCallback",
+    "useMemo",
+    "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 6,
    "usado_por_arquivos": [
     "src/components/copilot/ObjectionCard.tsx",
     "src/components/copilot/ObjectionHandlerCard.tsx",
     "src/components/copilot/RadarPhase8Panel.tsx",
     "src/components/copilot/RadarPhase8to15Panel.tsx",
+    "src/components/inbox/copilot/CopilotPanel.tsx",
     "src/hooks/copilot/index.ts"
    ],
    "coberto_por_testes": 1
@@ -5762,19 +5775,41 @@
    "hooks_exportados": [
     "usePriceAnchoring"
    ],
-   "linhas": 32,
+   "linhas": 78,
    "dominio": "hooks/copilot",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useMemo"
+    "useCallback",
+    "useMemo",
+    "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "usado_por_arquivos": [
+    "src/components/inbox/copilot/CopilotPanel.tsx",
     "src/hooks/copilot/index.ts"
    ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/copilot/useProductRecommendation.ts",
+   "hooks_exportados": [
+    "useProductRecommendation"
+   ],
+   "linhas": 72,
+   "dominio": "hooks/copilot",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 0,
+   "usado_por_arquivos": [],
    "coberto_por_testes": 0
   },
   {

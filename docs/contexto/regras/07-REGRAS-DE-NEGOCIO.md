@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `09df718116` · branch `main` · 2026-11-10 17:43 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7ce81c0158` · branch `main` · 2026-11-10 17:50 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1453,7 +1453,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `hydrate` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
 | `type` | `idle` | compara, escreve | `src/hooks/ui/useLoadingState.ts` |
 | `type` | `image` | compara, escreve | `src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/LinkPreview.tsx`<br>`src/components/inbox/ReplyQuote.tsx`<br>`src/components/inbox/chat/MessageBubble.tsx`<br>… +12 |
-| `type` | `image_url` | escreve | `supabase/functions/_shared/ai-image-input.ts`<br>`supabase/functions/classify-emoji/index.ts`<br>`supabase/functions/classify-sticker/index.ts` |
+| `type` | `image_url` | escreve | `supabase/functions/_shared/ai-image-input.ts`<br>`supabase/functions/ai-multimodal-analysis/index.ts`<br>`supabase/functions/classify-emoji/index.ts`<br>`supabase/functions/classify-sticker/index.ts` |
 | `type` | `implicit` | escreve | `src/hooks/copilot/usePurchaseSignals.ts` |
 | `type` | `incoming_call` | compara, escreve | `src/hooks/communication/useIncomingCallListener.ts`<br>`supabase/functions/_shared/notification-events.ts` |
 | `type` | `info` | escreve | `src/hooks/system/useNotifications.ts` |
@@ -1543,7 +1543,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `style` | compara | `src/hooks/performance/useDataOptimization.ts` |
 | `type` | `success` | compara, escreve | `src/components/ui/micro-interactions/feedback.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `successful_close` | escreve | `src/hooks/copilot/useLearningMoment.ts` |
-| `type` | `suggestion` | escreve | `src/components/inbox/copilot/InsightCard.tsx`<br>`supabase/functions/copilot-live/index.ts` |
+| `type` | `suggestion` | escreve | `src/components/inbox/copilot/InsightCard.tsx` |
 | `type` | `supplier` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `support` | escreve | `src/components/admin/TrainingMode.tsx` |
 | `type` | `svg` | escreve | `supabase/functions/evolution-api/index.ts` |
@@ -1553,7 +1553,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `task` | escreve | `src/lib/journey/mappers.ts` |
 | `type` | `team_chat` | compara, escreve | `src/hooks/chat/useTeamChatNotifications.ts` |
 | `type` | `template` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
-| `type` | `text` | compara, escreve | `src/components/inbox/AdvancedMessageMenu.tsx`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/MessageContextActions.tsx`<br>`src/components/inbox/MessagePreview.tsx`<br>… +12 |
+| `type` | `text` | compara, escreve | `src/components/inbox/AdvancedMessageMenu.tsx`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/MessageContextActions.tsx`<br>`src/components/inbox/MessagePreview.tsx`<br>… +13 |
 | `type` | `time_inactive` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `timing` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
 | `type` | `toggleAlarm` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
@@ -2002,6 +2002,38 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```ts
   { handled: z.boolean(), response: z.string().min(1), transfer_to_human: z.boolean(), transfer_reason: z.string().nullable().optional(), confidence: z.number().min(0).max(1).optional(), matched_article: z.string().nullable().optional(), detected_intent: z.string().nullable().optional(), detected_sentiment: sentimentSchema.optional(), }
   ```
+- **ObjectionHandlerEnvelope** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { objectionType: z.enum(['preco', 'prazo', 'quantidade_minima', 'concorrente', 'chefe', 'qualidade', 'frete', 'generica']), isSmokescreen: z.boolean(), confidence: z.number().min(0).max(1), brindeLetter: z.enum(['B', 'R', 'I', 'N', 'D', 'E']).optional(), script: z.array(z.string().min(1)).min(1), suggestedReply: z.string().min(1), coaching: z.string().optional(), }
+  ```
+- **PriceAnchorEnvelope** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { triggered: z.boolean(), strategy: z.string().optional(), anchorScript: z.string(), costPerUseScript: z.string(), reframing: z.string().optional(), confidence: z.number().min(0).max(1), }
+  ```
+- **LossRiskEnvelope** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { level: z.enum(['low', 'medium', 'high']), riskScore: z.number().min(0).max(100), signals: z.array(z.string()), recoveryAction: z.string(), script: z.string(), urgency: z.enum(['now', 'today', 'this_week', 'monitor']), }
+  ```
+- **DeadlineCalculatorEnvelope** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { feasibility: z.enum(['ok', 'tight', 'impossible']), productionDays: z.number().int().min(0), daysUntilEvent: z.number().int().nullable(), lastOrderDate: z.string().nullable(), message: z.string().min(1), alternatives: z.array(z.string()), urgencyLevel: z.enum(['low', 'medium', 'high', 'critical']), }
+  ```
+- **LeadTemperatureEnvelope** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { temperature: z.number().min(0).max(100), temperatureLabel: z.enum(['cold', 'warm', 'hot']), interestScore: z.number().min(0).max(100), urgencyScore: z.number().min(0).max(100), capacityScore: z.number().min(0).max(100), signals: z.array(z.string()), recommendedAction: z.string().min(1), nextBestOffer: z.string(), }
+  ```
+- **ProductRecommendationItemSchema** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { product: z.string().min(1), category: z.string().min(1), reasoning: z.string(), estimatedPrice: z.string(), confidence: z.number().min(0).max(1), urgency: z.enum(['low', 'medium', 'high']), }
+  ```
+- **ProductRecommendationEnvelope** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { recommendations: z.array(ProductRecommendationItemSchema).min(1).max(3), topPick: z.string().min(1), upsellOpportunity: z.string(), }
+  ```
+- **MultimodalAnalysisEnvelope** (`supabase/functions/_shared/ai-response-contracts.ts`, z.object):
+  ```ts
+  { description: z.string().min(1), extractedText: z.array(z.string()), dominantColors: z.array(z.string()), keyElements: z.array(z.string()), brandingOpportunity: z.string(), suggestedReply: z.string().min(1), confidence: z.number().min(0).max(1), }
+  ```
 - **CopilotTier1Schema** (`supabase/functions/_shared/copilot-tick.ts`, z.object):
   ```ts
   { sale_stage: z.enum(SALE_STAGES).optional(), temperature: z.number().int().min(0).max(100).optional(), brinde: z.object({ budget: texto(120).optional(), responsible: texto(120).optional(), intention: texto(200).optional(), quantity: z.number().int().positive().max(10_000_000).optional(), deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), delivery: texto(200).optional(), }).partial().optional(), brinde_evidence: z.record(texto(300)).optional(), intent: texto(80).optional(), sentiment: texto(40).optional(), comm_style: texto(80).optional(), decision_role: texto(80).optional(), occasion: texto(120).optional(), stakeholders: z.array(z.object({ name: texto(120).optional(), role: texto(120).optional() })).max(10).optional(), key_moments: z.array(texto(40)).max(10).optional(), risks: …
@@ -2041,6 +2073,34 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **AiClassifyTicketsSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
   ```ts
   { limit: z.number().int().min(1).max(200).optional().default(50), }
+  ```
+- **AiObjectionHandlerSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
+  ```ts
+  { messages: z.array(MessageSchema).max(50), clientText: z.string().max(2000).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }
+  ```
+- **AiPriceAnchorSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
+  ```ts
+  { messages: z.array(MessageSchema).max(50), clientText: z.string().max(2000).optional(), productType: z.string().max(100).optional(), unitPrice: z.number().min(0).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }
+  ```
+- **AiLossRiskSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
+  ```ts
+  { messages: z.array(MessageSchema).max(50), daysSinceLastContact: z.number().int().min(0).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }
+  ```
+- **AiDeadlineCalculatorSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
+  ```ts
+  { messages: z.array(MessageSchema).max(50), eventDate: z.string().optional(), productType: z.string().max(100).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }
+  ```
+- **AiLeadTemperatureSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
+  ```ts
+  { messages: z.array(MessageSchema).max(50), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }
+  ```
+- **AiProductRecommendationSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
+  ```ts
+  { messages: z.array(MessageSchema).max(50), eventType: z.string().max(100).optional(), budget: z.number().min(0).optional(), quantity: z.number().int().min(1).optional(), context: z.string().max(500).optional(), requestId: z.string().uuid().optional(), }
+  ```
+- **AiMultimodalAnalysisSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
+  ```ts
+  { imageUrl: z.string().url(), context: z.string().max(500).optional(), conversationContext: z.string().max(1000).optional(), requestId: z.string().uuid().optional(), }
   ```
 - **ElevenLabsTTSSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
   ```ts
@@ -2102,35 +2162,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **DetectNewDeviceSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
   ```ts
   { device_fingerprint: z.string().min(1).max(500), browser: z.string().max(200), os: z.string().max(200), device_name: z.string().max(200), }
-  ```
-- **ScheduledReportSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
-  ```ts
-  { reportId: z.string().uuid("reportId must be a valid UUID"), }
-  ```
-- **GmailHeaderValueSchema** (`supabase/functions/_shared/schemas.ts`, z.string, encadeia refine):
-  ```ts
-  
-  ```
-  - Regras cruzadas (refine): “Quebra de linha nao permitida em cabecalho”
-- **GmailSendActionSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
-  ```ts
-  { action: z.enum(['send', 'reply', 'create-draft', 'update-draft', 'delete-draft', 'modify-labels', 'modify-thread-labels', 'mark-read', 'trash', 'trash-thread']), account_id: z.string().uuid("account_id must be a valid UUID"), to: z.union([GmailHeaderValueSchema, z.array(GmailHeaderValueSchema).max(100)]).optional(), cc: z.array(GmailHeaderValueSchema).max(100).optional(), bcc: z.array(GmailHeaderValueSchema).max(100).optional(), subject: GmailHeaderValueSchema.optional(), text_body: z.string().max(100000).optional(), html_body: z.string().max(500000).optional(), // IDs do Gmail sao interpolados direto na URL (/messages/{id}/modify, // /threads/{id}/trash, etc.) em varios cases do handler — regex fecha // injecao de path (/, ?, #, espaco) na validacao, uma vez, pra todos eles. thread_id: …
-  ```
-- **GmailOAuthActionSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
-  ```ts
-  { action: z.enum(['get-auth-url', 'exchange-code', 'refresh-token', 'disconnect', 'list-accounts']), code: z.string().max(2000).optional(), account_id: z.string().uuid().optional(), state: z.string().max(500).optional(), }
-  ```
-- **WebAuthnActionSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
-  ```ts
-  { action: z.enum(['registration-options', 'verify-registration', 'authentication-options', 'verify-authentication']), userId: z.string().uuid().optional(), userEmail: z.string().email().optional(), userName: z.string().max(200).optional(), credential: z.record(z.unknown()).optional(), friendlyName: z.string().max(200).optional(), }
-  ```
-- **ExternalDbBridgeSchema** (`supabase/functions/_shared/schemas.ts`, z.object):
-  ```ts
-  { // Z019: insert/update/delete removidos — allowlist só permite select/rpc. action: z.enum(['select', 'rpc']), table: z.string().max(100).optional(), rpc: z.string().max(100).optional(), params: z.record(z.unknown()).optional(), limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional(), countMode: z.string().max(20).optional(), }
-  ```
-- **EvolutionWebhookEnvelopeV1Schema** (`supabase/functions/_shared/schemas.ts`, z.object):
-  ```ts
-  { event: z.string().min(1, 'event is required').max(200), instance: z.string().min(1, 'instance is required').max(200), data: z.unknown().optional(), }
   ```
 - **AiProxySchema** (`supabase/functions/ai-proxy/index.ts`, z.object):
   ```ts
@@ -2792,9 +2823,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const dropped: DisconnectEvent[] = []; for (const row of rows) { if (!row.healthy && previousStatuses.get(row.id) === HEALTHY_STATUS) { dropped.push({ connectionId: row.id, instanceId: row.instanceId, name: row.name, at: now(), }); } } previousStatuses = new Map(rows.map((row) => [row.id, row.status])); if (dropped.length > 0) { history = [...dropped, ...history].slice(0, HISTORY_MAX_ENTRIES); } setState({ connections: rows, history });
   ```
-- **usePriceAnchoring({ clientText }: { clientText: string })** — `src/hooks/copilot/usePriceAnchoring.ts`
+- **usePriceAnchoring({ clientText, messages, }: { clientText: string; messages?: Array<{ content: string; sender: string; created_at?: string)** — `src/hooks/copilot/usePriceAnchoring.ts`
   ```
-  return useMemo(() => { if (!clientText) return { triggered: false, anchorScript: '', costPerUseScript: '' }; const lower = clientText.toLowerCase(); const triggered = PRICE_SENSITIVITY_TRIGGERS.some((t) => lower.includes(t)); if (!triggered) return { triggered: false, anchorScript: '', costPerUseScript: '' }; return { triggered: true, anchorScript: 'Comparando com o impacto que o brinde vai gerar no evento, o investimento por pessoa fica muito pequeno. Posso mostrar o cálculo?', costPerUseScript …
+  aiResult: AiPriceAnchoringResult | null; aiLoading: boolean; aiError: string | null; analyze: () => Promise<void>;
   ```
 - **scoreTemplate(template: QuickReplyTemplate, context: SaleContext,)** — `src/hooks/copilot/useSmartTemplates.ts`
   ```
@@ -3211,6 +3242,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **eligibility(recipient: EligibilityRecipient | null | undefined, ctx?: EligibilityContext | null,)** — `supabase/functions/_shared/messaging/eligibility.ts`
   ```
   const context = ctx ?? {}; const destination = typeof recipient?.destination === "string" ? recipient.destination.trim() : ""; // 1) Sem destino (ou marcado inválido): nada mais é avaliável. if (destination === "") { return { class: "no_destination", reason: "missing_destination" }; } if (context.destinationValid === false) { return { class: "no_destination", reason: "invalid_destination" }; } // 2) Opt-out (talkx_blacklist) — bloqueio duro, domina o transitório. if (isBlacklisted(destination, c …
+  ```
+- **generateLiveSuggestion(opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; })** — `supabase/functions/copilot-live/index.ts`
+  ```
+  content: string; modelVersion: string
   ```
 - **validExternalId(value: unknown)** — `supabase/functions/crm-integration/index.ts`
   ```
@@ -4491,7 +4526,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | não gero docs com teste vermelho: ${falhas.join( | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | HTTP 502 | `scripts/ci/fila-merge.unit.mjs` |
 | GitHub API ${method} ${path} → ${res.status}: ${text} | `scripts/ci/github-settings-guard.mjs` |
-| … +1735 linhas — lista completa em `context.json` | |
+| … +1742 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -5368,4 +5403,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
 | A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias. | `src/components/inbox/tabs/fileDisplay.ts` |
 | * Componente de APRESENTAÇÃO: não consulta banco nem Supabase, não guarda dado de negócio e não | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
-| … +1653 linhas — lista completa em `context.json` | |
+| … +1655 linhas — lista completa em `context.json` | |
