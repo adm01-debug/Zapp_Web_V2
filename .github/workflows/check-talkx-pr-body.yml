@@ -1,0 +1,49 @@
+# docs:
+#   gatilho: pull_request (opened, synchronize, edited) em PRs que tocam Talk X
+#   prova: valida que o corpo da PR segue o template Talk X (etapa + slug)
+#   falha: bloqueia o merge da PR com erro descritivo
+#   avisa: autor da PR via check reprovado
+name: "Talk X PR body check"
+# GA57: check-talkx-pr-body.mjs existia mas não era chamado por nenhum workflow.
+# O gatilho inclui `edited` para que corrigir só o corpo da PR (sem novo push)
+# também re-execute o check.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: talkx-pr-body-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-body:
+    name: "📋 Talk X PR body (X005)"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: 📥 Checkout confiável
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: 📋 Verificar corpo da PR (X005)
+        # GA57: lê título/corpo em tempo de execução via github.event.pull_request.*
+        # (não de GITHUB_EVENT_PATH no disco). O gatilho inclui `edited` para que
+        # corrigir só o corpo da PR não exija um novo push.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/ci/check-talkx-pr-body.mjs

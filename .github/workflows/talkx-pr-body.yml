@@ -1,0 +1,62 @@
+# docs:
+#   gatilho: pull_request (opened, edited, synchronize, reopened, ready_for_review) e dispatch
+#   prova: o corpo da PR de etapa Talk X V4 cumpre a definicao de pronto (X005)
+#   falha: PR de etapa `(X<NNN>)` sem as secoes exigidas fica vermelha
+#   avisa: autor da PR
+# =================================================
+# ZAPP-WEB · Corpo da PR Talk X (definicao de pronto X005)
+# =================================================
+# GA57: o check le titulo/corpo em tempo de execucao pela API (`gh pr view`) e
+# o gatilho inclui `edited` — antes, corrigir o corpo exigia push novo (contra
+# a R6), porque o check lia o corpo congelado do evento e nao rodava em edicao.
+# Sem `(X<NNN>)` no titulo o verificador nao se aplica e o job passa.
+# =================================================
+
+name: Talk X corpo da PR
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: talkx-pr-body-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  corpo:
+    name: 📝 Corpo da PR Talk X
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: 📝 Validar corpo da PR contra a definição de pronto
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # GA57: titulo/corpo lidos AGORA pela API, nao do evento congelado.
+          PR_TITLE="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json title --jq '.title')"
+          PR_BODY="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body --jq '.body')"
+          export PR_TITLE PR_BODY
+          node scripts/ci/check-talkx-pr-body.mjs
