@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "manager": "bun",
+  "tsconfigs": [
+    "tsconfig.app.json",
+    "tsconfig.node.json"
+  ],
+  "gates": [
+    {
+      "name": "lint",
+      "command": [
+        "bun",
+        "run",
+        "lint"
+      ]
+    },
+    {
+      "name": "types",
+      "command": [
+        "node",
+        "scripts/maintenance/typecheck.mjs",
+        "tsconfig.app.json",
+        "tsconfig.node.json"
+      ]
+    },
+    {
+      "name": "test",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "name": "build",
+      "command": [
+        "bun",
+        "run",
+        "build"
+      ]
+    }
+  ],
+  "fix": {
+    "roots": [
+      "src"
+    ],
+    "eslintRules": [],
+    "prettier": true
+  },
+  "timeoutMs": 300000,
+  "maxFiles": 20,
+  "maxChangedLines": 400
+}
