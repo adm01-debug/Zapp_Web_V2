@@ -52,7 +52,7 @@ export function useConversationTabCounts(contactId: string | null | undefined) {
     staleTime: 30_000,
   });
 
-  return { counts: query.data ?? EMPTY, isLoading: query.isLoading, refetch: query.refetch };
+  return { counts: query.data ?? EMPTY, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }
 
 /** Query key exportada para invalidação a partir de outros módulos. */
