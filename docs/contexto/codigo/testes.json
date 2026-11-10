@@ -5,9 +5,9 @@
   "vitest",
   "playwright"
  ],
- "total": 2608,
+ "total": 2609,
  "por_tipo": {
-  "contrato": 113,
+  "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 221
+   "arquivos": 222
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -490,11 +490,12 @@
   {
    "arquivo": "e2e/quarantine.unit.mjs",
    "tipo": "e2e",
-   "linhas": 116,
+   "linhas": 274,
    "testa": [
-    "scripts/ci/workflow-test-support.mjs"
+    "scripts/ci/workflow-test-support.mjs",
+    "scripts/e2e-isolated/runtime-contract.mjs"
    ],
-   "casos": 6
+   "casos": 7
   },
   {
    "arquivo": "e2e/quick-controls-volume.spec.ts",
@@ -1392,6 +1393,13 @@
    "linhas": 332,
    "testa": [],
    "casos": 9
+  },
+  {
+   "arquivo": "scripts/ci/e2e-quarantine-contract.unit.mjs",
+   "tipo": "contrato",
+   "linhas": 2,
+   "testa": [],
+   "casos": 0
   },
   {
    "arquivo": "scripts/ci/e2e-recovery.unit.mjs",
@@ -23817,7 +23825,7 @@
   "scripts/e2e-isolated/results.mjs": 2,
   "scripts/e2e-isolated/routine-ownership.mjs": 2,
   "scripts/e2e-isolated/run.mjs": 4,
-  "scripts/e2e-isolated/runtime-contract.mjs": 18,
+  "scripts/e2e-isolated/runtime-contract.mjs": 19,
   "scripts/e2e-isolated/seed-qr.mjs": 1,
   "scripts/e2e-isolated/seed-suite.mjs": 3,
   "scripts/e2e-isolated/stack.mjs": 3,

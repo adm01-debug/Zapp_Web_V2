@@ -150,7 +150,7 @@
   },
   {
    "arquivo": "scripts/e2e-isolated/runtime-contract.mjs",
-   "importado_por": 37
+   "importado_por": 38
   },
   {
    "arquivo": "src/hooks/system/useUserRole.ts",

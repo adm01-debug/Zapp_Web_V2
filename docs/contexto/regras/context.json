@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "e0a923fd8fcf09aeed69fb89dd8634df9ce42d3e",
+  "sha": "1c891507c6d71fc02f1cdf55d7e0cbefd8af475e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 18:03 UTC",
-  "files_total": 8225,
-  "code_files": 6072,
-  "code_lines": 1054332
+  "generated_at": "2026-11-10 18:18 UTC",
+  "files_total": 8226,
+  "code_files": 6073,
+  "code_lines": 1054492
  },
  "version": "1.3.2",
- "facts_hash": "c2d2aaca8a4e785d",
+ "facts_hash": "4b1d2a645fc407d4",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -320,7 +320,7 @@
    ".tsx": 2337,
    ".ts": 1889,
    ".sql": 1300,
-   ".mjs": 427,
+   ".mjs": 428,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67359,12 +67359,13 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18390,
+   "lines": 18548,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
     "quarantine.d.ts: quarentena",
     "quarantine.js: quarentena",
+    "quarantine.unit.mjs: gruposDaMatriz, validarMatriz",
     "catalog.ts: E2E_CATALOG_VIEW, E2E_CATALOG_PATH, E2E_CATALOG_PRODUCT_SKU, E2E_CATALOG_PRODUCT_SKU_VERIFIED, E2E_CATALOG_TEMPLATE_INFORMAL, E2E_CATALOG_SEND_EVENTS_TABLE",
     "conexoes.ts: gotoConexoes",
     "contacts-page.ts: CONTACT_TAB_LABELS, gotoContacts, parseCount, contactCards, liveContactsByPhone, softDeleteContact",
@@ -67512,8 +67513,8 @@
   },
   {
    "module": "scripts",
-   "files": 457,
-   "lines": 91752,
+   "files": 458,
+   "lines": 91754,
    "tables": [
     "a",
     "alem_do_limite",
@@ -261119,7 +261120,18 @@
   },
   "e2e/quarantine.unit.mjs": {
    "path": "e2e/quarantine.unit.mjs",
-   "lines": 116
+   "lines": 274,
+   "exports": [
+    "function gruposDaMatriz",
+    "function validarMatriz"
+   ],
+   "calc_fns": [
+    {
+     "name": "validarMatriz",
+     "params": "yaml, groups = GROUPS, shards = GROUP_SHARDS",
+     "body": "const job = jobOf(yaml, 'e2e-logado'); assert.equal(valueOf(job, 'timeout-minutes', 4), '${{ matrix.timeout-minutes }}'); assert.equal(valueOf(valueOf(job, 'strategy', 4), 'fail-fast', 0), 'false'); assert.deepEqual(shards, AUTH_SHARDS, 'mapa de shards fechado'); assert.deepEqual(groups, EXPECTED_GROUPS, 'distribuicao historica por backend'); const rows = gruposDaMatriz(yaml); assert.deepEqual(rows.map(row => row.name).sort(), [...EXPECTED_NAMES].sort(), 'nomes de grupos da matriz'); for (const …"
+    }
+   ]
   },
   "e2e/quick-controls-volume.spec.ts": {
    "path": "e2e/quick-controls-volume.spec.ts",
@@ -264603,6 +264615,10 @@
     "assert.deepEqual(h.observed.polls, [{ options: { timeout: 10_000 }, target: 0.16, precision: 2 }]);"
    ],
    "uses_service_role": true
+  },
+  "scripts/ci/e2e-quarantine-contract.unit.mjs": {
+   "path": "scripts/ci/e2e-quarantine-contract.unit.mjs",
+   "lines": 2
   },
   "scripts/ci/e2e-recovery.unit.mjs": {
    "path": "scripts/ci/e2e-recovery.unit.mjs",
@@ -385909,10 +385925,20 @@
   }
  },
  "git": {
-  "sha": "e0a923fd8fcf09aeed69fb89dd8634df9ce42d3e",
+  "sha": "1c891507c6d71fc02f1cdf55d7e0cbefd8af475e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1c89150",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)",
+    "files": [
+     "e2e/quarantine.unit.mjs",
+     "scripts/ci/e2e-quarantine-contract.unit.mjs"
+    ]
+   },
    {
     "sha": "e0a923f",
     "date": "2026-11-10",
@@ -386271,15 +386297,6 @@
     "files": [
      "src/components/talkx/TalkXSegments.tsx"
     ]
-   },
-   {
-    "sha": "743d162",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)",
-    "files": [
-     "scripts/db-audit/migration-evidence.json"
-    ]
    }
   ],
   "hot_files": [
@@ -386302,6 +386319,14 @@
    [
     "scripts/e2e-isolated/run.mjs",
     2
+   ],
+   [
+    "e2e/quarantine.unit.mjs",
+    1
+   ],
+   [
+    "scripts/ci/e2e-quarantine-contract.unit.mjs",
+    1
    ],
    [
     "scripts/ci/docs-realtime-citations.unit.mjs",
@@ -386353,14 +386378,6 @@
    ],
    [
     "src/hooks/copilot/useLeadThermometer.ts",
-    1
-   ],
-   [
-    "src/hooks/copilot/useLossRiskDetector.ts",
-    1
-   ],
-   [
-    "src/hooks/copilot/useObjectionHandler.ts",
     1
    ]
   ]

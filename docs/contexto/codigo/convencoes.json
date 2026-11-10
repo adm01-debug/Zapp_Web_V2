@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1955)",
-   "outro (221)",
+   "outro (222)",
    "co-localizado (*.test) (170)"
   ],
   "edge_functions": "supabase/functions",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)",
    "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)",
    "feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002 (#2834)",
    "Impede aprovar mutações sem executar testes (#2923)",
-   "chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)",
-   "chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)"
+   "chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

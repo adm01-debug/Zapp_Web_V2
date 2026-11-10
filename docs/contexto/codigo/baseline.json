@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e0a923fd8fcf09aeed69fb89dd8634df9ce42d3e",
+  "commit": "1c891507c6d71fc02f1cdf55d7e0cbefd8af475e",
   "branch": "main",
-  "data_commit": "2026-11-10T18:00:29Z",
+  "data_commit": "2026-11-10T18:12:26Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1c89150",
+    "data": "2026-11-10",
+    "assunto": "Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)"
+   },
    {
     "sha": "e0a923f",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "11efe5f",
     "data": "2026-11-10",
     "assunto": "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)"
-   },
-   {
-    "sha": "25e13ff",
-    "data": "2026-11-10",
-    "assunto": "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)"
    }
   ],
-  "arquivos_mudados_7d": 728,
+  "arquivos_mudados_7d": 729,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8383,
-  "arquivos_codigo": 4800,
-  "linhas_codigo": 887472,
+  "arquivos_total": 8384,
+  "arquivos_codigo": 4801,
+  "linhas_codigo": 887632,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 217,
   "migrations": 1100,
   "cron_jobs": 26,
-  "testes": 2608,
+  "testes": 2609,
   "workflows": 21,
   "scripts": 426,
   "docs_md": 1073
@@ -520,7 +520,7 @@
   },
   "e2e/quarantine.unit.mjs": {
    "arquivos": 1,
-   "linhas": 116
+   "linhas": 274
   },
   "e2e/quick-controls-volume.spec.ts": {
    "arquivos": 1,
@@ -607,8 +607,8 @@
    "linhas": 313
   },
   "scripts/ci": {
-   "arquivos": 210,
-   "linhas": 43756
+   "arquivos": 211,
+   "linhas": 43758
   },
   "scripts/db-audit": {
    "arquivos": 81,
