@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "401ea3d4d12c960ecc6d758943ed1cf77662c80a",
+  "sha": "c5650d887d515ef24d483082cb5999b471c25e48",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 16:08 UTC",
-  "files_total": 8208,
+  "generated_at": "2026-11-10 16:38 UTC",
+  "files_total": 8209,
   "code_files": 6059,
   "code_lines": 1051686
  },
@@ -385147,10 +385147,20 @@
   }
  },
  "git": {
-  "sha": "401ea3d4d12c960ecc6d758943ed1cf77662c80a",
+  "sha": "c5650d887d515ef24d483082cb5999b471c25e48",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c5650d8",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)",
+    "files": [
+     ".github/.ci-noop",
+     ".github/workflows/deploy-functions.yml"
+    ]
+   },
    {
     "sha": "401ea3d",
     "date": "2026-11-10",
@@ -385476,15 +385486,6 @@
     "files": [
      "scripts/edge-deploy/health-check.unit.mjs"
     ]
-   },
-   {
-    "sha": "d7bdb70",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "docs: documenta db-live-guard verde e ledger normalizado",
-    "files": [
-     "docs/PRONTO_PRODUCAO.md"
-    ]
    }
   ],
   "hot_files": [
@@ -385503,6 +385504,14 @@
    [
     "supabase/functions/connection-health-check/index.ts",
     2
+   ],
+   [
+    ".github/.ci-noop",
+    1
+   ],
+   [
+    ".github/workflows/deploy-functions.yml",
+    1
    ],
    [
     "src/components/talkx/TalkXCampaignRunning.tsx",
@@ -385558,14 +385567,6 @@
    ],
    [
     "scripts/maintenance/maintenance.unit.mjs",
-    1
-   ],
-   [
-    "scripts/maintenance/run.mjs",
-    1
-   ],
-   [
-    "scripts/maintenance/run.sh",
     1
    ]
   ]

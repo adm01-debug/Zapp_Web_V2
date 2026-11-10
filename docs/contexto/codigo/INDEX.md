@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `401ea3d4d12c960ecc6d758943ed1cf77662c80a` (2026-11-10T16:07:28Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c5650d887d515ef24d483082cb5999b471c25e48` (2026-11-10T16:37:05Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56534 nós · 116608 arestas · 4169 comunidades · grafo do commit `401ea3d4`
+- 56534 nós · 116608 arestas · 4169 comunidades · grafo do commit `c5650d88`
 - comunidades maiores: lucide-react (881), client.ts (855), vitest (640), react (628), cn (492), catalogShared.tsx (416), framer-motion (391), ref_https (387), @tanstack/react-query (372), ref_node_fs (366), ref_node_assert (356), schemas.ts (335)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CLAUDE.md (12)
 - docs/DB-INVENTORY.md (12)
 - supabase/schema-manifest.json (12)
+- .github/workflows/deploy-functions.yml (11)
 - .github/workflows/db-guard.yml (10)
-- .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
 - RELATORIO_CI.md (10)
 - scripts/db-audit/migration-evidence.json (10)
@@ -505,6 +505,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `c5650d8` fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)
 - 2026-11-10 `401ea3d` feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)
 - 2026-11-10 `9f94363` chore(docs): documenta geração de contexto no AGENTS.md (#2840)
 - 2026-11-10 `384befe` ci: registra 4 guards de segurança existentes como steps do CI (#2850)
@@ -519,7 +520,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `d40c053` docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)
 - 2026-11-10 `71dd723` fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox (#2832)
 - 2026-11-10 `cf79d70` feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)
-- 2026-11-10 `31e8df6` feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "401ea3d4d12c960ecc6d758943ed1cf77662c80a",
+  "commit": "c5650d887d515ef24d483082cb5999b471c25e48",
   "branch": "main",
-  "data_commit": "2026-11-10T16:07:28Z",
+  "data_commit": "2026-11-10T16:37:05Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c5650d8",
+    "data": "2026-11-10",
+    "assunto": "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)"
+   },
    {
     "sha": "401ea3d",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "f3792ec",
     "data": "2026-11-10",
     "assunto": "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)"
-   },
-   {
-    "sha": "e2c31f4",
-    "data": "2026-11-10",
-    "assunto": "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)"
    }
   ],
-  "arquivos_mudados_7d": 706,
+  "arquivos_mudados_7d": 707,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 266
+    "mudancas": 264
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 120
+    "mudancas": 119
    },
    {
     "pasta": "src/lib/__tests__",
@@ -226,11 +226,11 @@
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 10
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
+    "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 10
    },
    {
