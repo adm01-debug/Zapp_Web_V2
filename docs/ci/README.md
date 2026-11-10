@@ -4,11 +4,12 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**21 workflows.**
+**22 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
 | Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch | fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI | a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento | Job Summary com a fila (em voo, proxima, esperando, bloqueadas) | — | — |
+| Automação local | [`automation-local.yml`](../../.github/workflows/automation-local.yml) | PR para main, push em main e execução manual. | Contratos estáticos e suites locais de automação em fixtures isoladas. | O job falha; nenhum patch, commit, publicação ou deploy é executado. | O check fica vermelho no GitHub para o autor da PR e mantenedores. | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | branches podaveis, PRs paradas ha mais de 7 dias e SLA dos alertas de code scanning | SLA vencido deixa o job vermelho e publica o diagnostico se o relatorio foi gerado | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (diário) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security | — | — |
@@ -38,6 +39,13 @@
 - **O que prova:** fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI
 - **Quando falha:** a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento
 - **Quem é avisado:** Job Summary com a fila (em voo, proxima, esperando, bloqueadas)
+
+### Automação local (`automation-local.yml`)
+
+- **Gatilho:** PR para main, push em main e execução manual.
+- **O que prova:** Contratos estáticos e suites locais de automação em fixtures isoladas.
+- **Quando falha:** O job falha; nenhum patch, commit, publicação ou deploy é executado.
+- **Quem é avisado:** O check fica vermelho no GitHub para o autor da PR e mantenedores.
 
 ### Branch Hygiene Audit (`branch-hygiene-audit.yml`)
 

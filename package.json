@@ -9,9 +9,9 @@
     "postcss-selector-parser": "^6.1.4"
   },
   "scripts": {
-    "maintenance:doctor": "node scripts/maintenance/run.mjs doctor --root .",
-    "maintenance:check": "node scripts/maintenance/run.mjs check --root . --ref origin/main",
-    "maintenance:heal": "node scripts/maintenance/run.mjs heal --root . --ref origin/main",
+    "maintenance:doctor": "sh scripts/maintenance/run.sh doctor --root .",
+    "maintenance:check": "sh scripts/maintenance/run.sh check --root . --ref origin/main",
+    "maintenance:heal": "sh scripts/maintenance/run.sh heal --root . --ref origin/main",
     "test:maintenance": "node --test scripts/maintenance/maintenance.unit.mjs",
     "dev": "vite",
     "build": "vite build",
@@ -33,7 +33,16 @@
     "graph:update": "graphify update .",
     "contexto:ia": "node scripts/ai-context/gerar.mjs --out docs/contexto/codigo",
     "contexto:ia:test": "node --test scripts/ai-context/gerar.unit.mjs",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "automation:doctor": "node scripts/automation.mjs doctor",
+    "automation:test": "node scripts/automation.mjs test",
+    "automation:check": "node scripts/automation.mjs check --ref HEAD",
+    "automation:heal": "node scripts/automation.mjs heal --ref origin/main",
+    "automation:nightly": "node scripts/automation.mjs nightly --ref origin/main",
+    "automation:graph": "node scripts/automation.mjs graph",
+    "automation:status": "node scripts/automation.mjs graph status",
+    "automation:install-hooks": "node scripts/automation.mjs install-hooks",
+    "automation:uninstall-hooks": "node scripts/automation.mjs uninstall-hooks"
   },
   "dependencies": {
     "@axe-core/react": "^4.14.0",
