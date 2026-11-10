@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "fb36e30fcfb8f90257ca76fd6dcbc32832b25909",
+  "sha": "cb5c3a6cad84f56886e7c77728a4d61994a4adfb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 14:25 UTC",
+  "generated_at": "2026-11-10 15:35 UTC",
   "files_total": 8207,
   "code_files": 6058,
   "code_lines": 1051536
@@ -385123,10 +385123,19 @@
   }
  },
  "git": {
-  "sha": "fb36e30fcfb8f90257ca76fd6dcbc32832b25909",
+  "sha": "cb5c3a6cad84f56886e7c77728a4d61994a4adfb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "cb5c3a6",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)",
+    "files": [
+     "docs/migration/MATRIZ_EDGE_TABELA.md"
+    ]
+   },
    {
     "sha": "fb36e30",
     "date": "2026-11-10",
@@ -385453,19 +385462,6 @@
      "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
      "supabase/migrations/20261107122000_contacts_phone_search_digits.sql"
     ]
-   },
-   {
-    "sha": "ff90439",
-    "date": "2026-11-09",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#2902)",
-    "files": [
-     "scripts/db-audit/grants-baseline.json",
-     "scripts/db-audit/known-violations.json",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-catalog.json",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
@@ -385488,6 +385484,10 @@
    [
     "scripts/db-audit/migration-evidence.json",
     2
+   ],
+   [
+    "docs/migration/MATRIZ_EDGE_TABELA.md",
+    1
    ],
    [
     "scripts/lib/seguranca-processo.mjs",
@@ -385543,10 +385543,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-compilation-network.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
     1
    ]
   ]

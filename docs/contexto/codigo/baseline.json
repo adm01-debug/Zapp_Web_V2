@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "fb36e30fcfb8f90257ca76fd6dcbc32832b25909",
+  "commit": "cb5c3a6cad84f56886e7c77728a4d61994a4adfb",
   "branch": "main",
-  "data_commit": "2026-11-10T11:01:45-03:00",
+  "data_commit": "2026-11-10T15:30:17Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "cb5c3a6",
+    "data": "2026-11-10",
+    "assunto": "docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)"
+   },
    {
     "sha": "fb36e30",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "77dd764",
     "data": "2026-11-09",
     "assunto": "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes"
-   },
-   {
-    "sha": "18b7196",
-    "data": "2026-11-09",
-    "assunto": "fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414"
    }
   ],
-  "arquivos_mudados_7d": 702,
+  "arquivos_mudados_7d": 703,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",

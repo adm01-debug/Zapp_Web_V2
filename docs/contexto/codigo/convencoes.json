@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)",
    "fix(scripts): corrige resolução de caminhos e executáveis (#2922)",
    "chore(manutencao): adiciona rotina local isolada e verificavel (#2921)",
    "fix(catalogo): valida etapas e datas do plano de implementação (#2918)",
-   "fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)",
-   "fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)"
+   "fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
