@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 425,
+ "total": 426,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3924,6 +3924,15 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/pull-image.mjs",
+   "descricao": "* Retry only the registry failure observed in the native Docker pull. */",
+   "linhas": 82,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/qr-contract.mjs",
    "descricao": "QR version 3, encoded with ReportLab 4.4.9 and independently decoded with jsQR 1.4.0. The payload is harmless text, never a WhatsApp pairing secret.",
    "linhas": 105,
@@ -3978,7 +3987,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 813,
+   "linhas": 820,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"

@@ -224,6 +224,7 @@
    "scripts/e2e-isolated/compilation-network.mjs",
    "scripts/e2e-isolated/migrations.mjs",
    "scripts/e2e-isolated/provider-diagnostics.mjs",
+   "scripts/e2e-isolated/pull-image.mjs",
    "scripts/e2e-isolated/qr-contract.mjs",
    "scripts/e2e-isolated/results.mjs",
    "scripts/e2e-isolated/routine-ownership.mjs",

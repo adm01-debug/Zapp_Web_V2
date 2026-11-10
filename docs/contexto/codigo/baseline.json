@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c5650d887d515ef24d483082cb5999b471c25e48",
+  "commit": "44cdce8974a3b86be14aa11065eed83cddd6adf5",
   "branch": "main",
-  "data_commit": "2026-11-10T16:37:05Z",
+  "data_commit": "2026-11-10T16:50:49Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "44cdce8",
+    "data": "2026-11-10",
+    "assunto": "Recupera o rate limit no download das imagens do E2E isolado (#2925)"
+   },
    {
     "sha": "c5650d8",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "743d162",
     "data": "2026-11-10",
     "assunto": "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)"
-   },
-   {
-    "sha": "f3792ec",
-    "data": "2026-11-10",
-    "assunto": "fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)"
    }
   ],
-  "arquivos_mudados_7d": 707,
+  "arquivos_mudados_7d": 703,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -206,11 +206,11 @@
     "mudancas": 15
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 14
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 13
    },
    {
-    "arquivo": "docs/ci/README.md",
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
    },
    {
@@ -254,6 +254,10 @@
     "mudancas": 9
    },
    {
+    "arquivo": "scripts/e2e-isolated/run.mjs",
+    "mudancas": 9
+   },
+   {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 9
    },
@@ -274,7 +278,11 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/e2e-isolated/run.mjs",
+    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 8
    },
    {
@@ -282,15 +290,7 @@
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    "mudancas": 7
-   },
-   {
     "arquivo": "scripts/db-audit/replay-known-failures.json",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 7
    },
    {
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8367,
-  "arquivos_codigo": 4787,
-  "linhas_codigo": 884826,
+  "arquivos_total": 8369,
+  "arquivos_codigo": 4789,
+  "linhas_codigo": 885308,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,9 +328,9 @@
   "tabelas": 217,
   "migrations": 1100,
   "cron_jobs": 26,
-  "testes": 2605,
+  "testes": 2606,
   "workflows": 21,
-  "scripts": 425,
+  "scripts": 426,
   "docs_md": 1072
  },
  "por_pasta": {
@@ -607,8 +607,8 @@
    "linhas": 313
   },
   "scripts/ci": {
-   "arquivos": 208,
-   "linhas": 43294
+   "arquivos": 209,
+   "linhas": 43687
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -623,8 +623,8 @@
    "linhas": 229
   },
   "scripts/e2e-isolated": {
-   "arquivos": 39,
-   "linhas": 6343
+   "arquivos": 40,
+   "linhas": 6432
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
@@ -946,7 +946,7 @@
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "linha": 1574,
+   "linha": 1679,
    "tipo": "FIXME",
    "texto": "remains failure', fault: 'explicit-skip', failure: 'suite-result-not-clean' },"
   },

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "c5650d887d515ef24d483082cb5999b471c25e48",
+  "sha": "44cdce8974a3b86be14aa11065eed83cddd6adf5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 16:38 UTC",
-  "files_total": 8209,
-  "code_files": 6059,
-  "code_lines": 1051686
+  "generated_at": "2026-11-10 16:59 UTC",
+  "files_total": 8211,
+  "code_files": 6061,
+  "code_lines": 1052168
  },
  "version": "1.3.2",
- "facts_hash": "b67a339d501d1f4b",
+ "facts_hash": "0dbd24664ccca4c5",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -320,7 +320,7 @@
    ".tsx": 2336,
    ".ts": 1881,
    ".sql": 1300,
-   ".mjs": 423,
+   ".mjs": 425,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67338,8 +67338,8 @@
   },
   {
    "module": "scripts",
-   "files": 453,
-   "lines": 90810,
+   "files": 455,
+   "lines": 91292,
    "tables": [
     "a",
     "alem_do_limite",
@@ -80878,6 +80878,18 @@
    {
     "file": "scripts/e2e-isolated/providers.mjs",
     "msg": "unsupported-select"
+   },
+   {
+    "file": "scripts/e2e-isolated/pull-image.mjs",
+    "msg": "invalid-pull-clock"
+   },
+   {
+    "file": "scripts/e2e-isolated/pull-image.mjs",
+    "msg": "invalid-pull-jitter"
+   },
+   {
+    "file": "scripts/e2e-isolated/pull-image.mjs",
+    "msg": "run-cancelled"
    },
    {
     "file": "scripts/e2e-isolated/resolve-images.mjs",
@@ -263814,6 +263826,14 @@
    "lines": 172,
    "uses_service_role": true
   },
+  "scripts/ci/e2e-isolated-pull-image.unit.mjs": {
+   "path": "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+   "lines": 288,
+   "temporal": [
+    "test('a real signal pending during spawnSync is handled before retrying', { timeout: 5000 }, async () => {",
+    "test('the real retry timer aborts promptly without a second Docker command', { timeout: 5000 }, async () => {"
+   ]
+  },
   "scripts/ci/e2e-isolated-qr.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-qr.unit.mjs",
    "lines": 372,
@@ -263920,7 +263940,7 @@
   },
   "scripts/ci/e2e-isolated-runtime.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "lines": 1619,
+   "lines": 1724,
    "env": [
     "GITHUB_OUTPUT"
    ],
@@ -263955,6 +263975,7 @@
    ],
    "temporal": [
     "assert.deepEqual(CATALOG_EXECUTOR_OPTIONS, { timeout: 5000, killSignal: 'SIGKILL', maxBuffer: 8192 });",
+    "test('OCI pull retry controller: real SIGTERM aborts the wait, cleans and never retries', { timeout: 5000 }, async t => {",
     "test('provider catalog executor: the actual Node timeout kills a child that ignores SIGTERM', { timeout: 12000 }, () => {"
    ],
    "uses_service_role": true
@@ -268747,6 +268768,42 @@
    ],
    "uses_service_role": true
   },
+  "scripts/e2e-isolated/pull-image.mjs": {
+   "path": "scripts/e2e-isolated/pull-image.mjs",
+   "lines": 82,
+   "exports": [
+    "const PULL_BUDGET_MS",
+    "function isPullRateLimited",
+    "function pullPinnedImage"
+   ],
+   "errors": [
+    "invalid-pull-clock",
+    "invalid-pull-jitter",
+    "run-cancelled"
+   ],
+   "params": [
+    {
+     "name": "PULL_BUDGET_MS",
+     "value": "15"
+    },
+    {
+     "name": "HEX",
+     "value": "'(?:[a-f0-9]{12}|[a-f0-9]{64})'"
+    },
+    {
+     "name": "SIZE",
+     "value": "'[0-9]+(?:\\\\.[0-9]+)?(?:B|kB|MB|GB|TB)'"
+    },
+    {
+     "name": "BAR",
+     "value": "'\\\\[(?=[=> ]{1,60}\\\\])={0,60}>? {0,60}\\\\]'"
+    },
+    {
+     "name": "TERMINAL",
+     "value": "'toomanyrequests: Rate exceeded'"
+    }
+   ]
+  },
   "scripts/e2e-isolated/qr-contract.mjs": {
    "path": "scripts/e2e-isolated/qr-contract.mjs",
    "lines": 105,
@@ -268863,7 +268920,7 @@
   },
   "scripts/e2e-isolated/run.mjs": {
    "path": "scripts/e2e-isolated/run.mjs",
-   "lines": 813,
+   "lines": 820,
    "exports": [
     "function parseFilesSeedDiagnostic",
     "function parseQrSeedDiagnostic",
@@ -268951,7 +269008,6 @@
     "...inDriver([...cli, '--list', '--reporter=json']).slice(1)], { timeout: 120_000 }),",
     "], { timeout: 210_000, env: { PATH: process.env.PATH, DOCKER_CONFIG: compilerDockerConfig } });",
     "const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {",
-    "const result = docker(['pull', image], { timeout: 15 * 60_000 });",
     "cwd: ROOT, encoding: 'utf8', timeout: 120_000, maxBuffer: 64 * 1024 * 1024,"
    ],
    "side_effects": [
@@ -385147,10 +385203,23 @@
   }
  },
  "git": {
-  "sha": "c5650d887d515ef24d483082cb5999b471c25e48",
+  "sha": "44cdce8974a3b86be14aa11065eed83cddd6adf5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "44cdce8",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "Recupera o rate limit no download das imagens do E2E isolado (#2925)",
+    "files": [
+     "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/pull-image.mjs",
+     "scripts/e2e-isolated/run.mjs"
+    ]
+   },
    {
     "sha": "c5650d8",
     "date": "2026-11-10",
@@ -385477,24 +385546,27 @@
      "scripts/edge-deploy/health-check.mjs",
      "scripts/edge-deploy/health-check.unit.mjs"
     ]
-   },
-   {
-    "sha": "18b7196",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414",
-    "files": [
-     "scripts/edge-deploy/health-check.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
-    "scripts/edge-deploy/health-check.unit.mjs",
-    3
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/README.md",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/run.mjs",
+    2
    ],
    [
     "scripts/edge-deploy/health-check.mjs",
+    2
+   ],
+   [
+    "scripts/edge-deploy/health-check.unit.mjs",
     2
    ],
    [
@@ -385504,6 +385576,14 @@
    [
     "supabase/functions/connection-health-check/index.ts",
     2
+   ],
+   [
+    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+    1
+   ],
+   [
+    "scripts/e2e-isolated/pull-image.mjs",
+    1
    ],
    [
     ".github/.ci-noop",
@@ -385547,26 +385627,6 @@
    ],
    [
     "package.json",
-    1
-   ],
-   [
-    "scripts/ci/maintenance.unit.mjs",
-    1
-   ],
-   [
-    "scripts/maintenance/README.md",
-    1
-   ],
-   [
-    "scripts/maintenance/config.json",
-    1
-   ],
-   [
-    "scripts/maintenance/lib.mjs",
-    1
-   ],
-   [
-    "scripts/maintenance/maintenance.unit.mjs",
     1
    ]
   ]

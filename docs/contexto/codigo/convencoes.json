@@ -23,15 +23,15 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1955)",
-   "outro (220)",
+   "outro (221)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
    "scripts/db-audit (286)",
-   "scripts/ci (40)",
-   "scripts/e2e-isolated (40)"
+   "scripts/e2e-isolated (41)",
+   "scripts/ci (40)"
   ],
   "docs": [
    "docs (31)",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Recupera o rate limit no download das imagens do E2E isolado (#2925)",
    "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)",
    "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)",
    "chore(docs): documenta geração de contexto no AGENTS.md (#2840)",
-   "ci: registra 4 guards de segurança existentes como steps do CI (#2850)",
-   "docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)"
+   "ci: registra 4 guards de segurança existentes como steps do CI (#2850)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

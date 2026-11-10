@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2605,
+ "total": 2606,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2314
+  "unit": 2315
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 220
+   "arquivos": 221
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -1231,6 +1231,16 @@
    "casos": 14
   },
   {
+   "arquivo": "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+   "tipo": "unit",
+   "linhas": 288,
+   "testa": [
+    "scripts/e2e-isolated/pull-image.mjs",
+    "scripts/e2e-isolated/run.mjs"
+   ],
+   "casos": 25
+  },
+  {
    "arquivo": "scripts/ci/e2e-isolated-qr.unit.mjs",
    "tipo": "unit",
    "linhas": 372,
@@ -1275,11 +1285,12 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
    "tipo": "unit",
-   "linhas": 1619,
+   "linhas": 1724,
    "testa": [
     "scripts/e2e-isolated/compilation-network.mjs",
     "scripts/e2e-isolated/migrations.mjs",
     "scripts/e2e-isolated/provider-diagnostics.mjs",
+    "scripts/e2e-isolated/pull-image.mjs",
     "scripts/e2e-isolated/qr-contract.mjs",
     "scripts/e2e-isolated/routine-ownership.mjs",
     "scripts/e2e-isolated/run.mjs",
@@ -1287,7 +1298,7 @@
     "scripts/e2e-isolated/stack.mjs",
     "scripts/e2e-isolated/tls.mjs"
    ],
-   "casos": 72
+   "casos": 77
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
@@ -23782,12 +23793,13 @@
   "scripts/e2e-isolated/network-proof.mjs": 1,
   "scripts/e2e-isolated/provider-diagnostics.mjs": 2,
   "scripts/e2e-isolated/providers.mjs": 3,
+  "scripts/e2e-isolated/pull-image.mjs": 2,
   "scripts/e2e-isolated/qr-contract.mjs": 4,
   "scripts/e2e-isolated/qr-fixture-access.mjs": 2,
   "scripts/e2e-isolated/resolve-images.mjs": 1,
   "scripts/e2e-isolated/results.mjs": 2,
   "scripts/e2e-isolated/routine-ownership.mjs": 2,
-  "scripts/e2e-isolated/run.mjs": 3,
+  "scripts/e2e-isolated/run.mjs": 4,
   "scripts/e2e-isolated/runtime-contract.mjs": 18,
   "scripts/e2e-isolated/seed-qr.mjs": 1,
   "scripts/e2e-isolated/seed-suite.mjs": 3,
