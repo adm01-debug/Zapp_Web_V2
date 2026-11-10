@@ -4917,7 +4917,7 @@
     "ChatMessagesAreaRef"
    ],
    "export_default": null,
-   "linhas": 490,
+   "linhas": 498,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useReducedMotion"

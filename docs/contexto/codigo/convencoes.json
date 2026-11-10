@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1954)",
+   "co-localizado (__tests__) (1955)",
    "outro (217)",
    "co-localizado (*.test) (168)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)",
    "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)",
    "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)",
    "chore(ci): atualiza baseline do lint-ratchet (#2839)",
-   "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)",
-   "fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)"
+   "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

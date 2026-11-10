@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `11efe5fa10` · branch `main` · 2026-11-10 03:25 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f332a29796` · branch `main` · 2026-11-10 03:35 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4564,7 +4564,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21262 testes em 2253 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21265 testes em 2254 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4868,7 +4868,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` | 16 | TalkXQueryBoundary (matriz de estados — X047) · carregando: mostra o esqueleto e marca aria-busy · erro: mostra o erro e NUNCA o vazio (nem com a lista vazia) · vazio sem erro: mostra o vazio … |
 | `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 16 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx` | 16 | WorkItemSheet — etapas 137–140 (Planejamento) · 137: a seção traz os dois cartões e o Prazo mostra data e hora visíveis · 137: limpar o Prazo zera também a hora · 137: o Lembrete mostra a data e a hora agendadas … |
-| … +1953 linhas — lista completa em `context.json` | | |
+| … +1954 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

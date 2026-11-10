@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "11efe5fa10923111539773920a1aad36b6721da0",
+  "commit": "f332a29796a2be50394f8f03a3b495efd6d54acf",
   "branch": "main",
-  "data_commit": "2026-11-10T03:23:46Z",
+  "data_commit": "2026-11-10T03:33:52Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f332a29",
+    "data": "2026-11-10",
+    "assunto": "fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)"
+   },
    {
     "sha": "11efe5f",
     "data": "2026-11-10",
@@ -126,18 +131,13 @@
     "sha": "e9e38d8",
     "data": "2026-11-09",
     "assunto": "⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates (#2892)"
-   },
-   {
-    "sha": "0c191b6",
-    "data": "2026-11-09",
-    "assunto": "fix(migrations): IF EXISTS guards em migrations 220300 e 230300 para E2E"
    }
   ],
-  "arquivos_mudados_7d": 679,
+  "arquivos_mudados_7d": 681,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 669
+    "mudancas": 671
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -203,11 +203,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 16
-   },
-   {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 13
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -216,6 +212,10 @@
    {
     "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
+   },
+   {
+    "arquivo": "CLAUDE.md",
+    "mudancas": 12
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8354,
-  "arquivos_codigo": 4778,
-  "linhas_codigo": 881876,
+  "arquivos_total": 8355,
+  "arquivos_codigo": 4779,
+  "linhas_codigo": 882042,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 217,
   "migrations": 1099,
   "cron_jobs": 26,
-  "testes": 2601,
+  "testes": 2602,
   "workflows": 21,
   "scripts": 420,
   "docs_md": 1071
@@ -699,8 +699,8 @@
    "linhas": 616
   },
   "src/components": {
-   "arquivos": 2171,
-   "linhas": 370420
+   "arquivos": 2172,
+   "linhas": 370586
   },
   "src/config": {
    "arquivos": 3,

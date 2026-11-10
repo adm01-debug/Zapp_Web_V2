@@ -38,7 +38,7 @@
   },
   {
    "arquivo": "src/types/chat.ts",
-   "importado_por": 121
+   "importado_por": 122
   },
   {
    "arquivo": "supabase/functions/_shared/validation.ts",
