@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "5892191270f14a9f929d4d32aba3bf6d3140dd54",
+  "sha": "893c152cddf51dc49453ea1ce8ec68efd7e76017",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 10:02 UTC",
+  "generated_at": "2026-11-10 10:59 UTC",
   "files_total": 8197,
   "code_files": 6051,
   "code_lines": 1048874
@@ -384832,10 +384832,19 @@
   }
  },
  "git": {
-  "sha": "5892191270f14a9f929d4d32aba3bf6d3140dd54",
+  "sha": "893c152cddf51dc49453ea1ce8ec68efd7e76017",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "893c152",
+    "date": "2026-11-10",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ docker: Bump golang from `d200d2d` to `fa3d596` in /infrastructure/preview-egress-proxy (#2895)",
+    "files": [
+     "infrastructure/preview-egress-proxy/Dockerfile"
+    ]
+   },
    {
     "sha": "5892191",
     "date": "2026-11-10",
@@ -385148,15 +385157,6 @@
      ".github/workflows/talkx-status-regen.yml",
      ".github/workflows/types-sync.yml"
     ]
-   },
-   {
-    "sha": "e9e38d8",
-    "date": "2026-11-09",
-    "author": "dependabot[bot]",
-    "subject": "⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates (#2892)",
-    "files": [
-     ".github/workflows/codeql.yml"
-    ]
    }
   ],
   "hot_files": [
@@ -385197,6 +385197,10 @@
     2
    ],
    [
+    "infrastructure/preview-egress-proxy/Dockerfile",
+    1
+   ],
+   [
     "docs/agentes/banco.md",
     1
    ],
@@ -385234,10 +385238,6 @@
    ],
    [
     "src/pages/ViewRouter.tsx",
-    1
-   ],
-   [
-    "src/components/ui/badge.tsx",
     1
    ]
   ]

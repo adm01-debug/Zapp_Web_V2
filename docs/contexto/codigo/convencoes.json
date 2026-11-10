@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "⬆️ docker: Bump golang from `d200d2d` to `fa3d596` in /infrastructure/preview-egress-proxy (#2895)",
    "fix(conexao): restaura health check anterior à PR 2910 (#2916)",
    "docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)",
    "fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox (#2832)",
-   "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)",
-   "feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)"
+   "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
