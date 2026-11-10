@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d39dc1124e5054ba3db8f11e3322c5b8ff5c5f20",
+  "commit": "f120344f9b665d70129d07282f0d655ca4c14189",
   "branch": "main",
-  "data_commit": "2026-11-10T17:03:14Z",
+  "data_commit": "2026-11-10T17:24:00Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f120344",
+    "data": "2026-11-10",
+    "assunto": "chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)"
+   },
    {
     "sha": "d39dc11",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "61335ee",
     "data": "2026-11-10",
     "assunto": "fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)"
-   },
-   {
-    "sha": "0a6d41e",
-    "data": "2026-11-10",
-    "assunto": "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)"
    }
   ],
-  "arquivos_mudados_7d": 703,
+  "arquivos_mudados_7d": 704,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 264
+    "mudancas": 263
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -210,15 +210,15 @@
     "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
-   },
-   {
     "arquivo": "CLAUDE.md",
     "mudancas": 12
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
@@ -270,10 +270,6 @@
     "mudancas": 8
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 8
-   },
-   {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 8
    },
@@ -290,11 +286,15 @@
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/db-audit/replay-known-failures.json",
+    "arquivo": "ESTADO.md",
     "mudancas": 7
    },
    {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "docs/talkx/ESTADOS.md",
     "mudancas": 6
    }
   ],
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8367,
+  "arquivos_total": 8370,
   "arquivos_codigo": 4787,
   "linhas_codigo": 885104,
   "rotas": 18,
@@ -331,7 +331,7 @@
   "testes": 2605,
   "workflows": 21,
   "scripts": 425,
-  "docs_md": 1072
+  "docs_md": 1073
  },
  "por_pasta": {
   "docs/_arquivo": {

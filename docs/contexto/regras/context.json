@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "d39dc1124e5054ba3db8f11e3322c5b8ff5c5f20",
+  "sha": "f120344f9b665d70129d07282f0d655ca4c14189",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 17:12 UTC",
-  "files_total": 8209,
+  "generated_at": "2026-11-10 17:33 UTC",
+  "files_total": 8212,
   "code_files": 6059,
   "code_lines": 1051964
  },
@@ -385182,10 +385182,21 @@
   }
  },
  "git": {
-  "sha": "d39dc1124e5054ba3db8f11e3322c5b8ff5c5f20",
+  "sha": "f120344f9b665d70129d07282f0d655ca4c14189",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f120344",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)",
+    "files": [
+     "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
+     "auditoria-supabase/achados.json",
+     "auditoria-supabase/progresso.json"
+    ]
+   },
    {
     "sha": "d39dc11",
     "date": "2026-11-10",
@@ -385516,17 +385527,6 @@
      "src/components/inbox/chat/ChatInputArea.tsx",
      "src/components/inbox/chat/__tests__/ChatInputArea.radar-fases8a15.test.tsx"
     ]
-   },
-   {
-    "sha": "7c27c1a",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix: corrige bug crítico de notificação em connection-health-check (#2910)",
-    "files": [
-     "src/hooks/realtime/realtimeUtils.ts",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/connection-health-check/index.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -385543,12 +385543,16 @@
     2
    ],
    [
-    "supabase/deployment-manifest.json",
-    2
+    "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
+    1
    ],
    [
-    "supabase/functions/connection-health-check/index.ts",
-    2
+    "auditoria-supabase/achados.json",
+    1
+   ],
+   [
+    "auditoria-supabase/progresso.json",
+    1
    ],
    [
     "scripts/ci/qa-vercel-auditores.unit.mjs",
@@ -385604,10 +385608,6 @@
    ],
    [
     "docs/migration/MATRIZ_EDGE_TABELA.md",
-    1
-   ],
-   [
-    "scripts/lib/seguranca-processo.mjs",
     1
    ]
   ]
