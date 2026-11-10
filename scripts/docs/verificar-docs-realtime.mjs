@@ -15,9 +15,9 @@
  *   2. todo canal da tabela do inventário aponta a tabela assinada de verdade no
  *      código (`'<tabela>'` aparece em algum `.ts`/`.tsx` de `src/`);
  *   3. o nome do canal aparece no arquivo citado;
- *   4. a tabela está na publication `supabase_realtime`, provado por replay das
- *      migrations (comentários de linha são ignorados, então rollback documentado
- *      não conta);
+ *   4. a tabela consta da projeção lexical de ADD/DROP TABLE das migrations para
+ *      `supabase_realtime`; comentários e texto inerte não contam. IF/EXCEPTION
+ *      não são avaliados, e a projeção não substitui o estado real do banco;
  *   5. toda tabela listada como "fora da publication" realmente não está, e
  *      continua citada por algum canal;
  *   6. cada migration citada na tabela de publicação realmente adiciona a
@@ -26,6 +26,7 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { publicationChanges } from './publication.mjs';
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DOCS = [
@@ -37,7 +38,6 @@ const CITACAO = /\b((?:src|supabase|docs|scripts)\/[A-Za-z0-9_./-]+\.(?:tsx|ts|m
 const CITACAO_UM = new RegExp(CITACAO.source);
 const CITACAO_CURTA = /\b([A-Za-z0-9_-]+\.(?:tsx|ts|mjs|sql|json))(?::(\d+)(?:-(\d+))?)?(?![\w])/g;
 const ATALHO = /`([A-Za-z0-9_-]+\.(?:tsx|ts|mjs|sql))`\s*=\s*`([^`]+\.(?:tsx|ts|mjs|sql))`/g;
-const PUBLICATION = /ALTER\s+PUBLICATION\s+supabase_realtime\s+(ADD|DROP)\s+TABLE\s+([^;]+)/gi;
 
 const erros = [];
 const errar = (msg) => erros.push(msg);
@@ -55,41 +55,30 @@ function walk(dir, acc = []) {
   return acc;
 }
 
-function semComentarioDeLinha(sql) {
-  return sql.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
-}
-
-function tabelasDaInstrucao(lista) {
-  return lista
-    .replace(/\([^)]*\)/g, '')
-    .split(',')
-    .map((p) => p.trim().split(/\s+/)[0]?.replace(/public\./i, '').replace(/"/g, '') ?? '')
-    .filter((t) => /^[a-z_][a-z0-9_]*$/.test(t));
+function mudancasPublication(rel) {
+  try {
+    return publicationChanges(ler(rel), rel);
+  } catch (erro) {
+    if (erro.code !== 'PUBLICATION_UNSUPPORTED') throw erro;
+    errar(erro.message);
+    return [];
+  }
 }
 
 function replayPublication() {
   const publicadas = new Set();
   const dir = resolve(RAIZ, 'supabase/migrations');
   for (const arquivo of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
-    const texto = semComentarioDeLinha(readFileSync(join(dir, arquivo), 'utf8'));
-    for (const m of texto.matchAll(PUBLICATION)) {
-      for (const t of tabelasDaInstrucao(m[2])) {
-        if (m[1].toUpperCase() === 'ADD') publicadas.add(t);
-        else publicadas.delete(t);
-      }
+    for (const op of mudancasPublication(`supabase/migrations/${arquivo}`)) {
+      if (op.action === 'ADD') publicadas.add(op.table);
+      else publicadas.delete(op.table);
     }
   }
   return publicadas;
 }
 
 function adicionadasPor(rel) {
-  const texto = semComentarioDeLinha(ler(rel));
-  const adicionadas = new Set();
-  for (const m of texto.matchAll(PUBLICATION)) {
-    if (m[1].toUpperCase() !== 'ADD') continue;
-    for (const t of tabelasDaInstrucao(m[2])) adicionadas.add(t);
-  }
-  return adicionadas;
+  return new Set(mudancasPublication(rel).filter((op) => op.action === 'ADD').map((op) => op.table));
 }
 
 const codigoSrc = walk(resolve(RAIZ, 'src'))
@@ -110,7 +99,7 @@ for (const rel of arquivosDoRepo) {
   porBase.set(base, [...(porBase.get(base) ?? []), rel]);
 }
 
-function conferirCitacao(doc, rel, inicio) {
+function conferirCitacao(doc, rel, inicio, fim) {
   citacoes += 1;
   if (!existsSync(resolve(RAIZ, rel))) {
     errar(`${doc}: cita arquivo inexistente ${rel}`);
@@ -118,8 +107,14 @@ function conferirCitacao(doc, rel, inicio) {
   }
   if (inicio) {
     const n = Number(inicio);
+    const ultimo = fim === undefined ? n : Number(fim);
     const total = linhas(rel);
-    if (n > total) errar(`${doc}: ${rel}:${n} passou do fim do arquivo (${total} linhas)`);
+    const citacao = `${rel}:${inicio}${fim === undefined ? '' : `-${fim}`}`;
+    if (!Number.isSafeInteger(n) || n < 1 || !Number.isSafeInteger(ultimo) || ultimo < n) {
+      errar(`${doc}: ${citacao} tem intervalo de linhas inválido`);
+    } else if (n > total || ultimo > total) {
+      errar(`${doc}: ${citacao} passou do fim do arquivo (${total} linhas)`);
+    }
   }
 }
 
@@ -131,13 +126,13 @@ for (const doc of DOCS) {
   const texto = ler(doc);
   const atalhos = new Map([...texto.matchAll(ATALHO)].map((m) => [m[1], m[2]]));
 
-  for (const m of texto.matchAll(CITACAO)) conferirCitacao(doc, m[1], m[2]);
+  for (const m of texto.matchAll(CITACAO)) conferirCitacao(doc, m[1], m[2], m[3]);
 
   for (const m of texto.matchAll(CITACAO_CURTA)) {
     if (/[/\w.-]/.test(texto[m.index - 1] ?? '')) continue;
-    const [, base, inicio] = m;
+    const [, base, inicio, fim] = m;
     if (atalhos.has(base)) {
-      conferirCitacao(doc, atalhos.get(base), inicio);
+      conferirCitacao(doc, atalhos.get(base), inicio, fim);
       continue;
     }
     const candidatos = porBase.get(base) ?? [];
@@ -145,7 +140,7 @@ for (const doc of DOCS) {
       errar(`${doc}: citação curta ambígua ou desconhecida "${base}" (${candidatos.length} candidatos)`);
       continue;
     }
-    conferirCitacao(doc, candidatos[0], inicio);
+    conferirCitacao(doc, candidatos[0], inicio, fim);
   }
 }
 
@@ -187,7 +182,7 @@ for (const linha of inventario.split('\n')) {
     for (const tabela of soBackticks(celulas[1]).filter((t) => /^[a-z_][a-z0-9_]*$/.test(t))) {
       tabelasCitadas.add(tabela);
       if (foraDaPublication.has(tabela)) continue;
-      if (!publicadas.has(tabela)) errar(`${DOCS[0]}: ${tabela} não está na publication (replay das migrations)`);
+      if (!publicadas.has(tabela)) errar(`${DOCS[0]}: ${tabela} não está na publication (projeção das migrations)`);
       if (!codigoSrc.includes(`'${tabela}'`)) errar(`${DOCS[0]}: nenhum .ts/.tsx de src/ assina '${tabela}'`);
     }
     continue;
