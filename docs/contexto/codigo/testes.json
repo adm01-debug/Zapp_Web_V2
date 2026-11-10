@@ -2494,11 +2494,11 @@
   {
    "arquivo": "scripts/lib/seguranca-processo.test.mjs",
    "tipo": "unit",
-   "linhas": 122,
+   "linhas": 300,
    "testa": [
     "scripts/lib/seguranca-processo.mjs"
    ],
-   "casos": 10
+   "casos": 20
   },
   {
    "arquivo": "scripts/maintenance/maintenance.unit.mjs",

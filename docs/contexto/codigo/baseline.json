@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "be1c0c7ebb987d757678394e630a99391c444395",
+  "commit": "fb36e30fcfb8f90257ca76fd6dcbc32832b25909",
   "branch": "main",
-  "data_commit": "2026-11-10T13:37:33Z",
+  "data_commit": "2026-11-10T11:01:45-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "fb36e30",
+    "data": "2026-11-10",
+    "assunto": "fix(scripts): corrige resolução de caminhos e executáveis (#2922)"
+   },
    {
     "sha": "be1c0c7",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "18b7196",
     "data": "2026-11-09",
     "assunto": "fix(edge-deploy): atualiza teste queryAnalytics para POST após fix HTTP 414"
-   },
-   {
-    "sha": "d7bdb70",
-    "data": "2026-11-09",
-    "assunto": "docs: documenta db-live-guard verde e ledger normalizado"
    }
   ],
   "arquivos_mudados_7d": 702,
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -226,10 +226,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 10
    },
@@ -239,6 +235,10 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "RELATORIO_CI.md",
     "mudancas": 10
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8366,
   "arquivos_codigo": 4787,
-  "linhas_codigo": 884611,
+  "linhas_codigo": 884806,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -644,7 +644,7 @@
   },
   "scripts/lib": {
    "arquivos": 2,
-   "linhas": 223
+   "linhas": 418
   },
   "scripts/maintenance": {
    "arquivos": 4,
@@ -907,7 +907,7 @@
  ],
  "qualidade": {
   "any": 351,
-  "console_log": 419,
+  "console_log": 420,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,

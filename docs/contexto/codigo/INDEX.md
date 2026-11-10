@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `be1c0c7ebb987d757678394e630a99391c444395` (2026-11-10T13:37:33Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `fb36e30fcfb8f90257ca76fd6dcbc32832b25909` (2026-11-10T11:01:45-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8366 |
 | arquivos_codigo | 4787 |
-| linhas_codigo | 884611 |
+| linhas_codigo | 884806 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,23 +384,23 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56523 nós · 116595 arestas · 4099 comunidades · grafo do commit `be1c0c7e`
-- comunidades maiores: lucide-react (598), utils.ts (593), react (487), framer-motion (451), cn (443), validation.ts (391), ref_node_assert (383), @testing-library/react (341), supabase (338), useTalkXSegments.ts (310), ref_node_fs (309), vitest (301)
+- 56526 nós · 116600 arestas · 4215 comunidades · grafo do commit `fb36e30f`
+- comunidades maiores: lucide-react (953), cn (828), react (723), catalogShared.tsx (480), validation.ts (468), chat.ts (442), useTalkXSegments.ts (406), ref_node_assert (405), ref_https (383), ref_node_fs (312), framer-motion (307), TalkXOverview.tsx (299)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- PENDENCIAS.md (17)
+- PENDENCIAS.md (16)
 - .github/workflows/ci.yml (14)
 - supabase/deployment-manifest.json (14)
 - docs/ci/README.md (13)
 - CLAUDE.md (12)
 - docs/DB-INVENTORY.md (12)
 - supabase/schema-manifest.json (12)
-- RELATORIO_CI.md (11)
 - .github/workflows/db-guard.yml (10)
 - .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
+- RELATORIO_CI.md (10)
 - scripts/db-audit/migration-evidence.json (10)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/db-audit/grants-baseline.json (9)
@@ -505,6 +505,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `fb36e30` fix(scripts): corrige resolução de caminhos e executáveis (#2922)
 - 2026-11-10 `be1c0c7` chore(manutencao): adiciona rotina local isolada e verificavel (#2921)
 - 2026-11-10 `3d97dc7` fix(catalogo): valida etapas e datas do plano de implementação (#2918)
 - 2026-11-10 `5bdf733` fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)
@@ -519,7 +520,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `11efe5f` feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)
 - 2026-11-10 `25e13ff` fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)
 - 2026-11-10 `77d5cd4` chore(ci): atualiza baseline do lint-ratchet (#2839)
-- 2026-11-10 `11841db` feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

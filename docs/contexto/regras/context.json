@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "be1c0c7ebb987d757678394e630a99391c444395",
+  "sha": "fb36e30fcfb8f90257ca76fd6dcbc32832b25909",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 13:40 UTC",
+  "generated_at": "2026-11-10 14:25 UTC",
   "files_total": 8207,
   "code_files": 6058,
-  "code_lines": 1051341
+  "code_lines": 1051536
  },
  "version": "1.3.2",
- "facts_hash": "90d22d2d985f1034",
+ "facts_hash": "ef68fb62491c2510",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67330,7 +67330,7 @@
   {
    "module": "scripts",
    "files": 453,
-   "lines": 90615,
+   "lines": 90810,
    "tables": [
     "a",
     "alem_do_limite",
@@ -129398,6 +129398,46 @@
    {
     "file": "scripts/lib/seguranca-processo.test.mjs",
     "name": "RAIZ_REPO aponta para o pacote Zapp_Web_V2 e esta entre as raizes permitidas"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "caminho: link ${estilo}, profundidade ${profundidade}, alvo ${tipo}"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "caminho: preserva criacao de novo arquivo sob diretorios ainda ausentes"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "caminho: resolve ancestral dangling para ${dentro ? "
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "caminho: link relativo usa pai real com destino ${dentro ? "
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "caminho: cadeia de ${quantidade} links dangling tem limite finito"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "caminho: ciclo ${ciclo} falha com ELOOP"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "caminho: arquivo existente nao vira ancestral de diretorio inexistente"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "executavel: ${tipo} no PATH ${estilo} preserva ordem com cwd diferente"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "executavel: PATH ${JSON.stringify(envPath)} inclui cwd sem mudar env global"
+   },
+   {
+    "file": "scripts/lib/seguranca-processo.test.mjs",
+    "name": "executavel: PATH ausente mantem erro em vez de inventar busca"
    },
    {
     "file": "src/__tests__/bundle-inicial.bundle.test.ts",
@@ -270013,7 +270053,7 @@
   },
   "scripts/lib/seguranca-processo.mjs": {
    "path": "scripts/lib/seguranca-processo.mjs",
-   "lines": 101,
+   "lines": 118,
    "exports": [
     "const RAIZ_REPO",
     "const RAIZES_PERMITIDAS",
@@ -270036,7 +270076,7 @@
   },
   "scripts/lib/seguranca-processo.test.mjs": {
    "path": "scripts/lib/seguranca-processo.test.mjs",
-   "lines": 122,
+   "lines": 300,
    "is_test": true,
    "rule_comments": [
     "E o MESMO binario que o shell resolveria: nao pode pegar outro shim do PATH."
@@ -270051,7 +270091,17 @@
     "resolverCaminhoPermitido respeita o array de raizes explicito do chamador",
     "resolverCaminhoPermitido recusa arquivo existente acessado por symlink que escapa da raiz",
     "resolverCaminhoPermitido recusa alvo inexistente sob diretorio symlink que escapa da raiz",
-    "RAIZ_REPO aponta para o pacote Zapp_Web_V2 e esta entre as raizes permitidas"
+    "RAIZ_REPO aponta para o pacote Zapp_Web_V2 e esta entre as raizes permitidas",
+    "caminho: link ${estilo}, profundidade ${profundidade}, alvo ${tipo}",
+    "caminho: preserva criacao de novo arquivo sob diretorios ainda ausentes",
+    "caminho: resolve ancestral dangling para ${dentro ? ",
+    "caminho: link relativo usa pai real com destino ${dentro ? ",
+    "caminho: cadeia de ${quantidade} links dangling tem limite finito",
+    "caminho: ciclo ${ciclo} falha com ELOOP",
+    "caminho: arquivo existente nao vira ancestral de diretorio inexistente",
+    "executavel: ${tipo} no PATH ${estilo} preserva ordem com cwd diferente",
+    "executavel: PATH ${JSON.stringify(envPath)} inclui cwd sem mudar env global",
+    "executavel: PATH ausente mantem erro em vez de inventar busca"
    ]
   },
   "scripts/maintenance/lib.mjs": {
@@ -385073,10 +385123,20 @@
   }
  },
  "git": {
-  "sha": "be1c0c7ebb987d757678394e630a99391c444395",
+  "sha": "fb36e30fcfb8f90257ca76fd6dcbc32832b25909",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "fb36e30",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(scripts): corrige resolução de caminhos e executáveis (#2922)",
+    "files": [
+     "scripts/lib/seguranca-processo.mjs",
+     "scripts/lib/seguranca-processo.test.mjs"
+    ]
+   },
    {
     "sha": "be1c0c7",
     "date": "2026-11-10",
@@ -385406,17 +385466,6 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "8618770",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto",
-    "files": [
-     "scripts/ai-context/gerar.mjs",
-     "scripts/ai-context/gerar.unit.mjs",
-     "scripts/regras_negocio/generate.py"
-    ]
    }
   ],
   "hot_files": [
@@ -385429,10 +385478,6 @@
     3
    ],
    [
-    "scripts/regras_negocio/generate.py",
-    2
-   ],
-   [
     "supabase/deployment-manifest.json",
     2
    ],
@@ -385443,6 +385488,14 @@
    [
     "scripts/db-audit/migration-evidence.json",
     2
+   ],
+   [
+    "scripts/lib/seguranca-processo.mjs",
+    1
+   ],
+   [
+    "scripts/lib/seguranca-processo.test.mjs",
+    1
    ],
    [
     "package.json",
@@ -385494,10 +385547,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    1
-   ],
-   [
-    "scripts/e2e-isolated/README.md",
     1
    ]
   ]
