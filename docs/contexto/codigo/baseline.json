@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9f943637de2529125ced04dc5c1742c8215ef6db",
+  "commit": "401ea3d4d12c960ecc6d758943ed1cf77662c80a",
   "branch": "main",
-  "data_commit": "2026-11-10T15:54:12Z",
+  "data_commit": "2026-11-10T16:07:28Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "401ea3d",
+    "data": "2026-11-10",
+    "assunto": "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)"
+   },
    {
     "sha": "9f94363",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "e2c31f4",
     "data": "2026-11-10",
     "assunto": "feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)"
-   },
-   {
-    "sha": "be8aa06",
-    "data": "2026-11-09",
-    "assunto": "feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)"
    }
   ],
-  "arquivos_mudados_7d": 703,
+  "arquivos_mudados_7d": 706,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 264
+    "mudancas": 266
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8366,
+  "arquivos_total": 8367,
   "arquivos_codigo": 4787,
-  "linhas_codigo": 884806,
+  "linhas_codigo": 884826,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,7 +326,7 @@
   "hooks": 493,
   "edge_functions": 85,
   "tabelas": 217,
-  "migrations": 1099,
+  "migrations": 1100,
   "cron_jobs": 26,
   "testes": 2605,
   "workflows": 21,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2172,
-   "linhas": 370514
+   "linhas": 370534
   },
   "src/config": {
    "arquivos": 3,

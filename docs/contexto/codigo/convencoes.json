@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)",
    "chore(docs): documenta geração de contexto no AGENTS.md (#2840)",
    "ci: registra 4 guards de segurança existentes como steps do CI (#2850)",
    "docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)",
-   "fix(scripts): corrige resolução de caminhos e executáveis (#2922)",
-   "chore(manutencao): adiciona rotina local isolada e verificavel (#2921)"
+   "fix(scripts): corrige resolução de caminhos e executáveis (#2922)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

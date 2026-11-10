@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9f943637de2529125ced04dc5c1742c8215ef6db",
+  "sha": "401ea3d4d12c960ecc6d758943ed1cf77662c80a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 15:58 UTC",
-  "files_total": 8207,
-  "code_files": 6058,
-  "code_lines": 1051536
+  "generated_at": "2026-11-10 16:08 UTC",
+  "files_total": 8208,
+  "code_files": 6059,
+  "code_lines": 1051686
  },
  "version": "1.3.2",
- "facts_hash": "ef68fb62491c2510",
+ "facts_hash": "b67a339d501d1f4b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -319,7 +319,7 @@
   "languages": {
    ".tsx": 2336,
    ".ts": 1881,
-   ".sql": 1299,
+   ".sql": 1300,
    ".mjs": 423,
    ".py": 119,
    ".cjs": 19,
@@ -31841,33 +31841,6 @@
      "whatsapp_connections"
     ]
    },
-   "talkx_campaign_recipients_page": {
-    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL, p_status text DEFAULT NULL, p_search text DEFAULT NULL",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_profile_id uuid; v_can_view boolean; v_size integer := LEAST(GREATEST(COALESCE(p_page_size, 50), 1), 100); v_cur_at timestamptz; v_cur_id uuid; v_search text := NULLIF(btrim(p_search), ''); v_rows jsonb := '[]'::jsonb; v_has_more boolean := false; v_next text := NULL; v_total bigint := 0; v_kpis jsonb := '{}'::jsonb; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN v_can_view := true; ELSE IF auth.uid() IS NULL THEN RAISE EXCEPTION 'talkx_campaign_recipients_page: acesso negado' USING ERRCODE = '42501'; END IF; SELECT p.id INTO v_profile_id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1; SELECT EXISTS ( SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = p_ca …",
-    "raises": [
-     "talkx_campaign_recipients_page: acesso negado",
-     "talkx_campaign_recipients_page: acesso negado",
-     "talkx_campaign_recipients_page: status invalido"
-    ],
-    "tables": [
-     "contacts",
-     "numbered",
-     "page",
-     "profiles",
-     "talkx_campaigns",
-     "talkx_recipients",
-     "v_can_view",
-     "v_kpis",
-     "v_profile_id",
-     "v_rows",
-     "v_total"
-    ]
-   },
    "expire_user_sessions": {
     "args": "",
     "returns": "integer",
@@ -33828,6 +33801,33 @@
     "raises": [],
     "tables": [
      "vault"
+    ]
+   },
+   "talkx_campaign_recipients_page": {
+    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL, p_status text DEFAULT NULL, p_search text DEFAULT NULL, p_segment_id uuid DEFAULT NULL",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_can_view boolean; v_size integer := LEAST(GREATEST(COALESCE(p_page_size, 50), 1), 100); v_cur_at timestamptz; v_cur_id uuid; v_search text := NULLIF(btrim(p_search), ''); v_rows jsonb := '[]'::jsonb; v_has_more boolean := false; v_next text := NULL; v_total bigint := 0; v_kpis jsonb := '{}'::jsonb; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN v_can_view := true; ELSE IF auth.uid() IS NULL THEN RAISE EXCEPTION 'talkx_campaign_recipients_page: acesso negado' USING ERRCODE = '42501'; END IF; SELECT p.id INTO v_profile_id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1; SELECT EXISTS ( SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = p_ca …",
+    "raises": [
+     "talkx_campaign_recipients_page: acesso negado",
+     "talkx_campaign_recipients_page: acesso negado",
+     "talkx_campaign_recipients_page: status invalido"
+    ],
+    "tables": [
+     "contacts",
+     "numbered",
+     "page",
+     "profiles",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "v_can_view",
+     "v_kpis",
+     "v_profile_id",
+     "v_rows",
+     "v_total"
     ]
    },
    "talkx_campaign_heatmap": {
@@ -43020,6 +43020,7 @@
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
    "supabase/migrations/20261107170000_fix_message_reactions_rls.sql",
+   "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
    "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql",
    "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
    "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
@@ -55853,6 +55854,14 @@
    {
     "kind": "grant",
     "privs": "execute",
+    "object": "talkx_campaign_recipients_page",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
     "object": "talkx_campaign_heatmap",
     "objkind": "function",
     "roles": "authenticated",
@@ -59318,21 +59327,6 @@
     "src": "supabase/migrations/20261010042500_talkx_campaign_launch_checks.sql"
    },
    {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: status invalido",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
-   },
-   {
     "function": "get_team_messages_page",
     "msg": "not_authenticated",
     "src": "supabase/migrations/20261010064729_team_messages_page_cursor_tiebreak_and_min_limit.sql"
@@ -60936,6 +60930,21 @@
     "function": "increment_agent_resolutions",
     "msg": "permission denied",
     "src": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: status invalido",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
    },
    {
     "function": "talkx_campaign_heatmap",
@@ -67662,7 +67671,7 @@
   {
    "module": "src/components",
    "files": 2172,
-   "lines": 370514,
+   "lines": 370534,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -69284,8 +69293,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1099,
-   "lines": 105349,
+   "files": 1100,
+   "lines": 105479,
    "tables": [
     "audit_logs",
     "departments",
@@ -225782,33 +225791,6 @@
      "whatsapp_connections"
     ]
    },
-   "talkx_campaign_recipients_page": {
-    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL, p_status text DEFAULT NULL, p_search text DEFAULT NULL",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_profile_id uuid; v_can_view boolean; v_size integer := LEAST(GREATEST(COALESCE(p_page_size, 50), 1), 100); v_cur_at timestamptz; v_cur_id uuid; v_search text := NULLIF(btrim(p_search), ''); v_rows jsonb := '[]'::jsonb; v_has_more boolean := false; v_next text := NULL; v_total bigint := 0; v_kpis jsonb := '{}'::jsonb; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN v_can_view := true; ELSE IF auth.uid() IS NULL THEN RAISE EXCEPTION 'talkx_campaign_recipients_page: acesso negado' USING ERRCODE = '42501'; END IF; SELECT p.id INTO v_profile_id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1; SELECT EXISTS ( SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = p_ca …",
-    "raises": [
-     "talkx_campaign_recipients_page: acesso negado",
-     "talkx_campaign_recipients_page: acesso negado",
-     "talkx_campaign_recipients_page: status invalido"
-    ],
-    "tables": [
-     "contacts",
-     "numbered",
-     "page",
-     "profiles",
-     "talkx_campaigns",
-     "talkx_recipients",
-     "v_can_view",
-     "v_kpis",
-     "v_profile_id",
-     "v_rows",
-     "v_total"
-    ]
-   },
    "expire_user_sessions": {
     "args": "",
     "returns": "integer",
@@ -227769,6 +227751,33 @@
     "raises": [],
     "tables": [
      "vault"
+    ]
+   },
+   "talkx_campaign_recipients_page": {
+    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL, p_status text DEFAULT NULL, p_search text DEFAULT NULL, p_segment_id uuid DEFAULT NULL",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id uuid; v_can_view boolean; v_size integer := LEAST(GREATEST(COALESCE(p_page_size, 50), 1), 100); v_cur_at timestamptz; v_cur_id uuid; v_search text := NULLIF(btrim(p_search), ''); v_rows jsonb := '[]'::jsonb; v_has_more boolean := false; v_next text := NULL; v_total bigint := 0; v_kpis jsonb := '{}'::jsonb; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN v_can_view := true; ELSE IF auth.uid() IS NULL THEN RAISE EXCEPTION 'talkx_campaign_recipients_page: acesso negado' USING ERRCODE = '42501'; END IF; SELECT p.id INTO v_profile_id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1; SELECT EXISTS ( SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = p_ca …",
+    "raises": [
+     "talkx_campaign_recipients_page: acesso negado",
+     "talkx_campaign_recipients_page: acesso negado",
+     "talkx_campaign_recipients_page: status invalido"
+    ],
+    "tables": [
+     "contacts",
+     "numbered",
+     "page",
+     "profiles",
+     "talkx_campaigns",
+     "talkx_recipients",
+     "v_can_view",
+     "v_kpis",
+     "v_profile_id",
+     "v_rows",
+     "v_total"
     ]
    },
    "talkx_campaign_heatmap": {
@@ -231637,21 +231646,6 @@
     "src": "supabase/migrations/20261010042500_talkx_campaign_launch_checks.sql"
    },
    {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: status invalido",
-    "src": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
-   },
-   {
     "function": "get_team_messages_page",
     "msg": "not_authenticated",
     "src": "supabase/migrations/20261010064729_team_messages_page_cursor_tiebreak_and_min_limit.sql"
@@ -233255,6 +233249,21 @@
     "function": "increment_agent_resolutions",
     "msg": "permission denied",
     "src": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: status invalido",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
    },
    {
     "function": "talkx_campaign_heatmap",
@@ -241229,6 +241238,7 @@
    "supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql",
    "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
+   "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
@@ -254253,6 +254263,14 @@
     "objkind": "table",
     "roles": "PUBLIC, anon, authenticated",
     "src": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_recipients_page",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
    },
    {
     "kind": "grant",
@@ -310203,11 +310221,12 @@
   },
   "src/components/talkx/tracking/TalkXRecipientsTable.tsx": {
    "path": "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-   "lines": 207,
+   "lines": 227,
    "exports": [
     "type RecipientRow",
     "type RecipientKpis",
     "type RecipientsPage",
+    "type SegmentOption",
     "function TalkXRecipientsTable"
    ],
    "rpc": [
@@ -381244,6 +381263,11 @@
    "path": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql",
    "lines": 139
   },
+  "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql": {
+   "path": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
+   "lines": 130,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql": {
    "path": "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql",
    "lines": 68
@@ -385123,10 +385147,21 @@
   }
  },
  "git": {
-  "sha": "9f943637de2529125ced04dc5c1742c8215ef6db",
+  "sha": "401ea3d4d12c960ecc6d758943ed1cf77662c80a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "401ea3d",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)",
+    "files": [
+     "src/components/talkx/TalkXCampaignRunning.tsx",
+     "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
+     "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
+    ]
+   },
    {
     "sha": "9f94363",
     "date": "2026-11-10",
@@ -385450,16 +385485,6 @@
     "files": [
      "docs/PRONTO_PRODUCAO.md"
     ]
-   },
-   {
-    "sha": "32129d8",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70",
-    "files": [
-     ".github/workflows/e2e-logado-isolado.yml",
-     "scripts/ci/e2e-isolated-workflow.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -385478,6 +385503,18 @@
    [
     "supabase/functions/connection-health-check/index.ts",
     2
+   ],
+   [
+    "src/components/talkx/TalkXCampaignRunning.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
+    1
+   ],
+   [
+    "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
+    1
    ],
    [
     "AGENTS.md",
@@ -385529,18 +385566,6 @@
    ],
    [
     "scripts/maintenance/run.sh",
-    1
-   ],
-   [
-    "scripts/maintenance/typecheck.mjs",
-    1
-   ],
-   [
-    "scripts/catalog/validate-plan.mjs",
-    1
-   ],
-   [
-    "scripts/catalog/validate-plan.test.mjs",
     1
    ]
   ]

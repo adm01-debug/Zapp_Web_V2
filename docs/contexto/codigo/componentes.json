@@ -11589,10 +11589,11 @@
     "RecipientKpis",
     "RecipientRow",
     "RecipientsPage",
+    "SegmentOption",
     "TalkXRecipientsTable"
    ],
    "export_default": null,
-   "linhas": 207,
+   "linhas": 227,
    "dominio": "components/talkx",
    "hooks_locais": [],
    "tabelas": [],
