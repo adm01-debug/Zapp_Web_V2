@@ -221,6 +221,7 @@
   ],
   "scripts/e2e-isolated/run.mjs": [
    "scripts/e2e-isolated/collection.mjs",
+   "scripts/e2e-isolated/compilation-network.mjs",
    "scripts/e2e-isolated/migrations.mjs",
    "scripts/e2e-isolated/provider-diagnostics.mjs",
    "scripts/e2e-isolated/qr-contract.mjs",

@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2602,
+ "total": 2603,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2311
+  "unit": 2312
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 217
+   "arquivos": 218
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -1081,6 +1081,15 @@
    "casos": 3
   },
   {
+   "arquivo": "scripts/ci/e2e-isolated-compilation-network.unit.mjs",
+   "tipo": "unit",
+   "linhas": 109,
+   "testa": [
+    "scripts/e2e-isolated/compilation-network.mjs"
+   ],
+   "casos": 10
+  },
+  {
    "arquivo": "scripts/ci/e2e-isolated-email-l08.unit.mjs",
    "tipo": "unit",
    "linhas": 167,
@@ -1266,8 +1275,9 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
    "tipo": "unit",
-   "linhas": 1582,
+   "linhas": 1619,
    "testa": [
+    "scripts/e2e-isolated/compilation-network.mjs",
     "scripts/e2e-isolated/migrations.mjs",
     "scripts/e2e-isolated/provider-diagnostics.mjs",
     "scripts/e2e-isolated/qr-contract.mjs",
@@ -1277,7 +1287,7 @@
     "scripts/e2e-isolated/stack.mjs",
     "scripts/e2e-isolated/tls.mjs"
    ],
-   "casos": 70
+   "casos": 72
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-seed-diagnostic.unit.mjs",
@@ -23742,6 +23752,7 @@
   "scripts/db-tests/rpc-envelope.mjs": 1,
   "scripts/e2e-isolated/admission.mjs": 5,
   "scripts/e2e-isolated/collection.mjs": 1,
+  "scripts/e2e-isolated/compilation-network.mjs": 2,
   "scripts/e2e-isolated/fixture-access.mjs": 4,
   "scripts/e2e-isolated/force-online.mjs": 1,
   "scripts/e2e-isolated/gateway.mjs": 2,

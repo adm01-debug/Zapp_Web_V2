@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 420,
+ "total": 421,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3707,6 +3707,15 @@
    "orfao": false
   },
   {
+   "arquivo": "scripts/e2e-isolated/compilation-network.mjs",
+   "descricao": "* Copy only Docker's dependency-transport settings, never its registry identity. */",
+   "linhas": 71,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
    "arquivo": "scripts/e2e-isolated/fixture-access.mjs",
    "descricao": null,
    "linhas": 198,
@@ -3961,7 +3970,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 809,
+   "linhas": 813,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"

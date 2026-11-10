@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "77694900e3e9cb2b746052e5793baa74b4f58595",
+  "commit": "5bdf733819e9d9c76356abd25a2c69daaa655a1c",
   "branch": "main",
-  "data_commit": "2026-11-10T08:39:45-03:00",
+  "data_commit": "2026-11-10T08:59:34-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5bdf733",
+    "data": "2026-11-10",
+    "assunto": "fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)"
+   },
    {
     "sha": "7769490",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "3a8161c",
     "data": "2026-11-09",
     "assunto": "fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções"
-   },
-   {
-    "sha": "fe6c6b0",
-    "data": "2026-11-09",
-    "assunto": "fix(db-audit): registra 5 divergências de migration no evidence + renomeia 2 arquivos"
    }
   ],
-  "arquivos_mudados_7d": 695,
+  "arquivos_mudados_7d": 692,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -274,6 +274,10 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/e2e-isolated/run.mjs",
+    "mudancas": 8
+   },
+   {
     "arquivo": ".github/workflows/e2e-logado-isolado.yml",
     "mudancas": 7
    },
@@ -282,20 +286,16 @@
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/e2e-isolated/run.mjs",
+    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 7
    },
    {
     "arquivo": "supabase/functions/deno.json",
     "mudancas": 7
-   },
-   {
-    "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 6
    }
   ],
   "autores_30d": [
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8356,
-  "arquivos_codigo": 4780,
-  "linhas_codigo": 882978,
+  "arquivos_total": 8358,
+  "arquivos_codigo": 4782,
+  "linhas_codigo": 883199,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,9 +328,9 @@
   "tabelas": 217,
   "migrations": 1099,
   "cron_jobs": 26,
-  "testes": 2602,
+  "testes": 2603,
   "workflows": 21,
-  "scripts": 420,
+  "scripts": 421,
   "docs_md": 1071
  },
  "por_pasta": {
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 206,
-   "linhas": 43145
+   "arquivos": 207,
+   "linhas": 43291
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -623,8 +623,8 @@
    "linhas": 229
   },
   "scripts/e2e-isolated": {
-   "arquivos": 38,
-   "linhas": 6268
+   "arquivos": 39,
+   "linhas": 6343
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
@@ -942,7 +942,7 @@
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "linha": 1537,
+   "linha": 1574,
    "tipo": "FIXME",
    "texto": "remains failure', fault: 'explicit-skip', failure: 'suite-result-not-clean' },"
   },
