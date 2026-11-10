@@ -4,7 +4,7 @@
   "legacy_unmanaged_functions": [],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "9fe4de5f4ce0193d30833785f7738710e39c7df6435fd1a91547678395b97fa7"
+    "sha256": "e6281d46e573d47b0c5e8e1c381c996245004d2a257c4dec6df18c96269ff723"
   },
   "summary": {
     "function_count": 92,
@@ -2779,5 +2779,5 @@
       ]
     }
   ],
-  "manifest_sha256": "52bf62e41fa56ed636575dbe839a86e82ac8d19d18dc9bd43dc4631dff57f3b7"
+  "manifest_sha256": "1d130531bdae73b15ec1c6ccb1e4fde1813d7e7b6415d314001479efc9ca11c5"
 }
