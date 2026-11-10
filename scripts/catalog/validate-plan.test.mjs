@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -217,3 +217,26 @@ test('preserva duas posicoes descartadas distintas sem reduzir as 100 etapas', (
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /etapas: 100\/100 · blocos: 100/);
 });
+
+const planosPorQuebraDeLinha = [];
+for (const ids of [['54'], ['01'], ['100'], ['01', '54'], ['54', '100']]) {
+  for (const complemento of ['', ' (decisao do produto).']) {
+    planosPorQuebraDeLinha.push({
+      nome: `${ids.join('+')}, status ${complemento ? 'explicado' : 'simples'}`,
+      conteudo: planoCom(ids, id => tombstone(id, {
+        status: `**Status:** descartado em 2026-09-24${complemento}`,
+      })),
+    });
+  }
+}
+planosPorQuebraDeLinha.push({ nome: 'plano canonico', conteudo: readFileSync(path.join(ROOT, 'docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md'), 'utf8') });
+planosPorQuebraDeLinha.push({ nome: '100 etapas ativas', conteudo: planoComChecklistMisto() });
+for (const plano of planosPorQuebraDeLinha) {
+  for (const [nome, quebra] of [['LF', '\n'], ['CRLF', '\r\n']]) {
+    test(`preserva plano valido ${plano.nome} com ${nome}`, () => {
+      const result = executarPlano(plano.conteudo.replace(/\r\n/g, '\n').replace(/\n/g, quebra));
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /etapas: 100\/100 · blocos: 100/);
+    });
+  }
+}

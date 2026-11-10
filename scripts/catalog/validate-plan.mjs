@@ -32,7 +32,7 @@ const seen = new Set();
 const CABECALHO_TOMBSTONE = /^E\d{2,3} · ~~.+~~ \(RISCADO\)$/;
 const STATUS_DESCARTAVEL = /^\*\*Status:\*\* descartado em (\d{4}-\d{2}-\d{2})(?=\s|$)/m;
 function ehTombstone(b) {
-  if (!CABECALHO_TOMBSTONE.test(b.split('\n', 1)[0])) return false;
+  if (!CABECALHO_TOMBSTONE.test(b.split(/\r?\n/, 1)[0])) return false;
   const prazo = b.match(STATUS_DESCARTAVEL)?.[1];
   if (!prazo) return false;
   const data = new Date(`${prazo}T00:00:00.000Z`);
