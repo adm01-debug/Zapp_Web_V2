@@ -1,18 +1,11 @@
 {
   "version": 1,
   "manager": "bun",
-  "tsconfigs": [
-    "tsconfig.app.json",
-    "tsconfig.node.json"
-  ],
+  "tsconfigs": ["tsconfig.app.json", "tsconfig.node.json"],
   "gates": [
     {
       "name": "lint",
-      "command": [
-        "bun",
-        "run",
-        "lint"
-      ]
+      "command": ["bun", "run", "lint"]
     },
     {
       "name": "types",
@@ -25,26 +18,15 @@
     },
     {
       "name": "test",
-      "command": [
-        "node",
-        "node_modules/vitest/vitest.mjs",
-        "run",
-        "--maxWorkers=1"
-      ]
+      "command": ["node", "node_modules/vitest/vitest.mjs", "run", "--maxWorkers=1"]
     },
     {
       "name": "build",
-      "command": [
-        "bun",
-        "run",
-        "build"
-      ]
+      "command": ["bun", "run", "build"]
     }
   ],
   "fix": {
-    "roots": [
-      "src"
-    ],
+    "roots": ["src"],
     "eslintRules": [],
     "prettier": true
   },
