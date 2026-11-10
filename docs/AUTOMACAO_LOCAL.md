@@ -42,7 +42,7 @@ As suites usam fixtures descartáveis e não executam os scripts operacionais do
 
 ## Registro exato dos demais scripts
 
-Os registros `legacy` abaixo preservam ferramentas anteriores e seus chamadores; não são incluídos automaticamente no novo pipeline. Referência literal indica onde o arquivo é citado, sem garantir que esse caminho rode nem autorização para executar operações contra serviços. Sem referência, o arquivo é mantido manual porque função, parâmetros e ambiente precisam de revisão antes de ativar qualquer gatilho. Scripts novos não cobertos por registro fazem `doctor --static` falhar; não existe registro genérico `scripts/**` para ocultá-los.
+Os registros `legacy` abaixo preservam ferramentas anteriores e seus chamadores; não são incluídos automaticamente no novo pipeline. Para arquivos TypeScript de apoio sem runner comprovado, o comando listado só valida o inventário; os chamadores originais continuam sendo a referência de execução. Referência literal indica onde o arquivo é citado, sem garantir que esse caminho rode nem autorização para executar operações contra serviços. Sem referência, o arquivo é mantido manual porque função, parâmetros e ambiente precisam de revisão antes de ativar qualquer gatilho. Scripts novos não cobertos por registro fazem `doctor --static` falhar; não existe registro genérico `scripts/**` para ocultá-los.
 
 | Arquivo exato | Invocação manual de inventário | Chamadores literais / justificativa |
 |---|---|---|
@@ -511,7 +511,7 @@ Os registros `legacy` abaixo preservam ferramentas anteriores e seus chamadores;
 | `scripts/db-audit/talkx-template-second-update-snapshot.test.sh` | `sh scripts/db-audit/talkx-template-second-update-snapshot.test.sh` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
 | `scripts/db-audit/talkx-tick-expurgo.test.sh` | `sh scripts/db-audit/talkx-tick-expurgo.test.sh` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
 | `scripts/db-audit/talkx-transition-overload-postgrest.test.sh` | `sh scripts/db-audit/talkx-transition-overload-postgrest.test.sh` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
-| `scripts/db-audit/talkx-transition-postgrest.test.ts` | `bun scripts/db-audit/talkx-transition-postgrest.test.ts` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
+| `scripts/db-audit/talkx-transition-postgrest.test.ts` | `node scripts/automation.mjs doctor --static` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
 | `scripts/db-audit/talkx-update-limits-22009.test.sh` | `sh scripts/db-audit/talkx-update-limits-22009.test.sh` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
 | `scripts/db-audit/talkx-update-limits-casts.test.sh` | `sh scripts/db-audit/talkx-update-limits-casts.test.sh` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
 | `scripts/db-audit/talkx-update-limits-rpc.test.sh` | `sh scripts/db-audit/talkx-update-limits-rpc.test.sh` | .github/workflows/db-guard.yml, .github/workflows/types-sync.yml |
@@ -565,8 +565,8 @@ Os registros `legacy` abaixo preservam ferramentas anteriores e seus chamadores;
 | `scripts/e2e-isolated/fixture-access.mjs` | `node scripts/e2e-isolated/fixture-access.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/force-online.mjs` | `node scripts/e2e-isolated/force-online.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/gateway.mjs` | `node scripts/e2e-isolated/gateway.mjs` | .github/workflows/e2e-logado-isolado.yml |
-| `scripts/e2e-isolated/main/index.ts` | `bun scripts/e2e-isolated/main/index.ts` | scripts/e2e-isolated/run.mjs |
-| `scripts/e2e-isolated/main/memory-pressure.ts` | `bun scripts/e2e-isolated/main/memory-pressure.ts` | scripts/e2e-isolated/main/index.ts |
+| `scripts/e2e-isolated/main/index.ts` | `node scripts/automation.mjs doctor --static` | scripts/e2e-isolated/run.mjs |
+| `scripts/e2e-isolated/main/memory-pressure.ts` | `node scripts/automation.mjs doctor --static` | scripts/e2e-isolated/main/index.ts |
 | `scripts/e2e-isolated/migrations.mjs` | `node scripts/e2e-isolated/migrations.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/network-contexts-browser.mjs` | `node scripts/e2e-isolated/network-contexts-browser.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/network-contexts-policy.mjs` | `node scripts/e2e-isolated/network-contexts-policy.mjs` | .github/workflows/e2e-logado-isolado.yml |
@@ -574,7 +574,7 @@ Os registros `legacy` abaixo preservam ferramentas anteriores e seus chamadores;
 | `scripts/e2e-isolated/network-proof-browser.mjs` | `node scripts/e2e-isolated/network-proof-browser.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/network-proof-policy.mjs` | `node scripts/e2e-isolated/network-proof-policy.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/network-proof.mjs` | `node scripts/e2e-isolated/network-proof.mjs` | .github/workflows/e2e-logado-isolado.yml |
-| `scripts/e2e-isolated/playwright.config.ts` | `bun scripts/e2e-isolated/playwright.config.ts` | .github/workflows/e2e-logado-isolado.yml |
+| `scripts/e2e-isolated/playwright.config.ts` | `node scripts/automation.mjs doctor --static` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/provider-diagnostics.mjs` | `node scripts/e2e-isolated/provider-diagnostics.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/providers.mjs` | `node scripts/e2e-isolated/providers.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/qr-contract.mjs` | `node scripts/e2e-isolated/qr-contract.mjs` | .github/workflows/e2e-logado-isolado.yml |
@@ -590,11 +590,11 @@ Os registros `legacy` abaixo preservam ferramentas anteriores e seus chamadores;
 | `scripts/e2e-isolated/seed-qr.mjs` | `node scripts/e2e-isolated/seed-qr.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/seed-suite.mjs` | `node scripts/e2e-isolated/seed-suite.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/stack.mjs` | `node scripts/e2e-isolated/stack.mjs` | .github/workflows/e2e-logado-isolado.yml |
-| `scripts/e2e-isolated/tls-edge-probe.ts` | `bun scripts/e2e-isolated/tls-edge-probe.ts` | .github/workflows/e2e-logado-isolado.yml |
+| `scripts/e2e-isolated/tls-edge-probe.ts` | `node scripts/automation.mjs doctor --static` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/tls-probe.mjs` | `node scripts/e2e-isolated/tls-probe.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/tls.mjs` | `node scripts/e2e-isolated/tls.mjs` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/e2e-isolated/verify-providers.mjs` | `node scripts/e2e-isolated/verify-providers.mjs` | .github/workflows/e2e-logado-isolado.yml |
-| `scripts/e2e-isolated/vite.config.ts` | `bun scripts/e2e-isolated/vite.config.ts` | .github/workflows/e2e-logado-isolado.yml |
+| `scripts/e2e-isolated/vite.config.ts` | `node scripts/automation.mjs doctor --static` | .github/workflows/e2e-logado-isolado.yml |
 | `scripts/edge-deploy/api-traversal.unit.mjs` | `node --test scripts/edge-deploy/api-traversal.unit.mjs` | .github/workflows/deploy-functions.yml |
 | `scripts/edge-deploy/collect-remote.mjs` | `node scripts/edge-deploy/collect-remote.mjs` | .github/workflows/deploy-functions.yml |
 | `scripts/edge-deploy/deploy-plan.mjs` | `node scripts/edge-deploy/deploy-plan.mjs` | .github/workflows/deploy-functions.yml |
@@ -657,7 +657,7 @@ Os registros `legacy` abaixo preservam ferramentas anteriores e seus chamadores;
 | `scripts/talkx/lado-a-lado.unit.mjs` | `node --test scripts/talkx/lado-a-lado.unit.mjs` | .github/workflows/ci.yml |
 | `scripts/talkx/v4-status.mjs` | `node scripts/talkx/v4-status.mjs` | .github/workflows/ci.yml, .github/workflows/talkx-status-regen.yml |
 | `scripts/talkx/v4-status.unit.mjs` | `node --test scripts/talkx/v4-status.unit.mjs` | .github/workflows/ci.yml |
-| `scripts/tarefas/seed-local-imagens.ts` | `bun scripts/tarefas/seed-local-imagens.ts` | Sem chamador literal; manter manual e revisar parâmetros/ambiente antes de executar. |
+| `scripts/tarefas/seed-local-imagens.ts` | `node scripts/automation.mjs doctor --static` | Sem chamador literal; manter manual e revisar parâmetros/ambiente antes de executar. |
 | `scripts/team-chat-db-validate.mjs` | `node scripts/team-chat-db-validate.mjs` | Sem chamador literal; manter manual e revisar parâmetros/ambiente antes de executar. |
 | `scripts/team-chat-db-validate.unit.mjs` | `node --test scripts/team-chat-db-validate.unit.mjs` | .github/workflows/ci.yml |
 | `scripts/ui-audit/contacts-navy-header.unit.mjs` | `node --test scripts/ui-audit/contacts-navy-header.unit.mjs` | .github/workflows/ci.yml |

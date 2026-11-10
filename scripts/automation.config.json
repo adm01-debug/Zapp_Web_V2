@@ -7352,13 +7352,15 @@
         "scripts/db-audit/talkx-transition-postgrest.test.ts"
       ],
       "manual": [
-        "bun",
-        "scripts/db-audit/talkx-transition-postgrest.test.ts"
+        "node",
+        "scripts/automation.mjs",
+        "doctor",
+        "--static"
       ],
       "triggers": [
         "manual"
       ],
-      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/db-guard.yml, .github/workflows/types-sync.yml. O dispatcher não executa esta operação."
+      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/db-guard.yml, .github/workflows/types-sync.yml. O dispatcher não executa esta operação. Arquivo TypeScript de apoio: a invocação manual verifica somente o inventário; execução operacional usa o chamador original e seu runtime."
     },
     {
       "id": "legacy-c5b5f5a9bc696ad5",
@@ -8166,13 +8168,15 @@
         "scripts/e2e-isolated/main/index.ts"
       ],
       "manual": [
-        "bun",
-        "scripts/e2e-isolated/main/index.ts"
+        "node",
+        "scripts/automation.mjs",
+        "doctor",
+        "--static"
       ],
       "triggers": [
         "manual"
       ],
-      "reason": "Legado mantido no fluxo existente; referências literais: scripts/e2e-isolated/run.mjs. O dispatcher não executa esta operação."
+      "reason": "Legado mantido no fluxo existente; referências literais: scripts/e2e-isolated/run.mjs. O dispatcher não executa esta operação. Arquivo TypeScript de apoio: a invocação manual verifica somente o inventário; execução operacional usa o chamador original e seu runtime."
     },
     {
       "id": "legacy-bea96b1f4ac7fe41",
@@ -8181,13 +8185,15 @@
         "scripts/e2e-isolated/main/memory-pressure.ts"
       ],
       "manual": [
-        "bun",
-        "scripts/e2e-isolated/main/memory-pressure.ts"
+        "node",
+        "scripts/automation.mjs",
+        "doctor",
+        "--static"
       ],
       "triggers": [
         "manual"
       ],
-      "reason": "Legado mantido no fluxo existente; referências literais: scripts/e2e-isolated/main/index.ts. O dispatcher não executa esta operação."
+      "reason": "Legado mantido no fluxo existente; referências literais: scripts/e2e-isolated/main/index.ts. O dispatcher não executa esta operação. Arquivo TypeScript de apoio: a invocação manual verifica somente o inventário; execução operacional usa o chamador original e seu runtime."
     },
     {
       "id": "legacy-ebeec57b08779816",
@@ -8301,13 +8307,15 @@
         "scripts/e2e-isolated/playwright.config.ts"
       ],
       "manual": [
-        "bun",
-        "scripts/e2e-isolated/playwright.config.ts"
+        "node",
+        "scripts/automation.mjs",
+        "doctor",
+        "--static"
       ],
       "triggers": [
         "manual"
       ],
-      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/e2e-logado-isolado.yml. O dispatcher não executa esta operação."
+      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/e2e-logado-isolado.yml. O dispatcher não executa esta operação. Arquivo TypeScript de apoio: a invocação manual verifica somente o inventário; execução operacional usa o chamador original e seu runtime."
     },
     {
       "id": "legacy-239a80442c3c53c5",
@@ -8541,13 +8549,15 @@
         "scripts/e2e-isolated/tls-edge-probe.ts"
       ],
       "manual": [
-        "bun",
-        "scripts/e2e-isolated/tls-edge-probe.ts"
+        "node",
+        "scripts/automation.mjs",
+        "doctor",
+        "--static"
       ],
       "triggers": [
         "manual"
       ],
-      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/e2e-logado-isolado.yml. O dispatcher não executa esta operação."
+      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/e2e-logado-isolado.yml. O dispatcher não executa esta operação. Arquivo TypeScript de apoio: a invocação manual verifica somente o inventário; execução operacional usa o chamador original e seu runtime."
     },
     {
       "id": "legacy-c645da24bc917e91",
@@ -8601,13 +8611,15 @@
         "scripts/e2e-isolated/vite.config.ts"
       ],
       "manual": [
-        "bun",
-        "scripts/e2e-isolated/vite.config.ts"
+        "node",
+        "scripts/automation.mjs",
+        "doctor",
+        "--static"
       ],
       "triggers": [
         "manual"
       ],
-      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/e2e-logado-isolado.yml. O dispatcher não executa esta operação."
+      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/e2e-logado-isolado.yml. O dispatcher não executa esta operação. Arquivo TypeScript de apoio: a invocação manual verifica somente o inventário; execução operacional usa o chamador original e seu runtime."
     },
     {
       "id": "legacy-4a386ad667d68652",
@@ -9568,13 +9580,15 @@
         "scripts/tarefas/seed-local-imagens.ts"
       ],
       "manual": [
-        "bun",
-        "scripts/tarefas/seed-local-imagens.ts"
+        "node",
+        "scripts/automation.mjs",
+        "doctor",
+        "--static"
       ],
       "triggers": [
         "manual"
       ],
-      "reason": "Legado sem chamador literal no inventário; execução manual controlada após revisar parâmetros e ambiente. O dispatcher não executa esta operação."
+      "reason": "Legado sem chamador literal no inventário; execução manual controlada após revisar parâmetros e ambiente. O dispatcher não executa esta operação. Arquivo TypeScript de apoio: a invocação manual verifica somente o inventário; execução operacional usa o chamador original e seu runtime."
     },
     {
       "id": "legacy-1e50be0e48669438",
