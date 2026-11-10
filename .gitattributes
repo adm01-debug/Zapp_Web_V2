@@ -1,1 +1,5 @@
 graphify-out/graph.json merge=graphify
+
+# Edge functions e manifesto: sempre LF (hash do manifesto depende dos bytes crus)
+supabase/functions/** text eol=lf
+supabase/deployment-manifest.json text eol=lf
