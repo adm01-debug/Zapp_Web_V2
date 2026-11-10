@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1955)",
-   "outro (221)",
+   "outro (220)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)",
    "Recupera o rate limit no download das imagens do E2E isolado (#2925)",
    "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)",
    "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)",
-   "chore(docs): documenta geração de contexto no AGENTS.md (#2840)",
-   "ci: registra 4 guards de segurança existentes como steps do CI (#2850)"
+   "chore(docs): documenta geração de contexto no AGENTS.md (#2840)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

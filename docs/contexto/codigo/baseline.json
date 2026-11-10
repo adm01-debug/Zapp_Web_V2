@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "44cdce8974a3b86be14aa11065eed83cddd6adf5",
+  "commit": "d39dc1124e5054ba3db8f11e3322c5b8ff5c5f20",
   "branch": "main",
-  "data_commit": "2026-11-10T16:50:49Z",
+  "data_commit": "2026-11-10T17:03:14Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d39dc11",
+    "data": "2026-11-10",
+    "assunto": "chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)"
+   },
    {
     "sha": "44cdce8",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "0a6d41e",
     "data": "2026-11-10",
     "assunto": "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)"
-   },
-   {
-    "sha": "743d162",
-    "data": "2026-11-10",
-    "assunto": "fix(db-audit): adiciona exceções 20260901100001 e 20260901200001 ao migration-evidence.json (#2829)"
    }
   ],
   "arquivos_mudados_7d": 703,
@@ -198,11 +198,11 @@
   ],
   "arquivos_mais_mudados_90d": [
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 16
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 15
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 15
    },
    {
@@ -294,8 +294,8 @@
     "mudancas": 7
    },
    {
-    "arquivo": "supabase/functions/deno.json",
-    "mudancas": 7
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "mudancas": 6
    }
   ],
   "autores_30d": [
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8369,
-  "arquivos_codigo": 4789,
-  "linhas_codigo": 885308,
+  "arquivos_total": 8367,
+  "arquivos_codigo": 4787,
+  "linhas_codigo": 885104,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,9 +328,9 @@
   "tabelas": 217,
   "migrations": 1100,
   "cron_jobs": 26,
-  "testes": 2606,
+  "testes": 2605,
   "workflows": 21,
-  "scripts": 426,
+  "scripts": 425,
   "docs_md": 1072
  },
  "por_pasta": {
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 209,
-   "linhas": 43687
+   "linhas": 43686
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -687,8 +687,8 @@
    "linhas": 709
   },
   "scripts/vercel": {
-   "arquivos": 4,
-   "linhas": 523
+   "arquivos": 2,
+   "linhas": 320
   },
   "src/App.tsx": {
    "arquivos": 1,
@@ -907,7 +907,7 @@
  ],
  "qualidade": {
   "any": 351,
-  "console_log": 420,
+  "console_log": 412,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,

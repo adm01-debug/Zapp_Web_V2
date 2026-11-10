@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 426,
+ "total": 425,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -4584,17 +4584,6 @@
    "descricao": "V076: Ignora build do Vercel quando apenas arquivos não-front mudaram. Contrato: exit 1 = buildar, exit 0 = pular.",
    "linhas": 39,
    "env": [],
-   "npm_scripts": [],
-   "workflows": [],
-   "orfao": false
-  },
-  {
-   "arquivo": "scripts/vercel/verify-production.mjs",
-   "descricao": "V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zapp-web-v2.vercel.app]",
-   "linhas": 135,
-   "env": [
-    "SMOKE_BASE_URL"
-   ],
    "npm_scripts": [],
    "workflows": [],
    "orfao": false

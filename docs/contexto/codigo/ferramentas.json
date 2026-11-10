@@ -7,7 +7,7 @@
    "SQL (1300)",
    "Markdown (1072)",
    "JSON (601)",
-   "JavaScript (451)",
+   "JavaScript (449)",
    "Shell (233)",
    "Python (119)",
    "YAML (29)"
@@ -1646,7 +1646,7 @@
    },
    {
     "host": "zapp-web-v2.vercel.app",
-    "arquivos": 25
+    "arquivos": 24
    },
    {
     "host": "edge.invalid",

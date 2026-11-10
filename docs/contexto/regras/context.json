@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "44cdce8974a3b86be14aa11065eed83cddd6adf5",
+  "sha": "d39dc1124e5054ba3db8f11e3322c5b8ff5c5f20",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 16:59 UTC",
-  "files_total": 8211,
-  "code_files": 6061,
-  "code_lines": 1052168
+  "generated_at": "2026-11-10 17:12 UTC",
+  "files_total": 8209,
+  "code_files": 6059,
+  "code_lines": 1051964
  },
  "version": "1.3.2",
- "facts_hash": "0dbd24664ccca4c5",
+ "facts_hash": "140546dd5cbbcc0d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -320,7 +320,7 @@
    ".tsx": 2336,
    ".ts": 1881,
    ".sql": 1300,
-   ".mjs": 425,
+   ".mjs": 423,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67338,8 +67338,8 @@
   },
   {
    "module": "scripts",
-   "files": 455,
-   "lines": 91292,
+   "files": 453,
+   "lines": 91088,
    "tables": [
     "a",
     "alem_do_limite",
@@ -73866,9 +73866,6 @@
    ],
    "SIP_PASSWORD": [
     "supabase/functions/get-sip-password/index.ts"
-   ],
-   "SMOKE_BASE_URL": [
-    "scripts/vercel/verify-production.mjs"
    ],
    "SNAPSHOT_DIR": [
     "scripts/supabase_snapshot/snapshot.py"
@@ -265199,7 +265196,7 @@
   },
   "scripts/ci/qa-vercel-auditores.unit.mjs": {
    "path": "scripts/ci/qa-vercel-auditores.unit.mjs",
-   "lines": 6,
+   "lines": 5,
    "doc": "Agregador deliberado: o job Node CI executa scripts/ci/*.unit.mjs e estes imports registram as suites nos mesmos processos do node:test, sem duplicar os casos."
   },
   "scripts/ci/reconciliation-probe-provenance.unit.mjs": {
@@ -271004,24 +271001,6 @@
     "T5: SHA anterior ausente do checkout nao pode pular o build."
    ],
    "doc": "!/usr/bin/env node V077: Testes unitários para ignore-build.sh (sem git real). Executa: node scripts/vercel/ignore-build.unit.mjs"
-  },
-  "scripts/vercel/verify-production.mjs": {
-   "path": "scripts/vercel/verify-production.mjs",
-   "lines": 135,
-   "env": [
-    "SMOKE_BASE_URL"
-   ],
-   "doc": "!/usr/bin/env node V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zapp-web-v2.vercel.app] Retorna exit 0 se tudo OK, exit 1 em qualquer falha. O que verifica: 1. GET /version.json → 200, JSON válido com campo buildId 2. GET / → 200 …"
-  },
-  "scripts/vercel/verify-production.unit.mjs": {
-   "path": "scripts/vercel/verify-production.unit.mjs",
-   "lines": 68,
-   "params": [
-    {
-     "name": "SHA",
-     "value": "'a'"
-    }
-   ]
   },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
@@ -385203,10 +385182,22 @@
   }
  },
  "git": {
-  "sha": "44cdce8974a3b86be14aa11065eed83cddd6adf5",
+  "sha": "d39dc1124e5054ba3db8f11e3322c5b8ff5c5f20",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d39dc11",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)",
+    "files": [
+     "scripts/ci/qa-vercel-auditores.unit.mjs",
+     "scripts/vercel/README.md",
+     "scripts/vercel/verify-production.mjs",
+     "scripts/vercel/verify-production.unit.mjs"
+    ]
+   },
    {
     "sha": "44cdce8",
     "date": "2026-11-10",
@@ -385536,16 +385527,6 @@
      "supabase/deployment-manifest.json",
      "supabase/functions/connection-health-check/index.ts"
     ]
-   },
-   {
-    "sha": "77dd764",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(edge-deploy): reverte queryAnalytics para GET e evita HTTP 414 em escopos grandes",
-    "files": [
-     "scripts/edge-deploy/health-check.mjs",
-     "scripts/edge-deploy/health-check.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -385562,20 +385543,28 @@
     2
    ],
    [
-    "scripts/edge-deploy/health-check.mjs",
-    2
-   ],
-   [
-    "scripts/edge-deploy/health-check.unit.mjs",
-    2
-   ],
-   [
     "supabase/deployment-manifest.json",
     2
    ],
    [
     "supabase/functions/connection-health-check/index.ts",
     2
+   ],
+   [
+    "scripts/ci/qa-vercel-auditores.unit.mjs",
+    1
+   ],
+   [
+    "scripts/vercel/README.md",
+    1
+   ],
+   [
+    "scripts/vercel/verify-production.mjs",
+    1
+   ],
+   [
+    "scripts/vercel/verify-production.unit.mjs",
+    1
    ],
    [
     "scripts/ci/e2e-isolated-pull-image.unit.mjs",
@@ -385619,14 +385608,6 @@
    ],
    [
     "scripts/lib/seguranca-processo.mjs",
-    1
-   ],
-   [
-    "scripts/lib/seguranca-processo.test.mjs",
-    1
-   ],
-   [
-    "package.json",
     1
    ]
   ]

@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2606,
+ "total": 2605,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2315
+  "unit": 2314
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 221
+   "arquivos": 220
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -1699,7 +1699,7 @@
   {
    "arquivo": "scripts/ci/qa-vercel-auditores.unit.mjs",
    "tipo": "unit",
-   "linhas": 6,
+   "linhas": 5,
    "testa": [],
    "casos": 0
   },
@@ -2652,13 +2652,6 @@
    "linhas": 100,
    "testa": [],
    "casos": 7
-  },
-  {
-   "arquivo": "scripts/vercel/verify-production.unit.mjs",
-   "tipo": "unit",
-   "linhas": 68,
-   "testa": [],
-   "casos": 2
   },
   {
    "arquivo": "src/__tests__/a11y/icon-button-names.test.ts",
