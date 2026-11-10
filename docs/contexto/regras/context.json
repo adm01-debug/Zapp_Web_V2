@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5bdf733819e9d9c76356abd25a2c69daaa655a1c",
+  "sha": "3d97dc7ffa3bc28d58a03c5b6afb0e12bc864172",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 12:21 UTC",
+  "generated_at": "2026-11-10 12:32 UTC",
   "files_total": 8199,
   "code_files": 6053,
-  "code_lines": 1049929
+  "code_lines": 1050014
  },
  "version": "1.3.2",
- "facts_hash": "ec80355b220febb1",
+ "facts_hash": "e90921ff66dcd61c",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67326,7 +67326,7 @@
   {
    "module": "scripts",
    "files": 448,
-   "lines": 89203,
+   "lines": 89288,
    "tables": [
     "a",
     "alem_do_limite",
@@ -127678,6 +127678,34 @@
    {
     "file": "scripts/catalog/validate-plan.test.mjs",
     "name": "rejeita marcador RISCADO sem titulo riscado e sem data valida"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "rejeita a repeticao da etapa numerica E${id}"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "um tombstone nao pode esconder a repeticao de uma etapa"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "rejeita identificador extra invalido E${id} mesmo com as 100 etapas validas"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "preserva tombstone com data calendaria valida ${data}"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "data ${data} nao concede dispensa de estrutura ao tombstone"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "preserva duas posicoes descartadas distintas sem reduzir as 100 etapas"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "preserva plano valido ${plano.nome} com ${nome}"
    },
    {
     "file": "scripts/db-audit/ai-projection-version-guard.test.mjs",
@@ -262046,12 +262074,12 @@
   },
   "scripts/catalog/validate-plan.mjs": {
    "path": "scripts/catalog/validate-plan.mjs",
-   "lines": 56,
+   "lines": 70,
    "doc": "!/usr/bin/env node Valida docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md: 100 etapas, 10 sub-etapas e checklist em cada."
   },
   "scripts/catalog/validate-plan.test.mjs": {
    "path": "scripts/catalog/validate-plan.test.mjs",
-   "lines": 172,
+   "lines": 243,
    "is_test": true,
    "rule_comments": [
     "OTH-011: o total do checklist deve contar itens marcados E nao marcados."
@@ -262066,7 +262094,14 @@
     "aceita o plano canonico com E54 como tombstone (regressao do defeito)",
     "rejeita cabecalho RISCADO sem status de descarte datado",
     "rejeita status de descarte sem cabecalho riscado",
-    "rejeita marcador RISCADO sem titulo riscado e sem data valida"
+    "rejeita marcador RISCADO sem titulo riscado e sem data valida",
+    "rejeita a repeticao da etapa numerica E${id}",
+    "um tombstone nao pode esconder a repeticao de uma etapa",
+    "rejeita identificador extra invalido E${id} mesmo com as 100 etapas validas",
+    "preserva tombstone com data calendaria valida ${data}",
+    "data ${data} nao concede dispensa de estrutura ao tombstone",
+    "preserva duas posicoes descartadas distintas sem reduzir as 100 etapas",
+    "preserva plano valido ${plano.nome} com ${nome}"
    ]
   },
   "scripts/ci/a11y-button-name-ratchet.mjs": {
@@ -384926,10 +384961,20 @@
   }
  },
  "git": {
-  "sha": "5bdf733819e9d9c76356abd25a2c69daaa655a1c",
+  "sha": "3d97dc7ffa3bc28d58a03c5b6afb0e12bc864172",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "3d97dc7",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(catalogo): valida etapas e datas do plano de implementação (#2918)",
+    "files": [
+     "scripts/catalog/validate-plan.mjs",
+     "scripts/catalog/validate-plan.test.mjs"
+    ]
+   },
    {
     "sha": "5bdf733",
     "date": "2026-11-10",
@@ -385255,15 +385300,6 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "d0e624b",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)",
-    "files": [
-     ".github/workflows/e2e-logado-isolado.yml"
-    ]
    }
   ],
   "hot_files": [
@@ -385292,10 +385328,6 @@
     2
    ],
    [
-    ".github/workflows/e2e-logado-isolado.yml",
-    2
-   ],
-   [
     "scripts/db-audit/grants-baseline.json",
     2
    ],
@@ -385306,6 +385338,14 @@
    [
     "supabase/schema-manifest.json",
     2
+   ],
+   [
+    "scripts/catalog/validate-plan.mjs",
+    1
+   ],
+   [
+    "scripts/catalog/validate-plan.test.mjs",
+    1
    ],
    [
     "scripts/ci/e2e-isolated-compilation-network.unit.mjs",
@@ -385341,10 +385381,6 @@
    ],
    [
     "scripts/ci/verify-release-targets-timeout.unit.mjs",
-    1
-   ],
-   [
-    "scripts/db-audit/check-catalog-fresh.mjs",
     1
    ]
   ]

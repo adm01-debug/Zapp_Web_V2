@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(catalogo): valida etapas e datas do plano de implementação (#2918)",
    "fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)",
    "fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)",
    "⬆️ docker: Bump golang from `d200d2d` to `fa3d596` in /infrastructure/preview-egress-proxy (#2895)",
-   "fix(conexao): restaura health check anterior à PR 2910 (#2916)",
-   "docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)"
+   "fix(conexao): restaura health check anterior à PR 2910 (#2916)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

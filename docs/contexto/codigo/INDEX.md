@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5bdf733819e9d9c76356abd25a2c69daaa655a1c` (2026-11-10T08:59:34-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `3d97dc7ffa3bc28d58a03c5b6afb0e12bc864172` (2026-11-10T09:19:48-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8358 |
 | arquivos_codigo | 4782 |
-| linhas_codigo | 883199 |
+| linhas_codigo | 883284 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56469 nós · 116432 arestas · 4156 comunidades · grafo do commit `5bdf7338`
-- comunidades maiores: lucide-react (836), cn (825), TalkXSuppression.tsx (712), react (629), vitest (602), DashboardView.tsx (521), @tanstack/react-query (454), validation.ts (421), framer-motion (388), ref_https (383), chat.ts (380), ref_node_fs (365)
+- 56470 nós · 116433 arestas · 4157 comunidades · grafo do commit `3d97dc7f`
+- comunidades maiores: @tanstack/react-query (909), lucide-react (619), ExternalProductManagement.tsx (618), react (476), utils.ts (404), chat.ts (390), cn (373), avatar.tsx (372), useTalkXSegments.ts (367), vitest-axe (339), ref_node_assert (332), TalkXCampaignWizard.tsx (331)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `3d97dc7` fix(catalogo): valida etapas e datas do plano de implementação (#2918)
 - 2026-11-10 `5bdf733` fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)
 - 2026-11-10 `7769490` fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)
 - 2026-11-10 `893c152` ⬆️ docker: Bump golang from `d200d2d` to `fa3d596` in /infrastructure/preview-egress-proxy (#2895)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `77d5cd4` chore(ci): atualiza baseline do lint-ratchet (#2839)
 - 2026-11-10 `11841db` feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)
 - 2026-11-10 `61335ee` fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)
-- 2026-11-10 `0a6d41e` fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

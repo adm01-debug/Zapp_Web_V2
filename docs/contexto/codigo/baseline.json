@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5bdf733819e9d9c76356abd25a2c69daaa655a1c",
+  "commit": "3d97dc7ffa3bc28d58a03c5b6afb0e12bc864172",
   "branch": "main",
-  "data_commit": "2026-11-10T08:59:34-03:00",
+  "data_commit": "2026-11-10T09:19:48-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "3d97dc7",
+    "data": "2026-11-10",
+    "assunto": "fix(catalogo): valida etapas e datas do plano de implementação (#2918)"
+   },
    {
     "sha": "5bdf733",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "32129d8",
     "data": "2026-11-09",
     "assunto": "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70"
-   },
-   {
-    "sha": "3a8161c",
-    "data": "2026-11-09",
-    "assunto": "fix(ci): converte health-check para POST evitando HTTP 414 com 85 funções"
    }
   ],
-  "arquivos_mudados_7d": 692,
+  "arquivos_mudados_7d": 694,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8358,
   "arquivos_codigo": 4782,
-  "linhas_codigo": 883199,
+  "linhas_codigo": 883284,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -604,7 +604,7 @@
   },
   "scripts/catalog": {
    "arquivos": 2,
-   "linhas": 228
+   "linhas": 313
   },
   "scripts/ci": {
    "arquivos": 207,
