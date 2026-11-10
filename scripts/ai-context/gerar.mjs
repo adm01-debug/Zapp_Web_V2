@@ -37,14 +37,19 @@ const MAX_FILE_BYTES = (CFG.maxFileMB || 8) * 1024 * 1024;
 // workflow/branch em ai-context.config.json → "publicacao" (ou env AI_CONTEXT_PUBLICACAO).
 const PUBLICACAO = process.env.AI_CONTEXT_PUBLICACAO || CFG.publicacao || 'Publicado pelo workflow de contexto do repositório (ver .github/workflows).';
 const exists = (p) => fs.existsSync(abs(p));
-const readText = (p) => { try { const a = path.isAbsolute(p) ? p : abs(p); if (fs.statSync(a).size > MAX_FILE_BYTES) return ''; return fs.readFileSync(a, 'utf8'); } catch { return ''; } };
+const readText = (p) => { let fd; try { fd = fs.openSync(path.isAbsolute(p) ? p : abs(p), 'r'); if (fs.fstatSync(fd).size > MAX_FILE_BYTES) return ''; return fs.readFileSync(fd, 'utf8'); } catch { return ''; } finally { if (fd !== undefined) fs.closeSync(fd); } };
 const readJson = (p) => { try { return JSON.parse(readText(p).replace(/^﻿/, '')); } catch { return null; } };
 const uniq = (a) => [...new Set(a)].sort();
 const sortObj = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
 const countLines = (s) => (s ? s.split('\n').length : 0);
 const git = (...args) => { try { return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).trim(); } catch { return ''; } };
-const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\'"`])\/\/[^\n]*/g, '$1');
+// (?<!/) impede o caso que de fato quebrava: um "//" dentro de string (ex.: uma URL
+// postgres://) virava abertura de comentario de bloco e o [\s\S]*? engolia o codigo ate
+// o proximo */ real. Nao se pode excluir tambem aspas e backtick: um comentario legitimo
+// colado num literal ("x"/* ... */) deixaria de ser removido e um supabase.from()
+// comentado entraria no inventario como tabela real.
+const stripComments = (s) => s.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\'"`])\/\/[^\n]*/g, '$1');
 const cap = (arr, n = 200) => arr.slice(0, n);
 const allMatches = (re, s, g = 1) => { const out = []; re.lastIndex = 0; let m; while ((m = re.exec(s))) out.push(m[g]); return out; };
 const byCount = (arr) => Object.entries(arr.reduce((a, k) => { a[k] = (a[k] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
@@ -390,7 +395,7 @@ secao('menu', () => {
       let papeisExpr = null; const roles = [];
       for (const x of block.matchAll(/(?:roles?|permissions?|allowedRoles|requiredRole)\s*:\s*(\[[^\]]*\]|[A-Za-z_$][\w$.]*)/g)) {
         let expr = x[1];
-        if (!expr.startsWith('[')) { const cm = new RegExp(`(?:const|let|var)\\s+${expr.replace(/[.$]/g, '\\$&')}\\b[^=]*=\\s*(\\[[^\\]]*\\])`).exec(src) || [...(FILE.get(f)?.imports || [])].map((i) => new RegExp(`(?:const|let|var)\\s+${expr.replace(/[.$]/g, '\\$&')}\\b[^=]*=\\s*(\\[[^\\]]*\\])`).exec(FILE.get(i)?.conteudo || '')).find(Boolean); if (cm) expr = cm[1]; else { papeisExpr = x[1]; continue; } }
+        if (!expr.startsWith('[')) { const cm = new RegExp(`(?:const|let|var)\\s+${expr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b[^=]*=\\s*(\\[[^\\]]*\\])`).exec(src) || [...(FILE.get(f)?.imports || [])].map((i) => new RegExp(`(?:const|let|var)\\s+${expr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b[^=]*=\\s*(\\[[^\\]]*\\])`).exec(FILE.get(i)?.conteudo || '')).find(Boolean); if (cm) expr = cm[1]; else { papeisExpr = x[1]; continue; } }
         roles.push(...expr.replace(/^\[|\]$/g, '').split(',').map((s0) => s0.replace(/['"`\s]/g, '')).filter((s0) => /^\w+$/.test(s0)));
       }
       menu.push({ rotulo: label, destino: dest, grupo: g.length ? g[g.length - 1][1] : null, papeis: uniq(roles), papeis_nao_resolvidos: papeisExpr, definido_em: f });
@@ -604,7 +609,7 @@ const edgesSemPasta = uniq(appFiles.flatMap(([, d]) => d.edges)).filter((e) => !
 
 // ---------- ferramentas / scripts / workflows / deploy ----------
 const workflows = secao('workflows', () => ALL.filter((f) => /^\.github\/workflows\/.+\.ya?ml$/.test(f)).map((f) => {
-  const y = readText(f);
+  const y = readText(f).replace(/\r\n/g, '\n');
   const name = (/^name:\s*(.+)$/m.exec(y) || [])[1]?.trim().replace(/^['"]|['"]$/g, '') || path.posix.basename(f);
   const onBlock = (y.split(/^on:/m)[1] || '').split(/^[a-z]/m)[0];
   const gatilhos = uniq([...onBlock.matchAll(/^\s{2}([a-z_]+):/gm)].map((m) => m[1]).concat((/^on:\s*\[([^\]]*)\]/m.exec(y) || [, ''])[1].split(',').map((s) => s.trim()).filter(Boolean)));
