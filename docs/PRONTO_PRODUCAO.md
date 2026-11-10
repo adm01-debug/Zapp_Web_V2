@@ -46,3 +46,27 @@ contatos, filas) é cortado pelo limite de 15 min e termina `CANCELLED` em todos
 2. Fluxos 3 e 4 (receber e enviar), verificados com mensagem real.
 3. E2E logado terminando na `main` (destrava a prova de 1, 5, 6, 7 e 8).
 4. Fluxos 1, 5, 6, 7 e 8.
+
+## Guardas de banco (db-live-guard)
+
+**Estado em 2026-11-09: VERDE** — run #1454 passou 100% (todos os 20 steps, incluindo
+"Comparar migrations" e "Verificar frescor types.ts"). Próxima execução automática: segunda-feira 06:13 UTC
+(cron `13 6 * * 1` em `.github/workflows/db-live-guard.yml`).
+
+### Ledger de migrations — situação normal
+
+O ledger (`supabase_migrations.schema_migrations`) tem 68 linhas. 64 delas têm `statements = NULL`:
+isso é comportamento **esperado e aceito** — o script normaliza `NULL` para `[]` e emite `WARNING` (não
+erro) para essas migrations. O guard continua verde; os warnings não bloqueiam o CI.
+
+As 4 migrations aplicadas via MCP direto (sem `supabase db push`) foram corrigidas em 2026-11-09:
+
+| version | name |
+|---|---|
+| 20261108201000 | talkx_x074_analytics_rpcs |
+| 20261108202000 | talkx_x086_template_metrics_rpcs |
+| 20261108203000 | talkx_x058_campaign_queue_segment |
+| 20261108211000 | talkx_campaign_resume_precheck |
+
+Cada uma agora tem `name` preenchido e `statements = ARRAY[<conteúdo completo do arquivo>]`,
+eliminando os 4 warnings que apareceriam semanalmente.

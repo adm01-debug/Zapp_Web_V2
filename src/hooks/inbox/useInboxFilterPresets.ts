@@ -31,7 +31,7 @@ export const INBOX_FILTER_PRESETS_QUERY_KEY = [
 ] as const;
 
 // eslint-disable-next-line no-control-regex
-const CONTROL_CHARS = /[\u0000-\u001F\u007F​-‍﻿]/;
+const CONTROL_CHARS = /[\u0000-\u001F\u007F\u200B-\u200D\uFEFF]/;
 
 /** Marcador do id otimista, antes de o servidor devolver o id real. */
 const PENDING_PRESET_PREFIX = 'pending_';

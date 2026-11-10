@@ -306,10 +306,12 @@ INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUE
 
 INSERT INTO public.team_messages (conversation_id, sender_id, content, message_type, media_bucket, media_path, updated_at) VALUES
   ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b0000000-0000-0000-0000-000000000001', 'file1', 'image', 'team-chat-files', '$OWNER_PATH', '$LEGACY_TS'),
-  -- Segunda linha com chave canônica: 1º segmento = sender_id, 2º = conversation_id,
-  -- 3º segmento não vazio. Seed já está no formato correto — a migration não
-  -- reconcilia nada (rollback table fica vazia).
-  ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b0000000-0000-0000-0000-000000000001', 'legacy file', 'image', 'team-chat-files', 'b0000000-0000-0000-0000-000000000001/1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/legacy2.png', '$LEGACY_TS');
+  -- LINHA LEGADA: reivindica media_bucket='team-chat-files' com media_path fora da
+  -- chave canônica — 1º segmento é o auth.uid do remetente (formato antigo
+  -- <auth_uid>/<opaco> da policy de INSERT anterior a 20260928560000), não o
+  -- sender_id b000.... Serve para provar que a migration reconcilia dados
+  -- preexistentes em vez de assumir tabela vazia.
+  ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b0000000-0000-0000-0000-000000000001', 'legacy file', 'image', 'team-chat-files', '22222222-2222-2222-2222-222222222222/legacy.png', '$LEGACY_TS');
 
 INSERT INTO storage.objects (bucket_id, name) VALUES
   ('team-chat-files', '$OWNER_PATH'),
@@ -348,12 +350,15 @@ expect_value 'A2 controle: formato legado <auth_uid>/ era legível pelo dono' '1
   "$(as_actor "$OWNER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='22222222-2222-2222-2222-222222222222/legacy.png';")"
 
 echo
-echo '── Sonda: ADD CONSTRAINT VALIDADO deve passar (seed já é canônico) ────────────────'
-# Com seed canônico, ADD CONSTRAINT já validado é aceito — prova que o formato
-# <profile_id>/<conversation_id>/<opaco> satisfaz o CHECK por completo.
-psql_sql "ALTER TABLE public.team_messages ADD CONSTRAINT probe_r2db020_canonical CHECK (media_bucket IS DISTINCT FROM 'team-chat-files' OR (media_path IS NOT NULL AND split_part(media_path, '/', 1) = sender_id::text AND split_part(media_path, '/', 2) = conversation_id::text AND split_part(media_path, '/', 3) <> ''));" >/dev/null
+echo '── Sonda: um ADD CONSTRAINT VALIDADO falharia neste estado (prova do legado) ──────'
+# A mesma expressão do CHECK da migration, aplicada já VALIDADA, é recusada pela
+# linha legada do seed — prova de que a tabela NÃO estava limpa e de que a
+# estratégia NOT VALID + reconciliação + VALIDATE é necessária.
+expect_error 'L1 ADD CONSTRAINT validado equivalente falha com linha legada' \
+  'check constraint "probe_r2db020_canonical" of relation "team_messages" is violated by some row' \
+  "ALTER TABLE public.team_messages ADD CONSTRAINT probe_r2db020_canonical CHECK (media_bucket IS DISTINCT FROM 'team-chat-files' OR (media_path IS NOT NULL AND split_part(media_path, '/', 1) = sender_id::text AND split_part(media_path, '/', 2) = conversation_id::text AND split_part(media_path, '/', 3) <> ''));"
 psql_sql "ALTER TABLE public.team_messages DROP CONSTRAINT IF EXISTS probe_r2db020_canonical;" >/dev/null
-printf '[PASS] L1 sonda aceita seed canônico (ADD CONSTRAINT validado)\n'
+printf '[PASS] sonda removida (probe_r2db020_canonical)\n'
 
 echo
 echo '── Aplicando a migration ─────────────────────────────────────────────────────────'
@@ -369,20 +374,20 @@ expect_error 'L2 insert novo com caminho divergente recusado já sob NOT VALID' 
   "INSERT INTO public.team_messages (conversation_id, sender_id, content, media_bucket, media_path) VALUES ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','b0000000-0000-0000-0000-000000000001','x','team-chat-files','22222222-2222-2222-2222-222222222222/legacy.png');"
 # A linha legada foi reconciliada: media_bucket anulado (deixa de reivindicar um
 # arquivo do bucket) e media_path preservado como trilha.
-expect_value 'L3 linha canônica não reconciliada: media_bucket preservado' '1' \
-  "SELECT count(*) FROM public.team_messages WHERE media_bucket='team-chat-files' AND media_path='b0000000-0000-0000-0000-000000000001/1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/legacy2.png';"
+expect_value 'L3 linha legada reconciliada: media_bucket anulado, media_path preservado' '1' \
+  "SELECT count(*) FROM public.team_messages WHERE media_bucket IS NULL AND media_path='22222222-2222-2222-2222-222222222222/legacy.png';"
 # VALIDATE varreu a tabela inteira: constraint termina convalidada.
 expect_value 'L4 constraint termina convalidada (convalidated = true)' '1' \
   "SELECT count(*) FROM pg_constraint WHERE conname='team_messages_media_path_matches_sender_conversation' AND contype='c' AND convalidated;"
 # EFEITO COLATERAL do UPDATE (gatilho BEFORE UPDATE): a data da mensagem legada NÃO
 # pode ser reescrita pela reconciliação.
-expect_value 'L5 linha canônica não teve updated_at alterado (nenhuma reconciliação)' 't' \
-  "SELECT updated_at = '$LEGACY_TS'::timestamptz FROM public.team_messages WHERE media_path='b0000000-0000-0000-0000-000000000001/1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/legacy2.png';"
+expect_value 'L5 reconciliação preserva updated_at (gatilho suspenso no UPDATE)' 't' \
+  "SELECT updated_at = '$LEGACY_TS'::timestamptz FROM public.team_messages WHERE media_path='22222222-2222-2222-2222-222222222222/legacy.png';"
 expect_value 'L6 gatilho update_team_messages_updated_at volta LIGADO' '1' \
   "SELECT count(*) FROM pg_trigger WHERE tgrelid='public.team_messages'::regclass AND tgname='update_team_messages_updated_at' AND tgenabled='O' AND NOT tgisinternal;"
 # Tabela de apoio do rollback: guardou o valor ANTIGO, tem RLS ligada e ninguém além
 # do dono (que roda a migration) tem GRANT nela.
-expect_value 'L7 tabela de apoio está vazia (seed canônico, nenhuma reconciliação)' '0' \
+expect_value 'L7 tabela de apoio guardou o valor antigo da linha reconciliada' '1' \
   "SELECT count(*) FROM public.$RB_TABLE WHERE media_bucket='team-chat-files';"
 expect_value 'L8 tabela de apoio tem RLS ligada' '1' \
   "SELECT count(*) FROM pg_class WHERE oid='public.$RB_TABLE'::regclass AND relrowsecurity;"

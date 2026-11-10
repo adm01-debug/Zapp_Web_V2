@@ -14851,6 +14851,10 @@ export type Database = {
         Returns: Json
       }
       talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
+      talkx_campaign_resume_precheck: {
+        Args: { p_campaign_id: string }
+        Returns: Json
+      }
       talkx_campaign_revenue: { Args: { p_campaign: string }; Returns: Json }
       talkx_campaign_segment_progress: {
         Args: { p_campaign_id: string }
