@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2603,
+ "total": 2605,
  "por_tipo": {
   "contrato": 113,
   "e2e": 76,
   "pytest": 3,
   "qa": 8,
-  "unit": 2312
+  "unit": 2314
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 218
+   "arquivos": 220
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -1571,6 +1571,13 @@
    "casos": 38
   },
   {
+   "arquivo": "scripts/ci/maintenance.unit.mjs",
+   "tipo": "unit",
+   "linhas": 3,
+   "testa": [],
+   "casos": 0
+  },
+  {
    "arquivo": "scripts/ci/mapa-bundle-raw-doc.unit.mjs",
    "tipo": "unit",
    "linhas": 411,
@@ -2492,6 +2499,16 @@
     "scripts/lib/seguranca-processo.mjs"
    ],
    "casos": 10
+  },
+  {
+   "arquivo": "scripts/maintenance/maintenance.unit.mjs",
+   "tipo": "unit",
+   "linhas": 303,
+   "testa": [
+    "scripts/maintenance/lib.mjs",
+    "scripts/maintenance/run.mjs"
+   ],
+   "casos": 18
   },
   {
    "arquivo": "scripts/qa/contatos-redesign-baseline.cjs",
@@ -23796,6 +23813,8 @@
   "scripts/inventario/gerar-rotas.mjs": 1,
   "scripts/inventario/mudou-conteudo.mjs": 1,
   "scripts/lib/seguranca-processo.mjs": 4,
+  "scripts/maintenance/lib.mjs": 1,
+  "scripts/maintenance/run.mjs": 1,
   "scripts/mutation/run-mapa.mjs": 1,
   "scripts/talkx/gen-estados.mjs": 1,
   "scripts/talkx/lado-a-lado.mjs": 1,

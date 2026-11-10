@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 421,
+ "total": 425,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3975,7 +3975,11 @@
     "GITHUB_OUTPUT",
     "PATH"
    ],
-   "npm_scripts": [],
+   "npm_scripts": [
+    "maintenance:doctor",
+    "maintenance:check",
+    "maintenance:heal"
+   ],
    "workflows": [],
    "orfao": false
   },
@@ -4368,6 +4372,48 @@
    "env": [
     "PATH"
    ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/maintenance/lib.mjs",
+   "descricao": null,
+   "linhas": 394,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/maintenance/run.mjs",
+   "descricao": null,
+   "linhas": 545,
+   "env": [
+    "XDG_STATE_HOME"
+   ],
+   "npm_scripts": [
+    "maintenance:doctor",
+    "maintenance:check",
+    "maintenance:heal"
+   ],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/maintenance/run.sh",
+   "descricao": null,
+   "linhas": 16,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/maintenance/typecheck.mjs",
+   "descricao": null,
+   "linhas": 82,
+   "env": [],
    "npm_scripts": [],
    "workflows": [],
    "orfao": false

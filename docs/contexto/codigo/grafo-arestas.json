@@ -290,6 +290,12 @@
   "scripts/edge-deploy/verify-remote.mjs": [
    "scripts/edge-deploy/manifest-lib.mjs"
   ],
+  "scripts/maintenance/run.mjs": [
+   "scripts/maintenance/lib.mjs"
+  ],
+  "scripts/maintenance/typecheck.mjs": [
+   "scripts/maintenance/lib.mjs"
+  ],
   "scripts/mutation/run-mapa.mjs": [
    "scripts/lib/seguranca-processo.mjs"
   ],

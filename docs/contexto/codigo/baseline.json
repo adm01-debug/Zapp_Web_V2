@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "3d97dc7ffa3bc28d58a03c5b6afb0e12bc864172",
+  "commit": "be1c0c7ebb987d757678394e630a99391c444395",
   "branch": "main",
-  "data_commit": "2026-11-10T09:19:48-03:00",
+  "data_commit": "2026-11-10T13:37:33Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "be1c0c7",
+    "data": "2026-11-10",
+    "assunto": "chore(manutencao): adiciona rotina local isolada e verificavel (#2921)"
+   },
    {
     "sha": "3d97dc7",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "d7bdb70",
     "data": "2026-11-09",
     "assunto": "docs: documenta db-live-guard verde e ledger normalizado"
-   },
-   {
-    "sha": "32129d8",
-    "data": "2026-11-09",
-    "assunto": "fix(ci): usar github.sha em checkouts para fechar alertas CodeQL #66-70"
    }
   ],
-  "arquivos_mudados_7d": 694,
+  "arquivos_mudados_7d": 702,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8358,
-  "arquivos_codigo": 4782,
-  "linhas_codigo": 883284,
+  "arquivos_total": 8366,
+  "arquivos_codigo": 4787,
+  "linhas_codigo": 884611,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,10 +328,10 @@
   "tabelas": 217,
   "migrations": 1099,
   "cron_jobs": 26,
-  "testes": 2603,
+  "testes": 2605,
   "workflows": 21,
-  "scripts": 421,
-  "docs_md": 1071
+  "scripts": 425,
+  "docs_md": 1072
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -607,8 +607,8 @@
    "linhas": 313
   },
   "scripts/ci": {
-   "arquivos": 207,
-   "linhas": 43291
+   "arquivos": 208,
+   "linhas": 43294
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -645,6 +645,10 @@
   "scripts/lib": {
    "arquivos": 2,
    "linhas": 223
+  },
+  "scripts/maintenance": {
+   "arquivos": 4,
+   "linhas": 1324
   },
   "scripts/mutation": {
    "arquivos": 1,
@@ -903,11 +907,11 @@
  ],
  "qualidade": {
   "any": 351,
-  "console_log": 416,
+  "console_log": 419,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,
-  "arquivos_acima_500_linhas": 100
+  "arquivos_acima_500_linhas": 101
  },
  "todos": [
   {
