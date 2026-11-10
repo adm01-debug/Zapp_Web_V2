@@ -4438,7 +4438,7 @@
   {
    "arquivo": "scripts/mutation/run-mapa.mjs",
    "descricao": "* E69 · Script de mutação reproduzível do módulo do mapa (Fase 7).",
-   "linhas": 507,
+   "linhas": 537,
    "env": [],
    "npm_scripts": [
     "mutation:mapa"

@@ -1762,11 +1762,11 @@
   {
    "arquivo": "scripts/ci/run-mapa-classificacao.unit.mjs",
    "tipo": "unit",
-   "linhas": 221,
+   "linhas": 288,
    "testa": [
     "scripts/mutation/run-mapa.mjs"
    ],
-   "casos": 18
+   "casos": 24
   },
   {
    "arquivo": "scripts/ci/salesview-before-references.unit.mjs",

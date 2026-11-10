@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Impede aprovar mutações sem executar testes (#2923)",
    "chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)",
    "chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)",
    "Recupera o rate limit no download das imagens do E2E isolado (#2925)",
-   "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)",
-   "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)"
+   "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

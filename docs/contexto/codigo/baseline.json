@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f120344f9b665d70129d07282f0d655ca4c14189",
+  "commit": "09df718116d247a7e04ca001fa0a65d3d1d020dc",
   "branch": "main",
-  "data_commit": "2026-11-10T17:24:00Z",
+  "data_commit": "2026-11-10T17:39:11Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "09df718",
+    "data": "2026-11-10",
+    "assunto": "Impede aprovar mutações sem executar testes (#2923)"
+   },
    {
     "sha": "f120344",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "11841db",
     "data": "2026-11-10",
     "assunto": "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)"
-   },
-   {
-    "sha": "61335ee",
-    "data": "2026-11-10",
-    "assunto": "fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)"
    }
   ],
-  "arquivos_mudados_7d": 704,
+  "arquivos_mudados_7d": 705,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8370,
   "arquivos_codigo": 4787,
-  "linhas_codigo": 885104,
+  "linhas_codigo": 885201,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 209,
-   "linhas": 43686
+   "linhas": 43753
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -652,7 +652,7 @@
   },
   "scripts/mutation": {
    "arquivos": 1,
-   "linhas": 507
+   "linhas": 537
   },
   "scripts/qa": {
    "arquivos": 8,

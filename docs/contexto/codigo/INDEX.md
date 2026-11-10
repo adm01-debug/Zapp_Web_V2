@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f120344f9b665d70129d07282f0d655ca4c14189` (2026-11-10T17:24:00Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `09df718116d247a7e04ca001fa0a65d3d1d020dc` (2026-11-10T17:39:11Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8370 |
 | arquivos_codigo | 4787 |
-| linhas_codigo | 885104 |
+| linhas_codigo | 885201 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56591 nós · 116684 arestas · 4105 comunidades · grafo do commit `f120344f`
-- comunidades maiores: vitest (926), TalkXSuppression.tsx (909), button.tsx (800), @tanstack/react-query (772), lucide-react (685), CallSessionProvider.tsx (620), validation.ts (532), react (462), RealtimeInboxView.tsx (443), ref_https (440), chat.ts (438), cn (418)
+- 56593 nós · 116687 arestas · 4231 comunidades · grafo do commit `09df7181`
+- comunidades maiores: react (1110), button.tsx (908), vitest (630), TalkXSuppression.tsx (599), ExternalProductManagement.tsx (481), DashboardView.tsx (430), errorResponse (422), dialog.tsx (421), ref_https (385), ref_node_fs (357), @tanstack/react-query (353), audience.ts (326)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -505,6 +505,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `09df718` Impede aprovar mutações sem executar testes (#2923)
 - 2026-11-10 `f120344` chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)
 - 2026-11-10 `d39dc11` chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)
 - 2026-11-10 `44cdce8` Recupera o rate limit no download das imagens do E2E isolado (#2925)
@@ -519,7 +520,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `5bdf733` fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)
 - 2026-11-10 `7769490` fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)
 - 2026-11-10 `893c152` ⬆️ docker: Bump golang from `d200d2d` to `fa3d596` in /infrastructure/preview-egress-proxy (#2895)
-- 2026-11-10 `5892191` fix(conexao): restaura health check anterior à PR 2910 (#2916)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

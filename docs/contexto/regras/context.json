@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f120344f9b665d70129d07282f0d655ca4c14189",
+  "sha": "09df718116d247a7e04ca001fa0a65d3d1d020dc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 17:33 UTC",
+  "generated_at": "2026-11-10 17:43 UTC",
   "files_total": 8212,
   "code_files": 6059,
-  "code_lines": 1051964
+  "code_lines": 1052061
  },
  "version": "1.3.2",
- "facts_hash": "140546dd5cbbcc0d",
+ "facts_hash": "2f784b5cd86468e7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67339,7 +67339,7 @@
   {
    "module": "scripts",
    "files": 453,
-   "lines": 91088,
+   "lines": 91185,
    "tables": [
     "a",
     "alem_do_limite",
@@ -265393,7 +265393,7 @@
   },
   "scripts/ci/run-mapa-classificacao.unit.mjs": {
    "path": "scripts/ci/run-mapa-classificacao.unit.mjs",
-   "lines": 221,
+   "lines": 288,
    "doc": "R2-INF-019 (#366): o runner de mutação contava FALHA DE INFRAESTRUTURA como mutante morto (`killed = status !== 0`). Um binário que não inicia, uma configuração quebrada ou um \"No test files found\" davam MORTO sem executar um único teste — dava para \"provar\" qualidade sem medir nada. Estes testes pr …"
   },
   "scripts/ci/salesview-before-references.unit.mjs": {
@@ -270248,7 +270248,7 @@
   },
   "scripts/mutation/run-mapa.mjs": {
    "path": "scripts/mutation/run-mapa.mjs",
-   "lines": 507,
+   "lines": 537,
    "exports": [
     "const ESTADOS",
     "const EQUIVALENTES_DECLARADOS",
@@ -385182,10 +385182,20 @@
   }
  },
  "git": {
-  "sha": "f120344f9b665d70129d07282f0d655ca4c14189",
+  "sha": "09df718116d247a7e04ca001fa0a65d3d1d020dc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "09df718",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "Impede aprovar mutações sem executar testes (#2923)",
+    "files": [
+     "scripts/ci/run-mapa-classificacao.unit.mjs",
+     "scripts/mutation/run-mapa.mjs"
+    ]
+   },
    {
     "sha": "f120344",
     "date": "2026-11-10",
@@ -385517,16 +385527,6 @@
     "files": [
      "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql"
     ]
-   },
-   {
-    "sha": "be8aa06",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)",
-    "files": [
-     "src/components/inbox/chat/ChatInputArea.tsx",
-     "src/components/inbox/chat/__tests__/ChatInputArea.radar-fases8a15.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -385541,6 +385541,14 @@
    [
     "scripts/e2e-isolated/run.mjs",
     2
+   ],
+   [
+    "scripts/ci/run-mapa-classificacao.unit.mjs",
+    1
+   ],
+   [
+    "scripts/mutation/run-mapa.mjs",
+    1
    ],
    [
     "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
@@ -385600,14 +385608,6 @@
    ],
    [
     "AGENTS.md",
-    1
-   ],
-   [
-    ".github/workflows/ci.yml",
-    1
-   ],
-   [
-    "docs/migration/MATRIZ_EDGE_TABELA.md",
     1
    ]
   ]
