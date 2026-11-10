@@ -976,7 +976,7 @@
    "nome": "connection-health-check",
    "entrada": "supabase/functions/connection-health-check/index.ts",
    "arquivos": 1,
-   "linhas": 1032,
+   "linhas": 1143,
    "verify_jwt": false,
    "metodos": [],
    "tabelas": [

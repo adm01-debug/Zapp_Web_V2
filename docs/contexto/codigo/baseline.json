@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d40c05311ee067231ed8ff524cfbc959697b3916",
+  "commit": "5892191270f14a9f929d4d32aba3bf6d3140dd54",
   "branch": "main",
-  "data_commit": "2026-11-10T09:50:54Z",
+  "data_commit": "2026-11-10T09:59:40Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5892191",
+    "data": "2026-11-10",
+    "assunto": "fix(conexao): restaura health check anterior à PR 2910 (#2916)"
+   },
    {
     "sha": "d40c053",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "8618770",
     "data": "2026-11-09",
     "assunto": "fix(contexto): escapa backslash no sanitizador de regex do gerador de contexto"
-   },
-   {
-    "sha": "0142702",
-    "data": "2026-11-09",
-    "assunto": "chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck"
    }
   ],
   "arquivos_mudados_7d": 686,
@@ -206,11 +206,11 @@
     "mudancas": 14
    },
    {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 13
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 14
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
+    "arquivo": "docs/ci/README.md",
     "mudancas": 13
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8356,
   "arquivos_codigo": 4780,
-  "linhas_codigo": 882033,
+  "linhas_codigo": 882144,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -776,7 +776,7 @@
   },
   "supabase/functions": {
    "arquivos": 383,
-   "linhas": 116563
+   "linhas": 116674
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -841,6 +841,10 @@
    "linhas": 1165
   },
   {
+   "arquivo": "supabase/functions/connection-health-check/index.ts",
+   "linhas": 1143
+  },
+  {
    "arquivo": "supabase/functions/evolution-api/index.ts",
    "linhas": 1123
   },
@@ -863,10 +867,6 @@
   {
    "arquivo": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
    "linhas": 1040
-  },
-  {
-   "arquivo": "supabase/functions/connection-health-check/index.ts",
-   "linhas": 1032
   },
   {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_report.py",
