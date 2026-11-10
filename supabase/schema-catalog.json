@@ -2897,6 +2897,7 @@
         "talkx_campaign_recipients_page",
         "talkx_campaign_reply_stats",
         "talkx_campaign_report",
+        "talkx_campaign_resume_precheck",
         "talkx_campaign_revenue",
         "talkx_campaign_segment_progress",
         "talkx_campaign_window_open",
@@ -2955,7 +2956,7 @@
         "warroom_agent_today",
         "warroom_queue_stats"
     ],
-    "generated_at": "2026-11-08",
+    "generated_at": "2026-11-09",
     "format_version": 2,
     "check_constraints": [
         "agent_mini_game_xp_daily.agent_mini_game_xp_daily_game_id_check:CHECK ((game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text])))",
@@ -3639,6 +3640,7 @@
         "talkx_campaign_recipients_page(p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text)->jsonb|kind=f",
         "talkx_campaign_reply_stats(p_campaign_id uuid)->jsonb|kind=f",
         "talkx_campaign_report(p_campaign uuid)->jsonb|kind=f",
+        "talkx_campaign_resume_precheck(p_campaign_id uuid)->jsonb|kind=f",
         "talkx_campaign_revenue(p_campaign uuid)->jsonb|kind=f",
         "talkx_campaign_segment_progress(p_campaign_id uuid)->TABLE(segment_id uuid, \"position\" smallint, total bigint, sent bigint, delivered bigint, failed bigint, remaining bigint, percent numeric, status text, total_segments bigint, pending_segments bigint)|kind=f",
         "talkx_campaign_window_open(p_campaign_id uuid, p_at timestamp with time zone)->TABLE(allowed boolean, reason text, next_window timestamp with time zone)|kind=f",
