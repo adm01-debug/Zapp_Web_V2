@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1c891507c6d71fc02f1cdf55d7e0cbefd8af475e",
+  "sha": "a5bf6399e4a82a2c85838a4acfa333ac25746b58",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 18:18 UTC",
+  "generated_at": "2026-11-10 19:23 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054492
+  "code_lines": 1054500
  },
  "version": "1.3.2",
- "facts_hash": "4b1d2a645fc407d4",
+ "facts_hash": "bdcb04e8ad94ce98",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67359,7 +67359,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18548,
+   "lines": 18556,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -260631,7 +260631,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "path": "e2e/email-navy-visual.spec.ts",
-   "lines": 764,
+   "lines": 772,
    "is_test": true,
    "params": [
     {
@@ -385925,10 +385925,19 @@
   }
  },
  "git": {
-  "sha": "1c891507c6d71fc02f1cdf55d7e0cbefd8af475e",
+  "sha": "a5bf6399e4a82a2c85838a4acfa333ac25746b58",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a5bf639",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)",
+    "files": [
+     "e2e/email-navy-visual.spec.ts"
+    ]
+   },
    {
     "sha": "1c89150",
     "date": "2026-11-10",
@@ -386288,15 +386297,6 @@
     "files": [
      "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql"
     ]
-   },
-   {
-    "sha": "0a6d41e",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)",
-    "files": [
-     "src/components/talkx/TalkXSegments.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -386319,6 +386319,10 @@
    [
     "scripts/e2e-isolated/run.mjs",
     2
+   ],
+   [
+    "e2e/email-navy-visual.spec.ts",
+    1
    ],
    [
     "e2e/quarantine.unit.mjs",
@@ -386374,10 +386378,6 @@
    ],
    [
     "src/hooks/copilot/useImageAnalysis.ts",
-    1
-   ],
-   [
-    "src/hooks/copilot/useLeadThermometer.ts",
     1
    ]
   ]

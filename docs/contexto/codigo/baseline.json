@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1c891507c6d71fc02f1cdf55d7e0cbefd8af475e",
+  "commit": "a5bf6399e4a82a2c85838a4acfa333ac25746b58",
   "branch": "main",
-  "data_commit": "2026-11-10T18:12:26Z",
+  "data_commit": "2026-11-10T16:14:51-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a5bf639",
+    "data": "2026-11-10",
+    "assunto": "fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)"
+   },
    {
     "sha": "1c89150",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "f332a29",
     "data": "2026-11-10",
     "assunto": "fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)"
-   },
-   {
-    "sha": "11efe5f",
-    "data": "2026-11-10",
-    "assunto": "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)"
    }
   ],
-  "arquivos_mudados_7d": 729,
+  "arquivos_mudados_7d": 727,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -210,15 +210,15 @@
     "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
-   },
-   {
     "arquivo": "CLAUDE.md",
     "mudancas": 12
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887632,
+  "linhas_codigo": 887640,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -456,7 +456,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 764
+   "linhas": 772
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,
