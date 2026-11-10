@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)",
    "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)",
    "chore(ci): atualiza baseline do lint-ratchet (#2839)",
    "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)",
-   "fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)",
-   "fix(talkx): estimativa nula exibe '—' e limpa seleção fantasma pós-delete (#2826)"
+   "fix(db): corrige search_path de create_department_invite (S3-01-FIX) (#2827)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

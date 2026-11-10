@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "25e13ff60d7e80a48de7c4c7bc07a195165bc1e6",
+  "sha": "11efe5fa10923111539773920a1aad36b6721da0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 03:13 UTC",
+  "generated_at": "2026-11-10 03:25 UTC",
   "files_total": 8195,
   "code_files": 6049,
-  "code_lines": 1048602
+  "code_lines": 1048606
  },
  "version": "1.3.2",
- "facts_hash": "ead6025703276415",
+ "facts_hash": "8daec36eaf1077bf",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -61406,7 +61406,7 @@
      "log_audit_event",
      "user_has_permission"
     ],
-    "deps_count": 49
+    "deps_count": 52
    },
    {
     "path": "*",
@@ -61453,7 +61453,7 @@
      "log_audit_event",
      "user_has_permission"
     ],
-    "deps_count": 164
+    "deps_count": 166
    },
    {
     "path": "/2fa",
@@ -68505,7 +68505,7 @@
   {
    "module": "src/pages",
    "files": 70,
-   "lines": 10702,
+   "lines": 10706,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -351985,7 +351985,7 @@
   },
   "src/pages/ViewRouter.tsx": {
    "path": "src/pages/ViewRouter.tsx",
-   "lines": 260,
+   "lines": 264,
    "exports": [
     "function ViewRouter"
    ],
@@ -384812,10 +384812,19 @@
   }
  },
  "git": {
-  "sha": "25e13ff60d7e80a48de7c4c7bc07a195165bc1e6",
+  "sha": "11efe5fa10923111539773920a1aad36b6721da0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "11efe5f",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)",
+    "files": [
+     "src/pages/ViewRouter.tsx"
+    ]
+   },
    {
     "sha": "25e13ff",
     "date": "2026-11-10",
@@ -385128,15 +385137,6 @@
     "files": [
      "src/components/alerts/EvolutionDisconnectBanner.tsx"
     ]
-   },
-   {
-    "sha": "a6c3519",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): migration — cria RPC talkx_campaign_resume_precheck (#2874)",
-    "files": [
-     "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -385177,6 +385177,10 @@
     2
    ],
    [
+    "src/pages/ViewRouter.tsx",
+    1
+   ],
+   [
     "src/components/ui/badge.tsx",
     1
    ],
@@ -385214,10 +385218,6 @@
    ],
    [
     "src/components/inbox/copilot/RadarLive.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/RadarPanel.tsx",
     1
    ]
   ]

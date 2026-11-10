@@ -4,10 +4,10 @@
  "presente": true,
  "como_gerar": "uvx --from \"graphifyy[sql]\" graphify update .  (ou: bun run graph:update); saída em graphify-out/ — graph.json e graph.html NÃO são versionados (dezenas de MB); use `graphify query/path/explain` localmente",
  "relatorio": null,
- "commit_do_grafo": "25e13ff60d7e80a48de7c4c7bc07a195165bc1e6",
+ "commit_do_grafo": "11efe5fa10923111539773920a1aad36b6721da0",
  "grafo_atual": true,
  "nos": 56401,
- "arestas": 116275,
+ "arestas": 116277,
  "comunidades_total": 4175,
  "relacoes": {
   "calls": 14804,
@@ -18,8 +18,8 @@
   "dynamic_import": 528,
   "extends": 1,
   "implements": 4,
-  "imports": 20408,
-  "imports_from": 21479,
+  "imports": 20409,
+  "imports_from": 21480,
   "indexes": 1116,
   "indirect_call": 898,
   "inherits": 57,
@@ -31,7 +31,7 @@
   "triggers": 300
  },
  "origem": {
-  "EXTRACTED": 108453,
+  "EXTRACTED": 108455,
   "INFERRED": 7822
  },
  "comunidades": [

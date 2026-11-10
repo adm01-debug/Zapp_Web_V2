@@ -10117,6 +10117,7 @@
    "src/components/layout/ViewContainer.tsx",
    "src/components/layout/ViewLoadingFallback.tsx",
    "src/components/talkx/kit/forcedState.ts",
+   "src/components/talkx/kit/states.tsx",
    "src/components/ui/error-boundary-retry.tsx",
    "src/hooks/system/useCurrentModule.ts",
    "src/hooks/system/useUserRole.ts",

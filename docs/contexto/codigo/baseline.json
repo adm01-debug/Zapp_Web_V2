@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "25e13ff60d7e80a48de7c4c7bc07a195165bc1e6",
+  "commit": "11efe5fa10923111539773920a1aad36b6721da0",
   "branch": "main",
-  "data_commit": "2026-11-10T03:12:05Z",
+  "data_commit": "2026-11-10T03:23:46Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "11efe5f",
+    "data": "2026-11-10",
+    "assunto": "feat(talkx): X048 — tela de sem permissão específica do TalkX no ViewRouter (#2806)"
+   },
    {
     "sha": "25e13ff",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "0c191b6",
     "data": "2026-11-09",
     "assunto": "fix(migrations): IF EXISTS guards em migrations 220300 e 230300 para E2E"
-   },
-   {
-    "sha": "af47ad6",
-    "data": "2026-11-09",
-    "assunto": "fix(ci): vercel-env-cleanup sai com exit 0 em 403"
    }
   ],
-  "arquivos_mudados_7d": 678,
+  "arquivos_mudados_7d": 679,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8354,
   "arquivos_codigo": 4778,
-  "linhas_codigo": 881872,
+  "linhas_codigo": 881876,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -740,7 +740,7 @@
   },
   "src/pages": {
    "arquivos": 70,
-   "linhas": 10702
+   "linhas": 10706
   },
   "src/providers": {
    "arquivos": 10,

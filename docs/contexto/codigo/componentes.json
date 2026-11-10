@@ -10879,7 +10879,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 15,
+   "usado_por": 16,
    "orfao": false
   },
   {
@@ -14802,7 +14802,7 @@
     "ViewRouter"
    ],
    "export_default": null,
-   "linhas": 260,
+   "linhas": 264,
    "dominio": "pages",
    "hooks_locais": [
     "useAriaAnnouncer",
