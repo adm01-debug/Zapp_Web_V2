@@ -97,8 +97,10 @@ export async function executarCleanup({
     const { status, ok, networkError, body } = await apiFetch(`${path.pathname}${path.search}`);
     if (!ok) {
       if (status === 403) {
-        output.error(`GET envs falhou: VERCEL_READONLY_TOKEN sem acesso ao projeto ${project} (403)`);
-        return 1;
+        output.warn(`\n⚠️  SKIP: VERCEL_READONLY_TOKEN sem acesso ao projeto ${project} (403).`);
+        output.warn('   Atualize o secret VERCEL_READONLY_TOKEN com um token com acesso ao projeto zapp_web_v2.');
+        output.warn('   (Vercel Dashboard → Account Settings → Tokens → criar com escopo do projeto).');
+        return 0;
       }
       output.error(networkError ? 'GET envs falhou: erro de rede' : `GET envs falhou: ${status}`);
       return 1;
