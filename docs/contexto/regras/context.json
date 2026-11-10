@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "71dd7238dcd6fdd74ba24db6a2b0dd70add6a35c",
+  "sha": "d40c05311ee067231ed8ff524cfbc959697b3916",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-10 04:12 UTC",
+  "generated_at": "2026-11-10 09:59 UTC",
   "files_total": 8197,
   "code_files": 6051,
   "code_lines": 1048763
@@ -384851,10 +384851,19 @@
   }
  },
  "git": {
-  "sha": "71dd7238dcd6fdd74ba24db6a2b0dd70add6a35c",
+  "sha": "d40c05311ee067231ed8ff524cfbc959697b3916",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d40c053",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)",
+    "files": [
+     "docs/agentes/banco.md"
+    ]
+   },
    {
     "sha": "71dd723",
     "date": "2026-11-10",
@@ -385167,16 +385176,6 @@
      "supabase/migrations/20261026220300_classificar_rls_sem_policy.sql",
      "supabase/migrations/20261026230300_decidir_schemas_backup.sql"
     ]
-   },
-   {
-    "sha": "af47ad6",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "fix(ci): vercel-env-cleanup sai com exit 0 em 403",
-    "files": [
-     "scripts/ci/vercel-env-cleanup.mjs",
-     "scripts/ci/vercel-env-cleanup.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -385207,6 +385206,10 @@
    [
     "supabase/schema-manifest.json",
     2
+   ],
+   [
+    "docs/agentes/banco.md",
+    1
    ],
    [
     "src/components/email/EmailChatInbox.tsx",
@@ -385254,10 +385257,6 @@
    ],
    [
     "src/components/inbox/copilot/BrindeMeter.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/DecisionMakerBadge.tsx",
     1
    ]
   ]

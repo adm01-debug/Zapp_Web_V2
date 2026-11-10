@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `71dd7238dcd6fdd74ba24db6a2b0dd70add6a35c` (2026-11-10T04:10:26Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d40c05311ee067231ed8ff524cfbc959697b3916` (2026-11-10T09:50:54Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56413 nós · 116298 arestas · 4194 comunidades · grafo do commit `71dd7238`
+- 56413 nós · 116298 arestas · 4194 comunidades · grafo do commit `d40c0531`
 - comunidades maiores: vitest (899), lucide-react (858), cn (846), react (741), DashboardView.tsx (500), WorkItemSheet.tsx (482), @tanstack/react-query (428), chat.ts (384), ref_node_fs (352), catalogShared.tsx (351), useTalkXSegments.ts (328), framer-motion (312)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -501,6 +501,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `d40c053` docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)
 - 2026-11-10 `71dd723` fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox (#2832)
 - 2026-11-10 `cf79d70` feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)
 - 2026-11-10 `31e8df6` feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)
@@ -515,7 +516,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `f3792ec` fix: tolerância de relógio nas celebrações e filtro de tipo seguindo back/forward (#2821)
 - 2026-11-10 `e2c31f4` feat(copilot): adiciona brinde_state em copilot_sessions (CV-026) (#2815)
 - 2026-11-09 `be8aa06` feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)
-- 2026-11-09 `7c27c1a` fix: corrige bug crítico de notificação em connection-health-check (#2910)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

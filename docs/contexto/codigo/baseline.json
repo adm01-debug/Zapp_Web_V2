@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "71dd7238dcd6fdd74ba24db6a2b0dd70add6a35c",
+  "commit": "d40c05311ee067231ed8ff524cfbc959697b3916",
   "branch": "main",
-  "data_commit": "2026-11-10T04:10:26Z",
+  "data_commit": "2026-11-10T09:50:54Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d40c053",
+    "data": "2026-11-10",
+    "assunto": "docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)"
+   },
    {
     "sha": "71dd723",
     "data": "2026-11-10",
@@ -126,18 +131,13 @@
     "sha": "0142702",
     "data": "2026-11-09",
     "assunto": "chore(db-audit): regenerar baselines após migration talkx_campaign_resume_precheck"
-   },
-   {
-    "sha": "d0e624b",
-    "data": "2026-11-09",
-    "assunto": "fix: escopo restore-keys do cache do Bun (CodeQL cache-poisoning #66-69) (#2899)"
    }
   ],
   "arquivos_mudados_7d": 686,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 671
+    "mudancas": 615
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -161,11 +161,11 @@
    },
    {
     "pasta": "src/components/ui",
-    "mudancas": 129
+    "mudancas": 127
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 127
+    "mudancas": 124
    },
    {
     "pasta": "src/hooks/integrations",
