@@ -95,7 +95,7 @@ function exigirHeader(headers, name, expected) {
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
-async function resposta(fetchImpl, url, kind, requestTimeoutMs) {
+async function resposta(fetchImpl, url, kind, requestTimeoutMs, consume) {
   // AbortSignal.timeout() usa timer unref'd; usar AbortController+setTimeout (ref'd)
   // garante que o temporizador mantenha o event loop vivo até disparar.
   const controller = new AbortController();
@@ -103,43 +103,52 @@ async function resposta(fetchImpl, url, kind, requestTimeoutMs) {
     () => controller.abort(new DOMException('The operation timed out', 'TimeoutError')),
     requestTimeoutMs,
   );
+  let res;
   try {
-    const res = await fetchImpl(url, {
+    res = await fetchImpl(url, {
       cache: 'no-store',
       redirect: 'error',
       signal: controller.signal,
       headers: { 'cache-control': 'no-cache', 'user-agent': 'zapp-release-targets/1' },
     });
     if (!res || res.status !== 200) throw new Error(`${kind} HTTP ${res?.status ?? 'sem resposta'}`);
-    return res;
+    return await consume(res);
+  } catch (error) {
+    if (controller.signal.aborted) throw controller.signal.reason;
+    throw error;
   } finally {
     clearTimeout(timer);
+    if (res?.body && !res.bodyUsed) {
+      try { void res.body.cancel().catch(() => {}); } catch { /* preservar o resultado da request */ }
+    }
   }
 }
 
 async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeoutMs }) {
   const config = TARGETS[target];
   const nonce = `${now}-${Math.random().toString(16).slice(2)}`;
-  const versionRes = await resposta(fetchImpl, `${config.url}/version.json?verify=${nonce}`, 'version.json', requestTimeoutMs);
-  exigirHeader(versionRes.headers, 'content-type', 'application/json');
-  exigirHeader(versionRes.headers, 'cache-control', 'no-store');
-  exigirHeader(versionRes.headers, 'x-content-type-options', 'nosniff');
-  exigirHeader(versionRes.headers, 'referrer-policy', 'strict-origin-when-cross-origin');
-  exigirHeader(versionRes.headers, 'x-frame-options', config.frame);
-  if (config.robots) exigirHeader(versionRes.headers, 'x-robots-tag', config.robots);
+  const version = await resposta(fetchImpl, `${config.url}/version.json?verify=${nonce}`, 'version.json', requestTimeoutMs, async (versionRes) => {
+    exigirHeader(versionRes.headers, 'content-type', 'application/json');
+    exigirHeader(versionRes.headers, 'cache-control', 'no-store');
+    exigirHeader(versionRes.headers, 'x-content-type-options', 'nosniff');
+    exigirHeader(versionRes.headers, 'referrer-policy', 'strict-origin-when-cross-origin');
+    exigirHeader(versionRes.headers, 'x-frame-options', config.frame);
+    if (config.robots) exigirHeader(versionRes.headers, 'x-robots-tag', config.robots);
 
-  let body;
-  try { body = await versionRes.json(); } catch { throw new Error('version.json não é JSON válido'); }
-  const version = validarVersao(target, body, { expectedSha, now });
+    let body;
+    try { body = await versionRes.json(); } catch { throw new Error('version.json não é JSON válido'); }
+    return validarVersao(target, body, { expectedSha, now });
+  });
 
-  const rootRes = await resposta(fetchImpl, `${config.url}/?verify=${nonce}`, 'SPA', requestTimeoutMs);
-  exigirHeader(rootRes.headers, 'content-type', 'text/html');
-  exigirHeader(rootRes.headers, 'cache-control', 'no-store');
-  exigirHeader(rootRes.headers, 'x-content-type-options', 'nosniff');
-  exigirHeader(rootRes.headers, 'referrer-policy', 'strict-origin-when-cross-origin');
-  exigirHeader(rootRes.headers, 'x-frame-options', config.frame);
-  if (config.robots) exigirHeader(rootRes.headers, 'x-robots-tag', config.robots);
-  const html = await rootRes.text();
+  const html = await resposta(fetchImpl, `${config.url}/?verify=${nonce}`, 'SPA', requestTimeoutMs, async (rootRes) => {
+    exigirHeader(rootRes.headers, 'content-type', 'text/html');
+    exigirHeader(rootRes.headers, 'cache-control', 'no-store');
+    exigirHeader(rootRes.headers, 'x-content-type-options', 'nosniff');
+    exigirHeader(rootRes.headers, 'referrer-policy', 'strict-origin-when-cross-origin');
+    exigirHeader(rootRes.headers, 'x-frame-options', config.frame);
+    if (config.robots) exigirHeader(rootRes.headers, 'x-robots-tag', config.robots);
+    return rootRes.text();
+  });
 
   let entry = version.entry;
   if (!entry) {
@@ -149,8 +158,9 @@ async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeou
   }
   const assets = [entry, version.entryCss].filter(Boolean);
   for (const asset of assets) {
-    const assetRes = await resposta(fetchImpl, `${config.url}/${asset}`, `asset ${asset}`, requestTimeoutMs);
-    exigirHeader(assetRes.headers, 'cache-control', 'immutable');
+    await resposta(fetchImpl, `${config.url}/${asset}`, `asset ${asset}`, requestTimeoutMs, (assetRes) => {
+      exigirHeader(assetRes.headers, 'cache-control', 'immutable');
+    });
   }
   return { target, label: config.label, url: config.url, ...version, entry };
 }
