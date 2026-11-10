@@ -96,7 +96,7 @@ test('buildLogsSql usa ClickHouse, fonte correta e pathname fechado', () => {
   assert.throws(() => buildLogsSql([]), /vazio/);
 });
 
-test('queryAnalytics usa POST, endpoint atual, SQL e janela ISO sem expor token na URL', async () => {
+test('queryAnalytics usa GET com searchParams, SQL e janela ISO sem expor token na URL', async () => {
   const calls = [];
   const start = new Date('2026-11-07T12:00:00.000Z');
   const end = new Date('2026-11-07T12:05:00.000Z');
@@ -115,16 +115,25 @@ test('queryAnalytics usa POST, endpoint atual, SQL e janela ISO sem expor token 
 
   assert.deepEqual(result, { total: 12, errors: 2 });
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].init.method, 'POST');
-  assert.equal(calls[0].init.headers['Content-Type'], 'application/json');
+  assert.equal(calls[0].init.method, 'GET');
   assert.equal(calls[0].init.signal, 'signal');
   assert.equal(calls[0].init.headers.Authorization, 'Bearer management-token-secret');
   assert.equal(calls[0].url.pathname, `/v1/projects/${CANONICAL_PROJECT}/analytics/endpoints/logs`);
-  const body = JSON.parse(calls[0].init.body);
-  assert.match(body.sql, /FROM logs/);
-  assert.equal(body.iso_timestamp_start, start.toISOString());
-  assert.equal(body.iso_timestamp_end, end.toISOString());
+  assert.match(calls[0].url.searchParams.get('sql'), /FROM logs/);
+  assert.equal(calls[0].url.searchParams.get('iso_timestamp_start'), start.toISOString());
+  assert.equal(calls[0].url.searchParams.get('iso_timestamp_end'), end.toISOString());
   assert.doesNotMatch(calls[0].url.href, /management-token-secret/);
+  assert.equal(calls[0].init.body, undefined);
+});
+
+test('buildLogsSql usa prefixo /functions/v1/ para escopos com mais de 20 funções', () => {
+  const manySlugs = Array.from({ length: 21 }, (_, i) => `fn-${String(i + 1).padStart(2, '0')}`);
+  const sql = buildLogsSql(manySlugs);
+  assert.match(sql, /count\(\) AS total/);
+  assert.match(sql, /FROM logs/);
+  assert.match(sql, /source = 'function_edge_logs'/);
+  assert.match(sql, /startsWith\(log_attributes\['request\.pathname'\], '\/functions\/v1\/'\)/);
+  assert.doesNotMatch(sql, /fn-01/);
 });
 
 test('queryAnalytics limita a janela a 24h e valida o contrato agregado', async () => {
