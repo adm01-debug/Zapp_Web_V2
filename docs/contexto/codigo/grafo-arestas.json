@@ -3452,6 +3452,7 @@
   "src/components/inbox/chat/ChatInputArea.tsx": [
    "src/components/copilot/GhostTextOverlay.tsx",
    "src/components/copilot/RadarPhase7Panel.tsx",
+   "src/components/copilot/RadarPhase8to15Panel.tsx",
    "src/components/inbox/AudioRecorder.tsx",
    "src/components/inbox/CustomEmojiPicker.tsx",
    "src/components/inbox/FileUploader.tsx",

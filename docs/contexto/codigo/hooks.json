@@ -624,7 +624,7 @@
    "usado_por_arquivos": [
     "src/components/inbox/ChatPanel.tsx"
    ],
-   "coberto_por_testes": 12
+   "coberto_por_testes": 13
   },
   {
    "arquivo": "src/components/inbox/collaboration/ViewersIndicator.tsx",

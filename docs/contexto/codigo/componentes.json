@@ -2716,7 +2716,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -4862,7 +4862,7 @@
     "ChatInputArea"
    ],
    "export_default": null,
-   "linhas": 352,
+   "linhas": 370,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useChatInputLogic",

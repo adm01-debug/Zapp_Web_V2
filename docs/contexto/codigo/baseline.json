@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7c27c1a744734c016bcf4d2121157b9f67b011f9",
+  "commit": "be8aa06a1df18d9b39945742fd2f07fb1b8790b9",
   "branch": "main",
-  "data_commit": "2026-11-09T20:32:09-03:00",
+  "data_commit": "2026-11-09T23:56:43Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "be8aa06",
+    "data": "2026-11-09",
+    "assunto": "feat(copiloto): painel RADAR fases 8–15 visível no chat (CV-071..150) (#2809)"
+   },
    {
     "sha": "7c27c1a",
     "data": "2026-11-09",
@@ -126,18 +131,13 @@
     "sha": "1fb99f8",
     "data": "2026-11-09",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#2857)"
-   },
-   {
-    "sha": "6af86ab",
-    "data": "2026-11-09",
-    "assunto": "chore(resgate): validação exaustiva dos 8 clusters integrados + revert C121 (#2853)"
    }
   ],
-  "arquivos_mudados_7d": 647,
+  "arquivos_mudados_7d": 648,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 652
+    "mudancas": 654
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8326,
-  "arquivos_codigo": 4753,
-  "linhas_codigo": 878178,
+  "arquivos_total": 8327,
+  "arquivos_codigo": 4754,
+  "linhas_codigo": 878389,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 217,
   "migrations": 1096,
   "cron_jobs": 26,
-  "testes": 2595,
+  "testes": 2596,
   "workflows": 21,
   "scripts": 420,
   "docs_md": 1071
@@ -699,8 +699,8 @@
    "linhas": 616
   },
   "src/components": {
-   "arquivos": 2155,
-   "linhas": 368214
+   "arquivos": 2156,
+   "linhas": 368425
   },
   "src/config": {
    "arquivos": 3,
