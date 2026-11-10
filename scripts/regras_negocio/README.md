@@ -58,5 +58,13 @@ A suíte usa fixtures locais e cobre SQL ativo versus histórico, objetos do sch
 Prisma/tipos e a saída do perfil `regras`. O adaptador inclui a mesma suíte no CI obrigatório;
 nenhum teste acessa banco ou API de LLM.
 
+O cache valida fatos, revisão Git, opções de geração, documentos/árvore/metadados usados na
+renderização e hashes das saídas esperadas. Trocar perfil, snapshot, índice, opção de ponteiro ou
+modelo LLM exige regeneração; artefato ausente ou alterado também. `--check` retorna 1 nesses casos
+sem escrever arquivos. Estados antigos ou inválidos são regenerados, preservando `manual/`.
+As regressões cobrem transições entre os três perfis, recuperação de saídas danificadas, execução
+idempotente e mudanças de documentos sem novo commit; o cache LLM distingue fatos e modelo com
+respostas simuladas, sem rede.
+
 Origem e testes (430 cenários sintéticos + simulação git de 3 produtores na mesma branch): pacote
 `ai-context-sync` no Project "SCRIPTS | AUTÔNOMOS | REPOSITÓRIO".

@@ -120,12 +120,17 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // "lendo o historico" e a lista deixaria de acompanhar a conversa.
   const isNearBottomRef = useRef(true);
   const virtualizerRef = useRef<{ cancelScroll: () => void } | null>(null);
+  // #1991: distingue rolagem do usuário de rolagem programática para não cancelar
+  // scrollToIndex/scrollToMessage disparados pelo próprio sistema.
+  const isProgrammaticScrollRef = useRef(false);
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     const nearBottom = isNearBottom(el);
     isNearBottomRef.current = nearBottom;
-    if (!nearBottom) virtualizerRef.current?.cancelScroll();
+    const wasProgrammatic = isProgrammaticScrollRef.current;
+    isProgrammaticScrollRef.current = false;
+    if (!nearBottom && !wasProgrammatic) virtualizerRef.current?.cancelScroll();
   }, []);
 
   const handleMessageDeleted = useCallback(async (messageId: string) => {
@@ -294,12 +299,14 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       // historico fica onde esta.
       if (!isNearBottomRef.current) return;
       // behavior:'smooth' nao existe na API do @tanstack/react-virtual v3.x
+      isProgrammaticScrollRef.current = true;
       virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
     },
     scrollToBottomAfterSend: () => {
       if (!scrollContainerRef.current || messages.length === 0) return;
       // Envio proprio: vai ao fim SEM consultar isNearBottomRef — o usuario pode
       // estar lendo o historico e ainda assim tem de ver o que acabou de enviar.
+      isProgrammaticScrollRef.current = true;
       virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
       acenderSeloEnviada();
     },
@@ -309,6 +316,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     scrollToMessage: (messageId: string) => {
       const index = messages.findIndex(m => m.id === messageId);
       if (index !== -1) {
+        isProgrammaticScrollRef.current = true;
         virtualizer.scrollToIndex(index, { align: 'center' });
       }
     },
@@ -375,7 +383,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       )}
       {showHistoryStart && (
         <div className={cn(OLDER_ROW_CLASS, 'sticky top-0 z-10')}>
-          <p role="status" data-testid="history-start" className="text-2xs uppercase tracking-wider font-semibold text-muted-foreground/80 bg-muted/50 backdrop-blur-sm px-3 py-1 rounded-full border border-border/30">
+          <p role="status" data-testid="history-start" className="text-2xs uppercase tracking-wider font-semibold text-muted-foreground/80 bg-muted/50 backdrop-blur-sm px-3 py-1 rounded-full border border-border/30 shadow-sm">
             Início do histórico da conversa
           </p>
         </div>

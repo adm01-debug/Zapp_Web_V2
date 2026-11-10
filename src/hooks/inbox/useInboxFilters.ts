@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
@@ -42,11 +42,11 @@ const CHIP_TABS: readonly ChipTab[] =
   ['all', 'unread', 'attending', 'waiting', 'resolved', 'archived'];
 const DEFAULT_CHIP: ChipTab = 'attending';
 
-/** Sem identidade o filtro não é guardado — o rascunho vive só nesta sessão. */
+/** Sem identidade o filtro não é guardado — `draft` vive só nesta sessão. */
 const NO_OWNER = '';
 
 /**
- * Convenção da casa: `zapp.<area>:<dono>` em localStorage — o filtro é do
+ * Convenção da casa: `zapp.<area>:<dono>` em localStorage — filtro é do
  * usuário, não do navegador (mesmo escopo do histórico de busca e dos rascunhos).
  */
 export function inboxFiltersStorageKey(userId: string): string {
@@ -98,19 +98,12 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const storageKey = profileId ? inboxFiltersStorageKey(profileId) : null;
   const ownerKey = storageKey ?? NO_OWNER;
 
-  // Preferência do dono lida do storage; muda quando a identidade aparece (o
-  // perfil carrega assíncrono depois do primeiro render).
   const storedPrefs = useMemo(() => readStoredPrefs(storageKey), [storageKey]);
-  // Rascunho por dono: o que este usuário mexeu na sessão precede o storage, e a
-  // troca de conta no mesmo navegador não reaproveita o estado do anterior.
   const [draft, setDraft] = useState<Record<string, InboxFilterPrefs>>({});
 
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
     const typeParam = searchParams.get('type');
-    // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-    // typeParam !== null garante que URL explícita (mesmo inválida) não
-    // cai no stored pref — a intenção do deep-link prevalece.
     const contactType = typeParam !== null
       ? normalizeContactType(typeParam)
       : storedPrefs?.contactType ?? null;
@@ -125,10 +118,6 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const prefs = draft[ownerKey] ?? basePrefs;
   const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
 
-  /**
-   * Aplica a mudança sobre o estado vivo do dono e persiste só o que sobrevive
-   * ao reload (chip, fila, tipo) — mainTab/subTab são derivados do chip.
-   */
   const applyPrefs = useCallback((patch: Partial<InboxFilterPrefs>) => {
     setDraft((prev) => {
       const atual = prev[ownerKey] ?? basePrefs;
@@ -149,9 +138,6 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
 
-  // Chips derivam mainTab/subTab (compat com filtros existentes). setMainTab/setSubTab
-  // seguem expostos à parte — RealtimeInboxView usa setMainTab('search') no deep-link
-  // de contato pendente, fora do ciclo de vida dos chips.
   const setChipTab = useCallback((tab: ChipTab) => {
     applyPrefs({ chipTab: tab, ...tabsForChip(tab) });
   }, [applyPrefs]);
@@ -173,7 +159,26 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     }, { replace: true });
   }, [applyPrefs, setSearchParams]);
 
-  // Convert URL filters to InboxFiltersState
+  // Quando o URL muda por navegação browser (back/forward), o rascunho do dono
+  // ainda guarda o valor antigo e sobrepõe basePrefs. Este efeito detecta a troca
+  // externa do param `type` e sincroniza o rascunho — sem isso o filtro de tipo
+  // não acompanha o botão de voltar.
+  const lastUrlType = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const urlType = normalizeContactType(searchParams.get('type'));
+    if (lastUrlType.current === undefined) {
+      lastUrlType.current = urlType;
+      return;
+    }
+    if (urlType !== lastUrlType.current) {
+      lastUrlType.current = urlType;
+      setDraft((prev) => {
+        const atual = prev[ownerKey] ?? basePrefs;
+        return { ...prev, [ownerKey]: { ...atual, contactType: urlType } };
+      });
+    }
+  }, [searchParams, ownerKey, basePrefs]);
+
   const filters = useMemo<InboxFiltersState>(() => ({
     status: urlFilters.status,
     agentId: urlFilters.agentId,
@@ -183,7 +188,6 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     },
   }), [urlFilters]);
 
-  // Busca só em memória: telefone/nome digitado não pode ir para a URL.
   const [search, setSearch] = useState('');
 
   const setFilters = useCallback((newFilters: InboxFiltersState) => {
@@ -195,8 +199,6 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     });
   }, [setUrlFilters]);
 
-  // Contexto dos filtros extras (busca, tipo, painel) — o MESMO objeto alimenta
-  // a lista e o countByChip, para os dois nunca usarem regras diferentes.
   const extraFilterContext = useMemo(
     () => ({ search, selectedContactType, filters }),
     [search, selectedContactType, filters],
@@ -204,32 +206,13 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const filteredConversations = useMemo(() => {
     let result = conversations.filter(hasContact);
-
-    // Adiamento (R2-INB-029): conversa adiada sai da listagem até o prazo vencer.
-    // `snoozedIds` só traz os adiamentos ainda vigentes — no vencimento o hook de
-    // origem a remove do conjunto e ela volta a aparecer sem recarregar a lista.
     result = result.filter(c => !isSnoozed(c, snoozedIds));
-
-    // Tab-based filtering — ADR-005 (passo 3): o estado da conversa vem do campo
-    // persistido `contacts.conversation_status`, e não mais da derivação por
-    // `messages.length` (que mostrava como "aberta" toda conversa com mensagem e
-    // como "resolvida" apenas a que nunca teve nenhuma).
-    // As regras de cada chip vivem em ./chipCounts (as mesmas que contam os chips).
     if (chipTab === 'archived') {
-      // Chip "Arquivadas" (B2): a lista obedece o estado persistido
-      // `conversation_status === 'archived'`, independente de mainTab/subTab
-      // (o chip deriva mainTab 'open'/subTab null, ramo que não conhece esse
-      // estado). Busca, fila e tipo de contato seguem aplicados por cima,
-      // abaixo — por isso só o filtro de fila, que hoje vive no ramo 'open',
-      // é replicado aqui.
       result = result.filter(isArchived);
       if (selectedQueueId) {
         result = result.filter(c => isInQueue(c, selectedQueueId));
       }
     } else if (mainTab === 'open') {
-      // Ativas = open|waiting. O `messages.length > 0` abaixo não decide estado:
-      // é o guarda de atividade que mantém fora da inbox o contato histórico que
-      // nunca conversou (buildConversation sintetiza 1 mensagem quando há agregado).
       result = result.filter(isOpenActive);
       if (subTab === 'attending') {
         if (!showAll) {
@@ -244,20 +227,10 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     } else if (mainTab === 'resolved') {
       result = result.filter(isResolved);
     }
-
     if (chipTab === 'unread') {
       result = result.filter(isUnread);
     }
-    // 'all' não filtra por assigned_to (subTab já vem null) — mostra todas abertas
-    // attending e waiting já são tratados pelo subTab derivado
-
-    // Filtros por cima do chip — busca, painel Filtros (status/atendente/
-    // datas) e tipo de contato. A regra vive em passesExtraFilters, em
-    // ./chipCounts: é a MESMA que o countByChip aplica, então o número do chip e
-    // o length da lista não têm mais como divergir.
     result = result.filter((c) => passesExtraFilters(c, extraFilterContext));
-
-    // Smart sorting
     result.sort((a, b) => {
       if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
       if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
@@ -265,13 +238,9 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       const bTime = b.lastMessage ? new Date(b.lastMessage.created_at).getTime() : new Date(b.contact.updated_at).getTime();
       return bTime - aTime;
     });
-
     return result;
   }, [conversations, extraFilterContext, mainTab, subTab, chipTab, showAll, selectedQueueId, profileId, snoozedIds]);
 
-  // Contadores dos chips com o contexto atual — a tela só lê o número. Memoizado
-  // pelos mesmos insumos da lista; cada tecla da busca recalcula UMA varredura
-  // (o loop testa os seis chips por conversa), sem uma passada por chip.
   const chipCounts = useMemo(
     () =>
       countByChip(conversations, profileId, {
