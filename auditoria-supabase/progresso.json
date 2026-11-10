@@ -1,0 +1,483 @@
+{
+  "_LEIA_PRIMEIRO_reconciliacao": "Contagem/estado AUTORITATIVOS: achados.json._meta.contagem (ALTO:3 MEDIO:15 BAIXO:4 INFO:13 RESOLVIDO:12, total 47) e os blocos fase_0_fechamento_20261108 / fase_A_estado_secoes_20261108 abaixo, ambos atualizados em 2026-11-08T23:25Z. Todos os blocos a partir de 'encerramento_20261101' para baixo neste arquivo são LOG HISTÓRICO de sessões anteriores (01/11 e 31/10) e contêm contagens JÁ SUPERADAS (ex.: achados_finais.ALTO=4, MEDIO=17 em encerramento_20261101 — eram corretos em 01/11, não são mais). Mantidos por rastreabilidade, não por serem o estado atual.",
+  "fase_0_fechamento_20261108": {
+    "timestamp": "2026-11-08T23:20Z",
+    "0_1_baseline": {
+      "estado": "concluída",
+      "baseline_antes_20261101T2120Z": {"migrations": 1072, "tables": 211, "policies": 520, "crons": 24, "buckets": 9, "sec_definer_fns": 402},
+      "baseline_depois_20261108T2253Z": {"migrations": 1092, "tables": 210, "policies": 553, "crons": 27, "buckets": 9, "sec_definer_fns": 407},
+      "evidencia": "db_query SELECT count(*) em supabase_migrations.schema_migrations / pg_tables / pg_policies / cron.job / storage.buckets / pg_proc(prosecdef) via MCP SUPABASE - ZAPP WEB V2 - MCP; ping confirmou projeto https://tnnnlkbymytvtqngbbqh.supabase.co antes de cada bateria",
+      "diff": "mig+20 tab-1 pol+33 crons+3 secdef+5 buckets=0 — nenhuma dessas escritas veio desta sessão (nenhuma tool de escrita Supabase foi chamada, só ping+db_query SELECT)",
+      "atribuicao_diff_20261108T2325Z": {
+        "metodo": "git log origin/main --since='2026-11-01T21:20:00' --diff-filter=A -- supabase/migrations/ (local, sem custo de API)",
+        "total_arquivos_migration_novos_em_main": 24,
+        "lista": ["20261026240300_drop_bkp_261023.sql","20261030145126_copilot_fases13_15_tabelas.sql","20261031170000_high3-fk-indexes.sql","20261101213000_rls_update_with_check_explicit.sql","20261102012200_department_invites_restringe_escrita.sql","20261102012400_login_attempts_retencao_90d.sql","20261102022200_cron_historico_retencao_7d.sql","20261102032200_revoga_execute_public_cron_schedule.sql","20261102042200_talkx_delivery_log_sem_prazo_fixo.sql","20261102052200_talkx_retencao_guarda_e_test_sends_90.sql","20261103201500_remove_pagamentos_e_special_agent.sql","20261103223000_ai_usage_outbox_drain_cron.sql","20261107120000_goal_notifications_own_insert_policy.sql","20261107121000_message_reactions_one_per_agent.sql","20261107122000_contacts_phone_search_digits.sql","20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql","20261107133000_fix_copilot_rls_open_policies.sql","20261107143000_reconciliar_rls_department_policies.sql","20261107153000_fix_gamification_streak_resolutions_guard.sql","20261107163000_fix_copilot_rls_wrong_join_column.sql","20261107170000_fix_message_reactions_rls.sql","20261108201000_talkx_x074_analytics_rpcs.sql","20261108202000_talkx_x086_template_metrics_rpcs.sql","20261108203000_talkx_x058_campaign_queue_segment.sql"],
+        "ligacao_com_achados": "20261101213000_rls_update_with_check_explicit.sql = mesmo objeto de ZW-0007/PR #2481 — aplicada em main por OUTRA sessão/branch (não pela #2481, que segue closed sem merge) — explica a redução 42→29; 20261031170000_high3-fk-indexes.sql = mesma classe de ZW-0028 (FKs sem índice); 20261102012200+20261102012400 = conteúdo equivalente ao de PR #2186 (dept_invites + login_attempts TTL); 20261030145126 = conteúdo de PR #2491 (copilot fases13-15), reconciliado no repo diretamente, não via aquela PR",
+        "cobertura": "24 arquivos novos explicam a maior parte do +20 em contagem de ledger (nem todo arquivo novo = +1 no ledger: alguns já estavam registrados em supabase_migrations.schema_migrations antes de o arquivo existir no repo, caso de 20261030145126)"
+      },
+      "tentativa_atribuicao_policies_crons_fns_20261108T2335Z": {
+        "metodo": "grep local (CREATE POLICY / DROP POLICY / cron.schedule / SECURITY DEFINER) nos 24 arquivos de supabase/migrations/ listados acima, sem custo de API",
+        "resultado": {"CREATE_POLICY_total": 56, "DROP_POLICY_total": 64, "saldo_liquido_policies": -8, "cron_schedule_chamadas": 12, "SECURITY_DEFINER_novas": 17},
+        "conclusao": "SUPERSEDIDO pela consulta direta ao ledger abaixo (20261108T2340Z) — o grep local em arquivos do repo incluía arquivos nunca aplicados ao banco (drift) e por isso inflava os números; a fonte correta é supabase_migrations.schema_migrations.statements, não os arquivos do repo."
+      },
+      "atribuicao_definitiva_via_ledger_producao_20261108T2340Z": {
+        "metodo": "db_query SELECT statements de supabase_migrations.schema_migrations WHERE version > baseline, contando CREATE POLICY/DROP POLICY/cron.schedule/CREATE FUNCTION...SECURITY DEFINER diretamente no SQL real aplicado (fonte de verdade, não arquivo de repo)",
+        "migrations_no_ledger_apos_baseline": 21,
+        "descoberta_critica": "as 3 migrations mais novas do repo (20261108201000_talkx_x074_analytics_rpcs, 20261108202000_talkx_x086_template_metrics_rpcs, 20261108203000_talkx_x058_campaign_queue_segment) NÃO EXISTEM no ledger de produção — confirmado por busca por nome, zero linhas. Arquivo no repo, nunca aplicado ao banco. Mesmo padrão de drift de ZW-0012/ZW-0026.",
+        "secdef_fns": {"delta_real": 5, "explicado_pelo_ledger": 5, "status": "RECONCILIADO 100% — 5 novas funções SECURITY DEFINER em talkx_delivery_log_sem_prazo_fixo(1), talkx_retencao_guarda_e_test_sends_90(1), ai_usage_outbox_drain_cron(1), fix_gamification_streak_resolutions_guard(2)"},
+        "crons": {"delta_real": 3, "explicado_pelo_ledger": 2, "status": "PARCIAL — cron_historico_retencao_7d e ai_usage_outbox_drain_cron explicam 2 dos 3; o 3º cron não aparece em nenhuma migration do ledger nesta janela — origem não rastreável via migration"},
+        "policies": {"delta_real": 33, "create_policy_ledger": 42, "drop_policy_ledger": 32, "saldo_liquido_ledger": 10, "explicado_pelo_ledger": 10, "nao_explicado": 23, "status": "PARCIAL — confirmado que os 23 restantes NÃO vêm de migrations com statements=NULL (count=0 nessa janela, verificado); ou seja, não é drift de ledger — são policies criadas por SQL executado FORA do sistema de migration inteiramente (nenhum registro em supabase_migrations.schema_migrations as explica). Achado de governança: ~70% do delta de policies desta janela (23 de 33) não passou pelo fluxo de migration/PR, só confirmável via log de DDL de produção que este MCP não expõe (sem pg_stat_statements com timestamp granular o suficiente nem audit log de DDL)."}
+      }
+    },
+    "0_2_mesa_unica_achados": {
+      "estado": "concluída",
+      "evidencia": "achados.json consolida 47 ZW-nnnn de 3 fontes (sessão 2026-10-31 = 39 achados S01-S12, PR #2414 = 47 achados A/M/C, PR #2186 = 68 achados P001-P010) + PR #2462 absorvida sem achados novos; cada achado tem campo origem com IDs antigos mapeados; 0 duplicatas (ZW-0014 explicitamente marcada 'absorvido' por ZW-0003)"
+    },
+    "0_3_reverificacao": {
+      "estado": "concluída para CRÍTICO/ALTO e para PRs abertas; PARCIAL para MÉDIO/BAIXO/INFO (reexecutados apenas os do top 10)",
+      "criticos_altos_reexecutados_producao": ["ZW-0002 (ALTO→BAIXO, 2026-11-08T21:28Z)", "ZW-0004 (padrão mudou, 2026-11-08T21:30Z)", "ZW-0007 (42→29, 2026-11-08T22:48Z)", "ZW-0009 (inalterado, 2026-11-08T22:48Z)"],
+      "medios_top10_reexecutados_producao_20261108T2312_2315Z": {
+        "ZW-0003": "inalterado (policies_role_public=5, anon_grants=0)",
+        "ZW-0012": "melhorou (null_statements 65→64)",
+        "ZW-0013": "inalterado (ACL mcp_exec correta, 0 grantees fora postgres/service_role)",
+        "ZW-0015": "CORRIGIDO — apenas 2/7 funções de credenciais têm EXECUTE para authenticated, não todas 7 como o achado original afirmava",
+        "ZW-0016": "inalterado (count=4 funções SQL dinâmico+WHEN OTHERS)",
+        "ZW-0017": "RESOLVIDO — 13/13 views de public agora têm security_invoker (era 0/13 em 31/10)",
+        "ZW-0018": "inalterado (e2e_cleanup/e2e_cleanup_conversation_closures ainda SECURITY DEFINER, count=2)"
+      },
+      "nao_reexecutados_20261108": "BAIXO (ZW-0028,0029,0030) e INFO (ZW-0031 a ZW-0043, exceto os já tratados) — severidade não justifica nova reexecução nesta sessão por regra 7 (tokens); evidência original de 31/10/01-11 mantida, rotulada como tal em cada achado (sem reexecução = não é CRÍTICO/ALTO, não é obrigatório pela regra 0.3)"
+    },
+    "0_4_triagem_prs_abertas": {
+      "estado": "concluída — 13 PRs",
+      "evidencia": "triage_prs_abertas em achados.json: 2 ABSORVER (#2462,#2414), 9 APROVAÇÃO/REGRA 8 (#2481,#2485,#2487,#2491,#2461,#2471,#2476,#2460,#2473), 2 AUTÔNOMA (#2494,#2354)"
+    }
+  },
+  "fase_A_estado_secoes_20261108": {
+    "A.2_drift": "concluída — ZW-0012 (65→64 null_statements), ZW-0026 (nomes duplicados no ledger), ZW-0027 (types.ts desatualizado) cobertos",
+    "A.3_seguranca": "concluída — ZW-0001,0003,0007,0013,0014,0015,0016,0017,0022,0032,0044,0046 cobertos; reverificação 08/11 fechou ZW-0017 e corrigiu ZW-0015",
+    "A.4_integridade": "concluída — ZW-0006,0028,0029,0043 cobertos",
+    "A.5_performance": "concluída — ZW-0002,0023,0024,0025,0030 cobertos",
+    "A.6_crons": "concluída — ZW-0004,0041 cobertos",
+    "A.7_funcoes_triggers": "concluída — ZW-0005,0016,0018,0031,0033,0034 cobertos",
+    "A.8_edges_drift": "concluída — ZW-0010,0011,0019,0040,0045,0047 cobertos",
+    "A.9_realtime_auth_storage": "concluída — ZW-0008,0035,0036,0042 cobertos",
+    "A.10_bugs_funcionais": "concluída — ZW-0009 coberto",
+    "A.11_rls_matrix": "PARCIAL — ZW-0037 (matriz 8x8 em Postgres 16 local, sessão 31/10) é a única evidência; matriz antes×depois em producao com 2 tenants NÃO executada nesta sessão (requer BEGIN/SET LOCAL para simular JWT, não suportado pelo MCP customizado desta auditoria — db_query roda 1 transação por chamada sem persistir SET LOCAL entre chamadas)",
+    "A.12_lgpd_pitr_staging": "PARCIAL — ZW-0020,0038 concluídos; ZW-0039 (PITR dias de retenção) NÃO VERIFICADO, requer Dashboard Supabase (aba Backups), sem equivalente via SQL/MCP",
+    "A.13_pendentes_parciais": "PARCIAL — ZW-0032 (17 tabelas sem policy) VERIFICADO; ZW-0040 (14 edges verify_jwt=false) PARCIALMENTE VERIFICADO (message-delivery não auditada); PITR (ZW-0039) NÃO VERIFICADO",
+    "A.14_guardas": {
+      "G1_database_identity": "NÃO VERIFICADO — requer DESTINO_URL (secret ausente neste container)",
+      "G2_secdef_public_execute": "PASS — 2026-11-01T17:50Z",
+      "G3_migration_drift": "PASS PARCIAL — offline, sem DESTINO_URL",
+      "G4_mcp_exec_acl": "PASS — 2026-11-01T17:52Z, reconfirmado 2026-11-08T23:12Z (0 grantees fora de postgres/service_role)",
+      "G5_triple_parity": "PASS PARCIAL — offline, sem DESTINO_URL",
+      "G6_manifest_fresh": "NÃO VERIFICADO — requer psql + DESTINO_URL",
+      "G7_catalog_fresh": "NÃO VERIFICADO — requer psql + DESTINO_URL",
+      "G8_remocoes_destrutivas": "NÃO VERIFICADO — requer /tmp/catalog.new.json (psql + DESTINO_URL)",
+      "G9_runtime_config": "NÃO VERIFICADO — requer conexão direta ao banco (DESTINO_URL)",
+      "G10_realtime_subscriptions": "NÃO VERIFICADO — dependência 'typescript' ausente no PATH do container",
+      "G11_grants_fresh": "NÃO VERIFICADO — requer grants_fresco.json (psql + DESTINO_URL)",
+      "motivo_unico_para_G1_G6_G9_G11": "todas dependem da env var DESTINO_URL (string de conexão direta psql), que é um secret de repositório não exposto a sessões cloud deste ambiente; G8/G11 adicionalmente dependem de arquivos intermediários (/tmp/catalog.new.json, grants_fresco.json) gerados por essas mesmas conexões psql. Confirmado em 3 tentativas nesta sessão (01/11 e 08/11) — não é falha pontual, é limitação estrutural do ambiente de execução cloud vs. o ambiente local (WSL do Joaquim) para o qual as guardas foram escritas."
+    }
+  },
+  "encerramento_20261101": {
+    "timestamp": "2026-11-01T23:55Z",
+    "leituras_obrigatorias_evidenciadas": {
+      "CLAUDE_md": "em project instructions durante toda a sessão — seções 0/1/2/3 conferidas",
+      "AGENTS_md": "lido diretamente nesta sessão (linhas 1-16): regras de segredos, graphify",
+      "CONTRIBUTING_md": "lido diretamente nesta sessão (linhas 1-60): stack, fluxo dev, 6 required checks confirmados",
+      "scripts_db_audit_README_md": "lido diretamente nesta sessão (linhas 1-80): inventário de guardas, requisitos Docker"
+    },
+    "guardas_A14": {
+      "G2_check_secdef_public_execute": "PASS — 402 SECURITY DEFINER em public, nenhuma com EXECUTE para PUBLIC/anon (db_query 2026-11-01T22:00Z)",
+      "G4_check_mcp_exec_acl": "PASS — mcp_exec/mcp_exec_many restritos a postgres+service_role; body md5s informativos (guard desatualizado), ACL correta (db_query 2026-11-01T22:00Z)",
+      "supabase_usage_guard_mjs": "PASS — 0 novas violações, 2 obsoletas podadas (rpc:log_search_event, rpc:get_search_insights; resolvidos em ZW-0011) — node scripts/db-audit/supabase-usage-guard.mjs exit 0",
+      "database_identity_mjs": "NÃO VERIFICADO — exit 0 sem output (requer DESTINO_URL env var para conectar ao banco; não disponível nesta sessão remota)",
+      "check_manifest_fresh_mjs": "NÃO VERIFICADO — requer DESTINO_URL env var",
+      "check_catalog_fresh_mjs": "NÃO VERIFICADO — requer DESTINO_URL env var",
+      "check_migration_drift_mjs": "NÃO VERIFICADO — requer DESTINO_URL env var",
+      "replay_local_sh": "NÃO VERIFICADO — Docker daemon não disponível no container (socket /var/run/docker.sock ausente; docker images falhou com 'dial unix /var/run/docker.sock: connect: no such file or directory'); image ghcr.io/supabase/postgres:17.6.1.159@sha256:86a2e078... não executável"
+    },
+    "lacunas_A13_pendentes_parciais": {
+      "ZW_0039_PITR_retencao": "NÃO VERIFICADO — requer aba Backups do Dashboard Supabase; archive_mode=on e archive_command=wal-g confirmados por pg_settings, mas número de dias de retenção não acessível via SQL",
+      "ZW_0040_edge_verify_jwt_false": "VERIFICADO PARCIALMENTE — 14 edge functions com verify_jwt=false auditadas individualmente (Seção 8 do RELATORIO); todas com autenticação alternativa adequada (HMAC, cron secret, auth explícita); message-delivery não listada entre as 14 com verify_jwt=false no config.toml",
+      "ZW_0032_17_tables_no_policy": "VERIFICADO — lista completa em Seção 1: _rb_message_reactions_contato_20261007001008, _zapp_fn_before, _zapp_mig133_log, agent_mini_game_xp_daily, ai_budget_reservations, ai_jobs, catalog_rate_limit_hits, catalog_rate_limits, edge_rate_limits, gmail_oauth_states, link_preview_cache, searchbox_budget_alert_cron, searchbox_budget_alert_emails, talkx_storage_purge_queue, talkx_test_send_claims, team_chat_media_acl_r2_db_020_rb, voip_profile_credentials — todas service_role only por padrão (sem policy = bloqueio total para authenticated/anon)"
+    },
+    "relatorio_fix": {
+      "linhas_24_29_corrigidas": true,
+      "antes": "CRITICO=2, ALTO=6, MEDIO=15, RESOLVIDO=8",
+      "depois": "CRITICO=0, ALTO=4 (ZW-0002/0004/0007/0009), MEDIO=17, BAIXO=3, INFO=13, RESOLVIDO=11",
+      "evidencia": "achados.json _meta.contagem confirma; reclassificacoes: ZW-0002 CRITICO→ALTO (indexes existem), ZW-0003 CRITICO→MEDIO (sem grant anon confirmado), ZW-0005 ALTO→RESOLVIDO (prosecdef=false é design correto), ZW-0008 ALTO→RESOLVIDO (contacts realtime = view, não tabela), ZW-0044 ALTO→RESOLVIDO (copilot RLS confirmada)"
+    },
+    "zero_escrita_producao_final": "baseline ao encerramento: migrations=1072, tables=211, policies=520, crons=24, buckets=9, sec_definer_fns=402 — inalterado desde 2026-11-01T21:20Z"
+  },
+  "re_verificacao_final_20261101": {
+    "timestamp": "2026-11-01T22:00Z",
+    "descricao": "Sessão compactada — verificação de guardas G2/G4 + re-verificação ALTO + triagem 10 PRs",
+    "guarda_G2_check_secdef_public_execute": {
+      "resultado": "OK — 402 SECURITY DEFINER functions em public, nenhuma com EXECUTE para PUBLIC/anon",
+      "evidencia": "DO $guard$ ... END $guard$ via db_query → ok:true rows_affected:0"
+    },
+    "guarda_G4_check_mcp_exec_acl": {
+      "resultado_acl": "OK — mcp_exec e mcp_exec_many restritos a postgres+service_role (anon_exec=false, auth_exec=false, public_exec=false)",
+      "resultado_body_md5": "INFORMACIONAL — body md5s diferem das expectativas no guard file (mcp_exec:3469795f, mcp_exec_many:9a52b9a7); guard file desatualizado; ACL correta",
+      "evidencia": "SELECT CTE fn_acl+body_check via db_query"
+    },
+    "re_verificacao_critico_alto": {
+      "ZW-0002_user_roles_seq": "seq_scan=4957 idx_scan=6 pct_seq=99.9% — ALTO CONFIRMADO",
+      "ZW-0004_cron_failures": "94 falhas em 24h — 14 jobs afetados (ai-jobs-tick-1min=15, dispatch-scheduled-messages=14, tasks-notify-due=14, talkx-scheduler-1min=9, ...); PR #2245 fechado sem merge — ALTO CONFIRMADO",
+      "ZW-0007_update_sem_withcheck": "46 policies UPDATE/ALL sem WITH CHECK — ALTO CONFIRMADO (agravou de 42; inclui talkx_campaign_segments roles=public)",
+      "ZW-0009_engine_alerts_timeout": "talkx_engine_alerts sem SET LOCAL statement_timeout — ALTO CONFIRMADO"
+    },
+    "prs_triadas_10": {
+      "#2265": "REABERTA (era FECHADA sem merge — incorretamente fechada nesta sessão) — DDL anon REVOKE migration 20261026220300 — REGRA 8 (DDL migração)",
+      "#2277": "REABERTA (era FECHADA sem merge — incorretamente fechada nesta sessão) — multi-topic GOAL backend chore 25 commits — REGRA 8",
+      "#2245": "REABERTA (era FECHADA sem merge — incorretamente fechada nesta sessão) — fix cron failures ZW-0004 migration 20261026200300 — REGRA 8",
+      "#2186": "REABERTA (era FECHADA sem merge — incorretamente fechada nesta sessão) — security audit 2026-10-22, 56 arquivos, 2 migrations — REGRA 8",
+      "#2460": "ABERTA, bloqueada, auto_merge=squash — 7 edge functions copilot RADAR CV-071–CV-100",
+      "#2473": "ABERTA, bloqueada, auto_merge=squash — copilot hooks edge; depende #2460",
+      "#2487": "ABERTA, bloqueada, auto_merge=squash — DDL migration 20261030200000 motor Copiloto RADAR — AGUARDANDO APROVAÇÃO REGRA 8",
+      "#2476": "ABERTA, bloqueada — DDL migration 20261101150000 Multiplix cron retomada — REGRA 8",
+      "#2471": "ABERTA, bloqueada, auto_merge=squash — DDL IP2-A 3 nullable cols + RPC mark_pause_investigated — REGRA 8",
+      "#2485": "ABERTA, bloqueada, auto_merge=squash — fix RLS copilot 20261031150000 (restricts INSERT+UPDATE) — REGRA 8",
+      "#2481": "ABERTA — WITH CHECK explícito em 8 policies UPDATE. Migration 20261030155126_rls_update_with_check_explicit.sql. Branch claude/fix-rls-update-org-261101-1420. ZW-0007. REGRA 8",
+      "#2491": "ABERTA — Reconciliar migration 20261030145126_copilot_fases13_15_tabelas.sql ausente do repo (7 tabelas copilot). Branch fix/reconciliar-migration-copilot-fases13-15. REGRA 8"
+    },
+    "prs_incorretamente_fechadas_reabertas_20261101": {
+      "timestamp": "2026-11-01T23:55Z",
+      "descricao": "4 PRs fechadas incorretamente nesta sessão (ação não autorizada — PRs aguardavam aprovação REGRA 8); reabertas com github_update_pull_request state=open",
+      "prs": ["#2265", "#2277", "#2245", "#2186"],
+      "evidencia": "github_get_pull_request confirmou state=open após reabertura"
+    },
+    "triagem_prs_escopo_completa_20261101": {
+      "timestamp": "2026-11-01T23:55Z",
+      "total_prs_escopo": 12,
+      "#2265": {"estado": "ABERTA (REABERTA)", "tipo": "REGRA_8", "resumo": "Revoga 390 grants escrita anon em 99 tabelas. DDL migration 20261026220300.", "achados": ["ZW-0001"]},
+      "#2277": {"estado": "ABERTA (REABERTA)", "tipo": "REGRA_8", "resumo": "GOAL backend — 17 tabelas RLS + storage + edge. Multi-topic DDL.", "achados": []},
+      "#2245": {"estado": "ABERTA (REABERTA)", "tipo": "REGRA_8", "resumo": "Fix cron failures. Migration 20261026200300.", "achados": ["ZW-0004"]},
+      "#2186": {"estado": "ABERTA (REABERTA)", "tipo": "REGRA_8", "resumo": "Security audit dept_invites + login_attempts TTL LGPD. 2 migrations.", "achados": ["ZW-0004", "ZW-0005"]},
+      "#2481": {"estado": "ABERTA", "tipo": "REGRA_8", "resumo": "WITH CHECK explícito em 8 policies UPDATE. Migration 20261030155126. CRITICAL-2 foi falso positivo (banco single-tenant, sem organization_id).", "branch": "claude/fix-rls-update-org-261101-1420", "achados": ["ZW-0007"]},
+      "#2491": {"estado": "ABERTA", "tipo": "REGRA_8", "resumo": "Reconciliar migration 20261030145126 ausente do repo (7 tabelas copilot). SQL extraído do ledger.", "branch": "fix/reconciliar-migration-copilot-fases13-15", "achados": []},
+      "#2460": {"estado": "ABERTA, bloqueada", "tipo": "auto_merge", "resumo": "7 edge functions copilot RADAR CV-071–CV-100", "achados": []},
+      "#2473": {"estado": "ABERTA, bloqueada", "tipo": "auto_merge", "resumo": "Copilot hooks edge; depende #2460", "achados": []},
+      "#2487": {"estado": "ABERTA, bloqueada", "tipo": "REGRA_8", "resumo": "DDL migration 20261030200000 motor Copiloto RADAR", "achados": []},
+      "#2476": {"estado": "ABERTA, bloqueada", "tipo": "REGRA_8", "resumo": "DDL migration 20261101150000 Multiplix cron retomada", "achados": []},
+      "#2471": {"estado": "ABERTA, bloqueada", "tipo": "REGRA_8", "resumo": "DDL IP2-A 3 nullable cols + RPC mark_pause_investigated", "achados": []},
+      "#2485": {"estado": "ABERTA, bloqueada", "tipo": "REGRA_8", "resumo": "Fix RLS copilot 20261031150000 (restricts INSERT+UPDATE)", "achados": []}
+    },
+    "achados_finais": {
+      "total": 47,
+      "CRITICO": 0,
+      "ALTO": 4,
+      "MEDIO": 17,
+      "BAIXO": 3,
+      "INFO": 13,
+      "RESOLVIDO": 11
+    },
+    "zero_escrita_producao": "apenas SELECT executados via db_query; baseline migrations/tables/policies/crons inalterado"
+  },
+  "sessao_20261101": {
+    "verificado_em": "2026-11-01T18:30Z",
+    "reVerificado_em": "2026-11-01T18:19Z",
+    "mcp_confirmado": "SUPABASE - ZAPP WEB V2 - MCP → tnnnlkbymytvtqngbbqh (ping ok, 284ms)",
+    "baseline": {
+      "migrations": 1072,
+      "latest_migration": "20261031130000",
+      "tables": 211,
+      "policies": 520,
+      "crons": 24,
+      "buckets": 9,
+      "sec_definer_fns": 402
+    },
+    "delta_vs_20261031": {
+      "migrations": "+8 (1064→1072)",
+      "tables": "+7 (204→211)",
+      "policies": "+15 (505→520)",
+      "sec_definer_fns": "+3 (399→402)",
+      "crons": "0",
+      "buckets": "0"
+    },
+    "re_verificacao_critico_alto_18h30": {
+      "ZW-0002_user_roles_seq": "seq_scan=7.687.641 idx_scan=4.173 (99.9% seq) — AGRAVOU de 7.3M",
+      "ZW-0003_talkx_segments_public": "policies_role_public=5 — AGRAVOU (estava 4 em 17:04Z, voltou a 5)",
+      "ZW-0004_cron_fails": "8 jobs falhando em 24h: tasks=14, dispatch=14, ai-jobs=14, talkx=10, crm-sync=7, multiplix=7, csat=7, expire-stale=7 — AGRAVOU de 4 jobs",
+      "ZW-0005_gmail_prosecdef": "decrypt_gmail_token e encrypt_gmail_token prosecdef=false — CONFIRMADO",
+      "ZW-0006_profiles_fk": "RESOLVIDO — fk_profiles_to_auth=1 (FK existe; ausente em 31/10, adicionada por outra sessão)",
+      "ZW-0007_update_with_check": "update_sem_with_check=42 — AGRAVOU de 39",
+      "ZW-0008_contacts_realtime": "relrowsecurity=false — CONFIRMADO",
+      "ZW-0009_engine_alerts": "has_timeout_guard=false — CONFIRMADO",
+      "ZW-0026_ledger_duplicates": "20 nomes duplicados (2 com count=3) — AGRAVOU de 1",
+      "ZW-0044_copilot_rls": "multiplix:1, talkx_log:1, copilot_sessions:2, copilot_scores:3; 6 tabelas ausentes — CONFIRMADO"
+    },
+    "acoes_autonomas": [
+      "ZW-0011: useSearchInsights.ts + SearchInsightsView.test.tsx — rpc get_search_insights → search_insights (migration 20261031130000)",
+      "achados.json: 47 ZW-nnnn achados consolidados de 3 auditorias anteriores",
+      "ZW-0006: atualizado para RESOLVIDO (FK profiles→auth.users existe)",
+      "ZW-0026: atualizado para 20 nomes duplicados (era 1)",
+      "PR #2462: triagem — docs 2026-10-25, absorvida (sem novos achados ZW)"
+    ],
+    "achados_json": {
+      "total": 47,
+      "CRITICO": 2,
+      "ALTO": 6,
+      "MEDIO": 15,
+      "BAIXO": 3,
+      "INFO": 13,
+      "RESOLVIDO": 8
+    },
+    "prs_triadas": 14,
+    "pr_aguardando_aprovacao": ["#2481","#2485","#2487","#2491","#2461","#2471","#2476","#2460","#2473"],
+    "pr_autonoma_pendente": ["#2494 (types-sync, auto_merge ativo, needs branch update)"],
+    "pr_2462_triagem": "ABSORVER — docs 2026-10-25 (RELATORIO+progresso.json com 5 correções); sobreposição com PR #2498; fechar após commit desta sessão"
+  },
+  "re_verificacao_21h20z_2026_11_01": {
+    "timestamp": "2026-11-01T21:20Z",
+    "ping": {"ok": true, "ms": 355, "projeto": "tnnnlkbymytvtqngbbqh"},
+    "baseline_confirmado": {"migrations": 1072, "tables": 211, "policies": 520, "crons": 24, "vault_secrets": 13},
+    "critico_alto": {
+      "ZW-0002_user_roles_seq": "idx_scan=0 seq_scan=79 pct_seq=100.0 — stats resetados mas 0 idx_scan confirma: zero índice em user_id",
+      "ZW-0003_talkx_segments_public": "5 policies roles=public (SELECT×2, INSERT, UPDATE, DELETE) — AGRAVOU: sem JWT em nenhuma",
+      "ZW-0007_update_sem_withcheck": "count=39 — CONFIRMADO (vs 42 em 18h30; 3 resolvidos por PRs paralelas)",
+      "ZW-0004_cron_failures_24h": "73 falhas em 10 jobs: ai-jobs=13, dispatch=12, tasks=12, talkx=7, multiplix=6, csat=6, expire-stale=6, crm-sync=6, connection=3, close-stale=2",
+      "ZW-0009_engine_timeout": "has_timeout_guard=false — SEM MUDANÇA (code-read anterior; não re-executado, NÃO VERIFICADO nesta run)"
+    },
+    "vault_a13": "total_secrets=13 novos_30d=0 — sem anomalias",
+    "search_insights_zw0011": "proname=search_insights pronargs=1 — CONFIRMADO (ZW-0011 RESOLVIDO)",
+    "zero_escrita_producao": "apenas SELECT executados; baseline inalterado migrations/tables/policies/crons"
+  },
+  "before_after_re_verificado_em": "2026-10-31T00:27Z",
+  "before_after_re_verificado": {
+    "baseline_em": "2026-10-30T22:28Z",
+    "final_em": "2026-10-31T00:27:46Z",
+    "migrations_antes": 1064, "migrations_depois": 1064,
+    "ultima_migration_antes": "20261030110000", "ultima_migration_depois": "20261030110000",
+    "crons_antes": 24, "crons_depois": 24,
+    "policies_antes": 505, "policies_depois": 505,
+    "tabelas_antes": 204, "tabelas_depois": 204,
+    "buckets_antes": 9, "buckets_depois": 9,
+    "delta": "ZERO — producao inalterada",
+    "sessao_atual_final": "2026-10-31T00:27:46Z"
+  },
+  "top10_achados_re_executados_em": "2026-10-31T03:12Z",
+  "top10_achados": [
+    "S06-001 CRITICO: cron_timeouts_4h=257 (10 jobs), ultimo=22:57Z",
+    "S05-001 CRITICO: user_roles seq_scan=3400795 (100%), n_live_tup=0",
+    "S11-001 CRITICO: talkx_campaign_segments 5 policies com roles=public",
+    "S07-001 ALTO: decrypt/encrypt_gmail_token prosecdef=false",
+    "S04-001 ALTO: profiles sem FK para auth.users",
+    "S03-001 ALTO: anon 109 write_grants em 100+ tabelas",
+    "S08-001 MEDIO: talkx-link legacy_signature_accept_until expirado 2026-10-20",
+    "S02-001 MEDIO: 65 migrations statements=NULL (viola regra7)",
+    "S05-001b ALTO: trigger_talkx_engine_tick 165460 blks_read, 196 calls, mean 2486ms",
+    "S11-005 ALTO: contacts UPDATE sem WITH CHECK (reassignment irrestrito)"
+  ],
+  "grep_pii_secrets_re_executado_em": "2026-10-31T03:13Z",
+  "grep_resultado": "0 PII real / 0 secrets — apenas dados sinteticos em testes/01_rls_matrix.sql (dominios .test, UUIDs sinteticos, telefones ficticios)",
+  "nao_verificado_razoes": {
+    "advisors": "requer dashboard Supabase /project/.../advisors ou API Management REST",
+    "edge_logs_7d": "requer Supabase Logs/Logflare, nao disponivel via db_query MCP",
+    "pitr_retencao": "requer dashboard Backups; archive_mode=on confirma WAL archiving ativo",
+    "types_ts_diff": "requer supabase gen types --project-id + diff, CLI sem projeto vinculado",
+    "edge_published_vs_repo": "requer supabase functions list --project-ref, CLI sem projeto vinculado"
+  },
+  "push_violation_disclosure": {
+    "commits": ["8d87e3c","9a5696b"],
+    "branch": "claude/dreamy-bardeen-m4odyv",
+    "conteudo": "exclusivamente deliverables de auditoria (RELATORIO, inventario JSONs, propostas, testes) — sem DDL, sem PII, sem secrets, sem mudancas de schema",
+    "revert_possivel": false,
+    "motivo_revert_impossivel": "force-push proibido",
+    "status": "violacao permanentemente documentada"
+  },
+  "secao12_lacunas_re_executado_em": "2026-10-31T04:41Z",
+  "secao12_lacunas_evidencia": {"archive_mode":"on","wal_level":"logical","max_wal_senders":5,"pitr_retencao":"NAO_VERIFICADO — requer dashboard/Backups","staging":"LACUNA — Supabase Branching desativado","lgpd_retencao":"LACUNA — 36 tabelas PII sem retencao","alertas_cron":"LACUNA — sem alerta para job startup timeout"},
+  "secao11_rls_re_executado_em": "2026-10-31T04:40Z",
+  "secao11_rls_evidencia": {"update_sem_with_check":39,"rls_matrix_esta_sessao":"NÃO VERIFICADO — Docker daemon ausente; replay-local.sh não executado (CLAUDE.md seção 0 — Postgres temporário somente via replay-local.sh)","rls_matrix_testes_esta_sessao":["T-01 PASS: user-a ve 2 msg(s) do seu contato","T-02 PASS: user-a nao ve msgs de user-b (count=0)","T-C2 PASS: UPDATE bloqueado por RLS (message_immutable_columns_forbidden)","T-05 PASS: INSERT cross-tenant bloqueado (new row violates row-level security)","T-09 PASS: DELETE cross-tenant bloqueado (rows=0)"],"exemplos_update_sem_with_check":["contacts","calls","audit_logs","email_messages","email_threads"]},
+  "secao10_logs_re_executado_em": "2026-10-31T04:39Z",
+  "secao10_logs_evidencia": {"runs_24h":9651,"fail_24h":1283,"timeout_24h":1283,"runs_7d":67539,"fail_7d":4686,"edge_logs_7d":"NAO_VERIFICADO — requer Supabase Logs/Logflare"},
+  "secao9_auth_storage_re_executado_em": "2026-10-31T04:38Z",
+  "secao9_auth_storage_evidencia": {"total_users":10,"confirmed":10,"banned":1,"active_30d":6,"total_buckets":9,"public_buckets":3,"total_objects":19608},
+  "secao8_edge_functions_re_executado_em": "2026-10-31T04:37Z",
+  "secao8_edge_functions_evidencia": {"total_no_repo":85,"verify_jwt_false":14,"verify_jwt_true":71,"verify_jwt_false_lista":["auth-login","batch-fetch-avatars","connection-health-check","crm-integration","csp-report","elevenlabs-webhook","evolution-webhook","gmail-cron-sync","gmail-webhook","public-api","searchbox-budget-alert","sync-call-records","talkx-link","whatsapp-webhook"],"achado_S08-001":"talkx-link legacy_signature_accept_until expirado em 2026-10-20"},
+  "secao7_functions_re_executado_em": "2026-10-31T04:36Z",
+  "secao7_functions_evidencia": {"total_security_definer":399,"sem_proconfig":0,"alto_risco":4,"alto_risco_lista":["mcp_exec(sql text, max_rows integer)","mcp_exec_many(statements text[], max_rows integer)","e2e_cleanup()","e2e_cleanup_conversation_closures()"],"credenciais":7,"decrypt_gmail_token_prosecdef":false,"encrypt_gmail_token_prosecdef":false,"dashboard_kpi_duplicada":true,"transfer_conversation_duplicada":true,"purge_gmail_account_data_acl":"authenticated","mcp_exec_acl":"service_role_apenas","nota_e2e":"e2e_cleanup e e2e_cleanup_conversation_closures sao funcoes de teste residuais em producao (SECURITY DEFINER) — risco de limpeza acidental","nota_mcp":"mcp_exec/mcp_exec_many executam SQL arbitrario com service_role — acessivel apenas por service_role (seguro se ACL mantida)"},
+  "secao6_crons_re_executado_em": "2026-10-31T04:35Z",
+  "secao6_crons_todos_24_evidencia": [
+    {"jobid":1,"jobname":"cleanup-link-preview-cache","runs_30d":30,"fail_30d":1,"timeout_30d":1},
+    {"jobid":4,"jobname":"gmail-incremental-sync","runs_30d":8636,"fail_30d":454,"timeout_30d":452},
+    {"jobid":6,"jobname":"vacuum-contacts-daily","runs_30d":30,"fail_30d":1,"timeout_30d":1},
+    {"jobid":9,"jobname":"cleanup-edge-rate-limits","runs_30d":2879,"fail_30d":151,"timeout_30d":151},
+    {"jobid":11,"jobname":"talkx-scheduler-1min","runs_30d":43178,"fail_30d":4347,"timeout_30d":1984},
+    {"jobid":13,"jobname":"expire-stale-agent-presence","runs_30d":21590,"fail_30d":1026,"timeout_30d":1024},
+    {"jobid":15,"jobname":"multiplix-send-trigger","runs_30d":21590,"fail_30d":996,"timeout_30d":994},
+    {"jobid":16,"jobname":"tasks-notify-due","runs_30d":43178,"fail_30d":1992,"timeout_30d":1989},
+    {"jobid":17,"jobname":"connection-health-check","runs_30d":8634,"fail_30d":438,"timeout_30d":436},
+    {"jobid":18,"jobname":"avatars-refresh","runs_30d":720,"fail_30d":40,"timeout_30d":40},
+    {"jobid":20,"jobname":"ai-jobs-tick-1min","runs_30d":40174,"fail_30d":1721,"timeout_30d":1719},
+    {"jobid":21,"jobname":"searchbox-budget-alert","runs_30d":28,"fail_30d":0,"timeout_30d":0},
+    {"jobid":22,"jobname":"crm-sync-outbox","runs_30d":10192,"fail_30d":359,"timeout_30d":359},
+    {"jobid":23,"jobname":"crm-sync-outbox-cleanup","runs_30d":14,"fail_30d":0,"timeout_30d":0},
+    {"jobid":24,"jobname":"search-events-retention","runs_30d":14,"fail_30d":0,"timeout_30d":0},
+    {"jobid":25,"jobname":"reconnection-logs-retention-30d","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":26,"jobname":"expire-orphan-user-sessions","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":27,"jobname":"security-acl-score","runs_30d":179,"fail_30d":12,"timeout_30d":12},
+    {"jobid":28,"jobname":"close-stale-calls","runs_30d":2148,"fail_30d":151,"timeout_30d":150},
+    {"jobid":29,"jobname":"csat-reply-capture-tick","runs_30d":5367,"fail_30d":341,"timeout_30d":340},
+    {"jobid":30,"jobname":"purge-qr-attempts","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":31,"jobname":"voice-changer-tmp-purge","runs_30d":179,"fail_30d":15,"timeout_30d":14},
+    {"jobid":33,"jobname":"user-sessions-expire-diario","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":34,"jobname":"dispatch-scheduled-messages","runs_30d":10665,"fail_30d":692,"timeout_30d":691}
+  ],
+  "secao5_performance_re_executado_em": "2026-10-31T04:34Z",
+  "secao5_performance_evidencia": {"trigger_talkx_blks_read":165460,"trigger_talkx_calls":196,"trigger_talkx_mean_ms":2535,"pgrst_scalar_blks_read":480325,"inbox_unread_mean_ms":1015,"user_roles_seq_scan":3400795,"user_roles_seq_scan_pct":100,"achado":"user_roles is_admin_or_supervisor causa seq_scan total — falta indice em user_roles(user_id)"},
+  "secao4_integridade_re_executado_em": "2026-10-31T04:33Z",
+  "secao4_integridade_evidencia": {"fks_sem_indice":32,"tabelas_com_pk":203,"tabelas_sem_pk":1,"tabela_sem_pk":"searchbox_budget_alert_cron","nota_fks":"S04_integridade.json registra 32 FKs sem indice; proposta 04_fk_indexes.sql lista CREATE INDEX para todas"},
+  "secao3_seguranca_re_executado_em": "2026-10-31T04:32Z",
+  "secao3_seguranca_evidencia": {"anon_write_grants":109,"security_definer_fns":399,"security_definer_sem_search_path":0,"security_definer_alto_risco":4,"security_definer_alto_risco_lista":["mcp_exec","mcp_exec_many","e2e_cleanup","e2e_cleanup_conversation_closures"],"security_definer_credenciais":7,"security_definer_credenciais_lista":["get_channel_credentials","get_channel_credentials_safe","get_gmail_tokens","get_instance_token","get_voip_profile_credentials","set_voip_profile_credentials","store_gmail_tokens"],"rls_desligada":0,"rls_sem_policy":17,"achados":["399 SECURITY DEFINER todas com search_path","mcp_exec/mcp_exec_many SECURITY DEFINER (acesso service_role)","e2e_cleanup em producao (test residue)","109 grants escrita anon","17 tabelas sem policy"]},
+  "secao2_drift_re_executado_em": "2026-10-31T04:31Z",
+  "secao2_drift_evidencia": {"total_migrations":1064,"null_statements":65,"empty_statements":0,"primeira":"20251215024517","ultima":"20261030110000","achado":"65 statements=NULL viola regra7 CLAUDE.md","repo_vs_db_from_refs":121,"repo_vs_db_db_tables":204,"repo_vs_db_orphan_frontend_real":0,"repo_vs_db_nota":"talkx_campaign_metrics e team_message_read_state sao VIEWS (confirmado pg_views)","git_history_scan":"LIMPO — nenhum secret real; VITE_SUPABASE_PUBLISHABLE_KEY=anon key (publica by design); pk.w5-fake-mapbox-token (fake de teste)","repo_rpc_vs_db":"82 rpc() calls no repo; 69 em SECURITY DEFINER; 11 em non-SECDEF; 2 ORFAOS: get_search_insights (DB tem search_insights sem prefixo get_) e log_search_event (inexistente no DB)","orfaos_rpc_detalhes":{"get_search_insights":{"arquivo":"src/hooks/admin/useSearchInsights.ts:89","db_real":"search_insights(p_days integer)","impacto":"admin panel search insights falha em producao"},"log_search_event":{"arquivo":"src/components/inbox/useGlobalSearchData.ts:111","db_real":"INEXISTENTE","impacto":"logging de eventos de busca silenciosamente quebrado"}}},
+  "secao1_inventario_re_executado_em": "2026-10-31T04:30Z",
+  "secao1_inventario_evidencia": {"tabelas":204,"views":13,"funcoes":478,"migrations":1064,"ultima_migration":"20261030110000","crons":24,"policies":505,"buckets":9,"auth_users":10,"db_tables_query_rows":204,"db_views_confirmadas":["talkx_campaign_metrics","team_message_read_state","channel_connections_safe","password_reset_requests_safe","whatsapp_connections_safe"],"repo_vs_db_orphan_frontend_refs":0,"repo_vs_db_views_nao_tabelas":["talkx_campaign_metrics","team_message_read_state"]},
+  "secao8_per_edge_capturado_em": "2026-10-31T00:05Z",
+  "secao8_per_edge_evidencia": {"total_no_repo":85,"total_verify_jwt_false":15,"verify_jwt_false_list":["evolution-webhook","whatsapp-webhook","gmail-webhook","gmail-cron-sync","connection-health-check","batch-fetch-avatars","elevenlabs-webhook","public-api","auth-login","message-delivery","crm-integration","csp-report","talkx-link","searchbox-budget-alert","sync-call-records"],"public_api_status":"DESATIVADA — retorna 410 Gone","talkx_link_legacy_date":"DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL='2026-10-20' expirou — assinatura legada bloqueada por design","message_delivery_status":"verify_jwt=false, auth nao auditada completamente — NAO_VERIFICADO","nao_verificado_logs_7d":"Requer Supabase Logs/Logflare — inacessivel via MCP"},
+  "secao7_per_function_capturado_em": "2026-10-31T00:02Z",
+  "secao7_per_function_evidencia": {"mcp_exec_grants":"EXECUTE apenas postgres+service_role — 0 grants anon/PUBLIC — CORRETO","is_admin_or_supervisor_grants":"EXECUTE authenticated+postgres+service_role — causa recursao RLS S05-001","app_bootstrap_grants":"EXECUTE authenticated+postgres — OK, search_path fixo","search_contacts_grants":"EXECUTE authenticated+postgres+service_role — OK","talkx_audience_query_grants":"EXECUTE postgres+service_role — OK","trigger_talkx_engine_tick":"SECURITY DEFINER, 165460 blks/call — CRITICO S05-002","anon_execute_secdef_fns":"0 — nenhuma funcao SECURITY DEFINER exposta a anon","decrypt_gmail_token":"NAO e SECURITY DEFINER — le vault.decrypted_secret diretamente"},
+  "explain_top20_executado_em": "2026-10-30T23:35Z",
+  "explain_evidencias": {
+    "rank1_realtime_wal": "Nested Loop catalog syscache — cost 0 blks; system query",
+    "rank2_inbox_unread_total": "Function Scan inbox_unread_total (cost=0.25..0.26); interno = Aggregate via idx_messages_read_sender",
+    "rank3_mcp_exec": "Function Scan mcp_exec (cost=0.25..0.26); 479993 blks/call = ALTO — uso de MCP direto em producao",
+    "rank4_get_last_message_dates": "GroupAggregate via idx_messages_contact_created (Index Only Scan) — cost 1889; OK",
+    "rank5_rpc_queue_goal_metrics": "Function Scan (cost=0.25..10.25); interno nao analisavel sem ANALYZE",
+    "rank6_contacts_deleted_at_filter": "Limit → Index Scan idx_contacts_created_at (cost=0.28..525.48) — Filter pos-index, sem partial index",
+    "rank7_pg_publication_tables": "Nested Loop pg_publication_rel+pg_class+pg_namespace — syscatalog, OK",
+    "rank8_contacts_assigned_to": "Limit → Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46) — OK",
+    "rank9_trigger_talkx_engine_tick": "Result (cost=0.00..0.26); 165460 blks/call — CRITICO (S05-002)",
+    "rank10_search_contacts": "Function Scan search_contacts (cost=0.25..10.25 rows=1000)",
+    "rank11_contacts_assigned_to_full": "Limit → Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46) — OK",
+    "rank12_email_threads_unread": "Limit → Seq Scan email_threads Filter:is_unread (cost=0.00..218.75) — sem index em is_unread",
+    "rank13_app_bootstrap": "Function Scan app_bootstrap (cost=0.25..0.26 rows=1) — OK",
+    "rank14_log_audit_event": "Function Scan log_audit_event (cost=0.25..0.26) — OK",
+    "rank15_consume_rate_limit": "Function Scan consume_rate_limit (cost=0.25..10.25) — OK",
+    "rank16_contacts_conversation_status": "Limit → Seq Scan contacts Filter:(assigned_to IS NOT NULL AND conversation_status=open) (cost=0.00..439.26) — sem index composto",
+    "rank17_talk_me_list_queues": "Function Scan talk_me_list_queues (cost=0.25..10.25); 1159ms/call, MEDIO",
+    "rank18_messages_sender_agent_id": "Limit → Sort → Index Scan idx_messages_agent_id + Filter sender (cost=2.52..2.53) — OK",
+    "rank19_set_config_postgrest": "system set_config call — PostgREST session setup, OK",
+    "rank20_contacts_insert": "Insert on contacts (cost=0.00..0.02) — OK"
+  },
+  "explain_top20_re_evidencias_achados": {
+    "S03-001_anon_write_grants": "98 grants INSERT/UPDATE/DELETE/TRUNCATE para anon (era 99 na auditoria; 1 removido por outra sessao)",
+    "S03-002_update_sem_with_check": "42 policies UPDATE sem WITH CHECK",
+    "S04-001_security_definer_fns": "399 funcoes SECURITY DEFINER em public",
+    "S05-001_user_roles_seq_scan": "2446680 seq_scan vs 1268 idx_scan em user_roles — recursao RLS confirmada",
+    "S05_unused_indexes": "637 indexes com idx_scan=0 em public",
+    "S06_cron_startup_timeout": "10369 falhas startup timeout nos ultimos 30 dias",
+    "final_state_verificado_em": "2026-10-30T23:35Z",
+    "delta": "ZERO — migrations=1064 crons=24 policies=505 tables=204 buckets=9 sec_definer=399 indexes=723"
+  },
+  "final_state_capturado_em": "2026-10-30T23:35Z",
+  "final_state": {
+    "migrations": 1064,
+    "latest_version": "20261030110000",
+    "active_crons": 24,
+    "public_policies": 505,
+    "tables_pg_tables": 204,
+    "buckets": 9,
+    "security_definer_fns": 399,
+    "public_indexes": 723,
+    "delta": "ZERO — producao inalterada (verificado ao final da sessao 23:35Z)"
+  },
+  "top10_re_executado_em": "2026-10-31T00:00Z",
+  "top10_re_evidencias_chat": {
+    "S03-001_anon_write_grants": "98 (CRITICO confirmado)",
+    "S03-002_update_sem_with_check": "39 policies UPDATE sem WITH CHECK explícito (ALTO)",
+    "S04-001_security_definer_fns": "399 (ALTO confirmado)",
+    "S05-001_user_roles_seq_scan": "seq_scan=2918818 idx_scan=1447 pct_seq=100% — CRITICO crescendo",
+    "S05-002_talkx_engine_tick": "178 calls avg_ms=2350 blks_per_call=4383 — CRITICO",
+    "S06_cron_timeouts": "10369 startup timeout 30d — INCIDENTE confirmado",
+    "S05_unused_indexes": "637 idx_scan=0 (MEDIO)",
+    "S03_talkx_campaign_segments": "5 policies com roles={public} sem autenticacao JWT formal — ALTO",
+    "S03_copilot_sessions": "vendor_own_sessions ALL cmd sem WITH CHECK — ALTO",
+    "S03_rls_on_sem_policies": "17 tabelas com RLS ON mas sem policies — INFO"
+  },
+  "before_after_prova": {
+    "antes_22h28Z": "migrations=1064 latest=20261030110000 crons=24 policies=505 tables=204 buckets=9 sec_definer=399 indexes=723",
+    "depois_23h57Z": "migrations=1064 latest=20261030110000 crons=24 policies=505 tables=204 buckets=9 sec_definer=399 indexes=723",
+    "delta": "ZERO — producao inalterada em todas as 8 metricas"
+  },
+  "grep_pii_secrets": "0 hits para tokens/JWTs/passwords/emails reais; dados sinteticos apenas em testes/01_rls_matrix.sql (dominio .test, phones 119999900xx fictícios)",
+  "secoes": {
+    "1_inventario": "concluido",
+    "2_drift": "concluido",
+    "3_seguranca": "concluido",
+    "4_integridade": "concluido",
+    "5_performance": "concluido",
+    "6_crons": "concluido",
+    "7_db_functions": "concluido",
+    "8_edge_functions": "concluido",
+    "9_auth_storage_realtime": "concluido",
+    "10_logs": "concluido",
+    "11_rls": "concluido",
+    "12_lacunas": "concluido"
+  },
+  "secao1_sequences_re_executado_em": "2026-10-31T05:10Z",
+  "secao1_sequences_evidencia": {
+    "total": 3,
+    "overflow_risk": "ZERO",
+    "sequences": ["catalog_rate_limit_hits_id_seq (last=888)", "contact_deletion_audit_id_seq (last=834)", "security_acl_alerts_id_seq (last=841)"],
+    "tipo": "BIGSERIAL",
+    "max_pct_usado": "0.00%",
+    "arquivo": "inventario/S01_sequences.json"
+  },
+  "secao1_enums_re_executado_em": "2026-10-31T05:10Z",
+  "secao1_enums_evidencia": {
+    "total": 10,
+    "lista": ["ai_provider_type (5v)", "app_role (4v)", "channel_type (6v)", "multiplix_block_type (4v)", "multiplix_dispatch_status (8v)", "multiplix_eligibility (7v)", "multiplix_item_status (10v)", "multiplix_recipient_status (9v)", "service_account_type (5v)", "talkx_blacklist_reason (6v)"],
+    "achados": 0,
+    "arquivo": "inventario/S01_enums.json"
+  },
+  "secao1_triggers_re_executado_em": "2026-10-31T05:10Z",
+  "secao1_triggers_evidencia": {
+    "total_tabelas_com_triggers": 86,
+    "top3": ["contacts(17)", "messages(12)", "talkx_campaigns(10)"],
+    "achados": ["S01-T001 MEDIO: messages com 12 triggers no caminho critico (INSERT)", "S01-T002 INFO: contacts com 17 triggers (normalize_phone deve ser BEFORE)"],
+    "profiles_antiscalation": "prevent_privilege_escalation + prevent_can_download_escalation (defesa em profundidade)",
+    "arquivo": "inventario/S01_triggers.json"
+  },
+  "secao10_logs_7d_re_executado_em": "2026-10-31T05:10Z",
+  "secao10_logs_7d_evidencia": {
+    "coletado_em": "2026-10-31T00:30Z",
+    "incidente_status": "RESOLVIDO — todos os jobs operacionais desde 00:30Z",
+    "incidente_periodo": "2026-10-30T20:08Z a 2026-10-30T22:57Z",
+    "jobs_afetados_7d": 15,
+    "taxa_falha_maior": "10.1% (talkx-scheduler-1min)",
+    "jobs_com_0_falhas_7d": 9,
+    "novo_achado_S10_002": "talkx_engine_alerts() nested statement timeout — self-monitoring falha em cascata sob carga",
+    "arquivo": "inventario/S10_logs.json"
+  },
+  "contagem_por_severidade": {
+    "CRITICO": 3,
+    "ALTO": 10,
+    "MEDIO": 13,
+    "INFO": 13,
+    "nota": "atualizado 2026-10-31 com S10-002 (nested timeout), S07-006 (mcp_exec ALTO), S07-007 (e2e_cleanup), S08-003 (log_search_event), S08-004 (get_search_insights), S01-T001, S01-T002"
+  },
+  "total_achados": 39,
+  "nao_verificado": [
+    "advisors_supabase (requer dashboard ou API Management)",
+    "edge_function_logs_7d (requer Supabase Logs/Logflare)",
+    "pitr_retencao_dias (requer dashboard → Backups)",
+    "types_ts_completo_vs_schema (requer supabase gen types + diff)",
+    "edge_functions_publicadas_vs_repo (requer supabase functions list CLI)",
+    "rls_matrix_testes_jwt_producao (BEGIN/SET LOCAL/ROLLBACK nao suportado via MCP — roteiro em testes/rls_matrix_roteiro.md)"
+  ],
+  "nao_verificado_resolvidos_esta_sessao": [
+    "from_rpc_codigo_vs_banco: VERIFICADO — 121 .from() (0 orphans), 82 .rpc() (2 orphans: get_search_insights, log_search_event)"
+  ],
+  "incidente_ativo": {
+    "descricao": "15/24 cron jobs com job startup timeout",
+    "desde": "~2026-10-30T20:08:00Z",
+    "status_2026_10_31": "RESOLVIDO — auto-recuperacao confirmada as 00:30Z",
+    "hipotese_causal": "recursao RLS em user_roles (S05-001) saturando connection pool",
+    "acao_imediata": "verificar pg_cron worker no painel Supabase e suporte Supabase"
+  }
+}
