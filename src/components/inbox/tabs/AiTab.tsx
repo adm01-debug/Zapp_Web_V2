@@ -16,6 +16,8 @@ import { ConversationSummary } from '../ConversationSummary';
 import { ObjectionDetector } from '../ObjectionDetector';
 import { CopilotPanel } from '../copilot/CopilotPanel';
 import { LiveSuggestions } from '../copilot/LiveSuggestions';
+import { useCopilotSession } from '@/hooks/copilot/useCopilotSession';
+import { useLiveSuggestions } from '@/hooks/copilot/useLiveSuggestions';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { Conversation, Message } from '@/types/chat';
 
@@ -41,6 +43,9 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
   const { data: latestAnalysis, isError: analysisError, refetch: refetchAnalysis } = useLatestAnalysis(contactId);
   const { actions: nextActions, loading: nextActionsLoading } = useNextBestAction(contactId, contactName);
   const { data: leadScoreData } = useContactLeadScore(contactId);
+
+  const { session, refresh: refreshSession } = useCopilotSession(contactId);
+  const live = useLiveSuggestions(session?.id ?? null, refreshSession);
 
   const interesses = useMemo(() => conversation.contact.tags ?? [], [conversation.contact.tags]);
   const { data: products = [], isLoading: productsLoading } = useRecommendedProducts(contactId, interesses);
@@ -106,7 +111,16 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
       </SectionCard>
 
       <SectionCard icon={Lightbulb} title="Plays em tempo real" tone="purple">
-        <LiveSuggestions sessionId={null} onUseText={onUseSuggestion} />
+        <LiveSuggestions
+          suggestions={live.suggestions}
+          loading={live.loading}
+          onUse={onUseSuggestion}
+          onUseSplit={(parts) => onUseSuggestion(parts.join('\n'))}
+          onRefresh={() => {
+            refreshSession();
+            live.refresh();
+          }}
+        />
       </SectionCard>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
