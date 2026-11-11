@@ -163,6 +163,17 @@ export type Database = {
         self.assertFalse((self.root / "AGENTS.md").exists())
 
 
+class ModuleKeyTests(unittest.TestCase):
+    def test_monorepo_package_root_file_joins_its_package_module(self):
+        # Arquivo direto na raiz do pacote (ex.: packages/ui/index.ts) tem só 3 segmentos
+        # (pacote/arquivo, sem subpasta) e precisa cair no módulo "packages/ui" — não virar
+        # seu próprio módulo com o path completo (fragmenta 03-MODULOS.md em 1 módulo por arquivo).
+        self.assertEqual(generator.module_key("packages/ui/index.ts"), "packages/ui")
+        self.assertEqual(generator.module_key("apps/web/main.ts"), "apps/web")
+        # Com subpasta real, o agrupamento fica por subpasta (comportamento existente preservado).
+        self.assertEqual(generator.module_key("packages/ui/src/Button.tsx"), "packages/ui/src")
+
+
 class CacheValidityTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix="context-rules-cache-")
