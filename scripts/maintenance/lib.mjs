@@ -337,20 +337,24 @@ export async function acquire(directory) {
     }
     try {
       let stale = false;
+      // owner.json ausente, corrompido (JSON invalido) ou sem pid utilizavel contam
+      // como o mesmo caso: sem dono verificavel, a trava so pode ficar stale pelo
+      // timeout de mtime. So um owner.json com pid valido e vivo bloqueia de verdade.
+      let owner = null;
       try {
-        const owner = JSON.parse(await readFile(path.join(directory, 'owner.json'), 'utf8'));
-        if (Number.isSafeInteger(owner.pid) && owner.pid > 1) {
-          try {
-            process.kill(owner.pid, 0);
-          } catch (e) {
-            stale = e.code === 'ESRCH';
-          }
+        owner = JSON.parse(await readFile(path.join(directory, 'owner.json'), 'utf8'));
+      } catch {
+        owner = null;
+      }
+      if (owner && Number.isSafeInteger(owner.pid) && owner.pid > 1) {
+        try {
+          process.kill(owner.pid, 0);
+        } catch (e) {
+          stale = e.code === 'ESRCH';
         }
-      } catch (e) {
-        if (e.code === 'ENOENT') {
-          const info = await stat(directory).catch(() => null);
-          stale = info && Date.now() - info.mtimeMs > 300000;
-        }
+      } else {
+        const info = await stat(directory).catch(() => null);
+        stale = info && Date.now() - info.mtimeMs > 300000;
       }
       if (!stale)
         throw new MaintenanceError(
@@ -373,11 +377,14 @@ export async function acquire(directory) {
     }
   }
   const token = randomUUID();
-  await writeFile(
-    path.join(directory, 'owner.json'),
-    JSON.stringify({ pid: process.pid, token, startedAt: new Date().toISOString() }),
-    { mode: 0o600 }
-  );
+  // writeJson (temp+rename atomico) em vez de writeFile direto: um SIGKILL/OOM no
+  // meio da escrita nao pode deixar owner.json truncado, o que travaria toda
+  // execucao futura (JSON corrompido sem pid valido -> skipped_busy permanente).
+  await writeJson(path.join(directory, 'owner.json'), {
+    pid: process.pid,
+    token,
+    startedAt: new Date().toISOString(),
+  });
   return async () => {
     const owner = JSON.parse(await readFile(path.join(directory, 'owner.json'), 'utf8'));
     if (owner.token !== token) fail('Dono da trava mudou; limpeza interrompida');
