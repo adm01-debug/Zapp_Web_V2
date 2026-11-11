@@ -77,6 +77,7 @@ vi.mock('@/components/inbox/chat/ChatSearchBar', () => ({
   },
 }));
 vi.mock('@/components/inbox/chat/ChatDialogs', () => ({ ChatDialogs: () => null }));
+vi.mock('@/components/inbox/chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
 vi.mock('@/components/inbox/chat/useChatPanelHandlers', () => ({
   useChatPanelHandlers: () => ({
     inputValue: '', inputRef: { current: null }, isSending: false, isRecordingAudio: false,
