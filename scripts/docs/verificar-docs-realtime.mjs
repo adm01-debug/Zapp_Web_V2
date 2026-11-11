@@ -189,10 +189,18 @@ for (const linha of inventario.split('\n')) {
   }
 
   if (celulas.length === 2) {
-    const migration = soBackticks(celulas[1]).find((c) => c.endsWith('.sql'));
     const tabelas = soBackticks(celulas[0]).filter((t) => /^[a-z_][a-z0-9_]*$/.test(t));
-    if (!migration || tabelas.length === 0) continue;
+    if (tabelas.length === 0) continue;
+    // Coluna 0 já é inequívoca (lista de tabelas entre crases): a partir daqui a linha É
+    // da tabela tabela→migration, então a 2ª coluna tem de citar um .sql entre crases. Sem
+    // essa exigência, um erro de digitação (crase faltando) fazia a linha ser ignorada em
+    // silêncio em vez de reprovar — exatamente o drift que este guard existe para pegar.
+    const migration = soBackticks(celulas[1]).find((c) => c.endsWith('.sql'));
     migrationsCitadas += 1;
+    if (!migration) {
+      errar(`${DOCS[0]}: linha com tabela(s) ${tabelas.join(', ')} sem nome de migration .sql entre crases na 2ª coluna`);
+      continue;
+    }
     const rel = `supabase/migrations/${migration}`;
     if (!existsSync(resolve(RAIZ, rel))) {
       errar(`${DOCS[0]}: migration citada não existe: ${migration}`);
