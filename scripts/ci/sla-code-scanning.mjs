@@ -16,6 +16,12 @@ import { fileURLToPath } from 'node:url';
 
 export const SLA_DIAS = { alto: 14, baixo: 30 };
 
+// jssecurity:S5145 — `rule.id` e `location.path` vêm do alerta de Code Scanning
+// (API do GitHub, podendo refletir um upload de SARIF de terceiro acionado por PR)
+// e entram no `::error::` emitido abaixo. Quebras de linha / caracteres de controle
+// são neutralizados para impedir que esse conteúdo forje uma linha de log nova.
+const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 // security_severity_level (low/medium/high/critical) e o campo de severidade de
 // seguranca; regras sem ele (qualidade) usam rule.severity: error conta como alto.
 export function nivel(alerta) {
@@ -31,8 +37,9 @@ export function avaliarSla(alertas, agoraMs = Date.now()) {
     const prazo = sev === 'high' || sev === 'critical' ? SLA_DIAS.alto : SLA_DIAS.baixo;
     const dias = Math.floor((agoraMs - new Date(a.created_at).getTime()) / 86_400_000);
     if (dias > prazo) {
-      const local = a.most_recent_instance?.location?.path ?? '?';
-      violacoes.push(`${sev.toUpperCase()} (${dias}d > ${prazo}d) — #${a.number}: ${a.rule?.id ?? '?'} em ${local}`);
+      const local = semQuebra(a.most_recent_instance?.location?.path ?? '?');
+      const ruleId = semQuebra(a.rule?.id ?? '?');
+      violacoes.push(`${sev.toUpperCase()} (${dias}d > ${prazo}d) — #${a.number}: ${ruleId} em ${local}`);
     }
   }
   return { total: alertas.length, violacoes };
