@@ -75,9 +75,11 @@ for (const file of files) {
     }
     porArquivo.push({ arquivo: file, assertivas });
     for (const a of assertivas) {
-      if (a.status === 'FAIL') console.error(`  ✗ ${a.id}: ${a.detail}`);
-      else if (a.status === 'SKIP') console.log(`  - ${a.id}: SKIP${a.detail ? ` (${a.detail})` : ''}`);
-      else console.log(`  ✓ ${a.id}`);
+      const id = semQuebra(a.id);
+      const detail = semQuebra(a.detail);
+      if (a.status === 'FAIL') console.error(`  ✗ ${id}: ${detail}`);
+      else if (a.status === 'SKIP') console.log(`  - ${id}: SKIP${detail ? ` (${detail})` : ''}`);
+      else console.log(`  ✓ ${id}`);
     }
   } catch (e) {
     console.error(`  ERROR: ${e.message}`);
