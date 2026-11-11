@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b2967b43b9466dcd3bc2b468102d942eca0cfecb` (2026-11-11T00:44:36-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `ce06abc4b07938c259674fb08ee574417acc4855` (2026-11-11T01:14:10-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 887818 |
+| linhas_codigo | 887829 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56699 nós · 117165 arestas · 4155 comunidades · grafo do commit `b2967b43`
+- 56699 nós · 117165 arestas · 4155 comunidades · grafo do commit `ce06abc4`
 - comunidades maiores: cn (860), TalkXSuppression.tsx (825), badge.tsx (698), react (697), vitest (615), lucide-react (585), validation.ts (526), ExternalProductManagement.tsx (483), ref_node_assert (421), @tanstack/react-query (366), ref_node_fs (325), multiplix-send/index.ts (314)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `ce06abc` fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)
 - 2026-11-11 `b2967b4` fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)
 - 2026-11-11 `db960cd` fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)
 - 2026-11-10 `7f33c27` fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `09df718` Impede aprovar mutações sem executar testes (#2923)
 - 2026-11-10 `f120344` chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)
 - 2026-11-10 `d39dc11` chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)
-- 2026-11-10 `44cdce8` Recupera o rate limit no download das imagens do E2E isolado (#2925)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

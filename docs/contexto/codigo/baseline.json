@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b2967b43b9466dcd3bc2b468102d942eca0cfecb",
+  "commit": "ce06abc4b07938c259674fb08ee574417acc4855",
   "branch": "main",
-  "data_commit": "2026-11-11T00:44:36-03:00",
+  "data_commit": "2026-11-11T01:14:10-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ce06abc",
+    "data": "2026-11-11",
+    "assunto": "fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)"
+   },
    {
     "sha": "b2967b4",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "5bdf733",
     "data": "2026-11-10",
     "assunto": "fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)"
-   },
-   {
-    "sha": "7769490",
-    "data": "2026-11-10",
-    "assunto": "fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)"
    }
   ],
   "arquivos_mudados_7d": 664,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887818,
+  "linhas_codigo": 887829,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 211,
-   "linhas": 43812
+   "linhas": 43817
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -688,7 +688,7 @@
   },
   "scripts/vercel": {
    "arquivos": 2,
-   "linhas": 320
+   "linhas": 326
   },
   "src/App.tsx": {
    "arquivos": 1,

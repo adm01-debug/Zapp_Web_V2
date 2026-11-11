@@ -1476,11 +1476,11 @@
   {
    "arquivo": "scripts/ci/front-release-targets.unit.mjs",
    "tipo": "unit",
-   "linhas": 168,
+   "linhas": 173,
    "testa": [
     "scripts/vercel/verify-release-targets.mjs"
    ],
-   "casos": 9
+   "casos": 10
   },
   {
    "arquivo": "scripts/ci/gerar-matriz-edge-tabela.unit.mjs",

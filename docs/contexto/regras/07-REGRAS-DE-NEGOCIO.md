@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b2967b43b9` · branch `main` · 2026-11-11 04:06 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ce06abc4b0` · branch `main` · 2026-11-11 04:34 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4526,7 +4526,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | não gero docs com teste vermelho: ${falhas.join( | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | HTTP 502 | `scripts/ci/fila-merge.unit.mjs` |
 | GitHub API ${method} ${path} → ${res.status}: ${text} | `scripts/ci/github-settings-guard.mjs` |
-| … +1744 linhas — lista completa em `context.json` | |
+| … +1745 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b2967b43b9466dcd3bc2b468102d942eca0cfecb",
+  "sha": "ce06abc4b07938c259674fb08ee574417acc4855",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 04:06 UTC",
+  "generated_at": "2026-11-11 04:34 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054678
+  "code_lines": 1054689
  },
  "version": "1.3.2",
- "facts_hash": "7aa5303d3fab2a39",
+ "facts_hash": "ae26624a5727029f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 91928,
+   "lines": 91939,
    "tables": [
     "a",
     "alem_do_limite",
@@ -81974,6 +81974,10 @@
    {
     "file": "scripts/vercel/verify-release-targets.mjs",
     "msg": "--expected-sha deve ser um SHA completo"
+   },
+   {
+    "file": "scripts/vercel/verify-release-targets.mjs",
+    "msg": "--expected-sha não pode ser vazio"
    },
    {
     "file": "scripts/vercel/verify-release-targets.mjs",
@@ -264857,7 +264861,7 @@
   },
   "scripts/ci/front-release-targets.unit.mjs": {
    "path": "scripts/ci/front-release-targets.unit.mjs",
-   "lines": 168,
+   "lines": 173,
    "params": [
     {
      "name": "SHA_V2",
@@ -271502,7 +271506,7 @@
   },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
-   "lines": 220,
+   "lines": 226,
    "exports": [
     "const TARGETS",
     "function parseArgs",
@@ -271515,6 +271519,7 @@
     "${kind} HTTP ${res?.status ?? ",
     "${name} deve ser inteiro entre ${min} e ${max}",
     "--expected-sha deve ser um SHA completo",
+    "--expected-sha não pode ser vazio",
     "--expected-sha pertence somente ao alvo v2",
     "--target deve ser v2 ou v3",
     "SPA V2 sem entry JavaScript",
@@ -385952,10 +385957,20 @@
   }
  },
  "git": {
-  "sha": "b2967b43b9466dcd3bc2b468102d942eca0cfecb",
+  "sha": "ce06abc4b07938c259674fb08ee574417acc4855",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ce06abc",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)",
+    "files": [
+     "scripts/ci/front-release-targets.unit.mjs",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "b2967b4",
     "date": "2026-11-11",
@@ -386293,24 +386308,16 @@
     "files": [
      "src/components/email/EmailChatInbox.tsx"
     ]
-   },
-   {
-    "sha": "cf79d70",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)",
-    "files": [
-     "ESTADO.md",
-     "FEATURE_REGISTRY.md",
-     "src/components/admin/MediaMigrationTool.tsx",
-     "src/services/mediaMigration.service.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "scripts/maintenance/maintenance.unit.mjs",
     3
+   ],
+   [
+    "scripts/vercel/verify-release-targets.mjs",
+    2
    ],
    [
     "scripts/maintenance/run.mjs",
@@ -386329,10 +386336,6 @@
     2
    ],
    [
-    "ESTADO.md",
-    2
-   ],
-   [
     "supabase/deployment-manifest.json",
     2
    ],
@@ -386347,6 +386350,10 @@
    [
     "scripts/e2e-isolated/run.mjs",
     2
+   ],
+   [
+    "scripts/ci/front-release-targets.unit.mjs",
+    1
    ],
    [
     "scripts/ci/bundle-budget.mjs",
@@ -386382,10 +386389,6 @@
    ],
    [
     "e2e/quarantine.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/e2e-quarantine-contract.unit.mjs",
     1
    ]
   ]
