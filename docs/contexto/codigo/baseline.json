@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e334b0a1d23f6d2af5318ef01b38a785509db1ea",
+  "commit": "7f33c2725043b4cfb32fa2cc160cf06dd0fdf87c",
   "branch": "main",
-  "data_commit": "2026-11-10T23:33:36-03:00",
+  "data_commit": "2026-11-10T23:51:52-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7f33c27",
+    "data": "2026-11-10",
+    "assunto": "fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)"
+   },
    {
     "sha": "e334b0a",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "5892191",
     "data": "2026-11-10",
     "assunto": "fix(conexao): restaura health check anterior à PR 2910 (#2916)"
-   },
-   {
-    "sha": "d40c053",
-    "data": "2026-11-10",
-    "assunto": "docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)"
    }
   ],
-  "arquivos_mudados_7d": 658,
+  "arquivos_mudados_7d": 660,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -242,10 +242,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 9
    },
@@ -264,6 +260,10 @@
    {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 8
    },
    {
     "arquivo": "AGENTS.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887744,
+  "linhas_codigo": 887764,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -668,7 +668,7 @@
   },
   "scripts/talkx": {
    "arquivos": 6,
-   "linhas": 1354
+   "linhas": 1374
   },
   "scripts/tarefas": {
    "arquivos": 1,

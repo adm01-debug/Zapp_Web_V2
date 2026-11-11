@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)",
    "fix(maintenance): finally de restore não descarta mais a exceção original (#2933)",
    "fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)",
    "fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)",
-   "fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)",
-   "fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)"
+   "fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

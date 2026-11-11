@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e334b0a1d23f6d2af5318ef01b38a785509db1ea` (2026-11-10T23:33:36-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7f33c2725043b4cfb32fa2cc160cf06dd0fdf87c` (2026-11-10T23:51:52-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 887744 |
+| linhas_codigo | 887764 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56698 nós · 117163 arestas · 4109 comunidades · grafo do commit `e334b0a1`
+- 56698 nós · 117163 arestas · 4109 comunidades · grafo do commit `7f33c272`
 - comunidades maiores: client.ts (882), vitest (820), framer-motion (761), lucide-react (606), sonner (566), ref_node_fs (491), WorkItemSheet.tsx (485), button.tsx (470), cn (447), e2e-isolated-runtime.unit.mjs (410), @tanstack/react-query (352), catalogShared.tsx (311)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -408,10 +408,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/e2e-logado.yml (10)
 - RELATORIO_CI.md (10)
 - scripts/db-audit/migration-evidence.json (10)
-- .github/workflows/db-guard.yml (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/db-audit/grants-baseline.json (9)
 - scripts/e2e-isolated/run.mjs (9)
+- src/integrations/supabase/types.ts (9)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `7f33c27` fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)
 - 2026-11-10 `e334b0a` fix(maintenance): finally de restore não descarta mais a exceção original (#2933)
 - 2026-11-10 `f3c0c5f` fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)
 - 2026-11-10 `3725c34` fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `44cdce8` Recupera o rate limit no download das imagens do E2E isolado (#2925)
 - 2026-11-10 `c5650d8` fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)
 - 2026-11-10 `401ea3d` feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)
-- 2026-11-10 `9f94363` chore(docs): documenta geração de contexto no AGENTS.md (#2840)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
