@@ -161,6 +161,14 @@ for (const file of AUDITED) {
 
   checked++;
   for (const cn of roots) {
+    if (cn === null) {
+      // className presente mas com valor dinamico (ternario, variavel, etc.) que
+      // root-className.mjs nao consegue extrair — nao pode ser auditado como "",
+      // pois um dos ramos do ternario pode ser exatamente o anti-padrao.
+      console.error(`NAO AUDITAVEL: ${rel} — className dinamico na raiz, nao foi possivel extrair o valor`);
+      violations++;
+      continue;
+    }
     for (const { name, test, message } of ANTI_PATTERNS) {
       if (test(cn)) {
         console.error(`VIOLATION [${name}]`);
