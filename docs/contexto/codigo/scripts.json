@@ -4249,7 +4249,7 @@
   {
    "arquivo": "scripts/edge-deploy/serialize-scope.mjs",
    "descricao": "Serializa o deploy de TODAS as funcoes contra deploys por funcao. A concurrency do workflow e por funcao (`deploy-edge-functions-<fn|all>`), para",
-   "linhas": 95,
+   "linhas": 103,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

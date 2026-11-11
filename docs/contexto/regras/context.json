@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5829201163e0b957931ff9a4ad39fabbaabb4977",
+  "sha": "0d73698bac141013ca79d7e4ca30f0d57f38efbd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 11:32 UTC",
+  "generated_at": "2026-11-11 11:54 UTC",
   "files_total": 8228,
   "code_files": 6075,
-  "code_lines": 1055297
+  "code_lines": 1055328
  },
  "version": "1.3.2",
- "facts_hash": "b1c2f7af37fec8ed",
+ "facts_hash": "df3dbd5176f2dd51",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 460,
-   "lines": 92543,
+   "lines": 92574,
    "tables": [
     "a",
     "alem_do_limite",
@@ -270239,7 +270239,7 @@
   },
   "scripts/edge-deploy/serialize-scope.mjs": {
    "path": "scripts/edge-deploy/serialize-scope.mjs",
-   "lines": 95,
+   "lines": 103,
    "exports": [
     "const GATE_STEP_NAME",
     "const MAX_WAIT_MINUTES",
@@ -270268,7 +270268,10 @@
   },
   "scripts/edge-deploy/serialize-scope.unit.mjs": {
    "path": "scripts/edge-deploy/serialize-scope.unit.mjs",
-   "lines": 88
+   "lines": 111,
+   "rule_comments": [
+    "autor); uma quebra de linha no escopo extraído não pode forjar uma anotação"
+   ]
   },
   "scripts/edge-deploy/smoke-functions.mjs": {
    "path": "scripts/edge-deploy/smoke-functions.mjs",
@@ -386008,10 +386011,20 @@
   }
  },
  "git": {
-  "sha": "5829201163e0b957931ff9a4ad39fabbaabb4977",
+  "sha": "0d73698bac141013ca79d7e4ca30f0d57f38efbd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "0d73698",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)",
+    "files": [
+     "scripts/edge-deploy/serialize-scope.mjs",
+     "scripts/edge-deploy/serialize-scope.unit.mjs"
+    ]
+   },
    {
     "sha": "5829201",
     "date": "2026-11-11",
@@ -386326,16 +386339,6 @@
      "supabase/functions/ai-product-recommendation/index.ts",
      "supabase/functions/copilot-live/index.ts"
     ]
-   },
-   {
-    "sha": "09df718",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "Impede aprovar mutações sem executar testes (#2923)",
-    "files": [
-     "scripts/ci/run-mapa-classificacao.unit.mjs",
-     "scripts/mutation/run-mapa.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -386370,6 +386373,14 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/edge-deploy/serialize-scope.mjs",
+    1
+   ],
+   [
+    "scripts/edge-deploy/serialize-scope.unit.mjs",
+    1
    ],
    [
     "scripts/db-audit/diff.test.mjs",
@@ -386409,14 +386420,6 @@
    ],
    [
     "scripts/tarefas/seed-local-imagens.ts",
-    1
-   ],
-   [
-    "scripts/ci/seed-contatos-redesign-local.unit.mjs",
-    1
-   ],
-   [
-    "scripts/db/seed-contatos-redesign-local.sh",
     1
    ]
   ]

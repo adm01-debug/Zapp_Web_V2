@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5829201163e0b957931ff9a4ad39fabbaabb4977` (2026-11-11T08:16:49-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `0d73698bac141013ca79d7e4ca30f0d57f38efbd` (2026-11-11T08:43:29-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8386 |
 | arquivos_codigo | 4803 |
-| linhas_codigo | 888437 |
+| linhas_codigo | 888468 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56712 nós · 117200 arestas · 4127 comunidades · grafo do commit `58292011`
-- comunidades maiores: TalkXSuppression.tsx (910), lucide-react (880), react (844), vitest (637), utils.ts (615), cn (470), avatar.tsx (466), @tanstack/react-query (438), useGmail.ts (383), ref_node_fs (354), validation.ts (307), FilesTab.tsx (307)
+- 56713 nós · 117202 arestas · 4186 comunidades · grafo do commit `0d73698b`
+- comunidades maiores: button.tsx (881), TalkXSuppression.tsx (773), vitest (661), lucide-react (583), validation.ts (521), cn (484), ref_node_assert (458), e2e-isolated-runtime.unit.mjs (421), DashboardView.tsx (407), ref_node_fs (399), react (380), ref_https (366)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `0d73698` fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)
 - 2026-11-11 `5829201` fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)
 - 2026-11-11 `19ebdd9` fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)
 - 2026-11-11 `1507ad9` fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `e7646cc` fix(ui-audit): className dinâmico na raiz não é mais silenciado como "" (#2938)
 - 2026-11-11 `b50be19` fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)
 - 2026-11-11 `a7f9d03` fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)
-- 2026-11-11 `105ebc1` fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

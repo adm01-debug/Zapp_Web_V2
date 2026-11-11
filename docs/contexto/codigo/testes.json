@@ -2497,11 +2497,11 @@
   {
    "arquivo": "scripts/edge-deploy/serialize-scope.unit.mjs",
    "tipo": "unit",
-   "linhas": 88,
+   "linhas": 111,
    "testa": [
     "scripts/edge-deploy/serialize-scope.mjs"
    ],
-   "casos": 9
+   "casos": 11
   },
   {
    "arquivo": "scripts/edge-deploy/smoke-functions.unit.mjs",

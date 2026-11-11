@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5829201163e0b957931ff9a4ad39fabbaabb4977",
+  "commit": "0d73698bac141013ca79d7e4ca30f0d57f38efbd",
   "branch": "main",
-  "data_commit": "2026-11-11T08:16:49-03:00",
+  "data_commit": "2026-11-11T08:43:29-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0d73698",
+    "data": "2026-11-11",
+    "assunto": "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)"
+   },
    {
     "sha": "5829201",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "3725c34",
     "data": "2026-11-10",
     "assunto": "fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)"
-   },
-   {
-    "sha": "8d727a9",
-    "data": "2026-11-10",
-    "assunto": "fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)"
    }
   ],
-  "arquivos_mudados_7d": 662,
+  "arquivos_mudados_7d": 663,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8386,
   "arquivos_codigo": 4803,
-  "linhas_codigo": 888437,
+  "linhas_codigo": 888468,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
-   "linhas": 4616
+   "linhas": 4647
   },
   "scripts/eslint": {
    "arquivos": 1,
