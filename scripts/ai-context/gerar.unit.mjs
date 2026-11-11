@@ -392,3 +392,19 @@ test('workflow com CRLF: permissões são lidas como no arquivo com LF', (t) => 
     assert.deepEqual(wf.gatilhos, ['push'], wf.arquivo);
   }
 });
+
+test('--out colidindo com diretório real (ex.: src) aborta em vez de esvaziar o scan e poluir', (t) => {
+  const fixtureRoot = fixture();
+  t.after(() => fs.rmSync(fixtureRoot, { recursive: true, force: true }));
+  assert.throws(() => execFileSync(process.execPath, [GERADOR, '--out', 'src', '--quiet'], { cwd: fixtureRoot, stdio: 'pipe' }));
+  assert.ok(fs.existsSync(path.join(fixtureRoot, 'src/main.tsx')), 'src/ não pode ser tocado quando o gerador aborta');
+  assert.ok(!fs.existsSync(path.join(fixtureRoot, 'src/manifest.json')), 'nenhum arquivo gerado pode entrar em src/');
+});
+
+test('--out reaproveitando a própria saída anterior continua funcionando (rerun normal)', (t) => {
+  const fixtureRoot = fixture();
+  t.after(() => fs.rmSync(fixtureRoot, { recursive: true, force: true }));
+  execFileSync(process.execPath, [GERADOR, '--quiet'], { cwd: fixtureRoot });
+  execFileSync(process.execPath, [GERADOR, '--quiet'], { cwd: fixtureRoot });
+  assert.ok(fs.existsSync(path.join(fixtureRoot, 'inventario/ia/manifest.json')));
+});
