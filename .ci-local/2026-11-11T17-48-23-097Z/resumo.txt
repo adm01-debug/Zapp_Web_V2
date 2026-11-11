@@ -20,3 +20,22 @@ logs: /home/joaquim_ataides/projetos/_worktrees/Zapp_Web_V2/ci-local/.ci-local/2
    ✅ 📦 Validar pacote de reconciliação (3s)
    ✅ 📖 Verificar README gerado dos workflows (0s)
    ✅ Verificar inventário de testes (0s)
+   ❌ 🧩 Run Node CI scripts tests — código 1 (181s)
+      │ # Subtest: audita view com extensao explicita no import
+      │ ok 7104 - audita view com extensao explicita no import
+      │   ---
+      │   duration_ms: 47.884046
+      │   type: 'test'
+      │   ...
+      │ 1..7104
+      │ # tests 7256
+      │ # suites 11
+      │ # pass 7247
+      │ # fail 9
+      │ # cancelled 0
+      │ # skipped 0
+      │ # todo 0
+      │ # duration_ms 182404.355938
+── ▶️  edge-contracts — 🦕 Edge contracts
+   ·  📥 Checkout code — infraestrutura do runner (actions/checkout), não se aplica
+   ·  🦕 Setup Deno — infraestrutura do runner (denoland/setup-deno), não se aplica
