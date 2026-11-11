@@ -1164,7 +1164,7 @@ def detect_features(root: Path, files: list[Path], code: dict[str, dict], stack:
 def module_key(r: str) -> str:
     parts = r.split("/")
     if parts[0] in ("src", "app", "lib", "packages", "apps") and len(parts) > 2:
-        key = "/".join(parts[:2]) if parts[0] not in ("packages", "apps") else "/".join(parts[:3])
+        key = "/".join(parts[:2]) if parts[0] not in ("packages", "apps") or len(parts) <= 3 else "/".join(parts[:3])
         if parts[1] in ("features", "modules", "domains") and len(parts) > 3:
             key = "/".join(parts[:3])
         return key
