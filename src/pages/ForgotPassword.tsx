@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, ArrowLeft, CheckCircle, Loader2, Clock } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, Loader2, Clock, KeyRound } from 'lucide-react';
 import { log } from '@/lib/logger';
 import { z } from 'zod';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,15 +15,25 @@ import { toast } from 'sonner';
 
 const emailSchema = z.string().email('Email inválido');
 
+const MSG_ENVIADO = 'Se o email estiver cadastrado, o pedido foi enviado para aprovação do gestor.';
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  // Quem já está logado não pede reset anônimo: o gatilho trataria o pedido como do
+  // próprio usuário sem user_id e o INSERT seria recusado. Troca de senha com sessão
+  // é em Segurança → Alterar Senha (com reautenticação).
+  const { user, loading: authLoading, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Enter repetido / duplo submit: um pedido por vez. Sessão ainda carregando ou já
+    // existente: não grava pedido nenhum.
+    if (loading || authLoading || user) return;
     setError('');
 
     try {
@@ -54,7 +65,7 @@ export default function ForgotPassword() {
       if (requestError) throw requestError;
 
       setSent(true);
-      toast.success('Se o email estiver cadastrado, o pedido foi enviado para aprovação do gestor.');
+      toast.success(MSG_ENVIADO);
     } catch (err: unknown) {
       log.error('Error submitting reset request:', err);
       setError('Erro ao enviar solicitação. Tente novamente.');
@@ -63,6 +74,55 @@ export default function ForgotPassword() {
       setLoading(false);
     }
   };
+
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              <KeyRound className="w-6 h-6 text-primary" aria-hidden="true" />
+            </div>
+            <CardTitle>Você já está conectado</CardTitle>
+            <CardDescription>
+              {user.email ? <>Sessão ativa como <strong>{user.email}</strong>. </> : null}
+              Para trocar a senha, use Segurança → Alterar Senha. Se esta não é a sua
+              conta, saia dela para pedir o reset da sua.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button className="w-full" asChild>
+              <Link to="/?view=security">Ir para Segurança</Link>
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={signingOut}
+              onClick={async () => {
+                setSigningOut(true);
+                try {
+                  await signOut();
+                } catch (err: unknown) {
+                  log.error('Error signing out from forgot-password:', err);
+                  toast.error('Não foi possível sair da conta. Tente novamente.');
+                } finally {
+                  setSigningOut(false);
+                }
+              }}
+            >
+              {signingOut ? 'Saindo...' : 'Sair desta conta'}
+            </Button>
+            <Button variant="ghost" className="w-full" asChild>
+              <Link to="/">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar para o app
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (sent) {
     return (
@@ -91,7 +151,7 @@ export default function ForgotPassword() {
               <div className="p-4 rounded-lg bg-muted text-sm space-y-2">
                 <p className="font-medium">Próximos passos:</p>
                 <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                  <li>Um administrador irá analisar sua solicitação</li>
+                  <li>O gestor irá analisar sua solicitação</li>
                   <li>Você receberá um email quando for aprovada</li>
                   <li>Use o link do email para redefinir sua senha</li>
                 </ol>
@@ -127,7 +187,7 @@ export default function ForgotPassword() {
             </div>
             <CardTitle>Esqueceu sua senha?</CardTitle>
             <CardDescription>
-              Digite seu email e envie uma solicitação de reset. Um administrador irá analisar.
+              Digite seu email e envie uma solicitação de reset. O gestor irá analisar.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -142,9 +202,13 @@ export default function ForgotPassword() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                   className={error ? 'border-destructive' : ''}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? 'email-error' : undefined}
                 />
                 {error && (
                   <motion.p
+                    id="email-error"
+                    role="alert"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-sm text-destructive"
@@ -166,11 +230,11 @@ export default function ForgotPassword() {
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Ajuda o administrador a validar sua identidade
+                  Ajuda o gestor a validar sua identidade
                 </p>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || authLoading}>
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
