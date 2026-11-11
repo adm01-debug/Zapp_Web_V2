@@ -46,7 +46,7 @@ type EstadoReenvio = 'parado' | 'enviando' | 'concluido';
  */
 function podeReenviarComoTexto(mensagem: Message | null | undefined): boolean {
   if (!mensagem || mensagem.type !== 'text') return false;
-  // @ts-expect-error -- coluna adicionada por migration 20261101133000 (tipos regenerados no próximo types-sync)
+  // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync)
   return !mensagem.delivery_post_started_at;
 }
 
