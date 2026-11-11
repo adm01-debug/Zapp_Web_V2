@@ -68,13 +68,17 @@ function retryDataRefusal(data: unknown): string | null {
   return null;
 }
 
-/** Códigos de recusa de `talkx_block_recipient` em linguagem de operador. */
+/** Códigos de recusa de `talkx_block_recipient` em linguagem de operador. Nunca devolve texto cru. */
 function blockErrorMessage(err: unknown): string {
   const msg = rpcMessage(err);
+  const code = typeof err === 'object' && err !== null && 'code' in err ? String((err as { code: unknown }).code) : '';
   if (msg.includes('talkx_block_role_required')) return 'Só administradores e supervisores podem bloquear contatos.';
   if (msg.includes('talkx_block_recipient_not_found')) return 'Destinatário não encontrado — recarregue a lista.';
+  if (msg.includes('invalid_talkx_block_request')) return 'Pedido de bloqueio inválido — recarregue a lista e tente de novo.';
   if (msg.includes('active_profile_not_found') || msg.includes('authentication_required')) return 'Sessão inválida — entre novamente.';
-  return msg;
+  // Função ainda não publicada no banco (PostgREST não a acha no cache do schema).
+  if (code === 'PGRST202' || msg.includes('schema cache')) return 'Bloqueio indisponível no momento.';
+  return 'Não foi possível bloquear o contato. Tente novamente.';
 }
 
 export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecipientRowActionsProps) {
@@ -130,7 +134,8 @@ export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecip
     await doRetry();
   }, [doRetry]);
 
-  const handleBlock = useCallback(async () => {
+  /** Devolve `true` quando o servidor aceitou (bloqueado agora ou já estava bloqueado). */
+  const handleBlock = useCallback(async (): Promise<boolean> => {
     setBlocking(true);
     try {
       // talkx_suppress_contact é exclusiva do servidor (opt-out automático). O bloqueio
@@ -147,8 +152,10 @@ export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecip
       } else {
         toast.success('Contato bloqueado com sucesso.');
       }
+      return true;
     } catch (err: unknown) {
       toast.error(blockErrorMessage(err));
+      return false;
     } finally {
       setBlocking(false);
     }
@@ -216,15 +223,15 @@ function BlockButton({
   recipient: { id: string; campaign_id: string; contact_id: string; status: string; contacts?: { name?: string | null; phone?: string | null } | null; manual_retry_count: number | null };
   blocking: boolean;
   setBlocking: (v: boolean) => void;
-  onBlocked: () => Promise<void>;
+  onBlocked: () => Promise<boolean>;
   onActionDone?: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
   const handleConfirm = useCallback(async () => {
     setOpen(false);
-    await onBlocked();
-    onActionDone?.();
+    // Só recarrega a lista quando o bloqueio foi aceito; na falha o toast já explicou.
+    if (await onBlocked()) onActionDone?.();
   }, [onBlocked, onActionDone]);
 
   return (
