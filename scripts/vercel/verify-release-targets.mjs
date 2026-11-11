@@ -41,6 +41,12 @@ export function parseArgs(argv) {
   }
   const target = args.target;
   if (!Object.hasOwn(TARGETS, target)) throw new Error('--target deve ser v2 ou v3');
+  // Flag omitida (sem --expected-sha=) e flag passada vazia (--expected-sha=, ex.:
+  // GITHUB_SHA falhou ao expandir) nao sao a mesma coisa: a segunda e erro de uso,
+  // nao "nao verificar o deploy" silenciosamente.
+  if (Object.hasOwn(args, 'expected-sha') && args['expected-sha'] === '') {
+    throw new Error('--expected-sha não pode ser vazio');
+  }
   const expectedSha = args['expected-sha'] || null;
   if (expectedSha && !SHA.test(expectedSha)) throw new Error('--expected-sha deve ser um SHA completo');
   if (target === 'v3' && expectedSha) throw new Error('--expected-sha pertence somente ao alvo v2');
