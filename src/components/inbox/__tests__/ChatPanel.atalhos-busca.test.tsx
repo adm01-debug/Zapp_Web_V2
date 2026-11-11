@@ -104,6 +104,7 @@ vi.mock('../chat/ChatMessagesArea', () => ({ ChatMessagesArea: () => null }));
 vi.mock('../chat/ChatWatermark', () => ({ ChatWatermark: () => null }));
 vi.mock('../chat/ChatDragOverlay', () => ({ ChatDragOverlay: () => null }));
 vi.mock('../chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));
+vi.mock('../chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
 vi.mock('../WhisperMode', () => ({ WhisperMode: () => null }));
 vi.mock('../NextBestActionEngine', () => ({ NextBestActionEngine: () => null }));
 vi.mock('../TransferDialog', () => ({ default: () => null }));
