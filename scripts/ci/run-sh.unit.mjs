@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const runSh = fileURLToPath(new URL('./run.sh', import.meta.url));
+const runSh = fileURLToPath(new URL('../maintenance/run.sh', import.meta.url));
 
 test('run.sh: diretorio de estado inacessivel emite JSON failed em vez de abortar cru', async (t) => {
   const home = await mkdtemp(path.join(os.tmpdir(), 'maintenance-run-sh-'));
