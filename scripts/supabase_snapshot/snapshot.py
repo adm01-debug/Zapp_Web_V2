@@ -1584,6 +1584,9 @@ def render_stats(stats: dict, api_stats: dict, db: dict) -> None:
                                                      for i in ist if i["scans"] == 0 and not i["is_unique"] and not i["is_primary"] and i["bytes"] > 65536]),
           "\n## Storage\n", md_table(["bucket", "objetos (~)", "tamanho"], [[s["bucket_id"], approx(s["objects"]), human_bytes(s["bytes"])] for s in ds.get("storage") or []]),
           "\n## Auth (agregados)\n"]
+    if any(e["section"] == "db_stats.auth" for e in ERRORS):
+        md.append("> ⚠️ Coleta de `auth` falhou nesta rodada (ver `errors.md`) — a tabela abaixo pode estar"
+                   " zerada por falha de coleta, não por ausência real de usuários.\n\n")
     a = ds.get("auth") or {}
     md.append(md_table(["métrica", "valor"], [["usuários (~)", approx(a.get("users_total"))], ["confirmados (~)", approx(a.get("users_confirmed"))],
                                             ["criados últimos 30d (~)", approx(a.get("users_last_30d"))]]))
