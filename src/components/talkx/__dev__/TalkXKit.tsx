@@ -122,7 +122,9 @@ export function TalkXKit() {
   });
 
   // X057 — KPI cards reais
-  const { data: stats, isLoading: statsLoading } = useTalkXOverviewStats(null, null);
+  const {
+    data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats,
+  } = useTalkXOverviewStats(null, null);
 
   return (
     <div data-testid="talkx-kit" className="min-h-full bg-background px-4 py-4 space-y-5 md:px-6">
@@ -278,6 +280,14 @@ export function TalkXKit() {
                   <KpiCardSkeleton />
                   <KpiCardSkeleton />
                 </>
+              ) : statsError ? (
+                <div data-testid="talkx-kit-kpi-erro" className="sm:col-span-2 xl:col-span-3">
+                  <TalkXErrorState
+                    entity="métricas"
+                    message="Os indicadores não puderam ser lidos agora. Tente novamente em alguns instantes."
+                    onRetry={() => { void refetchStats(); }}
+                  />
+                </div>
               ) : (
                 <>
                   <KpiCard
@@ -287,7 +297,7 @@ export function TalkXKit() {
                     index={0}
                   />
                   <KpiCard
-                    icon={CheckCircle2} color="green" label="Entregues"
+                    icon={CheckCircle2} color="green" label="Enviadas"
                     value={stats?.current.sent ?? null}
                     comparison={stats?.previous?.sent != null ? { previous: stats.previous.sent, kind: 'relative' } : undefined}
                     index={1}
