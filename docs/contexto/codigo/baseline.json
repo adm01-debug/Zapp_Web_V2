@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "19ebdd9b0dc3ec39b27f6a69e03a3568b8ea83f9",
+  "commit": "5829201163e0b957931ff9a4ad39fabbaabb4977",
   "branch": "main",
-  "data_commit": "2026-11-11T07:56:32-03:00",
+  "data_commit": "2026-11-11T08:16:49-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5829201",
+    "data": "2026-11-11",
+    "assunto": "fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)"
+   },
    {
     "sha": "19ebdd9",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "8d727a9",
     "data": "2026-11-10",
     "assunto": "fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)"
-   },
-   {
-    "sha": "a5bf639",
-    "data": "2026-11-10",
-    "assunto": "fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)"
    }
   ],
-  "arquivos_mudados_7d": 661,
+  "arquivos_mudados_7d": 662,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -202,15 +202,15 @@
     "mudancas": 16
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 13
-   },
-   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 13
    },
    {
     "arquivo": "CLAUDE.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 12
    },
    {
@@ -234,10 +234,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 9
    },
@@ -247,6 +243,10 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 8
+   },
+   {
+    "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 8
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8386,
   "arquivos_codigo": 4803,
-  "linhas_codigo": 888423,
+  "linhas_codigo": 888437,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -612,7 +612,7 @@
   },
   "scripts/db-audit": {
    "arquivos": 81,
-   "linhas": 15398
+   "linhas": 15412
   },
   "scripts/db-tests": {
    "arquivos": 3,

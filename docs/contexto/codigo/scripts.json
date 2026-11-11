@@ -1601,7 +1601,7 @@
   {
    "arquivo": "scripts/db-audit/manifest-lib.mjs",
    "descricao": null,
-   "linhas": 99,
+   "linhas": 103,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

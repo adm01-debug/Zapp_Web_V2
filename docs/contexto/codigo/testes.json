@@ -2176,11 +2176,11 @@
   {
    "arquivo": "scripts/db-audit/diff.test.mjs",
    "tipo": "unit",
-   "linhas": 59,
+   "linhas": 69,
    "testa": [
     "scripts/db-audit/manifest-lib.mjs"
    ],
-   "casos": 3
+   "casos": 4
   },
   {
    "arquivo": "scripts/db-audit/export-targeted-ledger-evidence.test.mjs",
