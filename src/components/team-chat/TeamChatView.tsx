@@ -10,39 +10,56 @@ import { useActiveTeamChatConversation } from '@/hooks/chat/useTeamChatNotificat
 import { Button } from '@/components/ui/button';
 import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 
+/** Lê ?cid=<id> da URL (deep-link da notificação do chat da equipe). */
+function readCidParam(): string | null {
+  return new URLSearchParams(window.location.search).get('cid');
+}
+
+/** Remove ?cid= da entrada atual sem empilhar histórico (mesmo padrão do ?emailContact). */
+function stripCidParam(): void {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has('cid')) return;
+  url.searchParams.delete('cid');
+  const base = window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
+  window.history.replaceState(base, '', url.href);
+}
+
 export function TeamChatView() {
   const { data: conversations = [], isLoading: conversationsLoading } = useTeamConversations();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Escolha explícita do usuário; quando null, vale a conversa do deep-link.
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const [deepLinkCid, setDeepLinkCid] = useState<string | null>(() => readCidParam());
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+
+  // Deep-link: ?cid=<uuid> (vindo da notificação) é lido ao abrir a tela e a cada
+  // `zapp:navigate` (nova notificação com a tela aberta) e sai da URL na hora —
+  // recargas da lista (realtime) não desfazem a conversa escolhida depois.
+  useEffect(() => {
+    const onNavigate = () => {
+      const cid = readCidParam();
+      if (!cid) return;
+      setDeepLinkCid(cid);
+      setPickedId(null);
+    };
+    window.addEventListener('zapp:navigate', onNavigate);
+    return () => window.removeEventListener('zapp:navigate', onNavigate);
+  }, []);
+  useEffect(() => {
+    if (deepLinkCid) stripCidParam();
+  }, [deepLinkCid]);
+  const deepLinkedId =
+    !conversationsLoading && deepLinkCid && conversations.some(c => c.id === deepLinkCid) ? deepLinkCid : null;
+  const selectedId = pickedId ?? deepLinkedId;
+  const setSelectedId = (id: string | null) => {
+    setPickedId(id);
+    setDeepLinkCid(null);
+  };
 
   // TC-007: o listener de notificações é ÚNICO e global (montado em App.tsx); aqui a view
   // só publica a conversa em foco para o listener suprimir o alerta dela — e limpa ao
   // desmontar, para voltar a alertar quando o atendente sai da tela.
   useActiveTeamChatConversation(selectedId);
-
-  // Deep-link: ?cid=<uuid> (vindo da notificação) seleciona a conversa UMA vez e
-  // sai da URL, como o ?emailContact do e-mail — senão cada recarga da lista
-  // (realtime) desfaria a escolha do usuário. `zapp:navigate` cobre uma nova
-  // notificação clicada com a tela já aberta.
-  const [navTick, setNavTick] = useState(0);
-  useEffect(() => {
-    const onNavigate = () => setNavTick((n) => n + 1);
-    window.addEventListener('zapp:navigate', onNavigate);
-    return () => window.removeEventListener('zapp:navigate', onNavigate);
-  }, []);
-  useEffect(() => {
-    if (conversationsLoading) return;
-    const url = new URL(window.location.href);
-    const cid = url.searchParams.get('cid');
-    if (!cid) return;
-    if (conversations.some(c => c.id === cid)) {
-      setSelectedId(cid);
-    }
-    url.searchParams.delete('cid');
-    const base = window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
-    window.history.replaceState(base, '', url.href);
-  }, [conversations, conversationsLoading, navTick]);
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
 
