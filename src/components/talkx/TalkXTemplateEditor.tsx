@@ -834,19 +834,19 @@ export function TalkXTemplateEditor({
         open={showTest}
         onClose={() => setShowTest(false)}
         title="Testar template"
+        description="Envia a mensagem personalizada para um número via WhatsApp."
         className="max-w-sm"
         footer={<>
           <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
           <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
         </>}
       >
-        <p className="text-xs text-muted-foreground -mt-1">Envia a mensagem personalizada para um número via WhatsApp.</p>
         <div>
-          <Label className="text-xs text-foreground-secondary">Número de destino</Label>
-          <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
+          <Label htmlFor="talkx-template-test-phone" className="text-xs text-foreground-secondary">Número de destino</Label>
+          <Input id="talkx-template-test-phone" value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
         </div>
         {testResult && (
-          <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
+          <div className={testResult.ok ? 'mt-2 flex items-center gap-2 text-dash-green text-xs' : 'mt-2 flex items-center gap-2 text-dash-red text-xs'}>
             {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
             {testResult.msg}
           </div>
