@@ -29,6 +29,7 @@ import { useChatMessageNavigation } from './chat/chatMessageNavigation';
 import { ConversationDeliverySummary } from './chat/ConversationDeliverySummary';
 import { estadoDeEnvio, type EstadoDeEnvio } from './chat/messageSendTimeline';
 import { SendErrorBanner } from './chat/SendErrorBanner';
+import { UnconfirmedMessagesPanel } from './chat/UnconfirmedMessagesPanel';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 import type { TransferTargetType } from './TransferDialog';
 import { fillQuickReplyVariables } from './template-utils';
@@ -469,6 +470,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
             Silenciosos quando não há pendência — não mexem no scroll nem no envio. */}
         <ConversationDeliverySummary messages={messages} onFocusState={handleFocusDeliveryState} />
         <SendErrorBanner messages={messages} onSendMessage={onSendMessage} />
+        {/* C110: mensagens com entrega ambígua (POST iniciado, recibo nunca confirmado). */}
+        <UnconfirmedMessagesPanel contactId={conversation.contact.id} />
 
         <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
           typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
