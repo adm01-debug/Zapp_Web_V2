@@ -778,3 +778,37 @@ Deno.test('PD-80 [merge main/E15]: o handler continua entregando com o token da 
   if (!seenPath) throw new Error('evoFetch não foi chamado');
   resetInstanceTokenCache();
 });
+
+Deno.test('PD-79 [pré-DDL]: RPC mark_outbound_post_started ainda inexistente (PGRST202) não derruba o envio — entrega sem carimbo', async () => {
+  resetInstanceTokenCache();
+  const client = makeClient({
+    claim: { data: [CLAIM], error: null },
+    rpcErrors: { mark_outbound_post_started: { code: 'PGRST202', message: 'Could not find the function' } },
+  });
+  let provedorChamado = false;
+  const deps = makeDeps(client, async () => {
+    provedorChamado = true;
+    return jsonOf(200, { key: { id: 'wamid.pre-ddl' } });
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), deps);
+  assertStatus(response.status, 200);
+  if (!provedorChamado) throw new Error('provedor deveria ter sido chamado sem o carimbo');
+  if (!rpcCalled(client, 'complete_outbound_message')) throw new Error('envio deveria ser concluído');
+  resetInstanceTokenCache();
+});
+
+Deno.test('PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando antes do POST', async () => {
+  resetInstanceTokenCache();
+  const client = makeClient({
+    claim: { data: [CLAIM], error: null },
+    rpcErrors: { mark_outbound_post_started: { code: 'P0001', message: 'stale_claim' } },
+  });
+  let provedorChamado = false;
+  const deps = makeDeps(client, async () => {
+    provedorChamado = true;
+    return jsonOf(200, { key: { id: 'wamid.nao-deveria' } });
+  });
+  await handleMessageDeliveryRequest(postRequest(), deps);
+  if (provedorChamado) throw new Error('provedor NÃO pode ser chamado quando o carimbo falha por outro motivo');
+  resetInstanceTokenCache();
+});
