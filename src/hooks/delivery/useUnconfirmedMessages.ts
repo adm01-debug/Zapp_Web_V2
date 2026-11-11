@@ -67,9 +67,10 @@ export function useUnconfirmedMessages(
       return { rows: (data ?? []) as unknown as UnconfirmedMessage[], schemaReady: true };
     },
     enabled: !!conversationContactId || !!conversationGroupId,
-    // Pré-DDL não martela o PostgREST a cada 30 s: o polling só liga quando a
-    // coluna existe (a próxima montagem/foco volta a checar).
-    refetchInterval: (q) => (q.state.data?.schemaReady === false ? false : 30_000),
+    // Não martela o PostgREST a cada 30 s: o polling para no pré-DDL (coluna
+    // ausente) e depois de qualquer erro; a próxima montagem/foco volta a checar.
+    refetchInterval: (q) =>
+      (q.state.status === 'error' || q.state.data?.schemaReady === false ? false : 30_000),
   });
 
   const resolveMutation = useMutation({

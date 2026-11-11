@@ -283,3 +283,58 @@ Deno.test("IA-047: enqueue repetido usa a MESMA chave estável (UNIQUE deduplica
 Deno.test("IA-047: ai-jobs-worker registra o handler de effect.reconcile", () => {
   assert(typeof HANDLERS[EFFECT_RECONCILE_KIND] === "function", "HANDLERS precisa mapear effect.reconcile");
 });
+
+/* --------------------------------------------------------------------------- */
+/* C110 pré-DDL: manually_resolved_at ainda não existe (20261111160000)          */
+/* --------------------------------------------------------------------------- */
+
+/** Client cujo UPDATE de `messages` registra os filtros `.is()` e simula o schema. */
+function makeUpdateClient(columnExists: boolean) {
+  const updates: Array<{ guarded: boolean }> = [];
+  const client = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    from(_table: string): any {
+      let guarded = false;
+      const chain: Record<string, unknown> = {};
+      for (const m of ["update", "eq", "in"]) chain[m] = () => chain;
+      chain.is = (column: string) => {
+        if (column === "manually_resolved_at") guarded = true;
+        return chain;
+      };
+      chain.select = () => {
+        updates.push({ guarded });
+        if (guarded && !columnExists) {
+          return Promise.resolve({ data: null, error: { code: "42703", message: "column messages.manually_resolved_at does not exist" } });
+        }
+        return Promise.resolve({ data: [{ id: MESSAGE_ID }], error: null });
+      };
+      return chain;
+    },
+    rpc() { return Promise.resolve({ data: null, error: null }); },
+  };
+  return { client, updates };
+}
+
+const APPLY_CTX: EffectReconcileContext = {
+  effect: EFFECT_MESSAGE_SEND, sourceTable: "messages", sourceId: MESSAGE_ID,
+  externalId: "ext-1", attemptFrom: 1, payload: {},
+};
+
+Deno.test("C110 pré-DDL: applyConfirmed em messages repete SEM o filtro manually_resolved_at (42703) e aplica", async () => {
+  const { client, updates } = makeUpdateClient(false);
+  const deps = makeEffectReconcileDeps({ supabase: client });
+  const applied = await deps.applyConfirmed(APPLY_CTX, "ext-1");
+  assertEquals(applied, true, "aplicou o recibo confirmado");
+  assertEquals(updates.length, 2, "1ª tentativa com o filtro + repetição sem ele");
+  assertEquals(updates[0].guarded, true, "1ª tentativa protege a resolução manual");
+  assertEquals(updates[1].guarded, false, "repetição pré-DDL sem o filtro");
+});
+
+Deno.test("C110 pós-DDL: applyConfirmed em messages mantém o filtro manually_resolved_at (uma só escrita)", async () => {
+  const { client, updates } = makeUpdateClient(true);
+  const deps = makeEffectReconcileDeps({ supabase: client });
+  const applied = await deps.applyConfirmed(APPLY_CTX, "ext-1");
+  assertEquals(applied, true, "aplicou");
+  assertEquals(updates.length, 1, "sem repetição");
+  assertEquals(updates[0].guarded, true, "filtro presente");
+});
