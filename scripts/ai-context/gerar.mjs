@@ -56,6 +56,21 @@ const byCount = (arr) => Object.entries(arr.reduce((a, k) => { a[k] = (a[k] || 0
 const dirOf = (f) => path.posix.dirname(f);
 const baseOf = (f) => path.posix.basename(f).replace(/\.[^.]+$/, '');
 
+// --out apontando para um diretório real (ex.: --out src por engano) faz o walk()
+// abaixo pular esse diretório inteiro do scan (full === OUT) e depois escrever
+// manifest.json/INDEX.md etc. direto nele — silenciosamente esvazia o contexto
+// E poluiria um diretório de código real. Só seguimos sem perguntar quando OUT já
+// é uma saída anterior deste mesmo gerador (manifest.json com o `gerador` certo).
+(function validarOut() {
+  if (!exists(OUT_REL)) return;
+  let entradas;
+  try { entradas = fs.readdirSync(OUT); } catch { return; }
+  if (entradas.length === 0) return;
+  const manifestAnterior = readJson(path.join(OUT_REL, 'manifest.json'));
+  if (manifestAnterior && manifestAnterior.gerador === 'scripts/ai-context/gerar.mjs') return;
+  throw new Error(`--out "${OUT_REL}" já existe e não parece ser uma saída anterior deste gerador (sem manifest.json reconhecível) — abortando para não apagar do scan nem poluir um diretório real. Escolha outro --out.`);
+})();
+
 // ---------- walk ----------
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', '.nuxt', '.svelte-kit', '.turbo', '.vercel', '.netlify', 'coverage',
   'out', '.cache', '.parcel-cache', 'tmp', '.tmp', 'vendor', '__pycache__', '.venv', 'venv', 'env', '.mypy_cache', '.pytest_cache', '.ruff_cache',
