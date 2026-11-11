@@ -12,12 +12,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 permissions:
   contents: read
 
 concurrency:
   group: automation-local-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancela só run velho de PR; push na main nunca é cancelado (E98).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   contracts:

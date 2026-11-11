@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   CANONICAL_PROJECT,
   MAX_LOG_WINDOW_MS,
@@ -9,6 +13,7 @@ import {
   queryAnalytics,
   resolveScope,
   runHealthCheck,
+  semQuebra,
 } from './health-check.mjs';
 
 const manifest = JSON.stringify({
@@ -283,6 +288,51 @@ test('runHealthCheck dry-run não exige SUPABASE_ACCESS_TOKEN', async () => {
   const dryArgs = { ...baseArgs, dryRun: true, waitMs: 0 };
   const outcome = await runHealthCheck(dryArgs, { env: {}, readFileImpl, logger: silentLogger });
   assert.equal(outcome.status, 'dry-run');
+});
+
+// S5145: um nome de função com quebra de linha no manifesto não pode forjar
+// uma anotação `::error::`/`::warning::` nova no log do Actions quando o erro
+// sobe cru pelo catch de topo do CLI. Executa o script de verdade (child
+// process) — mesmo padrão de scripts/edge-deploy/register-deployment.mjs e
+// scripts/ci/github-settings-guard.mjs.
+test('semQuebra neutraliza quebra de linha e caracteres de controle', () => {
+  assert.equal(semQuebra('foo\nbar'), 'foo bar');
+  assert.equal(semQuebra('foo\r\nbar'), 'foo  bar');
+  assert.equal(semQuebra('foo\u0000bar'), 'foo bar');
+  assert.equal(semQuebra(null), '');
+  assert.equal(semQuebra(undefined), '');
+  assert.equal(semQuebra(42), '42');
+});
+
+test('CLI real: slug com quebra de linha no manifesto não forja anotação nova no log', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'health-check-manifest-'));
+  try {
+    const manifestPath = join(dir, 'manifest.json');
+    writeFileSync(manifestPath, JSON.stringify({
+      functions: [{ name: 'auth-login\n::error::forjado' }],
+    }));
+    const r = spawnSync(process.execPath, [
+      'scripts/edge-deploy/health-check.mjs',
+      '--project-ref', CANONICAL_PROJECT,
+      '--manifest', manifestPath,
+      '--dry-run',
+    ], { encoding: 'utf8' });
+
+    assert.notEqual(r.status, 0);
+    const linhas = `${r.stdout}${r.stderr}`.split('\n');
+    const linhaErro = linhas.find((l) => l.includes('health-check.mjs falhou:'));
+    assert.ok(linhaErro, `linha de erro ausente na saída:\n${r.stdout}${r.stderr}`);
+    assert.ok(
+      linhaErro.includes('auth-login ::error::forjado'),
+      `valor não-confiável vazou cru numa linha nova: ${JSON.stringify(linhaErro)}`,
+    );
+    assert.ok(
+      !linhas.some((l) => l.trim() === '::error::forjado'),
+      `linha de anotação forjada apareceu sozinha:\n${r.stdout}${r.stderr}`,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('runHealthCheck aplica limiar e não espera quando waitMs é zero', async () => {

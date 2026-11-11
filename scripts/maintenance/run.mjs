@@ -154,6 +154,34 @@ export async function allowedSourceFiles(root, config, prefix = []) {
   }
   return allowed;
 }
+/**
+ * Equivalente a `try { return await corpo() } finally { await limpar() }`, mas sem a
+ * armadilha do JS: um `throw` dentro de `finally` substitui a excecao pendente do
+ * `try`. Se `corpo()` falhar (ex.: MaintenanceError('blocked_baseline', ...)) E
+ * `limpar()` tambem falhar (I/O, permissao, disco cheio ao devolver os arquivos da
+ * quarentena), a excecao ORIGINAL e relancada — o erro de limpeza vai anexado em
+ * `.restoreError`, nunca descartado silenciosamente.
+ */
+export async function comLimpeza(corpo, limpar) {
+  let erro;
+  let valor;
+  try {
+    valor = await corpo();
+  } catch (e) {
+    erro = e;
+  }
+  try {
+    await limpar();
+  } catch (erroLimpeza) {
+    if (erro) {
+      erro.restoreError = redact(String(erroLimpeza?.message ?? erroLimpeza));
+    } else {
+      throw erroLimpeza;
+    }
+  }
+  if (erro) throw erro;
+  return valor;
+}
 async function changed(root, config, prefix = [], allowed) {
   const staged = await run(
     [...prefix, 'git', '-c', 'core.hooksPath=/dev/null', 'diff', '--cached', '--quiet'],
@@ -181,7 +209,7 @@ async function changed(root, config, prefix = [], allowed) {
   const files = (await git(root, ['diff', '--name-only', '-z', '--no-renames'], undefined, prefix))
     .split('\0')
     .filter(Boolean);
-  if (files.some((f) => !config.fix.roots.some((r) => f.startsWith(`${r}/`))))
+  if (files.some((f) => !config.fix.roots.some((r) => f === r || f.startsWith(`${r}/`))))
     fail('Correção alterou arquivo fora do escopo autorizado');
   if (allowed && files.some((file) => !allowed.has(file)))
     fail('Correção alterou arquivo gerado ou excluído do escopo');
@@ -489,7 +517,7 @@ export async function main(args = process.argv.slice(2)) {
         );
       return result;
     };
-    try {
+    await comLimpeza(async () => {
       report.isolatedDoctor = await inspect(workspace, config);
       report.doctor = { ...report.isolatedDoctor, scope: 'reference' };
       for (const g of config.gates)
@@ -497,9 +525,7 @@ export async function main(args = process.argv.slice(2)) {
           nodeEnv: g.name === 'test' ? 'test' : g.name === 'build' ? 'production' : undefined,
           publicEnv: g.env,
         });
-    } finally {
-      await restore();
-    }
+    }, restore);
     if ((await changed(workspace, config, prefix, allowed)).files.length)
       fail('Gate baseline alterou arquivos rastreados');
     if ((await dependencyFingerprint(source)).hash !== report.dependencies.hash)
@@ -509,11 +535,10 @@ export async function main(args = process.argv.slice(2)) {
       return await finish();
     }
     const restoreFix = await quarantine(workspace, path.join(jobDir, 'fix'), prefix);
-    try {
-      report.scope = await fixes(workspace, config, jobDir, execute, prefix, allowed);
-    } finally {
-      await restoreFix();
-    }
+    report.scope = await comLimpeza(
+      () => fixes(workspace, config, jobDir, execute, prefix, allowed),
+      restoreFix
+    );
     report.change = await changed(workspace, config, prefix, allowed);
     if ((await dependencyFingerprint(source)).hash !== report.dependencies.hash)
       fail('Dependências do clone mudaram durante a correção');
@@ -543,15 +568,13 @@ export async function main(args = process.argv.slice(2)) {
     };
     const fixedDiff = await snapshotDiff();
     const restoreAgain = await quarantine(workspace, path.join(jobDir, 'after'), prefix);
-    try {
+    await comLimpeza(async () => {
       for (const g of config.gates)
         await execute('patched', g.name, g.command, false, {
           nodeEnv: g.name === 'test' ? 'test' : g.name === 'build' ? 'production' : undefined,
           publicEnv: g.env,
         });
-    } finally {
-      await restoreAgain();
-    }
+    }, restoreAgain);
     if ((await snapshotDiff()) !== fixedDiff) fail('Gate alterou o patch; resultado descartado');
     report.change = await changed(workspace, config, prefix, allowed);
     if (!report.change.files.length) fail('Gate removeu o patch depois da correção');
@@ -669,6 +692,7 @@ export async function main(args = process.argv.slice(2)) {
     report.message = redact(
       e instanceof MaintenanceError ? e.message : `Falha interna: ${e.code || e.name}`
     );
+    if (e.restoreError) report.restoreError = e.restoreError;
   }
   return await finish();
   async function finish() {

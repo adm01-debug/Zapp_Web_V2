@@ -18,7 +18,13 @@ try {
   console.error('ERRO: ' + erro.message);
   process.exit(1);
 }
-const md = readFileSync(arquivo, 'utf8'); // NOSONAR(S8707): 'arquivo' vem de resolverCaminhoPermitido(...) acima, que resolve o caminho e recusa (exit 1) tudo fora do repositorio/tmp antes deste read
+let md;
+try {
+  md = readFileSync(arquivo, 'utf8'); // NOSONAR(S8707): 'arquivo' vem de resolverCaminhoPermitido(...) acima, que resolve o caminho e recusa (exit 1) tudo fora do repositorio/tmp antes deste read
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
+  process.exit(1);
+}
 const blocks = md.split(/^### (?=E\d+ · )/m).slice(1);
 const errors = [];
 const seen = new Set();
@@ -42,7 +48,8 @@ function ehTombstone(b) {
 for (const b of blocks) {
   const id = b.match(/^E(\d+)/)[1];
   const numero = Number(id);
-  if (id.length < 2 || id.length > 3) {
+  const canonico = numero === 100 ? '100' : String(numero).padStart(2, '0');
+  if (id !== canonico) {
     errors.push(`E${id}: formato de identificador invalido`);
     continue;
   }

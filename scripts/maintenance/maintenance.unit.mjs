@@ -15,7 +15,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import os from 'node:os';
 import path from 'node:path';
-import { main, parseArgs, networkPrefix } from './run.mjs';
+import { main, parseArgs, networkPrefix, comLimpeza } from './run.mjs';
 import {
   git,
   run,
@@ -36,6 +36,7 @@ async function fixture(
     trackedEnv = false,
     formatterEscapes = false,
     nativeTypes = false,
+    roots = ['src'],
   } = {}
 ) {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-test-'));
@@ -105,7 +106,7 @@ async function fixture(
           ? ['node', new URL('./typecheck.mjs', import.meta.url).pathname, 'tsconfig.app.json']
           : ['node', 'scripts/gate.mjs', name],
     })),
-    fix: { roots: ['src'], prettier: true, eslintRules: [] },
+    fix: { roots, prettier: true, eslintRules: [] },
     timeoutMs: failure === 'timeout' ? 300 : 5000,
     maxFiles: 20,
     maxChangedLines: 400,
@@ -226,6 +227,15 @@ test('formatter fora do escopo é descartado antes de commit', isolated, async (
     'fixture'
   );
 });
+test('root de arquivo único (permitido por validateConfig) não é descartado como fora do escopo', isolated, async (t) => {
+  // validateConfig aceita qualquer `src/...`, inclusive um arquivo exato (não só diretório).
+  // changed() checava escopo com `f.startsWith(root + '/')`, que nunca casa quando root É o
+  // próprio arquivo — a correção legítima e dentro do escopo configurado era descartada.
+  const f = await fixture(t, { roots: ['src/value.ts'] });
+  const result = await main(f.args());
+  assert.equal(result.report.status, 'validated_patch', JSON.stringify(result.report));
+  assert.match(await git(f.root, ['show', `${result.report.commit}:src/value.ts`]), /good/);
+});
 test('código de saída baseline timeout é bloqueante', isolated, async (t) => {
   const f = await fixture(t, { failure: 'timeout' });
   const result = await main(f.args());
@@ -274,6 +284,25 @@ test('trava de pid morto é recuperada, trava recente sem dono fica bloqueante',
   await release();
   await mkdir(lock);
   await assert.rejects(acquire(lock), (e) => e.code === 'skipped_busy');
+});
+test('owner.json corrompido (crash no meio da escrita) e recente fica bloqueante', async (t) => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-corrupt-recent-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const lock = path.join(dir, 'lock');
+  await mkdir(lock);
+  await writeFile(path.join(lock, 'owner.json'), '{"pid":12345,"token":"ab');
+  await assert.rejects(acquire(lock), (e) => e.code === 'skipped_busy');
+});
+test('owner.json corrompido e trava antiga (mtime) e recuperada', async (t) => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-corrupt-stale-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const lock = path.join(dir, 'lock');
+  await mkdir(lock);
+  await writeFile(path.join(lock, 'owner.json'), '{"pid":12345,"token":"ab');
+  const past = new Date(Date.now() - 400000);
+  await utimes(lock, past, past);
+  const release = await acquire(lock);
+  await release();
 });
 test('namespace de rede impede acesso externo de todos os filhos', isolated, async () => {
   const prefix = await networkPrefix(process.cwd());
@@ -883,4 +912,40 @@ test('leitura vendor vincula validação e bytes ao mesmo inode', async (t) => {
   await writeFile(replacement, 'replacement fixture');
   await rename(replacement, file);
   await assert.rejects(readRegularDependency(file, expected), /substituído durante a inspeção/);
+});
+test('comLimpeza: corpo falha e limpeza falha -> relanca a excecao ORIGINAL com restoreError anexado', async () => {
+  const original = new Error('gate baseline falhou');
+  await assert.rejects(
+    comLimpeza(
+      async () => { throw original; },
+      async () => { throw new Error('rename ENOENT: disco cheio'); }
+    ),
+    (e) => e === original && /disco cheio/.test(e.restoreError)
+  );
+});
+test('comLimpeza: corpo falha e limpeza funciona -> relanca a excecao original sem restoreError', async () => {
+  const original = new Error('gate baseline falhou');
+  await assert.rejects(
+    comLimpeza(
+      async () => { throw original; },
+      async () => {}
+    ),
+    (e) => e === original && e.restoreError === undefined
+  );
+});
+test('comLimpeza: corpo funciona e limpeza falha -> propaga o erro da limpeza', async () => {
+  await assert.rejects(
+    comLimpeza(
+      async () => 'valor',
+      async () => { throw new Error('rename ENOENT'); }
+    ),
+    /rename ENOENT/
+  );
+});
+test('comLimpeza: caminho feliz devolve o valor do corpo', async () => {
+  const valor = await comLimpeza(
+    async () => 'valor-do-corpo',
+    async () => {}
+  );
+  assert.equal(valor, 'valor-do-corpo');
 });

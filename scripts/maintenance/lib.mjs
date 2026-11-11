@@ -753,11 +753,13 @@ export async function acquire(directory) {
         await rm(current, { recursive: true, force: true });
       }
     await mkdir(directory, { mode: 0o700 });
-    await writeFile(
-      path.join(directory, 'owner.json'),
-      JSON.stringify({ pid: process.pid, token, startedAt: new Date().toISOString() }),
-      { mode: 0o600 }
-    );
+    // writeJson (temp+rename atomico) em vez de writeFile direto: um SIGKILL/OOM no
+    // meio da escrita nao pode deixar owner.json truncado (vindo da main, #2931).
+    await writeJson(path.join(directory, 'owner.json'), {
+      pid: process.pid,
+      token,
+      startedAt: new Date().toISOString(),
+    });
     owned = true;
   } finally {
     if (!owned) await releaseProcess();
