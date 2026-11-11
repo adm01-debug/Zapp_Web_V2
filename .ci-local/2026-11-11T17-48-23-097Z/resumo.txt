@@ -1,0 +1,10 @@
+CI local — base origin/main (9727aaedd) → HEAD 9727aaedd [claude/feat-ci-local-espelho-261111]
+logs: /home/joaquim_ataides/projetos/_worktrees/Zapp_Web_V2/ci-local/.ci-local/2026-11-11T17-48-23-097Z
+
+════ CI/CD Pipeline (ci.yml)
+── ▶️  typecheck — 🔎 TypeCheck
+   ·  📥 Checkout code — infraestrutura do runner (actions/checkout), não se aplica
+   ·  🟩 Setup Node — infraestrutura do runner (actions/setup-node), não se aplica
+   ·  🧄 Setup Bun — infraestrutura do runner (oven-sh/setup-bun), não se aplica
+   ·  💾 Cache de dependências Bun — infraestrutura do runner (actions/cache), não se aplica
+   ✅ 📚 Install dependencies (0s)

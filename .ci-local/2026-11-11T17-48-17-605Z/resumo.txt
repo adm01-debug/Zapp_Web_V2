@@ -1,0 +1,301 @@
+CI local — base origin/main (9727aaedd) → HEAD 9727aaedd [claude/feat-ci-local-espelho-261111]
+logs: /home/joaquim_ataides/projetos/_worktrees/Zapp_Web_V2/ci-local/.ci-local/2026-11-11T17-48-17-605Z
+
+════ CI/CD Pipeline (ci.yml)
+── ▶️  typecheck — 🔎 TypeCheck
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses actions/setup-node] 🟩 Setup Node
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 🔎 Run TypeScript debt ratchet
+   · [run] 🛡️ Integridade do CLAUDE.md (GA02)
+── ▶️  unit-tests (1) — 🧪 Unit Tests (1/3)
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 🧪 Run Vitest shard ${{ matrix.shard }}/3
+── ▶️  unit-tests (2) — 🧪 Unit Tests (2/3)
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 🧪 Run Vitest shard ${{ matrix.shard }}/3
+── ▶️  unit-tests (3) — 🧪 Unit Tests (3/3)
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 🧪 Run Vitest shard ${{ matrix.shard }}/3
+── ▶️  node-scripts — 🧩 Node CI Scripts
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses actions/setup-node] 🟩 Setup Node
+   · [uses denoland/setup-deno] 🦕 Setup Deno
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 📦 Validar pacote de reconciliação
+   · [run] 📖 Verificar README gerado dos workflows
+   · [run] Verificar inventário de testes
+   · [run] 🧩 Run Node CI scripts tests
+   · [run] 📊 Verificar placar V4 (--check)
+   · [run] 🧪 Test Vercel ignore-build guard
+   · [run] 📦 Validar manifesto de edge functions
+   · [run] 🛡️ Exposição de erro interno nas edge functions
+   · [run] 🛡️ src/ não lê VITE_SUPABASE_URL/PUBLISHABLE_KEY via import.meta.env
+── ▶️  edge-contracts — 🦕 Edge contracts
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses denoland/setup-deno] 🦕 Setup Deno
+   · [run] 🦕 Test Edge handlers
+── ▶️  build — 🏗️ Build
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 🏗️ Build for production
+   · [uses actions/upload-artifact] 📦 Upload build artifacts
+   · [run] 📏 Enforce initial bundle budget (performance-budget.json)
+   · [run] 🛡️ Bundle publicado não expõe JWT service_role
+   · [run] 📐 Report bundle size
+── ▶️  security — 🔒 Security Audit
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 🔎 Audit completo (informativo, inclui devDependencies)
+   · [run] 🔒 Audit bloqueante (HIGH/CRITICAL em dependencias de producao)
+   · [uses gitleaks/gitleaks-action] 🔍 Detect secrets introduced in commits
+── ▶️  workflow-lint — 🛡️ Workflow lint
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses actions/setup-node] 🟩 Setup Node
+   · [run] 🛡️ Pins de Action resolvem para o commit real da tag
+   · [run] 📦 Instalar actionlint e shellcheck (versao + sha256 pinados)
+   · [run] 🔍 actionlint (sintaxe, expressoes e shellcheck dos blocos run)
+   · [run] 📦 Instalar zizmor (pinado)
+   · [run] 🛡️ zizmor (seguranca dos workflows)
+── ▶️  ci-gate — ✅ CI Gate (required check)
+   · [run] Verificar resultado dos jobs obrigatórios
+── ▶️  e2e — 🎭 E2E Tests (Playwright)
+   · [uses actions/checkout] 📥 Checkout code
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [uses actions/cache] 💾 Cache dos browsers Playwright
+   · [run] 🎭 Install Playwright (Chromium, Firefox, WebKit)
+   · [run] 🔧 Dependências de sistema do Playwright (cache quente)
+   · [run] 🧪 Run Playwright E2E (PR sem autenticação)
+   · [uses actions/upload-artifact] 📊 Upload Playwright report
+── ▶️  mutation-mapa — 🧬 Mutação do mapa (não bloqueante)
+   · [uses actions/checkout] 📥 Checkout code
+   · [run] 🔎 Detectar mudança no módulo do mapa (paths filter)
+   · [uses oven-sh/setup-bun] 🧄 Setup Bun
+   · [uses actions/cache] 💾 Cache de dependências Bun
+   · [run] 📚 Install dependencies
+   · [run] 🧬 Rodar mutação do mapa (E69)
+
+════ DB Guard (offline) (db-guard.yml)
+── ▶️  offline-contract — Contrato DB offline
+   · [uses actions/checkout] Checkout code
+   · [uses actions/github-script] Rejeitar edicao de migration ja existente
+   · [uses actions/setup-node] Setup Node
+   · [uses oven-sh/setup-bun] Setup Bun
+   · [uses actions/cache] Cache do Bun (instalacao)
+   · [run] Instalar dependencias do guard AST
+   · [run] Executar suites Node antes mantidas na allowlist
+   · [uses denoland/setup-deno] Setup Deno
+   · [run] Validar .from() e .rpc() contra o catalogo
+   · [run] Validar subscriptions contra a publicacao Realtime
+   · [run] Testar comparadores de catalogo, manifesto e migrations
+   · [run] Provar contrato Talk X de janela de envio em PostgreSQL descartavel
+   · [run] Instalar docker-shim (E47)
+   · [run] Provar filtro de consultas do snapshot no PostgreSQL 17
+   · [run] Provar cursor e reset Gmail com PostgREST descartável (7 + 1)
+   · [run] Provar X034 com PostgREST e Evolution falso (8)
+   · [run] Validar SQL de catalogo e manifesto no PostgreSQL 17
+   · [run] Provar politica confiavel do rate limit do catalogo
+   · [run] Simular politica confiavel do rate limit do catalogo
+   · [run] Testar normalizacao deterministica dos tipos gerados
+   · [run] Validar migrations localmente
+   · [run] Simular contrato de acesso das assinaturas de e-mail (email_signatures)
+   · [run] Simular contrato de acesso da auto-reconexao de conexoes
+   · [run] Simular regressões do contrato mcp_exec
+   · [run] Simular regressões da ACL de webhook failures
+   · [run] Simular revogacao dos privilegios de anon nas 17 tabelas de contatos/mensagens (SEC-RLS_CONTATOS_MENSAGENS-05)
+   · [run] Simular SECURITY DEFINER aberta para PUBLIC/anon
+   · [run] Simular chamador ausente nas SECURITY DEFINER expostas
+   · [run] Simular violações dos invariantes gerais do banco vivo
+   · [run] Provar remoção do token legado da API pública
+   · [run] Simular concorrência e integridade da fila CRM
+   · [run] Simular autorização canônica do Inbox
+   · [run] Simular exclusão, status e grants canônicos de Contatos
+   · [run] Simular contatos legados fora por padrão (include_legacy)
+   · [run] Simular autorização de status de conversa e etiquetas de WhatsApp
+   · [run] Simular escopo por conexão das etiquetas de WhatsApp (item 22 / TRA-006)
+   · [run] Simular autorização do INSERT em análises de conversa
+   · [run] Simular autorização da LEITURA de análises/etiquetas por fila (L8)
+   · [run] Simular autorização do notify_due_tasks (RPC sem guarda)
+   · [run] Provar rearme de alarme quando remind_at muda
+   · [run] Simular pedido anônimo de recuperação de senha (item 72)
+   · [run] Simular janela aberta (fim nulo) na consulta de custo de IA (item 265)
+   · [run] Simular fronteira RLS das RPCs do Dashboard (DASH-091/092)
+   · [run] Simular credencial dedicada de cron no Vault (L5)
+   · [run] Simular escopo das 14 policies TO public -> authenticated
+   · [run] Simular escopo das 9 policies de snooze/favorite/pin TO authenticated (N-141)
+   · [run] Simular o flag administrativo de download em profiles (R2-AUTH-027)
+   · [run] Simular higiene de grants (EXECUTE de PUBLIC + policies duplicadas)
+   · [run] Simular permissao send_messages imposta na RPC de envio (L9)
+   · [run] Simular autorizacao da edicao de mensagens
+   · [run] Simular escopo de fila na escolha da conexao de envio (L7)
+   · [run] Simular escopo de posse da midia privada do Storage (SEC-DEFINER_GRANTS_STORAGE-01/02)
+   · [run] Simular troca atomica da conexao WhatsApp padrao (#174)
+   · [run] Simular gamificacao de marco no enfileiramento (R2-DB-009)
+   · [run] Simular INSERT de evento de conversa com autor e contato visivel (N-143)
+   · [run] Simular recuperacao autenticada sem coluna reset_token (R2-DB-023)
+   · [run] Simular o despacho de mensagens agendadas
+   · [run] Simular vinculo de time na reacao em mensagem (#1265)
+   · [run] Simular view team_message_read_state — all_read por mensagem (N-070)
+   · [run] Simular drop do indice redundante de messages.external_id (perf)
+   · [run] Simular índices de tarefas concluídas do kanban (N-083)
+   · [run] Simular fila, autorização e aceite concorrente do TALK ME
+   · [run] Simular distribuicao e transbordo de filas
+   · [run] Simular assumir e devolver conversa por fila
+   · [run] Simular histórico atômico de templates Talk X
+   · [run] Simular snapshot do 2o UPDATE de template Talk X (R2-DB-013)
+   · [run] Simular correção forward-only da FK saved_by do Talk X
+   · [run] Simular reconciliação forward-only da policy Talk X blacklist
+   · [run] Simular trilha de auditoria da blacklist Talk X (N-107)
+   · [run] Simular publicação Realtime da blacklist Talk X com escopo de colunas
+   · [run] Simular edição de limites de campanha via RPC Talk X (V09)
+   · [run] Simular correção da janela de envio via RPC Talk X (V09b)
+   · [run] Simular janela de envio Talk X com fuso/dia local (N-102c)
+   · [run] Simular endurecimento de casts na RPC Talk X (V09c)
+   · [run] Simular cast de send_weekdays nas RPCs Talk X (N-102b)
+   · [run] Simular correção do vazamento 22009 na RPC Talk X (V09e)
+   · [run] Simular autenticação do escape hatch de limites Talk X (V09d)
+   · [run] Simular guards fail-closed do Talk X (MAPA)
+   · [run] Simular replay idempotente do talkx_settings (R2-01)
+   · [run] Provar o DDL da janela de envio do Talk X (N-102a)
+   · [run] Simular teto de send_interval_max em 24h (A2)
+   · [run] Simular limites de ritmo por minuto/dia/conexão e perfis de velocidade (X018)
+   · [run] Simular eventos do ciclo de vida gravados no servidor (V12)
+   · [run] Simular guard de replied_count e remoção da RPC de use_count (V15)
+   · [run] Simular série horária contando sent + delivered (V16)
+   · [run] Simular READ marcando read_at + read_count (V17)
+   · [run] Simular benchmarks por período com nomes (X075 / N-123)
+   · [run] Simular dicas por regra no servidor (X075 / N-124)
+   · [run] Simular retry manual de destinatário terminal (V19)
+   · [run] Simular flags de lançamento persistidas (V21)
+   · [run] Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
+   · [run] Simular vazamento e correção da view de métricas Talk X
+   · [run] Simular snapshot atômico de destinatários Talk X
+   · [run] Simular identidade e revisão otimista de rascunhos Talk X
+   · [run] Simular checagens de lançamento de campanha Talk X
+   · [run] Simular leases de entrega concorrente do Talk X
+   · [run] Simular snapshot imutável de mensagem e variante Talk X
+   · [run] Simular contrato de acesso e fila do Multiplix
+   · [run] Simular a fila de entrega por item do Multiplix
+   · [run] Simular conclusão drenada do Multiplix gravando status enum
+   · [run] Simular revogação de EXECUTE público do gatilho Multiplix (N-144)
+   · [run] Provar escopo da audiencia Multiplix (F24)
+   · [run] Simular redacao fora do escopo do resolve Multiplix (R2-DB-003)
+   · [run] Provar por mutação os testes do worker do Multiplix (N-017)
+   · [run] Simular estados e audiencia canônicos do Talk X
+   · [run] Simular transições concorrentes de campanha Talk X
+   · [run] Simular trava por campanha, fila do worker e segredo de cron do Talk X (X010)
+   · [run] Provar a RPC de paginacao de destinatarios da campanha Talk X (N-095)
+   · [run] Simular portões de papel do Talk X (X014)
+   · [run] Simular a RPC unica de audiencia do Talk X (X016)
+   · [run] Simular a tabela e funcao de segmentos do Talk X (N-111)
+   · [run] Simular o snapshot de audiencia do Talk X (X017)
+   · [run] Provar constraint de pesos de variantes do Talk X (N-103)
+   · [run] Saude de segmento (N-116)
+   · [run] Simular a correção das regressões do Talk X (cadeia completa)
+   · [run] Simular o tick do motor Talk X (X012)
+   · [run] Provar ambiguidade do overload de transition_talkx_campaign no PostgREST
+   · [run] Provar o contrato de eventos do Talk X
+   · [run] Provar escrita de links, leitura de cliques/conversões e investimento (X021)
+   · [run] Provar o ciclo de vida com ator/motivo e o fechamento da fila (X024)
+   · [run] Provar contadores, checklist, duplicar/excluir e policy de eventos (X026)
+   · [run] Provar recibos de leitura, atribuicao de resposta e tempo de resposta (X027)
+   · [run] Provar reenvio manual e resolucao de outcome_unknown com trilha (X031)
+   · [run] Provar consentimento no lancamento e expurgo por prazo (X032)
+   · [run] Provar log por destinatario, saude do motor e alertas (X033)
+   · [run] Provar gate de papel nas leituras do cron do motor Talk X (M-DB-03)
+   · [run] Provar que o tick nao aborta no expurgo (M-DB-01)
+   · [run] Provar lote de alertas Talk X com outcome_unknown_24h (item 33)
+   · [run] Provar que o expurgo nao apaga ai_jobs de outros modulos (#130)
+   · [run] Simular primitivas atômicas de mensagens e encerramento
+   · [run] Simular transporte canônico de mensagens interativas (botões/lista)
+   · [run] Simular contrato de dados da Telefonia v2
+   · [run] Simular notificações atômicas de chamadas e sentimento
+   · [run] Simular contrato runtime generico de migration
+   · [run] Simular reconciliação segura do ledger
+   · [run] Simular auditoria somente-leitura de configuracao runtime
+   · [run] Provar transporte libpq com cliente e PostgreSQL reais
+   · [run] Executar o SQL do ledger pos-apply no PostgreSQL 17 (R2-INF-005)
+   · [run] Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
+   · [run] Simular concorrencia da RPC de conversa direta (TC-002)
+   · [run] Simular ACL de escrita de departments (L11)
+   · [run] Simular gestao de departamentos pelo admin
+   · [run] Simular vinculo obrigatorio no recibo de leitura do team chat (auditoria Onda 3)
+   · [run] Simular guarda de bootstrap e ultimo owner no team chat (TC-003)
+   · [run] Simular bloqueios RESTRICTIVE de escrita em gmail_accounts
+   · [run] Simular contrato de seguranca do WhatsApp de departamento (TC-005)
+   · [run] Simular pedido de acesso a departamento (N-071)
+   · [run] Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)
+   · [run] Simular member_role nas RPCs de saída/remoção do team chat (TC-004)
+   · [run] Simular ACL e persistencia de media_path do Team Chat (R2-DB-020)
+   · [run] Simular guarda de departamento e transferencia no team chat (QA5-10)
+   · [run] Provar contrato de endereco da RPC search_contacts (mapa F1)
+   · [run] Provar contrato de vocabulário de IA — backfill e reversão (IA-030)
+   · [run] Provar RLS de escrita em talkx_settings — admin persiste, agente não (V06)
+   · [run] Provar as colunas novas de talkx_templates (N-126b)
+   · [run] Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
+   · [run] Provar grants e revogação das vozes do Multiplix (F64)
+   · [run] Provar limite de tamanho nos buckets whatsapp-media, audio-messages e multiplix-voice (N-010)
+   · [run] Simular RPC de modo do WhatsApp do departamento (QA5-09)
+   · [run] Provar o rollout gradual de feature_flags (V3 etapa 5) — percentual, papéis, listas e RLS
+   · [run] Provar a RPC canônica de política de rede (R2-AUTH-022)
+   · [run] Provar revogação de sessões Auth por migration (R2-AUTH-004)
+   · [run] Provar encerramento diario de sessoes vencidas (N-008)
+   · [run] Simular amarração do alvo no INSERT de atividades, chamadas e tarefas (SEC-Y25-01)
+   · [run] Provar a trava de escalada de privilegio em profiles (N-002)
+   · [run] Provar a remocao do ramo admin inerte do RLS de email (N-147)
+   · [run] Provar a serie diaria de KPIs do dashboard (DASHBOARD-03)
+   · [run] Provar o runbook de recriacao do banco local (N-136)
+   · [run] Provar leitura de reacoes pelo profile_id (N-142)
+   · [run] Provar escrita de reacoes para agente de fila (SEC-RLS visibilidade)
+   · [run] Provar defaults de conversao Talk X com NULL explicito (R2-API-036)
+   · [run] Provar contrato de banco da midia do team chat (TC-001)
+   · [run] Provar corrida de criacao de conversa direta no team chat (item 55)
+   · [run] Provar autorizacao de INSERT de conversation_tasks e conversation_events
+   · [run] Provar contrato de convites e vocabulario de auditoria do team chat (TC-008)
+   · [run] Provar outbox duravel do log de uso de IA (IA-TIMEOUT-001)
+   · [run] Provar dedup de policies de avatar em storage (N-011)
+   · [run] Provar search_path com pg_temp em is_admin_or_supervisor e get_own_gmail_accounts (n-148)
+   · [run] Provar contratos shell restantes em serviços descartáveis
+── ▶️  replay-migrations — Replay local das migrations
+   · [uses actions/checkout] Baixar o codigo
+   · [run] Detectar mudanca em supabase/migrations
+   · [run] Pre-baixar a imagem do replay
+   · [run] Aplicar as migrations em PostgreSQL 17 descartavel
+   · [uses actions/upload-artifact] Publicar o log e os erros do replay
+   · [run] Provar as RPCs de leitura da supressão do Talk X (X176)
+   · [run] Provar limites de storage em stickers e audio-memes (N-009)
+   · [run] Provar talkx_help_views + ranking dos mais vistos (N-135)
+   · [run] Provar cursor tiebreak e limite minimo de get_team_messages_page (N-072)
+   · [run] Provar limites dos buckets e a identidade de team-chat-files (SEC-DEFINER_GRANTS_STORAGE-06/08)
+   · [run] Provar RLS de agendamento e sussurro por contato visível e permissão (t_d3c1981f)
+   · [run] Provar a identidade mensal do alerta de custo do autocomplete (R2-API-058)
+   · [run] Simular amarração do alvo no INSERT de atividades, chamadas e tarefas (SEC-Y25-01)
+   · [run] Provar o remetente de grupo em messages (t_35d5aa82)
+   · [run] Provar talkx_save_template_variants
+   · [run] Provar talkx_segment_progress
+   · [run] Provar admin_cron_jobs_rpc
+   · [run] Provar gmail_accounts_sync_backoff
+   · [run] Provar replay_classify
+   · [run] Provar search_email_threads
+   · [run] Provar talkx_campaign_recurrence
+   · [run] Provar talkx_n102_window_acl
+
