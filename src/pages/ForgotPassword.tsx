@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle, Loader2, Clock, KeyRound } from 'lucide-react';
 import { log } from '@/lib/logger';
 import { z } from 'zod';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useReauthentication } from '@/hooks/auth/useReauthentication';
+import { ReauthDialog } from '@/components/auth/ReauthDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,10 +26,29 @@ export default function ForgotPassword() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   // Quem já está logado não pede reset anônimo: o gatilho trataria o pedido como do
-  // próprio usuário sem user_id e o INSERT seria recusado. Troca de senha com sessão
-  // é em Segurança → Alterar Senha (com reautenticação).
+  // próprio usuário sem user_id e o INSERT seria recusado. Troca da PRÓPRIA senha com
+  // sessão é o mesmo fluxo de Segurança → Alterar Senha: reautenticação e depois
+  // /reset-password. A tela de Segurança (`/?view=security`) é só de gestor
+  // (STAFF_ROLES) e o atendente cairia em "acesso restrito"; por isso o atalho daqui
+  // vai direto ao destino do painel, igual para todos os papéis.
   const { user, loading: authLoading, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
+  const navigate = useNavigate();
+  const {
+    showReauthDialog,
+    pendingAction,
+    requireReauth,
+    confirmReauth,
+    cancelReauth,
+    getActionLabel,
+    isReauthenticating,
+  } = useReauthentication();
+
+  const alterarMinhaSenha = () => {
+    requireReauth('change_password', async () => {
+      navigate('/reset-password');
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,13 +107,13 @@ export default function ForgotPassword() {
             <CardTitle>Você já está conectado</CardTitle>
             <CardDescription>
               {user.email ? <>Sessão ativa como <strong>{user.email}</strong>. </> : null}
-              Para trocar a senha, use Segurança → Alterar Senha. Se esta não é a sua
-              conta, saia dela para pedir o reset da sua.
+              Para trocar a sua senha, confirme a senha atual e defina a nova. Se esta não
+              é a sua conta, saia dela para pedir o reset da sua.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button className="w-full" asChild>
-              <Link to="/?view=security">Ir para Segurança</Link>
+            <Button className="w-full" onClick={alterarMinhaSenha}>
+              Alterar minha senha
             </Button>
             <Button
               variant="outline"
@@ -120,6 +141,14 @@ export default function ForgotPassword() {
             </Button>
           </CardContent>
         </Card>
+        <ReauthDialog
+          open={showReauthDialog}
+          onOpenChange={() => cancelReauth()}
+          actionLabel={pendingAction ? getActionLabel(pendingAction) : ''}
+          onConfirm={confirmReauth}
+          onCancel={cancelReauth}
+          isLoading={isReauthenticating}
+        />
       </div>
     );
   }
