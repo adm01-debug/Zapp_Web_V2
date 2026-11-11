@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9084db736411df86ca4d52e4642301471077451b",
+  "commit": "d4f25e704294bc3439d7c82dba508ceae6cc768d",
   "branch": "main",
-  "data_commit": "2026-11-11T10:57:24-03:00",
+  "data_commit": "2026-11-11T17:13:07Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d4f25e7",
+    "data": "2026-11-11",
+    "assunto": "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)"
+   },
    {
     "sha": "9084db7",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "db960cd",
     "data": "2026-11-11",
     "assunto": "fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)"
-   },
-   {
-    "sha": "7f33c27",
-    "data": "2026-11-10",
-    "assunto": "fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)"
    }
   ],
   "arquivos_mudados_7d": 630,
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 14
+    "mudancas": 13
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8386,
   "arquivos_codigo": 4803,
-  "linhas_codigo": 888505,
+  "linhas_codigo": 888530,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -616,7 +616,7 @@
   },
   "scripts/db-tests": {
    "arquivos": 3,
-   "linhas": 521
+   "linhas": 546
   },
   "scripts/docs": {
    "arquivos": 4,

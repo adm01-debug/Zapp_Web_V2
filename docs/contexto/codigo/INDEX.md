@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `9084db736411df86ca4d52e4642301471077451b` (2026-11-11T10:57:24-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d4f25e704294bc3439d7c82dba508ceae6cc768d` (2026-11-11T17:13:07Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8386 |
 | arquivos_codigo | 4803 |
-| linhas_codigo | 888505 |
+| linhas_codigo | 888530 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,13 +391,13 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56714 nós · 117203 arestas · 4194 comunidades · grafo do commit `9084db73`
+- 56714 nós · 117203 arestas · 4194 comunidades · grafo do commit `d4f25e70`
 - comunidades maiores: TalkXSuppression.tsx (1207), lucide-react (996), vitest (701), react (690), ExternalProductManagement.tsx (556), useAuth (473), cn (458), DashboardWidgetRenderer.tsx (432), @tanstack/react-query (420), useMyWorkItems.ts (379), ref_node_fs (349), getAvatarColor (348)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (14)
+- .github/workflows/ci.yml (13)
 - docs/ci/README.md (13)
 - CLAUDE.md (12)
 - PENDENCIAS.md (12)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `d4f25e7` fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)
 - 2026-11-11 `9084db7` fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)
 - 2026-11-11 `b548ca0` fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)
 - 2026-11-11 `0e15ed6` fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `d1fc5ad` fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)
 - 2026-11-11 `090f5f8` fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)
 - 2026-11-11 `d3a132d` fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)
-- 2026-11-11 `15ff5f3` fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
