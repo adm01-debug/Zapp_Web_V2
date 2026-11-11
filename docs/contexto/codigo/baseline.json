@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9727aaeddf83e20405f8ec5db0825d4b50704833",
+  "commit": "8ea43011f681483cd609ecafcaeedcfbe7239f36",
   "branch": "main",
-  "data_commit": "2026-11-11T14:37:31-03:00",
+  "data_commit": "2026-11-11T15:09:56-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "8ea4301",
+    "data": "2026-11-11",
+    "assunto": "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)"
+   },
    {
     "sha": "9727aae",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "ce06abc",
     "data": "2026-11-11",
     "assunto": "fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)"
-   },
-   {
-    "sha": "b2967b4",
-    "data": "2026-11-11",
-    "assunto": "fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)"
    }
   ],
-  "arquivos_mudados_7d": 650,
+  "arquivos_mudados_7d": 628,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8389,
-  "arquivos_codigo": 4805,
-  "linhas_codigo": 889803,
+  "arquivos_total": 8390,
+  "arquivos_codigo": 4806,
+  "linhas_codigo": 889855,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 217,
   "migrations": 1101,
   "cron_jobs": 26,
-  "testes": 2611,
+  "testes": 2612,
   "workflows": 21,
   "scripts": 426,
   "docs_md": 1073
@@ -607,8 +607,8 @@
    "linhas": 337
   },
   "scripts/ci": {
-   "arquivos": 212,
-   "linhas": 43961
+   "arquivos": 213,
+   "linhas": 44013
   },
   "scripts/db-audit": {
    "arquivos": 81,

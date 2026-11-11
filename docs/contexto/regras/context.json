@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9727aaeddf83e20405f8ec5db0825d4b50704833",
+  "sha": "8ea43011f681483cd609ecafcaeedcfbe7239f36",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 17:44 UTC",
-  "files_total": 8231,
-  "code_files": 6078,
-  "code_lines": 1057163
+  "generated_at": "2026-11-11 18:27 UTC",
+  "files_total": 8232,
+  "code_files": 6079,
+  "code_lines": 1057215
  },
  "version": "1.3.2",
- "facts_hash": "69f9a763d440c055",
+ "facts_hash": "36d1674c48ad557c",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -320,7 +320,7 @@
    ".tsx": 2338,
    ".ts": 1890,
    ".sql": 1301,
-   ".mjs": 430,
+   ".mjs": 431,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67660,8 +67660,8 @@
   },
   {
    "module": "scripts",
-   "files": 460,
-   "lines": 92651,
+   "files": 461,
+   "lines": 92703,
    "tables": [
     "a",
     "alem_do_limite",
@@ -266401,6 +266401,16 @@
    "lines": 288,
    "doc": "R2-INF-019 (#366): o runner de mutação contava FALHA DE INFRAESTRUTURA como mutante morto (`killed = status !== 0`). Um binário que não inicia, uma configuração quebrada ou um \"No test files found\" davam MORTO sem executar um único teste — dava para \"provar\" qualidade sem medir nada. Estes testes pr …"
   },
+  "scripts/ci/run-sh.unit.mjs": {
+   "path": "scripts/ci/run-sh.unit.mjs",
+   "lines": 52,
+   "rule_comments": [
+    "PATH minimo com mkdir/chmod mas SEM flock: prova que o script passou"
+   ],
+   "temporal": [
+    "timeout: 5000,"
+   ]
+  },
   "scripts/ci/salesview-before-references.unit.mjs": {
    "path": "scripts/ci/salesview-before-references.unit.mjs",
    "lines": 49
@@ -386746,10 +386756,20 @@
   }
  },
  "git": {
-  "sha": "9727aaeddf83e20405f8ec5db0825d4b50704833",
+  "sha": "8ea43011f681483cd609ecafcaeedcfbe7239f36",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "8ea4301",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)",
+    "files": [
+     "scripts/ci/run-sh.unit.mjs",
+     "scripts/maintenance/run.sh"
+    ]
+   },
    {
     "sha": "9727aae",
     "date": "2026-11-11",
@@ -387063,23 +387083,9 @@
      "scripts/catalog/validate-plan.mjs",
      "scripts/catalog/validate-plan.test.mjs"
     ]
-   },
-   {
-    "sha": "3725c34",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)",
-    "files": [
-     "scripts/maintenance/lib.mjs",
-     "scripts/maintenance/maintenance.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "scripts/maintenance/maintenance.unit.mjs",
-    3
-   ],
    [
     "scripts/db-tests/run-all.mjs",
     2
@@ -387094,6 +387100,10 @@
    ],
    [
     "scripts/catalog/validate-plan.test.mjs",
+    2
+   ],
+   [
+    "scripts/maintenance/maintenance.unit.mjs",
     2
    ],
    [
@@ -387121,6 +387131,14 @@
     2
    ],
    [
+    "scripts/ci/run-sh.unit.mjs",
+    1
+   ],
+   [
+    "scripts/maintenance/run.sh",
+    1
+   ],
+   [
     "ESTADO.md",
     1
    ],
@@ -387146,14 +387164,6 @@
    ],
    [
     "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
     1
    ]
   ]

@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2611,
+ "total": 2612,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2318
+  "unit": 2319
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 224
+   "arquivos": 225
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -1782,6 +1782,13 @@
     "scripts/mutation/run-mapa.mjs"
    ],
    "casos": 24
+  },
+  {
+   "arquivo": "scripts/ci/run-sh.unit.mjs",
+   "tipo": "unit",
+   "linhas": 52,
+   "testa": [],
+   "casos": 2
   },
   {
    "arquivo": "scripts/ci/salesview-before-references.unit.mjs",

@@ -4429,7 +4429,7 @@
   {
    "arquivo": "scripts/maintenance/run.sh",
    "descricao": null,
-   "linhas": 16,
+   "linhas": 18,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
