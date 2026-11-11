@@ -36,16 +36,20 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      // O pedido é criado pelo servidor (request_password_reset, SECURITY DEFINER):
-      // quem esqueceu a senha não está logado, e anon não lê profiles nem grava em
-      // password_reset_requests. A função responde igual exista ou não o e-mail
-      // (não revela quem tem conta) e o pedido fica pendente até o gestor liberar.
-      // @ts-expect-error request_password_reset entra nos tipos gerados após a migration 20261111140000
-      const { error: requestError } = await supabase.rpc('request_password_reset', {
-        p_email: email,
-        p_reason: reason || null,
-        p_user_agent: navigator.userAgent,
-      });
+      // Quem esqueceu a senha não está logado (anon): não lê profiles e não sabe o
+      // próprio user_id. O cliente envia SÓ email/motivo/navegador; o gatilho
+      // public.sanitize_reset_request() (migration 20261015182400) resolve a conta no
+      // servidor a partir do e-mail, ignora e-mail sem conta e limita a 3 pendentes
+      // por hora — sem erro e sem revelar se a conta existe. O pedido nasce pendente
+      // e só o gestor libera (painel de pedidos + Edge approve-password-reset).
+      // Sem .select(): o anon não lê a tabela, então não há RETURNING.
+      const { error: requestError } = await supabase
+        .from('password_reset_requests')
+        .insert({
+          email,
+          reason: reason || null,
+          user_agent: navigator.userAgent,
+        });
 
       if (requestError) throw requestError;
 
