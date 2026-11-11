@@ -18,16 +18,26 @@ export function resolverReferencia(ref, ctx) {
   const [raiz, ...resto] = partes;
   const pegar = (obj, chaves) => chaves.reduce((acc, k) => (acc == null ? undefined : acc[k]), obj);
   switch (raiz) {
-    case 'env': return pegar(ctx.env ?? {}, resto);
-    case 'matrix': return pegar(ctx.matrix ?? {}, resto);
-    case 'secrets': return pegar(ctx.secrets ?? {}, resto);
-    case 'vars': return pegar(ctx.vars ?? {}, resto);
-    case 'github': return pegar(ctx.github ?? {}, resto);
-    case 'runner': return pegar(ctx.runner ?? {}, resto);
-    case 'steps': return pegar(ctx.steps ?? {}, resto);
-    case 'needs': return pegar(ctx.needs ?? {}, resto);
-    case 'inputs': return pegar(ctx.inputs ?? {}, resto);
-    default: return undefined;
+    case 'env':
+      return pegar(ctx.env ?? {}, resto);
+    case 'matrix':
+      return pegar(ctx.matrix ?? {}, resto);
+    case 'secrets':
+      return pegar(ctx.secrets ?? {}, resto);
+    case 'vars':
+      return pegar(ctx.vars ?? {}, resto);
+    case 'github':
+      return pegar(ctx.github ?? {}, resto);
+    case 'runner':
+      return pegar(ctx.runner ?? {}, resto);
+    case 'steps':
+      return pegar(ctx.steps ?? {}, resto);
+    case 'needs':
+      return pegar(ctx.needs ?? {}, resto);
+    case 'inputs':
+      return pegar(ctx.inputs ?? {}, resto);
+    default:
+      return undefined;
   }
 }
 
@@ -44,7 +54,8 @@ export function avaliarExpressao(expr, ctx) {
   let i = 0;
   const olhar = () => tokens[i];
   const comer = (t) => {
-    if (t !== undefined && tokens[i] !== t) throw new ExpressaoNaoSuportada(`esperado ${t} em "${expr}"`);
+    if (t !== undefined && tokens[i] !== t)
+      throw new ExpressaoNaoSuportada(`esperado ${t} em "${expr}"`);
     return tokens[i++];
   };
   const verdade = (v) => !(v === false || v === null || v === undefined || v === '' || v === 0);
@@ -52,8 +63,16 @@ export function avaliarExpressao(expr, ctx) {
   function primario() {
     const t = olhar();
     if (t === undefined) throw new ExpressaoNaoSuportada(`expressão incompleta: "${expr}"`);
-    if (t === '(') { comer('('); const v = ou(); comer(')'); return v; }
-    if (t === '!') { comer('!'); return !verdade(primario()); }
+    if (t === '(') {
+      comer('(');
+      const v = ou();
+      comer(')');
+      return v;
+    }
+    if (t === '!') {
+      comer('!');
+      return !verdade(primario());
+    }
     comer();
     if (/^'.*'$/s.test(t)) return t.slice(1, -1).replace(/''/g, "'");
     if (/^-?\d+(\.\d+)?$/.test(t)) return Number(t);
@@ -78,30 +97,41 @@ export function avaliarExpressao(expr, ctx) {
     while (olhar() === '==' || olhar() === '!=') {
       const op = comer();
       const d = primario();
-      const igual = String(v ?? '').toLowerCase() === String(d ?? '').toLowerCase()
-        && (typeof v !== 'boolean' || typeof d !== 'boolean' || v === d);
+      const igual =
+        String(v ?? '').toLowerCase() === String(d ?? '').toLowerCase() &&
+        (typeof v !== 'boolean' || typeof d !== 'boolean' || v === d);
       v = op === '==' ? igual : !igual;
     }
     return v;
   }
   function e() {
     let v = comparacao();
-    while (olhar() === '&&') { comer('&&'); const d = comparacao(); v = verdade(v) ? d : v; }
+    while (olhar() === '&&') {
+      comer('&&');
+      const d = comparacao();
+      v = verdade(v) ? d : v;
+    }
     return v;
   }
   function ou() {
     let v = e();
-    while (olhar() === '||') { comer('||'); const d = e(); v = verdade(v) ? v : d; }
+    while (olhar() === '||') {
+      comer('||');
+      const d = e();
+      v = verdade(v) ? v : d;
+    }
     return v;
   }
   const v = ou();
-  if (i !== tokens.length) throw new ExpressaoNaoSuportada(`sobrou "${tokens.slice(i).join(' ')}" em "${expr}"`);
+  if (i !== tokens.length)
+    throw new ExpressaoNaoSuportada(`sobrou "${tokens.slice(i).join(' ')}" em "${expr}"`);
   return v;
 }
 
 function tokenizar(expr) {
   const out = [];
-  const re = /\s*('(?:[^']|'')*'|==|!=|&&|\|\||[()!,]|[A-Za-z_][\w-]*(?:\.[\w*-]+)*|-?\d+(?:\.\d+)?)/y;
+  const re =
+    /\s*('(?:[^']|'')*'|==|!=|&&|\|\||[()!,]|[A-Za-z_][\w-]*(?:\.[\w*-]+)*|-?\d+(?:\.\d+)?)/y;
   let pos = 0;
   const s = expr.trim();
   while (pos < s.length) {
@@ -130,8 +160,15 @@ export function interpolar(texto, ctx) {
   const faltando = [];
   const saida = String(texto).replace(EXPR, (_, dentro) => {
     let v;
-    try { v = avaliarExpressao(dentro, ctx); } catch { v = undefined; }
-    if (v === undefined || v === null) { faltando.push(dentro.trim()); return ''; }
+    try {
+      v = avaliarExpressao(dentro, ctx);
+    } catch {
+      v = undefined;
+    }
+    if (v === undefined || v === null) {
+      faltando.push(dentro.trim());
+      return '';
+    }
     return typeof v === 'object' ? JSON.stringify(v) : String(v);
   });
   return { texto: saida, faltando };
@@ -151,7 +188,8 @@ export function expandirMatriz(job) {
   combos = combos.filter((c) => !exclude.some((x) => casa(c, x)));
   for (const inc of include) {
     const base = combos.find((c) => Object.keys(c).length && casa(inc, c));
-    if (base) Object.assign(base, inc); else combos.push({ ...inc });
+    if (base) Object.assign(base, inc);
+    else combos.push({ ...inc });
   }
   return combos.length ? combos : [{}];
 }
