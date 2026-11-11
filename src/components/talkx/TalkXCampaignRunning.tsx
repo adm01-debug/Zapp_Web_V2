@@ -630,6 +630,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   // atualizada. Com dois efeitos separados a limpeza ficava morta — o primeiro gravava
   // `campaign = null` na referência e o segundo, ao testar `prevCampaignRef.current !== null`,
   // já encontrava `null` e nunca limpava seleção nem modais (R2-MOD-032).
+  // `close` do lifecycle é estável (useCallback sem deps); o objeto inteiro muda a cada render.
+  const closeLifecycle = lifecycle.close;
   const prevCampaignRef = React.useRef<TalkXCampaign | null>(campaign);
   React.useEffect(() => {
     const prevCampaign = prevCampaignRef.current;
@@ -641,10 +643,10 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       // no-op silencioso (guard `if (!campaign) return`), e o modal nunca fecha.
       toast.info('Campanha concluída ou cancelada.');
       setSelectedId(null);
-      lifecycle.close();
+      closeLifecycle();
       setLimitsOpen(false);
     }
-  }, [campaign, sending, selectedId]);
+  }, [campaign, sending, selectedId, closeLifecycle]);
 
   // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
   const { data: sentHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
