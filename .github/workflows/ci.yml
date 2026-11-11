@@ -159,6 +159,7 @@ jobs:
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
+          scripts/inventario/gerar-repo.unit.mjs
           scripts/lib/seguranca-processo.test.mjs
           scripts/qa/prova-visao-classificadores.unit.mjs
           scripts/talkx/lado-a-lado.unit.mjs
