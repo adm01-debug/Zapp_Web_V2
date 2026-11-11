@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "8d727a9c9604306e3408bf1aa6a8c4d879749582",
+  "commit": "3725c3449fbc41b968e096943ed8a322a06616c3",
   "branch": "main",
-  "data_commit": "2026-11-10T22:40:06-03:00",
+  "data_commit": "2026-11-10T22:54:09-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "3725c34",
+    "data": "2026-11-10",
+    "assunto": "fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)"
+   },
    {
     "sha": "8d727a9",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "cf79d70",
     "data": "2026-11-10",
     "assunto": "feat(admin): extrai lógica de banco do MediaMigrationTool para serviço (#2816)"
-   },
-   {
-    "sha": "31e8df6",
-    "data": "2026-11-10",
-    "assunto": "feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)"
    }
   ],
   "arquivos_mudados_7d": 658,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887644,
+  "linhas_codigo": 887670,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -648,7 +648,7 @@
   },
   "scripts/maintenance": {
    "arquivos": 4,
-   "linhas": 1324
+   "linhas": 1350
   },
   "scripts/mutation": {
    "arquivos": 1,

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)",
    "fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)",
    "fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)",
    "Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)",
-   "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)",
-   "feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002 (#2834)"
+   "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

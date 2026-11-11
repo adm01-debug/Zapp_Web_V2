@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "8d727a9c9604306e3408bf1aa6a8c4d879749582",
+  "sha": "3725c3449fbc41b968e096943ed8a322a06616c3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 01:43 UTC",
+  "generated_at": "2026-11-11 02:00 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054504
+  "code_lines": 1054530
  },
  "version": "1.3.2",
- "facts_hash": "b14570321618965a",
+ "facts_hash": "8f90714e97426de6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 91754,
+   "lines": 91780,
    "tables": [
     "a",
     "alem_do_limite",
@@ -270648,7 +270648,7 @@
   },
   "scripts/maintenance/lib.mjs": {
    "path": "scripts/maintenance/lib.mjs",
-   "lines": 394,
+   "lines": 401,
    "exports": [
     "class MaintenanceError",
     "const fail",
@@ -270673,6 +270673,9 @@
     "missing_dependencies",
     "skipped_busy"
    ],
+   "rule_comments": [
+    "meio da escrita nao pode deixar owner.json truncado, o que travaria toda"
+   ],
    "calc_fns": [
     {
      "name": "validateConfig",
@@ -270683,7 +270686,7 @@
   },
   "scripts/maintenance/maintenance.unit.mjs": {
    "path": "scripts/maintenance/maintenance.unit.mjs",
-   "lines": 303,
+   "lines": 322,
    "external_urls": [
     "http://192.0.2.1:9"
    ],
@@ -385925,10 +385928,20 @@
   }
  },
  "git": {
-  "sha": "8d727a9c9604306e3408bf1aa6a8c4d879749582",
+  "sha": "3725c3449fbc41b968e096943ed8a322a06616c3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "3725c34",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)",
+    "files": [
+     "scripts/maintenance/lib.mjs",
+     "scripts/maintenance/maintenance.unit.mjs"
+    ]
+   },
    {
     "sha": "8d727a9",
     "date": "2026-11-10",
@@ -386264,42 +386277,17 @@
     "files": [
      "scripts/ci/eslint-baseline.json"
     ]
-   },
-   {
-    "sha": "11841db",
-    "date": "2026-11-09",
-    "author": "adm01-debug",
-    "subject": "feat(copilot): motor e telas RADAR Copiloto CV-021–060 (#2828)",
-    "files": [
-     "src/components/inbox/copilot/BrindeMeter.tsx",
-     "src/components/inbox/copilot/DecisionMakerBadge.tsx",
-     "src/components/inbox/copilot/InsightCard.tsx",
-     "src/components/inbox/copilot/LiveSuggestions.tsx",
-     "src/components/inbox/copilot/MissingQuestions.tsx",
-     "src/components/inbox/copilot/OccasionAlert.tsx",
-     "src/components/inbox/copilot/RadarCards.tsx",
-     "src/components/inbox/copilot/RadarLive.tsx",
-     "src/components/inbox/copilot/RadarPanel.tsx",
-     "src/components/inbox/copilot/StageIndicator.tsx",
-     "src/components/inbox/copilot/StakeholdersCard.tsx",
-     "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
-     "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
-     "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
-     "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
-     "src/data/copilot/brinde-questions.ts",
-     "src/data/copilot/commercial-calendar.ts",
-     "src/data/copilot/sale-stages.ts",
-     "src/data/copilot/winning-plays.ts",
-     "src/hooks/copilot/useCopilotSession.ts",
-     "src/hooks/copilot/useLiveSuggestions.ts",
-     "src/hooks/copilot/useRadarPanel.ts",
-     "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
-     "supabase/functions/_shared/copilot-tick.ts",
-     "supabase/migrations/20261031160000_copilot_radar_delta_columns.sql"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/maintenance/lib.mjs",
+    2
+   ],
+   [
+    "scripts/maintenance/maintenance.unit.mjs",
+    2
+   ],
    [
     "ESTADO.md",
     2
@@ -386370,14 +386358,6 @@
    ],
    [
     "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/copilot/useDeadlineCalculator.ts",
     1
    ]
   ]

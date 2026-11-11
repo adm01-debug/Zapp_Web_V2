@@ -4405,7 +4405,7 @@
   {
    "arquivo": "scripts/maintenance/lib.mjs",
    "descricao": null,
-   "linhas": 394,
+   "linhas": 401,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
