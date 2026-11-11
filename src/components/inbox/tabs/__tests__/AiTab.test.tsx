@@ -34,7 +34,8 @@ function chain() {
   q.select = () => q;
   q.eq = () => q;
   q.order = () => q;
-  q.limit = () => Promise.resolve({ data: [], error: null });
+  q.limit = () => q;
+  q.maybeSingle = () => Promise.resolve({ data: null, error: null });
   return q;
 }
 

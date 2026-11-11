@@ -116,5 +116,5 @@ export function useTeamReadState(
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, hasOwnMessages, queryClient]);
 
-  return { readStates: query.data ?? SEM_LEITURA, isLoading: query.isLoading };
+  return { readStates: query.data ?? SEM_LEITURA, isLoading: query.isLoading, isError: query.isError };
 }
