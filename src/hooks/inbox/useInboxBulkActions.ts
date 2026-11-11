@@ -184,7 +184,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         .from('contacts')
         .select('id, conversation_status')
         .in('id', contactIds);
-      if (selectError) throw selectError;
+      if (selectError) { toast.error('Não foi possível verificar o estado das conversas'); return; }
 
       const previousStatus = new Map<string, string | null>();
       for (const row of originals ?? []) {
@@ -198,7 +198,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       const targetIds = contactIds.filter(
         (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
       );
-      if (targetIds.length === 0) throw new Error('nenhum contato lido');
+      if (targetIds.length === 0) { toast.info('Nenhum contato disponível para arquivar'); return; }
 
       await executeUndoable({
         successMessage: `${targetIds.length} contato(s) arquivado(s)`,
@@ -213,29 +213,57 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           refetch();
         },
         undoAction: async () => {
-          // Agrupa por status original para emitir um UPDATE por grupo —
-          // restauração atômica por valor: uma falha não deixa o lote parcialmente
-          // revertido.
-          // Trigger enforce_conversation_status_transition (produção): a partir de
-          // 'archived' só são válidos 'open' e 'pending'. Qualquer outro original
-          // (waiting/resolved/closed/null) voltaria erro e o desfazer falharia —
-          // cai em 'open'.
+          // Trigger enforce_conversation_status_transition: de 'archived' só são
+          // válidos 'open' e 'pending' em um único passo. Para restaurar
+          // waiting/resolved/closed, fazemos dois passos: archived→open→original.
           const validFromArchived = new Set(['open', 'pending']);
-          const byStatus = new Map<string | null, string[]>();
+          const directGroups = new Map<string, string[]>();
+          const twoStepGroups = new Map<string, string[]>();
+
           for (const id of targetIds) {
             const raw = previousStatus.get(id) ?? null;
-            const original = raw !== null && validFromArchived.has(raw) ? raw : 'open';
-            const group = byStatus.get(original) ?? [];
-            group.push(id);
-            byStatus.set(original, group);
+            const original = raw ?? 'open';
+            if (validFromArchived.has(original)) {
+              const g = directGroups.get(original) ?? [];
+              g.push(id);
+              directGroups.set(original, g);
+            } else {
+              const g = twoStepGroups.get(original) ?? [];
+              g.push(id);
+              twoStepGroups.set(original, g);
+            }
           }
-          for (const [status, ids] of byStatus) {
+
+          for (const [status, ids] of directGroups) {
             const { error } = await supabase
               .from('contacts')
               .update({ conversation_status: status as unknown as string })
               .in('id', ids);
             if (error) throw error;
           }
+
+          if (twoStepGroups.size > 0) {
+            const allTwoStep = [...twoStepGroups.values()].flat();
+            // Passo 1: archived → open (sempre válido)
+            const { error: e1 } = await supabase
+              .from('contacts')
+              .update({ conversation_status: 'open' })
+              .in('id', allTwoStep);
+            if (e1) throw e1;
+            // Passo 2: open → status original
+            for (const [original, ids] of twoStepGroups) {
+              const { error: e2 } = await supabase
+                .from('contacts')
+                .update({ conversation_status: original as unknown as string })
+                .in('id', ids);
+              if (e2) {
+                // Fallback: deixa em 'open' em vez de 'archived'
+                await supabase.from('contacts').update({ conversation_status: 'open' }).in('id', ids);
+                throw e2;
+              }
+            }
+          }
+
           refetch();
         },
       });
