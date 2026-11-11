@@ -69,3 +69,50 @@ for (const formato of ['completa', 'curta', 'atalho']) {
     });
   }
 }
+
+function executarLinhaMigration(linhaMigration, { migrationSql } = {}) {
+  const raiz = mkdtempSync(join(tmpdir(), 'docs-realtime-migration-'));
+  try {
+    for (const dir of ['scripts/docs', 'scripts/db-audit', 'src', 'supabase/migrations', 'docs/adr']) {
+      mkdirSync(join(raiz, dir), { recursive: true });
+    }
+    const script = join(raiz, 'scripts/docs/verificar-docs-realtime.mjs');
+    copyFileSync(verificador, script);
+    copyFileSync(new URL('./publication.mjs', import.meta.url), join(raiz, 'scripts/docs/publication.mjs'));
+    copyFileSync(new URL('../db-audit/sql-lexer.mjs', import.meta.url), join(raiz, 'scripts/db-audit/sql-lexer.mjs'));
+    writeFileSync(join(raiz, 'src/hook.ts'), [
+      '// channel-one', "const tabela = 'hidden_table';", 'const a = 1;', 'const b = 2;', 'const c = 3;',
+    ].join('\n'));
+    if (migrationSql) writeFileSync(join(raiz, 'supabase/migrations/20260101000000_x.sql'), migrationSql);
+    writeFileSync(join(raiz, 'docs/REALTIME-CHANNELS-INVENTORY.md'),
+      'Fora da publication hoje: `hidden_table`\n' +
+      '| `channel-one` | `hidden_table` | `src/hook.ts:1` |\n\n' +
+      '| Tabela | Migration (ADD) |\n' +
+      '|---|---|\n' +
+      `${linhaMigration}\n`);
+    writeFileSync(join(raiz, 'docs/JORNADA_MENSAGEM_WHATSAPP.md'), 'Sem citações adicionais.\n');
+    writeFileSync(join(raiz, 'docs/adr/ADR-009-inbox-fonte-unica-de-mensagens.md'), 'Sem citações adicionais.\n');
+    return spawnSync(process.execPath, [script], { encoding: 'utf8', timeout: 10_000 });
+  } finally {
+    rmSync(raiz, { recursive: true, force: true });
+  }
+}
+
+test('linha tabela→migration sem crases no .sql da 2ª coluna é recusada (não pode passar em silêncio)', () => {
+  const resultado = executarLinhaMigration('| `minha_tabela` | 20260101000000_x.sql |');
+  assert.equal(resultado.error, undefined);
+  assert.equal(resultado.status, 1, resultado.stderr || resultado.stdout);
+  assert.match(resultado.stderr, /^FALHOU/);
+  assert.match(resultado.stderr, /minha_tabela/);
+  assert.match(resultado.stderr, /sem nome de migration \.sql entre crases/);
+});
+
+test('linha tabela→migration com .sql entre crases continua sendo validada normalmente', () => {
+  const resultado = executarLinhaMigration(
+    '| `minha_tabela` | `20260101000000_x.sql` |',
+    { migrationSql: 'ALTER PUBLICATION supabase_realtime ADD TABLE minha_tabela;\n' },
+  );
+  assert.equal(resultado.error, undefined);
+  assert.equal(resultado.status, 0, resultado.stderr || resultado.stdout);
+  assert.match(resultado.stdout, /^OK: 3 documentos/);
+});
