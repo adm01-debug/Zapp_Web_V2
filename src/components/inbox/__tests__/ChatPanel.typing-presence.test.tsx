@@ -119,6 +119,7 @@ vi.mock('../chat/ChatDragOverlay', () => ({ ChatDragOverlay: () => null }));
 vi.mock('../chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));
 vi.mock('../chat/ChatSearchBar', () => ({ ChatSearchBar: () => null }));
 vi.mock('../chat/ChatDialogs', () => ({ ChatDialogs: () => null }));
+vi.mock('../chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
 vi.mock('../chat/useChatPanelHandlers', () => ({
   useChatPanelHandlers: (args: Record<string, unknown>) => {
     mocks.handlerArgs.current = args;
