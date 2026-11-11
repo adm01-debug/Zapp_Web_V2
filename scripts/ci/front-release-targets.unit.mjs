@@ -71,6 +71,11 @@ test('CLI exige trilha explícita e reserva expected-sha para V2', () => {
   assert.throws(() => parseArgs(['--target=v2', '--url=https:\/\/exemplo.invalid']), /argumento desconhecido/);
 });
 
+test('--expected-sha vazio é erro de uso, não "não verificar" silencioso', () => {
+  assert.throws(() => parseArgs(['--target=v2', '--expected-sha=']), /--expected-sha não pode ser vazio/);
+  assert.equal(parseArgs(['--target=v2']).expectedSha, null);
+});
+
 test('contrato V2 exige SHA completo e igualdade com a main esperada', () => {
   assert.equal(validarVersao('v2', { buildId: SHA_V2 }, { expectedSha: SHA_V2 }).release, SHA_V2);
   assert.throws(() => validarVersao('v2', { buildId: 'curto' }), /buildId inválido/);

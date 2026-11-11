@@ -203,6 +203,25 @@ test('falha fechado quando o catalogo contem entrada duplicada', () => {
   assert.match(result.stderr, /entradas duplicadas no catalogo fresco/);
 });
 
+for (const secao of ['tables', 'views', 'columns', 'functions', 'function_signatures', 'check_constraints']) {
+  for (const [nome, commitado, fresco, esperado] of [
+    ['ambos invalidos', null, null, 2],
+    ['item fresco invalido com commitado invalido', null, [1], 2],
+    ['duplicata fresca com commitado invalido', null, ['fixture', 'fixture'], 2],
+    ['commitado invalido com fresco valido', null, [], 1],
+    ['commitado valido com fresco invalido', [], null, 2],
+    ['ambos validos', [], [], 0],
+  ]) {
+    test(`valida ${secao} independentemente nos dois catalogos: ${nome}`, () => {
+      const result = executar({ ...base, [secao]: commitado }, { ...base, [secao]: fresco });
+      assert.equal(result.status, esperado, result.stderr + result.stdout);
+      if (esperado === 2) {
+        assert.match(result.stderr, /snapshot nao deve ser atualizado/);
+      }
+    });
+  }
+}
+
 test('falha fechado para JSON fresco malformado', () => {
   const result = executar(base, '{invalido');
   assert.equal(result.status, 2);
