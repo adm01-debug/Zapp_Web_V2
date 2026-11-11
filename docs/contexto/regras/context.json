@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d1fc5ad6a61818d974905b20ff3487ff8ede5c5c",
+  "sha": "2182f81ed702f1abf44ec97b39e06f23630f77bc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 09:01 UTC",
+  "generated_at": "2026-11-11 09:13 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1055055
+  "code_lines": 1055069
  },
  "version": "1.3.2",
- "facts_hash": "db2fe0d135ff0ec4",
+ "facts_hash": "f0ee51396992c6ff",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92301,
+   "lines": 92315,
    "tables": [
     "a",
     "alem_do_limite",
@@ -271116,7 +271116,7 @@
   },
   "scripts/supabase_snapshot/snapshot.py": {
    "path": "scripts/supabase_snapshot/snapshot.py",
-   "lines": 1791,
+   "lines": 1794,
    "exports": [
     "def env_int",
     "def log",
@@ -271239,7 +271239,7 @@
   },
   "scripts/supabase_snapshot/test_snapshot.py": {
    "path": "scripts/supabase_snapshot/test_snapshot.py",
-   "lines": 878,
+   "lines": 889,
    "exports": [
     "class OfflineConnection",
     "def function",
@@ -385986,10 +385986,20 @@
   }
  },
  "git": {
-  "sha": "d1fc5ad6a61818d974905b20ff3487ff8ede5c5c",
+  "sha": "2182f81ed702f1abf44ec97b39e06f23630f77bc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2182f81",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)",
+    "files": [
+     "scripts/supabase_snapshot/snapshot.py",
+     "scripts/supabase_snapshot/test_snapshot.py"
+    ]
+   },
    {
     "sha": "d1fc5ad",
     "date": "2026-11-11",
@@ -386309,15 +386319,6 @@
     "files": [
      "AGENTS.md"
     ]
-   },
-   {
-    "sha": "384befe",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "ci: registra 4 guards de segurança existentes como steps do CI (#2850)",
-    "files": [
-     ".github/workflows/ci.yml"
-    ]
    }
   ],
   "hot_files": [
@@ -386348,6 +386349,14 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/supabase_snapshot/snapshot.py",
+    1
+   ],
+   [
+    "scripts/supabase_snapshot/test_snapshot.py",
+    1
    ],
    [
     "scripts/edge-deploy/health-check.mjs",
@@ -386391,14 +386400,6 @@
    ],
    [
     "scripts/qa/prova-visao-classificadores.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ia/ensaio-provisionamento.mjs",
-    1
-   ],
-   [
-    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
     1
    ]
   ]

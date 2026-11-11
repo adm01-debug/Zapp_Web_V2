@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d1fc5ad6a61818d974905b20ff3487ff8ede5c5c",
+  "commit": "2182f81ed702f1abf44ec97b39e06f23630f77bc",
   "branch": "main",
-  "data_commit": "2026-11-11T05:42:21-03:00",
+  "data_commit": "2026-11-11T06:06:01-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2182f81",
+    "data": "2026-11-11",
+    "assunto": "fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)"
+   },
    {
     "sha": "d1fc5ad",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "f120344",
     "data": "2026-11-10",
     "assunto": "chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)"
-   },
-   {
-    "sha": "d39dc11",
-    "data": "2026-11-10",
-    "assunto": "chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)"
    }
   ],
   "arquivos_mudados_7d": 670,
@@ -294,8 +294,8 @@
     "mudancas": 7
    },
    {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 6
+    "arquivo": "scripts/supabase_snapshot/snapshot.py",
+    "mudancas": 7
    }
   ],
   "autores_30d": [
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 888195,
+  "linhas_codigo": 888209,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -664,7 +664,7 @@
   },
   "scripts/supabase_snapshot": {
    "arquivos": 2,
-   "linhas": 2669
+   "linhas": 2683
   },
   "scripts/talkx": {
    "arquivos": 6,
@@ -814,7 +814,7 @@
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
-   "linhas": 1791
+   "linhas": 1794
   },
   {
    "arquivo": "supabase/functions/talkx-send/index.ts",
