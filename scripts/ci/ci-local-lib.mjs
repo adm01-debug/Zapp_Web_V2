@@ -654,13 +654,43 @@ export function arquivosParaVitestRelated(lista) {
   );
 }
 
-/** Linhas de um passo que pedem root (sudo/apt): só fazem sentido no runner descartável. */
+// ------------------------------------------------------------- root/sudo
+/** Comandos que pedem root. Cada passo roda com shims deles na frente do PATH. */
+export const COMANDOS_ROOT = ['sudo', 'apt', 'apt-get', 'dpkg', 'su', 'doas', 'pkexec'];
+
+const RE_COMANDO_ROOT = new RegExp(
+  `(?:^|[\\s;&|(\`]|/s?bin/)(?:${COMANDOS_ROOT.map((c) => c.replace(/-/g, '\\-')).join('|')})(?=[\\s;&|)]|$)`
+);
+// Playwright chama `sudo apt-get install` POR CONTA PRÓPRIA em `install --with-deps`
+// e `install-deps`: o texto do passo não tem "sudo", mas a máquina ganharia ~80 pacotes.
+const RE_PLAYWRIGHT_DEPS = /\bplaywright\b.*(?:\s--with-deps\b|\sinstall-deps\b)/;
+
+/**
+ * Linhas de um passo que pedem root (sudo/apt/dpkg/su/doas/pkexec, inclusive por
+ * /usr/bin/..., e `playwright install --with-deps`/`install-deps`): esses passos
+ * são pulados. O que escapar desta detecção (ex.: `$cmd install`) cai nos shims
+ * de `shimsDeRoot()` e falha — nunca roda como root na máquina.
+ */
 export function comandosComSudo(script) {
   return String(script ?? '')
     .split('\n')
     .filter((l) => !/^\s*#/.test(l))
-    .filter((l) => /(?:^|[\s;&|(`])(?:sudo|apt-get|apt|dpkg)(?=\s|$)/.test(l))
+    .filter((l) => RE_COMANDO_ROOT.test(l) || RE_PLAYWRIGHT_DEPS.test(l))
     .map((l) => l.trim());
+}
+
+export const MSG_SHIM_ROOT = 'requer root — só no GitHub';
+
+/** Conteúdo dos shims (nome → script) que barram root em todo passo. */
+export function shimsDeRoot() {
+  return Object.fromEntries(
+    COMANDOS_ROOT.map((nome) => [
+      nome,
+      '#!/bin/sh\n' +
+        `echo "ci-local: \\"${nome} $*\\" ${MSG_SHIM_ROOT} (bloqueado na máquina local)" >&2\n` +
+        'exit 1\n',
+    ])
+  );
 }
 
 /** Troca valores de segredo por *** (como o mascaramento do runner). */
