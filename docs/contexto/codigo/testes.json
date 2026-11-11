@@ -2597,16 +2597,16 @@
   {
    "arquivo": "scripts/qa/prova-visao-classificadores.mjs",
    "tipo": "qa",
-   "linhas": 246,
+   "linhas": 249,
    "testa": [],
    "casos": 0
   },
   {
    "arquivo": "scripts/qa/prova-visao-classificadores.unit.mjs",
    "tipo": "qa",
-   "linhas": 228,
+   "linhas": 238,
    "testa": [],
-   "casos": 8
+   "casos": 9
   },
   {
    "arquivo": "scripts/regras_negocio/test_generate.py",

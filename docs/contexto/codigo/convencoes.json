@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)",
    "fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)",
    "fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)",
    "fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)",
-   "fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)",
-   "fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)"
+   "fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

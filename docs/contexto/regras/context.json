@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ec190c214beb289eb3b38ad867cc6e518a82fc4b",
+  "sha": "105ebc130d046db58d314caf75bdbbbd54d1a785",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 05:27 UTC",
+  "generated_at": "2026-11-11 05:41 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054757
+  "code_lines": 1054770
  },
  "version": "1.3.2",
- "facts_hash": "36e0ba1bbb4db2ca",
+ "facts_hash": "9a16648dafe332db",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92003,
+   "lines": 92016,
    "tables": [
     "a",
     "alem_do_limite",
@@ -270895,7 +270895,7 @@
   },
   "scripts/qa/prova-visao-classificadores.mjs": {
    "path": "scripts/qa/prova-visao-classificadores.mjs",
-   "lines": 246,
+   "lines": 249,
    "params": [
     {
      "name": "REF",
@@ -270924,7 +270924,7 @@
   },
   "scripts/qa/prova-visao-classificadores.unit.mjs": {
    "path": "scripts/qa/prova-visao-classificadores.unit.mjs",
-   "lines": 228,
+   "lines": 238,
    "rule_comments": [
     "NÃO pode forjar uma linha nova no log. Executa-se o script de verdade (child",
     "fosse 2xx virava apenas um AVISO (falhas continuava 0 → \"PROVA OK\"), e quando",
@@ -385957,10 +385957,20 @@
   }
  },
  "git": {
-  "sha": "ec190c214beb289eb3b38ad867cc6e518a82fc4b",
+  "sha": "105ebc130d046db58d314caf75bdbbbd54d1a785",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "105ebc1",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)",
+    "files": [
+     "scripts/qa/prova-visao-classificadores.mjs",
+     "scripts/qa/prova-visao-classificadores.unit.mjs"
+    ]
+   },
    {
     "sha": "ec190c2",
     "date": "2026-11-11",
@@ -386300,16 +386310,6 @@
     "files": [
      "infrastructure/preview-egress-proxy/Dockerfile"
     ]
-   },
-   {
-    "sha": "5892191",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(conexao): restaura health check anterior à PR 2910 (#2916)",
-    "files": [
-     "supabase/deployment-manifest.json",
-     "supabase/functions/connection-health-check/index.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -386346,10 +386346,6 @@
     2
    ],
    [
-    "supabase/deployment-manifest.json",
-    2
-   ],
-   [
     "scripts/ci/e2e-isolated-runtime.unit.mjs",
     2
    ],
@@ -386360,6 +386356,14 @@
    [
     "scripts/e2e-isolated/run.mjs",
     2
+   ],
+   [
+    "scripts/qa/prova-visao-classificadores.mjs",
+    1
+   ],
+   [
+    "scripts/qa/prova-visao-classificadores.unit.mjs",
+    1
    ],
    [
     "scripts/ia/ensaio-provisionamento.mjs",
@@ -386387,10 +386391,6 @@
    ],
    [
     "scripts/ci/check-pr-workflow-secrets.unit.mjs",
-    1
-   ],
-   [
-    "scripts/talkx/gen-estados.mjs",
     1
    ]
   ]

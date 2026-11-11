@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ec190c214beb289eb3b38ad867cc6e518a82fc4b",
+  "commit": "105ebc130d046db58d314caf75bdbbbd54d1a785",
   "branch": "main",
-  "data_commit": "2026-11-11T02:05:32-03:00",
+  "data_commit": "2026-11-11T02:24:33-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "105ebc1",
+    "data": "2026-11-11",
+    "assunto": "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)"
+   },
    {
     "sha": "ec190c2",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "fb36e30",
     "data": "2026-11-10",
     "assunto": "fix(scripts): corrige resolução de caminhos e executáveis (#2922)"
-   },
-   {
-    "sha": "be1c0c7",
-    "data": "2026-11-10",
-    "assunto": "chore(manutencao): adiciona rotina local isolada e verificavel (#2921)"
    }
   ],
-  "arquivos_mudados_7d": 664,
+  "arquivos_mudados_7d": 666,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -234,12 +234,12 @@
     "mudancas": 10
    },
    {
-    "arquivo": "RELATORIO_CI.md",
+    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 10
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 9
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887897,
+  "linhas_codigo": 887910,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -656,7 +656,7 @@
   },
   "scripts/qa": {
    "arquivos": 8,
-   "linhas": 1707
+   "linhas": 1720
   },
   "scripts/regras_negocio": {
    "arquivos": 3,
