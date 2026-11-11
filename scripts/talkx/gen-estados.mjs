@@ -71,19 +71,46 @@ export function coberturaEstadoForcado(forzadoSrc = FORCED_STATE_SRC, boundarySr
   const bsrc = readFileSync(boundarySrc, 'utf8');
   bsrc.split('\n').forEach((linha, i) => {
     const cod = linha.trim();
-    if (cod.startsWith('//') || cod.startsWith('*')) return;
+    if (cod.startsWith('//') || cod.startsWith('*') || cod.startsWith('/*')) return;
     if (linha.includes('currentTalkXForcedState')) pontos.push(`${rel(boundarySrc)}:${i + 1}`);
   });
   return pontos;
 }
 
+/**
+ * Marca, para cada linha de `texto`, se ela está dentro de um comentário —
+ * de linha (`//`), de bloco `/* ... *\/` OU do comentário JSX `{/* ... *\/}`
+ * (o estilo usado de fato nestas telas para apagar JSX morto, ex.:
+ * `{/* <TalkXEmptyState /> *\/}`), inclusive linhas de CONTINUAÇÃO de um bloco
+ * aberto em linha anterior, que não têm o prefixo `*` do JSDoc. Sem isto,
+ * `varrerTela` lia prosa dentro de `{/* ... *\/}` como JSX real.
+ */
+function marcarComentarios(linhas) {
+  const comentada = [];
+  let dentroDeBloco = false;
+  for (const linha of linhas) {
+    if (dentroDeBloco) {
+      comentada.push(true);
+      if (linha.includes('*/')) dentroDeBloco = false;
+      continue;
+    }
+    const cod = linha.trim();
+    const abreComentario = cod.startsWith('//') || cod.startsWith('*') || cod.startsWith('/*') || cod.startsWith('{/*');
+    comentada.push(abreComentario);
+    if (abreComentario && !cod.startsWith('//') && !linha.includes('*/')) dentroDeBloco = true;
+  }
+  return comentada;
+}
+
 /** Linhas de `texto` onde cada estado aparece (1-based, na ordem do arquivo). */
 export function varrerTela(texto, estados = ESTADOS) {
   const linhas = texto.split('\n');
+  const comentada = marcarComentarios(linhas);
   const achados = {};
   for (const estado of estados) {
     const hits = [];
     linhas.forEach((linha, indice) => {
+      if (comentada[indice]) return;
       if (estado.padroes.some((re) => re.test(linha))) hits.push(indice + 1);
     });
     achados[estado.id] = hits;
