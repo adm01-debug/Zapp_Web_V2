@@ -72,6 +72,20 @@ describe('SendErrorBanner', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Enviado/ })).toBeInTheDocument());
   });
 
+  it('PD-79: falha DEFINITIVA com POST carimbado (recusa 4xx) ainda oferece reenvio', () => {
+    const onSendMessage = vi.fn();
+    const carimbada = { ...msg({ status: 'failed', content: 'oi de novo' }), delivery_post_started_at: '2026-10-11T10:00:01.000Z' } as Message;
+    render(<SendErrorBanner messages={[carimbada]} onSendMessage={onSendMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
+    expect(onSendMessage).toHaveBeenCalledWith('oi de novo');
+  });
+
+  it('PD-79: mensagem ambígua (sending carimbada) não aparece no banner', () => {
+    const ambigua = { ...msg({ status: 'sending', content: 'x' }), delivery_post_started_at: '2026-10-11T10:00:01.000Z' } as Message;
+    const { container } = render(<SendErrorBanner messages={[ambigua]} onSendMessage={vi.fn()} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('falha de audio/interativa: so o aviso, sem botao de reenvio', () => {
     render(
       <SendErrorBanner

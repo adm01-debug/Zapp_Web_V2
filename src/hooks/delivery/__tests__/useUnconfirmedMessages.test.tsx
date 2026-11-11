@@ -31,7 +31,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 
-import { useUnconfirmedMessages, isSchemaNotReadyError } from '../useUnconfirmedMessages';
+import { useUnconfirmedMessages, isSchemaNotReadyError, unconfirmedRefetchInterval } from '../useUnconfirmedMessages';
 
 let client: QueryClient;
 function wrapper({ children }: { children: ReactNode }) {
@@ -47,7 +47,7 @@ beforeEach(() => {
 });
 
 describe('useUnconfirmedMessages', () => {
-  it('pré-DDL (42703): lista vazia, sem erro, sem retry e sem polling', async () => {
+  it('pré-DDL (42703): lista vazia, sem erro, sem retry e polling lento de 5 min', async () => {
     state.result = { data: null, error: { code: '42703', message: 'column messages.delivery_post_started_at does not exist' } };
     const { result } = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
 
@@ -57,7 +57,7 @@ describe('useUnconfirmedMessages', () => {
     expect(state.froms).toBe(1);
     const query = client.getQueryCache().find({ queryKey: ['unconfirmed-messages', 'contact-1', null] });
     const interval = (query?.options as { refetchInterval?: unknown }).refetchInterval;
-    expect(typeof interval === 'function' ? (interval as (q: unknown) => unknown)(query) : interval).toBe(false);
+    expect(typeof interval === 'function' ? (interval as (q: unknown) => unknown)(query) : interval).toBe(300_000);
   });
 
   it('PGRST202 também é tratado como schema ainda não pronto', () => {
@@ -84,9 +84,32 @@ describe('useUnconfirmedMessages', () => {
     client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const { result } = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
-    // Depois do erro o polling de 30 s para (medido: 11 requisições com erro em 5 min).
+    // Depois do erro o polling de 30 s vira espera crescente (medido antes: 11 requisições com erro em 5 min).
     const query = client.getQueryCache().find({ queryKey: ['unconfirmed-messages', 'contact-1', null] });
     const interval = (query?.options as { refetchInterval?: unknown }).refetchInterval;
-    expect(typeof interval === 'function' ? (interval as (q: unknown) => unknown)(query) : interval).toBe(false);
+    expect(typeof interval === 'function' ? (interval as (q: unknown) => unknown)(query) : interval).toBe(60_000);
+  });
+
+  it('espera crescente depois de erro: 1, 2, 4, 8 e teto de 10 min; volta a 30 s quando recupera', () => {
+    const erro = (n: number) => unconfirmedRefetchInterval({ state: { status: 'error', errorUpdateCount: n } });
+    expect([1, 2, 3, 4, 5, 9].map(erro)).toEqual([60_000, 120_000, 240_000, 480_000, 600_000, 600_000]);
+    expect(unconfirmedRefetchInterval({ state: { status: 'error' } })).toBe(60_000);
+    expect(unconfirmedRefetchInterval({ state: { status: 'success', data: { rows: [], schemaReady: true }, errorUpdateCount: 7 } })).toBe(30_000);
+    expect(unconfirmedRefetchInterval({ state: { status: 'success', data: { rows: [], schemaReady: false } } })).toBe(300_000);
+  });
+
+  it('ignora o cache global de 5 min: revalida ao montar e ao voltar à aba', async () => {
+    client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 5 * 60_000, refetchOnMount: false, refetchOnWindowFocus: false } } });
+    const primeiro = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
+    await waitFor(() => expect(primeiro.result.current.isLoading).toBe(false));
+    primeiro.unmount();
+    const antes = state.froms;
+    const segundo = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
+    await waitFor(() => expect(state.froms).toBe(antes + 1));
+    segundo.unmount();
+    const query = client.getQueryCache().find({ queryKey: ['unconfirmed-messages', 'contact-1', null] });
+    const opts = query?.options as { refetchOnWindowFocus?: unknown; staleTime?: unknown };
+    expect(opts.refetchOnWindowFocus).toBe(true);
+    expect(opts.staleTime).toBe(0);
   });
 });
