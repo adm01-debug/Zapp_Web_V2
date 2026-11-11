@@ -71,7 +71,7 @@ export function coberturaEstadoForcado(forzadoSrc = FORCED_STATE_SRC, boundarySr
   const bsrc = readFileSync(boundarySrc, 'utf8');
   bsrc.split('\n').forEach((linha, i) => {
     const cod = linha.trim();
-    if (cod.startsWith('//') || cod.startsWith('*')) return;
+    if (cod.startsWith('//') || cod.startsWith('*') || cod.startsWith('/*')) return;
     if (linha.includes('currentTalkXForcedState')) pontos.push(`${rel(boundarySrc)}:${i + 1}`);
   });
   return pontos;
@@ -84,6 +84,10 @@ export function varrerTela(texto, estados = ESTADOS) {
   for (const estado of estados) {
     const hits = [];
     linhas.forEach((linha, indice) => {
+      const cod = linha.trim();
+      // Mesma guarda de coberturaEstadoForcado: a matriz e lida do codigo, nao
+      // de JSX morto comentado durante depuracao.
+      if (cod.startsWith('//') || cod.startsWith('*') || cod.startsWith('/*')) return;
       if (estado.padroes.some((re) => re.test(linha))) hits.push(indice + 1);
     });
     achados[estado.id] = hits;
