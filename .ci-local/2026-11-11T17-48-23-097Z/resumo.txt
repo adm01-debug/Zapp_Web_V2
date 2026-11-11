@@ -8,3 +8,15 @@ logs: /home/joaquim_ataides/projetos/_worktrees/Zapp_Web_V2/ci-local/.ci-local/2
    ·  🧄 Setup Bun — infraestrutura do runner (oven-sh/setup-bun), não se aplica
    ·  💾 Cache de dependências Bun — infraestrutura do runner (actions/cache), não se aplica
    ✅ 📚 Install dependencies (0s)
+   ✅ 🔎 Run TypeScript debt ratchet (127s)
+   ✅ 🛡️ Integridade do CLAUDE.md (GA02) (1s)
+── ▶️  node-scripts — 🧩 Node CI Scripts
+   ·  📥 Checkout code — infraestrutura do runner (actions/checkout), não se aplica
+   ·  🟩 Setup Node — infraestrutura do runner (actions/setup-node), não se aplica
+   ·  🦕 Setup Deno — infraestrutura do runner (denoland/setup-deno), não se aplica
+   ·  🧄 Setup Bun — infraestrutura do runner (oven-sh/setup-bun), não se aplica
+   ·  💾 Cache de dependências Bun — infraestrutura do runner (actions/cache), não se aplica
+   ✅ 📚 Install dependencies (0s)
+   ✅ 📦 Validar pacote de reconciliação (3s)
+   ✅ 📖 Verificar README gerado dos workflows (0s)
+   ✅ Verificar inventário de testes (0s)
