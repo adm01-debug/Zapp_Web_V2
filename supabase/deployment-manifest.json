@@ -676,8 +676,8 @@
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "bytes": 16986,
-      "sha256": "8af4daac0dfc5781739927b55346fd696f0e19b3dd56ed394ee5b37014ee4e97"
+      "bytes": 16951,
+      "sha256": "4763cafb6f20b19f884f79188da7baf73ed0c8e6631f82eb9f20ed05476c493d"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
@@ -2099,7 +2099,7 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4f04f1e5aa1454a328aceed6954117fb05346da4c5f0c470844538c0544e8151",
+      "source_sha256": "15ff8c33689d4062c9267ac130d23151026913aa4181c1aec13241e5ce1cb6d5",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2779,5 +2779,5 @@
       ]
     }
   ],
-  "manifest_sha256": "8e4aa007803a25e16a628787d49278e3966ad0d296fec0866269dc4932195552"
+  "manifest_sha256": "d8eab9a936d2012179e80751fd3c4fcef57be871419fc4d0b667a9b880d41de4"
 }
