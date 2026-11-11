@@ -30,6 +30,20 @@ test("extrai somente script module, modulepreload e stylesheet", () => {
   });
 });
 
+test("reconhece atributos com aspas simples (HTML valido, minificador diferente)", () => {
+  const htmlSingleQuotes = [
+    "<!doctype html><html><head>",
+    "<link rel='modulepreload' crossorigin href='/assets/vendor-core-abc.js'>",
+    "<link rel='stylesheet' crossorigin href='/assets/index-abc.css'>",
+    "</head><body><script type='module' crossorigin src='/assets/index-abc.js'></script>",
+    "</body></html>",
+  ].join("\n");
+  assert.deepEqual(extractInitialAssets(htmlSingleQuotes), {
+    js: ["/assets/index-abc.js", "/assets/vendor-core-abc.js"],
+    css: ["/assets/index-abc.css"],
+  });
+});
+
 const fixtureDirs = [];
 after(() => { for (const dir of fixtureDirs) rmSync(dir, { recursive: true, force: true }); });
 
