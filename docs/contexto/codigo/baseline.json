@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "240ac5b0e8cf816218251bf78a64c6604c880b6b",
+  "commit": "ec190c214beb289eb3b38ad867cc6e518a82fc4b",
   "branch": "main",
-  "data_commit": "2026-11-11T01:40:00-03:00",
+  "data_commit": "2026-11-11T02:05:32-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ec190c2",
+    "data": "2026-11-11",
+    "assunto": "fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)"
+   },
    {
     "sha": "240ac5b",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "be1c0c7",
     "data": "2026-11-10",
     "assunto": "chore(manutencao): adiciona rotina local isolada e verificavel (#2921)"
-   },
-   {
-    "sha": "3d97dc7",
-    "data": "2026-11-10",
-    "assunto": "fix(catalogo): valida etapas e datas do plano de implementação (#2918)"
    }
   ],
   "arquivos_mudados_7d": 664,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887889,
+  "linhas_codigo": 887897,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -636,7 +636,7 @@
   },
   "scripts/ia": {
    "arquivos": 1,
-   "linhas": 841
+   "linhas": 845
   },
   "scripts/inventario": {
    "arquivos": 4,
@@ -788,7 +788,7 @@
   },
   "tests/contracts": {
    "arquivos": 95,
-   "linhas": 20886
+   "linhas": 20890
   },
   "vite.config.ts": {
    "arquivos": 1,

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `240ac5b0e8cf816218251bf78a64c6604c880b6b` (2026-11-11T01:40:00-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `ec190c214beb289eb3b38ad867cc6e518a82fc4b` (2026-11-11T02:05:32-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 887889 |
+| linhas_codigo | 887897 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56702 nós · 117169 arestas · 4158 comunidades · grafo do commit `240ac5b0`
+- 56702 nós · 117169 arestas · 4158 comunidades · grafo do commit `ec190c21`
 - comunidades maiores: lucide-react (874), cn (783), vitest (752), react (699), ExternalProductManagement.tsx (572), WorkItemSheet.tsx (493), DashboardView.tsx (469), @tanstack/react-query (444), dialog.tsx (405), date-fns (369), ref_node_fs (359), validation.ts (348)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `ec190c2` fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)
 - 2026-11-11 `240ac5b` fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)
 - 2026-11-11 `ce06abc` fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)
 - 2026-11-11 `b2967b4` fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `e0a923f` Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)
 - 2026-11-10 `7ce81c0` feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002 (#2834)
 - 2026-11-10 `09df718` Impede aprovar mutações sem executar testes (#2923)
-- 2026-11-10 `f120344` chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

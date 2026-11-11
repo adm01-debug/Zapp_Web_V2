@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "240ac5b0e8cf816218251bf78a64c6604c880b6b",
+  "sha": "ec190c214beb289eb3b38ad867cc6e518a82fc4b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 05:00 UTC",
+  "generated_at": "2026-11-11 05:27 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054749
+  "code_lines": 1054757
  },
  "version": "1.3.2",
- "facts_hash": "d528952dcfe18aa6",
+ "facts_hash": "36e0ba1bbb4db2ca",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 91999,
+   "lines": 92003,
    "tables": [
     "a",
     "alem_do_limite",
@@ -69657,7 +69657,7 @@
   {
    "module": "tests",
    "files": 95,
-   "lines": 20886,
+   "lines": 20890,
    "tables": [
     "audit_logs",
     "conversation_analyses",
@@ -270369,7 +270369,7 @@
   },
   "scripts/ia/ensaio-provisionamento.mjs": {
    "path": "scripts/ia/ensaio-provisionamento.mjs",
-   "lines": 841,
+   "lines": 845,
    "exports": [
     "const PREFIXO_ENSAIO",
     "const DOMINIO_ENSAIO",
@@ -385646,7 +385646,7 @@
   },
   "tests/contracts/sl059-ia010-provisionamento.contract.test.ts": {
    "path": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-   "lines": 630,
+   "lines": 634,
    "is_test": true,
    "rule_comments": [
     "cópia (onde os ensaios rodam, regra R1) e, no canônico, só sob autorização.",
@@ -385957,10 +385957,20 @@
   }
  },
  "git": {
-  "sha": "240ac5b0e8cf816218251bf78a64c6604c880b6b",
+  "sha": "ec190c214beb289eb3b38ad867cc6e518a82fc4b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ec190c2",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)",
+    "files": [
+     "scripts/ia/ensaio-provisionamento.mjs",
+     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts"
+    ]
+   },
    {
     "sha": "240ac5b",
     "date": "2026-11-11",
@@ -386300,15 +386310,6 @@
      "supabase/deployment-manifest.json",
      "supabase/functions/connection-health-check/index.ts"
     ]
-   },
-   {
-    "sha": "d40c053",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)",
-    "files": [
-     "docs/agentes/banco.md"
-    ]
    }
   ],
   "hot_files": [
@@ -386361,6 +386362,14 @@
     2
    ],
    [
+    "scripts/ia/ensaio-provisionamento.mjs",
+    1
+   ],
+   [
+    "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
+    1
+   ],
+   [
     "scripts/ci/front-release-targets.unit.mjs",
     1
    ],
@@ -386382,14 +386391,6 @@
    ],
    [
     "scripts/talkx/gen-estados.mjs",
-    1
-   ],
-   [
-    "scripts/talkx/gen-estados.unit.mjs",
-    1
-   ],
-   [
-    "e2e/talkx-visual.spec.ts",
     1
    ]
   ]

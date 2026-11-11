@@ -23564,7 +23564,7 @@
   {
    "arquivo": "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
    "tipo": "contrato",
-   "linhas": 630,
+   "linhas": 634,
    "testa": [
     "scripts/ia/ensaio-provisionamento.mjs"
    ],
