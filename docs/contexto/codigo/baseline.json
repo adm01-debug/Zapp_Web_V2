@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "15ff5f3cc2af9d0215e33ebdbc313d8e37ba0538",
+  "commit": "d3a132d1bde527c66b751d3ba201267c7cfafec1",
   "branch": "main",
-  "data_commit": "2026-11-11T04:23:57-03:00",
+  "data_commit": "2026-11-11T04:52:21-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d3a132d",
+    "data": "2026-11-11",
+    "assunto": "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)"
+   },
    {
     "sha": "15ff5f3",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "c5650d8",
     "data": "2026-11-10",
     "assunto": "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)"
-   },
-   {
-    "sha": "401ea3d",
-    "data": "2026-11-10",
-    "assunto": "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)"
    }
   ],
   "arquivos_mudados_7d": 668,
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 284
+    "commits": 285
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 10
+    "commits": 9
    },
    {
     "autor": "dependabot[bot]",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 888062,
+  "linhas_codigo": 888107,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -668,7 +668,7 @@
   },
   "scripts/talkx": {
    "arquivos": 6,
-   "linhas": 1374
+   "linhas": 1419
   },
   "scripts/tarefas": {
    "arquivos": 1,

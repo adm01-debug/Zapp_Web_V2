@@ -2625,11 +2625,11 @@
   {
    "arquivo": "scripts/talkx/gen-estados.unit.mjs",
    "tipo": "unit",
-   "linhas": 154,
+   "linhas": 176,
    "testa": [
     "scripts/talkx/gen-estados.mjs"
    ],
-   "casos": 11
+   "casos": 12
   },
   {
    "arquivo": "scripts/talkx/lado-a-lado.unit.mjs",

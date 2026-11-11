@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)",
    "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)",
    "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)",
    "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)",
-   "fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)",
-   "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)"
+   "fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

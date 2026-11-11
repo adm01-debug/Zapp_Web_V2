@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "15ff5f3cc2af9d0215e33ebdbc313d8e37ba0538",
+  "sha": "d3a132d1bde527c66b751d3ba201267c7cfafec1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 07:47 UTC",
+  "generated_at": "2026-11-11 08:00 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054922
+  "code_lines": 1054967
  },
  "version": "1.3.2",
- "facts_hash": "2724dc3b777c1c85",
+ "facts_hash": "4890ccef5ffc5818",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92168,
+   "lines": 92213,
    "tables": [
     "a",
     "alem_do_limite",
@@ -271276,7 +271276,7 @@
   },
   "scripts/talkx/gen-estados.mjs": {
    "path": "scripts/talkx/gen-estados.mjs",
-   "lines": 207,
+   "lines": 230,
    "exports": [
     "const root",
     "const TELAS_DIR",
@@ -271305,9 +271305,10 @@
   },
   "scripts/talkx/gen-estados.unit.mjs": {
    "path": "scripts/talkx/gen-estados.unit.mjs",
-   "lines": 154,
+   "lines": 176,
    "rule_comments": [
-    "4 — real, deve contar"
+    "4 — real, deve contar",
+    "8 — real, deve contar"
    ]
   },
   "scripts/talkx/lado-a-lado.mjs": {
@@ -385981,10 +385982,20 @@
   }
  },
  "git": {
-  "sha": "15ff5f3cc2af9d0215e33ebdbc313d8e37ba0538",
+  "sha": "d3a132d1bde527c66b751d3ba201267c7cfafec1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d3a132d",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)",
+    "files": [
+     "scripts/talkx/gen-estados.mjs",
+     "scripts/talkx/gen-estados.unit.mjs"
+    ]
+   },
    {
     "sha": "15ff5f3",
     "date": "2026-11-11",
@@ -386302,29 +386313,16 @@
      "scripts/lib/seguranca-processo.mjs",
      "scripts/lib/seguranca-processo.test.mjs"
     ]
-   },
-   {
-    "sha": "be1c0c7",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "chore(manutencao): adiciona rotina local isolada e verificavel (#2921)",
-    "files": [
-     "package.json",
-     "scripts/ci/maintenance.unit.mjs",
-     "scripts/maintenance/README.md",
-     "scripts/maintenance/config.json",
-     "scripts/maintenance/lib.mjs",
-     "scripts/maintenance/maintenance.unit.mjs",
-     "scripts/maintenance/run.mjs",
-     "scripts/maintenance/run.sh",
-     "scripts/maintenance/typecheck.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
-    "scripts/maintenance/maintenance.unit.mjs",
-    3
+    "scripts/talkx/gen-estados.mjs",
+    2
+   ],
+   [
+    "scripts/talkx/gen-estados.unit.mjs",
+    2
    ],
    [
     "scripts/ui-audit/layout-guard.mjs",
@@ -386343,11 +386341,7 @@
     2
    ],
    [
-    "scripts/maintenance/run.mjs",
-    2
-   ],
-   [
-    "scripts/maintenance/lib.mjs",
+    "scripts/maintenance/maintenance.unit.mjs",
     2
    ],
    [

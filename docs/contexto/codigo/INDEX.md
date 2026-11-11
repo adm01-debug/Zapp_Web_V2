@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `15ff5f3cc2af9d0215e33ebdbc313d8e37ba0538` (2026-11-11T04:23:57-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d3a132d1bde527c66b751d3ba201267c7cfafec1` (2026-11-11T04:52:21-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 888062 |
+| linhas_codigo | 888107 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56704 nós · 117172 arestas · 4235 comunidades · grafo do commit `15ff5f3c`
-- comunidades maiores: TalkXSuppression.tsx (1202), react (1010), lucide-react (904), vitest (726), client.ts (704), ExternalProductManagement.tsx (451), WorkItemSheet.tsx (444), framer-motion (441), ref_node_assert (434), DashboardView.tsx (421), @tanstack/react-query (419), avatar.tsx (414)
+- 56705 nós · 117174 arestas · 4133 comunidades · grafo do commit `d3a132d1`
+- comunidades maiores: react (834), lucide-react (779), utils.ts (596), cn (546), DashboardView.tsx (488), ExternalProductManagement.tsx (473), validation.ts (459), ref_https (426), ref_node_fs (401), TalkXCampaignWizard.tsx (383), useTalkXSegments.ts (351), chat.ts (329)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `d3a132d` fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)
 - 2026-11-11 `15ff5f3` fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)
 - 2026-11-11 `e7646cc` fix(ui-audit): className dinâmico na raiz não é mais silenciado como "" (#2938)
 - 2026-11-11 `b50be19` fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `e334b0a` fix(maintenance): finally de restore não descarta mais a exceção original (#2933)
 - 2026-11-10 `f3c0c5f` fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)
 - 2026-11-10 `3725c34` fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)
-- 2026-11-10 `8d727a9` fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

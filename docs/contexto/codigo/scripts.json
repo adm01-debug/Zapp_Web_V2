@@ -4500,7 +4500,7 @@
   {
    "arquivo": "scripts/talkx/gen-estados.mjs",
    "descricao": "* X055 — gera a matriz tela × estado do Talk X em `docs/talkx/ESTADOS.md`.",
-   "linhas": 207,
+   "linhas": 230,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
