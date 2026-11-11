@@ -7,7 +7,7 @@ import {
   ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
+import { useTalkXLifecycleWith, TalkXLifecycleDialog, type TalkXLifecycleIntent } from './useTalkXLifecycle';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -600,13 +600,40 @@ interface Props {
   initialCampaignId?: string | null;
 }
 
+/** Retorno de sucesso da tela de execução (o mesmo de antes do diálogo único). */
+function runningLifecycleSuccess(onBack: () => void) {
+  return (intent: TalkXLifecycleIntent) => {
+    if (intent.kind === 'pause') toast.info('Campanha pausada.');
+    // Retomar: `startCampaign` já avisa "Envio iniciado; acompanhe no monitor".
+    if (intent.kind === 'cancel') {
+      toast.warning('Campanha cancelada.');
+      onBack();
+    }
+  };
+}
+
+/** Erro do diálogo em português; nunca o texto cru da Edge (ex.: "non-2xx status code"). */
+function runningLifecycleError(intent: TalkXLifecycleIntent): string {
+  if (intent.kind === 'pause') return 'Erro ao pausar a campanha.';
+  if (intent.kind === 'cancel') return 'Erro ao cancelar a campanha.';
+  if (intent.kind === 'resume') return 'Erro ao retomar a campanha.';
+  return 'Não foi possível concluir a ação.';
+}
+
 export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId }: Props) {
   const {
     campaigns, updateCampaign, updateCampaignLimits,
+    startCampaign, pauseCampaign, cancelCampaign,
     refetchCampaigns, isLoading: campaignsLoading, isFetching: campaignsFetching,
     isError: campaignsIsError, error: campaignsError,
   } = useTalkX();
-  const lifecycle = useTalkXLifecycle();
+  // X051: diálogo único do ciclo de vida com as MESMAS operações desta tela (um só
+  // useTalkX = um só canal realtime) e o retorno que a tela sempre deu: toast de
+  // sucesso, cancelar volta para a lista e erro em português no diálogo.
+  const lifecycle = useTalkXLifecycleWith(
+    { startCampaign, pauseCampaign, cancelCampaign, updateCampaign },
+    { onSuccess: runningLifecycleSuccess(onBack), errorMessage: runningLifecycleError },
+  );
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
