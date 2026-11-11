@@ -85,6 +85,27 @@ test("continua rejeitando h-full sem largura", () => {
   assert.match(result.output, /VIOLATION \[h-full without w-full\/flex-1\]/);
 });
 
+test("w-full só a partir de lg não cobre h-full incondicional (mobile fica sem largura)", () => {
+  const result = runGuard({
+    "src/pages/lazyViews.ts": lazyImport("BreakpointMismatchView"),
+    "src/components/BreakpointMismatchView.tsx":
+      'export function BreakpointMismatchView() {\n  return <main className="h-full lg:w-full">erro</main>;\n}\n',
+  });
+
+  assert.equal(result.status, 1, result.output);
+  assert.match(result.output, /VIOLATION \[h-full without w-full\/flex-1\]/);
+});
+
+test("w-full a partir de sm cobre h-full que só começa em lg", () => {
+  const result = runGuard({
+    "src/pages/lazyViews.ts": lazyImport("CoveredBreakpointView"),
+    "src/components/CoveredBreakpointView.tsx":
+      'export function CoveredBreakpointView() {\n  return <main className="sm:w-full lg:h-full">ok</main>;\n}\n',
+  });
+
+  assert.equal(result.status, 0, result.output);
+});
+
 test("aplica as regras na raiz do alvo reexportado", () => {
   const result = runGuard({
     "src/pages/lazyViews.ts": lazyImport("AliasView"),
