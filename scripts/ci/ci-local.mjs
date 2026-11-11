@@ -296,7 +296,8 @@ function prepararWorkspace(runRoot, gh, args, avisos, log) {
   const url = git('config', '--get', 'remote.origin.url');
   if (url.ok && url.out) executar('git', ['-C', ws, 'remote', 'set-url', 'origin', url.out]);
 
-  const sujo = git('status', '--porcelain', '--untracked-files=all').out;
+  // .ci-local/ (logs desta execução) nunca conta como mudança do working tree.
+  const sujo = git('status', '--porcelain', '--untracked-files=all', '--', '.', ':!.ci-local').out;
   if (sujo) {
     const n = sujo.split('\n').length;
     if (args.incluirNaoCommitado) {
@@ -310,7 +311,7 @@ function prepararWorkspace(runRoot, gh, args, avisos, log) {
           encoding: undefined,
         });
       const novos = arquivosDoDiffZ(
-        executar('git', ['-C', ORIGEM, 'ls-files', '-z', '--others', '--exclude-standard'])
+        executar('git', ['-C', ORIGEM, 'ls-files', '-z', '--others', '--exclude-standard', '--', '.', ':!.ci-local'])
       );
       for (const f of novos) {
         mkdirSync(dirname(join(ws, f)), { recursive: true });
@@ -523,8 +524,9 @@ function rodarScript({ script, shell, dirPassos, n, ...resto }) {
 
 function ultimasLinhas(arquivo, n = 15) {
   if (!existsSync(arquivo)) return '';
-  return readFileSync(arquivo, 'utf8')
-    .trimEnd()
+  const texto = readFileSync(arquivo, 'utf8').trimEnd();
+  if (!texto) return '      │ (passo sem saída)';
+  return texto
     .split('\n')
     .slice(-n)
     .map((l) => `      │ ${l}`)
@@ -945,7 +947,7 @@ async function main() {
         cwd: ORIGEM,
         encoding: 'utf8',
       });
-      const novos = spawnSync('git', ['ls-files', '-z', '--others', '--exclude-standard'], {
+      const novos = spawnSync('git', ['ls-files', '-z', '--others', '--exclude-standard', '--', '.', ':!.ci-local'], {
         cwd: ORIGEM,
         encoding: 'utf8',
       });

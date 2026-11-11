@@ -275,7 +275,7 @@ test('timeout mata o grupo de processos (netos inclusive) e o orçamento é do j
   assert.ok(r.ms < 20_000, `demorou ${r.ms} ms: o neto segurou o pipe`);
   assert.match(r.out, /timeout do passo/);
   assert.match(r.out, /timeout do job/);
-  assert.match(r.out, /✅ teste \/ expressao \(5\)/);
+  assert.match(r.out, /✅ to \/ expressao \(5\)/);
 });
 
 test('working-directory, defaults e arquivos do runner (GITHUB_ENV/OUTPUT/PATH)', (t) => {
@@ -377,14 +377,16 @@ test('--rapido: nomes com aspas/acento/espaço vão como argumentos (sem shell) 
 });
 
 test('Ctrl-C (SIGINT) mata os passos e apaga os temporários', async (t) => {
-  const { src, raiz } = repo(t, {
+  const marcas = mkdtempSync(join(tmpdir(), 'ci-local-teste-pid-'));
+  t.after(() => rmSync(marcas, { recursive: true, force: true }));
+  const { src } = repo(t, {
     longo: wf(`  a:
     runs-on: x
     steps:
       - run: |
-          echo $$ > "${join(raiz, 'pid')}"
+          echo $$ > "${join(marcas, 'pid')}"
           sleep 60 &
-          echo $! > "${join(raiz, 'pid-neto')}"
+          echo $! > "${join(marcas, 'pid-neto')}"
           wait
 `),
   });
@@ -393,9 +395,9 @@ test('Ctrl-C (SIGINT) mata os passos e apaga os temporários', async (t) => {
   filho.stdout.on('data', (d) => (out += d));
   filho.stderr.on('data', (d) => (out += d));
   const fim = new Promise((ok) => filho.on('exit', (code) => ok(code)));
-  for (let i = 0; i < 200 && !existsSync(join(raiz, 'pid-neto')); i++)
+  for (let i = 0; i < 200 && !existsSync(join(marcas, 'pid-neto')); i++)
     await new Promise((ok) => setTimeout(ok, 100));
-  assert.ok(existsSync(join(raiz, 'pid-neto')), out);
+  assert.ok(existsSync(join(marcas, 'pid-neto')), out);
   await new Promise((ok) => setTimeout(ok, 200));
   filho.kill('SIGINT');
   assert.equal(await fim, 130, out);
@@ -409,6 +411,6 @@ test('Ctrl-C (SIGINT) mata os passos e apaga os temporários', async (t) => {
   };
   await new Promise((ok) => setTimeout(ok, 300));
   for (const f of ['pid', 'pid-neto'])
-    assert.equal(vivo(Number(readFileSync(join(raiz, f), 'utf8'))), false, `${f} sobreviveu`);
+    assert.equal(vivo(Number(readFileSync(join(marcas, f), 'utf8'))), false, `${f} sobreviveu`);
   assert.equal(existsSync(temporarios(out)), false, 'temporários apagados');
 });
