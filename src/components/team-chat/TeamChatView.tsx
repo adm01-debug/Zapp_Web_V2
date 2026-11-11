@@ -25,7 +25,11 @@ function stripCidParam(): void {
 }
 
 export function TeamChatView() {
-  const { data: conversations = [], isLoading: conversationsLoading } = useTeamConversations();
+  const {
+    data: conversations = [],
+    isLoading: conversationsLoading,
+    refetch: refetchConversations,
+  } = useTeamConversations();
   // Escolha explícita do usuário; quando null, vale a conversa do deep-link.
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [deepLinkCid, setDeepLinkCid] = useState<string | null>(() => readCidParam());
@@ -55,13 +59,26 @@ export function TeamChatView() {
   useEffect(() => {
     stripCidParam();
   }, []);
-  // Lista carregada sem a conversa do deep-link (sem acesso, apagada): o pedido é
-  // descartado — não fica guardado para abrir sozinho quando a conversa surgir depois.
+  // Lista carregada sem a conversa do deep-link: antes de desistir, recarrega a lista
+  // UMA vez — a notificação de uma conversa recém-criada costuma chegar antes do
+  // realtime atualizar a lista. Se depois da recarga ela continuar ausente (sem acesso,
+  // apagada), o pedido é descartado e não abre sozinho quando surgir mais tarde.
   // Ajuste de estado no render (padrão do React para estado derivado de props).
-  const deepLinkMissing =
+  const [recarga, setRecarga] = useState<{ cid: string; feita: boolean } | null>(null);
+  const deepLinkAusente =
     !conversationsLoading && !!deepLinkCid && !conversations.some(c => c.id === deepLinkCid);
+  if (deepLinkAusente && recarga?.cid !== deepLinkCid) setRecarga({ cid: deepLinkCid as string, feita: false });
+  useEffect(() => {
+    if (!recarga || recarga.feita) return;
+    let ativo = true;
+    void Promise.resolve(refetchConversations()).finally(() => {
+      if (ativo) setRecarga((r) => (r && r.cid === recarga.cid ? { ...r, feita: true } : r));
+    });
+    return () => { ativo = false; };
+  }, [recarga, refetchConversations]);
+  const deepLinkMissing = deepLinkAusente && recarga?.cid === deepLinkCid && recarga.feita;
   if (deepLinkMissing) setDeepLinkCid(null);
-  const deepLinkedId = !conversationsLoading && !deepLinkMissing ? deepLinkCid : null;
+  const deepLinkedId = !conversationsLoading && !deepLinkAusente ? deepLinkCid : null;
   const selectedId = pickedId ?? deepLinkedId;
   const setSelectedId = (id: string | null) => {
     setPickedId(id);

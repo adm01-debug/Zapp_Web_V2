@@ -8,8 +8,11 @@ const C = '33333333-3333-4333-8333-333333333333';
 
 let conversas: Array<{ id: string; name: string }> = [];
 let carregando = false;
+// Recarga da lista: o teste decide o que a lista passa a ter quando a recarga termina.
+let aoRecarregar: () => void = () => {};
+const refetch = vi.fn(async () => { aoRecarregar(); });
 vi.mock('@/hooks/chat/useTeamChat', () => ({
-  useTeamConversations: () => ({ data: conversas, isLoading: carregando }),
+  useTeamConversations: () => ({ data: conversas, isLoading: carregando, refetch }),
 }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({
   useActiveTeamChatConversation: () => undefined,
@@ -42,6 +45,8 @@ describe('TeamChatView — deep-link ?cid=', () => {
   beforeEach(() => {
     conversas = [{ id: A, name: 'A' }, { id: B, name: 'B' }];
     carregando = false;
+    aoRecarregar = () => {};
+    refetch.mockClear();
     window.history.replaceState({}, '', '/');
   });
 
@@ -117,13 +122,26 @@ describe('TeamChatView — deep-link ?cid=', () => {
     expect(screen.getByTestId('painel').textContent).toBe(A);
   });
 
-  it('lista carregada SEM a conversa do deep-link descarta o pedido: ela não abre sozinha quando surgir depois', () => {
+  it('conversa recém-criada que ainda não está na lista: recarrega a lista uma vez e abre', async () => {
+    aoRecarregar = () => { conversas = [...conversas, { id: C, name: 'C' }]; };
     window.history.replaceState({}, '', `/?view=team-chat&cid=${C}`);
     const { rerender } = render(<TeamChatView />);
+    await act(async () => {});
+    expect(refetch).toHaveBeenCalledTimes(1);
+    rerender(<TeamChatView />);
+    expect(screen.getByTestId('painel').textContent).toBe(C);
+  });
+
+  it('se a recarga confirmar que a conversa não existe, descarta: não abre sozinha quando surgir depois', async () => {
+    window.history.replaceState({}, '', `/?view=team-chat&cid=${C}`);
+    const { rerender } = render(<TeamChatView />);
+    await act(async () => {});
+    expect(refetch).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('painel')).toBeNull();
     conversas = [...conversas, { id: C, name: 'C' }];
     rerender(<TeamChatView />);
     expect(screen.queryByTestId('painel')).toBeNull();
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('aplicar o deep-link fecha o painel de detalhes da conversa anterior', () => {
