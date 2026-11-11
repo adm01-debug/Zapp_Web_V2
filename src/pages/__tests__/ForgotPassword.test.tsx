@@ -3,36 +3,34 @@
  * esqueci a senha, fluxo de solicitação aprovada pelo gestor).
  *
  * Como se prova aqui: a tela REAL é renderizada e a única fronteira dublada é o
- * banco. Quem esqueceu a senha não está logado (anon): ele não lê `profiles` nem
- * grava em `password_reset_requests` (RLS). O pedido é criado no servidor pela RPC
- * `request_password_reset` (migration 20261111140000), que responde igual exista
- * ou não o e-mail. A LIBERAÇÃO da senha continua com o gestor (painel de pedidos +
- * Edge approve-password-reset).
+ * banco. Quem esqueceu a senha não está logado (anon): não lê `profiles` nem sabe
+ * o próprio user_id. A tela grava em `password_reset_requests` SÓ email/motivo/
+ * navegador; o gatilho `sanitize_reset_request()` (migration 20261015182400)
+ * resolve a conta no servidor e ignora e-mail sem conta, sem erro. A LIBERAÇÃO da
+ * senha continua com o gestor (painel de pedidos + Edge approve-password-reset).
  *
  * Regras de produto que estes testes travam:
  *  - email inválido não gera chamada ao banco;
- *  - a tela NUNCA consulta `profiles` nem grava direto em `password_reset_requests`;
- *  - email válido chama a RPC com e-mail, motivo opcional e `user_agent`, e mostra
- *    a mesma tela de enviado (não revela se o e-mail existe);
- *  - falha da RPC aparece como erro, não como "enviado".
+ *  - a tela NUNCA consulta `profiles` e NUNCA manda user_id (quem resolve é o servidor);
+ *  - email válido grava email, motivo opcional e `user_agent`, e mostra a mesma tela
+ *    de enviado (não revela se o e-mail existe);
+ *  - falha ao gravar aparece como erro, não como "enviado".
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 const h = vi.hoisted(() => ({
-  rpc: vi.fn(),
-  from: vi.fn(),
+  insert: vi.fn(),
+  tabelas: [] as string[],
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    rpc: (...a: unknown[]) => h.rpc(...a),
-    from: (table: string) => {
-      h.from(table);
-      throw new Error(`a tela não deve acessar a tabela ${table} direto`);
-    },
+vi.mock('@/lib/supabaseHelpers', () => ({
+  fromTable: (table: string) => {
+    h.tabelas.push(table);
+    if (table !== 'password_reset_requests') throw new Error(`tabela inesperada na tela: ${table}`);
+    return { insert: (...a: unknown[]) => h.insert(...a) };
   },
 }));
 
@@ -67,7 +65,8 @@ function preencherEEnviar(email: string, motivo?: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  h.rpc.mockResolvedValue({ data: null, error: null });
+  h.tabelas.length = 0;
+  h.insert.mockResolvedValue({ error: null });
 });
 
 describe('ForgotPassword — validação', () => {
@@ -76,25 +75,25 @@ describe('ForgotPassword — validação', () => {
     preencherEEnviar('nao-e-email');
 
     expect(await screen.findByText('Email inválido')).toBeTruthy();
-    expect(h.rpc).not.toHaveBeenCalled();
-    expect(h.from).not.toHaveBeenCalled();
+    expect(h.insert).not.toHaveBeenCalled();
+    expect(h.tabelas).toEqual([]);
     expect(screen.queryByText('Solicitação Enviada!')).toBeNull();
   });
 });
 
-describe('ForgotPassword — pedido pelo servidor', () => {
-  it('chama request_password_reset com e-mail, motivo nulo quando vazio e user_agent', async () => {
+describe('ForgotPassword — pedido resolvido no servidor', () => {
+  it('grava só e-mail, motivo nulo quando vazio e user_agent — sem user_id e sem ler profiles', async () => {
     cenario();
     preencherEEnviar('ana@empresa.com');
 
     expect(await screen.findByText('Solicitação Enviada!')).toBeTruthy();
-    expect(h.rpc).toHaveBeenCalledTimes(1);
-    expect(h.rpc).toHaveBeenCalledWith('request_password_reset', {
-      p_email: 'ana@empresa.com',
-      p_reason: null,
-      p_user_agent: navigator.userAgent,
+    expect(h.insert).toHaveBeenCalledTimes(1);
+    expect(h.insert).toHaveBeenCalledWith({
+      email: 'ana@empresa.com',
+      reason: null,
+      user_agent: navigator.userAgent,
     });
-    expect(h.from).not.toHaveBeenCalled();
+    expect(h.tabelas).toEqual(['password_reset_requests']);
     expect(h.toast.success).toHaveBeenCalledWith(MSG_ENVIADO);
   });
 
@@ -103,11 +102,12 @@ describe('ForgotPassword — pedido pelo servidor', () => {
     preencherEEnviar('ana@empresa.com', 'Esqueci após as férias');
 
     expect(await screen.findByText('Solicitação Enviada!')).toBeTruthy();
-    const [, args] = h.rpc.mock.calls[0] as [string, Record<string, unknown>];
-    expect(args.p_reason).toBe('Esqueci após as férias');
+    const [pedido] = h.insert.mock.calls[0] as [Record<string, unknown>];
+    expect(pedido.reason).toBe('Esqueci após as férias');
+    expect('user_id' in pedido).toBe(false);
   });
 
-  it('não revela se o e-mail existe: a resposta da tela é a mesma (a RPC devolve void nos dois casos)', async () => {
+  it('não revela se o e-mail existe: a resposta da tela é a mesma (o gatilho descarta e-mail sem conta sem erro)', async () => {
     cenario();
     preencherEEnviar('ninguem@empresa.com');
 
@@ -115,8 +115,8 @@ describe('ForgotPassword — pedido pelo servidor', () => {
     expect(h.toast.success).toHaveBeenCalledWith(MSG_ENVIADO);
   });
 
-  it('falha da RPC aparece como erro e NÃO como enviado', async () => {
-    h.rpc.mockResolvedValue({ data: null, error: new Error('rpc recusada') });
+  it('falha ao gravar aparece como erro e NÃO como enviado', async () => {
+    h.insert.mockResolvedValue({ error: new Error('insert recusado') });
     cenario();
     preencherEEnviar('ana@empresa.com');
 
