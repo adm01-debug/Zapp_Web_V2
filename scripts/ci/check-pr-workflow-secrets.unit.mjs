@@ -16,6 +16,16 @@ test('reconhece pull_request em bloco e formato inline', () => {
   assert.equal(hasPullRequestTrigger('on:\n  workflow_dispatch:\n'), false);
 });
 
+test('reconhece pull_request em mapeamento flow-style (on: { pull_request: {} })', () => {
+  assert.equal(hasPullRequestTrigger('on: { pull_request: {} }\n'), true);
+  assert.equal(hasPullRequestTrigger('on: { pull_request_target: {} }\n'), true);
+  assert.equal(
+    hasPullRequestTrigger('on: { pull_request: { types: [opened] } }\n'),
+    true
+  );
+  assert.equal(hasPullRequestTrigger('on: { push: {}, workflow_dispatch: {} }\n'), false);
+});
+
 test('rejeita secret privilegiado em qualquer trecho de workflow de PR', () => {
   const workflow = `on:
   push:
