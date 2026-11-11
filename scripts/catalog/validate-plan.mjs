@@ -48,7 +48,8 @@ function ehTombstone(b) {
 for (const b of blocks) {
   const id = b.match(/^E(\d+)/)[1];
   const numero = Number(id);
-  if (id.length < 2 || id.length > 3) {
+  const canonico = numero === 100 ? '100' : String(numero).padStart(2, '0');
+  if (id !== canonico) {
     errors.push(`E${id}: formato de identificador invalido`);
     continue;
   }
