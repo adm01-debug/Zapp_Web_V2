@@ -141,7 +141,6 @@ export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecip
       // talkx_suppress_contact é exclusiva do servidor (opt-out automático). O bloqueio
       // manual usa a porta própria, que confere o papel e lê campanha/contato/telefone
       // do destinatário no servidor (migration 20261111170000).
-      // @ts-expect-error talkx_block_recipient entra nos tipos gerados após a migration 20261111170000
       const { data, error } = await supabase.rpc('talkx_block_recipient', {
         p_recipient_id: recipient.id,
       });
