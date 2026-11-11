@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)",
    "fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)",
    "fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)",
    "fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)",
-   "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)",
-   "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)"
+   "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

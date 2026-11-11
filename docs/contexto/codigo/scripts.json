@@ -3670,7 +3670,7 @@
   {
    "arquivo": "scripts/db/seed-contatos-redesign-local.sh",
    "descricao": "seed-contatos-redesign-local.sh — RD-009 Roda scripts/db/seed-contatos-redesign-local.sql (DML puro, NAO e migration) e",
-   "linhas": 249,
+   "linhas": 253,
    "env": [
     "ZAPP_SEED_URL"
    ],

@@ -1823,9 +1823,9 @@
   {
    "arquivo": "scripts/ci/seed-contatos-redesign-local.unit.mjs",
    "tipo": "unit",
-   "linhas": 176,
+   "linhas": 186,
    "testa": [],
-   "casos": 7
+   "casos": 8
   },
   {
    "arquivo": "scripts/ci/sla-code-scanning.unit.mjs",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "2182f81ed702f1abf44ec97b39e06f23630f77bc",
+  "sha": "a6b4ffb409d837e72951a5c4f610723d86f3d7c3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 09:13 UTC",
+  "generated_at": "2026-11-11 09:50 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1055069
+  "code_lines": 1055079
  },
  "version": "1.3.2",
- "facts_hash": "f0ee51396992c6ff",
+ "facts_hash": "64f2a99e33af54bf",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92315,
+   "lines": 92325,
    "tables": [
     "a",
     "alem_do_limite",
@@ -265909,7 +265909,7 @@
   },
   "scripts/ci/seed-contatos-redesign-local.unit.mjs": {
    "path": "scripts/ci/seed-contatos-redesign-local.unit.mjs",
-   "lines": 176,
+   "lines": 186,
    "env": [
     "PATH"
    ],
@@ -385986,10 +385986,20 @@
   }
  },
  "git": {
-  "sha": "2182f81ed702f1abf44ec97b39e06f23630f77bc",
+  "sha": "a6b4ffb409d837e72951a5c4f610723d86f3d7c3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a6b4ffb",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)",
+    "files": [
+     "scripts/ci/seed-contatos-redesign-local.unit.mjs",
+     "scripts/db/seed-contatos-redesign-local.sh"
+    ]
+   },
    {
     "sha": "2182f81",
     "date": "2026-11-11",
@@ -386310,15 +386320,6 @@
      "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
      "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
     ]
-   },
-   {
-    "sha": "9f94363",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "chore(docs): documenta geração de contexto no AGENTS.md (#2840)",
-    "files": [
-     "AGENTS.md"
-    ]
    }
   ],
   "hot_files": [
@@ -386349,6 +386350,14 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/ci/seed-contatos-redesign-local.unit.mjs",
+    1
+   ],
+   [
+    "scripts/db/seed-contatos-redesign-local.sh",
+    1
    ],
    [
     "scripts/supabase_snapshot/snapshot.py",
@@ -386392,14 +386401,6 @@
    ],
    [
     "scripts/db-tests/run-all.unit.mjs",
-    1
-   ],
-   [
-    "scripts/qa/prova-visao-classificadores.mjs",
-    1
-   ],
-   [
-    "scripts/qa/prova-visao-classificadores.unit.mjs",
     1
    ]
   ]

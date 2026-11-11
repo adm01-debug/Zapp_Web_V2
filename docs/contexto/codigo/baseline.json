@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2182f81ed702f1abf44ec97b39e06f23630f77bc",
+  "commit": "a6b4ffb409d837e72951a5c4f610723d86f3d7c3",
   "branch": "main",
-  "data_commit": "2026-11-11T06:06:01-03:00",
+  "data_commit": "2026-11-11T06:32:10-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a6b4ffb",
+    "data": "2026-11-11",
+    "assunto": "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)"
+   },
    {
     "sha": "2182f81",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "09df718",
     "data": "2026-11-10",
     "assunto": "Impede aprovar mutações sem executar testes (#2923)"
-   },
-   {
-    "sha": "f120344",
-    "data": "2026-11-10",
-    "assunto": "chore(auditoria): consolida achados.json/RELATORIO/progresso — FASES 0 e A auditoria-supabase (#2844)"
    }
   ],
-  "arquivos_mudados_7d": 670,
+  "arquivos_mudados_7d": 658,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 888209,
+  "linhas_codigo": 888219,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 211,
-   "linhas": 43846
+   "linhas": 43856
   },
   "scripts/db-audit": {
    "arquivos": 81,
