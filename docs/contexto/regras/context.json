@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a7f9d033a3b51d6d337d8158df0c202965159dec",
+  "sha": "b50be19811691116f8d9dc56f019e77b58a49e9a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 06:30 UTC",
+  "generated_at": "2026-11-11 06:53 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054804
+  "code_lines": 1054859
  },
  "version": "1.3.2",
- "facts_hash": "ff71a721ca52a577",
+ "facts_hash": "12ac542e93d3062b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92050,
+   "lines": 92105,
    "tables": [
     "a",
     "alem_do_limite",
@@ -129789,6 +129789,14 @@
    {
     "file": "scripts/docs/verificar-docs-realtime.test.mjs",
     "name": "citação ${formato} ${sufixo || "
+   },
+   {
+    "file": "scripts/docs/verificar-docs-realtime.test.mjs",
+    "name": "linha tabela→migration sem crases no .sql da 2ª coluna é recusada (não pode passar em silêncio)"
+   },
+   {
+    "file": "scripts/docs/verificar-docs-realtime.test.mjs",
+    "name": "linha tabela→migration com .sql entre crases continua sendo validada normalmente"
    },
    {
     "file": "scripts/lib/seguranca-processo.test.mjs",
@@ -268715,18 +268723,20 @@
   },
   "scripts/docs/verificar-docs-realtime.mjs": {
    "path": "scripts/docs/verificar-docs-realtime.mjs",
-   "lines": 224,
+   "lines": 232,
    "doc": "!/usr/bin/env node"
   },
   "scripts/docs/verificar-docs-realtime.test.mjs": {
    "path": "scripts/docs/verificar-docs-realtime.test.mjs",
-   "lines": 72,
+   "lines": 119,
    "is_test": true,
    "temporal": [
     "return spawnSync(process.execPath, [script], { encoding: 'utf8', timeout: 10_000 });"
    ],
    "tests": [
-    "citação ${formato} ${sufixo || "
+    "citação ${formato} ${sufixo || ",
+    "linha tabela→migration sem crases no .sql da 2ª coluna é recusada (não pode passar em silêncio)",
+    "linha tabela→migration com .sql entre crases continua sendo validada normalmente"
    ]
   },
   "scripts/e2e-isolated/admission.mjs": {
@@ -385958,10 +385968,20 @@
   }
  },
  "git": {
-  "sha": "a7f9d033a3b51d6d337d8158df0c202965159dec",
+  "sha": "b50be19811691116f8d9dc56f019e77b58a49e9a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b50be19",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)",
+    "files": [
+     "scripts/docs/verificar-docs-realtime.mjs",
+     "scripts/docs/verificar-docs-realtime.test.mjs"
+    ]
+   },
    {
     "sha": "a7f9d03",
     "date": "2026-11-11",
@@ -386288,30 +386308,6 @@
      "scripts/e2e-isolated/compilation-network.mjs",
      "scripts/e2e-isolated/run.mjs"
     ]
-   },
-   {
-    "sha": "7769490",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(scripts): elimina falsos positivos e travamentos nas validações (#2917)",
-    "files": [
-     "docs/talkx/ESTADOS.md",
-     "scripts/ci/check-quarantine.mjs",
-     "scripts/ci/check-quarantine.unit.mjs",
-     "scripts/ci/verify-release-targets-timeout.unit.mjs",
-     "scripts/db-audit/check-catalog-fresh.mjs",
-     "scripts/db-audit/check-catalog-fresh.test.mjs",
-     "scripts/db-tests/rpc-envelope.mjs",
-     "scripts/db-tests/run-all.unit.mjs",
-     "scripts/edge-deploy/health-check.mjs",
-     "scripts/edge-deploy/health-check.unit.mjs",
-     "scripts/regras_negocio/README.md",
-     "scripts/regras_negocio/generate.py",
-     "scripts/regras_negocio/test_generate.py",
-     "scripts/ui-audit/layout-guard.mjs",
-     "scripts/ui-audit/layout-guard.unit.mjs",
-     "scripts/vercel/verify-release-targets.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -386320,19 +386316,11 @@
     3
    ],
    [
-    "scripts/db-tests/run-all.unit.mjs",
+    "scripts/docs/verificar-docs-realtime.mjs",
     2
    ],
    [
-    "scripts/ui-audit/layout-guard.mjs",
-    2
-   ],
-   [
-    "scripts/ui-audit/layout-guard.unit.mjs",
-    2
-   ],
-   [
-    "scripts/vercel/verify-release-targets.mjs",
+    "scripts/docs/verificar-docs-realtime.test.mjs",
     2
    ],
    [
@@ -386368,6 +386356,10 @@
     1
    ],
    [
+    "scripts/db-tests/run-all.unit.mjs",
+    1
+   ],
+   [
     "scripts/qa/prova-visao-classificadores.mjs",
     1
    ],
@@ -386384,15 +386376,19 @@
     1
    ],
    [
+    "scripts/ui-audit/layout-guard.mjs",
+    1
+   ],
+   [
+    "scripts/ui-audit/layout-guard.unit.mjs",
+    1
+   ],
+   [
     "scripts/ci/front-release-targets.unit.mjs",
     1
    ],
    [
-    "scripts/ci/bundle-budget.mjs",
-    1
-   ],
-   [
-    "scripts/ci/bundle-budget.unit.mjs",
+    "scripts/vercel/verify-release-targets.mjs",
     1
    ]
   ]

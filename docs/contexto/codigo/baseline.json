@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a7f9d033a3b51d6d337d8158df0c202965159dec",
+  "commit": "b50be19811691116f8d9dc56f019e77b58a49e9a",
   "branch": "main",
-  "data_commit": "2026-11-11T03:05:03-03:00",
+  "data_commit": "2026-11-11T03:27:39-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b50be19",
+    "data": "2026-11-11",
+    "assunto": "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)"
+   },
    {
     "sha": "a7f9d03",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "384befe",
     "data": "2026-11-10",
     "assunto": "ci: registra 4 guards de segurança existentes como steps do CI (#2850)"
-   },
-   {
-    "sha": "cb5c3a6",
-    "data": "2026-11-10",
-    "assunto": "docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)"
    }
   ],
   "arquivos_mudados_7d": 667,
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 119
+    "mudancas": 118
    },
    {
     "pasta": "src/lib/__tests__",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887944,
+  "linhas_codigo": 887999,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -620,7 +620,7 @@
   },
   "scripts/docs": {
    "arquivos": 4,
-   "linhas": 793
+   "linhas": 848
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,

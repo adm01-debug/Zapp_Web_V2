@@ -3699,7 +3699,7 @@
   {
    "arquivo": "scripts/docs/verificar-docs-realtime.mjs",
    "descricao": "* Verificador das páginas de documentação de Realtime/mensagem.",
-   "linhas": 224,
+   "linhas": 232,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

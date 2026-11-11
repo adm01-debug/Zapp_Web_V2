@@ -2397,9 +2397,9 @@
   {
    "arquivo": "scripts/docs/verificar-docs-realtime.test.mjs",
    "tipo": "unit",
-   "linhas": 72,
+   "linhas": 119,
    "testa": [],
-   "casos": 1
+   "casos": 3
   },
   {
    "arquivo": "scripts/edge-deploy/api-traversal.unit.mjs",
