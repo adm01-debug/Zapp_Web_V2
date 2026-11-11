@@ -5,12 +5,12 @@
   "vitest",
   "playwright"
  ],
- "total": 2609,
+ "total": 2610,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
-  "qa": 8,
+  "qa": 9,
   "unit": 2317
  },
  "onde_ficam": [
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 222
+   "arquivos": 223
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -2590,7 +2590,14 @@
   {
    "arquivo": "scripts/qa/medir-tipografia.cjs",
    "tipo": "qa",
-   "linhas": 440,
+   "linhas": 463,
+   "testa": [],
+   "casos": 3
+  },
+  {
+   "arquivo": "scripts/qa/medir-tipografia.unit.mjs",
+   "tipo": "qa",
+   "linhas": 66,
    "testa": [],
    "casos": 3
   },

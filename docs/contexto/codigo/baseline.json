@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "dd991b0834297be0aff01590a9474ec4e1d97a74",
+  "commit": "1507ad9d59f9d1ab570624adf2f568b8bd4e348e",
   "branch": "main",
-  "data_commit": "2026-11-11T07:12:19-03:00",
+  "data_commit": "2026-11-11T07:37:16-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1507ad9",
+    "data": "2026-11-11",
+    "assunto": "fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)"
+   },
    {
     "sha": "dd991b0",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "1c89150",
     "data": "2026-11-10",
     "assunto": "Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)"
-   },
-   {
-    "sha": "e0a923f",
-    "data": "2026-11-10",
-    "assunto": "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)"
    }
   ],
-  "arquivos_mudados_7d": 659,
+  "arquivos_mudados_7d": 661,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8384,
-  "arquivos_codigo": 4801,
-  "linhas_codigo": 888253,
+  "arquivos_total": 8385,
+  "arquivos_codigo": 4802,
+  "linhas_codigo": 888342,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 217,
   "migrations": 1100,
   "cron_jobs": 26,
-  "testes": 2609,
+  "testes": 2610,
   "workflows": 21,
   "scripts": 426,
   "docs_md": 1073
@@ -655,8 +655,8 @@
    "linhas": 537
   },
   "scripts/qa": {
-   "arquivos": 8,
-   "linhas": 1720
+   "arquivos": 9,
+   "linhas": 1809
   },
   "scripts/regras_negocio": {
    "arquivos": 3,
