@@ -641,8 +641,8 @@
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "bytes": 9424,
-      "sha256": "d5ac631407b3e03c8680673baa0e1f1e1993aa220bad8a1ff86977743f859cad"
+      "bytes": 9996,
+      "sha256": "a2cb3eecaf58311ccb525b10c82aa37909cce19ae139839cc1e26723ae9e820a"
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
@@ -1993,7 +1993,7 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "90bb3394c70f68518f18646a7540e579c225972b4f25936f62d8222f4a2963ce",
+      "source_sha256": "a117ec2bd3af00f77fc3ad331386ad44a8698721c37682185fee96bf3e894d11",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2779,5 +2779,5 @@
       ]
     }
   ],
-  "manifest_sha256": "8e4aa007803a25e16a628787d49278e3966ad0d296fec0866269dc4932195552"
+  "manifest_sha256": "b6d439670c213320ceb1f9e24df26ba367cb3abc3c1fdc5c53d2cb009dcfd479"
 }
