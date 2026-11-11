@@ -207,7 +207,7 @@ export function resumoMarkdown(result) {
   return `${lines.join('\n')}\n`;
 }
 
-async function principal(argv = process.argv.slice(2), env = process.env) {
+export async function principal(argv = process.argv.slice(2), env = process.env) {
   let options;
   try { options = parseArgs(argv); } catch (error) {
     console.error(`release-targets: ${error.message}`);
@@ -216,7 +216,13 @@ async function principal(argv = process.argv.slice(2), env = process.env) {
   const result = await verificarAlvo(options);
   const summary = resumoMarkdown(result);
   console.log(summary.trimEnd());
-  if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, `${summary}\n`);
+  if (env.GITHUB_STEP_SUMMARY) {
+    try {
+      appendFileSync(env.GITHUB_STEP_SUMMARY, `${summary}\n`);
+    } catch (error) {
+      console.error(`release-targets: falha ao gravar GITHUB_STEP_SUMMARY: ${error.message}`);
+    }
+  }
   return result.ok ? 0 : 1;
 }
 
