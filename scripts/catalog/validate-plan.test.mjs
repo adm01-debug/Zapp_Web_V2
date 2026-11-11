@@ -178,7 +178,7 @@ test('rejeita marcador RISCADO sem titulo riscado e sem data valida', () => {
   assert.match(result.stderr, /E54: sem Objetivo/);
 });
 
-for (const id of ['01', '54', '100', '001']) {
+for (const id of ['01', '54', '100']) {
   test(`rejeita a repeticao da etapa numerica E${id}`, () => {
     const result = executarPlano(planoComChecklistMisto() + '\n' + etapa(id));
     assert.equal(result.status, 1, result.stdout);
@@ -192,13 +192,22 @@ test('um tombstone nao pode esconder a repeticao de uma etapa', () => {
   assert.match(result.stderr, /E54: etapa duplicada/);
 });
 
-for (const id of ['00', '000', '101', '999', '1', '0001', '1000', '10000']) {
+for (const id of ['00', '000', '101', '999', '1', '001', '0001', '1000', '10000']) {
   test(`rejeita identificador extra invalido E${id} mesmo com as 100 etapas validas`, () => {
     const result = executarPlano(planoComChecklistMisto() + '\n' + etapa(id));
     assert.equal(result.status, 1, result.stdout);
     assert.match(result.stderr, new RegExp(`E${id}: (?:fora da faixa|formato de identificador)`));
   });
 }
+
+test('cabecalho E007 com zero a mais nao e tratado como equivalente a E07', () => {
+  const result = executarPlano(
+    planoCom(['07'], (id) => etapa(id).replace(`E${id}`, `E0${id}`)),
+  );
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /E007: formato de identificador invalido/);
+  assert.match(result.stderr, /E07: ausente/);
+});
 
 for (const data of ['2024-02-29', '2000-02-29', '2026-12-31']) {
   test(`preserva tombstone com data calendaria valida ${data}`, () => {
