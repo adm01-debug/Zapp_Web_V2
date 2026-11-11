@@ -365,3 +365,19 @@ test('comLimpeza: caminho feliz devolve o valor do corpo', async () => {
   );
   assert.equal(valor, 'valor-do-corpo');
 });
+test('run() nao corrompe caractere UTF-8 multibyte partido entre dois chunks do pipe', async () => {
+  // 'a' (0x61) + 'ã' partido em dois writes (0xC3 | 0xA3) + 'b' (0x62): forca dois
+  // eventos 'data' distintos com o atraso, cada um terminando/comecando no meio
+  // dos bytes do caractere multibyte 'ã'.
+  const script = `
+    process.stdout.write(Buffer.from([0x61, 0xC3]));
+    setTimeout(() => {
+      process.stdout.write(Buffer.from([0xA3, 0x62]));
+      process.exit(0);
+    }, 50);
+  `;
+  const result = await run([process.execPath, '-e', script], process.cwd());
+  assert.equal(result.code, 0);
+  assert.equal(result.output, 'aãb');
+  assert.ok(!result.output.includes('�'), 'saida nao deve conter replacement character');
+});
