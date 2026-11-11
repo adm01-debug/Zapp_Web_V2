@@ -5,17 +5,9 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       um:
-        image: alpine:3.20
-        options: --entrypoint "sleep" 
+        image: alpine:latest
+        options: -i
       dois:
         image: imagem-que-nao-existe-zz:1
     steps:
       - run: echo nunca
-  t:
-    runs-on: ubuntu-24.04
-    services:
-      um:
-        image: busybox:latest
-        options: --entrypoint sh
-    steps:
-      - run: sleep 60

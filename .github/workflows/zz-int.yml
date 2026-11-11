@@ -1,0 +1,11 @@
+name: zz-int
+on: pull_request
+jobs:
+  t:
+    runs-on: ubuntu-24.04
+    services:
+      um:
+        image: alpine:latest
+        options: -i
+    steps:
+      - run: sleep 45; echo fim
