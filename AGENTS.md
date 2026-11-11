@@ -82,6 +82,14 @@ divergiu da realidade → corrija no mesmo PR do fix. Responda sempre em PT-BR.
   (checks obrigatórios, `strict=true`, squash only). Mudou perímetro → atualize
   `scripts/ci/github-settings-baseline.json` na mesma PR.
 - **Regras de domínio** — ler `docs/agentes/regras-dominio.md` ao mexer em Talk X, contatos, convites ou inbox.
+- **Contexto gerado para agentes** — branch gerada `contexto` (histórico; nunca edite nem abra PR dela),
+  regerada por automação (`.github/workflows/contexto.yml`) a cada 10 min e a cada push em `main` que toque
+  `src/`, `supabase/`, `api/`, `server/` ou os scripts das automações. Leia **antes** do README:
+  `git fetch origin contexto && git show origin/contexto:docs/contexto/00-INDEX.md` (ou MCP do GitHub com
+  `ref=contexto`, ou `raw.githubusercontent.com/adm01-debug/Zapp_Web_V2/contexto/docs/contexto/00-INDEX.md`).
+  Três fontes, cada fato com um dono: `codigo/` (rotas, hooks, edges, grafo — `scripts/ai-context/gerar.mjs`),
+  `supabase/` (banco oficial ao vivo — `scripts/supabase_snapshot/`), `regras/` (o que pode e o que não pode —
+  `scripts/regras_negocio/`, inclui `manual/`).
 
 ## Stack e comandos — detalhe em `docs/agentes/mapa-repo.md`
 - Vite + React + TS (`src/`), Supabase (`supabase/functions/`, `supabase/migrations/`), Playwright (`e2e/`),

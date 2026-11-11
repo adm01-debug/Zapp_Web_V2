@@ -11,6 +11,7 @@ import { NavigationService } from '@/services/navigation.service';
 import { TALKX_KIT_VIEW_ID, isTalkXKitEnabled } from '@/components/talkx/kit/forcedState';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { ShieldAlert } from 'lucide-react';
+import { TalkXNoPermissionState } from '@/components/talkx/kit/states';
 
 import * as Views from './lazyViews';
 
@@ -137,6 +138,9 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
       return <ViewLoadingFallback noPadding />;
     }
     if (!authorized) {
+      if (currentView === 'talkx') {
+        return <TalkXNoPermissionState />;
+      }
       return <RestrictedView onNavigateTo={onNavigateTo} />;
     }
     // Check special views first (those needing props)
