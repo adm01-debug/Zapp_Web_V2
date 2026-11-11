@@ -756,8 +756,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 65238,
-      "sha256": "4ea7335e97045403e1cfe1bd5c0aabe26bfa00b80e7219af5af6c5032db23d7f"
+      "bytes": 65812,
+      "sha256": "a9d8144f8c2f1b168d421dba1b0214a756210aa092b546993de56aacdbfa0fb4"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -846,8 +846,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 71910,
-      "sha256": "7855f863837fdc798b2e3f1b11558d485a4e50d95ae69d117f28d75ecdabe2ed"
+      "bytes": 72493,
+      "sha256": "17bffd8d9260ecc0e63e0e85372b0b8d8be7f36177e0ae72075346f8619900ba"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
@@ -2307,7 +2307,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ca0ae447866975086a77d2cc8dbca4e918c01216bb684311379a4b56e785c60e",
+      "source_sha256": "65fe80d20631bfed6ac5d5ef45e23f7a007ed0c1839f03bf0fb06369dc724b9e",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -2615,7 +2615,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "060494bdc53d0753d535fac3f4c986e5107f096ceb78410a3780dda5b3e3c26b",
+      "source_sha256": "80db73b80ab6970b629be5ca51b372a442f6115c8a8be9397a5069b56869e401",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2782,5 +2782,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2eea8992a76b1190c0896296d9312be5b0377e50ee93bd9eab20a2f80f69d61a"
+  "manifest_sha256": "258f704ffaa7e71290e9466a5690f48907494e243e8b8f41b4bcf90429469f13"
 }
