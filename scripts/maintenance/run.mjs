@@ -117,6 +117,34 @@ async function quarantine(root, jobDir, prefix = []) {
     for (const { from, to } of saved.splice(0)) await rename(to, from);
   };
 }
+/**
+ * Equivalente a `try { return await corpo() } finally { await limpar() }`, mas sem a
+ * armadilha do JS: um `throw` dentro de `finally` substitui a excecao pendente do
+ * `try`. Se `corpo()` falhar (ex.: MaintenanceError('blocked_baseline', ...)) E
+ * `limpar()` tambem falhar (I/O, permissao, disco cheio ao devolver os arquivos da
+ * quarentena), a excecao ORIGINAL e relancada — o erro de limpeza vai anexado em
+ * `.restoreError`, nunca descartado silenciosamente.
+ */
+export async function comLimpeza(corpo, limpar) {
+  let erro;
+  let valor;
+  try {
+    valor = await corpo();
+  } catch (e) {
+    erro = e;
+  }
+  try {
+    await limpar();
+  } catch (erroLimpeza) {
+    if (erro) {
+      erro.restoreError = redact(String(erroLimpeza?.message ?? erroLimpeza));
+    } else {
+      throw erroLimpeza;
+    }
+  }
+  if (erro) throw erro;
+  return valor;
+}
 async function changed(root, config, prefix = []) {
   const staged = await run(
     [...prefix, 'git', '-c', 'core.hooksPath=/dev/null', 'diff', '--cached', '--quiet'],
@@ -410,12 +438,10 @@ export async function main(args = process.argv.slice(2)) {
         );
       return result;
     };
-    try {
+    await comLimpeza(async () => {
       report.isolatedDoctor = await inspect(workspace, config);
       for (const g of config.gates) await execute('baseline', g.name, g.command);
-    } finally {
-      await restore();
-    }
+    }, restore);
     if ((await changed(workspace, config, prefix)).files.length)
       fail('Gate baseline alterou arquivos rastreados');
     if (options.action === 'check') {
@@ -423,11 +449,10 @@ export async function main(args = process.argv.slice(2)) {
       return await finish();
     }
     const restoreFix = await quarantine(workspace, path.join(jobDir, 'fix'), prefix);
-    try {
-      report.scope = await fixes(workspace, config, jobDir, execute, prefix);
-    } finally {
-      await restoreFix();
-    }
+    report.scope = await comLimpeza(
+      () => fixes(workspace, config, jobDir, execute, prefix),
+      restoreFix
+    );
     report.change = await changed(workspace, config, prefix);
     if (!report.change.files.length) {
       report.status = 'no_changes';
@@ -455,11 +480,9 @@ export async function main(args = process.argv.slice(2)) {
     };
     const fixedDiff = await snapshotDiff();
     const restoreAgain = await quarantine(workspace, path.join(jobDir, 'after'), prefix);
-    try {
+    await comLimpeza(async () => {
       for (const g of config.gates) await execute('patched', g.name, g.command);
-    } finally {
-      await restoreAgain();
-    }
+    }, restoreAgain);
     if ((await snapshotDiff()) !== fixedDiff) fail('Gate alterou o patch; resultado descartado');
     report.change = await changed(workspace, config, prefix);
     if (!report.change.files.length) fail('Gate removeu o patch depois da correção');
@@ -510,6 +533,7 @@ export async function main(args = process.argv.slice(2)) {
     report.message = redact(
       e instanceof MaintenanceError ? e.message : `Falha interna: ${e.code || e.name}`
     );
+    if (e.restoreError) report.restoreError = e.restoreError;
   }
   return await finish();
   async function finish() {
