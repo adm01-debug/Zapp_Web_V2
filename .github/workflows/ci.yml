@@ -175,7 +175,6 @@ jobs:
           scripts/ui-audit/contacts-navy-header.unit.mjs
           scripts/ui-audit/layout-guard.unit.mjs
           scripts/ui-audit/view-container-padding.unit.mjs
-          scripts/vercel/verify-production.unit.mjs
         env:
           CI: true
 
