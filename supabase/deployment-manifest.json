@@ -141,8 +141,8 @@
     },
     {
       "path": "supabase/functions/_shared/effect-reconcile.ts",
-      "bytes": 24298,
-      "sha256": "7e601b0a60c2a5ccbdf2b34a6936205280f2694361373a120cc33b018d7240a9"
+      "bytes": 24494,
+      "sha256": "78dbb576ceda686bea88c24e95e2344664c378dfbb3ad19a2c08a1fa5144676f"
     },
     {
       "path": "supabase/functions/_shared/email-font-stack.ts",
@@ -211,13 +211,13 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 68383,
-      "sha256": "7b6ce2f9762d7098539a66f436c016ca1d5ee4eef926916b1b73d17ec31e1f6f"
+      "bytes": 69798,
+      "sha256": "f4adcebddf4d5243ad03bc35ecfca45bf5a0042a7d5bbad69d326a050f251345"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 23276,
-      "sha256": "47d94b0b16b65cf80d06ee00b876e152060806ddcc9047c586bb4d37ea2d92e0"
+      "bytes": 26272,
+      "sha256": "787214dd32ff1edc8df8e89c0322bc66f5e1bb62a78967266bdee3667279ab67"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -706,8 +706,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 20946,
-      "sha256": "ea4158338626c841f1d2dda62cb35828ebbaffe87419599fd4818619b8a5861a"
+      "bytes": 36607,
+      "sha256": "5ea7d2b1028d244604ffcbe296e6ae6403233b6396d6cc8fee4175ac0f89b2ca"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -1090,7 +1090,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8d317f8386a7dfe208a7b979a8b87a4a6c2a9eeffd8771cb091aaec6d78261ed",
+      "source_sha256": "9ca24f6c33ecc4434d30d6b99f7c24670114d5e8450115b1ffaaa148fdeff905",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1959,7 +1959,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "87a36d2dc830a300a3a5dc9c840a73cdf2bf5d94271907aafe7911578674fe97",
+      "source_sha256": "8c7f248028c195be31f12babe749061830e4eb2b53457effafd094f2f3706b73",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-jobs.ts",
@@ -2193,17 +2193,20 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "dfaa397e776051bea9cb906cf53819e3261c68cb4c8a50912387e725031436e2",
+      "source_sha256": "a1ae3f885190f574efed7fb4cb4a6679feab6597e5941b01f801553996ae85d0",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-instance-token.ts",
         "supabase/functions/_shared/evolution-send.ts",
+        "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/media-egress.ts",
+        "supabase/functions/_shared/messaging/errors.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/ssrf.ts",
@@ -2612,7 +2615,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "776c272a325f6ccdc69774f5fe90eccbb5a8ddc816b2e06e5aeb543ef0119d08",
+      "source_sha256": "d56f2c4d59b96e40184c698d0b8752026bd98fbabd01efe2abc3e9001fc0b2d5",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2779,5 +2782,5 @@
       ]
     }
   ],
-  "manifest_sha256": "b6d439670c213320ceb1f9e24df26ba367cb3abc3c1fdc5c53d2cb009dcfd479"
+  "manifest_sha256": "5f6fd48d68aec9e61c7f20a3c5c8ccc5577d281d6e779d7238d5f4fae282d5b7"
 }
