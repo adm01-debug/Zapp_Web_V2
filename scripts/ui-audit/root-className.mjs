@@ -36,8 +36,12 @@ function openingTagAt(source, from) {
 }
 
 /**
- * @returns {string[]} um className por raiz retornada; vazio quando o arquivo
- * nao tem componente exportado ou nenhum return de JSX no nivel do corpo.
+ * @returns {(string|null)[]} um className por raiz retornada; array vazio quando
+ * o arquivo nao tem componente exportado ou nenhum return de JSX no nivel do
+ * corpo. Cada item e "" quando a raiz genuinamente nao tem className (ex.:
+ * Fragment), ou `null` quando ha um atributo className presente mas com valor
+ * dinamico que esta funcao nao consegue extrair (ternario, variavel, etc.) —
+ * os dois casos nao sao equivalentes para quem consome o retorno.
  */
 export function extractRootClassNames(source) {
   const exportRe = /^export\s+(?:default\s+)?(?:function|const|class)\s+/gm;
@@ -68,7 +72,16 @@ export function extractRootClassNames(source) {
     const tag = openingTagAt(body, lineStart + m.index);
     if (tag === null) continue;
     const cls = tag.match(CLASSNAME_RE);
-    roots.push(cls ? (cls[1] || cls[2] || cls[3] || cls[4] || cls[5] || "") : "");
+    if (cls) {
+      roots.push(cls[1] || cls[2] || cls[3] || cls[4] || cls[5] || "");
+    } else if (/\bclassName\s*=/.test(tag)) {
+      // className presente mas o valor e uma expressao que CLASSNAME_RE nao
+      // extrai (ternario, variavel, chamada que nao e cn(...)/template/literal).
+      // null != "" — "" e so para raiz genuinamente sem className (Fragment).
+      roots.push(null);
+    } else {
+      roots.push("");
+    }
   }
   return roots;
 }
