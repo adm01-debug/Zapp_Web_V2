@@ -14,7 +14,7 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 
 | Tela | Vazio | Carregando (esqueleto) | Erro de consulta | CRM 360 indisponível | WhatsApp desconectado | Sem permissão |
 |---|---|---|---|---|---|---|
-| `src/components/talkx/TalkXAnalytics.tsx` | `300` | `298`, `383` | `295` | — | — | — |
+| `src/components/talkx/TalkXAnalytics.tsx` | `321` | `319`, `404` | `316` | — | — | — |
 | `src/components/talkx/TalkXAudienceFilters.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXCampaignPaused.tsx` | `177` | `174` | `170` | — | — | — |
 | `src/components/talkx/TalkXCampaignRunning.tsx` | — | `176`, `477`, `568`, `834` | `170`, `323`, `473`, `562`, `830` | — | — | — |
