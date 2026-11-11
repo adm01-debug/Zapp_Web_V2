@@ -37,13 +37,18 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
     // conexoes (ou entre as duas direcoes da conversa) faria este pre-check achar
     // a linha errada e marcar a mensagem do contato como 'sent'.
     let dupCheckQuery = supabase.from('messages')
-      .select('id, status').eq('external_id', externalId).eq('sender', 'agent');
+      .select('id, status, manually_resolved_at').eq('external_id', externalId).eq('sender', 'agent');
     if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
-    const { data: existingMessage } = await dupCheckQuery
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existingMessage, error: dupCheckError } = await (dupCheckQuery as any)
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
+    // Fix #9: log query error — pode indicar coluna ausente (deploy antes do DDL)
+    if (dupCheckError) console.warn('[handleMessages] dupCheck query error:', (dupCheckError as { message?: string }).message);
 
     if (existingMessage?.id) {
-      if (shouldUpdateStatus(existingMessage.status as string | null, 'sent')) {
+      // C110: recibo tardio não sobrescreve decisão manual do operador
+      if (!(existingMessage as { manually_resolved_at?: unknown }).manually_resolved_at
+          && shouldUpdateStatus((existingMessage as { status?: unknown }).status as string | null, 'sent')) {
         await supabase.from('messages')
           .update({ status: 'sent', external_id: externalId, status_updated_at: now })
           .eq('id', existingMessage.id);
@@ -68,16 +73,22 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
           }
 
           const recentCutoff = new Date(Date.now() - 300_000).toISOString();
-          const { data: pendingMessage } = await supabase.from('messages')
-            .select('id').eq('contact_id', contact.id).eq('sender', 'agent')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: pendingMessage, error: pendingError } = await (supabase.from('messages') as any)
+            .select('id, manually_resolved_at').eq('contact_id', contact.id).eq('sender', 'agent')
             .eq('message_type', webhookMsgType).is('external_id', null)
             .gte('created_at', recentCutoff).order('created_at', { ascending: true })
             .limit(1).maybeSingle();
+          // Fix #9: log query error — pode indicar coluna ausente (deploy antes do DDL)
+          if (pendingError) console.warn('[handleMessages] pendingMessage query error:', (pendingError as { message?: string }).message);
 
           if (pendingMessage?.id) {
-            await supabase.from('messages')
-              .update({ status: 'sent', external_id: externalId, status_updated_at: now })
-              .eq('id', pendingMessage.id);
+            // C110: recibo tardio não sobrescreve decisão manual do operador
+            if (!(pendingMessage as { manually_resolved_at?: unknown }).manually_resolved_at) {
+              await supabase.from('messages')
+                .update({ status: 'sent', external_id: externalId, status_updated_at: now })
+                .eq('id', pendingMessage.id);
+            }
             updatedMessageId = pendingMessage.id as string;
           }
         }
@@ -131,13 +142,24 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       // key.fromMe quando o provedor manda o flag; sem ele, cai no
       // comportamento antigo (linha mais recente da conexao).
       let currentMessageQuery = supabase.from('messages')
-        .select('id, status, sender').eq('external_id', key.id);
+        .select('id, status, sender, manually_resolved_at').eq('external_id', key.id);
       if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
       if (typeof key.fromMe === 'boolean') {
         currentMessageQuery = currentMessageQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
       }
-      let { data: currentMessage } = await currentMessageQuery
+      const { data: currentMessageInitial, error: msgQueryErr } = await currentMessageQuery
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      let currentMessage = currentMessageInitial;
+      // 42703 = column not found: manually_resolved_at ainda não existe (pre-DDL).
+      // Fallback sem a coluna — receipts continuam sendo processados normalmente.
+      if (msgQueryErr?.code === '42703') {
+        let fbQuery = supabase.from('messages').select('id, status, sender').eq('external_id', key.id);
+        if (connection?.id) fbQuery = fbQuery.eq('whatsapp_connection_id', connection.id);
+        if (typeof key.fromMe === 'boolean') fbQuery = fbQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
+        ({ data: currentMessage } = await fbQuery.order('created_at', { ascending: false }).limit(1).maybeSingle());
+      }
+      // Sinaliza se a coluna já existe (pós-DDL) para o predicado atômico do UPDATE.
+      const resolvedColumnExists = msgQueryErr?.code !== '42703';
 
       // GO receipt fix: no Evolution GO o adaptador infere key.fromMe por
       // Chat === Sender, entao um recibo de mensagem NOSSA chega com
@@ -149,13 +171,22 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       // ou de outra conexao.
       if (!currentMessage?.id && key?.fromMe === false && connection?.id &&
           (newStatus === 'delivered' || newStatus === 'read')) {
-        const { data: outboundMessage } = await supabase.from('messages')
-          .select('id, status, sender')
+        const { data: outboundMessage, error: outboundQueryErr } = await supabase.from('messages')
+          .select('id, status, sender, manually_resolved_at')
           .eq('external_id', key.id)
           .eq('whatsapp_connection_id', connection.id)
           .eq('sender', 'agent')
           .order('created_at', { ascending: false }).limit(1).maybeSingle();
-        if (outboundMessage?.id) currentMessage = outboundMessage;
+        // 42703: fallback sem manually_resolved_at (pre-DDL)
+        if (outboundQueryErr?.code === '42703') {
+          const { data: fbOutbound } = await supabase.from('messages')
+            .select('id, status, sender')
+            .eq('external_id', key.id).eq('whatsapp_connection_id', connection.id).eq('sender', 'agent')
+            .order('created_at', { ascending: false }).limit(1).maybeSingle();
+          if (fbOutbound?.id) currentMessage = fbOutbound;
+        } else if (outboundMessage?.id) {
+          currentMessage = outboundMessage;
+        }
       }
 
       // O recibo e NOSSO quando o provedor disse (fromMe === true) ou quando a
@@ -164,8 +195,14 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       const receiptIsOurs = key?.fromMe === true || currentMessage?.sender === 'agent';
 
       if (currentMessage?.id) {
-        if (shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
-          await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
+        // C110: recibo tardio não sobrescreve decisão manual do operador
+        if (!(currentMessage as { manually_resolved_at?: string | null }).manually_resolved_at
+            && shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
+          // Predicado atômico: evita TOCTOU entre leitura e escrita do status.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let updateStatusQ: any = supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
+          if (resolvedColumnExists) updateStatusQ = updateStatusQ.is('manually_resolved_at', null);
+          await updateStatusQ;
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
       }
