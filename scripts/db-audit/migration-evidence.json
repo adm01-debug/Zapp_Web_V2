@@ -295,6 +295,19 @@
       "justification": "O arquivo não teve alteração executável após sua introdução e o ledger mantém o mesmo nome; a serialização do bloco cron diverge textualmente e ambas ficam fixadas por hash."
     },
     {
+      "version": "20260901100001",
+      "filename": "20260901100001_add_last_sender_to_email_threads.sql",
+      "file_sha256": "2040a949294f182a4ef8d3cb869bff1a097a2234d334773dba3d862b0b8bca43",
+      "file_sql_sha256": "739f3d1a671a4e44ef599d1cdece47c105b4f3c1c3f7e29bf56297222a243897",
+      "ledger_name": "add_last_sender_to_email_threads",
+      "ledger_statements_sha256": "1b2e4d87e7fde59ff7de1d2e10056f07e5db1b9ffbeed6fa5d41b54bef533d53",
+      "ledger_sql_sha256": "739f3d1a671a4e44ef599d1cdece47c105b4f3c1c3f7e29bf56297222a243897",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "Migration aplicada direto em produção em 2026-09-01; o arquivo em supabase/migrations foi reconstruído com o DDL completo (ALTER TABLE + CREATE OR REPLACE FUNCTION + CREATE TRIGGER); ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
+    },
+    {
       "version": "20260901100003",
       "filename": "20260901100003_create_contact_identity_map_e32.sql",
       "file_sha256": "a6f023d4ea5711fe1d1094d9701d15dcc8910f5c4c222c835537c0d37ff86e2c",
@@ -306,6 +319,19 @@
       "reason": "ledger-summary",
       "related_migration": null,
       "justification": "A migration foi aplicada direto em produção (fora do Git) com statements resumidos no ledger. O arquivo em supabase/migrations foi reconstruído depois com o DDL completo (CREATE TABLE + índice + RLS + policies); ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
+    },
+    {
+      "version": "20260901200001",
+      "filename": "20260901200001_e23_default_queue_rls_policies.sql",
+      "file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
+      "file_sql_sha256": "5387d6e5e52928f77898e857f1f053053f47f5165cc8efa2f2f21499afd4fb6f",
+      "ledger_name": "e23_default_queue_rls_policies",
+      "ledger_statements_sha256": "e10d52fd0ef27c7e60c225bad7407fb6e33d3fefcaad0f5c634ff1069936c224",
+      "ledger_sql_sha256": "5387d6e5e52928f77898e857f1f053053f47f5165cc8efa2f2f21499afd4fb6f",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "E23: fila padrão e políticas RLS aplicados direto em produção em 2026-09-01 via db_transaction (fora do fluxo Git); o arquivo em supabase/migrations foi reconstruído com o DDL completo; ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
     },
     {
       "version": "20260902000200",

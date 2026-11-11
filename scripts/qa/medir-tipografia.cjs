@@ -188,19 +188,42 @@ function parseLoadedWeights(indexHtmlPath = INDEX_HTML) {
   const familyRe = /family=([^&"']+)/g;
   let m;
   while ((m = familyRe.exec(urlMatch[0]))) {
-    const [namePart, spec] = m[1].split(':wght@');
+    // Antes o split era literal em ':wght@', que só casa o eixo ÚNICO
+    // "wght@...". O Google Fonts v2 também publica combinações de eixo
+    // (ex.: "Nome:ital,wght@0,400;1,400" para família com itálico), onde o
+    // separador é ":ital,wght@" — sem bater no split antigo, a família toda
+    // (nome + eixos + valores) virava a CHAVE do objeto, e a família real
+    // (ex.: "Plus Jakarta Sans") silenciosamente desaparecia de `families`,
+    // fazendo `scanOrphanWeights` desistir sem avisar ("URL ausente/formato
+    // mudou — nao quebra o guard") assim que essa família ganhasse itálico.
+    const colon = m[1].indexOf(':');
+    const namePart = colon === -1 ? m[1] : m[1].slice(0, colon);
     const name = decodeURIComponent(namePart.replace(/\+/g, ' '));
-    if (!spec) { families[name] = { min: 400, max: 400, exact: [400] }; continue; }
-    const range = spec.match(/^([0-9]+)\.\.([0-9]+)$/);
-    if (range) {
-      // eixo variavel: qualquer peso inteiro dentro de [min,max] e renderizavel.
-      families[name] = { min: +range[1], max: +range[2], exact: null };
-    } else {
+    const at = colon === -1 ? -1 : m[1].indexOf('@', colon);
+    if (colon === -1 || at === -1) { families[name] = { min: 400, max: 400, exact: [400] }; continue; }
+    const eixos = m[1].slice(colon + 1, at).split(',');
+    const idxWght = eixos.indexOf('wght');
+    const spec = m[1].slice(at + 1);
+    if (idxWght === -1) { families[name] = { min: 400, max: 400, exact: [400] }; continue; }
+    if (eixos.length === 1) {
+      const range = spec.match(/^([0-9]+)\.\.([0-9]+)$/);
+      if (range) {
+        // eixo variavel: qualquer peso inteiro dentro de [min,max] e renderizavel.
+        families[name] = { min: +range[1], max: +range[2], exact: null };
+        continue;
+      }
       // lista estatica: so os pesos EXATAMENTE listados estao carregados.
       const weights = [...new Set(spec.split(';').map(Number).filter((n) => !Number.isNaN(n)))]
         .sort((a, b) => a - b);
       if (weights.length) families[name] = { min: weights[0], max: weights[weights.length - 1], exact: weights };
+      continue;
     }
+    // multiplos eixos (ex.: "ital,wght"): cada entrada e uma lista separada
+    // por virgula alinhada aos eixos; extrai so o valor de wght de cada uma.
+    const weights = [...new Set(
+      spec.split(';').map((entrada) => Number(entrada.split(',')[idxWght])).filter((n) => !Number.isNaN(n)),
+    )].sort((a, b) => a - b);
+    if (weights.length) families[name] = { min: weights[0], max: weights[weights.length - 1], exact: weights };
   }
   return families;
 }
