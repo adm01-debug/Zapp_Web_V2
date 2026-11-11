@@ -572,7 +572,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('desfazer: original fora de open/pending (waiting/resolved) volta como "open" — archived só transita para open/pending no banco', async () => {
+  it('desfazer: original fora de open/pending (waiting/resolved) é restaurado em dois passos — archived→open→original', async () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'waiting' },
@@ -591,8 +591,16 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    expect(restores).toHaveLength(1);
+    // Passo 1: todos de archived para open (única transição válida a partir de archived).
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2] } });
+    // Passo 2: cada grupo volta ao status original.
+    expect(restores).toHaveLength(3);
+    expect(restores.slice(1)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ payload: { conversation_status: 'waiting' }, filters: { id: [c1] } }),
+        expect.objectContaining({ payload: { conversation_status: 'resolved' }, filters: { id: [c2] } }),
+      ]),
+    );
   });
 
   it('desfazer: contato já archived antes da seleção NÃO é aberto — excluído do lote desde o início', async () => {

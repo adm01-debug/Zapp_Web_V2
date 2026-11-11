@@ -184,7 +184,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         .from('contacts')
         .select('id, conversation_status')
         .in('id', contactIds);
-      if (selectError) { toast.info('Sem permissão para verificar o estado das conversas'); return; }
+      if (selectError) { toast.error('Não foi possível verificar o estado das conversas'); return; }
 
       const previousStatus = new Map<string, string | null>();
       for (const row of originals ?? []) {
