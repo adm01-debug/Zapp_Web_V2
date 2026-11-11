@@ -76,6 +76,17 @@ export interface TalkXCampaignReportProps {
   onViewMonitor?: (id: string) => void;
 }
 
+/** Linha de `by_segment` do RPC talkx_campaign_queue_by_segment (X058). */
+interface TalkXQueueSegmentRow {
+  segment_id: string | null;
+  segment_name: string;
+  sent?: number;
+  delivered?: number;
+  replied?: number;
+}
+/** Destinatários sem segmento viram um item próprio do seletor (o Select exige valor). */
+const NO_SEGMENT_ID = 'sem-segmento';
+
 export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor }: TalkXCampaignReportProps) {
   const timeZone = campaign.schedule_timezone || DEFAULT_TIMEZONE;
   const [granularity, setGranularity] = useState<TalkXReportGranularity>('day');
@@ -84,19 +95,26 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const [segmentId, setSegmentId] = useState<string | null>(null);
   const { canDownload } = useDownloadPermission();
 
+  // X058: contagens por segmento da fila desta campanha. O seletor do funil só tem
+  // sentido se trocar os números: com um segmento escolhido, Enviadas/Entregues/
+  // Respondidas vêm da linha dele; Cliques não têm recorte por segmento e ficam "sem dados".
   const segmentQuery = useQuery({
     queryKey: ['talkx-campaign-queue-segment', campaign.id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('talkx_campaign_queue_by_segment', { p_campaign_id: campaign.id });
+      const { data, error } = await supabase.rpc('talkx_campaign_queue_by_segment', { p_campaign_id: campaign.id });
       if (error) throw error;
-      return data as unknown as { by_segment: Array<{ segment_id: string; segment_name: string }> } | null;
+      return (data as unknown as { by_segment?: TalkXQueueSegmentRow[] } | null)?.by_segment ?? [];
     },
     staleTime: 60_000,
   });
+  const segmentRows = useMemo(() => segmentQuery.data ?? [], [segmentQuery.data]);
   const funnelSegments = useMemo<TalkXReportFunnelSegment[]>(
-    () => (segmentQuery.data?.by_segment ?? []).map((s) => ({ id: s.segment_id, name: s.segment_name })),
-    [segmentQuery.data],
+    () => segmentRows.map((s) => ({ id: s.segment_id ?? NO_SEGMENT_ID, name: s.segment_name })),
+    [segmentRows],
+  );
+  const selectedSegment = useMemo(
+    () => (segmentId === null ? null : segmentRows.find((s) => (s.segment_id ?? NO_SEGMENT_ID) === segmentId) ?? null),
+    [segmentRows, segmentId],
   );
 
   const reportQuery = useQuery({
@@ -158,6 +176,15 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   }, [heatmapMetric, recipients, clicks, timeZone]);
 
   const funnelSteps = useMemo<TalkXReportFunnelStep[]>(() => {
+    if (selectedSegment) {
+      return [
+        { key: 'sent', count: selectedSegment.sent ?? 0 },
+        { key: 'delivered', count: selectedSegment.delivered ?? 0 },
+        { key: 'replied', count: selectedSegment.replied ?? 0 },
+        { key: 'clicked', count: null },
+        { key: 'converted', count: null },
+      ];
+    }
     const sent = kpis?.sent_count ?? campaign.sent_count;
     const delivered = kpis?.delivered_count ?? campaign.delivered_count;
     const hasClicksData = clicksQuery.isSuccess;
@@ -168,7 +195,7 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
       { key: 'clicked', count: hasClicksData ? clicks.length : null },
       { key: 'converted', count: null },
     ];
-  }, [kpis, campaign, clicks.length, clicksQuery.isSuccess]);
+  }, [selectedSegment, kpis, campaign, clicks.length, clicksQuery.isSuccess]);
 
   const handleGranularity = useCallback((next: TalkXReportGranularity) => setGranularity(next), []);
   const handleMetric = useCallback((next: TalkXReportHeatmapMetric) => setHeatmapMetric(next), []);

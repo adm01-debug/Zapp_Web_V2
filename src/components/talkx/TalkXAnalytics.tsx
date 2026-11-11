@@ -203,8 +203,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     queryKey: ['talkx-campaign-ranking'],
     queryFn: async () => {
       type RankRow = { campaign_id: string; campaign_name: string; total_recipients: number; delivery_rate_pct: number; reply_rate_pct: number };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('talkx_campaign_ranking', { p_limit: 5, p_metric: 'reply_rate' });
+      const { data, error } = await supabase.rpc('talkx_campaign_ranking', { p_limit: 5, p_metric: 'reply_rate' });
       if (error) throw error;
       return ((data as unknown as { campaigns?: RankRow[] } | null)?.campaigns ?? []);
     },
@@ -215,8 +214,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     queryKey: ['talkx-top-segments'],
     queryFn: async () => {
       type SegRow = { segment_id: string; segment_name: string; campaign_count: number; total_recipients: number; avg_delivery_rate_pct: number; avg_reply_rate_pct: number };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('talkx_top_segments', { p_limit: 5 });
+      const { data, error } = await supabase.rpc('talkx_top_segments', { p_limit: 5 });
       if (error) throw error;
       return ((data as unknown as { segments?: SegRow[] } | null)?.segments ?? []);
     },

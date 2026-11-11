@@ -83,6 +83,33 @@ As regressões executam funções reais e o controlador com interfaces Docker, G
 
 A configuração isolada preserva projetos, dependências e assertions. O modo `login` seleciona somente `setup`; os modos abaixo executam a seleção explícita de cada grupo. Sucesso do login não declara os demais casos aprovados. A reativação do workflow autenticado anterior depende da substituição completa e validada.
 
+Na compilação de dependências públicas, o controller projeta somente `proxies.default.httpProxy`,
+`httpsProxy` e `noProxy` do Docker config original em um config temporário privado do compilador.
+Credenciais de registro e seletores de daemon permanecem fora dessa projeção. Valores de proxy,
+inclusive autenticação de rede, ficam nesse config com modo `0600`, fora dos argumentos e relatórios.
+Quando há proxy, a CA pública de `SSL_CERT_FILE` ou `CODEX_PROXY_CERT` é montada somente para leitura
+nesse processo, com verificação TLS habilitada. Arquivo de CA precisa conter somente certificados CA,
+sem chaves privadas. Config malformado ou CA inválida interrompem antes da compilação. Sem proxy
+configurado, a compilação conserva o transporte direto. A stack de aplicação, os probes e os browsers
+continuam com Docker config vazio, namespace isolado e suas CAs sintéticas próprias.
+
+O download das imagens fixadas aceita até quatro tentativas somente para o formato Docker
+`toomanyrequests: Rate exceeded` observado no registro. O terminal precisa ser único e encerrar sua
+própria stream; stdout e stderr são validados separadamente. As outras linhas precisam ser headers
+da imagem pedida ou progresso Docker de identificador hexadecimal e estados/tamanhos conhecidos.
+Linha desconhecida, erro contraditório, controle ou saída acima de 64 KiB impede retry; nenhuma
+linha é removida do log original. Isso não aceita toda resposta HTTP 429. O contrato atual de
+`assertPinnedImages` exige `repository:tag@sha256:64hex`, sem digest-only nem registry com porta.
+As esperas de 15, 30 e 60 segundos recebem
+até cinco segundos aleatórios adicionais cada, limitando a espera total a 120 segundos. Todas as
+tentativas e esperas compartilham os 15 minutos originais por imagem, medidos por relógio monotônico;
+o timeout de cada comando usa somente o tempo restante. Prazo vencido não aceita nem saída zero.
+Erro de autenticação, manifesto, TLS, rede, disco, timeout ou sinal não recebe retry. O cancelamento
+interrompe a espera e impede outra tentativa; a limpeza conserva seu caminho independente. Cada
+tentativa passa pelo redator existente antes de entrar no log privado e na publicação redigida.
+Os digests, a inspeção após sucesso e os gates do ambiente continuam obrigatórios. Esse tratamento
+não repete compilação, migrations, seeds, login ou testes.
+
 
 ## Suíte em cinco grupos isolados
 
