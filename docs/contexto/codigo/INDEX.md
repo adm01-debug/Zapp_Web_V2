@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b50be19811691116f8d9dc56f019e77b58a49e9a` (2026-11-11T03:27:39-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e7646cc7aad13381a1ccd68b0d742bf4966647e4` (2026-11-11T04:01:00-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 887999 |
+| linhas_codigo | 888031 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,14 +391,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56704 nós · 117172 arestas · 4235 comunidades · grafo do commit `b50be198`
+- 56704 nós · 117172 arestas · 4235 comunidades · grafo do commit `e7646cc7`
 - comunidades maiores: TalkXSuppression.tsx (1202), react (1010), lucide-react (904), vitest (726), client.ts (704), ExternalProductManagement.tsx (451), WorkItemSheet.tsx (444), framer-motion (441), ref_node_assert (434), DashboardView.tsx (421), @tanstack/react-query (419), avatar.tsx (414)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (15)
-- PENDENCIAS.md (14)
+- PENDENCIAS.md (13)
 - docs/ci/README.md (13)
 - CLAUDE.md (12)
 - docs/DB-INVENTORY.md (12)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `e7646cc` fix(ui-audit): className dinâmico na raiz não é mais silenciado como "" (#2938)
 - 2026-11-11 `b50be19` fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)
 - 2026-11-11 `a7f9d03` fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)
 - 2026-11-11 `105ebc1` fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `3725c34` fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)
 - 2026-11-10 `8d727a9` fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)
 - 2026-11-10 `a5bf639` fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)
-- 2026-11-10 `1c89150` Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b50be19811691116f8d9dc56f019e77b58a49e9a",
+  "sha": "e7646cc7aad13381a1ccd68b0d742bf4966647e4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 06:53 UTC",
+  "generated_at": "2026-11-11 07:26 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054859
+  "code_lines": 1054891
  },
  "version": "1.3.2",
- "facts_hash": "12ac542e93d3062b",
+ "facts_hash": "d69f64415b24c965",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92105,
+   "lines": 92137,
    "tables": [
     "a",
     "alem_do_limite",
@@ -271434,23 +271434,24 @@
   },
   "scripts/ui-audit/layout-guard.mjs": {
    "path": "scripts/ui-audit/layout-guard.mjs",
-   "lines": 223,
+   "lines": 231,
    "errors": [
     "lazyViews.ts nao rendeu nenhum arquivo — auditoria incompleta",
     "view roteada nao resolvida: ${spec} — auditoria incompleta"
    ],
    "rule_comments": [
-    "Arquivo roteado que o extrator nao conseguiu ler nao pode passar calado:"
+    "Arquivo roteado que o extrator nao conseguiu ler nao pode passar calado:",
+    "root-className.mjs nao consegue extrair — nao pode ser auditado como \"\","
    ],
    "doc": "!/usr/bin/env node"
   },
   "scripts/ui-audit/layout-guard.unit.mjs": {
    "path": "scripts/ui-audit/layout-guard.unit.mjs",
-   "lines": 163
+   "lines": 174
   },
   "scripts/ui-audit/root-className.mjs": {
    "path": "scripts/ui-audit/root-className.mjs",
-   "lines": 75,
+   "lines": 88,
    "exports": [
     "function extractRootClassNames"
    ],
@@ -385968,10 +385969,21 @@
   }
  },
  "git": {
-  "sha": "b50be19811691116f8d9dc56f019e77b58a49e9a",
+  "sha": "e7646cc7aad13381a1ccd68b0d742bf4966647e4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e7646cc",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)",
+    "files": [
+     "scripts/ui-audit/layout-guard.mjs",
+     "scripts/ui-audit/layout-guard.unit.mjs",
+     "scripts/ui-audit/root-className.mjs"
+    ]
+   },
    {
     "sha": "b50be19",
     "date": "2026-11-11",
@@ -386295,25 +386307,20 @@
      "scripts/catalog/validate-plan.mjs",
      "scripts/catalog/validate-plan.test.mjs"
     ]
-   },
-   {
-    "sha": "5bdf733",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)",
-    "files": [
-     "scripts/ci/e2e-isolated-compilation-network.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/compilation-network.mjs",
-     "scripts/e2e-isolated/run.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "scripts/maintenance/maintenance.unit.mjs",
     3
+   ],
+   [
+    "scripts/ui-audit/layout-guard.mjs",
+    2
+   ],
+   [
+    "scripts/ui-audit/layout-guard.unit.mjs",
+    2
    ],
    [
     "scripts/docs/verificar-docs-realtime.mjs",
@@ -386340,16 +386347,8 @@
     2
    ],
    [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/README.md",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/run.mjs",
-    2
+    "scripts/ui-audit/root-className.mjs",
+    1
    ],
    [
     "scripts/db-tests/run-all.mjs",
@@ -386376,19 +386375,19 @@
     1
    ],
    [
-    "scripts/ui-audit/layout-guard.mjs",
-    1
-   ],
-   [
-    "scripts/ui-audit/layout-guard.unit.mjs",
-    1
-   ],
-   [
     "scripts/ci/front-release-targets.unit.mjs",
     1
    ],
    [
     "scripts/vercel/verify-release-targets.mjs",
+    1
+   ],
+   [
+    "scripts/ci/bundle-budget.mjs",
+    1
+   ],
+   [
+    "scripts/ci/bundle-budget.unit.mjs",
     1
    ]
   ]

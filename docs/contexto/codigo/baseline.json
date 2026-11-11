@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b50be19811691116f8d9dc56f019e77b58a49e9a",
+  "commit": "e7646cc7aad13381a1ccd68b0d742bf4966647e4",
   "branch": "main",
-  "data_commit": "2026-11-11T03:27:39-03:00",
+  "data_commit": "2026-11-11T04:01:00-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e7646cc",
+    "data": "2026-11-11",
+    "assunto": "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)"
+   },
    {
     "sha": "b50be19",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "9f94363",
     "data": "2026-11-10",
     "assunto": "chore(docs): documenta geração de contexto no AGENTS.md (#2840)"
-   },
-   {
-    "sha": "384befe",
-    "data": "2026-11-10",
-    "assunto": "ci: registra 4 guards de segurança existentes como steps do CI (#2850)"
    }
   ],
-  "arquivos_mudados_7d": 667,
+  "arquivos_mudados_7d": 668,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 14
+    "mudancas": 13
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887999,
+  "linhas_codigo": 888031,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -684,7 +684,7 @@
   },
   "scripts/ui-audit": {
    "arquivos": 7,
-   "linhas": 769
+   "linhas": 801
   },
   "scripts/vercel": {
    "arquivos": 2,

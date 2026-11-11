@@ -4550,7 +4550,7 @@
   {
    "arquivo": "scripts/ui-audit/layout-guard.mjs",
    "descricao": "* layout-guard.mjs — Etapa 27",
-   "linhas": 223,
+   "linhas": 231,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4559,7 +4559,7 @@
   {
    "arquivo": "scripts/ui-audit/root-className.mjs",
    "descricao": "* Extrai o className da raiz JSX de um componente de view.",
-   "linhas": 75,
+   "linhas": 88,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

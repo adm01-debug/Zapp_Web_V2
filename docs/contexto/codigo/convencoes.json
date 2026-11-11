@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)",
    "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)",
    "fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)",
    "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)",
-   "fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)",
-   "fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)"
+   "fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
