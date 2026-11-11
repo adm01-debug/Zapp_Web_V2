@@ -68,6 +68,16 @@ describe('prova-visao-classificadores: log injection (jssecurity:S5145)', () => 
     );
   });
 
+  it('login recusado com credencial PRESENTE sai com exit 1, nao com o exit 2 de credencial ausente', () => {
+    // Contrato documentado no cabeçalho do script: exit 2 é só "faltou credencial"
+    // (variáveis não configuradas); credencial completa e recusada pelo Auth
+    // (senha rotacionada, Supabase fora do ar) é a prova RODANDO e FALHANDO — exit 1.
+    // Sem essa distinção, uma automação que trata exit 2 como "ambiente não
+    // configurado, pular" mascararia uma falha real como "não configurado".
+    const res = run(401, '{"msg":"senha rotacionada"}');
+    assert.equal(res.status, 1, `login recusado com credencial presente deve sair 1, nao 2:\n${res.stdout}${res.stderr}`);
+  });
+
   it('neutraliza quebras de linha na categoria devolvida (linhas 147 e 182)', () => {
     const res = run(200, '{"access_token":"stub-token"}');
     const out = `${res.stdout}${res.stderr}`;
