@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-20`. 85 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-20`. 92 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -23,10 +23,10 @@ partir do código e falha quando:
 |---|---|
 | A | 54 |
 | B | 1 |
-| C | 3 |
+| C | 4 |
 | D | 6 |
-| E | 21 |
-| **total** | **85** |
+| E | 27 |
+| **total** | **92** |
 
 ## Tabela
 
@@ -37,15 +37,22 @@ partir do código e falha quando:
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
+| `ai-deadline-calculator` | E | — sem chamador no repositório — |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
+| `ai-lead-temperature` | E | — sem chamador no repositório — |
+| `ai-loss-risk` | E | — sem chamador no repositório — |
+| `ai-multimodal-analysis` | E | — sem chamador no repositório — |
+| `ai-objection-handler` | E | — sem chamador no repositório — |
+| `ai-price-anchor` | E | — sem chamador no repositório — |
+| `ai-product-recommendation` | E | — sem chamador no repositório — |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1420` |
-| `ai-usage-outbox-drain` | E | — sem chamador no repositório — |
+| `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:96` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
-| `auth-login` | A | `src/lib/serverLogin.ts:149` · `supabase/config.toml:39` |
+| `auth-login` | A | `src/lib/serverLogin.ts:129` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
 | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
 | `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:252` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
@@ -57,7 +64,7 @@ partir do código e falha quando:
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:130` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `copilot-live` | E | — sem chamador no repositório — |
-| `create-user` | A | `src/components/admin/useAdminData.ts:444` · `src/components/admin/useAdminData.ts:444` |
+| `create-user` | A | `src/components/admin/useAdminData.ts:485` · `src/components/admin/useAdminData.ts:485` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
 | `detect-new-device` | A | `src/lib/avisoDispositivo.ts:117` |
@@ -88,7 +95,7 @@ partir do código e falha quando:
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
 | `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:476` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
-| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:164` |
+| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:97` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
@@ -118,7 +125,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfós (21) — GATE B
+## Órfós (27) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador ext de
@@ -128,7 +135,13 @@ As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guard
 mantém a lista honesta.
 
 - `ai-auto-tag`
-- `ai-usage-outbox-drain`
+- `ai-deadline-calculator`
+- `ai-lead-temperature`
+- `ai-loss-risk`
+- `ai-multimodal-analysis`
+- `ai-objection-handler`
+- `ai-price-anchor`
+- `ai-product-recommendation`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
 - `copilot-live`
