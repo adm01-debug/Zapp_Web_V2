@@ -700,7 +700,7 @@ close_2="$(grep -E '^[0-9a-f-]{36}:[0-9a-f-]{36}$' "$concurrency_dir/close-2" | 
 # --- PD-79 (t_8c6419cf): carimbo do POST iniciado -> lease vencido nao reenvia ---
 # (0) Pre-condicao fail-closed: sem a 20261011155946 (envio para grupo) a migration
 # aborta ANTES de qualquer alteracao (senao o claim reescrito leria objetos que nao existem).
-post_started_migration="$repo_root/supabase/migrations/20261101133000_outbound_post_started.sql"
+post_started_migration="$repo_root/supabase/migrations/20261111160000_outbound_post_started.sql"
 claim_md5_before="$(psql_test -Atqc "SELECT md5(pg_get_functiondef(p.oid)) FROM pg_proc p WHERE p.proname='claim_outbound_message' AND p.pronamespace='public'::regnamespace;")"
 if precond_out="$(psql_test < "$post_started_migration" 2>&1)"; then
   fail 'a migration PD-79 passou sem a 20261011155946 aplicada'

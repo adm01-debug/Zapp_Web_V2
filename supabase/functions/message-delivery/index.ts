@@ -714,7 +714,7 @@ export async function handleMessageDeliveryRequest(
     });
     if (markError) {
       // Pré-DDL: a Edge é publicada automaticamente no push da main, mas a migration
-      // 20261101133000 só roda pelo db-migrate (manual, com aprovação). Enquanto a RPC
+      // 20261111160000 só roda pelo db-migrate (manual, com aprovação). Enquanto a RPC
       // não existe (PGRST202 no PostgREST / 42883 no Postgres), segue o fluxo anterior
       // ao PD-79 — sem carimbo — em vez de derrubar todo envio. Qualquer outro erro
       // continua sendo infra pré-dispatch: nada saiu.
