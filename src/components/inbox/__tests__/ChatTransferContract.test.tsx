@@ -185,6 +185,7 @@ vi.mock('../chat/ChatInputArea', () => ({ ChatInputArea: () => null }));
 vi.mock('../chat/ChatDragOverlay', () => ({ ChatDragOverlay: () => null }));
 vi.mock('../chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));
 vi.mock('../chat/ChatSearchBar', () => ({ ChatSearchBar: () => null }));
+vi.mock('../chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
 vi.mock('../WhisperMode', () => ({ WhisperMode: () => null }));
 vi.mock('../NextBestActionEngine', () => ({ NextBestActionEngine: () => null }));
 vi.mock('../AIConversationAssistant', () => ({ AIConversationAssistant: () => null }));
