@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
@@ -308,4 +308,37 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
     expect(screen.queryByText(/Sem envios registrados/)).toBeNull();
     expect(screen.queryByTestId('perf-chart')).toBeNull();
   });
+
+  describe('Ranking de campanhas (RPC sem filtros da tela)', () => {
+    const ranking = {
+      campaigns: [
+        { campaign_id: 'r1', campaign_name: 'Reativação', total_recipients: 300, delivery_rate_pct: 95, reply_rate_pct: 12 },
+      ],
+    };
+
+    it('o título diz a janela e o alcance reais: "Últimos 90 dias · todas as campanhas"', async () => {
+      rpcMock.mockImplementation(async (name: string) =>
+        name === 'talkx_campaign_ranking' ? { data: ranking, error: null } : { data: { daily }, error: null });
+      withClient(<TalkXAnalytics campaigns={[campaign]} isLoading={false} isError={false} />);
+
+      const secao = await screen.findByTestId('talkx-ranking');
+      expect(secao).toHaveTextContent('Top 5 por taxa de resposta · Últimos 90 dias · todas as campanhas');
+      expect(secao).toHaveTextContent('Reativação');
+    });
+
+    it('erro do ranking aparece como estado de erro com "Tentar novamente" (não some calado) e tenta de novo', async () => {
+      rpcMock.mockImplementation(async (name: string) =>
+        name === 'talkx_campaign_ranking' ? { data: null, error: new Error('permission denied') } : { data: { daily }, error: null });
+      withClient(<TalkXAnalytics campaigns={[campaign]} isLoading={false} isError={false} />);
+
+      const secao = await screen.findByTestId('talkx-ranking');
+      expect(secao).toHaveTextContent('Não foi possível carregar as campanhas do ranking');
+      expect(secao).not.toHaveTextContent('permission denied');
+      const rankingCalls = () => rpcMock.mock.calls.filter((c) => c[0] === 'talkx_campaign_ranking').length;
+      const antes = rankingCalls();
+      fireEvent.click(within(secao).getByRole('button', { name: /tentar novamente/i }));
+      await waitFor(() => expect(rankingCalls()).toBeGreaterThan(antes));
+    });
+  });
 });
+

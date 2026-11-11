@@ -199,7 +199,11 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     [campaigns, selectedCampaignId]
   );
 
-  const { data: rankingRows } = useQuery({
+  // talkx_campaign_ranking só recebe (p_limit, p_metric): janela fixa de 90 dias no
+  // servidor, sem os filtros de período/campanha/equipe desta tela — o título diz isso.
+  const {
+    data: rankingRows, isError: rankingIsError, refetch: refetchRanking,
+  } = useQuery({
     queryKey: ['talkx-campaign-ranking'],
     queryFn: async () => {
       type RankRow = { campaign_id: string; campaign_name: string; total_recipients: number; delivery_rate_pct: number; reply_rate_pct: number };
@@ -210,7 +214,9 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     staleTime: 300_000,
   });
 
-  const { data: topSegmentsRows } = useQuery({
+  const {
+    data: topSegmentsRows, isError: topSegmentsIsError, refetch: refetchTopSegments,
+  } = useQuery({
     queryKey: ['talkx-top-segments'],
     queryFn: async () => {
       type SegRow = { segment_id: string; segment_name: string; campaign_count: number; total_recipients: number; avg_delivery_rate_pct: number; avg_reply_rate_pct: number };
@@ -518,15 +524,18 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
         </div>
       </section>
 
-      {(rankingRows ?? []).length > 0 && (
-        <section className="rounded-2xl bg-card border border-border/70 p-4">
+      {(rankingIsError || (rankingRows ?? []).length > 0) && (
+        <section data-testid="talkx-ranking" className="rounded-2xl bg-card border border-border/70 p-4">
           <div className="flex items-center gap-2 mb-3">
             <IconTile icon={TrendingUp} color="green" size={36} />
             <div>
               <p className="text-[15px] font-bold text-foreground">Ranking de campanhas</p>
-              <p className="text-xs text-foreground-secondary">Top 5 por taxa de resposta (90 dias)</p>
+              <p className="text-xs text-foreground-secondary">Top 5 por taxa de resposta · Últimos 90 dias · todas as campanhas</p>
             </div>
           </div>
+          {rankingIsError ? (
+            <TalkXErrorState entity="campanhas do ranking" onRetry={() => { void refetchRanking(); }} />
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse">
               <thead><tr>
@@ -545,18 +554,22 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
               </tbody>
             </table>
           </div>
+          )}
         </section>
       )}
 
-      {canFilterTeam && (topSegmentsRows ?? []).length > 0 && (
-        <section className="rounded-2xl bg-card border border-border/70 p-4">
+      {canFilterTeam && (topSegmentsIsError || (topSegmentsRows ?? []).length > 0) && (
+        <section data-testid="talkx-top-segmentos" className="rounded-2xl bg-card border border-border/70 p-4">
           <div className="flex items-center gap-2 mb-3">
             <IconTile icon={Users} color="violet" size={36} />
             <div>
               <p className="text-[15px] font-bold text-foreground">Top segmentos</p>
-              <p className="text-xs text-foreground-secondary">Maior taxa de resposta média (90 dias)</p>
+              <p className="text-xs text-foreground-secondary">Maior taxa de resposta média · Últimos 90 dias · todas as campanhas</p>
             </div>
           </div>
+          {topSegmentsIsError ? (
+            <TalkXErrorState entity="segmentos" onRetry={() => { void refetchTopSegments(); }} />
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[500px] border-collapse">
               <thead><tr>
@@ -576,6 +589,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
               </tbody>
             </table>
           </div>
+          )}
         </section>
       )}
       {/* E74: painel de detalhe por campanha */}

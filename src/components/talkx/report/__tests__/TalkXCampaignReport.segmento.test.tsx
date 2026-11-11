@@ -126,8 +126,9 @@ function renderReport() {
 describe('TalkXCampaignReport — funil por segmento (X058)', () => {
   beforeEach(() => {
     state.bySegment = [
-      { segment_id: 'seg-a', segment_name: 'Clientes VIP', sent: 40, delivered: 35, replied: 7 },
-      { segment_id: null, segment_name: 'Sem segmento', sent: 60, delivered: 55, replied: 3 },
+      // Como a RPC devolve: `sent` = parados em status 'sent'; entregues já viraram 'delivered'.
+      { segment_id: 'seg-a', segment_name: 'Clientes VIP', sent: 5, delivered: 35, replied: 7 },
+      { segment_id: null, segment_name: 'Sem segmento', sent: 5, delivered: 55, replied: 3 },
     ];
   });
 
@@ -153,4 +154,12 @@ describe('TalkXCampaignReport — funil por segmento (X058)', () => {
     await waitFor(() => expect(screen.getByTestId('steps')).toHaveTextContent('sent=60,delivered=55,replied=3'));
     expect(screen.getByTestId('funnel')).toHaveAttribute('data-segment', 'sem-segmento');
   });
+
+  it('Enviadas do segmento soma sent + delivered: todos entregues (sent=0) não deixa Enviadas < Entregues', async () => {
+    state.bySegment = [{ segment_id: 'seg-b', segment_name: 'Só entregues', sent: 0, delivered: 10, replied: 4 }];
+    renderReport();
+    fireEvent.click(await screen.findByRole('button', { name: 'Só entregues' }));
+    await waitFor(() => expect(screen.getByTestId('steps')).toHaveTextContent('sent=10,delivered=10,replied=4'));
+  });
 });
+

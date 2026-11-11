@@ -76,13 +76,28 @@ export interface TalkXCampaignReportProps {
   onViewMonitor?: (id: string) => void;
 }
 
-/** Linha de `by_segment` do RPC talkx_campaign_queue_by_segment (X058). */
+/**
+ * Linha de `by_segment` do RPC talkx_campaign_queue_by_segment (X058).
+ * Contagens por STATUS ATUAL do destinatário: `sent` é só quem parou em 'sent' (quem foi
+ * entregue passou para 'delivered'); `delivered`/`replied` contam os carimbos
+ * delivered_at/replied_at.
+ */
 interface TalkXQueueSegmentRow {
   segment_id: string | null;
   segment_name: string;
   sent?: number;
   delivered?: number;
   replied?: number;
+}
+
+/**
+ * "Enviadas" do funil por segmento = todo destinatário que passou do envio
+ * (status 'sent' + 'delivered'). Nunca menor que Entregues/Respondidas: o funil
+ * não pode afunilar ao contrário.
+ */
+function segmentSentCount(row: TalkXQueueSegmentRow): number {
+  const delivered = row.delivered ?? 0;
+  return Math.max((row.sent ?? 0) + delivered, delivered, row.replied ?? 0);
 }
 /** Destinatários sem segmento viram um item próprio do seletor (o Select exige valor). */
 const NO_SEGMENT_ID = 'sem-segmento';
@@ -178,7 +193,7 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const funnelSteps = useMemo<TalkXReportFunnelStep[]>(() => {
     if (selectedSegment) {
       return [
-        { key: 'sent', count: selectedSegment.sent ?? 0 },
+        { key: 'sent', count: segmentSentCount(selectedSegment) },
         { key: 'delivered', count: selectedSegment.delivered ?? 0 },
         { key: 'replied', count: selectedSegment.replied ?? 0 },
         { key: 'clicked', count: null },
