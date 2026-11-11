@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a5bf6399e4a82a2c85838a4acfa333ac25746b58",
+  "commit": "8d727a9c9604306e3408bf1aa6a8c4d879749582",
   "branch": "main",
-  "data_commit": "2026-11-10T16:14:51-03:00",
+  "data_commit": "2026-11-10T22:40:06-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "8d727a9",
+    "data": "2026-11-10",
+    "assunto": "fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)"
+   },
    {
     "sha": "a5bf639",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "31e8df6",
     "data": "2026-11-10",
     "assunto": "feat(talkx): migrar TalkXSuppression para TalkXDialogShell (X050) (#2810)"
-   },
-   {
-    "sha": "f332a29",
-    "data": "2026-11-10",
-    "assunto": "fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)"
    }
   ],
-  "arquivos_mudados_7d": 727,
+  "arquivos_mudados_7d": 658,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887640,
+  "linhas_codigo": 887644,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -556,7 +556,7 @@
   },
   "e2e/talkx-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 410
+   "linhas": 414
   },
   "e2e/talkx.spec.ts": {
    "arquivos": 1,

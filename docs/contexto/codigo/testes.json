@@ -558,7 +558,7 @@
   {
    "arquivo": "e2e/talkx-visual.spec.ts",
    "tipo": "e2e",
-   "linhas": 410,
+   "linhas": 414,
    "testa": [],
    "casos": 11
   },
