@@ -1,0 +1,22 @@
+{
+  "fase": "concluída",
+  "inicio": "2026-11-08T22:13:07Z",
+  "fim": "2026-11-08T22:32:00Z",
+  "fase0_concluida": true,
+  "agentes": {
+    "A1_rastreabilidade": "concluído",
+    "A2_banco": "concluído",
+    "A3_edge_functions": "concluído",
+    "A4_front": "concluído",
+    "A5_regressao_ci": "concluído"
+  },
+  "consolidacao": "concluída",
+  "pr_correcao_aberta": false,
+  "motivo_sem_pr_correcao": "achados HIGH exigem decisão humana (reimplementar feature C130; investigar reescrita de histórico), não correção de diff mínimo",
+  "entregaveis": [
+    "resgate-online/validacao/escopo.json",
+    "resgate-online/validacao/achados.json",
+    "resgate-online/validacao/RELATORIO_VALIDACAO.md",
+    "resgate-online/validacao/progresso.json"
+  ]
+}
