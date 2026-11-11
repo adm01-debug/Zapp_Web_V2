@@ -19,6 +19,13 @@ const RPC_ALLOWLIST: ReadonlySet<string> = new Set<string>([
   "get_external_message_count",
 ]);
 
+function validIdentifier(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);
+}
+const FILTER_OPERATORS: ReadonlySet<string> = new Set([
+  'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike', 'is', 'in',
+]);
+
 function isOperationAllowed(action: string, table?: string | null, rpc?: string | null): boolean {
   if (action === "rpc") return !!rpc && RPC_ALLOWLIST.has(rpc);
   if (!table) return false;
@@ -168,11 +175,17 @@ export async function handleExternalDbBridge(
         });
         if (params?.filters) {
           for (const f of params.filters as Array<{ column: string; operator: string; value: unknown }>) {
+            if (!validIdentifier(f.column) || !FILTER_OPERATORS.has(f.operator)) {
+              return errorResponse("Invalid filter column or operator", 400, req);
+            }
             query = query.filter(f.column, f.operator, f.value);
           }
         }
         if (params?.order) {
           const ord = params.order as { column: string; ascending?: boolean };
+          if (!validIdentifier(ord.column)) {
+            return errorResponse("Invalid order column", 400, req);
+          }
           query = query.order(ord.column, { ascending: ord.ascending ?? true });
         }
         if (limit) query = query.limit(limit);
