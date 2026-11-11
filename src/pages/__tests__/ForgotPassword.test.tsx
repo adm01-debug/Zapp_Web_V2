@@ -17,17 +17,34 @@
  *  - falha ao gravar aparece como erro, não como "enviado".
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 
 const h = vi.hoisted(() => ({
   insert: vi.fn(),
   tabelas: [] as string[],
   toast: { success: vi.fn(), error: vi.fn() },
   auth: { user: null as null | { email?: string }, loading: false, signOut: vi.fn() },
+  // Reautenticação dublada: guarda a ação pedida e o que roda depois da senha aceita.
+  reauth: { acoes: [] as string[], depois: null as null | (() => Promise<void>) },
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => h.auth }));
+
+vi.mock('@/hooks/auth/useReauthentication', () => ({
+  useReauthentication: () => ({
+    showReauthDialog: false,
+    pendingAction: null,
+    requireReauth: (acao: string, depois: () => Promise<void>) => {
+      h.reauth.acoes.push(acao);
+      h.reauth.depois = depois;
+    },
+    confirmReauth: vi.fn(),
+    cancelReauth: vi.fn(),
+    getActionLabel: () => '',
+    isReauthenticating: false,
+  }),
+}));
 
 vi.mock('@/lib/supabaseHelpers', () => ({
   fromTable: (table: string) => {
@@ -48,10 +65,18 @@ import ForgotPassword from '../ForgotPassword';
 
 const MSG_ENVIADO = 'Se o email estiver cadastrado, o pedido foi enviado para aprovação do gestor.';
 
+function Onde() {
+  const loc = useLocation();
+  return <div data-testid="onde">{loc.pathname + loc.search}</div>;
+}
+
 function cenario() {
   return render(
     <MemoryRouter initialEntries={['/forgot-password']}>
-      <ForgotPassword />
+      <Routes>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="*" element={<Onde />} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -70,6 +95,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.tabelas.length = 0;
   h.auth = { user: null, loading: false, signOut: vi.fn().mockResolvedValue(undefined) };
+  h.reauth = { acoes: [], depois: null };
   h.insert.mockResolvedValue({ error: null });
 });
 
@@ -147,16 +173,35 @@ describe('ForgotPassword — envio único', () => {
 });
 
 describe('ForgotPassword — usuário já logado', () => {
-  it('mostra o aviso com o caminho de troca de senha (Segurança) e não oferece o formulário', () => {
+  it('mostra o aviso e não oferece o formulário nem grava pedido', () => {
     h.auth = { ...h.auth, user: { email: 'ana@empresa.com' } };
     cenario();
 
     expect(screen.getByText('Você já está conectado')).toBeTruthy();
     expect(screen.getByText('ana@empresa.com')).toBeTruthy();
-    const link = screen.getByRole('link', { name: 'Ir para Segurança' });
-    expect(link.getAttribute('href')).toBe('/?view=security');
     expect(document.querySelector('form')).toBeNull();
     expect(h.tabelas).toEqual([]);
+    expect(h.insert).not.toHaveBeenCalled();
+  });
+
+  it('"Alterar minha senha" não manda para a tela de Segurança (só gestor): pede reautenticação e leva a /reset-password', async () => {
+    // Regressão: o botão levava a /?view=security, view restrita a STAFF_ROLES —
+    // o atendente comum caía em "acesso restrito" e não tinha como trocar a senha.
+    h.auth = { ...h.auth, user: { email: 'ana@empresa.com' } };
+    cenario();
+
+    expect(screen.queryByRole('link', { name: /Segurança/ })).toBeNull();
+    expect(document.querySelector('a[href*="view=security"]')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alterar minha senha' }));
+    // Antes da senha atual ser confirmada, nada de navegar.
+    expect(h.reauth.acoes).toEqual(['change_password']);
+    expect(screen.queryByTestId('onde')).toBeNull();
+
+    await act(async () => {
+      await h.reauth.depois?.();
+    });
+    expect(screen.getByTestId('onde').textContent).toBe('/reset-password');
     expect(h.insert).not.toHaveBeenCalled();
   });
 
