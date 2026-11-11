@@ -104,16 +104,31 @@ conferir o caminho do workflow: `npm run ci:local -- --workflow e2e-logado --eve
 - Timeout de passo/job e Ctrl-C encerram o grupo de processos com escalada:
   **SIGINT → espera (5 s) → SIGTERM → espera → SIGKILL** (um segundo Ctrl-C pula
   as esperas). Órfãos em segundo plano (marcados pelo ambiente) seguem a mesma escalada.
-- No fim (sucesso, erro ou Ctrl-C) são removidos os containers **criados durante a
-  execução**: a lista de containers é fotografada no início e só sai o que não
-  estava nela (e não pertence a outra execução viva do CI local). Containers que já
-  existiam **nunca** são tocados; se o docker não respondeu no início, nada é removido
-  por esse caminho. Atenção: um container que **você** suba em paralelo, durante a
-  execução, também entra nessa conta — o resumo lista cada container removido.
+- **Containers só saem se tiverem o rótulo desta execução.** Todo passo roda com um
+  shim `docker` na frente do `PATH` (mesmo diretório dos shims de root) que, em
+  `docker run`/`docker create`/`docker container run|create`, injeta
+  os rótulos `ci-local=1`, `ci-local.run=<execução>`, `ci-local.job=<job>`,
+  `ci-local.pid=<pid>` e `ci-local.inicio=<início>`; os `services:` sobem com
+  os mesmos rótulos. No fim de cada job saem os containers com o rótulo do job; no fim
+  da execução (sucesso, erro ou Ctrl-C), os com o rótulo da execução. **Container sem
+  rótulo nunca é removido** — os que já existiam e os que outras sessões/agentes sobem
+  em paralelo (replays de banco, `supabase start`) ficam intactos.
+- O shim delega ao próximo `docker` do `PATH` (ex.: o `docker-shim` que o `db-guard`
+  copia para `$HOME/.local/bin/docker` — com o HOME isolado ele fica no HOME
+  descartável, atrás do shim). Os passos recebem `DOCKER_REAL` com o caminho absoluto
+  do docker real resolvido no início, e um shim que chame `docker` pelo nome volta ao
+  shim do CI local, que então vai direto ao real: sem laço.
+- **Não são rotulados (e por isso não são removidos):** containers criados sem passar
+  pelo CLI `docker run/create` — `docker compose` (os rótulos do compose não vêm de
+  argumento; trocar `COMPOSE_PROJECT_NAME` mudaria os nomes que os scripts esperam),
+  `docker-compose`, `supabase start` (usa a API do Docker direto) — e os criados por
+  binário chamado por caminho absoluto. Os workflows padrão (`ci`, `db-guard`) não usam
+  compose. Se um passo subir algo assim, derrube à mão.
 - Ao iniciar, o CI local varre restos de execuções que morreram sem limpar (SIGKILL,
   queda do WSL): diretórios `/tmp/ci-local-*` cujo `dono.json` aponta para processo
   morto (pid + início do processo, então pid reaproveitado não engana) e os processos
-  que herdaram a marca deles, e containers com rótulo `ci-local` cujo pid dono morreu.
+  que herdaram a marca deles, e containers com rótulo `ci-local` cujo pid dono (rótulo `ci-local.pid` + `ci-local.inicio`)
+  morreu.
   Diretório sem `dono.json` não é tocado.
 
 ## Pré-requisitos
