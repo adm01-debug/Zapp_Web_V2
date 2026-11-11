@@ -6,6 +6,12 @@ import {
 } from '../../kit/forcedState';
 import { TalkXQueryBoundary } from '../../kit/states';
 
+// X057: a prancha lê KPIs reais via useTalkXOverviewStats (useQuery). O teste
+// cobre a prancha e o estado forçado, não a RPC — mesmo mock dos testes do Overview.
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: () => ({ data: undefined, isLoading: false }),
+}));
+
 /**
  * X055 — prancha de referência (`TalkXKit`) e estado forçado por URL.
  *
