@@ -11,10 +11,14 @@
 //   npm run ci:local -- --incluir-nao-commitado  # testa também o que não foi commitado
 //   npm run ci:local -- --evento workflow_dispatch [--input chave=valor]
 //   npm run ci:local -- --base origin/main    # base de comparação (padrão)
+//   npm run ci:local -- --com-credenciais     # copia o login do gh (hosts.yml) e do docker para o HOME do job
+//   npm run ci:local -- --permitir-workflow-sem-pr  # roda workflow sem gatilho pull_request
 //
 // Cada execução roda num CLONE DESCARTÁVEL do HEAD commitado (nada escreve no
-// .git real) e cada job tem HOME, TMPDIR e RUNNER_TEMP próprios. Ctrl-C limpa
-// containers, processos e temporários. Detalhes: docs/ci/CI_LOCAL.md.
+// .git real) e cada job tem HOME, TMPDIR e RUNNER_TEMP próprios. Os passos não
+// herdam o ambiente de quem chamou (lista permitida) e sudo/apt/dpkg/su/doas/pkexec
+// caem em shims que falham. Ctrl-C encerra com SIGINT → SIGTERM → SIGKILL e
+// limpa containers, processos e temporários. Detalhes: docs/ci/CI_LOCAL.md.
 //
 // Saída: 0 = tudo o que rodou passou; 1 = algum job falharia no GitHub;
 //        2 = uso inválido ou ambiente sem base; 3 = nenhum job rodou.
@@ -26,6 +30,7 @@ import {
   readFileSync,
   readdirSync,
   writeFileSync,
+  chmodSync,
   appendFileSync,
   mkdtempSync,
   rmSync,
@@ -56,9 +61,26 @@ import {
   ExpressaoNaoSuportada,
   planoHomeIsolado,
   paraTexto,
+  shimsDeRoot,
+  ambientePermitido,
+  configDockerSemCredenciais,
+  GITCONFIG_SEM_CREDENCIAL,
+  temGatilhoPullRequest,
+  gatilhosDoWorkflow,
+  semTestesRelacionados,
+  encerrarEscalonado,
+  inicioDoProcesso,
+  donoVivo,
+  containersCriadosNaExecucao,
+  lerListaContainers,
+  containersOrfaos,
 } from './ci-local-lib.mjs';
 
 class ErroUso extends Error {}
+
+// Nenhum `git status`/`git diff` do CI local reescreve o índice do checkout real
+// (o refresh do índice disputaria o index.lock com o editor/IDE do usuário).
+process.env.GIT_OPTIONAL_LOCKS = '0';
 
 const ORIGEM = resolve(
   spawnSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).stdout.trim() || '.'
@@ -68,32 +90,55 @@ const EVENTOS = ['pull_request', 'push', 'workflow_dispatch'];
 const TIMEOUT_JOB_PADRAO_MIN = 360; // padrão do GitHub
 
 // ------------------------------------------------------------- limpeza global
-// Tudo o que a execução cria fica registrado aqui; SIGINT/SIGTERM e o finally
-// do main derrubam containers, matam os grupos de processos e apagam os temporários.
-const limpeza = { grupos: new Set(), containers: new Set(), dirs: new Set(), marca: null };
+// Tudo o que a execução cria fica registrado aqui; SIGINT/SIGTERM e o fim do main
+// encerram os grupos de processos (SIGINT → SIGTERM → SIGKILL), removem os
+// containers criados DURANTE a execução e apagam os temporários.
+const limpeza = {
+  grupos: new Set(),
+  containers: new Set(),
+  dirs: new Set(),
+  marca: null,
+  containersAntes: null, // Set de ids existentes no início (null = docker indisponível)
+  forcar: false,
+};
+const GRACA_MS = Number(process.env.CI_LOCAL_GRACA_MS) >= 0 ? Number(process.env.CI_LOCAL_GRACA_MS) : 5000;
 
-function matarGrupo(pid) {
-  if (!pid) return;
+function grupoVivo(pid) {
   try {
-    process.kill(-pid, 'SIGKILL');
+    process.kill(-pid, 0);
+    return true;
   } catch {
-    /* grupo já terminou */
+    return false;
   }
 }
 
-/**
- * Mata todo processo que herdou a marca `chave=valor` no ambiente (órfãos em
- * segundo plano, inclusive os que mudaram de grupo). Usa a marca, e não o PGID,
- * para nunca acertar um processo alheio que reaproveitou o número.
- */
-function matarMarcados(chave, valor) {
+/** Encerra o grupo de processos com escalada (o timeout e o Ctrl-C chegam aqui). */
+function encerrarGrupo(pid) {
+  if (!pid) return Promise.resolve(null);
+  return encerrarEscalonado({
+    sinalizar: (sinal) => {
+      try {
+        process.kill(-pid, sinal);
+      } catch {
+        /* grupo já terminou */
+      }
+    },
+    vivo: () => grupoVivo(pid),
+    esperaMs: GRACA_MS,
+    apressar: () => limpeza.forcar,
+  });
+}
+
+/** PIDs (exceto o próprio) que herdaram a marca `chave=valor` no ambiente. */
+function pidsMarcados(chave, valor) {
   const marca = `${chave}=${valor}`;
   let pids = [];
   try {
     pids = readdirSync('/proc').filter((d) => /^\d+$/.test(d));
   } catch {
-    return;
+    return [];
   }
+  const out = [];
   for (const pid of pids) {
     if (Number(pid) === process.pid) continue;
     let environ;
@@ -102,28 +147,89 @@ function matarMarcados(chave, valor) {
     } catch {
       continue;
     }
-    if (environ.split('\0').includes(marca)) {
-      try {
-        process.kill(Number(pid), 'SIGKILL');
-      } catch {
-        /* já saiu */
-      }
-    }
+    if (environ.split('\0').includes(marca)) out.push(Number(pid));
   }
+  return out;
+}
+
+/**
+ * Encerra (com escalada) todo processo que herdou a marca `chave=valor` no
+ * ambiente (órfãos em segundo plano, inclusive os que mudaram de grupo). Usa a
+ * marca, e não o PGID, para nunca acertar um processo alheio que reaproveitou o número.
+ */
+function encerrarMarcados(chave, valor) {
+  return encerrarEscalonado({
+    sinalizar: (sinal) => {
+      for (const pid of pidsMarcados(chave, valor)) {
+        try {
+          process.kill(pid, sinal);
+        } catch {
+          /* já saiu */
+        }
+      }
+    },
+    vivo: () => pidsMarcados(chave, valor).length > 0,
+    esperaMs: GRACA_MS,
+    apressar: () => limpeza.forcar,
+  });
+}
+
+function docker(args, opcoes = {}) {
+  return spawnSync('docker', args, { encoding: 'utf8', timeout: 60_000, ...opcoes });
+}
+
+/** Para (SIGTERM do docker, com prazo) e remove containers pelo id/nome. */
+function removerContainers(ids) {
+  if (!ids.length) return;
+  docker(['stop', '--time', String(Math.ceil(GRACA_MS / 1000)), ...ids], { stdio: 'ignore' });
+  docker(['rm', '-f', ...ids], { stdio: 'ignore' });
 }
 
 function derrubarContainer(nome) {
-  spawnSync('docker', ['rm', '-f', nome], { stdio: 'ignore' });
+  removerContainers([nome]);
   limpeza.containers.delete(nome);
 }
 
-function limparTudo() {
-  for (const g of limpeza.grupos) matarGrupo(g);
-  limpeza.grupos.clear();
-  if (limpeza.marca) matarMarcados('CI_LOCAL_RUN', limpeza.marca);
+const FORMATO_PS = '{{.ID}}\t{{.Label "ci-local.run"}}\t{{.Names}}\t{{.Image}}';
+
+/** Ids de todos os containers da máquina (null se o docker não respondeu). */
+function listarContainers() {
+  const r = docker(['ps', '-a', '--no-trunc', '--format', FORMATO_PS]);
+  if (r.error || r.status !== 0) return null;
+  return lerListaContainers(r.stdout);
+}
+
+/**
+ * Containers criados durante a execução (não existiam no início) — os `services:`
+ * e os que os passos subiram (ex.: `supabase start`). Os que já existiam NUNCA são
+ * tocados; sem a foto do início (docker indisponível), nada é removido por aqui.
+ */
+function removerContainersDaExecucao() {
+  const removidos = [];
+  if (limpeza.containersAntes) {
+    const depois = listarContainers();
+    if (depois) {
+      const novos = containersCriadosNaExecucao(limpeza.containersAntes, depois, limpeza.marca);
+      removerContainers(novos.map((c) => c.id));
+      removidos.push(...novos);
+    }
+  }
   for (const c of [...limpeza.containers]) derrubarContainer(c);
-  for (const d of limpeza.dirs) rmSync(d, { recursive: true, force: true });
-  limpeza.dirs.clear();
+  return removidos;
+}
+
+let limpando = null;
+function limparTudo() {
+  limpando ??= (async () => {
+    await Promise.all([...limpeza.grupos].map((g) => encerrarGrupo(g)));
+    limpeza.grupos.clear();
+    if (limpeza.marca) await encerrarMarcados('CI_LOCAL_RUN', limpeza.marca);
+    const removidos = removerContainersDaExecucao();
+    for (const d of limpeza.dirs) rmSync(d, { recursive: true, force: true });
+    limpeza.dirs.clear();
+    return removidos;
+  })();
+  return limpando;
 }
 
 let interrompido = false;
@@ -133,12 +239,66 @@ for (const [sinal, codigo] of [
   ['SIGHUP', 129],
 ]) {
   process.on(sinal, () => {
-    if (interrompido) return;
+    if (interrompido) {
+      // Segundo sinal: sem esperas, direto para o SIGKILL.
+      limpeza.forcar = true;
+      return;
+    }
     interrompido = true;
-    console.error(`\n${sinal}: interrompido — limpando containers, processos e temporários...`);
-    limparTudo();
-    process.exit(codigo);
+    console.error(
+      `\n${sinal}: interrompido — encerrando passos (SIGINT → SIGTERM → SIGKILL), ` +
+        'containers e temporários... (de novo para forçar)'
+    );
+    limparTudo().finally(() => process.exit(codigo));
   });
+}
+
+// ------------------------------------------------------- restos de execuções
+const DONO = 'dono.json';
+
+/**
+ * Varre restos de execuções que morreram sem limpar (SIGKILL, queda do WSL):
+ * diretórios /tmp/ci-local-XXXXXX cujo dono.json aponta para processo morto
+ * (e os processos que herdaram a marca deles) e containers com rótulo ci-local
+ * cujo pid dono morreu. Sem dono.json o diretório não é tocado.
+ */
+async function varrerRestos(log) {
+  const base = tmpdir();
+  let nomes = [];
+  try {
+    nomes = readdirSync(base).filter((n) => /^ci-local-[A-Za-z0-9]{6}$/.test(n));
+  } catch {
+    /* tmp ilegível */
+  }
+  for (const nome of nomes) {
+    const dir = join(base, nome);
+    let dono;
+    try {
+      dono = JSON.parse(readFileSync(join(dir, DONO), 'utf8'));
+    } catch {
+      continue; // sem dono conhecido: não é nosso para apagar
+    }
+    if (donoVivo(dono)) continue;
+    await encerrarMarcados('CI_LOCAL_RUN', dir);
+    rmSync(dir, { recursive: true, force: true });
+    log(`🧹 resto de execução morta (pid ${dono.pid}) removido: ${dir}`);
+  }
+  const r = docker([
+    'ps',
+    '-a',
+    '--no-trunc',
+    '--filter',
+    'label=ci-local=1',
+    '--format',
+    '{{.ID}}\t{{.Label "ci-local.pid"}}\t{{.Label "ci-local.inicio"}}\t{{.Names}}',
+  ]);
+  if (r.error || r.status !== 0) return;
+  const orfaos = containersOrfaos(r.stdout);
+  if (orfaos.length) {
+    removerContainers(orfaos.map((c) => c.id));
+    for (const c of orfaos)
+      log(`🧹 container de execução morta (pid ${c.dono.pid}) removido: ${c.nomes || c.id}`);
+  }
 }
 
 // ---------------------------------------------------------------- argumentos
@@ -152,6 +312,8 @@ function lerArgs(argv) {
     base: 'origin/main',
     evento: 'pull_request',
     inputs: {},
+    comCredenciais: false,
+    permitirSemPr: false,
   };
   const valor = (i, nome) => {
     const v = argv[i];
@@ -172,6 +334,8 @@ function lerArgs(argv) {
     if (x === '--rapido') a.rapido = true;
     else if (x === '--listar') a.listar = true;
     else if (x === '--incluir-nao-commitado') a.incluirNaoCommitado = true;
+    else if (x === '--com-credenciais') a.comCredenciais = true;
+    else if (x === '--permitir-workflow-sem-pr') a.permitirSemPr = true;
     else if (x === '--workflow') a.workflows = lista(valor(++i, x), x);
     else if (x === '--job') a.jobs = lista(valor(++i, x), x);
     else if (x === '--base') a.base = valor(++i, x);
@@ -214,6 +378,10 @@ function executar(cmd, args, opcoes = {}) {
   return r.stdout;
 }
 
+/**
+ * `secrets.*` vêm SÓ de .env.ci.local (nunca do ambiente de quem chamou: um
+ * `secrets.GITHUB_TOKEN` não pode pegar o GITHUB_TOKEN/GH_TOKEN do terminal).
+ */
 function carregarSegredos() {
   const arq = join(ORIGEM, '.env.ci.local');
   let doArquivo = {};
@@ -230,7 +398,7 @@ function carregarSegredos() {
     {
       get: (_, k) => {
         if (typeof k !== 'string') return undefined;
-        const v = process.env[k] ?? doArquivo[k];
+        const v = doArquivo[k];
         if (v) usados.add(v);
         return v;
       },
@@ -354,16 +522,35 @@ function prepararHome(homeJob, plano) {
   for (const c of plano.copias) {
     mkdirSync(dirname(c.destino), { recursive: true });
     const ligar = new Set(c.ligar ?? []);
+    const excluir = new Set(c.excluir ?? []);
     cpSync(c.origem, c.destino, {
       recursive: true,
       dereference: false,
-      filter: (src) => !ligar.has(src.slice(c.origem.length + 1).split('/')[0]),
+      filter: (src) => {
+        const topo = src.slice(c.origem.length + 1).split('/')[0];
+        return !ligar.has(topo) && !excluir.has(topo);
+      },
     });
     for (const nome of ligar) {
       const alvo = join(c.origem, nome);
       if (existsSync(alvo)) symlinkSync(alvo, join(c.destino, nome));
     }
+    if (c.semCredencialGit) appendFileSync(c.destino, GITCONFIG_SEM_CREDENCIAL);
+    const cfgDocker = join(c.destino, 'config.json');
+    if (c.semCredencialDocker && existsSync(cfgDocker))
+      writeFileSync(cfgDocker, configDockerSemCredenciais(readFileSync(cfgDocker, 'utf8')));
   }
+}
+
+/** Diretório com shims de sudo/apt/apt-get/dpkg/su/doas/pkexec que falham (vai na frente do PATH). */
+function prepararShimsRoot(runRoot) {
+  const dir = join(runRoot, 'bin-sem-root');
+  mkdirSync(dir, { recursive: true });
+  for (const [nome, conteudo] of Object.entries(shimsDeRoot())) {
+    writeFileSync(join(dir, nome), conteudo);
+    chmodSync(join(dir, nome), 0o755);
+  }
+  return dir;
 }
 
 // --------------------------------------------------- equivalentes de `uses:`
@@ -421,6 +608,12 @@ async function subirServicos(job, jobId, ctx, log, res, containersJob) {
         nome,
         '--label',
         'ci-local=1',
+        '--label',
+        `ci-local.run=${limpeza.marca}`,
+        '--label',
+        `ci-local.pid=${process.pid}`,
+        '--label',
+        `ci-local.inicio=${inicioDoProcesso(process.pid) ?? ''}`,
         ...env,
         ...portas,
         ...opcoes,
@@ -522,7 +715,7 @@ function rodarProcesso({ bin, args, cwd, env, timeoutMs, arquivoLog, segredos })
       timer = setTimeout(
         () => {
           estourou = true;
-          matarGrupo(filho.pid);
+          encerrarGrupo(filho.pid);
         },
         Math.max(1, Math.min(timeoutMs, 2 ** 31 - 1))
       );
@@ -594,7 +787,7 @@ function inputsDoDispatch(wf, args) {
 // --------------------------------------------------------------------- job
 async function rodarJob(p) {
   const { wfNome, wf, jobId, job, matrix, rotuloBase, gh, ws, runRoot, args, segredos, log } = p;
-  const { needsResult, naoSelecionados, arquivosRapido, siteUsuario } = p;
+  const { needsResult, naoSelecionados, arquivosRapido, siteUsuario, shimsRoot } = p;
   const res = {
     wf: wfNome,
     job: rotuloBase,
@@ -602,6 +795,7 @@ async function rodarJob(p) {
     falhas: [],
     avisos: new Set(),
     naoBloqueia: false,
+    semVerificacao: false, // passou, mas não verificou nada (ex.: --rapido sem teste relacionado)
     outputs: {},
   };
   const needs = [].concat(job.needs ?? []);
@@ -673,12 +867,14 @@ async function rodarJob(p) {
     const plano = planoHomeIsolado(homeJob, process.env, existsSync, {
       pythonUserSite: siteUsuario,
       tmpdir: tmpJob,
+      comCredenciais: args.comCredenciais,
     });
     prepararHome(homeJob, plano);
     const eventoArq = join(dirJob, 'event.json');
     writeFileSync(eventoArq, JSON.stringify(gh.event));
     env = {
-      ...process.env,
+      // Lista permitida: GH_TOKEN, chaves de API etc. do terminal NÃO chegam ao passo.
+      ...ambientePermitido(process.env),
       ...plano.env,
       CI: 'true',
       GITHUB_WORKSPACE: ws,
@@ -692,7 +888,7 @@ async function rodarJob(p) {
       GITHUB_RUN_ID: 'local',
       RUNNER_TEMP: runnerTemp,
       RUNNER_OS: 'Linux',
-      // Marcas para recolher órfãos no fim do job e no Ctrl-C (ver matarMarcados).
+      // Marcas para recolher órfãos no fim do job e no Ctrl-C (ver encerrarMarcados).
       CI_LOCAL_RUN: runRoot,
       CI_LOCAL_JOB: dirJob,
     };
@@ -722,6 +918,7 @@ async function rodarJob(p) {
     const usamTmp = [];
     let n = 0;
     for (const step of job.steps ?? []) {
+      if (interrompido) break;
       n++;
       const ctxStep = ctxDe({
         steps: outputs,
@@ -773,7 +970,9 @@ async function rodarJob(p) {
       if (args.rapido && jobId === 'unit-tests' && /vitest\s+run/.test(script ?? '')) {
         // Modo rápido: só os testes ligados ao que a branch mudou (o GitHub roda tudo).
         if (!arquivosRapido.length) {
-          log(`   ⏭️  ${nome} (rápido: nenhum arquivo de código mudou nos commits da branch)`);
+          log(`   ⚠️  ${nome} (rápido: nenhum arquivo de código mudou nos commits da branch)`);
+          res.semVerificacao = true;
+          res.avisos.add(`"${nome}": --rapido sem arquivo de código mudado — nenhum teste rodou`);
           marcarPulado();
           continue;
         }
@@ -783,6 +982,7 @@ async function rodarJob(p) {
             'vitest',
             'related',
             '--run',
+            '--passWithNoTests',
             ...arquivosRapido.map((f) => (f.startsWith('-') ? `./${f}` : f)),
           ],
         };
@@ -834,8 +1034,10 @@ async function rodarJob(p) {
       if (!processo) {
         const sudo = comandosComSudo(corpo);
         if (sudo.length) {
-          log(`   ⏭️  ${nome} — requer sudo — pulado (só no GitHub)`);
-          res.avisos.add(`"${nome}": requer sudo — pulado (só no GitHub): ${sudo.join(' ; ')}`);
+          log(`   ⏭️  ${nome} — requer sudo/root — pulado (só no GitHub)`);
+          res.avisos.add(
+            `"${nome}": requer sudo/root — pulado (só no GitHub): ${sudo.join(' ; ')}`
+          );
           marcarPulado();
           continue;
         }
@@ -884,7 +1086,15 @@ async function rodarJob(p) {
       const limiteMs = Math.min(timeoutStepMs, restanteMs);
       const comum = {
         cwd,
-        env: { ...envStep, ...arqs },
+        env: {
+          ...envStep,
+          ...arqs,
+          // Shims de root SEMPRE na frente (depois de GITHUB_PATH e do env do passo):
+          // sudo/apt/dpkg/su/doas/pkexec chamados por um script ou ferramenta (ex.:
+          // playwright --with-deps) falham em vez de instalar pacotes na máquina.
+          PATH: [shimsRoot, envStep.PATH ?? ''].join(':'),
+          SUDO_ASKPASS: '/bin/false',
+        },
         timeoutMs: limiteMs,
         arquivoLog,
         segredos: segredos.valores,
@@ -917,7 +1127,13 @@ async function rodarJob(p) {
           ? `timeout do job (${timeoutJobMin} min)`
           : `timeout do passo (${timeoutStepMin} min)`
         : (r.erro ?? erroArquivos ?? `código ${code}`);
-      if (code === 0) log(`   ✅ ${descricao} (${r.segundos}s)`);
+      const semTestes =
+        processo && code === 0 && semTestesRelacionados(readFileSync(arquivoLog, 'utf8'));
+      if (semTestes) {
+        res.semVerificacao = true;
+        res.avisos.add(`"${nome}": --rapido — nenhum teste relacionado aos arquivos mudados`);
+        log(`   ⚠️  ${descricao} — nenhum teste relacionado (nada verificado) (${r.segundos}s)`);
+      } else if (code === 0) log(`   ✅ ${descricao} (${r.segundos}s)`);
       else if (continua)
         log(`   ⚠️  ${descricao} — falhou (${porque}), mas continue-on-error (${r.segundos}s)`);
       else {
@@ -942,7 +1158,7 @@ async function rodarJob(p) {
     log(`   ❌ ${e.message}`);
   } finally {
     // Como o runner: órfãos do job são recolhidos no fim dele.
-    matarMarcados('CI_LOCAL_JOB', dirJob);
+    await encerrarMarcados('CI_LOCAL_JOB', dirJob);
     for (const c of containersJob) derrubarContainer(c);
     rmSync(homeJob, { recursive: true, force: true });
     rmSync(dirJob, { recursive: true, force: true });
@@ -963,10 +1179,27 @@ async function main() {
           `Disponíveis: ${[...existentes].join(', ')}`
       );
   }
+  const semPr = workflows.filter((w) => !temGatilhoPullRequest(w.wf));
+  if (semPr.length && !args.permitirSemPr && !args.listar)
+    throw new ErroUso(
+      semPr
+        .map(
+          (w) =>
+            `${w.arquivo} não tem gatilho pull_request (on: ${gatilhosDoWorkflow(w.wf).join(', ') || '—'})`
+        )
+        .join('; ') +
+        '. Workflows de push/schedule/dispatch costumam publicar ou implantar: ' +
+        'só rodam com --permitir-workflow-sem-pr.'
+    );
   const segredos = carregarSegredos();
   const runRoot = mkdtempSync(join(tmpdir(), 'ci-local-'));
   limpeza.dirs.add(runRoot);
   limpeza.marca = runRoot;
+  // Dono vivo = esta execução; a próxima execução só apaga o diretório se este pid morrer.
+  writeFileSync(
+    join(runRoot, DONO),
+    JSON.stringify({ pid: process.pid, inicio: inicioDoProcesso(process.pid) })
+  );
   const avisosGerais = new Set();
   const execucao = new Date().toISOString().replace(/[:.]/g, '-');
   const dirLogs = join(ORIGEM, '.ci-local', execucao);
@@ -1017,7 +1250,13 @@ async function main() {
   log(`temporários: ${runRoot}\n`);
 
   let ws = gh.workspace;
+  let shimsRoot = '';
   if (!args.listar) {
+    await varrerRestos(log);
+    // Foto dos containers ANTES de qualquer passo: no fim só sai o que nasceu depois.
+    const antes = listarContainers();
+    limpeza.containersAntes = antes ? new Set(antes.map((c) => c.id)) : null;
+    shimsRoot = prepararShimsRoot(runRoot);
     try {
       ws = prepararWorkspace(runRoot, gh, args, avisosGerais, log);
     } catch (e) {
@@ -1033,7 +1272,10 @@ async function main() {
     const naoSelecionados = new Set();
     log(`════ ${wf.name ?? wfNome} (${arquivo})`);
 
+    if (!args.listar && !temGatilhoPullRequest(wf))
+      log(`⚠️  ${arquivo} sem gatilho pull_request — rodando por --permitir-workflow-sem-pr`);
     for (const jobId of ordenarJobs(wf.jobs)) {
+      if (interrompido) break;
       const job = wf.jobs[jobId];
       if (args.jobs && !args.jobs.includes(jobId)) {
         needsResult[jobId] = { result: 'skipped', outputs: {} };
@@ -1107,6 +1349,7 @@ async function main() {
           naoSelecionados,
           arquivosRapido,
           siteUsuario,
+          shimsRoot,
           dirLogs,
         });
         resultados.push(res);
@@ -1134,15 +1377,27 @@ async function main() {
   for (const a of avisosGerais) log(`⚠️  ${a}`);
   for (const r of resultados) {
     const icone =
-      r.status === 'success' ? '✅' : r.status === 'skipped' ? '⏭️ ' : r.naoBloqueia ? '⚠️ ' : '❌';
+      r.status === 'success'
+        ? r.semVerificacao
+          ? '⚠️ '
+          : '✅'
+        : r.status === 'skipped'
+          ? '⏭️ '
+          : r.naoBloqueia
+            ? '⚠️ '
+            : '❌';
     log(
-      `${icone} ${r.wf} / ${r.job}${r.status === 'failure' && r.naoBloqueia ? ' (falhou, mas continue-on-error: não bloqueia)' : ''}`
+      `${icone} ${r.wf} / ${r.job}${r.status === 'failure' && r.naoBloqueia ? ' (falhou, mas continue-on-error: não bloqueia)' : ''}${r.status === 'success' && r.semVerificacao ? ' (passou sem verificar nada — veja o aviso)' : ''}`
     );
     for (const f of r.falhas) log(`     ❌ ${f}`);
     for (const a of r.avisos) log(`     ⚠️  ${a}`);
   }
   log(
-    '\nSó no GitHub (não reproduzível aqui): prévia da Vercel; steps de infraestrutura do runner (checkout, setup-*, cache, upload de artefatos); passos com sudo/apt.'
+    '\nSó no GitHub (não reproduzível aqui): prévia da Vercel; steps de infraestrutura do runner ' +
+      '(checkout, setup-*, cache, upload de artefatos); passos que pedem root. Os detectados ' +
+      '(sudo/apt/apt-get/dpkg/su/doas/pkexec, `playwright install --with-deps`/`install-deps`) ' +
+      'são PULADOS e listados acima; qualquer outra chamada a esses comandos dentro de um passo ' +
+      'cai num shim que FALHA ("requer root — só no GitHub") e o passo fica vermelho aqui.'
   );
   if (args.rapido)
     log(
@@ -1165,17 +1420,18 @@ async function main() {
   return falhou ? 1 : 0;
 }
 
+async function encerrar(codigo) {
+  if (interrompido) return; // o tratador do sinal encerra (código 128+n)
+  const removidos = await limparTudo();
+  for (const c of removidos)
+    console.log(`🧹 container criado durante a execução removido: ${c.nomes || c.id} (${c.imagem})`);
+  process.exit(codigo);
+}
+
 main()
-  .then((codigo) => {
-    limparTudo();
-    process.exit(codigo);
-  })
+  .then((codigo) => encerrar(codigo))
   .catch((e) => {
-    limparTudo();
-    if (e instanceof ErroUso) {
-      console.error(`ci-local: ${e.message}`);
-      process.exit(2);
-    }
-    console.error(e);
-    process.exit(2);
+    if (e instanceof ErroUso) console.error(`ci-local: ${e.message}`);
+    else console.error(e);
+    return encerrar(2);
   });
