@@ -95,5 +95,22 @@ test(
 
 rmSync(tmpRepo, { recursive: true, force: true });
 
+// T7: Clone raso com 1 único commit alcançável (profundidade 1) — o
+// fallback `git log -n 2 | tail -1` devolve o próprio HEAD como base.
+// Builda (fail-open) em vez de pular, mesmo com src/ mudado.
+const shallowRepo = mkdtempSync(join(tmpdir(), 'ignore-build-shallow-'));
+execSync('git init -q', { cwd: shallowRepo });
+execSync('git config user.email "test@test.com"', { cwd: shallowRepo });
+execSync('git config user.name "Test"', { cwd: shallowRepo });
+mkdirSync(join(shallowRepo, 'src'), { recursive: true });
+writeFileSync(join(shallowRepo, 'src/index.ts'), 'export {}');
+execSync('git add . && git commit -q -m "único commit (clone raso)"', { cwd: shallowRepo, shell: true });
+test(
+  'T7: clone raso (1 commit) sem SHA anterior → fail-open (builda)',
+  run({ VERCEL_ENV: 'preview' }, 1, shallowRepo),
+  1
+);
+rmSync(shallowRepo, { recursive: true, force: true });
+
 console.log(`\n${passed} passou(aram), ${failed} falhou(aram).\n`);
 if (failed > 0) process.exit(1);
