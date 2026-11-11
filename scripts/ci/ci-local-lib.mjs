@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Lógica pura do CI local (scripts/ci/ci-local.mjs): lê os workflows do GitHub
@@ -654,13 +654,43 @@ export function arquivosParaVitestRelated(lista) {
   );
 }
 
-/** Linhas de um passo que pedem root (sudo/apt): só fazem sentido no runner descartável. */
+// ------------------------------------------------------------- root/sudo
+/** Comandos que pedem root. Cada passo roda com shims deles na frente do PATH. */
+export const COMANDOS_ROOT = ['sudo', 'apt', 'apt-get', 'dpkg', 'su', 'doas', 'pkexec'];
+
+const RE_COMANDO_ROOT = new RegExp(
+  `(?:^|[\\s;&|(\`]|/s?bin/)(?:${COMANDOS_ROOT.map((c) => c.replace(/-/g, '\\-')).join('|')})(?=[\\s;&|)]|$)`
+);
+// Playwright chama `sudo apt-get install` POR CONTA PRÓPRIA em `install --with-deps`
+// e `install-deps`: o texto do passo não tem "sudo", mas a máquina ganharia ~80 pacotes.
+const RE_PLAYWRIGHT_DEPS = /\bplaywright\b.*(?:\s--with-deps\b|\sinstall-deps\b)/;
+
+/**
+ * Linhas de um passo que pedem root (sudo/apt/dpkg/su/doas/pkexec, inclusive por
+ * /usr/bin/..., e `playwright install --with-deps`/`install-deps`): esses passos
+ * são pulados. O que escapar desta detecção (ex.: `$cmd install`) cai nos shims
+ * de `shimsDeRoot()` e falha — nunca roda como root na máquina.
+ */
 export function comandosComSudo(script) {
   return String(script ?? '')
     .split('\n')
     .filter((l) => !/^\s*#/.test(l))
-    .filter((l) => /(?:^|[\s;&|(`])(?:sudo|apt-get|apt|dpkg)(?=\s|$)/.test(l))
+    .filter((l) => RE_COMANDO_ROOT.test(l) || RE_PLAYWRIGHT_DEPS.test(l))
     .map((l) => l.trim());
+}
+
+export const MSG_SHIM_ROOT = 'requer root — só no GitHub';
+
+/** Conteúdo dos shims (nome → script) que barram root em todo passo. */
+export function shimsDeRoot() {
+  return Object.fromEntries(
+    COMANDOS_ROOT.map((nome) => [
+      nome,
+      '#!/bin/sh\n' +
+        `echo "ci-local: \\"${nome} $*\\" ${MSG_SHIM_ROOT} (bloqueado na máquina local)" >&2\n` +
+        'exit 1\n',
+    ])
+  );
 }
 
 /** Troca valores de segredo por *** (como o mascaramento do runner). */
@@ -680,10 +710,14 @@ export function mascarar(texto, valores) {
 // HOME descartável por job. Caches (bun, playwright, deno, npm) continuam os
 // reais. Configurações graváveis (git, gh, docker) são COPIADAS para o HOME do
 // job: um `git config --global` ou `docker login` de um passo fica preso ao job.
+// CREDENCIAIS NÃO vão junto (sem `--com-credenciais`): o `hosts.yml` do gh (token
+// com escopo repo/workflow) não é copiado, o `config.json` do docker perde
+// auths/credsStore/credHelpers e o `credential.helper` do git é zerado.
 // O site-packages do usuário (onde fica o pip numa máquina sem pip no sistema)
 // entra só para leitura via PYTHONPATH; o que o passo instala vai para o HOME do job.
 export function planoHomeIsolado(homeJob, base = process.env, existe = existsSync, opcoes = {}) {
   const real = base.HOME ?? '';
+  const comCredenciais = !!opcoes.comCredenciais;
   const seExiste = (p) => (p && existe(p) ? p : undefined);
   const copias = [];
   const copiar = (origem, destinoRel, extra = {}) => {
@@ -692,11 +726,20 @@ export function planoHomeIsolado(homeJob, base = process.env, existe = existsSyn
     copias.push({ origem, destino, ...extra });
     return destino;
   };
-  const gitconfig = copiar(base.GIT_CONFIG_GLOBAL ?? join(real, '.gitconfig'), '.gitconfig');
-  const gh = copiar(base.GH_CONFIG_DIR ?? join(real, '.config', 'gh'), join('.config', 'gh'));
+  const gitconfig = copiar(
+    base.GIT_CONFIG_GLOBAL ?? join(real, '.gitconfig'),
+    '.gitconfig',
+    comCredenciais ? {} : { semCredencialGit: true }
+  );
+  const gh = copiar(
+    base.GH_CONFIG_DIR ?? join(real, '.config', 'gh'),
+    join('.config', 'gh'),
+    comCredenciais ? {} : { excluir: ['hosts.yml'] }
+  );
   // cli-plugins (docker compose/buildx do usuário) é ligado, não copiado: binários grandes, só leitura.
   const docker = copiar(base.DOCKER_CONFIG ?? join(real, '.docker'), '.docker', {
     ligar: ['cli-plugins'],
+    ...(comCredenciais ? {} : { semCredencialDocker: true }),
   });
   const env = {
     HOME: homeJob,
@@ -726,4 +769,164 @@ export function planoHomeIsolado(homeJob, base = process.env, existe = existsSyn
 
 export function ambienteIsolado(homeJob, base = process.env, existe = existsSync, opcoes = {}) {
   return planoHomeIsolado(homeJob, base, existe, opcoes).env;
+}
+
+/** config.json do docker sem credenciais (auths, credsStore, credHelpers). */
+export function configDockerSemCredenciais(conteudo) {
+  let cfg;
+  try {
+    cfg = JSON.parse(String(conteudo));
+  } catch {
+    return '{}\n';
+  }
+  if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) return '{}\n';
+  const { auths: _a, credsStore: _s, credHelpers: _h, ...resto } = cfg;
+  return `${JSON.stringify(resto, null, 2)}\n`;
+}
+
+/** Acrescentado à cópia do .gitconfig: zera a lista de credential.helper (git ≥ 2.9). */
+export const GITCONFIG_SEM_CREDENCIAL =
+  '\n# ci-local: credenciais do git não entram nos passos (use --com-credenciais)\n[credential]\n\thelper =\n';
+
+// ------------------------------------------------------- ambiente dos passos
+// O passo NÃO herda o ambiente de quem chamou (GH_TOKEN, chaves de API, AWS_*...):
+// só esta lista passa; o resto vem do workflow (env:), do isolamento do HOME e
+// das variáveis do runner que o CI local define.
+const AMBIENTE_PERMITIDO = new Set([
+  'PATH',
+  'LANG',
+  'LANGUAGE',
+  'TERM',
+  'COLORTERM',
+  'NO_COLOR',
+  'TZ',
+  'USER',
+  'LOGNAME',
+  'SHELL',
+  'HOSTNAME',
+  'CI',
+  'DOCKER_HOST',
+  'XDG_RUNTIME_DIR',
+  'SSL_CERT_FILE',
+  'SSL_CERT_DIR',
+  'NODE_EXTRA_CA_CERTS',
+  'HTTP_PROXY',
+  'HTTPS_PROXY',
+  'NO_PROXY',
+  'http_proxy',
+  'https_proxy',
+  'no_proxy',
+]);
+
+export function ambientePermitido(base = process.env) {
+  return Object.fromEntries(
+    Object.entries(base).filter(
+      ([k, v]) => v !== undefined && (AMBIENTE_PERMITIDO.has(k) || /^LC_[A-Z]+$/.test(k))
+    )
+  );
+}
+
+// ------------------------------------------------------------------ gatilhos
+/** Eventos do `on:` de um workflow (string, lista ou mapa). */
+export function gatilhosDoWorkflow(wf) {
+  const on = wf?.on ?? wf?.[true];
+  if (typeof on === 'string') return [on];
+  if (Array.isArray(on)) return on.map(String);
+  if (on && typeof on === 'object') return Object.keys(on);
+  return [];
+}
+
+/** Só workflows de PR rodam por padrão: os de push/schedule/dispatch costumam publicar ou implantar. */
+export function temGatilhoPullRequest(wf) {
+  return gatilhosDoWorkflow(wf).includes('pull_request');
+}
+
+// --------------------------------------------------------------- modo rápido
+/** Saída do vitest quando `related` não achou nenhum teste ligado aos arquivos. */
+export function semTestesRelacionados(saida) {
+  return /No (?:affected )?test files found/i.test(String(saida ?? ''));
+}
+
+// -------------------------------------------------------------- encerramento
+/**
+ * Encerra com escalada: SIGINT → espera → SIGTERM → espera → SIGKILL. Para assim
+ * que `vivo()` fica falso. Devolve o último sinal enviado (ou null se já tinha saído).
+ * `apressar()` verdadeiro corta as esperas (ex.: segundo Ctrl-C).
+ */
+export async function encerrarEscalonado({
+  sinalizar,
+  vivo,
+  esperaMs = 5000,
+  passoMs = 100,
+  apressar = () => false,
+  dormir = (ms) => new Promise((ok) => setTimeout(ok, ms)),
+}) {
+  let ultimo = null;
+  for (const sinal of ['SIGINT', 'SIGTERM', 'SIGKILL']) {
+    if (!vivo()) return ultimo;
+    sinalizar(sinal);
+    ultimo = sinal;
+    if (sinal === 'SIGKILL') return ultimo;
+    for (let t = 0; t < esperaMs && !apressar(); t += passoMs) {
+      await dormir(passoMs);
+      if (!vivo()) return ultimo;
+    }
+  }
+  return ultimo;
+}
+
+// ------------------------------------------------------ restos de execuções
+/** Início do processo (campo 22 de /proc/<pid>/stat): distingue PID reaproveitado. */
+export function inicioDoProcesso(pid, ler = (f) => readFileSync(f, 'utf8')) {
+  try {
+    const stat = ler(`/proc/${pid}/stat`);
+    const campos = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+    return campos[19] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** O dono (pid + início) ainda é o mesmo processo vivo? */
+export function donoVivo(dono, inicioDe = inicioDoProcesso) {
+  if (!dono || !Number.isInteger(Number(dono.pid)) || Number(dono.pid) <= 0) return false;
+  const atual = inicioDe(Number(dono.pid));
+  if (atual === null) return false;
+  return dono.inicio === undefined || dono.inicio === null || String(dono.inicio) === atual;
+}
+
+/**
+ * Containers (linhas `id\trun\tnomes\timagem` do `docker ps`) a remover no fim:
+ * só os que NÃO existiam no início desta execução e não pertencem a outra execução
+ * do CI local (rótulo ci-local.run de outro dono). Os que já existiam nunca entram.
+ */
+export function containersCriadosNaExecucao(antes, depois, runAtual) {
+  return depois.filter((c) => !antes.has(c.id) && (!c.run || c.run === runAtual));
+}
+
+/** Linhas de `docker ps --format '{{.ID}}\t{{.Label "ci-local.run"}}\t{{.Names}}\t{{.Image}}'`. */
+export function lerListaContainers(saida) {
+  return String(saida ?? '')
+    .split('\n')
+    .filter((l) => l.trim())
+    .map((l) => {
+      const [id, run, nomes, imagem] = l.split('\t');
+      return { id: id.trim(), run: run ?? '', nomes: nomes ?? '', imagem: imagem ?? '' };
+    });
+}
+
+/**
+ * Containers do CI local cujo dono morreu (linhas `id\tpid\tinicio\tnomes`). Sem
+ * rótulo de pid (versão antiga), o pid vem do sufixo do nome `ci-local-...-<pid>`.
+ */
+export function containersOrfaos(saida, vivoDe = donoVivo) {
+  return String(saida ?? '')
+    .split('\n')
+    .filter((l) => l.trim())
+    .map((l) => {
+      const [id, pid, inicio, nomes = ''] = l.split('\t');
+      const pidNome = /-(\d+)$/.exec(nomes.split(',')[0] ?? '')?.[1];
+      return { id: id.trim(), nomes, dono: { pid: pid || pidNome, inicio: inicio || undefined } };
+    })
+    .filter((c) => c.dono.pid && !vivoDe(c.dono));
 }

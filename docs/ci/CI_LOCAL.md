@@ -16,16 +16,18 @@ enviar. Ele **não tem uma cópia** dos comandos: lê os próprios arquivos
 | `npm run ci:local -- --incluir-nao-commitado`    | Testa também o que ainda não foi commitado (diff e arquivos novos)                                          | —                |
 | `npm run ci:local -- --evento workflow_dispatch` | Simula outro evento (`pull_request` é o padrão; aceita `push`, `workflow_dispatch`) e `--input chave=valor` | —                |
 | `npm run ci:local -- --base origin/main`         | Base de comparação (padrão: `origin/main`)                                                                  | —                |
+| `npm run ci:local -- --com-credenciais`          | Copia também o login do `gh` (`hosts.yml`), as credenciais do docker e o `credential.helper` do git         | —                |
+| `npm run ci:local -- --permitir-workflow-sem-pr` | Deixa rodar workflow **sem** gatilho `pull_request` (push/schedule/dispatch costumam publicar ou implantar) | —                |
 
 No fim aparece um **resumo** com ✅/❌ por job, os avisos e o caminho do log de
 cada passo (`.ci-local/<data>/`, fora do git). Códigos de saída:
 
-| Código | Significado                                                                         |
-| ------ | ----------------------------------------------------------------------------------- |
-| `0`    | tudo o que rodou passou                                                             |
-| `1`    | algum job falharia no GitHub                                                        |
-| `2`    | uso inválido (`--job`/`--workflow` inexistente ou sem valor) ou base sem merge-base |
-| `3`    | **nenhum** job rodou (todos pulados pelo `if:`/`needs`) — nada foi verificado       |
+| Código | Significado                                                                                                                                               |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`    | tudo o que rodou passou                                                                                                                                   |
+| `1`    | algum job falharia no GitHub                                                                                                                              |
+| `2`    | uso inválido (`--job`/`--workflow` inexistente ou sem valor, workflow sem gatilho `pull_request` sem `--permitir-workflow-sem-pr`) ou base sem merge-base |
+| `3`    | **nenhum** job rodou (todos pulados pelo `if:`/`needs`) — nada foi verificado                                                                             |
 
 ## O que ele testa: o HEAD commitado, num clone descartável
 
@@ -41,20 +43,20 @@ de fora. Para incluí-las use `--incluir-nao-commitado`.
 
 ## Como cada coisa do GitHub vira local
 
-| No GitHub                                                               | Aqui                                                                                                                                                                                                                                                       |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Passos `run:`                                                           | Rodam igual, com o mesmo shell do runner (`bash -e`, ou o `shell:` do passo/`defaults.run`), no `working-directory` do passo/job/workflow                                                                                                                  |
-| `strategy.matrix`                                                       | Algoritmo oficial (produto cartesiano, `exclude`, `include` anexado a todas as combinações compatíveis ou como combinação nova)                                                                                                                            |
-| `services:` (ex.: Postgres do `db-guard`)                               | Sobe o mesmo container no Docker (portas só em `127.0.0.1`) e derruba no fim, no erro e no Ctrl-C                                                                                                                                                          |
-| `${{ }}` e `if:`                                                        | Semântica do Actions: coerção numérica de `==`/`<`/`>`, status implícito `success()`, `!cancelled()` roda depois de falha, `needs` com falha pula o job (salvo `always()`/`failure()`), funções `contains/startsWith/endsWith/format/join/toJSON/fromJSON` |
-| Expressão que o CI local não sabe avaliar (ex.: `hashFiles`)            | **Não roda**: o passo/job falha com aviso claro (nada roda "no escuro")                                                                                                                                                                                    |
-| `continue-on-error`, `timeout-minutes` (passo e job)                    | Avaliados como expressão. Timeout mata o grupo de processos inteiro; o `timeout-minutes` do job é um orçamento para todos os passos                                                                                                                        |
-| `$GITHUB_ENV`, `$GITHUB_PATH`, `$GITHUB_OUTPUT`, `$GITHUB_STEP_SUMMARY` | Funcionam entre os passos (heredoc incluído)                                                                                                                                                                                                               |
-| `gitleaks/gitleaks-action`                                              | `gitleaks git` nos commits novos (equivalente local)                                                                                                                                                                                                       |
-| "Rejeitar edição de migration já existente" (`github-script`)           | `git diff --diff-filter=M` em `supabase/migrations/*.sql` (mesmo critério)                                                                                                                                                                                 |
-| `actions/checkout`, `setup-*`, `cache`, `upload-artifact`               | Não se aplicam (a máquina já tem o código e as ferramentas)                                                                                                                                                                                                |
-| Passos com `sudo`/`apt-get`/`apt`                                       | **Não rodam** na sua máquina: "requer sudo — pulado (só no GitHub)" aparece no resumo com o comando                                                                                                                                                        |
-| `${{ secrets.* }}`                                                      | Vêm do ambiente ou de `.env.ci.local` (copie de `.env.ci.local.example`; fora do git). Os valores são **mascarados** (`***`) nos logs                                                                                                                      |
+| No GitHub                                                               | Aqui                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Passos `run:`                                                           | Rodam igual, com o mesmo shell do runner (`bash -e`, ou o `shell:` do passo/`defaults.run`), no `working-directory` do passo/job/workflow                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `strategy.matrix`                                                       | Algoritmo oficial (produto cartesiano, `exclude`, `include` anexado a todas as combinações compatíveis ou como combinação nova)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `services:` (ex.: Postgres do `db-guard`)                               | Sobe o mesmo container no Docker (portas só em `127.0.0.1`) e derruba no fim, no erro e no Ctrl-C                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `${{ }}` e `if:`                                                        | Semântica do Actions: coerção numérica de `==`/`<`/`>`, status implícito `success()`, `!cancelled()` roda depois de falha, `needs` com falha pula o job (salvo `always()`/`failure()`), funções `contains/startsWith/endsWith/format/join/toJSON/fromJSON`                                                                                                                                                                                                                                                                                                                                                                                        |
+| Expressão que o CI local não sabe avaliar (ex.: `hashFiles`)            | **Não roda**: o passo/job falha com aviso claro (nada roda "no escuro")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `continue-on-error`, `timeout-minutes` (passo e job)                    | Avaliados como expressão. Timeout mata o grupo de processos inteiro; o `timeout-minutes` do job é um orçamento para todos os passos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `$GITHUB_ENV`, `$GITHUB_PATH`, `$GITHUB_OUTPUT`, `$GITHUB_STEP_SUMMARY` | Funcionam entre os passos (heredoc incluído)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `gitleaks/gitleaks-action`                                              | `gitleaks git` nos commits novos (equivalente local)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| "Rejeitar edição de migration já existente" (`github-script`)           | `git diff --diff-filter=M` em `supabase/migrations/*.sql` (mesmo critério)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `actions/checkout`, `setup-*`, `cache`, `upload-artifact`               | Não se aplicam (a máquina já tem o código e as ferramentas)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Passos que pedem root                                                   | **Nunca rodam como root** na sua máquina. Os detectados no texto (`sudo`, `apt`, `apt-get`, `dpkg`, `su`, `doas`, `pkexec`, inclusive `/usr/bin/sudo`, e `playwright install --with-deps`/`install-deps`, que chamam `sudo apt-get` por conta própria) são **pulados**: "requer sudo/root — pulado (só no GitHub)" no resumo, com o comando. O que escapar da detecção (ex.: `$cmd install`, uma ferramenta que chama `sudo` por dentro) cai em **shims** desses sete comandos, sempre na frente do `PATH` (também depois de `$GITHUB_PATH`), que saem com erro "requer root — só no GitHub" — o passo **falha** aqui. `SUDO_ASKPASS=/bin/false`. |
+| `${{ secrets.* }}`                                                      | Vêm **só** de `.env.ci.local` (copie de `.env.ci.local.example`; fora do git) — nunca do ambiente do terminal (um `secrets.GITHUB_TOKEN` não pega o seu `GH_TOKEN`). Os valores são **mascarados** (`***`) nos logs                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 **Só existe no GitHub:** a prévia da Vercel (deploy na nuvem deles).
 
@@ -64,10 +66,23 @@ de fora. Para incluí-las use `--incluir-nao-commitado`.
   no erro e no Ctrl-C). `~/.gitconfig`, `~/.config/gh` e `~/.docker` são
   **copiados** para o HOME do job: `git config --global`, `gh auth` ou
   `docker login` de um passo não mudam os seus.
+- **Credenciais não vão junto** (sem `--com-credenciais`): o `hosts.yml` do `gh`
+  (token com escopo `repo`/`workflow`) não é copiado, o `config.json` do docker
+  perde `auths`/`credsStore`/`credHelpers` e a cópia do `.gitconfig` zera o
+  `credential.helper`.
+- **O ambiente do terminal não passa para os passos.** Só uma lista permitida
+  (`PATH`, `LANG`, `LC_*`, `TERM`, `COLORTERM`, `NO_COLOR`, `TZ`, `USER`, `LOGNAME`,
+  `SHELL`, `HOSTNAME`, `CI`, `DOCKER_HOST`, `XDG_RUNTIME_DIR`, certificados e proxy);
+  o resto vem do `env:` do workflow, do HOME isolado e das variáveis do runner.
+  `GH_TOKEN`, chaves de API e afins do seu terminal **não** chegam aos passos.
+- Só workflows com gatilho `pull_request` rodam por padrão (os padrões `ci` e
+  `db-guard` têm). Outros exigem `--permitir-workflow-sem-pr`; `--listar` mostra qualquer um.
 - Caches (bun, Playwright, Deno, npm) continuam os reais. O `site-packages` do
   usuário entra só para leitura (`PYTHONPATH`): o `python3 -m pip` instalado em
   `~/.local` funciona, e o que um passo instala vai para o HOME do job.
 - `DOCKER_SHIM_STATE_DIR` (docker-shim do `db-guard`) vai para o temporário da execução.
+- O `git` do CI local no seu checkout roda com `GIT_OPTIONAL_LOCKS=0`: `git status`
+  não reescreve o índice nem disputa o `index.lock` com o editor.
 - O resumo avisa o que ainda escapa do isolamento: `docker tag` (reetiqueta uma
   imagem no docker da máquina), portas publicadas por `services:` e caminhos fixos
   em `/tmp` escritos pelos próprios workflows.
@@ -82,7 +97,24 @@ verdade, use o próprio controlador (Docker, sem credencial real):
     bash scripts/e2e-isolated/run.sh suite authenticated-1-of-3 /tmp/e2e-isolated-authenticated-1
 
 (veja `scripts/e2e-isolated/README.md` para os cinco grupos e o login). Para só
-conferir o caminho do workflow: `npm run ci:local -- --workflow e2e-logado --evento workflow_dispatch`.
+conferir o caminho do workflow: `npm run ci:local -- --workflow e2e-logado --evento workflow_dispatch --permitir-workflow-sem-pr`.
+
+## Encerramento e limpeza
+
+- Timeout de passo/job e Ctrl-C encerram o grupo de processos com escalada:
+  **SIGINT → espera (5 s) → SIGTERM → espera → SIGKILL** (um segundo Ctrl-C pula
+  as esperas). Órfãos em segundo plano (marcados pelo ambiente) seguem a mesma escalada.
+- No fim (sucesso, erro ou Ctrl-C) são removidos os containers **criados durante a
+  execução**: a lista de containers é fotografada no início e só sai o que não
+  estava nela (e não pertence a outra execução viva do CI local). Containers que já
+  existiam **nunca** são tocados; se o docker não respondeu no início, nada é removido
+  por esse caminho. Atenção: um container que **você** suba em paralelo, durante a
+  execução, também entra nessa conta — o resumo lista cada container removido.
+- Ao iniciar, o CI local varre restos de execuções que morreram sem limpar (SIGKILL,
+  queda do WSL): diretórios `/tmp/ci-local-*` cujo `dono.json` aponta para processo
+  morto (pid + início do processo, então pid reaproveitado não engana) e os processos
+  que herdaram a marca deles, e containers com rótulo `ci-local` cujo pid dono morreu.
+  Diretório sem `dono.json` não é tocado.
 
 ## Pré-requisitos
 
@@ -95,7 +127,12 @@ como no GitHub.
 - `--rapido` usa os **commits** da branch (`git diff -z` entre o merge-base e o
   HEAD; com `--incluir-nao-commitado`, também o working tree). Sem merge-base com
   a base (ex.: repositório raso) ele **para com código 2** em vez de "não mudou nada".
+  Se nenhum teste estiver ligado aos arquivos mudados, o passo aparece com ⚠️
+  "nenhum teste relacionado (nada verificado)", não com ✅.
   É para iterar: antes do merge o GitHub roda a suíte inteira.
+- O job `e2e` não instala browsers nem dependências de sistema aqui (os dois passos
+  do Playwright pedem root): ele usa os browsers já baixados em `~/.cache/ms-playwright`
+  (rode `bunx playwright install chromium firefox webkit` uma vez, sem `--with-deps`).
 - `hashFiles()` e contextos que só existem no runner não são avaliados: o passo que
   depender deles falha com aviso (os `uses:` de cache que usam `hashFiles` são
   infraestrutura e não rodam).

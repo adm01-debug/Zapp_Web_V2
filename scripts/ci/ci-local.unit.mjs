@@ -23,6 +23,21 @@ import {
   arquivosDoDiffZ,
   portaLocal,
   paraNumero,
+  COMANDOS_ROOT,
+  shimsDeRoot,
+  MSG_SHIM_ROOT,
+  ambientePermitido,
+  configDockerSemCredenciais,
+  GITCONFIG_SEM_CREDENCIAL,
+  gatilhosDoWorkflow,
+  temGatilhoPullRequest,
+  semTestesRelacionados,
+  encerrarEscalonado,
+  inicioDoProcesso,
+  donoVivo,
+  containersCriadosNaExecucao,
+  lerListaContainers,
+  containersOrfaos,
 } from './ci-local-lib.mjs';
 
 const ctx = {
@@ -394,4 +409,225 @@ test('isolamento não inventa caminho de cache inexistente', () => {
   const env = ambienteIsolado('/tmp/h', { HOME: '/home/fulano', PATH: '/usr/bin' }, () => false);
   assert.equal(env.PLAYWRIGHT_BROWSERS_PATH, undefined);
   assert.equal(env.HOME, '/tmp/h');
+});
+
+// ---------------------------------------------------- achado 1: root/sudo
+test('requer root: playwright --with-deps/install-deps, caminho absoluto, su/doas/pkexec', () => {
+  assert.deepEqual(
+    comandosComSudo(
+      [
+        'bunx playwright@1.64.1 install --with-deps chromium firefox webkit',
+        'bunx playwright install-deps chromium',
+        'npx playwright install chromium',
+        '/usr/bin/sudo -n true',
+        'doas ls',
+        'su - root -c x',
+        'x=1; pkexec y',
+        'ls /var/cache/apt',
+        'echo sudoers',
+        'dpkg -l',
+      ].join('\n')
+    ),
+    [
+      'bunx playwright@1.64.1 install --with-deps chromium firefox webkit',
+      'bunx playwright install-deps chromium',
+      '/usr/bin/sudo -n true',
+      'doas ls',
+      'su - root -c x',
+      'x=1; pkexec y',
+      'dpkg -l',
+    ]
+  );
+});
+
+test('job e2e do ci.yml: os dois passos de dependências do Playwright são marcados como root', () => {
+  const doc = parseYaml(
+    readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8')
+  );
+  const marcados = doc.jobs.e2e.steps
+    .filter((s) => s.run && /playwright/.test(s.run) && /with-deps|install-deps/.test(s.run))
+    .map((s) => comandosComSudo(s.run).length);
+  assert.ok(marcados.length >= 2, 'o e2e deixou de instalar dependências? revise o teste');
+  assert.ok(marcados.every((n) => n > 0));
+});
+
+test('shims de root: um por comando, saem com erro e dizem por quê', () => {
+  const shims = shimsDeRoot();
+  assert.deepEqual(Object.keys(shims).sort(), [...COMANDOS_ROOT].sort());
+  for (const nome of ['sudo', 'apt', 'apt-get', 'dpkg', 'su', 'doas', 'pkexec']) {
+    assert.match(shims[nome], /^#!\/bin\/sh\n/);
+    assert.match(shims[nome], /exit 1\n$/);
+    assert.ok(shims[nome].includes(MSG_SHIM_ROOT));
+  }
+  assert.equal(MSG_SHIM_ROOT, 'requer root — só no GitHub');
+});
+
+// ------------------------------------------------- achado 2: credenciais
+test('HOME do job: hosts.yml do gh e credenciais do docker/git só com --com-credenciais', () => {
+  const sem = planoHomeIsolado('/tmp/h', { HOME: '/home/fulano' }, () => true);
+  const porDestino = Object.fromEntries(sem.copias.map((c) => [c.destino, c]));
+  assert.deepEqual(porDestino['/tmp/h/.config/gh'].excluir, ['hosts.yml']);
+  assert.equal(porDestino['/tmp/h/.docker'].semCredencialDocker, true);
+  assert.equal(porDestino['/tmp/h/.gitconfig'].semCredencialGit, true);
+  const com = planoHomeIsolado('/tmp/h', { HOME: '/home/fulano' }, () => true, {
+    comCredenciais: true,
+  });
+  for (const c of com.copias) {
+    assert.equal(c.excluir, undefined);
+    assert.equal(c.semCredencialDocker, undefined);
+    assert.equal(c.semCredencialGit, undefined);
+  }
+  assert.match(GITCONFIG_SEM_CREDENCIAL, /\[credential\]\n\thelper =\n/);
+  assert.deepEqual(
+    JSON.parse(
+      configDockerSemCredenciais(
+        JSON.stringify({
+          auths: { 'ghcr.io': { auth: 'eDp5' } },
+          credsStore: 'desktop.exe',
+          credHelpers: { x: 'y' },
+          currentContext: 'default',
+        })
+      )
+    ),
+    { currentContext: 'default' }
+  );
+  assert.equal(configDockerSemCredenciais('não é json'), '{}\n');
+});
+
+test('ambiente do passo é lista permitida: token e chaves do terminal não passam', () => {
+  const env = ambientePermitido({
+    PATH: '/usr/bin',
+    LANG: 'pt_BR.UTF-8',
+    LC_ALL: 'C',
+    TERM: 'xterm',
+    TZ: 'America/Sao_Paulo',
+    GH_TOKEN: 'ghp_x',
+    GITHUB_TOKEN: 'ghs_x',
+    OPENROUTER_API_KEY: 'sk-x',
+    AWS_SECRET_ACCESS_KEY: 'x',
+    SSH_AUTH_SOCK: '/tmp/ssh',
+    HOME: '/home/fulano',
+  });
+  assert.deepEqual(Object.keys(env).sort(), ['LANG', 'LC_ALL', 'PATH', 'TERM', 'TZ']);
+});
+
+test('gatilho pull_request: string, lista e mapa (e `on` lido como true pelo YAML 1.1)', () => {
+  assert.equal(temGatilhoPullRequest({ on: 'pull_request' }), true);
+  assert.equal(temGatilhoPullRequest({ on: ['push', 'pull_request'] }), true);
+  assert.equal(temGatilhoPullRequest({ on: { pull_request: null, push: {} } }), true);
+  assert.equal(temGatilhoPullRequest({ [true]: { pull_request: {} } }), true);
+  assert.equal(temGatilhoPullRequest({ on: { push: {}, workflow_dispatch: {} } }), false);
+  assert.equal(temGatilhoPullRequest({ on: 'pull_request_target' }), false);
+  assert.equal(temGatilhoPullRequest({}), false);
+  assert.deepEqual(gatilhosDoWorkflow({ on: { schedule: [], push: {} } }), ['schedule', 'push']);
+  for (const wf of ['ci', 'db-guard'])
+    assert.ok(
+      temGatilhoPullRequest(
+        parseYaml(
+          readFileSync(new URL(`../../.github/workflows/${wf}.yml`, import.meta.url), 'utf8')
+        )
+      ),
+      `${wf}.yml perdeu o gatilho pull_request`
+    );
+});
+
+// ------------------------------------------------- achado 3: encerramento
+test('encerramento escala SIGINT → SIGTERM → SIGKILL e para quando o processo sai', async () => {
+  const dormir = async () => {};
+  const enviados = [];
+  const teimoso = await encerrarEscalonado({
+    sinalizar: (s) => enviados.push(s),
+    vivo: () => true,
+    esperaMs: 300,
+    dormir,
+  });
+  assert.equal(teimoso, 'SIGKILL');
+  assert.deepEqual(enviados, ['SIGINT', 'SIGTERM', 'SIGKILL']);
+
+  const educado = [];
+  let vivo = true;
+  const r = await encerrarEscalonado({
+    sinalizar: (s) => {
+      educado.push(s);
+      vivo = false;
+    },
+    vivo: () => vivo,
+    esperaMs: 300,
+    dormir,
+  });
+  assert.equal(r, 'SIGINT');
+  assert.deepEqual(educado, ['SIGINT']);
+
+  const nada = [];
+  assert.equal(
+    await encerrarEscalonado({ sinalizar: (s) => nada.push(s), vivo: () => false, dormir }),
+    null
+  );
+  assert.deepEqual(nada, []);
+
+  let esperas = 0;
+  const pressa = [];
+  await encerrarEscalonado({
+    sinalizar: (s) => pressa.push(s),
+    vivo: () => true,
+    esperaMs: 10_000,
+    apressar: () => true,
+    dormir: async () => esperas++,
+  });
+  assert.deepEqual(pressa, ['SIGINT', 'SIGTERM', 'SIGKILL']);
+  assert.equal(esperas, 0, 'segundo Ctrl-C não espera');
+});
+
+test('containers removidos no fim: só os criados durante a execução, nunca os que já existiam', () => {
+  const antes = new Set(['a1', 'b2']);
+  const depois = lerListaContainers(
+    [
+      'a1\t\tpostgres-do-usuario\tpostgres:17',
+      'b2\t/tmp/ci-local-outro\tci-local-antigo\tpostgres:17',
+      'c3\t/tmp/ci-local-esta\tci-local-x-db-1\tpostgres:17',
+      'd4\t\tsupabase_db_zapp\tpostgres:15',
+      'e5\t/tmp/ci-local-outra-viva\tci-local-y-db-2\tpostgres:17',
+    ].join('\n')
+  );
+  assert.deepEqual(
+    containersCriadosNaExecucao(antes, depois, '/tmp/ci-local-esta').map((c) => c.id),
+    ['c3', 'd4']
+  );
+});
+
+// --------------------------------------------- achado 4: restos de execuções
+test('restos de execuções: dono = pid + início do processo (pid reaproveitado não engana)', () => {
+  const inicio = inicioDoProcesso(process.pid);
+  assert.match(String(inicio), /^\d+$/);
+  assert.equal(donoVivo({ pid: process.pid, inicio }), true);
+  assert.equal(donoVivo({ pid: process.pid, inicio: `${inicio}9` }), false, 'pid reaproveitado');
+  assert.equal(donoVivo({ pid: 0 }), false);
+  assert.equal(donoVivo(null), false);
+  assert.equal(
+    // campo 22 = 19º depois do estado (campo 3); o nome pode ter ")" e espaço
+    inicioDoProcesso(42, () => `42 (nome com ) e espaço) S ${'1 '.repeat(18)}777 0 0`),
+    '777'
+  );
+  const vivos = new Set(['10']);
+  const orfaos = containersOrfaos(
+    [
+      'c1\t10\t5\tci-local-db-guard-postgres-10',
+      'c2\t20\t5\tci-local-db-guard-postgres-20',
+      'c3\t\t\tci-local-db-guard-postgres-30',
+      'c4\t\t\tci-local-db-guard-postgres-10',
+      'c5\t\t\tsem-pid-no-nome',
+    ].join('\n'),
+    (d) => vivos.has(String(d.pid))
+  );
+  assert.deepEqual(
+    orfaos.map((c) => c.id),
+    ['c2', 'c3']
+  );
+});
+
+// ------------------------------------------------------- achado 5: rápido
+test('--rapido: saída do vitest sem teste relacionado é reconhecida', () => {
+  assert.equal(semTestesRelacionados('No test files found, exiting with code 0\n'), true);
+  assert.equal(semTestesRelacionados('No affected test files found'), true);
+  assert.equal(semTestesRelacionados(' Test Files  3 passed (3)'), false);
 });
