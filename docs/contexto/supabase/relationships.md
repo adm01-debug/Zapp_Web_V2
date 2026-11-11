@@ -249,6 +249,7 @@
 | public.talkx_segment_versions | segment_id | public.talkx_segments | id | CASCADE | NO ACTION |
 | public.talkx_segments | created_by | public.profiles | id | SET NULL | NO ACTION |
 | public.talkx_segments | published_by | public.profiles | id | SET NULL | NO ACTION |
+| public.talkx_suppression_reasons | created_by | auth.users | id | SET NULL | NO ACTION |
 | public.talkx_template_variants | template_id | public.talkx_templates | id | CASCADE | NO ACTION |
 | public.talkx_template_versions | saved_by | public.profiles | id | SET NULL | NO ACTION |
 | public.talkx_template_versions | template_id | public.talkx_templates | id | CASCADE | NO ACTION |

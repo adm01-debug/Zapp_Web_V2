@@ -10887,6 +10887,19 @@
         "type": "jsonb"
       },
       {
+        "comment": "CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state().",
+        "default": "'{}'::jsonb",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "brinde_state",
+        "nullable": false,
+        "position": 25,
+        "schema": "public",
+        "table": "copilot_sessions",
+        "type": "jsonb"
+      },
+      {
         "comment": null,
         "default": "gen_random_uuid()",
         "generated": null,
@@ -27879,6 +27892,110 @@
       },
       {
         "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "code",
+        "nullable": false,
+        "position": 1,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "label",
+        "nullable": false,
+        "position": 2,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": "'informativo'::text",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "tone",
+        "nullable": false,
+        "position": 3,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "is_system",
+        "nullable": false,
+        "position": 4,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "boolean"
+      },
+      {
+        "comment": null,
+        "default": "true",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "active",
+        "nullable": false,
+        "position": 5,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "boolean"
+      },
+      {
+        "comment": null,
+        "default": "100",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "sort_order",
+        "nullable": false,
+        "position": 6,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "integer"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "created_by",
+        "nullable": true,
+        "position": 7,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "created_at",
+        "nullable": false,
+        "position": 8,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "timestamp with time zone"
+      },
+      {
+        "comment": null,
         "default": "gen_random_uuid()",
         "generated": null,
         "identity": null,
@@ -44723,6 +44840,76 @@
       },
       {
         "columns": [
+          "code"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (code = lower(code) AND code ~ '^[a-z_]+$'::text)",
+        "name": "talkx_suppression_reasons_code_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "created_by"
+        ],
+        "deferrable": false,
+        "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+        "name": "talkx_suppression_reasons_created_by_fkey",
+        "on_delete": "SET NULL",
+        "on_update": "NO ACTION",
+        "ref_columns": [
+          "id"
+        ],
+        "ref_schema": "auth",
+        "ref_table": "users",
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "FOREIGN KEY",
+        "validated": true
+      },
+      {
+        "columns": [
+          "code"
+        ],
+        "deferrable": false,
+        "definition": "PRIMARY KEY (code)",
+        "name": "talkx_suppression_reasons_pkey",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "PRIMARY KEY",
+        "validated": true
+      },
+      {
+        "columns": [
+          "tone"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (tone = ANY (ARRAY['informativo'::text, 'alerta'::text, 'crítico'::text]))",
+        "name": "talkx_suppression_reasons_tone_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
           "content"
         ],
         "deferrable": false,
@@ -50817,10 +51004,10 @@
         },
         "comment": null,
         "config": [
-          "search_path=public, pg_temp"
+          "search_path=public, extensions, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "f513759200031334",
+        "definition_sha": "a471e4888bc16eb6",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -56468,7 +56655,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 392,
+          "code_total_files": 393,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -65432,9 +65619,13 @@
             {
               "file": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 5,
+          "code_total_files": 6,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -65529,6 +65720,43 @@
         "security_definer": false,
         "strict": false,
         "volatility": "stable"
+      },
+      {
+        "args": "",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [
+            "public.talkx_suppression_reasons.talkx_suppression_reasons_guard_trigger"
+          ],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "5180ce3b35294783",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": true,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_suppression_reasons_guard",
+        "owner": "postgres",
+        "returns": "trigger",
+        "schema": "public",
+        "security_definer": false,
+        "strict": false,
+        "volatility": "volatile"
       },
       {
         "args": "p_days integer",
@@ -77589,6 +77817,20 @@
       },
       {
         "columns": [
+          "code"
+        ],
+        "definition": "CREATE UNIQUE INDEX talkx_suppression_reasons_pkey ON public.talkx_suppression_reasons USING btree (code)",
+        "is_primary": true,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "talkx_suppression_reasons_pkey",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_suppression_reasons"
+      },
+      {
+        "columns": [
           "template_id"
         ],
         "definition": "CREATE INDEX idx_talkx_template_variants_template ON public.talkx_template_variants USING btree (template_id)",
@@ -79160,6 +79402,12 @@
         "code": "fk_without_index",
         "detail": "FK sem índice nas colunas ['segment_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
         "object": "public.talkx_campaign_segments.talkx_campaign_segments_segment_id_fkey",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "fk_without_index",
+        "detail": "FK sem índice nas colunas ['created_by']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
+        "object": "public.talkx_suppression_reasons.talkx_suppression_reasons_created_by_fkey",
         "severity": "BAIXA"
       },
       {
@@ -81308,6 +81556,18 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.talkx_settings.talkx_settings_admin_write",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.talkx_suppression_reasons.talkx_suppression_reasons_update",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.talkx_suppression_reasons.talkx_suppression_reasons_write",
         "severity": "BAIXA"
       },
       {
@@ -88252,6 +88512,11 @@
         "version": "20261031130000"
       },
       {
+        "name": "copilot_sessions_brinde_state",
+        "statements": null,
+        "version": "20261031140000"
+      },
+      {
         "name": "high3-fk-indexes",
         "statements": 48,
         "statements_sha": "98abe2ce2f3aa308",
@@ -88364,6 +88629,11 @@
         "statements": 6,
         "statements_sha": "c5d02659b1fada72",
         "version": "20261107170000"
+      },
+      {
+        "name": "fix_create_department_invite_search_path",
+        "statements": null,
+        "version": "20261108090000"
       },
       {
         "name": "talkx_x074_analytics_rpcs",
@@ -93553,6 +93823,42 @@
         "with_check": "is_admin_or_supervisor(auth.uid())"
       },
       {
+        "cmd": "SELECT",
+        "name": "talkx_suppression_reasons_read",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "using": "true",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "name": "talkx_suppression_reasons_update",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "using": "is_admin_or_supervisor(auth.uid())",
+        "with_check": "is_admin_or_supervisor(auth.uid())"
+      },
+      {
+        "cmd": "INSERT",
+        "name": "talkx_suppression_reasons_write",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "talkx_suppression_reasons",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
+      },
+      {
         "cmd": "DELETE",
         "name": "talkx_template_variants_delete",
         "permissive": "PERMISSIVE",
@@ -98476,6 +98782,21 @@
         "from_extension": false,
         "is_partition": false,
         "kind": "table",
+        "name": "talkx_suppression_reasons",
+        "owner": "postgres",
+        "parent": null,
+        "partition_bound": null,
+        "partition_key": null,
+        "replica_identity": "default",
+        "rls_enabled": true,
+        "rls_forced": false,
+        "schema": "public"
+      },
+      {
+        "comment": null,
+        "from_extension": false,
+        "is_partition": false,
+        "kind": "table",
         "name": "talkx_template_variants",
         "owner": "postgres",
         "parent": null,
@@ -100325,6 +100646,17 @@
         "schema": "public",
         "status": "enabled",
         "table": "talkx_segments",
+        "timing": "BEFORE"
+      },
+      {
+        "definition": "CREATE TRIGGER talkx_suppression_reasons_guard_trigger BEFORE INSERT OR UPDATE ON talkx_suppression_reasons FOR EACH ROW EXECUTE FUNCTION talkx_suppression_reasons_guard()",
+        "events": "INSERT OR UPDATE",
+        "function": "public.talkx_suppression_reasons_guard",
+        "level": "ROW",
+        "name": "talkx_suppression_reasons_guard_trigger",
+        "schema": "public",
+        "status": "enabled",
+        "table": "talkx_suppression_reasons",
         "timing": "BEFORE"
       },
       {

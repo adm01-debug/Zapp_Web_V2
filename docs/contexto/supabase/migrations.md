@@ -1077,6 +1077,7 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261031110000 | [copilot_live_helpers](migrations/20261031110000_copilot_live_helpers.sql) | 4 |
 | 20261031120000 | [copilot_phase4_brinde_intelligence](migrations/20261031120000_copilot_phase4_brinde_intelligence.sql) | 10 |
 | 20261031130000 | [search_event_rpc](migrations/20261031130000_search_event_rpc.sql) | 10 |
+| 20261031140000 | [copilot_sessions_brinde_state](migrations/20261031140000_copilot_sessions_brinde_state.sql) | 0 |
 | 20261031170000 | [high3-fk-indexes](migrations/20261031170000_high3-fk-indexes.sql) | 48 |
 | 20261101213000 | [rls_update_with_check_explicit](migrations/20261101213000_rls_update_with_check_explicit.sql) | 8 |
 | 20261102012200 | [department_invites_restringe_escrita](migrations/20261102012200_department_invites_restringe_escrita.sql) | 1 |
@@ -1096,6 +1097,7 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261107153000 | [fix_gamification_streak_resolutions_guard](migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql) | 2 |
 | 20261107163000 | [fix_copilot_rls_wrong_join_column](migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql) | 4 |
 | 20261107170000 | [fix_message_reactions_rls](migrations/20261107170000_fix_message_reactions_rls.sql) | 6 |
+| 20261108090000 | [fix_create_department_invite_search_path](migrations/20261108090000_fix_create_department_invite_search_path.sql) | 0 |
 | 20261108201000 | [talkx_x074_analytics_rpcs](migrations/20261108201000_talkx_x074_analytics_rpcs.sql) | 1 |
 | 20261108202000 | [talkx_x086_template_metrics_rpcs](migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql) | 1 |
 | 20261108203000 | [talkx_x058_campaign_queue_segment](migrations/20261108203000_talkx_x058_campaign_queue_segment.sql) | 1 |

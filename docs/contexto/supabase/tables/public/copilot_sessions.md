@@ -40,6 +40,7 @@
 | 22 | `decision_role` | `text` | sim |  |  | CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…). |
 | 23 | `occasion` | `text` | sim |  |  | CV-035/036 — ocasião comercial detectada (natal, sipat, outubro_rosa, …). |
 | 24 | `stakeholders` | `jsonb` | não | `'[]'::jsonb` |  | CV-039 — pessoas citadas na conversa que participam da decisão. |
+| 25 | `brinde_state` | `jsonb` | não | `'{}'::jsonb` |  | CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state(). |
 
 
 ## Constraints

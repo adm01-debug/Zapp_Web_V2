@@ -2,6 +2,19 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-11 22:22 UTC
+
+- **colunas** adicionado (9): `public.copilot_sessions.brinde_state`, `public.talkx_suppression_reasons.active`, `public.talkx_suppression_reasons.code`, `public.talkx_suppression_reasons.created_at`, `public.talkx_suppression_reasons.created_by`, `public.talkx_suppression_reasons.is_system`, `public.talkx_suppression_reasons.label`, `public.talkx_suppression_reasons.sort_order`, `public.talkx_suppression_reasons.tone`
+- **constraints** adicionado (4): `public.talkx_suppression_reasons.talkx_suppression_reasons_code_check`, `public.talkx_suppression_reasons.talkx_suppression_reasons_created_by_fkey`, `public.talkx_suppression_reasons.talkx_suppression_reasons_pkey`, `public.talkx_suppression_reasons.talkx_suppression_reasons_tone_check`
+- **functions** adicionado (1): `public.talkx_suppression_reasons_guard()`
+- **functions** alterado (3): `public.create_department_invite(p_department_id uuid, p_max_uses integer, p_expires_hours integer)`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.talkx_suppress_contact(p_contact_id uuid, p_phone text, p_reason text, p_reason_code talkx_blacklist_reason, p_origin text, p_source_message_id uuid, p_campaign_id uuid)`
+- **indexes** adicionado (1): `public.talkx_suppression_reasons_pkey`
+- **lints** adicionado (3): `fk_without_index:public.talkx_suppression_reasons.talkx_suppression_reasons_created_by_fkey`, `policy_auth_fn_not_wrapped:public.talkx_suppression_reasons.talkx_suppression_reasons_update`, `policy_auth_fn_not_wrapped:public.talkx_suppression_reasons.talkx_suppression_reasons_write`
+- **migrations** adicionado (2): `20261031140000_copilot_sessions_brinde_state`, `20261108090000_fix_create_department_invite_search_path`
+- **policies (RLS)** adicionado (3): `public.talkx_suppression_reasons.talkx_suppression_reasons_read`, `public.talkx_suppression_reasons.talkx_suppression_reasons_update`, `public.talkx_suppression_reasons.talkx_suppression_reasons_write`
+- **tabelas** adicionado (1): `public.talkx_suppression_reasons`
+- **triggers** adicionado (1): `public.talkx_suppression_reasons.talkx_suppression_reasons_guard_trigger`
+
 ## 2026-11-11 17:44 UTC
 
 - **functions** alterado (4): `public.claim_outbound_message(p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer)`, `public.fail_outbound_message(p_message_id uuid, p_claim_token uuid, p_retryable boolean)`, `public.guard_message_delivery_internal_fields()`, `public.is_admin_or_supervisor(_user_id uuid)`

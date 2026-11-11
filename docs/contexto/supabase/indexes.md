@@ -671,6 +671,7 @@ Uso e tamanho em `stats.md`.
 | public.talkx_storage_purge_queue | talkx_storage_purge_queue_pending_dedup | btree | bucket_id, object_name | sim | sim | `(processed_at IS NULL)` |
 | public.talkx_storage_purge_queue | talkx_storage_purge_queue_pending_idx | btree | enqueued_at | não | sim | `(processed_at IS NULL)` |
 | public.talkx_storage_purge_queue | talkx_storage_purge_queue_pkey | btree | id | sim | sim |  |
+| public.talkx_suppression_reasons | talkx_suppression_reasons_pkey | btree | code | sim | sim |  |
 | public.talkx_template_variants | idx_talkx_template_variants_template | btree | template_id | não | sim |  |
 | public.talkx_template_variants | talkx_template_variants_pkey | btree | id | sim | sim |  |
 | public.talkx_template_variants | talkx_template_variants_template_id_label_key | btree | template_id, label | sim | sim |  |

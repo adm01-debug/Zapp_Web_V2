@@ -79,7 +79,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.copilot_objection_catalog](tables/public/copilot_objection_catalog.md) | table | sim | 2 | 7 | não |  |
 | [public.copilot_outcomes](tables/public/copilot_outcomes.md) | table | sim | 2 | 8 | não |  |
 | [public.copilot_seller_settings](tables/public/copilot_seller_settings.md) | table | sim | 3 | 3 | não |  |
-| [public.copilot_sessions](tables/public/copilot_sessions.md) | table | sim | 2 | 24 | não |  |
+| [public.copilot_sessions](tables/public/copilot_sessions.md) | table | sim | 2 | 25 | não |  |
 | [public.copilot_usage](tables/public/copilot_usage.md) | table | sim | 2 | 7 | não |  |
 | [public.crisis_room_alerts](tables/public/crisis_room_alerts.md) | table | sim | 4 | 10 | não |  |
 | [public.crm_contact_links](tables/public/crm_contact_links.md) | table | sim | 2 | 9 | não |  |
@@ -195,6 +195,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.talkx_segments](tables/public/talkx_segments.md) | table | sim | 4 | 22 | sim |  |
 | [public.talkx_settings](tables/public/talkx_settings.md) | table | sim | 2 | 4 | não |  |
 | [public.talkx_storage_purge_queue](tables/public/talkx_storage_purge_queue.md) | table | sim | 0 | 9 | não | [RLS-sem-policy: intencional] Fila de purge de storage do TalkX. Gerenciada pela edge function talkx-storage-purge (service_role). |
+| [public.talkx_suppression_reasons](tables/public/talkx_suppression_reasons.md) | table | sim | 3 | 8 | não |  |
 | [public.talkx_template_variants](tables/public/talkx_template_variants.md) | table | sim | 4 | 8 | não |  |
 | [public.talkx_template_versions](tables/public/talkx_template_versions.md) | table | sim | 1 | 15 | não | Historico imutavel de templates Talk X; escrita somente pela RPC atomica canonica. |
 | [public.talkx_templates](tables/public/talkx_templates.md) | table | sim | 4 | 23 | sim |  |

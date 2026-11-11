@@ -2,7 +2,7 @@ CREATE OR REPLACE FUNCTION public.create_department_invite(p_department_id uuid,
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
+ SET search_path TO 'public', 'extensions', 'pg_temp'
 AS $function$
 declare
   v_profile_id uuid;
@@ -20,7 +20,7 @@ begin
   end if;
 
   for v_attempt in 1..5 loop
-    v_code := upper(substr(translate(encode(extensions.gen_random_bytes(16), 'base64'), '+/=', ''), 1, 8));
+    v_code := upper(substr(translate(encode(gen_random_bytes(16), 'base64'), '+/=', ''), 1, 8));
     begin
       insert into public.department_invitations(
         department_id, code, max_uses, expires_at, created_by, status
