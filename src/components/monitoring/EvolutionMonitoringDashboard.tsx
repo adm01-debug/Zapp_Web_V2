@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Activity, Wifi, Webhook, RefreshCw, Stethoscope, Timer, Bell, BellOff, CalendarDays, BarChart3, Clock, Volume2, VolumeX, AlertTriangle } from 'lucide-react';
+import { Activity, Wifi, Webhook, RefreshCw, Stethoscope, Timer, Bell, BellOff, CalendarDays, BarChart3, Clock, Volume2, VolumeX, AlertTriangle, PauseCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEvolutionMonitoring } from './hooks/useEvolutionMonitoring';
 import type { TimePeriod } from './hooks/useEvolutionMonitoring';
@@ -20,6 +20,7 @@ import { MonitoringAvailabilityHeatmap } from './MonitoringAvailabilityHeatmap';
 import { MonitoringSLAPanel } from './MonitoringSLAPanel';
 import { MonitoringIncidents } from './MonitoringIncidents';
 import { MonitoringInboxSilence } from './MonitoringInboxSilence';
+import { MonitoringInstancePauses } from './MonitoringInstancePauses';
 import { DashboardSkeleton } from './MonitoringSkeletons';
 
 const PERIODS: { value: TimePeriod; label: string }[] = [
@@ -292,6 +293,9 @@ export function EvolutionMonitoringDashboard() {
           <TabsTrigger value="inbox-silence" className="gap-1.5">
             <BellOff className="w-4 h-4" />Entrada muda
           </TabsTrigger>
+          <TabsTrigger value="pauses" className="gap-1.5">
+            <PauseCircle className="w-4 h-4" />Pausas
+          </TabsTrigger>
           <TabsTrigger value="health-logs" className="gap-1.5">
             <Activity className="w-4 h-4" />Logs
             {errLogs > 0 && (
@@ -396,6 +400,18 @@ export function EvolutionMonitoringDashboard() {
               transition={{ duration: 0.2 }}
             >
               <MonitoringInboxSilence />
+            </motion.div>
+          </TabsContent>
+
+          {/* Só monta com a aba aberta: a leitura de instance_pauses não roda em outra aba. */}
+          <TabsContent value="pauses" key="pauses">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <MonitoringInstancePauses />
             </motion.div>
           </TabsContent>
 
