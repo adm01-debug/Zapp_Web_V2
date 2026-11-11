@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7f33c2725043b4cfb32fa2cc160cf06dd0fdf87c",
+  "sha": "db960cd267c80667a9560f5afa64ef5819ef12df",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 02:58 UTC",
+  "generated_at": "2026-11-11 03:34 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054624
+  "code_lines": 1054659
  },
  "version": "1.3.2",
- "facts_hash": "08955f0540ac95af",
+ "facts_hash": "deb3091b4959693b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 91874,
+   "lines": 91909,
    "tables": [
     "a",
     "alem_do_limite",
@@ -263146,7 +263146,7 @@
   },
   "scripts/ci/check-pr-workflow-secrets.mjs": {
    "path": "scripts/ci/check-pr-workflow-secrets.mjs",
-   "lines": 190,
+   "lines": 215,
    "exports": [
     "function hasPullRequestTrigger",
     "function hasPushTriggerUnrestricted",
@@ -263165,7 +263165,7 @@
   },
   "scripts/ci/check-pr-workflow-secrets.unit.mjs": {
    "path": "scripts/ci/check-pr-workflow-secrets.unit.mjs",
-   "lines": 302,
+   "lines": 312,
    "rule_comments": [
     "nao deve ser confundido com o escalar `secrets: inherit`",
     "scanWorkflowDirectory deve desduplicar (teste indireto — o ultimo teste de integracao"
@@ -385952,10 +385952,20 @@
   }
  },
  "git": {
-  "sha": "7f33c2725043b4cfb32fa2cc160cf06dd0fdf87c",
+  "sha": "db960cd267c80667a9560f5afa64ef5819ef12df",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "db960cd",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)",
+    "files": [
+     "scripts/ci/check-pr-workflow-secrets.mjs",
+     "scripts/ci/check-pr-workflow-secrets.unit.mjs"
+    ]
+   },
    {
     "sha": "7f33c27",
     "date": "2026-11-10",
@@ -386294,16 +386304,6 @@
     "files": [
      "src/components/talkx/TalkXSuppression.tsx"
     ]
-   },
-   {
-    "sha": "f332a29",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(chat): guard de scroll programático evita cancelamento do scrollToIndex (#2808)",
-    "files": [
-     "src/components/inbox/chat/ChatMessagesArea.tsx",
-     "src/components/inbox/chat/__tests__/ChatMessagesArea.scroll-programatico.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -386348,6 +386348,14 @@
     2
    ],
    [
+    "scripts/ci/check-pr-workflow-secrets.mjs",
+    1
+   ],
+   [
+    "scripts/ci/check-pr-workflow-secrets.unit.mjs",
+    1
+   ],
+   [
     "scripts/talkx/gen-estados.mjs",
     1
    ],
@@ -386377,14 +386385,6 @@
    ],
    [
     "scripts/docs/publication.mjs",
-    1
-   ],
-   [
-    "scripts/docs/publication.test.mjs",
-    1
-   ],
-   [
-    "scripts/docs/verificar-docs-realtime.mjs",
     1
    ]
   ]

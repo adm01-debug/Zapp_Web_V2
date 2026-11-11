@@ -180,8 +180,8 @@
   },
   {
    "arquivo": "scripts/ci/check-pr-workflow-secrets.mjs",
-   "descricao": null,
-   "linhas": 190,
+   "descricao": "* YAML flow-style mapping (`on: { pull_request: {} }`) é sintaxe valida e aceita pelo",
+   "linhas": 215,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

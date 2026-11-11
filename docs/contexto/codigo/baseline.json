@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7f33c2725043b4cfb32fa2cc160cf06dd0fdf87c",
+  "commit": "db960cd267c80667a9560f5afa64ef5819ef12df",
   "branch": "main",
-  "data_commit": "2026-11-10T23:51:52-03:00",
+  "data_commit": "2026-11-11T00:20:52-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "db960cd",
+    "data": "2026-11-11",
+    "assunto": "fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)"
+   },
    {
     "sha": "7f33c27",
     "data": "2026-11-10",
@@ -126,14 +131,9 @@
     "sha": "893c152",
     "data": "2026-11-10",
     "assunto": "⬆️ docker: Bump golang from `d200d2d` to `fa3d596` in /infrastructure/preview-egress-proxy (#2895)"
-   },
-   {
-    "sha": "5892191",
-    "data": "2026-11-10",
-    "assunto": "fix(conexao): restaura health check anterior à PR 2910 (#2916)"
    }
   ],
-  "arquivos_mudados_7d": 660,
+  "arquivos_mudados_7d": 662,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887764,
+  "linhas_codigo": 887799,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 211,
-   "linhas": 43758
+   "linhas": 43793
   },
   "scripts/db-audit": {
    "arquivos": 81,

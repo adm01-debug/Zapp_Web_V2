@@ -755,11 +755,11 @@
   {
    "arquivo": "scripts/ci/check-pr-workflow-secrets.unit.mjs",
    "tipo": "unit",
-   "linhas": 302,
+   "linhas": 312,
    "testa": [
     "scripts/ci/check-pr-workflow-secrets.mjs"
    ],
-   "casos": 36
+   "casos": 37
   },
   {
    "arquivo": "scripts/ci/check-quarantine.unit.mjs",
