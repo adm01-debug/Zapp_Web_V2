@@ -72,6 +72,14 @@ test('rejeita caminho absoluto fora do repositorio e do temporario', () => {
   assert.match(result.stderr, /fora das raizes permitidas/);
 });
 
+test('caminho valido e dentro da raiz, mas arquivo inexistente, da ERRO limpo (sem stack cru)', () => {
+  const inexistente = path.join(ROOT, 'docs', 'catalogo', 'ARQUIVO_QUE_NAO_EXISTE_NO_REPO.md');
+  const result = executar(inexistente);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /^ERRO: /);
+  assert.doesNotMatch(result.stderr, /at Object\.<anonymous>/);
+});
+
 test('aceita o caminho default do plano dentro do repositorio', () => {
   // O que este caso garante e que o caminho default do repositorio nao e
   // barrado pela guarda; a validade estrutural do plano canonico e provada
