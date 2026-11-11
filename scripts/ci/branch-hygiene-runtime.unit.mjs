@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, readFileSync, existsSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { jobOf, stepsOf, valueOf, runOf, shellCode, onlyStep, conditionOf, conditionAllows, assertBlocking } from './workflow-test-support.mjs';
@@ -13,6 +13,11 @@ const job = jobOf(source, 'audit');
 const steps = stepsOf(job);
 const reportStep = onlyStep(steps, (s) => valueOf(s, 'id') === 'relatorio', 'coleta de branches');
 const pruneStep = onlyStep(steps, (s) => shellCode(s).includes('node scripts/ci/branch-podaveis.mjs'), 'W98');
+// Diretórios reais de node e jq no PATH de quem roda o teste (sem gh/git: esses são fakes).
+const toolDirs = [...new Set([dirname(process.execPath), ...['jq'].map((tool) => {
+  const found = spawnSync('sh', ['-c', 'command -v ' + tool], { encoding: 'utf8' }).stdout.trim();
+  return found ? dirname(found) : null;
+}).filter(Boolean)])];
 const slaStep = onlyStep(steps, (s) => shellCode(s).includes('node scripts/ci/sla-code-scanning.mjs'), 'W83');
 const publishStep = onlyStep(steps, (s) => shellCode(s).includes('gh issue edit'), 'publicacao');
 const day = 86_400_000;
@@ -102,7 +107,10 @@ function fixture(t, config = {}) {
   writeFileSync(summary, 'SUMMARY ANTERIOR\n');
   if (config.tsv !== null) writeFileSync(join(temp, 'branch-equivalentes.tsv'), config.tsv ?? oldTsv);
   const env = {
-    PATH: bin + ':/usr/bin:/bin',
+    // Os fakes (gh/git) vêm primeiro; depois só os diretórios das ferramentas reais
+    // que os steps usam (node, jq). No runner elas estão em /usr/bin; numa máquina
+    // com nvm/asdf/~/.local/bin não — sem isto o CI local falhava à toa.
+    PATH: [bin, ...toolDirs, '/usr/bin', '/bin'].join(':'),
     GH_TOKEN: 'offline-fixture-only',
     REPO: 'fixture/repo',
     RUNNER_TEMP: temp,
