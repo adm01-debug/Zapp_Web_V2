@@ -19,10 +19,21 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'ci-local.mjs');
-const GIT = ['-c', 'user.name=ci', '-c', 'user.email=ci@local', '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null'];
+const GIT = [
+  '-c',
+  'user.name=ci',
+  '-c',
+  'user.email=ci@local',
+  '-c',
+  'commit.gpgsign=false',
+  '-c',
+  'core.hooksPath=/dev/null',
+];
 
 function envLimpo(extra = {}) {
-  const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')));
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_'))
+  );
   return { ...env, ...extra };
 }
 
@@ -143,7 +154,12 @@ test('passo com sudo/apt não roda na máquina: pulado com aviso e comando lista
 
 test('argumentos inválidos saem com 2 (job/workflow inexistente ou sem valor)', (t) => {
   const { src } = repo(t, { ci: wf(`  a:\n    runs-on: x\n    steps:\n      - run: 'true'\n`) });
-  for (const args of [['--workflow', 'ci', '--job', 'nao-existe'], ['--workflow', 'nao-existe'], ['--workflow'], ['--job']]) {
+  for (const args of [
+    ['--workflow', 'ci', '--job', 'nao-existe'],
+    ['--workflow', 'nao-existe'],
+    ['--workflow'],
+    ['--job'],
+  ]) {
     const r = rodar(src, args);
     assert.equal(r.code, 2, `${args.join(' ')}: ${r.out}`);
   }
@@ -279,9 +295,11 @@ test('timeout mata o grupo de processos (netos inclusive) e o orçamento é do j
 });
 
 test('working-directory, defaults e arquivos do runner (GITHUB_ENV/OUTPUT/PATH)', (t) => {
-  const { src } = repo(t, {
-    wd: wf(
-      `  a:
+  const { src } = repo(
+    t,
+    {
+      wd: wf(
+        `  a:
     runs-on: x
     steps:
       - id: s1
@@ -300,9 +318,11 @@ test('working-directory, defaults e arquivos do runner (GITHUB_ENV/OUTPUT/PATH)'
           test "$(qual)" = p2
           test -f README.md
 `,
-      'defaults:\n  run:\n    working-directory: sub\n'
-    ),
-  }, { 'sub/.keep': '' });
+        'defaults:\n  run:\n    working-directory: sub\n'
+      ),
+    },
+    { 'sub/.keep': '' }
+  );
   const r = rodar(src, ['--workflow', 'wd']);
   assert.equal(r.code, 0, r.out);
 });
@@ -362,7 +382,10 @@ test('--rapido: nomes com aspas/acento/espaço vão como argumentos (sem shell) 
   const fake = join(raiz, 'bin');
   mkdirSync(fake);
   const registro = join(raiz, 'bun-args');
-  writeFileSync(join(fake, 'bun'), `#!/bin/sh\nfor a in "$@"; do printf '%s\\0' "$a"; done > "${registro}"\n`);
+  writeFileSync(
+    join(fake, 'bun'),
+    `#!/bin/sh\nfor a in "$@"; do printf '%s\\0' "$a"; done > "${registro}"\n`
+  );
   chmodSync(join(fake, 'bun'), 0o755);
   const r = rodar(src, ['--rapido', '--workflow', 'ci'], { PATH: `${fake}:${process.env.PATH}` });
   assert.equal(r.code, 0, r.out);
@@ -390,7 +413,10 @@ test('Ctrl-C (SIGINT) mata os passos e apaga os temporários', async (t) => {
           wait
 `),
   });
-  const filho = spawn(process.execPath, [SCRIPT, '--workflow', 'longo'], { cwd: src, env: envLimpo() });
+  const filho = spawn(process.execPath, [SCRIPT, '--workflow', 'longo'], {
+    cwd: src,
+    env: envLimpo(),
+  });
   let out = '';
   filho.stdout.on('data', (d) => (out += d));
   filho.stderr.on('data', (d) => (out += d));

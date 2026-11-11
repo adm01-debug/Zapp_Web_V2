@@ -124,14 +124,23 @@ test('funções puras da documentação: contains, startsWith, endsWith, format,
   const c = { github: { event: { issue: { labels: [{ name: 'bug' }, { name: 'Docs' }] } } } };
   assert.equal(avaliarExpressao("contains('Hello world', 'llo')", c), true);
   assert.equal(avaliarExpressao("contains(github.event.issue.labels.*.name, 'docs')", c), true);
-  assert.equal(avaliarExpressao("contains(fromJSON('[\"push\", \"pull_request\"]'), 'push')", c), true);
+  assert.equal(
+    avaliarExpressao('contains(fromJSON(\'["push", "pull_request"]\'), \'push\')', c),
+    true
+  );
   assert.equal(avaliarExpressao("startsWith('Hello world', 'he')", c), true);
   assert.equal(avaliarExpressao("endsWith('Hello world', 'ld')", c), true);
-  assert.equal(avaliarExpressao("format('Hello {0} {1} {2}', 'Mona', 'the', 'Octocat')", c), 'Hello Mona the Octocat');
-  assert.equal(avaliarExpressao("format('{{Hello {0} {1} {2}!}}', 'Mona', 'the', 'Octocat')", c), '{Hello Mona the Octocat!}');
+  assert.equal(
+    avaliarExpressao("format('Hello {0} {1} {2}', 'Mona', 'the', 'Octocat')", c),
+    'Hello Mona the Octocat'
+  );
+  assert.equal(
+    avaliarExpressao("format('{{Hello {0} {1} {2}!}}', 'Mona', 'the', 'Octocat')", c),
+    '{Hello Mona the Octocat!}'
+  );
   assert.equal(avaliarExpressao("join(github.event.issue.labels.*.name, ', ')", c), 'bug, Docs');
-  assert.equal(avaliarExpressao("fromJSON('{\"a\": 3}').a", c), 3);
-  assert.equal(avaliarExpressao("github.event.issue.labels[1].name", c), 'Docs');
+  assert.equal(avaliarExpressao('fromJSON(\'{"a": 3}\').a', c), 3);
+  assert.equal(avaliarExpressao('github.event.issue.labels[1].name', c), 'Docs');
 });
 
 test('status implícito: if sem função de status vale success() && (if)', () => {
@@ -225,9 +234,12 @@ test('matriz: include só com chaves novas anexa em todas; só include não cria
     },
   });
   assert.equal(m.length, 4);
-  assert.deepEqual(m.filter((c) => c.npm === 6), [{ os: 'windows-latest', node: 16, npm: 6 }]);
+  assert.deepEqual(
+    m.filter((c) => c.npm === 6),
+    [{ os: 'windows-latest', node: 16, npm: 6 }]
+  );
   assert.throws(
-    () => expandirMatriz({ strategy: { matrix: "${{ fromJSON(needs.x.outputs.m) }}" } }, {}),
+    () => expandirMatriz({ strategy: { matrix: '${{ fromJSON(needs.x.outputs.m) }}' } }, {}),
     /JSON|mapa/
   );
 });
@@ -278,12 +290,16 @@ test('git diff -z: nomes com espaço, aspas e acento chegam intactos', () => {
     "src/x'$(id)'.ts",
     'src/ação.ts',
   ]);
-  assert.deepEqual(arquivosParaVitestRelated(['src/ação.ts', 'src/ação.ts', 'a.md']), ['src/ação.ts']);
+  assert.deepEqual(arquivosParaVitestRelated(['src/ação.ts', 'src/ação.ts', 'a.md']), [
+    'src/ação.ts',
+  ]);
 });
 
 test('sudo/apt é detectado (comentário e palavra parecida não)', () => {
   assert.deepEqual(
-    comandosComSudo('echo a\nsudo apt-get update -qq && x\n# sudo nada\nlaptop install\napt install y'),
+    comandosComSudo(
+      'echo a\nsudo apt-get update -qq && x\n# sudo nada\nlaptop install\napt install y'
+    ),
     ['sudo apt-get update -qq && x', 'apt install y']
   );
 });

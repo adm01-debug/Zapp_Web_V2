@@ -97,9 +97,7 @@ export function usaFuncaoStatus(expr) {
   } catch {
     return false;
   }
-  return tokens.some(
-    (t, k) => t.t === 'id' && FUNCOES_STATUS.has(t.v) && tokens[k + 1]?.v === '('
-  );
+  return tokens.some((t, k) => t.t === 'id' && FUNCOES_STATUS.has(t.v) && tokens[k + 1]?.v === '(');
 }
 
 // ------------------------------------------------------ coerção (especificação)

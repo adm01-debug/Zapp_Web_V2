@@ -311,7 +311,17 @@ function prepararWorkspace(runRoot, gh, args, avisos, log) {
           encoding: undefined,
         });
       const novos = arquivosDoDiffZ(
-        executar('git', ['-C', ORIGEM, 'ls-files', '-z', '--others', '--exclude-standard', '--', '.', ':!.ci-local'])
+        executar('git', [
+          '-C',
+          ORIGEM,
+          'ls-files',
+          '-z',
+          '--others',
+          '--exclude-standard',
+          '--',
+          '.',
+          ':!.ci-local',
+        ])
       );
       for (const f of novos) {
         mkdirSync(dirname(join(ws, f)), { recursive: true });
@@ -368,7 +378,11 @@ function equivalenteLocal(uses, step, gh) {
       cmd: `gitleaks git --no-banner --log-opts="${base}..HEAD"`,
     };
   }
-  if (acao === 'actions/github-script' && /Rejeitar edicao de migration/i.test(step.name ?? '') && base) {
+  if (
+    acao === 'actions/github-script' &&
+    /Rejeitar edicao de migration/i.test(step.name ?? '') &&
+    base
+  ) {
     // Mesmo critério do workflow: só 'modified' em supabase/migrations/*.sql.
     return {
       desc: 'migration existente editada? (equivalente local)',
@@ -399,7 +413,19 @@ async function subirServicos(job, jobId, ctx, log, res, containersJob) {
     const imagem = interpolar(def.image, ctx).texto;
     const r = spawnSync(
       'docker',
-      ['run', '-d', '--rm', '--name', nome, '--label', 'ci-local=1', ...env, ...portas, ...opcoes, imagem],
+      [
+        'run',
+        '-d',
+        '--rm',
+        '--name',
+        nome,
+        '--label',
+        'ci-local=1',
+        ...env,
+        ...portas,
+        ...opcoes,
+        imagem,
+      ],
       { encoding: 'utf8' }
     );
     if (r.status !== 0) {
@@ -486,7 +512,10 @@ function rodarProcesso({ bin, args, cwd, env, timeoutMs, arquivoLog, segredos })
     }
     filho.on('error', (e) => {
       escrita.linha(`[ci-local] não consegui iniciar "${bin}": ${e.code ?? e.message}`);
-      fim({ code: 127, erro: `"${bin}" não encontrado ou não executável (${e.code ?? e.message})` });
+      fim({
+        code: 127,
+        erro: `"${bin}" não encontrado ou não executável (${e.code ?? e.message})`,
+      });
     });
     if (filho.pid) limpeza.grupos.add(filho.pid);
     if (Number.isFinite(timeoutMs))
@@ -554,9 +583,11 @@ function carregarWorkflows(nomes) {
 
 function inputsDoDispatch(wf, args) {
   const on = wf.on ?? wf[true];
-  const def = on && typeof on === 'object' && !Array.isArray(on) ? on.workflow_dispatch?.inputs : null;
+  const def =
+    on && typeof on === 'object' && !Array.isArray(on) ? on.workflow_dispatch?.inputs : null;
   const inputs = {};
-  for (const [k, v] of Object.entries(def ?? {})) if (v?.default !== undefined) inputs[k] = v.default;
+  for (const [k, v] of Object.entries(def ?? {}))
+    if (v?.default !== undefined) inputs[k] = v.default;
   return { ...inputs, ...args.inputs };
 }
 
@@ -696,7 +727,11 @@ async function rodarJob(p) {
         steps: outputs,
         runner: { temp: runnerTemp, os: 'Linux', arch: 'X64' },
         job: { status: res.status },
-        status: { success: res.status === 'success', failure: res.status === 'failure', cancelled: false },
+        status: {
+          success: res.status === 'success',
+          failure: res.status === 'failure',
+          cancelled: false,
+        },
       });
       const nome = step.name
         ? interpolar(step.name, ctxStep).texto
@@ -720,7 +755,9 @@ async function rodarJob(p) {
         continue;
       }
       if (!roda) {
-        log(`   ⏭️  ${nome} (${res.status === 'failure' && !step.if ? 'pulado: job já falhou' : 'if'})`);
+        log(
+          `   ⏭️  ${nome} (${res.status === 'failure' && !step.if ? 'pulado: job já falhou' : 'if'})`
+        );
         marcarPulado();
         continue;
       }
@@ -742,14 +779,21 @@ async function rodarJob(p) {
         }
         processo = {
           bin: 'bun',
-          args: ['vitest', 'related', '--run', ...arquivosRapido.map((f) => (f.startsWith('-') ? `./${f}` : f))],
+          args: [
+            'vitest',
+            'related',
+            '--run',
+            ...arquivosRapido.map((f) => (f.startsWith('-') ? `./${f}` : f)),
+          ],
         };
         descricao = `${nome} [rápido: ${arquivosRapido.length} arquivo(s) mudado(s)]`;
       }
       if (step.uses) {
         const eq = equivalenteLocal(step.uses, step, gh);
         if (!eq) {
-          log(`   ·  ${nome} — infraestrutura do runner (${step.uses.split('@')[0]}), não se aplica`);
+          log(
+            `   ·  ${nome} — infraestrutura do runner (${step.uses.split('@')[0]}), não se aplica`
+          );
           marcarPulado();
           continue;
         }
@@ -779,7 +823,9 @@ async function rodarJob(p) {
         erros.push(...r.erros);
       }
       if (erros.length) {
-        falhar(`"${nome}": expressão não avaliável localmente — passo NÃO rodou (${erros.join('; ')})`);
+        falhar(
+          `"${nome}": expressão não avaliável localmente — passo NÃO rodou (${erros.join('; ')})`
+        );
         continue;
       }
       if (faltas.length)
@@ -890,7 +936,9 @@ async function rodarJob(p) {
   } catch (e) {
     if (!(e instanceof ExpressaoNaoSuportada) && !(e instanceof Error)) throw e;
     res.status = 'failure';
-    res.falhas.push(e instanceof ExpressaoNaoSuportada ? `expressão não avaliável: ${e.message}` : e.message);
+    res.falhas.push(
+      e instanceof ExpressaoNaoSuportada ? `expressão não avaliável: ${e.message}` : e.message
+    );
     log(`   ❌ ${e.message}`);
   } finally {
     // Como o runner: órfãos do job são recolhidos no fim dele.
@@ -934,11 +982,11 @@ async function main() {
   if (args.rapido) {
     const mb = git('merge-base', args.base, 'HEAD');
     if (!mb.ok || !mb.out) throw new ErroUso(`--rapido: sem merge-base entre ${args.base} e HEAD`);
-    const r = spawnSync(
-      'git',
-      ['diff', '-z', '--name-only', '--diff-filter=d', mb.out, 'HEAD'],
-      { cwd: ORIGEM, encoding: 'utf8', maxBuffer: 1 << 30 }
-    );
+    const r = spawnSync('git', ['diff', '-z', '--name-only', '--diff-filter=d', mb.out, 'HEAD'], {
+      cwd: ORIGEM,
+      encoding: 'utf8',
+      maxBuffer: 1 << 30,
+    });
     if (r.status !== 0)
       throw new ErroUso(`--rapido: git diff da branch falhou: ${(r.stderr ?? '').trim()}`);
     let lista = arquivosDoDiffZ(r.stdout);
@@ -947,10 +995,14 @@ async function main() {
         cwd: ORIGEM,
         encoding: 'utf8',
       });
-      const novos = spawnSync('git', ['ls-files', '-z', '--others', '--exclude-standard', '--', '.', ':!.ci-local'], {
-        cwd: ORIGEM,
-        encoding: 'utf8',
-      });
+      const novos = spawnSync(
+        'git',
+        ['ls-files', '-z', '--others', '--exclude-standard', '--', '.', ':!.ci-local'],
+        {
+          cwd: ORIGEM,
+          encoding: 'utf8',
+        }
+      );
       if (wt.status !== 0 || novos.status !== 0)
         throw new ErroUso('--rapido: git diff do working tree falhou');
       lista = [...lista, ...arquivosDoDiffZ(wt.stdout), ...arquivosDoDiffZ(novos.stdout)];
@@ -1082,14 +1134,10 @@ async function main() {
   for (const a of avisosGerais) log(`⚠️  ${a}`);
   for (const r of resultados) {
     const icone =
-      r.status === 'success'
-        ? '✅'
-        : r.status === 'skipped'
-          ? '⏭️ '
-          : r.naoBloqueia
-            ? '⚠️ '
-            : '❌';
-    log(`${icone} ${r.wf} / ${r.job}${r.status === 'failure' && r.naoBloqueia ? ' (falhou, mas continue-on-error: não bloqueia)' : ''}`);
+      r.status === 'success' ? '✅' : r.status === 'skipped' ? '⏭️ ' : r.naoBloqueia ? '⚠️ ' : '❌';
+    log(
+      `${icone} ${r.wf} / ${r.job}${r.status === 'failure' && r.naoBloqueia ? ' (falhou, mas continue-on-error: não bloqueia)' : ''}`
+    );
     for (const f of r.falhas) log(`     ❌ ${f}`);
     for (const a of r.avisos) log(`     ⚠️  ${a}`);
   }
