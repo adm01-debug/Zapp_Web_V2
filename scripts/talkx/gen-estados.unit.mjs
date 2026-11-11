@@ -66,6 +66,28 @@ test('varrerTela ignora JSX comentado (código morto não é adoção real)', ()
   assert.deepEqual(achados.loading, [4]);
 });
 
+test('varrerTela ignora comentário JSX ({/* ... */}), de linha única e em bloco multi-linha', () => {
+  const texto = [
+    'function TalkXFixture() {', // 1
+    '  return (', // 2
+    '    <div>', // 3
+    '      {/* <TalkXEmptyState /> não é mais usado aqui */}', // 4 — comentário JSX de uma linha
+    '      {/* nota antiga sobre o fluxo:', // 5 — abre bloco JSX multi-linha
+    '      <TalkXCrmUnavailableState />', // 6 — continuação do bloco, sem prefixo `*`
+    '      não é mais usado aqui */}', // 7 — fecha o bloco
+    '      <TalkXSkeletonRows rows={4} />', // 8 — real, deve contar
+    '    </div>', // 9
+    '  );', // 10
+    '}', // 11
+  ].join('\n');
+
+  const achados = varrerTela(texto);
+
+  assert.deepEqual(achados.empty, []);
+  assert.deepEqual(achados.crm, []);
+  assert.deepEqual(achados.loading, [8]);
+});
+
 test('varrerTela aceita o vazio por filtro e o skeleton de KPI', () => {
   const texto = '<TalkXFilteredEmptyState onClearFilters={x} />\n<KpiCardSkeleton />';
   const achados = varrerTela(texto);
