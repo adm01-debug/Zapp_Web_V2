@@ -39,17 +39,29 @@ export function TeamChatView() {
     const onNavigate = () => {
       const cid = readCidParam();
       if (!cid) return;
+      // Sai da URL aqui mesmo, sem depender de mudança de estado: com o mesmo cid duas
+      // vezes seguidas o estado não muda, e o ?cid= ficaria pendurado na URL (reabrindo a
+      // conversa ao voltar para a tela ou recarregar).
+      stripCidParam();
       setDeepLinkCid(cid);
       setPickedId(null);
+      setShowDetails(false);
     };
     window.addEventListener('zapp:navigate', onNavigate);
     return () => window.removeEventListener('zapp:navigate', onNavigate);
   }, []);
+  // O ?cid= da abertura já foi lido no estado inicial: sai da URL na montagem, mesmo
+  // quando a conversa não existe para o usuário (o pedido é descartado logo abaixo).
   useEffect(() => {
-    if (deepLinkCid) stripCidParam();
-  }, [deepLinkCid]);
-  const deepLinkedId =
-    !conversationsLoading && deepLinkCid && conversations.some(c => c.id === deepLinkCid) ? deepLinkCid : null;
+    stripCidParam();
+  }, []);
+  // Lista carregada sem a conversa do deep-link (sem acesso, apagada): o pedido é
+  // descartado — não fica guardado para abrir sozinho quando a conversa surgir depois.
+  // Ajuste de estado no render (padrão do React para estado derivado de props).
+  const deepLinkMissing =
+    !conversationsLoading && !!deepLinkCid && !conversations.some(c => c.id === deepLinkCid);
+  if (deepLinkMissing) setDeepLinkCid(null);
+  const deepLinkedId = !conversationsLoading && !deepLinkMissing ? deepLinkCid : null;
   const selectedId = pickedId ?? deepLinkedId;
   const setSelectedId = (id: string | null) => {
     setPickedId(id);
