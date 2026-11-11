@@ -813,6 +813,17 @@ class SnapshotDBStatsTests(SnapshotFixture):
         self.assertNotIn("top_queries", rendered)
         self.assertTrue((self.out / "stats.md").exists())
         self.assertEqual(errors, {"db_stats.auth", "db_stats.top_queries"})
+        md_text = (self.out / "stats.md").read_text()
+        self.assertIn("Coleta de `auth` falhou", md_text,
+                      "auth zerado por timeout/erro precisa de aviso inline em stats.md, não parecer 0 usuários reais")
+
+    def test_successful_auth_collection_has_no_partial_warning(self):
+        stats, _, errors = self.stats(auth_error=False)
+        self.assert_core_metrics(stats, False)
+        self.snapshot.render_stats({"db_stats": stats}, {}, {})
+        self.assertNotIn("db_stats.auth", errors)
+        md_text = (self.out / "stats.md").read_text()
+        self.assertNotIn("Coleta de `auth` falhou", md_text)
 
     def test_mandatory_database_failure_keeps_section_error_contract(self):
         stats, _, errors = self.stats(failure="database")

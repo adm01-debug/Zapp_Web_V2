@@ -9,6 +9,16 @@ test('escopo vem do titulo do run; titulo antigo sem escopo conta como all', () 
   assert.equal(parseScopeFromTitle(undefined), 'all');
 });
 
+// S5145: display_title vem de OUTRO run (API do GitHub, inclusive de outro
+// autor); uma quebra de linha no escopo extraído não pode forjar uma anotação
+// `::error::` nova no log deste run quando o escopo entra na mensagem de erro
+// de waitForTurn/blockingRuns.
+test('escopo com quebra de linha no titulo nao sobrevive — nao forja anotacao nova', () => {
+  const escopo = parseScopeFromTitle('Deploy Edge Functions (all\n::error::forjado)');
+  assert.equal(escopo, 'all ::error::forjado');
+  assert.ok(!escopo.includes('\n'));
+});
+
 test('funcoes diferentes nao se bloqueiam', () => {
   const me = { id: 20, scope: 'send-email' };
   assert.deepEqual(blockingRuns(me, [{ id: 10, scope: 'detect-new-device', gatePassed: true }]), []);
@@ -61,6 +71,19 @@ test('waitForTurn espera o all conflitante terminar e entao segue', async () => 
   });
   assert.equal(logs.length, 2);
   assert.match(logs[0], /10\(all\)/);
+});
+
+test('waitForTurn falha alto sem forjar anotacao nova quando o run conflitante tem titulo hostil', async () => {
+  let tick = 0;
+  await assert.rejects(waitForTurn({
+    me: { id: 20, scope: 'all' }, repo: 'o/r', workflowFile: 'w.yml', token: 't',
+    get: fakeApi([{ runs: [{ id: 10, display_title: 'Deploy Edge Functions (all\n::error::forjado)' }], gatePassed: [10] }]),
+    intervalMs: 1_000, maxWaitMs: 5_000, now: () => tick, sleep: async (ms) => { tick += ms; }, log: () => {},
+  }), (erro) => {
+    assert.ok(!erro.message.includes('\n'), `mensagem de erro com quebra de linha crua: ${JSON.stringify(erro.message)}`);
+    assert.match(erro.message, /10\(all ::error::forjado\)/);
+    return true;
+  });
 });
 
 test('waitForTurn falha alto quando o conflito passa do teto', async () => {
