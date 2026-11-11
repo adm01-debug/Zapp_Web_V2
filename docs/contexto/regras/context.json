@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f036006adae985e8a3f45c2f27a92b85889f221a",
+  "sha": "d5835ed8c91163b2692eeb2b8dc6037188cd0e50",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 19:53 UTC",
-  "files_total": 8232,
-  "code_files": 6079,
-  "code_lines": 1057226
+  "generated_at": "2026-11-11 21:27 UTC",
+  "files_total": 8234,
+  "code_files": 6080,
+  "code_lines": 1057729
  },
  "version": "1.3.2",
- "facts_hash": "e44464a9529ecda6",
+ "facts_hash": "8cd0951dd37d66b0",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -319,7 +319,7 @@
   "languages": {
    ".tsx": 2338,
    ".ts": 1890,
-   ".sql": 1301,
+   ".sql": 1302,
    ".mjs": 431,
    ".py": 119,
    ".cjs": 19,
@@ -3056,6 +3056,13 @@
      },
      {
       "name": "reason",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "reason_code",
       "type": "string | null",
       "fk": "",
       "generated": "",
@@ -17714,6 +17721,70 @@
     "comment": "",
     "origin": "migration"
    },
+   "talkx_suppression_reasons": {
+    "columns": [
+     {
+      "name": "code",
+      "type": "text PRIMARY KEY CHECK (code = lower(code) AND code ~ '^[a-z_]+$')",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     },
+     {
+      "name": "label",
+      "type": "text NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     },
+     {
+      "name": "tone",
+      "type": "text NOT NULL DEFAULT 'informativo' CHECK (tone IN ('informativo','alerta','crítico'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     },
+     {
+      "name": "is_system",
+      "type": "boolean NOT NULL DEFAULT false",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     },
+     {
+      "name": "active",
+      "type": "boolean NOT NULL DEFAULT true",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     },
+     {
+      "name": "sort_order",
+      "type": "int NOT NULL DEFAULT 100",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     },
+     {
+      "name": "created_by",
+      "type": "uuid REFERENCES auth.users(id) ON DELETE SET NULL",
+      "fk": "users.id ON DELETE SET NULL",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     },
+     {
+      "name": "created_at",
+      "type": "timestamptz NOT NULL DEFAULT now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+     }
+    ],
+    "constraints": [],
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "comment": "",
+    "origin": "migration"
+   },
    "auth.users": {
     "columns": [
      {
@@ -23959,6 +24030,36 @@
     "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
    },
    {
+    "name": "talkx_suppression_reasons_read",
+    "table": "talkx_suppression_reasons",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "true",
+    "check": "",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "talkx_suppression_reasons_write",
+    "table": "talkx_suppression_reasons",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "talkx_suppression_reasons_update",
+    "table": "talkx_suppression_reasons",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
     "name": "Users can update own notifications",
     "table": "notifications",
     "cmd": "UPDATE",
@@ -25408,6 +25509,24 @@
     "condition": "",
     "each": "row",
     "src": "supabase/migrations/20261030100000_copilot_sessions.sql"
+   },
+   {
+    "name": "talkx_suppression_reasons_guard_trigger",
+    "when": "BEFORE INSERT OR UPDATE",
+    "table": "talkx_suppression_reasons",
+    "function": "talkx_suppression_reasons_guard",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "trg_talkx_blacklist_reason_active",
+    "when": "BEFORE INSERT OR UPDATE OF REASON_CODE",
+    "table": "talkx_blacklist",
+    "function": "talkx_blacklist_reason_active_guard",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
    },
    {
     "name": "update_queues_updated_at",
@@ -30626,25 +30745,6 @@
      "v_replied"
     ]
    },
-   "talkx_suppress_contact": {
-    "args": "p_contact_id uuid, p_phone text, p_reason text, p_reason_code public.talkx_blacklist_reason, p_origin text, p_source_message_id uuid, p_campaign_id uuid DEFAULT NULL",
-    "returns": "uuid",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_id uuid; v_campaign_id uuid := p_campaign_id; BEGIN IF coalesce(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF v_campaign_id IS NULL AND p_origin = 'auto_optout' AND p_contact_id IS NOT NULL THEN SELECT r.campaign_id INTO v_campaign_id FROM public.talkx_recipients AS r WHERE r.contact_id = p_contact_id AND r.sent_at IS NOT NULL ORDER BY r.sent_at DESC, r.id DESC LIMIT 1; END IF; UPDATE public.talkx_blacklist AS b SET removed_at = statement_timestamp() WHERE b.removed_at IS NULL AND b.expires_at IS NOT NULL AND b.expires_at <= statement_timestamp() AND ( (p_contact_id IS NOT NULL AND b.contact_id = p_contact_id) OR …",
-    "raises": [
-     "service_role_required"
-    ],
-    "tables": [
-     "contacts",
-     "talkx_blacklist",
-     "talkx_recipients",
-     "v_campaign_id",
-     "v_id"
-    ]
-   },
    "purge_talkx_expired_data": {
     "args": "p_limit integer DEFAULT 1000",
     "returns": "jsonb",
@@ -32070,13 +32170,15 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "BEGIN IF NEW.phone IS NOT NULL THEN NEW.phone := regexp_replace(NEW.phone, '[^0-9]', '', 'g'); IF NEW.phone !~ '^[0-9]{10,15}$' THEN NEW.phone := NULL; END IF; END IF; IF NEW.reason_code IS NULL AND NEW.origin IS NOT NULL THEN BEGIN NEW.reason_code := NEW.origin::public.talkx_blacklist_reason; EXCEPTION WHEN others THEN NULL; END; END IF; IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL THEN NEW.blocked_by := (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1); ELSIF TG_OP = 'UPDATE' AND auth.uid() IS NOT NULL THEN NEW.blocked_by := OLD.blocked_by; END IF; IF NEW.removed_at IS NOT NULL AND auth.uid() IS NOT NULL AND (TG_OP = 'INSERT' OR OLD.removed_at IS NULL) THEN NEW.re …",
+    "body": "BEGIN IF NEW.phone IS NOT NULL THEN NEW.phone := regexp_replace(NEW.phone, '[^0-9]', '', 'g'); IF NEW.phone !~ '^[0-9]{10,15}$' THEN NEW.phone := NULL; END IF; END IF; IF NEW.reason_code IS NULL AND NEW.origin IS NOT NULL THEN SELECT r.code INTO NEW.reason_code FROM public.talkx_suppression_reasons AS r WHERE r.active AND r.code = CASE NEW.origin WHEN 'optout' THEN 'opt_out' WHEN 'auto_optout' THEN 'opt_out' WHEN 'list' THEN 'manual' WHEN 'system' THEN NULL ELSE NEW.origin END; END IF; IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL THEN NEW.blocked_by := (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1); ELSIF TG_OP = 'UPDATE' AND auth.uid() IS NOT NULL THEN NEW.block …",
     "raises": [],
     "tables": [
-     "profiles"
+     "NEW",
+     "profiles",
+     "talkx_suppression_reasons"
     ]
    },
    "talkx_blacklist_no_delete": {
@@ -33828,6 +33930,60 @@
      "v_profile_id",
      "v_rows",
      "v_total"
+    ]
+   },
+   "talkx_suppression_reasons_guard": {
+    "args": "",
+    "returns": "trigger",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "security_definer": false,
+    "search_path": true,
+    "body": "BEGIN IF TG_OP = 'INSERT' THEN IF NEW.is_system AND current_user IN ('authenticated', 'anon') THEN RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema só nasce por migration' USING ERRCODE = '42501'; END IF; RETURN NEW; END IF; IF OLD.code IS DISTINCT FROM NEW.code THEN RAISE EXCEPTION 'talkx_suppression_reasons: code imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system IS DISTINCT FROM NEW.is_system THEN RAISE EXCEPTION 'talkx_suppression_reasons: is_system imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system AND OLD.label IS DISTINCT FROM NEW.label THEN RAISE EXCEPTION 'talkx_suppression_reasons: label de motivo do sistema é imutável' USING …",
+    "raises": [
+     "talkx_suppression_reasons: motivo do sistema só nasce por migration",
+     "talkx_suppression_reasons: code imutável após criação",
+     "talkx_suppression_reasons: is_system imutável após criação",
+     "talkx_suppression_reasons: label de motivo do sistema é imutável",
+     "talkx_suppression_reasons: motivo do sistema não pode ser desativado"
+    ],
+    "tables": [
+     "NEW"
+    ]
+   },
+   "talkx_blacklist_reason_active_guard": {
+    "args": "",
+    "returns": "trigger",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "BEGIN IF NEW.reason_code IS NULL THEN RETURN NEW; END IF; IF TG_OP = 'UPDATE' AND NEW.reason_code IS NOT DISTINCT FROM OLD.reason_code THEN RETURN NEW; END IF; IF EXISTS ( SELECT 1 FROM public.talkx_suppression_reasons AS r WHERE r.code = NEW.reason_code AND NOT r.active ) THEN RAISE EXCEPTION 'talkx_suppression_reason_inactive' USING ERRCODE = '23514', DETAIL = format('reason_code %s está desativado no catálogo', NEW.reason_code); END IF; RETURN NEW; END;",
+    "raises": [
+     "talkx_suppression_reason_inactive"
+    ],
+    "tables": [
+     "OLD",
+     "talkx_suppression_reasons"
+    ]
+   },
+   "talkx_suppress_contact": {
+    "args": "p_contact_id uuid, p_phone text, p_reason text, p_reason_code text, p_origin text, p_source_message_id uuid, p_campaign_id uuid DEFAULT NULL::uuid",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_id uuid; v_campaign_id uuid := p_campaign_id; BEGIN IF coalesce(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF v_campaign_id IS NULL AND p_origin = 'auto_optout' AND p_contact_id IS NOT NULL THEN SELECT r.campaign_id INTO v_campaign_id FROM public.talkx_recipients AS r WHERE r.contact_id = p_contact_id AND r.sent_at IS NOT NULL ORDER BY r.sent_at DESC, r.id DESC LIMIT 1; END IF; UPDATE public.talkx_blacklist AS b SET removed_at = statement_timestamp() WHERE b.removed_at IS NULL AND b.expires_at IS NOT NULL AND b.expires_at <= statement_timestamp() AND ((p_contact_id IS NOT NULL AND b.contact_id = p_contact_id) OR …",
+    "raises": [
+     "service_role_required"
+    ],
+    "tables": [
+     "contacts",
+     "talkx_blacklist",
+     "talkx_recipients",
+     "v_campaign_id",
+     "v_id"
     ]
    },
    "talkx_campaign_heatmap": {
@@ -41941,7 +42097,7 @@
    },
    "talkx_campaign_optouts": {
     "body": "SELECT b.campaign_id, count(*)::bigint AS optout_count, count(*) FILTER (WHERE b.origin = 'auto_optout')::bigint AS auto_optout_count, max(b.created_at) AS last_optout_at FROM public.talkx_blacklist AS b WHERE b.campaign_id IS NOT NULL AND b.reason_code = 'opt_out' GROUP BY b.campaign_id",
-    "src": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql"
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
    },
    "talkx_engine_health": {
     "body": "WITH sending_activity AS ( SELECT c.id AS campaign_id, COALESCE( (SELECT max(r.sent_at) FROM public.talkx_recipients AS r WHERE r.campaign_id = c.id AND r.sent_at IS NOT NULL), c.started_at, c.updated_at ) AS last_activity_at FROM public.talkx_campaigns AS c WHERE c.status = 'sending' ) SELECT 'stalled_campaign'::text AS kind, a.campaign_id, NULL::uuid AS recipient_id, NULL::text AS status, NULL::text AS return_message, NULL::bigint AS metric_count, NULL::numeric AS metric_rate, jsonb_build_object( 'last_activity_at', a.last_activity_at, 'stalled_minutes', floor(EXTRACT(epoch FROM (now() - a.l …",
@@ -43063,6 +43219,7 @@
    "supabase/migrations/20261107170000_fix_message_reactions_rls.sql",
    "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
    "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql",
+   "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
    "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
    "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
    "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
@@ -43377,6 +43534,7 @@
    "copilot_learning_moments": "enabled",
    "copilot_conversation_scores": "enabled",
    "_rb_message_reactions_one_per_agent_20261107121000": "enabled",
+   "talkx_suppression_reasons": "enabled",
    "zz_prova_sem_rls": "enabled",
    "zz_prova_policy": "enabled"
   },
@@ -55902,6 +56060,94 @@
     "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppression_reasons_guard",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppression_reasons",
+    "objkind": "table",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select",
+    "object": "talkx_suppression_reasons",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "all",
+    "object": "talkx_suppression_reasons",
+    "objkind": "table",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "truncate, references, trigger",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_audit_trigger",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_reason_active_guard",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppress_contact",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_suppress_contact",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
     "kind": "grant",
     "privs": "execute",
     "object": "talkx_campaign_heatmap",
@@ -58064,11 +58310,6 @@
    {
     "function": "talkx_audience_query",
     "msg": "invalid_talkx_audience_rule_value",
-    "src": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql"
-   },
-   {
-    "function": "talkx_suppress_contact",
-    "msg": "service_role_required",
     "src": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql"
    },
    {
@@ -61015,6 +61256,41 @@
     "function": "talkx_campaign_recipients_page",
     "msg": "talkx_campaign_recipients_page: status invalido",
     "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema só nasce por migration",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: code imutável após criação",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: is_system imutável após criação",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: label de motivo do sistema é imutável",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_blacklist_reason_active_guard",
+    "msg": "talkx_suppression_reason_inactive",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppress_contact",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
    },
    {
     "function": "talkx_campaign_heatmap",
@@ -68633,7 +68909,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15576,
+   "lines": 15595,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -69615,8 +69891,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1101,
-   "lines": 105964,
+   "files": 1102,
+   "lines": 106448,
    "tables": [
     "audit_logs",
     "departments",
@@ -76192,6 +76468,7 @@
    "talkx_segment_library_history",
    "talkx_segment_versions",
    "talkx_storage_purge_queue",
+   "talkx_suppression_reasons",
    "team_chat_media_acl_r2_db_020_rb",
    "team_message_receipts",
    "users",
@@ -76216,10 +76493,6 @@
    {
     "table": "talkx_blacklist",
     "column": "company"
-   },
-   {
-    "table": "talkx_blacklist",
-    "column": "reason_code"
    }
   ]
  },
@@ -103787,6 +104060,46 @@
    {
     "table": "copilot_conversation_scores",
     "column": "updated_at",
+    "rule": "default now()"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "code",
+    "rule": "PK; CHECK code = lower(code) AND code ~ '^[a-z_]+$'"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "label",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "tone",
+    "rule": "default 'informativo'; CHECK tone IN ('informativo','alerta','crítico')"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "is_system",
+    "rule": "default false"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "active",
+    "rule": "default true"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "sort_order",
+    "rule": "default 100"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "created_by",
+    "rule": "FK → users.id ON DELETE SET NULL"
+   },
+   {
+    "table": "talkx_suppression_reasons",
+    "column": "created_at",
     "rule": "default now()"
    },
    {
@@ -218723,6 +219036,36 @@
     "src": "supabase/migrations/20261107170000_fix_message_reactions_rls.sql"
    },
    {
+    "name": "talkx_suppression_reasons_read",
+    "table": "talkx_suppression_reasons",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "true",
+    "check": "",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "talkx_suppression_reasons_write",
+    "table": "talkx_suppression_reasons",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "talkx_suppression_reasons_update",
+    "table": "talkx_suppression_reasons",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
     "name": "Users can update own notifications",
     "table": "notifications",
     "cmd": "UPDATE",
@@ -220172,6 +220515,24 @@
     "condition": "",
     "each": "row",
     "src": "supabase/migrations/20261030100000_copilot_sessions.sql"
+   },
+   {
+    "name": "talkx_suppression_reasons_guard_trigger",
+    "when": "BEFORE INSERT OR UPDATE",
+    "table": "talkx_suppression_reasons",
+    "function": "talkx_suppression_reasons_guard",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "trg_talkx_blacklist_reason_active",
+    "when": "BEFORE INSERT OR UPDATE OF REASON_CODE",
+    "table": "talkx_blacklist",
+    "function": "talkx_blacklist_reason_active_guard",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
    },
    {
     "name": "update_queues_updated_at",
@@ -225390,25 +225751,6 @@
      "v_replied"
     ]
    },
-   "talkx_suppress_contact": {
-    "args": "p_contact_id uuid, p_phone text, p_reason text, p_reason_code public.talkx_blacklist_reason, p_origin text, p_source_message_id uuid, p_campaign_id uuid DEFAULT NULL",
-    "returns": "uuid",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_id uuid; v_campaign_id uuid := p_campaign_id; BEGIN IF coalesce(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF v_campaign_id IS NULL AND p_origin = 'auto_optout' AND p_contact_id IS NOT NULL THEN SELECT r.campaign_id INTO v_campaign_id FROM public.talkx_recipients AS r WHERE r.contact_id = p_contact_id AND r.sent_at IS NOT NULL ORDER BY r.sent_at DESC, r.id DESC LIMIT 1; END IF; UPDATE public.talkx_blacklist AS b SET removed_at = statement_timestamp() WHERE b.removed_at IS NULL AND b.expires_at IS NOT NULL AND b.expires_at <= statement_timestamp() AND ( (p_contact_id IS NOT NULL AND b.contact_id = p_contact_id) OR …",
-    "raises": [
-     "service_role_required"
-    ],
-    "tables": [
-     "contacts",
-     "talkx_blacklist",
-     "talkx_recipients",
-     "v_campaign_id",
-     "v_id"
-    ]
-   },
    "purge_talkx_expired_data": {
     "args": "p_limit integer DEFAULT 1000",
     "returns": "jsonb",
@@ -226834,13 +227176,15 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "BEGIN IF NEW.phone IS NOT NULL THEN NEW.phone := regexp_replace(NEW.phone, '[^0-9]', '', 'g'); IF NEW.phone !~ '^[0-9]{10,15}$' THEN NEW.phone := NULL; END IF; END IF; IF NEW.reason_code IS NULL AND NEW.origin IS NOT NULL THEN BEGIN NEW.reason_code := NEW.origin::public.talkx_blacklist_reason; EXCEPTION WHEN others THEN NULL; END; END IF; IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL THEN NEW.blocked_by := (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1); ELSIF TG_OP = 'UPDATE' AND auth.uid() IS NOT NULL THEN NEW.blocked_by := OLD.blocked_by; END IF; IF NEW.removed_at IS NOT NULL AND auth.uid() IS NOT NULL AND (TG_OP = 'INSERT' OR OLD.removed_at IS NULL) THEN NEW.re …",
+    "body": "BEGIN IF NEW.phone IS NOT NULL THEN NEW.phone := regexp_replace(NEW.phone, '[^0-9]', '', 'g'); IF NEW.phone !~ '^[0-9]{10,15}$' THEN NEW.phone := NULL; END IF; END IF; IF NEW.reason_code IS NULL AND NEW.origin IS NOT NULL THEN SELECT r.code INTO NEW.reason_code FROM public.talkx_suppression_reasons AS r WHERE r.active AND r.code = CASE NEW.origin WHEN 'optout' THEN 'opt_out' WHEN 'auto_optout' THEN 'opt_out' WHEN 'list' THEN 'manual' WHEN 'system' THEN NULL ELSE NEW.origin END; END IF; IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL THEN NEW.blocked_by := (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1); ELSIF TG_OP = 'UPDATE' AND auth.uid() IS NOT NULL THEN NEW.block …",
     "raises": [],
     "tables": [
-     "profiles"
+     "NEW",
+     "profiles",
+     "talkx_suppression_reasons"
     ]
    },
    "talkx_blacklist_no_delete": {
@@ -228592,6 +228936,60 @@
      "v_profile_id",
      "v_rows",
      "v_total"
+    ]
+   },
+   "talkx_suppression_reasons_guard": {
+    "args": "",
+    "returns": "trigger",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "security_definer": false,
+    "search_path": true,
+    "body": "BEGIN IF TG_OP = 'INSERT' THEN IF NEW.is_system AND current_user IN ('authenticated', 'anon') THEN RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema só nasce por migration' USING ERRCODE = '42501'; END IF; RETURN NEW; END IF; IF OLD.code IS DISTINCT FROM NEW.code THEN RAISE EXCEPTION 'talkx_suppression_reasons: code imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system IS DISTINCT FROM NEW.is_system THEN RAISE EXCEPTION 'talkx_suppression_reasons: is_system imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system AND OLD.label IS DISTINCT FROM NEW.label THEN RAISE EXCEPTION 'talkx_suppression_reasons: label de motivo do sistema é imutável' USING …",
+    "raises": [
+     "talkx_suppression_reasons: motivo do sistema só nasce por migration",
+     "talkx_suppression_reasons: code imutável após criação",
+     "talkx_suppression_reasons: is_system imutável após criação",
+     "talkx_suppression_reasons: label de motivo do sistema é imutável",
+     "talkx_suppression_reasons: motivo do sistema não pode ser desativado"
+    ],
+    "tables": [
+     "NEW"
+    ]
+   },
+   "talkx_blacklist_reason_active_guard": {
+    "args": "",
+    "returns": "trigger",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "BEGIN IF NEW.reason_code IS NULL THEN RETURN NEW; END IF; IF TG_OP = 'UPDATE' AND NEW.reason_code IS NOT DISTINCT FROM OLD.reason_code THEN RETURN NEW; END IF; IF EXISTS ( SELECT 1 FROM public.talkx_suppression_reasons AS r WHERE r.code = NEW.reason_code AND NOT r.active ) THEN RAISE EXCEPTION 'talkx_suppression_reason_inactive' USING ERRCODE = '23514', DETAIL = format('reason_code %s está desativado no catálogo', NEW.reason_code); END IF; RETURN NEW; END;",
+    "raises": [
+     "talkx_suppression_reason_inactive"
+    ],
+    "tables": [
+     "OLD",
+     "talkx_suppression_reasons"
+    ]
+   },
+   "talkx_suppress_contact": {
+    "args": "p_contact_id uuid, p_phone text, p_reason text, p_reason_code text, p_origin text, p_source_message_id uuid, p_campaign_id uuid DEFAULT NULL::uuid",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_id uuid; v_campaign_id uuid := p_campaign_id; BEGIN IF coalesce(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF v_campaign_id IS NULL AND p_origin = 'auto_optout' AND p_contact_id IS NOT NULL THEN SELECT r.campaign_id INTO v_campaign_id FROM public.talkx_recipients AS r WHERE r.contact_id = p_contact_id AND r.sent_at IS NOT NULL ORDER BY r.sent_at DESC, r.id DESC LIMIT 1; END IF; UPDATE public.talkx_blacklist AS b SET removed_at = statement_timestamp() WHERE b.removed_at IS NULL AND b.expires_at IS NOT NULL AND b.expires_at <= statement_timestamp() AND ((p_contact_id IS NOT NULL AND b.contact_id = p_contact_id) OR …",
+    "raises": [
+     "service_role_required"
+    ],
+    "tables": [
+     "contacts",
+     "talkx_blacklist",
+     "talkx_recipients",
+     "v_campaign_id",
+     "v_id"
     ]
    },
    "talkx_campaign_heatmap": {
@@ -231148,11 +231546,6 @@
    {
     "function": "talkx_audience_query",
     "msg": "invalid_talkx_audience_rule_value",
-    "src": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql"
-   },
-   {
-    "function": "talkx_suppress_contact",
-    "msg": "service_role_required",
     "src": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql"
    },
    {
@@ -234101,6 +234494,41 @@
     "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
    },
    {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema só nasce por migration",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: code imutável após criação",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: is_system imutável após criação",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: label de motivo do sistema é imutável",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_blacklist_reason_active_guard",
+    "msg": "talkx_suppression_reason_inactive",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "function": "talkx_suppress_contact",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
     "function": "talkx_campaign_heatmap",
     "msg": "not found",
     "src": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql"
@@ -234405,7 +234833,7 @@
    },
    "talkx_campaign_optouts": {
     "body": "SELECT b.campaign_id, count(*)::bigint AS optout_count, count(*) FILTER (WHERE b.origin = 'auto_optout')::bigint AS auto_optout_count, max(b.created_at) AS last_optout_at FROM public.talkx_blacklist AS b WHERE b.campaign_id IS NOT NULL AND b.reason_code = 'opt_out' GROUP BY b.campaign_id",
-    "src": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql"
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
    },
    "talkx_engine_health": {
     "body": "WITH sending_activity AS ( SELECT c.id AS campaign_id, COALESCE( (SELECT max(r.sent_at) FROM public.talkx_recipients AS r WHERE r.campaign_id = c.id AND r.sent_at IS NOT NULL), c.started_at, c.updated_at ) AS last_activity_at FROM public.talkx_campaigns AS c WHERE c.status = 'sending' ) SELECT 'stalled_campaign'::text AS kind, a.campaign_id, NULL::uuid AS recipient_id, NULL::text AS status, NULL::text AS return_message, NULL::bigint AS metric_count, NULL::numeric AS metric_rate, jsonb_build_object( 'last_activity_at', a.last_activity_at, 'stalled_minutes', floor(EXTRACT(epoch FROM (now() - a.l …",
@@ -241038,6 +241466,19 @@
     "UPDATE": [],
     "DELETE": []
    },
+   "talkx_suppression_reasons": {
+    "rls": "enabled",
+    "SELECT": [
+     "authenticated: true"
+    ],
+    "INSERT": [
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
+    ],
+    "UPDATE": [
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
+    ],
+    "DELETE": []
+   },
    "talkx_template_variants": {
     "rls": "enabled",
     "SELECT": [
@@ -242163,6 +242604,7 @@
    "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
+   "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/migrations/20261111160000_outbound_post_started.sql",
    "supabase/tests/admin_inbox_silence.sql",
@@ -242580,6 +243022,7 @@
    "talkx_benchmarks",
    "talkx_blacklist_audit_trigger",
    "talkx_blacklist_no_delete",
+   "talkx_blacklist_reason_active_guard",
    "talkx_campaign_heatmap",
    "talkx_campaign_launch_checks",
    "talkx_campaign_logs",
@@ -255200,6 +255643,94 @@
     "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppression_reasons_guard",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppression_reasons",
+    "objkind": "table",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select",
+    "object": "talkx_suppression_reasons",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "all",
+    "object": "talkx_suppression_reasons",
+    "objkind": "table",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "truncate, references, trigger",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_audit_trigger",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_reason_active_guard",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppress_contact",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_suppress_contact",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
     "kind": "grant",
     "privs": "execute",
     "object": "talkx_campaign_heatmap",
@@ -256016,6 +256547,10 @@
    [
     "talkx_optout_keywords",
     "active"
+   ],
+   [
+    "talkx_suppression_reasons",
+    "active"
    ]
   ],
   "audit": {
@@ -256692,6 +257227,10 @@
    ],
    "copilot_conversation_scores": [
     "updated_at"
+   ],
+   "talkx_suppression_reasons": [
+    "created_at",
+    "created_by"
    ],
    "auth.users": [],
    "storage.buckets": [],
@@ -257423,11 +257962,6 @@
    {
     "kind": "coluna",
     "msg": "coluna `company` usada no código não existe no schema de `talkx_blacklist`",
-    "where": []
-   },
-   {
-    "kind": "coluna",
-    "msg": "coluna `reason_code` usada no código não existe no schema de `talkx_blacklist`",
     "where": []
    },
    {
@@ -258489,7 +259023,7 @@
    "`copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "161/221 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
+   "162/222 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -345329,7 +345863,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15503,
+   "lines": 15522,
    "exports": [
     "type Json",
     "type Database",
@@ -382877,6 +383411,11 @@
    "path": "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql",
    "lines": 68
   },
+  "supabase/migrations/20261108100000_talkx_suppression_reasons.sql": {
+   "path": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+   "lines": 484,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql": {
    "path": "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
    "lines": 153,
@@ -386757,10 +387296,23 @@
   }
  },
  "git": {
-  "sha": "f036006adae985e8a3f45c2f27a92b85889f221a",
+  "sha": "d5835ed8c91163b2692eeb2b8dc6037188cd0e50",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d5835ed",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)",
+    "files": [
+     "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
+     "scripts/db-audit/grants-baseline.json",
+     "scripts/db-audit/talkx-suppression-reasons.smoke.sh",
+     "src/integrations/supabase/types.ts",
+     "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+    ]
+   },
    {
     "sha": "f036006",
     "date": "2026-11-11",
@@ -387074,16 +387626,6 @@
      "scripts/talkx/gen-estados.mjs",
      "scripts/talkx/gen-estados.unit.mjs"
     ]
-   },
-   {
-    "sha": "e334b0a",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(maintenance): finally de restore não descarta mais a exceção original (#2933)",
-    "files": [
-     "scripts/maintenance/maintenance.unit.mjs",
-     "scripts/maintenance/run.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -387093,14 +387635,6 @@
    ],
    [
     "scripts/db-tests/run-all.unit.mjs",
-    2
-   ],
-   [
-    "scripts/maintenance/maintenance.unit.mjs",
-    2
-   ],
-   [
-    "scripts/maintenance/run.mjs",
     2
    ],
    [
@@ -387122,6 +387656,26 @@
    [
     "scripts/ui-audit/layout-guard.unit.mjs",
     2
+   ],
+   [
+    "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
+    1
+   ],
+   [
+    "scripts/db-audit/grants-baseline.json",
+    1
+   ],
+   [
+    "scripts/db-audit/talkx-suppression-reasons.smoke.sh",
+    1
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    1
+   ],
+   [
+    "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    1
    ],
    [
     "scripts/regras_negocio/generate.py",
@@ -387153,18 +387707,6 @@
    ],
    [
     "src/components/inbox/ChatPanel.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
     1
    ]
   ]

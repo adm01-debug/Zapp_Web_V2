@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1101,
+ "migrations": 1102,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -523,6 +523,7 @@
   "talkx_benchmarks",
   "talkx_blacklist_audit_trigger",
   "talkx_blacklist_no_delete",
+  "talkx_blacklist_reason_active_guard",
   "talkx_campaign_heatmap",
   "talkx_campaign_launch_checks",
   "talkx_campaign_logs",
@@ -568,6 +569,7 @@
   "talkx_suppress_contact",
   "talkx_suppression_activity",
   "talkx_suppression_list",
+  "talkx_suppression_reasons_guard",
   "talkx_suppression_stats",
   "talkx_sync_campaign_segments",
   "talkx_template_library_kpis",
@@ -1445,6 +1447,13 @@
    "funcao": "talkx_blacklist_no_delete"
   },
   {
+   "nome": "trg_talkx_blacklist_reason_active",
+   "quando": "before",
+   "evento": "insert or update of reason_code",
+   "tabela": "talkx_blacklist",
+   "funcao": "talkx_blacklist_reason_active_guard"
+  },
+  {
    "nome": "enforce_talkx_campaign_mutability",
    "quando": "before",
    "evento": "insert or delete or update",
@@ -1534,6 +1543,13 @@
    "evento": "update",
    "tabela": "talkx_segments",
    "funcao": "update_updated_at_column"
+  },
+  {
+   "nome": "talkx_suppression_reasons_guard_trigger",
+   "quando": "before",
+   "evento": "insert or update",
+   "tabela": "talkx_suppression_reasons",
+   "funcao": "talkx_suppression_reasons_guard"
   },
   {
    "nome": "trg_guard_talkx_template_version_immutable",
@@ -23975,7 +23991,7 @@
      "ref": null
     },
     "reason_code": {
-     "tipo": "public",
+     "tipo": "text",
      "nn": false,
      "pk": false,
      "default": null,
@@ -24099,6 +24115,7 @@
     "blocked_by->profiles",
     "campaign_id->talkx_campaigns",
     "contact_id->contacts",
+    "reason_code->talkx_suppression_reasons",
     "removed_by->profiles",
     "source_message_id->messages"
    ],
@@ -24113,13 +24130,13 @@
     "origin": "string",
     "phone": "string | null",
     "reason": "string | null",
+    "reason_code": "string | null",
     "removed_at": "string | null",
     "removed_by": "string | null",
     "source_message_id": "string | null"
    },
    "drift": {
     "so_na_migration": [
-     "reason_code",
      "import_batch_id",
      "removal_reason"
     ],
@@ -24129,7 +24146,8 @@
    "usada_em_edges": [],
    "triggers": [
     "trg_talkx_blacklist_audit",
-    "trg_talkx_blacklist_no_delete"
+    "trg_talkx_blacklist_no_delete",
+    "trg_talkx_blacklist_reason_active"
    ],
    "sem_rls": false,
    "nao_usada": false
@@ -27252,6 +27270,113 @@
    "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
+   "sem_rls": false,
+   "nao_usada": true
+  },
+  "talkx_suppression_reasons": {
+   "colunas": {
+    "active": {
+     "tipo": "boolean",
+     "nn": true,
+     "pk": false,
+     "default": "true",
+     "ref": null
+    },
+    "code": {
+     "tipo": "text",
+     "nn": false,
+     "pk": true,
+     "default": null,
+     "ref": null
+    },
+    "created_at": {
+     "tipo": "timestamptz",
+     "nn": true,
+     "pk": false,
+     "default": "now()",
+     "ref": null
+    },
+    "created_by": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": "auth"
+    },
+    "is_system": {
+     "tipo": "boolean",
+     "nn": true,
+     "pk": false,
+     "default": "false",
+     "ref": null
+    },
+    "label": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "sort_order": {
+     "tipo": "int",
+     "nn": true,
+     "pk": false,
+     "default": "100",
+     "ref": null
+    },
+    "tone": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": "'informativo'",
+     "ref": null
+    }
+   },
+   "rls": true,
+   "policies": [
+    {
+     "nome": "talkx_suppression_reasons_read",
+     "comando": "select",
+     "para": "authenticated",
+     "tipo": "permissive"
+    },
+    {
+     "nome": "talkx_suppression_reasons_update",
+     "comando": "update",
+     "para": "authenticated",
+     "tipo": "permissive"
+    },
+    {
+     "nome": "talkx_suppression_reasons_write",
+     "comando": "insert",
+     "para": "authenticated",
+     "tipo": "permissive"
+    }
+   ],
+   "indices": [],
+   "fks": [
+    "created_by->auth"
+   ],
+   "criada_em": "20261108100000_talkx_suppression_reasons.sql",
+   "colunas_types": {
+    "active": "boolean",
+    "code": "string",
+    "created_at": "string",
+    "created_by": "string | null",
+    "is_system": "boolean",
+    "label": "string",
+    "sort_order": "number",
+    "tone": "string"
+   },
+   "drift": {
+    "so_na_migration": [],
+    "so_no_types": []
+   },
+   "usada_no_front": 0,
+   "usada_em_edges": [],
+   "triggers": [
+    "talkx_suppression_reasons_guard_trigger"
+   ],
    "sem_rls": false,
    "nao_usada": true
   },

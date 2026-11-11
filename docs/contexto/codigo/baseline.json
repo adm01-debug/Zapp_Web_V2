@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f036006adae985e8a3f45c2f27a92b85889f221a",
+  "commit": "d5835ed8c91163b2692eeb2b8dc6037188cd0e50",
   "branch": "main",
-  "data_commit": "2026-11-11T16:18:51-03:00",
+  "data_commit": "2026-11-11T18:18:27-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d5835ed",
+    "data": "2026-11-11",
+    "assunto": "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)"
+   },
    {
     "sha": "f036006",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "ec190c2",
     "data": "2026-11-11",
     "assunto": "fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)"
-   },
-   {
-    "sha": "240ac5b",
-    "data": "2026-11-11",
-    "assunto": "fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)"
    }
   ],
-  "arquivos_mudados_7d": 628,
+  "arquivos_mudados_7d": 629,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 118
+    "mudancas": 117
    },
    {
     "pasta": "src/lib/__tests__",
@@ -238,7 +238,15 @@
     "mudancas": 9
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 9
+   },
+   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 9
    },
    {
@@ -266,15 +274,7 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 8
-   },
-   {
     "arquivo": "scripts/e2e-isolated/README.md",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 8
    },
    {
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8390,
+  "arquivos_total": 8392,
   "arquivos_codigo": 4806,
-  "linhas_codigo": 889866,
+  "linhas_codigo": 889885,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -325,12 +325,12 @@
   "componentes": 898,
   "hooks": 495,
   "edge_functions": 92,
-  "tabelas": 217,
-  "migrations": 1101,
+  "tabelas": 218,
+  "migrations": 1102,
   "cron_jobs": 26,
   "testes": 2612,
   "workflows": 21,
-  "scripts": 426,
+  "scripts": 427,
   "docs_md": 1073
  },
  "por_pasta": {
@@ -732,7 +732,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15576
+   "linhas": 15595
   },
   "src/lib": {
    "arquivos": 283,
@@ -806,7 +806,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15503
+   "linhas": 15522
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",

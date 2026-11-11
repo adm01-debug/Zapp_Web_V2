@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 426,
+ "total": 427,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3075,6 +3075,15 @@
    "workflows": [
     "db-guard.yml"
    ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-suppression-reasons.smoke.sh",
+   "descricao": "X070 — talkx_suppression_reasons: conferência PÓS-DEPLOY (não é teste de CI: exige um banco com a migration aplicada; o CI prova a aplicação no replay).",
+   "linhas": 70,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
    "orfao": false
   },
   {

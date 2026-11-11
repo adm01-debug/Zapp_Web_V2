@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f036006ada` · branch `main` · 2026-11-11 19:53 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d5835ed8c9` · branch `main` · 2026-11-11 21:27 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -178,7 +178,7 @@
 | `supabase_migrations.version_reservations` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `tags` | Etiquetas aplicaveis a contatos (contact_tags). | 1 colunas | migration |
 | `talkx_alerts` | X033: alertas do motor Talk X. Um alerta aberto por (tipo, campanha); fechado sozinho quando o sinal deixa de disparar (resolved_at). Escrito por talkx_engine_alerts (service_role), lido por admin/supervisor. | 6 colunas | migration |
-| `talkx_blacklist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
+| `talkx_blacklist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 13 colunas | migration |
 | `talkx_campaign_events` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `talkx_campaign_segments` | Talk X (X057): segmentos de uma campanha, em ordem (position 1..10). A ordem define qual segmento "ganha" quando o mesmo contato aparece em mais de um. | 7 colunas | migration |
 | `talkx_campaigns` | _(sem COMMENT ON TABLE — significado não documentado)_ | 72 colunas | migration |
@@ -198,6 +198,7 @@
 | `talkx_segments` | _(sem COMMENT ON TABLE — significado não documentado)_ | 22 colunas | migration |
 | `talkx_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `talkx_storage_purge_queue` | [RLS-sem-policy: intencional] Fila de purge de storage do TalkX. Gerenciada pela edge function talkx-storage-purge (service_role). | 9 colunas | migration |
+| `talkx_suppression_reasons` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `talkx_template_variants` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `talkx_template_versions` | Historico imutavel de templates Talk X; escrita somente pela RPC atomica canonica. | 15 colunas | migration |
 | `talkx_templates` | _(sem COMMENT ON TABLE — significado não documentado)_ | 23 colunas | migration |
@@ -306,8 +307,7 @@
 | `AnalyticsPeriod` (TS) | 7d \| 30d \| 90d \| month \| custom |  | `src/components/talkx/talkxAnalyticsFilters.ts` |
 | `TalkxInteractiveButtonType` (TS) | reply \| link |  | `src/components/talkx/talkxInteractive.ts` |
 | `TalkxInteractiveMode` (TS) | none \| buttons \| poll |  | `src/components/talkx/talkxInteractive.ts` |
-| `TalkXScreen` (TS) | monitor \| scheduled \| running \| paused |  | `src/components/talkx/talkxRoute.ts` |
-| … +348 linhas — lista completa em `context.json` | | | |
+| … +349 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -392,7 +392,6 @@
 | coluna | coluna `manually_resolved_at` usada no código não existe no schema de `messages` |  |
 | coluna | coluna `company_id` usada no código não existe no schema de `contacts` |  |
 | coluna | coluna `company` usada no código não existe no schema de `talkx_blacklist` |  |
-| coluna | coluna `reason_code` usada no código não existe no schema de `talkx_blacklist` |  |
 | tabela | tabela `a` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
 | tabela | tabela `alem_do_limite` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `audit_log` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
@@ -584,7 +583,7 @@
 - `copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 161/221 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
+- 162/222 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

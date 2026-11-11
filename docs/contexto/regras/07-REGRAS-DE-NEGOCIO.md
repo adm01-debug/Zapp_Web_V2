@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f036006ada` · branch `main` · 2026-11-11 19:53 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d5835ed8c9` · branch `main` · 2026-11-11 21:27 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -419,7 +419,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `link_preview_cache_metrics` | Admins/supervisors can read metrics | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `link_preview_cache_metrics` | service_role inserts cache metrics | INSERT | service_role | permissive |  | `true` |
 | `email_attachments` | Users can view attachments of own accounts | SELECT | authenticated | permissive | `EXISTS ( SELECT 1 FROM public.email_messages em JOIN public.gmail_accounts ga ON ga.id = em.gmail_account_id WHERE em.id = email_attachments.email_message_id AND (ga.user_id = auth.uid() OR is_admin_or_supervisor(auth.uid())) )` |  |
-| … +270 linhas — lista completa em `context.json` | | | | | | |
+| … +273 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -725,7 +725,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `gmail_accounts` | `sync_status` | obrigatório |
 | `gmail_accounts` | `updated_at` | obrigatório |
 | `saved_filters` | `id` | PK; default gen_random_uuid() |
-| … +1356 linhas — lista completa em `context.json` | | |
+| … +1364 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -882,6 +882,8 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | enforce_saved_filters_inbox_limite_trigger | BEFORE INSERT OR UPDATE | `saved_filters` | `enforce_saved_filters_inbox_limite` |  |
 | team_reactions_force_conversation_id_trig | BEFORE INSERT OR UPDATE | `team_message_reactions` | `team_reactions_force_conversation_id` |  |
 | trg_copilot_sessions_updated_at | BEFORE UPDATE | `copilot_sessions` | `copilot_sessions_updated_at` |  |
+| talkx_suppression_reasons_guard_trigger | BEFORE INSERT OR UPDATE | `talkx_suppression_reasons` | `talkx_suppression_reasons_guard` |  |
+| trg_talkx_blacklist_reason_active | BEFORE INSERT OR UPDATE OF REASON_CODE | `talkx_blacklist` | `talkx_blacklist_reason_active_guard` |  |
 | update_queues_updated_at | BEFORE UPDATE | `queues` | `update_updated_at_column` |  |
 | update_rate_limit_configs_updated_at | BEFORE UPDATE | `rate_limit_configs` | `update_updated_at_column` |  |
 | update_messages_updated_at | BEFORE UPDATE | `messages` | `update_updated_at_column` |  |
@@ -1192,7 +1194,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `duplicate_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
-| … +667 linhas — lista completa em `context.json` | | |
+| … +673 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 

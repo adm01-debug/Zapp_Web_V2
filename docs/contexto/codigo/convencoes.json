@@ -29,7 +29,7 @@
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (286)",
+   "scripts/db-audit (287)",
    "scripts/e2e-isolated (41)",
    "scripts/ci (40)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)",
    "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)",
    "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)",
    "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO (#2496)",
-   "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)",
-   "fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)"
+   "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

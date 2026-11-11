@@ -13364,7 +13364,7 @@
    "modulo": "integrations/supabase",
    "arquivos": 3,
    "testes": 1,
-   "linhas": 15564,
+   "linhas": 15583,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

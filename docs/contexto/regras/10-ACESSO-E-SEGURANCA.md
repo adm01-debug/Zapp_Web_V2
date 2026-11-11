@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f036006ada` · branch `main` · 2026-11-11 19:53 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d5835ed8c9` · branch `main` · 2026-11-11 21:27 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -207,6 +207,7 @@
 | `talkx_segments` | enabled | authenticated: (created_by = (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1)) OR is_admin_or_supervisor(auth.uid()) | authenticated: created_by = (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1) | authenticated: (created_by = (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1)) OR is_admin_or_supervisor(auth.uid()) | authenticated: (created_by = (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1)) OR is_admin_or_supervisor(auth.uid()) |
 | `talkx_settings` | enabled | authenticated: true | — | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
 | `talkx_storage_purge_queue` | enabled | — | — | — | — |
+| `talkx_suppression_reasons` | enabled | authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
 | `talkx_template_variants` | enabled | authenticated: auth.uid() IS NOT NULL | authenticated: EXISTS ( SELECT 1 FROM public.talkx_templates AS template WHERE template.id = talkx_template_variants.template_id AND ( templ | authenticated: EXISTS ( SELECT 1 FROM public.talkx_templates AS template WHERE template.id = talkx_template_variants.template_id AND ( templ | authenticated: EXISTS ( SELECT 1 FROM public.talkx_templates AS template WHERE template.id = talkx_template_variants.template_id AND ( templ |
 | `talkx_template_versions` | enabled | authenticated: auth.uid() IS NOT NULL AND EXISTS ( SELECT 1 FROM public.talkx_templates template WHERE template.id = talkx_template_versions | — | — | — |
 | `talkx_templates` | enabled | public: auth.uid() IS NOT NULL | public: created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1) | public: created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1) OR public.is_admin_or_supervisor(auth.uid()) | public: created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1) OR public.is_admin_or_supervisor(auth.uid()) |
@@ -240,7 +241,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 749 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 750 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -392,7 +393,7 @@
 - `supabase/functions/_shared/request-policy.ts`
 - `supabase/functions/_shared/talkx-reply.ts`
 - `supabase/functions/_shared/validation.ts`
-- … +599 (lista completa em `context.json`)
+- … +600 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -717,6 +718,7 @@
 - `talkx_benchmarks`
 - `talkx_blacklist_audit_trigger`
 - `talkx_blacklist_no_delete`
+- `talkx_blacklist_reason_active_guard`
 - `talkx_campaign_heatmap`
 - `talkx_campaign_launch_checks`
 - `talkx_campaign_logs`
@@ -853,7 +855,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
-| grant | authenticated | select | `profiles_public`, `password_reset_requests_safe`, `password_reset_requests_safe`, `profiles_public`, `whatsapp_connections_public`, `whatsapp_connections_public`, `login_attempts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `whatsapp_connections_agent`, `channel_connections_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `gmail_accounts_safe`, `gmail_accounts_safe` … +42 |
+| grant | authenticated | select | `profiles_public`, `password_reset_requests_safe`, `password_reset_requests_safe`, `profiles_public`, `whatsapp_connections_public`, `whatsapp_connections_public`, `login_attempts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `whatsapp_connections_agent`, `channel_connections_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `gmail_accounts_safe`, `gmail_accounts_safe` … +43 |
 | grant | authenticated | select, insert | `catalog_send_events`, `talkx_help_views`, `audit_logs` |
 | grant | authenticated | select, insert, delete | `message_favorites` |
 | grant | authenticated | select, insert, update | `sla_alert_preferences`, `connection_alert_preferences`, `notifications`, `messages` |
@@ -863,12 +865,12 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated, anon, service_role | insert | `prova_hz503_asserts` |
 | grant | authenticated, anon, service_role | select, insert, update, delete | `password_reset_requests`, `conversation_analyses` |
 | grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone`, `set_conversation_status`, `get_last_message_dates`, `dashboard_leaderboard`, `search_contacts`, `search_contacts` … +114 |
-| grant | authenticated, service_role | select | `talkx_campaign_optouts`, `talkx_engine_health`, `talkx_engine_health`, `talkx_ddd_regions`, `security_acl_alerts`, `profiles`, `user_roles`, `t88_ids`, `profiles`, `profiles` |
+| grant | authenticated, service_role | select | `talkx_campaign_optouts`, `talkx_engine_health`, `talkx_engine_health`, `talkx_ddd_regions`, `security_acl_alerts`, `talkx_campaign_optouts`, `profiles`, `user_roles`, `t88_ids`, `profiles`, `profiles` |
 | grant | authenticated, service_role | select, insert, update | `messages` |
 | grant | authenticated, service_role | select, insert, update, delete | `contact_notes`, `contact_protection_policy` |
 | grant | postgres | execute | `set_conversation_status`, `set_conversation_status`, `set_conversation_status` |
-| grant | service_role | all | `audio_meme_favorites`, `link_preview_cache`, `link_preview_cache_metrics`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions`, `talkx_settings`, `multiplix_delivery_items`, `ai_budget_reservations`, `ai_jobs`, `talkx_test_send_claims`, `talkx_optout_keywords`, `talkx_delivery_log`, `talkx_alerts`, `talkx_storage_purge_queue` … +14 |
-| grant | service_role | execute | `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `get_identity_matrix`, `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox` … +206 |
+| grant | service_role | all | `audio_meme_favorites`, `link_preview_cache`, `link_preview_cache_metrics`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions`, `talkx_settings`, `multiplix_delivery_items`, `ai_budget_reservations`, `ai_jobs`, `talkx_test_send_claims`, `talkx_optout_keywords`, `talkx_delivery_log`, `talkx_alerts`, `talkx_storage_purge_queue` … +15 |
+| grant | service_role | execute | `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `get_identity_matrix`, `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox` … +207 |
 | grant | service_role | select | `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `searchbox_budget_alert_cron`, `sla_alert_events` |
 | grant | service_role | select, insert | `contact_deletion_audit`, `audit_logs`, `contact_block_audit` |
 | grant | service_role | select, insert, update | `multiplix_events`, `searchbox_budget_alert_emails`, `talkx_segment_library_history`, `talkx_contact_attributes`, `public` |
@@ -879,9 +881,9 @@ Middleware matcher (Next.js): nenhum
 | grant | service_role, postgres | execute | `mcp_exec`, `mcp_exec_many` |
 | revoke | PUBLIC | all | `get_identity_matrix`, `enqueue_crm_sync_from_closure`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `is_valid_talkx_schedule_timezone`, `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions` … +44 |
 | revoke | PUBLIC | execute | `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak`, `increment_agent_messages`, `increment_agent_resolutions`, `set_conversation_status`, `accept_department_invite` … +25 |
-| revoke | PUBLIC, anon | all | `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `close_conversation_atomic`, `replace_talkx_draft_recipients` … +116 |
+| revoke | PUBLIC, anon | all | `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `close_conversation_atomic`, `replace_talkx_draft_recipients` … +117 |
 | revoke | PUBLIC, anon | execute | `clear_login_attempts`, `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at` … +65 |
-| revoke | PUBLIC, anon, authenticated | all | `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `register_first_response_internal`, `register_first_response_internal`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `upsert_crm_contact_link_guarded`, `redact_crm_sync_on_contact_delete`, `claim_crm_sync_outbox` … +195 |
+| revoke | PUBLIC, anon, authenticated | all | `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `register_first_response_internal`, `register_first_response_internal`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `upsert_crm_contact_link_guarded`, `redact_crm_sync_on_contact_delete`, `claim_crm_sync_outbox` … +200 |
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
 | revoke | PUBLIC, anon, authenticated | execute | `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `reschedule_talkx_recipient`, `transition_talkx_campaign`, `expire_stale_agent_presence`, `handle_message_gamification`, `handle_conversation_closure_gamification`, `get_department_whatsapp_credentials`, `get_department_whatsapp_api_key`, `record_incoming_call_event`, `sanitize_reset_request`, `team_receipts_fill_conversation_id`, `team_reactions_force_conversation_id`, `sanitize_reset_request` … +20 |
 | revoke | PUBLIC, anon, authenticated | truncate, references, trigger | `public` |
@@ -915,7 +917,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | authenticated | insert, update | `multiplix_recipients`, `departments`, `multiplix_dispatches` |
 | revoke | authenticated | insert, update, delete | `department_audit_logs` |
 | revoke | authenticated | insert, update, delete, truncate, references, trigger | `multiplix_voice_assets`, `multiplix_voice_grants`, `reconnection_logs` |
-| revoke | authenticated | truncate, references, trigger | `multiplix_dispatches`, `multiplix_recipients`, `multiplix_blocks`, `multiplix_audiences`, `multiplix_audience_members` |
+| revoke | authenticated | truncate, references, trigger | `multiplix_dispatches`, `multiplix_recipients`, `multiplix_blocks`, `multiplix_audiences`, `multiplix_audience_members`, `talkx_campaign_optouts` |
 | revoke | authenticated | truncate, trigger, references | `whatsapp_connections` |
 | revoke | authenticated | update | `team_conversation_members`, `team_messages`, `storage.objects`, `team_conversations`, `whisper_messages`, `passkey_credentials`, `whisper_messages`, `notifications` |
 | revoke | authenticated, anon | select | `departments` |
@@ -986,6 +988,7 @@ Middleware matcher (Next.js): nenhum
 | `talkx_segments` | `archived_at` |
 | `talkx_templates` | `archived_at` |
 | `talkx_optout_keywords` | `active` |
+| `talkx_suppression_reasons` | `active` |
 
 ## Auditoria (colunas de rastreio)
 
@@ -1171,6 +1174,7 @@ Middleware matcher (Next.js): nenhum
 | `copilot_help_requests` | `created_at` |
 | `copilot_learning_moments` | `created_at` |
 | `copilot_conversation_scores` | `updated_at` |
+| `talkx_suppression_reasons` | `created_at`, `created_by` |
 | `_rb_message_reactions_one_per_agent_20261107121000` | `created_at` |
 | `instance_pauses` | `created_at` |
 | `outbox_events` | `created_at` |
