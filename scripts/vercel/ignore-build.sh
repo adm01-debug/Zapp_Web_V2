@@ -22,6 +22,15 @@ if [ -z "$BASE" ]; then
   exit 1
 fi
 
+# Clone raso (profundidade 1): só existe 1 commit alcançável, então o
+# fallback acima devolve o próprio HEAD como base. Diffar HEAD contra si
+# mesmo sempre dá vazio, o que pularia o build mesmo com mudanças reais.
+HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
+if [ -z "$HEAD_SHA" ] || [ "$BASE" = "$HEAD_SHA" ]; then
+  echo "ignore-build: base commit is HEAD (shallow clone?) — building (fail-open)."
+  exit 1
+fi
+
 # Verifica se algum arquivo de front foi alterado.
 # shellcheck disable=SC2086
 if ! changed=$(git diff --name-only "$BASE" HEAD -- $FRONT_PATHS 2>/dev/null); then
