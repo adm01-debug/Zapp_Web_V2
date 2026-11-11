@@ -712,7 +712,18 @@ export async function handleMessageDeliveryRequest(
       p_message_id: claim.message_id,
       p_claim_token: claim.claim_token,
     });
-    if (markError) throw new PreDispatchInfraError('mark_outbound_post_started_failed');
+    if (markError) {
+      // Pré-DDL: a Edge é publicada automaticamente no push da main, mas a migration
+      // 20261101133000 só roda pelo db-migrate (manual, com aprovação). Enquanto a RPC
+      // não existe (PGRST202 no PostgREST / 42883 no Postgres), segue o fluxo anterior
+      // ao PD-79 — sem carimbo — em vez de derrubar todo envio. Qualquer outro erro
+      // continua sendo infra pré-dispatch: nada saiu.
+      if (markError.code === 'PGRST202' || markError.code === '42883') {
+        console.error(JSON.stringify({ event: 'message_delivery_post_stamp_unavailable', code: markError.code }));
+      } else {
+        throw new PreDispatchInfraError('mark_outbound_post_started_failed');
+      }
+    }
     providerPostAttempted = true;
     const providerResponse = await deliverOutbound(
       service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
