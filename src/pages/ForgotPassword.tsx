@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle, Loader2, Clock } from 'lucide-react';
 import { log } from '@/lib/logger';
 import { z } from 'zod';
-import { supabase } from '@/integrations/supabase/client';
+import { fromTable } from '@/lib/supabaseHelpers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,9 +42,9 @@ export default function ForgotPassword() {
       // servidor a partir do e-mail, ignora e-mail sem conta e limita a 3 pendentes
       // por hora — sem erro e sem revelar se a conta existe. O pedido nasce pendente
       // e só o gestor libera (painel de pedidos + Edge approve-password-reset).
-      // Sem .select(): o anon não lê a tabela, então não há RETURNING.
-      const { error: requestError } = await supabase
-        .from('password_reset_requests')
+      // Sem .select(): o anon não lê a tabela, então não há RETURNING. fromTable porque
+      // o tipo gerado exige user_id, que aqui é preenchido pelo gatilho no servidor.
+      const { error: requestError } = await fromTable('password_reset_requests')
         .insert({
           email,
           reason: reason || null,
