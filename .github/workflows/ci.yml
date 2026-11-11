@@ -156,6 +156,11 @@ jobs:
       - name: Verificar inventário de testes
         run: node scripts/ci/check-test-inventory.mjs
 
+      # scripts/inventario/gerar-repo.unit.mjs chama o script real, que shella para `rg`;
+      # a imagem do runner não traz ripgrep por padrão.
+      - name: 🔍 Instalar ripgrep
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ripgrep
+
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
