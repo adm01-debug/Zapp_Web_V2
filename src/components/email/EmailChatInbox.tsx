@@ -312,7 +312,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
           <Button ref={helpButtonRef} variant="outline" onClick={() => setShowHelp(true)} className="ml-auto hidden sm:inline-flex"><CircleHelp className="mr-2 h-4 w-4" />Ajuda</Button>
           <Button onClick={() => { setComposerTo(''); setShowComposer(true); }}><Plus className="mr-2 h-4 w-4" />Nova mensagem</Button>
         </div>
-        <div className="mt-2 flex items-center gap-2 text-2xs text-success"><Wifi className="h-3 w-3" />{activeAccount.email_address}<span className="text-border">•</span><span className="text-muted-foreground">{unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}</span></div>
+        <div className="mt-2 flex items-center gap-2 text-2xs text-success"><Wifi className="h-3 w-3" />{activeAccount.email_address}<span className="text-muted-foreground">•</span><span className="text-muted-foreground">{unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}</span></div>
       </header>}
 
       {embedded && <div className="flex shrink-0 items-center gap-2 border-b border-border bg-inbox-panel px-3 py-2 text-xs text-foreground"><Mail className="h-4 w-4 text-primary" /><span className="font-medium">Email</span><span className="truncate text-muted-foreground">{activeAccount.email_address}</span><Button size="sm" className="ml-auto h-7 px-2 text-xs" onClick={() => { setComposerTo(''); setShowComposer(true); }}><Plus className="mr-1 h-3.5 w-3.5" />Nova mensagem</Button></div>}
