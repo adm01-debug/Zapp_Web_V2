@@ -30,11 +30,14 @@ export function TeamChatView() {
     isLoading: conversationsLoading,
     refetch: refetchConversations,
   } = useTeamConversations();
-  // Escolha explícita do usuário; quando null, vale a conversa do deep-link.
+  // Conversa aberta (escolha do usuário ou deep-link já resolvido). Um deep-link
+  // pendente não a apaga: só a substitui quando a conversa dele existir.
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [deepLinkCid, setDeepLinkCid] = useState<string | null>(() => readCidParam());
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  // Recarga da lista pedida pelo deep-link (ver abaixo): cid e se já terminou.
+  const [recarga, setRecarga] = useState<{ cid: string; feita: boolean } | null>(null);
 
   // Deep-link: ?cid=<uuid> (vindo da notificação) é lido ao abrir a tela e a cada
   // `zapp:navigate` (nova notificação com a tela aberta) e sai da URL na hora —
@@ -47,9 +50,13 @@ export function TeamChatView() {
       // vezes seguidas o estado não muda, e o ?cid= ficaria pendurado na URL (reabrindo a
       // conversa ao voltar para a tela ou recarregar).
       stripCidParam();
+      // A seleção atual NÃO muda aqui: só troca quando o cid resolver para uma conversa
+      // existente (abaixo). Se ele for descartado, o usuário continua na conversa que
+      // tinha aberta. E cada notificação é um pedido novo: zera a recarga, para que o
+      // mesmo cid descartado antes volte a recarregar a lista (a conversa pode ter
+      // passado a existir desde então).
       setDeepLinkCid(cid);
-      setPickedId(null);
-      setShowDetails(false);
+      setRecarga(null);
     };
     window.addEventListener('zapp:navigate', onNavigate);
     return () => window.removeEventListener('zapp:navigate', onNavigate);
@@ -64,7 +71,6 @@ export function TeamChatView() {
   // realtime atualizar a lista. Se depois da recarga ela continuar ausente (sem acesso,
   // apagada), o pedido é descartado e não abre sozinho quando surgir mais tarde.
   // Ajuste de estado no render (padrão do React para estado derivado de props).
-  const [recarga, setRecarga] = useState<{ cid: string; feita: boolean } | null>(null);
   const deepLinkAusente =
     !conversationsLoading && !!deepLinkCid && !conversations.some(c => c.id === deepLinkCid);
   if (deepLinkAusente && recarga?.cid !== deepLinkCid) setRecarga({ cid: deepLinkCid as string, feita: false });
@@ -79,7 +85,14 @@ export function TeamChatView() {
   const deepLinkMissing = deepLinkAusente && recarga?.cid === deepLinkCid && recarga.feita;
   if (deepLinkMissing) setDeepLinkCid(null);
   const deepLinkedId = !conversationsLoading && !deepLinkAusente ? deepLinkCid : null;
-  const selectedId = pickedId ?? deepLinkedId;
+  // Deep-link resolvido para conversa existente: vira a escolha atual (substitui a
+  // conversa aberta e fecha os detalhes dela). Até resolver, a anterior continua.
+  if (deepLinkedId) {
+    setPickedId(deepLinkedId);
+    setDeepLinkCid(null);
+    setShowDetails(false);
+  }
+  const selectedId = deepLinkedId ?? pickedId;
   const setSelectedId = (id: string | null) => {
     setPickedId(id);
     setDeepLinkCid(null);
