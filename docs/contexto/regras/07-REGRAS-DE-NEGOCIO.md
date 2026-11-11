@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e7646cc7aa` · branch `main` · 2026-11-11 07:26 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `15ff5f3cc2` · branch `main` · 2026-11-11 07:47 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4425,6 +4425,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | seed: objeto privado baixado difere do esperado (${baixado.length} bytes vs ${esperado.length}) | `e2e/fixtures/arquivos-local/seed.ts` |
 | seed: upload ${caminho} falhou (${res.status}): ${await res.text()} | `e2e/fixtures/arquivos-local/seed.ts` |
 | ${msg}: esperado ${JSON.stringify(b)} obtido ${JSON.stringify(a)} | `scripts/ai-context/cenarios.mjs` |
+| --out  | `scripts/ai-context/gerar.mjs` |
 | Argumento desconhecido: ${arg} | `scripts/ci/a11y-button-name-ratchet.mjs` |
 | Valor ausente para ${arg}. | `scripts/ci/a11y-button-name-ratchet.mjs` |
 | ${metodo} ${caminho} -> ${r.status} | `scripts/ci/actions-kpi.mjs` |
@@ -4525,8 +4526,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | deno coverage não executou: ${cobertura.error.message} | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | não gero docs com teste vermelho: ${falhas.join( | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | HTTP 502 | `scripts/ci/fila-merge.unit.mjs` |
-| GitHub API ${method} ${path} → ${res.status}: ${text} | `scripts/ci/github-settings-guard.mjs` |
-| … +1745 linhas — lista completa em `context.json` | |
+| … +1746 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

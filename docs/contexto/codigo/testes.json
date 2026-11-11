@@ -607,9 +607,9 @@
   {
    "arquivo": "scripts/ai-context/gerar.unit.mjs",
    "tipo": "unit",
-   "linhas": 395,
+   "linhas": 411,
    "testa": [],
-   "casos": 2
+   "casos": 4
   },
   {
    "arquivo": "scripts/catalog/validate-plan.test.mjs",

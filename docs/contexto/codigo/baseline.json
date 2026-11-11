@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e7646cc7aad13381a1ccd68b0d742bf4966647e4",
+  "commit": "15ff5f3cc2af9d0215e33ebdbc313d8e37ba0538",
   "branch": "main",
-  "data_commit": "2026-11-11T04:01:00-03:00",
+  "data_commit": "2026-11-11T04:23:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "15ff5f3",
+    "data": "2026-11-11",
+    "assunto": "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)"
+   },
    {
     "sha": "e7646cc",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "401ea3d",
     "data": "2026-11-10",
     "assunto": "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)"
-   },
-   {
-    "sha": "9f94363",
-    "data": "2026-11-10",
-    "assunto": "chore(docs): documenta geração de contexto no AGENTS.md (#2840)"
    }
   ],
   "arquivos_mudados_7d": 668,
@@ -214,16 +214,16 @@
     "mudancas": 12
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
-   },
-   {
     "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
+   },
+   {
     "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 12
+    "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",
@@ -242,19 +242,7 @@
     "mudancas": 9
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
    },
    {
@@ -282,7 +270,19 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 8
+   },
+   {
     "arquivo": "scripts/e2e-isolated/README.md",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 8
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 888031,
+  "linhas_codigo": 888062,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -600,7 +600,7 @@
   },
   "scripts/ai-context": {
    "arquivos": 3,
-   "linhas": 1497
+   "linhas": 1528
   },
   "scripts/catalog": {
    "arquivos": 2,
@@ -922,13 +922,13 @@
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linha": 193,
+   "linha": 208,
    "tipo": "TODO",
    "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(line); if (m) todos.push({ linha: ln, tipo: m[1], text"
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linha": 227,
+   "linha": 242,
    "tipo": "TODO",
    "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(l); return m ? { linha: i + 1, tipo: m[1], texto: m[2]"
   },

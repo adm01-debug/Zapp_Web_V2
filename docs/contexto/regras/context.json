@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "e7646cc7aad13381a1ccd68b0d742bf4966647e4",
+  "sha": "15ff5f3cc2af9d0215e33ebdbc313d8e37ba0538",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 07:26 UTC",
+  "generated_at": "2026-11-11 07:47 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054891
+  "code_lines": 1054922
  },
  "version": "1.3.2",
- "facts_hash": "d69f64415b24c965",
+ "facts_hash": "2724dc3b777c1c85",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92137,
+   "lines": 92168,
    "tables": [
     "a",
     "alem_do_limite",
@@ -80098,6 +80098,10 @@
    {
     "file": "scripts/ai-context/cenarios.mjs",
     "msg": "${msg}: esperado ${JSON.stringify(b)} obtido ${JSON.stringify(a)}"
+   },
+   {
+    "file": "scripts/ai-context/gerar.mjs",
+    "msg": "--out "
    },
    {
     "file": "scripts/ci/a11y-button-name-ratchet.mjs",
@@ -262457,11 +262461,14 @@
   },
   "scripts/ai-context/gerar.mjs": {
    "path": "scripts/ai-context/gerar.mjs",
-   "lines": 929,
+   "lines": 944,
    "env": [
     "AI_CONTEXT_DIR",
     "AI_CONTEXT_PUBLICACAO",
     "AI_CONTEXT_ROOT"
+   ],
+   "errors": [
+    "--out "
    ],
    "params": [
     {
@@ -262475,6 +262482,11 @@
    "doc": "!/usr/bin/env node Gera o contexto de projeto para agentes de IA (padrão: inventario/ia/*). Zero dependências. Node >= 18. Genérico: funciona em qualquer repositório. JS/TS (React, Next, Vue, Svelte, Nuxt, Remix, Astro, Express/Hono/Fastify/Nest), Python (FastAPI/Flask/Django), e qualquer outra ling …",
    "calc_fns": [
     {
+     "name": "validarOut",
+     "params": "",
+     "body": "if (!exists(OUT_REL)) return; let entradas; try { entradas = fs.readdirSync(OUT); } catch { return; } if (entradas.length === 0) return; const manifestAnterior = readJson(path.join(OUT_REL, 'manifest.json')); if (manifestAnterior && manifestAnterior.gerador === 'scripts/ai-context/gerar.mjs') return; throw new Error(`--out \"${OUT_REL}\" já existe e não parece ser uma saída anterior deste gerador (sem manifest.json reconhecível) — abortando para não apagar do scan nem poluir um diretório real. Esc …"
+    },
+    {
      "name": "scanObjs",
      "params": "text, parent, depth",
      "body": "const re2 = /\\{\\s*(?:[^{}]*?\\b)?path:\\s*['\"]([^'\"]*)['\"]([^{}]*(?:\\{[^{}]*\\}[^{}]*)*)/g; let mm; while ((mm = re2.exec(text))) { const body = mm[2].replace(/children\\s*:\\s*\\[[\\s\\S]*$/, ''); const compM = /(?:element|Component|component|lazy)\\s*:\\s*(?:<)?(?:\\(\\)\\s*=>\\s*import\\(\\s*['\"]([^'\"]+)['\"]\\s*\\))?([A-Z]\\w*)?/.exec(body); const full = joinPath(parent, mm[1]); if (compM && (compM[1] || compM[2])) rotas.push(mk({ caminho: full, componente: compM[2] || null, arquivo: compM[1] ? resolveImport(rf …"
@@ -262483,7 +262495,7 @@
   },
   "scripts/ai-context/gerar.unit.mjs": {
    "path": "scripts/ai-context/gerar.unit.mjs",
-   "lines": 395,
+   "lines": 411,
    "exports": [
     "function AppRoutes",
     "function useContacts",
@@ -385969,10 +385981,20 @@
   }
  },
  "git": {
-  "sha": "e7646cc7aad13381a1ccd68b0d742bf4966647e4",
+  "sha": "15ff5f3cc2af9d0215e33ebdbc313d8e37ba0538",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "15ff5f3",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)",
+    "files": [
+     "scripts/ai-context/gerar.mjs",
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
    {
     "sha": "e7646cc",
     "date": "2026-11-11",
@@ -386297,16 +386319,6 @@
      "scripts/maintenance/run.sh",
      "scripts/maintenance/typecheck.mjs"
     ]
-   },
-   {
-    "sha": "3d97dc7",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(catalogo): valida etapas e datas do plano de implementação (#2918)",
-    "files": [
-     "scripts/catalog/validate-plan.mjs",
-     "scripts/catalog/validate-plan.test.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -386335,16 +386347,16 @@
     2
    ],
    [
-    "scripts/catalog/validate-plan.mjs",
-    2
-   ],
-   [
-    "scripts/catalog/validate-plan.test.mjs",
-    2
-   ],
-   [
     "scripts/maintenance/lib.mjs",
     2
+   ],
+   [
+    "scripts/ai-context/gerar.mjs",
+    1
+   ],
+   [
+    "scripts/ai-context/gerar.unit.mjs",
+    1
    ],
    [
     "scripts/ui-audit/root-className.mjs",
