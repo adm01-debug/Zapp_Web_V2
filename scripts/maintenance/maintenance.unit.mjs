@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, utimes } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { main, parseArgs, networkPrefix, comLimpeza } from './run.mjs';
@@ -253,6 +253,25 @@ test('trava de pid morto é recuperada, trava recente sem dono fica bloqueante',
   await release();
   await mkdir(lock);
   await assert.rejects(acquire(lock), (e) => e.code === 'skipped_busy');
+});
+test('owner.json corrompido (crash no meio da escrita) e recente fica bloqueante', async (t) => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-corrupt-recent-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const lock = path.join(dir, 'lock');
+  await mkdir(lock);
+  await writeFile(path.join(lock, 'owner.json'), '{"pid":12345,"token":"ab');
+  await assert.rejects(acquire(lock), (e) => e.code === 'skipped_busy');
+});
+test('owner.json corrompido e trava antiga (mtime) e recuperada', async (t) => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-corrupt-stale-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const lock = path.join(dir, 'lock');
+  await mkdir(lock);
+  await writeFile(path.join(lock, 'owner.json'), '{"pid":12345,"token":"ab');
+  const past = new Date(Date.now() - 400000);
+  await utimes(lock, past, past);
+  const release = await acquire(lock);
+  await release();
 });
 test('namespace de rede impede acesso externo de todos os filhos', isolated, async () => {
   const prefix = await networkPrefix(process.cwd());
