@@ -1,0 +1,12 @@
+name: zz-to
+on: pull_request
+jobs:
+  x:
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.t }}
+    strategy:
+      matrix:
+        include:
+          - t: 5
+    steps:
+      - run: sleep 2; echo ok

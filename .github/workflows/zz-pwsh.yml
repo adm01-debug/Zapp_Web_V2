@@ -1,0 +1,12 @@
+name: zz-pwsh
+on: pull_request
+jobs:
+  p:
+    runs-on: ubuntu-24.04
+    services:
+      um:
+        image: alpine:latest
+        options: -i
+    steps:
+      - shell: pwsh
+        run: Write-Host oi
