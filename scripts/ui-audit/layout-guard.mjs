@@ -29,9 +29,14 @@ function routedViewFiles() {
     const spec = m[1];
     if (!spec.startsWith("@/")) continue;
     const base = path.join(SRC, spec.slice(2));
-    for (const ext of [".tsx", ".ts"]) {
-      if (existsSync(base + ext)) { files.add(base + ext); break; }
+    const candidates = path.extname(base)
+      ? [base]
+      : [base + ".tsx", base + ".ts", path.join(base, "index.tsx"), path.join(base, "index.ts")];
+    const file = candidates.find((candidate) => existsSync(candidate) && statSync(candidate).isFile());
+    if (!file) {
+      throw new Error(`view roteada nao resolvida: ${spec} — auditoria incompleta`);
     }
+    files.add(file);
   }
   if (files.size === 0) {
     throw new Error("lazyViews.ts nao rendeu nenhum arquivo — auditoria incompleta");
@@ -72,6 +77,45 @@ function hasUtility(className, utility) {
   });
 }
 
+// Breakpoints em ordem mobile-first (Tailwind): um utilitário com prefixo
+// `lg:` só vale de `lg` pra cima, nunca cobre as telas menores que ele.
+// hasUtility() ignora isso — `lg:w-full` já fazia hasUtility(cn,"w-full")
+// retornar true mesmo que o root seja `h-full lg:w-full`, escondendo o
+// anti-padrão exatamente nas telas abaixo de `lg` (h-full sem largura).
+const BREAKPOINTS = ["sm", "md", "lg", "xl", "2xl"];
+
+/** Índices de breakpoint (0=base .. BREAKPOINTS.length=maior) em que `utility` está ativo. */
+function activeBreakpoints(className, utility) {
+  const active = new Set();
+  for (const token of className.split(/\s+/)) {
+    const normalized = token.replace(/^!/, "");
+    if (normalized === utility) {
+      for (let i = 0; i <= BREAKPOINTS.length; i += 1) active.add(i);
+      continue;
+    }
+    const bpIndex = BREAKPOINTS.findIndex((bp) =>
+      normalized === `${bp}:${utility}` || normalized.endsWith(`:${bp}:${utility}`));
+    if (bpIndex !== -1) {
+      for (let i = bpIndex + 1; i <= BREAKPOINTS.length; i += 1) active.add(i);
+    }
+  }
+  return active;
+}
+
+/** True se `utility` está ativo em algum breakpoint onde nenhum de `counters` cobre. */
+function hasUncoveredBreakpoint(className, utility, counters) {
+  const required = activeBreakpoints(className, utility);
+  if (required.size === 0) return false;
+  const covered = new Set();
+  for (const counter of counters) {
+    for (const idx of activeBreakpoints(className, counter)) covered.add(idx);
+  }
+  for (const idx of required) {
+    if (!covered.has(idx)) return true;
+  }
+  return false;
+}
+
 const ANTI_PATTERNS = [
   {
     name: "overflow-y-auto at root",
@@ -80,8 +124,8 @@ const ANTI_PATTERNS = [
   },
   {
     name: "h-full without w-full/flex-1",
-    test: (cn) => hasUtility(cn, "h-full") && !hasUtility(cn, "w-full") && !hasUtility(cn, "flex-1"),
-    message: "h-full without w-full or flex-1 — will size to content width.",
+    test: (cn) => hasUncoveredBreakpoint(cn, "h-full", ["w-full", "flex-1"]),
+    message: "h-full without w-full or flex-1 at every breakpoint where h-full applies — will size to content width on the uncovered screens.",
   },
   {
     name: "p-6 duplicate padding",
@@ -156,6 +200,14 @@ for (const file of AUDITED) {
 
   checked++;
   for (const cn of roots) {
+    if (cn === null) {
+      // className presente mas com valor dinamico (ternario, variavel, etc.) que
+      // root-className.mjs nao consegue extrair — nao pode ser auditado como "",
+      // pois um dos ramos do ternario pode ser exatamente o anti-padrao.
+      console.error(`NAO AUDITAVEL: ${rel} — className dinamico na raiz, nao foi possivel extrair o valor`);
+      violations++;
+      continue;
+    }
     for (const { name, test, message } of ANTI_PATTERNS) {
       if (test(cn)) {
         console.error(`VIOLATION [${name}]`);

@@ -111,7 +111,7 @@ export function TalkXTemplateEditor({
     id: string; template_id: string; version_number: number; name: string; description: string | null; content: string;
     category: string; status: string; media_url: string|null; media_type: string|null;
     tags: string[]; custom_variables: string[]; created_at: string;
-  }>>([]); 
+  }>>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
   // Sub-aba que o ENDEREÇO pediu: ela segue aberta quando a biblioteca lateral troca de
   // template (o endereço preserva o `ttab`). Abrir/fechar à mão fora dela é transitório.
