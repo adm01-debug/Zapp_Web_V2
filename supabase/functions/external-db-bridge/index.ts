@@ -222,15 +222,16 @@ export async function handleExternalDbBridge(
         if (selectParam && selectParam.includes('(')) {
           return errorResponse("Invalid select parameter", 400, req);
         }
+        // Valida filtros ANTES de montar a query privilegiada.
+        const filters = parseFilters(params?.filters);
+        if (!filters) {
+          return errorResponse("Invalid filter column or operator", 400, req);
+        }
         // deno-lint-ignore no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let query: any = supabaseAdmin.from(table).select(selectParam || "*", {
           count: (countMode as "exact" | "planned" | "estimated") || undefined,
         });
-        const filters = parseFilters(params?.filters);
-        if (!filters) {
-          return errorResponse("Invalid filter column or operator", 400, req);
-        }
         for (const f of filters) {
           query = query.filter(f.column, f.operator, f.value);
         }
