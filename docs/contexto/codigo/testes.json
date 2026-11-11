@@ -691,11 +691,11 @@
   {
    "arquivo": "scripts/ci/bundle-budget.unit.mjs",
    "tipo": "unit",
-   "linhas": 207,
+   "linhas": 221,
    "testa": [
     "scripts/ci/bundle-budget.mjs"
    ],
-   "casos": 11
+   "casos": 12
   },
   {
    "arquivo": "scripts/ci/catalog-ct73-docs.unit.mjs",

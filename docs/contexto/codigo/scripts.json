@@ -116,7 +116,7 @@
   {
    "arquivo": "scripts/ci/bundle-budget.mjs",
    "descricao": "Guard do budget de bundle inicial. Le dist/index.html, soma o gzip de todo JS carregado no first paint (script[type=module] + link[rel=modulepreload]) e do",
-   "linhas": 149,
+   "linhas": 154,
    "env": [],
    "npm_scripts": [],
    "workflows": [
