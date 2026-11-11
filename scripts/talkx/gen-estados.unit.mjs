@@ -50,6 +50,22 @@ test('varrerTela devolve a linha (1-based) de cada estado adotado', () => {
   assert.deepEqual(achados.perm, []);
 });
 
+test('varrerTela ignora JSX comentado (código morto não é adoção real)', () => {
+  const texto = [
+    'function TalkXFixture() {', // 1
+    "  // return <TalkXEmptyState />;", // 2 — comentado durante depuração
+    "  /* <TalkXCrmUnavailableState /> */", // 3 — idem
+    '  return <TalkXSkeletonRows rows={4} />;', // 4 — real, deve contar
+    '}', // 5
+  ].join('\n');
+
+  const achados = varrerTela(texto);
+
+  assert.deepEqual(achados.empty, []);
+  assert.deepEqual(achados.crm, []);
+  assert.deepEqual(achados.loading, [4]);
+});
+
 test('varrerTela aceita o vazio por filtro e o skeleton de KPI', () => {
   const texto = '<TalkXFilteredEmptyState onClearFilters={x} />\n<KpiCardSkeleton />';
   const achados = varrerTela(texto);
