@@ -24,7 +24,10 @@ const h = vi.hoisted(() => ({
   insert: vi.fn(),
   tabelas: [] as string[],
   toast: { success: vi.fn(), error: vi.fn() },
+  auth: { user: null as null | { email?: string }, loading: false, signOut: vi.fn() },
 }));
+
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => h.auth }));
 
 vi.mock('@/lib/supabaseHelpers', () => ({
   fromTable: (table: string) => {
@@ -66,6 +69,7 @@ function preencherEEnviar(email: string, motivo?: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   h.tabelas.length = 0;
+  h.auth = { user: null, loading: false, signOut: vi.fn().mockResolvedValue(undefined) };
   h.insert.mockResolvedValue({ error: null });
 });
 
@@ -123,5 +127,74 @@ describe('ForgotPassword — pedido resolvido no servidor', () => {
     expect(await screen.findByText('Erro ao enviar solicitação. Tente novamente.')).toBeTruthy();
     expect(screen.queryByText('Solicitação Enviada!')).toBeNull();
     expect(h.toast.error).toHaveBeenCalledWith('Erro ao enviar solicitação');
+  });
+});
+
+describe('ForgotPassword — envio único', () => {
+  it('dois submits antes da resposta gravam UM pedido só', async () => {
+    let responder!: (v: unknown) => void;
+    h.insert.mockReturnValue(new Promise((r) => { responder = r; }));
+    cenario();
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ana@empresa.com' } });
+    const form = document.querySelector('form')!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    responder({ error: null });
+
+    expect(await screen.findByText('Solicitação Enviada!')).toBeTruthy();
+    expect(h.insert).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ForgotPassword — usuário já logado', () => {
+  it('mostra o aviso com o caminho de troca de senha (Segurança) e não oferece o formulário', () => {
+    h.auth = { ...h.auth, user: { email: 'ana@empresa.com' } };
+    cenario();
+
+    expect(screen.getByText('Você já está conectado')).toBeTruthy();
+    expect(screen.getByText('ana@empresa.com')).toBeTruthy();
+    const link = screen.getByRole('link', { name: 'Ir para Segurança' });
+    expect(link.getAttribute('href')).toBe('/?view=security');
+    expect(document.querySelector('form')).toBeNull();
+    expect(h.tabelas).toEqual([]);
+    expect(h.insert).not.toHaveBeenCalled();
+  });
+
+  it('"Sair desta conta" encerra a sessão (para quem quer pedir o reset de outra conta)', async () => {
+    h.auth = { ...h.auth, user: { email: 'ana@empresa.com' } };
+    cenario();
+    fireEvent.click(screen.getByRole('button', { name: 'Sair desta conta' }));
+    await vi.waitFor(() => expect(h.auth.signOut).toHaveBeenCalledTimes(1));
+    expect(h.insert).not.toHaveBeenCalled();
+  });
+
+  it('com a sessão ainda carregando, o botão fica desabilitado e o submit não grava', () => {
+    h.auth = { ...h.auth, loading: true };
+    cenario();
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ana@empresa.com' } });
+    expect((screen.getByRole('button', { name: /Solicitar Reset de Senha/ }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.submit(document.querySelector('form')!);
+    expect(h.insert).not.toHaveBeenCalled();
+  });
+});
+
+describe('ForgotPassword — texto e acessibilidade', () => {
+  it('a tela fala em "gestor", igual ao aviso de envio (nenhum "administrador")', async () => {
+    cenario();
+    expect(document.body.textContent).not.toMatch(/administrador/i);
+    preencherEEnviar('ana@empresa.com');
+    expect(await screen.findByText('Solicitação Enviada!')).toBeTruthy();
+    expect(document.body.textContent).toContain('O gestor irá analisar sua solicitação');
+    expect(document.body.textContent).not.toMatch(/administrador/i);
+  });
+
+  it('erro de validação é anunciado (role=alert) e ligado ao campo (aria-invalid/aria-describedby)', async () => {
+    cenario();
+    preencherEEnviar('nao-e-email');
+    const alerta = await screen.findByRole('alert');
+    expect(alerta.textContent).toBe('Email inválido');
+    const campo = screen.getByLabelText('Email');
+    expect(campo.getAttribute('aria-invalid')).toBe('true');
+    expect(campo.getAttribute('aria-describedby')).toBe(alerta.id);
   });
 });
