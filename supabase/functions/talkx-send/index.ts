@@ -128,6 +128,23 @@ export async function buildTalkxTrackingUrl(params: {
     : `${params.supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(params.slug)}&r=${rParam}`;
 }
 
+/**
+ * Código estável de um erro do PostgREST para o corpo de um 4xx. Só o texto que
+ * já é um código (`RAISE EXCEPTION 'talkx_campaign_not_found'`) passa; qualquer
+ * outra mensagem do Postgres (nome de coluna/função, timeout, permissão) vira o
+ * SQLSTATE ou `fallback` — nunca o texto cru.
+ */
+export function safeDbErrorCode(
+  error: { message?: unknown; code?: unknown } | null | undefined,
+  fallback = "transition_failed",
+): string {
+  const message = error?.message;
+  if (typeof message === "string" && /^[a-z0-9_]{1,80}$/.test(message)) return message;
+  const code = error?.code;
+  if (typeof code === "string" && /^[A-Za-z0-9_]{1,16}$/.test(code)) return code;
+  return fallback;
+}
+
 export async function handleTalkxSend(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -453,7 +470,7 @@ export async function handleTalkxSend(
         p_recipient_id: recipientId,
       });
       if (retryError) {
-        return new Response(JSON.stringify({ error: retryError.message }), { status: 409, headers });
+        return new Response(JSON.stringify({ error: safeDbErrorCode(retryError) }), { status: 409, headers });
       }
       return new Response(JSON.stringify({ success: retried === true }), { headers });
     }
@@ -493,9 +510,7 @@ export async function handleTalkxSend(
         p_pause_reason: pauseReason,
       });
       if (error) {
-        const safeError = typeof error.message === 'string' && !error.message.includes(' ')
-          ? error.message : (error.code || 'transition_failed');
-        return new Response(JSON.stringify({ error: safeError }), { status: 409, headers });
+        return new Response(JSON.stringify({ error: safeDbErrorCode(error) }), { status: 409, headers });
       }
       const transition = Array.isArray(data) ? data[0] : data;
       return new Response(JSON.stringify({ success: true, status: transition?.current_status }), { headers });
@@ -1425,7 +1440,7 @@ export async function handleTalkxSend(
       p_actor_id: actorId,
     });
     if (transitionError) {
-      return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+      return new Response(JSON.stringify({ error: safeDbErrorCode(transitionError) }), { status: 409, headers });
     }
 
     // X013: o limite diário é conferido aqui, não mais no laço inline. A
