@@ -1,7 +1,6 @@
 # PENDÊNCIAS DE CI
 
 > Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.
-> Atualizado em 2026-11-09 pela sessão `brave-mccarthy-zvzky4`.
 > Atualizar quando os bloqueios forem resolvidos.
 
 ---
@@ -94,48 +93,3 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
 2. Para cada alerta: corrigir o código (PR de fix) ou dispensar com justificativa se for falso positivo.
 3. Após fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
-
----
-
-## 5. CI/CD Pipeline — validação da correção bloqueada por fila de runners
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/ci.yml` |
-| Falha original na main | Última execução com falha: [#42444580978 (commit `9183f0f6`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42444580978) — job `🧪 Unit Tests (2/3)` com erro `No test suite found in file src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` |
-| Correção aplicada | Commit `558f4a9a` na branch `claude_05/brave-mccarthy-zvzky4` (HEAD atual: `faa6041d`): adicionado `describe('TalkXCampaignReport', ...)` com 2 `it.todo` em `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` |
-| Causa raiz da falha | Arquivo tinha 61 linhas de imports/mocks mas nenhum bloco `describe`/`it`/`test` — Vitest aborta a shard com erro quando um arquivo de teste não contém casos |
-| Status da validação | **BLOQUEADA POR FILA DE RUNNERS** — runs criados em 2026-11-09T01:17:42Z ainda em `status: pending` |
-| Run CI/CD Pipeline | [#42544806835](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42544806835) — `pending` desde 01:17Z |
-| Run E2E Talk X | [#42544806793](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42544806793) — `pending` desde 01:17Z |
-| Run DB Guard | [#42544806817](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42544806817) — `queued` desde 01:17Z |
-| Check-in armado | Trigger `trig_019uUbVo8NyetZNRjJZ4Qrdi` — verificação em 2026-11-09T02:03Z |
-| Por que não posso validar agora | Fila global de runners do GitHub (`status: pending` = GitHub não alocou runner). Múltiplas sessões de agentes competem simultaneamente. Não é problema de código — a correção está aplicada e verificada localmente (arquivo lido via GitHub API). |
-
-**O que acontecerá quando os runners ficarem disponíveis:**
-- CI/CD Pipeline rodará a shard 2/3 e encontrará o `describe` block → ✅ passa
-- Se todos os 6 required checks passarem → squash-merge automático do PR #2881 pelo trigger
-- Merge em `main` = deploy automático via Vercel
-
-### O que o dono pode fazer para acelerar
-
-1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/actions e verificar se existe algum run stuck bloqueando o grupo de concorrência.
-2. Se os runs #42544806835/#42544806793/#42544806817 ainda estiverem `pending` após 2h+, cancelá-los manualmente e fazer re-push de qualquer commit na branch para re-triggerar o CI.
-3. Após CI verde: o agente (via trigger `trig_019uUbVo8NyetZNRjJZ4Qrdi`) fará o squash-merge do PR #2881 automaticamente.
-
-**Histórico de runs canceladas (HEADs anteriores):**
-
-| Run ID | HEAD | Status |
-|---|---|---|
-| [42538584418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584418) | `76a6072f` | cancelled |
-| [42538584548](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42538584548) | `76a6072f` | cancelled |
-| [42540034065](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540034065) | `cb292233` | cancelled |
-| [42540033943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42540033943) | `cb292233` | cancelled |
-| [42541991611](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991611) | `558f4a9a` | cancelled |
-| [42541991641](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42541991641) | `558f4a9a` | cancelled |
-| [42542650389](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650389) | `18a87133` | cancelled |
-| [42542650448](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650448) | `18a87133` | cancelled |
-| [42542650490](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42542650490) | `18a87133` | cancelled |
-| [42543039375](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42543039375) | `2fc7053f` | cancelled/pending |
-| [42543039418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42543039418) | `2fc7053f` | cancelled/pending |
-| [42543039370](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42543039370) | `2fc7053f` | cancelled/pending |

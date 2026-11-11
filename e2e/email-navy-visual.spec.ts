@@ -3,6 +3,14 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { mockEmailNavy } from './fixtures/email-navy';
 
+/**
+ * Boot declarado de 60 s vs teto implícito de 5 s do expect: sob contenção de host compartilhado,
+ * o workspace pode não montar em 5 s (medido na run 42867364702, webkit, linha 695, 6× resolved to 0).
+ * Retry no nível do arquivo (precedente: files-tab.spec.ts, quick-controls-volume.spec.ts) sem afrouxar teto.
+ */
+test.describe.configure({ retries: 1 });
+
+
 const output = join(import.meta.dirname, 'email-navy-visual');
 
 /**

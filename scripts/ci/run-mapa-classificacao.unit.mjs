@@ -218,3 +218,70 @@ test('INF-019.17 controle que NÃO sobrevive não inventa sobrevivente nem repro
   assert.deepEqual(v.sobreviventesEsperados, []);
   assert.deepEqual(v.sobreviventesInesperados, []);
 });
+
+const RESUMOS_SEM_MEDICAO = [
+  'no tests', '0 passed (0)', '0 failed | 0 passed (0)',
+  '42 skipped (42)', '42 todo (42)', '21 skipped | 21 todo (42)',
+  '0 passed | 42 skipped (42)', '0 failed | 42 todo (42)',
+  '', 'nonsense', 'passed (1)', '-1 passed (1)', '-1 failed (1)',
+  '1.5 passed (1)', '1.5 failed (1)', '1e3 passed (1000)', '+1 passed (1)',
+  '1,000 passed (1000)', '1_000 passed (1000)', 'NaN passed (1)',
+  'Infinity passed (1)', '9007199254740992 passed (9007199254740992)',
+  '1 passedXYZ (1)', 'garbage 1 passed (1)', '1 passed (1) garbage',
+  '1 passed (0)', '1 passed (2)', '1 passed | 1 passed (2)',
+];
+
+for (const resumo of RESUMOS_SEM_MEDICAO) {
+  for (const colorido of [false, true]) {
+    test(`resumo sem prova reprova baseline e equivalente: ${JSON.stringify(resumo)}${colorido ? ' ANSI/CRLF' : ''}`, () => {
+      const texto = `      Tests  ${resumo}\n`;
+      const stdout = colorido ? `\u001b[2m${texto.replaceAll('\n', '\r\n')}\u001b[22m` : texto;
+      const rodada = interpretarRodada({ status: 0, signal: null, stdout, stderr: '' });
+      assert.ok([ESTADOS.infra, ESTADOS.inconclusivo].includes(rodada.estado));
+      assert.equal(veredito({ baseline: rodada, resultados: [MUTANTE_MORTO] }).codigo, 2);
+      assert.equal(veredito({ baseline: BASELINE_VERDE, resultados: [
+        MUTANTE_MORTO, { id: 'F3-abort', ...rodada },
+      ] }).codigo, 2);
+    });
+  }
+}
+
+for (const resumo of [
+  '1 expected fail (1)', '1 passed | 1 expected fail | 2 skipped | 3 todo (7)',
+  '1 passed | 42 skipped (43)', '1 passed | 42 todo (43)',
+  '0 failed | 1 passed (1)',
+]) {
+  test(`execução real continua conclusiva: ${resumo}`, () => {
+    const rodada = interpretarRodada({ status: 0, signal: null,
+      stdout: `\u001b[2m      Tests  ${resumo}\u001b[22m\r\n`, stderr: '' });
+    assert.equal(rodada.estado, ESTADOS.sobrevivente);
+  });
+}
+
+test('falha nomeada com skip/todo mantém a detecção do mutante', () => {
+  const rodada = interpretarRodada({ status: 1, signal: null,
+    stdout: '   × mapa > asserção rastreável\n      Tests  1 failed | 2 skipped | 3 todo (6)\n', stderr: '' });
+  assert.equal(rodada.estado, ESTADOS.morto);
+});
+
+test('resumo e saída contraditórios não concluem medição', () => {
+  for (const resumo of ['1 failed (1)', '1 passed (1)']) {
+    const rodada = interpretarRodada({ status: 0, signal: null,
+      stdout: `   × mapa > asserção vermelha\n      Tests  ${resumo}\n`, stderr: '' });
+    assert.equal(rodada.estado, ESTADOS.inconclusivo);
+  }
+});
+
+test('linha vazia de resumo não consome contagem na linha seguinte', () => {
+  const rodada = interpretarRodada({ status: 0, signal: null,
+    stdout: '      Tests  \n42 passed (42)\n', stderr: '' });
+  assert.notEqual(rodada.estado, ESTADOS.sobrevivente);
+});
+
+test('spawn real sem execução não aprova equivalente documentado', () => {
+  const rodada = rodarSuite({ comando: process.execPath,
+    argumentos: ['-e', "process.stdout.write('      Tests  42 skipped (42)\\n')"] });
+  assert.equal(rodada.estado, ESTADOS.inconclusivo);
+  assert.equal(veredito({ baseline: BASELINE_VERDE,
+    resultados: [{ id: 'F3-abort', ...rodada }] }).codigo, 2);
+});

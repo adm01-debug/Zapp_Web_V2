@@ -1,11 +1,30 @@
-COMMENT ON TABLE public._rb_message_reactions_contato_20261007001008 IS
-  '[RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação.';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema = 'public'
+               AND table_name = '_rb_message_reactions_contato_20261007001008') THEN
+    EXECUTE $b$COMMENT ON TABLE public._rb_message_reactions_contato_20261007001008 IS
+      '[RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação.'$b$;
+  END IF;
+END $$;
 
-COMMENT ON TABLE public._zapp_fn_before IS
-  '[RLS-sem-policy: intencional] Snapshot das definições de funções antes de migrations críticas. Só leitura por service_role/DBA.';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema = 'public' AND table_name = '_zapp_fn_before') THEN
+    EXECUTE $b$COMMENT ON TABLE public._zapp_fn_before IS
+      '[RLS-sem-policy: intencional] Snapshot das definições de funções antes de migrations críticas. Só leitura por service_role/DBA.'$b$;
+  END IF;
+END $$;
 
-COMMENT ON TABLE public._zapp_mig133_log IS
-  '[RLS-sem-policy: intencional] Log interno da migration 133. Só service_role.';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema = 'public' AND table_name = '_zapp_mig133_log') THEN
+    EXECUTE $b$COMMENT ON TABLE public._zapp_mig133_log IS
+      '[RLS-sem-policy: intencional] Log interno da migration 133. Só service_role.'$b$;
+  END IF;
+END $$;
 
 COMMENT ON TABLE public.team_chat_media_acl_r2_db_020_rb IS
   '[RLS-sem-policy: intencional] Tabela de rebuild para ACL de mídia do Team Chat. Só service_role durante scripts de migração.';

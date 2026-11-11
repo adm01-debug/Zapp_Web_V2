@@ -9,7 +9,32 @@ const PUBLIC_SECRET_ALLOWLIST = new Set([
   'VITE_SUPABASE_PUBLISHABLE_KEY',
 ]);
 
+/**
+ * YAML flow-style mapping (`on: { pull_request: {} }`) é sintaxe valida e aceita pelo
+ * GitHub Actions, mas nem a forma bloco (`on:\n  pull_request:`) nem a lista
+ * (`on: [pull_request]`) casam com ela. Extrai o conteudo de `on: { ... }` respeitando
+ * chaves aninhadas (ex.: `{ pull_request: { types: [opened] } }`), ou null se a chave
+ * `on:` nao usar flow-style.
+ */
+function extractFlowOnBlock(source) {
+  const match = /^on:\s*\{/mu.exec(source);
+  if (!match) return null;
+  const start = match.index + match[0].length - 1;
+  let depth = 0;
+  for (let i = start; i < source.length; i += 1) {
+    if (source[i] === '{') depth += 1;
+    else if (source[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return source.slice(start + 1, i);
+    }
+  }
+  return null;
+}
+
 export function hasPullRequestTrigger(source) {
+  const flowOn = extractFlowOnBlock(source);
+  if (flowOn !== null) return /\bpull_request(?:_target)?\b/u.test(flowOn);
+
   const lines = source.split(/\r?\n/u);
   const onIndex = lines.findIndex((line) => /^on:\s*(?:#.*)?$/u.test(line));
 
