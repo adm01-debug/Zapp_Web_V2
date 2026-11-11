@@ -429,7 +429,7 @@
   {
    "arquivo": "scripts/ci/sla-code-scanning.mjs",
    "descricao": "W83 — SLA dos alertas abertos de Code Scanning (usado pelo branch-hygiene-audit.yml). high/critical → 14 dias; medium/low → 30 dias. Violação → exit 1.",
-   "linhas": 79,
+   "linhas": 86,
    "env": [],
    "npm_scripts": [],
    "workflows": [

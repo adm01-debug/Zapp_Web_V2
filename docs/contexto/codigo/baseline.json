@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "90a432731871d6ebd06683bedd9f73e3c31f825d",
+  "commit": "dd991b0834297be0aff01590a9474ec4e1d97a74",
   "branch": "main",
-  "data_commit": "2026-11-11T06:53:14-03:00",
+  "data_commit": "2026-11-11T07:12:19-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "dd991b0",
+    "data": "2026-11-11",
+    "assunto": "fix(ci): SLA de code scanning neutraliza quebra de linha de rule.id/path (#2958)"
+   },
    {
     "sha": "90a4327",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "e0a923f",
     "data": "2026-11-10",
     "assunto": "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)"
-   },
-   {
-    "sha": "7ce81c0",
-    "data": "2026-11-10",
-    "assunto": "feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002 (#2834)"
    }
   ],
-  "arquivos_mudados_7d": 657,
+  "arquivos_mudados_7d": 659,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 888223,
+  "linhas_codigo": 888253,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 211,
-   "linhas": 43856
+   "linhas": 43886
   },
   "scripts/db-audit": {
    "arquivos": 81,

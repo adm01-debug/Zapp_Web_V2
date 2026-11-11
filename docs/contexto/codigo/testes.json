@@ -1830,12 +1830,12 @@
   {
    "arquivo": "scripts/ci/sla-code-scanning.unit.mjs",
    "tipo": "unit",
-   "linhas": 73,
+   "linhas": 96,
    "testa": [
     "scripts/ci/sla-code-scanning.mjs",
     "scripts/ci/workflow-test-support.mjs"
    ],
-   "casos": 7
+   "casos": 8
   },
   {
    "arquivo": "scripts/ci/slo-docs-honesty.unit.mjs",
