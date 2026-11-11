@@ -131,8 +131,8 @@ Deno.test("#2879: filtros válidos seguem funcionando (eq/ilike/order)", async (
 
 Deno.test("#2879: a URL real do supabase-js para o `in` montado é uma lista PostgREST válida", () => {
   const filtros = parseFilters([{ column: "status", operator: "in", value: ["a", "b,c"] }]);
-  const client = createClient("https://x.invalid", "k");
-  const q = client.from("clientes").select("*").filter(filtros![0].column, filtros![0].operator, filtros![0].value);
+  const externalClient = createClient("https://x.invalid", "k");
+  const q = externalClient.from("clientes").select("*").filter(filtros![0].column, filtros![0].operator, filtros![0].value);
   const url = (q as unknown as { url: URL }).url;
   assertEquals(decodeURIComponent(url.search), '?select=*&status=in.("a","b,c")');
 });
