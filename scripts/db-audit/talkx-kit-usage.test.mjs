@@ -28,6 +28,9 @@ const ALLOWED_FILES = new Set([
   'TalkXCampaignWizard.tsx',
   'TalkXCampaignScheduled.tsx',
   'TalkXMessagePreview.tsx',
+  // Diálogo "Testar template" (envio de teste), não é ação de ciclo de vida da
+  // campanha; a migração dele para TalkXDialogShell está na X050 (#2553).
+  'TalkXTemplateEditor.tsx',
 ]);
 
 const FORBIDDEN = [
