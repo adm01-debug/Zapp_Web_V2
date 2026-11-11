@@ -47,7 +47,6 @@
 | supabase_realtime | public.warroom_alerts | full |
 | supabase_realtime | public.whatsapp_connections | full |
 | supabase_realtime | public.whisper_messages | full |
-| supabase_realtime_messages_publication | realtime.messages_2026_11_07 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_08 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_09 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_10 |  |
