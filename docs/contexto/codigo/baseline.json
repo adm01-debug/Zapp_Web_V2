@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "8ea43011f681483cd609ecafcaeedcfbe7239f36",
+  "commit": "f036006adae985e8a3f45c2f27a92b85889f221a",
   "branch": "main",
-  "data_commit": "2026-11-11T15:09:56-03:00",
+  "data_commit": "2026-11-11T16:18:51-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f036006",
+    "data": "2026-11-11",
+    "assunto": "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)"
+   },
    {
     "sha": "8ea4301",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "240ac5b",
     "data": "2026-11-11",
     "assunto": "fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)"
-   },
-   {
-    "sha": "ce06abc",
-    "data": "2026-11-11",
-    "assunto": "fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)"
    }
   ],
   "arquivos_mudados_7d": 628,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8390,
   "arquivos_codigo": 4806,
-  "linhas_codigo": 889855,
+  "linhas_codigo": 889866,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -660,7 +660,7 @@
   },
   "scripts/regras_negocio": {
    "arquivos": 3,
-   "linhas": 2799
+   "linhas": 2810
   },
   "scripts/supabase_snapshot": {
    "arquivos": 2,

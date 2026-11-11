@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `8ea43011f681483cd609ecafcaeedcfbe7239f36` (2026-11-11T15:09:56-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f036006adae985e8a3f45c2f27a92b85889f221a` (2026-11-11T16:18:51-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8390 |
 | arquivos_codigo | 4806 |
-| linhas_codigo | 889855 |
+| linhas_codigo | 889866 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56774 nós · 117313 arestas · 4093 comunidades · grafo do commit `8ea43011`
-- comunidades maiores: vitest (853), TalkXSuppression.tsx (844), lucide-react (814), utils.ts (652), client.ts (446), cn (436), ref_node_fs (434), DashboardView.tsx (410), validation.ts (400), useAuth (399), ref_https (393), getAvatarColor (355)
+- 56776 nós · 117315 arestas · 4136 comunidades · grafo do commit `f036006a`
+- comunidades maiores: TalkXSuppression.tsx (853), react (824), utils.ts (756), lucide-react (754), button.tsx (631), vitest (532), ref_node_assert (507), cn (468), validation.ts (462), ref_https (440), ref_node_fs (424), @tanstack/react-query (401)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `f036006` fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)
 - 2026-11-11 `8ea4301` fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)
 - 2026-11-11 `9727aae` feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO 
 - 2026-11-11 `d4f25e7` fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `90a4327` fix(tarefas): exigirLocal normaliza case do host antes da guarda local (#2953)
 - 2026-11-11 `a6b4ffb` fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)
 - 2026-11-11 `2182f81` fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)
-- 2026-11-11 `d1fc5ad` fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "8ea43011f681483cd609ecafcaeedcfbe7239f36",
+  "sha": "f036006adae985e8a3f45c2f27a92b85889f221a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 18:27 UTC",
+  "generated_at": "2026-11-11 19:53 UTC",
   "files_total": 8232,
   "code_files": 6079,
-  "code_lines": 1057215
+  "code_lines": 1057226
  },
  "version": "1.3.2",
- "facts_hash": "36d1674c48ad557c",
+ "facts_hash": "e44464a9529ecda6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67661,7 +67661,7 @@
   {
    "module": "scripts",
    "files": 461,
-   "lines": 92703,
+   "lines": 92714,
    "tables": [
     "a",
     "alem_do_limite",
@@ -271654,9 +271654,10 @@
   },
   "scripts/regras_negocio/test_generate.py": {
    "path": "scripts/regras_negocio/test_generate.py",
-   "lines": 393,
+   "lines": 404,
    "exports": [
     "class CurrentSqlSourcesTests",
+    "class ModuleKeyTests",
     "class CacheValidityTests"
    ],
    "rule_comments": [
@@ -386756,10 +386757,20 @@
   }
  },
  "git": {
-  "sha": "8ea43011f681483cd609ecafcaeedcfbe7239f36",
+  "sha": "f036006adae985e8a3f45c2f27a92b85889f221a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f036006",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)",
+    "files": [
+     "scripts/regras_negocio/generate.py",
+     "scripts/regras_negocio/test_generate.py"
+    ]
+   },
    {
     "sha": "8ea4301",
     "date": "2026-11-11",
@@ -387073,16 +387084,6 @@
      "scripts/maintenance/maintenance.unit.mjs",
      "scripts/maintenance/run.mjs"
     ]
-   },
-   {
-    "sha": "f3c0c5f",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)",
-    "files": [
-     "scripts/catalog/validate-plan.mjs",
-     "scripts/catalog/validate-plan.test.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -387092,14 +387093,6 @@
    ],
    [
     "scripts/db-tests/run-all.unit.mjs",
-    2
-   ],
-   [
-    "scripts/catalog/validate-plan.mjs",
-    2
-   ],
-   [
-    "scripts/catalog/validate-plan.test.mjs",
     2
    ],
    [
@@ -387129,6 +387122,14 @@
    [
     "scripts/ui-audit/layout-guard.unit.mjs",
     2
+   ],
+   [
+    "scripts/regras_negocio/generate.py",
+    1
+   ],
+   [
+    "scripts/regras_negocio/test_generate.py",
+    1
    ],
    [
     "scripts/ci/run-sh.unit.mjs",
