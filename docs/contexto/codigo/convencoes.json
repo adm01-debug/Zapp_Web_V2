@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1955)",
-   "outro (223)",
+   "outro (224)",
    "co-localizado (*.test) (170)"
   ],
   "edge_functions": "supabase/functions",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)",
    "fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)",
    "fix(ci): SLA de code scanning neutraliza quebra de linha de rule.id/path (#2958)",
    "fix(tarefas): exigirLocal normaliza case do host antes da guarda local (#2953)",
-   "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)",
-   "fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)"
+   "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

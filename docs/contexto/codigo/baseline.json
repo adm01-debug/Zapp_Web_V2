@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1507ad9d59f9d1ab570624adf2f568b8bd4e348e",
+  "commit": "19ebdd9b0dc3ec39b27f6a69e03a3568b8ea83f9",
   "branch": "main",
-  "data_commit": "2026-11-11T07:37:16-03:00",
+  "data_commit": "2026-11-11T07:56:32-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "19ebdd9",
+    "data": "2026-11-11",
+    "assunto": "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)"
+   },
    {
     "sha": "1507ad9",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "a5bf639",
     "data": "2026-11-10",
     "assunto": "fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)"
-   },
-   {
-    "sha": "1c89150",
-    "data": "2026-11-10",
-    "assunto": "Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)"
    }
   ],
   "arquivos_mudados_7d": 661,
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8385,
-  "arquivos_codigo": 4802,
-  "linhas_codigo": 888342,
+  "arquivos_total": 8386,
+  "arquivos_codigo": 4803,
+  "linhas_codigo": 888423,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 217,
   "migrations": 1100,
   "cron_jobs": 26,
-  "testes": 2610,
+  "testes": 2611,
   "workflows": 21,
   "scripts": 426,
   "docs_md": 1073
@@ -607,8 +607,8 @@
    "linhas": 327
   },
   "scripts/ci": {
-   "arquivos": 211,
-   "linhas": 43886
+   "arquivos": 212,
+   "linhas": 43961
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -688,7 +688,7 @@
   },
   "scripts/vercel": {
    "arquivos": 2,
-   "linhas": 326
+   "linhas": 332
   },
   "src/App.tsx": {
    "arquivos": 1,

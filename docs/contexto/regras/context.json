@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1507ad9d59f9d1ab570624adf2f568b8bd4e348e",
+  "sha": "19ebdd9b0dc3ec39b27f6a69e03a3568b8ea83f9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 10:51 UTC",
-  "files_total": 8227,
-  "code_files": 6074,
-  "code_lines": 1055202
+  "generated_at": "2026-11-11 11:08 UTC",
+  "files_total": 8228,
+  "code_files": 6075,
+  "code_lines": 1055283
  },
  "version": "1.3.2",
- "facts_hash": "0f51bee07180d258",
+ "facts_hash": "5e6c37a1998d7b6a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -320,7 +320,7 @@
    ".tsx": 2337,
    ".ts": 1889,
    ".sql": 1300,
-   ".mjs": 429,
+   ".mjs": 430,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -67513,8 +67513,8 @@
   },
   {
    "module": "scripts",
-   "files": 459,
-   "lines": 92448,
+   "files": 460,
+   "lines": 92529,
    "tables": [
     "a",
     "alem_do_limite",
@@ -266429,6 +266429,14 @@
    "lines": 120,
    "doc": "E65: prova de que o registro no ledger nao passa com `statements` NULL, vazio ou divergente do arquivo. Antes desta etapa, o passo \"Validar registro no ledger\" do db-migrate.yml provava so' `count(*) = 1`: uma linha com statements NULL ou vazio era aceita, e a trilha de auditoria perdia o conteudo e …"
   },
+  "scripts/ci/verify-release-targets-summary.unit.mjs": {
+   "path": "scripts/ci/verify-release-targets-summary.unit.mjs",
+   "lines": 75,
+   "rule_comments": [
+    "R2-WOP-001: GITHUB_STEP_SUMMARY apontando para um caminho sem permissão de",
+    "escrita (ex.: um diretório em vez de arquivo) nao pode derrubar o processo com"
+   ]
+  },
   "scripts/ci/verify-release-targets-timeout.unit.mjs": {
    "path": "scripts/ci/verify-release-targets-timeout.unit.mjs",
    "lines": 180,
@@ -271543,13 +271551,14 @@
   },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
-   "lines": 226,
+   "lines": 232,
    "exports": [
     "const TARGETS",
     "function parseArgs",
     "function validarVersao",
     "function verificarAlvo",
-    "function resumoMarkdown"
+    "function resumoMarkdown",
+    "function principal"
    ],
    "errors": [
     "${field} inválido",
@@ -385994,10 +386003,20 @@
   }
  },
  "git": {
-  "sha": "1507ad9d59f9d1ab570624adf2f568b8bd4e348e",
+  "sha": "19ebdd9b0dc3ec39b27f6a69e03a3568b8ea83f9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "19ebdd9",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)",
+    "files": [
+     "scripts/ci/verify-release-targets-summary.unit.mjs",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "1507ad9",
     "date": "2026-11-11",
@@ -386313,21 +386332,13 @@
      "auditoria-supabase/achados.json",
      "auditoria-supabase/progresso.json"
     ]
-   },
-   {
-    "sha": "d39dc11",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "chore(scripts): remove verify-production.mjs, substituído por verify-release-targets.mjs (#2842)",
-    "files": [
-     "scripts/ci/qa-vercel-auditores.unit.mjs",
-     "scripts/vercel/README.md",
-     "scripts/vercel/verify-production.mjs",
-     "scripts/vercel/verify-production.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/vercel/verify-release-targets.mjs",
+    2
+   ],
    [
     "scripts/talkx/gen-estados.mjs",
     2
@@ -386355,6 +386366,10 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/ci/verify-release-targets-summary.unit.mjs",
+    1
    ],
    [
     ".github/workflows/ci.yml",
@@ -386398,14 +386413,6 @@
    ],
    [
     "scripts/supabase_snapshot/test_snapshot.py",
-    1
-   ],
-   [
-    "scripts/edge-deploy/health-check.mjs",
-    1
-   ],
-   [
-    "scripts/edge-deploy/health-check.unit.mjs",
     1
    ]
   ]
