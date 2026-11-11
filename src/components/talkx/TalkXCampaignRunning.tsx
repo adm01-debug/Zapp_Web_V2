@@ -831,7 +831,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                 </>
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
-              {activeTab === 'recipients' && <TalkXRecipientsTable campaignId={campaign.id} segmentName={segmentName} />}
+              {activeTab === 'recipients' && <TalkXRecipientsTable campaignId={campaign.id} segmentName={segmentName} segments={segments ?? []} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
               {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} segmentName={segmentName} />}
