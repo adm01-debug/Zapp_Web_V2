@@ -14801,6 +14801,10 @@ export type Database = {
         Args: { p_days?: number; p_limit?: number }
         Returns: Json
       }
+      talkx_block_recipient: {
+        Args: { p_recipient_id: string }
+        Returns: string
+      }
       talkx_campaign_heatmap: { Args: { p_campaign_id: string }; Returns: Json }
       talkx_campaign_launch_checks: {
         Args: { p_campaign_id: string }
