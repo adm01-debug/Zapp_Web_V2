@@ -1,8 +1,10 @@
 #!/bin/sh
 set -eu
 state="${XDG_STATE_HOME:-$HOME/.local/state}/repo-maintenance"
-mkdir -p "$state"
-chmod 700 "$state"
+if ! mkdir -p "$state" 2>/dev/null || ! chmod 700 "$state" 2>/dev/null; then
+  printf '%s\n' '{"status":"failed","message":"diretorio de estado inacessivel"}'
+  exit 2
+fi
 if ! command -v flock >/dev/null 2>&1; then
   printf '%s\n' '{"status":"failed","message":"flock indisponível"}'
   exit 1

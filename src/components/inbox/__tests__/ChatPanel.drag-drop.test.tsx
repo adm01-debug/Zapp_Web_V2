@@ -145,6 +145,7 @@ vi.mock('../chat/ChatWatermark', () => ({ ChatWatermark: () => null }));
 vi.mock('../chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));
 vi.mock('../chat/ChatSearchBar', () => ({ ChatSearchBar: () => null }));
 vi.mock('../chat/ChatDialogs', () => ({ ChatDialogs: () => null }));
+vi.mock('../chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
 vi.mock('../chat/ChatDragOverlay', () => ({
   ChatDragOverlay: (props: { isDraggingOver: boolean }) => {
     mocks.dragOverlay.current = props.isDraggingOver;
