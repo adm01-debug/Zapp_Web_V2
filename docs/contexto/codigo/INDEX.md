@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `105ebc130d046db58d314caf75bdbbbd54d1a785` (2026-11-11T02:24:33-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a7f9d033a3b51d6d337d8158df0c202965159dec` (2026-11-11T03:05:03-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 887910 |
+| linhas_codigo | 887944 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56702 nós · 117169 arestas · 4158 comunidades · grafo do commit `105ebc13`
-- comunidades maiores: lucide-react (874), cn (783), vitest (752), react (699), ExternalProductManagement.tsx (572), WorkItemSheet.tsx (493), DashboardView.tsx (469), @tanstack/react-query (444), dialog.tsx (405), date-fns (369), ref_node_fs (359), validation.ts (348)
+- 56703 nós · 117171 arestas · 4154 comunidades · grafo do commit `a7f9d033`
+- comunidades maiores: lucide-react (906), vitest (884), TalkXSuppression.tsx (792), react (685), utils.ts (561), useMyWorkItems.ts (499), RealtimeInboxView (457), validation.ts (438), cn (431), DashboardView.tsx (421), ExternalProductManagement.tsx (416), @tanstack/react-query (414)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -407,11 +407,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
 - scripts/db-audit/migration-evidence.json (10)
-- RELATORIO_CI.md (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/db-audit/grants-baseline.json (9)
 - scripts/e2e-isolated/run.mjs (9)
 - src/integrations/supabase/types.ts (9)
+- supabase/schema-catalog.json (9)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `a7f9d03` fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)
 - 2026-11-11 `105ebc1` fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)
 - 2026-11-11 `ec190c2` fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)
 - 2026-11-11 `240ac5b` fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `a5bf639` fix(e2e): retry 1 no spec email-navy-visual para flake webkit de host compartilhado (#2928)
 - 2026-11-10 `1c89150` Atualiza o contrato E2E para cinco grupos e o executa no CI (#2924)
 - 2026-11-10 `e0a923f` Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)
-- 2026-11-10 `7ce81c0` feat(copilot): 7 edge functions AI + camada AI nos hooks RADAR + LiveSuggestions #2460 #2473 #2002 (#2834)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

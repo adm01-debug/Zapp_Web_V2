@@ -3657,7 +3657,7 @@
   {
    "arquivo": "scripts/db-tests/run-all.mjs",
    "descricao": "* scripts/db-tests/run-all.mjs",
-   "linhas": 91,
+   "linhas": 98,
    "env": [
     "DB_TESTS_DIR",
     "SUPABASE_SERVICE_KEY",

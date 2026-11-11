@@ -2379,11 +2379,11 @@
   {
    "arquivo": "scripts/db-tests/run-all.unit.mjs",
    "tipo": "unit",
-   "linhas": 249,
+   "linhas": 276,
    "testa": [
     "scripts/db-tests/rpc-envelope.mjs"
    ],
-   "casos": 16
+   "casos": 17
   },
   {
    "arquivo": "scripts/docs/publication.test.mjs",
