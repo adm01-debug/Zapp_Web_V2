@@ -7,6 +7,11 @@ import type { TalkXRecipient } from '@/hooks/integrations/useTalkX';
 import { toast } from 'sonner';
 
 const rpcMock = vi.hoisted(() => vi.fn());
+const papel = vi.hoisted(() => ({ isSupervisor: true }));
+
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isSupervisor: papel.isSupervisor, isAdmin: false }),
+}));
 
 vi.mock('@/lib/supabaseHelpers', () => ({
   supabase: {
@@ -39,6 +44,7 @@ const baseRecipient: TalkXRecipient = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  papel.isSupervisor = true;
   rpcMock.mockResolvedValue({ data: { ok: true }, error: null });
 });
 
@@ -99,7 +105,7 @@ describe('TalkXRecipientRowActions', () => {
     );
   });
 
-  it('ao confirmar bloqueio, chama talkx_suppress_contact sem uuid vazio e chama onActionDone UMA vez', async () => {
+  it('ao confirmar bloqueio, chama talkx_block_recipient só com o id do destinatário e chama onActionDone UMA vez', async () => {
     rpcMock.mockResolvedValue({ data: 'suppression-uuid-1', error: null });
     const onActionDone = vi.fn();
     wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={onActionDone} />);
@@ -107,20 +113,31 @@ describe('TalkXRecipientRowActions', () => {
     const dialog = screen.getByRole('alertdialog');
     fireEvent.click(within(dialog).getByRole('button', { name: /^bloquear$/i }));
 
-    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith(
-      'talkx_suppress_contact',
-      expect.objectContaining({
-        p_campaign_id: 'c1',
-        p_contact_id: 'ct1',
-        p_reason_code: 'manual',
-      }),
-    ));
-    const params = rpcMock.mock.calls[0][1] as Record<string, unknown>;
-    expect(params.p_source_message_id).not.toBe('');
-    expect(params.p_phone).not.toBe('');
+    // Campanha, contato e telefone são lidos do destinatário NO SERVIDOR; a RPC
+    // exclusiva do servidor (talkx_suppress_contact) nunca é chamada do navegador.
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('talkx_block_recipient', { p_recipient_id: 'r1' }));
+    expect(rpcMock.mock.calls.some((c) => c[0] === 'talkx_suppress_contact')).toBe(false);
     expect(vi.mocked(toast.success)).toHaveBeenCalled();
     expect(vi.mocked(toast.warning)).not.toHaveBeenCalled();
     await waitFor(() => expect(onActionDone).toHaveBeenCalledTimes(1));
+  });
+
+  it('quem não é gestor (admin/supervisor) não vê o botão "Bloquear"', () => {
+    papel.isSupervisor = false;
+    wrap(<TalkXRecipientRowActions recipient={baseRecipient} />);
+    expect(screen.queryByRole('button', { name: /^bloquear$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /abrir conversa/i })).toBeInTheDocument();
+  });
+
+  it('recusa de papel do servidor vira mensagem clara, não código cru', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'talkx_block_role_required' } });
+    wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /^bloquear$/i }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: /^bloquear$/i }));
+
+    await waitFor(() => expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
+      'Só administradores e supervisores podem bloquear contatos.',
+    ));
   });
 
   it('bloqueio já suprimido (data null) mostra toast.warning', async () => {

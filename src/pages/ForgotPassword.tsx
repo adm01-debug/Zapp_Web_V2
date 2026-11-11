@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle, Loader2, Clock } from 'lucide-react';
 import { log } from '@/lib/logger';
 import { z } from 'zod';
-import { supabase } from '@/integrations/supabase/client';
+import { fromTable } from '@/lib/supabaseHelpers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,36 +36,25 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      // First, find the user by email
-      // We need to create a reset request instead of directly sending
-      const { data: existingUser, error: userError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (!existingUser) {
-        // Don't reveal if user exists or not for security
-        setSent(true);
-        toast.success('Se o email existir, sua solicitação será analisada.');
-        return;
-      }
-
-      // Create password reset request
-      const { error: insertError } = await supabase
-        .from('password_reset_requests')
+      // Quem esqueceu a senha não está logado (anon): não lê profiles e não sabe o
+      // próprio user_id. O cliente envia SÓ email/motivo/navegador; o gatilho
+      // public.sanitize_reset_request() (migration 20261015182400) resolve a conta no
+      // servidor a partir do e-mail, ignora e-mail sem conta e limita a 3 pendentes
+      // por hora — sem erro e sem revelar se a conta existe. O pedido nasce pendente
+      // e só o gestor libera (painel de pedidos + Edge approve-password-reset).
+      // Sem .select(): o anon não lê a tabela, então não há RETURNING. fromTable porque
+      // o tipo gerado exige user_id, que aqui é preenchido pelo gatilho no servidor.
+      const { error: requestError } = await fromTable('password_reset_requests')
         .insert({
-          user_id: existingUser.user_id,
           email,
           reason: reason || null,
-          ip_address: null, // Could get from an API if needed
           user_agent: navigator.userAgent,
         });
 
-      if (insertError) throw insertError;
+      if (requestError) throw requestError;
 
       setSent(true);
-      toast.success('Solicitação enviada! Aguarde a aprovação de um administrador.');
+      toast.success('Se o email estiver cadastrado, o pedido foi enviado para aprovação do gestor.');
     } catch (err: unknown) {
       log.error('Error submitting reset request:', err);
       setError('Erro ao enviar solicitação. Tente novamente.');
