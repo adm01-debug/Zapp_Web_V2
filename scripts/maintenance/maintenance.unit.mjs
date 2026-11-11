@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, utimes } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { main, parseArgs, networkPrefix } from './run.mjs';
+import { main, parseArgs, networkPrefix, comLimpeza } from './run.mjs';
 import { git, run, acquire, validateConfig } from './lib.mjs';
 
 async function fixture(
@@ -254,6 +254,25 @@ test('trava de pid morto é recuperada, trava recente sem dono fica bloqueante',
   await mkdir(lock);
   await assert.rejects(acquire(lock), (e) => e.code === 'skipped_busy');
 });
+test('owner.json corrompido (crash no meio da escrita) e recente fica bloqueante', async (t) => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-corrupt-recent-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const lock = path.join(dir, 'lock');
+  await mkdir(lock);
+  await writeFile(path.join(lock, 'owner.json'), '{"pid":12345,"token":"ab');
+  await assert.rejects(acquire(lock), (e) => e.code === 'skipped_busy');
+});
+test('owner.json corrompido e trava antiga (mtime) e recuperada', async (t) => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-corrupt-stale-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const lock = path.join(dir, 'lock');
+  await mkdir(lock);
+  await writeFile(path.join(lock, 'owner.json'), '{"pid":12345,"token":"ab');
+  const past = new Date(Date.now() - 400000);
+  await utimes(lock, past, past);
+  const release = await acquire(lock);
+  await release();
+});
 test('namespace de rede impede acesso externo de todos os filhos', isolated, async () => {
   const prefix = await networkPrefix(process.cwd());
   const result = await run(
@@ -299,4 +318,40 @@ test('TypeScript 7 com CLI sem arquivos bloqueia doctor', isolated, async (t) =>
   const result = await main(f.args('doctor'));
   assert.equal(result.report.status, 'failed');
   assert.match(result.report.message, /vazio ou inválido/);
+});
+test('comLimpeza: corpo falha e limpeza falha -> relanca a excecao ORIGINAL com restoreError anexado', async () => {
+  const original = new Error('gate baseline falhou');
+  await assert.rejects(
+    comLimpeza(
+      async () => { throw original; },
+      async () => { throw new Error('rename ENOENT: disco cheio'); }
+    ),
+    (e) => e === original && /disco cheio/.test(e.restoreError)
+  );
+});
+test('comLimpeza: corpo falha e limpeza funciona -> relanca a excecao original sem restoreError', async () => {
+  const original = new Error('gate baseline falhou');
+  await assert.rejects(
+    comLimpeza(
+      async () => { throw original; },
+      async () => {}
+    ),
+    (e) => e === original && e.restoreError === undefined
+  );
+});
+test('comLimpeza: corpo funciona e limpeza falha -> propaga o erro da limpeza', async () => {
+  await assert.rejects(
+    comLimpeza(
+      async () => 'valor',
+      async () => { throw new Error('rename ENOENT'); }
+    ),
+    /rename ENOENT/
+  );
+});
+test('comLimpeza: caminho feliz devolve o valor do corpo', async () => {
+  const valor = await comLimpeza(
+    async () => 'valor-do-corpo',
+    async () => {}
+  );
+  assert.equal(valor, 'valor-do-corpo');
 });
