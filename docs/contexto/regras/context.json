@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "090f5f89090ba941ae0c5072e22bae16632d03f1",
+  "sha": "d1fc5ad6a61818d974905b20ff3487ff8ede5c5c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 08:30 UTC",
+  "generated_at": "2026-11-11 09:01 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054996
+  "code_lines": 1055055
  },
  "version": "1.3.2",
- "facts_hash": "253a6adb8781ecb1",
+ "facts_hash": "db2fe0d135ff0ec4",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92242,
+   "lines": 92301,
    "tables": [
     "a",
     "alem_do_limite",
@@ -269967,7 +269967,7 @@
   },
   "scripts/edge-deploy/health-check.mjs": {
    "path": "scripts/edge-deploy/health-check.mjs",
-   "lines": 293,
+   "lines": 302,
    "exports": [
     "const CANONICAL_PROJECT",
     "const MGMT_BASE",
@@ -269976,6 +269976,7 @@
     "const MAX_WAIT_MS",
     "const WINDOW_MS",
     "const MAX_LOG_WINDOW_MS",
+    "const semQuebra",
     "class TransientAnalyticsError",
     "function validateSlug",
     "function parseArgs",
@@ -270066,10 +270067,13 @@
   },
   "scripts/edge-deploy/health-check.unit.mjs": {
    "path": "scripts/edge-deploy/health-check.unit.mjs",
-   "lines": 301,
+   "lines": 351,
    "errors": [
     "coerção não permitida",
     "network secret"
+   ],
+   "rule_comments": [
+    "S5145: um nome de função com quebra de linha no manifesto não pode forjar"
    ]
   },
   "scripts/edge-deploy/log-injection.unit.mjs": {
@@ -385982,10 +385986,20 @@
   }
  },
  "git": {
-  "sha": "090f5f89090ba941ae0c5072e22bae16632d03f1",
+  "sha": "d1fc5ad6a61818d974905b20ff3487ff8ede5c5c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d1fc5ad",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)",
+    "files": [
+     "scripts/edge-deploy/health-check.mjs",
+     "scripts/edge-deploy/health-check.unit.mjs"
+    ]
+   },
    {
     "sha": "090f5f8",
     "date": "2026-11-11",
@@ -386304,15 +386318,6 @@
     "files": [
      ".github/workflows/ci.yml"
     ]
-   },
-   {
-    "sha": "cb5c3a6",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "docs(migration): regenera matriz edge × tabela (estava desatualizada) (#2852)",
-    "files": [
-     "docs/migration/MATRIZ_EDGE_TABELA.md"
-    ]
    }
   ],
   "hot_files": [
@@ -386343,6 +386348,14 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/edge-deploy/health-check.mjs",
+    1
+   ],
+   [
+    "scripts/edge-deploy/health-check.unit.mjs",
+    1
    ],
    [
     "scripts/ci/github-settings-guard.mjs",
@@ -386386,14 +386399,6 @@
    ],
    [
     "tests/contracts/sl059-ia010-provisionamento.contract.test.ts",
-    1
-   ],
-   [
-    "scripts/ci/front-release-targets.unit.mjs",
-    1
-   ],
-   [
-    "scripts/vercel/verify-release-targets.mjs",
     1
    ]
   ]

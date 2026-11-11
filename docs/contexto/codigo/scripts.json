@@ -4187,7 +4187,7 @@
   {
    "arquivo": "scripts/edge-deploy/health-check.mjs",
    "descricao": "W65: pós-deploy health check — consulta a API atual de logs do Supabase e bloqueia regressões 5xx. Somente indisponibilidade transitória de",
-   "linhas": 293,
+   "linhas": 302,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

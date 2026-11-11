@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)",
    "fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)",
    "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)",
    "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)",
-   "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)",
-   "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)"
+   "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
