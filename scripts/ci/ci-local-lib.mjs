@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 // Lógica pura do CI local (scripts/ci/ci-local.mjs): lê os workflows do GitHub
 // e decide O QUE rodar, sem executar nada. Tudo aqui é determinístico e coberto
 // por scripts/ci/ci-local.unit.mjs.
@@ -265,4 +268,26 @@ export function arquivosParaVitestRelated(listaGit) {
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => /\.(m?[jt]sx?)$/.test(l) && !l.startsWith('supabase/functions/'));
+}
+
+// ------------------------------------------------------- isolamento do HOME
+// HOME descartável por job; caches e credenciais de ferramenta continuam
+// apontando para os reais (só leitura/cache — nada de config é reescrita).
+export function ambienteIsolado(homeJob, base = process.env, existe = existsSync) {
+  const real = base.HOME ?? '';
+  const seExiste = (p) => (existe(p) ? p : undefined);
+  const env = {
+    HOME: homeJob,
+    PATH: [join(homeJob, '.local', 'bin'), base.PATH ?? ''].join(':'),
+    BUN_INSTALL_CACHE_DIR:
+      base.BUN_INSTALL_CACHE_DIR ?? seExiste(join(real, '.bun', 'install', 'cache')),
+    PLAYWRIGHT_BROWSERS_PATH:
+      base.PLAYWRIGHT_BROWSERS_PATH ?? seExiste(join(real, '.cache', 'ms-playwright')),
+    DENO_DIR: base.DENO_DIR ?? seExiste(join(real, '.cache', 'deno')),
+    npm_config_cache: base.npm_config_cache ?? seExiste(join(real, '.npm')),
+    GIT_CONFIG_GLOBAL: base.GIT_CONFIG_GLOBAL ?? seExiste(join(real, '.gitconfig')),
+    GH_CONFIG_DIR: base.GH_CONFIG_DIR ?? seExiste(join(real, '.config', 'gh')),
+    DOCKER_CONFIG: base.DOCKER_CONFIG ?? seExiste(join(real, '.docker')),
+  };
+  return Object.fromEntries(Object.entries(env).filter(([, v]) => v !== undefined));
 }

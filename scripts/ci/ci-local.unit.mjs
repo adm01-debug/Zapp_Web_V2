@@ -13,6 +13,7 @@ import {
   separarOpcoesDocker,
   arquivosParaVitestRelated,
   ExpressaoNaoSuportada,
+  ambienteIsolado,
 } from './ci-local-lib.mjs';
 
 const ctx = {
@@ -168,4 +169,27 @@ test('todas as condições dos workflows padrão são avaliáveis (nada é rodad
       }
     }
   }
+});
+
+test('cada job roda com HOME descartável: nada do workflow escreve no HOME real', () => {
+  const env = ambienteIsolado(
+    '/tmp/ci-local-home-x',
+    { HOME: '/home/fulano', PATH: '/usr/bin:/home/fulano/.local/bin' },
+    () => true
+  );
+  assert.equal(env.HOME, '/tmp/ci-local-home-x');
+  // ~/.local/bin do HOME descartável vem antes de tudo: um `cp x "$HOME/.local/bin/docker"`
+  // (docker-shim do db-guard) fica preso ao job e não troca o docker da máquina.
+  assert.ok(env.PATH.startsWith('/tmp/ci-local-home-x/.local/bin:'));
+  assert.ok(!env.PATH.split(':')[0].startsWith('/home/fulano'));
+  // caches e credenciais de ferramenta continuam os reais (só leitura/cache)
+  assert.equal(env.PLAYWRIGHT_BROWSERS_PATH, '/home/fulano/.cache/ms-playwright');
+  assert.equal(env.GIT_CONFIG_GLOBAL, '/home/fulano/.gitconfig');
+  assert.equal(env.GH_CONFIG_DIR, '/home/fulano/.config/gh');
+});
+
+test('isolamento não inventa caminho de cache inexistente', () => {
+  const env = ambienteIsolado('/tmp/h', { HOME: '/home/fulano', PATH: '/usr/bin' }, () => false);
+  assert.equal(env.PLAYWRIGHT_BROWSERS_PATH, undefined);
+  assert.equal(env.HOME, '/tmp/h');
 });

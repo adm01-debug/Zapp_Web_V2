@@ -39,6 +39,7 @@ import {
   separarOpcoesDocker,
   arquivosParaVitestRelated,
   ExpressaoNaoSuportada,
+  ambienteIsolado,
 } from './ci-local-lib.mjs';
 
 const RAIZ = resolve(
@@ -271,8 +272,14 @@ async function main() {
           ? `${jobId} (${Object.values(matrix).join(', ')})`
           : jobId;
         const res = { wf: wfNome, job: rotulo, status: 'success', falhas: [], avisos: [] };
+        // Cada job roda com um HOME descartável, como o runner do GitHub. Steps
+        // como `cp docker-shim "$HOME/.local/bin/docker"` (db-guard, E47) são
+        // inofensivos lá e DESTRUTIVOS aqui: trocariam o docker da máquina inteira.
+        const homeJob = mkdtempSync(join(tmpdir(), `ci-local-home-${jobId}-`));
+        mkdirSync(join(homeJob, '.local', 'bin'), { recursive: true });
         const envBase = {
           ...process.env,
+          ...ambienteIsolado(homeJob),
           CI: 'true',
           GITHUB_WORKSPACE: RAIZ,
           RUNNER_TEMP: runnerTemp,
@@ -297,6 +304,7 @@ async function main() {
             log(`── ⏭️  ${rotulo}: pulado (if: ${job.if})`);
             resultados.push(res);
             needsResult[jobId] = { result: 'skipped' };
+            rmSync(homeJob, { recursive: true, force: true });
             continue;
           }
         } catch (e) {
@@ -314,6 +322,7 @@ async function main() {
             log(
               `   · ${s.uses ? `[uses ${s.uses.split('@')[0]}]` : '[run]'} ${s.name ?? (s.run ?? '').split('\n')[0].slice(0, 80)}`
             );
+          rmSync(homeJob, { recursive: true, force: true });
           continue;
         }
 
@@ -419,6 +428,7 @@ async function main() {
           }
         }
         derrubarServicos(servicos);
+        rmSync(homeJob, { recursive: true, force: true });
         resultados.push(res);
         // needs.<job>.result agrega a matriz: qualquer falha => failure.
         const anterior = needsResult[jobId]?.result;
