@@ -1,0 +1,49 @@
+name: zz-expr
+on: pull_request
+jobs:
+  a:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo antes
+      - name: falha-forte
+        run: exit 3
+      - name: nao-cancelado
+        if: ${{ !cancelled() }}
+        run: echo RODOU-NAO-CANCELADO
+      - name: sempre
+        if: always()
+        run: echo RODOU-SEMPRE
+  b:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: so-em-falha-com-contains
+        if: failure() && contains(github.event_name, 'pull')
+        run: echo ERRO-RODOU-EM-SUCESSO
+      - name: bool-vs-string
+        if: github.event.pull_request.draft == 'false'
+        run: echo ERRO-BOOL-STRING-RODOU
+  c:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        exp: [false]
+    steps:
+      - name: coe-expr
+        continue-on-error: ${{ matrix.exp }}
+        run: exit 1
+  d:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - run: exit 1
+  e:
+    needs: a
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo ERRO-E-RODOU-COM-NEEDS-FALHO
+  f:
+    needs: a
+    if: failure()
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo F-RODOU-OK

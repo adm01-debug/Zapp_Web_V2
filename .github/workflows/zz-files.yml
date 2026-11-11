@@ -1,0 +1,31 @@
+name: zz-files
+on: pull_request
+defaults:
+  run:
+    working-directory: src
+jobs:
+  g:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: s1
+        run: |
+          pwd
+          { echo 'MULTI<<EOF'; echo 'l1'; echo 'l2'; echo 'EOF'; } >> "$GITHUB_ENV"
+          echo 'SIMPLES=a=b' >> "$GITHUB_ENV"
+          echo 'out1=valor' >> "$GITHUB_OUTPUT"
+          { echo 'om<<X'; echo 'x1'; echo 'x2'; echo 'X'; } >> "$GITHUB_OUTPUT"
+          mkdir -p /tmp/claude-1000/p1 /tmp/claude-1000/p2
+          printf '#!/bin/sh\necho p1\n' > /tmp/claude-1000/p1/qual; printf '#!/bin/sh\necho p2\n' > /tmp/claude-1000/p2/qual; chmod +x /tmp/claude-1000/p1/qual /tmp/claude-1000/p2/qual
+          echo /tmp/claude-1000/p1 >> "$GITHUB_PATH"
+          echo /tmp/claude-1000/p2 >> "$GITHUB_PATH"
+      - name: le
+        env:
+          STEPV: daqui
+          REF: ${{ env.STEPV }}
+        run: |
+          printf 'MULTI=[%s]\n' "$MULTI"; echo "SIMPLES=$SIMPLES"; echo "OUT=${{ steps.s1.outputs.out1 }}"; echo "OM=${{ steps.s1.outputs.om }}"; echo "QUAL=$(qual)"; echo "REF=[$REF]"; echo "HOME=$HOME"
+      - name: timeout
+        timeout-minutes: 0.05
+        run: |
+          date +%s
+          sleep 25
