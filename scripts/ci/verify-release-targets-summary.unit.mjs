@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { principal } from './verify-release-targets.mjs';
+import { principal } from '../vercel/verify-release-targets.mjs';
 
 function fetchSaudavelV2(sha) {
   return async (url) => {
