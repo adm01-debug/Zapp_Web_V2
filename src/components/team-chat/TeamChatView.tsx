@@ -21,17 +21,28 @@ export function TeamChatView() {
   // desmontar, para voltar a alertar quando o atendente sai da tela.
   useActiveTeamChatConversation(selectedId);
 
-  // Deep-link: se a URL tiver ?cid=<uuid>, seleciona a conversa automaticamente.
-  // Roda uma vez após as conversas carregarem — cid inválido ou não encontrado é ignorado.
+  // Deep-link: ?cid=<uuid> (vindo da notificação) seleciona a conversa UMA vez e
+  // sai da URL, como o ?emailContact do e-mail — senão cada recarga da lista
+  // (realtime) desfaria a escolha do usuário. `zapp:navigate` cobre uma nova
+  // notificação clicada com a tela já aberta.
+  const [navTick, setNavTick] = useState(0);
   useEffect(() => {
-    if (conversationsLoading || conversations.length === 0) return;
-    const params = new URLSearchParams(window.location.search);
-    const cid = params.get('cid');
+    const onNavigate = () => setNavTick((n) => n + 1);
+    window.addEventListener('zapp:navigate', onNavigate);
+    return () => window.removeEventListener('zapp:navigate', onNavigate);
+  }, []);
+  useEffect(() => {
+    if (conversationsLoading) return;
+    const url = new URL(window.location.href);
+    const cid = url.searchParams.get('cid');
     if (!cid) return;
     if (conversations.some(c => c.id === cid)) {
       setSelectedId(cid);
     }
-  }, [conversations, conversationsLoading]);
+    url.searchParams.delete('cid');
+    const base = window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
+    window.history.replaceState(base, '', url.href);
+  }, [conversations, conversationsLoading, navTick]);
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
 
