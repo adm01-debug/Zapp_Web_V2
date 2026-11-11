@@ -523,7 +523,9 @@ test('gatilho pull_request: string, lista e mapa (e `on` lido como true pelo YAM
   for (const wf of ['ci', 'db-guard'])
     assert.ok(
       temGatilhoPullRequest(
-        parseYaml(readFileSync(new URL(`../../.github/workflows/${wf}.yml`, import.meta.url), 'utf8'))
+        parseYaml(
+          readFileSync(new URL(`../../.github/workflows/${wf}.yml`, import.meta.url), 'utf8')
+        )
       ),
       `${wf}.yml perdeu o gatilho pull_request`
     );

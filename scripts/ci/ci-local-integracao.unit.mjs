@@ -13,6 +13,8 @@ import {
   rmSync,
   readdirSync,
   chmodSync,
+  statSync,
+  utimesSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -30,11 +32,18 @@ const GIT = [
   'core.hooksPath=/dev/null',
 ];
 
+// Os testes nunca falam com o docker da máquina: um `docker` que falha vem antes
+// no PATH (o CI local trata como "docker indisponível" e não lista nem remove nada).
+const SEM_DOCKER = mkdtempSync(join(tmpdir(), 'ci-local-teste-sem-docker-'));
+writeFileSync(join(SEM_DOCKER, 'docker'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+process.on('exit', () => rmSync(SEM_DOCKER, { recursive: true, force: true }));
+const pathCom = (dir) => `${dir}:${SEM_DOCKER}:${process.env.PATH}`;
+
 function envLimpo(extra = {}) {
   const env = Object.fromEntries(
     Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_'))
   );
-  return { ...env, ...extra };
+  return { ...env, PATH: `${SEM_DOCKER}:${process.env.PATH}`, ...extra };
 }
 
 function git(cwd, ...args) {
@@ -148,7 +157,7 @@ test('passo com sudo/apt não roda na máquina: pulado com aviso e comando lista
   });
   const r = rodar(src, ['--workflow', 'sudo']);
   assert.equal(r.code, 0, r.out);
-  assert.match(r.out, /requer sudo — pulado \(só no GitHub\)/);
+  assert.match(r.out, /requer sudo\/root — pulado \(só no GitHub\)/);
   assert.match(r.out, /sudo apt-get install -y ripgrep/);
 });
 
@@ -387,11 +396,11 @@ test('--rapido: nomes com aspas/acento/espaço vão como argumentos (sem shell) 
     `#!/bin/sh\nfor a in "$@"; do printf '%s\\0' "$a"; done > "${registro}"\n`
   );
   chmodSync(join(fake, 'bun'), 0o755);
-  const r = rodar(src, ['--rapido', '--workflow', 'ci'], { PATH: `${fake}:${process.env.PATH}` });
+  const r = rodar(src, ['--rapido', '--workflow', 'ci'], { PATH: pathCom(fake) });
   assert.equal(r.code, 0, r.out);
   const recebidos = readFileSync(registro, 'utf8').split('\0').filter(Boolean);
-  assert.deepEqual(recebidos.slice(0, 3), ['vitest', 'related', '--run']);
-  assert.deepEqual(recebidos.slice(3).sort(), ["src/x'$(touch PWNED)'.ts", 'src/ação b.ts'].sort());
+  assert.deepEqual(recebidos.slice(0, 4), ['vitest', 'related', '--run', '--passWithNoTests']);
+  assert.deepEqual(recebidos.slice(4).sort(), ["src/x'$(touch PWNED)'.ts", 'src/ação b.ts'].sort());
   assert.equal(existsSync(join(src, 'PWNED')), false);
   assert.match(r.out, /unit-tests \(rápido\)/);
   const semBase = rodar(src, ['--rapido', '--workflow', 'ci', '--base', 'origin/nao-existe']);
@@ -439,4 +448,261 @@ test('Ctrl-C (SIGINT) mata os passos e apaga os temporários', async (t) => {
   for (const f of ['pid', 'pid-neto'])
     assert.equal(vivo(Number(readFileSync(join(marcas, f), 'utf8'))), false, `${f} sobreviveu`);
   assert.equal(existsSync(temporarios(out)), false, 'temporários apagados');
+});
+
+// ------------------------------------------------- achado 1: root nunca roda
+test('root nunca roda: playwright --with-deps/install-deps pulados; sudo/apt escondidos caem no shim', (t) => {
+  const { src, raiz } = repo(t, {
+    root: wf(`  a:
+    runs-on: x
+    steps:
+      - name: Install Playwright
+        run: bunx playwright@1.64.1 install --with-deps chromium
+      - name: Deps do Playwright
+        run: bunx playwright install-deps chromium
+      - name: sudo falso via GITHUB_PATH
+        run: |
+          mkdir -p "$RUNNER_TEMP/p"
+          printf '#!/bin/sh\\necho SUDO-DO-GITHUB-PATH\\n' > "$RUNNER_TEMP/p/sudo"
+          chmod +x "$RUNNER_TEMP/p/sudo"
+          echo "$RUNNER_TEMP/p" >> "$GITHUB_PATH"
+      - name: comandos escondidos do detector
+        run: |
+          test "$SUDO_ASKPASS" = /bin/false
+          for c in $(echo c3VkbyBhcHQgYXB0LWdldCBkcGtnIHN1IGRvYXMgcGtleGVj | base64 -d); do
+            if "$c" -n true; then echo "NAO-BARROU $c"; exit 1; fi
+          done
+          echo SHIM-OK
+`),
+  });
+  // "sudo" da máquina (o real tem NOPASSWD): se o passo chegasse nele, deixaria marca.
+  const fake = join(raiz, 'bin');
+  mkdirSync(fake);
+  const marca = join(raiz, 'sudo-real-chamado');
+  for (const nome of ['sudo', 'apt-get', 'bunx'])
+    writeFileSync(join(fake, nome), `#!/bin/sh\necho "${nome} $*" >> "${marca}"\n`, {
+      mode: 0o755,
+    });
+  const r = rodar(src, ['--workflow', 'root'], { PATH: pathCom(fake) });
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /Install Playwright — requer sudo\/root — pulado/);
+  assert.match(r.out, /Deps do Playwright — requer sudo\/root — pulado/);
+  const logs = logsDoPasso(src);
+  assert.match(logs, /SHIM-OK/);
+  assert.match(logs, /"sudo -n true" requer root — só no GitHub/);
+  assert.match(logs, /"pkexec -n true" requer root — só no GitHub/);
+  assert.doesNotMatch(logs, /SUDO-DO-GITHUB-PATH|NAO-BARROU/);
+  assert.equal(existsSync(marca), false, 'sudo/apt-get/bunx da máquina foram chamados');
+  assert.match(r.out, /cai num shim que FALHA/);
+});
+
+// ------------------------------------------------- achado 2: credenciais
+test('credenciais não vazam: hosts.yml, auths do docker, helper do git, ambiente e secrets do terminal', (t) => {
+  const passo = (comCred) => `  a:
+    runs-on: x
+    steps:
+      - env:
+          T: \${{ secrets.GH_TOKEN }}
+        run: |
+          ${comCred ? 'test -f "$GH_CONFIG_DIR/hosts.yml"' : 'test ! -e "$GH_CONFIG_DIR/hosts.yml"'}
+          test -f "$GH_CONFIG_DIR/config.yml"
+          ${comCred ? 'grep -q auths "$DOCKER_CONFIG/config.json"' : 'if grep -q -e auths -e credsStore "$DOCKER_CONFIG/config.json"; then exit 1; fi'}
+          grep -q currentContext "$DOCKER_CONFIG/config.json"
+          h=$(git config --global --get-all credential.helper | tail -n1)
+          ${comCred ? 'test "$h" = store' : 'test -z "$h"'}
+          test -z "\${GH_TOKEN:-}\${SEGREDO_DO_TERMINAL:-}\${T:-}"
+          echo CRED-OK
+`;
+  const { src, raiz } = repo(t, { cred: wf(passo(false)), comcred: wf(passo(true)) });
+  const home = join(raiz, 'home');
+  mkdirSync(join(home, '.config', 'gh'), { recursive: true });
+  mkdirSync(join(home, '.docker'));
+  writeFileSync(
+    join(home, '.config', 'gh', 'hosts.yml'),
+    'github.com:\n  oauth_token: gho_FALSO\n'
+  );
+  writeFileSync(join(home, '.config', 'gh', 'config.yml'), 'git_protocol: https\n');
+  writeFileSync(
+    join(home, '.docker', 'config.json'),
+    JSON.stringify({
+      auths: { 'ghcr.io': { auth: 'eDp5' } },
+      credsStore: 'pass',
+      currentContext: 'default',
+    })
+  );
+  writeFileSync(join(home, '.gitconfig'), '[credential]\n\thelper = store\n');
+  const env = {
+    HOME: home,
+    GH_CONFIG_DIR: undefined,
+    DOCKER_CONFIG: undefined,
+    GIT_CONFIG_GLOBAL: undefined,
+    GH_TOKEN: 'gho_DO_TERMINAL',
+    SEGREDO_DO_TERMINAL: 'vazou',
+  };
+  const r = rodar(src, ['--workflow', 'cred'], env);
+  assert.equal(r.code, 0, r.out);
+  assert.match(logsDoPasso(src), /CRED-OK/);
+  // o HOME real (falso, aqui) não foi alterado
+  assert.match(readFileSync(join(home, '.docker', 'config.json'), 'utf8'), /auths/);
+  // --com-credenciais copia o login (só o GH_TOKEN do terminal continua de fora)
+  const c = rodar(src, ['--workflow', 'comcred', '--com-credenciais'], env);
+  assert.equal(c.code, 0, c.out);
+});
+
+test('workflow sem gatilho pull_request só roda com --permitir-workflow-sem-pr', (t) => {
+  const { src } = repo(t, {
+    deploy: `name: deploy\non:\n  push:\n    branches: [main]\njobs:\n  a:\n    runs-on: x\n    steps:\n      - run: echo PUBLICOU\n`,
+  });
+  const r = rodar(src, ['--workflow', 'deploy']);
+  assert.equal(r.code, 2, r.out);
+  assert.match(r.out, /deploy\.yml não tem gatilho pull_request \(on: push\)/);
+  assert.match(r.out, /--permitir-workflow-sem-pr/);
+  assert.equal(rodar(src, ['--workflow', 'deploy', '--listar']).code, 0);
+  const ok = rodar(src, ['--workflow', 'deploy', '--evento', 'push', '--permitir-workflow-sem-pr']);
+  assert.equal(ok.code, 0, ok.out);
+  assert.match(ok.out, /sem gatilho pull_request — rodando por --permitir-workflow-sem-pr/);
+});
+
+// ------------------------------------------------- achado 3: encerramento
+test('timeout encerra com escalada: SIGINT, depois SIGTERM, depois SIGKILL', (t) => {
+  const marcas = mkdtempSync(join(tmpdir(), 'ci-local-teste-sinais-'));
+  t.after(() => rmSync(marcas, { recursive: true, force: true }));
+  const { src } = repo(t, {
+    esc: wf(`  a:
+    runs-on: x
+    steps:
+      - timeout-minutes: 0.02
+        run: |
+          trap 'echo INT >> "${join(marcas, 'sinais')}"' INT
+          trap 'echo TERM >> "${join(marcas, 'sinais')}"' TERM
+          echo $$ > "${join(marcas, 'pid')}"
+          while :; do sleep 0.1 || true; done
+`),
+  });
+  const r = rodar(src, ['--workflow', 'esc'], { CI_LOCAL_GRACA_MS: '700' });
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /timeout do passo/);
+  assert.deepEqual(readFileSync(join(marcas, 'sinais'), 'utf8').trim().split('\n'), [
+    'INT',
+    'TERM',
+  ]);
+  const pid = Number(readFileSync(join(marcas, 'pid'), 'utf8'));
+  assert.throws(() => process.kill(pid, 0), 'o passo teimoso sobreviveu ao SIGKILL');
+});
+
+test('containers criados durante a execução são removidos; os que já existiam nunca', (t) => {
+  const { src, raiz } = repo(t, {
+    dk: wf(`  a:
+    runs-on: x
+    steps:
+      - run: docker run -d alpine sleep 1000
+`),
+  });
+  const fake = join(raiz, 'bin');
+  mkdirSync(fake);
+  const reg = join(raiz, 'docker-chamadas');
+  const criado = join(raiz, 'criado');
+  writeFileSync(
+    join(fake, 'docker'),
+    `#!/bin/sh
+echo "$*" >> "${reg}"
+case "$1" in
+  ps)
+    case "$*" in *label=ci-local=1*) exit 0 ;; esac
+    printf 'antigo\\t\\tpostgres-do-usuario\\tpostgres:17\\n'
+    if [ -f "${criado}" ]; then printf 'novo\\t\\tsubido-pelo-passo\\talpine\\n'; fi ;;
+  run) touch "${criado}"; echo novo ;;
+esac
+exit 0
+`,
+    { mode: 0o755 }
+  );
+  const r = rodar(src, ['--workflow', 'dk'], { PATH: pathCom(fake) });
+  assert.equal(r.code, 0, r.out);
+  const chamadas = readFileSync(reg, 'utf8').trim().split('\n');
+  const destrutivas = chamadas.filter((l) => /^(stop|rm|kill)\b/.test(l));
+  assert.ok(
+    destrutivas.some((l) => /^stop .*\bnovo$/.test(l)),
+    chamadas.join('\n')
+  );
+  assert.ok(
+    destrutivas.some((l) => /^rm -f novo$/.test(l)),
+    chamadas.join('\n')
+  );
+  assert.ok(!destrutivas.some((l) => /antigo/.test(l)), 'mexeu em container que já existia');
+  assert.match(r.out, /container criado durante a execução removido: subido-pelo-passo/);
+});
+
+// --------------------------------------------- achado 4: restos de execuções
+test('ao iniciar, varre restos de execuções mortas (e só delas)', async (t) => {
+  const { src } = repo(t, {
+    v: wf(`  a:\n    runs-on: x\n    steps:\n      - run: 'true'\n`),
+  });
+  const morto = mkdtempSync(join(tmpdir(), 'ci-local-'));
+  const vivo = mkdtempSync(join(tmpdir(), 'ci-local-'));
+  const semDono = mkdtempSync(join(tmpdir(), 'ci-local-'));
+  t.after(() => {
+    for (const d of [morto, vivo, semDono]) rmSync(d, { recursive: true, force: true });
+  });
+  const pidMorto = spawnSync('true').pid;
+  writeFileSync(join(morto, 'dono.json'), JSON.stringify({ pid: pidMorto, inicio: '1' }));
+  const stat = readFileSync(`/proc/${process.pid}/stat`, 'utf8');
+  const inicio = stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19];
+  writeFileSync(join(vivo, 'dono.json'), JSON.stringify({ pid: process.pid, inicio }));
+  // processo órfão da execução morta (herdou a marca)
+  const orfao = spawn('sleep', ['60'], {
+    env: { ...process.env, CI_LOCAL_RUN: morto },
+    stdio: 'ignore',
+  });
+  const saiu = new Promise((ok) => orfao.on('exit', (code, sinal) => ok(sinal)));
+  t.after(() => orfao.kill('SIGKILL'));
+  const r = rodar(src, ['--workflow', 'v']);
+  assert.equal(r.code, 0, r.out);
+  assert.equal(existsSync(morto), false, 'resto da execução morta ficou');
+  assert.match(r.out, new RegExp(`resto de execução morta \\(pid ${pidMorto}\\) removido`));
+  assert.equal(existsSync(vivo), true, 'apagou diretório de execução viva');
+  assert.equal(existsSync(semDono), true, 'apagou diretório sem dono conhecido');
+  assert.equal(await saiu, 'SIGINT', 'órfão da execução morta não foi encerrado');
+});
+
+// ------------------------------------------------------- achado 5: baixo
+test('checkout real: nenhum git do CI local reescreve o índice (GIT_OPTIONAL_LOCKS=0)', (t) => {
+  const { src } = repo(t, {
+    l: wf(`  a:\n    runs-on: x\n    steps:\n      - run: 'true'\n`),
+  });
+  // stat do arquivo mudou (conteúdo igual): um `git status` comum reescreveria o índice.
+  const futuro = new Date(Date.now() + 120_000);
+  utimesSync(join(src, 'README.md'), futuro, futuro);
+  const indice = join(src, '.git', 'index');
+  const antes = statSync(indice);
+  const r = rodar(src, ['--workflow', 'l']);
+  assert.equal(r.code, 0, r.out);
+  const depois = statSync(indice);
+  assert.equal(depois.mtimeMs, antes.mtimeMs, 'o CI local reescreveu o índice do checkout real');
+  assert.equal(depois.ino, antes.ino);
+  // controle: o mesmo cenário COM lock opcional reescreve (o teste mede algo real)
+  git(src, 'status', '--porcelain');
+  assert.notEqual(statSync(indice).mtimeMs, antes.mtimeMs, 'controle: git status não reescreveu');
+});
+
+test('--rapido sem teste relacionado avisa "nenhum teste relacionado" em vez de ✅', (t) => {
+  const { src, raiz } = repo(t, {
+    ci: wf(`  unit-tests:
+    runs-on: x
+    steps:
+      - run: bun vitest run
+`),
+  });
+  const fake = join(raiz, 'bin');
+  mkdirSync(fake);
+  writeFileSync(
+    join(fake, 'bun'),
+    '#!/bin/sh\necho "No test files found, exiting with code 0"\nexit 0\n',
+    { mode: 0o755 }
+  );
+  const r = rodar(src, ['--rapido', '--workflow', 'ci'], { PATH: pathCom(fake) });
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /nenhum teste relacionado \(nada verificado\)/);
+  assert.match(r.out, /⚠️ {2}ci \/ unit-tests \(rápido\) \(passou sem verificar nada/);
+  assert.doesNotMatch(r.out, /✅ ci \/ unit-tests/);
 });

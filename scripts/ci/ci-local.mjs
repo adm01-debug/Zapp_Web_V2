@@ -101,7 +101,8 @@ const limpeza = {
   containersAntes: null, // Set de ids existentes no início (null = docker indisponível)
   forcar: false,
 };
-const GRACA_MS = Number(process.env.CI_LOCAL_GRACA_MS) >= 0 ? Number(process.env.CI_LOCAL_GRACA_MS) : 5000;
+const GRACA_MS =
+  Number(process.env.CI_LOCAL_GRACA_MS) >= 0 ? Number(process.env.CI_LOCAL_GRACA_MS) : 5000;
 
 function grupoVivo(pid) {
   try {
@@ -1316,7 +1317,7 @@ async function main() {
           const ctx = { github: gh, matrix, env: {}, inputs: inputsDoDispatch(wf, args) };
           log(`── ▶️  ${rotulo}${job.name ? ` — ${interpolar(job.name, ctx).texto}` : ''}`);
           for (const s of job.steps ?? []) {
-            const sudo = s.run && comandosComSudo(s.run).length ? ' [requer sudo: pulado]' : '';
+            const sudo = s.run && comandosComSudo(s.run).length ? ' [requer sudo/root: pulado]' : '';
             log(
               `   · ${s.uses ? `[uses ${s.uses.split('@')[0]}]` : '[run]'} ${s.name ? interpolar(s.name, ctx).texto : (s.run ?? '').split('\n')[0].slice(0, 80)}${sudo}`
             );
@@ -1424,7 +1425,9 @@ async function encerrar(codigo) {
   if (interrompido) return; // o tratador do sinal encerra (código 128+n)
   const removidos = await limparTudo();
   for (const c of removidos)
-    console.log(`🧹 container criado durante a execução removido: ${c.nomes || c.id} (${c.imagem})`);
+    console.log(
+      `🧹 container criado durante a execução removido: ${c.nomes || c.id} (${c.imagem})`
+    );
   process.exit(codigo);
 }
 
