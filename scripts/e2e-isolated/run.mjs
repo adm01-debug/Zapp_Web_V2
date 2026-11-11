@@ -20,6 +20,8 @@ import { createTlsMaterial, preflightTlsTools, tlsEnvironment, tlsMounts, instal
 import { CATALOG_EXECUTOR_OPTIONS, PROVIDER_CATALOG_SQL, parseCatalog, parseProviderDiagnostic } from './provider-diagnostics.mjs';
 import { restoreRoutineOwnership } from './routine-ownership.mjs';
 import { QR_SEED_PATH, validateQrSeedProof } from './qr-contract.mjs';
+import { prepareCompilationNetwork } from './compilation-network.mjs';
+import { pullPinnedImage } from './pull-image.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const HERE = fileURLToPath(new URL('./', import.meta.url));
@@ -303,7 +305,7 @@ function safeCode(error) {
   return /^[a-z][a-z0-9-]{0,100}$/.test(text) ? text : 'isolated-runtime-failed';
 }
 
-export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group } = {}) {
+export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group, compilationNetwork = prepareCompilationNetwork, imagePull = pullPinnedImage } = {}) {
   if (!['login', 'suite'].includes(scope) || (scope === 'login' && group !== undefined) ||
       (scope === 'suite' && !Object.hasOwn(GROUPS, group))) throw new Error('invalid-isolated-scope');
   const shard = browserShard(scope, group);
@@ -321,6 +323,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   const runRoot = mkdtempSync(path.join(tmpdir(), 'zapp-e2e-runtime-'));
   const runId = 'zapp-e2e-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
   const dockerConfig = path.join(runRoot, 'docker-client');
+  const compilerDockerConfig = path.join(runRoot, 'compiler-docker-client');
   const privateDir = path.join(runRoot, 'private');
   const controlDir = path.join(runRoot, 'control');
   const bundles = path.join(runRoot, 'bundles');
@@ -342,7 +345,8 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
   let failure;
   let cancelled = false;
   let cleaning = false;
-  const onCancel = () => { cancelled = true; };
+  const pullCancellation = new AbortController();
+  const onCancel = () => { cancelled = true; pullCancellation.abort(); };
   process.on('SIGTERM', onCancel); process.on('SIGINT', onCancel);
   const execute = (program, args, options = {}) => {
     if (cancelled && !cleaning) throw new Error('run-cancelled');
@@ -454,11 +458,17 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     ]));
     const context = JSON.parse(required(docker(['context', 'inspect', '--format', '{{json .Endpoints.docker.Host}}']), 'docker-context-failed'));
     if (context !== 'unix:///var/run/docker.sock') throw new Error('nonlocal-docker-context');
+    const compilerNetwork = compilationNetwork({ directory: compilerDockerConfig });
     phase('pull-immutable-images');
     const imageEvidence = {};
     for (const [name, image] of Object.entries(images)) {
-      const result = docker(['pull', image], { timeout: 15 * 60_000 });
-      writeFileSync(path.join(output, 'pull-' + name + '.log'), redacted(String(result.stdout || '') + String(result.stderr || '')), { mode: 0o600 });
+      const result = await imagePull({ image, signal: pullCancellation.signal,
+        command: (reference, options) => docker(['pull', reference], options),
+        onAttempt: (attemptResult, attempt) => writeFileSync(path.join(output, 'pull-' + name + '.log'),
+          (attempt === 1 ? '' : '\n[pull-retry-attempt ' + attempt + ']\n') +
+          redacted(String(attemptResult.stdout || '') + String(attemptResult.stderr || '')),
+          { mode: 0o600, flag: attempt === 1 ? 'w' : 'a' }),
+      });
       required(result, 'pull-' + name + '-failed');
       const digests = JSON.parse(required(docker(['image', 'inspect', image, '--format', '{{json .RepoDigests}}']), 'image-inspect-failed'));
       const expected = image.slice(image.indexOf('@sha256:'));
@@ -490,11 +500,12 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
         '--user', runnerUser,
         '--label', OWNER_LABEL + '=' + runId, '--label', PURPOSE_LABEL + '=' + PURPOSE,
         '--workdir', '/work', '--env', 'DENO_DIR=/cache',
+        ...compilerNetwork.args,
         '--mount', 'type=bind,src=' + ROOT + ',dst=/work,readonly',
         '--mount', 'type=bind,src=' + bundles + ',dst=/bundles',
         '--mount', 'type=bind,src=' + bundleCache + ',dst=/cache',
         images.edge, 'bundle', '--entrypoint', entry, '--output', '/bundles/' + name + '.eszip', '--timeout', '180',
-      ], { timeout: 210_000 });
+      ], { timeout: 210_000, env: { PATH: process.env.PATH, DOCKER_CONFIG: compilerDockerConfig } });
       // Compiler diagnostics can include source. Do not copy raw output.
       required(result, 'bundle-' + name + '-failed');
       const bytes = readFileSync(path.join(bundles, name + '.eszip'));

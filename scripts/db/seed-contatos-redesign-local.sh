@@ -110,7 +110,11 @@ const decode = (value, label) => {
   return decoded;
 };
 
-let host = parsed.hostname;
+// postgres:/postgresql: nao e esquema "especial" para o parser WHATWG URL (so
+// http/https/ws/ftp/file normalizam host para minusculas) — sem lowercase aqui,
+// "postgres://LOCALHOST/db" (alvo local de verdade, so com caixa diferente) cairia
+// no mesmo RECUSADO usado para host remoto de verdade.
+let host = parsed.hostname.toLowerCase();
 if (host.startsWith('[') && host.endsWith(']')) host = host.slice(1, -1);
 if (!['localhost', '127.0.0.1', '::1'].includes(host)) {
   refuse('o host nao e localhost, 127.0.0.1 ou ::1.');

@@ -79,7 +79,7 @@ jobs:
       # "STATUS.md ja atualizado" continua sendo no-op.
       - name: Abrir ou atualizar PR do placar
         id: pull-request
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8 # v8.1.2
         env:
           HUSKY: '0'  # Evita que o hook pre-push do Husky bloqueie o push interno da action
         with:

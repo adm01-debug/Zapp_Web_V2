@@ -18,7 +18,7 @@ import type { Achievement, AgentStats } from './types';
 const log = getLogger('AgentCelebrations');
 
 /** Tópico exclusivo por instância: dois consumidores ao vivo não dividem canal. */
-const CANAL_BASE = 'agente-celebracoes';
+const CAMAS_BASE = 'agente-celebracoes';
 /** Janela olhada ao ressincronizar: só o que ainda pode virar festa na tela. */
 const JANELA_CONQUISTAS = 20;
 
@@ -67,7 +67,7 @@ export function useAgentCelebrations(
   const enabled = options.enabled ?? true;
   const profileIdExplicito = options.profileId ?? null;
 
-  // Mesmo cache do `useAgentGamification`: sem perfil, resolve o próprio.
+  // Mesmo cache do `useAgentGamificação`: sem perfil, resolve o próprio.
   const perfilQuery = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
@@ -169,6 +169,8 @@ export function useAgentCelebrations(
     // Marco da montagem: o SELECT inicial pode enxergar uma conquista gravada DEPOIS
     // de montar (o insert comitou antes da resposta). Essa nasceu na nossa janela e
     // vira festa; só o que já existia no marco é semente suprimida.
+    // Tolerância de 2 s cobre relógios ligeiramente desalinhados entre cliente e banco.
+    const TOLERANCIA_RELOGIO_MS = 2000;
     const marcoMontagem = Date.now();
     void (async () => {
       const [conquistas, stats] = await Promise.all([
@@ -184,8 +186,8 @@ export function useAgentCelebrations(
       if (conquistas.error) log.warn('Falha ao carregar conquistas do perfil', conquistas.error);
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
         if (!linha?.id) continue;
-        // `earned_at` ausente ou ilegível (NaN) nunca é "posterior": fica suprimido.
-        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem) {
+        // `earned_at` ausente ou ilegímvel (NaN) nunca é "posterior": fica suprimido.
+        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem + TOLERANCIA_RELOGIO_MS) {
           celebrarConquista(linha);
         } else {
           conquistasConhecidas.current.add(String(linha.id));
@@ -233,7 +235,7 @@ export function useAgentCelebrations(
     estadoCanal.current = null;
 
     const canal = supabase
-      .channel(uniqueRealtimeTopic(CANAL_BASE))
+      .channel(uniqueRealtimeTopic(CAMAS_BASE))
       .on(
         'postgres_changes',
         {

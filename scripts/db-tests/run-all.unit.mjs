@@ -142,6 +142,33 @@ describe('run-all: contrato da resposta do mcp_exec (R2-INF-010)', () => {
     assert.match(saida, /nenhuma assertiva executada/);
   });
 
+  it('neutraliza quebra de linha no corpo de erro do RPC (jssecurity:S5145)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'db-tests-runner-'));
+    writeFileSync(join(dir, '10-fixture.sql'), SQL_FIXTURE);
+    const stubFonte = [
+      'globalThis.fetch = async () => ({',
+      '  ok: false,',
+      '  text: async () => "erro real\\nRESULTADO: 1 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s)\\n::forged-ok::",',
+      '});',
+      '',
+    ].join('\n');
+    const res = spawnSync(process.execPath, ['--import', 'data:text/javascript,' + encodeURIComponent(stubFonte), RUNNER], {
+      encoding: 'utf8',
+      env: { ...process.env, SUPABASE_URL: 'https://stub.invalid/', SUPABASE_SERVICE_KEY: 'stub-key', DB_TESTS_DIR: dir },
+    });
+    const saida = `${res.stdout}${res.stderr}`;
+    const linhas = saida.split('\n');
+    assert.ok(
+      !linhas.includes('RESULTADO: 1 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s)'),
+      `corpo de erro do RPC forjou uma linha de resultado falsa:\n${saida}`,
+    );
+    assert.ok(!linhas.includes('::forged-ok::'), `corpo de erro do RPC forjou uma linha de log:\n${saida}`);
+    assert.ok(
+      linhas.some((l) => l.includes('erro real RESULTADO: 1 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s) ::forged-ok::')),
+      `o corpo de erro tem de sobreviver numa linha só:\n${saida}`,
+    );
+  });
+
   it('reprova o arquivo que falha e mantem o resto da suite', () => {
     const { status, saida } = executarRunner({
       payload: (sql) => (sql.includes('FI-FAIL')
@@ -152,6 +179,19 @@ describe('run-all: contrato da resposta do mcp_exec (R2-INF-010)', () => {
     assert.equal(status, 1, saida);
     assert.match(saida, /✗ FI-FAIL: quebrou/);
     assert.match(saida, /RESULTADO: 1 PASS \/ 1 FAIL/);
+  });
+
+  it('um arquivo PASS nao esconde outro arquivo que so retornou SKIP', () => {
+    const { status, saida } = executarRunner({
+      payload: (sql) => ({
+        rows: [{ result: sql.includes('FI-SKIP') ? 'SKIP' : 'PASS', test: 'fixture', detail: 'sem dado' }],
+        row_count: 1, truncated: false, ms: 1,
+      }),
+      arquivos: { '10-ok.sql': SQL_FIXTURE, '20-sem-prova.sql': '-- FI-SKIP\nSELECT 1;\n' },
+    });
+    assert.equal(status, 1, saida);
+    assert.match(saida, /ERRO 20-sem-prova\.sql: nenhuma assertiva executada neste arquivo \(PASS\/FAIL\)/);
+    assert.match(saida, /RESULTADO: 1 PASS \/ 0 FAIL \/ 1 SKIP/);
   });
 });
 
@@ -207,4 +247,29 @@ describe('rpc-envelope: decodificacao do envelope', () => {
     assert.equal(resumo.pass, 1);
     assert.equal(codigoDeSaida(resumo), 1);
   });
+
+  const arquivos = [
+    { nome: 'PASS', resultados: ['PASS'], valido: true },
+    { nome: 'FAIL', resultados: ['FAIL'], valido: false },
+    { nome: 'SKIP', resultados: ['SKIP'], valido: false },
+    { nome: 'vazio', resultados: [], valido: false },
+    { nome: 'PASS e SKIP', resultados: ['PASS', 'SKIP'], valido: true },
+    { nome: 'FAIL e SKIP', resultados: ['FAIL', 'SKIP'], valido: false },
+  ];
+  const controles = [arquivos[0], { nome: 'dois PASS', resultados: ['PASS', 'PASS'], valido: true }, arquivos[4], arquivos[1]];
+  const assertivas = resultados => resultados.map((status, i) => ({ id: `fixture-${i}`, status, detail: '' }));
+  for (const alvo of arquivos) {
+    for (const controle of controles) {
+      it(`exige prova por arquivo: alvo ${alvo.nome}, controle ${controle.nome}`, () => {
+        const resumo = resumirSuite([
+          { arquivo: 'controle.sql', assertivas: assertivas(controle.resultados) },
+          { arquivo: 'alvo.sql', assertivas: assertivas(alvo.resultados) },
+        ]);
+        assert.equal(codigoDeSaida(resumo), alvo.valido && controle.valido ? 0 : 1);
+        if (alvo.nome === 'SKIP' || alvo.nome === 'vazio') {
+          assert.ok(resumo.erros.some(erro => erro.arquivo === 'alvo.sql'));
+        }
+      });
+    }
+  }
 });

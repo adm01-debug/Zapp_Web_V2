@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -70,6 +70,14 @@ test('rejeita caminho absoluto fora do repositorio e do temporario', () => {
   const result = executar(fora);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /fora das raizes permitidas/);
+});
+
+test('caminho valido e dentro da raiz, mas arquivo inexistente, da ERRO limpo (sem stack cru)', () => {
+  const inexistente = path.join(ROOT, 'docs', 'catalogo', 'ARQUIVO_QUE_NAO_EXISTE_NO_REPO.md');
+  const result = executar(inexistente);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /^ERRO: /);
+  assert.doesNotMatch(result.stderr, /at Object\.<anonymous>/);
 });
 
 test('aceita o caminho default do plano dentro do repositorio', () => {
@@ -169,3 +177,83 @@ test('rejeita marcador RISCADO sem titulo riscado e sem data valida', () => {
   assert.match(result.stderr, /E54: checklist com 0 itens/);
   assert.match(result.stderr, /E54: sem Objetivo/);
 });
+
+for (const id of ['01', '54', '100']) {
+  test(`rejeita a repeticao da etapa numerica E${id}`, () => {
+    const result = executarPlano(planoComChecklistMisto() + '\n' + etapa(id));
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`E${id}: etapa duplicada`));
+  });
+}
+
+test('um tombstone nao pode esconder a repeticao de uma etapa', () => {
+  const result = executarPlano(planoComChecklistMisto() + '\n' + tombstone('54'));
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /E54: etapa duplicada/);
+});
+
+for (const id of ['00', '000', '101', '999', '1', '001', '0001', '1000', '10000']) {
+  test(`rejeita identificador extra invalido E${id} mesmo com as 100 etapas validas`, () => {
+    const result = executarPlano(planoComChecklistMisto() + '\n' + etapa(id));
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`E${id}: (?:fora da faixa|formato de identificador)`));
+  });
+}
+
+test('cabecalho E007 com zero a mais nao e tratado como equivalente a E07', () => {
+  const result = executarPlano(
+    planoCom(['07'], (id) => etapa(id).replace(`E${id}`, `E0${id}`)),
+  );
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /E007: formato de identificador invalido/);
+  assert.match(result.stderr, /E07: ausente/);
+});
+
+for (const data of ['2024-02-29', '2000-02-29', '2026-12-31']) {
+  test(`preserva tombstone com data calendaria valida ${data}`, () => {
+    const result = executarPlano(planoCom(['54'], id => tombstone(id, {
+      status: `**Status:** descartado em ${data} (decisao do produto).`,
+    })));
+    assert.equal(result.status, 0, result.stderr);
+  });
+}
+
+for (const data of ['2026-02-30', '2026-02-29', '1900-02-29', '2026-04-31', '2026-13-01',
+  '2026-00-01', '2026-01-00', '2026-01-32', '2026-01-01fake', '2026-09-24T00:00:00Z']) {
+  test(`data ${data} nao concede dispensa de estrutura ao tombstone`, () => {
+    const result = executarPlano(planoCom(['54'], id => tombstone(id, {
+      status: `**Status:** descartado em ${data}`,
+    })));
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /E54: 0 sub-etapas/);
+  });
+}
+
+test('preserva duas posicoes descartadas distintas sem reduzir as 100 etapas', () => {
+  const result = executarPlano(planoCom(['53', '54'], id => tombstone(id)));
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /etapas: 100\/100 · blocos: 100/);
+});
+
+const planosPorQuebraDeLinha = [];
+for (const ids of [['54'], ['01'], ['100'], ['01', '54'], ['54', '100']]) {
+  for (const complemento of ['', ' (decisao do produto).']) {
+    planosPorQuebraDeLinha.push({
+      nome: `${ids.join('+')}, status ${complemento ? 'explicado' : 'simples'}`,
+      conteudo: planoCom(ids, id => tombstone(id, {
+        status: `**Status:** descartado em 2026-09-24${complemento}`,
+      })),
+    });
+  }
+}
+planosPorQuebraDeLinha.push({ nome: 'plano canonico', conteudo: readFileSync(path.join(ROOT, 'docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md'), 'utf8') });
+planosPorQuebraDeLinha.push({ nome: '100 etapas ativas', conteudo: planoComChecklistMisto() });
+for (const plano of planosPorQuebraDeLinha) {
+  for (const [nome, quebra] of [['LF', '\n'], ['CRLF', '\r\n']]) {
+    test(`preserva plano valido ${plano.nome} com ${nome}`, () => {
+      const result = executarPlano(plano.conteudo.replace(/\r\n/g, '\n').replace(/\n/g, quebra));
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /etapas: 100\/100 · blocos: 100/);
+    });
+  }
+}

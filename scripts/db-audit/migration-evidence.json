@@ -295,6 +295,19 @@
       "justification": "O arquivo não teve alteração executável após sua introdução e o ledger mantém o mesmo nome; a serialização do bloco cron diverge textualmente e ambas ficam fixadas por hash."
     },
     {
+      "version": "20260901100001",
+      "filename": "20260901100001_add_last_sender_to_email_threads.sql",
+      "file_sha256": "2040a949294f182a4ef8d3cb869bff1a097a2234d334773dba3d862b0b8bca43",
+      "file_sql_sha256": "739f3d1a671a4e44ef599d1cdece47c105b4f3c1c3f7e29bf56297222a243897",
+      "ledger_name": "add_last_sender_to_email_threads",
+      "ledger_statements_sha256": "1b2e4d87e7fde59ff7de1d2e10056f07e5db1b9ffbeed6fa5d41b54bef533d53",
+      "ledger_sql_sha256": "739f3d1a671a4e44ef599d1cdece47c105b4f3c1c3f7e29bf56297222a243897",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "Migration aplicada direto em produção em 2026-09-01; o arquivo em supabase/migrations foi reconstruído com o DDL completo (ALTER TABLE + CREATE OR REPLACE FUNCTION + CREATE TRIGGER); ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
+    },
+    {
       "version": "20260901100003",
       "filename": "20260901100003_create_contact_identity_map_e32.sql",
       "file_sha256": "a6f023d4ea5711fe1d1094d9701d15dcc8910f5c4c222c835537c0d37ff86e2c",
@@ -306,6 +319,19 @@
       "reason": "ledger-summary",
       "related_migration": null,
       "justification": "A migration foi aplicada direto em produção (fora do Git) com statements resumidos no ledger. O arquivo em supabase/migrations foi reconstruído depois com o DDL completo (CREATE TABLE + índice + RLS + policies); ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
+    },
+    {
+      "version": "20260901200001",
+      "filename": "20260901200001_e23_default_queue_rls_policies.sql",
+      "file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
+      "file_sql_sha256": "5387d6e5e52928f77898e857f1f053053f47f5165cc8efa2f2f21499afd4fb6f",
+      "ledger_name": "e23_default_queue_rls_policies",
+      "ledger_statements_sha256": "e10d52fd0ef27c7e60c225bad7407fb6e33d3fefcaad0f5c634ff1069936c224",
+      "ledger_sql_sha256": "5387d6e5e52928f77898e857f1f053053f47f5165cc8efa2f2f21499afd4fb6f",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "E23: fila padrão e políticas RLS aplicados direto em produção em 2026-09-01 via db_transaction (fora do fluxo Git); o arquivo em supabase/migrations foi reconstruído com o DDL completo; ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
     },
     {
       "version": "20260902000200",
@@ -796,6 +822,19 @@
       "justification": "O arquivo no repo preserva a versao original do contrato de auditoria para convites de departamento; o ledger contem a versao aplicada em producao apos correcoes de vocabulario e contrato. Migration ja aplicada e imutavel (regra 7 do CLAUDE.md). Hashes medidos em 02/11/2026."
     },
     {
+      "version": "20261009011641",
+      "filename": "20261009011641_multiplix_drain_enum_cast.sql",
+      "file_sha256": "23faa885bead5e9eb29bac57c622faca462dbc5d2e456dc588d11e945819b837",
+      "file_sql_sha256": "dec93337b586bd398f0d1146045a8795e32e130098b7a29a7a679e6b8ee7e138",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_name": "multiplix_drain_enum_cast",
+      "ledger_statements_sha256": "67f17fd94fa9c2ca2a731aa30d7ebe3de1c04905cad3757039211365a6fc673f",
+      "ledger_sql_sha256": "419d620ba9449594b6aedaf76ae0736ce8195c13ab415b9ac9fb002c8ed1e8b9",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo usa CREATE OR REPLACE FUNCTION com cabecalho de comentarios e formatacao diferente da armazenada no ledger para complete_multiplix_dispatch_if_drained e complete_multiplix_dispatch_if_items_drained. A logica funcional e o cast ::public.multiplix_dispatch_status sao identicos; a diferenca e de formatacao e comentarios. Migration imutavel; hashes medidos em 09/11/2026."
+    },
+    {
       "version": "20261009193246",
       "filename": "20261009193246_team_receipts_reactions_conversation_id_forced.sql",
       "file_sha256": "8d01e6fbd56a161652fd88e72e188b138736d3967c71f7fc1baa0b24eb013bdf",
@@ -1136,6 +1175,32 @@
       "justification": "O arquivo no repo difere do SQL aplicado em producao para os limites de filtros salvos no inbox (indice unico + trigger). Migration imutavel; arquivo fixado por hash proprio. Hashes medidos em 02/11/2026."
     },
     {
+      "version": "20261026220300",
+      "filename": "20261026220300_classificar_rls_sem_policy.sql",
+      "file_sha256": "c89426764c92984b86b0681015e649f40471be3a0e171d17a87063aa1f1ab8ff",
+      "file_sql_sha256": "a2f3f914a5bdca15f05d033d43109d36d622c9a1ea5d1015df652e4d2c4754f4",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_name": "classificar_rls_sem_policy",
+      "ledger_statements_sha256": "adcdcf92745a3871fd5112b921b05c9fcd2b1a288b15966ddd35d4e013d352ba",
+      "ledger_sql_sha256": "368f9c3057eb565b384654ba6ee088127a1fc192b7654c99e4313525f1cc332f",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo usa blocos DO com guards IF EXISTS para aplicar COMMENTs em tabelas sem politica de RLS; o ledger preserva as 19 instrucoes aplicadas diretamente em producao (COMMENTs e REVOKEs diretos). Migration imutavel; arquivo fixado por hash proprio. Hashes medidos em 09/11/2026."
+    },
+    {
+      "version": "20261026230300",
+      "filename": "20261026230300_decidir_schemas_backup.sql",
+      "file_sha256": "8274f57459ab61f0804e06396b1901e48744e4c1bdfa928889830138b6b307a5",
+      "file_sql_sha256": "7705cce2d4f70a920260c560996e033a6ae19da4f19b2350c447b2df68c145fc",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_name": "decidir_schemas_backup",
+      "ledger_statements_sha256": "c30e9bdb038fab9519a87f990e092244e28e1327a247440f08fdd5055455cd54",
+      "ledger_sql_sha256": "57d40eeaa2d9c136eb7b19c09581b89763cf980930803271149d6326e72d8705",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo usa DROP SCHEMA IF EXISTS e bloco DO com EXECUTE para aplicar COMMENTs condicionalmente ao schema _bkp_261023; o ledger registra DROP SCHEMA sem IF EXISTS e os 10 COMMENTs aplicados diretamente em producao. Migration imutavel; arquivo fixado por hash proprio. Hashes medidos em 09/11/2026."
+    },
+    {
       "version": "20261026240300",
       "filename": "20261026240300_drop_bkp_261023.sql",
       "file_sha256": "ae73ca7b6be01398a8c1e658ba34f01988a6df299186a4803cdbff6b05fef34c",
@@ -1185,6 +1250,32 @@
       "kind": "ledger-divergence/pinned-sql-marker",
       "reason": "safer-replay",
       "justification": "O ledger preserva um marker do REVOKE anterior; o arquivo local condiciona a operação à autoridade do executor para que o replay como postgres não aborte. Arquivo, SQL local, array integral e marker ficam fixados sem promover o comentário a SQL aplicado."
+    },
+    {
+      "version": "20261107121000",
+      "filename": "20261107121000_message_reactions_one_per_agent.sql",
+      "file_sha256": "48ec6d470455d321c88030a3a988d4ef569f8ce269ae8402c5434632180ac6af",
+      "file_sql_sha256": "f12dff50d3a46fe9de568f827a75039dc5d823e1f8699e226e9e7f6d8236c99a",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_name": "message_reactions_one_per_agent",
+      "ledger_statements_sha256": "4596797fb188bb0fe8aac39145ea01af98e224134a1fcf69d88944388702585e",
+      "ledger_sql_sha256": "63932370962219ecaf8bdff7e3b3abd5897e06e9dba9a7caf442ee828c50b454",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo usa CREATE TABLE AS SELECT e INSERT DISTINCT ON para o rebuild; o ledger preserva 10 instrucoes com schema de colunas explicito, row_number() OVER e COMMENTs finais. Arquivo renomeado de _constraint para corresponder ao nome aplicado em producao. Migration imutavel; hashes medidos em 09/11/2026."
+    },
+    {
+      "version": "20261107122000",
+      "filename": "20261107122000_contacts_phone_search_digits.sql",
+      "file_sha256": "f32e6a495288986567018ecc5a212a8d34690685bc0ac2a9f411ef170f5a0aaa",
+      "file_sql_sha256": "b5050830790371d9e1fc188d8e1675a0f7e2a313450ffb3a0b93556a9946a5c6",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_name": "contacts_phone_search_digits",
+      "ledger_statements_sha256": "2d14f6e5720ea9b11b0b0e1995312ced71adaf7848b1cab3ed55277662a11f50",
+      "ledger_sql_sha256": "21a73b30fa45916ca7531e043650bedb3b1340c9e42986b43beeb5e9e95965b6",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo usa regexp_replace(phone,'\\D','','g') e nome de indice contacts_phone_search_digits_trgm_idx; o ledger preserva regexp_replace(coalesce(phone,''),'[^0-9]','','g') com nome idx_contacts_phone_search_digits_trgm e COMMENT ON COLUMN final. Arquivo renomeado de _column para corresponder ao nome aplicado em producao. Migration imutavel; hashes medidos em 09/11/2026."
     },
     {
       "version": "20261107153000",

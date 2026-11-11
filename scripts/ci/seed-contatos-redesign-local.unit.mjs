@@ -134,6 +134,16 @@ test('localhost, IPv4 e IPv6 locais chegam ao psql apenas por variaveis libpq', 
   }
 });
 
+test('host local com caixa diferente (LOCALHOST) nao e tratado como remoto', () => {
+  // postgres:/postgresql: nao e esquema "especial" do parser WHATWG URL: sem
+  // lowercase explicito no host, "LOCALHOST" (alvo local de verdade, so com caixa
+  // diferente) cairia no mesmo RECUSADO usado para host remoto de verdade.
+  const result = runScript(['--rollback', '--url', 'postgres://postgres@LOCALHOST:6543/app']);
+  assert.notEqual(result.status, 3, result.stderr);
+  assert.doesNotMatch(result.stderr, /RECUSADO:/);
+  assert.match(result.envLog, /localhost\|6543\|postgres\|app\|set\|seed_url=/);
+});
+
 test('componentes percent-encoded sao decodificados sem avaliacao pelo shell', () => {
   const result = runScript(
     ['--rollback', '--url', 'postgres://user%20local:p%40ss%20local@localhost/db%20local'],

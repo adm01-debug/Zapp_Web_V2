@@ -514,6 +514,10 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
     expect(conferirAlvoLocal('postgres://127.0.0.1:54321/postgres')).toBe('127.0.0.1');
     expect(conferirAlvoLocal('postgresql://postgres:senha@localhost:54322/postgres')).toBe('localhost');
     expect(conferirAlvoLocal('postgresql://postgres:senha@[::1]:54322/postgres')).toMatch(/::1/u);
+    // postgres:/postgresql: não é esquema "especial" para o parser de URL: sem
+    // lowercase explícito no host, "LOCALHOST" (alvo local de verdade, só com caixa
+    // diferente) cairia no mesmo throw de host remoto que db.exemplo-do-cliente.com.
+    expect(conferirAlvoLocal('postgres://LOCALHOST:54322/postgres')).toBe('localhost');
     expect(conferirAlvoLocal(undefined)).toBeNull();
     expect(conferirAlvoLocal('')).toBeNull();
     expect(() => conferirAlvoLocal('https://localhost:5432/postgres')).toThrow(/protocolo não-PostgreSQL/u);

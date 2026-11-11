@@ -1,7 +1,6 @@
 # Automação Vercel
 
 `ignore-build.sh` decide builds de preview; produção sempre cria um deployment.
-`verify-production.mjs` mantém o smoke legado de um endereço V2 informado.
 `verify-release-targets.mjs` acompanha os dois destinos que hoje têm donos diferentes:
 
 - `v2`: `https://zapp-web-v2.vercel.app`, cujo `buildId` deve ser o SHA atual da `main`;

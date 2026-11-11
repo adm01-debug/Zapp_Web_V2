@@ -138,7 +138,10 @@ if (!rLogin.ok) {
   const corpo = await rLogin.text();
   console.error(`  FALHA  login recusado (HTTP ${statusLogin})`);
   console.error(`  resposta do Auth (sem credencial): ${semQuebra(corpo.slice(0, 180))}`);
-  process.exit(2);
+  // Credencial PRESENTE e recusada pelo Auth (senha rotacionada, conta desativada,
+  // Supabase fora do ar) é a prova RODANDO e FALHANDO — exit 1, nunca o exit 2 de
+  // "faltou credencial" (linha 104 acima), que uma automação trataria como "pular".
+  process.exit(1);
 }
 const token = (await rLogin.json()).access_token;
 ver(Boolean(token), `login aceito (HTTP ${statusLogin}) — JWT obtido e mantido oculto`);

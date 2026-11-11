@@ -312,21 +312,21 @@ jobs:
       # Com um único artefato, a action extrai diretamente em path. Cada fonte tem destino explícito.
       - name: Baixar codigo/
         if: needs.codigo.outputs.artifact-id != ''
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.codigo.outputs.artifact-id }}
           path: ${{ runner.temp }}/art/contexto-codigo
 
       - name: Baixar supabase/
         if: needs.banco.outputs.artifact-id != ''
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.banco.outputs.artifact-id }}
           path: ${{ runner.temp }}/art/contexto-supabase
 
       - name: Baixar regras/
         if: needs.regras.outputs.artifact-id != ''
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.regras.outputs.artifact-id }}
           path: ${{ runner.temp }}/art/contexto-regras

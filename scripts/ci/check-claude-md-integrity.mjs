@@ -11,7 +11,7 @@
  * Na base o conjunto e o que existir la (na main antiga, CLAUDE.md + AGENTS.md).
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
 const AGENTS = 'AGENTS.md';
@@ -27,8 +27,8 @@ const REQUIRED_SECTIONS = [
   '## Stack e comandos',
   '## Grafo de código',
 ];
-const SHRINK_THRESHOLD = 0.30;
-const FILE_SHRINK_THRESHOLD = 0.50;
+const SHRINK_THRESHOLD = 0.3;
+const FILE_SHRINK_THRESHOLD = 0.5;
 
 let content;
 try {
@@ -63,9 +63,14 @@ function bytesAtuais() {
 // quando a base nao tem nenhum deles (ref inexistente, checkout raso sem a main).
 function bytesNaBase(base) {
   const porArquivo = new Map();
+  // git sem shell: `${base}` interpolado numa string de shell era injecao de comando
+  // (CLAUDE_MD_BASE='HEAD$(id > /tmp/x)' executava `id`).
   const tamanho = (path) => {
     try {
-      const out = execSync(`git cat-file -s ${base}:${path}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      const out = execFileSync('git', ['cat-file', '-s', `${base}:${path}`], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
       porArquivo.set(path, Number.parseInt(out.trim(), 10) || 0);
     } catch {
       /* nao existe na base */
@@ -74,11 +79,18 @@ function bytesNaBase(base) {
   for (const f of CONJUNTO_RAIZ) tamanho(f);
   let lista = '';
   try {
-    lista = execSync(`git ls-tree -r --name-only ${base} -- ${DOCS_DIR}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    lista = execFileSync('git', ['ls-tree', '-r', '--name-only', base, '--', DOCS_DIR], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
   } catch {
     lista = '';
   }
-  for (const path of lista.split('\n').map((l) => l.trim()).filter((l) => l.endsWith('.md'))) tamanho(path);
+  for (const path of lista
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.endsWith('.md')))
+    tamanho(path);
   if (porArquivo.size === 0) return null;
   let total = 0;
   for (const n of porArquivo.values()) total += n;
@@ -86,13 +98,36 @@ function bytesNaBase(base) {
 }
 
 const BASE = process.env.CLAUDE_MD_BASE || 'HEAD';
+if (BASE.startsWith('-')) {
+  console.error(`::error::CLAUDE_MD_BASE invalido ("${BASE}"): nao pode comecar com "-".`);
+  process.exitCode = 1;
+  process.exit();
+}
 const atual = bytesAtuais();
 const base = bytesNaBase(BASE);
 
+// Base que nao resolve (ref inexistente, fora de repo git, git ausente do PATH) pulava os dois
+// checks de tamanho e imprimia "OK" com exit 0 — um wipe de docs/agentes/ passava inteiro.
+if (!base) {
+  if (process.env.CLAUDE_MD_ALLOW_NO_BASE === '1') {
+    console.log(
+      `${AGENTS} OK: ${REQUIRED_SECTIONS.length} secoes presentes. Comparacao de tamanho PULADA (base "${BASE}" nao resolveu e CLAUDE_MD_ALLOW_NO_BASE=1).`
+    );
+    process.exit();
+  }
+  console.error(
+    `::error::Base "${BASE}" nao resolveu (ref inexistente, fora de repo git ou git ausente). A comparacao de tamanho nao rodou, entao um wipe passaria: falhando de proposito. Use CLAUDE_MD_ALLOW_NO_BASE=1 para rodar sem base.`
+  );
+  process.exitCode = 1;
+  process.exit();
+}
+
 if (base) {
   const ratio = atual / base.total;
-  if (ratio < (1 - SHRINK_THRESHOLD)) {
-    console.error(`::error::Instrucoes para agentes (AGENTS.md + CLAUDE.md + ${DOCS_DIR}/*.md) encolheram ${Math.round((1 - ratio) * 100)}% vs ${BASE} (atual: ${atual} bytes, base: ${base.total} bytes). Possivel wipe por sessao paralela.`);
+  if (ratio < 1 - SHRINK_THRESHOLD) {
+    console.error(
+      `::error::Instrucoes para agentes (AGENTS.md + CLAUDE.md + ${DOCS_DIR}/*.md) encolheram ${Math.round((1 - ratio) * 100)}% vs ${BASE} (atual: ${atual} bytes, base: ${base.total} bytes). Possivel wipe por sessao paralela.`
+    );
     process.exitCode = 1;
     process.exit();
   }
@@ -102,13 +137,17 @@ if (base) {
   for (const [path, naBase] of base.porArquivo) {
     if (path === 'CLAUDE.md' || naBase === 0) continue;
     if (!existsSync(path)) {
-      console.error(`::error::${path} existia em ${BASE} (${naBase} bytes) e sumiu. Possivel wipe por sessao paralela.`);
+      console.error(
+        `::error::${path} existia em ${BASE} (${naBase} bytes) e sumiu. Possivel wipe por sessao paralela.`
+      );
       falhas += 1;
       continue;
     }
     const agora = Buffer.byteLength(readFileSync(path, 'utf8'));
     if (agora < naBase * FILE_SHRINK_THRESHOLD) {
-      console.error(`::error::${path} encolheu ${Math.round((1 - agora / naBase) * 100)}% vs ${BASE} (atual: ${agora} bytes, base: ${naBase} bytes); limite por arquivo e ${Math.round(FILE_SHRINK_THRESHOLD * 100)}%.`);
+      console.error(
+        `::error::${path} encolheu ${Math.round((1 - agora / naBase) * 100)}% vs ${BASE} (atual: ${agora} bytes, base: ${naBase} bytes); limite por arquivo e ${Math.round(FILE_SHRINK_THRESHOLD * 100)}%.`
+      );
       falhas += 1;
     }
   }
@@ -118,4 +157,6 @@ if (base) {
   }
 }
 
-console.log(`${AGENTS} OK: ${REQUIRED_SECTIONS.length} secoes presentes; conjunto com ${DOCS_DIR}/: ${atual} bytes${base ? ` (base ${BASE}: ${base.total} bytes em ${base.porArquivo.size} arquivos, cada um >= ${Math.round(FILE_SHRINK_THRESHOLD * 100)}% do tamanho na base)` : ''}.`);
+console.log(
+  `${AGENTS} OK: ${REQUIRED_SECTIONS.length} secoes presentes; conjunto com ${DOCS_DIR}/: ${atual} bytes${base ? ` (base ${BASE}: ${base.total} bytes em ${base.porArquivo.size} arquivos, cada um >= ${Math.round(FILE_SHRINK_THRESHOLD * 100)}% do tamanho na base)` : ''}.`
+);

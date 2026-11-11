@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import {
-  Sparkles, MessageSquare, FileText, ShieldQuestion, Zap, Package, Smile, Meh, Frown, AlertTriangle, ChevronRight,
+  Sparkles, MessageSquare, FileText, ShieldQuestion, Zap, Package, Smile, Meh, Frown, AlertTriangle, ChevronRight, Brain, Lightbulb,
 } from 'lucide-react';
 import { normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,10 @@ import { SectionCard } from './SectionCard';
 import { AISuggestions } from '../AISuggestions';
 import { ConversationSummary } from '../ConversationSummary';
 import { ObjectionDetector } from '../ObjectionDetector';
+import { CopilotPanel } from '../copilot/CopilotPanel';
+import { LiveSuggestions } from '../copilot/LiveSuggestions';
+import { useCopilotSession } from '@/hooks/copilot/useCopilotSession';
+import { useLiveSuggestions } from '@/hooks/copilot/useLiveSuggestions';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { Conversation, Message } from '@/types/chat';
 
@@ -39,6 +43,9 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
   const { data: latestAnalysis, isError: analysisError, refetch: refetchAnalysis } = useLatestAnalysis(contactId);
   const { actions: nextActions, loading: nextActionsLoading } = useNextBestAction(contactId, contactName);
   const { data: leadScoreData } = useContactLeadScore(contactId);
+
+  const { session, refresh: refreshSession } = useCopilotSession(contactId);
+  const live = useLiveSuggestions(session?.id ?? null, refreshSession);
 
   const interesses = useMemo(() => conversation.contact.tags ?? [], [conversation.contact.tags]);
   const { data: products = [], isLoading: productsLoading } = useRecommendedProducts(contactId, interesses);
@@ -76,8 +83,6 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
           <p className="text-[13px] text-muted-foreground truncate">Seu copiloto para conversas mais produtivas</p>
         </div>
         {analysisError ? (
-          // Falha de leitura da análise não é "sem análise": dizer "Sem análise ainda"
-          // faria o atendente pensar que o contato nunca foi analisado.
           <span
             role="alert"
             data-testid="analysis-error"
@@ -100,6 +105,23 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
           </span>
         )}
       </div>
+
+      <SectionCard icon={Brain} title="Copiloto B·R·I·N·D·E" tone="purple">
+        <CopilotPanel conversation={conversation} messages={messages} />
+      </SectionCard>
+
+      <SectionCard icon={Lightbulb} title="Plays em tempo real" tone="purple">
+        <LiveSuggestions
+          suggestions={live.suggestions}
+          loading={live.loading}
+          onUse={onUseSuggestion}
+          onUseSplit={(parts) => onUseSuggestion(parts.join('\n'))}
+          onRefresh={() => {
+            refreshSession();
+            live.refresh();
+          }}
+        />
+      </SectionCard>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <SectionCard icon={MessageSquare} title="Sugestão de resposta" tone="blue">

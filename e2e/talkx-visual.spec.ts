@@ -128,6 +128,10 @@ for (const tela of TELAS) {
       return;
     }
 
+    // Tela passou a existir: apaga o marcador de execução anterior para a régua
+    // não classificar como "sem-componente" uma tela que já tem captura real.
+    rmSync(join(OUT, `nao-existe-${tela.n}.txt`), { force: true });
+
     // Contrato de crescimento (X003/X004): a régua só captura tela cuja fixture
     // tem dados reais. Fixture vazia ({}) é PULADA — não é falha, é "ainda não é
     // a etapa desta tela". O guard anti-vazio (loadDemoData) aborta se alguém

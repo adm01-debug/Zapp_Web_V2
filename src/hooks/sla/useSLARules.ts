@@ -46,7 +46,7 @@ export function useSLARules(scope?: SLARuleScope) {
   const queryClient = useQueryClient();
   const queryKey = ['sla-rules', scope];
 
-  const { data: rules = [], isLoading } = useQuery({
+  const { data: rules = [], isLoading, isError } = useQuery({
     queryKey,
     queryFn: async () => {
       let query = supabase.from('sla_rules').select('*').order('priority', { ascending: false });
@@ -169,6 +169,7 @@ export function useSLARules(scope?: SLARuleScope) {
   return {
     rules,
     isLoading,
+    isError,
     createRule: createMutation.mutate,
     updateRule: updateMutation.mutate,
     deleteRule: deleteMutation.mutate,

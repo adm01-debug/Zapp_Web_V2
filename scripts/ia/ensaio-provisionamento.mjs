@@ -730,7 +730,11 @@ export function conferirAlvoLocal(url) {
   if (!['postgres:', 'postgresql:'].includes(alvo.protocol)) {
     throw new Error('ensaio: DB_URL usa protocolo não-PostgreSQL.');
   }
-  const host = alvo.hostname;
+  // postgres:/postgresql: não é esquema "especial" para o parser de URL (WHATWG URL
+  // só normaliza host para minúsculas em esquemas como http/https/ws/ftp/file) — sem
+  // lowercase aqui, "postgres://LOCALHOST/db" (alvo local de verdade) cairia no ramo
+  // de erro "host não-local" por diferença de caixa, não por ser remoto.
+  const host = alvo.hostname.toLowerCase();
   const locais = ['127.0.0.1', 'localhost', '::1', '[::1]'];
   if (!locais.includes(host)) {
     throw new Error(

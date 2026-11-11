@@ -16,6 +16,15 @@ export const MAX_LOG_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
+/**
+ * S5145: neutraliza quebra de linha e caracteres de controle em valor vindo de
+ * fora (ex.: nome de função do manifesto) antes de ele virar linha de log —
+ * em especial dentro de um comando `::error::`/`::warning::` do Actions, onde
+ * uma quebra de linha forja uma anotação nova. Mesmo tratamento já aplicado em
+ * scripts/edge-deploy/register-deployment.mjs e scripts/ci/github-settings-guard.mjs.
+ */
+export const semQuebra = (valor) => String(valor ?? '').replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 export class TransientAnalyticsError extends Error {
   constructor(message) {
     super(message);
@@ -99,10 +108,21 @@ function pathnamePredicate(slug) {
     `startsWith(log_attributes['request.pathname'], '${pathname}/'))` ;
 }
 
-export function buildLogsSql(slugs) {
+export function buildLogsSql(slugs, matchAll = false) {
+  if (matchAll) {
+    return (
+      `SELECT ` +
+      `count() AS total, ` +
+      `countIf(toInt32OrZero(log_attributes['response.status_code']) BETWEEN 500 AND 599) AS errors ` +
+      `FROM logs ` +
+      `WHERE source = 'function_edge_logs'`
+    );
+  }
   if (!Array.isArray(slugs) || slugs.length === 0) throw new Error('Escopo de logs vazio');
   const unique = [...new Set(slugs.map(validateSlug))];
-  const scopeFilter = unique.map(pathnamePredicate).join(' OR ');
+  const scopeFilter = unique.length > 20
+    ? `startsWith(log_attributes['request.pathname'], '/functions/v1/')`
+    : unique.map(pathnamePredicate).join(' OR ');
   return (
     `SELECT ` +
     `count() AS total, ` +
@@ -120,7 +140,8 @@ function isoTimestamp(value, label) {
 }
 
 function parseCount(value, label) {
-  if (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value)) {
+  if ((typeof value !== 'number' && typeof value !== 'string') ||
+      (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value))) {
     throw new Error(`Resposta de logs contém ${label} inválido`);
   }
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -224,17 +245,18 @@ export async function runHealthCheck(args, {
   const start = new Date(end.getTime() - WINDOW_MS);
   let row;
   try {
+    const matchAll = !args.scope || args.scope === 'all';
     row = await queryAnalytics({
       projectRef: args.projectRef,
       token,
-      sql: buildLogsSql(slugs),
+      sql: buildLogsSql(slugs, matchAll),
       start,
       end,
       fetchImpl,
     });
   } catch (error) {
     if (!(error instanceof TransientAnalyticsError)) throw error;
-    logger.error(`::warning::Health check sem observabilidade transitória: ${error.message}. Prosseguindo.`);
+    logger.error(`::warning::Health check sem observabilidade transitória: ${semQuebra(error.message)}. Prosseguindo.`);
     return { status: 'warning', reason: error.message };
   }
 
@@ -273,7 +295,7 @@ export async function main(argv = process.argv.slice(2), dependencies) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   main().catch((error) => {
-    console.error(`::error::health-check.mjs falhou: ${error.message}`);
+    console.error(`::error::health-check.mjs falhou: ${semQuebra(error.message)}`);
     process.exitCode = 1;
   });
 }

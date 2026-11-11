@@ -19,10 +19,18 @@ export const GATE_STEP_NAME = 'Serializar escopo TODAS contra deploys por funcao
 /** Teto da espera. O `timeout-minutes` do job precisa cobrir isto + um deploy completo (meta-teste pina). */
 export const MAX_WAIT_MINUTES = 40;
 
+/**
+ * S5145: neutraliza quebra de linha e caracteres de controle. `display_title`
+ * vem da API do GitHub (run de OUTRO workflow, inclusive de outro autor) e é
+ * ecoado cru dentro de um `::error::`/em log por `blockingRuns`/`waitForTurn`
+ * — uma quebra de linha nele forja uma anotação nova no log deste run.
+ */
+const semQuebra = (valor) => String(valor ?? '').replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 /** Titulo do run: "Deploy Edge Functions (<escopo>)". Sem escopo (run antigo) = `all`, por cautela. */
 export function parseScopeFromTitle(title) {
   const match = /\(([^()]+)\)\s*$/.exec(title ?? '');
-  return match ? match[1].trim() : 'all';
+  return match ? semQuebra(match[1].trim()) : 'all';
 }
 
 /**

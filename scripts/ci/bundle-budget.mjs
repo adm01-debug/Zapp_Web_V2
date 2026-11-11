@@ -20,7 +20,12 @@ export function extractInitialAssets(html) {
   const tagRe = /<(script|link)\b([^>]*)>/giu;
   for (const match of html.matchAll(tagRe)) {
     const [, tag, attrs] = match;
-    const attr = (name) => attrs.match(new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`, "iu"))?.[1] ?? null;
+    // HTML aceita atributo entre aspas duplas ou simples; so aceitar duplas deixava
+    // o guard cego a um index.html gerado com aspas simples (mudanca de minificador).
+    const attr = (name) => {
+      const m = attrs.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, "iu"));
+      return m ? m[1] ?? m[2] ?? "" : null;
+    };
     if (tag.toLowerCase() === "script") {
       const src = attr("src");
       if (src && (attr("type") ?? "").toLowerCase() === "module") js.add(src);

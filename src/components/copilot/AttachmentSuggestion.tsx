@@ -69,7 +69,7 @@ export function AttachmentSuggestionBanner({
         <Button
           variant="ghost"
           size="icon"
-          className="w-5 h-5 rounded-full shrink-0 text-muted-foreground/60 hover:text-muted-foreground"
+          className="w-5 h-5 rounded-full shrink-0 text-muted-foreground hover:text-muted-foreground"
           onClick={onDismiss}
           aria-label="Dispensar sugestão de anexo"
         >

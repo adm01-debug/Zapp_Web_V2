@@ -41,10 +41,11 @@ export const RAIZES_PERMITIDAS = [RAIZ_REPO, path.resolve(os.tmpdir()), path.res
  * binario silenciosamente.
  */
 export function resolverExecutavel(comando) {
-  const diretorios = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+  const diretorios = process.env.PATH === undefined ? [] : process.env.PATH.split(path.delimiter);
   for (const diretorio of diretorios) {
-    const candidato = path.join(diretorio, comando);
+    const candidato = path.resolve(diretorio || '.', comando);
     try {
+      if (!fs.statSync(candidato).isFile()) continue;
       fs.accessSync(candidato, fs.constants.X_OK);
       return candidato;
     } catch {
@@ -70,19 +71,35 @@ export function estaDentro(raiz, candidato) {
  * inexistentes. Assim `tmp/link-para-fora/novo.json` nao passa apenas porque
  * `novo.json` ainda nao foi criado.
  */
-function caminhoRealMesmoSeAusente(caminho) {
+function caminhoRealMesmoSeAusente(caminho, linksRestantes = 40) {
   let existente = caminho;
   const ausentes = [];
 
-  while (!fs.existsSync(existente)) {
-    const pai = path.dirname(existente);
-    if (pai === existente) break;
-    ausentes.unshift(path.basename(existente));
-    existente = pai;
+  while (true) {
+    let estado;
+    try {
+      estado = fs.lstatSync(existente);
+    } catch (erro) {
+      if (erro.code !== 'ENOENT') throw erro;
+      const pai = path.dirname(existente);
+      if (pai === existente) throw erro;
+      ausentes.unshift(path.basename(existente));
+      existente = pai;
+      continue;
+    }
+    if (estado.isSymbolicLink()) {
+      if (linksRestantes === 0) {
+        const erro = new Error('ELOOP: muitos links simbolicos no caminho: ' + caminho);
+        erro.code = 'ELOOP';
+        throw erro;
+      }
+      const paiReal = fs.realpathSync.native(path.dirname(existente));
+      const alvo = path.resolve(paiReal, fs.readlinkSync(existente), ...ausentes);
+      return caminhoRealMesmoSeAusente(alvo, linksRestantes - 1);
+    }
+    const baseReal = fs.realpathSync.native(existente);
+    return path.resolve(baseReal, ...ausentes);
   }
-
-  const baseReal = fs.realpathSync.native(existente);
-  return path.resolve(baseReal, ...ausentes);
 }
 
 /**

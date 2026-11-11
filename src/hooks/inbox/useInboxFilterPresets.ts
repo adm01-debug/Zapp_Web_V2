@@ -182,7 +182,7 @@ export function useInboxFilterPresets() {
   const queryClient = useQueryClient();
   const queryKey = INBOX_FILTER_PRESETS_QUERY_KEY;
 
-  const { data: presets = [], isLoading } = useQuery({
+  const { data: presets = [], isLoading, isError } = useQuery({
     queryKey,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -339,6 +339,7 @@ export function useInboxFilterPresets() {
   return {
     presets,
     isLoading,
+    isError,
     savePreset: saveMutation.mutateAsync,
     deletePreset: deleteMutation.mutateAsync,
     isSaving: saveMutation.isPending,

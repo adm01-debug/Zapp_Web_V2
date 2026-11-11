@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { setTimeout as abortableWait } from 'node:timers/promises';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
@@ -17,6 +18,9 @@ import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
 import { OWNERSHIP_ROUTINES, OWNERSHIP_EXECUTOR_OPTIONS, ownershipSql } from '../e2e-isolated/routine-ownership.mjs';
 import { QR_FIXTURE, QR_SEED_FLAGS } from '../e2e-isolated/qr-contract.mjs';
+import { prepareCompilationNetwork } from '../e2e-isolated/compilation-network.mjs';
+import { pullPinnedImage, PULL_BUDGET_MS } from '../e2e-isolated/pull-image.mjs';
+import { rootCertificates } from 'node:tls';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -229,15 +233,25 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
 }
 
 async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
-  const { scope = 'login', group = AUTH_GROUP, manifest = value => value, pullDiagnostic, seedDiagnostic,
-    catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult, browserObservation } = typeof options === 'function' ? { manifest: options } : options;
+  const { scope = 'login', group = AUTH_GROUP, manifest = value => value, pullDiagnostic, pullRetry, seedDiagnostic,
+    catalogResult, providerObservation, ownershipResult, ownershipFault, collectionFile, collectionResult, browserObservation, compilerProxy = false } = typeof options === 'function' ? { manifest: options } : options;
   const fullSeed = scope === 'suite' && isAuthenticatedGroup(group);
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
+  const compilerSource = path.join(temporary, 'compiler-source');
+  const compilerEnvironment = compilerProxy ? { DOCKER_CONFIG: compilerSource, SSL_CERT_FILE: path.join(compilerSource, 'ca.crt') } : {};
+  if (compilerProxy) {
+    mkdirSync(compilerSource);
+    writeFileSync(path.join(compilerSource, 'config.json'), JSON.stringify({
+      proxies: { default: { httpsProxy: 'http://fixture-user:synthetic-proxy-secret@192.0.2.1:8080', noProxy: 'localhost' } },
+      auths: { fixture: { auth: 'synthetic-registry-secret' } }, credsStore: 'foreign', currentContext: 'foreign',
+    }));
+    writeFileSync(compilerEnvironment.SSL_CERT_FILE, rootCertificates[0]);
+  }
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs', 'qr-contract.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs', 'qr-contract.mjs', 'compilation-network.mjs', 'pull-image.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
@@ -261,6 +275,9 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     writeFileSync(path.join(root, 'scripts/e2e-isolated/images.lock.json'), JSON.stringify(data));
   }
   const calls = [];
+  let pullClock = 0, retryCalls = 0;
+  const retrySleeps = [], retryTimeouts = [];
+  let retryRuntime;
   let browserReadCalls = 0, restoreBrowserFilesystem;
   const containers = new Map();
   const volumes = new Map();
@@ -312,11 +329,32 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     assert.deepEqual(args.slice(0, 2), ['--host', 'unix:///var/run/docker.sock']);
     assert.deepEqual(Object.keys(options.env).sort(), ['DOCKER_CONFIG', 'PATH']);
     const argv = args.slice(2);
+    if (compilerProxy) {
+      const configFile = path.join(options.env.DOCKER_CONFIG, 'config.json');
+      const clientConfig = existsSync(configFile) ? JSON.parse(readFileSync(configFile, 'utf8')) : {};
+      const compiler = argv[0] === 'run' && valueAfter(argv, '--name')?.includes('-bundle-');
+      assert.deepEqual(Object.keys(clientConfig), compiler ? ['proxies'] : [], 'only compiler Docker client may receive the proxy config');
+      if (compiler) {
+        assert.deepEqual(Object.keys(clientConfig.proxies), ['default']);
+        assert.deepEqual(Object.keys(clientConfig.proxies.default), ['httpsProxy', 'noProxy']);
+        assert.ok(allAfter(argv, '--mount').some(value => value.endsWith(',dst=/run/zapp-e2e-compiler/ca.crt,readonly')));
+        assert.equal(argv.some(value => /synthetic-proxy-secret|synthetic-registry-secret|fixture-user|192\.0\.2\.1/.test(value)), false);
+      } else {
+        assert.equal(argv.some(value => value.includes('/run/zapp-e2e-compiler/')), false, 'runtime, probes, database and browser never mount compiler CA');
+      }
+    }
     if (argv[0] === 'context') return ok(JSON.stringify(fault === 'external-docker' ? 'tcp://external.invalid:2376' : 'unix:///var/run/docker.sock'));
     if (argv[0] === 'pull') {
       const privateDir = path.join(path.dirname(options.env.DOCKER_CONFIG), 'private');
       assert.equal(readdirSync(privateDir).length, 0, 'pull must precede credential generation');
-      assert.equal(options.timeout, 15 * 60_000, 'the existing pull timeout remains bounded');
+      assert.ok(Number.isInteger(options.timeout) && options.timeout > 0 && options.timeout <= PULL_BUDGET_MS, 'all attempts share the original pull timeout budget');
+      if (pullRetry && argv[1] === lock().images.rest) {
+        retryRuntime = path.dirname(options.env.DOCKER_CONFIG);
+        retryTimeouts.push(options.timeout);
+        const entry = pullRetry.results[Math.min(retryCalls++, pullRetry.results.length - 1)];
+        pullClock += entry.duration ?? 0;
+        return entry.result ?? entry;
+      }
       if (pullDiagnostic && argv[1] === lock().images[pullDiagnostic.role]) {
         const message = 'OCI_PULL_DIAGNOSTIC role=' + pullDiagnostic.role + ' synthetic-redaction-control-not-a-credential ' +
           'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzeW50aGV0aWMifQ.c3ludGhldGlj\n';
@@ -333,7 +371,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
       }
       return fault === 'pull-auth' && argv[1] === lock().images.auth ? error() : ok();
     }
-    if (argv[0] === 'image') return ok(JSON.stringify([fault === 'wrong-image-digest' ? 'registry.invalid/image@sha256:' + '0'.repeat(64) : argv[2]]));
+    if (argv[0] === 'image') return ok(JSON.stringify([fault === 'wrong-image-digest' && (!pullRetry || argv[2] === lock().images.rest) ? 'registry.invalid/image@sha256:' + '0'.repeat(64) : argv[2]]));
     if (argv[0] === 'run') {
       const name = valueAfter(argv, '--name');
       const mounts = allAfter(argv, '--mount').map(value => {
@@ -670,13 +708,28 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   globalThis.setTimeout = (callback, _delay, ...args) => realTimeout(callback, 0, ...args);
   const originalOutput = process.env.GITHUB_OUTPUT;
   const diagnosticOutput = path.join(temporary, 'github-output');
-  if (seedDiagnostic || browserObservation) process.env.GITHUB_OUTPUT = diagnosticOutput;
+  if (seedDiagnostic || browserObservation || pullRetry) process.env.GITHUB_OUTPUT = diagnosticOutput;
   let exit;
-  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, ...(scope === 'suite' ? { group } : {}) }); }
+  const imagePull = input => pullPinnedImage({ ...input, now: () => pullClock, jitter: () => 0,
+    sleep: async (delay, signal) => {
+      retrySleeps.push(delay);
+      if (pullRetry.realSignal) {
+        const sender = spawn(process.execPath, ['-e', 'setTimeout(() => process.kill(' + process.pid + ', "SIGTERM"), 50)'], { stdio: 'ignore' });
+        try { await abortableWait(delay, undefined, { signal }); }
+        finally {
+          await new Promise(resolve => {
+            if (sender.exitCode !== null || sender.signalCode !== null) resolve();
+            else { sender.once('close', resolve); sender.kill(); }
+          });
+        }
+      } else pullClock += delay;
+    },
+  });
+  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, compilationNetwork: ({ directory }) => prepareCompilationNetwork({ directory, environment: compilerEnvironment, homeDirectory: temporary }), ...(pullRetry ? { imagePull } : {}), ...(scope === 'suite' ? { group } : {}) }); }
   finally {
     restoreBrowserFilesystem?.();
     globalThis.setTimeout = realTimeout;
-    if (seedDiagnostic || browserObservation) {
+    if (seedDiagnostic || browserObservation || pullRetry) {
       if (originalOutput === undefined) delete process.env.GITHUB_OUTPUT;
       else process.env.GITHUB_OUTPUT = originalOutput;
     }
@@ -696,7 +749,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const qrRedaction = fault === 'qr-redaction' ? readFileSync(path.join(output, 'public', 'browser-suite.log'), 'utf8') : null;
   const tlsDiagnosticLog = tlsDiagnostic && existsSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'))
     ? readFileSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'), 'utf8') : null;
-  const pullLogs = pullDiagnostic ? Object.fromEntries(Object.keys(assertPinnedImages(lock())).flatMap(role => {
+  const pullLogs = pullDiagnostic || pullRetry ? Object.fromEntries(Object.keys(assertPinnedImages(lock())).flatMap(role => {
     const file = 'pull-' + role + '.log', privateFile = path.join(output, file), publicFile = path.join(output, 'public', file);
     return existsSync(privateFile) && existsSync(publicFile) ? [[role, { private: readFileSync(privateFile, 'utf8'),
       published: readFileSync(publicFile, 'utf8'), privateMode: statSync(privateFile).mode & 0o777, publicMode: statSync(publicFile).mode & 0o777 }]] : [];
@@ -717,7 +770,7 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
     privateMode: statSync(qrDiagnosticFile).mode & 0o777,
     publicMode: statSync(qrDiagnosticPublic).mode & 0o777,
   } : null;
-  const reportOutput = seedDiagnostic || browserObservation ? readFileSync(diagnosticOutput, 'utf8') : null;
+  const reportOutput = seedDiagnostic || browserObservation || pullRetry ? readFileSync(diagnosticOutput, 'utf8') : null;
   const providerMetadata = Object.fromEntries(['provider-catalog.json', 'provider-diagnostic.json'].flatMap(name => {
     const file = path.join(output, 'public', name);
     return existsSync(file) ? [[name, { value: JSON.parse(readFileSync(file, 'utf8')), mode: statSync(file).mode & 0o777 }]] : [];
@@ -728,7 +781,9 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   const browserMetadata = existsSync(browserFile) ? { value: JSON.parse(readFileSync(browserFile, 'utf8')), mode: statSync(browserFile).mode & 0o777 } : null;
   const browserSummaryFile = path.join(output, 'results-summary.json');
   const browserSummary = browserObservation && existsSync(browserSummaryFile) ? JSON.parse(readFileSync(browserSummaryFile, 'utf8')) : null;
-  const result = { qrRedaction, qrDiagnostic, browserMetadata, browserSummary, browserReadCalls, ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const result = { retryCalls, retrySleeps, retryTimeouts, retryRuntimeRemoved: retryRuntime ? !existsSync(retryRuntime) : undefined,
+    retryMountsRemoved: !existsSync(path.join(root, 'e2e/.auth')) && !existsSync(path.join(root, 'node_modules/.vite')),
+    qrRedaction, qrDiagnostic, browserMetadata, browserSummary, browserReadCalls, ownershipCalls, ownershipMetadata, providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -836,6 +891,93 @@ for (const role of ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', '
     });
   }
 }
+
+const pullRetryCanary = 'synthetic-redaction-control-not-a-credential ' +
+  'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzeW50aGV0aWMifQ.c3ludGhldGlj';
+const limitedPull = { status: 1, stdout: 'v14.5: Pulling from supabase/postgrest\n', stderr: 'toomanyrequests: Rate exceeded\n' };
+const successfulPull = { status: 0, stdout: 'completed attempt ' + pullRetryCanary + '\n', stderr: '' };
+
+for (const failures of [0, 1, 2, 3]) test('OCI pull retry controller: succeeds after ' + failures + ' throttled pulls', async t => {
+  const value = await controllerFixture(t, 'none', { pullRetry: { results: [...Array(failures).fill(limitedPull), successfulPull] } });
+  assert.equal(value.exit, 0); assert.equal(value.state.success, true);
+  assert.equal(value.retryCalls, failures + 1);
+  assert.deepEqual(value.retrySleeps, [15_000, 30_000, 60_000].slice(0, failures));
+  assert.deepEqual(value.retryTimeouts, [900_000, 885_000, 855_000, 795_000].slice(0, failures + 1));
+  const rest = value.calls.filter(call => call.program === 'docker' && call.args[2] === 'pull' && call.args[3] === lock().images.rest);
+  assert.equal(rest.length, failures + 1, 'every attempt keeps the same pinned reference');
+  const inspections = value.calls.filter(call => call.program === 'docker' && call.args[2] === 'image' && call.args[4] === lock().images.rest);
+  assert.equal(inspections.length, 1, 'inspect only after successful pull');
+  const log = value.pullLogs.rest;
+  assert.equal(log.privateMode, 0o600); assert.equal(log.publicMode, 0o600);
+  if (failures) assert.match(log.published, /Pulling from supabase\/postgrest/);
+  assert.match(log.published, /completed attempt/);
+  assert.equal((log.published.match(/pull-retry-attempt/g) ?? []).length, failures);
+  assert.doesNotMatch(log.private, /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/);
+  assert.doesNotMatch(log.published, /synthetic-redaction-control-not-a-credential/);
+  assert.equal(value.browserCalls, 1); assert.equal(value.migrationCalls, 1);
+  assert.equal(value.retryRuntimeRemoved, true); assert.equal(value.retryMountsRemoved, true);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
+for (const [name, result, attempts] of [
+  ['persistent throttling', limitedPull, 4],
+  ['authorization', { status: 1, stderr: 'unauthorized: denied' }, 1],
+  ...['context deadline exceeded', 'i/o timeout', 'Client.Timeout exceeded while awaiting headers',
+    'context canceled', 'authentication required', 'manifest not found', 'request cancelled', 'operation timed out',
+    'connection reset by peer', 'temporary failure in name resolution', 'no route to host',
+    'requested access to the resource is denied', 'read: connection reset by peer', 'write: broken pipe',
+    'unexpected EOF', 'disk quota exceeded', 'failed to register layer: read-only file system',
+    'pull access denied for image, repository does not exist']
+    .map(message => [message, { status: 1, stderr: message + '\n' + limitedPull.stderr }, 1]),
+  ['timeout', { status: null, error: new Error('controlled timeout'), stderr: limitedPull.stderr }, 1],
+  ['late apparent success', { result: successfulPull, duration: PULL_BUDGET_MS }, 1],
+]) test('OCI pull retry controller: fails closed before credentials / ' + name, async t => {
+  const value = await controllerFixture(t, 'none', { pullRetry: { results: [result] } });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'pull-rest-failed');
+  assert.equal(value.state.failed_phase, 'pull-immutable-images'); assert.equal(value.state.native_e2e, false);
+  assert.equal(value.retryCalls, attempts); assert.equal(value.credentialFilesSeen, false);
+  assert.equal(value.migrationCalls, 0); assert.equal(value.browserCalls, 0); assert.deepEqual(value.bundled, []);
+  assert.equal(value.calls.filter(call => call.program === 'docker' && call.args[2] === 'image' && call.args[4] === lock().images.rest).length, 0);
+  assert.equal(value.retryRuntimeRemoved, true); assert.equal(value.retryMountsRemoved, true);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
+for (const [fault, code] of [['wrong-image-digest', 'image-digest-mismatch'], ['browser-failure', 'browser-login-failed']]) {
+  test('OCI pull retry controller: preserves downstream gate / ' + fault, async t => {
+    const value = await controllerFixture(t, fault, { pullRetry: { results: [limitedPull, successfulPull] } });
+    assert.equal(value.exit, 1); assert.equal(value.state.error, code); assert.equal(value.retryCalls, 2);
+    assert.equal(value.browserCalls, fault === 'browser-failure' ? 1 : 0);
+    assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.equal(value.retryRuntimeRemoved, true); assert.equal(value.retryMountsRemoved, true);
+  });
+}
+test('OCI pull retry controller: redaction failure preserves original pull failure and blocks upload', async t => {
+  const value = await controllerFixture(t, 'redactor-failure', { pullRetry: { results: [limitedPull] } });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'pull-rest-failed');
+  assert.equal(value.retryCalls, 4); assert.equal(value.reportOutput, 'report_ready=false\n');
+  assert.equal(value.retryRuntimeRemoved, true); assert.equal(value.retryMountsRemoved, true);
+});
+test('OCI pull retry controller: real SIGTERM aborts the wait, cleans and never retries', { timeout: 5000 }, async t => {
+  const value = await controllerFixture(t, 'none', { pullRetry: { results: [limitedPull], realSignal: true } });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'run-cancelled');
+  assert.equal(value.state.failed_phase, 'pull-immutable-images'); assert.equal(value.retryCalls, 1);
+  assert.equal(value.credentialFilesSeen, false); assert.equal(value.migrationCalls, 0); assert.equal(value.browserCalls, 0);
+  assert.equal(value.state.cleanup_error, undefined); assert.equal(value.state.phase, 'complete');
+  assert.equal(value.retryRuntimeRemoved, true); assert.equal(value.retryMountsRemoved, true);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+  assert.equal(value.reportOutput, 'report_ready=true\n');
+  assert.match(value.pullLogs.rest.published, /Pulling from supabase\/postgrest/);
+  assert.doesNotMatch(value.pullLogs.rest.published, /pull-retry-attempt/);
+});
+
+for (const scope of ['login', 'suite']) test('controller real: proxy e CA exclusivos da compilação / ' + scope, async t => {
+  const value = await controllerFixture(t, 'none', { scope, compilerProxy: true });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.success, true);
+  const compilers = value.calls.filter(call => call.program === 'docker' && call.args[2] === 'run' && call.args[call.args.indexOf('--name') + 1]?.includes('-bundle-'));
+  assert.ok(compilers.length >= 3);
+  assert.doesNotMatch(JSON.stringify({ state: value.state, calls: value.calls }), /synthetic-proxy-secret|synthetic-registry-secret|fixture-user/);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
+});
 
 test('controller real: percurso completo com interfaces falsas preserva a ordem e limpa os recursos próprios', async t => {
   const value = await controllerFixture(t, 'none');

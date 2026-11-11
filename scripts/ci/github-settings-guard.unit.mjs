@@ -379,6 +379,35 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
       `linha de log forjada emitida:\n${r.out}`,
     );
   });
+
+  it('neutraliza quebra de linha num corpo de erro nao-JSON (ex.: gateway 502) que sobe ao catch final', () => {
+    // Um 502/503 de um proxy/CDN na frente da API devolve HTML/texto puro, nao JSON —
+    // esse corpo nao e capturado por NaoVerificavel (so 401/403/404 o sao) e sobe cru
+    // pelo `throw` em checarBranchProtection() at'e o catch de topo do CLI. Antes do
+    // fix, esse catch imprimia `e.message` sem `semQuebra`, e qualquer `\n` no corpo
+    // forjava uma linha `::error::` nova no log do Actions.
+    const stubGateway = [
+      "const send = (status, raw) => ({ ok: status >= 200 && status < 300, status: status, headers: { get: () => null }, text: async () => raw, json: async () => { try { return JSON.parse(raw); } catch { return null; } } });",
+      'globalThis.fetch = async (url, opts) => {',
+      "  if (String(url).endsWith('/branches/main/protection')) return send(502, '<html>Bad Gateway\\n::error::forjado-pelo-corpo-html\\n</html>');",
+      "  return send(200, '{}');",
+      '};',
+      '',
+    ].join('\n');
+    const arquivo = 'data:text/javascript,' + encodeURIComponent(stubGateway);
+    const res = spawnSync(process.execPath, ['--import', arquivo, SCRIPT], {
+      encoding: 'utf8',
+      env: { ...process.env, GITHUB_TOKEN: 'x', GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: '1' },
+    });
+    const out = `${res.stdout}${res.stderr}`;
+    const linhas = out.split('\n');
+
+    assert.ok(out.includes('Bad Gateway'), `o erro do gateway nao chegou ao catch final:\n${out}`);
+    assert.ok(
+      !linhas.includes('::error::forjado-pelo-corpo-html'),
+      `corpo de erro nao-JSON forjou uma linha de log propria:\n${out}`,
+    );
+  });
 });
 
 // W13: environments extras (Vercel-managed vs inesperados)

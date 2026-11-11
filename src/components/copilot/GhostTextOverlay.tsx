@@ -62,7 +62,7 @@ export function GhostTextOverlay({
       {/* Parte já digitada: transparente — sobreposta pelo texto real do textarea */}
       <span style={{ color: 'transparent' }}>{inputValue}</span>
       {/* Sufixo fantasma: cinza */}
-      <span className="text-muted-foreground/60">{ghostSuffix}</span>
+      <span className="text-muted-foreground">{ghostSuffix}</span>
     </div>
   );
 }
@@ -81,7 +81,7 @@ export function GhostTextHint({ visible, className }: GhostTextHintProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-3xs text-muted-foreground/60 select-none',
+        'inline-flex items-center gap-1 text-3xs text-muted-foreground select-none',
         className,
       )}
       aria-label="Tab para aceitar, Esc para descartar"

@@ -10,8 +10,10 @@ cd "$(git rev-parse --show-toplevel)"
 
 if command -v uv >/dev/null 2>&1; then
   uv tool install --force "$PKG"
+  GRAPHIFY_BIN_DIR="$(uv tool dir --bin)"
 elif command -v pipx >/dev/null 2>&1; then
   pipx install --force "$PKG"
+  GRAPHIFY_BIN_DIR="${PIPX_BIN_DIR:-$HOME/.local/bin}"
 else
   echo "graphify: instale o uv (curl -LsSf https://astral.sh/uv/install.sh | sh)" >&2
   echo "          ou o pipx (sudo apt install pipx) e rode de novo." >&2
@@ -19,9 +21,8 @@ else
 fi
 
 case ":$PATH:" in
-  *":$HOME/.local/bin:"*) ;;
-  *) echo "graphify: ~/.local/bin fora do PATH; rode uv tool update-shell (ou pipx ensurepath) e abra outro terminal." >&2
-     export PATH="$HOME/.local/bin:$PATH" ;;
+  *":$GRAPHIFY_BIN_DIR:"*) ;;
+  *) export PATH="$GRAPHIFY_BIN_DIR:$PATH" ;;
 esac
 graphify --version
 

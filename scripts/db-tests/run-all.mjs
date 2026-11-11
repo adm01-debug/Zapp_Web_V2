@@ -20,6 +20,13 @@ import { fileURLToPath } from 'node:url';
 
 import { decodificarResposta, resumirSuite, codigoDeSaida } from './rpc-envelope.mjs';
 
+// jssecurity:S5145 — o corpo de erro devolvido pelo RPC (mensagem de permissao, erro
+// de sintaxe SQL, dado ecoado por uma query) entra no log de CI via `throw`/
+// `console.error`. Sem neutralizar quebra de linha, esse texto pode forjar uma linha
+// "RESULTADO: N PASS / 0 FAIL" ou um comando `::...::` do Actions. Mesmo helper de
+// scripts/qa/prova-visao-classificadores.mjs e scripts/ci/github-settings-guard.mjs.
+const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 const __dir = dirname(fileURLToPath(import.meta.url));
 const dir = process.env.DB_TESTS_DIR || __dir;
 const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
@@ -42,7 +49,7 @@ async function execSQL(sql) {
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`SQL failed: ${err}`);
+    throw new Error(`SQL failed: ${semQuebra(err)}`);
   }
   return res.json();
 }

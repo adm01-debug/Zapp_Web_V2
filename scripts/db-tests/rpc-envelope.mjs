@@ -113,11 +113,18 @@ export function resumirSuite(porArquivo) {
       resumo.erros.push({ arquivo: resultado.arquivo, motivo: resultado.erro });
       continue;
     }
+    const totalAntes = resumo.pass + resumo.fail;
     for (const assertiva of resultado.assertivas ?? []) {
       // SKIP e "nao deu para provar" (ex.: sem dado no banco): conta, mas nao e prova.
       if (assertiva.status === 'PASS') resumo.pass += 1;
       else if (assertiva.status === 'FAIL') resumo.fail += 1;
       else resumo.skip += 1;
+    }
+    if (resumo.pass + resumo.fail === totalAntes) {
+      resumo.erros.push({
+        arquivo: resultado.arquivo,
+        motivo: 'nenhuma assertiva executada neste arquivo (PASS/FAIL): SKIP nao e prova',
+      });
     }
   }
 

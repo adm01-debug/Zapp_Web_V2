@@ -51,7 +51,11 @@ function exigirEnv(nome: string): string {
 }
 
 function exigirLocal(url: string, rotulo: string): void {
-  const host = new URL(url).hostname;
+  // `new URL(...).hostname` só normaliza o case para esquemas "especiais"
+  // (http/https); para `postgres:`/`postgresql:` (host opaco) o parser WHATWG
+  // preserva o case original, então sem o toLowerCase() aqui um DB_URL com
+  // host em maiúsculas (ex.: `postgres://LOCALHOST/db`) escapava da guarda.
+  const host = new URL(url).hostname.toLowerCase();
   if (!['127.0.0.1', 'localhost', '::1', '[::1]'].includes(host)) {
     throw new Error(
       `seed tarefas-local: ${rotulo} aponta para host não-local (${host}). Proibido — só banco local.`,

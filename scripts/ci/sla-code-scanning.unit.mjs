@@ -49,6 +49,29 @@ test('CLI: lê o JSON do stdin, sai 1 com violação e 0 sem', () => {
   assert.match(r0.stdout, /Nenhuma violação/);
 });
 
+// jssecurity:S5145 — `rule.id` e `location.path` vêm da API de Code Scanning (podendo
+// refletir SARIF de terceiro acionado por PR). Quebra de linha NÃO pode forjar uma
+// linha `::error::`/`::warning::` nova no log do Actions.
+test('CLI: neutraliza quebra de linha em rule.id e location.path vindos do alerta', () => {
+  const alertaHostil = {
+    number: 1,
+    created_at: '2020-01-01T00:00:00Z',
+    rule: { severity: 'error', id: 'js/injection\n::error::forjado-via-rule-id' },
+    most_recent_instance: { location: { path: 'src/x.ts\n::warning::forjado-via-path' } },
+  };
+  const r = cli(JSON.stringify([alertaHostil]));
+  assert.equal(r.status, 1);
+  const linhas = `${r.stdout}${r.stderr}`.split('\n');
+  assert.ok(
+    !linhas.includes('::error::forjado-via-rule-id') && !linhas.includes('::warning::forjado-via-path'),
+    `linha de log forjada emitida:\n${r.stdout}${r.stderr}`,
+  );
+  assert.ok(
+    linhas.some((l) => l.includes('::error::forjado-via-rule-id')),
+    `o valor não chegou (stub quebrado?) ou foi apagado em vez de neutralizado:\n${r.stdout}${r.stderr}`,
+  );
+});
+
 test('CLI: resposta que não é lista (erro de permissão) ou JSON inválido avisa e não bloqueia', () => {
   for (const entrada of [JSON.stringify({ message: 'Resource not accessible by integration' }), 'não é json', '']) {
     const r = cli(entrada);

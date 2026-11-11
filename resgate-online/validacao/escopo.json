@@ -1,0 +1,34 @@
+{
+  "gerado_em": "2026-11-08T22:15:00Z",
+  "sessao": "session_01Gd4dBfJk6eTncDSU7yvJVb",
+  "metodo": "Fase 0 via busca empírica no GitHub (github_search_issues: head:claude/feat- + body menciona resgate/cluster/MAPA_2026-10-24, merged:>=2026-10-24), não confiando no MAPA sem cruzar.",
+  "tags_resgate_remoto": {
+    "total": 2391,
+    "prefixos_unicos_cluster": 1595,
+    "observacao": "Confirmado no MAPA_2026-10-24.md (arquivado em docs/_arquivo/): a imensa maioria é arquivamento puro ('sem branches, sem PR de código, sem merge'), não integração. Fora de escopo desta validação."
+  },
+  "baseline_sha": "1645c4aac5b3820f2dda659f0ba12144a56f7ac3",
+  "main_atual_sha": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+  "nota_historico": "ACHADO A5: nenhum dos 11 SHAs de merge (baseline incluso) é ancestral do main atual via git merge-base --is-ancestor. Indício de reescrita/reset de histórico em algum ponto após os merges do resgate. Validação adaptada: verificação por conteúdo (git show/grep no blob atual) em vez de diff por ancestralidade.",
+  "clusters_integrados_com_pr": [
+    {"cluster": "C019", "pr": 2224, "merge_sha": "b1fe88215b4861121c912140d7968581e26e9111", "tema": "presets de filtros salvos no inbox", "tocou_banco": true, "migration": "20261026190300_saved_filters_inbox_limites.sql"},
+    {"cluster": "C007", "pr": 2223, "merge_sha": "c7b563e09fa0ed470e744c808290899bd76e48aa", "tema": "modal Nova Tarefa + painel de detalhes não-modal", "tocou_banco": false},
+    {"cluster": "C097", "pr": 2234, "merge_sha": "a0e21b651101b1cbb5b1188e8f8d0ed70d866696", "tema": "chip de sequência no dashboard", "tocou_banco": false},
+    {"cluster": "C098", "pr": 2231, "pr_extra": 2281, "merge_sha": "a8d2b63806960cbbca488dc8d3a4d2b20c02b302", "merge_sha_extra": "77cd6c10b2f473e461add2580066678b1dac845e", "tema": "editar/fixar/ordenar notas na ficha do contato", "tocou_banco": true, "migration": "20261026200000_contact_notes_pinned.sql"},
+    {"cluster": "C011", "pr": 2240, "merge_sha": "a6fbadfa39658c0554a370ed9222820a1a084b32", "tema": "filtros/paginação/URL sync na biblioteca de segmentos TalkX", "tocou_banco": false},
+    {"cluster": "C130", "pr": 2239, "merge_sha": "939d6a9ca71a5313bf3d12d0ad02ccc1049e7ff3", "tema": "seletor Hoje/Semana/Mês em Metas", "tocou_banco": false, "status": "NAO_INTEGRADO — ver achado ZW-R01"},
+    {"cluster": "C297", "pr": 2237, "merge_sha": "0eea407b31e386f91e143ee6e17db3206a6c1701", "tema": "aria-busy/a11y (parte do cluster)", "tocou_banco": false},
+    {"cluster": "C303", "pr": 2236, "merge_sha": "6617a5d0a0590573395c1e0de94c52989b06e7c6", "tema": "painel \"Entrada muda\" no monitor Evolution", "tocou_banco": false}
+  ],
+  "clusters_revertidos": [
+    {"cluster": "C121", "pr": 2235, "merge_sha": "db7dc362c00d2960c0780056386ffbebdf6df1d0", "pr_revert": 2280, "merge_sha_revert": "e9da73ad4ef5605a7bc06de03931f93ee8da1ad8", "tema": "investigação de pausa de instância (IP2)", "motivo_revert": "feature pela metade mergeada violando o goal (sem chamador de front, sem UI, IP2-B ausente, types.ts não sincronizado) — corretamente desfeita, feature volta para COMPLETAR"}
+  ],
+  "clusters_integrar_sem_pr": "não aplicável neste método (achados vieram de busca empírica de PRs mergeadas, não de leitura do veredito INTEGRAR do MAPA linha a linha, que está arquivado e fora do escopo pedido)",
+  "agentes_despachados": [
+    {"agente": "A1", "foco": "rastreabilidade git/patch-id", "tool_uses": 42, "duracao_ms": 310436},
+    {"agente": "A2", "foco": "banco (PhD)", "tool_uses": 63, "duracao_ms": 496405},
+    {"agente": "A3", "foco": "edge functions", "tool_uses": 32, "duracao_ms": 191772},
+    {"agente": "A4", "foco": "front / integração ponta a ponta", "tool_uses": 55, "duracao_ms": 723918},
+    {"agente": "A5", "foco": "regressão / CI / baseline", "tool_uses": 92, "duracao_ms": 1072424}
+  ]
+}

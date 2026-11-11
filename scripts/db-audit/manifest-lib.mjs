@@ -72,10 +72,14 @@ export function compararManifestos(A, B) {
     const SA = A[secao];
     const SB = B[secao];
     const todos = [...new Set([...Object.keys(SA), ...Object.keys(SB)])].sort((a, b) => a.localeCompare(b));
-    const soEmA = todos.filter((chave) => !(chave in SB));
-    const soEmB = todos.filter((chave) => !(chave in SA));
+    // Object.hasOwn, nao `in`: um objeto/coluna chamado "toString", "constructor" etc.
+    // e' herdado de Object.prototype em qualquer SA/SB, entao `chave in SB` da' true mesmo
+    // quando SB nao tem essa chave de verdade -- um drift real (so' em A ou so' em B)
+    // e' reclassificado como "divergente" no relatorio.
+    const soEmA = todos.filter((chave) => !Object.hasOwn(SB, chave));
+    const soEmB = todos.filter((chave) => !Object.hasOwn(SA, chave));
     const divergentes = todos.filter(
-      (chave) => chave in SA && chave in SB && SA[chave] !== SB[chave],
+      (chave) => Object.hasOwn(SA, chave) && Object.hasOwn(SB, chave) && SA[chave] !== SB[chave],
     );
     total += soEmA.length + soEmB.length + divergentes.length;
     secoes.push({ secao, soEmA, soEmB, divergentes });

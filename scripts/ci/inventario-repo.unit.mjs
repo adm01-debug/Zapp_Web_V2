@@ -90,3 +90,31 @@ test('rg com erro operacional (exit >= 2) falha fechado', () => {
   assert.match(result.stderr, /ripgrep \(rg\) falhou com exit 2/);
   assert.equal(existsSync(join(root, 'inventario/estado/edges.json')), false);
 });
+
+const temRg = spawnSync('rg', ['--version'], { encoding: 'utf8' }).status === 0;
+
+test('detecção com rg real: prefixo não casa, template string conta e segredo em helper entra', { skip: !temRg && 'ripgrep ausente' }, () => {
+  const root = fixture();
+  for (const dir of ['supabase/functions/foo/helpers', 'supabase/functions/foo-bar']) mkdirSync(join(root, dir), { recursive: true });
+  writeFileSync(join(root, 'supabase/functions/foo/index.ts'), "const a = Deno.env.get('SEGREDO_INDEX');\n");
+  writeFileSync(join(root, 'supabase/functions/foo/helpers/x.ts'), 'const b = Deno.env.get("SEGREDO_HELPER");\n');
+  writeFileSync(join(root, 'supabase/functions/foo/helpers/x.test.ts'), "Deno.env.get('SEGREDO_TESTE');\n");
+  writeFileSync(join(root, 'supabase/functions/foo-bar/index.ts'), 'Deno.serve(() => new Response("ok"));\n');
+  // Só chama foo-bar por URL: não pode contar como chamador de foo.
+  writeFileSync(join(root, 'src/a.ts'), "await fetch(`${base}/functions/v1/foo-bar`);\n");
+  // Chama foo com template string (sub-rota dinâmica): tem de contar.
+  writeFileSync(join(root, 'src/b.ts'), 'await supabase.functions.invoke(`foo/${acao}`, { body });\n');
+
+  const result = spawnSync(process.execPath, [join(root, 'scripts/inventario/gerar-repo.mjs')], {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const edges = JSON.parse(readFileSync(join(root, 'inventario/estado/edges.json'), 'utf8')).edge_functions;
+
+  assert.equal(edges['foo-bar'].chamada_em.src, 1);
+  assert.equal(edges.foo.chamada_em.src, 1, 'foo: só o invoke com template string conta; /functions/v1/foo-bar não é foo');
+  assert.deepEqual(edges.foo.segredos_lidos, ['SEGREDO_HELPER', 'SEGREDO_INDEX'], 'helper conta, teste não');
+  assert.equal(edges.exemplo.sem_chamador, true);
+});

@@ -64,7 +64,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
     gcTime: 10 * 60 * 1000,
   });
 
-  const { data: reactions = [], isLoading, refetch } = useQuery({
+  const { data: reactions = [], isLoading, isError, refetch } = useQuery({
     queryKey: messageReactionsQueryKey(messageId),
     queryFn: async () => {
       const { data, error } = await supabase
@@ -128,6 +128,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
     reactions,
     groupedReactions,
     isLoading,
+    isError,
     addReaction,
     removeReaction,
     hasReacted,

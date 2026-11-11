@@ -12,8 +12,8 @@ const DEFAULT_BASELINE = "scripts/ci/eslint-baseline.json";
 const MAX_REPORTED_ISSUES = 50;
 // Artefatos produzidos por testes nao sao fonte do projeto. O ESLint nao le o
 // .gitignore por padrao em todas as versoes/configuracoes, entao o ratchet os
-// exclui explicitamente para que uma execucao de coverage nao altere o gate.
-const GENERATED_ARTIFACT_IGNORES = ["coverage/**"];
+// exclui explicitamente para que coverage e mutacao nao alterem o gate.
+const GENERATED_ARTIFACT_IGNORES = ["coverage/**", ".tmp/**"];
 // Modo --staged (pre-commit): so os arquivos do commit sao lintados. Acima do limite o custo da
 // linha de comando nao compensa e o gate volta a rodar o repositorio inteiro.
 const STAGED_LINTABLE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
@@ -457,6 +457,7 @@ function parseArguments(argv) {
     updateBaseline: false,
     staged: false,
     base: null,
+    fix: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -470,6 +471,8 @@ function parseArguments(argv) {
       index += 1;
     } else if (argument === "--staged") {
       options.staged = true;
+    } else if (argument === "--fix") {
+      options.fix = true;
     } else if (argument === "--help") {
       options.help = true;
     } else {
@@ -483,6 +486,9 @@ function parseArguments(argv) {
   if (options.base && options.updateBaseline) {
     throw new Error("--base nao combina com --update-baseline.");
   }
+  if (options.fix && options.report) {
+    throw new Error("--fix nao combina com --report.");
+  }
 
   options.root = path.resolve(options.root);
   options.baseline = path.resolve(options.root, options.baseline);
@@ -490,10 +496,11 @@ function parseArguments(argv) {
   return options;
 }
 
-export function eslintCommandArguments(eslintEntry, { targets = ["."], noWarnIgnored = false } = {}) {
+export function eslintCommandArguments(eslintEntry, { targets = ["."], noWarnIgnored = false, fix = false } = {}) {
   return [
     eslintEntry,
     ...targets,
+    ...(fix ? ["--fix", "--fix-type", "problem,suggestion,layout"] : []),
     "--format",
     "json",
     ...(noWarnIgnored ? ["--no-warn-ignored"] : []),
@@ -501,13 +508,16 @@ export function eslintCommandArguments(eslintEntry, { targets = ["."], noWarnIgn
   ];
 }
 
-function runEslint(root, targets = null) {
+function runEslint(root, targets = null, fix = false) {
   const eslintEntry = path.join(root, "node_modules", "eslint", "bin", "eslint.js");
   if (!existsSync(eslintEntry)) {
     throw new Error("ESLint local nao encontrado. Execute a instalacao das dependencias primeiro.");
   }
 
-  const result = spawnSync(process.execPath, eslintCommandArguments(eslintEntry, targets ? { targets, noWarnIgnored: true } : {}), {
+  const result = spawnSync(process.execPath, eslintCommandArguments(eslintEntry, {
+    ...(targets ? { targets, noWarnIgnored: true } : {}),
+    fix,
+  }), {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
@@ -546,6 +556,7 @@ export function main(argv = process.argv.slice(2)) {
       console.log(`Uso:
   node scripts/ci/lint-ratchet.mjs
   node scripts/ci/lint-ratchet.mjs --update-baseline
+  node scripts/ci/lint-ratchet.mjs --fix           (corrige o que for automatico e aplica o ratchet)
   node scripts/ci/lint-ratchet.mjs --staged         (so os arquivos staged; usado no pre-commit)
   node scripts/ci/lint-ratchet.mjs --base <ref>     (so os arquivos mudados desde <ref>; usado no CI)
 
@@ -583,7 +594,9 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
       scopeLabel = (count) => `Lint ratchet (base ${options.base}, ${count} arquivo(s))`;
     }
 
-    const report = options.report ? readJson(options.report, "relatorio ESLint") : runEslint(options.root, scopedTargets);
+    const report = options.report
+      ? readJson(options.report, "relatorio ESLint")
+      : runEslint(options.root, scopedTargets, options.fix);
     const current = createBaseline(report, options.root);
 
     if (options.updateBaseline) {

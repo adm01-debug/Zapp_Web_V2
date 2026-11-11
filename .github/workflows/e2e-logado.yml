@@ -83,7 +83,7 @@ jobs:
           set -euo pipefail
           case "$EVENT_NAME" in
             workflow_run)
-              if [[ "$SOURCE_CONCLUSION" != success || "$SOURCE_EVENT" != push || "$SOURCE_BRANCH" != main || "$SOURCE_REPOSITORY" != "$REPOSITORY" ]]; then
+              if [[  "$SOURCE_CONCLUSION" != success || "$SOURCE_EVENT" != push || "$SOURCE_BRANCH" != main || "$SOURCE_REPOSITORY" != "$REPOSITORY" ]]; then
                 echo '::error::A execução de origem não comprova CI aprovado na main deste repositório.'
                 exit 1
               fi

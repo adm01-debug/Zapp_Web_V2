@@ -1,7 +1,6 @@
 {
   "alertas": [
     {
-      "tipo": "rls_sem_policy",
       "detalhe": [
         "_rb_message_reactions_contato_20261007001008",
         "_zapp_fn_before",
@@ -21,51 +20,8 @@
         "talkx_test_send_claims",
         "team_chat_media_acl_r2_db_020_rb",
         "voip_profile_credentials"
-      ]
-    },
-    {
-      "detalhe": [
-        "ai-jobs-tick-1min (9% em 7d)",
-        "avatars-refresh (9.8% em 7d)",
-        "cleanup-edge-rate-limits (10% em 7d)",
-        "close-stale-calls (10.2% em 7d)",
-        "connection-health-check (9.8% em 7d)",
-        "crm-sync-outbox (9.5% em 7d)",
-        "crm-sync-outbox-cleanup (14.3% em 7d)",
-        "csat-reply-capture-tick (9.1% em 7d)",
-        "dispatch-scheduled-messages (9.1% em 7d)",
-        "expire-stale-agent-presence (9.5% em 7d)",
-        "gmail-incremental-sync (10.1% em 7d)",
-        "multiplix-send-trigger (9.2% em 7d)",
-        "reconnection-logs-retention-30d (14.3% em 7d)",
-        "search-events-retention (14.3% em 7d)",
-        "security-acl-score (9% em 7d)",
-        "talkx-scheduler-1min (8.8% em 7d)",
-        "tasks-notify-due (9.1% em 7d)",
-        "voice-changer-tmp-purge (10.8% em 7d)"
       ],
-      "tipo": "cron_falhando"
-    },
-    {
-      "detalhe": [
-        "2026-10-28T17:00Z",
-        "2026-10-28T18:00Z",
-        "2026-10-28T19:00Z",
-        "2026-10-29T16:00Z",
-        "2026-10-29T17:00Z",
-        "2026-10-29T18:00Z",
-        "2026-10-29T19:00Z",
-        "2026-10-30T05:00Z",
-        "2026-10-30T19:00Z",
-        "2026-10-30T20:00Z",
-        "2026-10-31T04:00Z",
-        "2026-10-31T05:00Z",
-        "2026-10-31T06:00Z",
-        "2026-10-31T07:00Z",
-        "2026-10-31T08:00Z",
-        "2026-10-31T09:00Z"
-      ],
-      "tipo": "cron_parado"
+      "tipo": "rls_sem_policy"
     },
     {
       "detalhe": [
@@ -88,93 +44,12 @@
       "max_worker_processes": "6"
     },
     "historico": {
-      "bytes": 89006080,
-      "linhas": 67020,
-      "mais_antigo": "2026-10-26T15:02:00Z",
-      "mais_de_7_dias": 177
+      "bytes": 89391104,
+      "linhas": 70782,
+      "mais_antigo": "2026-11-02T03:17:00Z",
+      "mais_de_7_dias": 2897
     },
-    "horas_paradas_7d": [
-      {
-        "execucoes": 402,
-        "falhas": 267,
-        "hora": "2026-10-28T17:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 370,
-        "hora": "2026-10-28T18:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 364,
-        "hora": "2026-10-28T19:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 318,
-        "hora": "2026-10-29T16:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 303,
-        "hora": "2026-10-29T17:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 335,
-        "hora": "2026-10-29T18:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 306,
-        "hora": "2026-10-29T19:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 362,
-        "hora": "2026-10-30T05:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 267,
-        "hora": "2026-10-30T19:00Z"
-      },
-      {
-        "execucoes": 396,
-        "falhas": 320,
-        "hora": "2026-10-30T20:00Z"
-      },
-      {
-        "execucoes": 405,
-        "falhas": 386,
-        "hora": "2026-10-31T04:00Z"
-      },
-      {
-        "execucoes": 389,
-        "falhas": 365,
-        "hora": "2026-10-31T05:00Z"
-      },
-      {
-        "execucoes": 301,
-        "falhas": 298,
-        "hora": "2026-10-31T06:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 392,
-        "hora": "2026-10-31T07:00Z"
-      },
-      {
-        "execucoes": 402,
-        "falhas": 357,
-        "hora": "2026-10-31T08:00Z"
-      },
-      {
-        "execucoes": 291,
-        "falhas": 221,
-        "hora": "2026-10-31T09:00Z"
-      }
-    ],
+    "horas_paradas_7d": [],
     "jobs": [
       {
         "agenda": "1-59 * * * *",
@@ -182,15 +57,31 @@
         "chama": [
           "public.trigger_ai_jobs_tick"
         ],
-        "duracao_max_s_7d": 469,
-        "execucoes_24h": 1413,
-        "execucoes_7d": 9799,
-        "falhas_24h": 22,
-        "falhas_7d": 882,
+        "duracao_max_s_7d": 3,
+        "execucoes_24h": 1416,
+        "execucoes_7d": 9909,
+        "falhas_24h": 1,
+        "falhas_7d": 10,
         "nome": "ai-jobs-tick-1min",
-        "startup_timeout_7d": 880,
-        "taxa_falha_7d_pct": 9,
-        "ultima_falha": "2026-11-02T12:44:00Z"
+        "startup_timeout_7d": 10,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-08T13:42:00Z"
+      },
+      {
+        "agenda": "3-53/10 * * * *",
+        "ativo": true,
+        "chama": [
+          "net.http_post"
+        ],
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 144,
+        "execucoes_7d": 283,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "ai-usage-outbox-drain",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "7 * * * *",
@@ -198,29 +89,29 @@
         "chama": [
           "net.http_post"
         ],
-        "duracao_max_s_7d": 5,
+        "duracao_max_s_7d": 3,
         "execucoes_24h": 24,
-        "execucoes_7d": 164,
-        "falhas_24h": 1,
-        "falhas_7d": 16,
+        "execucoes_7d": 168,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
         "nome": "avatars-refresh",
-        "startup_timeout_7d": 16,
-        "taxa_falha_7d_pct": 9.8,
-        "ultima_falha": "2026-11-01T22:07:00Z"
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "7-52/15 * * * *",
         "ativo": true,
         "chama": [],
-        "duracao_max_s_7d": 5,
+        "duracao_max_s_7d": 1,
         "execucoes_24h": 96,
-        "execucoes_7d": 663,
-        "falhas_24h": 2,
-        "falhas_7d": 66,
+        "execucoes_7d": 672,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
         "nome": "cleanup-edge-rate-limits",
-        "startup_timeout_7d": 66,
-        "taxa_falha_7d_pct": 10,
-        "ultima_falha": "2026-11-02T02:52:00Z"
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "12 3 * * *",
@@ -228,7 +119,7 @@
         "chama": [
           "public.cleanup_link_preview_cache"
         ],
-        "duracao_max_s_7d": 1,
+        "duracao_max_s_7d": 0,
         "execucoes_24h": 1,
         "execucoes_7d": 7,
         "falhas_24h": 0,
@@ -244,15 +135,15 @@
         "chama": [
           "public.close_stale_calls"
         ],
-        "duracao_max_s_7d": 10,
-        "execucoes_24h": 287,
-        "execucoes_7d": 1995,
-        "falhas_24h": 6,
-        "falhas_7d": 203,
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 288,
+        "execucoes_7d": 2015,
+        "falhas_24h": 0,
+        "falhas_7d": 1,
         "nome": "close-stale-calls",
-        "startup_timeout_7d": 202,
-        "taxa_falha_7d_pct": 10.2,
-        "ultima_falha": "2026-11-02T05:05:00Z"
+        "startup_timeout_7d": 1,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": "2026-11-02T17:05:00Z"
       },
       {
         "agenda": "2-57/5 * * * *",
@@ -260,15 +151,15 @@
         "chama": [
           "net.http_post"
         ],
-        "duracao_max_s_7d": 36,
+        "duracao_max_s_7d": 3,
         "execucoes_24h": 288,
-        "execucoes_7d": 1993,
-        "falhas_24h": 5,
-        "falhas_7d": 196,
+        "execucoes_7d": 2016,
+        "falhas_24h": 1,
+        "falhas_7d": 3,
         "nome": "connection-health-check",
-        "startup_timeout_7d": 195,
-        "taxa_falha_7d_pct": 9.8,
-        "ultima_falha": "2026-11-02T12:42:00Z"
+        "startup_timeout_7d": 3,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-08T13:42:00Z"
       },
       {
         "agenda": "1-59/2 * * * *",
@@ -276,15 +167,15 @@
         "chama": [
           "public.trigger_crm_sync_outbox"
         ],
-        "duracao_max_s_7d": 40,
-        "execucoes_24h": 719,
-        "execucoes_7d": 4984,
-        "falhas_24h": 12,
-        "falhas_7d": 474,
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 720,
+        "execucoes_7d": 5039,
+        "falhas_24h": 0,
+        "falhas_7d": 4,
         "nome": "crm-sync-outbox",
-        "startup_timeout_7d": 474,
-        "taxa_falha_7d_pct": 9.5,
-        "ultima_falha": "2026-11-02T12:43:00Z"
+        "startup_timeout_7d": 4,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-02T17:05:00Z"
       },
       {
         "agenda": "17 4 * * *",
@@ -296,11 +187,25 @@
         "execucoes_24h": 1,
         "execucoes_7d": 7,
         "falhas_24h": 0,
-        "falhas_7d": 1,
+        "falhas_7d": 0,
         "nome": "crm-sync-outbox-cleanup",
-        "startup_timeout_7d": 1,
-        "taxa_falha_7d_pct": 14.3,
-        "ultima_falha": "2026-10-31T04:17:34Z"
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
+      },
+      {
+        "agenda": "17 3 * * *",
+        "ativo": true,
+        "chama": [],
+        "duracao_max_s_7d": 4,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "cron-historico-retencao-7d",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "*/2 * * * *",
@@ -308,15 +213,15 @@
         "chama": [
           "public.fn_capture_csat_replies"
         ],
-        "duracao_max_s_7d": 36,
-        "execucoes_24h": 718,
-        "execucoes_7d": 4982,
-        "falhas_24h": 9,
-        "falhas_7d": 453,
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 720,
+        "execucoes_7d": 5038,
+        "falhas_24h": 1,
+        "falhas_7d": 6,
         "nome": "csat-reply-capture-tick",
-        "startup_timeout_7d": 452,
-        "taxa_falha_7d_pct": 9.1,
-        "ultima_falha": "2026-11-02T12:44:00Z"
+        "startup_timeout_7d": 6,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-08T13:42:00Z"
       },
       {
         "agenda": "* * * * *",
@@ -324,15 +229,15 @@
         "chama": [
           "public.dispatch_scheduled_messages"
         ],
-        "duracao_max_s_7d": 53,
-        "execucoes_24h": 1437,
-        "execucoes_7d": 9965,
-        "falhas_24h": 21,
-        "falhas_7d": 902,
+        "duracao_max_s_7d": 2,
+        "execucoes_24h": 1440,
+        "execucoes_7d": 10077,
+        "falhas_24h": 1,
+        "falhas_7d": 10,
         "nome": "dispatch-scheduled-messages",
-        "startup_timeout_7d": 901,
-        "taxa_falha_7d_pct": 9.1,
-        "ultima_falha": "2026-11-02T12:44:00Z"
+        "startup_timeout_7d": 10,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-08T13:42:00Z"
       },
       {
         "agenda": "23 3 * * *",
@@ -356,15 +261,15 @@
         "chama": [
           "public.expire_stale_agent_presence"
         ],
-        "duracao_max_s_7d": 470,
-        "execucoes_24h": 719,
-        "execucoes_7d": 4984,
-        "falhas_24h": 12,
-        "falhas_7d": 475,
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 720,
+        "execucoes_7d": 5039,
+        "falhas_24h": 0,
+        "falhas_7d": 4,
         "nome": "expire-stale-agent-presence",
-        "startup_timeout_7d": 474,
-        "taxa_falha_7d_pct": 9.5,
-        "ultima_falha": "2026-11-02T12:43:00Z"
+        "startup_timeout_7d": 4,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-02T17:05:00Z"
       },
       {
         "agenda": "0-55/5 * * * *",
@@ -372,15 +277,29 @@
         "chama": [
           "net.http_post"
         ],
-        "duracao_max_s_7d": 10,
-        "execucoes_24h": 287,
-        "execucoes_7d": 1995,
-        "falhas_24h": 6,
-        "falhas_7d": 202,
+        "duracao_max_s_7d": 2,
+        "execucoes_24h": 288,
+        "execucoes_7d": 2015,
+        "falhas_24h": 0,
+        "falhas_7d": 1,
         "nome": "gmail-incremental-sync",
-        "startup_timeout_7d": 201,
-        "taxa_falha_7d_pct": 10.1,
-        "ultima_falha": "2026-11-02T05:05:00Z"
+        "startup_timeout_7d": 1,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": "2026-11-02T17:05:00Z"
+      },
+      {
+        "agenda": "41 4 * * *",
+        "ativo": true,
+        "chama": [],
+        "duracao_max_s_7d": 0,
+        "execucoes_24h": 1,
+        "execucoes_7d": 4,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "login-attempts-retention-90d",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "0-58/2 * * * *",
@@ -388,15 +307,15 @@
         "chama": [
           "public.trigger_pending_multiplix_dispatches"
         ],
-        "duracao_max_s_7d": 37,
-        "execucoes_24h": 718,
-        "execucoes_7d": 4982,
-        "falhas_24h": 9,
-        "falhas_7d": 458,
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 720,
+        "execucoes_7d": 5038,
+        "falhas_24h": 1,
+        "falhas_7d": 6,
         "nome": "multiplix-send-trigger",
-        "startup_timeout_7d": 457,
-        "taxa_falha_7d_pct": 9.2,
-        "ultima_falha": "2026-11-02T12:44:00Z"
+        "startup_timeout_7d": 6,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-08T13:42:00Z"
       },
       {
         "agenda": "25 3 * * *",
@@ -418,15 +337,15 @@
         "agenda": "30 4 * * *",
         "ativo": true,
         "chama": [],
-        "duracao_max_s_7d": 1,
+        "duracao_max_s_7d": 0,
         "execucoes_24h": 1,
         "execucoes_7d": 7,
         "falhas_24h": 0,
-        "falhas_7d": 1,
+        "falhas_7d": 0,
         "nome": "reconnection-logs-retention-30d",
-        "startup_timeout_7d": 1,
-        "taxa_falha_7d_pct": 14.3,
-        "ultima_falha": "2026-10-31T04:31:28Z"
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "10 4 * * *",
@@ -438,11 +357,11 @@
         "execucoes_24h": 1,
         "execucoes_7d": 7,
         "falhas_24h": 0,
-        "falhas_7d": 1,
+        "falhas_7d": 0,
         "nome": "search-events-retention",
-        "startup_timeout_7d": 1,
-        "taxa_falha_7d_pct": 14.3,
-        "ultima_falha": "2026-10-31T04:10:00Z"
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "0 12 * * *",
@@ -466,15 +385,15 @@
         "chama": [
           "public.score_security_acl"
         ],
-        "duracao_max_s_7d": 68,
+        "duracao_max_s_7d": 3,
         "execucoes_24h": 24,
-        "execucoes_7d": 166,
+        "execucoes_7d": 168,
         "falhas_24h": 0,
-        "falhas_7d": 15,
+        "falhas_7d": 0,
         "nome": "security-acl-score",
-        "startup_timeout_7d": 15,
-        "taxa_falha_7d_pct": 9,
-        "ultima_falha": "2026-10-31T09:24:22Z"
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       },
       {
         "agenda": "* * * * *",
@@ -482,15 +401,15 @@
         "chama": [
           "public.trigger_talkx_engine_tick"
         ],
-        "duracao_max_s_7d": 467,
-        "execucoes_24h": 1437,
-        "execucoes_7d": 9965,
-        "falhas_24h": 17,
-        "falhas_7d": 881,
+        "duracao_max_s_7d": 36,
+        "execucoes_24h": 1440,
+        "execucoes_7d": 10077,
+        "falhas_24h": 1,
+        "falhas_7d": 9,
         "nome": "talkx-scheduler-1min",
-        "startup_timeout_7d": 865,
-        "taxa_falha_7d_pct": 8.8,
-        "ultima_falha": "2026-11-02T12:44:00Z"
+        "startup_timeout_7d": 9,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-08T13:42:00Z"
       },
       {
         "agenda": "* * * * *",
@@ -498,15 +417,15 @@
         "chama": [
           "public.notify_due_tasks"
         ],
-        "duracao_max_s_7d": 49,
-        "execucoes_24h": 1437,
-        "execucoes_7d": 9965,
-        "falhas_24h": 21,
-        "falhas_7d": 902,
+        "duracao_max_s_7d": 3,
+        "execucoes_24h": 1440,
+        "execucoes_7d": 10077,
+        "falhas_24h": 1,
+        "falhas_7d": 10,
         "nome": "tasks-notify-due",
-        "startup_timeout_7d": 900,
-        "taxa_falha_7d_pct": 9.1,
-        "ultima_falha": "2026-11-02T12:44:00Z"
+        "startup_timeout_7d": 10,
+        "taxa_falha_7d_pct": 0.1,
+        "ultima_falha": "2026-11-08T13:42:00Z"
       },
       {
         "agenda": "17 3 * * *",
@@ -528,7 +447,7 @@
         "agenda": "42 3 * * *",
         "ativo": true,
         "chama": [],
-        "duracao_max_s_7d": 3,
+        "duracao_max_s_7d": 1,
         "execucoes_24h": 1,
         "execucoes_7d": 7,
         "falhas_24h": 0,
@@ -544,15 +463,15 @@
         "chama": [
           "public.purge_voice_changer_tmp"
         ],
-        "duracao_max_s_7d": 3,
+        "duracao_max_s_7d": 0,
         "execucoes_24h": 24,
-        "execucoes_7d": 166,
-        "falhas_24h": 1,
-        "falhas_7d": 18,
+        "execucoes_7d": 168,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
         "nome": "voice-changer-tmp-purge",
-        "startup_timeout_7d": 17,
-        "taxa_falha_7d_pct": 10.8,
-        "ultima_falha": "2026-11-01T20:17:00Z"
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
       }
     ]
   },
@@ -561,501 +480,501 @@
     "no_repo_sem_deploy": [],
     "publicadas": [
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "ai-auto-tag",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 612
+        "versao": 614
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "ai-churn-analysis",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 599
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-classify-tickets",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 598
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-conversation-analysis",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 609
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-conversation-summary",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 607
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-enhance-message",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 605
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-jobs-worker",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 160
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-kb-ingest",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 4
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-proxy",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 609
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-suggest-reply",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 606
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "ai-transcribe-audio",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 596
-      },
-      {
-        "atualizada_em": "2026-11-02T08:11Z",
-        "slug": "ai-usage-outbox-drain",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 2
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "approve-password-reset",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 593
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "auth-login",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 558
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "auto-close-conversations",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 589
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "automation-suggest-reply",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 1
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "batch-fetch-avatars",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 600
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "bitrix-api",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 589
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "chatbot-l1",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 606
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "classify-audio-meme",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 601
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "classify-emoji",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-classify-tickets",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 600
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-conversation-analysis",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 611
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-conversation-summary",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 609
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-enhance-message",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 607
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-jobs-worker",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 162
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-kb-ingest",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 6
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-proxy",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 611
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-suggest-reply",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 608
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-transcribe-audio",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 598
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "ai-usage-outbox-drain",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "approve-password-reset",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 595
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "auth-login",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 560
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "auto-close-conversations",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 591
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "automation-suggest-reply",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 3
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "batch-fetch-avatars",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 602
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "bitrix-api",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 591
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "chatbot-l1",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 608
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "classify-audio-meme",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 603
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "classify-sticker",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 604
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "cleanup-rate-limit-logs",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 587
-      },
-      {
-        "atualizada_em": "2026-11-02T08:11Z",
-        "slug": "connection-health-check",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 598
-      },
-      {
-        "atualizada_em": "2026-11-02T08:11Z",
-        "slug": "copilot-live",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 2
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "create-user",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 588
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "crm-integration",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 550
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "csp-report",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 559
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "detect-new-device",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 592
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-agent-token",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 586
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-dialogue",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 590
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-scribe-token",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 586
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-sfx",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 590
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-sts",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 586
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-tts",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 591
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-tts-stream",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 591
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-voice-design",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 590
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "elevenlabs-webhook",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 628
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "evolution-api",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "classify-emoji",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 605
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "evolution-sync",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "classify-sticker",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 596
+        "versao": 606
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "evolution-webhook",
+        "atualizada_em": "2026-11-08T04:52Z",
+        "slug": "cleanup-rate-limit-logs",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "connection-health-check",
         "status": "ACTIVE",
         "verify_jwt": false,
-        "versao": 672
+        "versao": 601
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "external-db-bridge",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "copilot-live",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "create-user",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 591
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "external-db-proxy",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "crm-integration",
         "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 594
+        "verify_jwt": false,
+        "versao": 552
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "fetch-link-preview",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "csp-report",
         "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 590
+        "verify_jwt": false,
+        "versao": 561
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "get-call-recording",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "detect-new-device",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 9
+        "versao": 595
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "get-mapbox-token",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 585
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "get-sip-password",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-agent-token",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 588
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "gmail-cron-sync",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 606
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "gmail-oauth",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 597
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "gmail-send",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 596
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "gmail-sync",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 595
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "gmail-webhook",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 624
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "health",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 4
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "invite-user",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 1
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "message-delivery",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 544
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "metrics",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 4
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "migrate-media-storage",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-dialogue",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 592
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "multiplix-audience",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-scribe-token",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 469
+        "versao": 588
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "multiplix-dispatch",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 149
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "multiplix-send",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 485
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "multiplix-voices",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 8
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "promogifts-catalog",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 619
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "public-api",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 631
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "recover-corrupted-audios",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-sfx",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 592
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "recover-message-media",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-sts",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 1
+        "versao": 588
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "revoke-auth-sessions",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 8
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "searchbox-budget-alert",
-        "status": "ACTIVE",
-        "verify_jwt": false,
-        "versao": 80
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "send-email",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 590
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "send-rate-limit-alert",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-tts",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 593
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "send-scheduled-report",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-tts-stream",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 593
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-voice-design",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 592
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "elevenlabs-webhook",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 630
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "evolution-api",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 607
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "evolution-sync",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 598
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "evolution-webhook",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 674
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "external-db-bridge",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 593
+      },
+      {
+        "atualizada_em": "2026-11-08T04:52Z",
+        "slug": "external-db-proxy",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 597
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "fetch-link-preview",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 592
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "get-call-recording",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 11
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "get-mapbox-token",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 587
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "get-sip-password",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "gmail-cron-sync",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 608
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "gmail-oauth",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 599
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "gmail-send",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 598
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "gmail-sync",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 597
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "gmail-webhook",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 626
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "health",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 6
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "invite-user",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "message-delivery",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 546
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "metrics",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 6
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "migrate-media-storage",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 594
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "multiplix-audience",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 471
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "multiplix-dispatch",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 151
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "multiplix-send",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 487
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "multiplix-voices",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 10
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "promogifts-catalog",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 621
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "public-api",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 633
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "recover-corrupted-audios",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 594
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "recover-message-media",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 3
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "revoke-auth-sessions",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 11
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "searchbox-budget-alert",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 82
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "send-email",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 592
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "send-rate-limit-alert",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 595
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "sentiment-alert",
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "send-scheduled-report",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 597
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "sentiment-alert",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 599
       },
       {
         "atualizada_em": "2026-09-29T12:57Z",
@@ -1072,102 +991,102 @@
         "versao": 581
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "status",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 4
+        "versao": 6
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "sync-call-records",
         "status": "ACTIVE",
         "verify_jwt": false,
-        "versao": 9
+        "versao": 11
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "talkx-ai",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 4
+        "versao": 6
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "talkx-link",
         "status": "ACTIVE",
         "verify_jwt": false,
-        "versao": 510
+        "versao": 512
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "talkx-report",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 509
+        "versao": 511
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "talkx-scheduler",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 596
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "talkx-send",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 620
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "talkx-storage-purge",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 6
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "voice-agent",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 599
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "voice-changer",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 587
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "voice-copilot-action",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-07T13:05Z",
+        "slug": "webauthn",
         "status": "ACTIVE",
         "verify_jwt": true,
         "versao": 594
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "talkx-send",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 618
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "talkx-storage-purge",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 4
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "voice-agent",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 597
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "voice-changer",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 585
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "voice-copilot-action",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 588
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
-        "slug": "webauthn",
-        "status": "ACTIVE",
-        "verify_jwt": true,
-        "versao": 592
-      },
-      {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "webhook-diagnostic",
         "status": "ACTIVE",
         "verify_jwt": true,
-        "versao": 597
+        "versao": 599
       },
       {
-        "atualizada_em": "2026-11-02T05:08Z",
+        "atualizada_em": "2026-11-07T13:05Z",
         "slug": "whatsapp-webhook",
         "status": "ACTIVE",
         "verify_jwt": false,
-        "versao": 623
+        "versao": 625
       }
     ],
     "publicadas_sem_codigo_no_repo": [
@@ -1177,20 +1096,20 @@
   },
   "fonte": "scripts/inventario/banco.sql + GET /functions + .from() em src/ e supabase/functions/ (scripts/inventario/gerar-banco.mjs)",
   "format_version": 1,
-  "medido_em": "2026-11-02T15:27:21Z",
+  "medido_em": "2026-11-09T10:27:04Z",
   "resumo": {
-    "cron_ativos": 24,
-    "cron_jobs": 24,
-    "funcoes_public": 481,
-    "ledger_registros": 1075,
-    "ledger_versao_max": "20261102012200",
+    "cron_ativos": 27,
+    "cron_jobs": 27,
+    "funcoes_public": 485,
+    "ledger_registros": 1092,
+    "ledger_versao_max": "20261107170000",
     "max_connections": 60,
-    "policies": 521,
+    "policies": 514,
     "postgres": "17.6",
-    "tabelas_public": 211,
+    "tabelas_public": 210,
     "tabelas_sem_rls": 0,
-    "tamanho_bytes": 472411283,
-    "triggers_public": 161,
+    "tamanho_bytes": 469806227,
+    "triggers_public": 157,
     "views_public": 13
   },
   "tabelas": [
@@ -1201,6 +1120,21 @@
       "linhas_exatas": true,
       "nome": "_rb_message_reactions_contato_20261007001008",
       "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 2,
+      "linhas_exatas": true,
+      "nome": "_rb_message_reactions_one_per_agent_20261107121000",
+      "policies": 1,
       "rls": true,
       "rls_forcado": false,
       "triggers": 0,
@@ -1407,7 +1341,7 @@
     {
       "bytes": 180224,
       "citada_no_banco": true,
-      "linhas": 35,
+      "linhas": 36,
       "linhas_exatas": true,
       "nome": "ai_usage_logs",
       "policies": 3,
@@ -1420,9 +1354,9 @@
       }
     },
     {
-      "bytes": 24576,
+      "bytes": 49152,
       "citada_no_banco": false,
-      "linhas": 0,
+      "linhas": 4,
       "linhas_exatas": true,
       "nome": "ai_usage_outbox",
       "policies": 1,
@@ -1495,9 +1429,9 @@
       }
     },
     {
-      "bytes": 40132608,
+      "bytes": 40206336,
       "citada_no_banco": true,
-      "linhas": 88833,
+      "linhas": 88975,
       "linhas_exatas": true,
       "nome": "audit_logs",
       "policies": 4,
@@ -1810,9 +1744,9 @@
       }
     },
     {
-      "bytes": 622592,
+      "bytes": 630784,
       "citada_no_banco": true,
-      "linhas": 1792,
+      "linhas": 2012,
       "linhas_exatas": true,
       "nome": "connection_health_logs",
       "policies": 3,
@@ -1915,22 +1849,7 @@
       }
     },
     {
-      "bytes": 90112,
-      "citada_no_banco": true,
-      "linhas": 0,
-      "linhas_exatas": true,
-      "nome": "contact_purchases",
-      "policies": 4,
-      "rls": true,
-      "rls_forcado": false,
-      "triggers": 3,
-      "uso_no_codigo": {
-        "edges": 0,
-        "src": 5
-      }
-    },
-    {
-      "bytes": 7045120,
+      "bytes": 3088384,
       "citada_no_banco": true,
       "linhas": 4345,
       "linhas_exatas": true,
@@ -2365,9 +2284,9 @@
       }
     },
     {
-      "bytes": 65536,
+      "bytes": 57344,
       "citada_no_banco": true,
-      "linhas": 7,
+      "linhas": 5,
       "linhas_exatas": true,
       "nome": "edge_rate_limits",
       "policies": 0,
@@ -2697,7 +2616,7 @@
     {
       "bytes": 57344,
       "citada_no_banco": true,
-      "linhas": 117,
+      "linhas": 124,
       "linhas_exatas": true,
       "nome": "link_preview_cache_metrics",
       "policies": 2,
@@ -2770,9 +2689,9 @@
       }
     },
     {
-      "bytes": 204800,
+      "bytes": 221184,
       "citada_no_banco": false,
-      "linhas": 116,
+      "linhas": 114,
       "linhas_exatas": true,
       "nome": "message_reactions",
       "policies": 5,
@@ -2781,7 +2700,7 @@
       "triggers": 1,
       "uso_no_codigo": {
         "edges": 2,
-        "src": 5
+        "src": 6
       }
     },
     {
@@ -2817,7 +2736,7 @@
     {
       "bytes": 44163072,
       "citada_no_banco": true,
-      "linhas": 53463,
+      "linhas": 53466,
       "linhas_exatas": true,
       "nome": "messages",
       "policies": 3,
@@ -2995,9 +2914,9 @@
       }
     },
     {
-      "bytes": 90112,
+      "bytes": 1064960,
       "citada_no_banco": true,
-      "linhas": 18,
+      "linhas": 1134,
       "linhas_exatas": true,
       "nome": "notifications",
       "policies": 4,
@@ -3005,7 +2924,7 @@
       "rls_forcado": false,
       "triggers": 0,
       "uso_no_codigo": {
-        "edges": 3,
+        "edges": 5,
         "src": 8
       }
     },
@@ -3082,21 +3001,6 @@
       "uso_no_codigo": {
         "edges": 3,
         "src": 1
-      }
-    },
-    {
-      "bytes": 40960,
-      "citada_no_banco": false,
-      "linhas": 0,
-      "linhas_exatas": true,
-      "nome": "payment_links",
-      "policies": 4,
-      "rls": true,
-      "rls_forcado": false,
-      "triggers": 1,
-      "uso_no_codigo": {
-        "edges": 0,
-        "src": 0
       }
     },
     {
@@ -3657,7 +3561,7 @@
     {
       "bytes": 131072,
       "citada_no_banco": true,
-      "linhas": 57,
+      "linhas": 65,
       "linhas_exatas": true,
       "nome": "talkx_campaign_events",
       "policies": 2,
@@ -3695,13 +3599,13 @@
       "rls_forcado": false,
       "triggers": 5,
       "uso_no_codigo": {
-        "edges": 11,
-        "src": 5
+        "edges": 12,
+        "src": 6
       }
     },
     {
       "bytes": 40960,
-      "citada_no_banco": true,
+      "citada_no_banco": false,
       "linhas": 0,
       "linhas_exatas": true,
       "nome": "talkx_contact_attributes",
@@ -3891,7 +3795,7 @@
       "triggers": 2,
       "uso_no_codigo": {
         "edges": 0,
-        "src": 0
+        "src": 1
       }
     },
     {
@@ -3966,7 +3870,7 @@
       "triggers": 3,
       "uso_no_codigo": {
         "edges": 2,
-        "src": 0
+        "src": 1
       }
     },
     {
@@ -4017,7 +3921,7 @@
     {
       "bytes": 73728,
       "citada_no_banco": true,
-      "linhas": 4,
+      "linhas": 6,
       "linhas_exatas": true,
       "nome": "team_conversation_members",
       "policies": 4,
@@ -4032,7 +3936,7 @@
     {
       "bytes": 114688,
       "citada_no_banco": true,
-      "linhas": 2,
+      "linhas": 3,
       "linhas_exatas": true,
       "nome": "team_conversations",
       "policies": 4,
@@ -4075,9 +3979,9 @@
       }
     },
     {
-      "bytes": 90112,
+      "bytes": 98304,
       "citada_no_banco": true,
-      "linhas": 2,
+      "linhas": 4,
       "linhas_exatas": true,
       "nome": "team_messages",
       "policies": 4,
@@ -4130,7 +4034,7 @@
       "rls_forcado": false,
       "triggers": 2,
       "uso_no_codigo": {
-        "edges": 10,
+        "edges": 11,
         "src": 9
       }
     },
@@ -4160,7 +4064,7 @@
       "rls_forcado": false,
       "triggers": 1,
       "uso_no_codigo": {
-        "edges": 3,
+        "edges": 4,
         "src": 0
       }
     },
@@ -4212,7 +4116,7 @@
     {
       "bytes": 237568,
       "citada_no_banco": false,
-      "linhas": 514,
+      "linhas": 515,
       "linhas_exatas": true,
       "nome": "warroom_alerts",
       "policies": 4,
@@ -4220,8 +4124,8 @@
       "rls_forcado": false,
       "triggers": 0,
       "uso_no_codigo": {
-        "edges": 8,
-        "src": 3
+        "edges": 12,
+        "src": 4
       }
     },
     {
@@ -4295,8 +4199,8 @@
       "rls_forcado": false,
       "triggers": 2,
       "uso_no_codigo": {
-        "edges": 50,
-        "src": 29
+        "edges": 52,
+        "src": 30
       }
     },
     {
@@ -4377,9 +4281,9 @@
       "email_signatures",
       "entity_versions",
       "mfa_sessions",
-      "payment_links",
       "sicoob_contact_mapping",
       "sla_alert_preferences",
+      "talkx_contact_attributes",
       "team_chat_media_acl_r2_db_020_rb",
       "webhook_failures"
     ]
@@ -4387,14 +4291,14 @@
   "whatsapp": {
     "conexoes": [
       {
-        "atualizada_em": "2026-11-02T15:27:02Z",
+        "atualizada_em": "2026-11-09T10:27:04Z",
         "health_reason": "Reconexão automática esgotada — gere um novo QR Code na tela Conexões.",
         "health_status": "disconnected",
         "instance_id": "PRINCIPAL",
         "nome": "Promo Brindes WhatsApp",
         "padrao": true,
         "status": "disconnected",
-        "ultimo_health_check": "2026-11-02T15:27:02Z"
+        "ultimo_health_check": "2026-11-09T10:22:02Z"
       },
       {
         "atualizada_em": "2026-09-28T20:21:53Z",
@@ -4407,6 +4311,6 @@
         "ultimo_health_check": "2026-09-28T19:55:02Z"
       }
     ],
-    "mensagens_7d": 4
+    "mensagens_7d": 3
   }
 }

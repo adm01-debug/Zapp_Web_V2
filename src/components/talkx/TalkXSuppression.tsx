@@ -13,7 +13,7 @@ import { openContactChat } from '@/components/catalog/useSendProduct';
 import { toast } from 'sonner';
 import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, ListChecks, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity, Pencil, Eye, Megaphone, RotateCcw, Save } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TalkXDialogShell } from './kit/dialogs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -733,9 +733,12 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
       </div>
 
       {/* Modal adicionar: contato existente ou telefone avulso (duas abas) */}
-      <Dialog open={showAdd} onOpenChange={(o) => { setShowAdd(o); if (!o) resetAddForm(); }}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Adicionar à Lista de Supressão</DialogTitle></DialogHeader>
+      <TalkXDialogShell
+        open={showAdd}
+        onClose={() => { setShowAdd(false); resetAddForm(); }}
+        title="Adicionar à Lista de Supressão"
+        footer={<><GhostButton onClick={() => { setShowAdd(false); resetAddForm(); }}>Cancelar</GhostButton><PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} disabled={!addReady || addMutation.isPending}>Bloquear</PrimaryButton></>}
+      >
           <Tabs value={addTab} onValueChange={(v) => setAddTab(v as 'contact' | 'phone')}>
             <TabsList className="grid w-full grid-cols-2 h-auto">
               <TabsTrigger value="contact">Contato existente</TabsTrigger>
@@ -776,17 +779,15 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
               {addReason === 'Outro' && <Textarea value={addCustomReason} onChange={(e) => setAddCustomReason(e.target.value)} placeholder="Descreva o motivo…" className="mt-2 bg-input/40 border-border/70" rows={2} />}
             </div>
           </div>
-          <DialogFooter>
-            <GhostButton onClick={() => { setShowAdd(false); resetAddForm(); }}>Cancelar</GhostButton>
-            <PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} disabled={!addReady || addMutation.isPending}>Bloquear</PrimaryButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </TalkXDialogShell>
 
       {/* Modal editar motivo e expiração (1 linha ou a seleção) */}
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>{editing?.bulk ? `Editar ${editing.ids.length} contatos suprimidos` : 'Editar supressão'}</DialogTitle></DialogHeader>
+      <TalkXDialogShell
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title={editing?.bulk ? `Editar ${editing.ids.length} contatos suprimidos` : 'Editar supressão'}
+        footer={<><GhostButton onClick={() => setEditing(null)}>Cancelar</GhostButton><PrimaryButton icon={Save} onClick={saveEdit} disabled={editExpiry === 'date' && !editDate} className={cn(editMutation.isPending && 'opacity-50 pointer-events-none')}>Salvar</PrimaryButton></>}
+      >
           <div className="space-y-4 py-2">
             <div>
               <Label className="text-xs text-foreground-secondary">Motivo</Label>
@@ -813,12 +814,7 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
               {editExpiry === 'date' && <Input type="date" min={todayDateInput()} value={editDate} onChange={(e) => setEditDate(e.target.value)} aria-label="Data de expiração" className="mt-2 bg-input/40 border-border/70" />}
             </div>
           </div>
-          <DialogFooter>
-            <GhostButton onClick={() => setEditing(null)}>Cancelar</GhostButton>
-            <PrimaryButton icon={Save} onClick={saveEdit} disabled={editExpiry === 'date' && !editDate} className={cn(editMutation.isPending && 'opacity-50 pointer-events-none')}>Salvar</PrimaryButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </TalkXDialogShell>
 
       {/* Modal remover (kit, X050) — texto do preset `removerSupressao` (tile e
           botão violeta, nome do contato nas linhas de detalhe). Opt-out/LGPD exige
@@ -842,63 +838,62 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
       />
 
       {/* X184 — "Ver todas": histórico paginado da trilha (20 por página) */}
-      <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-xl" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Atividade recente</DialogTitle></DialogHeader>
-          <div className="space-y-3 py-1">
-            <Select value={historyType} onValueChange={(v) => { setHistoryType(v as SuppressionActivityEventType | 'all'); setHistoryPage(1); }}>
-              <SelectTrigger className="bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                {SUPPRESSION_ACTIVITY_EVENT_TYPES.map((t) => <SelectItem key={t} value={t}>{ACTIVITY_FILTER_LABELS[t]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            {history.isLoading ? <TalkXSkeletonRows rows={4} />
-              : history.isError ? (
-                <div role="alert" className="rounded-xl border border-dash-red/40 bg-dash-red/5 p-3">
-                  <p className="text-xs text-foreground">Não foi possível carregar a atividade da lista.</p>
-                  <button type="button" onClick={() => { void history.refetch(); }} className="mt-1 text-2xs font-semibold text-foreground-secondary hover:text-foreground">Tentar novamente</button>
-                </div>
-              ) : history.items.length === 0 ? (
-                <p className="py-6 text-center text-xs text-foreground-secondary">Nenhuma atividade ainda</p>
-              ) : (
-                <ul className="flex max-h-[45vh] flex-col divide-y divide-border/50 overflow-auto">
-                  {history.items.map((item) => <li key={item.id} className="py-2.5"><ActivityLine item={item} showActor /></li>)}
-                </ul>
-              )}
-            {history.total > 0 && (
-              <TalkXPagination
-                page={historyPage} pageSize={historyPageSize} total={history.total}
-                onPage={setHistoryPage} onPageSize={(n) => { setHistoryPageSize(n); setHistoryPage(1); }}
-                noun="atividades"
-              />
+      <TalkXDialogShell open={showHistory} onClose={() => setShowHistory(false)} title="Atividade recente" className="max-w-xl">
+        <div className="space-y-3 py-1">
+          <Select value={historyType} onValueChange={(v) => { setHistoryType(v as SuppressionActivityEventType | 'all'); setHistoryPage(1); }}>
+            <SelectTrigger className="bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {SUPPRESSION_ACTIVITY_EVENT_TYPES.map((t) => <SelectItem key={t} value={t}>{ACTIVITY_FILTER_LABELS[t]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {history.isLoading ? <TalkXSkeletonRows rows={4} />
+            : history.isError ? (
+              <div role="alert" className="rounded-xl border border-dash-red/40 bg-dash-red/5 p-3">
+                <p className="text-xs text-foreground">Não foi possível carregar a atividade da lista.</p>
+                <button type="button" onClick={() => { void history.refetch(); }} className="mt-1 text-2xs font-semibold text-foreground-secondary hover:text-foreground">Tentar novamente</button>
+              </div>
+            ) : history.items.length === 0 ? (
+              <p className="py-6 text-center text-xs text-foreground-secondary">Nenhuma atividade ainda</p>
+            ) : (
+              <ul className="flex max-h-[45vh] flex-col divide-y divide-border/50 overflow-auto">
+                {history.items.map((item) => <li key={item.id} className="py-2.5"><ActivityLine item={item} showActor /></li>)}
+              </ul>
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
+          {history.total > 0 && (
+            <TalkXPagination
+              page={historyPage} pageSize={historyPageSize} total={history.total}
+              onPage={setHistoryPage} onPageSize={(n) => { setHistoryPageSize(n); setHistoryPage(1); }}
+              noun="atividades"
+            />
+          )}
+        </div>
+      </TalkXDialogShell>
 
       {/* Modal gerenciar motivos */}
-      <Dialog open={showReasons} onOpenChange={setShowReasons}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Motivos de supressão</DialogTitle></DialogHeader>
-          <ul className="divide-y divide-border/50 rounded-lg border border-border/60 max-h-72 overflow-auto">
-            {REASONS.map((r) => {
-              const usos = reasonUsage.get(r) ?? 0;
-              return (
-                <li key={r} className="flex items-center justify-between gap-3 px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-foreground truncate">{r}</p>
-                    <p className="text-2xs text-foreground-secondary">{usos === 1 ? '1 registro' : `${fmtInt(usos)} registros`}</p>
-                  </div>
-                  <Pill label="Sistema" tone="muted" />
-                </li>
-              );
-            })}
-          </ul>
-          <p className="text-2xs text-foreground-secondary">Criar, renomear e desativar categorias depende da tabela de motivos do módulo (ainda não criada).</p>
-          <DialogFooter><GhostButton onClick={() => setShowReasons(false)}>Fechar</GhostButton></DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TalkXDialogShell
+        open={showReasons}
+        onClose={() => setShowReasons(false)}
+        title="Motivos de supressão"
+        className="max-w-md"
+        footer={<GhostButton onClick={() => setShowReasons(false)}>Fechar</GhostButton>}
+      >
+        <ul className="divide-y divide-border/50 rounded-lg border border-border/60 max-h-72 overflow-auto">
+          {REASONS.map((r) => {
+            const usos = reasonUsage.get(r) ?? 0;
+            return (
+              <li key={r} className="flex items-center justify-between gap-3 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium text-foreground truncate">{r}</p>
+                  <p className="text-2xs text-foreground-secondary">{usos === 1 ? '1 registro' : `${fmtInt(usos)} registros`}</p>
+                </div>
+                <Pill label="Sistema" tone="muted" />
+              </li>
+            );
+          })}
+        </ul>
+        <p className="text-2xs text-foreground-secondary">Criar, renomear e desativar categorias depende da tabela de motivos do módulo (ainda não criada).</p>
+      </TalkXDialogShell>
     </div>
   );
 }

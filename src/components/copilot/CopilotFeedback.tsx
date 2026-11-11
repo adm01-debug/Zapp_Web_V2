@@ -68,7 +68,7 @@ export function CopilotFeedback({
 
   if (submitted) {
     return (
-      <span className={cn('text-3xs text-muted-foreground/60 select-none', className)}>
+      <span className={cn('text-3xs text-muted-foreground select-none', className)}>
         Obrigado pelo feedback!
       </span>
     );

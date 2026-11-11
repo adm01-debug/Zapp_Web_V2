@@ -25,10 +25,11 @@ export function EvolutionDisconnectBanner() {
   const { preferences } = useConnectionAlertPreferences();
 
   const fetchStatus = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('whatsapp_connections')
       .select('id, instance_id, phone_number, status')
       .eq('status', 'disconnected');
+    if (error) return;
     if (data && data.length > 0) {
       setDisconnected(data as DisconnectedInstance[]);
       setDismissed(false); // Re-show if new disconnections

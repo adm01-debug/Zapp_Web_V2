@@ -172,6 +172,87 @@ export const ChatbotL1Output = z.object({
   detected_sentiment: sentimentSchema.optional(),
 });
 
+// ─── Capacidade: tratamento de objeção ───────────────────────
+export const ObjectionHandlerEnvelope = z.object({
+  objectionType: z.enum(['preco', 'prazo', 'quantidade_minima', 'concorrente', 'chefe', 'qualidade', 'frete', 'generica']),
+  isSmokescreen: z.boolean(),
+  confidence: z.number().min(0).max(1),
+  brindeLetter: z.enum(['B', 'R', 'I', 'N', 'D', 'E']).optional(),
+  script: z.array(z.string().min(1)).min(1),
+  suggestedReply: z.string().min(1),
+  coaching: z.string().optional(),
+});
+
+// ─── Capacidade: âncora de preço ─────────────────────────────
+export const PriceAnchorEnvelope = z.object({
+  triggered: z.boolean(),
+  strategy: z.string().optional(),
+  anchorScript: z.string(),
+  costPerUseScript: z.string(),
+  reframing: z.string().optional(),
+  confidence: z.number().min(0).max(1),
+});
+
+// ─── Capacidade: risco de perda ──────────────────────────────
+export const LossRiskEnvelope = z.object({
+  level: z.enum(['low', 'medium', 'high']),
+  riskScore: z.number().min(0).max(100),
+  signals: z.array(z.string()),
+  recoveryAction: z.string(),
+  script: z.string(),
+  urgency: z.enum(['now', 'today', 'this_week', 'monitor']),
+});
+
+// ─── Capacidade: calculadora de prazo ────────────────────────
+export const DeadlineCalculatorEnvelope = z.object({
+  feasibility: z.enum(['ok', 'tight', 'impossible']),
+  productionDays: z.number().int().min(0),
+  daysUntilEvent: z.number().int().nullable(),
+  lastOrderDate: z.string().nullable(),
+  message: z.string().min(1),
+  alternatives: z.array(z.string()),
+  urgencyLevel: z.enum(['low', 'medium', 'high', 'critical']),
+});
+
+// ─── Capacidade: temperatura do lead ─────────────────────────
+export const LeadTemperatureEnvelope = z.object({
+  temperature: z.number().min(0).max(100),
+  temperatureLabel: z.enum(['cold', 'warm', 'hot']),
+  interestScore: z.number().min(0).max(100),
+  urgencyScore: z.number().min(0).max(100),
+  capacityScore: z.number().min(0).max(100),
+  signals: z.array(z.string()),
+  recommendedAction: z.string().min(1),
+  nextBestOffer: z.string(),
+});
+
+// ─── Capacidade: recomendação de produto ─────────────────────
+const ProductRecommendationItemSchema = z.object({
+  product: z.string().min(1),
+  category: z.string().min(1),
+  reasoning: z.string(),
+  estimatedPrice: z.string(),
+  confidence: z.number().min(0).max(1),
+  urgency: z.enum(['low', 'medium', 'high']),
+});
+
+export const ProductRecommendationEnvelope = z.object({
+  recommendations: z.array(ProductRecommendationItemSchema).min(1).max(3),
+  topPick: z.string().min(1),
+  upsellOpportunity: z.string(),
+});
+
+// ─── Capacidade: análise multimodal ──────────────────────────
+export const MultimodalAnalysisEnvelope = z.object({
+  description: z.string().min(1),
+  extractedText: z.array(z.string()),
+  dominantColors: z.array(z.string()),
+  keyElements: z.array(z.string()),
+  brandingOpportunity: z.string(),
+  suggestedReply: z.string().min(1),
+  confidence: z.number().min(0).max(1),
+});
+
 // ─── Tipos inferidos (o "por capacidade" do consumidor) ──────
 export type ConversationAnalysisOutput = z.infer<typeof ConversationAnalysisOutput>;
 export type ConversationSummaryOutput = z.infer<typeof ConversationSummaryOutput>;
@@ -179,6 +260,13 @@ export type SuggestedRepliesOutput = z.infer<typeof SuggestedRepliesOutput>;
 export type AutoTagOutput = z.infer<typeof AutoTagOutput>;
 export type ChatbotL1Output = z.infer<typeof ChatbotL1Output>;
 export type AgentPerformance = z.infer<typeof AgentPerformanceSchema>;
+export type ObjectionHandlerEnvelope = z.infer<typeof ObjectionHandlerEnvelope>;
+export type PriceAnchorEnvelope = z.infer<typeof PriceAnchorEnvelope>;
+export type LossRiskEnvelope = z.infer<typeof LossRiskEnvelope>;
+export type DeadlineCalculatorEnvelope = z.infer<typeof DeadlineCalculatorEnvelope>;
+export type LeadTemperatureEnvelope = z.infer<typeof LeadTemperatureEnvelope>;
+export type ProductRecommendationEnvelope = z.infer<typeof ProductRecommendationEnvelope>;
+export type MultimodalAnalysisEnvelope = z.infer<typeof MultimodalAnalysisEnvelope>;
 
 // ─── Parser com erros achatados ──────────────────────────────
 /** Erro de contrato com o caminho achatado (ex.: `keyPoints.5`). */
