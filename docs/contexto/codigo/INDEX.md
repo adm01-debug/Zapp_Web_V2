@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f3c0c5f7e8a29b057b4459216a8acb8d93169f6c` (2026-11-10T23:03:08-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e334b0a1d23f6d2af5318ef01b38a785509db1ea` (2026-11-10T23:33:36-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 887684 |
+| linhas_codigo | 887744 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56697 nós · 117159 arestas · 4161 comunidades · grafo do commit `f3c0c5f7`
-- comunidades maiores: cn (937), react (859), lucide-react (791), input.tsx (728), vitest (720), catalogShared.tsx (509), @tanstack/react-query (489), useMyWorkItems.ts (420), DashboardView.tsx (415), ref_node_fs (346), react-router-dom (345), useTalkXSegments.ts (318)
+- 56698 nós · 117163 arestas · 4109 comunidades · grafo do commit `e334b0a1`
+- comunidades maiores: client.ts (882), vitest (820), framer-motion (761), lucide-react (606), sonner (566), ref_node_fs (491), WorkItemSheet.tsx (485), button.tsx (470), cn (447), e2e-isolated-runtime.unit.mjs (410), @tanstack/react-query (352), catalogShared.tsx (311)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -404,11 +404,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/DB-INVENTORY.md (12)
 - supabase/deployment-manifest.json (12)
 - supabase/schema-manifest.json (12)
-- .github/workflows/db-guard.yml (10)
 - .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
 - RELATORIO_CI.md (10)
 - scripts/db-audit/migration-evidence.json (10)
+- .github/workflows/db-guard.yml (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/db-audit/grants-baseline.json (9)
 - scripts/e2e-isolated/run.mjs (9)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-10 `e334b0a` fix(maintenance): finally de restore não descarta mais a exceção original (#2933)
 - 2026-11-10 `f3c0c5f` fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)
 - 2026-11-10 `3725c34` fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)
 - 2026-11-10 `8d727a9` fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `c5650d8` fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)
 - 2026-11-10 `401ea3d` feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)
 - 2026-11-10 `9f94363` chore(docs): documenta geração de contexto no AGENTS.md (#2840)
-- 2026-11-10 `384befe` ci: registra 4 guards de segurança existentes como steps do CI (#2850)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -4414,7 +4414,7 @@
   {
    "arquivo": "scripts/maintenance/run.mjs",
    "descricao": null,
-   "linhas": 545,
+   "linhas": 569,
    "env": [
     "XDG_STATE_HOME"
    ],

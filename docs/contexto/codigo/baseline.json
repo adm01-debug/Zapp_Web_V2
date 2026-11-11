@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f3c0c5f7e8a29b057b4459216a8acb8d93169f6c",
+  "commit": "e334b0a1d23f6d2af5318ef01b38a785509db1ea",
   "branch": "main",
-  "data_commit": "2026-11-10T23:03:08-03:00",
+  "data_commit": "2026-11-10T23:33:36-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e334b0a",
+    "data": "2026-11-10",
+    "assunto": "fix(maintenance): finally de restore não descarta mais a exceção original (#2933)"
+   },
    {
     "sha": "f3c0c5f",
     "data": "2026-11-10",
@@ -126,11 +131,6 @@
     "sha": "d40c053",
     "data": "2026-11-10",
     "assunto": "docs: banco.md volta a avisar que o db-migrate.yml não tem execução verde ponta a ponta (#2863)"
-   },
-   {
-    "sha": "71dd723",
-    "data": "2026-11-10",
-    "assunto": "fix(email): corrige contraste do separador no cabeçalho do EmailChatInbox (#2832)"
    }
   ],
   "arquivos_mudados_7d": 658,
@@ -226,10 +226,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 10
-   },
-   {
     "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 10
    },
@@ -244,6 +240,10 @@
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 10
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 9
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887684,
+  "linhas_codigo": 887744,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -648,7 +648,7 @@
   },
   "scripts/maintenance": {
    "arquivos": 4,
-   "linhas": 1350
+   "linhas": 1410
   },
   "scripts/mutation": {
    "arquivos": 1,

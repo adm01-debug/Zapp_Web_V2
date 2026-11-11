@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f3c0c5f7e8a29b057b4459216a8acb8d93169f6c",
+  "sha": "e334b0a1d23f6d2af5318ef01b38a785509db1ea",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 02:18 UTC",
+  "generated_at": "2026-11-11 02:39 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1054544
+  "code_lines": 1054604
  },
  "version": "1.3.2",
- "facts_hash": "e9ccbb86fc059dc2",
+ "facts_hash": "083da088bfbcc9a9",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 91794,
+   "lines": 91854,
    "tables": [
     "a",
     "alem_do_limite",
@@ -81762,6 +81762,14 @@
    {
     "file": "scripts/maintenance/lib.mjs",
     "msg": "skipped_busy"
+   },
+   {
+    "file": "scripts/maintenance/maintenance.unit.mjs",
+    "msg": "rename ENOENT"
+   },
+   {
+    "file": "scripts/maintenance/maintenance.unit.mjs",
+    "msg": "rename ENOENT: disco cheio"
    },
    {
     "file": "scripts/maintenance/run.mjs",
@@ -270691,7 +270699,7 @@
   },
   "scripts/maintenance/maintenance.unit.mjs": {
    "path": "scripts/maintenance/maintenance.unit.mjs",
-   "lines": 322,
+   "lines": 358,
    "external_urls": [
     "http://192.0.2.1:9"
    ],
@@ -270699,16 +270707,21 @@
     "MAINTENANCE_TEST_",
     "MAINTENANCE_TEST_SECRET"
    ],
+   "errors": [
+    "rename ENOENT",
+    "rename ENOENT: disco cheio"
+   ],
    "temporal": [
     "const gates = `import fs from 'node:fs';import {spawnSync} from 'node:child_process';\\nconst text=fs.readFileSync('src/value.ts','utf8'); const phase=process.ar …"
    ]
   },
   "scripts/maintenance/run.mjs": {
    "path": "scripts/maintenance/run.mjs",
-   "lines": 545,
+   "lines": 569,
    "exports": [
     "function parseArgs",
     "function networkPrefix",
+    "function comLimpeza",
     "function main"
    ],
    "env": [
@@ -270717,6 +270730,9 @@
    "errors": [
     "blocked_network_sandbox",
     "pending_patch"
+   ],
+   "rule_comments": [
+    "`limpar()` tambem falhar (I/O, permissao, disco cheio ao devolver os arquivos da"
    ],
    "doc": "!/usr/bin/env node"
   },
@@ -385933,10 +385949,20 @@
   }
  },
  "git": {
-  "sha": "f3c0c5f7e8a29b057b4459216a8acb8d93169f6c",
+  "sha": "e334b0a1d23f6d2af5318ef01b38a785509db1ea",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e334b0a",
+    "date": "2026-11-10",
+    "author": "adm01-debug",
+    "subject": "fix(maintenance): finally de restore não descarta mais a exceção original (#2933)",
+    "files": [
+     "scripts/maintenance/maintenance.unit.mjs",
+     "scripts/maintenance/run.mjs"
+    ]
+   },
    {
     "sha": "f3c0c5f",
     "date": "2026-11-10",
@@ -386274,18 +386300,17 @@
     "files": [
      "src/pages/ViewRouter.tsx"
     ]
-   },
-   {
-    "sha": "25e13ff",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(ui): Badge não trunca texto longo — overflow quebrava layout (#2805)",
-    "files": [
-     "src/components/ui/badge.tsx"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/maintenance/maintenance.unit.mjs",
+    3
+   ],
+   [
+    "scripts/maintenance/run.mjs",
+    2
+   ],
    [
     "scripts/catalog/validate-plan.mjs",
     2
@@ -386296,10 +386321,6 @@
    ],
    [
     "scripts/maintenance/lib.mjs",
-    2
-   ],
-   [
-    "scripts/maintenance/maintenance.unit.mjs",
     2
    ],
    [
@@ -386360,10 +386381,6 @@
    ],
    [
     ".gitattributes",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/CopilotPanel.tsx",
     1
    ]
   ]

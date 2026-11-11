@@ -2545,12 +2545,12 @@
   {
    "arquivo": "scripts/maintenance/maintenance.unit.mjs",
    "tipo": "unit",
-   "linhas": 322,
+   "linhas": 358,
    "testa": [
     "scripts/maintenance/lib.mjs",
     "scripts/maintenance/run.mjs"
    ],
-   "casos": 20
+   "casos": 25
   },
   {
    "arquivo": "scripts/qa/contatos-redesign-baseline.cjs",
