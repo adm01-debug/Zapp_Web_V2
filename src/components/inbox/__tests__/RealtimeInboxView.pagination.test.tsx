@@ -156,6 +156,9 @@ import { RealtimeInboxView } from '../RealtimeInboxView';
 // ChatMessagesArea), só o carregamento do módulo deixa de ser assíncrono.
 import '../ChatPanel';
 
+// PD-79: painel de mensagens sem confirmação tem query própria; fora do escopo destes testes.
+vi.mock('@/components/inbox/chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
+
 // Mantém espera local ao boundary lazy/Suspense para máquinas lentas, sem alterar
 // o timeout global da suíte nem afrouxar as asserções funcionais deste teste.
 const ESPERA_LAZY = { timeout: 10000, interval: 50 };

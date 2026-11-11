@@ -198,6 +198,9 @@ vi.mock('@/services/chat.service', () => ({
 
 import ChatPopup from '../ChatPopup';
 
+// PD-79: painel de mensagens sem confirmação tem query própria; fora do escopo destes testes.
+vi.mock('@/components/inbox/chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
+
 const PAGE_SIZE = 1000;
 const TOTAL = 1005; // 1000 + 5 → o histórico antigo exige uma segunda página
 const ALTURA_ESTIMADA = 100; // estimateSize do ChatMessagesArea
