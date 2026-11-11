@@ -276,7 +276,9 @@ export async function handleMultiplixSend(
         p_action: dispatchAction,
       });
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });
+        const safeError = typeof error.message === 'string' && !error.message.includes(' ')
+          ? error.message : (error.code || 'transition_failed');
+        return new Response(JSON.stringify({ error: safeError }), { status: 409, headers });
       }
       const transition = Array.isArray(data) ? data[0] : data;
       return new Response(JSON.stringify({ success: true, status: transition?.current_status }), { headers });
