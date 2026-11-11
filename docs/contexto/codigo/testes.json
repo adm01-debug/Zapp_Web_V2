@@ -1494,11 +1494,11 @@
   {
    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
    "tipo": "unit",
-   "linhas": 423,
+   "linhas": 452,
    "testa": [
     "scripts/ci/github-settings-guard.mjs"
    ],
-   "casos": 23
+   "casos": 24
   },
   {
    "arquivo": "scripts/ci/gitleaks-config.unit.mjs",

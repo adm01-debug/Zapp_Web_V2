@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d3a132d1bde527c66b751d3ba201267c7cfafec1",
+  "commit": "090f5f89090ba941ae0c5072e22bae16632d03f1",
   "branch": "main",
-  "data_commit": "2026-11-11T04:52:21-03:00",
+  "data_commit": "2026-11-11T05:13:36-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "090f5f8",
+    "data": "2026-11-11",
+    "assunto": "fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)"
+   },
    {
     "sha": "d3a132d",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "44cdce8",
     "data": "2026-11-10",
     "assunto": "Recupera o rate limit no download das imagens do E2E isolado (#2925)"
-   },
-   {
-    "sha": "c5650d8",
-    "data": "2026-11-10",
-    "assunto": "fix: instalar @types/node via npm no deploy-functions.yml para resolver deno check (#2855)"
    }
   ],
-  "arquivos_mudados_7d": 668,
+  "arquivos_mudados_7d": 670,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -218,10 +218,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
    },
@@ -231,6 +227,10 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 888107,
+  "linhas_codigo": 888136,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 211,
-   "linhas": 43817
+   "linhas": 43846
   },
   "scripts/db-audit": {
    "arquivos": 81,

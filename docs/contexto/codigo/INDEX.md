@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d3a132d1bde527c66b751d3ba201267c7cfafec1` (2026-11-11T04:52:21-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `090f5f89090ba941ae0c5072e22bae16632d03f1` (2026-11-11T05:13:36-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 888107 |
+| linhas_codigo | 888136 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56705 nós · 117174 arestas · 4133 comunidades · grafo do commit `d3a132d1`
+- 56705 nós · 117174 arestas · 4133 comunidades · grafo do commit `090f5f89`
 - comunidades maiores: react (834), lucide-react (779), utils.ts (596), cn (546), DashboardView.tsx (488), ExternalProductManagement.tsx (473), validation.ts (459), ref_https (426), ref_node_fs (401), TalkXCampaignWizard.tsx (383), useTalkXSegments.ts (351), chat.ts (329)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -402,10 +402,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/ci/README.md (13)
 - CLAUDE.md (12)
 - supabase/deployment-manifest.json (12)
-- docs/DB-INVENTORY.md (11)
 - supabase/schema-manifest.json (11)
 - .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
+- docs/DB-INVENTORY.md (10)
 - scripts/db-audit/migration-evidence.json (10)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/e2e-isolated/run.mjs (9)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `090f5f8` fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)
 - 2026-11-11 `d3a132d` fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)
 - 2026-11-11 `15ff5f3` fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)
 - 2026-11-11 `e7646cc` fix(ui-audit): className dinâmico na raiz não é mais silenciado como "" (#2938)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-10 `7f33c27` fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)
 - 2026-11-10 `e334b0a` fix(maintenance): finally de restore não descarta mais a exceção original (#2933)
 - 2026-11-10 `f3c0c5f` fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)
-- 2026-11-10 `3725c34` fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
