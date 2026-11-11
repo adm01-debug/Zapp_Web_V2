@@ -5,10 +5,6 @@
   "eslintConfigSha256": "9e63ecfc90d89ad9c7301e29f7e6e9dbda238aa561d33fb496af781cfff9d2c2",
   "files": [
     {
-      "path": "e2e/inbox-contact-sidebar.spec.ts",
-      "sha256": "9610ace260a2a0eb8c4f2154d5f5c313174ee89dbb8f58ffb371c643c7b9c290"
-    },
-    {
       "path": "src/components/a11y/a11yHooks.tsx",
       "sha256": "252bbfe91307966aee43b64cf60da0735884e3882640b516c48cd2f458675f94"
     },
@@ -633,10 +629,6 @@
       "sha256": "10c33da85f4fdce7a8b72b67cb188bcab4ecbd3c76ac17f24acfac107117ce1f"
     },
     {
-      "path": "src/components/talkx/TalkXSegments.tsx",
-      "sha256": "5ed2d7a91bad162240a0210dcc70f4d74e98238ed5288fa6e20287c2ca26aacf"
-    },
-    {
       "path": "src/components/talkx/TalkXSuppression.tsx",
       "sha256": "8c96c3d74dcca95d0585bc35045cc61fc3835e5a4288b32b5b80dd8033157554"
     },
@@ -767,10 +759,6 @@
     {
       "path": "src/contexts/LayoutScrollContext.tsx",
       "sha256": "c5bd24720c1b7ee3acbdf0c507ca5fcf2e75a685d0c937aedc9d35ba2a2636c8"
-    },
-    {
-      "path": "src/features/talk-me/TalkMeView.tsx",
-      "sha256": "6eceda636cb44a36c79015c14d3f34c9e4781ba84ee565ae861261cab2a1de2c"
     },
     {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
@@ -1146,20 +1134,6 @@
     }
   ],
   "issues": [
-    {
-      "file": "e2e/inbox-contact-sidebar.spec.ts",
-      "line": 40,
-      "column": 5,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "90aa2749824e48247c215e5a71d74608e96165d1c4481f52edd54fabaff5f86c",
-      "contextHash": "c713a21f8ca2752a6e000b7a34f03cf5360c39de44a468b30f285c67042e350f"
-    },
     {
       "file": "src/components/a11y/a11yHooks.tsx",
       "line": 118,
@@ -4311,62 +4285,6 @@
       "contextHash": "1504719c8f9de72865bbb5f700a6799901a31d3264683269e4e9df352dfedb76"
     },
     {
-      "file": "src/components/talkx/TalkXSegments.tsx",
-      "line": 103,
-      "column": 68,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "ac72bf5c261dbb0376f65d8bc4d8d8bac09ceef7c98f1a4201c314633c9b9552",
-      "contextHash": "e28309be46438e48a5b750bbdf2cddff1de6e8aada30c71d7e24b6ba2c588983"
-    },
-    {
-      "file": "src/components/talkx/TalkXSegments.tsx",
-      "line": 264,
-      "column": 56,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "139d62c4d9961f5510e39dcf1d585d6b670a469d07ce3f692550cd578f77e989",
-      "contextHash": "ca9d20b3545a8c1cd84d3cb2a2f141ef1671cc187b6e105c30ca0e9b07749e54"
-    },
-    {
-      "file": "src/components/talkx/TalkXSegments.tsx",
-      "line": 512,
-      "column": 223,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "0bfe359143e568c28f91e349e7b134ed5252bc9d6f50b08b9bd6db6768a04f24",
-      "contextHash": "42d64f1b6f87d45487681e313319b3a3aa4e521d48db157567305c8286e49609"
-    },
-    {
-      "file": "src/components/talkx/TalkXSegments.tsx",
-      "line": 536,
-      "column": 262,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "8bcdff3d7f0935bee3b1b8a978304c0bb89f8051c71a8c15ed0762e8160c16bd",
-      "contextHash": "81dc59ffd4fd4130b749b7f7a6532350d51896e03ea7e69fa65a907fcf512170"
-    },
-    {
       "file": "src/components/talkx/TalkXSuppression.tsx",
       "line": 279,
       "column": 41,
@@ -5163,76 +5081,6 @@
       "spanHash": "2d660602771068d04323c18d227c236b31d5e08cb081ad1100602d64f9eb75a5",
       "lineHash": "740a61b924d3874b251048d858b50b999eb5e145e0e83c39bb366b458a9e26e3",
       "contextHash": "7349e37f1e009a57721653286d77e40bbdf16547c8821cf717fdb1b7515030b3"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 113,
-      "column": 9,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "7ac4859f4b5bb7d7b91765215f681e7cc1f0f4af0e45ebe1dd2a7818ce33d25f",
-      "contextHash": "8abbadded8f50412eb7bfacd6a8937e8df90c74ef59970368d97e6754c71762e"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 115,
-      "column": 9,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "7ac4859f4b5bb7d7b91765215f681e7cc1f0f4af0e45ebe1dd2a7818ce33d25f",
-      "contextHash": "0ec5ee58efc3544a5b1847d6d36592d9f330e440d603f9ca07a0bf962c7cb786"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 202,
-      "column": 9,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "7ac4859f4b5bb7d7b91765215f681e7cc1f0f4af0e45ebe1dd2a7818ce33d25f",
-      "contextHash": "f83f440d9769af5cd51214b2ce35c3e6892a0afc1384382a9d0d0cfe0b3ace98"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 204,
-      "column": 9,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "7ac4859f4b5bb7d7b91765215f681e7cc1f0f4af0e45ebe1dd2a7818ce33d25f",
-      "contextHash": "195d4a5875c57f4ab0c0ceef9fc6adc73691f669b423471be232c641d70ee61a"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 879,
-      "column": 19,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from 'local/no-secret-compare').",
-      "spanHash": null,
-      "lineHash": "7ac4859f4b5bb7d7b91765215f681e7cc1f0f4af0e45ebe1dd2a7818ce33d25f",
-      "contextHash": "309e92a3b167afd395d96671aaf0477034a5403f7eb9f3707c49eba114f2f7a8"
     },
     {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",

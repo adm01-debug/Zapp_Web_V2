@@ -172,7 +172,7 @@ async function changed(root, config, prefix = []) {
   const files = (await git(root, ['diff', '--name-only', '-z', '--no-renames'], undefined, prefix))
     .split('\0')
     .filter(Boolean);
-  if (files.some((f) => !config.fix.roots.some((r) => f.startsWith(`${r}/`))))
+  if (files.some((f) => !config.fix.roots.some((r) => f === r || f.startsWith(`${r}/`))))
     fail('Correção alterou arquivo fora do escopo autorizado');
   const stats = (await git(root, ['diff', '--numstat', '-z', '--no-renames'], undefined, prefix))
     .split('\0')

@@ -161,6 +161,7 @@ jobs:
           node --test scripts/ci/*.unit.mjs
           scripts/eslint/no-secret-compare.unit.mjs
           scripts/lib/seguranca-processo.test.mjs
+          scripts/qa/medir-tipografia.unit.mjs
           scripts/qa/prova-visao-classificadores.unit.mjs
           scripts/talkx/lado-a-lado.unit.mjs
           scripts/talkx/v4-status.unit.mjs
