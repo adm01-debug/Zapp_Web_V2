@@ -46,13 +46,23 @@ result=$(pq "SELECT count(*) FROM information_schema.views WHERE table_schema='p
 
 # 7. RLS habilitado
 echo -n "[7] RLS habilitado em talkx_suppression_reasons ... "
-result=$(pq "SELECT rowsecurity FROM pg_class JOIN pg_namespace ON pg_namespace.oid=pg_class.relnamespace WHERE relname='talkx_suppression_reasons' AND nspname='public';")
+result=$(pq "SELECT relrowsecurity FROM pg_class JOIN pg_namespace ON pg_namespace.oid=pg_class.relnamespace WHERE relname='talkx_suppression_reasons' AND nspname='public';")
 [[ "$result" == "t" ]] && echo "OK" || { echo "FALHOU (got: $result)"; exit 1; }
 
 # 8. talkx_suppress_contact existe e é SECURITY DEFINER
 echo -n "[8] talkx_suppress_contact SECURITY DEFINER ... "
 result=$(pq "SELECT prosecdef FROM pg_proc JOIN pg_namespace ON pg_namespace.oid=pg_proc.pronamespace WHERE proname='talkx_suppress_contact' AND nspname='public';")
 [[ "$result" == "t" ]] && echo "OK" || { echo "FALHOU (got: $result)"; exit 1; }
+
+# 9. Gatilho de motivo ativo em talkx_blacklist
+echo -n "[9] trg_talkx_blacklist_reason_active existe ... "
+result=$(pq "SELECT count(*) FROM pg_trigger WHERE tgname='trg_talkx_blacklist_reason_active' AND tgrelid='public.talkx_blacklist'::regclass;")
+[[ "$result" == "1" ]] && echo "OK" || { echo "FALHOU (got: $result)"; exit 1; }
+
+# 10. authenticated nao escreve is_system (GRANT so de colunas editaveis)
+echo -n "[10] authenticated sem INSERT/UPDATE em is_system ... "
+result=$(pq "SELECT has_column_privilege('authenticated','public.talkx_suppression_reasons','is_system','INSERT') OR has_column_privilege('authenticated','public.talkx_suppression_reasons','is_system','UPDATE');")
+[[ "$result" == "f" ]] && echo "OK" || { echo "FALHOU (got: $result)"; exit 1; }
 
 echo ""
 echo "=== TODOS OS TESTES PASSARAM ==="
