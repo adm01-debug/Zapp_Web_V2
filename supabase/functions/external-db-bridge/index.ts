@@ -19,12 +19,66 @@ const RPC_ALLOWLIST: ReadonlySet<string> = new Set<string>([
   "get_external_message_count",
 ]);
 
-function validIdentifier(value: unknown): value is string {
-  return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);
+// Parâmetros de query que o PostgREST interpreta como CONTROLE, não como coluna:
+// um "filtro" com esse nome viraria `?select=eq.x`/`?or=eq.(...)`/`?limit=eq.1`
+// ao lado dos parâmetros reais montados pelo supabase-js.
+const POSTGREST_RESERVED: ReadonlySet<string> = new Set([
+  'select', 'or', 'and', 'not', 'order', 'limit', 'offset', 'on_conflict', 'columns',
+]);
+
+export function validIdentifier(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-z_][a-z0-9_]{0,62}$/i.test(value)
+    && !POSTGREST_RESERVED.has(value.toLowerCase());
 }
 const FILTER_OPERATORS: ReadonlySet<string> = new Set([
   'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike', 'is', 'in',
 ]);
+const MAX_FILTERS = 20;
+const MAX_IN_ITEMS = 1000;
+
+type Scalar = string | number | boolean;
+type ValidFilter = { column: string; operator: string; value: Scalar | null };
+
+function isScalar(value: unknown): value is Scalar {
+  return typeof value === 'string' || typeof value === 'boolean'
+    || (typeof value === 'number' && Number.isFinite(value));
+}
+
+/** Item de lista do `in`: string sempre entre aspas (vírgula/parêntese/aspas escapados). */
+function inListItem(value: Scalar): string {
+  if (typeof value !== 'string') return String(value);
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+/**
+ * Valida `params.filters`: array de objetos `{ column, operator, value }`, coluna
+ * identificador simples (sem nome reservado do PostgREST), operador da allowlist,
+ * valor escalar — e, no `in`, array de escalares que vira `("a","b")`. Qualquer
+ * outra forma é erro do PEDIDO (400), não do servidor (antes: TypeError → 500).
+ */
+export function parseFilters(raw: unknown): ValidFilter[] | null {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.length > MAX_FILTERS) return null;
+  const filters: ValidFilter[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+    const { column, operator, value } = item as Record<string, unknown>;
+    if (!validIdentifier(column) || typeof operator !== 'string' || !FILTER_OPERATORS.has(operator)) return null;
+    if (operator === 'in') {
+      if (!Array.isArray(value) || value.length < 1 || value.length > MAX_IN_ITEMS || !value.every(isScalar)) return null;
+      filters.push({ column, operator, value: `(${value.map(inListItem).join(',')})` });
+      continue;
+    }
+    if (operator === 'is') {
+      if (value !== null && value !== true && value !== false) return null;
+      filters.push({ column, operator, value: value === null ? 'null' : String(value) });
+      continue;
+    }
+    if (!isScalar(value)) return null;
+    filters.push({ column, operator, value });
+  }
+  return filters;
+}
 
 function isOperationAllowed(action: string, table?: string | null, rpc?: string | null): boolean {
   if (action === "rpc") return !!rpc && RPC_ALLOWLIST.has(rpc);
@@ -173,17 +227,17 @@ export async function handleExternalDbBridge(
         let query: any = supabaseAdmin.from(table).select(selectParam || "*", {
           count: (countMode as "exact" | "planned" | "estimated") || undefined,
         });
-        if (params?.filters) {
-          for (const f of params.filters as Array<{ column: string; operator: string; value: unknown }>) {
-            if (!validIdentifier(f.column) || !FILTER_OPERATORS.has(f.operator)) {
-              return errorResponse("Invalid filter column or operator", 400, req);
-            }
-            query = query.filter(f.column, f.operator, f.value);
-          }
+        const filters = parseFilters(params?.filters);
+        if (!filters) {
+          return errorResponse("Invalid filter column or operator", 400, req);
         }
-        if (params?.order) {
-          const ord = params.order as { column: string; ascending?: boolean };
-          if (!validIdentifier(ord.column)) {
+        for (const f of filters) {
+          query = query.filter(f.column, f.operator, f.value);
+        }
+        if (params?.order !== undefined) {
+          const ord = params.order as { column?: unknown; ascending?: unknown } | null;
+          if (!ord || typeof ord !== 'object' || Array.isArray(ord) || !validIdentifier(ord.column)
+              || (ord.ascending !== undefined && typeof ord.ascending !== 'boolean')) {
             return errorResponse("Invalid order column", 400, req);
           }
           query = query.order(ord.column, { ascending: ord.ascending ?? true });
