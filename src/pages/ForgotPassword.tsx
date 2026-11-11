@@ -36,36 +36,21 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      // First, find the user by email
-      // We need to create a reset request instead of directly sending
-      const { data: existingUser, error: userError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('email', email)
-        .maybeSingle();
+      // O pedido é criado pelo servidor (request_password_reset, SECURITY DEFINER):
+      // quem esqueceu a senha não está logado, e anon não lê profiles nem grava em
+      // password_reset_requests. A função responde igual exista ou não o e-mail
+      // (não revela quem tem conta) e o pedido fica pendente até o gestor liberar.
+      // @ts-expect-error request_password_reset entra nos tipos gerados após a migration 20261111140000
+      const { error: requestError } = await supabase.rpc('request_password_reset', {
+        p_email: email,
+        p_reason: reason || null,
+        p_user_agent: navigator.userAgent,
+      });
 
-      if (!existingUser) {
-        // Don't reveal if user exists or not for security
-        setSent(true);
-        toast.success('Se o email existir, sua solicitação será analisada.');
-        return;
-      }
-
-      // Create password reset request
-      const { error: insertError } = await supabase
-        .from('password_reset_requests')
-        .insert({
-          user_id: existingUser.user_id,
-          email,
-          reason: reason || null,
-          ip_address: null, // Could get from an API if needed
-          user_agent: navigator.userAgent,
-        });
-
-      if (insertError) throw insertError;
+      if (requestError) throw requestError;
 
       setSent(true);
-      toast.success('Solicitação enviada! Aguarde a aprovação de um administrador.');
+      toast.success('Se o email estiver cadastrado, o pedido foi enviado para aprovação do gestor.');
     } catch (err: unknown) {
       log.error('Error submitting reset request:', err);
       setError('Erro ao enviar solicitação. Tente novamente.');
