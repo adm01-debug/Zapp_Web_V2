@@ -16,6 +16,15 @@ export const MAX_LOG_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
+/**
+ * S5145: neutraliza quebra de linha e caracteres de controle em valor vindo de
+ * fora (ex.: nome de função do manifesto) antes de ele virar linha de log —
+ * em especial dentro de um comando `::error::`/`::warning::` do Actions, onde
+ * uma quebra de linha forja uma anotação nova. Mesmo tratamento já aplicado em
+ * scripts/edge-deploy/register-deployment.mjs e scripts/ci/github-settings-guard.mjs.
+ */
+export const semQuebra = (valor) => String(valor ?? '').replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 export class TransientAnalyticsError extends Error {
   constructor(message) {
     super(message);
@@ -247,7 +256,7 @@ export async function runHealthCheck(args, {
     });
   } catch (error) {
     if (!(error instanceof TransientAnalyticsError)) throw error;
-    logger.error(`::warning::Health check sem observabilidade transitória: ${error.message}. Prosseguindo.`);
+    logger.error(`::warning::Health check sem observabilidade transitória: ${semQuebra(error.message)}. Prosseguindo.`);
     return { status: 'warning', reason: error.message };
   }
 
@@ -286,7 +295,7 @@ export async function main(argv = process.argv.slice(2), dependencies) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   main().catch((error) => {
-    console.error(`::error::health-check.mjs falhou: ${error.message}`);
+    console.error(`::error::health-check.mjs falhou: ${semQuebra(error.message)}`);
     process.exitCode = 1;
   });
 }
