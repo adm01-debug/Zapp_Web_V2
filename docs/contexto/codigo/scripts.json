@@ -4550,7 +4550,7 @@
   {
    "arquivo": "scripts/ui-audit/layout-guard.mjs",
    "descricao": "* layout-guard.mjs — Etapa 27",
-   "linhas": 184,
+   "linhas": 223,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

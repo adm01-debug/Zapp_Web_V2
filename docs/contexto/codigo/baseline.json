@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ce06abc4b07938c259674fb08ee574417acc4855",
+  "commit": "240ac5b0e8cf816218251bf78a64c6604c880b6b",
   "branch": "main",
-  "data_commit": "2026-11-11T01:14:10-03:00",
+  "data_commit": "2026-11-11T01:40:00-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "240ac5b",
+    "data": "2026-11-11",
+    "assunto": "fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)"
+   },
    {
     "sha": "ce06abc",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "3d97dc7",
     "data": "2026-11-10",
     "assunto": "fix(catalogo): valida etapas e datas do plano de implementação (#2918)"
-   },
-   {
-    "sha": "5bdf733",
-    "data": "2026-11-10",
-    "assunto": "fix(e2e): usa proxy e CA apenas na compilação isolada (#2920)"
    }
   ],
   "arquivos_mudados_7d": 664,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8384,
   "arquivos_codigo": 4801,
-  "linhas_codigo": 887829,
+  "linhas_codigo": 887889,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -684,7 +684,7 @@
   },
   "scripts/ui-audit": {
    "arquivos": 7,
-   "linhas": 709
+   "linhas": 769
   },
   "scripts/vercel": {
    "arquivos": 2,

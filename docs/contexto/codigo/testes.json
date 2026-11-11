@@ -2666,9 +2666,9 @@
   {
    "arquivo": "scripts/ui-audit/layout-guard.unit.mjs",
    "tipo": "unit",
-   "linhas": 142,
+   "linhas": 163,
    "testa": [],
-   "casos": 8
+   "casos": 10
   },
   {
    "arquivo": "scripts/ui-audit/view-container-padding.unit.mjs",
