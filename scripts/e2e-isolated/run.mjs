@@ -448,7 +448,7 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
     const bunPath = realpathSync(required(execute('which', ['bun']), 'bun-unavailable'));
     if (!statSync(bunPath).isFile() || !existsSync(path.join(ROOT, 'node_modules/@playwright/test/package.json'))) throw new Error('dependencies-not-installed');
     const playwrightVersion = JSON.parse(readFileSync(path.join(ROOT, 'node_modules/@playwright/test/package.json'), 'utf8')).version;
-    if (playwrightVersion !== '1.64.1') throw new Error('playwright-image-version-mismatch');
+    if (playwrightVersion !== '1.65.0') throw new Error('playwright-image-version-mismatch');
     if (ORIGIN !== TLS_ORIGIN) throw new Error('tls-origin-mismatch');
     const tlsTools = preflightTlsTools({ directory: path.join(runRoot, 'tls-tools'), command: execute });
     mountTargets.push(...prepareMountTargets(ROOT, [
