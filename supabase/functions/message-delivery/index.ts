@@ -481,6 +481,45 @@ async function failClaim(
   if (error) console.error(JSON.stringify({ event: 'message_delivery_fail_transition', code: error.code }));
 }
 
+/** 42703 = coluna inexistente (Postgres via PostgREST): DDL ainda não aplicado. */
+export function isMissingColumnError(error: { code?: string } | null | undefined): boolean {
+  return error?.code === '42703';
+}
+
+const UNCLAIMED_BASE_COLUMNS = 'agent_id, sender, status, external_id, contact_id, whatsapp_connection_id';
+
+type UnclaimedRow = {
+  agent_id?: string | null; sender?: string | null; status?: string | null;
+  external_id?: string | null; contact_id?: string | null;
+  whatsapp_connection_id?: string | null;
+  delivery_claim_expires_at?: string | null;
+  delivery_post_started_at?: string | null;
+};
+
+/**
+ * Lê a linha do claim vazio. As colunas do PD-79 (`delivery_post_started_at`,
+ * `delivery_claim_expires_at` para o lease) só existem depois da migration
+ * 20261111160000; antes dela o SELECT devolve 42703 e o handler respondia 404
+ * "Message not found" para TODO claim vazio (inclusive o 200 idempotente). Pré-DDL
+ * repete sem a coluna nova: sem coluna = sem carimbo = comportamento anterior.
+ */
+async function readUnclaimedMessage(
+  service: DeliveryDbClient,
+  messageId: string,
+): Promise<{ data: UnclaimedRow | null; error: { code?: string } | null }> {
+  const first = await service
+    .from('messages')
+    .select(`${UNCLAIMED_BASE_COLUMNS}, delivery_claim_expires_at, delivery_post_started_at`)
+    .eq('id', messageId)
+    .maybeSingle();
+  if (!isMissingColumnError(first.error)) return first;
+  return await service
+    .from('messages')
+    .select(`${UNCLAIMED_BASE_COLUMNS}, delivery_claim_expires_at`)
+    .eq('id', messageId)
+    .maybeSingle();
+}
+
 /**
  * Claim vazio: descobre a CAUSA lendo contato + conexão (os mesmos critérios
  * da claim_outbound_message: conexão 'connected' com instance_id e telefone
@@ -494,7 +533,9 @@ async function classifyUnclaimedCause(
     status?: string | null; contact_id?: string | null;
     whatsapp_connection_id?: string | null;
     delivery_post_started_at?: string | null;
+    delivery_claim_expires_at?: string | null;
   },
+  now: number = Date.now(),
 ): Promise<DeliveryFailure> {
   // Mensagem sem contato (envio para GRUPO, `whatsapp_group_id`; 20261011155946):
   // o destino é o JID do grupo, não um telefone de `contacts`. Esta leitura de
@@ -506,7 +547,12 @@ async function classifyUnclaimedCause(
   // PD-79: POST já iniciado = resultado ambíguo, independente do estado da conexão.
   // Verificar ANTES de qualquer lookup de contato/conexão: uma conexão que cai
   // após o POST sair não torna o resultado "não ambíguo".
+  // Exceção: lease AINDA VIVO = o envio que carimbou continua em voo (ex.: duplo
+  // clique durante o POST) → "em andamento" (409), não "pode ter sido entregue".
   if (existing.delivery_post_started_at && existing.status === 'sending') {
+    const leaseExpiresAt = existing.delivery_claim_expires_at
+      ? Date.parse(existing.delivery_claim_expires_at) : Number.NaN;
+    if (Number.isFinite(leaseExpiresAt) && leaseExpiresAt > now) return IN_PROGRESS_FAILURE;
     return unconfirmedReceiptFailure();
   }
   if (!existing.contact_id) {
@@ -655,11 +701,7 @@ export async function handleMessageDeliveryRequest(
 
   const claim = (claimedRows?.[0] ?? null) as Claim | null;
   if (!claim) {
-    const { data: existing, error: existingError } = await service
-      .from('messages')
-      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id, delivery_post_started_at')
-      .eq('id', messageId)
-      .maybeSingle();
+    const { data: existing, error: existingError } = await readUnclaimedMessage(service, messageId);
     if (existingError || !existing || existing.agent_id !== profile.id || existing.sender !== 'agent') {
       return errorResponse('Message not found', 404, req);
     }
@@ -668,8 +710,9 @@ export async function handleMessageDeliveryRequest(
     }
     // Claim vazio: a causa decide o código — conexão fora do ar, número
     // inválido, lease vivo em outro worker ou linha terminal sem recibo.
-    // PD-79: o subcaso "POST iniciado + lease vencido" continua resolvido pelo
-    // fluxo PD-78/PD-79 (fail_outbound_unclaimed), não aqui. Não reenviamos.
+    // PD-79: "POST iniciado + lease vencido" vira receipt_unconfirmed (ambíguo);
+    // a linha fica em 'sending' até o operador resolvê-la explicitamente
+    // (resolve_unconfirmed_message). Não reenviamos.
     return deliveryFailureResponse(await classifyUnclaimedCause(service, existing), req);
   }
 
@@ -715,11 +758,17 @@ export async function handleMessageDeliveryRequest(
     if (markError) {
       // Pré-DDL: a Edge é publicada automaticamente no push da main, mas a migration
       // 20261111160000 só roda pelo db-migrate (manual, com aprovação). Enquanto a RPC
-      // não existe (PGRST202 no PostgREST / 42883 no Postgres), segue o fluxo anterior
-      // ao PD-79 — sem carimbo — em vez de derrubar todo envio. Qualquer outro erro
-      // continua sendo infra pré-dispatch: nada saiu.
-      if (markError.code === 'PGRST202' || markError.code === '42883') {
-        console.error(JSON.stringify({ event: 'message_delivery_post_stamp_unavailable', code: markError.code }));
+      // não existe no schema cache, o PostgREST devolve PGRST202 (HTTP 404) e o envio
+      // segue o fluxo anterior ao PD-79 — sem carimbo — em vez de derrubar todo envio.
+      // SÓ PGRST202: um 42883 viria de DENTRO de uma função existente (defeito real),
+      // e esse continua sendo infra pré-dispatch como qualquer outro erro: nada saiu.
+      if (markError.code === 'PGRST202') {
+        console.error(JSON.stringify({
+          event: 'message_delivery_post_stamp_unavailable',
+          level: 'alert',
+          code: markError.code,
+          detail: 'fencing PD-79 desligado: mark_outbound_post_started ausente no schema cache',
+        }));
       } else {
         throw new PreDispatchInfraError('mark_outbound_post_started_failed');
       }

@@ -459,15 +459,21 @@ export function makeEffectReconcileDeps(opts: {
     // Guarda pelos estados INCERTOS: já confirmado por outro caminho não é
     // sobrescrito (idempotente). Linha fora desses estados → 0 linhas.
     // C110: não sobrescreve resolução manual do operador (coluna só existe em messages)
-    let q = opts.supabase
-      .from(rule.sourceTable)
-      .update(patch)
-      .eq("id", ctx.sourceId)
-      .in("status", rule.uncertainStatuses);
-    if (rule.sourceTable === "messages") {
-      q = q.is("manually_resolved_at", null);
+    const runUpdate = async (guardManualResolution: boolean) => {
+      let q = opts.supabase
+        .from(rule.sourceTable)
+        .update(patch)
+        .eq("id", ctx.sourceId)
+        .in("status", rule.uncertainStatuses);
+      if (guardManualResolution) q = q.is("manually_resolved_at", null);
+      return await q.select("id");
+    };
+    let { data, error } = await runUpdate(rule.sourceTable === "messages");
+    // 42703 = manually_resolved_at ainda não existe (pré-DDL da 20261111160000):
+    // sem a coluna não há resolução manual a proteger — repete sem o filtro.
+    if (error && rule.sourceTable === "messages" && (error as { code?: string }).code === "42703") {
+      ({ data, error } = await runUpdate(false));
     }
-    const { data, error } = await q.select("id");
     if (error) {
       throw new AiJobInfraError(
         `effect-reconcile: atualizacao de ${rule.sourceTable} falhou: ${error.message ?? "erro"}`,

@@ -12,6 +12,18 @@ export interface UnconfirmedMessage {
   agent_id: string | null;
 }
 
+/** 42703 = coluna ausente; PGRST202 = função ausente no schema cache (pré-DDL). */
+export function isSchemaNotReadyError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === '42703' || code === 'PGRST202';
+}
+
+interface UnconfirmedQueryResult {
+  rows: UnconfirmedMessage[];
+  /** false = migration 20261111160000 ainda não aplicada. */
+  schemaReady: boolean;
+}
+
 // Janela mínima antes de exibir como "ambígua": 2 minutos após o POST ter sido iniciado.
 // Abaixo desse limiar o job de reconciliação ainda pode fechar sozinho.
 const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;
@@ -24,8 +36,8 @@ export function useUnconfirmedMessages(
 
   const query = useQuery({
     queryKey: ['unconfirmed-messages', conversationContactId ?? null, conversationGroupId ?? null],
-    queryFn: async () => {
-      if (!conversationContactId && !conversationGroupId) return [];
+    queryFn: async (): Promise<UnconfirmedQueryResult> => {
+      if (!conversationContactId && !conversationGroupId) return { rows: [], schemaReady: true };
       const threshold = new Date(Date.now() - AMBIGUOUS_THRESHOLD_MS).toISOString();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q = (supabase as any)
@@ -33,7 +45,9 @@ export function useUnconfirmedMessages(
         .select('id, content, created_at, delivery_post_started_at, status, contact_id, agent_id')
         .eq('sender', 'agent')
         .not('delivery_post_started_at', 'is', null)
-        .not('status', 'in', '("sent","delivered","read")')
+        // Só 'sending' é ambígua: 'failed' com carimbo foi recusa DEFINITIVA do
+        // provedor (fail_outbound_message), não pode virar "entregue" à mão.
+        .eq('status', 'sending')
         .is('manually_resolved_at', null)
         .lt('delivery_post_started_at', threshold)
         .order('created_at', { ascending: false });
@@ -44,11 +58,18 @@ export function useUnconfirmedMessages(
         q = q.eq('contact_id', conversationContactId);
       }
       const { data, error } = await q;
-      if (error) throw error;
-      return (data ?? []) as unknown as UnconfirmedMessage[];
+      if (error) {
+        // Migration 20261111160000 ainda não aplicada (o front publica antes do
+        // db-migrate): sem as colunas não existe mensagem ambígua a listar.
+        if (isSchemaNotReadyError(error)) return { rows: [], schemaReady: false };
+        throw error;
+      }
+      return { rows: (data ?? []) as unknown as UnconfirmedMessage[], schemaReady: true };
     },
     enabled: !!conversationContactId || !!conversationGroupId,
-    refetchInterval: 30_000,
+    // Pré-DDL não martela o PostgREST a cada 30 s: o polling só liga quando a
+    // coluna existe (a próxima montagem/foco volta a checar).
+    refetchInterval: (q) => (q.state.data?.schemaReady === false ? false : 30_000),
   });
 
   const resolveMutation = useMutation({
@@ -68,7 +89,9 @@ export function useUnconfirmedMessages(
       toast({ title: `Mensagem ${label}`, description: 'Status corrigido manualmente.' });
     },
     onError: (error: Error) => {
-      const msg = error.message.includes('message_not_resolvable')
+      const msg = isSchemaNotReadyError(error)
+        ? 'Correção manual ainda indisponível. Tente mais tarde.'
+        : error.message.includes('message_not_resolvable')
         ? 'Mensagem já resolvida ou não elegível.'
         : error.message.includes('admin_or_supervisor_required')
           ? 'Apenas admins e supervisores podem corrigir status.'
@@ -78,7 +101,7 @@ export function useUnconfirmedMessages(
   });
 
   return {
-    messages: query.data ?? [],
+    messages: query.data?.rows ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     resolve: resolveMutation.mutate,

@@ -36,22 +36,33 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
     // real (ux_messages_dedup) -- sem isso, uma colisao de external_id entre duas
     // conexoes (ou entre as duas direcoes da conversa) faria este pre-check achar
     // a linha errada e marcar a mensagem do contato como 'sent'.
-    let dupCheckQuery = supabase.from('messages')
-      .select('id, status, manually_resolved_at').eq('external_id', externalId).eq('sender', 'agent');
-    if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: existingMessage, error: dupCheckError } = await (dupCheckQuery as any)
-      .order('created_at', { ascending: false }).limit(1).maybeSingle();
-    // Fix #9: log query error — pode indicar coluna ausente (deploy antes do DDL)
-    if (dupCheckError) console.warn('[handleMessages] dupCheck query error:', (dupCheckError as { message?: string }).message);
+    // 42703 = manually_resolved_at ainda não existe (pré-DDL da 20261111160000):
+    // repete sem a coluna — sem ela não há resolução manual a proteger.
+    const dupCheck = async (columns: string) => {
+      let q = supabase.from('messages')
+        .select(columns).eq('external_id', externalId).eq('sender', 'agent');
+      if (connection?.id) q = q.eq('whatsapp_connection_id', connection.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return await (q as any).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    };
+    let { data: existingMessage, error: dupCheckError } = await dupCheck('id, status, manually_resolved_at');
+    let dupColumnExists = true;
+    if (dupCheckError?.code === '42703') {
+      dupColumnExists = false;
+      ({ data: existingMessage, error: dupCheckError } = await dupCheck('id, status'));
+    }
+    if (dupCheckError) console.warn('[handleMessages] dupCheck query error:', (dupCheckError as { code?: string }).code);
 
     if (existingMessage?.id) {
       // C110: recibo tardio não sobrescreve decisão manual do operador
       if (!(existingMessage as { manually_resolved_at?: unknown }).manually_resolved_at
           && shouldUpdateStatus((existingMessage as { status?: unknown }).status as string | null, 'sent')) {
-        await supabase.from('messages')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let updateQ: any = supabase.from('messages')
           .update({ status: 'sent', external_id: externalId, status_updated_at: now })
           .eq('id', existingMessage.id);
+        if (dupColumnExists) updateQ = updateQ.is('manually_resolved_at', null);
+        await updateQ;
       }
       updatedMessageId = existingMessage.id as string;
     }
@@ -73,21 +84,31 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
           }
 
           const recentCutoff = new Date(Date.now() - 300_000).toISOString();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: pendingMessage, error: pendingError } = await (supabase.from('messages') as any)
-            .select('id, manually_resolved_at').eq('contact_id', contact.id).eq('sender', 'agent')
-            .eq('message_type', webhookMsgType).is('external_id', null)
-            .gte('created_at', recentCutoff).order('created_at', { ascending: true })
-            .limit(1).maybeSingle();
-          // Fix #9: log query error — pode indicar coluna ausente (deploy antes do DDL)
-          if (pendingError) console.warn('[handleMessages] pendingMessage query error:', (pendingError as { message?: string }).message);
+          const pendingLookup = async (columns: string) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from('messages') as any)
+              .select(columns).eq('contact_id', contact.id).eq('sender', 'agent')
+              .eq('message_type', webhookMsgType).is('external_id', null)
+              .gte('created_at', recentCutoff).order('created_at', { ascending: true })
+              .limit(1).maybeSingle();
+          let { data: pendingMessage, error: pendingError } = await pendingLookup('id, manually_resolved_at');
+          // 42703 = coluna ainda não existe (pré-DDL): repete sem manually_resolved_at.
+          let pendingColumnExists = true;
+          if (pendingError?.code === '42703') {
+            pendingColumnExists = false;
+            ({ data: pendingMessage, error: pendingError } = await pendingLookup('id'));
+          }
+          if (pendingError) console.warn('[handleMessages] pendingMessage query error:', (pendingError as { code?: string }).code);
 
           if (pendingMessage?.id) {
             // C110: recibo tardio não sobrescreve decisão manual do operador
             if (!(pendingMessage as { manually_resolved_at?: unknown }).manually_resolved_at) {
-              await supabase.from('messages')
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              let updatePendingQ: any = supabase.from('messages')
                 .update({ status: 'sent', external_id: externalId, status_updated_at: now })
                 .eq('id', pendingMessage.id);
+              if (pendingColumnExists) updatePendingQ = updatePendingQ.is('manually_resolved_at', null);
+              await updatePendingQ;
             }
             updatedMessageId = pendingMessage.id as string;
           }
