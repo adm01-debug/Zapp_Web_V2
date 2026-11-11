@@ -54,6 +54,7 @@
 | supabase_realtime_messages_publication | realtime.messages_2026_11_11 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_12 |  |
 | supabase_realtime_messages_publication | realtime.messages_2026_11_13 |  |
+| supabase_realtime_messages_publication | realtime.messages_2026_11_14 |  |
 
 ## Broadcast / Presence (policies em realtime.messages)
 
