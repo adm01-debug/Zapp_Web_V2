@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b548ca08c1f8e19c33286d2794f03132851cbaeb",
+  "commit": "9084db736411df86ca4d52e4642301471077451b",
   "branch": "main",
-  "data_commit": "2026-11-11T10:08:32-03:00",
+  "data_commit": "2026-11-11T10:57:24-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9084db7",
+    "data": "2026-11-11",
+    "assunto": "fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)"
+   },
    {
     "sha": "b548ca0",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "7f33c27",
     "data": "2026-11-10",
     "assunto": "fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)"
-   },
-   {
-    "sha": "e334b0a",
-    "data": "2026-11-10",
-    "assunto": "fix(maintenance): finally de restore não descarta mais a exceção original (#2933)"
    }
   ],
-  "arquivos_mudados_7d": 642,
+  "arquivos_mudados_7d": 630,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -234,10 +234,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
     "mudancas": 9
    },
@@ -263,6 +259,10 @@
    },
    {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 8
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8386,
   "arquivos_codigo": 4803,
-  "linhas_codigo": 888488,
+  "linhas_codigo": 888505,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -688,7 +688,7 @@
   },
   "scripts/vercel": {
    "arquivos": 2,
-   "linhas": 332
+   "linhas": 349
   },
   "src/App.tsx": {
    "arquivos": 1,

@@ -4591,7 +4591,7 @@
   {
    "arquivo": "scripts/vercel/ignore-build.sh",
    "descricao": "V076: Ignora build do Vercel quando apenas arquivos não-front mudaram. Contrato: exit 1 = buildar, exit 0 = pular.",
-   "linhas": 39,
+   "linhas": 48,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

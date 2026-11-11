@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)",
    "fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)",
    "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)",
    "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)",
-   "fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)",
-   "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)"
+   "fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
