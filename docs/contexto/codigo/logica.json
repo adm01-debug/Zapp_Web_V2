@@ -727,7 +727,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 373,
+   "usado_por": 374,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -768,6 +768,7 @@
     "hooks/copilot",
     "hooks/crm",
     "hooks/dashboard",
+    "hooks/delivery",
     "hooks/evolution",
     "hooks/gamification",
     "hooks/gmail",
@@ -5176,7 +5177,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 469,
+   "usado_por": 470,
    "usado_por_modulos": [
     "components",
     "components/a11y",

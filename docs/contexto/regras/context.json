@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d4f25e704294bc3439d7c82dba508ceae6cc768d",
+  "sha": "9727aaeddf83e20405f8ec5db0825d4b50704833",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 17:25 UTC",
-  "files_total": 8228,
-  "code_files": 6075,
-  "code_lines": 1055390
+  "generated_at": "2026-11-11 17:44 UTC",
+  "files_total": 8231,
+  "code_files": 6078,
+  "code_lines": 1057163
  },
  "version": "1.3.2",
- "facts_hash": "db4e8bc70707ef03",
+ "facts_hash": "69f9a763d440c055",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -317,9 +317,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2337,
-   ".ts": 1889,
-   ".sql": 1300,
+   ".tsx": 2338,
+   ".ts": 1890,
+   ".sql": 1301,
    ".mjs": 430,
    ".py": 119,
    ".cjs": 19,
@@ -26759,10 +26759,10 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
     "security_definer": false,
     "search_path": true,
-    "body": "BEGIN IF current_user IN ('postgres', 'service_role') THEN RETURN NEW; END IF; IF (TG_OP = 'INSERT' AND ( NEW.client_message_id IS NOT NULL OR NEW.delivery_claim_token IS NOT NULL OR NEW.delivery_claimed_at IS NOT NULL OR NEW.delivery_claim_expires_at IS NOT NULL OR NEW.delivery_claimed_by IS NOT NULL OR NEW.delivery_last_claim_token IS NOT NULL OR NEW.delivery_attempt_count <> 0 )) OR (TG_OP = 'UPDATE' AND ( NEW.client_message_id IS DISTINCT FROM OLD.client_message_id OR NEW.delivery_claim_token IS DISTINCT FROM OLD.delivery_claim_token OR NEW.delivery_claimed_at IS DISTINCT FROM OLD.delivery_claimed_at OR NEW.delivery_claim_expires_at IS DISTINCT FROM OLD.delivery_claim_expires_at OR NEW.d …",
+    "body": "BEGIN IF current_user IN ('postgres', 'service_role') THEN RETURN NEW; END IF; IF (TG_OP = 'INSERT' AND ( NEW.client_message_id IS NOT NULL OR NEW.delivery_claim_token IS NOT NULL OR NEW.delivery_claimed_at IS NOT NULL OR NEW.delivery_claim_expires_at IS NOT NULL OR NEW.delivery_claimed_by IS NOT NULL OR NEW.delivery_last_claim_token IS NOT NULL OR NEW.delivery_attempt_count <> 0 OR NEW.delivery_post_started_at IS NOT NULL OR NEW.manually_resolved_at IS NOT NULL )) OR (TG_OP = 'UPDATE' AND ( NEW.client_message_id IS DISTINCT FROM OLD.client_message_id OR NEW.delivery_claim_token IS DISTINCT FROM OLD.delivery_claim_token OR NEW.delivery_claimed_at IS DISTINCT FROM OLD.delivery_claimed_at OR N …",
     "raises": [
      "message_delivery_internal_fields_forbidden",
      "message_delivery_payload_immutable"
@@ -26805,7 +26805,7 @@
     "args": "p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90",
     "returns": "TABLE(\n  message_id uuid,\n  client_message_id uuid,\n  contact_id uuid,\n  agent_id uuid,\n  content text,\n  message_type text,\n  media_url text,\n  caption text,\n  media_filename text,\n  media_mimetype text,\n  reply_to_id uuid,\n  reply_external_id text,\n  whatsapp_connection_id uuid,\n  whatsapp_instance_name text,\n  contact_phone text,\n  claim_token uuid,\n  claim_expires_at timestamptz,\n  delivery_attempt_count integer\n)",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
     "security_definer": true,
     "search_path": true,
     "body": "BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_message_id IS NULL OR p_agent_id IS NULL OR p_worker IS NULL OR p_worker !~ '^[A-Za-z0-9._:@/-]{1,100}$' OR p_lease_seconds IS NULL OR p_lease_seconds NOT BETWEEN 30 AND 300 THEN RAISE EXCEPTION 'invalid_delivery_claim' USING ERRCODE = '22023'; END IF; RETURN QUERY WITH candidate AS ( SELECT message.id, connection.id AS resolved_connection_id FROM public.messages AS message LEFT JOIN public.contacts AS contact ON contact.id = message.contact_id LEFT JOIN public.whatsapp_groups AS grp ON grp.id = message.whatsapp_group_id JOIN public.whatsapp_connections AS c …",
@@ -33963,6 +33963,47 @@
      "v_local",
      "v_suppressed",
      "whatsapp_connections"
+    ]
+   },
+   "mark_outbound_post_started": {
+    "args": "p_message_id uuid, p_claim_token uuid",
+    "returns": "public.messages",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_message public.messages%ROWTYPE; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_message_id IS NULL OR p_claim_token IS NULL THEN RAISE EXCEPTION 'invalid_delivery_post_mark' USING ERRCODE = '22023'; END IF; SELECT * INTO v_message FROM public.messages AS message WHERE message.id = p_message_id FOR UPDATE; IF NOT FOUND THEN RAISE EXCEPTION 'outbound_message_not_found' USING ERRCODE = 'P0002'; END IF; IF v_message.delivery_claim_token IS DISTINCT FROM p_claim_token OR v_message.sender IS DISTINCT FROM 'agent' OR v_message.status IS DISTINCT FROM 'sending' OR v_message.external_id IS NOT NULL THEN …",
+    "raises": [
+     "service_role_required",
+     "invalid_delivery_post_mark",
+     "outbound_message_not_found",
+     "outbound_delivery_claim_conflict",
+     "delivery_claim_expired",
+     "outbound_post_already_started"
+    ],
+    "tables": [
+     "messages",
+     "p_claim_token",
+     "v_message"
+    ]
+   },
+   "resolve_unconfirmed_message": {
+    "args": "p_message_id uuid, p_outcome text",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_result uuid; v_new_status text; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' THEN RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501'; END IF; IF p_outcome NOT IN ('sent', 'not_delivered') THEN RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023'; END IF; IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin_or_supervisor_required' USING ERRCODE = '42501'; END IF; v_new_status := CASE p_outcome WHEN 'sent' THEN 'sent' ELSE 'failed' END; UPDATE public.messages SET status = v_new_status, status_updated_at = statement_timestamp(), manually_resolved_at = statement_timestamp(), updated_at = statement_timestamp() WHERE id = p_mess …",
+    "raises": [
+     "authenticated_required",
+     "invalid_resolve_outcome",
+     "admin_or_supervisor_required",
+     "message_not_resolvable"
+    ],
+    "tables": [
+     "messages",
+     "v_result"
     ]
    },
    "uid": {
@@ -43026,6 +43067,7 @@
    "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
    "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
+   "supabase/migrations/20261111160000_outbound_post_started.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -55924,6 +55966,54 @@
     "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "mark_outbound_post_started",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "mark_outbound_post_started",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "claim_outbound_message",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "claim_outbound_message",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -56560,16 +56650,6 @@
     "function": "close_conversation_atomic",
     "msg": "invalid_transition % -> resolved",
     "src": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql"
-   },
-   {
-    "function": "guard_message_delivery_internal_fields",
-    "msg": "message_delivery_internal_fields_forbidden",
-    "src": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql"
-   },
-   {
-    "function": "guard_message_delivery_internal_fields",
-    "msg": "message_delivery_payload_immutable",
-    "src": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql"
    },
    {
     "function": "talkx_recipient_is_suppressed",
@@ -60177,16 +60257,6 @@
     "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql"
    },
    {
-    "function": "claim_outbound_message",
-    "msg": "service_role_required",
-    "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql"
-   },
-   {
-    "function": "claim_outbound_message",
-    "msg": "invalid_delivery_claim",
-    "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql"
-   },
-   {
     "function": "admin_list_cron_jobs",
     "msg": "admin_list_cron_jobs: acesso restrito a administradores",
     "src": "supabase/migrations/20261011173000_admin_cron_jobs.sql"
@@ -60997,6 +61067,76 @@
     "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
    },
    {
+    "function": "mark_outbound_post_started",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "invalid_delivery_post_mark",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "outbound_message_not_found",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "outbound_delivery_claim_conflict",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "delivery_claim_expired",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "outbound_post_already_started",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "claim_outbound_message",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "claim_outbound_message",
+    "msg": "invalid_delivery_claim",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "guard_message_delivery_internal_fields",
+    "msg": "message_delivery_internal_fields_forbidden",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "guard_message_delivery_internal_fields",
+    "msg": "message_delivery_payload_immutable",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "authenticated_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "invalid_resolve_outcome",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "admin_or_supervisor_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "message_not_resolvable",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
     "function": "espera_contem",
     "msg": "LA FALHOU [%]: \"%\" nao contem \"%\"",
     "src": "supabase/tests/admin_unlock_login_autorizacao.sql"
@@ -61377,7 +61517,9 @@
    "column:copilot_sessions.decision_role": "CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…).",
    "column:copilot_sessions.occasion": "CV-035/036 — ocasião comercial detectada (natal, sipat, outubro_rosa, …).",
    "column:copilot_sessions.stakeholders": "CV-039 — pessoas citadas na conversa que participam da decisão.",
-   "column:copilot_sessions.brinde_state": "CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state()."
+   "column:copilot_sessions.brinde_state": "CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state().",
+   "column:messages.delivery_post_started_at": "PD-79: instante em que a Edge marcou o POST ao provedor (mark_outbound_post_started). Com lease vencido, torna o resultado ambiguo e o claim recusa reivindicar de novo (sem reenvio cego). NULL quando o POST nunca comecou.",
+   "column:messages.manually_resolved_at": "C110: timestamp da resolução manual por admin/supervisor via resolve_unconfirmed_message. Quando preenchido, o reconciliador e o webhook de recibos ignoram atualizações de status desta mensagem."
   },
   "types_file": "src/integrations/supabase/types.ts"
  },
@@ -63270,6 +63412,7 @@
     "auth": "PÚBLICA (verify_jwt=false em config.toml)",
     "tables": [
      "contacts",
+     "message_reactions",
      "messages",
      "profiles",
      "talkx_campaigns",
@@ -63286,9 +63429,9 @@
      "invalid_list_payload",
      "invalid_location_payload",
      "invalid_poll_payload",
-     "missing_media_url",
-     "missing_rich_delivery_payload",
-     "unsupported_message_type"
+     "mark_outbound_post_started_failed",
+     "media_resolve_failed",
+     "missing_media_url"
     ],
     "side_effects": [
      "sendWhatsAppAudio"
@@ -64734,7 +64877,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2173,
+  "components_count": 2174,
   "hooks": [
    {
     "name": "useContacts",
@@ -65939,6 +66082,10 @@
    {
     "name": "useTodayHourlyVolume",
     "file": "src/hooks/dashboard/useTodayHourlyVolume.ts"
+   },
+   {
+    "name": "useUnconfirmedMessages",
+    "file": "src/hooks/delivery/useUnconfirmedMessages.ts"
    },
    {
     "name": "useEmailThreadListQuery",
@@ -67514,7 +67661,7 @@
   {
    "module": "scripts",
    "files": 460,
-   "lines": 92636,
+   "lines": 92651,
    "tables": [
     "a",
     "alem_do_limite",
@@ -67845,8 +67992,8 @@
   },
   {
    "module": "src/components",
-   "files": 2173,
-   "lines": 370740,
+   "files": 2174,
+   "lines": 370886,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68193,8 +68340,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 986,
-   "lines": 160538,
+   "files": 987,
+   "lines": 160627,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -68690,7 +68837,7 @@
   {
    "module": "src/pages",
    "files": 70,
-   "lines": 10706,
+   "lines": 10712,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -69233,7 +69380,7 @@
   {
    "module": "supabase/functions",
    "files": 390,
-   "lines": 117813,
+   "lines": 118845,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -69468,8 +69615,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1100,
-   "lines": 105479,
+   "files": 1101,
+   "lines": 105964,
    "tables": [
     "audit_logs",
     "departments",
@@ -70308,6 +70455,7 @@
      "supabase/functions/crm-integration/index.ts",
      "supabase/functions/evolution-api/index.ts",
      "supabase/functions/gmail-webhook/index.ts",
+     "supabase/functions/message-delivery/index.ts",
      "supabase/functions/send-scheduled-report/index.ts",
      "supabase/functions/sentiment-alert/index.ts",
      "supabase/functions/voice-copilot-action/index.ts"
@@ -70934,6 +71082,7 @@
      "src/hooks/chat/useForwardMedia.ts",
      "src/hooks/chat/useMessageStatus.ts",
      "src/hooks/chat/useNextBestAction.ts",
+     "src/hooks/delivery/useUnconfirmedMessages.ts",
      "src/hooks/queues/useQueueDetails.ts",
      "src/hooks/reactions/useReactionMutations.ts",
      "src/hooks/system/useDiagnosticsData.ts",
@@ -70984,7 +71133,9 @@
      "supabase/functions/whatsapp-webhook/index.ts"
     ],
     "ref": [
-     "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx"
+     "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+     "supabase/functions/_shared/evolution-webhook-messages.ts",
+     "supabase/functions/_shared/evolution-webhook-msg-handlers.ts"
     ],
     "delete": [
      "src/components/monitoring/hooks/useMonitoringActions.ts",
@@ -72087,6 +72238,7 @@
      "supabase/functions/connection-health-check/index.ts",
      "supabase/functions/evolution-api/index.ts",
      "supabase/functions/health/index.ts",
+     "supabase/functions/message-delivery/index.ts",
      "supabase/functions/migrate-media-storage/index.ts",
      "supabase/functions/multiplix-send/index.ts",
      "supabase/functions/recover-corrupted-audios/index.ts",
@@ -72687,10 +72839,12 @@
     "contact_id",
     "content",
     "created_at",
+    "delivery_post_started_at",
     "external_id",
     "id",
     "is_deleted",
     "is_read",
+    "manually_resolved_at",
     "media_filename",
     "media_meta",
     "media_size",
@@ -74793,6 +74947,9 @@
    "mark_multiplix_item_dispatch_started": [
     "supabase/functions/multiplix-send/index.ts"
    ],
+   "mark_outbound_post_started": [
+    "supabase/functions/message-delivery/index.ts"
+   ],
    "mark_talkx_recipient_dispatch_started": [
     "supabase/functions/talkx-send/process-recipient.ts"
    ],
@@ -74952,6 +75109,9 @@
    ],
    "resolve_network_policy": [
     "supabase/functions/_shared/request-policy.ts"
+   ],
+   "resolve_unconfirmed_message": [
+    "src/hooks/delivery/useUnconfirmedMessages.ts"
    ],
    "retry_talkx_recipient": [
     "supabase/functions/talkx-send/index.ts"
@@ -76041,6 +76201,14 @@
    "webhook_failures"
   ],
   "columns_unknown": [
+   {
+    "table": "messages",
+    "column": "delivery_post_started_at"
+   },
+   {
+    "table": "messages",
+    "column": "manually_resolved_at"
+   },
    {
     "table": "contacts",
     "column": "company_id"
@@ -79230,6 +79398,11 @@
     "file": "supabase/functions/gmail-sync/index.ts",
     "name": "GmailLabelMutationAction",
     "values": "create-label | update-label | delete-label"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "name": "DeliveryErrorCode",
+    "values": "invalid_number | instance_unavailable | provider_rejected | provider_unavailable | rate_limited | in_progress | receipt_unconfirmed | media_invalid"
    },
    {
     "file": "supabase/functions/migrate-media-storage/index.ts",
@@ -86709,11 +86882,23 @@
    },
    {
     "file": "supabase/functions/message-delivery/index.ts",
+    "msg": "mark_outbound_post_started_failed"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "msg": "media_resolve_failed"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
     "msg": "missing_media_url"
    },
    {
     "file": "supabase/functions/message-delivery/index.ts",
     "msg": "missing_rich_delivery_payload"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "msg": "rich_payload_read_failed"
    },
    {
     "file": "supabase/functions/message-delivery/index.ts",
@@ -88654,6 +88839,14 @@
    {
     "file": "src/components/inbox/chat/MessageSendHistorySheet.tsx",
     "text": "AA do E.3; `--info` só no ícone), animação apenas com `motion-safe:`, nada de exportar/baixar novo"
+   },
+   {
+    "file": "src/components/inbox/chat/SendErrorBanner.tsx",
+    "text": "iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve"
+   },
+   {
+    "file": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+    "text": "de correção manual — o RPC resolve_unconfirmed_message valida a permissão no banco."
    },
    {
     "file": "src/components/inbox/chat/contactPresence.ts",
@@ -94758,6 +94951,18 @@
    {
     "file": "supabase/functions/gmail-webhook/index.ts",
     "text": "cursor, o 404 atrasado não pode limpar/retroceder o cursor novo."
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "text": "* true SOMENTE quando o POST já saiu e a confirmação falhou: não reenvie cego. */"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "text": "* Limite de envios do próprio Zapp (não é recusa do provedor). */"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "text": "dessa migration, e a função não pode depender dela."
    },
    {
     "file": "supabase/functions/message-delivery/index.ts",
@@ -105577,6 +105782,11 @@
     "value": "5"
    },
    {
+    "file": "src/hooks/delivery/useUnconfirmedMessages.ts",
+    "name": "AMBIGUOUS_THRESHOLD_MS",
+    "value": "2"
+   },
+   {
     "file": "src/hooks/email/useEmailThreadListQuery.ts",
     "name": "EMAIL_THREAD_SEARCH_DEBOUNCE_MS",
     "value": "300"
@@ -111639,6 +111849,12 @@
     "field": "type",
     "value": "text",
     "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+    "field": "type",
+    "value": "spring",
+    "kind": "escreve"
    },
    {
     "file": "src/components/inbox/chat/contactPresence.ts",
@@ -122477,6 +122693,30 @@
     "kind": "compara"
    },
    {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "field": "status",
+    "value": "sending",
+    "kind": "compara"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "field": "status",
+    "value": "sending",
+    "kind": "compara"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "field": "status",
+    "value": "connected",
+    "kind": "compara"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
+    "field": "status",
+    "value": "sending",
+    "kind": "compara"
+   },
+   {
     "file": "supabase/functions/metrics/index.ts",
     "field": "type",
     "value": "gauge",
@@ -123610,7 +123850,7 @@
     "file": "src/components/inbox/chat/SendErrorBanner.tsx",
     "name": "podeReenviarComoTexto",
     "params": "mensagem: Message | null | undefined",
-    "body": "return mensagem?.type === 'text';"
+    "body": "if (!mensagem || mensagem.type !== 'text') return false; // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync) return !mensagem.delivery_post_started_at;"
    },
    {
     "file": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
@@ -125149,6 +125389,10 @@
    {
     "file": "src/hooks/dashboard/useSentimentTrend.ts",
     "line": "staleTime: 5 * 60 * 1000,"
+   },
+   {
+    "file": "src/hooks/delivery/useUnconfirmedMessages.ts",
+    "line": "const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;"
    },
    {
     "file": "src/hooks/groups/actions.ts",
@@ -204899,6 +205143,134 @@
     "name": "message delivery does not call the redundant mark_first_response RPC"
    },
    {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo; POST iniciado chama failClaim"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: instância desconectada vira code=instance_unavailable (409); POST iniciado chama failClaim"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: 401 do provedor vira code=instance_unavailable; POST iniciado chama failClaim"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: 429 do provedor vira code=rate_limited; POST iniciado chama failClaim"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: recusa 4xx genérica do provedor chama failClaim quando POST foi iniciado"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: 5xx do provedor vira code=provider_unavailable, ambíguo e reconcilia; sem dado pessoal no corpo"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: 200 sem id do provedor vira code=receipt_unconfirmed e reconcilia"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: falha ao gravar o recibo (pós-POST) vira code=receipt_unconfirmed e reconcilia"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: falha ANTES do POST (carga inválida) vira code=media_invalid, não ambíguo e NÃO chama o provedor"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: exceção de rede DEPOIS do POST vira code=receipt_unconfirmed e reconcilia"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: limite de envios do próprio Zapp vira code=rate_limited (429)"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: envio em andamento devolve code=in_progress (409) sem reenviar"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: entrega já confirmada continua idempotente (200) — comportamento preservado"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: caminho feliz devolve 200 sem code e preserva contrato antigo"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: classifyProviderFailure é a fonte única do código por ramo"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: claim vazio de mensagem de OUTRO agente devolve 404 (linha EXISTE e é negada, não é 409)"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: claim vazio de mensagem de ENTRADA (sender≠agent) devolve 404"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: claim vazio de mensagem inexistente devolve 404 sem inventar envio"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80: envio confirmado devolve 200 e NÃO chama a RPC legada mark_first_response (ela falharia/lançaria)"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: claim vazio com conexão fora do ar vira code=instance_unavailable (409), retryable e sem telefone no corpo"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: claim vazio com conexão sem instance_id vira code=instance_unavailable (409)"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: claim vazio com telefone fora de 8–15 dígitos vira code=invalid_number (422), sem retry e sem telefone no corpo"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: claim vazio com status final sem recibo (failed) vira code=provider_rejected (422), não in_progress"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: falha de INFRA ao assinar URL privada (storage) vira code=provider_unavailable (503), retryable, sem reconciliar e sem chamar o provedor"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: falha de INFRA ao ler o payload rico vira code=provider_unavailable (503), retryable e sem reconciliar"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: linha legível sem payload rico continua erro de CONTEÚDO (422 media_invalid), não infra"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: erro ao ler contato/conexão na causa do claim vazio degrada para infra (503 provider_unavailable), retryable"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [refazer1]: contato ausente (linha não achada) com conexão ok vira code=invalid_number (422)"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [merge main/grupos]: claim vazio de mensagem de GRUPO (sem contact_id) não é classificada como número inválido nem conexão fora — 409 in_progress, sem ler contacts/whatsapp_connections"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-80 [merge main/E15]: o handler continua entregando com o token da PRÓPRIA instância do claim (get_instance_token), nunca com a key global"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-79 [pré-DDL]: RPC mark_outbound_post_started ainda inexistente (PGRST202) não derruba o envio — entrega sem carimbo"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando antes do POST"
+   },
+   {
     "file": "supabase/functions/metrics/index.test.ts",
     "name": "metrics: sem identidade → 401 e nenhuma consulta"
    },
@@ -221151,10 +221523,10 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
     "security_definer": false,
     "search_path": true,
-    "body": "BEGIN IF current_user IN ('postgres', 'service_role') THEN RETURN NEW; END IF; IF (TG_OP = 'INSERT' AND ( NEW.client_message_id IS NOT NULL OR NEW.delivery_claim_token IS NOT NULL OR NEW.delivery_claimed_at IS NOT NULL OR NEW.delivery_claim_expires_at IS NOT NULL OR NEW.delivery_claimed_by IS NOT NULL OR NEW.delivery_last_claim_token IS NOT NULL OR NEW.delivery_attempt_count <> 0 )) OR (TG_OP = 'UPDATE' AND ( NEW.client_message_id IS DISTINCT FROM OLD.client_message_id OR NEW.delivery_claim_token IS DISTINCT FROM OLD.delivery_claim_token OR NEW.delivery_claimed_at IS DISTINCT FROM OLD.delivery_claimed_at OR NEW.delivery_claim_expires_at IS DISTINCT FROM OLD.delivery_claim_expires_at OR NEW.d …",
+    "body": "BEGIN IF current_user IN ('postgres', 'service_role') THEN RETURN NEW; END IF; IF (TG_OP = 'INSERT' AND ( NEW.client_message_id IS NOT NULL OR NEW.delivery_claim_token IS NOT NULL OR NEW.delivery_claimed_at IS NOT NULL OR NEW.delivery_claim_expires_at IS NOT NULL OR NEW.delivery_claimed_by IS NOT NULL OR NEW.delivery_last_claim_token IS NOT NULL OR NEW.delivery_attempt_count <> 0 OR NEW.delivery_post_started_at IS NOT NULL OR NEW.manually_resolved_at IS NOT NULL )) OR (TG_OP = 'UPDATE' AND ( NEW.client_message_id IS DISTINCT FROM OLD.client_message_id OR NEW.delivery_claim_token IS DISTINCT FROM OLD.delivery_claim_token OR NEW.delivery_claimed_at IS DISTINCT FROM OLD.delivery_claimed_at OR N …",
     "raises": [
      "message_delivery_internal_fields_forbidden",
      "message_delivery_payload_immutable"
@@ -221197,7 +221569,7 @@
     "args": "p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90",
     "returns": "TABLE(\n  message_id uuid,\n  client_message_id uuid,\n  contact_id uuid,\n  agent_id uuid,\n  content text,\n  message_type text,\n  media_url text,\n  caption text,\n  media_filename text,\n  media_mimetype text,\n  reply_to_id uuid,\n  reply_external_id text,\n  whatsapp_connection_id uuid,\n  whatsapp_instance_name text,\n  contact_phone text,\n  claim_token uuid,\n  claim_expires_at timestamptz,\n  delivery_attempt_count integer\n)",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
     "security_definer": true,
     "search_path": true,
     "body": "BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_message_id IS NULL OR p_agent_id IS NULL OR p_worker IS NULL OR p_worker !~ '^[A-Za-z0-9._:@/-]{1,100}$' OR p_lease_seconds IS NULL OR p_lease_seconds NOT BETWEEN 30 AND 300 THEN RAISE EXCEPTION 'invalid_delivery_claim' USING ERRCODE = '22023'; END IF; RETURN QUERY WITH candidate AS ( SELECT message.id, connection.id AS resolved_connection_id FROM public.messages AS message LEFT JOIN public.contacts AS contact ON contact.id = message.contact_id LEFT JOIN public.whatsapp_groups AS grp ON grp.id = message.whatsapp_group_id JOIN public.whatsapp_connections AS c …",
@@ -228357,6 +228729,47 @@
      "whatsapp_connections"
     ]
    },
+   "mark_outbound_post_started": {
+    "args": "p_message_id uuid, p_claim_token uuid",
+    "returns": "public.messages",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_message public.messages%ROWTYPE; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_message_id IS NULL OR p_claim_token IS NULL THEN RAISE EXCEPTION 'invalid_delivery_post_mark' USING ERRCODE = '22023'; END IF; SELECT * INTO v_message FROM public.messages AS message WHERE message.id = p_message_id FOR UPDATE; IF NOT FOUND THEN RAISE EXCEPTION 'outbound_message_not_found' USING ERRCODE = 'P0002'; END IF; IF v_message.delivery_claim_token IS DISTINCT FROM p_claim_token OR v_message.sender IS DISTINCT FROM 'agent' OR v_message.status IS DISTINCT FROM 'sending' OR v_message.external_id IS NOT NULL THEN …",
+    "raises": [
+     "service_role_required",
+     "invalid_delivery_post_mark",
+     "outbound_message_not_found",
+     "outbound_delivery_claim_conflict",
+     "delivery_claim_expired",
+     "outbound_post_already_started"
+    ],
+    "tables": [
+     "messages",
+     "p_claim_token",
+     "v_message"
+    ]
+   },
+   "resolve_unconfirmed_message": {
+    "args": "p_message_id uuid, p_outcome text",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_result uuid; v_new_status text; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' THEN RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501'; END IF; IF p_outcome NOT IN ('sent', 'not_delivered') THEN RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023'; END IF; IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin_or_supervisor_required' USING ERRCODE = '42501'; END IF; v_new_status := CASE p_outcome WHEN 'sent' THEN 'sent' ELSE 'failed' END; UPDATE public.messages SET status = v_new_status, status_updated_at = statement_timestamp(), manually_resolved_at = statement_timestamp(), updated_at = statement_timestamp() WHERE id = p_mess …",
+    "raises": [
+     "authenticated_required",
+     "invalid_resolve_outcome",
+     "admin_or_supervisor_required",
+     "message_not_resolvable"
+    ],
+    "tables": [
+     "messages",
+     "v_result"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -229321,16 +229734,6 @@
     "function": "close_conversation_atomic",
     "msg": "invalid_transition % -> resolved",
     "src": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql"
-   },
-   {
-    "function": "guard_message_delivery_internal_fields",
-    "msg": "message_delivery_internal_fields_forbidden",
-    "src": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql"
-   },
-   {
-    "function": "guard_message_delivery_internal_fields",
-    "msg": "message_delivery_payload_immutable",
-    "src": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql"
    },
    {
     "function": "talkx_recipient_is_suppressed",
@@ -232938,16 +233341,6 @@
     "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql"
    },
    {
-    "function": "claim_outbound_message",
-    "msg": "service_role_required",
-    "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql"
-   },
-   {
-    "function": "claim_outbound_message",
-    "msg": "invalid_delivery_claim",
-    "src": "supabase/migrations/20261011155946_enqueue_group_outbound_message.sql"
-   },
-   {
     "function": "admin_list_cron_jobs",
     "msg": "admin_list_cron_jobs: acesso restrito a administradores",
     "src": "supabase/migrations/20261011173000_admin_cron_jobs.sql"
@@ -233756,6 +234149,76 @@
     "function": "talkx_campaign_resume_precheck",
     "msg": "talkx_campaign_not_found",
     "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "invalid_delivery_post_mark",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "outbound_message_not_found",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "outbound_delivery_claim_conflict",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "delivery_claim_expired",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "mark_outbound_post_started",
+    "msg": "outbound_post_already_started",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "claim_outbound_message",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "claim_outbound_message",
+    "msg": "invalid_delivery_claim",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "guard_message_delivery_internal_fields",
+    "msg": "message_delivery_internal_fields_forbidden",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "guard_message_delivery_internal_fields",
+    "msg": "message_delivery_payload_immutable",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "authenticated_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "invalid_resolve_outcome",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "admin_or_supervisor_required",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "message_not_resolvable",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
    },
    {
     "function": "espera_contem",
@@ -235274,6 +235737,7 @@
       "escreve:src/components/inbox/chat/MessageBubble.tsx",
       "escreve:src/components/inbox/chat/PinnedConversationsStack.tsx",
       "escreve:src/components/inbox/chat/SendErrorBanner.tsx",
+      "escreve:src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
       "escreve:src/components/leaderboard/LeaderboardHelpers.tsx",
       "escreve:src/components/mobile/MiniChatPiP.tsx",
       "escreve:src/components/mobile/MobileDrawerMenu.tsx",
@@ -236506,6 +236970,7 @@
       "compara:src/components/talkx/useCampaignRowActions.tsx",
       "compara:src/hooks/integrations/useTalkXAnalytics.ts",
       "compara:src/pages/ChatPopup.tsx",
+      "compara:supabase/functions/message-delivery/index.ts",
       "compara:supabase/functions/multiplix-send/index.ts",
       "compara:supabase/functions/talkx-send/index.ts",
       "compara:supabase/functions/talkx-send/process-recipient.ts",
@@ -236863,6 +237328,7 @@
       "compara:supabase/functions/_shared/talkx-resume-policy.ts",
       "compara:supabase/functions/connection-health-check/index.ts",
       "compara:supabase/functions/evolution-api/index.ts",
+      "compara:supabase/functions/message-delivery/index.ts",
       "compara:supabase/functions/talkx-send/index.ts",
       "compara:supabase/migrations/20260404174354_30f2c688-f26a-4c18-9657-8448de6613bd.sql",
       "escreve:src/hooks/inbox/useConnectionsManager.ts",
@@ -241698,6 +242164,7 @@
    "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
    "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
+   "supabase/migrations/20261111160000_outbound_post_started.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -241983,6 +242450,7 @@
    "mark_first_response",
    "mark_multiplix_item_dispatch_started",
    "mark_multiplix_recipient_dispatch_started",
+   "mark_outbound_post_started",
    "mark_talkx_recipient_dispatch_started",
    "mark_team_conversation_read",
    "mcp_exec",
@@ -242069,6 +242537,7 @@
    "resolve_network_policy",
    "resolve_sla_alert",
    "resolve_talkx_outcome_unknown",
+   "resolve_unconfirmed_message",
    "retry_talkx_recipient",
    "retry_talkx_recipients",
    "return_conversation_to_queue",
@@ -254795,6 +255264,54 @@
     "src": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "mark_outbound_post_started",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "mark_outbound_post_started",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "claim_outbound_message",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "claim_outbound_message",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -256887,6 +257404,16 @@
     "where": [
      "compara:src/hooks/integrations/useTalkXServerResumePrecheck.ts"
     ]
+   },
+   {
+    "kind": "coluna",
+    "msg": "coluna `delivery_post_started_at` usada no código não existe no schema de `messages`",
+    "where": []
+   },
+   {
+    "kind": "coluna",
+    "msg": "coluna `manually_resolved_at` usada no código não existe no schema de `messages`",
+    "where": []
    },
    {
     "kind": "coluna",
@@ -267685,7 +268212,7 @@
   },
   "scripts/db-audit/message-delivery-phase1-runtime.sql": {
    "path": "scripts/db-audit/message-delivery-phase1-runtime.sql",
-   "lines": 335,
+   "lines": 350,
    "uses_service_role": true
   },
   "scripts/db-audit/multiplix-audience-parity.mjs": {
@@ -285078,7 +285605,7 @@
   },
   "src/components/inbox/ChatPanel.tsx": {
    "path": "src/components/inbox/ChatPanel.tsx",
-   "lines": 529,
+   "lines": 532,
    "exports": [
     "function ChatPanel"
    ],
@@ -287208,7 +287735,7 @@
   },
   "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx": {
    "path": "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
-   "lines": 233,
+   "lines": 234,
    "is_test": true,
    "rule_comments": [
     "O listener de document (busca global da Inbox) não pode agir no mesmo pressionamento."
@@ -287226,7 +287753,7 @@
   },
   "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx": {
    "path": "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
-   "lines": 266,
+   "lines": 267,
    "is_test": true,
    "tests": [
     "ChatPanel — drag&drop de arquivos (U7)",
@@ -287249,7 +287776,7 @@
   },
   "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx": {
    "path": "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
-   "lines": 293,
+   "lines": 294,
    "is_test": true,
    "params": [
     {
@@ -287272,7 +287799,7 @@
   },
   "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx": {
    "path": "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
-   "lines": 309,
+   "lines": 310,
    "is_test": true,
    "tests": [
     "ChatPanel — presença de digitação entre agentes (R2-INB-026)",
@@ -287298,7 +287825,7 @@
   },
   "src/components/inbox/__tests__/ChatTransferContract.test.tsx": {
    "path": "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
-   "lines": 325,
+   "lines": 326,
    "is_test": true,
    "rpc": [
     "transfer_conversation"
@@ -288604,7 +289131,7 @@
   },
   "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx": {
    "path": "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx",
-   "lines": 272,
+   "lines": 275,
    "is_test": true,
    "temporal": [
     "const ESPERA_LAZY = { timeout: 10000, interval: 50 };"
@@ -289529,7 +290056,7 @@
   },
   "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx": {
    "path": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
-   "lines": 273,
+   "lines": 274,
    "is_test": true,
    "rule_comments": [
     "Cadeia tolerante: qualquer encadeamento (`select().eq().order().limit()`) resolve vazio.",
@@ -290870,7 +291397,7 @@
   },
   "src/components/inbox/chat/SendErrorBanner.tsx": {
    "path": "src/components/inbox/chat/SendErrorBanner.tsx",
-   "lines": 222,
+   "lines": 228,
    "exports": [
     "interface SendErrorBannerProps",
     "function SendErrorBanner"
@@ -290890,13 +291417,35 @@
      "kind": "compara"
     }
    ],
+   "rule_comments": [
+    "iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve"
+   ],
    "calc_fns": [
     {
      "name": "podeReenviarComoTexto",
      "params": "mensagem: Message | null | undefined",
-     "body": "return mensagem?.type === 'text';"
+     "body": "if (!mensagem || mensagem.type !== 'text') return false; // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync) return !mensagem.delivery_post_started_at;"
     }
    ]
+  },
+  "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx": {
+   "path": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+   "lines": 127,
+   "exports": [
+    "interface UnconfirmedMessagesPanelProps",
+    "function UnconfirmedMessagesPanel"
+   ],
+   "status_values": [
+    {
+     "field": "type",
+     "value": "spring",
+     "kind": "escreve"
+    }
+   ],
+   "rule_comments": [
+    "de correção manual — o RPC resolve_unconfirmed_message valida a permissão no banco."
+   ],
+   "doc": "Painel de mensagens com entrega ambígua (C110). Aparece quando há mensagens cujo POST para o provedor foi iniciado mas o recibo nunca chegou e o job de reconciliação não conseguiu confirmar. Só admins e supervisores enxergam os botões de correção manual — o RPC resolve_unconfirmed_message valida a p …"
   },
   "src/components/inbox/chat/chatMessageNavigation.ts": {
    "path": "src/components/inbox/chat/chatMessageNavigation.ts",
@@ -291452,7 +292001,7 @@
   },
   "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
-   "lines": 311,
+   "lines": 312,
    "is_test": true,
    "errors": [
     ")).toHaveTextContent("
@@ -330207,6 +330756,48 @@
     "sem nenhum bucket, todayByHour todo 0/null e avg7dCurrentHour 0"
    ]
   },
+  "src/hooks/delivery/useUnconfirmedMessages.ts": {
+   "path": "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "lines": 89,
+   "exports": [
+    "interface UnconfirmedMessage",
+    "function useUnconfirmedMessages"
+   ],
+   "tables": [
+    {
+     "table": "messages",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "messages": [
+     "agent_id",
+     "contact_id",
+     "content",
+     "created_at",
+     "delivery_post_started_at",
+     "id",
+     "manually_resolved_at",
+     "sender",
+     "status"
+    ]
+   },
+   "rpc": [
+    "resolve_unconfirmed_message"
+   ],
+   "params": [
+    {
+     "name": "AMBIGUOUS_THRESHOLD_MS",
+     "value": "2"
+    }
+   ],
+   "hooks": [
+    "useUnconfirmedMessages"
+   ],
+   "temporal": [
+    "const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;"
+   ]
+  },
   "src/hooks/email/useEmailThreadListQuery.ts": {
    "path": "src/hooks/email/useEmailThreadListQuery.ts",
    "lines": 85,
@@ -353075,7 +353666,7 @@
   },
   "src/pages/__tests__/ChatPopup.pagination.test.tsx": {
    "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
-   "lines": 370,
+   "lines": 373,
    "is_test": true,
    "errors": [
     "lista virtualizada nao encontrada dentro do role=log"
@@ -353115,7 +353706,7 @@
   },
   "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx": {
    "path": "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
-   "lines": 382,
+   "lines": 385,
    "is_test": true,
    "errors": [
     "lista virtualizada nao encontrada dentro do role=log"
@@ -359044,7 +359635,7 @@
   },
   "supabase/functions/_shared/effect-reconcile.ts": {
    "path": "supabase/functions/_shared/effect-reconcile.ts",
-   "lines": 587,
+   "lines": 591,
    "exports": [
     "const EFFECT_RECONCILE_KIND",
     "const EFFECT_RECONCILE_FUNCTION",
@@ -360206,7 +360797,7 @@
   },
   "supabase/functions/_shared/evolution-webhook-messages.ts": {
    "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "lines": 1426,
+   "lines": 1446,
    "exports": [
     "interface OptOutKeyword",
     "function resetOptOutKeywordCache",
@@ -360282,6 +360873,10 @@
     {
      "table": "contact_identity_map",
      "op": "upsert"
+    },
+    {
+     "table": "messages",
+     "op": "ref"
     },
     {
      "table": "messages",
@@ -360521,7 +361116,7 @@
   },
   "supabase/functions/_shared/evolution-webhook-msg-handlers.ts": {
    "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-   "lines": 427,
+   "lines": 464,
    "exports": [
     "function handleSendMessage",
     "function handleMessagesUpdate",
@@ -360540,11 +361135,19 @@
     },
     {
      "table": "messages",
-     "op": "select"
+     "op": "ref"
     },
     {
      "table": "messages",
      "op": "update"
+    },
+    {
+     "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "messages",
+     "op": "select"
     },
     {
      "table": "messages",
@@ -360589,11 +361192,9 @@
    ],
    "table_cols": {
     "messages": [
-     "contact_id",
-     "created_at",
      "external_id",
      "id",
-     "message_type",
+     "manually_resolved_at",
      "sender",
      "status",
      "whatsapp_connection_id"
@@ -370572,32 +371173,52 @@
   },
   "supabase/functions/message-delivery/index.test.ts": {
    "path": "supabase/functions/message-delivery/index.test.ts",
-   "lines": 155,
+   "lines": 815,
    "is_test": true,
    "errors": [
+    "${label}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}",
     "CTA URL button fields not preserved",
     "a RPC mark_first_response não pode ser chamada: o trigger já registra o SLA",
     "body must map to description",
     "buttonText not forwarded",
     "buttons not forwarded",
+    "enqueue_ai_job não foi chamado",
+    "enqueue_ai_job sem p_payload",
+    "envio deveria ser concluído",
+    "evoFetch não foi chamado",
     "expected HTTP ${expected}, got ${actual}",
+    "fail_outbound_message não foi chamado",
     "footer not forwarded",
     "internal media placeholder became a provider caption",
     "list row must keep title/description and map id to rowId",
     "malformed contact payload was accepted",
     "missing footer must become a single space (GO rejects empty)",
     "payload ${JSON.stringify(payload)} should fail with ${expected}, got ${rejected || ",
+    "provedor NÃO pode ser chamado quando o carimbo falha por outro motivo",
+    "provedor deveria ter sido chamado sem o carimbo",
     "quoted reply metadata was not preserved",
     "reply button fields not preserved",
+    "resposta vazou telefone",
+    "resposta vazou telefone do provedor",
+    "resposta vazou texto do provedor",
+    "rpc ${fn} exploded",
     "sections not forwarded",
+    "socket timeout",
     "title not forwarded",
     "wrong buttons route",
     "wrong list route",
     "wrong poll route",
     "wrong recipient"
    ],
+   "params": [
+    {
+     "name": "CONTACT_PHONE",
+     "value": "'5511999999999'"
+    }
+   ],
    "rule_comments": [
-    "Guarda de regressão: a chamada não pode voltar. O registro pelo trigger é"
+    "Guarda de regressão: a chamada não pode voltar. O registro pelo trigger é",
+    "recibo já conhecido. SEMPRE somente-leitura: o kind `effect.reconcile`."
    ],
    "tests": [
     "message delivery rejects methods other than POST before reading secrets",
@@ -370608,19 +371229,77 @@
     "message delivery builds an Evolution list body only from a valid persisted payload",
     "message delivery rejects malformed persisted interactive payloads",
     "media delivery never turns timeline placeholders into captions and preserves quoted replies",
-    "message delivery does not call the redundant mark_first_response RPC"
+    "message delivery does not call the redundant mark_first_response RPC",
+    "PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo; POST iniciado chama failClaim",
+    "PD-80: instância desconectada vira code=instance_unavailable (409); POST iniciado chama failClaim",
+    "PD-80: 401 do provedor vira code=instance_unavailable; POST iniciado chama failClaim",
+    "PD-80: 429 do provedor vira code=rate_limited; POST iniciado chama failClaim",
+    "PD-80: recusa 4xx genérica do provedor chama failClaim quando POST foi iniciado",
+    "PD-80: 5xx do provedor vira code=provider_unavailable, ambíguo e reconcilia; sem dado pessoal no corpo",
+    "PD-80: 200 sem id do provedor vira code=receipt_unconfirmed e reconcilia",
+    "PD-80: falha ao gravar o recibo (pós-POST) vira code=receipt_unconfirmed e reconcilia",
+    "PD-80: falha ANTES do POST (carga inválida) vira code=media_invalid, não ambíguo e NÃO chama o provedor",
+    "PD-80: exceção de rede DEPOIS do POST vira code=receipt_unconfirmed e reconcilia",
+    "PD-80: limite de envios do próprio Zapp vira code=rate_limited (429)",
+    "PD-80: envio em andamento devolve code=in_progress (409) sem reenviar",
+    "PD-80: entrega já confirmada continua idempotente (200) — comportamento preservado",
+    "PD-80: caminho feliz devolve 200 sem code e preserva contrato antigo",
+    "PD-80: classifyProviderFailure é a fonte única do código por ramo",
+    "PD-80: claim vazio de mensagem de OUTRO agente devolve 404 (linha EXISTE e é negada, não é 409)",
+    "PD-80: claim vazio de mensagem de ENTRADA (sender≠agent) devolve 404",
+    "PD-80: claim vazio de mensagem inexistente devolve 404 sem inventar envio",
+    "PD-80: envio confirmado devolve 200 e NÃO chama a RPC legada mark_first_response (ela falharia/lançaria)",
+    "PD-80 [refazer1]: claim vazio com conexão fora do ar vira code=instance_unavailable (409), retryable e sem telefone no corpo",
+    "PD-80 [refazer1]: claim vazio com conexão sem instance_id vira code=instance_unavailable (409)",
+    "PD-80 [refazer1]: claim vazio com telefone fora de 8–15 dígitos vira code=invalid_number (422), sem retry e sem telefone no corpo",
+    "PD-80 [refazer1]: claim vazio com status final sem recibo (failed) vira code=provider_rejected (422), não in_progress",
+    "PD-80 [refazer1]: falha de INFRA ao assinar URL privada (storage) vira code=provider_unavailable (503), retryable, sem reconciliar e sem chamar o provedor",
+    "PD-80 [refazer1]: falha de INFRA ao ler o payload rico vira code=provider_unavailable (503), retryable e sem reconciliar",
+    "PD-80 [refazer1]: linha legível sem payload rico continua erro de CONTEÚDO (422 media_invalid), não infra",
+    "PD-80 [refazer1]: erro ao ler contato/conexão na causa do claim vazio degrada para infra (503 provider_unavailable), retryable",
+    "PD-80 [refazer1]: contato ausente (linha não achada) com conexão ok vira code=invalid_number (422)",
+    "PD-80 [merge main/grupos]: claim vazio de mensagem de GRUPO (sem contact_id) não é classificada como número inválido nem conexão fora — 409 in_progress, sem ler contacts/whatsapp_connections",
+    "PD-80 [merge main/E15]: o handler continua entregando com o token da PRÓPRIA instância do claim (get_instance_token), nunca com a key global",
+    "PD-79 [pré-DDL]: RPC mark_outbound_post_started ainda inexistente (PGRST202) não derruba o envio — entrega sem carimbo",
+    "PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando antes do POST"
    ],
    "uses_service_role": true
   },
   "supabase/functions/message-delivery/index.ts": {
    "path": "supabase/functions/message-delivery/index.ts",
-   "lines": 488,
+   "lines": 799,
    "exports": [
+    "type DeliveryErrorCode",
+    "interface DeliveryFailure",
+    "const DELIVERY_ERROR_MESSAGES",
+    "function deliveryFailureBody",
+    "function deliveryFailureResponse",
+    "const PROMPT_REJECTED_FAILURE",
+    "const IN_PROGRESS_FAILURE",
+    "const CONNECTION_DOWN_FAILURE",
+    "const INVALID_NUMBER_FAILURE",
+    "const TERMINAL_WITHOUT_RECEIPT_FAILURE",
+    "const EDGE_RATE_LIMITED_FAILURE",
+    "function unconfirmedReceiptFailure",
+    "function preDispatchFailure",
+    "function preDispatchInfraFailure",
+    "class PreDispatchInfraError",
+    "function classifyProviderFailure",
+    "type DeliveryDbClient",
+    "interface MessageDeliveryDeps",
     "function providerPayload",
     "function deliverOutbound",
     "function handleMessageDeliveryRequest"
    ],
    "tables": [
+    {
+     "table": "contacts",
+     "op": "select"
+    },
+    {
+     "table": "whatsapp_connections",
+     "op": "select"
+    },
     {
      "table": "profiles",
      "op": "select"
@@ -370635,6 +371314,16 @@
     }
    ],
    "table_cols": {
+    "contacts": [
+     "id",
+     "phone",
+     "whatsapp_connection_id"
+    ],
+    "whatsapp_connections": [
+     "id",
+     "instance_id",
+     "status"
+    ],
     "profiles": [
      "id",
      "is_active",
@@ -370642,17 +371331,21 @@
     ],
     "messages": [
      "agent_id",
+     "contact_id",
+     "delivery_post_started_at",
      "external_id",
      "id",
      "media_meta",
      "sender",
-     "status"
+     "status",
+     "whatsapp_connection_id"
     ]
    },
    "rpc": [
     "claim_outbound_message",
     "complete_outbound_message",
-    "fail_outbound_message"
+    "fail_outbound_message",
+    "mark_outbound_post_started"
    ],
    "errors": [
     "invalid_buttons_payload",
@@ -370660,9 +371353,18 @@
     "invalid_list_payload",
     "invalid_location_payload",
     "invalid_poll_payload",
+    "mark_outbound_post_started_failed",
+    "media_resolve_failed",
     "missing_media_url",
     "missing_rich_delivery_payload",
+    "rich_payload_read_failed",
     "unsupported_message_type"
+   ],
+   "enums": [
+    {
+     "name": "DeliveryErrorCode",
+     "values": "invalid_number | instance_unavailable | provider_rejected | provider_unavailable | rate_limited | in_progress | receipt_unconfirmed | media_invalid"
+    }
    ],
    "params": [
     {
@@ -370695,9 +371397,32 @@
      "field": "type",
      "value": "call",
      "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "connected",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "compara"
     }
    ],
    "rule_comments": [
+    "* true SOMENTE quando o POST já saiu e a confirmação falhou: não reenvie cego. */",
+    "* Limite de envios do próprio Zapp (não é recusa do provedor). */",
+    "dessa migration, e a função não pode depender dela.",
     "* IA-047: enfileira a RECONCILIAÇÃO (somente-leitura, idempotente, SEM reenvio)",
     "ambíguo, enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio).",
     "IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA."
@@ -382164,6 +382889,11 @@
    "lines": 134,
    "uses_service_role": true
   },
+  "supabase/migrations/20261111160000_outbound_post_started.sql": {
+   "path": "supabase/migrations/20261111160000_outbound_post_started.sql",
+   "lines": 485,
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -386016,10 +386746,42 @@
   }
  },
  "git": {
-  "sha": "d4f25e704294bc3439d7c82dba508ceae6cc768d",
+  "sha": "9727aaeddf83e20405f8ec5db0825d4b50704833",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9727aae",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO (#2496)",
+    "files": [
+     "ESTADO.md",
+     "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+     "scripts/db-audit/message-delivery-phase1-runtime.sql",
+     "src/components/inbox/ChatPanel.tsx",
+     "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
+     "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
+     "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
+     "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
+     "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
+     "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx",
+     "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+     "src/components/inbox/chat/SendErrorBanner.tsx",
+     "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+     "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
+     "src/hooks/delivery/useUnconfirmedMessages.ts",
+     "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+     "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/effect-reconcile.ts",
+     "supabase/functions/_shared/evolution-webhook-messages.ts",
+     "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+     "supabase/functions/message-delivery/index.test.ts",
+     "supabase/functions/message-delivery/index.ts",
+     "supabase/migrations/20261111160000_outbound_post_started.sql"
+    ]
+   },
    {
     "sha": "d4f25e7",
     "date": "2026-11-11",
@@ -386311,15 +387073,6 @@
      "scripts/maintenance/lib.mjs",
      "scripts/maintenance/maintenance.unit.mjs"
     ]
-   },
-   {
-    "sha": "8d727a9",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): remove marcador órfão nao-existe-N.txt na régua Talk X (#2930)",
-    "files": [
-     "e2e/talkx-visual.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -386368,39 +387121,39 @@
     2
    ],
    [
-    "scripts/vercel/ignore-build.sh",
+    "ESTADO.md",
     1
    ],
    [
-    "scripts/vercel/ignore-build.unit.mjs",
+    "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
     1
    ],
    [
-    "scripts/edge-deploy/serialize-scope.mjs",
+    "scripts/db-audit/message-delivery-phase1-runtime.sql",
     1
    ],
    [
-    "scripts/edge-deploy/serialize-scope.unit.mjs",
+    "src/components/inbox/ChatPanel.tsx",
     1
    ],
    [
-    "scripts/db-audit/diff.test.mjs",
+    "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
     1
    ],
    [
-    "scripts/db-audit/manifest-lib.mjs",
+    "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
     1
    ],
    [
-    "scripts/ci/verify-release-targets-summary.unit.mjs",
+    "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
     1
    ],
    [
-    ".github/workflows/ci.yml",
+    "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
     1
    ],
    [
-    "TESTING_CONVENTION.md",
+    "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
     1
    ]
   ]

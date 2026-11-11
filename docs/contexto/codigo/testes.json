@@ -6173,7 +6173,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
    "tipo": "unit",
-   "linhas": 273,
+   "linhas": 274,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/chat/ConversationTabContent.tsx",
@@ -6247,7 +6247,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
    "tipo": "unit",
-   "linhas": 233,
+   "linhas": 234,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/components/ui/tooltip.tsx",
@@ -6259,7 +6259,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
    "tipo": "unit",
-   "linhas": 266,
+   "linhas": 267,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/types/chat.ts"
@@ -6278,7 +6278,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
    "tipo": "unit",
-   "linhas": 293,
+   "linhas": 294,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/types/chat.ts"
@@ -6288,7 +6288,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
    "tipo": "unit",
-   "linhas": 309,
+   "linhas": 310,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/types/chat.ts"
@@ -6308,7 +6308,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
    "tipo": "unit",
-   "linhas": 325,
+   "linhas": 326,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/types/chat.ts"
@@ -7175,7 +7175,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx",
    "tipo": "unit",
-   "linhas": 272,
+   "linhas": 275,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
@@ -7900,7 +7900,7 @@
   {
    "arquivo": "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
    "tipo": "unit",
-   "linhas": 311,
+   "linhas": 312,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/types/chat.ts"
@@ -20192,7 +20192,7 @@
   {
    "arquivo": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
    "tipo": "unit",
-   "linhas": 370,
+   "linhas": 373,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/pages/ChatPopup.tsx"
@@ -20202,7 +20202,7 @@
   {
    "arquivo": "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
    "tipo": "unit",
-   "linhas": 382,
+   "linhas": 385,
    "testa": [
     "src/pages/ChatPopup.tsx"
    ],
@@ -22413,12 +22413,12 @@
   {
    "arquivo": "supabase/functions/message-delivery/index.test.ts",
    "tipo": "unit",
-   "linhas": 155,
+   "linhas": 815,
    "testa": [
     "supabase/functions/_shared/evolution-instance-token.ts",
     "supabase/functions/message-delivery/index.ts"
    ],
-   "casos": 10
+   "casos": 42
   },
   {
    "arquivo": "supabase/functions/metrics/index.test.ts",
@@ -25422,6 +25422,7 @@
    "src/hooks/crm/useTeamProfiles.ts",
    "src/hooks/dashboard/useQueueHealth.ts",
    "src/hooks/dashboard/useScheduledReportConfigs.ts",
+   "src/hooks/delivery/useUnconfirmedMessages.ts",
    "src/hooks/evolution/useEvolutionInstance.ts",
    "src/hooks/inbox/useConnectionAuditLogs.ts",
    "src/hooks/inbox/useContactDeliveryStats.ts",

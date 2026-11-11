@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 897,
+ "total": 898,
  "orfaos": 53,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -5484,10 +5484,29 @@
     "SendErrorBannerProps"
    ],
    "export_default": null,
-   "linhas": 222,
+   "linhas": 228,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useReducedMotion"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+   "exports": [
+    "UnconfirmedMessagesPanel",
+    "UnconfirmedMessagesPanelProps"
+   ],
+   "export_default": null,
+   "linhas": 127,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useReducedMotion",
+    "useUnconfirmedMessages",
+    "useUserRole"
    ],
    "tabelas": [],
    "edges": [],
@@ -5500,7 +5519,7 @@
     "ChatPanel"
    ],
    "export_default": null,
-   "linhas": 529,
+   "linhas": 532,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAmbientColor",
@@ -12980,7 +12999,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 389,
+   "usado_por": 390,
    "orfao": false
   },
   {

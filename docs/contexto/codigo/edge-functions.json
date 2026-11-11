@@ -2192,19 +2192,22 @@
    "nome": "message-delivery",
    "entrada": "supabase/functions/message-delivery/index.ts",
    "arquivos": 1,
-   "linhas": 488,
+   "linhas": 799,
    "verify_jwt": true,
    "metodos": [
     "POST"
    ],
    "tabelas": [
+    "contacts",
     "messages",
-    "profiles"
+    "profiles",
+    "whatsapp_connections"
    ],
    "rpcs": [
     "claim_outbound_message",
     "complete_outbound_message",
-    "fail_outbound_message"
+    "fail_outbound_message",
+    "mark_outbound_post_started"
    ],
    "env": [],
    "buckets": [],
@@ -2212,6 +2215,7 @@
    "hosts_externos": [],
    "usa_shared": [
     "effect-reconcile.ts",
+    "errors.ts",
     "evolution-api-proxy.ts",
     "evolution-instance-token.ts",
     "evolution-send.ts",

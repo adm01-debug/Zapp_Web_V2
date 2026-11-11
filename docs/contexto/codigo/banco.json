@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1100,
+ "migrations": 1101,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -367,6 +367,7 @@
   "mark_first_response",
   "mark_multiplix_item_dispatch_started",
   "mark_multiplix_recipient_dispatch_started",
+  "mark_outbound_post_started",
   "mark_talkx_recipient_dispatch_started",
   "mark_team_conversation_read",
   "mcp_exec",
@@ -464,6 +465,7 @@
   "resolve_network_policy",
   "resolve_sla_alert",
   "resolve_talkx_outcome_unknown",
+  "resolve_unconfirmed_message",
   "resume_instance",
   "retry_talkx_recipient",
   "retry_talkx_recipients",
@@ -8208,6 +8210,7 @@
     "crm-integration",
     "evolution-api",
     "gmail-webhook",
+    "message-delivery",
     "send-scheduled-report",
     "sentiment-alert",
     "voice-copilot-action"
@@ -15689,6 +15692,13 @@
      "default": null,
      "ref": null
     },
+    "delivery_post_started_at": {
+     "tipo": "timestamptz",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
     "external_id": {
      "tipo": "text",
      "nn": false,
@@ -15726,6 +15736,13 @@
     },
     "link_preview": {
      "tipo": "jsonb",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "manually_resolved_at": {
+     "tipo": "timestamptz",
      "nn": false,
      "pk": false,
      "default": null,
@@ -16064,10 +16081,13 @@
     "whatsapp_group_id": "string | null"
    },
    "drift": {
-    "so_na_migration": [],
+    "so_na_migration": [
+     "delivery_post_started_at",
+     "manually_resolved_at"
+    ],
     "so_no_types": []
    },
-   "usada_no_front": 44,
+   "usada_no_front": 45,
    "usada_em_edges": [
     "_shared",
     "ai-auto-tag",
@@ -30832,6 +30852,7 @@
     "evolution-api",
     "evolution-webhook",
     "health",
+    "message-delivery",
     "migrate-media-storage",
     "multiplix-send",
     "recover-corrupted-audios",
@@ -31946,6 +31967,11 @@
    "usada_em": 1
   },
   {
+   "nome": "mark_outbound_post_started",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "mark_talkx_recipient_dispatch_started",
    "definida": true,
    "usada_em": 1
@@ -32167,6 +32193,11 @@
   },
   {
    "nome": "resolve_network_policy",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "resolve_unconfirmed_message",
    "definida": true,
    "usada_em": 1
   },

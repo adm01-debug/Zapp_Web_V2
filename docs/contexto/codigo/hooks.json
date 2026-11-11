@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 494,
+ "total": 495,
  "hooks": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -6963,6 +6963,32 @@
    "coberto_por_testes": 2
   },
   {
+   "arquivo": "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "hooks_exportados": [
+    "useUnconfirmedMessages"
+   ],
+   "linhas": 89,
+   "dominio": "hooks/delivery",
+   "tabelas": [
+    "messages"
+   ],
+   "rpcs": [
+    "resolve_unconfirmed_message"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
    "arquivo": "src/hooks/email/useEmailThreadListQuery.ts",
    "hooks_exportados": [
     "useEmailThreadListQuery"
@@ -10945,7 +10971,7 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 32,
+   "usado_por": 33,
    "usado_por_arquivos": [
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",
@@ -10964,6 +10990,7 @@
     "src/components/dashboard/DashboardView.tsx",
     "src/components/inbox/AdvancedMessageMenu.tsx",
     "src/components/inbox/InboxFilters.tsx",
+    "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
     "src/components/inbox/useGlobalSearchData.ts",
     "src/components/integrations/GmailIntegrationCard.tsx",
     "src/components/layout/Sidebar.tsx",
@@ -10975,8 +11002,7 @@
     "src/components/settings/IntegrationKeysSection.tsx",
     "src/components/settings/SettingsView.tsx",
     "src/hooks/integrations/useModuleCommandItems.ts",
-    "src/hooks/system/index.ts",
-    "src/pages/ViewRouter.tsx"
+    "src/hooks/system/index.ts"
    ],
    "coberto_por_testes": 5
   },
@@ -11646,7 +11672,7 @@
     "useSyncExternalStore"
    ],
    "canais_realtime": [],
-   "usado_por": 56,
+   "usado_por": 57,
    "usado_por_arquivos": [
     "src/components/connections/ConnectionCard.tsx",
     "src/components/effects/EasterEggs.tsx",

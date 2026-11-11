@@ -3,8 +3,8 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4230)",
-   "SQL (1300)",
+   "TypeScript (4232)",
+   "SQL (1301)",
    "Markdown (1073)",
    "JSON (603)",
    "JavaScript (456)",
@@ -1805,6 +1805,10 @@
     "arquivos": 4
    },
    {
+    "host": "evolution.invalid",
+    "arquivos": 4
+   },
+   {
     "host": "exemplo.invalid",
     "arquivos": 4
    },
@@ -1846,10 +1850,6 @@
    },
    {
     "host": "evolution.exemplo.com",
-    "arquivos": 3
-   },
-   {
-    "host": "evolution.invalid",
     "arquivos": 3
    },
    {
@@ -2006,6 +2006,10 @@
    },
    {
     "host": "storage.test",
+    "arquivos": 2
+   },
+   {
+    "host": "supabase.invalid",
     "arquivos": 2
    },
    {
@@ -2449,10 +2453,6 @@
     "arquivos": 1
    },
    {
-    "host": "supabase.invalid",
-    "arquivos": 1
-   },
-   {
     "host": "synthetic.invalid",
     "arquivos": 1
    },
@@ -2704,7 +2704,7 @@
    },
    {
     "papel": "region",
-    "ocorrencias": 20
+    "ocorrencias": 21
    },
    {
     "papel": "button",

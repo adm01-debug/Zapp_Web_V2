@@ -2772,6 +2772,7 @@
    "src/components/inbox/chat/ConversationDeliverySummary.tsx",
    "src/components/inbox/chat/PinnedConversationsStack.tsx",
    "src/components/inbox/chat/SendErrorBanner.tsx",
+   "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
    "src/components/inbox/chat/chatMessageNavigation.ts",
    "src/components/inbox/chat/messageSendTimeline.ts",
    "src/components/inbox/chat/useChatPanelHandlers.ts",
@@ -3728,6 +3729,12 @@
    "src/lib/motion.ts",
    "src/lib/utils.ts",
    "src/types/chat.ts"
+  ],
+  "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx": [
+   "src/components/ui/button.tsx",
+   "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "src/hooks/system/useUserRole.ts",
+   "src/lib/utils.ts"
   ],
   "src/components/inbox/chat/index.ts": [
    "src/components/inbox/chat/ChatAssignedBar.tsx",
@@ -8616,6 +8623,10 @@
    "src/integrations/supabase/client.ts",
    "src/lib/localDay.ts"
   ],
+  "src/hooks/delivery/useUnconfirmedMessages.ts": [
+   "src/hooks/ui/use-toast.ts",
+   "src/integrations/supabase/client.ts"
+  ],
   "src/hooks/email/useEmailThreadListQuery.ts": [
    "src/lib/emailThreadQuery.ts"
   ],
@@ -11100,6 +11111,7 @@
    "supabase/functions/_shared/evolution-api-proxy.ts",
    "supabase/functions/_shared/evolution-instance-token.ts",
    "supabase/functions/_shared/evolution-send.ts",
+   "supabase/functions/_shared/messaging/errors.ts",
    "supabase/functions/_shared/validation.ts"
   ],
   "supabase/functions/metrics/index.ts": [

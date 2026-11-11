@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d4f25e7042` · branch `main` · 2026-11-11 17:25 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9727aaeddf` · branch `main` · 2026-11-11 17:44 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `TalkxInteractiveButtonType` (TS) | reply \| link |  | `src/components/talkx/talkxInteractive.ts` |
 | `TalkxInteractiveMode` (TS) | none \| buttons \| poll |  | `src/components/talkx/talkxInteractive.ts` |
 | `TalkXScreen` (TS) | monitor \| scheduled \| running \| paused |  | `src/components/talkx/talkxRoute.ts` |
-| … +347 linhas — lista completa em `context.json` | | | |
+| … +348 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -388,6 +388,8 @@
 | status | valor `string` para `call_status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useIncomingCallListener.ts` |
 | status | valor `string` para `transcription_status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/ai-transcribe-audio/index.ts` |
 | status | valor `string` para `connection_status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useTalkXServerResumePrecheck.ts` |
+| coluna | coluna `delivery_post_started_at` usada no código não existe no schema de `messages` |  |
+| coluna | coluna `manually_resolved_at` usada no código não existe no schema de `messages` |  |
 | coluna | coluna `company_id` usada no código não existe no schema de `contacts` |  |
 | coluna | coluna `company` usada no código não existe no schema de `talkx_blacklist` |  |
 | coluna | coluna `reason_code` usada no código não existe no schema de `talkx_blacklist` |  |

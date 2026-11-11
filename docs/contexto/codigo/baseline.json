@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d4f25e704294bc3439d7c82dba508ceae6cc768d",
+  "commit": "9727aaeddf83e20405f8ec5db0825d4b50704833",
   "branch": "main",
-  "data_commit": "2026-11-11T17:13:07Z",
+  "data_commit": "2026-11-11T14:37:31-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9727aae",
+    "data": "2026-11-11",
+    "assunto": "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO "
+   },
    {
     "sha": "d4f25e7",
     "data": "2026-11-11",
@@ -126,18 +131,13 @@
     "sha": "b2967b4",
     "data": "2026-11-11",
     "assunto": "fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)"
-   },
-   {
-    "sha": "db960cd",
-    "data": "2026-11-11",
-    "assunto": "fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)"
    }
   ],
-  "arquivos_mudados_7d": 630,
+  "arquivos_mudados_7d": 650,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 619
+    "mudancas": 630
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -153,7 +153,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 203
+    "mudancas": 206
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -206,15 +206,15 @@
     "mudancas": 13
    },
    {
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 13
+   },
+   {
     "arquivo": "CLAUDE.md",
     "mudancas": 12
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
@@ -234,6 +234,10 @@
     "mudancas": 10
    },
    {
+    "arquivo": "ESTADO.md",
+    "mudancas": 9
+   },
+   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
     "mudancas": 9
    },
@@ -250,19 +254,11 @@
     "mudancas": 8
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 8
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 8
    },
    {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 8
    },
    {
@@ -290,6 +286,10 @@
     "mudancas": 7
    },
    {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 7
+   },
+   {
     "arquivo": "scripts/edge-deploy/health-check.mjs",
     "mudancas": 7
    },
@@ -314,19 +314,19 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8386,
-  "arquivos_codigo": 4803,
-  "linhas_codigo": 888530,
+  "arquivos_total": 8389,
+  "arquivos_codigo": 4805,
+  "linhas_codigo": 889803,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "modulos": 143,
-  "componentes": 897,
-  "hooks": 494,
+  "modulos": 144,
+  "componentes": 898,
+  "hooks": 495,
   "edge_functions": 92,
   "tabelas": 217,
-  "migrations": 1100,
+  "migrations": 1101,
   "cron_jobs": 26,
   "testes": 2611,
   "workflows": 21,
@@ -703,8 +703,8 @@
    "linhas": 616
   },
   "src/components": {
-   "arquivos": 2173,
-   "linhas": 370740
+   "arquivos": 2174,
+   "linhas": 370886
   },
   "src/config": {
    "arquivos": 3,
@@ -723,8 +723,8 @@
    "linhas": 3298
   },
   "src/hooks": {
-   "arquivos": 986,
-   "linhas": 160538
+   "arquivos": 987,
+   "linhas": 160627
   },
   "src/i18n": {
    "arquivos": 2,
@@ -744,7 +744,7 @@
   },
   "src/pages": {
    "arquivos": 70,
-   "linhas": 10706
+   "linhas": 10712
   },
   "src/providers": {
    "arquivos": 10,
@@ -780,7 +780,7 @@
   },
   "supabase/functions": {
    "arquivos": 390,
-   "linhas": 117813
+   "linhas": 118845
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -822,7 +822,7 @@
   },
   {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "linhas": 1426
+   "linhas": 1446
   },
   {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
@@ -906,12 +906,12 @@
   }
  ],
  "qualidade": {
-  "any": 351,
+  "any": 357,
   "console_log": 412,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 48,
-  "arquivos_acima_500_linhas": 101
+  "arquivos_acima_500_linhas": 102
  },
  "todos": [
   {
@@ -1271,6 +1271,7 @@
    "edge_rate_limits",
    "feature_flags",
    "global_settings",
+   "messages",
    "talkx_blacklist",
    "talkx_contact_attributes",
    "talkx_settings"

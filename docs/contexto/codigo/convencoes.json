@@ -7,12 +7,12 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (863)",
+   "src/components (864)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (413)",
+   "src/hooks (414)",
    "src/components (72)",
    "src/contexts (2)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 70,
  "extensao_componentes": [
-  ".tsx (897)"
+  ".tsx (898)"
  ],
  "alias_imports": {
   "(raiz)": {
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO (#2496)",
    "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)",
    "fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)",
    "fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)",
-   "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)",
-   "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)"
+   "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

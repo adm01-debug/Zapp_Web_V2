@@ -2691,9 +2691,9 @@
   },
   {
    "modulo": "components/inbox",
-   "arquivos": 252,
+   "arquivos": 253,
    "testes": 322,
-   "linhas": 43656,
+   "linhas": 43792,
    "itens_menu": [
     "Chat"
    ],
@@ -2701,7 +2701,7 @@
     "inbox"
    ],
    "rotas_http": [],
-   "componentes": 211,
+   "componentes": 212,
    "hooks_locais": [
     "useAddressAutocomplete",
     "useAdvanceDealStage",
@@ -2881,6 +2881,7 @@
     "useTheme",
     "useToast",
     "useTypingPresence",
+    "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
     "useUpsellSuggestion",
@@ -3009,6 +3010,7 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
+    "resolve_unconfirmed_message",
     "search_contacts",
     "set_conversation_status",
     "talk_me_claim",
@@ -3153,6 +3155,7 @@
     "hooks/communication",
     "hooks/copilot",
     "hooks/crm",
+    "hooks/delivery",
     "hooks/gmail",
     "hooks/inbox",
     "hooks/integrations",
@@ -3885,6 +3888,7 @@
     "useTransferConversation",
     "useTransferConversationDepartment",
     "useTypingPresence",
+    "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
@@ -4127,6 +4131,7 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
+    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
@@ -5075,6 +5080,7 @@
     "useTheme",
     "useToast",
     "useTypingPresence",
+    "useUnconfirmedMessages",
     "useUniversityHelp",
     "useUpsellSuggestion",
     "useUserRole",
@@ -5177,6 +5183,7 @@
     "log_audit_event",
     "log_search_event",
     "reopen_conversation",
+    "resolve_unconfirmed_message",
     "search_contacts",
     "search_email_threads",
     "set_conversation_status",
@@ -5227,6 +5234,7 @@
     "progressbar",
     "radio",
     "radiogroup",
+    "region",
     "row",
     "search",
     "slider",
@@ -5720,6 +5728,7 @@
     "useTransferConversation",
     "useTransferConversationDepartment",
     "useTypingPresence",
+    "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
     "useUpsellSuggestion",
@@ -5919,6 +5928,7 @@
     "merge_contacts_atomic",
     "my_network_status",
     "reopen_conversation",
+    "resolve_unconfirmed_message",
     "search_contacts",
     "search_email_threads",
     "search_team_messages",
@@ -10102,6 +10112,54 @@
    ]
   },
   {
+   "modulo": "hooks/delivery",
+   "arquivos": 1,
+   "testes": 0,
+   "linhas": 89,
+   "itens_menu": [],
+   "telas": [],
+   "rotas_http": [],
+   "componentes": 0,
+   "hooks_locais": [
+    "useToast",
+    "useUnconfirmedMessages"
+   ],
+   "hooks_definidos": [
+    "useUnconfirmedMessages"
+   ],
+   "edges": [],
+   "tabelas": [
+    "messages"
+   ],
+   "rpcs": [
+    "resolve_unconfirmed_message"
+   ],
+   "buckets": [],
+   "canais_realtime": [],
+   "env": [],
+   "flags": [],
+   "papeis": [],
+   "diretos": {
+    "edges": [],
+    "tabelas": [
+     "messages"
+    ],
+    "rpcs": [
+     "resolve_unconfirmed_message"
+    ]
+   },
+   "importado_por_outros_modulos": [
+    "components/inbox"
+   ],
+   "depende_de_modulos": [
+    "hooks/ui",
+    "integrations/supabase"
+   ],
+   "pacotes_externos": [
+    "@tanstack/react-query"
+   ]
+  },
+  {
    "modulo": "hooks/email",
    "arquivos": 1,
    "testes": 1,
@@ -12145,6 +12203,7 @@
     "useTransferConversation",
     "useTransferConversationDepartment",
     "useTypingPresence",
+    "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
@@ -12445,6 +12504,7 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
+    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
@@ -13183,6 +13243,7 @@
     "hooks/chat",
     "hooks/communication",
     "hooks/crm",
+    "hooks/delivery",
     "hooks/groups",
     "hooks/inbox",
     "hooks/integrations",
@@ -13365,6 +13426,7 @@
     "hooks/copilot",
     "hooks/crm",
     "hooks/dashboard",
+    "hooks/delivery",
     "hooks/evolution",
     "hooks/gamification",
     "hooks/gmail",
@@ -14406,6 +14468,7 @@
     "useTransferConversation",
     "useTransferConversationDepartment",
     "useTypingPresence",
+    "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
@@ -14652,6 +14715,7 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
+    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
@@ -15656,6 +15720,7 @@
     "useTransferConversationDepartment",
     "useTransitionPreferences",
     "useTypingPresence",
+    "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
@@ -15905,6 +15970,7 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
+    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",

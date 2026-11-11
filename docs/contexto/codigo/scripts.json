@@ -1641,7 +1641,7 @@
   {
    "arquivo": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
    "descricao": null,
-   "linhas": 753,
+   "linhas": 927,
    "env": [
     "RUNTIME_PROOF"
    ],
@@ -1654,7 +1654,7 @@
   {
    "arquivo": "scripts/db-audit/message-delivery-phase1-runtime.sql",
    "descricao": null,
-   "linhas": 335,
+   "linhas": 350,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
