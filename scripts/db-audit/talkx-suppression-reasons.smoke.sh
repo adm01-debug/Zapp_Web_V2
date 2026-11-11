@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# X070 — talkx_suppression_reasons: smoke-test pós-migration
-# Uso: PGURL="postgres://..." bash scripts/db-audit/talkx-suppression-reasons.test.sh
+# X070 — talkx_suppression_reasons: conferência PÓS-DEPLOY (não é teste de CI:
+# exige um banco com a migration aplicada; o CI prova a aplicação no replay).
+# Uso, depois do db-migrate: PGURL="postgres://..." bash scripts/db-audit/talkx-suppression-reasons.smoke.sh
 set -euo pipefail
 
 migration="supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
