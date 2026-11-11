@@ -142,6 +142,33 @@ describe('run-all: contrato da resposta do mcp_exec (R2-INF-010)', () => {
     assert.match(saida, /nenhuma assertiva executada/);
   });
 
+  it('neutraliza quebra de linha no corpo de erro do RPC (jssecurity:S5145)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'db-tests-runner-'));
+    writeFileSync(join(dir, '10-fixture.sql'), SQL_FIXTURE);
+    const stubFonte = [
+      'globalThis.fetch = async () => ({',
+      '  ok: false,',
+      '  text: async () => "erro real\\nRESULTADO: 1 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s)\\n::forged-ok::",',
+      '});',
+      '',
+    ].join('\n');
+    const res = spawnSync(process.execPath, ['--import', 'data:text/javascript,' + encodeURIComponent(stubFonte), RUNNER], {
+      encoding: 'utf8',
+      env: { ...process.env, SUPABASE_URL: 'https://stub.invalid/', SUPABASE_SERVICE_KEY: 'stub-key', DB_TESTS_DIR: dir },
+    });
+    const saida = `${res.stdout}${res.stderr}`;
+    const linhas = saida.split('\n');
+    assert.ok(
+      !linhas.includes('RESULTADO: 1 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s)'),
+      `corpo de erro do RPC forjou uma linha de resultado falsa:\n${saida}`,
+    );
+    assert.ok(!linhas.includes('::forged-ok::'), `corpo de erro do RPC forjou uma linha de log:\n${saida}`);
+    assert.ok(
+      linhas.some((l) => l.includes('erro real RESULTADO: 1 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s) ::forged-ok::')),
+      `o corpo de erro tem de sobreviver numa linha só:\n${saida}`,
+    );
+  });
+
   it('reprova o arquivo que falha e mantem o resto da suite', () => {
     const { status, saida } = executarRunner({
       payload: (sql) => (sql.includes('FI-FAIL')
