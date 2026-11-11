@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)",
    "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)",
    "fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)",
    "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)",
-   "fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)",
-   "fix(ci): SLA de code scanning neutraliza quebra de linha de rule.id/path (#2958)"
+   "fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

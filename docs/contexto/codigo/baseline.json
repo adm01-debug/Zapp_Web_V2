@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0d73698bac141013ca79d7e4ca30f0d57f38efbd",
+  "commit": "0e15ed61a9f097f4885389b9deb0f0dc8004427b",
   "branch": "main",
-  "data_commit": "2026-11-11T08:43:29-03:00",
+  "data_commit": "2026-11-11T09:21:08-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0e15ed6",
+    "data": "2026-11-11",
+    "assunto": "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)"
+   },
    {
     "sha": "0d73698",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "f3c0c5f",
     "data": "2026-11-10",
     "assunto": "fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)"
-   },
-   {
-    "sha": "3725c34",
-    "data": "2026-11-10",
-    "assunto": "fix(maintenance): owner.json corrompido não trava heal/check para sempre (#2931)"
    }
   ],
   "arquivos_mudados_7d": 663,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8386,
   "arquivos_codigo": 4803,
-  "linhas_codigo": 888468,
+  "linhas_codigo": 888478,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -648,7 +648,7 @@
   },
   "scripts/maintenance": {
    "arquivos": 4,
-   "linhas": 1410
+   "linhas": 1420
   },
   "scripts/mutation": {
    "arquivos": 1,
