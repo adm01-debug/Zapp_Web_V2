@@ -1,14 +1,14 @@
 /**
- * copilot-live — Edge Function stub (CV-141)
+ * copilot-live — Edge Function (CV-141)
  *
- * Recebe um tick do RADAR (contexto da conversa) e devolve insights
- * calculados no servidor. Hoje retorna resposta estática para que o
- * front possa ser deployado sem dependência de LLM; a lógica real
- * será adicionada iterativamente.
+ * Recebe um tick do RADAR (contexto da conversa), cria/atualiza a sessão
+ * do copiloto e gera uma sugestão em tempo real via generateWithRouting.
+ * Persiste o insight em copilot_insights para consumo via realtime pelo front.
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { allowedOriginFor } from '../_shared/cors-origins.ts';
+import { generateWithRouting } from '../_shared/ai-generate.ts';
 
 function cors(req: Request) {
   return {
@@ -25,6 +25,7 @@ interface TickPayload {
   draft_text?: string;
   brinde_meter?: number;
   sale_stage?: string;
+  messages?: Array<{ content: string; sender: string }>;
 }
 
 serve(async (req) => {
@@ -192,21 +193,22 @@ serve(async (req) => {
       }
     }
 
-    // Stub insight — real LLM call replaced in next iteration
-    const insight = {
-      type: 'suggestion' as const,
-      content: 'Continue qualificando: pergunte sobre orçamento e quantidade.',
-      source: 'edge' as const,
-    };
+    // Gera sugestão contextual via AI
+    const insight = await generateLiveSuggestion({
+      lastClientMessage: payload.last_client_message,
+      draftText: payload.draft_text,
+      saleStage: payload.sale_stage,
+      userId,
+    });
 
     if (session?.id) {
       await supabase.from('copilot_insights').insert({
         session_id: session.id,
         profile_id: userId,
-        insight_type: insight.type,
+        insight_type: 'suggestion',
         content: insight.content,
-        source: insight.source,
-        model_version: 'stub-v1',
+        source: 'edge',
+        model_version: insight.modelVersion,
       });
     }
 
@@ -222,3 +224,72 @@ serve(async (req) => {
     });
   }
 });
+
+/* ——— AI suggestion generator ——— */
+
+const STAGE_LABELS: Record<string, string> = {
+  qualificacao: 'qualificação',
+  apresentacao: 'apresentação',
+  negociacao: 'negociação',
+  fechamento: 'fechamento',
+  pos_venda: 'pós-venda',
+};
+
+async function generateLiveSuggestion(opts: {
+  lastClientMessage?: string;
+  draftText?: string;
+  saleStage?: string;
+  userId: string;
+}): Promise<{ content: string; modelVersion: string }> {
+  const stageLabel = opts.saleStage ? (STAGE_LABELS[opts.saleStage] ?? opts.saleStage) : 'indefinido';
+
+  const system = `Você é o Copiloto RADAR, assistente de vendas de brindes corporativos B2B.
+Analise o contexto da conversa e dê UMA sugestão objetiva para o vendedor avançar no estágio de ${stageLabel}.
+A sugestão deve ser direta (máx. 120 caracteres), acionável e específica para o momento da conversa.
+Responda APENAS com o texto da sugestão, sem prefixos, aspas ou explicação.`;
+
+  const userContent = [
+    opts.lastClientMessage ? `Última mensagem do cliente: "${opts.lastClientMessage}"` : null,
+    opts.draftText ? `Rascunho do vendedor: "${opts.draftText}"` : null,
+  ].filter(Boolean).join('\n') || `Estágio atual: ${stageLabel}. Sugira uma próxima ação.`;
+
+  try {
+    const { response, data } = await generateWithRouting({
+      purpose: 'copilot',
+      functionName: 'copilot-live',
+      userId: opts.userId,
+      system,
+      messages: [{ role: 'user', content: userContent }],
+      temperature: 0.4,
+    });
+
+    if (!response.ok || !data) {
+      return fallbackSuggestion(opts.saleStage);
+    }
+
+    const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })
+      .choices?.[0]?.message?.content;
+    const text = typeof content === 'string' ? content.trim().slice(0, 200) : '';
+
+    if (!text) return fallbackSuggestion(opts.saleStage);
+
+    const modelUsed = (data as { model?: string }).model ?? 'unknown';
+    return { content: text, modelVersion: modelUsed };
+  } catch {
+    return fallbackSuggestion(opts.saleStage);
+  }
+}
+
+function fallbackSuggestion(stage?: string): { content: string; modelVersion: string } {
+  const fallbacks: Record<string, string> = {
+    qualificacao: 'Pergunte sobre o evento e o número de participantes.',
+    apresentacao: 'Apresente até 3 opções alinhadas ao orçamento do cliente.',
+    negociacao: 'Destaque o custo por uso — não o custo total.',
+    fechamento: 'Pergunte o que falta para avançar com o pedido.',
+    pos_venda: 'Confirme a satisfação e solicite indicação.',
+  };
+  return {
+    content: fallbacks[stage ?? ''] ?? 'Qualifique o lead com perguntas abertas.',
+    modelVersion: 'fallback-v1',
+  };
+}

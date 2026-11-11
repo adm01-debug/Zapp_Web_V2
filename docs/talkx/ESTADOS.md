@@ -29,9 +29,9 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXMessagePreview.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXOverview.tsx` | `312`, `338` | `305`, `307` | `297` | — | — | — |
 | `src/components/talkx/TalkXScheduleTimeline.tsx` | — | — | — | — | — | — |
-| `src/components/talkx/TalkXSegments.tsx` | `488`, `490` | `413`, `486`, `595` | `423`, `482` | — | — | — |
+| `src/components/talkx/TalkXSegments.tsx` | `502`, `504` | `427`, `500`, `609` | `437`, `496` | — | — | — |
 | `src/components/talkx/TalkXSettings.tsx` | — | `32` | `28` | — | — | — |
-| `src/components/talkx/TalkXSuppression.tsx` | `616`, `618` | `614`, `694`, `856` | `610` | — | — | — |
+| `src/components/talkx/TalkXSuppression.tsx` | `616`, `618` | `614`, `694`, `850` | `610` | — | — | — |
 | `src/components/talkx/TalkXTemplateEditor.tsx` | — | `519` | `515` | — | — | — |
 | `src/components/talkx/TalkXTemplates.tsx` | `322`, `326`, `333` | `293`, `320`, `362`, `396` | `316` | — | — | — |
 | `src/components/talkx/TalkXView.tsx` | — | `60`, `446` | — | — | `590` | — |

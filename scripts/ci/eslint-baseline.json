@@ -6,7 +6,7 @@
   "files": [
     {
       "path": "e2e/skins-e2e.spec.ts",
-      "sha256": "a8ca2720cda7a8ef1f8fe63d88ae85361b1ba805ee4c81ed617fc7065e965044"
+      "sha256": "0a168fad03d43a2245bfaa88d5115d551d55c569e00cac7028f44037ec0b606e"
     },
     {
       "path": "src/components/a11y/a11yComponents.tsx",
@@ -153,12 +153,8 @@
       "sha256": "29f5982b502cdb922ba7d75511b5e7e9560ed91bbf27ee59314297d106d6121c"
     },
     {
-      "path": "src/components/CommandPalette.tsx",
-      "sha256": "ec80668c35c7781bee695224acdc412c6905e4706cd1867c4d7abf9705d635d0"
-    },
-    {
       "path": "src/components/compliance/LGPDComplianceView.tsx",
-      "sha256": "e9b1d1d43615630f830090f559ff3fbdf65a3d4ded9ded06121db143992cf6b2"
+      "sha256": "f4f240ae0267598439273c8559a51c03b6f9a10ed8854a888c3ce948078f6f93"
     },
     {
       "path": "src/components/connections/BusinessHoursDialog.tsx",
@@ -482,7 +478,7 @@
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "bdbf62b7f7d59824f15dc396973e4d99d8aff98d37c53c08bcf7c9835aaca206"
+      "sha256": "bd10533e343a23a905356b64abef81b378e80fb965b6e6d375679c29dc786bc3"
     },
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
@@ -1010,7 +1006,7 @@
     },
     {
       "path": "src/components/ui/command-palette.tsx",
-      "sha256": "5fddf4843e6ffe1d6247e25bc5addcceb8f0fbd4c12139f0b2d0073247f63c16"
+      "sha256": "6cd30e160c2508aa197e6bb13d707d405791d95009e0725b90ffb9233f26741e"
     },
     {
       "path": "src/components/ui/dialog.tsx",
@@ -1058,7 +1054,7 @@
     },
     {
       "path": "src/components/ui/sonner.tsx",
-      "sha256": "470afe5bfd4445203ee267c1055cc465f1604be6a64f33b4abf3caf2cc35e829"
+      "sha256": "7ee58d97a649b920d428ff2b47f7a17efc3c6317d286dd19d892d1339ddea52d"
     },
     {
       "path": "src/components/ui/toggle.tsx",
@@ -1342,7 +1338,7 @@
     },
     {
       "path": "src/hooks/ui/useVolumeRocker.ts",
-      "sha256": "c05aa60e0a61c67d631701aec014b33ff66f9d59c1c209d8f611046b803eb755"
+      "sha256": "1d47ae653abb6f0524698faff309ead1c7a354b2c2b5463060ed0d0f36937ba6"
     },
     {
       "path": "src/hooks/ui/useZenMode.ts",
@@ -1446,11 +1442,11 @@
     },
     {
       "path": "supabase/functions/_shared/ai-feature-flags.ts",
-      "sha256": "b444d797754e75c3fe34c06a0bc46dc7d10b25241ccf0cac0440b5ef1dfa010e"
+      "sha256": "2bd9023e0692d48ea73bebfe8d48f9b0ea94fd6ebbddcea3300fa7c97ab30feb"
     },
     {
       "path": "supabase/functions/_shared/ai-usage.ts",
-      "sha256": "7d2414614bb8a03fa7c405f001116c1893003ed86889a6198a7ca29869c738cf"
+      "sha256": "eee8da03a316728014dfcd7aebddaeca26f64f9668222c47b66a5d08bbdd1f95"
     },
     {
       "path": "supabase/functions/_shared/ai-vocabulary.ts",
@@ -1482,7 +1478,7 @@
     },
     {
       "path": "supabase/functions/_shared/observability.ts",
-      "sha256": "a0a3630c98946fa2b06dcaf89b3e6ca653eb98a1c81f5ec156e933a0324d27aa"
+      "sha256": "616d504f1e8416ee08556c562a76ba2a7f547a9b18e2a2a9c64b986d2555a74a"
     },
     {
       "path": "supabase/functions/_shared/providers/evolution/index.ts",
@@ -1498,59 +1494,59 @@
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
-      "sha256": "aab2f37cc427d6ced4c0b17e2eaa4335c3280f1e3cfedbfb91b9df705f141fca"
+      "sha256": "bfc6a12f3e5f4a4f95e4749b2f5d32f6337014bc75d67a79c8e8ce14b9e4e5b5"
     },
     {
       "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
-      "sha256": "9e9b98547188aad72d52fcdbda91beb89b00b69aebaffc8736632adfa084f4ed"
+      "sha256": "6f851c4c4500137cfa90a5ccdb2598db77d0758f1bf8e866f674e0a74c2ad082"
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "996b5224287d460ee9fcd5e9aeb81a3f750f9349e1b0356c5a0c9be1d0cc31fa"
+      "sha256": "39445353477463534590f13cfa3c4f9da43d6d5b5b4e97fa089397ab3588573d"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "sha256": "5a9762286c7ab3209c66b87c20df81925d1ce51ad0be3a3755e037ecc253882b"
+      "sha256": "d5ac631407b3e03c8680673baa0e1f1e1993aa220bad8a1ff86977743f859cad"
     },
     {
       "path": "supabase/functions/get-sip-password/index.ts",
-      "sha256": "f5d69b0eee1536b3803b6019866baf14f2344166f8295d969d385d4a0102c371"
+      "sha256": "7b98d59d49bfa3bc14c8138b47697a69f009d009c6bb25953ab90af379b8074f"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "sha256": "3686ef162ca47bfd59200e84cda7434e4ff68bf0bbee3df8a215302c2fff1fca"
+      "sha256": "8af4daac0dfc5781739927b55346fd696f0e19b3dd56ed394ee5b37014ee4e97"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "sha256": "1422680607076d7212987049a218d21d4ddb38b7406c9d12620b48879d3db750"
+      "sha256": "a0f202121028febcc9b4a9789f0298f8be2f531ba66b2cb087fcc4b0107fd43c"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/blocks.ts",
-      "sha256": "e7e38ee87382039855c6129c9ed5cbc0c444e728eed66630e8169029ca9fba0f"
+      "sha256": "2a9b6de3d99c98b377dd51604ab830c92a45ed471c357ce73755ad78b49654d8"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
-      "sha256": "58668b4284adb196500fb50207e0eb0c6c3d23f753a12e6ce6cfbae4611d688d"
+      "sha256": "ddde54b3b264d11d5d78c1191baa55a99e211a3d2fdae3e77c04cf3d988705b6"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "sha256": "bc80064757393b751d8faed42407dfddbacc228152fa6d7fcda6b296ab122d14"
+      "sha256": "b1ee6b5ae71fa74cbf9ce5a13fb03df769253e8835037fbe613855382bb1b998"
     },
     {
       "path": "supabase/functions/send-rate-limit-alert/index.ts",
-      "sha256": "1655d16f9215021070c01b1c2b681fb4c0089802e884206c3396cc8a7d5901dd"
+      "sha256": "72d88479ab2ae071383cc7432d651d19e3358de38a3f28eab2b387599ae58d78"
     },
     {
       "path": "supabase/functions/send-scheduled-report/index.ts",
-      "sha256": "f4d079a234cca947d43dcbd2701e7433cb93978cd69a9e46b72b1be1969748c6"
+      "sha256": "bd9bc6d6f758e18635745b9ef7793295fb5bafd0f888f694a3780910adf50842"
     },
     {
       "path": "supabase/functions/talkx-ai/index.ts",
-      "sha256": "b758ce21d40569efefd28ebc3388415aa88f4970b72844d976f537b955cb9074"
+      "sha256": "9cbd3905a2790524ff1847807ce7976bf494d5e4acab7dad42a8a4baec969d24"
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
-      "sha256": "2990e341af1609cc9a9c9919ade5b7e09537f481e2a30a37e445ce4893258af8"
+      "sha256": "3c644b0daf5116eae08b5542d78cee3bb9d1266a23d4fd9f1d40f37dd9dfde71"
     },
     {
       "path": "supabase/functions/talkx-send/_test-utils.ts",
@@ -1558,19 +1554,19 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "sha256": "97e9a38984243c97f7ebfa4ee5bf6b0ee9210ad2d17ff98ff07652f40cda5199"
+      "sha256": "d6cf2119ff0c57f4314b0521c6323d6e73092c0ce7a5f39d3493208fcdbd9b0d"
     },
     {
       "path": "supabase/functions/talkx-storage-purge/index.ts",
-      "sha256": "ce848c35af9d2700184892233b207f8a3db7dddf9827d601e3871db433108332"
+      "sha256": "e5156088cd5b0460cfb69c7ff32e9e6439a1874d0e6ed194520bb5c7bf44382a"
     }
   ],
   "issues": [
     {
       "file": "e2e/skins-e2e.spec.ts",
-      "line": 405,
+      "line": 417,
       "column": 15,
-      "endLine": 405,
+      "endLine": 417,
       "endColumn": 24,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -1582,9 +1578,9 @@
     },
     {
       "file": "e2e/skins-e2e.spec.ts",
-      "line": 660,
+      "line": 672,
       "column": 13,
-      "endLine": 660,
+      "endLine": 672,
       "endColumn": 26,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -2713,20 +2709,6 @@
       "spanHash": "3363ca62e885d6c1bb84dd33228fc4133d0ab1709e8f6309a1de556b95227e64",
       "lineHash": "a108573342594beab572214f67dd1706a988f07e6d3e2a4a1b6d240b537ae6d1",
       "contextHash": "710fc94c43cd47f59b0c444da61ab64a759df672c0af72a601de6f8a9acf5eef"
-    },
-    {
-      "file": "src/components/CommandPalette.tsx",
-      "line": 67,
-      "column": 11,
-      "endLine": 67,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "1e332e1466415867e0816be7a1ee739cae94c4b347e75b964d0db0d741e9f8e5",
-      "lineHash": "4dc02a311ae9c2088a1338a286f5c90380a9c90cfefb582d40a0c2211caf7eb8",
-      "contextHash": "027fa2eafeed270f7cdfdc9776790c25826c68a7ece33a2fd6d5ccb8984feaf2"
     },
     {
       "file": "src/components/compliance/LGPDComplianceView.tsx",
@@ -9226,9 +9208,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 360,
+      "line": 364,
       "column": 17,
-      "endLine": 360,
+      "endLine": 364,
       "endColumn": 34,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -11242,9 +11224,9 @@
     },
     {
       "file": "src/hooks/ui/useVolumeRocker.ts",
-      "line": 101,
+      "line": 102,
       "column": 7,
-      "endLine": 101,
+      "endLine": 102,
       "endColumn": 30,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -11256,9 +11238,9 @@
     },
     {
       "file": "src/hooks/ui/useVolumeRocker.ts",
-      "line": 104,
+      "line": 105,
       "column": 14,
-      "endLine": 104,
+      "endLine": 105,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -11270,9 +11252,9 @@
     },
     {
       "file": "src/hooks/ui/useVolumeRocker.ts",
-      "line": 107,
+      "line": 108,
       "column": 14,
-      "endLine": 107,
+      "endLine": 108,
       "endColumn": 35,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -11284,9 +11266,9 @@
     },
     {
       "file": "src/hooks/ui/useVolumeRocker.ts",
-      "line": 112,
+      "line": 113,
       "column": 14,
-      "endLine": 112,
+      "endLine": 113,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -11298,9 +11280,9 @@
     },
     {
       "file": "src/hooks/ui/useVolumeRocker.ts",
-      "line": 112,
+      "line": 113,
       "column": 35,
-      "endLine": 112,
+      "endLine": 113,
       "endColumn": 52,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -11312,9 +11294,9 @@
     },
     {
       "file": "src/hooks/ui/useVolumeRocker.ts",
-      "line": 176,
+      "line": 177,
       "column": 11,
-      "endLine": 176,
+      "endLine": 177,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",

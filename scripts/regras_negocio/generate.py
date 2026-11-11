@@ -620,7 +620,7 @@ def analyze_code_file(p: Path, root: Path) -> dict | None:
 # 4. Schema SQL (migrations / schema.sql / prisma / database.types.ts)
 # --------------------------------------------------------------------------- #
 SQL_CREATE_TABLE_RE = re.compile(r"create\s+(?:unlogged\s+|temp(?:orary)?\s+|global\s+|local\s+)*table\s+(?:if\s+not\s+exists\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s*\(", re.I)
-SQL_ALTER_ADD_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?\"?(\w+)\"?\s+([^,;]+)", re.I)
+SQL_ALTER_ADD_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?\"?(\w+)\"?\s+((?:[^,;(]|\([^)]*\))+)", re.I)
 SQL_ALTER_ADD_CONSTRAINT_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+add\s+constraint\s+\"?(\w+)\"?\s+([^;]+);", re.I)
 SQL_ALTER_COL_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+alter\s+(?:column\s+)?\"?(\w+)\"?\s+(set\s+not\s+null|drop\s+not\s+null|set\s+default\s+[^,;]+|drop\s+default|(?:set\s+data\s+)?type\s+[^,;]+)", re.I)
 SQL_ALTER_DROP_COL_RE = re.compile(r"alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+drop\s+column\s+(?:if\s+exists\s+)?\"?(\w+)\"?", re.I)
@@ -944,10 +944,16 @@ def parse_sql_schema(root: Path, files: list[Path]) -> dict:
             schema["sources"].append(rel(f, root))
     # database.types.ts (Supabase gen types) — fonte quando migrations não têm a tabela
     for f in files:
-        if f.name in ("types.ts", "database.types.ts", "database.ts", "supabase.ts") and "Tables:" in read_text(f) and "Row:" in read_text(f):
-            txt = read_text(f)
+        if f.name in ("types.ts", "database.types.ts", "database.ts", "supabase.ts") and "Tables:" in read_text(f, 2_000_000) and "Row:" in read_text(f, 2_000_000):
+            txt = read_text(f, 2_000_000)
             schema["types_file"] = rel(f, root)
-            for name, row in re.findall(r"\n\s+(\w+):\s*\{\s*\n\s*Row:\s*\{([^}]*)\}", txt):
+            _public_start = txt.find("\n  public: {")
+            if _public_start < 0:
+                _public_start = txt.find("\n  public:{")
+            _tables_start = txt.find("    Tables:", _public_start) if _public_start >= 0 else txt.find("    Tables:")
+            _tables_end = txt.find("\n    Views:", _tables_start) if _tables_start >= 0 else -1
+            _tables_txt = txt[_tables_start:_tables_end] if _tables_start >= 0 and _tables_end > 0 else txt
+            for name, row in re.findall(r"\n\s+(\w+):\s*\{\s*\n\s*Row:\s*\{([^}]*)\}", _tables_txt):
                 cols = []
                 for line in row.strip().splitlines():
                     cm = re.match(r"\s*(\w+)\??:\s*(.+?)\s*;?$", line)
@@ -1158,7 +1164,7 @@ def detect_features(root: Path, files: list[Path], code: dict[str, dict], stack:
 def module_key(r: str) -> str:
     parts = r.split("/")
     if parts[0] in ("src", "app", "lib", "packages", "apps") and len(parts) > 2:
-        key = "/".join(parts[:2]) if parts[0] not in ("packages", "apps") else "/".join(parts[:3])
+        key = "/".join(parts[:2]) if parts[0] not in ("packages", "apps") or len(parts) <= 3 else "/".join(parts[:3])
         if parts[1] in ("features", "modules", "domains") and len(parts) > 3:
             key = "/".join(parts[:3])
         return key
@@ -1565,7 +1571,7 @@ def llm_synthesis(facts: dict, cache_dir: Path, model: str) -> str:
     if not key:
         log("ANTHROPIC_API_KEY ausente — síntese narrativa desativada")
         return ""
-    h = stable_hash(facts)
+    h = stable_hash({"facts": facts, "model": model})
     cache = cache_dir / f"llm-{h}.md"
     if cache.exists():
         return cache.read_text(encoding="utf-8")
@@ -1977,6 +1983,15 @@ def render_changes(meta, gitd) -> str:
 # --------------------------------------------------------------------------- #
 POINTER_START = "<!-- ai-context-sync:start -->"
 POINTER_END = "<!-- ai-context-sync:end -->"
+PROFILES = {"codigo": {"00-INDEX.md", "01-VISAO-GERAL.md", "02-ARQUITETURA.md", "03-MODULOS.md", "04-FUNCIONALIDADES.md", "05-FLUXO-DE-DADOS.md", "06-BANCO-DE-DADOS.md", "08-INTEGRACOES.md", "09-MUDANCAS-RECENTES.md"},
+            "regras": {"07-REGRAS-DE-NEGOCIO.md", "10-ACESSO-E-SEGURANCA.md", "11-GLOSSARIO-E-LACUNAS.md"}}
+
+
+def artifact_hashes(directory: Path, names) -> dict | None:
+    try:
+        return {name: hashlib.sha256((directory / name).read_bytes()).hexdigest() for name in sorted(names)}
+    except OSError:
+        return None
 
 
 def upsert_pointer(root: Path, out_rel: str, index_rel: str, create_if_missing: bool) -> list[str]:
@@ -2023,6 +2038,10 @@ def main() -> int:
     out_rel = rel(out_dir, root) if out_dir.is_relative_to(root) else args.out.rstrip("/")
     log(f"repo={root} out={out_dir}")
 
+    pointer_writes = []
+    if not args.no_pointer and not args.check:
+        index_rel = args.index_path.strip("/") or f"{out_rel}/00-INDEX.md"
+        pointer_writes = upsert_pointer(root, out_rel, index_rel, create_if_missing=True)
     files = walk_repo(root, out_dir)
     code: dict[str, dict] = {}
     for f in files:
@@ -2063,11 +2082,30 @@ def main() -> int:
     if state_path.exists():
         try: prev = json.loads(state_path.read_text())
         except Exception: prev = {}
-    changed = prev.get("facts_hash") != facts_hash or prev.get("version") != VERSION
+    if not isinstance(prev, dict):
+        prev = {}
+    snap = args.schema_snapshot or ("docs/supabase" if (root / "docs" / "supabase").is_dir() else "")
+    snap_dir = (root / snap) if snap else None
+    if snap_dir and not snap_dir.is_dir():
+        log(f"aviso: snapshot {snap} não existe — 06 reconstruído das migrations")
+        snap_dir = None
+    render_hash = stable_hash({
+        "profile": args.profile, "schema_snapshot": snap, "llm": args.llm, "model": args.model,
+        "no_pointer": args.no_pointer, "index_path": args.index_path, "out": out_rel, "git": gitd,
+        "docs": docs, "files": [rel(f, root) for f in files], "code": code,
+        "snapshot": render_database_pointer({"sha": "", "branch": "", "generated_at": ""}, schema, snap, snap_dir, root) if snap_dir else None,
+        "env_examples": {name: read_text(root / name) for name in (".env.example", ".env.sample", ".env.template", ".env.local.example")},
+    })
+    expected = PROFILES.get(args.profile, PROFILES["codigo"] | PROFILES["regras"]) | {"context.json", "manifest.json"}
+    artifacts = artifact_hashes(out_dir, expected)
+    pointers = artifact_hashes(root, [name for name in ("CLAUDE.md", "AGENTS.md") if (root / name).exists()]) if not args.no_pointer else None
+    changed = (prev.get("facts_hash") != facts_hash or prev.get("version") != VERSION
+               or prev.get("render_hash") != render_hash or artifacts is None
+               or prev.get("artifacts") != artifacts or prev.get("pointers") != pointers)
     log(f"facts_hash={facts_hash} prev={prev.get('facts_hash')} changed={changed}")
     if args.check:
         return 1 if changed else 0
-    if not changed and prev.get("sha") == gitd["sha"] and not args.force:
+    if not changed and not args.force:
         log("nada mudou — nenhuma escrita")
         return 0
 
@@ -2085,11 +2123,6 @@ def main() -> int:
     if not rd.exists():
         rd.write_text("# Regras manuais\n\nArquivos `.md` aqui (exceto README e TEMPLATE*) entram em `07-REGRAS-DE-NEGOCIO.md` seção A com prioridade máxima e nunca são sobrescritos. Comece copiando `TEMPLATE-regras-de-negocio.md` para `regras.md`.\n", encoding="utf-8")
 
-    snap = args.schema_snapshot or ("docs/supabase" if (root / "docs" / "supabase").is_dir() else "")
-    snap_dir = (root / snap) if snap else None
-    if snap_dir and not snap_dir.is_dir():
-        log(f"aviso: snapshot {snap} não existe — 06 reconstruído das migrations")
-        snap_dir = None
     outputs = {
         "00-INDEX.md": render_index(meta, stack, feats, schema, mods, docs, dataflow, rules, access, audit),
         "01-VISAO-GERAL.md": render_overview(meta, stack, docs, feats, dataflow, llm_text),
@@ -2104,31 +2137,29 @@ def main() -> int:
         "10-ACESSO-E-SEGURANCA.md": render_access(meta, access, schema),
         "11-GLOSSARIO-E-LACUNAS.md": render_glossary(meta, schema, rules, access, audit, docs),
     }
-    PROFILES = {"codigo": {"00-INDEX.md", "01-VISAO-GERAL.md", "02-ARQUITETURA.md", "03-MODULOS.md", "04-FUNCIONALIDADES.md", "05-FLUXO-DE-DADOS.md", "06-BANCO-DE-DADOS.md", "08-INTEGRACOES.md", "09-MUDANCAS-RECENTES.md"},
-                "regras": {"07-REGRAS-DE-NEGOCIO.md", "10-ACESSO-E-SEGURANCA.md", "11-GLOSSARIO-E-LACUNAS.md"}}
     if args.profile in PROFILES:
         outputs = {k: v for k, v in outputs.items() if k in PROFILES[args.profile]}
         for stale in set(PROFILES["codigo"] | PROFILES["regras"]) - set(outputs):
             if (out_dir / stale).exists():
                 (out_dir / stale).unlink()
-    written = []
+    written = pointer_writes.copy()
     for name, content in outputs.items():
         p = out_dir / name
         content = redact(content)
-        if not p.exists() or p.read_text(encoding="utf-8") != content:
+        if not p.exists() or p.read_bytes() != content.encode("utf-8"):
             p.write_text(content, encoding="utf-8"); written.append(name)
     ctx = {"meta": meta, "version": VERSION, "facts_hash": facts_hash, **facts,
            "code_files": {k: {kk: vv for kk, vv in v.items() if kk != "imports" and vv not in ([], {}, "", 0, False)} for k, v in code.items()}, "git": gitd}
     (out_dir / "context.json").write_text(json.dumps(ctx, ensure_ascii=False, indent=1, default=list), encoding="utf-8")
-    state_path.write_text(json.dumps({"facts_hash": facts_hash, "sha": gitd["sha"], "version": VERSION, "generated_at": meta["generated_at"]}, indent=1), encoding="utf-8")
     manifest = {"produtor": "ai-context-sync", "versao": VERSION, "perfil": args.profile, "gerado_em": meta["generated_at"], "commit": gitd["sha"],
                 "fonte": {"full": "código do repo + migrations/types + manual/", "codigo": "código do repo", "regras": "código + migrations/types + manual/ (regras de negócio)"}[args.profile],
                 "entrada": sorted(outputs)[0] if outputs else "", "arquivos": sorted(outputs) + ["context.json"],
                 "schema_real_em": snap if snap_dir else "", "inconsistencias": len(audit["issues"]), "lacunas": len(audit["gaps"])}
     (out_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
-    if not args.no_pointer:
-        index_rel = args.index_path.strip("/") or f"{out_rel}/00-INDEX.md"
-        written += upsert_pointer(root, out_rel, index_rel, create_if_missing=True)
+    pointers = artifact_hashes(root, [name for name in ("CLAUDE.md", "AGENTS.md") if (root / name).exists()]) if not args.no_pointer else None
+    state_path.write_text(json.dumps({"facts_hash": facts_hash, "sha": gitd["sha"], "version": VERSION,
+                                     "render_hash": render_hash, "artifacts": artifact_hashes(out_dir, expected), "pointers": pointers,
+                                     "generated_at": meta["generated_at"]}, indent=1), encoding="utf-8")
     log(f"escritos: {', '.join(written) or 'nenhum (sem diferença)'} + context.json")
     return 0
 
