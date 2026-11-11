@@ -24,6 +24,9 @@ WITH expected_functions AS (
       OR (procedure.proname = 'fail_outbound_message'
        AND pg_get_function_identity_arguments(procedure.oid) =
          'p_message_id uuid, p_claim_token uuid, p_retryable boolean')
+      OR (procedure.proname = 'mark_outbound_post_started'
+       AND pg_get_function_identity_arguments(procedure.oid) =
+         'p_message_id uuid, p_claim_token uuid')
       OR (procedure.proname = 'close_conversation_atomic'
        AND pg_get_function_identity_arguments(procedure.oid) =
          'p_contact_id uuid, p_client_request_id uuid, p_close_reason text, p_outcome text, p_classification text, p_notes text')
@@ -73,6 +76,7 @@ WITH expected_functions AS (
     ('messages', 'delivery_claimed_by', 'text', 'YES', NULL::text),
     ('messages', 'delivery_last_claim_token', 'uuid', 'YES', NULL::text),
     ('messages', 'delivery_attempt_count', 'integer', 'NO', '0'::text),
+    ('messages', 'delivery_post_started_at', 'timestamp with time zone', 'YES', NULL::text),
     ('conversation_closures', 'client_request_id', 'uuid', 'YES', NULL::text),
     ('conversation_events', 'closure_id', 'uuid', 'YES', NULL::text)
   ) AS column_contract(
@@ -123,7 +127,8 @@ WITH expected_functions AS (
         AND column_name IN (
           'client_message_id', 'delivery_claim_token', 'delivery_claimed_at',
           'delivery_claim_expires_at', 'delivery_claimed_by',
-          'delivery_last_claim_token', 'delivery_attempt_count'
+          'delivery_last_claim_token', 'delivery_attempt_count',
+          'delivery_post_started_at'
         )
     ),
     'closure_column_count', (
@@ -195,6 +200,7 @@ WITH expected_functions AS (
           'enqueue_outbound_message', 'claim_outbound_message',
           'enqueue_rich_outbound_message',
           'complete_outbound_message', 'fail_outbound_message',
+          'mark_outbound_post_started',
           'close_conversation_atomic',
           'guard_message_delivery_internal_fields',
           'guard_conversation_closure_request_id',
@@ -285,11 +291,20 @@ WITH expected_functions AS (
         AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
         AND privilege_type = 'EXECUTE'
     ),
+    'service_mark_effective', COALESCE((SELECT has_function_privilege(
+      'service_role', oid, 'EXECUTE'
+    ) FROM expected_functions WHERE proname = 'mark_outbound_post_started'), false),
+    'service_mark_direct', EXISTS (
+      SELECT 1 FROM expected_function_acl
+      WHERE proname = 'mark_outbound_post_started'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+        AND privilege_type = 'EXECUTE'
+    ),
     'authenticated_privileged_delivery', COALESCE((SELECT bool_or(
       has_function_privilege('authenticated', oid, 'EXECUTE')
     ) FROM expected_functions WHERE proname IN (
       'claim_outbound_message', 'complete_outbound_message',
-      'fail_outbound_message'
+      'fail_outbound_message', 'mark_outbound_post_started'
     )), false),
     'authenticated_internal_guard_execute', COALESCE((SELECT bool_or(
       has_function_privilege('authenticated', oid, 'EXECUTE')
@@ -310,14 +325,14 @@ WITH expected_functions AS (
       SELECT count(*) FROM expected_functions
       WHERE proname IN (
         'claim_outbound_message', 'complete_outbound_message',
-        'fail_outbound_message'
+        'fail_outbound_message', 'mark_outbound_post_started'
       ) AND has_function_privilege('service_role', oid, 'EXECUTE')
     ),
     'service_delivery_direct_count', (
       SELECT count(DISTINCT proname) FROM expected_function_acl
       WHERE proname IN (
         'claim_outbound_message', 'complete_outbound_message',
-        'fail_outbound_message'
+        'fail_outbound_message', 'mark_outbound_post_started'
       )
         AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
         AND privilege_type = 'EXECUTE'

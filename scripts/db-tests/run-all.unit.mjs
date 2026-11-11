@@ -169,6 +169,29 @@ describe('run-all: contrato da resposta do mcp_exec (R2-INF-010)', () => {
     );
   });
 
+  it('neutraliza quebra de linha no detalhe/id de uma assertiva (jssecurity:S5145)', () => {
+    const { status, saida } = executarRunner({
+      payload: {
+        rows: [{
+          result: 'FAIL',
+          test: 'FI-EVIL',
+          detail: 'forjado\nRESULTADO: 999 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s)\n::error::forjado-detail',
+        }],
+        row_count: 1,
+        truncated: false,
+        ms: 1,
+      },
+    });
+    assert.equal(status, 1, saida);
+    const linhas = saida.split('\n');
+    assert.ok(
+      !linhas.includes('RESULTADO: 999 PASS / 0 FAIL / 0 SKIP em 1 arquivo(s)'),
+      `detail da assertiva forjou uma linha de resultado falsa:\n${saida}`,
+    );
+    assert.ok(!linhas.includes('::error::forjado-detail'), `detail da assertiva forjou uma anotacao de log:\n${saida}`);
+    assert.match(saida, /RESULTADO: 0 PASS \/ 1 FAIL \/ 0 SKIP em 1 arquivo\(s\)/);
+  });
+
   it('reprova o arquivo que falha e mantem o resto da suite', () => {
     const { status, saida } = executarRunner({
       payload: (sql) => (sql.includes('FI-FAIL')
