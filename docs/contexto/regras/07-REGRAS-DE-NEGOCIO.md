@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `3725c3449f` · branch `main` · 2026-11-11 02:00 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f3c0c5f7e8` · branch `main` · 2026-11-11 02:18 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4597,7 +4597,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21289 testes em 2256 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21290 testes em 2256 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4834,6 +4834,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts` | 19 | (1) banco: três colunas novas NULLABLE (IA-047) · (2) banco: três índices únicos PARCIAIS com o where correto (IA-047) · a migration NÃO cria índice único TOTAL sobre a coluna nova (risco de colisão com histórico) · (3) banco: aditivo, idempotente, com rollback e sem transação explícita … |
 | `tests/contracts/requireauth-network-policy.contract.test.ts` | 19 | canonicalEndpointFromUrl — endpoint canônico estável a partir da URL · extrai o nome da função do gateway /functions/v1/<nome> · descarta sub-path e devolve só o nome da função · usa o primeiro segmento quando não há a barra functions/v1 … |
 | `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` | 19 | SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produção · o gerador existe no repositório e o plano cobre o §2 da IA-010 · todo registro nasce marcado: prefixo ENSAIO-, domínio de teste e faixa de telefone própria · nenhum dado pessoal real: sem CPF/CNPJ e sem telefone repetido no plano … |
+| `scripts/catalog/validate-plan.test.mjs` | 18 | rejeita caminho relativo que escapa do repositorio · rejeita caminho absoluto fora do repositorio e do temporario · caminho valido e dentro da raiz, mas arquivo inexistente, da ERRO limpo (sem stack cru) · aceita o caminho default do plano dentro do repositorio … |
 | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` | 18 | AutomationEditorDialog — estado por registro (R2-MOD-001) · mostra os dados do registro aberto · ao trocar de registro (mesmo componente montado), não reaproveita o estado do anterior · ao abrir  … |
 | `src/components/groups/__tests__/GroupsView.test.tsx` | 18 | GroupsView · renders the page title · shows empty state when no groups · renders groups when data loads … |
 | `src/components/inbox/__tests__/InboxSavedFiltersMenu.test.tsx` | 18 | InboxSavedFiltersMenu — filtros salvos do inbox · lista vazia: orienta e mantém  · aplicar: o conteúdo do preset chega ao onApply e o menu fecha · salvar: grava o filtro que está na tela, com o nome digitado … |
@@ -4854,7 +4855,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/_adv_vocabulary-consumers-gaps.test.ts` | 18 | ADVERSARIAL — defeitos de consumidor (comparação morta / ausência → valor) · $file :: $what · ADVERSARIAL — chaves de vocabulário EN fora do módulo canônico · $file :: $what … |
 | `tests/contracts/ai-endpoints-auth.contract.test.ts` | 18 | endpoints de IA — ordem entre autenticação e gasto de provedor (IA-011) · ${fn} autentica o chamador antes de chamar o provedor · o contrato não confunde import com chamada (guarda do próprio teste) · cliente do voice-agent — credencial da sessão (IA-011, regressão A1) … |
 | `tests/contracts/crm-sentiment-boundary.contract.test.ts` | 18 | sentimentForExternalCrm — mapa canônico pt-BR → domínio EN do CRM · cobre exatamente os 4 canônicos (nem a mais, nem a menos) · aceita variação de caixa/espaço do valor canônico · ausência não vira token — nunca inventa sentimento … |
-| `scripts/catalog/validate-plan.test.mjs` | 17 | rejeita caminho relativo que escapa do repositorio · rejeita caminho absoluto fora do repositorio e do temporario · aceita o caminho default do plano dentro do repositorio · aceita plano valido cujo checklist mistura [ ], [x] e [X] … |
 | `src/components/admin/__tests__/adminDownloadPermission.test.ts` | 17 | useAdminData - can_download no handleSaveUser · envia can_download no payload de update · envia can_download=false quando desabilitado · UserWithRole interface … |
 | `src/components/calls/__tests__/NewCallPanel.test.tsx` | 17 | NewCallPanel (T56/T59/T60) · tem o segmentado VoIP/WhatsApp como radiogroup, independente das abas do historico · lembra o canal escolhido no localStorage · desabilita a opcao sem capacidade de discar … |
 | `src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx` | 17 | CatalogAdvancedFilters — faixa de preço (slider real, E36) · sem stats, usa o teto de fallback (2000) — nunca hardcoded  · com stats.price_max, o teto vem dele (arredondado para cima) — nunca um valor fixo · inicializa o slider com priceMin/priceMax de filters, clampado ao teto real … |
