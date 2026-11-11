@@ -166,6 +166,7 @@ type RpcResult = { data: unknown; error: { code?: string; message?: string } | n
 interface Chain {
   select: (columns?: string) => Chain;
   eq: (column?: string, value?: unknown) => Chain;
+  is: (column?: string, value?: unknown) => Chain;
   in: (column?: string, values?: readonly unknown[]) => Chain;
   update: (patch?: Row) => Chain;
   maybeSingle: () => Promise<RpcResult>;
@@ -189,6 +190,12 @@ function makeClient(cfg: {
   /** Linhas de `contacts` e `whatsapp_connections` (classificação do claim vazio). */
   contacts?: RpcResult[];
   connections?: RpcResult[];
+  /**
+   * Colunas que NÃO existem no schema simulado (pré-DDL). Select/filtro que as
+   * cite devolve 42703 como o PostgREST real ("column ... does not exist") e NÃO
+   * consome a fila de respostas da tabela.
+   */
+  missingColumns?: string[];
 }): FakeClient {
   const rpcCalls: { fn: string; args?: Row }[] = [];
   const messagesQueue: RpcResult[] = [...(cfg.messages ?? [])];
@@ -202,13 +209,29 @@ function makeClient(cfg: {
       if (table === 'messages') result = messagesQueue.shift() ?? { data: null, error: null };
       if (table === 'contacts') result = contactsQueue.shift() ?? { data: null, error: null };
       if (table === 'whatsapp_connections') result = connectionsQueue.shift() ?? { data: null, error: null };
+      const referenced: string[] = [];
+      const missingError = (): RpcResult | null => {
+        const missing = (cfg.missingColumns ?? []).find((col) =>
+          referenced.some((ref) => ref.split(',').map((c) => c.trim()).includes(col)));
+        return missing ? { data: null, error: { code: '42703', message: `column messages.${missing} does not exist` } } : null;
+      };
+      const respond = async (): Promise<RpcResult> => {
+        const missing = missingError();
+        if (missing) {
+          // Coluna inexistente: devolve a resposta à fila (não foi consumida).
+          if (table === 'messages') messagesQueue.unshift(result);
+          return missing;
+        }
+        return result;
+      };
       const chain: Chain = {
-        select: () => chain,
-        eq: () => chain,
-        in: () => chain,
+        select: (columns?: string) => { referenced.push(columns ?? ''); return chain; },
+        eq: (column?: string) => { referenced.push(column ?? ''); return chain; },
+        is: (column?: string) => { referenced.push(column ?? ''); return chain; },
+        in: (column?: string) => { referenced.push(column ?? ''); return chain; },
         update: () => chain,
-        maybeSingle: async () => result,
-        single: async () => result,
+        maybeSingle: respond,
+        single: respond,
       };
       return chain;
     },
@@ -811,4 +834,110 @@ Deno.test('PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando
   await handleMessageDeliveryRequest(postRequest(), deps);
   if (provedorChamado) throw new Error('provedor NÃO pode ser chamado quando o carimbo falha por outro motivo');
   resetInstanceTokenCache();
+});
+
+// ── Compatibilidade pré-DDL (20261111160000 ainda não aplicada em produção) ───
+// A Edge publica no push da main; a migration só roda pelo db-migrate. Antes dela
+// `messages.delivery_post_started_at` e `manually_resolved_at` não existem e o
+// PostgREST devolve 42703. O claim vazio respondia 404 "Message not found".
+
+const PRE_DDL_COLUMNS = ['delivery_post_started_at', 'manually_resolved_at'];
+
+Deno.test('pré-DDL: claim vazio de mensagem JÁ ENTREGUE continua 200 idempotente (não 404)', async () => {
+  const client = makeClient({
+    missingColumns: PRE_DDL_COLUMNS,
+    messages: [{ data: { agent_id: 'profile-1', sender: 'agent', status: 'sent', external_id: 'wamid.previous' }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    throw new Error('provider must not be called');
+  }));
+  assertStatus(response.status, 200);
+  const body = await response.json() as Row;
+  assertEqual(body.idempotent, true, 'idempotent');
+  assertEqual(body.externalId, 'wamid.previous', 'externalId');
+});
+
+Deno.test('pré-DDL: claim vazio com conexão caída continua 409 instance_unavailable (não 404)', async () => {
+  const client = makeClient({
+    missingColumns: PRE_DDL_COLUMNS,
+    messages: [{ data: { agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null, contact_id: 'contact-1', whatsapp_connection_id: 'conn-1' }, error: null }],
+    contacts: [{ data: { phone: CONTACT_PHONE, whatsapp_connection_id: 'conn-1' }, error: null }],
+    connections: [{ data: { status: 'disconnected', instance_id: 'main' }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    throw new Error('provider must not be called');
+  }));
+  assertStatus(response.status, 409);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'instance_unavailable', 'code');
+});
+
+Deno.test('pré-DDL: claim vazio com lease vivo (sem coluna de carimbo) é 409 in_progress', async () => {
+  const client = makeClient({
+    missingColumns: PRE_DDL_COLUMNS,
+    messages: [{ data: {
+      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
+      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
+      delivery_claim_expires_at: new Date(Date.now() + 60_000).toISOString(),
+    }, error: null }],
+    contacts: [{ data: { phone: CONTACT_PHONE, whatsapp_connection_id: 'conn-1' }, error: null }],
+    connections: [{ data: { status: 'connected', instance_id: 'main' }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    throw new Error('provider must not be called');
+  }));
+  assertStatus(response.status, 409);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'in_progress', 'code');
+});
+
+Deno.test('pós-DDL: POST carimbado com lease AINDA VIVO é 409 in_progress (duplo clique durante o envio)', async () => {
+  const client = makeClient({
+    messages: [{ data: {
+      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
+      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
+      delivery_post_started_at: new Date(Date.now() - 5_000).toISOString(),
+      delivery_claim_expires_at: new Date(Date.now() + 60_000).toISOString(),
+    }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    throw new Error('provider must not be called');
+  }));
+  assertStatus(response.status, 409);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'in_progress', 'code');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+});
+
+Deno.test('pós-DDL: POST carimbado com lease VENCIDO continua 502 receipt_unconfirmed (ambíguo, sem reenvio)', async () => {
+  const client = makeClient({
+    messages: [{ data: {
+      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
+      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
+      delivery_post_started_at: new Date(Date.now() - 200_000).toISOString(),
+      delivery_claim_expires_at: new Date(Date.now() - 100_000).toISOString(),
+    }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    throw new Error('provider must not be called');
+  }));
+  assertStatus(response.status, 502);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'receipt_unconfirmed', 'code');
+  assertEqual(body.ambiguous, true, 'ambiguous');
+});
+
+Deno.test('PD-79: 42883 no mark_outbound_post_started NÃO é tolerado (só PGRST202): nada sai, failClaim', async () => {
+  let providerCalled = false;
+  const client = makeClient({
+    claim: { data: [CLAIM], error: null },
+    rpcErrors: { mark_outbound_post_started: { code: '42883', message: 'function x does not exist' } },
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, { key: { id: 'wamid.x' } });
+  }));
+  assertEqual(providerCalled, false, 'provider não chamado');
+  assertStatus(response.status, 503);
+  assertFailClaim(client);
 });
