@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a6b4ffb409d837e72951a5c4f610723d86f3d7c3",
+  "sha": "90a432731871d6ebd06683bedd9f73e3c31f825d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 09:50 UTC",
+  "generated_at": "2026-11-11 10:15 UTC",
   "files_total": 8226,
   "code_files": 6073,
-  "code_lines": 1055079
+  "code_lines": 1055083
  },
  "version": "1.3.2",
- "facts_hash": "64f2a99e33af54bf",
+ "facts_hash": "e7c5a876c500783e",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 458,
-   "lines": 92325,
+   "lines": 92329,
    "tables": [
     "a",
     "alem_do_limite",
@@ -271421,7 +271421,7 @@
   },
   "scripts/tarefas/seed-local-imagens.ts": {
    "path": "scripts/tarefas/seed-local-imagens.ts",
-   "lines": 333,
+   "lines": 337,
    "errors": [
     "seed tarefas-local: ${rotulo} aponta para host não-local (${host}). Proibido — só banco local.",
     "seed tarefas-local: esperado ${k}=${v}, encontrado ${c[k]}",
@@ -385986,10 +385986,19 @@
   }
  },
  "git": {
-  "sha": "a6b4ffb409d837e72951a5c4f610723d86f3d7c3",
+  "sha": "90a432731871d6ebd06683bedd9f73e3c31f825d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "90a4327",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(tarefas): exigirLocal normaliza case do host antes da guarda local (#2953)",
+    "files": [
+     "scripts/tarefas/seed-local-imagens.ts"
+    ]
+   },
    {
     "sha": "a6b4ffb",
     "date": "2026-11-11",
@@ -386309,17 +386318,6 @@
      ".github/.ci-noop",
      ".github/workflows/deploy-functions.yml"
     ]
-   },
-   {
-    "sha": "401ea3d",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): filtro por segmento na tabela de destinatários (#2190) (#2823)",
-    "files": [
-     "src/components/talkx/TalkXCampaignRunning.tsx",
-     "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-     "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -386350,6 +386348,10 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/tarefas/seed-local-imagens.ts",
+    1
    ],
    [
     "scripts/ci/seed-contatos-redesign-local.unit.mjs",
@@ -386397,10 +386399,6 @@
    ],
    [
     "scripts/db-tests/run-all.mjs",
-    1
-   ],
-   [
-    "scripts/db-tests/run-all.unit.mjs",
     1
    ]
   ]

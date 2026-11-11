@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a6b4ffb409d837e72951a5c4f610723d86f3d7c3` (2026-11-11T06:32:10-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `90a432731871d6ebd06683bedd9f73e3c31f825d` (2026-11-11T06:53:14-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8384 |
 | arquivos_codigo | 4801 |
-| linhas_codigo | 888219 |
+| linhas_codigo | 888223 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56707 nós · 117184 arestas · 4088 comunidades · grafo do commit `a6b4ffb4`
+- 56707 nós · 117184 arestas · 4088 comunidades · grafo do commit `90a43273`
 - comunidades maiores: vitest (868), lucide-react (707), cn (564), ExternalProductManagement.tsx (543), useAuth (486), @tanstack/react-query (474), tooltip.tsx (474), ref_node_assert (424), DashboardCard.tsx (382), ref_node_fs (375), chat.ts (366), getAvatarColor (342)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -403,10 +403,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CLAUDE.md (12)
 - supabase/deployment-manifest.json (12)
 - supabase/schema-manifest.json (11)
-- .github/workflows/deploy-functions.yml (10)
 - .github/workflows/e2e-logado.yml (10)
 - docs/DB-INVENTORY.md (10)
 - scripts/db-audit/migration-evidence.json (10)
+- .github/workflows/deploy-functions.yml (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - scripts/e2e-isolated/run.mjs (9)
 - .github/workflows/db-guard.yml (8)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `90a4327` fix(tarefas): exigirLocal normaliza case do host antes da guarda local (#2953)
 - 2026-11-11 `a6b4ffb` fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)
 - 2026-11-11 `2182f81` fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)
 - 2026-11-11 `d1fc5ad` fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `240ac5b` fix(ui-audit): h-full sem largura ignorava breakpoint do w-full/flex-1 (#2940)
 - 2026-11-11 `ce06abc` fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)
 - 2026-11-11 `b2967b4` fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)
-- 2026-11-11 `db960cd` fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

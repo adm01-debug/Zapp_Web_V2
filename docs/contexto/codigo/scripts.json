@@ -4532,7 +4532,7 @@
   {
    "arquivo": "scripts/tarefas/seed-local-imagens.ts",
    "descricao": "* Semente LOCAL que reproduz as tarefas das imagens de referência do módulo de",
-   "linhas": 333,
+   "linhas": 337,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
