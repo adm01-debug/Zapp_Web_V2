@@ -173,7 +173,28 @@ function vitestBin() {
 
 /** Linha de resumo do vitest (`Tests  1 failed | 41 passed (42)`), quando existe. */
 function resumoDeTestes(saida) {
-  return (saida.match(/^\s*Tests\s+.*$/m) ?? [])[0]?.trim() ?? null;
+  return (saida.match(/^[ \t]*Tests[ \t]+[^\r\n]*\r?$/m) ?? [])[0]?.trim() ?? null;
+}
+
+/** Contagens completas do reporter: presença de resumo não prova execução. */
+function contagensDeTestes(resumo) {
+  const match = /^Tests\s+(.+?)\s+\((\d+)\)$/.exec(resumo);
+  if (!match) return null;
+  const total = Number(match[2]);
+  if (!Number.isSafeInteger(total)) return null;
+  const contagens = { passed: 0, failed: 0, 'expected fail': 0, skipped: 0, todo: 0 };
+  const vistos = new Set();
+  let soma = 0;
+  for (const parte of match[1].split(/\s*\|\s*/)) {
+    const item = /^(\d+)\s+(passed|failed|expected fail|skipped|todo)$/.exec(parte);
+    if (!item || vistos.has(item[2])) return null;
+    const quantidade = Number(item[1]);
+    if (!Number.isSafeInteger(quantidade)) return null;
+    vistos.add(item[2]);
+    contagens[item[2]] = quantidade;
+    soma += quantidade;
+  }
+  return Number.isSafeInteger(soma) && soma === total ? contagens : null;
 }
 
 /** Nomes dos testes vermelhos: é o que torna a detecção rastreável. */
@@ -223,8 +244,17 @@ export function interpretarRodada(processo) {
       falhas,
     };
   }
-  const falhasNoResumo = Number((resumo.match(/(\d+)\s+failed/) ?? [])[1] ?? 0);
-  if (falhasNoResumo > 0 && falhas.length > 0) {
+  const contagens = contagensDeTestes(resumo);
+  if (!contagens || contagens.passed + contagens.failed + contagens['expected fail'] === 0) {
+    return {
+      estado: ESTADOS.inconclusivo,
+      motivo: `resumo inválido ou sem nenhum teste executado (${resumo})`,
+      resumo,
+      falhas,
+    };
+  }
+  const falhasNoResumo = contagens.failed;
+  if (processo.status !== 0 && falhasNoResumo > 0 && falhas.length > 0) {
     return {
       estado: ESTADOS.morto,
       motivo: `${falhas.length} teste(s) nomeado(s) vermelho(s) — ${resumo}`,
@@ -232,7 +262,7 @@ export function interpretarRodada(processo) {
       falhas,
     };
   }
-  if (processo.status === 0 && falhasNoResumo === 0) {
+  if (processo.status === 0 && falhasNoResumo === 0 && falhas.length === 0) {
     return {
       estado: ESTADOS.sobrevivente,
       motivo: `suíte verde sob a mutação (${resumo})`,

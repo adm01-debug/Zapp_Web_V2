@@ -150,6 +150,60 @@ export const AiClassifyTicketsSchema = z.object({
   limit: z.number().int().min(1).max(200).optional().default(50),
 });
 
+// ─── Schemas de input das capacidades RADAR AI ───────────────
+export const AiObjectionHandlerSchema = z.object({
+  messages: z.array(MessageSchema).max(50),
+  clientText: z.string().max(2000).optional(),
+  context: z.string().max(500).optional(),
+  requestId: z.string().uuid().optional(),
+});
+
+export const AiPriceAnchorSchema = z.object({
+  messages: z.array(MessageSchema).max(50),
+  clientText: z.string().max(2000).optional(),
+  productType: z.string().max(100).optional(),
+  unitPrice: z.number().min(0).optional(),
+  context: z.string().max(500).optional(),
+  requestId: z.string().uuid().optional(),
+});
+
+export const AiLossRiskSchema = z.object({
+  messages: z.array(MessageSchema).max(50),
+  daysSinceLastContact: z.number().int().min(0).optional(),
+  context: z.string().max(500).optional(),
+  requestId: z.string().uuid().optional(),
+});
+
+export const AiDeadlineCalculatorSchema = z.object({
+  messages: z.array(MessageSchema).max(50),
+  eventDate: z.string().optional(),
+  productType: z.string().max(100).optional(),
+  context: z.string().max(500).optional(),
+  requestId: z.string().uuid().optional(),
+});
+
+export const AiLeadTemperatureSchema = z.object({
+  messages: z.array(MessageSchema).max(50),
+  context: z.string().max(500).optional(),
+  requestId: z.string().uuid().optional(),
+});
+
+export const AiProductRecommendationSchema = z.object({
+  messages: z.array(MessageSchema).max(50),
+  eventType: z.string().max(100).optional(),
+  budget: z.number().min(0).optional(),
+  quantity: z.number().int().min(1).optional(),
+  context: z.string().max(500).optional(),
+  requestId: z.string().uuid().optional(),
+});
+
+export const AiMultimodalAnalysisSchema = z.object({
+  imageUrl: z.string().url(),
+  context: z.string().max(500).optional(),
+  conversationContext: z.string().max(1000).optional(),
+  requestId: z.string().uuid().optional(),
+});
+
 // ─── ElevenLabs schemas ──────────────────────────────────────
 // SL-008 (achado B4) — lista FECHADA de vozes e modelos. Antes o cliente escolhia
 // `voiceId`/`modelId`/`voice_id` livremente (qualquer texto de até 100 caracteres):

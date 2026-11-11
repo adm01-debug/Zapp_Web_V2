@@ -25,7 +25,7 @@ test('em caso de sucesso, stdout comeca com "OK:" e lista estatisticas', () => {
   const r = executar();
   if (r.status === 0) {
     assert.match(r.stdout.trim(), /^OK:/);
-    assert.match(r.stdout, /\d+ canal/);
+    assert.match(r.stdout, /\d+ cana(?:l|is)\b/);
     assert.match(r.stdout, /\d+ cita/);
   }
 });
