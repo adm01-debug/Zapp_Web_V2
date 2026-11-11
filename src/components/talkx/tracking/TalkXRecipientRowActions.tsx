@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseHelpers';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 interface TalkXRecipientRowActionsProps {
   recipient: {
@@ -67,8 +68,20 @@ function retryDataRefusal(data: unknown): string | null {
   return null;
 }
 
+/** Códigos de recusa de `talkx_block_recipient` em linguagem de operador. */
+function blockErrorMessage(err: unknown): string {
+  const msg = rpcMessage(err);
+  if (msg.includes('talkx_block_role_required')) return 'Só administradores e supervisores podem bloquear contatos.';
+  if (msg.includes('talkx_block_recipient_not_found')) return 'Destinatário não encontrado — recarregue a lista.';
+  if (msg.includes('active_profile_not_found') || msg.includes('authentication_required')) return 'Sessão inválida — entre novamente.';
+  return msg;
+}
+
 export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecipientRowActionsProps) {
   const [blocking, setBlocking] = useState(false);
+  // Bloquear é do gestor (admin/supervisor): mesma regra do banco (talkx_block_recipient
+  // e policy de INSERT de talkx_blacklist). isSupervisor inclui admin.
+  const { isSupervisor } = useUserRole();
   const [retrying, setRetrying] = useState(false);
   const [retryOpen, setRetryOpen] = useState(false);
 
@@ -120,18 +133,12 @@ export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecip
   const handleBlock = useCallback(async () => {
     setBlocking(true);
     try {
-      const { data, error } = await supabase.rpc('talkx_suppress_contact', {
-        p_campaign_id: recipient.campaign_id,
-        p_contact_id: recipient.contact_id,
-        p_origin: 'manual_block',
-        // Sem fallback '': telefone ausente vai como null (a RPC aceita).
-        p_phone: recipient.contacts?.phone ?? (null as unknown as string),
-        p_reason: 'Bloqueado manualmente pelo operador',
-        // 'manual' é valor válido do enum talkx_blacklist_reason
-        // (opt_out, invalid_number, manual, lgpd, no_commercial_permission, bounce).
-        p_reason_code: 'manual',
-        // uuid nunca recebe '': sem mensagem de origem, passa null.
-        p_source_message_id: null as unknown as string,
+      // talkx_suppress_contact é exclusiva do servidor (opt-out automático). O bloqueio
+      // manual usa a porta própria, que confere o papel e lê campanha/contato/telefone
+      // do destinatário no servidor (migration 20261111170000).
+      // @ts-expect-error talkx_block_recipient entra nos tipos gerados após a migration 20261111170000
+      const { data, error } = await supabase.rpc('talkx_block_recipient', {
+        p_recipient_id: recipient.id,
       });
       if (error) throw error;
       // A RPC retorna o id da supressão, ou null quando já estava suprimido.
@@ -141,11 +148,11 @@ export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecip
         toast.success('Contato bloqueado com sucesso.');
       }
     } catch (err: unknown) {
-      toast.error(rpcMessage(err));
+      toast.error(blockErrorMessage(err));
     } finally {
       setBlocking(false);
     }
-  }, [recipient.campaign_id, recipient.contact_id, recipient.contacts]);
+  }, [recipient.id]);
 
   return (
     <div className="flex items-center gap-1">
@@ -186,13 +193,15 @@ export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecip
           </AlertDialog>
         </>
       )}
-      <BlockButton
-        recipient={recipient}
-        blocking={blocking}
-        setBlocking={setBlocking}
-        onBlocked={handleBlock}
-        onActionDone={onActionDone}
-      />
+      {isSupervisor && (
+        <BlockButton
+          recipient={recipient}
+          blocking={blocking}
+          setBlocking={setBlocking}
+          onBlocked={handleBlock}
+          onActionDone={onActionDone}
+        />
+      )}
     </div>
   );
 }
@@ -235,8 +244,8 @@ function BlockButton({
             <AlertDialogTitle>Bloquear contato?</AlertDialogTitle>
             <AlertDialogDescription>
               {recipient.contacts?.name
-                ? `Bloquear "${recipient.contacts.name}" (${recipient.contacts.phone ?? 'sem telefone'})? O contato não receberá mais mensagens desta campanha.`
-                : 'Bloquear este contato? Ele não receberá mais mensagens desta campanha.'}
+                ? `Bloquear "${recipient.contacts.name}" (${recipient.contacts.phone ?? 'sem telefone'})? O contato não receberá mais mensagens de nenhuma campanha do Talk X.`
+                : 'Bloquear este contato? Ele não receberá mais mensagens de nenhuma campanha do Talk X.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
