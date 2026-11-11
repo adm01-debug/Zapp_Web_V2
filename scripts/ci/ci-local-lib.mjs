@@ -895,13 +895,77 @@ export function donoVivo(dono, inicioDe = inicioDoProcesso) {
   return dono.inicio === undefined || dono.inicio === null || String(dono.inicio) === atual;
 }
 
+// ------------------------------------------------------------ shim do docker
+/** Rótulos que o CI local põe em todo container que ele (ou um passo) cria. */
+export const ROTULOS_CI_LOCAL = [
+  'ci-local',
+  'ci-local.run',
+  'ci-local.job',
+  'ci-local.pid',
+  'ci-local.inicio',
+];
+
 /**
- * Containers (linhas `id\trun\tnomes\timagem` do `docker ps`) a remover no fim:
- * só os que NÃO existiam no início desta execução e não pertencem a outra execução
- * do CI local (rótulo ci-local.run de outro dono). Os que já existiam nunca entram.
+ * Shim `docker` (bash) que vai na frente do PATH dos passos, no mesmo diretório
+ * dos shims de root. Em `docker run`/`docker create`/`docker container run|create`
+ * injeta `--label ci-local=1 --label ci-local.run=… ci-local.job=… ci-local.pid=…
+ * ci-local.inicio=…` (valores do ambiente do passo); todo o resto passa intacto.
+ * A limpeza remove SÓ containers com o rótulo da execução: container sem rótulo
+ * (outra sessão, `supabase start`, compose) nunca é tocado.
+ *
+ * Delegação: para o próximo `docker` do PATH fora deste diretório (ex.: o
+ * docker-shim do db-guard em $HOME/.local/bin — sem ele o job divergiria do
+ * GitHub). Se esse próximo chamar `docker` pelo nome e voltar aqui, a marca
+ * CI_LOCAL_DOCKER_SHIM_ATIVO manda direto ao docker real resolvido no início
+ * (CI_LOCAL_DOCKER_REAL, caminho absoluto): sem laço.
  */
-export function containersCriadosNaExecucao(antes, depois, runAtual) {
-  return depois.filter((c) => !antes.has(c.id) && (!c.run || c.run === runAtual));
+export function shimDocker(dirShim) {
+  return `#!/usr/bin/env bash
+# ci-local: rotula os containers criados pelos passos (ver scripts/ci/ci-local-lib.mjs).
+set -u
+eu_dir=${JSON.stringify(dirShim)}
+alvo=""
+if [[ -z "\${CI_LOCAL_DOCKER_SHIM_ATIVO:-}" ]]; then
+  IFS=: read -r -a dirs <<< "\${PATH:-}"
+  for d in "\${dirs[@]}"; do
+    [[ -z "$d" || "$d" == "$eu_dir" ]] && continue
+    if [[ -x "$d/docker" && ! -d "$d/docker" ]]; then alvo="$d/docker"; break; fi
+  done
+fi
+[[ -z "$alvo" ]] && alvo="\${CI_LOCAL_DOCKER_REAL:-}"
+if [[ -z "$alvo" || "$alvo" == "$eu_dir/docker" ]]; then
+  echo "ci-local: docker não encontrado" >&2
+  exit 127
+fi
+export CI_LOCAL_DOCKER_SHIM_ATIVO=1
+rotulos=(--label ci-local=1 --label "ci-local.run=\${CI_LOCAL_RUN:-}" --label "ci-local.job=\${CI_LOCAL_JOB:-}" --label "ci-local.pid=\${CI_LOCAL_PID:-}" --label "ci-local.inicio=\${CI_LOCAL_INICIO:-}")
+args=("$@")
+n=\${#args[@]}
+out=()
+i=0
+# opções globais do docker antes do subcomando
+while (( i < n )); do
+  a=\${args[i]}
+  case "$a" in
+    --config|-c|--context|-H|--host|-l|--log-level|--tlscacert|--tlscert|--tlskey)
+      out+=("$a"); i=$((i + 1))
+      if (( i < n )); then out+=("\${args[i]}"); i=$((i + 1)); fi
+      continue ;;
+    -*) out+=("$a"); i=$((i + 1)); continue ;;
+  esac
+  break
+done
+if (( i < n )); then
+  sub=\${args[i]}
+  if [[ "$sub" == run || "$sub" == create ]]; then
+    out+=("$sub" "\${rotulos[@]}"); i=$((i + 1))
+  elif [[ "$sub" == container ]] && (( i + 1 < n )) && [[ "\${args[i+1]}" == run || "\${args[i+1]}" == create ]]; then
+    out+=("$sub" "\${args[i+1]}" "\${rotulos[@]}"); i=$((i + 2))
+  fi
+fi
+out+=("\${args[@]:i}")
+exec "$alvo" "\${out[@]}"
+`;
 }
 
 /** Linhas de `docker ps --format '{{.ID}}\t{{.Label "ci-local.run"}}\t{{.Names}}\t{{.Image}}'`. */

@@ -31,6 +31,9 @@ import {
   readdirSync,
   writeFileSync,
   chmodSync,
+  statSync,
+  accessSync,
+  constants as fsConstants,
   appendFileSync,
   mkdtempSync,
   rmSync,
@@ -71,8 +74,8 @@ import {
   encerrarEscalonado,
   inicioDoProcesso,
   donoVivo,
-  containersCriadosNaExecucao,
   lerListaContainers,
+  shimDocker,
   containersOrfaos,
 } from './ci-local-lib.mjs';
 
@@ -92,13 +95,12 @@ const TIMEOUT_JOB_PADRAO_MIN = 360; // padrão do GitHub
 // ------------------------------------------------------------- limpeza global
 // Tudo o que a execução cria fica registrado aqui; SIGINT/SIGTERM e o fim do main
 // encerram os grupos de processos (SIGINT → SIGTERM → SIGKILL), removem os
-// containers criados DURANTE a execução e apagam os temporários.
+// containers COM O RÓTULO desta execução e apagam os temporários.
 const limpeza = {
   grupos: new Set(),
   containers: new Set(),
   dirs: new Set(),
   marca: null,
-  containersAntes: null, // Set de ids existentes no início (null = docker indisponível)
   forcar: false,
 };
 const GRACA_MS = /^\d+$/.test(process.env.CI_LOCAL_GRACA_MS ?? '')
@@ -194,30 +196,30 @@ function derrubarContainer(nome) {
 
 const FORMATO_PS = '{{.ID}}\t{{.Label "ci-local.run"}}\t{{.Names}}\t{{.Image}}';
 
-/** Ids de todos os containers da máquina (null se o docker não respondeu). */
-function listarContainers() {
-  const r = docker(['ps', '-a', '--no-trunc', '--format', FORMATO_PS]);
-  if (r.error || r.status !== 0) return null;
-  return lerListaContainers(r.stdout);
+/**
+ * Remove os containers com o rótulo `chave=valor` (ci-local.run desta execução ou
+ * ci-local.job de um job). Rótulo vem do `docker run` dos services e do shim
+ * `docker` dos passos. Container SEM esse rótulo nunca é tocado.
+ */
+function removerRotulados(chave, valor) {
+  const r = docker([
+    'ps',
+    '-a',
+    '--no-trunc',
+    '--filter',
+    `label=${chave}=${valor}`,
+    '--format',
+    FORMATO_PS,
+  ]);
+  if (r.error || r.status !== 0) return [];
+  const alvos = lerListaContainers(r.stdout);
+  removerContainers(alvos.map((c) => c.id));
+  return alvos;
 }
 
-/**
- * Containers criados durante a execução (não existiam no início) — os `services:`
- * e os que os passos subiram (ex.: `supabase start`). Os que já existiam NUNCA são
- * tocados; sem a foto do início (docker indisponível), nada é removido por aqui.
- */
 function removerContainersDaExecucao() {
-  const removidos = [];
-  if (limpeza.containersAntes) {
-    const depois = listarContainers();
-    if (depois) {
-      const novos = containersCriadosNaExecucao(limpeza.containersAntes, depois, limpeza.marca);
-      removerContainers(novos.map((c) => c.id));
-      removidos.push(...novos);
-    }
-  }
   for (const c of [...limpeza.containers]) derrubarContainer(c);
-  return removidos;
+  return limpeza.marca ? removerRotulados('ci-local.run', limpeza.marca) : [];
 }
 
 let limpando = null;
@@ -544,15 +546,35 @@ function prepararHome(homeJob, plano) {
   }
 }
 
-/** Diretório com shims de sudo/apt/apt-get/dpkg/su/doas/pkexec que falham (vai na frente do PATH). */
-function prepararShimsRoot(runRoot) {
+/**
+ * Diretório que vai na frente do PATH de todo passo: shims de sudo/apt/apt-get/
+ * dpkg/su/doas/pkexec que falham e o shim `docker` que rotula os containers.
+ */
+function prepararShims(runRoot) {
   const dir = join(runRoot, 'bin-sem-root');
   mkdirSync(dir, { recursive: true });
-  for (const [nome, conteudo] of Object.entries(shimsDeRoot())) {
+  for (const [nome, conteudo] of Object.entries({ ...shimsDeRoot(), docker: shimDocker(dir) })) {
     writeFileSync(join(dir, nome), conteudo);
     chmodSync(join(dir, nome), 0o755);
   }
   return dir;
+}
+
+/** Caminho absoluto do docker real no PATH de quem chamou (resolvido uma vez, no início). */
+function dockerReal() {
+  for (const d of (process.env.PATH ?? '').split(':')) {
+    if (!d) continue;
+    const p = resolve(d, 'docker');
+    try {
+      if (statSync(p).isFile()) {
+        accessSync(p, fsConstants.X_OK);
+        return p;
+      }
+    } catch {
+      /* próximo */
+    }
+  }
+  return '';
 }
 
 // --------------------------------------------------- equivalentes de `uses:`
@@ -789,7 +811,7 @@ function inputsDoDispatch(wf, args) {
 // --------------------------------------------------------------------- job
 async function rodarJob(p) {
   const { wfNome, wf, jobId, job, matrix, rotuloBase, gh, ws, runRoot, args, segredos, log } = p;
-  const { needsResult, naoSelecionados, arquivosRapido, siteUsuario, shimsRoot } = p;
+  const { needsResult, naoSelecionados, arquivosRapido, siteUsuario, shimsRoot, dockerReal } = p;
   const res = {
     wf: wfNome,
     job: rotuloBase,
@@ -893,6 +915,10 @@ async function rodarJob(p) {
       // Marcas para recolher órfãos no fim do job e no Ctrl-C (ver encerrarMarcados).
       CI_LOCAL_RUN: runRoot,
       CI_LOCAL_JOB: dirJob,
+      // Lidos pelo shim `docker` para rotular os containers dos passos.
+      CI_LOCAL_PID: String(process.pid),
+      CI_LOCAL_INICIO: inicioDoProcesso(process.pid) ?? '',
+      CI_LOCAL_DOCKER_REAL: dockerReal,
     };
     const ctxEnv = () => ctxDe({ runner: { temp: runnerTemp, os: 'Linux', arch: 'X64' } });
     for (const [k, v] of Object.entries({ ...(wf.env ?? {}), ...(job.env ?? {}) })) {
@@ -1096,6 +1122,9 @@ async function rodarJob(p) {
           // playwright --with-deps) falham em vez de instalar pacotes na máquina.
           PATH: [shimsRoot, envStep.PATH ?? ''].join(':'),
           SUDO_ASKPASS: '/bin/false',
+          // docker-shim do db-guard: sem DOCKER_REAL ele usaria /usr/bin/docker; com o
+          // caminho absoluto resolvido no início ele nunca volta ao shim pelo nome.
+          ...(dockerReal && envStep.DOCKER_REAL === undefined ? { DOCKER_REAL: dockerReal } : {}),
         },
         timeoutMs: limiteMs,
         arquivoLog,
@@ -1162,6 +1191,8 @@ async function rodarJob(p) {
     // Como o runner: órfãos do job são recolhidos no fim dele.
     await encerrarMarcados('CI_LOCAL_JOB', dirJob);
     for (const c of containersJob) derrubarContainer(c);
+    // Como o runner: containers que os passos deste job subiram (rótulo do shim) saem no fim dele.
+    removerRotulados('ci-local.job', dirJob);
     rmSync(homeJob, { recursive: true, force: true });
     rmSync(dirJob, { recursive: true, force: true });
   }
@@ -1253,12 +1284,10 @@ async function main() {
 
   let ws = gh.workspace;
   let shimsRoot = '';
+  const realDocker = dockerReal();
   if (!args.listar) {
     await varrerRestos(log);
-    // Foto dos containers ANTES de qualquer passo: no fim só sai o que nasceu depois.
-    const antes = listarContainers();
-    limpeza.containersAntes = antes ? new Set(antes.map((c) => c.id)) : null;
-    shimsRoot = prepararShimsRoot(runRoot);
+    shimsRoot = prepararShims(runRoot);
     try {
       ws = prepararWorkspace(runRoot, gh, args, avisosGerais, log);
     } catch (e) {
@@ -1353,6 +1382,7 @@ async function main() {
           arquivosRapido,
           siteUsuario,
           shimsRoot,
+          dockerReal: realDocker,
           dirLogs,
         });
         resultados.push(res);
@@ -1427,9 +1457,7 @@ async function encerrar(codigo) {
   if (interrompido) return; // o tratador do sinal encerra (código 128+n)
   const removidos = await limparTudo();
   for (const c of removidos)
-    console.log(
-      `🧹 container criado durante a execução removido: ${c.nomes || c.id} (${c.imagem})`
-    );
+    console.log(`🧹 container desta execução removido: ${c.nomes || c.id} (${c.imagem})`);
   process.exit(codigo);
 }
 
