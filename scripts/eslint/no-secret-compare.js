@@ -2,15 +2,20 @@
  * Z012 — proíbe comparação direta (===|!==) de identificadores que aludam a credenciais.
  * Requer timingSafeStringEqual (_shared/cron-secret-auth.ts) em vez de === direto.
  *
- * Pega: `token !== serviceRole`, `key === expected`, etc.
- * Não pega: literais, expressões sem nome legível, e os nomes exatos em NAO_CREDENCIAL
- * (modificadores de teclado/mouse do DOM que casam com /key/i sem serem credencial).
+ * Pega: `token !== serviceRole`, `key === expected`, `key !== serviceRole`, etc.
+ * Não pega: literais, expressões sem nome legível, os modificadores de teclado/mouse
+ * do DOM (ctrlKey/shiftKey/altKey/metaKey, sempre booleanos) e `.key` lido de um
+ * objeto de EVENTO (`e.key`, `event.key`, `evt.key`, `keyboardEvent.key`,
+ * `e.nativeEvent.key`) — KeyboardEvent.key é a tecla, nunca credencial.
+ * Um `key` solto ou de outro objeto (`row.key`, `flag.key`) continua sendo pego.
  */
 const CREDENTIAL_RE = /secret|token|key|password/i;
 
-// Nomes exatos que casam com CREDENTIAL_RE (por causa de "key") mas são sempre
-// modificadores/propriedades de evento DOM, nunca credencial.
-const NAO_CREDENCIAL = new Set(['key', 'ctrlKey', 'shiftKey', 'altKey', 'metaKey']);
+// Propriedades de MouseEvent/KeyboardEvent que casam com /key/i e são sempre booleanas.
+const MODIFICADORES_DOM = new Set(['ctrlKey', 'shiftKey', 'altKey', 'metaKey']);
+
+// Nome de objeto que é evento do DOM/React: e, ev, evt, event, *Event (keyboardEvent, nativeEvent...).
+const NOME_DE_EVENTO = /^(?:e|ev|evt|event|[A-Za-z]*Event)$/;
 
 function nameOf(node) {
   if (node.type === 'Identifier') return node.name;
@@ -18,8 +23,26 @@ function nameOf(node) {
   return null;
 }
 
-function nomeDeCredencial(name) {
-  return !!name && !NAO_CREDENCIAL.has(name) && CREDENTIAL_RE.test(name);
+/** `<evento>.key` (não computado), com <evento> = identificador ou `x.nativeEvent`. */
+function ehTeclaDeEvento(node) {
+  if (node.type !== 'MemberExpression' || node.computed) return false;
+  if (node.property?.type !== 'Identifier' || node.property.name !== 'key') return false;
+  const objeto = node.object;
+  const nomeObjeto =
+    objeto.type === 'Identifier'
+      ? objeto.name
+      : objeto.type === 'MemberExpression' && !objeto.computed && objeto.property?.type === 'Identifier'
+        ? objeto.property.name
+        : null;
+  return !!nomeObjeto && NOME_DE_EVENTO.test(nomeObjeto);
+}
+
+function credencialEm(node) {
+  const name = nameOf(node);
+  if (!name || !CREDENTIAL_RE.test(name)) return null;
+  if (MODIFICADORES_DOM.has(name)) return null;
+  if (ehTeclaDeEvento(node)) return null;
+  return name;
 }
 
 export default {
@@ -34,11 +57,11 @@ export default {
     return {
       BinaryExpression(node) {
         if (node.operator !== '===' && node.operator !== '!==') return;
-        const leftName = nameOf(node.left);
-        const rightName = nameOf(node.right);
-        if (nomeDeCredencial(leftName)) {
+        const leftName = credencialEm(node.left);
+        const rightName = credencialEm(node.right);
+        if (leftName) {
           context.report({ node, messageId: 'noSecretCompare', data: { name: leftName } });
-        } else if (nomeDeCredencial(rightName)) {
+        } else if (rightName) {
           context.report({ node, messageId: 'noSecretCompare', data: { name: rightName } });
         }
       },
