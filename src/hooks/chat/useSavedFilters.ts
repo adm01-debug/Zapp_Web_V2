@@ -57,7 +57,7 @@ export function useSavedFilters(entityType: string) {
   }, [queryClient]);
 
   // Listar filtros salvos (próprios + compartilhados)
-  const { data: filters = [], isLoading } = useQuery({
+  const { data: filters = [], isLoading, isError } = useQuery({
     queryKey,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -212,6 +212,7 @@ export function useSavedFilters(entityType: string) {
   return {
     filters,
     isLoading,
+    isError,
     defaultFilter,
     saveFilter: saveMutation.mutate,
     updateFilter: updateMutation.mutate,

@@ -15,7 +15,7 @@
  * que existir la (na main antiga, CLAUDE.md + AGENTS.md).
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -92,9 +92,14 @@ function bytesAtuais() {
 // quando a base nao tem nenhum deles (ref inexistente, checkout raso sem a main).
 function bytesNaBase(base) {
   const porArquivo = new Map();
+  // git sem shell: `${base}` interpolado numa string de shell era injecao de comando
+  // (CLAUDE_MD_BASE='HEAD$(id > /tmp/x)' executava `id`).
   const tamanho = (path) => {
     try {
-      const out = execSync(`git cat-file -s ${base}:${path}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      const out = execFileSync('git', ['cat-file', '-s', `${base}:${path}`], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
       porArquivo.set(path, Number.parseInt(out.trim(), 10) || 0);
     } catch {
       /* nao existe na base */
@@ -103,7 +108,10 @@ function bytesNaBase(base) {
   for (const f of CONJUNTO_RAIZ) tamanho(f);
   let lista;
   try {
-    lista = execSync(`git ls-tree -r --name-only ${base} -- ${DOCS_DIR}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    lista = execFileSync('git', ['ls-tree', '-r', '--name-only', base, '--', DOCS_DIR], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
   } catch {
     lista = '';
   }
@@ -177,8 +185,29 @@ function main() {
   }
 
   const BASE = process.env.CLAUDE_MD_BASE || 'HEAD';
+  if (BASE.startsWith('-')) {
+    console.error(`::error::CLAUDE_MD_BASE invalido ("${BASE}"): nao pode comecar com "-".`);
+    process.exitCode = 1;
+    process.exit();
+  }
   const atual = { total: bytesAtuais(), porArquivo: atualPorArquivo() };
   const base = bytesNaBase(BASE);
+
+  // Base que nao resolve (ref inexistente, fora de repo git, git ausente do PATH) pulava os dois
+  // checks de tamanho e imprimia "OK" com exit 0 — um wipe de docs/agentes/ passava inteiro.
+  if (!base) {
+    if (process.env.CLAUDE_MD_ALLOW_NO_BASE === '1') {
+      console.log(
+        `${AGENTS} OK: ${REQUIRED_SECTIONS.length} secoes presentes. Comparacao de tamanho PULADA (base "${BASE}" nao resolveu e CLAUDE_MD_ALLOW_NO_BASE=1).`,
+      );
+      process.exit();
+    }
+    console.error(
+      `::error::Base "${BASE}" nao resolveu (ref inexistente, fora de repo git ou git ausente). A comparacao de tamanho nao rodou, entao um wipe passaria: falhando de proposito. Use CLAUDE_MD_ALLOW_NO_BASE=1 para rodar sem base.`,
+    );
+    process.exitCode = 1;
+    process.exit();
+  }
   const errosEncolhimento = erroDeEncolhimento(atual, base);
   if (errosEncolhimento.length > 0) {
     for (const e of errosEncolhimento) console.error(`::error::${e}`);

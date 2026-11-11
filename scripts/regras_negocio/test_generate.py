@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import importlib.util
+import contextlib
+import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).with_name("generate.py")
@@ -157,6 +161,231 @@ export type Database = {
         self.assertNotIn("365 days", rendered)
         self.assertNotIn("historical_status", rendered)
         self.assertFalse((self.root / "AGENTS.md").exists())
+
+
+class CacheValidityTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="context-rules-cache-")
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        (self.root / "src").mkdir()
+        (self.root / "src/main.ts").write_text("export const total = 20;\n", encoding="utf-8")
+        (self.root / "package.json").write_text('{"name":"fixture"}', encoding="utf-8")
+        self.out = self.root / "output"
+
+    def run_generator(self, *args, **git_overrides):
+        git = {"sha": "a" * 40, "branch": "main", "remote": "", "commits": [], "hot_files": []} | git_overrides
+        with mock.patch.object(sys, "argv", [str(SCRIPT), "--repo", str(self.root), "--out", "output", *args]), \
+                mock.patch.object(generator, "git_info", return_value=git), \
+                mock.patch.object(generator, "llm_synthesis", return_value="Síntese offline"), \
+                contextlib.redirect_stderr(io.StringIO()):
+            return generator.main()
+
+    def files(self):
+        return {p.relative_to(self.root).as_posix(): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+
+    def test_profile_transitions_check_force_and_manual_preservation(self):
+        manual = self.out / "manual/regras.md"
+        manual.parent.mkdir(parents=True)
+        manual.write_text("# Regra humana\nO limite é 20.\n", encoding="utf-8")
+        for source in ("full", "codigo", "regras"):
+            for target in ("full", "codigo", "regras"):
+                for mode in ("normal", "check", "force"):
+                    with self.subTest(source=source, target=target, mode=mode):
+                        self.assertEqual(self.run_generator("--no-pointer", "--profile", source), 0)
+                        before = self.files()
+                        flags = [] if mode == "normal" else ["--" + mode]
+                        self.assertEqual(self.run_generator("--no-pointer", "--profile", target, *flags),
+                                         int(mode == "check" and source != target))
+                        expected = source if mode == "check" else target
+                        manifest = json.loads((self.out / "manifest.json").read_text(encoding="utf-8"))
+                        self.assertEqual(manifest["perfil"], expected)
+                        self.assertEqual(manual.read_text(encoding="utf-8"), "# Regra humana\nO limite é 20.\n")
+                        self.assertEqual({p.name for p in self.out.glob("*.md")},
+                                         generator.PROFILES.get(expected, generator.PROFILES["codigo"] | generator.PROFILES["regras"]))
+                        if mode == "check":
+                            self.assertEqual(self.files(), before)
+
+    def test_invalid_or_legacy_state_is_stale_and_recovers(self):
+        for value in ([], None, "texto", 1, True, {}, "truncated", "legacy"):
+            with self.subTest(value=value):
+                self.run_generator("--no-pointer")
+                state = self.out / ".state.json"
+                if value == "legacy":
+                    old = json.loads(state.read_text(encoding="utf-8"))
+                    for key in ("render_hash", "artifacts", "pointers"):
+                        old.pop(key)
+                    state.write_text(json.dumps(old), encoding="utf-8")
+                else:
+                    state.write_text("{" if value == "truncated" else json.dumps(value), encoding="utf-8")
+                before = self.files()
+                self.assertEqual(self.run_generator("--no-pointer", "--check"), 1)
+                self.assertEqual(self.files(), before)
+                self.assertEqual(self.run_generator("--no-pointer"), 0)
+                self.assertEqual(self.run_generator("--no-pointer", "--check"), 0)
+
+    def test_missing_modified_or_invalid_utf8_outputs_are_repaired(self):
+        for profile in ("full", "codigo", "regras"):
+            for name in ("manifest.json", "context.json", "07-REGRAS-DE-NEGOCIO.md" if profile == "regras" else "00-INDEX.md"):
+                for damage in ("missing", "modified", "invalid_utf8"):
+                    with self.subTest(profile=profile, name=name, damage=damage):
+                        flags = ("--no-pointer", "--profile", profile)
+                        self.assertEqual(self.run_generator(*flags), 0)
+                        p = self.out / name
+                        if damage == "missing":
+                            p.unlink()
+                        else:
+                            p.write_bytes(b"alterado" if damage == "modified" else b"\xff")
+                        before = self.files()
+                        self.assertEqual(self.run_generator(*flags, "--check"), 1)
+                        self.assertEqual(self.files(), before)
+                        self.assertEqual(self.run_generator(*flags), 0)
+                        p.read_text(encoding="utf-8")
+                        if p.suffix == ".json":
+                            json.loads(p.read_text(encoding="utf-8"))
+                        self.assertEqual(self.run_generator(*flags, "--check"), 0)
+
+    def test_render_options_and_git_changes_invalidate_cache(self):
+        for option in (("--schema-snapshot", "snapshot"), ("--index-path", "outro/INDEX.md"),
+                       ("--model", "outro-modelo"), ("--llm",)):
+            with self.subTest(option=option):
+                self.run_generator("--no-pointer")
+                self.assertEqual(self.run_generator("--no-pointer", *option, "--check"), 1)
+                self.assertEqual(self.run_generator("--no-pointer", *option), 0)
+                self.assertEqual(self.run_generator("--no-pointer", *option, "--check"), 0)
+        self.run_generator("--no-pointer")
+        self.assertEqual(self.run_generator("--no-pointer", "--check", sha="b" * 40), 1)
+        self.run_generator("--no-pointer", sha="b" * 40)
+        self.assertEqual(self.run_generator("--no-pointer", "--check", sha="b" * 40), 0)
+        self.assertEqual(self.run_generator("--no-pointer", "--check", sha="b" * 40, branch="outra"), 1)
+
+    def test_snapshot_appearance_contents_and_removal_invalidate_cache(self):
+        self.run_generator("--no-pointer")
+        snap = self.root / "docs/supabase"
+        snap.mkdir(parents=True)
+        for change in (lambda: None,
+                       lambda: (snap / "manifest.json").write_text('{"gerado_em":"2026-11-10T00:00:00Z"}'),
+                       lambda: (snap / "README.md").write_text("# Snapshot"),
+                       lambda: (snap / "README.md").unlink(),
+                       lambda: (snap / "manifest.json").unlink(),
+                       lambda: snap.rmdir()):
+            change()
+            self.assertEqual(self.run_generator("--no-pointer", "--check"), 1)
+            self.run_generator("--no-pointer")
+            self.assertEqual(self.run_generator("--no-pointer", "--check"), 0)
+
+    def test_pointer_options_and_deleted_pointer_recover_without_touching_manual(self):
+        self.run_generator("--no-pointer")
+        self.assertEqual(self.run_generator("--check"), 1)
+        self.run_generator()
+        self.assertIn("output/00-INDEX.md", (self.root / "AGENTS.md").read_text(encoding="utf-8"))
+        self.run_generator()
+        self.assertEqual(self.run_generator("--check"), 0)
+        self.assertEqual(self.run_generator("--index-path", "contexto/00-INDEX.md", "--check"), 1)
+        self.run_generator("--index-path", "contexto/00-INDEX.md")
+        self.assertIn("contexto/00-INDEX.md", (self.root / "AGENTS.md").read_text(encoding="utf-8"))
+        (self.root / "AGENTS.md").unlink()
+        (self.root / "CLAUDE.md").unlink()
+        self.assertEqual(self.run_generator("--index-path", "contexto/00-INDEX.md", "--check"), 1)
+        self.run_generator("--index-path", "contexto/00-INDEX.md")
+        self.assertTrue((self.root / "AGENTS.md").is_file())
+        self.assertEqual(self.run_generator("--no-pointer", "--check"), 1)
+
+    def test_unchanged_cache_performs_no_writes_and_force_regenerates(self):
+        self.run_generator("--no-pointer")
+        before = self.files()
+        stamp = (self.out / ".state.json").stat().st_mtime_ns
+        self.assertEqual(self.run_generator("--no-pointer"), 0)
+        self.assertEqual(self.files(), before)
+        self.assertEqual((self.out / ".state.json").stat().st_mtime_ns, stamp)
+        self.run_generator("--no-pointer", "--force")
+        self.assertGreater((self.out / ".state.json").stat().st_mtime_ns, stamp)
+
+    def test_real_cli_tracks_document_tree_and_code_metadata_without_new_commit(self):
+        subprocess.run(["git", "init", "-q"], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.test",
+                        "commit", "-qm", "fixture"], cwd=self.root, check=True, capture_output=True)
+        doc = self.root / "docs/ARCHITECTURE.md"
+        doc.parent.mkdir()
+        doc.write_text("# Arquitetura\nMarcador inicial.\n", encoding="utf-8")
+        cmd = [sys.executable, str(SCRIPT), "--repo", str(self.root), "--out", "output", "--no-pointer"]
+
+        def run(*args):
+            return subprocess.run([*cmd, *args], capture_output=True, text=True, timeout=30).returncode
+
+        for kind in ("doc", "tree", "code"):
+            for variant in range(8):
+                with self.subTest(kind=kind, variant=variant):
+                    self.assertEqual(run(), 0)
+                    if kind == "doc":
+                        doc.write_text(f"# Arquitetura\nNOVO MARCADOR {variant}.\n", encoding="utf-8")
+                    elif kind == "tree":
+                        folder = self.root / f"data{variant}"
+                        folder.mkdir()
+                        (folder / "item.txt").write_text("item", encoding="utf-8")
+                    else:
+                        (self.root / "src/main.ts").write_text("export const total = 20;\n" + "\n" * (variant + 1), encoding="utf-8")
+                    before = self.files()
+                    self.assertEqual(run("--check"), 1)
+                    self.assertEqual(self.files(), before)
+                    self.assertEqual(run(), 0)
+                    self.assertEqual(run("--check"), 0)
+                    if kind == "doc":
+                        self.assertIn(f"NOVO MARCADOR {variant}", (self.out / "01-VISAO-GERAL.md").read_text(encoding="utf-8"))
+                    elif kind == "tree":
+                        self.assertIn(f"data{variant}/", (self.out / "02-ARQUITETURA.md").read_text(encoding="utf-8"))
+
+    def test_real_cli_second_run_is_idempotent_for_all_profiles_and_pointer_states(self):
+        for profile in ("full", "codigo", "regras"):
+            for pointers in ((), ("CLAUDE.md",), ("AGENTS.md",), ("CLAUDE.md", "AGENTS.md")):
+                for disabled in (False, True):
+                    with self.subTest(profile=profile, pointers=pointers, disabled=disabled), \
+                            tempfile.TemporaryDirectory(prefix="rules-pointer-cli-") as tmp:
+                        root = Path(tmp)
+                        (root / "src").mkdir()
+                        (root / "src/main.ts").write_text("export const total = 20;\n", encoding="utf-8")
+                        for name in pointers:
+                            (root / name).write_text("# Instruções humanas\nPreservar conteúdo humano.\n", encoding="utf-8")
+                        subprocess.run(["git", "init", "-q"], cwd=root, check=True, capture_output=True)
+                        subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True)
+                        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.test",
+                                        "commit", "-qm", "fixture"], cwd=root, check=True, capture_output=True)
+                        cmd = [sys.executable, str(SCRIPT), "--repo", str(root), "--out", "output", "--profile", profile]
+                        if disabled:
+                            cmd.append("--no-pointer")
+
+                        def files():
+                            return {p.relative_to(root).as_posix(): (p.read_bytes(), p.stat().st_mtime_ns)
+                                    for p in root.rglob("*") if p.is_file() and ".git" not in p.relative_to(root).parts}
+
+                        before = files()
+                        self.assertEqual(subprocess.run([*cmd, "--check"], capture_output=True, timeout=30).returncode, 1)
+                        self.assertEqual(files(), before)
+                        self.assertEqual(subprocess.run(cmd, capture_output=True, timeout=30).returncode, 0)
+                        before = files()
+                        self.assertEqual(subprocess.run(cmd, capture_output=True, timeout=30).returncode, 0)
+                        self.assertEqual(files(), before)
+                        self.assertEqual(subprocess.run([*cmd, "--check"], capture_output=True, timeout=30).returncode, 0)
+                        self.assertEqual(files(), before)
+                        for name in pointers:
+                            self.assertIn("Preservar conteúdo humano.", (root / name).read_text(encoding="utf-8"))
+
+    def test_llm_cache_reuses_only_the_same_facts_and_model(self):
+        def response(request, timeout):
+            model = json.loads(request.data)["model"]
+            return contextlib.closing(io.BytesIO(json.dumps({"content": [{"text": model}]}).encode()))
+
+        for initial in ("model-a", "model-b", "model-c"):
+            for target in (initial, "model-d", "model-e", "model-f"):
+                for changed in (False, True):
+                    with self.subTest(initial=initial, target=target, changed=changed), \
+                            tempfile.TemporaryDirectory(prefix="rules-llm-cache-") as tmp, \
+                            mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "fixture-no-network"}), \
+                            mock.patch.object(generator.urllib.request, "urlopen", side_effect=response) as request:
+                        self.assertEqual(generator.llm_synthesis({"v": 1}, Path(tmp), initial), initial)
+                        self.assertEqual(generator.llm_synthesis({"v": 2 if changed else 1}, Path(tmp), target), target)
+                        self.assertEqual(request.call_count, 1 if target == initial and not changed else 2)
 
 
 if __name__ == "__main__":
