@@ -590,47 +590,82 @@ test('timeout encerra com escalada: SIGINT, depois SIGTERM, depois SIGKILL', (t)
   assert.throws(() => process.kill(pid, 0), 'o passo teimoso sobreviveu ao SIGKILL');
 });
 
-test('containers criados durante a execução são removidos; os que já existiam nunca', (t) => {
-  const { src, raiz } = repo(t, {
-    dk: wf(`  a:
-    runs-on: x
-    steps:
-      - run: docker run -d alpine sleep 1000
-`),
-  });
-  const fake = join(raiz, 'bin');
+test('containers: só os rotulados pelo shim desta execução saem; sem rótulo (paralelo/pré-existente) sobrevive', (t) => {
+  const marcas = mkdtempSync(join(tmpdir(), 'ci-local-teste-docker-'));
+  t.after(() => rmSync(marcas, { recursive: true, force: true }));
+  const fake = join(marcas, 'bin');
   mkdirSync(fake);
-  const reg = join(raiz, 'docker-chamadas');
-  const criado = join(raiz, 'criado');
+  const estado = join(marcas, 'containers.json');
+  const reg = join(marcas, 'chamadas');
+  writeFileSync(
+    estado,
+    JSON.stringify([{ id: 'preexistente', run: '', job: '', img: 'postgres:17' }])
+  );
+  // docker falso com estado: run cria (com os rótulos recebidos), ps filtra por rótulo, rm remove.
   writeFileSync(
     join(fake, 'docker'),
-    `#!/bin/sh
-echo "$*" >> "${reg}"
-case "$1" in
-  ps)
-    case "$*" in *label=ci-local=1*) exit 0 ;; esac
-    printf 'antigo\\t\\tpostgres-do-usuario\\tpostgres:17\\n'
-    if [ -f "${criado}" ]; then printf 'novo\\t\\tsubido-pelo-passo\\talpine\\n'; fi ;;
-  run) touch "${criado}"; echo novo ;;
-esac
-exit 0
+    `#!/usr/bin/env node
+const fs = require('fs');
+const a = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(reg)}, a.join(' ') + '\\n');
+const cs = JSON.parse(fs.readFileSync(${JSON.stringify(estado)}, 'utf8'));
+const salvar = () => fs.writeFileSync(${JSON.stringify(estado)}, JSON.stringify(cs));
+const rot = (k) => { const i = a.indexOf('--label', a.findIndex((x, j) => x === '--label' && a[j + 1].startsWith(k + '='))); return i < 0 ? '' : a[i + 1].slice(k.length + 1); };
+if (a[0] === 'run') {
+  const id = 'c' + cs.length;
+  cs.push({ id, run: rot('ci-local.run'), job: rot('ci-local.job'), pid: rot('ci-local.pid'), img: a[a.length - 1] });
+  salvar();
+  console.log(id);
+} else if (a[0] === 'ps') {
+  const f = a[a.indexOf('--filter') + 1] || '';
+  const m = /^label=(ci-local\\.run|ci-local\\.job)=(.*)$/.exec(f);
+  if (m) for (const c of cs) if (c[m[1] === 'ci-local.run' ? 'run' : 'job'] === m[2]) console.log([c.id, c.run, c.id + '-nome', c.img].join('\\t'));
+} else if (a[0] === 'rm') {
+  for (const id of a.slice(2)) { const k = cs.findIndex((c) => c.id === id); if (k >= 0) cs.splice(k, 1); }
+  salvar();
+}
 `,
     { mode: 0o755 }
   );
+  const { src } = repo(t, {
+    dk: wf(`  a:
+    runs-on: x
+    steps:
+      - name: docker-shim do projeto (como o db-guard) chama docker pelo nome
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          printf '#!/bin/sh\\necho PROJETO-SHIM >&2\\nexec docker "$@"\\n' > "$HOME/.local/bin/docker"
+          chmod +x "$HOME/.local/bin/docker"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: outra sessão sobe container em paralelo e o passo sobe o seu
+        run: |
+          "${join(fake, 'docker')}" run -d paralelo-de-outra-sessao
+          docker run -d alpine
+`),
+  });
   const r = rodar(src, ['--workflow', 'dk'], { PATH: pathCom(fake) });
   assert.equal(r.code, 0, r.out);
   const chamadas = readFileSync(reg, 'utf8').trim().split('\n');
+  const final = JSON.parse(readFileSync(estado, 'utf8'));
+  // sobreviventes: o que já existia e o que outra sessão subiu em paralelo (sem rótulo)
+  assert.deepEqual(final.map((c) => c.id).sort(), ['c1', 'preexistente'], chamadas.join('\n'));
+  assert.equal(final.find((c) => c.id === 'c1').img, 'paralelo-de-outra-sessao');
   const destrutivas = chamadas.filter((l) => /^(stop|rm|kill)\b/.test(l));
   assert.ok(
-    destrutivas.some((l) => /^stop .*\bnovo$/.test(l)),
+    destrutivas.some((l) => /^rm -f c2$/.test(l)),
     chamadas.join('\n')
   );
   assert.ok(
-    destrutivas.some((l) => /^rm -f novo$/.test(l)),
-    chamadas.join('\n')
+    !destrutivas.some((l) => /preexistente|\bc1\b/.test(l)),
+    'mexeu em container sem rótulo'
   );
-  assert.ok(!destrutivas.some((l) => /antigo/.test(l)), 'mexeu em container que já existia');
-  assert.match(r.out, /container criado durante a execução removido: subido-pelo-passo/);
+  // o do passo foi rotulado (passando pelo shim do projeto uma vez só, sem laço)
+  const runDoPasso = chamadas.find((l) => /^run .*alpine$/.test(l));
+  assert.match(
+    runDoPasso,
+    /--label ci-local=1 --label ci-local\.run=\/\S*ci-local-\w{6} --label ci-local\.job=\S+ --label ci-local\.pid=\d+/
+  );
+  assert.equal((logsDoPasso(src).match(/PROJETO-SHIM/g) ?? []).length, 1);
 });
 
 // --------------------------------------------- achado 4: restos de execuções

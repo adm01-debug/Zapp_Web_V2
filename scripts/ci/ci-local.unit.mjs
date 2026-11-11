@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import {
   avaliarExpressao,
@@ -35,8 +38,8 @@ import {
   encerrarEscalonado,
   inicioDoProcesso,
   donoVivo,
-  containersCriadosNaExecucao,
   lerListaContainers,
+  shimDocker,
   containersOrfaos,
 } from './ci-local-lib.mjs';
 
@@ -578,21 +581,102 @@ test('encerramento escala SIGINT → SIGTERM → SIGKILL e para quando o process
   assert.equal(esperas, 0, 'segundo Ctrl-C não espera');
 });
 
-test('containers removidos no fim: só os criados durante a execução, nunca os que já existiam', () => {
-  const antes = new Set(['a1', 'b2']);
-  const depois = lerListaContainers(
-    [
-      'a1\t\tpostgres-do-usuario\tpostgres:17',
-      'b2\t/tmp/ci-local-outro\tci-local-antigo\tpostgres:17',
-      'c3\t/tmp/ci-local-esta\tci-local-x-db-1\tpostgres:17',
-      'd4\t\tsupabase_db_zapp\tpostgres:15',
-      'e5\t/tmp/ci-local-outra-viva\tci-local-y-db-2\tpostgres:17',
-    ].join('\n')
+test('lista de containers do docker ps é lida por coluna', () => {
+  assert.deepEqual(lerListaContainers('c3\t/tmp/ci-local-x\tci-local-x-db-1\tpostgres:17\n\n'), [
+    { id: 'c3', run: '/tmp/ci-local-x', nomes: 'ci-local-x-db-1', imagem: 'postgres:17' },
+  ]);
+});
+
+test('shim docker: rótulo só em run/create, resto intacto, sem laço com shim que chama `docker`', (t) => {
+  const raiz = mkdtempSync(join(tmpdir(), 'ci-local-teste-shim-docker-'));
+  t.after(() => rmSync(raiz, { recursive: true, force: true }));
+  const shims = join(raiz, 'shims');
+  const real = join(raiz, 'real');
+  const projeto = join(raiz, 'projeto');
+  for (const d of [shims, real, projeto]) mkdirSync(d);
+  writeFileSync(join(shims, 'docker'), shimDocker(shims), { mode: 0o755 });
+  // "docker real": imprime um argumento por linha
+  writeFileSync(join(real, 'docker'), '#!/bin/sh\nfor a in "$@"; do echo "$a"; done\n', {
+    mode: 0o755,
+  });
+  const env = {
+    PATH: `${shims}:${real}:/usr/bin:/bin`,
+    CI_LOCAL_RUN: '/tmp/ci-local-abc123',
+    CI_LOCAL_JOB: '/tmp/ci-local-abc123/job-x',
+    CI_LOCAL_PID: '4242',
+    CI_LOCAL_INICIO: '99',
+    CI_LOCAL_DOCKER_REAL: join(real, 'docker'),
+  };
+  const docker = (args, extra = {}) => {
+    const r = spawnSync(join(shims, 'docker'), args, {
+      encoding: 'utf8',
+      env: { ...env, ...extra },
+      timeout: 10_000,
+    });
+    assert.equal(r.status, 0, r.stderr);
+    return r.stdout.trimEnd().split('\n');
+  };
+  const rotulos = [
+    '--label',
+    'ci-local=1',
+    '--label',
+    'ci-local.run=/tmp/ci-local-abc123',
+    '--label',
+    'ci-local.job=/tmp/ci-local-abc123/job-x',
+    '--label',
+    'ci-local.pid=4242',
+    '--label',
+    'ci-local.inicio=99',
+  ];
+  assert.deepEqual(docker(['run', '-d', 'alpine', 'sh', '-c', 'echo "a b"']), [
+    'run',
+    ...rotulos,
+    '-d',
+    'alpine',
+    'sh',
+    '-c',
+    'echo "a b"',
+  ]);
+  assert.deepEqual(docker(['--context', 'x', '-D', 'create', 'img']), [
+    '--context',
+    'x',
+    '-D',
+    'create',
+    ...rotulos,
+    'img',
+  ]);
+  assert.deepEqual(docker(['container', 'run', 'img']), ['container', 'run', ...rotulos, 'img']);
+  assert.deepEqual(docker(['ps', '-a', '--filter', 'label=x']), [
+    'ps',
+    '-a',
+    '--filter',
+    'label=x',
+  ]);
+  assert.deepEqual(docker(['exec', 'c', 'run']), ['exec', 'c', 'run']);
+  // docker-shim de projeto em $HOME/.local/bin que chama `docker` PELO NOME: sem laço,
+  // a segunda passagem vai direto ao real (caminho absoluto resolvido no início).
+  writeFileSync(join(projeto, 'docker'), '#!/bin/sh\necho PROJETO\nexec docker "$@"\n', {
+    mode: 0o755,
+  });
+  const viaProjeto = docker(['run', 'img'], { PATH: `${shims}:${projeto}:${real}:/usr/bin:/bin` });
+  assert.equal(viaProjeto[0], 'PROJETO');
+  assert.equal(viaProjeto.filter((l) => l === 'PROJETO').length, 1);
+  assert.equal(viaProjeto[1], 'run');
+  assert.ok(viaProjeto.includes('ci-local.run=/tmp/ci-local-abc123'));
+  // sem docker nenhum: erro claro, não laço (PATH só com o shim e o bash)
+  const soBash = join(raiz, 'so-bash');
+  mkdirSync(soBash);
+  symlinkSync(
+    spawnSync('sh', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout.trim(),
+    join(soBash, 'bash')
   );
-  assert.deepEqual(
-    containersCriadosNaExecucao(antes, depois, '/tmp/ci-local-esta').map((c) => c.id),
-    ['c3', 'd4']
-  );
+  const sem = spawnSync(join(shims, 'docker'), ['ps'], {
+    encoding: 'utf8',
+    env: { ...env, PATH: `${shims}:${soBash}`, CI_LOCAL_DOCKER_REAL: '' },
+    timeout: 10_000,
+  });
+  assert.equal(sem.status, 127, sem.stderr);
+  assert.match(sem.stderr, /docker não encontrado/);
 });
 
 // --------------------------------------------- achado 4: restos de execuções
