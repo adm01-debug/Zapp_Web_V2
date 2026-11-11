@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d5835ed8c91163b2692eeb2b8dc6037188cd0e50",
+  "commit": "e408b77812a40907c7b2fb4379368bbf36d9af32",
   "branch": "main",
-  "data_commit": "2026-11-11T18:18:27-03:00",
+  "data_commit": "2026-11-11T19:21:07-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e408b77",
+    "data": "2026-11-11",
+    "assunto": "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)"
+   },
    {
     "sha": "d5835ed",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "105ebc1",
     "data": "2026-11-11",
     "assunto": "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)"
-   },
-   {
-    "sha": "ec190c2",
-    "data": "2026-11-11",
-    "assunto": "fix(ia): conferirAlvoLocal recusa LOCALHOST por caixa, nao por ser remoto (#2947)"
    }
   ],
-  "arquivos_mudados_7d": 629,
+  "arquivos_mudados_7d": 626,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8392,
   "arquivos_codigo": 4806,
-  "linhas_codigo": 889885,
+  "linhas_codigo": 889904,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -648,7 +648,7 @@
   },
   "scripts/maintenance": {
    "arquivos": 4,
-   "linhas": 1420
+   "linhas": 1439
   },
   "scripts/mutation": {
    "arquivos": 1,

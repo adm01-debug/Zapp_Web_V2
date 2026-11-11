@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)",
    "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)",
    "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)",
    "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)",
-   "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO (#2496)",
-   "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)"
+   "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO (#2496)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

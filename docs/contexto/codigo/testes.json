@@ -2561,12 +2561,12 @@
   {
    "arquivo": "scripts/maintenance/maintenance.unit.mjs",
    "tipo": "unit",
-   "linhas": 368,
+   "linhas": 384,
    "testa": [
     "scripts/maintenance/lib.mjs",
     "scripts/maintenance/run.mjs"
    ],
-   "casos": 26
+   "casos": 27
   },
   {
    "arquivo": "scripts/qa/contatos-redesign-baseline.cjs",

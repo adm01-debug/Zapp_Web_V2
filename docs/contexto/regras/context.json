@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d5835ed8c91163b2692eeb2b8dc6037188cd0e50",
+  "sha": "e408b77812a40907c7b2fb4379368bbf36d9af32",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 21:27 UTC",
+  "generated_at": "2026-11-11 23:00 UTC",
   "files_total": 8234,
   "code_files": 6080,
-  "code_lines": 1057729
+  "code_lines": 1057748
  },
  "version": "1.3.2",
- "facts_hash": "8cd0951dd37d66b0",
+ "facts_hash": "cdbf5742186fc2ec",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67937,7 +67937,7 @@
   {
    "module": "scripts",
    "files": 461,
-   "lines": 92714,
+   "lines": 92733,
    "tables": [
     "a",
     "alem_do_limite",
@@ -271788,7 +271788,7 @@
   },
   "scripts/maintenance/lib.mjs": {
    "path": "scripts/maintenance/lib.mjs",
-   "lines": 401,
+   "lines": 404,
    "exports": [
     "class MaintenanceError",
     "const fail",
@@ -271826,7 +271826,7 @@
   },
   "scripts/maintenance/maintenance.unit.mjs": {
    "path": "scripts/maintenance/maintenance.unit.mjs",
-   "lines": 368,
+   "lines": 384,
    "external_urls": [
     "http://192.0.2.1:9"
    ],
@@ -387296,10 +387296,20 @@
   }
  },
  "git": {
-  "sha": "d5835ed8c91163b2692eeb2b8dc6037188cd0e50",
+  "sha": "e408b77812a40907c7b2fb4379368bbf36d9af32",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e408b77",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)",
+    "files": [
+     "scripts/maintenance/lib.mjs",
+     "scripts/maintenance/maintenance.unit.mjs"
+    ]
+   },
    {
     "sha": "d5835ed",
     "date": "2026-11-11",
@@ -387616,19 +387626,13 @@
      "scripts/ci/check-pr-workflow-secrets.mjs",
      "scripts/ci/check-pr-workflow-secrets.unit.mjs"
     ]
-   },
-   {
-    "sha": "7f33c27",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "fix(talkx): varrerTela ignora JSX comentado ao gerar docs/talkx/ESTADOS.md (#2935)",
-    "files": [
-     "scripts/talkx/gen-estados.mjs",
-     "scripts/talkx/gen-estados.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/maintenance/maintenance.unit.mjs",
+    2
+   ],
    [
     "scripts/db-tests/run-all.mjs",
     2
@@ -387642,20 +387646,16 @@
     2
    ],
    [
-    "scripts/talkx/gen-estados.mjs",
-    2
-   ],
-   [
-    "scripts/talkx/gen-estados.unit.mjs",
-    2
-   ],
-   [
     "scripts/ui-audit/layout-guard.mjs",
     2
    ],
    [
     "scripts/ui-audit/layout-guard.unit.mjs",
     2
+   ],
+   [
+    "scripts/maintenance/lib.mjs",
+    1
    ],
    [
     "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
