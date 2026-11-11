@@ -84,5 +84,9 @@ describe('useUnconfirmedMessages', () => {
     client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const { result } = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
+    // Depois do erro o polling de 30 s para (medido: 11 requisições com erro em 5 min).
+    const query = client.getQueryCache().find({ queryKey: ['unconfirmed-messages', 'contact-1', null] });
+    const interval = (query?.options as { refetchInterval?: unknown }).refetchInterval;
+    expect(typeof interval === 'function' ? (interval as (q: unknown) => unknown)(query) : interval).toBe(false);
   });
 });
