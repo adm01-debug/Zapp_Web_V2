@@ -53,6 +53,17 @@ test("audita a raiz real de uma view reexportada por alias", () => {
   assert.match(result.output, /0 violations across 1 view files/);
 });
 
+test("className dinamico na raiz (ternario) e reportado como NAO AUDITAVEL, nao silenciado", () => {
+  const result = runGuard({
+    "src/pages/lazyViews.ts": lazyImport("DynamicClassView"),
+    "src/components/DynamicClassView.tsx":
+      'export function DynamicClassView({ isWide }) {\n  return <main className={isWide ? "h-full w-full" : "h-full"}>ok</main>;\n}\n',
+  });
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /NAO AUDITAVEL.*className dinamico na raiz/);
+});
+
 test("nao confunde min-h-full com o token h-full", () => {
   const result = runGuard({
     "src/pages/lazyViews.ts": lazyImport("MinHeightView"),
