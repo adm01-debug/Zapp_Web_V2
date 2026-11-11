@@ -612,7 +612,7 @@ async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
-    console.error('::error::' + e.message);
+    console.error('::error::' + semQuebra(e.message));
     process.exit(1);
   });
 }

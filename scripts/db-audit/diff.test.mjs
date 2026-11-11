@@ -51,6 +51,16 @@ test('retorna 1 e identifica objeto divergente', () => {
   assert.match(result.stdout, /contacts\.created_at/);
 });
 
+test('objeto so em A com nome igual a um membro de Object.prototype aparece como "so em A", nao "divergente"', () => {
+  const A = manifesto();
+  const B = manifesto();
+  A.defaults.toString = H1;
+  const result = executar(A, B);
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /\[defaults\] so em A: 1 \| so em B: 0 \| divergente: 0/);
+  assert.match(result.stdout, /so em A: toString/);
+});
+
 test('retorna 2 para manifesto invalido', () => {
   const result = executar(manifesto(), '{invalido');
   assert.equal(result.status, 2);
