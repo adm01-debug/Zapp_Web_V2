@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0e15ed61a9` · branch `main` · 2026-11-11 12:57 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b548ca08c1` · branch `main` · 2026-11-11 13:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4597,7 +4597,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21293 testes em 2256 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21294 testes em 2256 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4806,6 +4806,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/services/__tests__/outbound-message.service.test.ts` | 20 | sendOutboundMessage · enqueues first and only then asks the authenticated delivery gateway to dispatch · does not dispatch when authorization or validation prevents enqueueing · foto com URL inválida: o enqueue rejeitado impede o dispatch e propaga a falha … |
 | `src/utils/__tests__/notificationSounds.test.ts` | 20 | notificationSounds · playNotificationSound · plays default message sound without error · plays with chime sound type … |
 | `supabase/functions/_shared/messaging/__tests__/personalize.test.ts` | 20 | personalize resolves the built-in placeholders (nome/apelido/nome_completo/empresa) · personalize {{apelido}} cai no primeiro nome quando o contato nao tem apelido · personalize built-in sem valor entra em missing e mantem o texto vazio (X020) · personalize falls back to a bracket placeholder for an unresolved variable instead of throwing … |
+| `scripts/catalog/validate-plan.test.mjs` | 19 | rejeita caminho relativo que escapa do repositorio · rejeita caminho absoluto fora do repositorio e do temporario · caminho valido e dentro da raiz, mas arquivo inexistente, da ERRO limpo (sem stack cru) · aceita o caminho default do plano dentro do repositorio … |
 | `scripts/db-audit/check-catalog-fresh.test.mjs` | 19 | aceita conjuntos identicos em ordem diferente · falha quando surge coluna nova no banco · falha quando o tipo de uma coluna muda · falha quando a nulabilidade de uma coluna muda … |
 | `scripts/db-audit/check-triple-parity.test.mjs` | 19 | paridade tripla verde quando as tres pernas batem (generated_at ignorado) · detecta divergencia arquivos↔ledger (sha256/count) · detecta edge em disco fora do manifesto e vice-versa · detecta grants-baseline desatualizado … |
 | `src/components/contacts/__tests__/ContactEngagementScore.test.tsx` | 19 | calculateEngagement · retorna level=hot quando recência + frequência + volume >= 70 · retorna level=warm quando score >= 40 e < 70 · retorna level=cold quando score >= 15 e < 40 … |
@@ -4834,7 +4835,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts` | 19 | (1) banco: três colunas novas NULLABLE (IA-047) · (2) banco: três índices únicos PARCIAIS com o where correto (IA-047) · a migration NÃO cria índice único TOTAL sobre a coluna nova (risco de colisão com histórico) · (3) banco: aditivo, idempotente, com rollback e sem transação explícita … |
 | `tests/contracts/requireauth-network-policy.contract.test.ts` | 19 | canonicalEndpointFromUrl — endpoint canônico estável a partir da URL · extrai o nome da função do gateway /functions/v1/<nome> · descarta sub-path e devolve só o nome da função · usa o primeiro segmento quando não há a barra functions/v1 … |
 | `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` | 19 | SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produção · o gerador existe no repositório e o plano cobre o §2 da IA-010 · todo registro nasce marcado: prefixo ENSAIO-, domínio de teste e faixa de telefone própria · nenhum dado pessoal real: sem CPF/CNPJ e sem telefone repetido no plano … |
-| `scripts/catalog/validate-plan.test.mjs` | 18 | rejeita caminho relativo que escapa do repositorio · rejeita caminho absoluto fora do repositorio e do temporario · caminho valido e dentro da raiz, mas arquivo inexistente, da ERRO limpo (sem stack cru) · aceita o caminho default do plano dentro do repositorio … |
 | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` | 18 | AutomationEditorDialog — estado por registro (R2-MOD-001) · mostra os dados do registro aberto · ao trocar de registro (mesmo componente montado), não reaproveita o estado do anterior · ao abrir  … |
 | `src/components/groups/__tests__/GroupsView.test.tsx` | 18 | GroupsView · renders the page title · shows empty state when no groups · renders groups when data loads … |
 | `src/components/inbox/__tests__/InboxSavedFiltersMenu.test.tsx` | 18 | InboxSavedFiltersMenu — filtros salvos do inbox · lista vazia: orienta e mantém  · aplicar: o conteúdo do preset chega ao onApply e o menu fecha · salvar: grava o filtro que está na tela, com o nome digitado … |

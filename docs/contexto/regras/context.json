@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "0e15ed61a9f097f4885389b9deb0f0dc8004427b",
+  "sha": "b548ca08c1f8e19c33286d2794f03132851cbaeb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 12:57 UTC",
+  "generated_at": "2026-11-11 13:56 UTC",
   "files_total": 8228,
   "code_files": 6075,
-  "code_lines": 1055338
+  "code_lines": 1055348
  },
  "version": "1.3.2",
- "facts_hash": "7016897b20252662",
+ "facts_hash": "cef7b133a39eb660",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67514,7 +67514,7 @@
   {
    "module": "scripts",
    "files": 460,
-   "lines": 92584,
+   "lines": 92594,
    "tables": [
     "a",
     "alem_do_limite",
@@ -128137,6 +128137,10 @@
    {
     "file": "scripts/catalog/validate-plan.test.mjs",
     "name": "rejeita identificador extra invalido E${id} mesmo com as 100 etapas validas"
+   },
+   {
+    "file": "scripts/catalog/validate-plan.test.mjs",
+    "name": "cabecalho E007 com zero a mais nao e tratado como equivalente a E07"
    },
    {
     "file": "scripts/catalog/validate-plan.test.mjs",
@@ -262641,12 +262645,12 @@
   },
   "scripts/catalog/validate-plan.mjs": {
    "path": "scripts/catalog/validate-plan.mjs",
-   "lines": 76,
+   "lines": 77,
    "doc": "!/usr/bin/env node Valida docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md: 100 etapas, 10 sub-etapas e checklist em cada."
   },
   "scripts/catalog/validate-plan.test.mjs": {
    "path": "scripts/catalog/validate-plan.test.mjs",
-   "lines": 251,
+   "lines": 260,
    "is_test": true,
    "rule_comments": [
     "OTH-011: o total do checklist deve contar itens marcados E nao marcados."
@@ -262666,6 +262670,7 @@
     "rejeita a repeticao da etapa numerica E${id}",
     "um tombstone nao pode esconder a repeticao de uma etapa",
     "rejeita identificador extra invalido E${id} mesmo com as 100 etapas validas",
+    "cabecalho E007 com zero a mais nao e tratado como equivalente a E07",
     "preserva tombstone com data calendaria valida ${data}",
     "data ${data} nao concede dispensa de estrutura ao tombstone",
     "preserva duas posicoes descartadas distintas sem reduzir as 100 etapas",
@@ -386011,10 +386016,20 @@
   }
  },
  "git": {
-  "sha": "0e15ed61a9f097f4885389b9deb0f0dc8004427b",
+  "sha": "b548ca08c1f8e19c33286d2794f03132851cbaeb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b548ca0",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)",
+    "files": [
+     "scripts/catalog/validate-plan.mjs",
+     "scripts/catalog/validate-plan.test.mjs"
+    ]
+   },
    {
     "sha": "0e15ed6",
     "date": "2026-11-11",
@@ -386304,25 +386319,20 @@
      "e2e/quarantine.unit.mjs",
      "scripts/ci/e2e-quarantine-contract.unit.mjs"
     ]
-   },
-   {
-    "sha": "e0a923f",
-    "date": "2026-11-10",
-    "author": "adm01-debug",
-    "subject": "Corrige intervalos de citações e a projeção SQL no verificador de documentação (#2927)",
-    "files": [
-     "scripts/ci/docs-realtime-citations.unit.mjs",
-     "scripts/docs/publication.mjs",
-     "scripts/docs/publication.test.mjs",
-     "scripts/docs/verificar-docs-realtime.mjs",
-     "scripts/docs/verificar-docs-realtime.test.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "scripts/maintenance/maintenance.unit.mjs",
     3
+   ],
+   [
+    "scripts/catalog/validate-plan.mjs",
+    2
+   ],
+   [
+    "scripts/catalog/validate-plan.test.mjs",
+    2
    ],
    [
     "scripts/maintenance/run.mjs",
@@ -386346,14 +386356,6 @@
    ],
    [
     "scripts/ui-audit/layout-guard.unit.mjs",
-    2
-   ],
-   [
-    "scripts/docs/verificar-docs-realtime.mjs",
-    2
-   ],
-   [
-    "scripts/docs/verificar-docs-realtime.test.mjs",
     2
    ],
    [

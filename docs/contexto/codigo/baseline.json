@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0e15ed61a9f097f4885389b9deb0f0dc8004427b",
+  "commit": "b548ca08c1f8e19c33286d2794f03132851cbaeb",
   "branch": "main",
-  "data_commit": "2026-11-11T09:21:08-03:00",
+  "data_commit": "2026-11-11T10:08:32-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b548ca0",
+    "data": "2026-11-11",
+    "assunto": "fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)"
+   },
    {
     "sha": "0e15ed6",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "e334b0a",
     "data": "2026-11-10",
     "assunto": "fix(maintenance): finally de restore não descarta mais a exceção original (#2933)"
-   },
-   {
-    "sha": "f3c0c5f",
-    "data": "2026-11-10",
-    "assunto": "fix(catalog): validate-plan.mjs trata ENOENT em vez de vazar stack cru (#2934)"
    }
   ],
-  "arquivos_mudados_7d": 663,
+  "arquivos_mudados_7d": 642,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 16
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8386,
   "arquivos_codigo": 4803,
-  "linhas_codigo": 888478,
+  "linhas_codigo": 888488,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -604,7 +604,7 @@
   },
   "scripts/catalog": {
    "arquivos": 2,
-   "linhas": 327
+   "linhas": 337
   },
   "scripts/ci": {
    "arquivos": 212,

@@ -614,9 +614,9 @@
   {
    "arquivo": "scripts/catalog/validate-plan.test.mjs",
    "tipo": "unit",
-   "linhas": 251,
+   "linhas": 260,
    "testa": [],
-   "casos": 18
+   "casos": 19
   },
   {
    "arquivo": "scripts/ci/a11y-button-name-ratchet.unit.mjs",
