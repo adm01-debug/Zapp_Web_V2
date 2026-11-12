@@ -82,6 +82,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   // agente) e de configuração/credencial do provedor passam a exigir
   // admin/supervisor. (SL-075 removeu integrações e rotas legadas do handler.)
   'find-contacts', 'find-messages',
+  // Status/Stories lidos de `status@broadcast`: instance-wide (de toda a base),
+  // mesma regra de find-messages — admin/supervisor.
+  'find-status-messages',
   'get-media-base64',
   // perfil da conta/conexão (config) e de número arbitrário (fora da carteira)
   'fetch-profile', 'fetch-profile-picture', 'fetch-business-profile',
