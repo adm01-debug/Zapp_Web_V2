@@ -4,12 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const f = vi.hoisted(() => ({
   campaigns: [] as Array<Record<string, unknown>>,
   isLoading: false,
+  isError: false,
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({
     campaigns: f.campaigns,
     isLoading: f.isLoading,
+    isError: f.isError,
     isLive: false,
     startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
     deleteCampaign: { mutate: vi.fn() },
@@ -403,10 +405,11 @@ describe('TalkXView ?screen=report abre o relatório (X163)', () => {
       sent_count: 10, failed_count: 0, delivered_count: 10, total_recipients: 10,
     }];
     f.isLoading = false;
+    f.isError = false;
     window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_done&screen=report');
   });
 
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => { f.isError = false; vi.clearAllMocks(); });
 
   it('?screen=report abre o relatório da campanha na primeira pintura', async () => {
     render(<TalkXView />);
@@ -460,6 +463,24 @@ describe('TalkXView ?screen=report abre o relatório (X163)', () => {
     await waitFor(() => expect(new URLSearchParams(window.location.search).has('screen')).toBe(false));
     expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
     expect(screen.queryByTestId('report')).not.toBeInTheDocument();
+  });
+
+  it('lista em erro não apaga o ?screen=report; ao recarregar, abre o relatório', async () => {
+    f.campaigns = [];
+    f.isError = true;
+    const { rerender } = render(<TalkXView />);
+    await act(async () => {});
+    expect(new URLSearchParams(window.location.search).get('screen')).toBe('report');
+    expect(screen.queryByTestId('report')).not.toBeInTheDocument();
+
+    f.campaigns = [{
+      id: 'cmp_done', name: 'Finalizada', status: 'completed',
+      sent_count: 10, failed_count: 0, delivered_count: 10, total_recipients: 10,
+    }];
+    f.isError = false;
+    rerender(<TalkXView />);
+    expect(await screen.findByTestId('report')).toHaveAttribute('data-campaign-id', 'cmp_done');
+    expect(new URLSearchParams(window.location.search).get('screen')).toBe('report');
   });
 });
 

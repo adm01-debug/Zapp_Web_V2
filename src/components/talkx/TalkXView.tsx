@@ -140,7 +140,7 @@ export default function TalkXView() {
     const parsedScreen = parseTalkXScreenRoute(window.location.search);
 
     if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
-    // TL-152: ?screen= inválido (ex.: report, que não tem tela) é normalizado
+    // TL-152: ?screen= inválido (fora de SCREENS em talkxRoute.ts) é normalizado
     // aqui também — o parâmetro é removido sem abrir outra tela no lugar.
     if (parsedScreen.needsNormalization) replaceTalkXRoute(null);
 
@@ -215,13 +215,16 @@ export default function TalkXView() {
     if (initialScreen.needsNormalization) replaceTalkXRoute(null);
     // TL-152: o init só define o topView — os ids da tela roteada resolvem
     // aqui, quando as campanhas chegam (primeira pintura, uma vez só).
-    if (!didInitialScreenSync.current && !isLoading) {
+    // O relatório só abre com a campanha na lista: com a lista em erro, o
+    // ?screen=report fica no endereço e resolve quando o recarregamento der certo.
+    const awaitingReportList = isError && initialScreen.route?.screen === 'report';
+    if (!didInitialScreenSync.current && !isLoading && !awaitingReportList) {
       didInitialScreenSync.current = true;
       syncFromBrowserHistory();
     }
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [isLoading, syncFromBrowserHistory]);
+  }, [isError, isLoading, syncFromBrowserHistory]);
 
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
