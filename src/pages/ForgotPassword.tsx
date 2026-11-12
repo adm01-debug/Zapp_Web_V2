@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle, Loader2, Clock } from 'lucide-react';
 import { log } from '@/lib/logger';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
