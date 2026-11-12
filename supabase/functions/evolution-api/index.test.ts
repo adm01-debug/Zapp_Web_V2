@@ -1337,3 +1337,135 @@ for (const action of ["mark-read", "mark-unread"]) {
     }
   });
 }
+
+// ─── Rotas pendentes do #2054 restauradas por decisão do dono (12/11) ────────
+for (const [action, method, path, body, esperado] of [
+  ["find-chats", "POST", "/chat/findChats/PRINCIPAL", { where: { archived: false } }, { where: { archived: false } }],
+  ["find-templates", "GET", "/template/find/PRINCIPAL", {}, null],
+  ["get-catalog", "POST", "/business/getCatalog/PRINCIPAL", { number: "5511999999999", limit: 10 }, { number: "5511999999999", limit: 10 }],
+  ["get-collections", "POST", "/business/getCollections/PRINCIPAL", { number: "5511999999999" }, { number: "5511999999999" }],
+] as const) {
+  Deno.test(`#2054 ${action} (v2, admin): ${method} ${path}`, async () => {
+    const fake = createCapturingFake([]);
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, { instanceName: "PRINCIPAL", ...body }),
+        { callerClient: adminClient(), supabase: makeServiceClient() });
+      assertEquals(res.status, 200);
+      assertEquals(fake.calls.map((c) => `${c.method} ${c.path}`), [`${method} ${path}`]);
+      if (esperado) assertEquals(fake.calls[0].body, esperado);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("#2054 create-template / delete-template (v2, admin): repassam o corpo (contrato pré-#2054)", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const criar = await handleEvolutionApi(controlRequest("create-template", {
+      instanceName: "PRINCIPAL", name: "boas_vindas", category: "UTILITY", language: "pt_BR",
+      components: [{ type: "BODY", text: "Olá {{1}}" }],
+    }), { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(criar.status, 200);
+    assertEquals(fake.calls[0].method, "POST");
+    assertEquals(fake.calls[0].path, "/template/create/PRINCIPAL");
+    assertEquals(fake.calls[0].body.name, "boas_vindas");
+
+    const apagar = await handleEvolutionApi(controlRequest("delete-template", { instanceName: "PRINCIPAL", name: "boas_vindas" }),
+      { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(apagar.status, 200);
+    assertEquals(fake.calls[1].method, "DELETE");
+    assertEquals(fake.calls[1].path, "/template/delete/PRINCIPAL");
+    assertEquals(fake.calls[1].body.name, "boas_vindas");
+  } finally {
+    await fake.stop();
+  }
+});
+
+for (const action of ["find-chats", "create-template", "find-templates", "delete-template", "get-catalog", "get-collections"]) {
+  Deno.test(`#2054 ${action} sem papel devolve 403 e não produz I/O`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, { instanceName: "PRINCIPAL", number: "5511999999999", name: "x" }),
+        { callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: true }), supabase: sendSupabase() });
+      assertEquals(res.status, 403);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("#2054 offer-call (v2): agente com contato visível alcança o provedor; sem visibilidade, 403", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const negado = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: false }), supabase: sendSupabase() });
+    assertEquals(negado.status, 403);
+    assertEquals(fake.calls.length, 0);
+
+    const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999" }),
+      { callerClient: agentClient(), supabase: sendSupabase() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls[0].path, "/call/offer/PRINCIPAL");
+    assertEquals(fake.calls[0].body, { number: "5511999999999", isVideo: false, callDuration: 5 });
+  } finally {
+    await fake.stop();
+  }
+});
+
+for (const action of ["find-chats", "create-template", "find-templates", "delete-template", "get-catalog", "get-collections", "offer-call"]) {
+  Deno.test(`#2054 ${action} (GO): notSupported com 200, sem I/O no provedor`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, { instanceName: "PRINCIPAL", number: "5511999999999", name: "x" }),
+        { callerClient: adminClient(), supabase: sendSupabase() });
+      assertEquals(res.status, 200);
+      assertEquals((await res.json()).notSupported, true);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+for (const callDuration of [0, 61, 3.5, "10"]) {
+  Deno.test(`revisão: offer-call com callDuration=${JSON.stringify(callDuration)} é recusado (422) sem I/O`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999", callDuration }),
+        { callerClient: adminClient(), supabase: sendSupabase() });
+      assertEquals(res.status, 422);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("revisão: offer-call com callDuration=60 passa e vai a /call/offer", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999", callDuration: 60, isVideo: true }),
+      { callerClient: adminClient(), supabase: sendSupabase() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls[0].path, "/call/offer/PRINCIPAL");
+    assertEquals(fake.calls[0].body, { number: "5511999999999", isVideo: true, callDuration: 60 });
+  } finally {
+    await fake.stop();
+  }
+});
