@@ -1206,18 +1206,20 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
     // Restauradas (#2054, decisão do dono): templates da Meta (WhatsApp Business
     // Cloud API) e catálogo/coleções de um número business, e a oferta de chamada.
-    // Rotas só da v2 (`/template/*`, `/business/*`, `/call/offerCall`) → notSupported no GO.
+    // Rotas só da v2 (`/template/*`, `/business/*`, `/call/offer`) → notSupported no GO.
     if (action === 'create-template' || action === 'find-templates' || action === 'delete-template') {
       if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
       if (action === 'find-templates') return await proxy(`/template/find/${instance}`, 'GET');
-      return await proxy(`/template/${action === 'create-template' ? 'create' : 'delete'}/${instance}`, action === 'create-template' ? 'POST' : 'DELETE', body);
+      // Só o template vai ao provedor: `action`/`instanceName`/`instance` são do roteador.
+      const { action: _a, instanceName: _i, instance: _n, ...templateBody } = body as Record<string, unknown>;
+      return await proxy(`/template/${action === 'create-template' ? 'create' : 'delete'}/${instance}`, action === 'create-template' ? 'POST' : 'DELETE', templateBody);
     }
     if (action === 'get-catalog' || action === 'get-collections') {
       if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
       return await proxy(`/business/${action === 'get-catalog' ? 'getCatalog' : 'getCollections'}/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
     }
     // Evolution v2: POST /call/offer/{instância} (OfferCallDto). `callDuration` já
-    // chega validado pelo schema (inteiro de 1 a 60 s, padrão 5).
+    // chega validado pelo schema (inteiro de 1 a 15 s, padrão 5).
     if (action === 'offer-call') {
       if (isGoFlavor) return goActionNotSupported('offer-call', corsHeaders);
       return await proxy(`/call/offer/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo === true, callDuration: body.callDuration ?? 5 });
