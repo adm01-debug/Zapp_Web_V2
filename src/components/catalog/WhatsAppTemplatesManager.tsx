@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit2, Trash2, Copy, Eye, Search, FileText, Send, CheckCircle2, Clock, XCircle, Loader2, Variable } from 'lucide-react';
+import { Plus, Edit2, Trash2, Copy, Eye, Search, FileText, Send, CheckCircle2, Clock, XCircle, Loader2, Variable, Globe } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -17,6 +17,7 @@ import {
   STATUS_BADGES, EMPTY_TEMPLATE, type WhatsAppTemplate,
 } from '@/hooks/integrations/useWhatsAppTemplates';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { MetaTemplatesDialog } from './MetaTemplatesDialog';
 
 const STATUS_ICONS: Record<string, React.ElementType> = {
   CheckCircle2, Clock, XCircle, FileText,
@@ -42,6 +43,8 @@ export function WhatsAppTemplatesManager() {
   // Exclusão de template é irreversível: o clique abre a confirmação e só o
   // "Excluir" do diálogo chama `handleDelete` (cancelar não apaga nada).
   const [pendingDelete, setPendingDelete] = useState<WhatsAppTemplate | null>(null);
+  // Templates oficiais na Meta (find/create/delete-template, restauradas após o #2054).
+  const [metaAberto, setMetaAberto] = useState(false);
 
   return (
     <div className="space-y-4 md:space-y-6 w-full min-w-0">
@@ -51,7 +54,13 @@ export function WhatsAppTemplatesManager() {
           <p className="text-xs md:text-sm text-muted-foreground">Gerencie templates oficiais aprovados pelo WhatsApp Business API</p>
           {!canWrite && <p className="text-xs text-muted-foreground mt-1">Somente administradores e supervisores podem criar, editar ou excluir templates.</p>}
         </div>
-        {canWrite && <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>}
+        {canWrite && (
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setMetaAberto(true)} className="gap-2 w-full sm:w-auto"><Globe className="w-4 h-4" />Templates na Meta</Button>
+            <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>
+          </div>
+        )}
+        {canWrite && metaAberto && <MetaTemplatesDialog open onOpenChange={setMetaAberto} localTemplates={templates} />}
       </div>
 
       <div className="flex gap-3 flex-wrap">
