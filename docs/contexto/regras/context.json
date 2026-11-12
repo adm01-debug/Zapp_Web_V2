@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "7e128bc40305aa6917aec53a822fcc9c70098771",
+  "sha": "71123cc07ae3c413964215daf63d9f26890a1d33",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 02:14 UTC",
+  "generated_at": "2026-11-12 03:32 UTC",
   "files_total": 8241,
   "code_files": 6087,
   "code_lines": 1059033
@@ -387797,10 +387797,21 @@
   }
  },
  "git": {
-  "sha": "7e128bc40305aa6917aec53a822fcc9c70098771",
+  "sha": "71123cc07ae3c413964215daf63d9f26890a1d33",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "71123cc",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)",
+    "files": [
+     "supabase/deployment-manifest.json",
+     "supabase/functions/cleanup-rate-limit-logs/index.ts",
+     "supabase/functions/external-db-proxy/index.ts"
+    ]
+   },
    {
     "sha": "7e128bc",
     "date": "2026-11-11",
@@ -388128,19 +388139,13 @@
      "scripts/ui-audit/layout-guard.mjs",
      "scripts/ui-audit/layout-guard.unit.mjs"
     ]
-   },
-   {
-    "sha": "ce06abc",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(vercel): --expected-sha vazio não é mais tratado como ausente (#2939)",
-    "files": [
-     "scripts/ci/front-release-targets.unit.mjs",
-     "scripts/vercel/verify-release-targets.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "supabase/deployment-manifest.json",
+    2
+   ],
    [
     "scripts/db-audit/grants-baseline.json",
     2
@@ -388158,16 +388163,20 @@
     2
    ],
    [
-    "scripts/vercel/verify-release-targets.mjs",
-    2
-   ],
-   [
     "scripts/ui-audit/layout-guard.mjs",
     2
    ],
    [
     "scripts/ui-audit/layout-guard.unit.mjs",
     2
+   ],
+   [
+    "supabase/functions/cleanup-rate-limit-logs/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/external-db-proxy/index.ts",
+    1
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -388211,14 +388220,6 @@
    ],
    [
     "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
-    1
-   ],
-   [
-    "src/components/monitoring/hooks/useInstancePauses.ts",
-    1
-   ],
-   [
-    "src/services/instance-pauses.service.ts",
     1
    ]
   ]

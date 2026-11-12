@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)",
    "feat(talkx): conectar RPCs analytics ao front — ranking, top segmentos e segmentos do relatório",
    "feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)",
    "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)",
-   "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)",
-   "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)"
+   "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7e128bc40305aa6917aec53a822fcc9c70098771` (2026-11-11T22:29:42-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `71123cc07ae3c413964215daf63d9f26890a1d33` (2026-11-11T23:41:56-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -391,15 +391,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56838 nós · 117506 arestas · 4169 comunidades · grafo do commit `7e128bc4`
-- comunidades maiores: TalkXSuppression.tsx (1091), cn (877), vitest (832), react (786), lucide-react (779), button.tsx (704), useMyWorkItems.ts (515), @tanstack/react-query (418), ref_node_assert (404), ref_node_fs (351), errorResponse (284), useExternalCatalog.ts (282)
+- 56838 nós · 117506 arestas · 4158 comunidades · grafo do commit `71123cc0`
+- comunidades maiores: TalkXSuppression.tsx (968), cn (888), lucide-react (814), button.tsx (711), react (656), vitest (645), WorkItemSheet.tsx (463), @tanstack/react-query (417), ref_node_fs (343), ref_node_assert (333), validation.ts (331), framer-motion (300)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
+- supabase/deployment-manifest.json (14)
 - .github/workflows/ci.yml (13)
 - docs/ci/README.md (13)
-- supabase/deployment-manifest.json (13)
 - CLAUDE.md (12)
 - PENDENCIAS.md (12)
 - docs/DB-INVENTORY.md (11)
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-11 `71123cc` fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)
 - 2026-11-11 `7e128bc` feat(talkx): conectar RPCs analytics ao front — ranking, top segmentos e segmentos do relatório
 - 2026-11-11 `bd62fc9` feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)
 - 2026-11-11 `e408b77` fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `0d73698` fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)
 - 2026-11-11 `5829201` fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)
 - 2026-11-11 `19ebdd9` fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)
-- 2026-11-11 `1507ad9` fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

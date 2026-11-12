@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7e128bc40305aa6917aec53a822fcc9c70098771",
+  "commit": "71123cc07ae3c413964215daf63d9f26890a1d33",
   "branch": "main",
-  "data_commit": "2026-11-11T22:29:42-03:00",
+  "data_commit": "2026-11-11T23:41:56-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "71123cc",
+    "data": "2026-11-11",
+    "assunto": "fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)"
+   },
    {
     "sha": "7e128bc",
     "data": "2026-11-11",
@@ -126,11 +131,6 @@
     "sha": "e7646cc",
     "data": "2026-11-11",
     "assunto": "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)"
-   },
-   {
-    "sha": "b50be19",
-    "data": "2026-11-11",
-    "assunto": "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)"
    }
   ],
   "arquivos_mudados_7d": 632,
@@ -198,15 +198,15 @@
   ],
   "arquivos_mais_mudados_90d": [
    {
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 14
+   },
+   {
     "arquivo": ".github/workflows/ci.yml",
     "mudancas": 13
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 13
-   },
-   {
-    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
    },
    {
