@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "d8854eb31141f2d4b07b5337cdad4382f94acd7a",
+  "sha": "65cf38544717f59ee7486e9b10fe07d9cbd42769",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 12:25 UTC",
+  "generated_at": "2026-11-12 12:42 UTC",
   "files_total": 8259,
   "code_files": 6092,
   "code_lines": 1059769
@@ -387872,10 +387872,20 @@
   }
  },
  "git": {
-  "sha": "d8854eb31141f2d4b07b5337cdad4382f94acd7a",
+  "sha": "65cf38544717f59ee7486e9b10fe07d9cbd42769",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "65cf385",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)",
+    "files": [
+     "PENDENCIAS.md",
+     "RELATORIO_CI.md"
+    ]
+   },
    {
     "sha": "d8854eb",
     "date": "2026-11-12",
@@ -388225,30 +388235,20 @@
      "scripts/db-tests/run-all.mjs",
      "scripts/db-tests/run-all.unit.mjs"
     ]
-   },
-   {
-    "sha": "9084db7",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)",
-    "files": [
-     "scripts/vercel/ignore-build.sh",
-     "scripts/vercel/ignore-build.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
-    "supabase/deployment-manifest.json",
+    "PENDENCIAS.md",
     4
    ],
    [
     "RELATORIO_CI.md",
-    3
+    4
    ],
    [
-    "PENDENCIAS.md",
-    3
+    "supabase/deployment-manifest.json",
+    4
    ],
    [
     "scripts/db-audit/grants-baseline.json",

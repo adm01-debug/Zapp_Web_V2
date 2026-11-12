@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d8854eb31141f2d4b07b5337cdad4382f94acd7a",
+  "commit": "65cf38544717f59ee7486e9b10fe07d9cbd42769",
   "branch": "main",
-  "data_commit": "2026-11-12T08:48:45-03:00",
+  "data_commit": "2026-11-12T12:23:43Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "65cf385",
+    "data": "2026-11-12",
+    "assunto": "chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)"
+   },
    {
     "sha": "d8854eb",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "e408b77",
     "data": "2026-11-11",
     "assunto": "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)"
-   },
-   {
-    "sha": "d5835ed",
-    "data": "2026-11-11",
-    "assunto": "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)"
    }
   ],
   "arquivos_mudados_7d": 661,
@@ -203,19 +203,23 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 14
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
     "mudancas": 13
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
+    "arquivo": "CLAUDE.md",
     "mudancas": 12
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 12
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 11
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
@@ -228,10 +232,6 @@
    {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
-   },
-   {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 10
    },
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
