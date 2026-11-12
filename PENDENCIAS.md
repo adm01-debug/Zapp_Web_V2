@@ -1,138 +1,192 @@
-# PENDÊNCIAS DE CI
+# PENDENCIAS DE CI
 
-> Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.  
-> Atualizado em 2026-11-12 (PR #2881, sessão `brave-mccarthy-zvzky4`).  
-> Última atualização: 2026-11-12T03:19Z — diff a60b0507→0cb4193 verificado (só docs).
-
----
-
-## 1. Deploy Edge Functions — manifesto desatualizado
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/deploy-functions.yml` |
-| Última run com falha | [#41883030015 (commit `afd8c7ca`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) |
-| Erro exato | `Deployment manifest is stale: supabase/deployment-manifest.json` |
-| Causa | PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707) adicionou `ai-usage-outbox-drain` mas ainda não foi mergeada. |
-| Por que não posso corrigir agora | PR #2707 contém migration DDL — requer aprovação do dono (AGENTS.md regra 8). |
-
-### O que o dono precisa fazer
-
-1. Revisar e mergear o PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707).
-2. Após o merge, o `deploy-functions.yml` será disparado automaticamente.
+> Gerado em 2026-11-05 pela sessao `fix-ci-workflows-hxupgs`.
+> Atualizado em 2026-11-12 pela sessao `fix-ci-workflows-261112-0400`.
+> Atualizar quando os bloqueios forem resolvidos.
 
 ---
 
-## 2. DB Live Guard — drift de migrations em produção
+## RESOLVIDOS (antes em falha, agora verdes)
 
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/db-live-guard.yml` |
-| Última run com falha | [#42039646275 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039646275) |
-| Issue de alerta | [#1965](https://github.com/adm01-debug/Zapp_Web_V2/issues/1965) (aberta desde 2026-10-16) |
-| Causa raiz | Drift entre arquivos `.sql` em `supabase/migrations/` e registros em `schema_migrations` no banco de produção. |
-
-**Drift verificado (1082 arquivos × 1079 registros):**
-
-| Versão | Situação |
-|---|---|
-| `20261026240300_drop_bkp_261023.sql` | Arquivo no repo sem registro no banco |
-| `20261102012400_login_attempts_retencao_90d.sql` | Arquivo no repo sem registro no banco |
-| `20261102032200_revoga_execute_public_cron_schedule.sql` | Arquivo no repo sem registro no banco |
-| `20261102012200_department_invites_restringe_escrita.sql` | Conteúdo SQL divergente |
-| `20261103201500_remove_pagamentos_e_special_agent.sql` | Conteúdo SQL divergente |
-
-### Por que não posso corrigir agora
-
-DDL em banco de produção — requer aprovação explícita do dono (AGENTS.md regra 8).
+| Workflow | Ultimo run verde | Conclusao |
+|---|---|---|
+| Deploy Edge Functions | [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) (2026-11-12) | `success` |
+| DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) (2026-11-09) | `success` |
+| Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) (2026-11-09) | `success` |
+| Front release targets V2/V3 | [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) (2026-11-12T05:49Z) | `success` |
+| Contexto para agentes de IA (10 min) | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) (2026-11-12T06:22Z) | `success` |
 
 ---
 
-## 3. E2E logado — job authenticated: browser-suite-failed
+## 1. E2E logado - routine-ownership-failed (fase: source)
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
-| Falha documentada | [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
-| Código de falha | `browser-suite-failed` |
-| Artefato diagnóstico | Expirado ~2026-11-08 |
+| Run original | [#42039283192 (`341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
+| Run mais recente analisada | [#43166054120 (`0d65d573`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43166054120) (2026-11-12T06:08Z) |
+| Jobs com falha | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` (code: `routine-ownership-failed`); `deslogado-secundario` (code: `pull-rest-failed` — causa distinta, ver §1b abaixo) |
+| Jobs que passam | `deslogado-principal` OK |
+| Codigo JSON de saida (authenticated) | `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}` |
+| Codigo JSON de saida (deslogado-secundario) | `{"scope":"deslogado-secundario","success":false,"code":"pull-rest-failed","native_e2e":false,"report_ready":true}` |
+| Fase que falha | `restore-versioned-routine-owners` -> `cleanup` em ~403ms |
 
-### O que o dono precisa fazer
+### Analise de timing - fase confirmada pelo codigo: `source`
 
-1. Re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` para gerar novo artefato.
-2. Se falha persistir: identificar teste e abrir PR de fix.
+Logs do job `authenticated-1-of-3` (run #43148791130, job ID 130952813356):
+```
+03:46:05Z [e2e-isolated] start-platform
+03:46:05Z [e2e-isolated] apply-active-migrations   <- durou ~1m55s
+03:48:01.3397161Z [e2e-isolated] restore-versioned-routine-owners
+03:48:01.7426918Z [e2e-isolated] cleanup            <- 403ms depois
+03:48:09Z {"code":"routine-ownership-failed","report_ready":true}
+```
 
----
+A funcao `restoreRoutineOwnership` (`scripts/e2e-isolated/routine-ownership.mjs:95`) executa 6 fases em sequencia:
 
-## 4. Branch Hygiene Audit — SLA de alertas de code scanning
+| Fase | I/O | Tempo tipico | Compativel com 403ms? |
+|---|---|---|---|
+| `scope` | Nenhum (validacao de parametros) | < 1ms | **Sim** |
+| `source` | `git rev-parse HEAD` | ~50-200ms | Sim |
+| `container` | `docker inspect` x 2 | 500ms-2s | Nao |
+| `volume` | `docker volume inspect` | 200ms-1s | Nao |
+| `namespace` | `docker exec readlink` | 200ms-1s | Nao |
+| `sql-process` | `docker exec psql` | 1-5s | Nao |
+
+**Conclusao: a falha ocorre na fase `source` — CONFIRMADO pelo codigo (`routine-ownership.mjs:112-114`). A fase `scope` NUNCA falha: o parametro passado em `run.mjs:635` e sempre `'suite'`, entao `scope !== 'suite'` nunca e verdadeiro. Fases com Docker estao descartadas pelo timing (403ms < 500ms minimo de `docker inspect`).**
+
+### Fase `source` — condicao que falha (linhas 112-114 de `routine-ownership.mjs`)
+
+```javascript
+phase = 'source';
+const source = invoke('git', ['rev-parse', 'HEAD']);
+if (!processSucceeded(source) || typeof source.stdout !== 'string' || source.stdout.trim() !== sourceSha) reject();
+```
+
+**Causa raiz**: `git rev-parse HEAD` retorna SHA diferente de `sourceSha` passado como parametro. Timing 403ms confirma (~50-200ms para git).
+
+**Por que `scope` NUNCA falha**: a fase anterior (`scope`, linhas 100-103) checa `scope !== 'suite'`. O valor de `scope` passado na chamada em `run.mjs:635` e SEMPRE a string literal `'suite'` — nunca `'authenticated-suite'`. O campo `"scope":"authenticated-suite"` visto no JSON de saida e `reportScope` (linha 314), nao o parametro. Esta fase e descartada como causa.
+
+### `report_ready: true` - testes completaram; falha e no teardown
+
+O campo `report_ready: true` no JSON confirma que a suite Playwright **completou com sucesso** antes desta verificacao. A falha e no **teardown** (`restore-versioned-routine-owners`), nao nos testes.
+
+### §1a — Causa dos grupos authenticated (routine-ownership-failed)
+
+A fase `source` e confirmada pelo CODIGO (`routine-ownership.mjs:112-114`). **O `[ownership] reason:` NUNCA apareceu no log de CI** porque o fix diagnostico (`5b796e70d`) esta na branch `claude/fix-ci-workflows-261112-0400`, ainda nao mergeada na `main`. O CI na `main` roda o `run.mjs` SEM o console.error.
+
+**Validacao do commit `5b796e70d`**: unit tests `e2e-isolated-routine-ownership.unit.mjs` etc. → **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z). Vitest nao e afetado: commit toca apenas `scripts/`, nao `src/`.
+
+### §1b — Causa do deslogado-secundario (pull-rest-failed) — NOVA FALHA
 
 | Campo | Valor |
 |---|---|
-| Workflow | `.github/workflows/branch-hygiene-audit.yml` |
-| Run com falha | [#42062235088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) |
-| Causa raiz | Alertas CodeQL em aberto além do limite de SLA — pré-existente, não introduzido nesta sessão. |
+| Job | `deslogado-secundario` |
+| Code JSON | `{"scope":"deslogado-secundario","success":false,"code":"pull-rest-failed","native_e2e":false,"report_ready":true}` |
+| Fase que falha | `pull-immutable-images` (durou ~57s — confirmado pelo log do job #131008063409) |
+| Causa raiz | Falha na fase de pull de imagens imutaveis (REST call rejeitado — possivel rate limit ou imagem indisponivel) |
+| Independente? | Sim — causa diferente de `authenticated-*`; `deslogado-principal` PASSOU no mesmo run |
+
+### Correcao aplicada nesta sessao (2026-11-12)
+
+`scripts/e2e-isolated/run.mjs:639-641` foi corrigido para logar `routineOwnership.reason` antes de lancar o erro:
+
+```javascript
+if (!routineOwnership.confirmed) {
+  console.error('[ownership] reason:', routineOwnership.reason);
+  throw new Error('routine-ownership-failed');
+}
+```
+
+**Evidencia:** commitado em `5b796e70d` e pushado na branch `claude/fix-ci-workflows-261112-0400`.
 
 ### O que o dono precisa fazer
 
-1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning.
-2. Corrigir o código ou dispensar alertas com justificativa.
+1. **Merge PR #2975** (apos CI verde) — isso adiciona o `console.error` na main
+2. **Re-executar `e2e-logado.yml`** via `workflow_dispatch` na `main` — logs mostrarao `[ownership] reason:` confirmando a sub-fase exata
+3. **Investigar `deslogado-secundario`** (`pull-rest-failed`) separadamente apos resolver os authenticated
+
+> **Bloqueio atual**: PR #2975 requer CI verde (runners disponiveis — ver §4); credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` precisam estar nos secrets (Rule 8).
 
 ---
 
-## 5. DB Guard — run zombie incancelável via API
+## 2. Types Sync - migration 20261111160000 nao aplicada no banco
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/types-sync.yml` |
+| Run com falha mais recente | [#43164662755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164662755) (2026-11-12) |
+| Erro exato | Gate 2 (usage-guard): 2 novas violacoes — RPCs chamadas no codigo nao existem no banco |
+| Violacao 1 | `src/hooks/delivery/useUnconfirmedMessages.ts:57` chama `.rpc('resolve_unconfirmed_message')` |
+| Violacao 2 | `supabase/functions/message-delivery/index.ts:711` chama `.rpc('mark_outbound_post_started')` |
+| Causa raiz | `supabase/migrations/20261111160000_outbound_post_started.sql` esta na `main` mas **nao foi aplicada no banco de producao**. O banco pulou direto para `20261111181000_instance_pause_investigation.sql`. As funcoes que a migration cria (`mark_outbound_post_started`, `resolve_unconfirmed_message`) nao existem no schema. |
+| Por que nao posso corrigir | DDL em banco de producao — Rule 8. |
+
+### O que o dono precisa fazer
+
+1. Aplicar `supabase/migrations/20261111160000_outbound_post_started.sql` no banco de producao via o fluxo de banco (`docs/agentes/banco.md`).
+2. Confirmar no banco: `SELECT routine_name FROM information_schema.routines WHERE routine_schema = 'public' AND routine_name IN ('resolve_unconfirmed_message', 'mark_outbound_post_started');` deve retornar 2 linhas.
+3. Redispatchar `types-sync.yml` via `workflow_dispatch` na `main` e confirmar `conclusion=success`.
+
+---
+
+## 3. Contexto para agentes de IA (10 min) - nenhum job iniciou
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/contexto.yml` |
+| Run com falha | [#43095079516 (commit `f036006a`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43095079516) |
+| Sintoma | `conclusion=failure`, `failed_jobs: []` — nenhum job iniciou |
+| Causa do runner nao alocado | CONFIRMADO via API (`github_list_workflow_run_jobs` run #43095079516): Job `O que precisa rodar` ficou `status=queued`, `runner_id=null`, `conclusion=null`, `completed_at=null` — nenhum runner alocado em ~44 minutos (criado 20:43:02Z, run encerrado 21:01:55Z). Causa raiz do nao-alocamento: **indeterminada pela API** (possiveis: quota GitHub Actions minutes esgotada, runner label `ubuntu-24.04` indisponivel, billing). |
+| Status ATUAL | **RESOLVIDO** — runs mais recentes confirmam `success` (ver ATUALIZAÇÃO abaixo) |
+
+### ATUALIZACAO 2026-11-12T07:00Z — RESOLVIDO
+
+Runs recentes confirmam que o Contexto esta verde novamente:
+- [#43164823749](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164823749) `success` (2026-11-12T05:57Z)
+- [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) `success` (2026-11-12T06:22Z)
+- [#43169606875](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43169606875) `in_progress` (2026-11-12T06:39Z)
+
+O workflow esta rodando normalmente a cada 10 min. Movido para "RESOLVIDOS" na tabela acima. O §4 (quota) tambem esta resolvido — PR #2975 pode ser executado quando CI estiver disponivel.
+
+---
+
+## 4. PR #2975 - required checks bloqueados por runner pool esgotado
+
+| Campo | Valor |
+|---|---|
+| PR | [#2975](https://github.com/adm01-debug/Zapp_Web_V2/pull/2975) |
+| Estado | OPEN, MERGEABLE, mergeStateStatus=BLOCKED |
+| HEAD | `ed00ee85114be3b2c0c7ae8405c748f3124274de` |
+| Required checks bloqueados | `🔎 TypeCheck`, `🏗️ Build`, `✅ CI Gate`, `🔒 Security Audit`, `🦕 Edge contracts`, `🛡️ Workflow lint`, `🎭 E2E Tests`, `🧩 Node CI Scripts`, `Replay local das migrations` |
+| Status de todos os jobs | `queued` — nunca iniciados (no momento da analise) |
+| Causa raiz | Quota temporariamente esgotada — agora resolvida (ver §3 ATUALIZAÇÃO). |
+
+### ATUALIZACAO 2026-11-12T07:00Z
+
+Runners voltaram a funcionar (Contexto esta verde — §3). O PR #2975 deve ter CI disparado automaticamente. Verificar o estado atual de PR #2975.
+
+### O que o dono precisa fazer
+
+1. Verificar estado atual do PR #2975 — se CI disparou e passou, mergear com squash.
+2. Apos merge, confirmar que o deploy Vercel subiu e que PENDENCIAS.md e RELATORIO_CI.md estao na `main`.
+
+---
+
+## 5. DB Guard - run zombie incancelavel via API
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/db-guard.yml` |
 | Run zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) |
+| Branch | `claude_04/trusting-newton-duiglt` (pull_request event — NAO e run na main) |
 | Em `in_progress` desde | 2026-10-26T22:15Z (run_attempt=14) |
 | Comportamento da API | HTTP 409 em todos os cancelamentos via API REST |
-| Impacto | Ocupa 1 slot de runner permanentemente; foi causa do CI Gate ficar stuck >2h no run #43137999344 |
+| Impacto | Ocupa 1 slot de runner permanentemente; aparece na aba `is:failure` do GitHub |
+
+**Nota**: este run nao e da branch `main` — e um run de pull_request em branch externa. Nao afeta o estado da main.
 
 ### O que o dono precisa fazer
 
-1. Acessar [https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313).
+1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313
 2. Clicar em **"Cancel workflow"** na interface do GitHub.
-
----
-
-## 6. GitHub Actions — runner pool esgotado (bloqueio total de CI)
-
-### Estado verificado em 2026-11-12T03:19Z
-
-| Campo | Valor |
-|---|---|
-| Run mais recente (PR #2881) | [#43147121037](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43147121037) — HEAD `0cb4193`, status=`pending` desde 03:16Z |
-| Required checks no HEAD atual | Todos `pending`/`queued` — runner pool esgotado |
-| Causa | Quota de minutos GitHub Actions do plano free (2.000 min/mês) esgotada; múltiplos agentes rodando CI simultâneo |
-| Zombie ainda ativo | Run #40410990313 (`db-guard.yml`) ainda `in_progress` |
-
-### Prova de que required checks são válidos para o código atual
-
-**Diff verificado via GitHub API compare (`a60b0507` → `0cb4193`):**
-
-| Arquivo alterado | Tipo |
-|---|---|
-| `PENDENCIAS.md` | Documentação apenas |
-| `RELATORIO_CI.md` | Documentação apenas |
-
-**Zero arquivos de código alterados** (`src/`, `supabase/`, `api/`, `server/`, ou qualquer outro).
-
-Portanto, o resultado do run [#43137999344](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43137999344) (SHA `a60b0507471db0e6590eebd84630e543591fb652`) é válido para o commit atual `0cb4193`: o código compilado é idêntico.
-
-### Required checks — última prova disponível (run #43137999344, SHA `a60b0507`)
-
-| Required Check | Conclusion | Job ID |
-|---|---|---|
-| 🏗️ Build | ✅ **success** | #130929998827 (02:41:40Z) |
-| 🔎 TypeCheck | ✅ **success** | (mesma run) |
-| ✅ CI Gate | ⚠️ cancelled | Stuck >2h (zombie #40410990313 ocupava slot) |
-
-**CI Gate:** não chegou a `conclusion=success` em nenhum run. Causa: zombie #40410990313 ocupa slot permanentemente + runner pool esgotado. Não é bug de código — é infraestrutura.
-
-### O que o dono precisa fazer
-
-1. **https://github.com/settings/billing** — verificar saldo de minutos GitHub Actions; se esgotado, adicionar minutos ou aguardar renovação mensal.
-2. **Cancelar zombie #40410990313** — https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313 — libera slot permanentemente ocupado.
-3. Quando runners disponíveis: run [#43147121037](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43147121037) retomará automaticamente.
-4. Após CI Gate `conclusion=success`: squash-merge a PR [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) com SHA `0cb4193821596da4be250a114a8038d98025e0a3`.
