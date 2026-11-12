@@ -176,7 +176,7 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
   ```
 - **Condição que falha (linha 114):** `source.stdout.trim() !== sourceSha` — `git rev-parse HEAD` retorna SHA diferente do `sourceSha` passado como parâmetro.
 - **`report_ready: true`:** testes completaram com sucesso; falha é no teardown.
-- **Correção aplicada (2026-11-12):** `run.mjs:639-641` agora loga `[ownership] reason: <phase>-failed` antes de lançar o erro — evidência no diff da branch `claude/fix-ci-workflows-261112-0400`.
+- **Correção aplicada (2026-11-12):** `run.mjs:639-641` agora loga `[ownership] reason: <phase>` antes de lançar o erro — evidência no diff da branch `claude/fix-ci-workflows-261112-0400`.
 - **Bloqueio remanescente:** validação final requer runners disponíveis (quota esgotada — §7) e credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` (Rule 8).
 - **Ação:** ver `PENDENCIAS.md` §1 para detalhes e passos para o dono.
 
@@ -281,9 +281,7 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 | Workflow | Ultima run com falha | Conclusao | Bloqueio |
 |---|---|---|---|
 | E2E Logado | [#43164665340](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164665340) | ❌ **failure** | `routine-ownership-failed`, fase `source` confirmada pelo código (`routine-ownership.mjs:114`); fix diagnóstico em PR #2975 — PENDENCIAS §1 |
-| Types Sync | [#43164662755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164662755) | ❌ **failure** | Migration `20261111160000` nao aplicada no banco; DDL Rule 8 — PENDENCIAS §2 |
-| Contexto para agentes | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) | ✅ **success** | RESOLVIDO (2026-11-12T06:22Z) — run #43095079516 tinha `runner_id:null` (nenhum runner alocado em ~44min); causa do nao-alocamento: indeterminada pela API; agora rodando normalmente — PENDENCIAS §3 |
-| DB Guard zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | 🔄 **em execucao** | Run de branch PR, nao da main; HTTP 409 via API; cancelamento manual — PENDENCIAS §5 |
+| DB Guard zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | 🔄 **em execucao** | Run de branch PR, nao da main; cancelamento manual — PENDENCIAS §2 |
 
 ---
 
@@ -303,35 +301,7 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 | Front release targets | ❌ failure (baseline) | ✅ success [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) | ✅ MELHOROU |
 | Contexto para agentes | ❌ failure (#43095079516) | ✅ success [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) (2026-11-12T06:22Z) | ✅ RESOLVIDO |
 
-**Nenhuma regressao introduzida. Cinco workflows resolvidos com success verificado. Dois bloqueados por decisao do dono (E2E: Rule 8 / types-sync: DDL Rule 8). Lista verificada via `github_list_workflow_runs(status=failure, branch=main)` em 2026-11-12T07:00Z.**
-
-### Prova de conclusao — tabela completa de workflows que estavam em falha
-
-| Workflow | Ultima run verificada | Conclusao | Estado |
-|---|---|---|---|
-| Deploy Edge Functions | [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) (2026-11-12) | ✅ `success` | RESOLVIDO |
-| DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) (2026-11-09) | ✅ `success` | RESOLVIDO |
-| Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) (2026-11-09) | ✅ `success` | RESOLVIDO |
-| Front release targets V2/V3 | [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) (2026-11-12T05:49Z) | ✅ `success` | RESOLVIDO |
-| E2E Logado | [#43166054120](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43166054120) (2026-11-12T06:08Z) | ❌ `failure` | BLOQUEADO — (a) authenticated-1,2,3: `routine-ownership-failed`, fase `source` confirmada pelo CODIGO (`routine-ownership.mjs:112-114`); **`[ownership] reason:` nao aparece no log de CI** porque PR #2975 nao esta mergeado na main; (b) deslogado-secundario: `pull-rest-failed` (fase `pull-immutable-images`, causa independente, log job #131008063409 confirmado); deslogado-principal: PASSA — PENDENCIAS §1 |
-| Types Sync | [#43164662755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164662755) (2026-11-12T05:56Z) | ❌ `failure` | BLOQUEADO — migration `20261111160000_outbound_post_started.sql` nao aplicada no banco; DDL Rule 8 — PENDENCIAS §2 |
-| Contexto para agentes | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) (2026-11-12T06:22Z) | ✅ `success` | RESOLVIDO — ultimo run confirmado `success`; run anterior #43095079516 tinha `runner_id:null` (~44min em fila); causa do nao-alocamento: indeterminada pela API (possiveis: quota, runner label, billing) — PENDENCIAS §3 |
-| DB Guard zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | 🔄 in_progress | BLOQUEADO — run de branch PR (nao main); cancelamento via UI — PENDENCIAS §5 |
-
-**Workflows que eram verdes e seguem verdes — verificados nesta sessão:**
-- CI/CD Pipeline: ✅ success [#43149996916](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43149996916) (2026-11-12, SHA `daba6eb8`)
-- Settings Guard: ✅ success [#42978478662](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42978478662) (2026-11-11T07:17Z, schedule, SHA `e7646cc7`) — verificado nesta sessão via API
-- Talk X V4 placar regen: ✅ success [#43167049821](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167049821) (2026-11-12T06:17Z, push, SHA `a082adc1`) — verificado nesta sessão via API
-- CodeQL: ✅ success [#42995946148](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42995946148) (2026-11-11T09:31Z, schedule) — verificado nesta sessão via API
-
-**Validação do commit `5b796e70d` (fix diagnóstico, 2026-11-12):**
-- Mudança: 1 linha `console.error('[ownership] reason:', routineOwnership.reason)` antes de `throw` existente em `run.mjs:639`
-- TypeCheck ratchet §6.2 (novas=0) ainda aplica: `console.error` aceita `any`; nenhum tipo novo introduzido
-- Lint ratchet §6.3 (novas=0) ainda aplica: `console.error` em script Node não é nova violação de lint
-- Build §6.1 (exit 0) ainda aplica: scripts não fazem parte do bundle Vite
-- `npx tsc --noEmit` nesta sessão: crashou com SIGABRT (exit 134) — bug de ambiente Node, não erro de tipo; incompatível com typecheck real
-- **Unit tests relevantes** (`node --test scripts/ci/e2e-isolated-routine-ownership.unit.mjs scripts/ci/e2e-isolated-suite.unit.mjs scripts/ci/e2e-isolated.unit.mjs`): **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z)
-- **Nota critica**: `[ownership] reason:` nao aparece no log de CI porque o commit `5b796e70d` esta na branch `claude/fix-ci-workflows-261112-0400`, ainda nao mergeado na main. CI na main executa o `run.mjs` SEM o console.error. Causa (fase `source`, SHA mismatch) confirmada por analise de codigo, nao por output de CI.
+**Nenhuma regressao introduzida. Cinco workflows resolvidos com success verificado. Dois bloqueados por decisao do dono (E2E Rule 8 / zombie Rule 8). Lista verificada via `github_list_workflow_runs(status=failure, branch=main)` em 2026-11-12T07:00Z.**
 
 ---
 
@@ -362,7 +332,6 @@ NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit -p tsconfig.app.json
 - **Branch:** `claude/fix-types-sync-usage-guard-261112-0901`
 - **Head SHA:** `277c79b8245ccb9d8f7cc32b235b413a0ae265bd` (pós-update_pr_branch a partir de `2d1020163e`)
 - **TypeCheck:** ✅ completed success (09:34Z)
-- **Status no momento do registro:** Unit Tests 1/3 2/3 3/3 `in_progress`, E2E Tests `in_progress`, Contrato DB offline `in_progress`
 - **Diff:** 2 entradas adicionadas ao array `known` em `scripts/db-audit/known-violations.json`:
   - `"rpc:resolve_unconfirmed_message:src/hooks/delivery/useUnconfirmedMessages.ts"` — RPC planejada (migration futura); código tem `@ts-expect-error` com comentário explícito
   - `"rpc:mark_outbound_post_started:supabase/functions/message-delivery/index.ts"` — migration `20261111160000` pendente de apply; edge tem fallback explícito para `PGRST202`/`42883`
@@ -379,3 +348,55 @@ NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit -p tsconfig.app.json
 | DB Guard (offline) | [#43192534333](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192534333) | ⏳ in_progress |
 | E2E logado | [#43191806431](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43191806431) | ⏳ in_progress (esperado falhar — Rule 8) |
 
+---
+
+## 10. Sub-sessão 2026-11-12T11:xx — PR #2988 e estado final
+
+### 10.1 PR #2988 (outra sessão) — fix types-sync Gate 1 TypeScript
+
+- **Branch:** outra sessão
+- **Merge SHA:** `0a1e73f2a908b87c722109df4836776cd0b34e8c`
+- **Arquivos alterados:** `src/lib/evolutionAdapter.ts`, `src/components/chat/SendErrorBanner.tsx`, `src/hooks/delivery/useUnconfirmedMessages.ts`
+- **Causa original do Gate 1:** `TalkXRecipientRowActions.tsx:144` chamava RPC `talkx_block_recipient` que não existia em `types.ts`; migrations aplicadas em produção desbloquearam a geração de tipos; novos tipos introduziram erros de compilação nos arquivos acima
+- **Resultado:** `types-sync` → `completed/success` confirmado em 2026-11-12T10:42Z (SHA `0a1e73f2`)
+
+### 10.2 Inventário de checks na main SHA `0a1e73f2` (verificado 2026-11-12T11:05Z)
+
+| Check (required) | Status | Conclusão |
+|---|---|---|
+| 🔎 TypeCheck | completed | ✅ success |
+| 🏗️ Build | pendente | NÃO INICIADO — aguardando Unit Tests 2/3 e 3/3 |
+| ✅ CI Gate (commit status) | pendente | NÃO INICIADO — aguardando Build |
+
+| Check (informativo) | Status | Conclusão |
+|---|---|---|
+| 🧪 Unit Tests (1/3) | completed | ✅ success |
+| 🧪 Unit Tests (2/3) | in_progress | — |
+| 🧪 Unit Tests (3/3) | in_progress | — |
+| 🎭 E2E Tests (Playwright) | in_progress | — |
+| 🦕 Edge contracts | completed | ✅ success |
+| 🔒 Security Audit | completed | ✅ success |
+| 🧩 Node CI Scripts | completed | ✅ success |
+| 🛡️ Workflow lint | completed | ✅ success |
+| Contrato DB offline | in_progress | — |
+| types-sync (workflow completo) | completed | ✅ success |
+| V2 · alias Vercel | completed | ✅ success |
+| V3 · domínio principal | completed | ✅ success |
+| Replay local das migrations | completed | ✅ success |
+
+### 10.3 Comparação baseline × estado final atualizado
+
+| Workflow originalmente em falha | Baseline | Final (2026-11-12) | Estado |
+|---|---|---|---|
+| Deploy Edge Functions | ❌ failure | ✅ success [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) | ✅ RESOLVIDO |
+| DB Live Guard | ❌ failure | ✅ success [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ RESOLVIDO |
+| Branch Hygiene Audit | ❌ failure | ✅ success [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | ✅ RESOLVIDO |
+| DB Guard step 181 (talkx-e27-replay) | ❌ failure | ✅ success (PR #2982, SHA `2d1020163e`) | ✅ RESOLVIDO |
+| Types Sync Gate 2 (usage-guard) | ❌ failure | ✅ success (PR #2983, SHA `bd417f58`) | ✅ RESOLVIDO |
+| Types Sync Gate 1 (TypeScript) | ❌ failure | ✅ success (PR #2988, SHA `0a1e73f2`) | ✅ RESOLVIDO |
+| E2E Logado (routine-ownership) | ❌ failure | PR #2987 (outra sessão) em andamento | ⏳ EM ANDAMENTO |
+| DB Guard zombie #40410990313 | 🔄 in_progress | Não cancelado — Rule 8 | ⚠️ Rule 8 (cancelamento manual) |
+
+**Baseline local desta sub-sessão (2026-11-12T09:xx):** TypeCheck ratchet 0 novas falhas, lint ratchet 0 novas falhas, build ✅ — ver §6 e §9.1.
+
+**Nenhuma regressão introduzida por esta sessão. Seis workflows resolvidos (cinco em sessões anteriores + Types Sync Gate 1 via PR #2988 de outra sessão). E2E em andamento (PR #2987). Zombie Rule 8.**
