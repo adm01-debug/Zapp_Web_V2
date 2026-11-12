@@ -22,7 +22,6 @@
 -- Rollback (SQL executável, na ordem): cada linha abaixo sem o prefixo "--   " até a linha
 -- "-- Fim do rollback." forma um script único.
 -- Extração: sed -n '/^-- Rollback (SQL/,/^-- Fim do rollback/p' ARQ | sed -n 's/^--   //p'
---   DROP INDEX IF EXISTS public.idx_talkx_blacklist_reason_code;
 --   DROP INDEX IF EXISTS public.talkx_suppression_reasons_label_lower_key;
 --   CREATE OR REPLACE FUNCTION public.talkx_suppression_reasons_guard()
 --   RETURNS trigger
