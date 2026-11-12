@@ -649,6 +649,16 @@ jobs:
         env:
           TALKX_BLACKLIST_AUDIT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-audit-trigger.test.sh
+      # 20261112160000: a 20261011003007 esta no ledger mas os objetos nao estao no banco.
+      # A prova reproduz essa deriva (migrations reais sem a 20261011003007, default ACL do
+      # Supabase), aplica a reconciliacao 2x e prova gatilho de auditoria ligado ao corpo da
+      # X070 na ordem certa, DELETE barrado para todo papel, ACLs higienizadas, pre-condicao
+      # fechada e rollback. SKIP_DOCKER_SHIM=1: usa um segundo banco (espelho) no container.
+      - name: Simular reconciliacao da blacklist Talk X com a 20261011003007
+        env:
+          TALKX_BLACKLIST_RECONCILIA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-reconcilia.test.sh
       - name: Simular publicação Realtime da blacklist Talk X com escopo de colunas
         env:
           TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
