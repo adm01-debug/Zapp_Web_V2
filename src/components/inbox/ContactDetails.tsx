@@ -11,6 +11,8 @@ import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebar
 import { SidebarSection } from './contact-details/sidebar/SidebarSection';
 import { ContactIntelligencePanel } from './contact-details/ContactIntelligencePanel';
 import { ContactDeliveryPanel } from './contact-details/ContactDeliveryPanel';
+import { ConversationMemorySection } from './contact-details/ConversationMemorySection';
+import { AtendimentoSection } from './contact-details/AtendimentoSection';
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useContactQuickActions } from '@/hooks/inbox/useContactQuickActions';
@@ -135,6 +137,9 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             >
               <ContactDeliveryPanel contactId={contact.id} />
             </SidebarSection>
+            {/* Restaurados (2026-11-12): começam recolhidos e só buscam dado ao abrir. */}
+            <ConversationMemorySection contactId={contact.id} index={5} />
+            <AtendimentoSection contactId={contact.id} phone={contact.phone} name={contact.name} index={6} />
           </Accordion>
         </div>
       </div>
