@@ -1102,3 +1102,75 @@ Deno.test("catch-all: exceção interna vira 500 genérico (sem vazar a mensagem
     Deno.env.delete("EVOLUTION_API_FLAVOR");
   }
 });
+
+// ─── group-info / group-participants / fetch-profile-picture: mesmo contrato ─
+// Valor do corpo que vira query string: formato validado (422 sem I/O) e
+// sempre codificado. fetch-profile-picture é control (admin); grupos são read.
+const QUERY_PARAM_CASES = [
+  { action: "group-info", field: "groupJid", valid: "120363000000000000@g.us", v2Path: "/group/findGroupInfos/PRINCIPAL", goRoute: "POST /group/info", admin: false },
+  { action: "group-participants", field: "groupJid", valid: "120363000000000000@g.us", v2Path: "/group/participants/PRINCIPAL", goRoute: "POST /group/info", admin: false },
+  { action: "fetch-profile-picture", field: "number", valid: "5511999990001", v2Path: "/profile/fetchProfilePicture/PRINCIPAL", goRoute: "POST /user/avatar", admin: true },
+];
+
+for (const c of QUERY_PARAM_CASES) {
+  for (const bad of [`${c.valid}&extra=1`, `${c.valid}#x`, "../x", "", 123]) {
+    Deno.test(`${c.action}: ${c.field} ${JSON.stringify(bad)} → 422 sem I/O`, async () => {
+      const fake = createRecordingFake();
+      Deno.env.set("EVOLUTION_API_URL", fake.url);
+      Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+      try {
+        const res = await handleEvolutionApi(controlRequest(c.action, { instanceName: "PRINCIPAL", [c.field]: bad }), {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: c.admin }), supabase: makeServiceClient(),
+        });
+        assertEquals(res.status, 422);
+        assertEquals(fake.calls.length, 0);
+      } finally {
+        await fake.stop();
+        Deno.env.delete("EVOLUTION_API_FLAVOR");
+      }
+    });
+  }
+  for (const flavor of ["v2", "go"]) {
+    Deno.test(`${c.action}: ${c.field} válido chega codificado ao provedor (${flavor})`, async () => {
+      const fake = createRecordingFake();
+      Deno.env.set("EVOLUTION_API_URL", fake.url);
+      Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
+      try {
+        const res = await handleEvolutionApi(controlRequest(c.action, { instanceName: "PRINCIPAL", [c.field]: c.valid }), {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: c.admin }), supabase: makeServiceClient(),
+        });
+        assertEquals(res.status, 200);
+        assertEquals(fake.calls.length, 1);
+        if (flavor === "v2") {
+          assertEquals(`${fake.calls[0].method} ${fake.calls[0].path}`, `GET ${c.v2Path}`);
+          assertEquals(fake.calls[0].search, `?${c.field}=${encodeURIComponent(c.valid)}`);
+        } else {
+          assertEquals(`${fake.calls[0].method} ${fake.calls[0].path}`, c.goRoute);
+          const sent = String(fake.calls[0].body?.[c.field] ?? "");
+          assert(sent.startsWith(c.valid), `GO recebe o valor decodificado (${sent})`);
+        }
+      } finally {
+        await fake.stop();
+        Deno.env.delete("EVOLUTION_API_FLAVOR");
+      }
+    });
+  }
+}
+
+Deno.test("fetch-profile-picture: aceita JID de usuário e LID", async () => {
+  const fake = createRecordingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    for (const number of ["5511999990001@s.whatsapp.net", "123456789012345@lid", "+5511999990001"]) {
+      const res = await handleEvolutionApi(controlRequest("fetch-profile-picture", { instanceName: "PRINCIPAL", number }), {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient(),
+      });
+      assertEquals(res.status, 200, number);
+    }
+    assertEquals(fake.calls.length, 3);
+  } finally {
+    await fake.stop();
+    Deno.env.delete("EVOLUTION_API_FLAVOR");
+  }
+});

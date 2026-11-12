@@ -6,7 +6,7 @@ import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
-import { EvolutionApiRequestSchema, GROUP_JID_PATTERN, INSTANCE_NAME_PATTERN, evolutionApiRequiresInstance, parseBody, resolveEvolutionInstanceName, validationErrorResponse } from "../_shared/schemas.ts";
+import { EvolutionApiRequestSchema, GROUP_JID_PATTERN, INSTANCE_NAME_PATTERN, WHATSAPP_NUMBER_OR_JID_PATTERN, evolutionApiRequiresInstance, parseBody, resolveEvolutionInstanceName, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
 import {
   qrFromV2Connect,
@@ -235,6 +235,14 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
     };
     const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
+
+    // Valores do corpo que viram query string da URL do provedor: só passam no
+    // formato esperado e sempre codificados (cru, `&`/`#` injetavam parâmetros).
+    // Devolve o valor já codificado, ou null quando é inválido (→ 422, sem I/O).
+    const queryParamOrNull = (value: unknown, pattern: RegExp): string | null =>
+      typeof value === 'string' && pattern.test(value) ? encodeURIComponent(value) : null;
+    const invalidQueryParam = (path: string, message: string): Response =>
+      validationErrorResponse([{ path, message, code: 'custom' }], req);
 
     // ─── E10/E11 (plano multi-conexão): ambas admin-only — mesmo guard usado em
     // evolution-sync/index.ts (JWT válido + is_admin_or_supervisor via RPC).
@@ -1022,24 +1030,19 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // ─── 6. Groups ───
     if (action === 'create-group') return await proxy(`/group/create/${instance}`, 'POST', { subject: body.subject, description: body.description, participants: body.participants });
     if (action === 'list-groups') return await proxy(`/group/fetchAllGroups/${instance}?getParticipants=${body.getParticipants ?? 'false'}`, 'GET');
-    if (action === 'group-info') return await proxy(`/group/findGroupInfos/${instance}?groupJid=${body.groupJid}`, 'GET');
-    if (action === 'group-participants') return await proxy(`/group/participants/${instance}?groupJid=${body.groupJid}`, 'GET');
+    if (action === 'group-info' || action === 'group-participants') {
+      const groupJid = queryParamOrNull(body.groupJid, GROUP_JID_PATTERN);
+      if (groupJid === null) return invalidQueryParam('groupJid', 'groupJid inválido — esperado JID de grupo (ex.: 120363000000000000@g.us).');
+      return await proxy(`/group/${action === 'group-info' ? 'findGroupInfos' : 'participants'}/${instance}?groupJid=${groupJid}`, 'GET');
+    }
     if (action === 'update-group-name') return await proxy(`/group/updateGroupSubject/${instance}`, 'PUT', { groupJid: body.groupJid, subject: body.subject });
     if (action === 'update-group-description') return await proxy(`/group/updateGroupDescription/${instance}`, 'PUT', { groupJid: body.groupJid, description: body.description });
     if (action === 'update-participants') return await proxy(`/group/updateParticipant/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action, participants: body.participants });
     if (action === 'update-group-setting') return await proxy(`/group/updateSetting/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action });
     if (action === 'group-invite-code') {
-      // O JID vira query string da URL do provedor: só JID de grupo válido, e
-      // codificado (antes ia cru — `&`/`#` no valor injetavam parâmetros).
-      const groupJid = typeof body.groupJid === 'string' ? body.groupJid : '';
-      if (!GROUP_JID_PATTERN.test(groupJid)) {
-        return validationErrorResponse([{
-          path: 'groupJid',
-          message: 'groupJid inválido — esperado JID de grupo (ex.: 120363000000000000@g.us).',
-          code: 'custom',
-        }], req);
-      }
-      return await proxy(`/group/inviteCode/${instance}?groupJid=${encodeURIComponent(groupJid)}`, 'GET');
+      const groupJid = queryParamOrNull(body.groupJid, GROUP_JID_PATTERN);
+      if (groupJid === null) return invalidQueryParam('groupJid', 'groupJid inválido — esperado JID de grupo (ex.: 120363000000000000@g.us).');
+      return await proxy(`/group/inviteCode/${instance}?groupJid=${groupJid}`, 'GET');
     }
     if (action === 'revoke-invite-code') return await proxy(`/group/revokeInviteCode/${instance}`, 'PUT', { groupJid: body.groupJid });
     if (action === 'accept-invite') return await proxy(`/group/acceptInviteCode/${instance}`, 'POST', { inviteCode: body.inviteCode });
@@ -1056,7 +1059,11 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-profile-status') return await proxy(`/profile/updateProfileStatus/${instance}`, 'PUT', { status: body.status });
     if (action === 'update-profile-picture') return await proxy(`/profile/updateProfilePicture/${instance}`, 'PUT', { picture: body.picture });
     if (action === 'remove-profile-picture') return await proxy(`/profile/removeProfilePicture/${instance}`, 'DELETE');
-    if (action === 'fetch-profile-picture') return await proxy(`/profile/fetchProfilePicture/${instance}?number=${body.number}`, 'GET');
+    if (action === 'fetch-profile-picture') {
+      const number = queryParamOrNull(body.number, WHATSAPP_NUMBER_OR_JID_PATTERN);
+      if (number === null) return invalidQueryParam('number', 'number inválido — esperado número (só dígitos) ou JID do WhatsApp.');
+      return await proxy(`/profile/fetchProfilePicture/${instance}?number=${number}`, 'GET');
+    }
     if (action === 'fetch-business-profile') return await proxy(`/profile/fetchBusinessProfile/${instance}`, 'POST', { number: body.number });
     if (action === 'update-privacy') {
       // O GO exige os 7 campos no POST /user/privacy (parcial → 400). Faz GET
