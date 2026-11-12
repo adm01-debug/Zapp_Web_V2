@@ -261,6 +261,8 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         await supabase.from("gmail_accounts").update({ token_expires_at: expiresAt }).eq("id", account_id);
 
         log.done(200, { action });
+        // SEC: access_token não é retornado ao cliente — apenas expires_at.
+        // O token fica no banco (criptografado) e é usado server-side.
         return jsonResponse({ success: true, expires_at: expiresAt }, 200, req);
       }
 
