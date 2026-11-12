@@ -285,6 +285,12 @@ test("rotas da Evolution V2 com chamador no front permanecem explícitas no hand
   for (const action of [
     "set-settings", "get-settings", "get-webhook", "set-presence", "send-template",
     "mark-unread", "invite-info", "toggle-ephemeral",
+<<<<<<< HEAD
+=======
+    // decisão do dono (12/11): restauradas e com tela
+    "find-chats", "offer-call", "create-template", "find-templates", "delete-template",
+    "get-catalog", "get-collections",
+>>>>>>> refs/sim/pr/3020
   ]) {
     assert.match(
       apiSrc, new RegExp(`action === '${action}'`),

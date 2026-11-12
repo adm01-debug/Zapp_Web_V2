@@ -815,6 +815,10 @@ export const EvolutionApiRequestSchema = z.object({
   }).nullish(),
   instanceName: z.string().max(200).nullish(),
   instance: z.string().max(200).nullish(),
+  // offer-call: o toque precisa de duração limitada (o provedor aceitaria
+  // qualquer número e manteria o aparelho do contato tocando).
+  callDuration: z.number().int().min(1, 'callDuration mínimo: 1 s').max(60, 'callDuration máximo: 60 s').nullish(),
+  isVideo: z.boolean().nullish(),
 }).passthrough().superRefine((value, ctx) => {
   const raw = (value as { instanceName?: unknown; instance?: unknown });
   // `instanceName: ""` com `instance` preenchido é ambíguo: o handler escolhe a
