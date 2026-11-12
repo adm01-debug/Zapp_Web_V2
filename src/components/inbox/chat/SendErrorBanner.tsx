@@ -24,6 +24,7 @@ import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { zappMotion } from '@/lib/motion';
+import { toast } from '@/hooks/ui/use-toast';
 import type { Message } from '@/types/chat';
 
 export interface SendErrorBannerProps {
@@ -121,6 +122,13 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
         if (montado.current) setReenvio('parado');
       }, 1200);
     } catch {
+      // O caller relança a falha para o painel dar o retorno visual: sem isto, o
+      // botão só voltava a "Enviar de novo" e o agente achava que tinha ido.
+      toast({
+        title: 'Mensagem não enviada',
+        description: 'Não foi possível enviar de novo. Tente outra vez.',
+        variant: 'destructive',
+      });
       if (montado.current) setReenvio('parado');
     } finally {
       ocupado.current = false;

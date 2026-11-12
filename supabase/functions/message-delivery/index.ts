@@ -716,10 +716,16 @@ export async function handleMessageDeliveryRequest(
     const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name) ?? undefined;
     // PD-79: carimbo durável antes do POST — fencing contra reenvio após lease vencido.
     // Falha aqui = infra pré-dispatch: nada saiu, sem ambiguidade.
-    const { error: markError } = await service.rpc('mark_outbound_post_started', {
-      p_message_id: claim.message_id,
-      p_claim_token: claim.claim_token,
-    });
+    let markError: { code?: string } | null;
+    try {
+      ({ error: markError } = await service.rpc('mark_outbound_post_started', {
+        p_message_id: claim.message_id,
+        p_claim_token: claim.claim_token,
+      }));
+    } catch {
+      // Exceção (rede/cliente) no carimbo também é infra pré-dispatch: nada saiu.
+      throw new PreDispatchInfraError('mark_outbound_post_started_failed');
+    }
     if (markError) {
       // Pré-DDL: a Edge é publicada automaticamente no push da main, mas a migration
       // 20261111160000 só roda pelo db-migrate (manual, com aprovação). Enquanto a RPC

@@ -11,6 +11,8 @@ import type { Message } from '@/types/chat';
 import { SendErrorBanner } from '../SendErrorBanner';
 
 const controle = vi.hoisted(() => ({ reduzido: false }));
+const toastMock = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
 
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
@@ -19,6 +21,7 @@ vi.mock('framer-motion', async (importOriginal) => {
 
 beforeEach(() => {
   controle.reduzido = false;
+  toastMock.mockClear();
 });
 
 function msg(over: Partial<Message> = {}): Message {
@@ -223,5 +226,17 @@ describe('SendErrorBanner', () => {
     const banner = screen.getByRole('alert');
     expect(banner.style.opacity).not.toBe('0');
     expect(banner.style.transform).not.toContain('translate');
+  });
+
+  it('falha do "Enviar de novo" mostra toast de erro e devolve o botão', async () => {
+    const onSendMessage = vi.fn(() => Promise.reject(new Error('rede caiu')));
+    render(<SendErrorBanner messages={[msg({ status: 'failed', content: 'oi' })]} onSendMessage={onSendMessage} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Mensagem não enviada', variant: 'destructive',
+    })));
+    expect(screen.getByRole('button', { name: 'Enviar de novo' })).toBeEnabled();
   });
 });

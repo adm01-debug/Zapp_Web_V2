@@ -13,7 +13,8 @@ export interface UnconfirmedMessage {
 }
 
 // Janela mínima antes de exibir como "ambígua": 2 minutos após o POST ter sido iniciado.
-// Abaixo desse limiar o job de reconciliação ainda pode fechar sozinho.
+// Abaixo desse limiar o envio ainda pode estar em voo (lease de 90s) ou o recibo do
+// webhook ainda pode chegar e fechar a linha sozinho.
 const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;
 
 export function useUnconfirmedMessages(
@@ -71,6 +72,11 @@ export function useUnconfirmedMessages(
       toast({ title: `Mensagem ${label}`, description: 'Status corrigido manualmente.' });
     },
     onError: (error: Error) => {
+      // Já resolvida/não elegível (P0002): a linha saiu do estado ambíguo — recarrega a
+      // lista para ela sumir do painel em vez de esperar o próximo refetch de 30s.
+      if (error.message.includes('message_not_resolvable')) {
+        queryClient.invalidateQueries({ queryKey: ['unconfirmed-messages', conversationContactId ?? null, conversationGroupId ?? null] });
+      }
       const msg = error.message.includes('message_not_resolvable')
         ? 'Mensagem já resolvida ou não elegível.'
         : error.message.includes('admin_or_supervisor_required')

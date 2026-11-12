@@ -73,10 +73,12 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
           }
 
           const recentCutoff = new Date(Date.now() - 300_000).toISOString();
+          // Só 'sending' é pendente: linha 'failed' ou resolvida à mão também fica com
+          // external_id NULL e, sem o filtro, roubaria o external_id da mensagem nova.
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: pendingMessage, error: pendingError } = await (supabase.from('messages') as any)
             .select('id, manually_resolved_at').eq('contact_id', contact.id).eq('sender', 'agent')
-            .eq('message_type', webhookMsgType).is('external_id', null)
+            .eq('message_type', webhookMsgType).eq('status', 'sending').is('external_id', null)
             .gte('created_at', recentCutoff).order('created_at', { ascending: true })
             .limit(1).maybeSingle();
           // Fix #9: log query error — pode indicar coluna ausente (deploy antes do DDL)

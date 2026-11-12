@@ -866,3 +866,25 @@ Deno.test('PD-79: 42883 no mark_outbound_post_started NÃO é tolerado (só PGRS
   assertFailClaim(client);
   resetInstanceTokenCache();
 });
+
+Deno.test('PD-79: exceção LANÇADA no mark_outbound_post_started é infra (503 provider_unavailable, retryable), não 422 media_invalid', async () => {
+  resetInstanceTokenCache();
+  let providerCalled = false;
+  const client = makeClient({
+    claim: { data: [CLAIM], error: null },
+    rpcThrows: ['mark_outbound_post_started'],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, { key: { id: 'wamid.x' } });
+  }));
+  assertEqual(providerCalled, false, 'provider não chamado');
+  assertStatus(response.status, 503);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'provider_unavailable', 'code');
+  assertEqual(body.retryable, true, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'sem reconciliação');
+  assertFailClaim(client);
+  resetInstanceTokenCache();
+});

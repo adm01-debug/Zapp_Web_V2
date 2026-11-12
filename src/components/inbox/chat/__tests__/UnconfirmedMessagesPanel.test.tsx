@@ -13,9 +13,10 @@ const hook = vi.hoisted(() => ({
   },
 }));
 const role = vi.hoisted(() => ({ value: { isAdmin: false, isSupervisor: false } }));
+const hookArgs = vi.hoisted(() => ({ value: [] as unknown[][] }));
 
 vi.mock('@/hooks/delivery/useUnconfirmedMessages', () => ({
-  useUnconfirmedMessages: () => hook.value,
+  useUnconfirmedMessages: (...args: unknown[]) => { hookArgs.value.push(args); return hook.value; },
 }));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => role.value }));
 
@@ -29,6 +30,7 @@ const MSG = {
 beforeEach(() => {
   hook.value = { messages: [], isLoading: false, isError: false, resolve: vi.fn(), isResolving: false, resolvingId: null };
   role.value = { isAdmin: false, isSupervisor: false };
+  hookArgs.value = [];
 });
 
 describe('UnconfirmedMessagesPanel', () => {
@@ -66,5 +68,12 @@ describe('UnconfirmedMessagesPanel', () => {
     hook.value = { ...hook.value, messages: [MSG], isResolving: true, resolvingId: 'm1' };
     render(<UnconfirmedMessagesPanel contactId="c1" />);
     expect(screen.queryByRole('button', { name: /como entregue$/ })).toBeNull();
+  });
+
+  it('repassa o groupId ao hook (conversa de grupo) e mantém o caso de contato sem grupo', () => {
+    render(<UnconfirmedMessagesPanel contactId={null} groupId="g1" />);
+    expect(hookArgs.value[hookArgs.value.length - 1]).toEqual([null, 'g1']);
+    render(<UnconfirmedMessagesPanel contactId="c1" />);
+    expect(hookArgs.value[hookArgs.value.length - 1]).toEqual(['c1', undefined]);
   });
 });

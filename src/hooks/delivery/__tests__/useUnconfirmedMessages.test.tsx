@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 const state = vi.hoisted(() => ({
   result: { data: [] as unknown[] | null, error: null as { code?: string; message?: string } | null },
   calls: [] as Array<[string, ...unknown[]]>,
+  rpc: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -20,7 +21,7 @@ vi.mock('@/integrations/supabase/client', () => {
       Promise.resolve(state.result).then(res, rej);
     return chain;
   };
-  return { supabase: { from: () => makeChain(), rpc: vi.fn() } };
+  return { supabase: { from: () => makeChain(), rpc: state.rpc } };
 });
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 
@@ -67,5 +68,29 @@ describe('useUnconfirmedMessages', () => {
     const { result } = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.messages).toEqual([]);
+  });
+
+  it('erro message_not_resolvable (P0002) invalida a lista do painel', async () => {
+    state.rpc.mockResolvedValueOnce({ data: null, error: new Error('message_not_resolvable') });
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    const { result } = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.resolve({ messageId: 'm1', outcome: 'sent' }));
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['unconfirmed-messages', 'contact-1', null] }));
+  });
+
+  it('outro erro da RPC NÃO invalida a lista', async () => {
+    state.rpc.mockResolvedValueOnce({ data: null, error: new Error('admin_or_supervisor_required') });
+    const { toast } = await import('@/hooks/ui/use-toast');
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    const { result } = renderHook(() => useUnconfirmedMessages('contact-1'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.resolve({ messageId: 'm1', outcome: 'sent' }));
+
+    await waitFor(() => expect(toast).toHaveBeenCalled());
+    expect(invalidate).not.toHaveBeenCalled();
   });
 });

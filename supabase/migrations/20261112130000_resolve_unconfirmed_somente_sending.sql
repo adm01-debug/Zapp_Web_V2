@@ -13,7 +13,8 @@
 -- (4xx) do provedor — essa RPC zera o lease mas mantém delivery_post_started_at —,
 -- então a mensagem recusada podia ser marcada 'sent' à mão, sem recibo.
 -- Ambígua é só a linha que ficou em 'sending' com o POST carimbado e o lease
--- vencido. Esta migration restringe a RPC a status = 'sending'.
+-- vencido. Esta migration restringe a RPC a status = 'sending' e passa a recusar
+-- p_outcome NULL com 22023 (antes caía no ELSE do CASE e gravava 'failed').
 --
 -- ORDEM: depende de 20261111160000 (colunas delivery_post_started_at e
 -- manually_resolved_at). Sem elas, aborta antes de alterar qualquer coisa.
@@ -61,7 +62,9 @@ BEGIN
     RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501';
   END IF;
 
-  IF p_outcome NOT IN ('sent', 'not_delivered') THEN
+  -- NULL também é recusado: com NULL o NOT IN dá NULL (não dispara) e o CASE
+  -- abaixo cairia no ELSE 'failed', gravando resolução sem desfecho escolhido.
+  IF p_outcome IS NULL OR p_outcome NOT IN ('sent', 'not_delivered') THEN
     RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023';
   END IF;
 
