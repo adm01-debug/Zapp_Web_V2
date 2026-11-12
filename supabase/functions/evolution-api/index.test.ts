@@ -1528,3 +1528,143 @@ Deno.test("find-status-messages sem papel devolve 403 (leitura instance-wide)", 
     await fake.stop();
   }
 });
+
+// ─── Instância validada = instância usada (bypass por `instanceName: ""`) ────
+// O schema validava `instanceName ?? instance` e o handler usava
+// `instanceName || instance`: com `instanceName` vazio, o nome checado era ''
+// e o usado era `instance`, sem passar pelo padrão — e esse nome vira path da
+// URL do provedor. Prova: ação de LEITURA (liberada a qualquer autenticado),
+// agente sem papel, nome fora do padrão → 422 e ZERO requests ao provedor.
+function createRecordingFake() {
+  const calls: Array<{ method: string; path: string; search: string; body: any }> = [];
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, async (req) => {
+    const raw = await req.text();
+    let body: any = null;
+    try { body = raw ? JSON.parse(raw) : null; } catch { body = raw; }
+    const u = new URL(req.url);
+    calls.push({ method: req.method, path: u.pathname, search: u.search, body });
+    return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("fake: listener não TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, calls, stop: () => server.shutdown() };
+}
+
+const NO_ROLE = () => makeCallerClient({ isAdminOrSupervisor: false });
+const BAD_INSTANCE = "../../instance/restart/OUTRA";
+
+for (const flavor of ["v2", "go"]) {
+  for (const body of [
+    { instanceName: "", instance: BAD_INSTANCE },
+    { instanceName: null, instance: BAD_INSTANCE },
+    { instance: BAD_INSTANCE },
+    { instanceName: "", instance: "PRINCIPAL" },
+  ]) {
+    Deno.test(`instância: leitura sem papel (${flavor}) com ${JSON.stringify(body)} → 422 sem I/O`, async () => {
+      const fake = createRecordingFake();
+      Deno.env.set("EVOLUTION_API_URL", fake.url);
+      Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
+      try {
+        const res = await handleEvolutionApi(controlRequest("check-numbers", { ...body, numbers: ["5511999990001"] }), {
+          callerClient: NO_ROLE(), supabase: makeServiceClient(null),
+        });
+        assertEquals(res.status, 422);
+        assertEquals((await res.json()).error?.code ?? "VALIDATION_ERROR", "VALIDATION_ERROR");
+        assertEquals(fake.calls.length, 0, "nome fora do padrão não pode virar URL do provedor");
+      } finally {
+        await fake.stop();
+        Deno.env.delete("EVOLUTION_API_FLAVOR");
+      }
+    });
+  }
+}
+
+Deno.test("instância: schema valida o mesmo valor que o handler usa", () => {
+  assertEquals(EvolutionApiRequestSchema.safeParse({ instanceName: "", instance: BAD_INSTANCE }).success, false);
+  assertEquals(EvolutionApiRequestSchema.safeParse({ instanceName: null, instance: BAD_INSTANCE }).success, false);
+  assertEquals(EvolutionApiRequestSchema.safeParse({ instance: "PRINCIPAL" }).success, true);
+  assertEquals(EvolutionApiRequestSchema.safeParse({ instanceName: "PRINCIPAL", instance: "qualquer" }).success, true);
+});
+
+Deno.test("instância: alias legado `instance` válido continua funcionando (v2)", async () => {
+  const fake = createRecordingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("check-numbers", { instance: "PRINCIPAL", numbers: ["1"] }), {
+      callerClient: NO_ROLE(), supabase: makeServiceClient(),
+    });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls.map((c) => `${c.method} ${c.path}`), ["POST /chat/whatsappNumbers/PRINCIPAL"]);
+  } finally {
+    await fake.stop();
+    Deno.env.delete("EVOLUTION_API_FLAVOR");
+  }
+});
+
+// ─── group-invite-code: JID validado e codificado na query ──────────────────
+for (const groupJid of ["1@g.us&extra=1", "1@g.us#x", "5511999990001@s.whatsapp.net", "", "../x"]) {
+  Deno.test(`group-invite-code: groupJid ${JSON.stringify(groupJid)} → 422 sem I/O`, async () => {
+    const fake = createRecordingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest("group-invite-code", { instanceName: "PRINCIPAL", groupJid }), {
+        callerClient: NO_ROLE(), supabase: makeServiceClient(),
+      });
+      assertEquals(res.status, 422);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+      Deno.env.delete("EVOLUTION_API_FLAVOR");
+    }
+  });
+}
+
+for (const flavor of ["v2", "go"]) {
+  Deno.test(`group-invite-code: JID de grupo válido chega codificado ao provedor (${flavor})`, async () => {
+    const fake = createRecordingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
+    try {
+      const res = await handleEvolutionApi(controlRequest("group-invite-code", { instanceName: "PRINCIPAL", groupJid: "120363000000000000@g.us" }), {
+        callerClient: NO_ROLE(), supabase: makeServiceClient(),
+      });
+      assertEquals(res.status, 200);
+      assertEquals(fake.calls.length, 1);
+      if (flavor === "v2") {
+        assertEquals(fake.calls[0].path, "/group/inviteCode/PRINCIPAL");
+        assertEquals(fake.calls[0].search, "?groupJid=120363000000000000%40g.us");
+      } else {
+        // GO: a tradução lê a query (URLSearchParams decodifica) e manda no corpo.
+        assertEquals(`${fake.calls[0].method} ${fake.calls[0].path}`, "POST /group/invitelink");
+        assertEquals(fake.calls[0].body?.groupJid, "120363000000000000@g.us");
+      }
+    } finally {
+      await fake.stop();
+      Deno.env.delete("EVOLUTION_API_FLAVOR");
+    }
+  });
+}
+
+// ─── catch-all: 500 padrão, sem a mensagem crua da exceção ──────────────────
+Deno.test("catch-all: exceção interna vira 500 genérico (sem vazar a mensagem)", async () => {
+  Deno.env.set("EVOLUTION_API_URL", "http://127.0.0.1:9");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const SECRET = "segredo-interno-do-banco-xyz";
+  const exploding: any = {
+    from: () => { throw new Error(SECRET); },
+    rpc: () => { throw new Error(SECRET); },
+  };
+  try {
+    const res = await handleEvolutionApi(controlRequest("send-text", { instanceName: "PRINCIPAL", number: "5511999990001", text: "oi" }), {
+      callerClient: NO_ROLE(), supabase: exploding,
+    });
+    assertEquals(res.status, 500);
+    const text = await res.text();
+    assertEquals(text.includes(SECRET), false, "mensagem interna não pode ir ao cliente");
+    assertEquals(JSON.parse(text).error, "Internal server error");
+  } finally {
+    Deno.env.delete("EVOLUTION_API_FLAVOR");
+  }
+});
