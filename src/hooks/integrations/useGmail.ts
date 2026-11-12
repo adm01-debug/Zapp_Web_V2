@@ -80,7 +80,16 @@ function notifyGmailActionError(action: string, error: unknown): void {
  * com a outra execução, então vinham DOIS 409 no console e um toast de erro.
  */
 export function isGmailSyncAlreadyRunning(error: unknown): boolean {
-  return error instanceof GmailFunctionError && error.status === 409;
+  return error instanceof GmailFunctionError && error.status === 409 && !isGmailReauthRequired(error);
+}
+
+/**
+ * O MESMO 409 também significa "reconecte a conta": o token Google foi revogado
+ * ou expirou (`GMAIL_REAUTH_HTTP_STATUS`, corpo `{ code: 'reauth_required' }`).
+ * Esse caso não pode virar "sincronização já em andamento" — nunca terminaria.
+ */
+export function isGmailReauthRequired(error: unknown): boolean {
+  return error instanceof GmailFunctionError && error.code === 'reauth_required';
 }
 
 /**
@@ -453,6 +462,15 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
         queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] });
         toast.info('Sincronização já em andamento', {
           description: 'Os e-mails aparecem assim que a sincronização atual terminar.',
+        });
+        return;
+      }
+      if (isGmailReauthRequired(error)) {
+        // A conta já foi marcada `reauth_required` pelo backend: recarregar faz
+        // a faixa "reconectar" (`needsReconnect`) aparecer; o toast diz o porquê.
+        queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] });
+        toast.error('Sessão do Gmail expirada', {
+          description: 'Reconecte a conta Gmail para voltar a sincronizar.',
         });
         return;
       }
