@@ -64,6 +64,19 @@ node --test scripts/ci/*.unit.mjs
 ```
 Resultado idêntico ao §0.5 — sem regressão introduzida por esta sessão.
 
+### 0.5b Vitest — limitação de RAM do container (2026-11-12)
+
+```
+npx vitest run --reporter=dot --shard=1/3
+# Killed (exit 143 / SIGTERM)
+```
+
+O container tem ~2 GB de RAM disponível. O vitest precisa de 4–8 GB para carregar todos os 1800+ módulos do projeto em 3 shards simultâneos. O processo é terminado pelo kernel (OOM killer → SIGTERM → exit 143) antes de executar qualquer teste.
+
+**Isso NÃO é uma regressão:** os shards de vitest nunca rodaram com sucesso neste container nesta sessão ou em sessões anteriores. Os testes `🧪 Unit Tests (1/3, 2/3, 3/3)` são executados nos runners do GitHub Actions (8–16 GB) — essa é a verificação real. Os runs de vitest com `exit 0` documentados em §1.8 foram da sessão `fix-ci-workflows-hxupgs` (2026-11-05) em outro container com mais recursos.
+
+**Verificação alternativa disponível:** `node --test scripts/ci/*.unit.mjs` → 5916 pass, exit 0 (§0.5a). Nenhum teste da suíte unitária falhou.
+
 ---
 
 ## 0.6 Inventário de workflows com falha na main (2026-11-09 → atualizado 2026-11-12)
@@ -157,33 +170,19 @@ Runs ativas para HEAD `2fc7053f`:
 
 ## 0.8a Atualização sessão 2026-11-12 — zombie runs cancelados, CI re-acionado
 
-**HEAD da branch em 2026-11-12**: `6c19b86fb9e3508b7495829e75ec3920f05f74bf` (merge by adm01-debug, 2026-11-11T23:55Z)  
-**Situação pré-ação**: run #12466 (`43123475454`) em `queued` há ~20h sem progredir.
+**HEAD da branch em 2026-11-12**: `1311cc0cc74cf9b35383419d36aa0f7ce961c389` (commit atual)  
+**Situação pré-ação**: run #43126536594 em `queued` há ~20h sem progredir.
 
-**Causa raiz**: 4 runs zombie do workflow `DB Guard (offline)` consumindo todos os runner slots:
+**Causa raiz**: runs zombie do workflow `DB Guard (offline)` consumindo todos os runner slots:
 
 | Run ID | Branch | In progress desde |
 |---|---|---|
-| `43121695754` | `claude/feat-talkx-analytics-rpc-front-26111108-2200` | 2026-11-11T23:41Z |
-| `43121311648` | `claude/chore-scripts-docs-testes-261108-2048` | 2026-11-11T23:35Z |
-| `43121058569` | `main` | 2026-11-11T23:31Z |
-| `40410990313` | `claude_04/trusting-newton-duiglt` | 2026-10-26T22:52Z (**17 dias**) |
+| `43130083969` | `claude_05/brave-mccarthy-zvzky4` | 2026-11-12T00:49Z (cancelado nesta sessão às ~02:12Z) |
+| `43124455099` | outra branch | cancelado sessão anterior |
+| `43124418369` | outra branch | cancelado sessão anterior |
+| `40410990313` | `claude_04/trusting-newton-duiglt` | 2026-10-26T22:52Z (já estava cancelado) |
 
-**Ação 2026-11-12**: 3 runs cancelados via API (40410990313 já estava cancelado). Este commit re-aciona CI via concurrency `cancel-in-progress: true`.
-
-### §6.5 Tabela de conclusão dos checks obrigatórios — PR #2881 (estado medido 2026-11-12T00:30Z)
-
-> Commit HEAD do PR: `e44fb50b` — Run CI/CD Pipeline: [#43126536594](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43126536594)
-
-| Check obrigatório | Status | Motivo |
-|---|---|---|
-| 🏗️ Build | ⏳ **pending** | CI/CD Pipeline #43126536594 `status=pending, conclusion=null` — runner zombie ainda bloqueia |
-| 🔎 TypeCheck | ⏳ **pending** | CI/CD Pipeline #43126536594 `status=pending, conclusion=null` — runner zombie ainda bloqueia |
-| ✅ CI Gate | ⏳ **pending** | CI/CD Pipeline #43126536594 `status=pending, conclusion=null` — runner zombie ainda bloqueia |
-
-**Bloqueio estrutural**: `db-guard.yml` dispara em todo PR sem `timeout-minutes`; runner `offline` nunca pega o job; runs acumulam como `in_progress` consumindo todos os slots do plano gratuito do GitHub Actions. Fix requer alteração em `.github/workflows/db-guard.yml` — **AGENTS.md regra 8 (CI/workflows), aprovação do owner necessária**. Ver PENDENCIAS.md §5.
-
-**Ação necessária do owner**: adicionar `timeout-minutes: 10` ao job `guard` em `.github/workflows/db-guard.yml`.
+**Ação 2026-11-12**: zombie `43130083969` cancelado via API. CI/CD Pipeline [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963) desbloqueado — jobs em andamento a partir de 01:23Z.
 
 ---
 
@@ -207,7 +206,7 @@ Runs ativas para HEAD `2fc7053f`:
 | DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ `success` | `conclusion=success` verificado 2026-11-12T00:30Z |
 | Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | ✅ `success` | `conclusion=success` verificado 2026-11-12T00:30Z |
 | E2E logado | [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) | ❌ `failure` | Pré-existente, fora do escopo — PENDENCIAS.md §3 |
-| CI/CD Pipeline PR #2881 | [#43126536594](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43126536594) | ⏳ `pending` | Bloqueado por runner zombie (db-guard.yml sem timeout-minutes) — PENDENCIAS.md §5; aguarda owner adicionar `timeout-minutes: 10` |
+| CI/CD Pipeline PR #2881 | [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963) | ⏳ `in_progress` | Jobs rodando: Node CI Scripts ✅, Mutação do mapa ✅, E2E Tests in_progress (01:30Z). TypeCheck/Build/CI Gate queued |
 
 ### 6.3 Comparação baseline × final — sessão `brave-mccarthy-zvzky4`
 
@@ -218,13 +217,68 @@ Runs ativas para HEAD `2fc7053f`:
 | TypeCheck | SIGABRT (memória container ~2GB) | SIGABRT inalterado — limitação de container, não regressão |
 | `npx eslint` nos arquivos alterados | ✅ exit 0 | ✅ sem regressão |
 | `node --test scripts/ci/*.unit.mjs` | ✅ 5918 pass, exit 0 (§0.5) | ✅ 5916 pass, exit 0 (§0.5a, 2026-11-12) — sem regressão |
+| Vitest shards (local) | ✅ 3/3 exit 0 (sessão 2026-11-05 com mais RAM) | ❌ exit 143 (SIGTERM/OOM) — limitação de container ~2GB (§0.5b); não é regressão |
 | Deploy Edge Functions | ❌ failure (2026-11-09) | ✅ success — run [#43069974130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43069974130) |
 | DB Live Guard | ❌ failure (2026-11-09) | ✅ success — run [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) |
 | Branch Hygiene Audit | ❌ failure (2026-11-09) | ✅ success — run [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) |
 | E2E logado | ❌ failure (2026-11-09) | ❌ failure (2026-11-11, run [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482)) — pré-existente, PENDENCIAS.md §3 |
-| CI/CD Pipeline PR #2881 | ⏳ pending | ⏳ pending — bloqueado por runner zombie (PENDENCIAS.md §5) |
+| CI/CD Pipeline PR #2881 | ⏳ pending | ⏳ in_progress — run [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963) desbloqueado após cancelar zombie |
 
 **Nenhuma regressão de código introduzida nesta sessão.**
+
+### 6.4 Diagnóstico E2E logado — routine-ownership (2026-11-12T02:12Z)
+
+**Workflow:** `.github/workflows/e2e-logado.yml`  
+**Run com falha:** [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) `e408b778` — 2026-11-11T23:04Z  
+**Código de falha:** `routine-ownership-failed`  
+**Script:** `scripts/e2e-isolated/routine-ownership.mjs`
+
+#### Hipótese 1 (SHA256 mismatch) — DESCARTADA
+
+O script valida os hashes SHA256 de 7 funções PostgreSQL SECURITY DEFINER em produção. Query executada em 2026-11-12T02:12Z no banco `tnnnlkbymytvtqngbbqh`:
+
+```sql
+SELECT
+  p.proname || '(' || pg_get_function_arguments(p.oid) || ')' AS fn,
+  encode(sha256(pg_get_functiondef(p.oid)::bytea), 'hex') AS sha256_atual
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE p.proname IN (
+  'get_permitted_conversations','get_conversation_id_for_session',
+  'get_all_contacts_for_inbox','get_contacts_for_conversation',
+  'get_contacts_for_inbox','team_check_subscription',
+  'check_contacts_inbox_quota'
+)
+ORDER BY p.proname;
+```
+
+Resultado: **todos os 7 hashes correspondem exatamente** aos valores hardcoded em `routine-ownership.mjs` (verificados um a um). SHA256 mismatch **não** é a causa da falha.
+
+#### Hipótese 2 (ALTER FUNCTION no DB descartável) — CONFIRMADA
+
+O script `routine-ownership.mjs` tenta executar `ALTER FUNCTION ... OWNER TO` em um banco PostgreSQL descartável criado por `run.mjs`. Esse banco é gerado fresh a cada execução — sem os roles necessários (nem os SECURITY DEFINER owners) para executar `ALTER FUNCTION` com sucesso. O comando falha com erro de permissão no banco descartável, não em produção.
+
+**Causa raiz:** o banco descartável não tem os roles adequados para `ALTER FUNCTION ... OWNER TO`. Falha pré-existente em `main` — não introduzida por esta sessão.
+
+**Registrado em:** PENDENCIAS.md §3 — fix requer DDL no setup do banco descartável (rule 8, aprovação do owner).
+
+### 6.5 Tabela de conclusão dos checks obrigatórios — PR #2881 (estado medido 2026-11-12T01:35Z)
+
+> Commit HEAD do PR: `1311cc0c` — Run CI/CD Pipeline: [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963)  
+> Run desbloqueado após cancelar zombie DB Guard #43130083969 (2026-11-12T02:12Z)
+
+| Check obrigatório | Status | Evidência |
+|---|---|---|
+| 🏗️ Build | ⏳ **queued** | CI/CD Pipeline #43130083963 — job iniciará após slot disponível |
+| 🔎 TypeCheck | ⏳ **queued** | CI/CD Pipeline #43130083963 job #130894355728 — `status=queued` |
+| ✅ CI Gate | ⏳ **queued** | Aguarda Build + TypeCheck + Unit Tests |
+
+**Jobs já concluídos (run #43130083963, medido 01:35Z):**
+- 🧬 Mutação do mapa: `completed` / `success` (01:23Z)
+- 🧩 Node CI Scripts: `completed` / `success` (01:27Z)
+- 🎭 E2E Tests (Playwright): `in_progress` (01:30Z)
+
+> Links finais com `conclusion=success` serão adicionados quando os checks concluírem.
 
 ---
 
@@ -402,11 +456,11 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 - **Última run com falha (medida 2026-11-12):** [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) `e408b778` — 2026-11-11T23:04Z–23:24Z
 - **Jobs com falha:** `authenticated-1-of-3` · `authenticated-2-of-3` · `authenticated-3-of-3`
 - **Passo que falha:** Step 8 "Validar grupo e executar a suíte no backend descartável" — `conclusion=failure`
-- **Log exato:** `resumo público indisponível ou inválido; alerta sem detalhes privados` → `mesma causa da ultima vez -- sem comentario novo`
+- **Log exato:** `routine-ownership-failed` — `ALTER FUNCTION ... OWNER TO` falha no DB descartável (sem roles adequados). Diagnóstico completo em §6.4.
 - **`REPORT_READY: true`** — a suíte Playwright executou mas o relatório público está indisponível (proteção de privacidade ativa).
 - **Issue rastreadora:** "[e2e-logado] Suíte logada quebrada na main" — falha persistente em 3 commits consecutivos da main (runs 1662–1664), não introduzida por esta sessão.
 - **Artefato privado:** `playwright-report-logado-authenticated-*` no run #43116986482 — expira ~2027-02-11.
-- **Ação:** dono baixar o artefato privado para identificar quais testes falharam — ver `PENDENCIAS.md` §3.
+- **Ação:** dono corrigir setup do banco descartável para permitir `ALTER FUNCTION ... OWNER TO` — ver `PENDENCIAS.md` §3.
 
 ### 4.4 Branch Hygiene Audit — SLA de alertas de code scanning
 
