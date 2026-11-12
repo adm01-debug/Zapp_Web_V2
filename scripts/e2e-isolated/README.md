@@ -83,6 +83,33 @@ As regressões executam funções reais e o controlador com interfaces Docker, G
 
 A configuração isolada preserva projetos, dependências e assertions. O modo `login` seleciona somente `setup`; os modos abaixo executam a seleção explícita de cada grupo. Sucesso do login não declara os demais casos aprovados. A reativação do workflow autenticado anterior depende da substituição completa e validada.
 
+Na compilação de dependências públicas, o controller projeta somente `proxies.default.httpProxy`,
+`httpsProxy` e `noProxy` do Docker config original em um config temporário privado do compilador.
+Credenciais de registro e seletores de daemon permanecem fora dessa projeção. Valores de proxy,
+inclusive autenticação de rede, ficam nesse config com modo `0600`, fora dos argumentos e relatórios.
+Quando há proxy, a CA pública de `SSL_CERT_FILE` ou `CODEX_PROXY_CERT` é montada somente para leitura
+nesse processo, com verificação TLS habilitada. Arquivo de CA precisa conter somente certificados CA,
+sem chaves privadas. Config malformado ou CA inválida interrompem antes da compilação. Sem proxy
+configurado, a compilação conserva o transporte direto. A stack de aplicação, os probes e os browsers
+continuam com Docker config vazio, namespace isolado e suas CAs sintéticas próprias.
+
+O download das imagens fixadas aceita até quatro tentativas somente para o formato Docker
+`toomanyrequests: Rate exceeded` observado no registro. O terminal precisa ser único e encerrar sua
+própria stream; stdout e stderr são validados separadamente. As outras linhas precisam ser headers
+da imagem pedida ou progresso Docker de identificador hexadecimal e estados/tamanhos conhecidos.
+Linha desconhecida, erro contraditório, controle ou saída acima de 64 KiB impede retry; nenhuma
+linha é removida do log original. Isso não aceita toda resposta HTTP 429. O contrato atual de
+`assertPinnedImages` exige `repository:tag@sha256:64hex`, sem digest-only nem registry com porta.
+As esperas de 15, 30 e 60 segundos recebem
+até cinco segundos aleatórios adicionais cada, limitando a espera total a 120 segundos. Todas as
+tentativas e esperas compartilham os 15 minutos originais por imagem, medidos por relógio monotônico;
+o timeout de cada comando usa somente o tempo restante. Prazo vencido não aceita nem saída zero.
+Erro de autenticação, manifesto, TLS, rede, disco, timeout ou sinal não recebe retry. O cancelamento
+interrompe a espera e impede outra tentativa; a limpeza conserva seu caminho independente. Cada
+tentativa passa pelo redator existente antes de entrar no log privado e na publicação redigida.
+Os digests, a inspeção após sucesso e os gates do ambiente continuam obrigatórios. Esse tratamento
+não repete compilação, migrations, seeds, login ou testes.
+
 
 ## Suíte em cinco grupos isolados
 
@@ -138,7 +165,7 @@ Depois do login real, o controller executa os seeds existentes de Arquivos, o se
 
 Somente no grupo autenticado, depois do replay e da revalidação de cron desligado, o controller restaura para `postgres` o proprietário de sete assinaturas fixas: `enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)`, `claim_outbound_message(uuid,uuid,text,integer)`, `complete_outbound_message(uuid,uuid,text,text)`, `fail_outbound_message(uuid,uuid,boolean)`, `get_instance_token(text)`, `enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)` e `close_conversation_atomic(uuid,uuid,text,text,text,text)`, todas em `public`. O snapshot `contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e` registra `postgres` nas rotinas privilegiadas; o replay local as cria como `supabase_admin`. Isso também preserva o contrato dos triggers de encerramento, que aceitam os campos internos `client_request_id` e `closure_id` somente quando a RPC é executada por `postgres`/`service_role`. O usuário global do replay permanece inalterado.
 
-`routine-ownership.mjs` vincula cada assinatura ao SHA256 integral de sua definição exportada. Antes de qualquer ALTER, exige sete OIDs distintos, função SECURITY DEFINER, owner atual `supabase_admin` ou `postgres` e definição exata. Diferença de formato ou corpo bloqueia; não há normalização de hash, descoberta de funções adicionais, GRANT, mudança de guardas/RLS ou alteração de migrations. Owner já correto é validado sem novo ALTER.
+`routine-ownership.mjs` vincula cada assinatura ao SHA256 integral de sua definição exportada. Antes de qualquer ALTER, exige oito OIDs distintos, função SECURITY DEFINER, owner atual `supabase_admin` ou `postgres` e definição exata. Diferença de formato ou corpo bloqueia; não há normalização de hash, descoberta de funções adicionais, GRANT, mudança de guardas/RLS ou alteração de migrations. Owner já correto é validado sem novo ALTER.
 
 A etapa reinspeciona CID, imagem, rótulos, estado, namespace e volume da execução. O novo `psql` usa o CID conferido, socket local, ambiente mínimo com `env -i`, `-X`, `-w` e limites de tempo. Não herda PGHOSTADDR, PGSERVICE, PGOPTIONS ou URL de conexão. A transação preserva definição, atributos e ACL do replay; a comparação transforma somente as entradas anteriores do proprietário (grantor e grantee), conserva grant options, terceiros e a distinção entre ACL NULL e vazia. Isso não afirma equivalência integral das permissões com produção nem elimina as falhas históricas aceitas pelo replay.
 

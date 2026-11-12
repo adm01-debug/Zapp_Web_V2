@@ -50,7 +50,7 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
   team chat e `ui-audit` listadas no passo; as suítes de deploy e os contratos de
   Edge rodam nos workflows específicos.
 * Comando (CI, passo "Run Node CI scripts tests"):
-  `node --test scripts/ci/*.unit.mjs scripts/lib/seguranca-processo.test.mjs scripts/qa/prova-visao-classificadores.unit.mjs scripts/talkx/lado-a-lado.unit.mjs scripts/talkx/v4-status.unit.mjs scripts/team-chat-db-validate.unit.mjs scripts/ui-audit/contacts-navy-header.unit.mjs scripts/ui-audit/layout-guard.unit.mjs`.
+  `node --test scripts/ci/*.unit.mjs scripts/catalog/validate-plan.unit.mjs scripts/db-tests/run-all.unit.mjs scripts/docs/verificar-docs-realtime.unit.mjs scripts/lib/seguranca-processo.unit.mjs scripts/qa/contatos-redesign-baseline.unit.mjs scripts/qa/contraste-auditores.unit.mjs scripts/qa/medir-tipografia.unit.mjs scripts/qa/prova-visao-classificadores.unit.mjs scripts/talkx/gen-estados.unit.mjs scripts/talkx/lado-a-lado.unit.mjs scripts/talkx/v4-status.unit.mjs scripts/tarefas/seed-local-imagens.unit.mjs scripts/team-chat-db-validate.unit.mjs scripts/ui-audit/contacts-navy-header.unit.mjs scripts/ui-audit/layout-guard.unit.mjs scripts/ui-audit/view-container-padding.unit.mjs`.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
   dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
 * Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.
