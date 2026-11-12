@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 22:24 UTC
+
+- **migrations** alterado (2): `20261031160000_copilot_radar_delta_columns`, `20261112160000_talkx_blacklist_reconcilia_e_higiene`
+
 ## 2026-11-12 21:13 UTC
 
 - **colunas** adicionado (2): `public.talkx_blacklist.import_batch_id`, `public.talkx_blacklist.removal_reason`

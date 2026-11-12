@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "cca5655b81667d40e43da5ca55a29c3e5b8b5848",
+  "sha": "b2813f8324faa8444a04fe35743f9c002a561415",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 21:10 UTC",
+  "generated_at": "2026-11-12 22:25 UTC",
   "files_total": 8259,
   "code_files": 6092,
-  "code_lines": 1059941
+  "code_lines": 1060051
  },
  "version": "1.3.2",
- "facts_hash": "4083ff086102c482",
+ "facts_hash": "572f4b49def027b0",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68447,7 +68447,7 @@
   {
    "module": "src/components",
    "files": 2179,
-   "lines": 371937,
+   "lines": 372047,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -160396,6 +160396,18 @@
    {
     "file": "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx",
     "name": "sem ?talkxState= a precedência do boundary continua a de antes (conteúdo)"
+   },
+   {
+    "file": "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx",
+    "name": "TalkXKit — KPIs reais (X057)"
+   },
+   {
+    "file": "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx",
+    "name": "o KPI de envios se chama "
+   },
+   {
+    "file": "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx",
+    "name": "erro na leitura dos KPIs mostra o estado de erro com "
    },
    {
     "file": "src/components/talkx/__tests__/RuleValueInput.test.tsx",
@@ -308310,7 +308322,7 @@
   },
   "src/components/talkx/__dev__/TalkXKit.tsx": {
    "path": "src/components/talkx/__dev__/TalkXKit.tsx",
-   "lines": 278,
+   "lines": 350,
    "exports": [
     "function TalkXKit"
    ],
@@ -308338,7 +308350,7 @@
   },
   "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx": {
    "path": "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx",
-   "lines": 165,
+   "lines": 203,
    "is_test": true,
    "tests": [
     "TalkXKit — prancha de referência (X055)",
@@ -308355,7 +308367,10 @@
     "?talkxState=error mostra o erro mesmo com a consulta saudável",
     "?talkxState=loading mostra o esqueleto e trava no carregamento",
     "?talkxState=perm / crm / wa trocam o estado do boundary",
-    "sem ?talkxState= a precedência do boundary continua a de antes (conteúdo)"
+    "sem ?talkxState= a precedência do boundary continua a de antes (conteúdo)",
+    "TalkXKit — KPIs reais (X057)",
+    "o KPI de envios se chama ",
+    "erro na leitura dos KPIs mostra o estado de erro com "
    ]
   },
   "src/components/talkx/__tests__/RuleValueInput.test.tsx": {
@@ -387926,10 +387941,21 @@
   }
  },
  "git": {
-  "sha": "cca5655b81667d40e43da5ca55a29c3e5b8b5848",
+  "sha": "b2813f8324faa8444a04fe35743f9c002a561415",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b2813f8",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)",
+    "files": [
+     "FEATURE_REGISTRY.md",
+     "src/components/talkx/__dev__/TalkXKit.tsx",
+     "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx"
+    ]
+   },
    {
     "sha": "cca5655",
     "date": "2026-11-12",
@@ -388255,16 +388281,6 @@
      "src/integrations/supabase/types.ts",
      "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
     ]
-   },
-   {
-    "sha": "f036006",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)",
-    "files": [
-     "scripts/regras_negocio/generate.py",
-     "scripts/regras_negocio/test_generate.py"
-    ]
    }
   ],
   "hot_files": [
@@ -388293,16 +388309,20 @@
     2
    ],
    [
-    "scripts/regras_negocio/generate.py",
-    2
-   ],
-   [
-    "scripts/regras_negocio/test_generate.py",
-    2
-   ],
-   [
     "scripts/tarefas/seed-local-imagens.unit.mjs",
     2
+   ],
+   [
+    "FEATURE_REGISTRY.md",
+    1
+   ],
+   [
+    "src/components/talkx/__dev__/TalkXKit.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx",
+    1
    ],
    [
     "src/pages/ForgotPassword.tsx",
@@ -388342,10 +388362,6 @@
    ],
    [
     "src/adapters/evolutionAdapter.ts",
-    1
-   ],
-   [
-    "src/components/inbox/chat/SendErrorBanner.tsx",
     1
    ]
   ]

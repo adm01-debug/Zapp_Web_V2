@@ -8867,9 +8867,10 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_arquivos": [
     "src/components/talkx/TalkXOverview.tsx",
+    "src/components/talkx/__dev__/TalkXKit.tsx",
     "src/hooks/integrations/useTalkX.ts"
    ],
    "coberto_por_testes": 1

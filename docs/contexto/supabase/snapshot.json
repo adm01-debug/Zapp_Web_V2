@@ -89103,8 +89103,8 @@
       },
       {
         "name": "copilot_radar_delta_columns",
-        "statements": 1,
-        "statements_sha": "10c3f26aad92a261",
+        "statements": 7,
+        "statements_sha": "68945af8c6f088a7",
         "version": "20261031160000"
       },
       {
@@ -89288,8 +89288,8 @@
       },
       {
         "name": "talkx_blacklist_reconcilia_e_higiene",
-        "statements": 1,
-        "statements_sha": "7cc33e167ce0bc2b",
+        "statements": 22,
+        "statements_sha": "ad39ea887ab5cf0c",
         "version": "20261112160000"
       }
     ],

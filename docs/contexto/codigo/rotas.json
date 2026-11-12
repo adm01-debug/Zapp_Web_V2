@@ -7248,17 +7248,23 @@
    "registrada_em": "src/pages/ViewRouter.tsx",
    "hooks": [
     "useEffect",
+    "useMemo",
+    "useQuery",
     "useReducedMotion",
     "useRef",
     "useState",
-    "useTalkXMediaUrl"
+    "useTalkXMediaUrl",
+    "useTalkXOverviewStats"
    ],
    "hooks_locais": [
     "useReducedMotion",
-    "useTalkXMediaUrl"
+    "useTalkXMediaUrl",
+    "useTalkXOverviewStats"
    ],
    "tabelas": [],
-   "rpcs": [],
+   "rpcs": [
+    "talkx_overview_stats"
+   ],
    "edges": [],
    "canais_realtime": [],
    "flags": [],
@@ -7272,7 +7278,7 @@
     "menuitem",
     "status"
    ],
-   "arquivos_puxados": 29
+   "arquivos_puxados": 30
   },
   {
    "id": "tasks",

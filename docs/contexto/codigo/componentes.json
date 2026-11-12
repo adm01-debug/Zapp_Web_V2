@@ -10669,9 +10669,11 @@
     "TalkXKit"
    ],
    "export_default": "TalkXKit",
-   "linhas": 278,
+   "linhas": 350,
    "dominio": "components/talkx",
-   "hooks_locais": [],
+   "hooks_locais": [
+    "useTalkXOverviewStats"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,

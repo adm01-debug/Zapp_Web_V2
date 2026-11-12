@@ -6449,6 +6449,7 @@
    "src/components/talkx/kit/forcedState.ts",
    "src/components/talkx/kit/states.tsx",
    "src/components/talkx/talkxShared.ts",
+   "src/hooks/integrations/useTalkXOverviewStats.ts",
    "src/lib/utils.ts"
   ],
   "src/components/talkx/analytics/AnalyticsFunnel.tsx": [

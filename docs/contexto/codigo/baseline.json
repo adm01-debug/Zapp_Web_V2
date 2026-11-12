@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "cca5655b81667d40e43da5ca55a29c3e5b8b5848",
+  "commit": "b2813f8324faa8444a04fe35743f9c002a561415",
   "branch": "main",
-  "data_commit": "2026-11-12T13:34:19-03:00",
+  "data_commit": "2026-11-12T18:02:00-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b2813f8",
+    "data": "2026-11-12",
+    "assunto": "feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)"
+   },
    {
     "sha": "cca5655",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "daba6eb",
     "data": "2026-11-12",
     "assunto": "chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares"
-   },
-   {
-    "sha": "71123cc",
-    "data": "2026-11-11",
-    "assunto": "fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)"
    }
   ],
-  "arquivos_mudados_7d": 663,
+  "arquivos_mudados_7d": 665,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 270
+    "mudancas": 272
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -177,7 +177,7 @@
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 110
+    "mudancas": 109
    },
    {
     "pasta": "src/components/tasks",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8417,
   "arquivos_codigo": 4815,
-  "linhas_codigo": 891690,
+  "linhas_codigo": 891800,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2179,
-   "linhas": 371937
+   "linhas": 372047
   },
   "src/config": {
    "arquivos": 3,

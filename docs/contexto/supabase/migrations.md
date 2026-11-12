@@ -1078,7 +1078,7 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261031120000 | [copilot_phase4_brinde_intelligence](migrations/20261031120000_copilot_phase4_brinde_intelligence.sql) | 10 |
 | 20261031130000 | [search_event_rpc](migrations/20261031130000_search_event_rpc.sql) | 10 |
 | 20261031140000 | [copilot_sessions_brinde_state](migrations/20261031140000_copilot_sessions_brinde_state.sql) | 0 |
-| 20261031160000 | [copilot_radar_delta_columns](migrations/20261031160000_copilot_radar_delta_columns.sql) | 1 |
+| 20261031160000 | [copilot_radar_delta_columns](migrations/20261031160000_copilot_radar_delta_columns.sql) | 7 |
 | 20261031170000 | [high3-fk-indexes](migrations/20261031170000_high3-fk-indexes.sql) | 48 |
 | 20261101213000 | [rls_update_with_check_explicit](migrations/20261101213000_rls_update_with_check_explicit.sql) | 8 |
 | 20261102012200 | [department_invites_restringe_escrita](migrations/20261102012200_department_invites_restringe_escrita.sql) | 1 |
@@ -1109,4 +1109,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261111160000 | [outbound_post_started](migrations/20261111160000_outbound_post_started.sql) | 21 |
 | 20261111170000 | [talkx_block_recipient](migrations/20261111170000_talkx_block_recipient.sql) | 4 |
 | 20261111181000 | [instance_pause_investigation](migrations/20261111181000_instance_pause_investigation.sql) | 7 |
-| 20261112160000 | [talkx_blacklist_reconcilia_e_higiene](migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql) | 1 |
+| 20261112160000 | [talkx_blacklist_reconcilia_e_higiene](migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql) | 22 |

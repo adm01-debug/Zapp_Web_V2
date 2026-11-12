@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `cca5655b81` · branch `main` · 2026-11-12 21:10 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b2813f8324` · branch `main` · 2026-11-12 22:25 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4608,7 +4608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21321 testes em 2257 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21324 testes em 2257 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4849,6 +4849,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` | 18 | AutomationEditorDialog — estado por registro (R2-MOD-001) · mostra os dados do registro aberto · ao trocar de registro (mesmo componente montado), não reaproveita o estado do anterior · ao abrir  … |
 | `src/components/groups/__tests__/GroupsView.test.tsx` | 18 | GroupsView · renders the page title · shows empty state when no groups · renders groups when data loads … |
 | `src/components/inbox/__tests__/InboxSavedFiltersMenu.test.tsx` | 18 | InboxSavedFiltersMenu — filtros salvos do inbox · lista vazia: orienta e mantém  · aplicar: o conteúdo do preset chega ao onApply e o menu fecha · salvar: grava o filtro que está na tela, com o nome digitado … |
+| `src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx` | 18 | TalkXKit — prancha de referência (X055) · sem ?talkxState= não mostra a faixa de estado forçado, mas monta as três seções · a seção de modais críticos desenha os 5 presets · ?talkxState=${estado} força o título  … |
 | `src/hooks/__tests__/useChatKeyboardNavigation.test.ts` | 18 | useChatKeyboardNavigation · initializes with no selected message · initializes with isNavigating false · exposes exitNavigationMode function … |
 | `src/hooks/__tests__/useIncomingCallListener.test.tsx` | 18 | useIncomingCallListener · subscribes to notifications scoped to the authenticated user · shows one ringing call from notification metadata and deduplicates replay · propagates the real call id from notification metadata (not the notification row id) … |
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 18 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
@@ -4911,7 +4912,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/__tests__/TalkXSuppression.add.test.tsx` | 16 | TalkXSuppression · Ações da lista no rail (X182/T06-053) · mostra o card  · não promete importar nem exportar em nenhum ponto do card · não oferece nenhuma ação de arquivo no card, nem desabilitada (regra: nada entra nem sai por arquivo) … |
 | `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` | 16 | R2-MOD-024 — resposta atrasada não contamina o template seguinte · variantes: resposta lenta de A não sobrescreve o painel de B · histórico: resposta lenta de A não sobrescreve o histórico de B · loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento … |
 | `src/components/talkx/__tests__/segmentValidation.test.ts` | 16 | segmentValidation · nome (X099) · recusa nome menor que o mínimo · aceita nome no mínimo, ignorando espaços nas pontas · recusa nome maior que o máximo … |
-| `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` | 16 | TalkXQueryBoundary (matriz de estados — X047) · carregando: mostra o esqueleto e marca aria-busy · erro: mostra o erro e NUNCA o vazio (nem com a lista vazia) · vazio sem erro: mostra o vazio … |
 | … +1957 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)

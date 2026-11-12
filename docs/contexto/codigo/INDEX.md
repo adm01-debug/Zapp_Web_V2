@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `cca5655b81667d40e43da5ca55a29c3e5b8b5848` (2026-11-12T13:34:19-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b2813f8324faa8444a04fe35743f9c002a561415` (2026-11-12T18:02:00-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8417 |
 | arquivos_codigo | 4815 |
-| linhas_codigo | 891690 |
+| linhas_codigo | 891800 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,14 +391,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56922 nós · 117629 arestas · 4135 comunidades · grafo do commit `cca5655b`
-- comunidades maiores: vitest (1175), lucide-react (849), TalkXSuppression.tsx (666), @tanstack/react-query (640), react (567), ref_node_fs (516), utils.ts (509), useRealtimeMessages.ts (469), cn (448), validation.ts (430), DashboardView.tsx (429), useTeamChatPanel.ts (406)
+- 56923 nós · 117635 arestas · 4228 comunidades · grafo do commit `b2813f83`
+- comunidades maiores: lucide-react (914), cn (747), react (717), TalkXSuppression.tsx (715), vitest (577), validation.ts (548), ref_node_fs (515), e2e-isolated-runtime.unit.mjs (405), @tanstack/react-query (388), chat.ts (383), avatar.tsx (355), multiplix-send/index.ts (312)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (16)
-- PENDENCIAS.md (15)
+- PENDENCIAS.md (14)
 - docs/ci/README.md (13)
 - CLAUDE.md (12)
 - .github/workflows/ci.yml (11)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `b2813f8` feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)
 - 2026-11-12 `cca5655` fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)
 - 2026-11-12 `cfa8959` fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)
 - 2026-11-12 `81f67b0` fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `6f90c93` fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)
 - 2026-11-12 `376332a` fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)
 - 2026-11-12 `93bff67` fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)
-- 2026-11-12 `1c4498d` fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
