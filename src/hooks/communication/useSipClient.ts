@@ -77,8 +77,10 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const acceptIncomingCall = useCallback(async () => { if (await garantirMicrofone()) await engine.accept(); }, [engine, garantirMicrofone]);
   const rejectIncomingCall = useCallback(async () => { await engine.reject(); }, [engine]);
 
-  const connectWithStoredCredentials = useCallback(async () => {
-    const config = await provisionarSip();
+  // Explícito (botão "reconectar") ignora a trava "SIP não configurado"; a aba
+  // líder, ao assumir, respeita a trava (sem 503 a cada carregamento).
+  const connectWithStoredCredentials = useCallback(async ({ ignorarTrava = true }: { ignorarTrava?: boolean } = {}) => {
+    const config = await provisionarSip({ ignorarTrava });
     if (config) await connect(config);
   }, [connect]);
 
@@ -86,7 +88,7 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   // callbacks vão numa ref dentro do hook — a identidade deles não agenda o
   // efeito, então não há loop de disconnect a cada render.
   useTabLeaderRole({
-    onBecameLeader: () => { void connectWithStoredCredentials(); },
+    onBecameLeader: () => { void connectWithStoredCredentials({ ignorarTrava: false }); },
     onBecameFollower: () => { void disconnect().then(() => setSipReason('line_in_use_other_tab')); },
   });
 
