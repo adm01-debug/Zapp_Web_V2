@@ -17,6 +17,10 @@ vi.mock('@/hooks/crm/useContactSidebar', () => ({
   useContactSidebar: () => hookResult,
 }));
 
+// A seção do catálogo WhatsApp (#2054) só aparece para supervisor/admin; aqui o papel
+// é de agente, então ela não renderiza e o teste segue focado nas 3 seções.
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false, isAdmin: false }) }));
+
 vi.mock('@/components/contacts/ContactCRMDialog', () => ({
   ContactCRMDialog: () => null,
 }));
