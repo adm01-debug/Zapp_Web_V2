@@ -33,7 +33,9 @@
     "graph:update": "graphify update .",
     "contexto:ia": "node scripts/ai-context/gerar.mjs --out docs/contexto/codigo",
     "contexto:ia:test": "node --test scripts/ai-context/gerar.unit.mjs",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "ci:local": "node scripts/ci/ci-local.mjs",
+    "ci:local:rapido": "node scripts/ci/ci-local.mjs --rapido"
   },
   "dependencies": {
     "@axe-core/react": "^4.14.0",
@@ -138,6 +140,7 @@
     "vite": "^8.3.6",
     "vitest": "^4.1.12",
     "vitest-axe": "0.1.0",
+    "yaml": "2.8.3",
     "zod3": "npm:zod@3.23.8"
   },
   "engines": {
