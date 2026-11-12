@@ -11,6 +11,17 @@ import { resolve, relative, isAbsolute } from 'node:path';
 
 const CHAVE_ALVO = /access[_%-]?token/gi;
 
+/** Quantas vezes cada valor literal (>= 8 chars, mesmo limiar de `redigir`) ocorre em `texto`. */
+export function contarValoresLiterais(texto, segredos = []) {
+  let total = 0;
+  for (const valor of segredos) {
+    const v = String(valor ?? '').trim();
+    if (v.length < 8) continue;
+    total += texto.split(v).length - 1;
+  }
+  return total;
+}
+
 export function redigir(texto, segredos = []) {
   let saida = texto;
   // 1. o valor literal, quando conhecido: e' a remocao que de fato protege.
@@ -78,8 +89,9 @@ function principal(argv) {
   const segredos = nomes.map((n) => process.env[n]).filter(Boolean);
   const limpo = redigir(original, segredos);
   const removidos = (original.match(CHAVE_ALVO) || []).length;
+  const valoresRemovidos = contarValoresLiterais(original, segredos);
   writeFileSync(caminho, limpo);
-  console.log(`log redigido: ${removidos} ocorrencia(s) de chave de token, ${segredos.length} valor(es) literal(is) removido(s)`);
+  console.log(`log redigido: ${removidos} ocorrencia(s) de chave de token, ${valoresRemovidos} ocorrencia(s) de valor(es) literal(is) removida(s)`);
 }
 
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) principal(process.argv);
