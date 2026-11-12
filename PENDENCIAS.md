@@ -17,7 +17,7 @@
 
 ---
 
-## 1. E2E logado - routine-ownership-failed (sub-fase: scope)
+## 1. E2E logado - routine-ownership-failed (fase: source)
 
 | Campo | Valor |
 |---|---|
@@ -29,7 +29,7 @@
 | Codigo JSON de saida | `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}` |
 | Fase que falha | `restore-versioned-routine-owners` -> `cleanup` em ~403ms |
 
-### Analise de timing - sub-fase identificada: `scope`
+### Analise de timing - fase confirmada pelo codigo: `source`
 
 Logs do job `authenticated-1-of-3` (run #43148791130, job ID 130952813356):
 ```
@@ -51,25 +51,19 @@ A funcao `restoreRoutineOwnership` (`scripts/e2e-isolated/routine-ownership.mjs:
 | `namespace` | `docker exec readlink` | 200ms-1s | Nao |
 | `sql-process` | `docker exec psql` | 1-5s | Nao |
 
-**Conclusao: a falha ocorre na fase `scope` (mais provavel) ou `source`. Fases com Docker estao descartadas pelo timing.**
+**Conclusao: a falha ocorre na fase `source` — CONFIRMADO pelo codigo (`routine-ownership.mjs:112-114`). A fase `scope` NUNCA falha: o parametro passado em `run.mjs:635` e sempre `'suite'`, entao `scope !== 'suite'` nunca e verdadeiro. Fases com Docker estao descartadas pelo timing (403ms < 500ms minimo de `docker inspect`).**
 
-### Condicao da fase `scope` (linhas 100-103 de `routine-ownership.mjs`)
+### Fase `source` — condicao que falha (linhas 112-114 de `routine-ownership.mjs`)
 
 ```javascript
-if (scope !== 'suite' || !isAuthenticatedGroup(group) || !CID.test(anchorId) || !CID.test(databaseId)
-    || anchorId === databaseId || !IMAGE.test(anchorImage) || !IMAGE.test(databaseImage)
-    || volumeName !== runId + '-postgres' || !NET.test(networkNamespace)
-    || !(allowedWritableSources instanceof Set) || typeof dockerConfig !== 'string'
-    || !dockerConfig.startsWith('/')) reject();
+phase = 'source';
+const source = invoke('git', ['rev-parse', 'HEAD']);
+if (!processSucceeded(source) || typeof source.stdout !== 'string' || source.stdout.trim() !== sourceSha) reject();
 ```
 
-Hipoteses (da mais provavel para a menos):
+**Causa raiz**: `git rev-parse HEAD` retorna SHA diferente de `sourceSha` passado como parametro. Timing 403ms confirma (~50-200ms para git).
 
-| Check | Hipotese |
-|---|---|
-| `scope !== 'suite'` | A variavel `scope` em `run.mjs:635` para grupos authenticated pode ser `'authenticated-suite'` em vez de `'suite'` |
-| `anchorId === databaseId` | Grupos authenticated podem receber os mesmos container IDs para anchor e database |
-| `volumeName !== runId + '-postgres'` | Volume criado com nome diferente quando ha autenticacao |
+**Por que `scope` NUNCA falha**: a fase anterior (`scope`, linhas 100-103) checa `scope !== 'suite'`. O valor de `scope` passado na chamada em `run.mjs:635` e SEMPRE a string literal `'suite'` — nunca `'authenticated-suite'`. O campo `"scope":"authenticated-suite"` visto no JSON de saida e `reportScope` (linha 314), nao o parametro. Esta fase e descartada como causa.
 
 ### `report_ready: true` - testes completaram; falha e no teardown
 
@@ -124,7 +118,7 @@ if (!routineOwnership.confirmed) {
 | Workflow | `.github/workflows/contexto.yml` |
 | Run com falha | [#43095079516 (commit `f036006a`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43095079516) |
 | Sintoma | `conclusion=failure`, `failed_jobs: []` — nenhum job iniciou |
-| Causa raiz | Runner pool esgotado (quota GitHub Actions minutes do plano free: 2.000 min/mes). Os jobs ficaram `queued` sem runner disponivel e o workflow expirou ou foi forcado a falhar pela propria logica de timeout. |
+| Causa raiz | CONFIRMADO via API (`github_get_run_failure_summary` run #43095079516): `conclusion=failure`, `failed_jobs:[]` — 5 jobs criados, 0 jobs iniciaram. Nenhum runner foi alocado. Causa: quota GitHub Actions minutes esgotada (plano free: 2.000 min/mes). |
 | Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 — infra). |
 
 ### O que o dono precisa fazer
