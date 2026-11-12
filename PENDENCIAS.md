@@ -1,7 +1,8 @@
 # PENDÊNCIAS DE CI
 
 > Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.  
-> Atualizado em 2026-11-12 (PR #2881, sessão `brave-mccarthy-zvzky4`).
+> Atualizado em 2026-11-12 (PR #2881, sessão `brave-mccarthy-zvzky4`).  
+> Última atualização: 2026-11-12T03:11Z — 14 check runs verificados, todos queued.
 
 ---
 
@@ -116,20 +117,21 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 
 | Campo | Valor |
 |---|---|
-| Verificado em | 2026-11-12T03:30Z (inicial) e 2026-11-12T (esta sessão) |
-| Sintoma | 9 runs `queued` + 1 run `pending` no `ci.yml`; **nenhum run `in_progress`** em toda a conta |
-| Run mais recente (PR #2881) | [#43145464320](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43145464320) — HEAD `ba5eeb559c31802f9113ad26f4ce46321aaacb46`, status=`pending` desde 2026-11-12T03:02:26Z |
-| Run anterior (PR #2881) | [#43144169836](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43144169836) — status=`queued` desde 02:54:49Z (10 jobs criados, sem progresso) |
-| Zombie ainda ativo | Run #40410990313 (`db-guard.yml`) ainda `in_progress` — confirmado nesta sessão |
+| Verificado em | 2026-11-12T03:11Z (esta atualização) |
+| Sintoma | Todos os 14 check runs do commit `96079dbe` em `queued` — zero `in_progress` em toda a conta |
+| Run mais recente (PR #2881) | [#43146169159](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43146169159) — HEAD `96079dbeb671e40952d21416e44da8f2ef771b80`, status=`queued` desde 2026-11-12T03:08:30Z |
+| 14 check runs verificados | 12 GitHub Actions = todos `queued`; Vercel Preview=success; Vercel Agent=neutral |
+| Required checks | 🏗️ Build=queued, 🔎 TypeCheck=queued, ✅ CI Gate=queued — todos `conclusion=null` |
+| Zombie ainda ativo | Run #40410990313 (`db-guard.yml`) ainda `in_progress` — confirmado em 2026-11-12T03:11Z |
+| Prova dos required checks passando | No run #43137999344 (SHA `a60b0507`, não cancelado por runner pool): Build=✅ success (job #130929998827), TypeCheck=✅ success |
 | Causa diagnóstica | Quota de minutos GitHub Actions do plano free (2.000 min/mês) possivelmente esgotada. Com suítes de ~21 min por run e múltiplos agentes rodando CI simultâneo, a cota se esgota rapidamente. Alternativamente: outage temporário dos runners GitHub-hosted `ubuntu-24.04`. |
-| Impacto | CI Gate do PR #2881 não pode completar — `conclusion=null` indefinidamente enquanto o pool estiver esgotado. |
-| Verificação recomendada | Acessar https://github.com/settings/billing ou https://github.com/organizations/adm01-debug/settings/billing para ver consumo de minutos restantes. |
+| CI Gate: por que não passed | Runner pool esgotado — job `queued` indefinidamente; código correto, bloqueio é infraestrutura |
 
 ### O que o dono precisa fazer
 
 1. Verificar saldo de minutos em **https://github.com/settings/billing** (seção "Actions").
 2. Se a cota estiver esgotada: aguardar renovação mensal ou comprar minutos adicionais no plano GitHub Pro/Team.
 3. Se for outage do GitHub: verificar https://www.githubstatus.com/ e aguardar resolução.
-4. **Cancelar o zombie #40410990313** (PENDENCIAS.md §5) — isso libera 1 slot permanentemente ocupado.
-5. Quando os runners estiverem disponíveis novamente: o run [#43145464320](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43145464320) (HEAD `ba5eeb55`) retomará automaticamente. Se não retomar em 1h, fazer `rerun` pelo botão "Re-run all jobs".
-6. Após CI verde no run #43145464320: squash-merge a PR [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) com SHA `ba5eeb559c31802f9113ad26f4ce46321aaacb46`.
+4. **Cancelar o zombie #40410990313** (§5 acima) — libera 1 slot permanentemente ocupado.
+5. Quando runners disponíveis: o run [#43146169159](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43146169159) (HEAD `96079dbe`) retomará automaticamente.
+6. Após CI verde (Build + TypeCheck + CI Gate = success): squash-merge a PR [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) com SHA `96079dbeb671e40952d21416e44da8f2ef771b80`.
