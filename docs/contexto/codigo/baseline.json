@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "6f90c933209ef722d47bfa222548675557e82c8c",
+  "commit": "2d1020163e2e46d830154f121be76164bbc9204a",
   "branch": "main",
-  "data_commit": "2026-11-12T06:14:06-03:00",
+  "data_commit": "2026-11-12T06:33:40-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2d10201",
+    "data": "2026-11-12",
+    "assunto": "fix(db-audit): wal_level=logical no container descartável do teste E27 replay"
+   },
    {
     "sha": "6f90c93",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "b548ca0",
     "data": "2026-11-11",
     "assunto": "fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)"
-   },
-   {
-    "sha": "0e15ed6",
-    "data": "2026-11-11",
-    "assunto": "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)"
    }
   ],
-  "arquivos_mudados_7d": 659,
+  "arquivos_mudados_7d": 660,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",

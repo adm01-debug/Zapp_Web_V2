@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "6f90c933209ef722d47bfa222548675557e82c8c",
+  "sha": "2d1020163e2e46d830154f121be76164bbc9204a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 09:15 UTC",
+  "generated_at": "2026-11-12 09:44 UTC",
   "files_total": 8258,
   "code_files": 6091,
   "code_lines": 1059634
@@ -387849,10 +387849,19 @@
   }
  },
  "git": {
-  "sha": "6f90c933209ef722d47bfa222548675557e82c8c",
+  "sha": "2d1020163e2e46d830154f121be76164bbc9204a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2d10201",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): wal_level=logical no container descartável do teste E27 replay",
+    "files": [
+     "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
+    ]
+   },
    {
     "sha": "6f90c93",
     "date": "2026-11-12",
@@ -388205,16 +388214,6 @@
      "scripts/qa/medir-tipografia.cjs",
      "scripts/qa/medir-tipografia.unit.mjs"
     ]
-   },
-   {
-    "sha": "dd991b0",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(ci): SLA de code scanning neutraliza quebra de linha de rule.id/path (#2958)",
-    "files": [
-     "scripts/ci/sla-code-scanning.mjs",
-     "scripts/ci/sla-code-scanning.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388263,6 +388262,10 @@
     2
    ],
    [
+    "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
+    1
+   ],
+   [
     "supabase/functions/external-db-bridge/index.ts",
     1
    ],
@@ -388292,10 +388295,6 @@
    ],
    [
     "src/hooks/analytics/__tests__/useGoalNotifications.idempotencia.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/analytics/useGoalNotifications.ts",
     1
    ]
   ]
