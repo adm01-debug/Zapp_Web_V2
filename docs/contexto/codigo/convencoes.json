@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)",
    "fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)",
    "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS",
    "fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)",
-   "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)",
-   "fix(scripts): guard rodar() contra bun ausente no PATH (#2978)"
+   "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

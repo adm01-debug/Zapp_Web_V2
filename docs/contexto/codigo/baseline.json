@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1c4498d69f13edc8818759c479d1b615a3e8f7e5",
+  "commit": "93bff6705875e75535a54aaa3ec9406299e14033",
   "branch": "main",
-  "data_commit": "2026-11-12T05:18:41-03:00",
+  "data_commit": "2026-11-12T05:34:48-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "93bff67",
+    "data": "2026-11-12",
+    "assunto": "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)"
+   },
    {
     "sha": "1c4498d",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "5829201",
     "data": "2026-11-11",
     "assunto": "fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)"
-   },
-   {
-    "sha": "19ebdd9",
-    "data": "2026-11-11",
-    "assunto": "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)"
    }
   ],
-  "arquivos_mudados_7d": 655,
+  "arquivos_mudados_7d": 656,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -222,6 +222,10 @@
     "mudancas": 11
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 11
+   },
+   {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
    },
@@ -231,10 +235,6 @@
    },
    {
     "arquivo": "RELATORIO_CI.md",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 10
    },
    {
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8414,
+  "arquivos_total": 8415,
   "arquivos_codigo": 4814,
   "linhas_codigo": 891286,
   "rotas": 18,
@@ -326,7 +326,7 @@
   "hooks": 496,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1103,
+  "migrations": 1104,
   "cron_jobs": 26,
   "testes": 2617,
   "workflows": 22,

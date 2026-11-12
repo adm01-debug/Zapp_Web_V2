@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1c4498d69f13edc8818759c479d1b615a3e8f7e5",
+  "sha": "93bff6705875e75535a54aaa3ec9406299e14033",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 08:21 UTC",
-  "files_total": 8256,
-  "code_files": 6089,
-  "code_lines": 1059284
+  "generated_at": "2026-11-12 08:36 UTC",
+  "files_total": 8257,
+  "code_files": 6090,
+  "code_lines": 1059440
  },
  "version": "1.3.2",
- "facts_hash": "8992831bb1b6a19a",
+ "facts_hash": "aedbc6a75a9eac4c",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -326,7 +326,7 @@
   "languages": {
    ".tsx": 2342,
    ".ts": 1892,
-   ".sql": 1303,
+   ".sql": 1304,
    ".mjs": 433,
    ".py": 119,
    ".cjs": 19,
@@ -43252,6 +43252,7 @@
    "supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql",
    "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
    "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
+   "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/migrations/20261111160000_outbound_post_started.sql",
    "supabase/migrations/20261111181000_instance_pause_investigation.sql",
@@ -56224,6 +56225,14 @@
     "objkind": "function",
     "roles": "authenticated",
     "src": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "select",
+    "object": "public",
+    "objkind": "tables",
+    "roles": "anon",
+    "src": "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql"
    },
    {
     "kind": "revoke",
@@ -69974,8 +69983,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1103,
-   "lines": 106602,
+   "files": 1104,
+   "lines": 106758,
    "tables": [
     "audit_logs",
     "departments",
@@ -255940,6 +255949,14 @@
    },
    {
     "kind": "revoke",
+    "privs": "select",
+    "object": "public",
+    "objkind": "tables",
+    "roles": "anon",
+    "src": "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql"
+   },
+   {
+    "kind": "revoke",
     "privs": "all",
     "object": "talkx_campaign_resume_precheck",
     "objkind": "function",
@@ -383772,6 +383789,10 @@
    "path": "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
    "lines": 65
   },
+  "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql": {
+   "path": "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql",
+   "lines": 156
+  },
   "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql": {
    "path": "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "lines": 134,
@@ -387638,10 +387659,20 @@
   }
  },
  "git": {
-  "sha": "1c4498d69f13edc8818759c479d1b615a3e8f7e5",
+  "sha": "93bff6705875e75535a54aaa3ec9406299e14033",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "93bff67",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)",
+    "files": [
+     "scripts/db-audit/grants-baseline.json",
+     "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql"
+    ]
+   },
    {
     "sha": "1c4498d",
     "date": "2026-11-12",
@@ -387991,19 +388022,13 @@
      "scripts/ci/seed-contatos-redesign-local.unit.mjs",
      "scripts/db/seed-contatos-redesign-local.sh"
     ]
-   },
-   {
-    "sha": "2182f81",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)",
-    "files": [
-     "scripts/supabase_snapshot/snapshot.py",
-     "scripts/supabase_snapshot/test_snapshot.py"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/db-audit/grants-baseline.json",
+    3
+   ],
    [
     "supabase/deployment-manifest.json",
     3
@@ -388037,12 +388062,12 @@
     2
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
+    "scripts/maintenance/maintenance.unit.mjs",
     2
    ],
    [
-    "scripts/maintenance/maintenance.unit.mjs",
-    2
+    "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql",
+    1
    ],
    [
     "scripts/e2e-isolated/run.mjs",
@@ -388078,10 +388103,6 @@
    ],
    [
     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    1
-   ],
-   [
-    "docs/ci/README.md",
     1
    ]
   ]
