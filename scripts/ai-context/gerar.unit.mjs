@@ -421,6 +421,9 @@ export const AuthRoutes = () => (<Routes>
   <Route path="/auth" element={<Auth />} />
   <Route path="/2fa" element={<TwoFactorAuth />} />
   <Route path="/painel" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+  <Route path="/area" element={<ProtectedRoute />}>
+    <Route path="x" element={<AdminPanel />} />
+  </Route>
 </Routes>);`);
   });
   const by = Object.fromEntries(read('rotas.json').urls.map((u) => [u.caminho, u]));
@@ -430,4 +433,6 @@ export const AuthRoutes = () => (<Routes>
   assert.equal(by['/admin'].protegida, false, '/admin (<Admin/> sem wrapper) não é protegida');
   assert.equal(by['/painel'].protegida, true, 'wrapper ProtectedRoute continua protegendo');
   assert.deepEqual(by['/painel'].wrappers, ['ProtectedRoute']);
+  assert.equal(by['/area'].protegida, true, 'rota layout com guard único (<ProtectedRoute />) continua protegida');
+  assert.equal(by['/area/x'].protegida, true, 'filha de rota layout protegida herda proteção');
 });
