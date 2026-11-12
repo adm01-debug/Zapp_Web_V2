@@ -127,7 +127,7 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* Restaurados em 2026-11-12 (saíram como órfãos na #1886). */}
-        <SectionCard icon={Sparkles} title="Insights da IA" subtitle="Resumo da inteligência comercial do CRM" tone="purple">
+        <SectionCard icon={Sparkles} title="Insights da IA" subtitle="Ações, abordagem DISC e última interação do CRM" tone="purple">
           <AIInsightsWidget contactId={contactId} />
         </SectionCard>
 

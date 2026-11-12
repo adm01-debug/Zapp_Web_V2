@@ -36,7 +36,6 @@ export interface EvolutionContactProfile {
     wa_version?: string;
   } | null;
   last_seen?: string | null;
-  labels?: string[] | null;
 }
 
 export interface EvolutionContactProfileResult {

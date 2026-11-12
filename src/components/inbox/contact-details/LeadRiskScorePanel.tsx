@@ -96,6 +96,9 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
     });
   };
 
+  const legacyOrigin = initial.leadOrigin && !LEAD_ORIGINS.some((o) => o.value === initial.leadOrigin)
+    ? initial.leadOrigin
+    : null;
   const consentLabel = CONSENT_OPTIONS.find((o) => o.value === draft.consentStatus)?.label ?? 'Não informado';
 
   return (
@@ -148,6 +151,10 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
             <SelectValue placeholder="Selecione a origem" />
           </SelectTrigger>
           <SelectContent>
+            {/* Valor legado gravado fora da lista (ex.: import antigo): aparece em vez de "Selecione". */}
+            {legacyOrigin && (
+              <SelectItem value={legacyOrigin}>{`Outro: ${legacyOrigin}`}</SelectItem>
+            )}
             {LEAD_ORIGINS.map((o) => (
               <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
             ))}
