@@ -2641,7 +2641,7 @@
   {
    "arquivo": "scripts/regras_negocio/test_generate.py",
    "tipo": "pytest",
-   "linhas": 404,
+   "linhas": 420,
    "testa": [],
    "casos": 0
   },

@@ -212,10 +212,11 @@
     "stable_hash",
     "strip_sql_comments",
     "trunc",
+    "unbalanced_fences",
     "upsert_pointer",
     "walk_repo"
    ],
-   "linhas": 2169,
+   "linhas": 2185,
    "tabelas": [],
    "rpcs": [],
    "edges": [],

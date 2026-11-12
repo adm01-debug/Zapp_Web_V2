@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1616f7b73a2bbdf5d3e131e9faba827c014e7a45",
+  "commit": "1c4498d69f13edc8818759c479d1b615a3e8f7e5",
   "branch": "main",
-  "data_commit": "2026-11-12T04:56:52-03:00",
+  "data_commit": "2026-11-12T05:18:41-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1c4498d",
+    "data": "2026-11-12",
+    "assunto": "fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)"
+   },
    {
     "sha": "1616f7b",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "19ebdd9",
     "data": "2026-11-11",
     "assunto": "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)"
-   },
-   {
-    "sha": "1507ad9",
-    "data": "2026-11-11",
-    "assunto": "fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)"
    }
   ],
   "arquivos_mudados_7d": 655,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8414,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891254,
+  "linhas_codigo": 891286,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -660,7 +660,7 @@
   },
   "scripts/regras_negocio": {
    "arquivos": 3,
-   "linhas": 2810
+   "linhas": 2842
   },
   "scripts/supabase_snapshot": {
    "arquivos": 2,
@@ -810,7 +810,7 @@
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
-   "linhas": 2169
+   "linhas": 2185
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
@@ -910,7 +910,7 @@
   "console_log": 412,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 48,
+  "todos": 49,
   "arquivos_acima_500_linhas": 102
  },
  "todos": [
@@ -1198,9 +1198,15 @@
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
-   "linha": 570,
+   "linha": 575,
    "tipo": "TODO",
    "texto": "\", \"http\", \"import\")) and \"://\" not in c:"
+  },
+  {
+   "arquivo": "scripts/regras_negocio/generate.py",
+   "linha": 1849,
+   "tipo": "TODO",
+   "texto": "o resto deste"
   }
  ],
  "alertas": {

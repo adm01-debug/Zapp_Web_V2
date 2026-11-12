@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1616f7b73a2bbdf5d3e131e9faba827c014e7a45` (2026-11-12T04:56:52-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1c4498d69f13edc8818759c479d1b615a3e8f7e5` (2026-11-12T05:18:41-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8414 |
 | arquivos_codigo | 4814 |
-| linhas_codigo | 891254 |
+| linhas_codigo | 891286 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56893 nós · 117568 arestas · 4189 comunidades · grafo do commit `1616f7b7`
-- comunidades maiores: cn (785), lucide-react (784), vitest (607), client.ts (543), ref_https (476), schemas.ts (456), useAuth (452), ref_node_fs (451), react (425), validation.ts (416), inspect.ts (376), @tanstack/react-query (371)
+- 56896 nós · 117574 arestas · 4149 comunidades · grafo do commit `1c4498d6`
+- comunidades maiores: react (1127), cn (862), lucide-react (821), input.tsx (665), ExternalProductManagement.tsx (639), ref_node_fs (518), chat.ts (465), DashboardView.tsx (403), react-router-dom (399), useTalkXSegments.ts (398), e2e-isolated-runtime.unit.mjs (391), validation.ts (293)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `1c4498d` fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)
 - 2026-11-12 `1616f7b` docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS
 - 2026-11-12 `5536177` fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)
 - 2026-11-12 `623f37b` fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `bd62fc9` feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)
 - 2026-11-11 `e408b77` fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)
 - 2026-11-11 `d5835ed` feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)
-- 2026-11-11 `f036006` fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

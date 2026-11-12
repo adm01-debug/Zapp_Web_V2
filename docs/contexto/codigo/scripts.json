@@ -4469,7 +4469,7 @@
   {
    "arquivo": "scripts/regras_negocio/generate.py",
    "descricao": null,
-   "linhas": 2169,
+   "linhas": 2185,
    "env": [],
    "npm_scripts": [],
    "workflows": [
