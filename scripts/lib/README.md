@@ -1,14 +1,11 @@
-# Utilidades compartilhadas pelos scripts de auditoria/CI
+# scripts/lib
 
-`seguranca-processo.mjs` evita repetir, em cada ponto de uso, dois trechos que
-o Sonar cobra de forma independente:
+Biblioteca compartilhada de segurança de processo.
 
-- `resolverExecutavel` — entrega o caminho **absoluto** do binário antes de
-  criar processo filho (`javascript:S4036`). Dispara quando o primeiro
-  argumento da chamada é um literal de string que não começa com prefixo de
-  caminho (`/`, `./`, `..`); nunca olha o `env`. Passar `env: { PATH: '<fixo>' }`
-  não silencia o achado — e troca o binário resolvido.
-- `resolverCaminhoPermitido` — recusa caminho vindo de `argv`/`env` que escape
-  das raízes legítimas (`jssecurity:S8707`, path traversal). Fail-closed: lança.
+`seguranca-processo.mjs` exporta:
+- `resolverExecutavel(cmd)` — resolve binário no PATH sem shell
+- `estaDentro(raiz, caminho)` — verifica contenção de path (imune a symlink escape)
+- `resolverCaminhoPermitido(caminho, rotulo, raizes?)` — valida e resolve caminho
+- `RAIZ_REPO`, `RAIZES_PERMITIDAS` — constantes de raiz do repositório
 
-Teste: `node --test scripts/lib/seguranca-processo.test.mjs`.
+Importado por `scripts/catalog/validate-plan.mjs` e pelos guards de CI.

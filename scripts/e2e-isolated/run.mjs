@@ -636,7 +636,10 @@ export async function runLogin({ outputDirectory, command = spawnSync, scope = '
       routineOwnership = restoreRoutineOwnership({ command: execute, dockerConfig, scope, group, runId, sourceSha,
         anchorId, anchorImage: images.driver, databaseId: database.id, databaseImage: images.postgres,
         volumeName: databaseVolume.source, networkNamespace: network.network_namespace, allowedWritableSources: writable });
-      if (!routineOwnership.confirmed) throw new Error('routine-ownership-failed');
+      if (!routineOwnership.confirmed) {
+        console.error('[ownership] reason:', routineOwnership.reason);
+        throw new Error('routine-ownership-failed');
+      }
     }
     required(psql("notify pgrst, 'reload schema';"), 'schema-cache-reload-failed');
     await pause(2_000);

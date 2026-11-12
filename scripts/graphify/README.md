@@ -1,13 +1,7 @@
-# Graphify — grafo de conhecimento do código
+# scripts/graphify
 
-```bash
-bun run graph:setup
-```
+`setup.sh` — instala e configura o `graphify` para análise do grafo de dependências
+do repositório.
 
-Instala o [graphify](https://pypi.org/project/graphifyy/) (`uv tool install`
-ou `pipx install`, o que estiver disponível) e configura o grafo neste clone.
-Requer Linux, macOS ou WSL e `uv` ou `pipx` no PATH. Versão fixada em
-`GRAPHIFY_VERSION` (env var, default no script).
-
-Depois de instalado, o grafo fica em `graphify-out/` — ver `docs/agentes/mapa-repo.md`
-para `graphify query`, `graphify path` e `graphify explain`.
+Uso: `bun run graph:setup` (primeira vez) ou `bun run graph:update` após mudanças
+de código. Consultas: `graphify query`, `graphify path`, `graphify explain`.

@@ -1,19 +1,13 @@
-# QA — provas visuais e de contraste
+# scripts/qa
 
-Scripts de verificação visual/QA que não cabem em `ui-audit/` (layout) nem em
-`ci/` (gates puros).
+Scripts de qualidade visual e acessibilidade:
 
-- `prova-visao-classificadores.mjs` — prova de ponta a ponta, contra o
-  ambiente **publicado**, de que `classify-sticker` e `classify-emoji`
-  realmente classificam (não caem no fallback `outros`) e que o consumo
-  aparece em `ai_usage_logs`, correlacionado por baseline antes/depois
-  (IA-032/IA-033, R2-INF-020).
-- `contraste-auditores.unit.mjs` / `contraste-combobox.mjs` /
-  `contraste-contatos.mjs` — auditoria de contraste de cor em telas
-  específicas.
-- `contatos-redesign-baseline.cjs` / `.unit.mjs` — baseline do redesign de
-  Contatos.
-- `medir-tipografia.cjs` + `tipografia-budget.json` — orçamento de tipografia.
-- `prova-orcamento-rate-limit.sh` — prova do orçamento de rate limit.
-
-Teste: `node --test scripts/qa/prova-visao-classificadores.unit.mjs scripts/qa/contatos-redesign-baseline.unit.mjs scripts/qa/contraste-auditores.unit.mjs`.
+- `contraste-auditores.unit.mjs`, `contraste-combobox.mjs`, `contraste-contatos.mjs`
+  — auditoria de contraste de cores
+- `contatos-redesign-baseline.cjs` — baseline visual do redesign de contatos (execução manual)
+- `contatos-redesign-baseline.unit.mjs` — testes automatizados do baseline; cobertos via `ci/qa-vercel-auditores.unit.mjs`
+- `medir-tipografia.cjs` — mede métricas tipográficas contra os thresholds de `tipografia-budget.json`
+- `prova-orcamento-rate-limit.sh` — smoke test de rate-limit do orçamento
+- `prova-visao-classificadores.mjs` — smoke test manual do fluxo de visão
+- `prova-visao-classificadores.unit.mjs` — smoke test do fluxo de visão executado no CI (`node --test`)
+- `tipografia-budget.json` — thresholds de métricas tipográficas consumidos por `medir-tipografia.cjs`
