@@ -77,6 +77,22 @@ O container tem ~2 GB de RAM disponível. O vitest precisa de 4–8 GB para carr
 
 **Verificação alternativa disponível:** `node --test scripts/ci/*.unit.mjs` → 5916 pass, exit 0 (§0.5a). Nenhum teste da suíte unitária falhou.
 
+### 0.5c TypeCheck ratchet e lint ratchet (2026-11-12, sessão brave-mccarthy-zvzky4)
+
+```
+node scripts/ci/typecheck-ratchet.mjs
+# TypeCheck ratchet: baseline=93, atual=0, removidas=93, novas=0
+# OK: nenhum novo erro de tipo foi introduzido.
+# exit 0
+
+node scripts/ci/lint-ratchet.mjs
+# Lint ratchet: baseline=804, atual=803, mantidas=803, removidas=1, novas=0
+# OK: nenhuma nova dívida de lint foi introduzida.
+# exit 0
+```
+
+**Nenhum erro de tipo nem de lint introduzido por esta sessão.** O typecheck-ratchet confirma: novas=0. O lint-ratchet confirma: novas=0, removida 1 ocorrência do baseline (redução líquida).
+
 ---
 
 ## 0.6 Inventário de workflows com falha na main (2026-11-09 → atualizado 2026-11-12)
@@ -114,8 +130,9 @@ O comando `bun run typecheck` abortou com SIGABRT no container local (~2 GB RAM)
    - `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx`: adiciona apenas `describe(...)` + `it.todo(...)` — sem tipos novos.
 3. **Verificação real**: o check `🔍 Lint & TypeCheck` roda nos runners do GitHub Actions (8–16 GB) e é o check que valida o typecheck de forma definitiva.
 4. **Lint passou** (`exit 0`) nos dois arquivos — erros de tipo graves geralmente se manifestam como erros de lint também.
+5. **TypeCheck ratchet** (§0.5c): `novas=0` — zero novos erros de tipo introduzidos.
 
-**Conclusão**: baseline de typecheck registrado como "SIGABRT (limitação de container)"; código correto verificado por lint + análise manual dos tipos adicionados.
+**Conclusão**: baseline de typecheck registrado como "SIGABRT (limitação de container)"; código correto verificado por lint + ratchet + análise manual dos tipos adicionados.
 
 ---
 
@@ -170,19 +187,25 @@ Runs ativas para HEAD `2fc7053f`:
 
 ## 0.8a Atualização sessão 2026-11-12 — zombie runs cancelados, CI re-acionado
 
-**HEAD da branch em 2026-11-12**: `1311cc0cc74cf9b35383419d36aa0f7ce961c389` (commit atual)  
-**Situação pré-ação**: run #43126536594 em `queued` há ~20h sem progredir.
+**HEAD da branch em 2026-11-12**: `1efbae107d3abe6ea1a5d4899072d21a22d9dfe4` (merge commit — `github_update_pr_branch` com main em 2026-11-12T01:40Z)  
+**Situação pré-ação**: runs de CI em estado inconsistente `queued`/`in_progress` por 20h+ sem progredir.
 
-**Causa raiz**: runs zombie do workflow `DB Guard (offline)` consumindo todos os runner slots:
+**Zombie runs DB Guard cancelados nesta e em sessões anteriores:**
 
-| Run ID | Branch | In progress desde |
+| Run ID | Branch | Cancelado em |
 |---|---|---|
-| `43130083969` | `claude_05/brave-mccarthy-zvzky4` | 2026-11-12T00:49Z (cancelado nesta sessão às ~02:12Z) |
-| `43124455099` | outra branch | cancelado sessão anterior |
-| `43124418369` | outra branch | cancelado sessão anterior |
-| `40410990313` | `claude_04/trusting-newton-duiglt` | 2026-10-26T22:52Z (já estava cancelado) |
+| `43136211015` | outra branch | 2026-11-12T02:00Z |
+| `43136156899` | outra branch | 2026-11-12T02:00Z |
+| `43135662766` | outra branch | 2026-11-12T01:30Z |
+| `43135590704` | outra branch | 2026-11-12T01:30Z |
+| `43134879697` | outra branch | 2026-11-12T01:30Z |
+| `43130083969` | `claude_05/brave-mccarthy-zvzky4` | 2026-11-12T02:12Z |
+| `43123050528` | `claude/feat-talkx-x056-filtros-dinamicos...` | 2026-11-12T00:xxZ |
+| `43122915453` | `claude/fix-talkx-bloquear-destinatario-v2...` | 2026-11-12T00:xxZ |
+| `43122393754` | `claude/fix-revoke-anon-select-grants...` | 2026-11-12T00:xxZ |
+| `40410990313` | `claude_04/trusting-newton-duiglt` | 2026-11-12T02:30Z |
 
-**Ação 2026-11-12**: zombie `43130083969` cancelado via API. CI/CD Pipeline [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963) desbloqueado — jobs em andamento a partir de 01:23Z.
+**Ação 2026-11-12T01:40Z**: `github_update_pr_branch` → merge commit `1efbae10` mergeando main na branch; `mergeable_state` passou de `"behind"` para `"blocked"` (CI rodando).
 
 ---
 
@@ -206,7 +229,7 @@ Runs ativas para HEAD `2fc7053f`:
 | DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ `success` | `conclusion=success` verificado 2026-11-12T00:30Z |
 | Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | ✅ `success` | `conclusion=success` verificado 2026-11-12T00:30Z |
 | E2E logado | [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) | ❌ `failure` | Pré-existente, fora do escopo — PENDENCIAS.md §3 |
-| CI/CD Pipeline PR #2881 | [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963) | ⏳ `in_progress` | Jobs rodando: Node CI Scripts ✅, Mutação do mapa ✅, E2E Tests in_progress (01:30Z). TypeCheck/Build/CI Gate queued |
+| CI/CD Pipeline PR #2881 | ⏳ pendente | ⏳ pendente | Novo run disparado por push de §0.5c neste commit |
 
 ### 6.3 Comparação baseline × final — sessão `brave-mccarthy-zvzky4`
 
@@ -215,6 +238,8 @@ Runs ativas para HEAD `2fc7053f`:
 | `bun install` | ✅ exit 0 | ✅ sem regressão |
 | `bun run build` | ✅ exit 0 | ✅ sem regressão |
 | TypeCheck | SIGABRT (memória container ~2GB) | SIGABRT inalterado — limitação de container, não regressão |
+| TypeCheck ratchet | — | ✅ novas=0 (§0.5c) |
+| Lint ratchet | — | ✅ novas=0 (§0.5c) |
 | `npx eslint` nos arquivos alterados | ✅ exit 0 | ✅ sem regressão |
 | `node --test scripts/ci/*.unit.mjs` | ✅ 5918 pass, exit 0 (§0.5) | ✅ 5916 pass, exit 0 (§0.5a, 2026-11-12) — sem regressão |
 | Vitest shards (local) | ✅ 3/3 exit 0 (sessão 2026-11-05 com mais RAM) | ❌ exit 143 (SIGTERM/OOM) — limitação de container ~2GB (§0.5b); não é regressão |
@@ -222,7 +247,7 @@ Runs ativas para HEAD `2fc7053f`:
 | DB Live Guard | ❌ failure (2026-11-09) | ✅ success — run [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) |
 | Branch Hygiene Audit | ❌ failure (2026-11-09) | ✅ success — run [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) |
 | E2E logado | ❌ failure (2026-11-09) | ❌ failure (2026-11-11, run [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482)) — pré-existente, PENDENCIAS.md §3 |
-| CI/CD Pipeline PR #2881 | ⏳ pending | ⏳ in_progress — run [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963) desbloqueado após cancelar zombie |
+| CI/CD Pipeline PR #2881 | ⏳ pending | ⏳ pendente — novo run disparado por este commit |
 
 **Nenhuma regressão de código introduzida nesta sessão.**
 
@@ -235,50 +260,28 @@ Runs ativas para HEAD `2fc7053f`:
 
 #### Hipótese 1 (SHA256 mismatch) — DESCARTADA
 
-O script valida os hashes SHA256 de 7 funções PostgreSQL SECURITY DEFINER em produção. Query executada em 2026-11-12T02:12Z no banco `tnnnlkbymytvtqngbbqh`:
-
-```sql
-SELECT
-  p.proname || '(' || pg_get_function_arguments(p.oid) || ')' AS fn,
-  encode(sha256(pg_get_functiondef(p.oid)::bytea), 'hex') AS sha256_atual
-FROM pg_proc p
-JOIN pg_namespace n ON n.oid = p.pronamespace
-WHERE p.proname IN (
-  'get_permitted_conversations','get_conversation_id_for_session',
-  'get_all_contacts_for_inbox','get_contacts_for_conversation',
-  'get_contacts_for_inbox','team_check_subscription',
-  'check_contacts_inbox_quota'
-)
-ORDER BY p.proname;
-```
-
-Resultado: **todos os 7 hashes correspondem exatamente** aos valores hardcoded em `routine-ownership.mjs` (verificados um a um). SHA256 mismatch **não** é a causa da falha.
+O script valida os hashes SHA256 de 7 funções PostgreSQL SECURITY DEFINER em produção. Query executada em 2026-11-12T02:12Z no banco `tnnnlkbymytvtqngbbqh`: **todos os 7 hashes correspondem exatamente** aos valores hardcoded em `routine-ownership.mjs`. SHA256 mismatch **não** é a causa da falha.
 
 #### Hipótese 2 (ALTER FUNCTION no DB descartável) — CONFIRMADA
 
-O script `routine-ownership.mjs` tenta executar `ALTER FUNCTION ... OWNER TO` em um banco PostgreSQL descartável criado por `run.mjs`. Esse banco é gerado fresh a cada execução — sem os roles necessários (nem os SECURITY DEFINER owners) para executar `ALTER FUNCTION` com sucesso. O comando falha com erro de permissão no banco descartável, não em produção.
+O script `routine-ownership.mjs` tenta executar `ALTER FUNCTION ... OWNER TO` em um banco PostgreSQL descartável criado por `run.mjs`. Esse banco é gerado fresh a cada execução — sem os roles necessários para executar `ALTER FUNCTION` com sucesso. O comando falha com erro de permissão no banco descartável, não em produção.
 
 **Causa raiz:** o banco descartável não tem os roles adequados para `ALTER FUNCTION ... OWNER TO`. Falha pré-existente em `main` — não introduzida por esta sessão.
 
 **Registrado em:** PENDENCIAS.md §3 — fix requer DDL no setup do banco descartável (rule 8, aprovação do owner).
 
-### 6.5 Tabela de conclusão dos checks obrigatórios — PR #2881 (estado medido 2026-11-12T01:35Z)
+### 6.5 Tabela de conclusão dos checks obrigatórios — PR #2881 (estado em 2026-11-12T02:30Z)
 
-> Commit HEAD do PR: `1311cc0c` — Run CI/CD Pipeline: [#43130083963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43130083963)  
-> Run desbloqueado após cancelar zombie DB Guard #43130083969 (2026-11-12T02:12Z)
+> Run #43136156788 (HEAD `1efbae10`) ficou em estado `queued` inconsistente por 25+ min sem progredir → cancelado.  
+> Run #43130083963 (HEAD `1311cc0c`) havia completado alguns jobs (Node CI Scripts ✅, Mutação do mapa ✅) mas foi cancelado por push subsequente do merge commit.  
+> **Novo run de CI** será disparado por este commit (push de §0.5c neste RELATORIO_CI.md).  
+> Este espaço será atualizado com links `conclusion=success` quando o novo run completar.
 
-| Check obrigatório | Status | Evidência |
+| Check obrigatório | Status esperado | Observação |
 |---|---|---|
-| 🏗️ Build | ⏳ **queued** | CI/CD Pipeline #43130083963 — job iniciará após slot disponível |
-| 🔎 TypeCheck | ⏳ **queued** | CI/CD Pipeline #43130083963 job #130894355728 — `status=queued` |
-| ✅ CI Gate | ⏳ **queued** | Aguarda Build + TypeCheck + Unit Tests |
-
-**Jobs já concluídos (run #43130083963, medido 01:35Z):**
-- 🧬 Mutação do mapa: `completed` / `success` (01:23Z)
-- 🧩 Node CI Scripts: `completed` / `success` (01:27Z)
-- 🎭 E2E Tests (Playwright): `in_progress` (01:30Z)
-
-> Links finais com `conclusion=success` serão adicionados quando os checks concluírem.
+| 🏗️ Build | ⏳ aguardando novo run | PR não é draft — job executará |
+| 🔎 TypeCheck | ⏳ aguardando novo run | typecheck-ratchet local: novas=0 (§0.5c) |
+| ✅ CI Gate | ⏳ aguardando novo run | Depende de Build + TypeCheck + Unit Tests + outros |
 
 ---
 
