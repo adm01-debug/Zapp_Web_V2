@@ -116,7 +116,7 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <TrendingUp className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-            <span id={`lead-score-${contactId}`} className="text-xs font-medium">Lead score</span>
+            <span className="text-xs font-medium">Lead score</span>
           </div>
           <span data-testid="lead-score-value" className={cn('text-lg font-bold tabular-nums', leadScoreClass(draft.leadScore))}>
             {draft.leadScore}
@@ -127,7 +127,7 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
           onValueChange={([v]) => setDraft((d) => ({ ...d, leadScore: v }))}
           max={100}
           step={5}
-          aria-labelledby={`lead-score-${contactId}`}
+          thumbLabel="Lead score"
         />
       </div>
 
@@ -135,7 +135,7 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <ShieldAlert className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-            <span id={`risk-score-${contactId}`} className="text-xs font-medium">Risk score</span>
+            <span className="text-xs font-medium">Risk score</span>
           </div>
           <span data-testid="risk-score-value" className={cn('text-lg font-bold tabular-nums', riskScoreClass(draft.riskScore))}>
             {draft.riskScore}
@@ -146,7 +146,7 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
           onValueChange={([v]) => setDraft((d) => ({ ...d, riskScore: v }))}
           max={100}
           step={5}
-          aria-labelledby={`risk-score-${contactId}`}
+          thumbLabel="Risk score"
         />
       </div>
 
