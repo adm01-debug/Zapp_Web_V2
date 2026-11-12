@@ -70,8 +70,6 @@ interface ChatPanelProps {
   hasOlderMessages?: boolean;
   loadingOlderMessages?: boolean;
   onLoadOlderMessages?: () => Promise<void> | void;
-  /** Grupo de WhatsApp da conversa (mensagens com contact_id NULL) — repassado ao painel C110. */
-  groupId?: string | null;
 }
 
 /**
@@ -199,7 +197,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onReopenConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages, groupId }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onReopenConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -473,7 +471,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
         <ConversationDeliverySummary messages={messages} onFocusState={handleFocusDeliveryState} />
         <SendErrorBanner messages={messages} onSendMessage={onSendMessage} />
         {/* C110: mensagens com entrega ambígua (POST iniciado, recibo nunca confirmado). */}
-        <UnconfirmedMessagesPanel contactId={conversation.contact.id} groupId={groupId} />
+        <UnconfirmedMessagesPanel contactId={conversation.contact.id} />
 
         <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
           typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}

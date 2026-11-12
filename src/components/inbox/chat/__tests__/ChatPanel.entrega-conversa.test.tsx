@@ -312,17 +312,9 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
     expect(screen.getByTestId('conversation-delivery-summary')).toBeInTheDocument();
   });
 
-  it('C110: painel de entrega ambígua recebe o contato e, em conversa de grupo, o groupId', () => {
+  it('C110: painel de entrega ambígua recebe o contato da conversa', () => {
     painelC110.props = [];
     renderPanel([]);
-    expect(painelC110.props[painelC110.props.length - 1]).toMatchObject({ contactId: 'contato-1', groupId: undefined });
-
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={queryClient}>
-        <ChatPanel conversation={conversation} messages={[]} onSendMessage={vi.fn()} groupId="grupo-1" />
-      </QueryClientProvider>,
-    );
-    expect(painelC110.props[painelC110.props.length - 1]).toMatchObject({ contactId: 'contato-1', groupId: 'grupo-1' });
+    expect(painelC110.props[painelC110.props.length - 1]).toMatchObject({ contactId: 'contato-1' });
   });
 });
