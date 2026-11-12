@@ -20,7 +20,7 @@
 |---|---|---|---|
 | Telas e rotas | 85 | 79 | 6 |
 | Edge functions | 94 | 80 | 14 |
-| Banco (RLS, advisors, migrations) | 8 | 8 | 0 |
+| Banco (RLS, advisors, migrations) | 9 | 7 | 2 |
 | GitHub Actions | 29 | 23 | 6 |
 | Integrações externas | 15 | 8 | 7 |
 | Produção ao vivo | 12 | 10 | 2 |
@@ -56,9 +56,9 @@ Cada PR acima tem teste que falha antes e passa depois, e revisão independente 
 
 | PR | por quê |
 |---|---|
-| [#2996](https://github.com/adm01-debug/Zapp_Web_V2/pull/2996) | migration 20261112130000 (resolução manual só para `sending`) + edges — aprovada pelo dono; na fila, apply após merge e deploy |
-| [#3013](https://github.com/adm01-debug/Zapp_Web_V2/pull/3013) | migration: filtro "Cancelado" dos destinatários Talk X — aprovada pelo dono; na fila |
-| [#3014](https://github.com/adm01-debug/Zapp_Web_V2/pull/3014) | migration: endurecimento de `talkx_suppression_reasons` e índice — aprovada pelo dono; na fila |
+| [#2996](https://github.com/adm01-debug/Zapp_Web_V2/pull/2996) | migration 20261112170000 (resolução manual só para `sending`) + edges — aprovada pelo dono; na fila, apply após merge e deploy |
+| [#3013](https://github.com/adm01-debug/Zapp_Web_V2/pull/3013) | migration 20261112171000: filtro "Cancelado" dos destinatários Talk X — aprovada pelo dono; na fila |
+| [#3014](https://github.com/adm01-debug/Zapp_Web_V2/pull/3014) | migration 20261112172000: endurecimento de `talkx_suppression_reasons` e índice — aprovada pelo dono; na fila |
 
 ## 5. BLOQUEADO — depende do dono
 
@@ -197,7 +197,7 @@ Todas as 54 entradas de `lazyViews.ts` resolvem para arquivo existente com o exp
 | item | status | prova |
 |---|---|---|
 | Inventário contexto × código (contagens) | OK | rotas.json: 18 urls = 18 `<Route>` em AppRoutes.tsx:93-159; 55 vistas = 54 VIEW_MAP + 1 SPECIAL (achievements); 61 menu = 53 itens em navigation.service.ts (10 primários :56-65, 34 em grupos :75-147, 9 avançados :155-163) + 8 rótulos Gmail. Script: "nav sem view: []"; "view sem nav: ['public-api','talkx-kit']". Nenhum item de menu sem destino. Destinos de navegação fora do VIEW_MAP achados no código são abas internas (`goals`/`team` = abas do Dashboard, DashboardView.tsx:80,83) ou redirect legado (`pipeline`/`tags`, useNavigationHistory.ts:98-112) — não são menus quebrados. |
-| Produção = HEAD e rotas no bundle | OK | Vercel prod `81f67b0db` READY; 18/18 `path:` no bundle `index-CFJIkylk.js` (244734B); 18/18 chunks lazy de página HTTP 200. |
+| Produção = HEAD e rotas no bundle | BLOQUEADO (desatualizado — ver auditoria; revalidar no fechamento) | Vercel prod `81f67b0db` READY; 18/18 `path:` no bundle `index-CFJIkylk.js` (244734B); 18/18 chunks lazy de página HTTP 200. |
 | E2E de navegação por todos os módulos (Y09) na main | BLOQUEADO | e2e/navegacao-modulos.spec.ts:1329 ("abre as 42 entradas mapeadas…") **falhou 3x (retry #1, #2)** na última suíte logada concluída da main: workflow e2e-logado.yml run 43216785856 (sha d8854eb31), job 131186396197 `authenticated-2-of-3` → `{"success":false,"code":"browser-suite-failed"}`; artefato `results-summary.json`: `reasons: [PLAYWRIGHT_REPORT_INVALID_SHAPE]`, `browser-result-diagnostic.json`: `error_code: ETIMEDOUT`, relatório Playwright ausente (ENOENT) → asserção exata que falhou não está no artefato. Issue aberta #2913 "[e2e-logado] Suíte logada quebrada na main". Run de 81f67b0db (43235977461) ainda `pending`. Os 2 commits depois de d8854eb31 só tocam docs e playwright.config.ts:1 linha (geolocation chromium-mapa). |
 | `rotas.json` fiel ao roteador (flag `protegida`) | BLOQUEADO | rotas.json marca `/auth` e `/2fa` como `protegida: true`, mas AppRoutes.tsx:95 e :100 não têm `ProtectedRoute` (wrappers `[]` no próprio JSON). Causa: scripts/ai-context/gerar.mjs:341 testa `/Protected\|Private\|Auth\|Guard\|Require\|Admin/i` sobre `tags` que inclui o próprio componente → `Auth` e `TwoFactorAuth` casam com `Auth`. Agentes que leem o contexto recebem rota pública como protegida. |
 
@@ -341,10 +341,11 @@ Base: worktree `main` @ `81f67b0db`. Coleta 2026-11-12, só leitura (Management 
 | B1. Tabelas com grant anon/authenticated têm RLS + ≥1 policy | OK | 211 tabelas em `public`; 187 com grant (has_table_privilege) → todas `relrowsecurity=true` e policies≥1; 0 violações (`bad=[]`). |
 | B1. Tabelas sem policy (RLS on, 0 policies) | OK | 18 tabelas — todas sem nenhum grant a anon/authenticated (has_table_privilege=false para S/I/U/D); batem 1:1 com as 18 lints INFO `rls_enabled_no_policy` do advisor. |
 | B1. Views expostas | OK | 13 views com grant a authenticated, todas `security_invoker=true/on` (reloptions) → herdam RLS das tabelas base; advisor sem `security_definer_view`. |
-| B1. Grant a anon | OK | Só `password_reset_requests` (anon:INSERT) — RLS on, 5 policies. |
+| B1. Grant a anon | OK | Recorte SELECT/INSERT/UPDATE/DELETE: só `password_reset_requests` (anon:INSERT) — RLS on, 5 policies. |
+| B1b. MAINTAIN para anon | BLOQUEADO | `has_table_privilege('anon', oid, 'MAINTAIN')` = 104 relações de `public` (consulta de 2026-11-12). `information_schema.table_privileges` não lista MAINTAIN, por isso a amostragem B1 não pegou. Revogar é DDL de permissão em produção → decisão do dono. |
 | B2. Advisor segurança — ERROR | OK | `GET .../advisors/security` HTTP 200: 220 lints, 0 ERROR. WARN=202, INFO=18. |
 | B2. Advisor performance — ERROR | OK | `GET .../advisors/performance` HTTP 200: 860 lints, 0 ERROR. WARN=505, INFO=355. |
-| B3. Migrations repo x ledger | OK | `supabase/migrations/*.sql` (raiz; `_foreign/` 10 e `_superseded/` 13 ignorados por `docs/agentes/banco.md:90`) = 1105 arquivos, 1105 versões únicas, 0 sem prefixo; `supabase_migrations.schema_migrations` = 1105 versões (min 20251215024517, max 20261111181000). Faltando no banco: 0. Sobrando no banco: 0. |
+| B3. Migrations repo x ledger | BLOQUEADO | Em 2026-11-12 ~21h o ledger passou a 1106 versões (max `20261112160000 talkx_blacklist_reconcilia_e_higiene`) e a `main` `b2813f832` tem 1105 arquivos: a versão sobrando vem da PR [#3027](https://github.com/adm01-debug/Zapp_Web_V2/pull/3027), de outro agente, aberta e não mergeada (DDL aplicado antes do merge). Resolve quando a #3027 for mergeada. Medição anterior: `supabase/migrations/*.sql` (raiz; `_foreign/` 10 e `_superseded/` 13 ignorados por `docs/agentes/banco.md:90`) = 1105 arquivos, 1105 versões únicas, 0 sem prefixo; `supabase_migrations.schema_migrations` = 1105 versões (min 20251215024517, max 20261111181000). Faltando no banco: 0. Sobrando no banco: 0. |
 
 ## B2. Contagem de lints
 
@@ -614,7 +615,7 @@ Resultado: **29 itens · 23 OK · 6 BLOQUEADO** (28 workflows ativos + 1 linha �
 | db-guard.yml | OK | run main `43224335290` (push, 81f67b0db) `success`. Os 10 últimos runs da main estão verdes. |
 | deploy-functions.yml | OK | run main `43189662194` (push, 6f90c9332) `success`. Os 8 últimos estão verdes. |
 | codeql.yml | OK | run `43192262198` (schedule, 2026-11-12 09:31) `success`. Os 8 últimos, diários, estão verdes. |
-| front-release-targets.yml | OK | run `43226278493` (schedule, 81f67b0db) `success`. Os 8 últimos estão verdes. |
+| front-release-targets.yml | OK (com falha intermitente) | Runs `43257829418` (cfa8959b9) e `43288958082` (cca5655b8) `failure` no step "Confirmar release V2 no alias Vercel": o agendado demora na fila e compara o alias com o SHA antigo do agendamento (`scripts/vercel/verify-release-targets.mjs`). Último run `43318816243` (b2813f832, 22:19Z) `success`. |
 | talkx-status-regen.yml | OK | run `43224335250` (push, 81f67b0db) `success`. |
 | settings-guard.yml | OK | run `43174279420` (schedule, 2026-11-12 07:18) `success`. Os 8 últimos estão verdes. |
 | branch-hygiene-audit.yml | OK | run `42582604190` (schedule, 2026-11-09) `success`. O cron de 02/11 (`41409678874`) também está verde. |
@@ -666,7 +667,7 @@ Coleta: 2026-11-12 ~14:25 UTC. Base: `main` @ `81f67b0db` (worktree limpo). Prod
 | IA — configuração (provedores, chaves, orçamento) | OK | `ai_providers` ativos: DeepSeek (`deepseek-v4-flash`, default, `DEEPSEEK_API_KEY`), GLM (`glm-5.3`, `GLM_API_KEY`), OpenRouter (`google/gemini-3.8-flash`, `OPENROUTER_API_KEY`); os 3 secrets existem. Orçamento: funções `ai_budget_reserve/settle/release/reconcile` existem; `ai_budget_reservations` 6 linhas, todas `released` (nenhuma presa); cron `searchbox-budget-alert` 1/1 OK; `ai_usage_outbox` 4 processadas, 0 pendentes. |
 | IA — chamada real a provedor LLM | BLOQUEADO | `ai_usage_logs`: último `success` de `ai-proxy` em 2026-09-15. Depois: OpenRouter `HTTP 402` (2026-10-01, sem crédito), DeepSeek `HTTP 402` (2026-09-30) e `HTTP 401` (2026-10-02 voice-agent, 2026-10-05 ai-proxy). `DEEPSEEK_API_KEY` foi trocada em 2026-10-06T11:56, mas **nenhuma chamada LLM registrada desde então** (30 dias: só ElevenLabs). Provar exige invocar `ai-proxy`, que grava `ai_usage_logs` e gasta crédito — proibido nesta varredura. `ai_jobs` 7d = 0. **Falta: 1 chamada real autorizada; crédito OpenRouter (dono).** |
 | IA voz — ElevenLabs TTS | BLOQUEADO | `ai_usage_logs`: `elevenlabs-tts` `error` "ElevenLabs HTTP 401" (2026-11-07T20:25, modelo `eleven_v3`); `elevenlabs-scribe-token` 7 `success` (último 2026-11-10). Mesma `ELEVENLABS_API_KEY` (upd 2026-08-27) funciona para STT e não para TTS → permissão/plano da chave. **Falta: dono revisar escopo/plano da chave ElevenLabs.** |
-| Vercel — deploy de produção do último commit da `main` | OK | `GET /v6/deployments?projectId=prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp&teamId=...&target=production&limit=3` → `dpl_DnngsBgz7em3qwXDjXnmwRh2JfbF` **READY**, sha `81f67b0db663d171686a85a1549e43099258d01c` (2026-11-12T13:07 UTC); `git ls-remote ... refs/heads/main` = mesmo sha. `https://zapp-web-v2.vercel.app/` HTTP 200; `/version.json` → `{"buildId":"81f67b0db663..."}`. Anteriores READY: `65cf385`, `d8854eb`. |
+| Vercel — deploy de produção do último commit da `main` | BLOQUEADO (desatualizado — ver auditoria; revalidar no fechamento) | `GET /v6/deployments?projectId=prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp&teamId=...&target=production&limit=3` → `dpl_DnngsBgz7em3qwXDjXnmwRh2JfbF` **READY**, sha `81f67b0db663d171686a85a1549e43099258d01c` (2026-11-12T13:07 UTC); `git ls-remote ... refs/heads/main` = mesmo sha. `https://zapp-web-v2.vercel.app/` HTTP 200; `/version.json` → `{"buildId":"81f67b0db663..."}`. Anteriores READY: `65cf385`, `d8854eb`. |
 | Cron jobs (pg_cron) | OK | `cron.job`: 27 jobs, 27 ativos. `cron.job_run_details` 24h: 9.803 execuções, **0 `failed`** (ex.: `dispatch-scheduled-messages` 1440/1440, `talkx-scheduler-1min` 1440/1440, `connection-health-check` 288/288). `net._http_response` (janela 08:25–14:24 UTC): 1.260 respostas, todas HTTP 200. Ressalva: "succeeded" não garante efeito — ver CRM outbox (no-op). |
 
 ### Bloqueios que dependem do dono
