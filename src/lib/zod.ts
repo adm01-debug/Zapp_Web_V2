@@ -1,3 +1,4 @@
+import './zodJitless';
 import { z } from 'zod';
 
 /**
@@ -16,6 +17,8 @@ import { z } from 'zod';
  * perceptível). A configuração precisa rodar ANTES de qualquer schema ser
  * definido — por isso mora aqui, no módulo que os definidores importam.
  */
+// A configuração em si mora em `./zodJitless` (também 1º import de `main.tsx`);
+// reafirmada aqui para quem usar `@/lib/zod` fora do app (testes, scripts).
 z.config({ jitless: true });
 
 export { z };
