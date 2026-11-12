@@ -13,7 +13,8 @@
     "gruntfuggly.todo-tree",
     "github.copilot",
     "ms-vscode.vscode-typescript-next",
-    "wayou.vscode-todo-highlight"
+    "wayou.vscode-todo-highlight",
+    "ms-edgedevtools.vscode-edge-devtools"
   ],
   "unwantedRecommendations": []
 }
