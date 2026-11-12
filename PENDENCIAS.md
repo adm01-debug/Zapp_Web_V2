@@ -1,6 +1,7 @@
 # PENDÊNCIAS DE CI
 
 > Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.
+> Atualizado em 2026-11-12 pela sessão `brave-mccarthy-zvzky4` (§5 adicionado).
 > Atualizar quando os bloqueios forem resolvidos.
 
 ---
@@ -93,3 +94,38 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
 2. Para cada alerta: corrigir o código (PR de fix) ou dispensar com justificativa se for falso positivo.
 3. Após fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
+
+---
+
+## 5. DB Guard (offline) — zombie runs bloqueiam CI do PR #2881
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/db-guard.yml` (workflow_id 344052670) |
+| Padrão recorrente | Runs ficam `in_progress` indefinidamente porque o runner `self-hosted` rotulado `offline` não responde. Consomem todos os slots do plano gratuito do GitHub Actions, travando todos os outros workflows (`in_progress`/`queued`). |
+| Impacto nesta sessão | CI/CD Pipeline do PR #2881 (run #43125697334) ficou `pending` por ~20 h sem progredir. |
+| Causa raiz | O `db-guard.yml` dispara em `pull_request` mas o runner `offline` nunca pega o job. Não há `timeout-minutes` configurado no job, então o run fica aberto até o limite de 35 dias da API. |
+| Por que não posso corrigir definitivamente | Desabilitar workflow, adicionar `timeout-minutes` ou migrar runner envolve CI/workflows (AGENTS.md regra 8) — requer aprovação do dono. |
+
+**Runs cancelados nesta sessão (2026-11-12T00:xx Z):**
+
+| Run ID | Branch | Criado em |
+|---|---|---|
+| 43123050528 | `claude/feat-talkx-x056-filtros-dinamicos-kit-261108-1200` | 2026-11-11T23:52Z |
+| 43122915453 | `claude/fix-talkx-bloquear-destinatario-v2-261111` | 2026-11-11T23:50Z |
+| 43122393754 | `claude/fix-revoke-anon-select-grants-261108-2300` | 2026-11-11T23:46Z |
+| 40410990313 | `claude_04/trusting-newton-duiglt` | 2026-10-26T22:15Z (já cancelado) |
+
+**Runs cancelados em sessão anterior (2026-11-12T00:00 Z):**
+
+| Run ID | Branch | Criado em |
+|---|---|---|
+| 43121695754 | `claude/feat-talkx-analytics-rpc-front-26111108-2200` | 2026-11-11T23:41Z |
+| 43121311648 | `claude/chore-scripts-docs-testes-261108-2048` | 2026-11-11T23:35Z |
+| 43121058569 | `main` | 2026-11-11T23:31Z |
+
+### O que o dono precisa fazer
+
+1. Adicionar `timeout-minutes: 10` ao job `guard` em `.github/workflows/db-guard.yml` para que runs com runner offline expirem automaticamente em vez de acumular.
+2. **Ou** migrar o runner para `ubuntu-latest` (GitHub-hosted) se o job `DB Guard (offline)` não depende de recursos locais do runner.
+3. Após a correção, dispatchar `db-guard.yml` manualmente para confirmar que o job termina (success ou failure) em vez de ficar `in_progress`.
