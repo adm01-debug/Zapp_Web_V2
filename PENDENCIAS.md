@@ -6,63 +6,23 @@
 
 ---
 
-## 1. Deploy Edge Functions - manifesto desatualizado
+## RESOLVIDOS (antes em falha, agora verdes)
 
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/deploy-functions.yml` |
-| Ultima run com falha | [#41883030015 (commit `afd8c7ca`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) |
-| Erro exato | `Deployment manifest is stale: supabase/deployment-manifest.json` |
-| Causa | PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707) adicionou `ai-usage-outbox-drain` mas ainda nao foi mergeada. O `generate-manifest.mjs` que atualiza `supabase/deployment-manifest.json` esta dentro do proprio PR. |
-| Por que nao posso corrigir agora | PR #2707 contem migration DDL - requer aprovacao do dono (AGENTS.md regra 8). |
-
-### O que o dono precisa fazer
-
-1. Revisar e mergear o PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707).
-2. Apos o merge, o `deploy-functions.yml` sera disparado automaticamente pelo push na `main` e devera passar.
-3. Se o deploy ainda falhar apos o merge, dispatchar manualmente `deploy-functions.yml` via GitHub Actions.
-
----
-
-## 2. DB Live Guard - drift de migrations em producao
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/db-live-guard.yml` |
-| Ultima run com falha | [#42039646275 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039646275) |
-| Issue de alerta | [#1965](https://github.com/adm01-debug/Zapp_Web_V2/issues/1965) (aberta desde 2026-10-16) |
-| Passo que falha | `Comparar migrations com schema_migrations` |
-| Causa raiz | Drift entre arquivos `.sql` em `supabase/migrations/` e registros em `schema_migrations` no banco de producao. |
-
-**Detalhes do drift (medido em 2026-11-05 no commit `341d3fda`, 1082 arquivos x 1079 registros):**
-
-| Versao | Arquivo | Situacao |
+| Workflow | Ultimo run verde | Conclusao |
 |---|---|---|
-| `20261026240300` | `20261026240300_drop_bkp_261023.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
-| `20261102012400` | `20261102012400_login_attempts_retencao_90d.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
-| `20261102032200` | `20261102032200_revoga_execute_public_cron_schedule.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
-| `20261102012200` | `20261102012200_department_invites_restringe_escrita.sql` | **Conteudo SQL divergente** (arquivo != ledger) |
-| `20261103201500` | `20261103201500_remove_pagamentos_e_special_agent.sql` | **Conteudo SQL divergente** (arquivo != ledger) |
-
-### Por que nao posso corrigir agora
-
-Envolve DDL em banco de producao (AGENTS.md regra 8) - requer aprovacao explicita do dono. As 3 migrations pendentes precisam de apply; as 2 divergentes precisam de diagnostico antes de qualquer acao.
-
-### O que o dono precisa fazer
-
-1. Para as 3 **sem registro**: verificar se o DDL e seguro aplicar hoje e, se sim, executar via `db_query` do MCP `SUPABASE - ZAPP WEB V2 - MCP`.
-2. Para as 2 **divergentes**: comparar `pg_get_functiondef` / `pg_indexes` / `pg_constraint` no banco com o SQL do arquivo para decidir se o banco ou o arquivo e a fonte correta. Referencia: `docs/MIGRATIONS.md`.
-3. Apos resolver, dispatchar novamente `db-live-guard.yml` para confirmar verde.
+| Deploy Edge Functions | [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) (2026-11-12) | `success` |
+| DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) (2026-11-09) | `success` |
+| Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) (2026-11-09) | `success` |
 
 ---
 
-## 3. E2E logado - job authenticated: routine-ownership-failed (sub-fase: scope)
+## 1. E2E logado - routine-ownership-failed (sub-fase: scope)
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
 | Run original | [#42039283192 (`341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
-| Run mais recente analisada | [#43148791130 (`71123cc0`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43148791130) |
+| Run mais recente analisada | [#43158859764 (`13a00e06`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43158859764) |
 | Jobs com falha | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` |
 | Jobs que passam | `deslogado-principal` OK, `deslogado-secundario` OK |
 | Codigo JSON de saida | `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}` |
@@ -125,86 +85,105 @@ if (!routineOwnership.confirmed) {
 }
 ```
 
-**Evidencia:** diff local confirmado (`git diff` mostra `+  console.error('[ownership] reason:', routineOwnership.reason);`); commitado e pushado na branch `claude/fix-ci-workflows-261112-0400`.
+**Evidencia:** commitado em `5b796e70d` e pushado na branch `claude/fix-ci-workflows-261112-0400`.
 
 ### O que o dono precisa fazer
 
-1. **Verificar `scope`** - apos a correcao, re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` (exige runners disponiveis — ver §7). Os logs do CI agora mostrarao `[ownership] reason: scope-failed` (ou outro reason), confirmando a sub-fase. Se `reason: scope-failed`, verificar no `run.mjs` se `scope` e `'suite'` ou `'authenticated-suite'` na chamada de `restoreRoutineOwnership` (~linha 635).
-2. **Verificar `anchorId === databaseId`** - confirmar se grupos authenticated recebem os mesmos container IDs.
-3. **Apos corrigir a causa raiz** - re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` e confirmar que os 3 grupos authenticated passam.
+1. **Verificar `scope`** - apos a correcao, re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` (exige runners disponiveis - ver paragrafo 5). Os logs do CI agora mostrarao `[ownership] reason: scope-failed` (ou outro reason), confirmando a sub-fase. Se `reason: scope-failed`, verificar no `run.mjs` se `scope` e `'suite'` ou `'authenticated-suite'` na chamada de `restoreRoutineOwnership` (~linha 635).
+2. **Apos corrigir a causa raiz** - re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` e confirmar que os 3 grupos authenticated passam.
 
-> **Bloqueio atual**: validacao final requer runners disponiveis (quota esgotada — ver §7) e credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` configuradas como secrets (Rule 8).
-
----
-
-## 4. Branch Hygiene Audit - SLA de alertas de code scanning
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/branch-hygiene-audit.yml` |
-| Run com falha | [#42062235088 (commit `d985c7fc`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) |
-| Passo que falha | Step 6 "SLA dos alertas de code scanning (W83)" |
-| Causa raiz | Alertas de code scanning (CodeQL) em aberto ha mais tempo do que o limite de SLA configurado. Condicao **temporal e pre-existente** - nao introduzida por esta sessao. |
-| Por que nao posso corrigir agora | Fechar/dispensar alertas de code scanning e decisao de seguranca do dono. |
-
-### O que o dono precisa fazer
-
-1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
-2. Para cada alerta: corrigir o codigo (PR de fix) ou dispensar com justificativa se for falso positivo.
-3. Apos fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
+> Bloqueio atual: validacao final requer runners disponieis (quota esgotada - ver paragrafo 5) e credenciais E2E_TEST_EMAIL/E2E_TEST_PASSWORD configuradas como secrets (Rule 8).
 
 ---
 
-## 5. DB Guard - run zombie incancelavel via API
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/db-guard.yml` |
-| Run zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) |
-| Em `in_progress` desde | 2026-10-26T22:15Z (run_attempt=14) |
-| Comportamento da API | HTTP 409 em todos os cancelamentos via API REST |
-| Impacto | Ocupa 1 slot de runner permanentemente |
-
-### O que o dono precisa fazer
-
-1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313
-2. Clicar em **"Cancel workflow"** na interface do GitHub.
-
----
-
-## 6. Types Sync - gate de usage-guard bloqueado
+## 2. Types Sync - gate de usage-guard bloqueado
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/types-sync.yml` |
 | Run com falha | [#43121058346](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43121058346) |
 | Erro exato | `"A sincronizacao foi bloqueada por um ou mais gates."` |
-| Causa raiz | Gate 2 (`usage-guard`) bloqueou a sincronizacao. Causa raiz: drift no banco (§2 acima). |
-| Dependencia | Dependente da resolucao do §2 (DB Live Guard). |
+| Causa raiz | Gate 2 (`usage-guard`) bloqueou a sincronizacao. Causa raiz: drift no banco. |
 
 ### O que o dono precisa fazer
 
-1. Resolver o §2 (aplicar as 5 migrations pendentes/divergentes no banco).
-2. Apos o banco sincronizado, dispatchar `types-sync.yml` via `workflow_dispatch` na `main`.
+1. Verificar se o drift de migrations foi resolvido (o DB Live Guard passou no run #42678012070).
+2. Dispatchar `types-sync.yml` via `workflow_dispatch` na `main`.
 3. Confirmar `conclusion=success`.
 
 ---
 
-## 7. PR #2975 - required checks bloqueados por runner pool esgotado
+## 3. Front release targets (V2/V3) - deploy Vercel nao atualizou no prazo
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/verify-release-targets.yml` |
+| Run com falha | [#43133746925 (commit `bd62fc9d`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43133746925) |
+| Erro exato | `V2 ainda em 7e128bc40305; esperado bd62fc9d9771` |
+| Causa raiz | O script `scripts/vercel/verify-release-targets.mjs` aguarda 30 tentativas x 10s (5 min) para o Vercel atualizar o deploy. O deploy V2 nao completou nesse prazo. |
+| Por que nao posso corrigir | Exige verificar se o deploy Vercel esta travado (Vercel billing/quota) ou se o timeout do script precisa ser aumentado. Ambos podem envolver decisao de infra (Rule 8). |
+
+### O que o dono precisa fazer
+
+1. Verificar no painel Vercel se o projeto `zapp-web-v2` tem deploy em andamento ou falho para o commit `bd62fc9d`.
+2. Se o deploy falhou no Vercel: verificar logs do build no painel Vercel.
+3. Se o deploy esta atrasado: verificar quota/billing do Vercel.
+4. Apos deploy confirmado, re-dispatchar `verify-release-targets.yml`.
+
+---
+
+## 4. Contexto para agentes de IA (10 min) - nenhum job iniciou
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/contexto.yml` |
+| Run com falha | [#43095079516 (commit `f036006a`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43095079516) |
+| Sintoma | `conclusion=failure`, `failed_jobs: []` -- nenhum job iniciou |
+| Causa raiz | Runner pool esgotado (quota GitHub Actions minutes do plano free: 2.000 min/mes). Os jobs ficaram queued sem runner disponivel e o workflow expirou ou foi forcado a falhar pela propria logica de timeout. |
+| Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 - infra). |
+
+### O que o dono precisa fazer
+
+1. Resolver o bloqueio de runners (ver secao 5 - quota esgotada).
+2. Apos runners disponiveis, o workflow sera disparado automaticamente a cada 10 min pelo schedule.
+
+---
+
+## 5. PR #2975 - required checks bloqueados por runner pool esgotado
 
 | Campo | Valor |
 |---|---|
 | PR | [#2975](https://github.com/adm01-debug/Zapp_Web_V2/pull/2975) |
 | Estado | OPEN, MERGEABLE, mergeStateStatus=BLOCKED |
 | HEAD | `ed00ee85114be3b2c0c7ae8405c748f3124274de` |
-| Required checks bloqueados | `🔎 TypeCheck`, `🏗️ Build`, `✅ CI Gate`, `🔒 Security Audit`, `🦕 Edge contracts`, `🛡️ Workflow lint`, `🎭 E2E Tests`, `🧩 Node CI Scripts`, `Replay local das migrations` |
-| Status de todos os jobs | `queued` — nunca iniciados |
-| Causa raiz | Quota de GitHub Actions minutes esgotada (plano free: 2.000 min/mês). Os jobs ficam `queued` indefinidamente sem runner disponivel. |
-| Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 — infra). |
+| Required checks bloqueados | TypeCheck, Build, CI Gate, Security Audit, Edge contracts, Workflow lint, E2E Tests, Node CI Scripts, Replay local das migrations |
+| Status de todos os jobs | queued - nunca iniciados |
+| Causa raiz | Quota de GitHub Actions minutes esgotada (plano free: 2.000 min/mes). Os jobs ficam queued indefinidamente sem runner disponivel. |
+| Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 - infra). |
 
 ### O que o dono precisa fazer
 
 1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/settings/billing (ou Settings > Billing and plans) e verificar o consumo de GitHub Actions minutes.
 2. Comprar minutes adicionais ou aguardar o proximo ciclo de faturamento (reinicia no inicio do mes).
 3. Apos runners disponiveis, o PR #2975 tera CI executado automaticamente. Se CI passar, mergear com squash.
-4. Apos merge, confirmar que o deploy Vercel subiu e que PENDENCIAS.md e RELATORIO_CI.md estao na `main`.
+4. Apos merge, confirmar que o deploy Vercel subiu e que PENDENCIAS.md e RELATORIO_CI.md estao na main.
+
+---
+
+## 6. DB Guard - run zombie incancelavel via API
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/db-guard.yml` |
+| Run zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) |
+| Branch | claude_04/trusting-newton-duiglt (pull_request event - NAO e run na main) |
+| Em in_progress desde | 2026-10-26T22:15Z (run_attempt=14) |
+| Comportamento da API | HTTP 409 em todos os cancelamentos via API REST |
+| Impacto | Ocupa 1 slot de runner permanentemente; aparece na aba is:failure do GitHub |
+
+Nota: este run nao e da branch main - e um run de pull_request em branch externa. Nao afeta o estado da main.
+
+### O que o dono precisa fazer
+
+1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313
+2. Clicar em "Cancel workflow" na interface do GitHub.
