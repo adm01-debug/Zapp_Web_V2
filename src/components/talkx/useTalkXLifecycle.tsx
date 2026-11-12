@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- TL-054A (X050): o contrato do cartão mantém o controlador, o texto (`talkXLifecycleCopy`) e o diálogo único no mesmo arquivo. */
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import {
@@ -150,13 +150,50 @@ export const talkXLifecycleCopy: Record<TalkXLifecycleKind, TalkXLifecycleCopy> 
 
 const ENVIO_NAO_ACEITO = 'O envio não foi aceito. Tente novamente.';
 
+/** Operações de `useTalkX` que o controlador usa. */
+export type TalkXLifecycleOps = Pick<
+  ReturnType<typeof useTalkX>,
+  'startCampaign' | 'pauseCampaign' | 'cancelCampaign' | 'updateCampaign'
+>;
+
+/**
+ * Ganchos opcionais da tela. Sem eles o controlador se comporta como sempre (as
+ * outras telas não mudam): o diálogo mostra `error.message` e nada acontece além
+ * de fechar no sucesso.
+ */
+export interface TalkXLifecycleOptions {
+  /** Depois do aceite (diálogo já fechado): toast de sucesso, voltar, etc. */
+  onSuccess?: (intent: TalkXLifecycleIntent) => void;
+  /** Texto do erro mostrado no diálogo (ex.: tradução do erro cru da Edge). */
+  errorMessage?: (intent: TalkXLifecycleIntent, error: unknown) => string;
+}
+
+/** Controlador com as operações de `useTalkX` da própria tela (sem abrir outro canal realtime). */
 export function useTalkXLifecycle(): TalkXLifecycleController {
+  return useTalkXLifecycleWith(useTalkX());
+}
+
+/**
+ * Mesmo controlador, recebendo as operações de quem já chamou `useTalkX()`: cada
+ * chamada de `useTalkX` abre um canal realtime `talkx:campaigns` — a tela que já tem
+ * o hook passa as funções em vez de instanciar de novo.
+ */
+export function useTalkXLifecycleWith(
+  ops: TalkXLifecycleOps,
+  options: TalkXLifecycleOptions = {},
+): TalkXLifecycleController {
   const {
     startCampaign,
     pauseCampaign,
     cancelCampaign,
     updateCampaign,
-  } = useTalkX();
+  } = ops;
+  // Os ganchos podem ser funções novas a cada render: ficam num ref para o `confirm`
+  // continuar estável (as telas usam `close`/`confirm` em dependências de efeito).
+  const optionsRef = useRef(options);
+  useLayoutEffect(() => {
+    optionsRef.current = options;
+  });
 
   const [intent, setIntent] = useState<TalkXLifecycleIntent | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -229,18 +266,25 @@ export function useTalkXLifecycle(): TalkXLifecycleController {
     pendingRef.current = true;
     setIsPending(true);
     setError(null);
+    let accepted = false;
     try {
       await runAction(intent, reason);
       setIntent(null);
       setReason('');
+      accepted = true;
     } catch (e: unknown) {
       // A intenção fica montada de propósito: o diálogo continua aberto com o
       // erro para a tela tratar e o usuário tentar de novo.
-      setError(e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
+      const translate = optionsRef.current.errorMessage;
+      setError(translate
+        ? translate(intent, e)
+        : e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
     } finally {
       pendingRef.current = false;
       setIsPending(false);
     }
+    // Fora do try: um erro do gancho da tela não pode reabrir o diálogo como falha.
+    if (accepted) optionsRef.current.onSuccess?.(intent);
   }, [intent, reason, runAction]);
 
   const close = useCallback((): boolean => {

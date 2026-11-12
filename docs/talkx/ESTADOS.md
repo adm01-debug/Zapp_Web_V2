@@ -17,7 +17,7 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXAnalytics.tsx` | `327` | `325`, `410` | `322` | — | — | — |
 | `src/components/talkx/TalkXAudienceFilters.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXCampaignPaused.tsx` | `177` | `174` | `170` | — | — | — |
-| `src/components/talkx/TalkXCampaignRunning.tsx` | — | `176`, `477`, `568`, `834` | `170`, `323`, `473`, `562`, `830` | — | — | — |
+| `src/components/talkx/TalkXCampaignRunning.tsx` | — | `172`, `473`, `564`, `821` | `166`, `319`, `469`, `558`, `817` | — | — | — |
 | `src/components/talkx/TalkXCampaignScheduled.tsx` | `121` | `118` | `114` | — | — | — |
 | `src/components/talkx/TalkXCampaignWizard.tsx` | — | — | — | — | `424` | — |
 | `src/components/talkx/TalkXContactSelector.tsx` | — | — | — | — | — | — |
