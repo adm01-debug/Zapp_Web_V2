@@ -30,7 +30,7 @@
 # cada um rotulado HARNESS com a fonte canonica.
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 MIG_DIR="$REPO_ROOT/supabase/migrations"
 
 F_CREATE="$MIG_DIR/20260409013057_7a6fb7ad-d6f8-4517-a461-ef10c0123af1.sql"
