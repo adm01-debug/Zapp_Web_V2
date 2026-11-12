@@ -658,7 +658,7 @@ jobs:
         env:
           TALKX_BLACKLIST_RECONCILIA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-reconcilia.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh
       - name: Simular publicação Realtime da blacklist Talk X com escopo de colunas
         env:
           TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
