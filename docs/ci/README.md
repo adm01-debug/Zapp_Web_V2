@@ -4,12 +4,13 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**21 workflows.**
+**22 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
 | Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch | fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI | a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento | Job Summary com a fila (em voo, proxima, esperando, bloqueadas) | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | branches podaveis, PRs paradas ha mais de 7 dias e SLA dos alertas de code scanning | SLA vencido deixa o job vermelho e publica o diagnostico se o relatorio foi gerado | issue `[branch-hygiene]` no repositorio | — | — |
+| Talk X PR body check | [`check-talkx-pr-body.yml`](../../.github/workflows/check-talkx-pr-body.yml) | pull_request em main (opened, synchronize, reopened e edited) | valida a definição de pronto das etapas Talk X pelo título e corpo da PR | check fica vermelho com a seção ausente ou incompatível com a etapa | autor e revisores pelo check do GitHub | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (diário) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security | — | — |
 | Contexto para agentes de IA (10 min) | [`contexto.yml`](../../.github/workflows/contexto.yml) | push em main que toque código, banco, scripts das automações ou docs/contexto/regras/manual/; a cada 10 min (minuto 3); dispatch | branch contexto com docs/contexto/{codigo,supabase,regras}/ regerados das três fontes de verdade (código em main, banco oficial, código+migrations+manual/) e docs/contexto/00-INDEX.md montado a partir dos manifests | falha fatal de produtor reprova o workflow; fontes com artefato publicam e as demais mantêm a última versão; erro de download impede a publicação | ninguém (a branch contexto é a prova; errors.md em supabase/ e erros_do_gerador em codigo/ listam seções com falha) | — | — |
@@ -45,6 +46,13 @@
 - **O que prova:** branches podaveis, PRs paradas ha mais de 7 dias e SLA dos alertas de code scanning
 - **Quando falha:** SLA vencido deixa o job vermelho e publica o diagnostico se o relatorio foi gerado
 - **Quem é avisado:** issue `[branch-hygiene]` no repositorio
+
+### Talk X PR body check (`check-talkx-pr-body.yml`)
+
+- **Gatilho:** pull_request em main (opened, synchronize, reopened e edited)
+- **O que prova:** valida a definição de pronto das etapas Talk X pelo título e corpo da PR
+- **Quando falha:** check fica vermelho com a seção ausente ou incompatível com a etapa
+- **Quem é avisado:** autor e revisores pelo check do GitHub
 
 ### CI/CD Pipeline (`ci.yml`)
 

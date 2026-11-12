@@ -261,7 +261,7 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         await supabase.from("gmail_accounts").update({ token_expires_at: expiresAt }).eq("id", account_id);
 
         log.done(200, { action });
-        return jsonResponse({ success: true, access_token: tokens.access_token, expires_at: expiresAt }, 200, req);
+        return jsonResponse({ success: true, expires_at: expiresAt }, 200, req);
       }
 
       case "disconnect": {
