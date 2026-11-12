@@ -56,6 +56,10 @@ Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa sã
   }
   assert(SEND_ACTIONS.has("send-text"));
   assert(SEND_ACTIONS.has("send-ptv"));
+  assert(SEND_ACTIONS.has("mark-unread"), "mark-unread: mutação de UMA conversa, mesmo escopo do mark-read");
+  assert(SEND_ACTIONS.has("send-template"), "send-template: envio com destinatário (gate de contato)");
+  assert(SEND_ACTIONS.has("offer-call"), "offer-call: toque para um número (gate de contato)");
+  assert(READ_ACTIONS.has("invite-info"), "invite-info: prévia de convite, leitura sem configuração");
 });
 
 Deno.test("R2EXT-STATUS: send-status é controle (não tem contato-alvo para gate por visibilidade)", () => {
@@ -84,7 +88,9 @@ Deno.test("R2EXT-AGENDA: leitura instance-wide e configuração do provedor exig
   // credencial do provedor: todas restritas a admin/supervisor.
   // (SL-075 removeu integrações e rotas legadas do handler.)
   const movedToControl = [
-    "find-contacts", "find-messages",
+    "find-contacts", "find-messages", "find-status-messages",
+    "get-settings", "set-settings", "get-webhook", "set-presence", "toggle-ephemeral",
+    "find-chats", "create-template", "find-templates", "delete-template", "get-catalog", "get-collections",
     "get-media-base64",
     "fetch-profile", "fetch-profile-picture", "fetch-business-profile",
     "find-labels",
