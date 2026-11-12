@@ -159,7 +159,7 @@ jobs:
       # scripts/inventario/gerar-repo.unit.mjs roda o gerar-repo.mjs, que exige o ripgrep
       # (mesmo passo do inventario-estado-semanal.yml).
       - name: Instalar ripgrep (usado pelo gerar-repo.mjs)
-        run: command -v rg || sudo apt-get install -y --no-install-recommends ripgrep
+        run: command -v rg || { sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ripgrep; }
 
       - name: 🧩 Run Node CI scripts tests
         run: >-
