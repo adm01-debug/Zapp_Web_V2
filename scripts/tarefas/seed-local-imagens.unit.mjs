@@ -8,7 +8,9 @@ const SCRIPT = fileURLToPath(new URL('./seed-local-imagens.ts', import.meta.url)
 const RAIZ = path.resolve(path.dirname(SCRIPT), '../..');
 
 function rodar(env = {}) {
-  return spawnSync('bun', [SCRIPT], { cwd: RAIZ, encoding: 'utf8', env });
+  const r = spawnSync('bun', [SCRIPT], { cwd: RAIZ, encoding: 'utf8', env });
+  assert.equal(r.error, undefined, 'bun encontrado no PATH');
+  return r;
 }
 
 test('recusa execucao com API_URL ausente', () => {
