@@ -32,11 +32,10 @@ function fontes(dir: string): string[] {
 }
 
 /**
- * Órfãs com correção em PR separado ainda não integrado. Depois do merge a
- * entrada fica inócua (a ação passa a existir) e pode sair desta lista.
- *  - find-status-messages: restaurada no PR #2999.
+ * Órfãs com correção em PR separado ainda não integrado (cada entrada exige
+ * justificativa). Vazia: find-status-messages foi restaurada no #2999.
  */
-const ORFAS_COM_CORRECAO_PENDENTE = new Set(['find-status-messages']);
+const ORFAS_COM_CORRECAO_PENDENTE = new Set<string>([]);
 
 /** Usos dinâmicos aceitos: arquivo → ações possíveis (conferidas) + justificativa. */
 const DINAMICOS_PERMITIDOS: Record<string, { acoes: string[]; motivo: string }> = {

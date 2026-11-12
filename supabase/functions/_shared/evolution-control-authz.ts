@@ -86,6 +86,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   // agente) e de configuração/credencial do provedor passam a exigir
   // admin/supervisor. (SL-075 removeu integrações e rotas legadas do handler.)
   'find-contacts', 'find-messages',
+  // Status/Stories lidos de `status@broadcast`: instance-wide (de toda a base),
+  // mesma regra de find-messages — admin/supervisor.
+  'find-status-messages',
   // configuração da instância/conexão (restauradas após o #2054: têm tela)
   'get-settings', 'set-settings', 'get-webhook',
   // restauradas após o #2054 (decisão do dono): conversas do aparelho (instance-wide),

@@ -88,7 +88,7 @@ Deno.test("R2EXT-AGENDA: leitura instance-wide e configuração do provedor exig
   // credencial do provedor: todas restritas a admin/supervisor.
   // (SL-075 removeu integrações e rotas legadas do handler.)
   const movedToControl = [
-    "find-contacts", "find-messages",
+    "find-contacts", "find-messages", "find-status-messages",
     "get-settings", "set-settings", "get-webhook", "set-presence", "toggle-ephemeral",
     "find-chats", "create-template", "find-templates", "delete-template", "get-catalog", "get-collections",
     "get-media-base64",
