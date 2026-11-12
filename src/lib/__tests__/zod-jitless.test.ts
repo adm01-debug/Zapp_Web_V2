@@ -19,15 +19,25 @@ function arquivosFonte(dir: string): string[] {
   });
 }
 
+/** Especificadores do Zod v4 que carregam o compilador (`zod/v3` fica de fora). */
+const ZOD_V4 = String.raw`zod(?:\/v4(?:\/(?:core|mini|classic))?|\/mini)?`;
+
 /**
- * `true` se a fonte importa ou reexporta um VALOR de `zod`, `zod/v4` ou
- * `zod/mini` (named, namespace, default, `export … from`). `import type` e
- * listas só com `type X` não contam: tipo não executa nada. `zod/v3` (legado,
- * sem compilador) fica de fora.
+ * `true` se a fonte importa ou reexporta um VALOR de `zod`, `zod/v4`,
+ * `zod/v4/core|mini|classic` ou `zod/mini` (named, namespace, default,
+ * `export … from`, com ou sem espaços, e `import('zod')` dinâmico). `import type`
+ * e listas só com `type X` não contam: tipo não executa nada. Comentários de
+ * bloco são removidos antes (um `/* … *\/` no começo da linha não esconde o
+ * import). `zod/v3` (legado, sem compilador) fica de fora.
  */
 function importaValorDoZod(fonte: string): boolean {
-  const declaracao = /^\s*(import|export)\s+(type\s+)?([^;'"]*?)\s*from\s*['"]zod(?:\/v4|\/mini)?['"]/gm;
-  for (const m of fonte.matchAll(declaracao)) {
+  const semComentarios = fonte.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  if (new RegExp(String.raw`\bimport\s*\(\s*['"\x60]${ZOD_V4}['"\x60]\s*\)`).test(semComentarios)) return true;
+  const declaracao = new RegExp(
+    String.raw`^\s*(import|export)(?=[\s{*])(\s+type(?=[\s{]))?\s*([^;'"]*?)\s*from\s*['"]${ZOD_V4}['"]`,
+    'gm',
+  );
+  for (const m of semComentarios.matchAll(declaracao)) {
     if (m[2]) continue; // import type / export type
     const clausula = m[3].trim();
     const soChaves = clausula.match(/^\{([\s\S]*)\}$/);
@@ -49,7 +59,7 @@ describe('@/lib/zod — Zod sem eval (CSP sem unsafe-eval)', () => {
   });
 
   it('nenhum módulo do app importa VALOR do Zod v4 direto (só via @/lib/zod)', () => {
-    const permitidos = new Set([join('lib', 'zod.ts'), join('lib', 'zodJitless.ts')]);
+    const permitidos = new Set([join('lib', 'zod.ts')]);
     const diretos = arquivosFonte(SRC)
       .filter((f) => !permitidos.has(relative(SRC, f)))
       .filter((f) => importaValorDoZod(readFileSync(f, 'utf8')))
@@ -69,6 +79,16 @@ describe('@/lib/zod — Zod sem eval (CSP sem unsafe-eval)', () => {
       "export * from 'zod/v4';",
       "import {\n  z,\n  type ZodError,\n} from 'zod';",
       "import React from 'react';\nimport type { A } from 'zod';\nimport { z } from 'zod/v4';",
+      "import{z}from'zod';",
+      'import{z}from"zod/v4"',
+      "import { config } from 'zod/v4/core';",
+      "import { object } from 'zod/v4/mini';",
+      "import { z } from 'zod/v4/classic';",
+      "const z = await import('zod');",
+      "const m = import( 'zod/v4' );",
+      "/* comentário */ import { z } from 'zod';",
+      "/**\n * doc\n */ import * as z from 'zod';",
+      "export*from'zod';",
     ];
     const ignora = [
       "import type { ZodType } from 'zod';",
@@ -78,6 +98,12 @@ describe('@/lib/zod — Zod sem eval (CSP sem unsafe-eval)', () => {
       "import { z } from 'zod/v3';",
       "import { zodResolver } from '@hookform/resolvers/zod';",
       "import React from 'react';\nimport type { ZodType } from 'zod';",
+      "import type{ ZodType }from'zod';",
+      "import type { $ZodConfig } from 'zod/v4/core';",
+      "const m = import('zod/v3');",
+      "// import { z } from 'zod';",
+      "/* import { z } from 'zod'; */",
+      "import { zodish } from 'zodiac';",
     ];
     for (const fonte of pega) expect(importaValorDoZod(fonte), fonte).toBe(true);
     for (const fonte of ignora) expect(importaValorDoZod(fonte), fonte).toBe(false);
