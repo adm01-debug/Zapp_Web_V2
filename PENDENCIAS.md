@@ -108,3 +108,24 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 1. Acessar [https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) e clicar em **"Cancel workflow"** na interface do GitHub (UI tem permissões diferentes da API REST).
 2. Se não funcionar via UI: contatar suporte do GitHub para limpar o run zombie (`workflow_run_id=40410990313`).
 3. Após cancelar: runs CI Gate que ficam stuck como este deverão ser liberados automaticamente.
+
+---
+
+## 6. GitHub Actions — runner pool esgotado (bloqueio total de CI)
+
+| Campo | Valor |
+|---|---|
+| Verificado em | 2026-11-12T03:30Z |
+| Sintoma | 9 runs `queued` + 1 run `pending` no `ci.yml`; **nenhum run `in_progress`** em toda a conta |
+| Runs afetados | #43144169836 (PR #2881, HEAD `1e078584`), #43144234960 (main), #43144020204 (main), #43143912156, #43143912153, #43143336048, #43143336046, #43143335972, #43143197373 — todos parados sem progresso por 40+ min |
+| Causa diagnóstica | Quota de minutos GitHub Actions do plano free (2.000 min/mês) possivelmente esgotada. Com suítes de ~21 min por run e múltiplos agentes rodando CI simultâneo, a cota se esgota rapidamente. Alternativamente: outage temporário dos runners GitHub-hosted `ubuntu-24.04`. |
+| Impacto | CI Gate do PR #2881 não pode completar — `conclusion=null` indefinidamente enquanto o pool estiver esgotado. |
+| Verificação recomendada | Acessar https://github.com/settings/billing ou https://github.com/organizations/adm01-debug/settings/billing para ver consumo de minutos restantes. |
+
+### O que o dono precisa fazer
+
+1. Verificar saldo de minutos em **https://github.com/settings/billing** (seção "Actions").
+2. Se a cota estiver esgotada: aguardar renovação mensal ou comprar minutos adicionais no plano GitHub Pro/Team.
+3. Se for outage do GitHub: verificar https://www.githubstatus.com/ e aguardar resolução.
+4. Quando os runners estiverem disponíveis novamente: o run #43144169836 retomará automaticamente (jobs já criados). Se não retomar em 1h, fazer `rerun` pelo botão "Re-run all jobs" em https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43144169836.
+5. Após CI verde no run #43144169836: squash-merge a PR #2881 (SHA `1e078584d9cf500864f94a1739df76435f8801bd`).

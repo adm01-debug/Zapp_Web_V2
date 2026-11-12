@@ -220,3 +220,50 @@ Ver `PENDENCIAS.md` §5 para instruções de cancelamento manual via UI do GitHu
 | CI Gate | — | ⏳ novo run em andamento (ver §6.3) |
 
 **Sem regressão em nenhuma verificação. TypeCheck e Build (required checks) com conclusion=success.**
+
+---
+
+## 7. Estado do CI em 2026-11-12T03:30Z — runner pool esgotado
+
+> Run #43144169836 (HEAD `1e078584`, PR #2881) — verificado em 2026-11-12T03:30Z.
+
+### 7.1 Estado do run
+
+| Campo | Valor |
+|---|---|
+| Run ID | [#43144169836](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43144169836) |
+| Status | `queued` |
+| Jobs criados | 10 jobs em `queued` (criados 02:54:49Z, sem progresso por 40+ min) |
+| Conclusion | `null` (CI Gate não completou) |
+| SHA | `1e078584d9cf500864f94a1739df76435f8801bd` |
+
+### 7.2 Diagnóstico do bloqueio
+
+**Nenhum run `in_progress` em toda a conta GitHub Actions.**
+
+| Run ID | Branch | Status | Desde |
+|---|---|---|---|
+| #43144234960 | `main` | queued | 02:51:17Z |
+| #43144169922 | `claude_05/brave-mccarthy-zvzky4` | queued | 02:50:41Z |
+| **#43144169836** | `claude_05/brave-mccarthy-zvzky4` | **queued** | 02:50:41Z |
+| #43144020204 | `main` | pending | 02:49:22Z |
+| #43143912156 | `claude/chore-scripts-docs...` | queued | 02:48:22Z |
+| #43143912153 | `claude/chore-scripts-docs...` | queued | 02:48:22Z |
+| #43143336048 | `claude/fix-ci-main...` | queued | 02:43:15Z |
+| #43143336046 | `claude/fix-ci-main...` | queued | 02:43:15Z |
+| #43143335972 | `claude/fix-ci-main...` | queued | 02:43:15Z |
+| #43143197373 | `main` | queued | 02:41:59Z |
+
+**Causa**: Quota de minutos GitHub Actions esgotada (plano free: 2.000 min/mês) ou outage temporário dos runners `ubuntu-24.04`.  
+Todos os jobs da PR #2881 foram corretamente criados e aguardam apenas disponibilidade de runner — o código está sem regressão e os required checks Build e TypeCheck estão com `conclusion=success` no run #43137999344.
+
+### 7.3 Resumo de bloqueios pendentes
+
+| Item | Bloqueio | Referência |
+|---|---|---|
+| CI Gate `conclusion=success` | Runner pool esgotado (externo, não-código) | §6 acima + PENDENCIAS.md §6 |
+| Deploy Edge Functions | PR #2707 DDL (rule 8) | PENDENCIAS.md §1 |
+| DB Live Guard | Drift migrations produção (DDL, rule 8) | PENDENCIAS.md §2 |
+| E2E logado authenticated | browser-suite-failed, artefato expirado | PENDENCIAS.md §3 |
+| Branch Hygiene Audit | SLA alertas CodeQL pré-existente | PENDENCIAS.md §4 |
+| DB Guard zombie #40410990313 | Incancelável via API, ocupa slot de runner | PENDENCIAS.md §5 |
