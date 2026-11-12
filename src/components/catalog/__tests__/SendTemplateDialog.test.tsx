@@ -1,5 +1,7 @@
 /** Porta de entrada de `send-template` (wrapper sem tela; o #2054 apagou a rota por isso). */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({ sendTemplateMessage: vi.fn() }));
@@ -16,7 +18,8 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-import { montarTemplateEvolution, SendTemplateDialog } from '../SendTemplateDialog';
+import { SendTemplateDialog } from '../SendTemplateDialog';
+import { montarTemplateEvolution } from '../sendTemplatePayload';
 import type { WhatsAppTemplate } from '@/hooks/integrations/useWhatsAppTemplates';
 
 const template = {
@@ -26,6 +29,11 @@ const template = {
 } as WhatsAppTemplate;
 
 beforeEach(() => { vi.clearAllMocks(); });
+
+function render(ui: ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return rtlRender(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
 
 describe('montarTemplateEvolution', () => {
   it('põe as variáveis no componente body, na ordem; sem variáveis, sem componentes', () => {

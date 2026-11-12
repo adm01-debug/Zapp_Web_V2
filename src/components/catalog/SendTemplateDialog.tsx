@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,9 +6,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useConnectionOptions } from '@/hooks/connections/useConnectionOptions';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import type { WhatsAppTemplate } from '@/hooks/integrations/useWhatsAppTemplates';
+import { montarTemplateEvolution } from './sendTemplatePayload';
 
 /**
  * Envio de um template pelo `send-template` da Edge (Evolution v2,
@@ -22,44 +23,26 @@ import type { WhatsAppTemplate } from '@/hooks/integrations/useWhatsAppTemplates
  * Edge confere se o número é um contato visível para quem envia.
  */
 
-interface ConexaoResumo { id: string; name: string; instance_id: string | null }
-
-/** Monta o `template` no formato da Evolution v2 (componente `body` com as variáveis, na ordem). */
-export function montarTemplateEvolution(template: Pick<WhatsAppTemplate, 'name' | 'language'>, valores: string[]) {
-  return {
-    name: template.name,
-    language: template.language,
-    components: valores.length > 0
-      ? [{ type: 'body', parameters: valores.map((text) => ({ type: 'text', text })) }]
-      : [],
-  };
-}
-
 export function SendTemplateDialog({ template, onOpenChange }: {
   template: WhatsAppTemplate | null;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { sendTemplateMessage } = useEvolutionApi();
-  const [conexoes, setConexoes] = useState<ConexaoResumo[]>([]);
-  const [conexao, setConexao] = useState('');
-  const [numero, setNumero] = useState('');
-  const [valores, setValores] = useState<string[]>([]);
-  const [enviando, setEnviando] = useState(false);
-
-  const variaveis = template?.variables ?? [];
-
-  useEffect(() => {
-    if (!template) return;
-    let cancelado = false;
-    setValores(variaveis.map(() => ''));
-    setConexao(template.whatsapp_connection_id ?? '');
-    void supabase.from('whatsapp_connections').select('id, name, instance_id').order('name', { ascending: true })
-      .then(({ data }) => { if (!cancelado) setConexoes((data ?? []) as ConexaoResumo[]); });
-    return () => { cancelado = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reinicia só quando o template muda
-  }, [template]);
-
   if (!template) return null;
+  // `key`: trocar de template remonta o formulário (estado inicial limpo, sem efeito de reset).
+  return <SendTemplateForm key={template.id} template={template} onOpenChange={onOpenChange} />;
+}
+
+function SendTemplateForm({ template, onOpenChange }: {
+  template: WhatsAppTemplate;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { sendTemplateMessage } = useEvolutionApi();
+  const { data: conexoes = [] } = useConnectionOptions();
+  const variaveis = template.variables ?? [];
+  const [conexao, setConexao] = useState(template.whatsapp_connection_id ?? '');
+  const [numero, setNumero] = useState('');
+  const [valores, setValores] = useState<string[]>(() => variaveis.map(() => ''));
+  const [enviando, setEnviando] = useState(false);
 
   const instancia = conexoes.find((c) => c.id === conexao)?.instance_id ?? '';
   const numeroLimpo = numero.replace(/\D/g, '');
