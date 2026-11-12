@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { toast } from 'sonner';
-import { AlertTriangle, Loader2, Settings, Shield, User } from 'lucide-react';
+import { AlertTriangle, Loader2, Radio, Settings, Shield, User } from 'lucide-react';
 import { getLogger } from '@/lib/logger';
 import { SettingsTabContent, PrivacyTabContent } from './InstanceSettingsTabContent';
+import { PresenceTabContent } from './InstancePresenceTab';
 
 const log = getLogger('InstanceSettingsDialog');
 
@@ -191,13 +192,14 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
       <DialogContent aria-describedby={undefined} className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-primary" />Configurações — {connectionName}</DialogTitle>
-          <DialogDescription>Gerencie configurações, perfil e privacidade da instância</DialogDescription>
+          <DialogDescription>Gerencie configurações, perfil, privacidade, e presença da instância</DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="settings">
           <TabsList className="flex w-full justify-start overflow-x-auto">
             <TabsTrigger value="settings" className="shrink-0"><Settings className="w-4 h-4 mr-1" /> Config</TabsTrigger>
             <TabsTrigger value="profile" className="shrink-0"><User className="w-4 h-4 mr-1" /> Perfil</TabsTrigger>
             <TabsTrigger value="privacy" className="shrink-0"><Shield className="w-4 h-4 mr-1" /> Privacidade</TabsTrigger>
+            <TabsTrigger value="presence" className="shrink-0"><Radio className="w-4 h-4 mr-1" /> Presença</TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -234,6 +236,10 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
                 if (Object.keys(privacy).length === 0) return;
                 try { await updatePrivacySettings({ instanceName, ...privacy }); setPrivacy({}); toast.success('Privacidade atualizada!'); } catch { toast.error('Erro ao atualizar'); }
               }} isLoading={isLoading} />
+          </TabsContent>
+
+          <TabsContent value="presence">
+            <PresenceTabContent instanceName={instanceName} />
           </TabsContent>
         </Tabs>
       </DialogContent>
