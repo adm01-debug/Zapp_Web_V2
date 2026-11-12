@@ -219,7 +219,9 @@
     "PR_TITLE"
    ],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "check-talkx-pr-body.yml"
+   ],
    "orfao": false
   },
   {

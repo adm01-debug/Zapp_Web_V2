@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "2942f212856851f55841825205cf98f023103177",
+  "sha": "0d65d57370204a336c5df32c16c2c50ffd7641e0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 05:33 UTC",
-  "files_total": 8255,
+  "generated_at": "2026-11-12 06:00 UTC",
+  "files_total": 8256,
   "code_files": 6089,
   "code_lines": 1059210
  },
  "version": "1.3.2",
- "facts_hash": "12ca296d12f85c88",
+ "facts_hash": "8eb4431ec4b10968",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -162,6 +162,13 @@
     "triggers": [
      "schedule",
      "workflow_dispatch"
+    ]
+   },
+   {
+    "file": ".github/workflows/check-talkx-pr-body.yml",
+    "name": "Talk X PR body check",
+    "triggers": [
+     "pull_request"
     ]
    },
    {
@@ -387621,10 +387628,23 @@
   }
  },
  "git": {
-  "sha": "2942f212856851f55841825205cf98f023103177",
+  "sha": "0d65d57370204a336c5df32c16c2c50ffd7641e0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "0d65d57",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "ci(talkx): ativa validação do corpo das PRs Talk X (#2919)",
+    "files": [
+     ".github/workflows/check-talkx-pr-body.yml",
+     "docs/agentes/github-ci.md",
+     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+     "docs/ci/README.md",
+     "scripts/ci/ci-docs-baseline.unit.mjs"
+    ]
+   },
    {
     "sha": "2942f21",
     "date": "2026-11-12",
@@ -387972,16 +387992,6 @@
      "scripts/docs/verificar-docs-realtime.mjs",
      "scripts/docs/verificar-docs-realtime.test.mjs"
     ]
-   },
-   {
-    "sha": "a7f9d03",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)",
-    "files": [
-     "scripts/db-tests/run-all.mjs",
-     "scripts/db-tests/run-all.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388006,12 +388016,24 @@
     2
    ],
    [
-    "scripts/db-tests/run-all.mjs",
-    2
+    ".github/workflows/check-talkx-pr-body.yml",
+    1
    ],
    [
-    "scripts/db-tests/run-all.unit.mjs",
-    2
+    "docs/agentes/github-ci.md",
+    1
+   ],
+   [
+    "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    1
+   ],
+   [
+    "docs/ci/README.md",
+    1
+   ],
+   [
+    "scripts/ci/ci-docs-baseline.unit.mjs",
+    1
    ],
    [
     "scripts/edge-deploy/redigir-log.mjs",
@@ -388051,18 +388073,6 @@
    ],
    [
     "scripts/db-tests/README.md",
-    1
-   ],
-   [
-    "scripts/docs/README.md",
-    1
-   ],
-   [
-    "scripts/docs/verificar-docs-realtime.unit.mjs",
-    1
-   ],
-   [
-    "scripts/eslint/README.md",
     1
    ]
   ]

@@ -10,7 +10,7 @@
    "JavaScript (459)",
    "Shell (234)",
    "Python (119)",
-   "YAML (29)"
+   "YAML (30)"
   ],
   "linguagem_principal": "TypeScript",
   "framework": "React",
@@ -191,6 +191,32 @@
    "secrets": [],
    "actions": [
     "actions/checkout"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/check-talkx-pr-body.yml",
+   "nome": "Talk X PR body check",
+   "gatilhos": [
+    "pull_request"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "check-body"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/check-talkx-pr-body.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node"
    ]
   },
   {

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2942f212856851f55841825205cf98f023103177",
+  "commit": "0d65d57370204a336c5df32c16c2c50ffd7641e0",
   "branch": "main",
-  "data_commit": "2026-11-12T02:09:48-03:00",
+  "data_commit": "2026-11-12T02:48:58-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0d65d57",
+    "data": "2026-11-12",
+    "assunto": "ci(talkx): ativa validação do corpo das PRs Talk X (#2919)"
+   },
    {
     "sha": "2942f21",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "d1fc5ad",
     "data": "2026-11-11",
     "assunto": "fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)"
-   },
-   {
-    "sha": "090f5f8",
-    "data": "2026-11-11",
-    "assunto": "fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)"
    }
   ],
-  "arquivos_mudados_7d": 651,
+  "arquivos_mudados_7d": 652,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -202,15 +202,15 @@
     "mudancas": 14
    },
    {
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 14
+   },
+   {
     "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 14
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 13
-   },
-   {
-    "arquivo": "docs/ci/README.md",
     "mudancas": 13
    },
    {
@@ -270,6 +270,10 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 8
+   },
+   {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 8
    },
@@ -286,15 +290,11 @@
     "mudancas": 7
    },
    {
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "mudancas": 7
+   },
+   {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "e2e/email-navy-visual.spec.ts",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 7
    }
   ],
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8413,
+  "arquivos_total": 8414,
   "arquivos_codigo": 4814,
   "linhas_codigo": 891212,
   "rotas": 18,
@@ -329,7 +329,7 @@
   "migrations": 1103,
   "cron_jobs": 26,
   "testes": 2617,
-  "workflows": 21,
+  "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
  },
