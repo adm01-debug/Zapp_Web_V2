@@ -126,7 +126,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             <SidebarSection
               index={3} value="intelligence" tone="blue"
               icon={<Brain />} title="Inteligência comercial"
-              subtitle="Risco de churn e melhores horários de contato"
+              subtitle="Briefing, risco de churn e melhores horários de contato"
             >
               <ContactIntelligencePanel contactId={contact.id} />
             </SidebarSection>
