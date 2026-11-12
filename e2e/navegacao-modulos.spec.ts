@@ -79,6 +79,14 @@ interface ItemNav {
   /** Percurso de Tarefas: mesmo menu/título, superfícies Lista e Quadro distintas. */
   modo?: 'Lista' | 'Quadro';
   /**
+   * Selo textual da entrada na barra lateral DESKTOP. O selo entra no nome
+   * acessível do botão — `Multiplix (novo)`, contrato de
+   * `src/components/layout/SidebarNavItem.tsx` (`accessibleLabel`) travado em
+   * `src/components/layout/__tests__/Sidebar.test.tsx`. O menu móvel não pinta o
+   * selo: lá o nome continua sendo só o `label`.
+   */
+  selo?: string;
+  /**
    * Entrada que a barra lateral só mostra para ADMINISTRADOR
    * (`src/services/navigation.service.ts`: `crm360` na linha 70 e `admin` na 121,
    * os dois com `roles: ADMIN_ONLY`). O usuário sintético do conjunto local é
@@ -98,7 +106,7 @@ const PRIMARIOS: ItemNav[] = [
   { id: 'team-chat', label: 'Teams' },
   { id: 'email-chat', label: 'Email' },
   { id: 'contacts', label: 'Contatos' },
-  { id: 'multiplix', label: 'Multiplix' },
+  { id: 'multiplix', label: 'Multiplix', selo: 'NOVO' },
   { id: 'catalog', label: 'Catálogo' },
   { id: 'voip', label: 'Telefonia' },
   { id: 'tasks', label: 'Tarefas', modo: 'Quadro' },
@@ -1124,8 +1132,12 @@ async function abrirSecaoDesktop(page: Page, secao: string): Promise<void> {
 
 async function clicarDesktop(page: Page, item: ItemNav): Promise<void> {
   const nav = page.getByRole('navigation', { name: MENU_DESKTOP });
-  const botao = nav.getByRole('button', { name: item.label, exact: true }).first();
-  await botao.click();
+  const nome = item.selo ? `${item.label} (${item.selo.toLocaleLowerCase('pt-BR')})` : item.label;
+  const botao = nav.getByRole('button', { name: nome, exact: true }).first();
+  // Teto curto e mensagem própria: sem ele, uma entrada ausente pendurava o
+  // clique até o teto do TESTE (22 min) com só o locator no log.
+  await expect(botao, `a entrada "${nome}" não está na barra lateral`).toBeVisible({ timeout: 10_000 });
+  await botao.click({ timeout: 10_000 });
   await expect(
     botao,
     `a entrada "${item.label}" da barra lateral não virou a view ativa`,
