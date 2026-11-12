@@ -155,8 +155,8 @@ describe('ContactIntelligencePanel — briefing pré-contato do CRM', () => {
     const briefing = screen.getByTestId('intelligence-briefing');
     expect(screen.getByText('Briefing pré-contato')).toBeInTheDocument();
     expect(briefing).toHaveTextContent('Retomar o orçamento de canecas enviado em setembro');
-    expect(screen.getByRole('alert')).toHaveTextContent('Cliente reclamou do prazo na última compra');
-    expect(briefing).toHaveTextContent('Último contato12d');
+    expect(screen.getByRole('note', { name: 'Alerta do CRM' })).toHaveTextContent('Cliente reclamou do prazo na última compra');
+    expect(briefing).toHaveTextContent('Último contatohá 12 dias');
     expect(briefing).toHaveTextContent('Interações34');
     expect(briefing).toHaveTextContent('Score78');
   });
@@ -177,10 +177,30 @@ describe('ContactIntelligencePanel — briefing pré-contato do CRM', () => {
     render(<ContactIntelligencePanel contactId="c1" />);
 
     const briefing = screen.getByTestId('intelligence-briefing');
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('note')).toBeNull();
     expect(briefing).toHaveTextContent('Último contato—');
     expect(briefing).toHaveTextContent('Interações0');
     expect(briefing).toHaveTextContent('Score—');
+  });
+
+  it('números em pt-BR e "há 1 dia" no singular', () => {
+    hook.data = fullData({
+      briefing: { opening_tip: 'Oi', risk_alert: null, days_since_last_contact: 1, total_interactions: 1234, relationship_score: 50 },
+    });
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    const briefing = screen.getByTestId('intelligence-briefing');
+    expect(briefing).toHaveTextContent('Último contatohá 1 dia');
+    expect(briefing).toHaveTextContent('Interações1.234');
+  });
+
+  it('dias acima de mil também saem em pt-BR', () => {
+    hook.data = fullData({
+      briefing: { opening_tip: 'Oi', risk_alert: null, days_since_last_contact: 1500, total_interactions: 2, relationship_score: 50 },
+    });
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    expect(screen.getByTestId('intelligence-briefing')).toHaveTextContent('Último contatohá 1.500 dias');
   });
 
   it('score zero é mostrado como 0, não como vazio', () => {

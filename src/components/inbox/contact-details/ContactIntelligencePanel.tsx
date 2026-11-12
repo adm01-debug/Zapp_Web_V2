@@ -27,9 +27,15 @@ interface ContactIntelligencePanelProps {
 // Sub-components
 // ========================
 
+function formatNumber(value: number): string {
+  return value.toLocaleString('pt-BR');
+}
+
 function formatDaysSince(days: number | null | undefined): string {
   if (days == null) return '—';
-  return days === 0 ? 'Hoje' : `${days}d`;
+  if (days === 0) return 'Hoje';
+  if (days === 1) return 'há 1 dia';
+  return `há ${formatNumber(days)} dias`;
 }
 
 function scoreClass(score: number | null | undefined): string {
@@ -48,10 +54,10 @@ function BriefingCard({ briefing }: { briefing: ContactBriefing }) {
   const riskAlert = briefing.risk_alert?.trim();
   const metrics = [
     { label: 'Último contato', value: formatDaysSince(briefing.days_since_last_contact), className: '' },
-    { label: 'Interações', value: briefing.total_interactions != null ? String(briefing.total_interactions) : '—', className: '' },
+    { label: 'Interações', value: briefing.total_interactions != null ? formatNumber(briefing.total_interactions) : '—', className: '' },
     {
       label: 'Score',
-      value: briefing.relationship_score != null ? String(briefing.relationship_score) : '—',
+      value: briefing.relationship_score != null ? formatNumber(briefing.relationship_score) : '—',
       className: scoreClass(briefing.relationship_score),
     },
   ];
@@ -68,7 +74,7 @@ function BriefingCard({ briefing }: { briefing: ContactBriefing }) {
       )}
 
       {riskAlert && (
-        <div role="alert" className="bg-destructive/5 border border-destructive/10 rounded-lg p-2.5">
+        <div role="note" aria-label="Alerta do CRM" className="bg-destructive/5 border border-destructive/10 rounded-lg p-2.5">
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-3.5 h-3.5 text-destructive mt-0.5 shrink-0" aria-hidden="true" />
             <p className="text-xs text-destructive leading-relaxed">{riskAlert}</p>
@@ -159,7 +165,7 @@ function BestTimesSection({ times }: { times: BestTime[] }) {
           <p className="text-3xs text-muted-foreground">{dayNames[t.day_of_week] || '?'}</p>
           <p className="text-xs font-medium">{t.hour}h</p>
           {t.success_rate != null && t.success_rate > 0 && (
-            <p className="text-[9px] text-success">{t.success_rate}%</p>
+            <p className="text-3xs text-success">{t.success_rate}%</p>
           )}
         </div>
       ))}
