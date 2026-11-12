@@ -15,6 +15,7 @@ async function fixture(
     trackedEnv = false,
     formatterEscapes = false,
     nativeTypes = false,
+    roots = ['src'],
   } = {}
 ) {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'maintenance-test-'));
@@ -84,7 +85,7 @@ async function fixture(
           ? ['node', new URL('./typecheck.mjs', import.meta.url).pathname, 'tsconfig.app.json']
           : ['node', 'scripts/gate.mjs', name],
     })),
-    fix: { roots: ['src'], prettier: true, eslintRules: [] },
+    fix: { roots, prettier: true, eslintRules: [] },
     timeoutMs: failure === 'timeout' ? 300 : 5000,
     maxFiles: 20,
     maxChangedLines: 400,
@@ -204,6 +205,15 @@ test('formatter fora do escopo é descartado antes de commit', isolated, async (
     JSON.parse(await readFile(path.join(f.root, 'package.json'), 'utf8')).name,
     'fixture'
   );
+});
+test('root de arquivo único (permitido por validateConfig) não é descartado como fora do escopo', isolated, async (t) => {
+  // validateConfig aceita qualquer `src/...`, inclusive um arquivo exato (não só diretório).
+  // changed() checava escopo com `f.startsWith(root + '/')`, que nunca casa quando root É o
+  // próprio arquivo — a correção legítima e dentro do escopo configurado era descartada.
+  const f = await fixture(t, { roots: ['src/value.ts'] });
+  const result = await main(f.args());
+  assert.equal(result.report.status, 'validated_patch', JSON.stringify(result.report));
+  assert.match(await git(f.root, ['show', `${result.report.commit}:src/value.ts`]), /good/);
 });
 test('código de saída baseline timeout é bloqueante', isolated, async (t) => {
   const f = await fixture(t, { failure: 'timeout' });
@@ -354,4 +364,20 @@ test('comLimpeza: caminho feliz devolve o valor do corpo', async () => {
     async () => {}
   );
   assert.equal(valor, 'valor-do-corpo');
+});
+test('run() nao corrompe caractere UTF-8 multibyte partido entre dois chunks do pipe', async () => {
+  // 'a' (0x61) + 'ã' partido em dois writes (0xC3 | 0xA3) + 'b' (0x62): forca dois
+  // eventos 'data' distintos com o atraso, cada um terminando/comecando no meio
+  // dos bytes do caractere multibyte 'ã'.
+  const script = `
+    process.stdout.write(Buffer.from([0x61, 0xC3]));
+    setTimeout(() => {
+      process.stdout.write(Buffer.from([0xA3, 0x62]));
+      process.exit(0);
+    }, 50);
+  `;
+  const result = await run([process.execPath, '-e', script], process.cwd());
+  assert.equal(result.code, 0);
+  assert.equal(result.output, 'aãb');
+  assert.ok(!result.output.includes('�'), 'saida nao deve conter replacement character');
 });

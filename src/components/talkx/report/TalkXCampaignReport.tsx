@@ -19,6 +19,7 @@ import {
   type TalkXReportRecipientRow,
 } from './talkxReportData';
 import type {
+  TalkXReportFunnelSegment,
   TalkXReportFunnelStep,
   TalkXReportGranularity,
   TalkXReportHeatmapMetric,
@@ -75,12 +76,61 @@ export interface TalkXCampaignReportProps {
   onViewMonitor?: (id: string) => void;
 }
 
+/**
+ * Linha de `by_segment` do RPC talkx_campaign_queue_by_segment (X058).
+ * Contagens por STATUS ATUAL do destinatário: `sent` é só quem parou em 'sent' (quem foi
+ * entregue passou para 'delivered'); `delivered`/`replied` contam os carimbos
+ * delivered_at/replied_at.
+ */
+interface TalkXQueueSegmentRow {
+  segment_id: string | null;
+  segment_name: string;
+  sent?: number;
+  delivered?: number;
+  replied?: number;
+}
+
+/**
+ * "Enviadas" do funil por segmento = todo destinatário que passou do envio
+ * (status 'sent' + 'delivered'). Nunca menor que Entregues/Respondidas: o funil
+ * não pode afunilar ao contrário.
+ */
+function segmentSentCount(row: TalkXQueueSegmentRow): number {
+  const delivered = row.delivered ?? 0;
+  return Math.max((row.sent ?? 0) + delivered, delivered, row.replied ?? 0);
+}
+/** Destinatários sem segmento viram um item próprio do seletor (o Select exige valor). */
+const NO_SEGMENT_ID = 'sem-segmento';
+
 export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor }: TalkXCampaignReportProps) {
   const timeZone = campaign.schedule_timezone || DEFAULT_TIMEZONE;
   const [granularity, setGranularity] = useState<TalkXReportGranularity>('day');
   const [heatmapMetric, setHeatmapMetric] = useState<TalkXReportHeatmapMetric>('replied');
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [segmentId, setSegmentId] = useState<string | null>(null);
   const { canDownload } = useDownloadPermission();
+
+  // X058: contagens por segmento da fila desta campanha. O seletor do funil só tem
+  // sentido se trocar os números: com um segmento escolhido, Enviadas/Entregues/
+  // Respondidas vêm da linha dele; Cliques não têm recorte por segmento e ficam "sem dados".
+  const segmentQuery = useQuery({
+    queryKey: ['talkx-campaign-queue-segment', campaign.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('talkx_campaign_queue_by_segment', { p_campaign_id: campaign.id });
+      if (error) throw error;
+      return (data as unknown as { by_segment?: TalkXQueueSegmentRow[] } | null)?.by_segment ?? [];
+    },
+    staleTime: 60_000,
+  });
+  const segmentRows = useMemo(() => segmentQuery.data ?? [], [segmentQuery.data]);
+  const funnelSegments = useMemo<TalkXReportFunnelSegment[]>(
+    () => segmentRows.map((s) => ({ id: s.segment_id ?? NO_SEGMENT_ID, name: s.segment_name })),
+    [segmentRows],
+  );
+  const selectedSegment = useMemo(
+    () => (segmentId === null ? null : segmentRows.find((s) => (s.segment_id ?? NO_SEGMENT_ID) === segmentId) ?? null),
+    [segmentRows, segmentId],
+  );
 
   const reportQuery = useQuery({
     queryKey: ['talkx-campaign-report', campaign.id],
@@ -141,6 +191,15 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   }, [heatmapMetric, recipients, clicks, timeZone]);
 
   const funnelSteps = useMemo<TalkXReportFunnelStep[]>(() => {
+    if (selectedSegment) {
+      return [
+        { key: 'sent', count: segmentSentCount(selectedSegment) },
+        { key: 'delivered', count: selectedSegment.delivered ?? 0 },
+        { key: 'replied', count: selectedSegment.replied ?? 0 },
+        { key: 'clicked', count: null },
+        { key: 'converted', count: null },
+      ];
+    }
     const sent = kpis?.sent_count ?? campaign.sent_count;
     const delivered = kpis?.delivered_count ?? campaign.delivered_count;
     const hasClicksData = clicksQuery.isSuccess;
@@ -151,7 +210,7 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
       { key: 'clicked', count: hasClicksData ? clicks.length : null },
       { key: 'converted', count: null },
     ];
-  }, [kpis, campaign, clicks.length, clicksQuery.isSuccess]);
+  }, [selectedSegment, kpis, campaign, clicks.length, clicksQuery.isSuccess]);
 
   const handleGranularity = useCallback((next: TalkXReportGranularity) => setGranularity(next), []);
   const handleMetric = useCallback((next: TalkXReportHeatmapMetric) => setHeatmapMetric(next), []);
@@ -281,7 +340,7 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
             hasConversionSource={false}
           />
 
-          <TalkXReportFunnel steps={funnelSteps} segments={[]} segmentId={null} onSegmentChange={() => {}} />
+          <TalkXReportFunnel steps={funnelSteps} segments={funnelSegments} segmentId={segmentId} onSegmentChange={setSegmentId} />
 
           <TalkXReportHeatmap matrix={heatmap} metric={heatmapMetric} onMetricChange={handleMetric} />
 
