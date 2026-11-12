@@ -53,8 +53,8 @@ export function useUnconfirmedMessages(
 
   const resolveMutation = useMutation({
     mutationFn: async ({ messageId, outcome }: { messageId: string; outcome: 'sent' | 'not_delivered' }) => {
-      // @ts-expect-error resolve_unconfirmed_message not in generated types until production migration
-      const { data, error } = await supabase.rpc('resolve_unconfirmed_message', {
+      // RPC da migration 20261111160000: chamada sem tipo para compilar antes e depois do types-sync.
+      const { data, error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)('resolve_unconfirmed_message', {
         p_message_id: messageId,
         p_outcome: outcome,
       });
