@@ -10251,6 +10251,45 @@
       },
       {
         "comment": null,
+        "default": "1",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "tier",
+        "nullable": false,
+        "position": 13,
+        "schema": "public",
+        "table": "copilot_insights",
+        "type": "smallint"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "latency_ms",
+        "nullable": true,
+        "position": 14,
+        "schema": "public",
+        "table": "copilot_insights",
+        "type": "integer"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "data",
+        "nullable": true,
+        "position": 15,
+        "schema": "public",
+        "table": "copilot_insights",
+        "type": "jsonb"
+      },
+      {
+        "comment": null,
         "default": "gen_random_uuid()",
         "generated": null,
         "identity": null,
@@ -10836,16 +10875,16 @@
       },
       {
         "comment": "CV-037 — etiquetas de estilo de comunicação do cliente.",
-        "default": "'{}'::text[]",
+        "default": null,
         "generated": null,
         "identity": null,
         "is_enum": false,
         "name": "comm_style",
-        "nullable": false,
+        "nullable": true,
         "position": 21,
         "schema": "public",
         "table": "copilot_sessions",
-        "type": "text[]"
+        "type": "text"
       },
       {
         "comment": "CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…).",
@@ -10898,6 +10937,45 @@
         "schema": "public",
         "table": "copilot_sessions",
         "type": "jsonb"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "last_processed_message_at",
+        "nullable": true,
+        "position": 26,
+        "schema": "public",
+        "table": "copilot_sessions",
+        "type": "timestamp with time zone"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "intent",
+        "nullable": true,
+        "position": 27,
+        "schema": "public",
+        "table": "copilot_sessions",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "sentiment",
+        "nullable": true,
+        "position": 28,
+        "schema": "public",
+        "table": "copilot_sessions",
+        "type": "text"
       },
       {
         "comment": null,
@@ -36513,6 +36591,23 @@
       },
       {
         "columns": [
+          "tier"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (tier = ANY (ARRAY[1, 2]))",
+        "name": "copilot_insights_tier_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "copilot_insights",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
           "id"
         ],
         "deferrable": false,
@@ -58314,6 +58409,10 @@
         "callers": {
           "code": [
             {
+              "file": "scripts/e2e-isolated/routine-ownership.mjs",
+              "hits": 2
+            },
+            {
               "file": "supabase/functions/message-delivery/index.ts",
               "hits": 1
             },
@@ -58322,7 +58421,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -88914,6 +89013,12 @@
         "name": "copilot_sessions_brinde_state",
         "statements": null,
         "version": "20261031140000"
+      },
+      {
+        "name": "copilot_radar_delta_columns",
+        "statements": 1,
+        "statements_sha": "10c3f26aad92a261",
+        "version": "20261031160000"
       },
       {
         "name": "high3-fk-indexes",

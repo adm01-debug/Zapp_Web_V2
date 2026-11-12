@@ -74,12 +74,12 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.copilot_conversation_scores](tables/public/copilot_conversation_scores.md) | table | sim | 3 | 4 | não |  |
 | [public.copilot_feedback](tables/public/copilot_feedback.md) | table | sim | 2 | 12 | não |  |
 | [public.copilot_help_requests](tables/public/copilot_help_requests.md) | table | sim | 2 | 5 | não |  |
-| [public.copilot_insights](tables/public/copilot_insights.md) | table | sim | 2 | 12 | sim |  |
+| [public.copilot_insights](tables/public/copilot_insights.md) | table | sim | 2 | 15 | sim |  |
 | [public.copilot_learning_moments](tables/public/copilot_learning_moments.md) | table | sim | 2 | 7 | não |  |
 | [public.copilot_objection_catalog](tables/public/copilot_objection_catalog.md) | table | sim | 2 | 7 | não |  |
 | [public.copilot_outcomes](tables/public/copilot_outcomes.md) | table | sim | 2 | 8 | não |  |
 | [public.copilot_seller_settings](tables/public/copilot_seller_settings.md) | table | sim | 3 | 3 | não |  |
-| [public.copilot_sessions](tables/public/copilot_sessions.md) | table | sim | 2 | 25 | não |  |
+| [public.copilot_sessions](tables/public/copilot_sessions.md) | table | sim | 2 | 28 | não |  |
 | [public.copilot_usage](tables/public/copilot_usage.md) | table | sim | 2 | 7 | não |  |
 | [public.crisis_room_alerts](tables/public/crisis_room_alerts.md) | table | sim | 4 | 10 | não |  |
 | [public.crm_contact_links](tables/public/crm_contact_links.md) | table | sim | 2 | 9 | não |  |

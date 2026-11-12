@@ -2,6 +2,14 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 11:37 UTC
+
+- **colunas** adicionado (6): `public.copilot_insights.data`, `public.copilot_insights.latency_ms`, `public.copilot_insights.tier`, `public.copilot_sessions.intent`, `public.copilot_sessions.last_processed_message_at`, `public.copilot_sessions.sentiment`
+- **colunas** alterado (1): `public.copilot_sessions.comm_style`
+- **constraints** adicionado (1): `public.copilot_insights.copilot_insights_tier_check`
+- **functions** alterado (1): `public.mark_outbound_post_started(p_message_id uuid, p_claim_token uuid)`
+- **migrations** adicionado (1): `20261031160000_copilot_radar_delta_columns`
+
 ## 2026-11-12 11:05 UTC
 
 - **functions** alterado (1): `public.resolve_unconfirmed_message(p_message_id uuid, p_outcome text)`

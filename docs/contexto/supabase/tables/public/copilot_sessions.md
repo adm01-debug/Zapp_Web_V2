@@ -36,11 +36,14 @@
 | 18 | `created_at` | `timestamp with time zone` | não | `now()` |  |  |
 | 19 | `updated_at` | `timestamp with time zone` | não | `now()` |  |  |
 | 20 | `brinde_evidence` | `jsonb` | não | `'{"B": null, "D": null, "E": null, "I": null, "N": null, "R": null}'::jsonb` |  | CV-031 — id da mensagem que originou cada letra B·R·I·N·D·E. |
-| 21 | `comm_style` | `text[]` | não | `'{}'::text[]` |  | CV-037 — etiquetas de estilo de comunicação do cliente. |
+| 21 | `comm_style` | `text` | sim |  |  | CV-037 — etiquetas de estilo de comunicação do cliente. |
 | 22 | `decision_role` | `text` | sim |  |  | CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…). |
 | 23 | `occasion` | `text` | sim |  |  | CV-035/036 — ocasião comercial detectada (natal, sipat, outubro_rosa, …). |
 | 24 | `stakeholders` | `jsonb` | não | `'[]'::jsonb` |  | CV-039 — pessoas citadas na conversa que participam da decisão. |
 | 25 | `brinde_state` | `jsonb` | não | `'{}'::jsonb` |  | CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state(). |
+| 26 | `last_processed_message_at` | `timestamp with time zone` | sim |  |  |  |
+| 27 | `intent` | `text` | sim |  |  |  |
+| 28 | `sentiment` | `text` | sim |  |  |  |
 
 
 ## Constraints

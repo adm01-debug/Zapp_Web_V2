@@ -28,6 +28,9 @@
 | 10 | `used_at` | `timestamp with time zone` | sim |  |  |  |
 | 11 | `dismissed_at` | `timestamp with time zone` | sim |  |  |  |
 | 12 | `created_at` | `timestamp with time zone` | não | `now()` |  |  |
+| 13 | `tier` | `smallint` | não | `1` |  |  |
+| 14 | `latency_ms` | `integer` | sim |  |  |  |
+| 15 | `data` | `jsonb` | sim |  |  |  |
 
 
 ## Constraints
@@ -39,6 +42,7 @@
 | copilot_insights_profile_id_fkey | FOREIGN KEY | `FOREIGN KEY (profile_id) REFERENCES auth.users(id)` | NO ACTION | NO ACTION | sim |
 | copilot_insights_session_id_fkey | FOREIGN KEY | `FOREIGN KEY (session_id) REFERENCES copilot_sessions(id) ON DELETE CASCADE` | CASCADE | NO ACTION | sim |
 | copilot_insights_source_check | CHECK | `CHECK (source = ANY (ARRAY['local'::text, 'edge'::text, 'cache'::text]))` |  |  | sim |
+| copilot_insights_tier_check | CHECK | `CHECK (tier = ANY (ARRAY[1, 2]))` |  |  | sim |
 
 
 ## Índices

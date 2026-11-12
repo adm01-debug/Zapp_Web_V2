@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0a1e73f2a908b87c722109df4836776cd0b34e8c",
+  "commit": "87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8",
   "branch": "main",
-  "data_commit": "2026-11-12T10:56:07Z",
+  "data_commit": "2026-11-12T11:15:01Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "87c5e97",
+    "data": "2026-11-12",
+    "assunto": "fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)"
+   },
    {
     "sha": "0a1e73f",
     "data": "2026-11-12",
@@ -126,18 +131,13 @@
     "sha": "f036006",
     "data": "2026-11-11",
     "assunto": "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)"
-   },
-   {
-    "sha": "8ea4301",
-    "data": "2026-11-11",
-    "assunto": "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)"
    }
   ],
   "arquivos_mudados_7d": 660,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 631
+    "mudancas": 630
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -218,10 +218,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 11
    },
@@ -232,6 +228,10 @@
    {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
+   },
+   {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 10
    },
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
@@ -247,6 +247,14 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 9
    },
    {
@@ -271,14 +279,6 @@
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 8
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8416,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891387,
+  "linhas_codigo": 891391,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -624,7 +624,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6436
+   "linhas": 6440
   },
   "scripts/edge-deploy": {
    "arquivos": 30,

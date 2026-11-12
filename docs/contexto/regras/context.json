@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "0a1e73f2a908b87c722109df4836776cd0b34e8c",
+  "sha": "87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 10:57 UTC",
+  "generated_at": "2026-11-12 11:34 UTC",
   "files_total": 8258,
   "code_files": 6091,
-  "code_lines": 1059638
+  "code_lines": 1059642
  },
  "version": "1.3.2",
- "facts_hash": "b530c219e902541a",
+ "facts_hash": "f6ce0999e44f0f8d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68093,7 +68093,7 @@
   {
    "module": "scripts",
    "files": 463,
-   "lines": 92944,
+   "lines": 92948,
    "tables": [
     "a",
     "alem_do_limite",
@@ -270855,7 +270855,7 @@
   },
   "scripts/e2e-isolated/routine-ownership.mjs": {
    "path": "scripts/e2e-isolated/routine-ownership.mjs",
-   "lines": 307,
+   "lines": 311,
    "exports": [
     "const OWNERSHIP_ROUTINES",
     "const OWNERSHIP_EXECUTOR_OPTIONS",
@@ -270868,6 +270868,9 @@
    ],
    "errors": [
     "routine-ownership-rejected"
+   ],
+   "rule_comments": [
+    "messages, so it must run as postgres (guard_message_delivery_internal_fields rejects supabase_admin)."
    ],
    "temporal": [
     "export const OWNERSHIP_EXECUTOR_OPTIONS = Object.freeze({ timeout: 5_000, killSignal: 'SIGKILL', maxBuffer: 8_192 });"
@@ -387843,10 +387846,22 @@
   }
  },
  "git": {
-  "sha": "0a1e73f2a908b87c722109df4836776cd0b34e8c",
+  "sha": "87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "87c5e97",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)",
+    "files": [
+     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
+     "scripts/ci/e2e-isolated-runtime.unit.mjs",
+     "scripts/e2e-isolated/README.md",
+     "scripts/e2e-isolated/routine-ownership.mjs"
+    ]
+   },
    {
     "sha": "0a1e73f",
     "date": "2026-11-12",
@@ -388194,16 +388209,6 @@
      "scripts/catalog/validate-plan.mjs",
      "scripts/catalog/validate-plan.test.mjs"
     ]
-   },
-   {
-    "sha": "0e15ed6",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)",
-    "files": [
-     "scripts/maintenance/maintenance.unit.mjs",
-     "scripts/maintenance/run.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388222,6 +388227,10 @@
    [
     "scripts/db-audit/grants-baseline.json",
     3
+   ],
+   [
+    "scripts/e2e-isolated/routine-ownership.mjs",
+    2
    ],
    [
     "src/components/inbox/chat/SendErrorBanner.tsx",
@@ -388248,8 +388257,16 @@
     2
    ],
    [
-    "scripts/maintenance/maintenance.unit.mjs",
-    2
+    "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
+    1
+   ],
+   [
+    "scripts/ci/e2e-isolated-runtime.unit.mjs",
+    1
+   ],
+   [
+    "scripts/e2e-isolated/README.md",
+    1
    ],
    [
     "src/adapters/evolutionAdapter.ts",
@@ -388273,18 +388290,6 @@
    ],
    [
     "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
-    1
-   ],
-   [
-    "supabase/migrations/20261111170000_talkx_block_recipient.sql",
-    1
-   ],
-   [
-    "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql",
-    1
-   ],
-   [
-    "scripts/e2e-isolated/run.mjs",
     1
    ]
   ]
