@@ -68,7 +68,7 @@ describe('VerifyEmail (/verify-email)', () => {
 
   it('link de cadastro com sessão: mostra sucesso com o email e leva ao dashboard', async () => {
     h.getSession.mockResolvedValue({ data: { session: sessao }, error: null });
-    cenario('?type=signup');
+    cenario('?type=signup&email=ana%40empresa.com');
 
     expect(await screen.findByText('Email Verificado!')).toBeInTheDocument();
     expect(screen.getByText('ana@empresa.com')).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('VerifyEmail (/verify-email)', () => {
   it('erro ao ler a sessão: mostra erro, reenvia o email e volta ao login', async () => {
     h.getSession.mockResolvedValue({ data: { session: null }, error: new Error('falha') });
     h.resend.mockResolvedValue({ error: null });
-    cenario('?type=email_change');
+    cenario('?type=email_change&email=ana%40empresa.com');
 
     expect(await screen.findByText('Erro na Verificação')).toBeInTheDocument();
     expect(screen.queryByText('Email Verificado!')).not.toBeInTheDocument();
@@ -97,7 +97,7 @@ describe('VerifyEmail (/verify-email)', () => {
   it('falha no reenvio aparece como erro, não como sucesso', async () => {
     h.getSession.mockResolvedValue({ data: { session: null }, error: new Error('falha') });
     h.resend.mockResolvedValue({ error: new Error('rate limit') });
-    cenario('?type=signup');
+    cenario('?type=signup&email=ana%40empresa.com');
 
     fireEvent.click(await screen.findByRole('button', { name: /Reenviar Email/ }));
 
@@ -107,7 +107,7 @@ describe('VerifyEmail (/verify-email)', () => {
 
   it('link de cadastro sem sessão: mostra link expirado e manda para o login', async () => {
     h.getSession.mockResolvedValue({ data: { session: null }, error: null });
-    cenario('?type=signup');
+    cenario('?type=signup&email=ana%40empresa.com');
 
     expect(await screen.findByText('Link Expirado')).toBeInTheDocument();
 
