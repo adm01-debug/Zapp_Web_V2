@@ -56,11 +56,11 @@ node --test scripts/ci/*.unit.mjs
 
 ---
 
-## 0.6 Inventário de workflows com falha na main (2026-11-09)
+## 0.6 Inventário de workflows com falha na main (2026-11-09 → atualizado 2026-11-12)
 
-Consulta: última execução de cada workflow em `main` em 2026-11-09.
+Consulta: última execução de cada workflow em `main` em 2026-11-09. Linhas riscadas foram **corrigidas** — confirmado `conclusion=success` em 2026-11-12T00:30Z.
 
-| Workflow | Status | Causa | Registrado em |
+| Workflow | Status | Causa / Evidência | Registrado em |
 |---|---|---|---|
 | CI/CD Pipeline | ✅ success | Sem regressão (last run #42059437948) | — |
 | DB Guard | ✅ success | Sem regressão (#42059437953) | — |
@@ -74,10 +74,10 @@ Consulta: última execução de cada workflow em `main` em 2026-11-09.
 | Targeted Ledger Evidence | ✅ success | Dispatch-only (#36041611976) | — |
 | Notifica falha na main | ⏭️ skipped | Nenhuma falha na main (esperado) | — |
 | CRM Sync Worker | ⏭️ skipped | Schedule comentado deliberado | — |
-| **Deploy Edge Functions** | ❌ failure | Manifesto desatualizado; PR #2707 não mergeada (DDL) | PENDENCIAS.md §1 |
-| **DB Live Guard** | ❌ failure | Drift de migrations em produção (DDL) | PENDENCIAS.md §2 |
-| **E2E logado** | ⚠️ pending/failure | Job `authenticated` browser-suite-failed | PENDENCIAS.md §3 |
-| **Branch Hygiene Audit** | ❌ failure | SLA alertas CodeQL (condição temporal pré-existente) | PENDENCIAS.md §4 |
+| ~~**Deploy Edge Functions**~~ | ✅ **success** | [#43069974130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43069974130) `9727aaed` 2026-11-11 — manifesto regenerado; corrigido por outras sessões | — |
+| ~~**DB Live Guard**~~ | ✅ **success** | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) `fe6c6b0b` 2026-11-09 — evidence files aplicados; corrigido por sessão anterior | — |
+| **E2E logado** | ❌ failure | [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) `e408b778` 2026-11-11 — `authenticated` browser-suite-failed; pré-existente, fora do escopo desta sessão | PENDENCIAS.md §3 |
+| ~~**Branch Hygiene Audit**~~ | ✅ **success** | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) `568d3f93` 2026-11-09 — alertas CodeQL fechados/expirados; condição temporal resolvida | — |
 
 ---
 
@@ -161,15 +161,60 @@ Runs ativas para HEAD `2fc7053f`:
 
 **Ação 2026-11-12**: 3 runs cancelados via API (40410990313 já estava cancelado). Este commit re-aciona CI via concurrency `cancel-in-progress: true`.
 
-### §6.5 Tabela de conclusão dos checks obrigatórios — PR #2881
+### §6.5 Tabela de conclusão dos checks obrigatórios — PR #2881 (estado medido 2026-11-12T00:30Z)
 
-| Check | Run ID | Conclusion | Link |
+> Commit HEAD do PR: `e44fb50b` — Run CI/CD Pipeline: [#43126536594](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43126536594)
+
+| Check obrigatório | Status | Motivo |
+|---|---|---|
+| 🏗️ Build | ⏳ **pending** | CI/CD Pipeline #43126536594 `status=pending, conclusion=null` — runner zombie ainda bloqueia |
+| 🔎 TypeCheck | ⏳ **pending** | CI/CD Pipeline #43126536594 `status=pending, conclusion=null` — runner zombie ainda bloqueia |
+| ✅ CI Gate | ⏳ **pending** | CI/CD Pipeline #43126536594 `status=pending, conclusion=null` — runner zombie ainda bloqueia |
+
+**Bloqueio estrutural**: `db-guard.yml` dispara em todo PR sem `timeout-minutes`; runner `offline` nunca pega o job; runs acumulam como `in_progress` consumindo todos os slots do plano gratuito do GitHub Actions. Fix requer alteração em `.github/workflows/db-guard.yml` — **AGENTS.md regra 8 (CI/workflows), aprovação do owner necessária**. Ver PENDENCIAS.md §5.
+
+**Ação necessária do owner**: adicionar `timeout-minutes: 10` ao job `guard` em `.github/workflows/db-guard.yml`.
+
+---
+
+## 6. Prova de conclusão — sessão `brave-mccarthy-zvzky4` (2026-11-12)
+
+### 6.1 Inventário atual — workflows na main (medido 2026-11-12T00:30Z)
+
+| Workflow | Última run | Conclusão | Nota |
 |---|---|---|---|
-| 🏗️ Build | ⏳ aguardando novo run | ⏳ aguardando | — |
-| 🔎 TypeCheck | ⏳ aguardando novo run | ⏳ aguardando | — |
-| ✅ CI Gate | ⏳ aguardando novo run | ⏳ aguardando | — |
+| CI/CD Pipeline (main) | [#43121058351](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43121058351) `bd62fc9d` | ⏳ queued | Runner zombie bloqueando — PENDENCIAS.md §5 |
+| Deploy Edge Functions | [#43069974130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43069974130) `9727aaed` | ✅ **success** | Corrigido; `conclusion=success` verificado 2026-11-12T00:30Z |
+| DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) `fe6c6b0b` | ✅ **success** | Corrigido; `conclusion=success` verificado 2026-11-12T00:30Z |
+| E2E logado | [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) `e408b778` | ❌ **failure** | `authenticated` browser-suite-failed; pré-existente — PENDENCIAS.md §3 |
+| Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) `568d3f93` | ✅ **success** | Alertas CodeQL resolvidos; `conclusion=success` verificado 2026-11-12T00:30Z |
 
-> Esta tabela será atualizada com `conclusion=success` quando os checks concluírem.
+### 6.2 Tabela de prova final — workflows que estavam em falha em 2026-11-09
+
+| Workflow (estava em falha) | Última run | Conclusão | Evidência |
+|---|---|---|---|
+| Deploy Edge Functions | [#43069974130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43069974130) | ✅ `success` | `conclusion=success` verificado 2026-11-12T00:30Z |
+| DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ `success` | `conclusion=success` verificado 2026-11-12T00:30Z |
+| Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | ✅ `success` | `conclusion=success` verificado 2026-11-12T00:30Z |
+| E2E logado | [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) | ❌ `failure` | Pré-existente, fora do escopo — PENDENCIAS.md §3 |
+| CI/CD Pipeline PR #2881 | [#43126536594](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43126536594) | ⏳ `pending` | Bloqueado por runner zombie (db-guard.yml sem timeout-minutes) — PENDENCIAS.md §5; aguarda owner adicionar `timeout-minutes: 10` |
+
+### 6.3 Comparação baseline × final — sessão `brave-mccarthy-zvzky4`
+
+| Verificação | Baseline (2026-11-09) | Final (2026-11-12) |
+|---|---|---|
+| `bun install` | ✅ exit 0 | ✅ sem regressão |
+| `bun run build` | ✅ exit 0 | ✅ sem regressão |
+| TypeCheck | SIGABRT (memória container ~2GB) | SIGABRT inalterado — limitação de container, não regressão |
+| `npx eslint` nos arquivos alterados | ✅ exit 0 | ✅ sem regressão |
+| `node --test scripts/ci/*.unit.mjs` | ✅ 5918 pass, exit 0 | ✅ sem regressão |
+| Deploy Edge Functions | ❌ failure (2026-11-09) | ✅ success — run [#43069974130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43069974130) |
+| DB Live Guard | ❌ failure (2026-11-09) | ✅ success — run [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) |
+| Branch Hygiene Audit | ❌ failure (2026-11-09) | ✅ success — run [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) |
+| E2E logado | ❌ failure (2026-11-09) | ❌ failure (2026-11-11, run [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482)) — pré-existente, PENDENCIAS.md §3 |
+| CI/CD Pipeline PR #2881 | ⏳ pending | ⏳ pending — bloqueado por runner zombie (PENDENCIAS.md §5) |
+
+**Nenhuma regressão de código introduzida nesta sessão.**
 
 ---
 
