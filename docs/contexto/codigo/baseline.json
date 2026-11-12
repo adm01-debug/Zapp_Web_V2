@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe",
+  "commit": "15923813a722c1fe9659ff82e0572455c1194aff",
   "branch": "main",
-  "data_commit": "2026-11-12T07:13:01-03:00",
+  "data_commit": "2026-11-12T07:27:49-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1592381",
+    "data": "2026-11-12",
+    "assunto": "chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix"
+   },
    {
     "sha": "f1d8e5f",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "9727aae",
     "data": "2026-11-11",
     "assunto": "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO "
-   },
-   {
-    "sha": "d4f25e7",
-    "data": "2026-11-11",
-    "assunto": "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)"
    }
   ],
   "arquivos_mudados_7d": 660,
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/ui",
-    "mudancas": 126
+    "mudancas": 125
    },
    {
     "pasta": "src/components/dashboard",
@@ -218,6 +218,10 @@
     "mudancas": 12
    },
    {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 11
+   },
+   {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 11
    },
@@ -231,10 +235,6 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "RELATORIO_CI.md",
     "mudancas": 10
    },
    {

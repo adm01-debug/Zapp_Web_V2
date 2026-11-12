@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe",
+  "sha": "15923813a722c1fe9659ff82e0572455c1194aff",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 10:15 UTC",
+  "generated_at": "2026-11-12 10:35 UTC",
   "files_total": 8258,
   "code_files": 6091,
   "code_lines": 1059634
@@ -387849,10 +387849,19 @@
   }
  },
  "git": {
-  "sha": "f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe",
+  "sha": "15923813a722c1fe9659ff82e0572455c1194aff",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1592381",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix",
+    "files": [
+     "RELATORIO_CI.md"
+    ]
+   },
    {
     "sha": "f1d8e5f",
     "date": "2026-11-12",
@@ -388200,22 +388209,16 @@
      "scripts/edge-deploy/serialize-scope.mjs",
      "scripts/edge-deploy/serialize-scope.unit.mjs"
     ]
-   },
-   {
-    "sha": "5829201",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)",
-    "files": [
-     "scripts/db-audit/diff.test.mjs",
-     "scripts/db-audit/manifest-lib.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
     4
+   ],
+   [
+    "RELATORIO_CI.md",
+    3
    ],
    [
     "PENDENCIAS.md",
@@ -388235,10 +388238,6 @@
    ],
    [
     "scripts/regras_negocio/test_generate.py",
-    2
-   ],
-   [
-    "RELATORIO_CI.md",
     2
    ],
    [

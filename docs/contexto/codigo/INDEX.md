@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe` (2026-11-12T07:13:01-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `15923813a722c1fe9659ff82e0572455c1194aff` (2026-11-12T07:27:49-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56891 nós · 117568 arestas · 4120 comunidades · grafo do commit `f1d8e5f9`
-- comunidades maiores: vitest (900), react (884), lucide-react (879), TalkXSuppression.tsx (854), ref_node_fs (794), utils.ts (705), WorkItemSheet.tsx (567), cn (477), e2e-isolated-runtime.unit.mjs (422), validation.ts (409), DashboardView.tsx (403), @tanstack/react-query (403)
+- 56896 nós · 117573 arestas · 4166 comunidades · grafo do commit `15923813`
+- comunidades maiores: cn (914), framer-motion (790), client.ts (681), vitest (671), button.tsx (663), @tanstack/react-query (471), ref_node_assert (387), ref_node_fs (356), react (327), errorResponse (315), framer-motion (312), workItem.types.ts (300)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -402,11 +402,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/ci/README.md (14)
 - .github/workflows/ci.yml (12)
 - CLAUDE.md (12)
+- RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
 - scripts/db-audit/grants-baseline.json (11)
 - supabase/schema-manifest.json (11)
 - .github/workflows/e2e-logado.yml (10)
-- RELATORIO_CI.md (10)
 - scripts/db-audit/migration-evidence.json (10)
 - scripts/e2e-isolated/run.mjs (10)
 - src/integrations/supabase/types.ts (10)
@@ -475,7 +475,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
 - `PENDENCIAS.md` — PENDÊNCIAS CI — 2026-11-12 (92 linhas)
 - `README.md` — 🚀 ZAPP-WEB (Pronto Talk Suite) (369 linhas)
-- `RELATORIO_CI.md` — RELATÓRIO CI — fix-ci-workflows-hxupgs / fix-ci-workflows-261112-0400 (335 linhas)
+- `RELATORIO_CI.md` — RELATÓRIO CI — fix-ci-workflows-hxupgs / fix-ci-workflows-261112-0400 (382 linhas)
 - `SECURITY.md` — 🔒 Política de Segurança — ZAPP-WEB (95 linhas)
 - `TESTING_CONVENTION.md` — TESTING_CONVENTION.md — onde cada teste mora e como ele roda (104 linhas)
 - `docs/BACKUP-RECOVERY-STRATEGY.md` — 🔐 ZAPP-WEB — Estratégia de Backup e Recovery (336 linhas)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `1592381` chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix
 - 2026-11-12 `f1d8e5f` chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha
 - 2026-11-12 `bd417f5` fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard
 - 2026-11-12 `2d10201` fix(db-audit): wal_level=logical no container descartável do teste E27 replay
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `a082adc` fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)
 - 2026-11-12 `0d65d57` ci(talkx): ativa validação do corpo das PRs Talk X (#2919)
 - 2026-11-12 `2942f21` fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)
-- 2026-11-12 `13a00e0` fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
