@@ -143,6 +143,7 @@ vi.mock('../chat/ChatPanelHeader', () => ({ ChatPanelHeader: () => null }));
 vi.mock('../chat/ChatWatermark', () => ({ ChatWatermark: () => null }));
 vi.mock('../chat/ChatDragOverlay', () => ({ ChatDragOverlay: () => null }));
 vi.mock('../chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));
+vi.mock('../chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
 vi.mock('../WhisperMode', () => ({ WhisperMode: () => null }));
 
 const conversation = {

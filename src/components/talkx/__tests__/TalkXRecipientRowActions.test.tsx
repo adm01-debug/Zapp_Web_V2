@@ -71,7 +71,7 @@ describe('TalkXRecipientRowActions', () => {
     expect(screen.queryByRole('button', { name: /^reenviar$/i })).not.toBeInTheDocument();
   });
 
-  it('renderiza "Bloquear" para todo destinatário', () => {
+  it('renderiza "Bloquear" para gestor (admin/supervisor) em qualquer status', () => {
     wrap(<TalkXRecipientRowActions recipient={baseRecipient} />);
     expect(screen.getByRole('button', { name: /^bloquear$/i })).toBeInTheDocument();
   });
@@ -206,5 +206,50 @@ describe('TalkXRecipientRowActions', () => {
     ));
     expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
     expect(onActionDone).not.toHaveBeenCalled();
+  });
+
+  describe('erros do bloqueio nunca chegam crus ao operador', () => {
+    const confirmarBloqueio = () => {
+      fireEvent.click(screen.getByRole('button', { name: /^bloquear$/i }));
+      fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: /^bloquear$/i }));
+    };
+
+    it.each([
+      [{ code: 'PGRST202', message: 'Could not find the function public.talkx_block_recipient(p_recipient_id) in the schema cache' }, 'Bloqueio indisponível no momento.'],
+      [{ message: 'invalid_talkx_block_request' }, 'Pedido de bloqueio inválido — recarregue a lista e tente de novo.'],
+      [{ message: 'talkx_block_recipient_not_found' }, 'Destinatário não encontrado — recarregue a lista.'],
+      [{ message: 'authentication_required' }, 'Sessão inválida — entre novamente.'],
+      [{ message: 'duplicate key value violates unique constraint "x"' }, 'Não foi possível bloquear o contato. Tente novamente.'],
+    ])('%o → %s', async (erro, esperado) => {
+      rpcMock.mockResolvedValue({ data: null, error: erro });
+      wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={vi.fn()} />);
+      confirmarBloqueio();
+      await waitFor(() => expect(vi.mocked(toast.error)).toHaveBeenCalledWith(esperado));
+    });
+
+    it('rejeição de rede vira mensagem genérica em português', async () => {
+      rpcMock.mockRejectedValue(new TypeError('Failed to fetch'));
+      wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={vi.fn()} />);
+      confirmarBloqueio();
+      await waitFor(() => expect(vi.mocked(toast.error)).toHaveBeenCalledWith('Não foi possível bloquear o contato. Tente novamente.'));
+    });
+
+    it('falha no bloqueio NÃO chama onActionDone (a lista não recarrega à toa)', async () => {
+      rpcMock.mockResolvedValue({ data: null, error: { message: 'talkx_block_role_required' } });
+      const onActionDone = vi.fn();
+      wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={onActionDone} />);
+      confirmarBloqueio();
+      await waitFor(() => expect(vi.mocked(toast.error)).toHaveBeenCalled());
+      await waitFor(() => expect(screen.getByRole('button', { name: /^bloquear$/i })).not.toBeDisabled());
+      expect(onActionDone).not.toHaveBeenCalled();
+    });
+
+    it('já bloqueado (data null, sem erro) conta como aceito e recarrega a lista', async () => {
+      rpcMock.mockResolvedValue({ data: null, error: null });
+      const onActionDone = vi.fn();
+      wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={onActionDone} />);
+      confirmarBloqueio();
+      await waitFor(() => expect(onActionDone).toHaveBeenCalledTimes(1));
+    });
   });
 });
