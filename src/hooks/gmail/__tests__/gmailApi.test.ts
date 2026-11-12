@@ -26,6 +26,22 @@ describe('callGmailFunction', () => {
     expect(error).toMatchObject({ kind: 'offline', outcomeUnknown: true });
   });
 
+  it('lê o `code` do corpo JSON da Response de erro', async () => {
+    const context = new Response(JSON.stringify({ code: 'reauth_required', error: 'x' }), { status: 409 });
+    mocks.invoke.mockResolvedValue({ data: null, error: { name: 'FunctionsHttpError', message: 'non-2xx', context } });
+    const error = await callGmailFunction('gmail-sync', { action: 'sync-inbox' }).catch(value => value);
+    expect(error).toMatchObject({ status: 409, code: 'reauth_required' });
+  });
+
+  it('corpo não-JSON ou já consumido não quebra: fica sem `code`', async () => {
+    const context = new Response('<html>bad gateway</html>', { status: 502 });
+    mocks.invoke.mockResolvedValue({ data: null, error: { name: 'FunctionsHttpError', message: 'non-2xx', context } });
+    const error = await callGmailFunction('gmail-sync', { action: 'sync-inbox' }).catch(value => value);
+    expect(error).toBeInstanceOf(GmailFunctionError);
+    expect(error.code).toBeUndefined();
+    expect(error.status).toBe(502);
+  });
+
   it('não invoca função sem uma sessão autenticada', async () => {
     mocks.getSession.mockResolvedValue({ data: { session: null } });
     await expect(callGmailFunction('gmail-send', { action: 'send' })).rejects.toThrow('Not authenticated');

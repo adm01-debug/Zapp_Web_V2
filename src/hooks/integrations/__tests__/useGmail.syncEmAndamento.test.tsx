@@ -46,7 +46,7 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({
 
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useGmail, shouldRetryGmailSync, isGmailSyncAlreadyRunning } from '../useGmail';
+import { useGmail, shouldRetryGmailSync, isGmailSyncAlreadyRunning, isGmailReauthRequired } from '../useGmail';
 import { GmailFunctionError } from '../../gmail/gmailApi';
 
 const MOCK_ACCOUNT = {
@@ -94,12 +94,23 @@ function httpError(status: number, message: string) {
   return { name: 'FunctionsHttpError', message, context: { status } };
 }
 
-function respondSyncWithStatus(status: number) {
+// Como o SDK real: `context` é a Response, com o corpo JSON da função.
+function httpErrorWithBody(status: number, body: unknown) {
+  return {
+    name: 'FunctionsHttpError',
+    message: 'Edge Function returned a non-2xx status code',
+    context: new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
+  };
+}
+
+function respondSyncWithStatus(status: number, body?: unknown) {
   invokeMock.mockImplementation(async (fn: string, opts: unknown) => {
     if (fn === 'gmail-oauth' && actionOf(opts) === 'list-accounts') {
       return { data: { accounts: [MOCK_ACCOUNT] }, error: null };
     }
-    if (fn === 'gmail-sync') return { data: null, error: httpError(status, `Edge Function returned a non-2xx status code`) };
+    if (fn === 'gmail-sync') {
+      return { data: null, error: body === undefined ? httpError(status, `Edge Function returned a non-2xx status code`) : httpErrorWithBody(status, body) };
+    }
     return { data: {}, error: null };
   });
 }
@@ -137,6 +148,40 @@ describe('useGmail — 409 do gmail-sync (sincronização já em andamento)', ()
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['gmail-accounts'] });
   });
 
+  it('409 com corpo "já em andamento" (Response real) segue como aviso informativo', async () => {
+    respondSyncWithStatus(409, { error: 'Gmail sync already in progress' });
+    const { wrapper } = makeHarness();
+    const { result } = renderHook(() => useGmail(), { wrapper });
+    await waitFor(() => expect(result.current.activeAccount).toBeDefined());
+
+    await act(async () => {
+      await result.current.syncInbox.mutateAsync({}).catch(() => undefined);
+    });
+
+    expect(syncCalls()).toBe(1);
+    expect(toast.info).toHaveBeenCalledTimes(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('409 reauth_required NÃO vira "em andamento": pede reconexão e recarrega a conta', async () => {
+    respondSyncWithStatus(409, { code: 'reauth_required', error: 'Sessão do Gmail expirada — reconecte a conta' });
+    const { qc, wrapper } = makeHarness();
+    const invalidateSpy = vi.spyOn(qc, 'invalidateQueries');
+    const { result } = renderHook(() => useGmail(), { wrapper });
+    await waitFor(() => expect(result.current.activeAccount).toBeDefined());
+
+    await act(async () => {
+      await result.current.syncInbox.mutateAsync({}).catch(() => undefined);
+    });
+
+    expect(syncCalls()).toBe(1);
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(String(vi.mocked(toast.error).mock.calls[0][0])).toMatch(/expirada/i);
+    expect(JSON.stringify(vi.mocked(toast.error).mock.calls[0][1])).toMatch(/reconecte/i);
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['gmail-accounts'] });
+  });
+
   it('falha de servidor (500) ainda ganha UMA nova tentativa e toast de erro', async () => {
     respondSyncWithStatus(500);
     const { wrapper } = makeHarness();
@@ -169,5 +214,13 @@ describe('shouldRetryGmailSync / isGmailSyncAlreadyRunning', () => {
     expect(isGmailSyncAlreadyRunning(err(409))).toBe(true);
     expect(isGmailSyncAlreadyRunning(err(500))).toBe(false);
     expect(isGmailSyncAlreadyRunning(new Error('409'))).toBe(false);
+  });
+
+  it('409 com code reauth_required é reconexão, não "já em andamento"', () => {
+    const reauth = new GmailFunctionError(httpError(409, 'x'), 'reauth_required');
+    expect(isGmailSyncAlreadyRunning(reauth)).toBe(false);
+    expect(isGmailReauthRequired(reauth)).toBe(true);
+    expect(isGmailReauthRequired(err(409))).toBe(false);
+    expect(shouldRetryGmailSync(0, reauth)).toBe(false);
   });
 });
