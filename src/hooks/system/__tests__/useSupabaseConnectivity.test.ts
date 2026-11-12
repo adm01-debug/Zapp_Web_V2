@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   SUPABASE_URL: 'https://proj.supabase.test',
+  SUPABASE_ANON_KEY: 'anon.publica',
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -34,6 +35,7 @@ vi.mock('@/lib/logger', () => ({
 
 import {
   useSupabaseConnectivity,
+  connectivityProbeUrl,
   nextBackoffDelay,
   CONNECTIVITY_BASE_INTERVAL_MS,
   CONNECTIVITY_MAX_INTERVAL_MS,
@@ -96,6 +98,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe('connectivityProbeUrl — chave pública na query (sem 401 no console)', () => {
+  it('anexa a anon key como ?apikey= (codificada) e tira barras finais da base', () => {
+    expect(connectivityProbeUrl('https://x.supabase.co/', 'a+b/c=')).toBe(
+      'https://x.supabase.co/auth/v1/health?apikey=a%2Bb%2Fc%3D',
+    );
+  });
+
+  it('sem chave, cai na URL nua (comportamento antigo)', () => {
+    expect(connectivityProbeUrl('https://x.supabase.co', '')).toBe('https://x.supabase.co/auth/v1/health');
+  });
+});
+
 describe('useSupabaseConnectivity — sonda leve, sem a Edge `health`', () => {
   it('sonda a URL do projeto (auth/v1/health) e nunca uma Edge Function', async () => {
     const { result } = renderHook(() => useSupabaseConnectivity());
@@ -106,7 +120,9 @@ describe('useSupabaseConnectivity — sonda leve, sem a Edge `health`', () => {
 
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
     const [url, init] = mocks.fetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://proj.supabase.test/auth/v1/health');
+    // A chave pública vai na QUERY: sem ela o Kong responde 401 e cada sonda
+    // suja o console de produção com "Failed to load resource: 401".
+    expect(url).toBe('https://proj.supabase.test/auth/v1/health?apikey=anon.publica');
     // A Edge `health` da V2 consulta o banco: nenhuma sonda pode passar por ela.
     expect(url).not.toContain('/functions/');
     expect(init).toMatchObject({ method: 'GET', mode: 'no-cors', cache: 'no-store' });
