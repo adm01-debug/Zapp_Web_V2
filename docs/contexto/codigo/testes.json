@@ -2682,7 +2682,7 @@
   {
    "arquivo": "scripts/tarefas/seed-local-imagens.unit.mjs",
    "tipo": "unit",
-   "linhas": 74,
+   "linhas": 76,
    "testa": [],
    "casos": 6
   },

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a082adc179bbab733daf4ffbe3b4865c149770c9",
+  "sha": "491a75d9faabf6d5bc3d835ff3b12021f0ac2034",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 06:31 UTC",
+  "generated_at": "2026-11-12 06:54 UTC",
   "files_total": 8256,
   "code_files": 6089,
-  "code_lines": 1059211
+  "code_lines": 1059213
  },
  "version": "1.3.2",
- "facts_hash": "ce9cad70cf41470f",
+ "facts_hash": "aaa9e36a63781152",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68017,7 +68017,7 @@
   {
    "module": "scripts",
    "files": 463,
-   "lines": 92907,
+   "lines": 92909,
    "tables": [
     "a",
     "alem_do_limite",
@@ -272704,7 +272704,7 @@
   },
   "scripts/tarefas/seed-local-imagens.unit.mjs": {
    "path": "scripts/tarefas/seed-local-imagens.unit.mjs",
-   "lines": 74,
+   "lines": 76,
    "env": [
     "PATH"
    ],
@@ -387628,10 +387628,19 @@
   }
  },
  "git": {
-  "sha": "a082adc179bbab733daf4ffbe3b4865c149770c9",
+  "sha": "491a75d9faabf6d5bc3d835ff3b12021f0ac2034",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "491a75d",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(scripts): guard rodar() contra bun ausente no PATH (#2978)",
+    "files": [
+     "scripts/tarefas/seed-local-imagens.unit.mjs"
+    ]
+   },
    {
     "sha": "a082adc",
     "date": "2026-11-12",
@@ -387980,20 +387989,13 @@
      "scripts/ai-context/gerar.mjs",
      "scripts/ai-context/gerar.unit.mjs"
     ]
-   },
-   {
-    "sha": "e7646cc",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)",
-    "files": [
-     "scripts/ui-audit/layout-guard.mjs",
-     "scripts/ui-audit/layout-guard.unit.mjs",
-     "scripts/ui-audit/root-className.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/tarefas/seed-local-imagens.unit.mjs",
+    2
+   ],
    [
     ".github/workflows/ci.yml",
     2
@@ -388068,10 +388070,6 @@
    ],
    [
     "scripts/catalog/validate-plan.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/README.md",
     1
    ]
   ]

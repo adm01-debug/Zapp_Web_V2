@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a082adc179bbab733daf4ffbe3b4865c149770c9",
+  "commit": "491a75d9faabf6d5bc3d835ff3b12021f0ac2034",
   "branch": "main",
-  "data_commit": "2026-11-12T03:16:58-03:00",
+  "data_commit": "2026-11-12T06:47:48Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "491a75d",
+    "data": "2026-11-12",
+    "assunto": "fix(scripts): guard rodar() contra bun ausente no PATH (#2978)"
+   },
    {
     "sha": "a082adc",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "a6b4ffb",
     "data": "2026-11-11",
     "assunto": "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)"
-   },
-   {
-    "sha": "2182f81",
-    "data": "2026-11-11",
-    "assunto": "fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)"
    }
   ],
   "arquivos_mudados_7d": 652,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8414,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891213,
+  "linhas_codigo": 891215,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -672,7 +672,7 @@
   },
   "scripts/tarefas": {
    "arquivos": 2,
-   "linhas": 411
+   "linhas": 413
   },
   "scripts/team-chat-db-validate.mjs": {
    "arquivos": 1,
