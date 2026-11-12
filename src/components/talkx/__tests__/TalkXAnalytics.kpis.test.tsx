@@ -242,7 +242,12 @@ describe('TalkXAnalytics — filtros e KPIs da RPC (X185)', () => {
     // O rail também acusa o erro — nada de "sem comparação" fingindo ausência de dado.
     expect(screen.getAllByText('Não foi possível carregar as estatísticas do comparativo').length).toBeGreaterThan(0);
     expect(screen.queryAllByTestId('kpi-card')).toHaveLength(0);
-    expect(screen.queryAllByText('Tentar novamente').length).toBe(2);
+    // Período + comparativo, e as seções de ranking e top segmentos (RPCs próprias, que
+    // aqui também falham) mostram cada uma o seu erro em vez de sumir caladas.
+    expect(screen.getByText('Não foi possível carregar as campanhas do ranking')).toBeTruthy();
+    expect(screen.queryAllByText('Tentar novamente').length).toBe(
+      2 + 1 + (screen.queryByTestId('talkx-top-segmentos') ? 1 : 0),
+    );
   });
 
   it('o comparativo de períodos mostra a variação (+50%)', async () => {
