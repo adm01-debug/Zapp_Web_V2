@@ -414,3 +414,37 @@ describe('parseRetryAfter', () => {
     expect(parseRetryAfter(-5)).toBeUndefined();
   });
 });
+
+describe('resposta `notSupported` (Evolution GO sem a rota da v2)', () => {
+  beforeEach(() => {
+    h.invoke.mockReset();
+    h.toast.success.mockReset();
+    h.toast.error.mockReset();
+  });
+
+  it('callApi sobe erro com `notSupported` e a mensagem da Edge (nunca vira sucesso)', async () => {
+    h.invoke.mockResolvedValue({ data: { success: false, notSupported: true, message: 'mark-unread não é suportado na Evolution GO.' }, error: null });
+    const { result } = renderHook(() => useEvolutionApiCore());
+
+    let capturado: unknown;
+    await act(async () => {
+      await result.current.callApi('mark-unread', { instanceName }).catch((e) => { capturado = e; });
+    });
+
+    expect(capturado).toBeInstanceOf(Error);
+    expect((capturado as { notSupported?: boolean }).notSupported).toBe(true);
+    expect((capturado as Error).message).toContain('não é suportado');
+  });
+
+  it('withToast mostra o aviso de não suportado em vez do toast de sucesso', async () => {
+    h.invoke.mockResolvedValue({ data: { success: false, notSupported: true }, error: null });
+    const { result } = renderHook(() => useEvolutionApiCore());
+
+    await act(async () => {
+      await result.current.withToast('set-settings', { instanceName }, 'Configurações salvas', 'Erro').catch(() => undefined);
+    });
+
+    expect(h.toast.success).not.toHaveBeenCalled();
+    expect(h.toast.error).toHaveBeenCalledWith('Recurso não suportado pelo provedor de WhatsApp em uso.');
+  });
+});
