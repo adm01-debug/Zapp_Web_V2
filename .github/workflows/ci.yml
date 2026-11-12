@@ -156,6 +156,11 @@ jobs:
       - name: Verificar inventário de testes
         run: node scripts/ci/check-test-inventory.mjs
 
+      # scripts/inventario/gerar-repo.unit.mjs roda o gerar-repo.mjs, que exige o ripgrep
+      # (mesmo passo do inventario-estado-semanal.yml).
+      - name: Instalar ripgrep (usado pelo gerar-repo.mjs)
+        run: command -v rg || sudo apt-get install -y --no-install-recommends ripgrep
+
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
@@ -163,6 +168,7 @@ jobs:
           scripts/db-tests/run-all.unit.mjs
           scripts/docs/verificar-docs-realtime.unit.mjs
           scripts/eslint/no-secret-compare.unit.mjs
+          scripts/inventario/gerar-repo.unit.mjs
           scripts/lib/seguranca-processo.unit.mjs
           scripts/qa/contatos-redesign-baseline.unit.mjs
           scripts/qa/contraste-auditores.unit.mjs
