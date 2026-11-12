@@ -1068,6 +1068,12 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
     }
 
+    // Restaurada (#2054, decisão do dono): lista de conversas do aparelho na v2
+    // (diagnóstico da conexão). `/chat/findChats` não existe no GO → notSupported.
+    if (action === 'find-chats') {
+      if (isGoFlavor) return goActionNotSupported('find-chats', corsHeaders);
+      return await proxy(`/chat/findChats/${instance}`, 'POST', { where: body.where || {} });
+    }
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
     if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
     if (action === 'get-media-base64') return await proxy(`/chat/getBase64FromMediaMessage/${instance}`, 'POST', { message: body.message, convertToMp4: body.convertToMp4 ?? false });
@@ -1176,6 +1182,22 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'send-template') {
       if (isGoFlavor) return goActionNotSupported('send-template', corsHeaders);
       return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
+    }
+    // Restauradas (#2054, decisão do dono): templates da Meta (WhatsApp Business
+    // Cloud API) e catálogo/coleções de um número business, e a oferta de chamada.
+    // Rotas só da v2 (`/template/*`, `/business/*`, `/call/offerCall`) → notSupported no GO.
+    if (action === 'create-template' || action === 'find-templates' || action === 'delete-template') {
+      if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
+      if (action === 'find-templates') return await proxy(`/template/find/${instance}`, 'GET');
+      return await proxy(`/template/${action === 'create-template' ? 'create' : 'delete'}/${instance}`, action === 'create-template' ? 'POST' : 'DELETE', body);
+    }
+    if (action === 'get-catalog' || action === 'get-collections') {
+      if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
+      return await proxy(`/business/${action === 'get-catalog' ? 'getCatalog' : 'getCollections'}/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
+    }
+    if (action === 'offer-call') {
+      if (isGoFlavor) return goActionNotSupported('offer-call', corsHeaders);
+      return await proxy(`/call/offerCall/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo ?? false, callDuration: body.callDuration ?? 5 });
     }
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;
