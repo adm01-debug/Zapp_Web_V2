@@ -275,3 +275,19 @@ test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'",
     "proxyToEvolution não pode expor o corpo raw da GO no campo 'details' — pode vazar tokens de integrações (chatwoot, openai, etc.)",
   );
 });
+
+test("rotas da Evolution V2 com chamador no front permanecem explícitas no handler", () => {
+  // Este contrato existia e foi apagado no #2054 junto com as próprias rotas —
+  // que tinham chamador no front e passaram a responder 404 "Unknown action"
+  // (admin) ou 403 (agente). Restaurado para as rotas restauradas: sumir com
+  // uma delas exige decisão explícita (e apagar também o chamador).
+  for (const action of [
+    "set-settings", "get-settings", "get-webhook", "set-presence", "send-template",
+    "mark-unread", "invite-info", "toggle-ephemeral", "find-status-messages",
+  ]) {
+    assert.match(
+      apiSrc, new RegExp(`action === '${action}'`),
+      `action ${action} precisa continuar explícita no handler (há chamador no front)`,
+    );
+  }
+});
