@@ -37,3 +37,19 @@ test('NÃO pega literais e comparações sem nome legível', () => {
   assert.equal(lint("if (a === 'x') {}").length, 0);
   assert.equal(lint('if (1 === 2) {}').length, 0);
 });
+
+test('`key` solto ou de objeto que não é evento continua sendo credencial', () => {
+  assert.equal(lint('if (key !== serviceRole) {}').length, 1);
+  assert.equal(lint('if (key === expected) {}').length, 1);
+  assert.equal(lint("if (row.key === 'business_hours') {}").length, 1);
+  assert.equal(lint('if (headers.key !== serviceRole) {}').length, 1);
+});
+
+test('`.key` de evento do DOM/React não é credencial (e, event, evt, *Event, nativeEvent)', () => {
+  assert.equal(lint("if (e.key === 'Escape') {}").length, 0);
+  assert.equal(lint("if (event.key !== 'Enter') {}").length, 0);
+  assert.equal(lint("if (evt.key === 'Tab') {}").length, 0);
+  assert.equal(lint("if (keyboardEvent.key === ' ') {}").length, 0);
+  assert.equal(lint("if (e.nativeEvent.key === 'a') {}").length, 0);
+  assert.equal(lint('if (e.key === token) {}').length, 1, 'o outro lado ainda é credencial');
+});

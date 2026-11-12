@@ -159,15 +159,23 @@ jobs:
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
+          scripts/catalog/validate-plan.unit.mjs
+          scripts/db-tests/run-all.unit.mjs
+          scripts/docs/verificar-docs-realtime.unit.mjs
           scripts/eslint/no-secret-compare.unit.mjs
-          scripts/lib/seguranca-processo.test.mjs
+          scripts/lib/seguranca-processo.unit.mjs
+          scripts/qa/contatos-redesign-baseline.unit.mjs
+          scripts/qa/contraste-auditores.unit.mjs
           scripts/qa/medir-tipografia.unit.mjs
           scripts/qa/prova-visao-classificadores.unit.mjs
+          scripts/talkx/gen-estados.unit.mjs
           scripts/talkx/lado-a-lado.unit.mjs
           scripts/talkx/v4-status.unit.mjs
+          scripts/tarefas/seed-local-imagens.unit.mjs
           scripts/team-chat-db-validate.unit.mjs
           scripts/ui-audit/contacts-navy-header.unit.mjs
           scripts/ui-audit/layout-guard.unit.mjs
+          scripts/ui-audit/view-container-padding.unit.mjs
         env:
           CI: true
 

@@ -37,6 +37,7 @@ async function installSidebarMocks(page: import('@playwright/test').Page, sideba
   await page.route(FLAGS_ROUTE, async (route) => {
     const response = await route.fetch();
     const flags = await response.json() as Array<Record<string, unknown>>;
+    // eslint-disable-next-line local/no-secret-compare -- `key` é a chave pública da feature flag, não credencial.
     const next = flags.filter((flag) => flag.key !== 'crm.integration');
     next.push({ key: 'crm.integration', enabled: true, description: 'E2E', updated_at: '2026-10-03T12:00:00Z' });
     await route.fulfill({ response, json: next });
