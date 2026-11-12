@@ -151,3 +151,18 @@ describe('gate de escrita de modelos de WhatsApp (RLS admin + supervisor)', () =
     expect(screen.queryByRole('button', { name: /Criar primeiro template/ })).not.toBeInTheDocument();
   });
 });
+
+describe('botão Enviar (send-template) só para template aprovado no cadastro local', () => {
+  it('aprovado: mostra Enviar, avisando que a aprovação é local', () => {
+    renderManager();
+    const enviar = screen.getByRole('button', { name: 'Enviar confirmacao_pedido' });
+    expect(enviar).toHaveAttribute('title', 'Enviar (aprovado no cadastro local)');
+  });
+
+  it.each(['draft', 'pending', 'rejected'])('status %s: sem Enviar', (status) => {
+    mockTemplates.mockReturnValue(baseReturn([{ ...template, status }]));
+    renderManager();
+    expect(screen.queryByRole('button', { name: 'Enviar confirmacao_pedido' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar confirmacao_pedido' })).toBeInTheDocument();
+  });
+});
