@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)",
    "fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)",
    "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)",
    "fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)",
-   "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS",
-   "fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)"
+   "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

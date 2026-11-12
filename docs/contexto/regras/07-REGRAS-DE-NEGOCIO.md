@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `376332a243` · branch `main` · 2026-11-12 08:54 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `6f90c93320` · branch `main` · 2026-11-12 09:15 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3261,6 +3261,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **canManageEmailContactLink()** — `supabase/functions/crm-integration/index.ts`
   ```
   return userHasPermission('crm.email_contact_link.manage');
+  ```
+- **validIdentifier(value: unknown)** — `supabase/functions/external-db-bridge/index.ts`
+  ```
+  return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);
   ```
 - **validIdentifier(value: unknown)** — `supabase/functions/external-db-proxy/index.ts`
   ```

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "376332a2432a534866693e57360d8be77de2b6a8",
+  "commit": "6f90c933209ef722d47bfa222548675557e82c8c",
   "branch": "main",
-  "data_commit": "2026-11-12T05:52:57-03:00",
+  "data_commit": "2026-11-12T06:14:06-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "6f90c93",
+    "data": "2026-11-12",
+    "assunto": "fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)"
+   },
    {
     "sha": "376332a",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "0e15ed6",
     "data": "2026-11-11",
     "assunto": "fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)"
-   },
-   {
-    "sha": "0d73698",
-    "data": "2026-11-11",
-    "assunto": "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)"
    }
   ],
   "arquivos_mudados_7d": 659,
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/ui",
-    "mudancas": 127
+    "mudancas": 126
    },
    {
     "pasta": "src/components/dashboard",
@@ -193,13 +193,13 @@
    },
    {
     "pasta": "src/components/settings",
-    "mudancas": 96
+    "mudancas": 95
    }
   ],
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8416,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891367,
+  "linhas_codigo": 891383,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -780,7 +780,7 @@
   },
   "supabase/functions": {
    "arquivos": 390,
-   "linhas": 118845
+   "linhas": 118861
   },
   "tailwind.config.ts": {
    "arquivos": 1,

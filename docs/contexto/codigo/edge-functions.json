@@ -1798,7 +1798,7 @@
    "nome": "external-db-bridge",
    "entrada": "supabase/functions/external-db-bridge/index.ts",
    "arquivos": 1,
-   "linhas": 239,
+   "linhas": 255,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [

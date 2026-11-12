@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "376332a2432a534866693e57360d8be77de2b6a8",
+  "sha": "6f90c933209ef722d47bfa222548675557e82c8c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 08:54 UTC",
+  "generated_at": "2026-11-12 09:15 UTC",
   "files_total": 8258,
   "code_files": 6091,
-  "code_lines": 1059618
+  "code_lines": 1059634
  },
  "version": "1.3.2",
- "facts_hash": "193093a150d6000a",
+ "facts_hash": "b74dcb6b1b91ba26",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -69815,7 +69815,7 @@
   {
    "module": "supabase/functions",
    "files": 390,
-   "lines": 118845,
+   "lines": 118861,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -125382,6 +125382,12 @@
     "name": "canManageEmailContactLink",
     "params": "",
     "body": "return userHasPermission('crm.email_contact_link.manage');"
+   },
+   {
+    "file": "supabase/functions/external-db-bridge/index.ts",
+    "name": "validIdentifier",
+    "params": "value: unknown",
+    "body": "return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);"
    },
    {
     "file": "supabase/functions/external-db-proxy/index.ts",
@@ -370938,7 +370944,7 @@
   },
   "supabase/functions/external-db-bridge/index.ts": {
    "path": "supabase/functions/external-db-bridge/index.ts",
-   "lines": 239,
+   "lines": 255,
    "exports": [
     "interface ExternalDbBridgeInjected",
     "function handleExternalDbBridge"
@@ -370958,6 +370964,13 @@
    ],
    "rule_comments": [
     "Service-role bypasses RLS, so we MUST whitelist what this bridge can touch."
+   ],
+   "calc_fns": [
+    {
+     "name": "validIdentifier",
+     "params": "value: unknown",
+     "body": "return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);"
+    }
    ],
    "uses_service_role": true
   },
@@ -387836,10 +387849,20 @@
   }
  },
  "git": {
-  "sha": "376332a2432a534866693e57360d8be77de2b6a8",
+  "sha": "6f90c933209ef722d47bfa222548675557e82c8c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "6f90c93",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)",
+    "files": [
+     "supabase/deployment-manifest.json",
+     "supabase/functions/external-db-bridge/index.ts"
+    ]
+   },
    {
     "sha": "376332a",
     "date": "2026-11-12",
@@ -388192,24 +388215,15 @@
      "scripts/ci/sla-code-scanning.mjs",
      "scripts/ci/sla-code-scanning.unit.mjs"
     ]
-   },
-   {
-    "sha": "90a4327",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(tarefas): exigirLocal normaliza case do host antes da guarda local (#2953)",
-    "files": [
-     "scripts/tarefas/seed-local-imagens.ts"
-    ]
    }
   ],
   "hot_files": [
    [
-    "scripts/db-audit/grants-baseline.json",
-    3
+    "supabase/deployment-manifest.json",
+    4
    ],
    [
-    "supabase/deployment-manifest.json",
+    "scripts/db-audit/grants-baseline.json",
     3
    ],
    [
@@ -388249,6 +388263,10 @@
     2
    ],
    [
+    "supabase/functions/external-db-bridge/index.ts",
+    1
+   ],
+   [
     "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
     1
    ],
@@ -388278,10 +388296,6 @@
    ],
    [
     "src/hooks/analytics/useGoalNotifications.ts",
-    1
-   ],
-   [
-    "supabase/functions/gmail-oauth/index.ts",
     1
    ]
   ]

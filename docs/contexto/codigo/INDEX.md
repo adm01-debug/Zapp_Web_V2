@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `376332a2432a534866693e57360d8be77de2b6a8` (2026-11-12T05:52:57-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6f90c933209ef722d47bfa222548675557e82c8c` (2026-11-12T06:14:06-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8416 |
 | arquivos_codigo | 4814 |
-| linhas_codigo | 891367 |
+| linhas_codigo | 891383 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,13 +391,13 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56902 nós · 117583 arestas · 4184 comunidades · grafo do commit `376332a2`
-- comunidades maiores: react (811), lucide-react (772), badge.tsx (647), vitest (617), TalkXSuppression.tsx (549), utils.ts (536), cn (447), @tanstack/react-query (435), validation.ts (426), ref_https (385), ref_node_assert (384), ref_node_fs (343)
+- 56904 nós · 117586 arestas · 4234 comunidades · grafo do commit `6f90c933`
+- comunidades maiores: TalkXSuppression.tsx (832), ExternalProductManagement.tsx (649), cn (568), react (558), button.tsx (544), useMyWorkItems.ts (536), lucide-react (517), useAuth (439), @tanstack/react-query (419), useRealtimeMessages.ts (389), AiTab.tsx (385), ref_node_fs (336)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- supabase/deployment-manifest.json (15)
+- supabase/deployment-manifest.json (16)
 - PENDENCIAS.md (14)
 - docs/ci/README.md (14)
 - .github/workflows/ci.yml (13)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `6f90c93` fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)
 - 2026-11-12 `376332a` fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)
 - 2026-11-12 `93bff67` fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)
 - 2026-11-12 `1c4498d` fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `daba6eb` chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares
 - 2026-11-11 `71123cc` fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)
 - 2026-11-11 `7e128bc` feat(talkx): conectar RPCs analytics ao front — ranking, top segmentos e segmentos do relatório
-- 2026-11-11 `bd62fc9` feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
