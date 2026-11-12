@@ -176,7 +176,8 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
   ```
 - **`report_ready: true`:** testes completaram com sucesso; falha é no teardown.
 - **Hipótese principal:** `scope !== 'suite'` ou `anchorId === databaseId` para grupos authenticated (`routine-ownership.mjs:100–103`).
-- **Bloqueio:** corrigir exige logging adicional em `run.mjs:639` para expor `routineOwnership.reason` (AGENTS.md regra 8 — script de CI).
+- **Correção aplicada (2026-11-12):** `run.mjs:639-641` agora loga `[ownership] reason: <phase>-failed` antes de lançar o erro — evidência no diff da branch `claude/fix-ci-workflows-261112-0400`.
+- **Bloqueio remanescente:** validação final requer runners disponíveis (quota esgotada — §7) e credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` (Rule 8).
 - **Ação:** ver `PENDENCIAS.md` §3 para detalhes e passos para o dono.
 
 ### 4.4 Branch Hygiene Audit — SLA de alertas de code scanning

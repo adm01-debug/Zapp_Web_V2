@@ -114,22 +114,26 @@ Hipoteses (da mais provavel para a menos):
 
 O campo `report_ready: true` no JSON confirma que a suite Playwright **completou com sucesso** antes desta verificacao. A falha e no **teardown** (`restore-versioned-routine-owners`), nao nos testes.
 
-### Por que `reason` nao aparece nos logs do CI
+### Correcao aplicada nesta sessao (2026-11-12)
 
-`scripts/e2e-isolated/run.mjs:639` lanca `Error('routine-ownership-failed')` **sem logar `routineOwnership.reason`** antes. O `reason` (ex: `scope-failed`) existe internamente em `routine-ownership.mjs:147` mas nunca chega aos logs de CI.
+`scripts/e2e-isolated/run.mjs:639-641` foi corrigido para logar `routineOwnership.reason` antes de lancar o erro:
+
+```javascript
+if (!routineOwnership.confirmed) {
+  console.error('[ownership] reason:', routineOwnership.reason);
+  throw new Error('routine-ownership-failed');
+}
+```
+
+**Evidencia:** diff local confirmado (`git diff` mostra `+  console.error('[ownership] reason:', routineOwnership.reason);`); commitado e pushado na branch `claude/fix-ci-workflows-261112-0400`.
 
 ### O que o dono precisa fazer
 
-1. **Expor o `reason`** - adicionar em `run.mjs:639`:
-   ```javascript
-   if (!routineOwnership.confirmed) {
-     console.error('[ownership] reason:', routineOwnership.reason);
-     throw new Error('routine-ownership-failed');
-   }
-   ```
-2. **Verificar `scope`** - no `run.mjs`, confirmar o valor da variavel `scope` na chamada de `restoreRoutineOwnership` (~linha 635). Se for `'authenticated-suite'` em vez de `'suite'`, esse e o bug.
-3. **Verificar `anchorId === databaseId`** - confirmar se grupos authenticated recebem os mesmos container IDs.
-4. **Apos corrigir** - re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` e confirmar que os 3 grupos authenticated passam.
+1. **Verificar `scope`** - apos a correcao, re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` (exige runners disponiveis — ver §7). Os logs do CI agora mostrarao `[ownership] reason: scope-failed` (ou outro reason), confirmando a sub-fase. Se `reason: scope-failed`, verificar no `run.mjs` se `scope` e `'suite'` ou `'authenticated-suite'` na chamada de `restoreRoutineOwnership` (~linha 635).
+2. **Verificar `anchorId === databaseId`** - confirmar se grupos authenticated recebem os mesmos container IDs.
+3. **Apos corrigir a causa raiz** - re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` e confirmar que os 3 grupos authenticated passam.
+
+> **Bloqueio atual**: validacao final requer runners disponiveis (quota esgotada — ver §7) e credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` configuradas como secrets (Rule 8).
 
 ---
 
