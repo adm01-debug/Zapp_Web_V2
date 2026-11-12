@@ -21,8 +21,6 @@
 -- Nada mais muda: CREATE OR REPLACE da mesma assinatura (ACL preservada e
 -- reafirmada), sem DML.
 
-BEGIN;
-
 SET LOCAL lock_timeout = '5s';
 SET LOCAL statement_timeout = '120s';
 
@@ -106,5 +104,3 @@ REVOKE ALL ON FUNCTION public.resolve_unconfirmed_message(uuid, text)
   FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.resolve_unconfirmed_message(uuid, text)
   TO authenticated;
-
-COMMIT;
