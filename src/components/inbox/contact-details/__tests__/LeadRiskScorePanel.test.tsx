@@ -10,20 +10,23 @@ const h = vi.hoisted(() => {
     writeError: null as { message: string } | null,
     pending: false,
     isAdmin: false,
+    updatedRows: [{ id: 'c1' }] as { id: string }[],
   };
-  const updateEq = vi.fn(async () => ({ error: state.writeError }));
+  const updateSelect = vi.fn(async () => ({ data: state.writeError ? null : state.updatedRows, error: state.writeError }));
+  const updateEq = vi.fn(() => ({ select: updateSelect }));
   const update = vi.fn((_payload: Record<string, unknown>) => ({ eq: updateEq }));
   const maybeSingle = vi.fn(() =>
     state.pending ? new Promise(() => {}) : Promise.resolve({ data: state.row, error: state.readError }),
   );
   const select = vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) }));
   const from = vi.fn(() => ({ select, update }));
-  return { state, from, update, updateEq };
+  return { state, from, update, updateEq, updateSelect };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: h.from } }));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isAdmin: h.state.isAdmin }) }));
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock('sonner', () => ({ toast }));
 
 function renderPanel() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -40,6 +43,7 @@ beforeEach(() => {
   h.state.writeError = null;
   h.state.pending = false;
   h.state.isAdmin = false;
+  h.state.updatedRows = [{ id: 'c1' }];
   vi.clearAllMocks();
 });
 
@@ -99,5 +103,31 @@ describe('LeadRiskScorePanel — score e LGPD', () => {
     renderPanel();
     expect(await screen.findByRole('combobox', { name: 'Consentimento LGPD' })).toBeInTheDocument();
     expect(screen.queryByTestId('consent-readonly')).toBeNull();
+  });
+
+  it('origem legada fora da lista aparece como "Outro: <valor>", não como "Selecione"', async () => {
+    h.state.row = { lead_score: 10, risk_score: 10, lead_origin: 'feira_2019', consent_status: 'unknown' };
+    renderPanel();
+    expect(await screen.findByRole('combobox', { name: 'Origem do lead' })).toHaveTextContent('Outro: feira_2019');
+    expect(screen.queryByText('Selecione a origem')).toBeNull();
+  });
+
+  it('UPDATE sem linha afetada (RLS) é erro, não "Scores atualizados"', async () => {
+    h.state.updatedRows = [];
+    renderPanel();
+    const slider = await screen.findByRole('slider', { name: 'Risk score' });
+    fireEvent.keyDown(slider, { key: 'ArrowRight' });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Não foi possível salvar os scores'));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(h.updateSelect).toHaveBeenCalledWith('id');
+  });
+
+  it('UPDATE com a linha devolvida confirma o salvamento', async () => {
+    renderPanel();
+    const slider = await screen.findByRole('slider', { name: 'Risk score' });
+    fireEvent.keyDown(slider, { key: 'ArrowRight' });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Scores atualizados'));
   });
 });

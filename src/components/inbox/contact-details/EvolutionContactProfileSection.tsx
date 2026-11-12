@@ -1,11 +1,13 @@
 /**
  * EvolutionContactProfileSection — perfil do WhatsApp do contato (foto HD,
- * recado, conta comercial, dispositivo, etiquetas da instância e visto por
- * último), lido de `evolution_contacts` na VPS da Evolution.
+ * recado, conta comercial, dispositivo e visto por último), lido de `evolution_contacts` na VPS da Evolution.
  *
  * Restaurado (2026-11-12) do componente que saiu como órfão na #1886.
  * A edge `external-db-proxy` só libera a leitura para admin/supervisor; para
  * os demais papéis a seção diz isso em vez de mostrar um erro 403.
+ * E-mail e sites aparecem como texto, sem link (regra: nenhuma informação sai
+ * do sistema); as etiquetas da instância não aparecem (tags/etiquetas foram
+ * removidas pelo dono).
  */
 import { AlertCircle, BadgeCheck, Briefcase, Building2, Clock, Globe, Mail, MapPin, Smartphone } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,8 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useEvolutionContactProfile } from '@/hooks/integrations/useEvolutionContactProfile';
-import { formatRelativeTime } from '@/lib/formatters';
-import { isSafeHttpUrl } from '@/lib/urlSafety';
+import { formatRelativeTime, getInitials } from '@/lib/formatters';
 
 interface EvolutionContactProfileSectionProps {
   phone: string;
@@ -60,10 +61,10 @@ function ProfileBody({ phone, fallbackName }: EvolutionContactProfileSectionProp
 
   const displayName = profile.verified_name || profile.push_name || fallbackName || 'Sem nome';
   const avatarUrl = profile.profile_picture_hd || profile.profile_picture_url || undefined;
-  const initials = displayName.split(' ').filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+  const initials = getInitials(displayName);
   const business = profile.business_profile;
   const device = profile.device_info;
-  const websites = (business?.website ?? []).filter(isSafeHttpUrl);
+  const websites = (business?.website ?? []).map((w) => w?.trim()).filter((w): w is string => !!w);
   const lastSeen = profile.last_seen ? new Date(profile.last_seen) : null;
 
   return (
@@ -109,7 +110,7 @@ function ProfileBody({ phone, fallbackName }: EvolutionContactProfileSectionProp
           {business.email && (
             <div className="flex items-center gap-2 text-xs">
               <Mail className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
-              <a href={`mailto:${business.email}`} className="text-primary hover:underline truncate">{business.email}</a>
+              <span className="text-foreground/80 truncate">{business.email}</span>
             </div>
           )}
           {websites.length > 0 && (
@@ -117,7 +118,7 @@ function ProfileBody({ phone, fallbackName }: EvolutionContactProfileSectionProp
               <Globe className="w-3.5 h-3.5 text-muted-foreground mt-0.5" aria-hidden="true" />
               <div className="flex flex-col gap-1 min-w-0">
                 {websites.map((url) => (
-                  <a key={url} href={url} target="_blank" rel="noreferrer noopener" className="text-primary hover:underline truncate">{url}</a>
+                  <span key={url} className="text-foreground/80 truncate">{url}</span>
                 ))}
               </div>
             </div>
@@ -138,14 +139,6 @@ function ProfileBody({ phone, fallbackName }: EvolutionContactProfileSectionProp
             {[device.device_manufacturer, device.device_model].filter(Boolean).join(' ') || device.platform}
             {device.wa_version ? ` · WA ${device.wa_version}` : ''}
           </span>
-        </div>
-      )}
-
-      {profile.labels && profile.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1" aria-label="Etiquetas da instância do WhatsApp">
-          {profile.labels.map((label) => (
-            <Badge key={label} variant="secondary" className="text-3xs h-5">{label}</Badge>
-          ))}
         </div>
       )}
 

@@ -36,8 +36,11 @@ export function useUpdateContactLeadRisk(contactId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (changes: Partial<ContactLeadRisk>) => {
-      const { error } = await supabase.from('contacts').update(changes).eq('id', contactId);
+      // .select('id'): sem linha devolvida o UPDATE não pegou nada (RLS ou contato
+      // inexistente) — o PostgREST responde sem erro, então isso precisa virar falha.
+      const { data, error } = await supabase.from('contacts').update(changes).eq('id', contactId).select('id');
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('Nenhum contato atualizado');
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: contactLeadRiskKey(contactId) });

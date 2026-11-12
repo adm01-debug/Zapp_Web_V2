@@ -40,14 +40,14 @@ describe('EvolutionContactProfileSection', () => {
     expect(screen.getByTestId('evolution-profile-loading')).toBeInTheDocument();
   });
 
-  it('mostra o perfil com conta comercial, links seguros e etiquetas da instância', async () => {
+  it('mostra o perfil com conta comercial; e-mail e site como texto, sem link e sem etiquetas', async () => {
     h.proxy.mockResolvedValue({
       data: [{
         push_name: 'Maria Brindes',
         verified: true,
         is_business: true,
         about: 'Brindes para empresas',
-        business_profile: { category: 'Comércio', website: ['https://exemplo.com.br', 'javascript:alert(1)'] },
+        business_profile: { category: 'Comércio', email: 'vendas@exemplo.com.br', website: ['https://exemplo.com.br'] },
         device_info: { device_manufacturer: 'Samsung', device_model: 'S23', wa_version: '2.24' },
         labels: ['Cliente novo'],
       }],
@@ -56,10 +56,12 @@ describe('EvolutionContactProfileSection', () => {
     expect(await screen.findByTestId('evolution-profile')).toHaveTextContent('Maria Brindes');
     expect(screen.getByRole('img', { name: 'Conta verificada' })).toBeInTheDocument();
     expect(screen.getByText('Business')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'https://exemplo.com.br' })).toHaveAttribute('rel', 'noreferrer noopener');
-    expect(screen.queryByText('javascript:alert(1)')).toBeNull();
+    expect(screen.getByText('https://exemplo.com.br')).toBeInTheDocument();
+    expect(screen.getByText('vendas@exemplo.com.br')).toBeInTheDocument();
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
     expect(screen.getByTestId('evolution-profile-device')).toHaveTextContent('Samsung S23 · WA 2.24');
-    expect(screen.getByText('Cliente novo')).toBeInTheDocument();
+    expect(screen.queryByText('Cliente novo')).toBeNull();
+    expect(screen.getByText('MB')).toBeInTheDocument();
 
     const filters = h.proxy.mock.calls[0][0].filters;
     expect(h.proxy.mock.calls[0][0].table).toBe('evolution_contacts');

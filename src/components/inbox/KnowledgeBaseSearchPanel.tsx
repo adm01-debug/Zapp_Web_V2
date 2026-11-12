@@ -22,10 +22,13 @@ interface KnowledgeBaseSearchPanelProps {
 }
 
 export function KnowledgeBaseSearchPanel({ onInsertText, className }: KnowledgeBaseSearchPanelProps) {
-  const { query, handleSearch, clear, articles, isLoading, isError, hasResults } = useKnowledgeBaseSearch();
+  const { query, handleSearch, clear, articles, isSearching, isDebouncing, isFetching, isError, hasResults } = useKnowledgeBaseSearch();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const baseId = useId();
-  const searching = query.trim().length >= 2;
+  const searching = isSearching;
+  // Enquanto o termo digitado não passou pelo debounce (ou a RPC está em voo),
+  // o resultado na tela é de outro termo: mostra "Pesquisando..." e não o vazio.
+  const pending = searching && (isDebouncing || isFetching);
 
   return (
     <div className={cn('space-y-2', className)} data-testid="kb-search">
@@ -57,25 +60,25 @@ export function KnowledgeBaseSearchPanel({ onInsertText, className }: KnowledgeB
         <p className="text-xs text-muted-foreground">Digite ao menos 2 letras para pesquisar artigos.</p>
       )}
 
-      {searching && isLoading && (
+      {pending && (
         <div role="status" className="flex items-center justify-center py-3 text-muted-foreground" data-testid="kb-loading">
           <Loader2 className="w-4 h-4 animate-spin mr-2" aria-hidden="true" />
           <span className="text-xs">Pesquisando...</span>
         </div>
       )}
 
-      {searching && isError && (
+      {searching && !pending && isError && (
         <p role="alert" data-testid="kb-error" className="flex items-center gap-1.5 text-xs text-destructive">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
           Não foi possível pesquisar a base de conhecimento.
         </p>
       )}
 
-      {searching && !isLoading && !isError && !hasResults && (
+      {searching && !pending && !isError && !hasResults && (
         <p data-testid="kb-empty" className="text-xs text-muted-foreground text-center py-3">Nenhum artigo encontrado</p>
       )}
 
-      {hasResults && (
+      {searching && !pending && !isError && hasResults && (
         <ul className="space-y-1.5 max-h-[300px] overflow-y-auto scrollbar-thin" aria-label="Artigos encontrados">
           {articles.map((article) => {
             const expanded = expandedId === article.id;
@@ -102,11 +105,11 @@ export function KnowledgeBaseSearchPanel({ onInsertText, className }: KnowledgeB
                     </span>
                     <span className="flex flex-wrap items-center gap-1 mt-0.5">
                       {article.category && (
-                        <Badge variant="outline" className="text-[9px] px-1 py-0">{article.category}</Badge>
+                        <Badge variant="outline" className="text-3xs px-1 py-0">{article.category}</Badge>
                       )}
                       {/* Assunto do artigo (não é a função de tags de contato removida em 12/10). */}
                       {article.tags?.slice(0, 2).map((topic) => (
-                        <Badge key={topic} variant="secondary" className="text-[9px] px-1 py-0">{topic}</Badge>
+                        <Badge key={topic} variant="secondary" className="text-3xs px-1 py-0">{topic}</Badge>
                       ))}
                     </span>
                   </button>
