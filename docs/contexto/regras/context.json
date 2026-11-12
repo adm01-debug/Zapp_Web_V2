@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "81f67b0db663d171686a85a1549e43099258d01c",
+  "sha": "cfa8959b9035e745d5f997e16f2ca51e76bee376",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 14:30 UTC",
+  "generated_at": "2026-11-12 15:50 UTC",
   "files_total": 8259,
   "code_files": 6092,
-  "code_lines": 1059769
+  "code_lines": 1059771
  },
  "version": "1.3.2",
- "facts_hash": "d9e872df3831e1cb",
+ "facts_hash": "6dee1288400a9c02",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67938,7 +67938,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18564,
+   "lines": 18566,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -262424,7 +262424,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "path": "e2e/navegacao-modulos.spec.ts",
-   "lines": 1943,
+   "lines": 1945,
    "is_test": true,
    "env": [
     "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE",
@@ -262494,7 +262494,7 @@
     "await page.goto('/auth', { timeout: 90_000, waitUntil: 'domcontentloaded' });",
     "await shell.waitFor({ state: 'visible', timeout: 45_000 }).catch(() => undefined);",
     "const teto = { timeout: 90_000 };",
-    "test.describe.configure({ timeout: 15 * 60_000 });",
+    "test.describe.configure({ timeout: 15 * 60_000, retries: 0 });",
     "timeout: 10_000,",
     "timeout: 25_000,",
     "timeout: 45_000,",
@@ -387872,10 +387872,19 @@
   }
  },
  "git": {
-  "sha": "81f67b0db663d171686a85a1549e43099258d01c",
+  "sha": "cfa8959b9035e745d5f997e16f2ca51e76bee376",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "cfa8959",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)",
+    "files": [
+     "e2e/navegacao-modulos.spec.ts"
+    ]
+   },
    {
     "sha": "81f67b0",
     "date": "2026-11-12",
@@ -388202,38 +388211,6 @@
      "scripts/ci/run-sh.unit.mjs",
      "scripts/maintenance/run.sh"
     ]
-   },
-   {
-    "sha": "9727aae",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO (#2496)",
-    "files": [
-     "ESTADO.md",
-     "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
-     "scripts/db-audit/message-delivery-phase1-runtime.sql",
-     "src/components/inbox/ChatPanel.tsx",
-     "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
-     "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
-     "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
-     "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
-     "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
-     "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx",
-     "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
-     "src/components/inbox/chat/SendErrorBanner.tsx",
-     "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-     "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
-     "src/hooks/delivery/useUnconfirmedMessages.ts",
-     "src/pages/__tests__/ChatPopup.pagination.test.tsx",
-     "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/effect-reconcile.ts",
-     "supabase/functions/_shared/evolution-webhook-messages.ts",
-     "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-     "supabase/functions/message-delivery/index.test.ts",
-     "supabase/functions/message-delivery/index.ts",
-     "supabase/migrations/20261111160000_outbound_post_started.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -388247,7 +388224,7 @@
    ],
    [
     "supabase/deployment-manifest.json",
-    4
+    3
    ],
    [
     "scripts/db-audit/grants-baseline.json",
@@ -388255,14 +388232,6 @@
    ],
    [
     "scripts/e2e-isolated/routine-ownership.mjs",
-    2
-   ],
-   [
-    "src/components/inbox/chat/SendErrorBanner.tsx",
-    2
-   ],
-   [
-    "src/hooks/delivery/useUnconfirmedMessages.ts",
     2
    ],
    [
@@ -388280,6 +388249,10 @@
    [
     "scripts/tarefas/seed-local-imagens.unit.mjs",
     2
+   ],
+   [
+    "e2e/navegacao-modulos.spec.ts",
+    1
    ],
    [
     "playwright.config.ts",
@@ -388310,11 +388283,15 @@
     1
    ],
    [
-    "scripts/db-audit/known-violations.json",
+    "src/components/inbox/chat/SendErrorBanner.tsx",
     1
    ],
    [
-    "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
+    "src/hooks/delivery/useUnconfirmedMessages.ts",
+    1
+   ],
+   [
+    "scripts/db-audit/known-violations.json",
     1
    ]
   ]

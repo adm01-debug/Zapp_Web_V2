@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "81f67b0db663d171686a85a1549e43099258d01c",
+  "commit": "cfa8959b9035e745d5f997e16f2ca51e76bee376",
   "branch": "main",
-  "data_commit": "2026-11-12T10:07:44-03:00",
+  "data_commit": "2026-11-12T11:25:10-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "cfa8959",
+    "data": "2026-11-12",
+    "assunto": "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)"
+   },
    {
     "sha": "81f67b0",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "7e128bc",
     "data": "2026-11-11",
     "assunto": "feat(talkx): conectar RPCs analytics ao front — ranking, top segmentos e segmentos do relatório"
-   },
-   {
-    "sha": "bd62fc9",
-    "data": "2026-11-11",
-    "assunto": "feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)"
    }
   ],
   "arquivos_mudados_7d": 661,
@@ -246,6 +246,10 @@
     "mudancas": 10
    },
    {
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
+    "mudancas": 9
+   },
+   {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 9
    },
@@ -271,10 +275,6 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 8
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8417,
   "arquivos_codigo": 4815,
-  "linhas_codigo": 891518,
+  "linhas_codigo": 891520,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -504,7 +504,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "arquivos": 1,
-   "linhas": 1943
+   "linhas": 1945
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "arquivos": 1,

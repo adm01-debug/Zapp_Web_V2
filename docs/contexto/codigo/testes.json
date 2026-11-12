@@ -459,7 +459,7 @@
   {
    "arquivo": "e2e/navegacao-modulos.spec.ts",
    "tipo": "e2e",
-   "linhas": 1943,
+   "linhas": 1945,
    "testa": [
     "scripts/e2e-isolated/fixture-access.mjs",
     "src/lib/productName.ts"
