@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2d1020163e2e46d830154f121be76164bbc9204a",
+  "commit": "bd417f58db7cde2e875fba23be7e4c958f1343ff",
   "branch": "main",
-  "data_commit": "2026-11-12T06:33:40-03:00",
+  "data_commit": "2026-11-12T06:52:03-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "bd417f5",
+    "data": "2026-11-12",
+    "assunto": "fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard"
+   },
    {
     "sha": "2d10201",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "9084db7",
     "data": "2026-11-11",
     "assunto": "fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)"
-   },
-   {
-    "sha": "b548ca0",
-    "data": "2026-11-11",
-    "assunto": "fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)"
    }
   ],
   "arquivos_mudados_7d": 660,
@@ -250,10 +250,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 9
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 8
    },
@@ -263,6 +259,10 @@
    },
    {
     "arquivo": "AGENTS.md",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "ESTADO.md",
     "mudancas": 8
    },
    {

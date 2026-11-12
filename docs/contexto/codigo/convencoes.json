@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard",
    "fix(db-audit): wal_level=logical no container descartável do teste E27 replay",
    "fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)",
    "fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)",
-   "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)",
-   "fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)"
+   "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

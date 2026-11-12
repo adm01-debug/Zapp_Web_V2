@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "2d1020163e2e46d830154f121be76164bbc9204a",
+  "sha": "bd417f58db7cde2e875fba23be7e4c958f1343ff",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 09:44 UTC",
+  "generated_at": "2026-11-12 10:02 UTC",
   "files_total": 8258,
   "code_files": 6091,
   "code_lines": 1059634
@@ -387849,10 +387849,19 @@
   }
  },
  "git": {
-  "sha": "2d1020163e2e46d830154f121be76164bbc9204a",
+  "sha": "bd417f58db7cde2e875fba23be7e4c958f1343ff",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "bd417f5",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard",
+    "files": [
+     "scripts/db-audit/known-violations.json"
+    ]
+   },
    {
     "sha": "2d10201",
     "date": "2026-11-12",
@@ -388202,18 +388211,6 @@
      "scripts/ci/verify-release-targets-summary.unit.mjs",
      "scripts/vercel/verify-release-targets.mjs"
     ]
-   },
-   {
-    "sha": "1507ad9",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)",
-    "files": [
-     ".github/workflows/ci.yml",
-     "TESTING_CONVENTION.md",
-     "scripts/qa/medir-tipografia.cjs",
-     "scripts/qa/medir-tipografia.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388250,16 +388247,12 @@
     2
    ],
    [
-    ".github/workflows/ci.yml",
-    2
-   ],
-   [
-    "TESTING_CONVENTION.md",
-    2
-   ],
-   [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/db-audit/known-violations.json",
+    1
    ],
    [
     "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
@@ -388295,6 +388288,10 @@
    ],
    [
     "src/hooks/analytics/__tests__/useGoalNotifications.idempotencia.test.tsx",
+    1
+   ],
+   [
+    "src/hooks/analytics/useGoalNotifications.ts",
     1
    ]
   ]
