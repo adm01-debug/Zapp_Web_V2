@@ -6,6 +6,7 @@ import { criarFilaDePersistencia, type CallEndOutcome } from '@/lib/calls/persis
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
 import { provisionarSip } from '@/lib/calls/sipProvisioning';
+import { claimLeadership, isLeader } from '@/lib/calls/tabLeaderStore';
 import { useMicrophoneGuard } from './useMicrophoneGuard';
 import { useTabLeaderRole } from './useTabLeaderRole';
 import { useCallEngineSink } from './useCallEngineSink';
@@ -18,6 +19,8 @@ export type CallStatus = EngineStatus;
 export type CallDirection = AdapterDirection;
 
 const log = getLogger('SipClient');
+/** Promoção a líder dentro desta janela após o clique é fruto do clique (jitter ≤ 120 ms). */
+const PEDIDO_EXPLICITO_JANELA_MS = 2_000;
 
 /**
  * T09: estado espelhado do motor, cronômetro, toast e conexão. T11: o banco é
@@ -84,11 +87,26 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
     if (config) await connect(config);
   }, [connect]);
 
+  // Clique do usuário ("Reconectar linha"). Aba já líder: provisiona na hora,
+  // ignorando a trava. Aba ainda não líder: reivindica a liderança e marca o
+  // pedido — a promoção que vier em seguida (jitter de até 120 ms) é deste
+  // clique e ignora a trava; uma promoção automática fora da janela a respeita.
+  const pedidoExplicitoAteRef = useRef(0);
+  const reconectarLinha = useCallback(async () => {
+    if (isLeader()) { await connectWithStoredCredentials({ ignorarTrava: true }); return; }
+    pedidoExplicitoAteRef.current = Date.now() + PEDIDO_EXPLICITO_JANELA_MS;
+    claimLeadership();
+  }, [connectWithStoredCredentials]);
+
   // T20: só a TRANSIÇÃO de papel age (o papel de nascença não conecta). Os
   // callbacks vão numa ref dentro do hook — a identidade deles não agenda o
   // efeito, então não há loop de disconnect a cada render.
   useTabLeaderRole({
-    onBecameLeader: () => { void connectWithStoredCredentials({ ignorarTrava: false }); },
+    onBecameLeader: () => {
+      const explicito = Date.now() <= pedidoExplicitoAteRef.current;
+      pedidoExplicitoAteRef.current = 0;
+      void connectWithStoredCredentials({ ignorarTrava: explicito });
+    },
     onBecameFollower: () => { void disconnect().then(() => setSipReason('line_in_use_other_tab')); },
   });
 
@@ -96,7 +114,7 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
 
   return {
     sipStatus, sipReason, micReason, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
-    connect, connectWithStoredCredentials, disconnect, makeCall, hangUp, toggleMute, sendDTMF,
+    connect, connectWithStoredCredentials, reconectarLinha, disconnect, makeCall, hangUp, toggleMute, sendDTMF,
     acceptIncomingCall, rejectIncomingCall, garantirMicrofone,
   };
 }
