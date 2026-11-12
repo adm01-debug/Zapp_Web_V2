@@ -21,6 +21,13 @@ interface UseTypingPresenceProps {
   conversationId: string;
   currentUserId?: string;
   currentUserName?: string;
+  /**
+   * `false` adia a abertura do canal. O `ChatPanel` passa `false` enquanto a
+   * identidade do agente logado ainda está sendo lida: sem isso o canal nascia
+   * com a chave provisória (`sessao:*`), era derrubado milissegundos depois quando a
+   * identidade real chegava e reaberto — um par abrir/fechar a cada conversa.
+   */
+  enabled?: boolean;
 }
 
 /**
@@ -54,7 +61,8 @@ function createClientScope(): string {
 export function useTypingPresence({
   conversationId,
   currentUserId,
-  currentUserName = 'Agente'
+  currentUserName = 'Agente',
+  enabled = true,
 }: UseTypingPresenceProps) {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [isContactTyping, setIsContactTyping] = useState(false);
@@ -136,7 +144,13 @@ export function useTypingPresence({
   }, [setTyping]);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !enabled) return;
+
+    // Console de produção (12/11): `Typing presence channel not subscribed: CLOSED`
+    // 2x a cada troca de conversa. Era o PRÓPRIO desmonte: `unsubscribe()` e
+    // `removeChannel()` disparam o callback do `subscribe` com `CLOSED`. Depois
+    // que este efeito começa a limpar, nenhum status do canal é notícia.
+    let disposed = false;
 
     // Create presence channel for this conversation
     const channel = supabase.channel(`typing:${conversationId}`, {
@@ -220,6 +234,7 @@ export function useTypingPresence({
 
     // Subscribe to channel
     channel.subscribe((status) => {
+      if (disposed) return;
       if (status === 'SUBSCRIBED') {
         subscribedRef.current = true;
         log.debug('Subscribed to typing presence for conversation:', conversationId);
@@ -239,6 +254,7 @@ export function useTypingPresence({
     });
 
     return () => {
+      disposed = true;
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -258,7 +274,7 @@ export function useTypingPresence({
       channel.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, [conversationId, presenceKey, scopedIdentity, ownUserId]);
+  }, [conversationId, enabled, presenceKey, scopedIdentity, ownUserId]);
 
   return {
     isContactTyping,
