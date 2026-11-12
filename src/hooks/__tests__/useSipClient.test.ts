@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { SIP_NOT_CONFIGURED_STORAGE_KEY } from '@/lib/calls/sipProvisioning';
 import { renderHook, act } from '@testing-library/react';
 import type { Invitation } from 'sip.js';
 
@@ -235,6 +236,9 @@ describe('useSipClient', () => {
     mockRpc.mockResolvedValue({ data: 'call-1', error: null });
     mockFunctionsInvoke.mockResolvedValue({ data: { password: 'test-pass' }, error: null });
     lastOnInvite = undefined;
+    // A trava "SIP não configurado" fica no localStorage (vale entre carregamentos):
+    // um teste que simulou o 503 não pode silenciar o provisionamento do seguinte.
+    localStorage.removeItem(SIP_NOT_CONFIGURED_STORAGE_KEY);
   });
 
   afterEach(() => {
