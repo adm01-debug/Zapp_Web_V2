@@ -281,16 +281,12 @@ test("rotas da Evolution V2 com chamador no front permanecem explícitas no hand
   // que tinham chamador no front e passaram a responder 404 "Unknown action"
   // (admin) ou 403 (agente). Restaurado para as rotas restauradas: sumir com
   // uma delas exige decisão explícita (e apagar também o chamador).
-  // `find-status-messages` entra aqui quando o PR #2999 (que a restaura) for integrado.
   for (const action of [
     "set-settings", "get-settings", "get-webhook", "set-presence", "send-template",
-    "mark-unread", "invite-info", "toggle-ephemeral",
-<<<<<<< HEAD
-=======
+    "mark-unread", "invite-info", "toggle-ephemeral", "find-status-messages",
     // decisão do dono (12/11): restauradas e com tela
     "find-chats", "offer-call", "create-template", "find-templates", "delete-template",
     "get-catalog", "get-collections",
->>>>>>> refs/sim/pr/3020
   ]) {
     assert.match(
       apiSrc, new RegExp(`action === '${action}'`),
