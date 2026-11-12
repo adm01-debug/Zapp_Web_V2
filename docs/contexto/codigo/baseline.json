@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "71123cc07ae3c413964215daf63d9f26890a1d33",
+  "commit": "daba6eb8c4570fa93d0e4c10d357a459e77b312d",
   "branch": "main",
-  "data_commit": "2026-11-11T23:41:56-03:00",
+  "data_commit": "2026-11-12T03:42:31Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "daba6eb",
+    "data": "2026-11-12",
+    "assunto": "chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares"
+   },
    {
     "sha": "71123cc",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "15ff5f3",
     "data": "2026-11-11",
     "assunto": "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)"
-   },
-   {
-    "sha": "e7646cc",
-    "data": "2026-11-11",
-    "assunto": "fix(ui-audit): className dinâmico na raiz não é mais silenciado como \"\" (#2938)"
    }
   ],
-  "arquivos_mudados_7d": 632,
+  "arquivos_mudados_7d": 649,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -198,12 +198,12 @@
   ],
   "arquivos_mais_mudados_90d": [
    {
-    "arquivo": "supabase/deployment-manifest.json",
+    "arquivo": ".github/workflows/ci.yml",
     "mudancas": 14
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 13
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -238,6 +238,10 @@
     "mudancas": 10
    },
    {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 9
+   },
+   {
     "arquivo": "ESTADO.md",
     "mudancas": 9
    },
@@ -248,10 +252,6 @@
    {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 9
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 8
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8399,
-  "arquivos_codigo": 4812,
-  "linhas_codigo": 891035,
+  "arquivos_total": 8413,
+  "arquivos_codigo": 4814,
+  "linhas_codigo": 891155,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,10 +328,10 @@
   "tabelas": 218,
   "migrations": 1103,
   "cron_jobs": 26,
-  "testes": 2615,
+  "testes": 2617,
   "workflows": 21,
   "scripts": 427,
-  "docs_md": 1073
+  "docs_md": 1085
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -619,8 +619,8 @@
    "linhas": 546
   },
   "scripts/docs": {
-   "arquivos": 4,
-   "linhas": 848
+   "arquivos": 5,
+   "linhas": 894
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
@@ -671,8 +671,8 @@
    "linhas": 1419
   },
   "scripts/tarefas": {
-   "arquivos": 1,
-   "linhas": 337
+   "arquivos": 2,
+   "linhas": 411
   },
   "scripts/team-chat-db-validate.mjs": {
    "arquivos": 1,

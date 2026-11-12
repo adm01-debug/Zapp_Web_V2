@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2615,
+ "total": 2617,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2322
+  "unit": 2324
  },
  "onde_ficam": [
   {
@@ -20,11 +20,11 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 225
+   "arquivos": 229
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 170
+   "arquivos": 168
   },
   {
    "padrao": "tests/",
@@ -612,7 +612,7 @@
    "casos": 4
   },
   {
-   "arquivo": "scripts/catalog/validate-plan.test.mjs",
+   "arquivo": "scripts/catalog/validate-plan.unit.mjs",
    "tipo": "unit",
    "linhas": 260,
    "testa": [],
@@ -2418,6 +2418,13 @@
    "casos": 3
   },
   {
+   "arquivo": "scripts/docs/verificar-docs-realtime.unit.mjs",
+   "tipo": "unit",
+   "linhas": 46,
+   "testa": [],
+   "casos": 5
+  },
+  {
    "arquivo": "scripts/edge-deploy/api-traversal.unit.mjs",
    "tipo": "unit",
    "linhas": 112,
@@ -2550,7 +2557,7 @@
    "casos": 9
   },
   {
-   "arquivo": "scripts/lib/seguranca-processo.test.mjs",
+   "arquivo": "scripts/lib/seguranca-processo.unit.mjs",
    "tipo": "unit",
    "linhas": 300,
    "testa": [
@@ -2671,6 +2678,13 @@
     "scripts/talkx/v4-status.mjs"
    ],
    "casos": 22
+  },
+  {
+   "arquivo": "scripts/tarefas/seed-local-imagens.unit.mjs",
+   "tipo": "unit",
+   "linhas": 74,
+   "testa": [],
+   "casos": 6
   },
   {
    "arquivo": "scripts/team-chat-db-validate.unit.mjs",

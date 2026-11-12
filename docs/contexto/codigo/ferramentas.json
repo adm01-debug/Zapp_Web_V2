@@ -5,9 +5,9 @@
   "linguagens": [
    "TypeScript (4238)",
    "SQL (1303)",
-   "Markdown (1073)",
+   "Markdown (1085)",
    "JSON (603)",
-   "JavaScript (457)",
+   "JavaScript (459)",
    "Shell (234)",
    "Python (119)",
    "YAML (29)"
@@ -2086,6 +2086,10 @@
    },
    {
     "host": "app.local",
+    "arquivos": 1
+   },
+   {
+    "host": "app.supabase.co",
     "arquivos": 1
    },
    {

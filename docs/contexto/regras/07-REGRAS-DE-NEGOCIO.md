@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `71123cc07a` · branch `main` · 2026-11-12 03:32 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `daba6eb8c4` · branch `main` · 2026-11-12 04:09 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4604,7 +4604,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21349 testes em 2259 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21310 testes em 2257 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4799,7 +4799,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/rlsConversationAccess.test.ts` | 21 | RLS real: contacts (schema resolvido das migrations) · o conjunto de policies bate com o manifest do schema real · SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin) · INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil) … |
 | `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts` | 21 | whatsapp-webhook: POST sem assinatura -> 401 antes de qualquer efeito (sem SUPABASE_URL configurada) · whatsapp-webhook: assinatura HMAC inválida -> 401 · whatsapp-webhook: replay — assinatura válida de OUTRO corpo -> 401 · whatsapp-webhook: sem WHATSAPP_APP_SECRET configurado -> 401 (falha fechada, mesmo com header bem formado) … |
 | `supabase/functions/detect-new-device/index.test.ts` | 21 | extractAuthSessionId extrai session_id do claim JWT · extractAuthSessionId devolve null sem claim ou com token malformado · extractAuthSessionId ignora session_id fora do claim (só o token conta) · decideSessionUpsert atualiza linha existente da mesma sessão Auth … |
-| `scripts/lib/seguranca-processo.test.mjs` | 20 | resolverExecutavel devolve caminho absoluto existente igual ao do shell · resolverExecutavel lanca para comando inexistente · estaDentro aceita a raiz e subpastas · estaDentro recusa  … |
 | `src/components/calls/__tests__/CallDialog.test.tsx` | 20 | CallDialog — aceite T21: abrir o diálogo NÃO insere em  · disca pelo provider e não toca em nenhum caminho de escrita da tabela  · não disca de novo quando a chamada já existe ( · disca UMA única vez por abertura, mesmo com  … |
 | `src/components/contacts/__tests__/useContactsCRUD.test.tsx` | 20 | useContactsCRUD — edição não apaga endereço (C1) · E01 — editar só o nome preserva endereço e coordenada da linha completa · E05 — abre a edição com 1 fetch pelo id · E05 — falha do getById não perde endereço: o update não escreve os campos de endereço … |
 | `src/components/gmail/__tests__/EmailThreadView.test.tsx` | 20 | EmailThreadView · chama setSelectedThreadId com thread.id no mount · chama setSelectedThreadId(null) no unmount · exibe o subject da thread no header … |
@@ -4814,7 +4813,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/services/__tests__/outbound-message.service.test.ts` | 20 | sendOutboundMessage · enqueues first and only then asks the authenticated delivery gateway to dispatch · does not dispatch when authorization or validation prevents enqueueing · foto com URL inválida: o enqueue rejeitado impede o dispatch e propaga a falha … |
 | `src/utils/__tests__/notificationSounds.test.ts` | 20 | notificationSounds · playNotificationSound · plays default message sound without error · plays with chime sound type … |
 | `supabase/functions/_shared/messaging/__tests__/personalize.test.ts` | 20 | personalize resolves the built-in placeholders (nome/apelido/nome_completo/empresa) · personalize {{apelido}} cai no primeiro nome quando o contato nao tem apelido · personalize built-in sem valor entra em missing e mantem o texto vazio (X020) · personalize falls back to a bracket placeholder for an unresolved variable instead of throwing … |
-| `scripts/catalog/validate-plan.test.mjs` | 19 | rejeita caminho relativo que escapa do repositorio · rejeita caminho absoluto fora do repositorio e do temporario · caminho valido e dentro da raiz, mas arquivo inexistente, da ERRO limpo (sem stack cru) · aceita o caminho default do plano dentro do repositorio … |
 | `scripts/db-audit/check-catalog-fresh.test.mjs` | 19 | aceita conjuntos identicos em ordem diferente · falha quando surge coluna nova no banco · falha quando o tipo de uma coluna muda · falha quando a nulabilidade de uma coluna muda … |
 | `scripts/db-audit/check-triple-parity.test.mjs` | 19 | paridade tripla verde quando as tres pernas batem (generated_at ignorado) · detecta divergencia arquivos↔ledger (sha256/count) · detecta edge em disco fora do manifesto e vice-versa · detecta grants-baseline desatualizado … |
 | `src/components/contacts/__tests__/ContactEngagementScore.test.tsx` | 19 | calculateEngagement · retorna level=hot quando recência + frequência + volume >= 70 · retorna level=warm quando score >= 40 e < 70 · retorna level=cold quando score >= 15 e < 40 … |
@@ -4908,7 +4906,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/__tests__/TalkXSuppression.add.test.tsx` | 16 | TalkXSuppression · Ações da lista no rail (X182/T06-053) · mostra o card  · não promete importar nem exportar em nenhum ponto do card · não oferece nenhuma ação de arquivo no card, nem desabilitada (regra: nada entra nem sai por arquivo) … |
 | `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` | 16 | R2-MOD-024 — resposta atrasada não contamina o template seguinte · variantes: resposta lenta de A não sobrescreve o painel de B · histórico: resposta lenta de A não sobrescreve o histórico de B · loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento … |
 | `src/components/talkx/__tests__/segmentValidation.test.ts` | 16 | segmentValidation · nome (X099) · recusa nome menor que o mínimo · aceita nome no mínimo, ignorando espaços nas pontas · recusa nome maior que o máximo … |
-| … +1959 linhas — lista completa em `context.json` | | |
+| `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` | 16 | TalkXQueryBoundary (matriz de estados — X047) · carregando: mostra o esqueleto e marca aria-busy · erro: mostra o erro e NUNCA o vazio (nem com a lista vazia) · vazio sem erro: mostra o vazio … |
+| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 16 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
+| … +1957 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
