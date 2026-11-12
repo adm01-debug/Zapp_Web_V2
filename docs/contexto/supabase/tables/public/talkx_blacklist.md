@@ -6,7 +6,7 @@
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 5 |
+| policies | 4 |
 | realtime (publication) | sim |
 | replica identity | default |
 | vem de extensão | não |
@@ -30,6 +30,8 @@
 | 11 | `source_message_id` | `uuid` | sim |  |  |  |
 | 12 | `removed_by` | `uuid` | sim |  |  |  |
 | 13 | `removed_at` | `timestamp with time zone` | sim |  |  |  |
+| 14 | `import_batch_id` | `uuid` | sim |  |  |  |
+| 15 | `removal_reason` | `text` | sim |  |  |  |
 
 
 ## Constraints
@@ -57,6 +59,7 @@
 | idx_talkx_blacklist_created_at_desc | btree | created_at | não | sim |  | `CREATE INDEX idx_talkx_blacklist_created_at_desc ON public.talkx_blacklist USING btree (created_at DESC)` |
 | idx_talkx_blacklist_expires_at | btree | expires_at | não | sim | `(expires_at IS NOT NULL)` | `CREATE INDEX idx_talkx_blacklist_expires_at ON public.talkx_blacklist USING btree (expires_at) WHERE (expires_at IS NOT NULL)` |
 | idx_talkx_blacklist_phone | btree | phone | não | sim | `(phone IS NOT NULL)` | `CREATE INDEX idx_talkx_blacklist_phone ON public.talkx_blacklist USING btree (phone) WHERE (phone IS NOT NULL)` |
+| idx_talkx_blacklist_reason_code | btree | reason_code | não | sim |  | `CREATE INDEX idx_talkx_blacklist_reason_code ON public.talkx_blacklist USING btree (reason_code)` |
 | idx_talkx_blacklist_removed_by | btree | removed_by | não | sim |  | `CREATE INDEX idx_talkx_blacklist_removed_by ON public.talkx_blacklist USING btree (removed_by)` |
 | idx_talkx_blacklist_source_message_id | btree | source_message_id | não | sim |  | `CREATE INDEX idx_talkx_blacklist_source_message_id ON public.talkx_blacklist USING btree (source_message_id)` |
 | talkx_blacklist_contact_active_unique | btree | contact_id | sim | sim | `((contact_id IS NOT NULL) AND (removed_at IS NULL))` | `CREATE UNIQUE INDEX talkx_blacklist_contact_active_unique ON public.talkx_blacklist USING btree (contact_id) WHERE ((contact_id IS NOT NULL) AND (removed_at IS NULL))` |
@@ -75,16 +78,6 @@
 | roles | authenticated |
 | USING |  |
 | WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
-
-### `Admins can remove from blacklist`
-
-| campo | valor |
-|---|---|
-| comando | DELETE |
-| tipo | PERMISSIVE |
-| roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK |  |
 
 ### `Only admins can view blacklist`
 
@@ -121,6 +114,8 @@
 
 | nome | timing | eventos | nível | status | função |
 |---|---|---|---|---|---|
+| trg_talkx_blacklist_audit | BEFORE | INSERT OR UPDATE | ROW | enabled | public.talkx_blacklist_audit_trigger |
+| trg_talkx_blacklist_no_delete | BEFORE | DELETE | ROW | enabled | public.talkx_blacklist_no_delete |
 | trg_talkx_blacklist_reason_active | BEFORE | INSERT OR UPDATE | ROW | enabled | public.talkx_blacklist_reason_active_guard |
 
 

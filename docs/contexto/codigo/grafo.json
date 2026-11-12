@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "nos": 2288,
- "arestas": 7932,
+ "arestas": 7935,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 411
+   "importado_por": 410
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -46,7 +46,7 @@
   },
   {
    "arquivo": "src/hooks/auth/useAuth.tsx",
-   "importado_por": 114
+   "importado_por": 115
   },
   {
    "arquivo": "src/components/ui/select.tsx",

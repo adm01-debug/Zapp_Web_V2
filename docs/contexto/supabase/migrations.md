@@ -1109,3 +1109,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261111160000 | [outbound_post_started](migrations/20261111160000_outbound_post_started.sql) | 21 |
 | 20261111170000 | [talkx_block_recipient](migrations/20261111170000_talkx_block_recipient.sql) | 4 |
 | 20261111181000 | [instance_pause_investigation](migrations/20261111181000_instance_pause_investigation.sql) | 7 |
+| 20261112160000 | [talkx_blacklist_reconcilia_e_higiene](migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql) | 1 |

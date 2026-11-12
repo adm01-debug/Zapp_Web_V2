@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `cfa8959b90` · branch `main` · 2026-11-12 15:50 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `cca5655b81` · branch `main` · 2026-11-12 21:10 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4537,7 +4537,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | deno coverage não executou: ${cobertura.error.message} | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | não gero docs com teste vermelho: ${falhas.join( | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | HTTP 502 | `scripts/ci/fila-merge.unit.mjs` |
-| … +1751 linhas — lista completa em `context.json` | |
+| … +1753 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4608,7 +4608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21316 testes em 2257 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21321 testes em 2257 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|

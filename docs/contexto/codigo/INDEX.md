@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `cfa8959b9035e745d5f997e16f2ca51e76bee376` (2026-11-12T11:25:10-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `cca5655b81667d40e43da5ca55a29c3e5b8b5848` (2026-11-12T13:34:19-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8417 |
 | arquivos_codigo | 4815 |
-| linhas_codigo | 891520 |
+| linhas_codigo | 891690 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -142,7 +142,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | lib | 0 | 0 | 112 | 19 | 6 | 17 |
 | lib/calls | 0 | 0 | 22 | 2 | 1 | 0 |
 | lib/journey | 0 | 0 | 6 | 0 | 0 | 0 |
-| pages | 1 | 16 | 18 | 443 | 49 | 122 |
+| pages | 1 | 16 | 18 | 443 | 49 | 121 |
 | pages/admin | 0 | 2 | 4 | 17 | 2 | 11 |
 | pages/admin-telemetria | 0 | 0 | 6 | 1 | 0 | 1 |
 | services | 0 | 0 | 16 | 11 | 4 | 17 |
@@ -368,7 +368,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - env de integração (só nomes): ANTHROPIC_API_KEY, BITRIX_WEBHOOK_URL, CHATBOT_L1_WEBHOOK_SECRET, CRON_SECRET, ELEVENLABS_WEBHOOK_SECRET, EVOLUTION_API_FLAVOR, EVOLUTION_API_KEY, EVOLUTION_API_URL, EVOLUTION_INSTANCE_NAME, EVOLUTION_INSTANCE_TOKEN, EVOLUTION_VPS_SUPABASE_ANON_KEY, EVOLUTION_VPS_SUPABASE_URL, EVOLUTION_WEBHOOK_ENFORCE, EVOLUTION_WEBHOOK_SECRET, GMAIL_CAS_JWT, GMAIL_CAS_POSTGREST_URL, GMAIL_OIDC_AUDIENCE, GMAIL_OIDC_EMAIL, GMAIL_OIDC_JWKS_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GROQ_API_KEY, INTERNAL_ALERT_SECRET, MULTIPLIX_SCOPE_HMAC_SECRET, OPENAI_API_KEY, PREVIEW_EGRESS_SHARED_SECRET, RESEND_API_KEY, TALKX_CONVERT_SECRET, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, WEBHOOK_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 
 ## Permissões / papéis
-- papéis no código: alert (110), status (104), admin (68), agent (60), supervisor (38), user (35), dialog (30), region (21), button (19), img (19), authenticated (17), group (15), tab (15), listbox (14), radiogroup (14), service_role (14), tablist (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (8), alertdialog (7), toolbar (7), list (6), note (6), log (5), menu (4), tabpanel (4), article (3), assistant (3), cliente (3), complementary (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), follower (2), fornecedor (2), gridcell (2), listitem (2), string (2), switch (2), A (1), B (1), RH (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), form (1), fundo (1), gateway (1), grand (1), html (1), intermediary (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), sup (1), target (1), textbox (1), texto (1), timer (1), unknown (1), untrusted (1)
+- papéis no código: alert (111), status (104), admin (68), agent (60), supervisor (38), user (35), dialog (30), region (21), button (19), img (19), authenticated (17), group (15), tab (15), listbox (14), radiogroup (14), service_role (14), tablist (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (8), alertdialog (7), toolbar (7), list (6), note (6), log (5), menu (4), tabpanel (4), article (3), assistant (3), cliente (3), complementary (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), follower (2), fornecedor (2), gridcell (2), listitem (2), string (2), switch (2), A (1), B (1), RH (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), form (1), fundo (1), gateway (1), grand (1), html (1), intermediary (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), sup (1), target (1), textbox (1), texto (1), timer (1), unknown (1), untrusted (1)
 - enums de papel: app_role: admin|supervisor|agent|special_agent
 - guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 10 · públicas: /*, /access-denied, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
 - feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, ENABLE_IMAGE_TRANSFORMATION, FEATURE_AUDIT, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, video_call
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56921 nós · 117619 arestas · 4141 comunidades · grafo do commit `cfa8959b`
-- comunidades maiores: button.tsx (833), vitest (741), lucide-react (705), validation.ts (573), ref_node_fs (480), date-fns (465), catalogShared.tsx (457), ref_https (434), useTeamChatPanel.ts (382), DashboardCard.tsx (381), cn (379), useTalkXSegments.ts (374)
+- 56922 nós · 117629 arestas · 4135 comunidades · grafo do commit `cca5655b`
+- comunidades maiores: vitest (1175), lucide-react (849), TalkXSuppression.tsx (666), @tanstack/react-query (640), react (567), ref_node_fs (516), utils.ts (509), useRealtimeMessages.ts (469), cn (448), validation.ts (430), DashboardView.tsx (429), useTeamChatPanel.ts (406)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `cca5655` fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)
 - 2026-11-12 `cfa8959` fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)
 - 2026-11-12 `81f67b0` fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)
 - 2026-11-12 `65cf385` chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `376332a` fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)
 - 2026-11-12 `93bff67` fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)
 - 2026-11-12 `1c4498d` fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)
-- 2026-11-12 `1616f7b` docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

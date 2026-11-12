@@ -24460,6 +24460,32 @@
       },
       {
         "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "import_batch_id",
+        "nullable": true,
+        "position": 14,
+        "schema": "public",
+        "table": "talkx_blacklist",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "removal_reason",
+        "nullable": true,
+        "position": 15,
+        "schema": "public",
+        "table": "talkx_blacklist",
+        "type": "text"
+      },
+      {
+        "comment": null,
         "default": "gen_random_uuid()",
         "generated": null,
         "identity": null,
@@ -58468,7 +58494,7 @@
         ],
         "definition": null,
         "definition_sha": "eca5ffa582ca40a7",
-        "execute_api_roles": "authenticated, service_role",
+        "execute_api_roles": "authenticated",
         "execute_public": false,
         "is_trigger_fn": false,
         "kind": "function",
@@ -62593,6 +62619,10 @@
         "callers": {
           "code": [
             {
+              "file": "src/pages/ForgotPassword.tsx",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql",
               "hits": 1
             },
@@ -62609,7 +62639,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 4,
+          "code_total_files": 5,
           "cron": [],
           "db": [],
           "triggers": [
@@ -64499,7 +64529,9 @@
           "code_total_files": 1,
           "cron": [],
           "db": [],
-          "triggers": [],
+          "triggers": [
+            "public.talkx_blacklist.trg_talkx_blacklist_audit"
+          ],
           "views": []
         },
         "comment": null,
@@ -64515,6 +64547,43 @@
         "language": "plpgsql",
         "leakproof": false,
         "name": "talkx_blacklist_audit_trigger",
+        "owner": "postgres",
+        "returns": "trigger",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [
+            "public.talkx_blacklist.trg_talkx_blacklist_no_delete"
+          ],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "b890810172b2d0e5",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": true,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_blacklist_no_delete",
         "owner": "postgres",
         "returns": "trigger",
         "schema": "public",
@@ -73627,6 +73696,20 @@
       },
       {
         "columns": [
+          "investigated_by"
+        ],
+        "definition": "CREATE INDEX idx_instance_pauses_investigated_by ON public.instance_pauses USING btree (investigated_by)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_instance_pauses_investigated_by",
+        "predicate": null,
+        "schema": "public",
+        "table": "instance_pauses"
+      },
+      {
+        "columns": [
           "paused_by"
         ],
         "definition": "CREATE INDEX idx_instance_pauses_paused_by ON public.instance_pauses USING btree (paused_by)",
@@ -77022,6 +77105,20 @@
       },
       {
         "columns": [
+          "reason_code"
+        ],
+        "definition": "CREATE INDEX idx_talkx_blacklist_reason_code ON public.talkx_blacklist USING btree (reason_code)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_talkx_blacklist_reason_code",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_blacklist"
+      },
+      {
+        "columns": [
           "removed_by"
         ],
         "definition": "CREATE INDEX idx_talkx_blacklist_removed_by ON public.talkx_blacklist USING btree (removed_by)",
@@ -78300,6 +78397,20 @@
         "predicate": null,
         "schema": "public",
         "table": "talkx_storage_purge_queue"
+      },
+      {
+        "columns": [
+          "created_by"
+        ],
+        "definition": "CREATE INDEX idx_talkx_suppression_reasons_created_by ON public.talkx_suppression_reasons USING btree (created_by)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_talkx_suppression_reasons_created_by",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_suppression_reasons"
       },
       {
         "columns": [
@@ -79868,12 +79979,6 @@
       },
       {
         "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['investigated_by']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.instance_pauses.instance_pauses_investigated_by_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
         "detail": "FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
         "object": "public.message_favorites.message_favorites_message_id_fkey",
         "severity": "BAIXA"
@@ -79892,20 +79997,8 @@
       },
       {
         "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['reason_code']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.talkx_blacklist.talkx_blacklist_reason_code_fk",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
         "detail": "FK sem índice nas colunas ['segment_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
         "object": "public.talkx_campaign_segments.talkx_campaign_segments_segment_id_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['created_by']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.talkx_suppression_reasons.talkx_suppression_reasons_created_by_fkey",
         "severity": "BAIXA"
       },
       {
@@ -81832,12 +81925,6 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.talkx_blacklist.Admins can add to blacklist",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.talkx_blacklist.Admins can remove from blacklist",
         "severity": "BAIXA"
       },
       {
@@ -89198,6 +89285,12 @@
         "statements": 7,
         "statements_sha": "2d553cc6959f7503",
         "version": "20261111181000"
+      },
+      {
+        "name": "talkx_blacklist_reconcilia_e_higiene",
+        "statements": 1,
+        "statements_sha": "7cc33e167ce0bc2b",
+        "version": "20261112160000"
       }
     ],
     "policies": [
@@ -93869,18 +93962,6 @@
         "table": "talkx_blacklist",
         "using": null,
         "with_check": "is_admin_or_supervisor(auth.uid())"
-      },
-      {
-        "cmd": "DELETE",
-        "name": "Admins can remove from blacklist",
-        "permissive": "PERMISSIVE",
-        "roles": [
-          "authenticated"
-        ],
-        "schema": "public",
-        "table": "talkx_blacklist",
-        "using": "is_admin_or_supervisor(auth.uid())",
-        "with_check": null
       },
       {
         "cmd": "SELECT",
@@ -101043,6 +101124,28 @@
         "schema": "public",
         "status": "enabled",
         "table": "sla_rules",
+        "timing": "BEFORE"
+      },
+      {
+        "definition": "CREATE TRIGGER trg_talkx_blacklist_audit BEFORE INSERT OR UPDATE ON talkx_blacklist FOR EACH ROW EXECUTE FUNCTION talkx_blacklist_audit_trigger()",
+        "events": "INSERT OR UPDATE",
+        "function": "public.talkx_blacklist_audit_trigger",
+        "level": "ROW",
+        "name": "trg_talkx_blacklist_audit",
+        "schema": "public",
+        "status": "enabled",
+        "table": "talkx_blacklist",
+        "timing": "BEFORE"
+      },
+      {
+        "definition": "CREATE TRIGGER trg_talkx_blacklist_no_delete BEFORE DELETE ON talkx_blacklist FOR EACH ROW EXECUTE FUNCTION talkx_blacklist_no_delete()",
+        "events": "DELETE",
+        "function": "public.talkx_blacklist_no_delete",
+        "level": "ROW",
+        "name": "trg_talkx_blacklist_no_delete",
+        "schema": "public",
+        "status": "enabled",
+        "table": "talkx_blacklist",
         "timing": "BEFORE"
       },
       {

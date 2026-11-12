@@ -760,7 +760,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -14434,7 +14434,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 106,
+   "usado_por": 107,
    "orfao": false
   },
   {
@@ -14635,13 +14635,13 @@
     "ForgotPassword"
    ],
    "export_default": "ForgotPassword",
-   "linhas": 208,
+   "linhas": 290,
    "dominio": "pages",
-   "hooks_locais": [],
-   "tabelas": [
-    "password_reset_requests",
-    "profiles"
+   "hooks_locais": [
+    "useAuth",
+    "useReauthentication"
    ],
+   "tabelas": [],
    "edges": [],
    "usado_por": 1,
    "orfao": false

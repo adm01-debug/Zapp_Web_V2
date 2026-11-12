@@ -2157,19 +2157,66 @@
    "definida_em": "src/routes/AppRoutes.tsx",
    "redireciona": null,
    "hooks": [
-    "useState"
+    "useAuth",
+    "useCallback",
+    "useContext",
+    "useEffect",
+    "useMessageUpdateBatcher",
+    "useNavigate",
+    "useNotificationLeader",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useQuery",
+    "useQueryClient",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useReauthentication",
+    "useRef",
+    "useState",
+    "useSyncExternalStore",
+    "useTeamAlertsPreference",
+    "useToast"
    ],
-   "hooks_locais": [],
+   "hooks_locais": [
+    "useAuth",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useReauthentication",
+    "useTeamAlertsPreference",
+    "useToast"
+   ],
    "tabelas": [
-    "password_reset_requests",
-    "profiles"
+    "contacts",
+    "messages",
+    "profiles",
+    "user_settings"
    ],
-   "rpcs": [],
-   "edges": [],
-   "canais_realtime": [],
+   "rpcs": [
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries"
+   ],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
    "flags": [],
-   "papeis": [],
-   "arquivos_puxados": 10
+   "papeis": [
+    "alert"
+   ],
+   "arquivos_puxados": 52
   },
   {
    "protegida": false,

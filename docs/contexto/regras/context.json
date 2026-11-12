@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "cfa8959b9035e745d5f997e16f2ca51e76bee376",
+  "sha": "cca5655b81667d40e43da5ca55a29c3e5b8b5848",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 15:50 UTC",
+  "generated_at": "2026-11-12 21:10 UTC",
   "files_total": 8259,
   "code_files": 6092,
-  "code_lines": 1059771
+  "code_lines": 1059941
  },
  "version": "1.3.2",
- "facts_hash": "6dee1288400a9c02",
+ "facts_hash": "4083ff086102c482",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -62117,10 +62117,18 @@
     "path": "/forgot-password",
     "file": "src/pages/ForgotPassword.tsx",
     "component": "ForgotPassword",
-    "tables_transitive": [],
-    "invokes_transitive": [],
-    "rpc_transitive": [],
-    "deps_count": 10
+    "tables_transitive": [
+     "contacts",
+     "messages",
+     "profiles"
+    ],
+    "invokes_transitive": [
+     "detect-new-device"
+    ],
+    "rpc_transitive": [
+     "get_inbox_contact_summaries"
+    ],
+    "deps_count": 38
    },
    {
     "path": "/install",
@@ -64791,6 +64799,13 @@
   "spa_routes": [
    {
     "path": "*",
+    "component": "Onde",
+    "guard": "",
+    "roles": [],
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx"
+   },
+   {
+    "path": "*",
     "component": "NotFound",
     "guard": "",
     "roles": [],
@@ -64991,6 +65006,13 @@
     "guard": "",
     "roles": [],
     "file": "scripts/ai-context/cenarios.mjs"
+   },
+   {
+    "path": "/forgot-password",
+    "component": "ForgotPassword",
+    "guard": "",
+    "roles": [],
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx"
    },
    {
     "path": "/forgot-password",
@@ -69269,11 +69291,10 @@
   {
    "module": "src/pages",
    "files": 70,
-   "lines": 10712,
+   "lines": 10882,
    "tables": [
     "contacts",
     "conversation_sla",
-    "password_reset_requests",
     "profiles",
     "query_telemetry",
     "user_roles"
@@ -71764,9 +71785,6 @@
     ]
    },
    "password_reset_requests": {
-    "insert": [
-     "src/pages/ForgotPassword.tsx"
-    ],
     "select": [
      "supabase/functions/approve-password-reset/index.ts"
     ],
@@ -71902,7 +71920,6 @@
      "src/hooks/sla/useSLAScopeNames.ts",
      "src/hooks/system/useDownloadPermission.ts",
      "src/hooks/ui/useOnboardingChecklist.ts",
-     "src/pages/ForgotPassword.tsx",
      "src/pages/admin/loadRolesWithProfiles.ts",
      "src/pages/admin/useRolesPageState.ts",
      "src/services/auth.service.ts",
@@ -86329,7 +86346,15 @@
    },
    {
     "file": "src/pages/ForgotPassword.tsx",
+    "msg": "\n                    initial={{ opacity: 0, y: -10 }}\n                    animate={{ opacity: 1, y: 0 }}\n                    className="
+   },
+   {
+    "file": "src/pages/ForgotPassword.tsx",
     "msg": "Erro ao enviar solicitação"
+   },
+   {
+    "file": "src/pages/ForgotPassword.tsx",
+    "msg": "Não foi possível sair da conta. Tente novamente."
    },
    {
     "file": "src/pages/QueueDetails.tsx",
@@ -197858,23 +197883,15 @@
    },
    {
     "file": "src/pages/__tests__/ForgotPassword.test.tsx",
-    "name": "email inválido mostra a mensagem e não chega a consultar o banco"
+    "name": "email inválido mostra a mensagem e não chega a chamar o banco"
    },
    {
     "file": "src/pages/__tests__/ForgotPassword.test.tsx",
-    "name": "ForgotPassword — email sem cadastro"
+    "name": "ForgotPassword — pedido resolvido no servidor"
    },
    {
     "file": "src/pages/__tests__/ForgotPassword.test.tsx",
-    "name": "não revela a ausência: mostra a tela de enviado e não grava pedido"
-   },
-   {
-    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
-    "name": "ForgotPassword — email com cadastro"
-   },
-   {
-    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
-    "name": "grava o pedido com user_id, email, user_agent e motivo nulo quando vazio"
+    "name": "grava só e-mail, motivo nulo quando vazio e user_agent — sem user_id e sem ler profiles"
    },
    {
     "file": "src/pages/__tests__/ForgotPassword.test.tsx",
@@ -197882,15 +197899,43 @@
    },
    {
     "file": "src/pages/__tests__/ForgotPassword.test.tsx",
+    "name": "não revela se o e-mail existe: a resposta da tela é a mesma (o gatilho descarta e-mail sem conta sem erro)"
+   },
+   {
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
     "name": "falha ao gravar aparece como erro e NÃO como enviado"
    },
    {
     "file": "src/pages/__tests__/ForgotPassword.test.tsx",
-    "name": "ForgotPassword — falha inesperada da consulta"
+    "name": "ForgotPassword — envio único"
    },
    {
     "file": "src/pages/__tests__/ForgotPassword.test.tsx",
-    "name": "a consulta que estoura também cai no erro visível, sem tela de enviado"
+    "name": "dois submits antes da resposta gravam UM pedido só"
+   },
+   {
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
+    "name": "ForgotPassword — usuário já logado"
+   },
+   {
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
+    "name": "mostra o aviso e não oferece o formulário nem grava pedido"
+   },
+   {
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
+    "name": "com a sessão ainda carregando, o botão fica desabilitado e o submit não grava"
+   },
+   {
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
+    "name": "ForgotPassword — texto e acessibilidade"
+   },
+   {
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
+    "name": "a tela fala em "
+   },
+   {
+    "file": "src/pages/__tests__/ForgotPassword.test.tsx",
+    "name": "erro de validação é anunciado (role=alert) e ligado ao campo (aria-invalid/aria-describedby)"
    },
    {
     "file": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
@@ -354226,28 +354271,17 @@
   },
   "src/pages/ForgotPassword.tsx": {
    "path": "src/pages/ForgotPassword.tsx",
-   "lines": 208,
+   "lines": 290,
    "exports": [
     "function ForgotPassword"
    ],
-   "tables": [
-    {
-     "table": "profiles",
-     "op": "select"
-    },
-    {
-     "table": "password_reset_requests",
-     "op": "insert"
-    }
+   "navigates": [
+    "/reset-password"
    ],
-   "table_cols": {
-    "profiles": [
-     "email",
-     "user_id"
-    ]
-   },
    "errors": [
-    "Erro ao enviar solicitação"
+    "\n                    initial={{ opacity: 0, y: -10 }}\n                    animate={{ opacity: 1, y: 0 }}\n                    className=",
+    "Erro ao enviar solicitação",
+    "Não foi possível sair da conta. Tente novamente."
    ],
    "zod": [
     {
@@ -354864,23 +354898,43 @@
   },
   "src/pages/__tests__/ForgotPassword.test.tsx": {
    "path": "src/pages/__tests__/ForgotPassword.test.tsx",
-   "lines": 158,
+   "lines": 246,
    "is_test": true,
+   "routes": [
+    {
+     "path": "/forgot-password",
+     "component": "ForgotPassword",
+     "guard": "",
+     "roles": []
+    },
+    {
+     "path": "*",
+     "component": "Onde",
+     "guard": "",
+     "roles": []
+    }
+   ],
    "errors": [
+    ");\n    expect(alerta.textContent).toBe(",
     "formulário não renderizado",
     "tabela inesperada na tela: ${table}"
    ],
    "tests": [
     "ForgotPassword — validação",
-    "email inválido mostra a mensagem e não chega a consultar o banco",
-    "ForgotPassword — email sem cadastro",
-    "não revela a ausência: mostra a tela de enviado e não grava pedido",
-    "ForgotPassword — email com cadastro",
-    "grava o pedido com user_id, email, user_agent e motivo nulo quando vazio",
+    "email inválido mostra a mensagem e não chega a chamar o banco",
+    "ForgotPassword — pedido resolvido no servidor",
+    "grava só e-mail, motivo nulo quando vazio e user_agent — sem user_id e sem ler profiles",
     "leva o motivo preenchido no pedido",
+    "não revela se o e-mail existe: a resposta da tela é a mesma (o gatilho descarta e-mail sem conta sem erro)",
     "falha ao gravar aparece como erro e NÃO como enviado",
-    "ForgotPassword — falha inesperada da consulta",
-    "a consulta que estoura também cai no erro visível, sem tela de enviado"
+    "ForgotPassword — envio único",
+    "dois submits antes da resposta gravam UM pedido só",
+    "ForgotPassword — usuário já logado",
+    "mostra o aviso e não oferece o formulário nem grava pedido",
+    "com a sessão ainda carregando, o botão fica desabilitado e o submit não grava",
+    "ForgotPassword — texto e acessibilidade",
+    "a tela fala em ",
+    "erro de validação é anunciado (role=alert) e ligado ao campo (aria-invalid/aria-describedby)"
    ]
   },
   "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx": {
@@ -387872,10 +387926,20 @@
   }
  },
  "git": {
-  "sha": "cfa8959b9035e745d5f997e16f2ca51e76bee376",
+  "sha": "cca5655b81667d40e43da5ca55a29c3e5b8b5848",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "cca5655",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)",
+    "files": [
+     "src/pages/ForgotPassword.tsx",
+     "src/pages/__tests__/ForgotPassword.test.tsx"
+    ]
+   },
    {
     "sha": "cfa8959",
     "date": "2026-11-12",
@@ -388201,16 +388265,6 @@
      "scripts/regras_negocio/generate.py",
      "scripts/regras_negocio/test_generate.py"
     ]
-   },
-   {
-    "sha": "8ea4301",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)",
-    "files": [
-     "scripts/ci/run-sh.unit.mjs",
-     "scripts/maintenance/run.sh"
-    ]
    }
   ],
   "hot_files": [
@@ -388251,6 +388305,14 @@
     2
    ],
    [
+    "src/pages/ForgotPassword.tsx",
+    1
+   ],
+   [
+    "src/pages/__tests__/ForgotPassword.test.tsx",
+    1
+   ],
+   [
     "e2e/navegacao-modulos.spec.ts",
     1
    ],
@@ -388284,14 +388346,6 @@
    ],
    [
     "src/components/inbox/chat/SendErrorBanner.tsx",
-    1
-   ],
-   [
-    "src/hooks/delivery/useUnconfirmedMessages.ts",
-    1
-   ],
-   [
-    "scripts/db-audit/known-violations.json",
     1
    ]
   ]

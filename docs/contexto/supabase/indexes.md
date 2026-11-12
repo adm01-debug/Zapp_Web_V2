@@ -342,6 +342,7 @@ Uso e tamanho em `stats.md`.
 | public.goals_configurations | goals_configurations_queue_id_goal_type_key | btree | queue_id, goal_type | sim | sim |  |
 | public.goals_configurations | idx_goals_configurations_profile_id | btree | profile_id | não | sim |  |
 | public.goals_configurations | idx_goals_configurations_queue_id | btree | queue_id | não | sim |  |
+| public.instance_pauses | idx_instance_pauses_investigated_by | btree | investigated_by | não | sim |  |
 | public.instance_pauses | idx_instance_pauses_paused_by | btree | paused_by | não | sim |  |
 | public.instance_pauses | idx_instance_pauses_resumed_by | btree | resumed_by | não | sim |  |
 | public.instance_pauses | instance_pauses_abertas_unicas | btree | instance | sim | sim | `(resumed_at IS NULL)` |
@@ -581,6 +582,7 @@ Uso e tamanho em `stats.md`.
 | public.talkx_blacklist | idx_talkx_blacklist_created_at_desc | btree | created_at | não | sim |  |
 | public.talkx_blacklist | idx_talkx_blacklist_expires_at | btree | expires_at | não | sim | `(expires_at IS NOT NULL)` |
 | public.talkx_blacklist | idx_talkx_blacklist_phone | btree | phone | não | sim | `(phone IS NOT NULL)` |
+| public.talkx_blacklist | idx_talkx_blacklist_reason_code | btree | reason_code | não | sim |  |
 | public.talkx_blacklist | idx_talkx_blacklist_removed_by | btree | removed_by | não | sim |  |
 | public.talkx_blacklist | idx_talkx_blacklist_source_message_id | btree | source_message_id | não | sim |  |
 | public.talkx_blacklist | talkx_blacklist_contact_active_unique | btree | contact_id | sim | sim | `((contact_id IS NOT NULL) AND (removed_at IS NULL))` |
@@ -671,6 +673,7 @@ Uso e tamanho em `stats.md`.
 | public.talkx_storage_purge_queue | talkx_storage_purge_queue_pending_dedup | btree | bucket_id, object_name | sim | sim | `(processed_at IS NULL)` |
 | public.talkx_storage_purge_queue | talkx_storage_purge_queue_pending_idx | btree | enqueued_at | não | sim | `(processed_at IS NULL)` |
 | public.talkx_storage_purge_queue | talkx_storage_purge_queue_pkey | btree | id | sim | sim |  |
+| public.talkx_suppression_reasons | idx_talkx_suppression_reasons_created_by | btree | created_by | não | sim |  |
 | public.talkx_suppression_reasons | talkx_suppression_reasons_pkey | btree | code | sim | sim |  |
 | public.talkx_template_variants | idx_talkx_template_variants_template | btree | template_id | não | sim |  |
 | public.talkx_template_variants | talkx_template_variants_pkey | btree | id | sim | sim |  |

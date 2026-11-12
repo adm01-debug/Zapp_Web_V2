@@ -728,7 +728,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 375,
+   "usado_por": 374,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -4905,7 +4905,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 29,
+   "usado_por": 30,
    "usado_por_modulos": [
     "components/admin",
     "components/security",
@@ -4913,6 +4913,7 @@
     "hooks/integrations",
     "hooks/system",
     "hooks/ui",
+    "pages",
     "pages/admin"
    ],
    "coberto_por_testes": 2,

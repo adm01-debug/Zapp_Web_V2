@@ -50,6 +50,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_instance_pauses_investigated_by | btree | investigated_by | não | sim |  | `CREATE INDEX idx_instance_pauses_investigated_by ON public.instance_pauses USING btree (investigated_by)` |
 | idx_instance_pauses_paused_by | btree | paused_by | não | sim |  | `CREATE INDEX idx_instance_pauses_paused_by ON public.instance_pauses USING btree (paused_by)` |
 | idx_instance_pauses_resumed_by | btree | resumed_by | não | sim |  | `CREATE INDEX idx_instance_pauses_resumed_by ON public.instance_pauses USING btree (resumed_by)` |
 | instance_pauses_abertas_unicas | btree | instance | sim | sim | `(resumed_at IS NULL)` | `CREATE UNIQUE INDEX instance_pauses_abertas_unicas ON public.instance_pauses USING btree (instance) WHERE (resumed_at IS NULL)` |

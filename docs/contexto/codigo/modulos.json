@@ -14037,7 +14037,7 @@
    "modulo": "pages",
    "arquivos": 18,
    "testes": 0,
-   "linhas": 3075,
+   "linhas": 3157,
    "itens_menu": [
     "Telemetria BD"
    ],
@@ -14631,7 +14631,6 @@
     "nps_surveys",
     "number_reputation",
     "passkey_credentials",
-    "password_reset_requests",
     "password_reset_requests_safe",
     "performance_snapshots",
     "permissions",
@@ -14870,8 +14869,6 @@
     ],
     "tabelas": [
      "contacts",
-     "password_reset_requests",
-     "profiles",
      "query_telemetry"
     ],
     "rpcs": []
@@ -15888,7 +15885,6 @@
     "nps_surveys",
     "number_reputation",
     "passkey_credentials",
-    "password_reset_requests",
     "password_reset_requests_safe",
     "performance_snapshots",
     "permissions",

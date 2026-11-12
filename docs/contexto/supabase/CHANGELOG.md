@@ -2,6 +2,17 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 21:13 UTC
+
+- **colunas** adicionado (2): `public.talkx_blacklist.import_batch_id`, `public.talkx_blacklist.removal_reason`
+- **functions** adicionado (1): `public.talkx_blacklist_no_delete()`
+- **functions** alterado (3): `public.mark_pause_investigated(p_pause_id uuid, p_notes text)`, `public.sanitize_reset_request()`, `public.talkx_blacklist_audit_trigger()`
+- **indexes** adicionado (3): `public.idx_instance_pauses_investigated_by`, `public.idx_talkx_blacklist_reason_code`, `public.idx_talkx_suppression_reasons_created_by`
+- **lints** removido (4): `fk_without_index:public.instance_pauses.instance_pauses_investigated_by_fkey`, `fk_without_index:public.talkx_blacklist.talkx_blacklist_reason_code_fk`, `fk_without_index:public.talkx_suppression_reasons.talkx_suppression_reasons_created_by_fkey`, `policy_auth_fn_not_wrapped:public.talkx_blacklist.Admins can remove from blacklist`
+- **migrations** adicionado (1): `20261112160000_talkx_blacklist_reconcilia_e_higiene`
+- **policies (RLS)** removido (1): `public.talkx_blacklist.Admins can remove from blacklist`
+- **triggers** adicionado (2): `public.talkx_blacklist.trg_talkx_blacklist_audit`, `public.talkx_blacklist.trg_talkx_blacklist_no_delete`
+
 ## 2026-11-12 11:37 UTC
 
 - **colunas** adicionado (6): `public.copilot_insights.data`, `public.copilot_insights.latency_ms`, `public.copilot_insights.tier`, `public.copilot_sessions.intent`, `public.copilot_sessions.last_processed_message_at`, `public.copilot_sessions.sentiment`

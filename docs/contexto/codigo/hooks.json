@@ -2431,7 +2431,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 106,
+   "usado_por": 107,
    "usado_por_arquivos": [
     "src/App.tsx",
     "src/components/auth/ProtectedRoute.tsx",
@@ -2538,11 +2538,12 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_arquivos": [
     "src/components/auth/ReauthDialog.tsx",
     "src/components/security/SecuritySettingsPanel.tsx",
-    "src/hooks/auth/index.ts"
+    "src/hooks/auth/index.ts",
+    "src/pages/ForgotPassword.tsx"
    ],
    "coberto_por_testes": 4
   },

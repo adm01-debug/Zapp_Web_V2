@@ -176,7 +176,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.sla_rules](tables/public/sla_rules.md) | table | sim | 4 | 15 | não |  |
 | [public.stickers](tables/public/stickers.md) | table | sim | 4 | 10 | não |  |
 | [public.talkx_alerts](tables/public/talkx_alerts.md) | table | sim | 1 | 6 | não | X033: alertas do motor Talk X. Um alerta aberto por (tipo, campanha); fechado sozinho quando o sinal deixa de disparar (resolved_at). Escrito por talkx_engine_alerts (service_role), lido por admin/supervisor. |
-| [public.talkx_blacklist](tables/public/talkx_blacklist.md) | table | sim | 5 | 13 | sim |  |
+| [public.talkx_blacklist](tables/public/talkx_blacklist.md) | table | sim | 4 | 15 | sim |  |
 | [public.talkx_campaign_events](tables/public/talkx_campaign_events.md) | table | sim | 2 | 8 | sim |  |
 | [public.talkx_campaign_segments](tables/public/talkx_campaign_segments.md) | table | sim | 5 | 7 | sim | Talk X (X057): segmentos de uma campanha, em ordem (position 1..10). A ordem define qual segmento "ganha" quando o mesmo contato aparece em mais de um. |
 | [public.talkx_campaigns](tables/public/talkx_campaigns.md) | table | sim | 5 | 72 | sim |  |

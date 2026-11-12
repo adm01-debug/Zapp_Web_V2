@@ -47,6 +47,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_talkx_suppression_reasons_created_by | btree | created_by | não | sim |  | `CREATE INDEX idx_talkx_suppression_reasons_created_by ON public.talkx_suppression_reasons USING btree (created_by)` |
 | talkx_suppression_reasons_pkey | btree | code | sim | sim |  | `CREATE UNIQUE INDEX talkx_suppression_reasons_pkey ON public.talkx_suppression_reasons USING btree (code)` |
 
 

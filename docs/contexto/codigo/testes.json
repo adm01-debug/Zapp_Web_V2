@@ -20301,11 +20301,11 @@
   {
    "arquivo": "src/pages/__tests__/ForgotPassword.test.tsx",
    "tipo": "unit",
-   "linhas": 158,
+   "linhas": 246,
    "testa": [
     "src/pages/ForgotPassword.tsx"
    ],
-   "casos": 6
+   "casos": 12
   },
   {
    "arquivo": "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
