@@ -10,6 +10,8 @@ import { useConnectionOptions } from '@/hooks/connections/useConnectionOptions';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import type { WhatsAppTemplate } from '@/hooks/integrations/useWhatsAppTemplates';
 import { montarTemplateEvolution } from './sendTemplatePayload';
+import { isEvolutionNotSupported, mensagemNaoSuportado } from '@/lib/evolutionNotSupported';
+import { sortTemplateVariables } from '@/hooks/integrations/useWhatsAppTemplates';
 
 /**
  * Envio de um template pelo `send-template` da Edge (Evolution v2,
@@ -19,7 +21,7 @@ import { montarTemplateEvolution } from './sendTemplatePayload';
  *
  * Só funciona com template APROVADO pela Meta numa conexão WhatsApp Business
  * (Cloud API). Na Evolution GO a rota não existe: a Edge responde
- * `notSupported` e o aviso aparece como erro, nunca como sucesso. O gate da
+ * `notSupported` e vira um aviso em português (nunca sucesso). O gate da
  * Edge confere se o número é um contato visível para quem envia.
  */
 
@@ -37,14 +39,16 @@ function SendTemplateForm({ template, onOpenChange }: {
   onOpenChange: (open: boolean) => void;
 }) {
   const { sendTemplateMessage } = useEvolutionApi();
-  const { data: conexoes = [] } = useConnectionOptions();
-  const variaveis = template.variables ?? [];
+  // Só conexões conectadas: enviar por uma desconectada sempre falha.
+  const { data: conexoes = [], isError: conexoesFalharam, isLoading: conexoesCarregando } = useConnectionOptions(true, { onlyConnected: true });
+  const variaveis = sortTemplateVariables(template.variables ?? []);
   const [conexao, setConexao] = useState(template.whatsapp_connection_id ?? '');
+  const conexaoValida = conexoes.some((c) => c.id === conexao) ? conexao : '';
   const [numero, setNumero] = useState('');
   const [valores, setValores] = useState<string[]>(() => variaveis.map(() => ''));
   const [enviando, setEnviando] = useState(false);
 
-  const instancia = conexoes.find((c) => c.id === conexao)?.instance_id ?? '';
+  const instancia = conexoes.find((c) => c.id === conexaoValida)?.instance_id ?? '';
   const numeroLimpo = numero.replace(/\D/g, '');
 
   const enviar = async () => {
@@ -57,6 +61,10 @@ function SendTemplateForm({ template, onOpenChange }: {
       toast.success('Template enviado');
       onOpenChange(false);
     } catch (err) {
+      if (isEvolutionNotSupported(err)) {
+        toast.warning(mensagemNaoSuportado('O envio de template'));
+        return;
+      }
       toast.error(err instanceof Error && err.message ? err.message : 'Não foi possível enviar o template');
     } finally {
       setEnviando(false);
@@ -73,12 +81,22 @@ function SendTemplateForm({ template, onOpenChange }: {
         <div className="space-y-4">
           <div>
             <Label htmlFor="template-conexao">Conexão</Label>
-            <Select value={conexao} onValueChange={setConexao}>
+            <Select value={conexaoValida} onValueChange={setConexao} disabled={conexoesFalharam || conexoes.length === 0}>
               <SelectTrigger id="template-conexao" aria-label="Conexão"><SelectValue placeholder="Escolha a conexão" /></SelectTrigger>
               <SelectContent>
                 {conexoes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
+            {conexoesFalharam && (
+              <p role="alert" data-testid="template-conexoes-erro" className="mt-1 text-xs text-destructive">
+                Não foi possível carregar as conexões. Feche e tente de novo.
+              </p>
+            )}
+            {!conexoesFalharam && !conexoesCarregando && conexoes.length === 0 && (
+              <p data-testid="template-conexoes-vazio" className="mt-1 text-xs text-muted-foreground">
+                Nenhuma conexão do WhatsApp conectada no momento.
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="template-numero">Número do contato</Label>
