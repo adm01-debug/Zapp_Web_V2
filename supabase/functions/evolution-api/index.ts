@@ -4,6 +4,18 @@ import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from 
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
+
+/**
+ * Ação da Evolution v2 sem equivalente na Evolution GO: responde 200 com
+ * `notSupported` (falha explícita e tratável pela tela) em vez de repassar e
+ * colher o 404 do GO — que, além de virar erro genérico, alimentava o circuit breaker.
+ */
+function goActionNotSupported(actionName: string, corsHeaders: Record<string, string>): Response {
+  return new Response(JSON.stringify({
+    success: false, notSupported: true,
+    message: `${actionName} não é suportado na Evolution GO.`,
+  }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
@@ -858,6 +870,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // ─── 2. Settings ───
+    // Rotas restauradas (saíram por engano no #2054 e ainda têm tela): a aba
+    // "Configurações" do InstanceSettingsDialog lê e grava por aqui. Contrato
+    // pré-#2054. `/settings/find|set` são rotas da v2 sem equivalente na
+    // Evolution GO (evolution-go-routes: passthrough → 404): no GO a resposta é
+    // `notSupported` explícito, e a tela marca os campos como indisponíveis.
+    if (action === 'set-settings' || action === 'get-settings') {
+      if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
+      if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');
+      return await proxy(`/settings/set/${instance}`, 'POST', { rejectCall: body.rejectCall, msgCall: body.msgCall, groupsIgnore: body.groupsIgnore, alwaysOnline: body.alwaysOnline, readMessages: body.readMessages, readStatus: body.readStatus, syncFullHistory: body.syncFullHistory });
+    }
+
     // ─── 3. Webhook ───
     if (action === 'set-webhook') {
       // Dois contratos em uso: o painel de monitoramento manda `{ instanceName,
@@ -899,6 +923,32 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: wh.enabled ?? true, url: wh.url, webhookByEvents, webhookBase64, events: wh.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
     }
+    // Restaurada (#2054): painel de Monitoramento → "Verificar webhook" (useMonitoringActions).
+    if (action === 'get-webhook') {
+      // `/webhook/find` é rota da v2. No GO a leitura da configuração corrente vem do
+      // registro da instância na listagem admin (`/instance/fetchInstances`, traduzida
+      // para `/instance/all`) — a mesma fonte que o webhook-diagnostic usa. Assim o
+      // painel lê a config real por flavor em vez de bater numa rota inexistente no GO.
+      if (!isGoFlavor) return await proxy(`/webhook/find/${instance}`, 'GET');
+      try {
+        const allRes = await proxy('/instance/fetchInstances', 'GET');
+        const allData = await allRes.json().catch(() => null);
+        const records: Record<string, unknown>[] = Array.isArray(allData?.data) ? allData.data : Array.isArray(allData) ? allData : [];
+        const rec = records.find((r) => r?.name === instance || r?.Name === instance) ?? {};
+        const evRaw = rec.events ?? rec.Events;
+        const events = Array.isArray(evRaw)
+          ? evRaw
+          : typeof evRaw === 'string' && evRaw ? evRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+        const url = typeof rec.webhook === 'string' ? rec.webhook : typeof rec.Webhook === 'string' ? rec.Webhook : '';
+        return new Response(JSON.stringify({
+          webhook: { enabled: !!url, url, events, webhookByEvents: true, webhookBase64: false },
+          ...(url ? {} : { goEnvManaged: true }),
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      } catch (_err) {
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao ler a configuração de webhook da instância no GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // ─── 4. Messaging ───
     if (action === 'send-text') return await proxy(`/message/sendText/${instance}`, 'POST', { number: body.number, text: body.text, delay: body.delay, quoted: body.quoted, mentionsEveryOne: body.mentionsEveryOne, mentioned: body.mentioned });
     if (action === 'send-media') {
@@ -990,6 +1040,14 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
     }
     if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
+    // Restaurada (#2054): "Marcar como não lida" (MessageHoverToolbar / MessageContextActions).
+    // Categoria send (alvo = a conversa da `key`). Só a `key` validada pelo gate
+    // segue ao provedor: `readMessages` livre (aceito antes do #2054) podia levar
+    // JIDs de outras conversas sem passar pela checagem de visibilidade.
+    if (action === 'mark-unread') {
+      if (isGoFlavor) return goActionNotSupported('mark-unread', corsHeaders);
+      return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: [body.key] });
+    }
     if (action === 'archive-chat') return await proxy(`/message/archiveChat/${instance}`, 'POST', { lastMessage: body.lastMessage, chat: body.chat, archive: body.archive ?? true });
     if (action === 'delete-message') return await proxy(`/message/delete/${instance}`, 'DELETE', { id: body.id, remoteJid: body.remoteJid, fromMe: body.fromMe });
     if (action === 'update-message') return await proxy(`/message/update/${instance}`, 'PUT', { number: body.number, key: body.key, text: body.text });

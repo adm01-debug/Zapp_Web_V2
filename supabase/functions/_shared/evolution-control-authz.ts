@@ -82,6 +82,8 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   // agente) e de configuração/credencial do provedor passam a exigir
   // admin/supervisor. (SL-075 removeu integrações e rotas legadas do handler.)
   'find-contacts', 'find-messages',
+  // configuração da instância/conexão (restauradas após o #2054: têm tela)
+  'get-settings', 'set-settings', 'get-webhook',
   'get-media-base64',
   // perfil da conta/conexão (config) e de número arbitrário (fora da carteira)
   'fetch-profile', 'fetch-profile-picture', 'fetch-business-profile',
@@ -120,6 +122,7 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   // mutações de estado da conversa no provedor (não entregam conteúdo, mas
   // seguem o mesmo escopo: o contato da conversa)
   'mark-read',
+  'mark-unread',
   'archive-chat',
 ]);
 

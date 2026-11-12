@@ -51,9 +51,6 @@ export function useEvolutionMessaging(
   const sendStatusMessage = useCallback((instanceName: string, body: object) =>
     callApi('send-status', { instanceName, ...body }), [callApi]);
 
-  const sendTemplateMessage = useCallback((instanceName: string, number: string, template: object) =>
-    callApi('send-template', { instanceName, number, template }), [callApi]);
-
   const sendPtvMessage = useCallback((instanceName: string, number: string, video: string, delay?: number) =>
     callApi('send-ptv', { instanceName, number, video, delay }), [callApi]);
 
@@ -107,7 +104,7 @@ export function useEvolutionMessaging(
     // Send messages
     sendTextMessage, sendMediaMessage, sendAudioMessage, sendStickerMessage,
     sendLocationMessage, sendContactMessage, sendReaction, sendPollMessage,
-    sendListMessage, sendButtonsMessage, sendStatusMessage, sendTemplateMessage,
+    sendListMessage, sendButtonsMessage, sendStatusMessage,
     sendPtvMessage, sendChatPresence,
     // Message management (existing)
     markMessageAsRead, markMessageAsUnread, archiveChat, deleteMessage,
