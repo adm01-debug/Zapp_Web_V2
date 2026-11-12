@@ -95,8 +95,13 @@ export function useWhatsAppTemplates() {
 
   useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
+  const extractVariables = (text: string): string[] => {
+    const matches = text.match(/\{\{(\d+)\}\}/g);
+    return matches ? sortTemplateVariables([...new Set(matches)]) : [];
+  };
+
   const handleContentChange = useCallback((content: string) => {
-    setEditingTemplate(prev => ({ ...prev, content, variables: extractTemplateVariables(content) }));
+    setEditingTemplate(prev => ({ ...prev, content, variables: extractVariables(content) }));
   }, []);
 
   const handleSave = useCallback(async () => {
