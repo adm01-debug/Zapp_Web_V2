@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "daba6eb8c4570fa93d0e4c10d357a459e77b312d",
+  "commit": "13a00e06afa353a5c61951110cccb8561c72519d",
   "branch": "main",
-  "data_commit": "2026-11-12T03:42:31Z",
+  "data_commit": "2026-11-12T01:21:03-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "13a00e0",
+    "data": "2026-11-12",
+    "assunto": "fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)"
+   },
    {
     "sha": "daba6eb",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "d3a132d",
     "data": "2026-11-11",
     "assunto": "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)"
-   },
-   {
-    "sha": "15ff5f3",
-    "data": "2026-11-11",
-    "assunto": "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)"
    }
   ],
   "arquivos_mudados_7d": 649,
@@ -206,15 +206,15 @@
     "mudancas": 14
    },
    {
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 13
+   },
+   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 13
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "PENDENCIAS.md",
     "mudancas": 12
    },
    {
@@ -246,6 +246,10 @@
     "mudancas": 9
    },
    {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 9
+   },
+   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
     "mudancas": 9
    },
@@ -259,10 +263,6 @@
    },
    {
     "arquivo": "AGENTS.md",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "RELATORIO_CI.md",
     "mudancas": 8
    },
    {
@@ -290,11 +290,11 @@
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "arquivo": "e2e/email-navy-visual.spec.ts",
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/edge-deploy/health-check.mjs",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 7
    }
   ],
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8413,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891155,
+  "linhas_codigo": 891159,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -456,7 +456,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 772
+   "linhas": 776
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,

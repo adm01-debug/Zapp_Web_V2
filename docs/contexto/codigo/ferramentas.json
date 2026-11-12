@@ -1119,7 +1119,7 @@
   {
    "arquivo": "PENDENCIAS.md",
    "titulo": "PENDÊNCIAS DE CI",
-   "linhas": 96
+   "linhas": 139
   },
   {
    "arquivo": "README.md",
@@ -1129,7 +1129,7 @@
   {
    "arquivo": "RELATORIO_CI.md",
    "titulo": "RELATÓRIO CI — fix-ci-workflows-hxupgs",
-   "linhas": 203
+   "linhas": 429
   },
   {
    "arquivo": "SECURITY.md",
