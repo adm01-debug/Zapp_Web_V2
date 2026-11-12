@@ -17,6 +17,7 @@ import {
   STATUS_BADGES, EMPTY_TEMPLATE, type WhatsAppTemplate,
 } from '@/hooks/integrations/useWhatsAppTemplates';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { SendTemplateDialog } from './SendTemplateDialog';
 
 const STATUS_ICONS: Record<string, React.ElementType> = {
   CheckCircle2, Clock, XCircle, FileText,
@@ -42,6 +43,8 @@ export function WhatsAppTemplatesManager() {
   // Exclusão de template é irreversível: o clique abre a confirmação e só o
   // "Excluir" do diálogo chama `handleDelete` (cancelar não apaga nada).
   const [pendingDelete, setPendingDelete] = useState<WhatsAppTemplate | null>(null);
+  // Envio pelo `send-template` da Edge (template aprovado pela Meta).
+  const [templateParaEnviar, setTemplateParaEnviar] = useState<WhatsAppTemplate | null>(null);
 
   return (
     <div className="space-y-4 md:space-y-6 w-full min-w-0">
@@ -122,6 +125,8 @@ export function WhatsAppTemplatesManager() {
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
                             <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Visualizar ${template.name}`} onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
+                            {/* Só template "Aprovado (local)": o status é do cadastro local, não confirmação da Meta. */}
+                            {canWrite && template.status === 'approved' && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Enviar ${template.name}`} title="Enviar (aprovado no cadastro local)" onClick={() => setTemplateParaEnviar(template)}><Send className="w-4 h-4" /></Button>}
                             {canWrite && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>}
                             {canWrite && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>}
                             {canWrite && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => setPendingDelete(template)}><Trash2 className="w-4 h-4" /></Button>}
@@ -247,6 +252,7 @@ export function WhatsAppTemplatesManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <SendTemplateDialog template={templateParaEnviar} onOpenChange={(aberto) => { if (!aberto) setTemplateParaEnviar(null); }} />
     </div>
   );
 }
