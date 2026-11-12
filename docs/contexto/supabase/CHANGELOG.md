@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 11:05 UTC
+
+- **functions** alterado (1): `public.resolve_unconfirmed_message(p_message_id uuid, p_outcome text)`
+
 ## 2026-11-12 10:18 UTC
 
 - **colunas** adicionado (2): `public.messages.delivery_post_started_at`, `public.messages.manually_resolved_at`
