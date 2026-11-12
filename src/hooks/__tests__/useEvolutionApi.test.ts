@@ -445,13 +445,14 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
 
     it('sendTemplateMessage', async () => {
       const { result } = renderHook(() => useEvolutionApi());
-      const template = { name: 'hello_world', language: { code: 'pt_BR' } };
+      // Evolution v2 (templateMessageSchema): name/language/components no topo do corpo.
+      const template = { name: 'hello_world', language: 'pt_BR', components: [] };
       await act(async () => {
         await result.current.sendTemplateMessage('wpp2', '5511999', template);
       });
       expect(mockInvoke).toHaveBeenCalledWith('evolution-api/send-template', {
         method: 'POST',
-        body: { instanceName: 'wpp2', number: '5511999', template },
+        body: { instanceName: 'wpp2', number: '5511999', ...template },
       });
     });
   });
