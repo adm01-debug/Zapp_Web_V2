@@ -47,6 +47,20 @@ export const STATUS_BADGES: Record<string, { label: string; className: string; i
   draft: { label: 'Rascunho local', className: 'bg-muted text-muted-foreground', iconName: 'FileText', scope: TEMPLATE_STATUS_SCOPE },
 };
 
+/** Número dentro de `{{N}}` (NaN se não for variável numérica). */
+const variableNumber = (v: string) => Number(v.replace(/\D/g, '') || Number.NaN);
+
+/** Ordena `{{N}}` pelo número: {{2}} antes de {{10}} (a ordem de texto punha {{10}} antes). */
+export function sortTemplateVariables(variables: string[]): string[] {
+  return [...variables].sort((a, b) => variableNumber(a) - variableNumber(b) || a.localeCompare(b));
+}
+
+/** Variáveis `{{N}}` do conteúdo, sem repetição, em ordem numérica. */
+export function extractTemplateVariables(text: string): string[] {
+  const matches = text.match(/\{\{(\d+)\}\}/g);
+  return matches ? sortTemplateVariables([...new Set(matches)]) : [];
+}
+
 export const EMPTY_TEMPLATE: Partial<WhatsAppTemplate> = {
   name: '', category: 'utility', language: 'pt_BR', content: '',
   header_text: '', footer_text: '', buttons: [], variables: [], status: 'draft',
@@ -81,13 +95,8 @@ export function useWhatsAppTemplates() {
 
   useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
-  const extractVariables = (text: string): string[] => {
-    const matches = text.match(/\{\{(\d+)\}\}/g);
-    return matches ? [...new Set(matches)].sort((a, b) => a.localeCompare(b)) : [];
-  };
-
   const handleContentChange = useCallback((content: string) => {
-    setEditingTemplate(prev => ({ ...prev, content, variables: extractVariables(content) }));
+    setEditingTemplate(prev => ({ ...prev, content, variables: extractTemplateVariables(content) }));
   }, []);
 
   const handleSave = useCallback(async () => {

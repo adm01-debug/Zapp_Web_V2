@@ -76,7 +76,10 @@ function SendTemplateForm({ template, onOpenChange }: {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Enviar template — {template.name}</DialogTitle>
-          <DialogDescription>Precisa ser um template aprovado pela Meta numa conexão WhatsApp Business.</DialogDescription>
+          <DialogDescription>
+            Precisa ser um template aprovado pela Meta numa conexão WhatsApp Business. O &quot;Aprovado&quot; desta lista
+            é do cadastro local: se a Meta não tiver aprovado, o envio é recusado.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
