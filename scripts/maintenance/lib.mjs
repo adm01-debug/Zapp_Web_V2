@@ -68,7 +68,8 @@ export function run(command, cwd, timeoutMs = 120000) {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     if (child.pid) activeChildren.set(child.pid, child);
-    let output = '',
+    const chunks = [];
+    let chunksLength = 0,
       timedOut = false,
       overflow = false;
     const kill = (signal) => {
@@ -88,8 +89,10 @@ export function run(command, cwd, timeoutMs = 120000) {
       child.stderr.destroy();
     }, timeoutMs + 1000);
     const collect = (data) => {
-      if (output.length < 4 * 1024 * 1024) output += data;
-      else {
+      if (chunksLength < 4 * 1024 * 1024) {
+        chunks.push(data);
+        chunksLength += data.length;
+      } else {
         overflow = true;
         kill('SIGKILL');
         child.stdout.destroy();
@@ -114,7 +117,7 @@ export function run(command, cwd, timeoutMs = 120000) {
       kill('SIGKILL');
       clearTimeout(timer);
       clearTimeout(hardTimer);
-      resolve({ code, signal, timedOut, overflow, output });
+      resolve({ code, signal, timedOut, overflow, output: Buffer.concat(chunks).toString('utf8') });
     });
   });
 }

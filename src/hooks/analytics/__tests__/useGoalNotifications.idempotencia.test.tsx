@@ -44,6 +44,8 @@ const h = vi.hoisted(() => ({
     /** A "tabela" notifications, com o índice único de `user_id` + `dedupe_key`. */
     rows: [] as NotificationRow[],
     insertAttempts: 0,
+        /** pré-checks de `notifications` (SELECT por user_id+dedupe_key) para provar que a recarga não insere de novo. */
+        selectChecks: 0,
   },
 }));
 
@@ -65,6 +67,15 @@ vi.mock('@/integrations/supabase/client', () => {
     or() { return this; }
 
     maybeSingle() { return Promise.resolve(this.result()); }
+
+        /** SELECT de `notifications` (pre-check de dedupe do hook): idem à linha existente. */
+        private notificacaoPorFiltros(): NotificationRow | null {
+          const user = this.filters.find(([c]) => c === 'user_id')?.[1] as string | undefined;
+          const chave = this.filters.find(([c]) => c === 'dedupe_key')?.[1] as string | undefined;
+          return h.state.rows.find(
+            (r) => (user === undefined || r.user_id === user) && (chave === undefined || r.dedupe_key === chave),
+          ) ?? null;
+        }
 
     insert(linhas: NotificationRow[]) {
       const s = h.state;
@@ -89,6 +100,9 @@ vi.mock('@/integrations/supabase/client', () => {
           return { data: s.agentStats, error: null };
         case 'contacts':
           return { count: s.contatos, data: null, error: null };
+            case 'notifications':
+              s.selectChecks += 1;
+              return { data: this.notificacaoPorFiltros(), error: null };
         default:
           return { count: 0, data: null, error: null };
       }
@@ -159,6 +173,7 @@ describe('useGoalNotifications — aviso de meta idempotente (PB-15)', () => {
     h.state.agentStats = null;
     h.state.rows = [];
     h.state.insertAttempts = 0;
+        h.state.selectChecks = 0;
     vi.clearAllMocks();
   });
 
@@ -176,11 +191,13 @@ describe('useGoalNotifications — aviso de meta idempotente (PB-15)', () => {
 
     // "Recarga": hook novo (useRef vazio), mesma conquista e mesmo dia.
     renderHook(() => useGoalNotifications());
-    await waitFor(() => expect(h.state.insertAttempts).toBeGreaterThanOrEqual(2));
+        await waitFor(() => expect(h.state.selectChecks).toBeGreaterThanOrEqual(1));
     await act(async () => { await Promise.resolve(); });
 
-    // O banco continua com UMA linha e o toast NÃO foi repetido.
+        // O banco continua com UMA linha, o INSERT não foi repetido (só o pré-check
+        // SELECT) e o toast NÃO foi repetido.
     expect(h.state.rows).toHaveLength(1);
+        expect(h.state.insertAttempts).toBe(1);
     expect(toast.success).toHaveBeenCalledTimes(1);
     // Duplicata é sucesso silencioso: nada de log de erro.
     expect(log.error).not.toHaveBeenCalled();

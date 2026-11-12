@@ -28,6 +28,23 @@ interface UnconfirmedQueryResult {
 // Abaixo desse limiar o job de reconciliação ainda pode fechar sozinho.
 const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;
 
+const POLL_MS = 30_000;
+const PRE_DDL_POLL_MS = 5 * 60_000;
+const ERROR_BACKOFF_BASE_MS = 60_000;
+const ERROR_BACKOFF_MAX_MS = 10 * 60_000;
+
+/** Intervalo do polling a partir do estado da query (exportado para teste). */
+export function unconfirmedRefetchInterval(q: {
+  state: { status: string; data?: UnconfirmedQueryResult; errorUpdateCount?: number };
+}): number {
+  if (q.state.status === 'error') {
+    const n = Math.max(1, q.state.errorUpdateCount ?? 1);
+    return Math.min(ERROR_BACKOFF_BASE_MS * 2 ** (n - 1), ERROR_BACKOFF_MAX_MS);
+  }
+  if (q.state.data?.schemaReady === false) return PRE_DDL_POLL_MS;
+  return POLL_MS;
+}
+
 export function useUnconfirmedMessages(
   conversationContactId: string | null | undefined,
   conversationGroupId?: string | null,
@@ -67,16 +84,23 @@ export function useUnconfirmedMessages(
       return { rows: (data ?? []) as unknown as UnconfirmedMessage[], schemaReady: true };
     },
     enabled: !!conversationContactId || !!conversationGroupId,
-    // Não martela o PostgREST a cada 30 s: o polling para no pré-DDL (coluna
-    // ausente) e depois de qualquer erro; a próxima montagem/foco volta a checar.
-    refetchInterval: (q) =>
-      (q.state.status === 'error' || q.state.data?.schemaReady === false ? false : 30_000),
+    // Não martela o PostgREST, mas também nunca para de vez:
+    //  - pré-DDL (coluna/função ausente): reconsulta a cada 5 min, para o painel
+    //    aparecer sozinho depois que a migration 20261111160000 for aplicada;
+    //  - erro (ex.: permissão, rede): espera crescente 1 → 2 → 4 → 8 → 10 min;
+    //  - normal: 30 s.
+    // O queryClient global desliga refetch no foco/montagem e segura o cache por
+    // 5 min; aqui o painel sempre revalida ao abrir a conversa e ao voltar à aba.
+    refetchInterval: unconfirmedRefetchInterval,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const resolveMutation = useMutation({
     mutationFn: async ({ messageId, outcome }: { messageId: string; outcome: 'sent' | 'not_delivered' }) => {
-      // @ts-expect-error resolve_unconfirmed_message not in generated types until production migration
-      const { data, error } = await supabase.rpc('resolve_unconfirmed_message', {
+      // RPC da migration 20261111160000: chamada sem tipo para compilar antes e depois do types-sync.
+      const { data, error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)('resolve_unconfirmed_message', {
         p_message_id: messageId,
         p_outcome: outcome,
       });
