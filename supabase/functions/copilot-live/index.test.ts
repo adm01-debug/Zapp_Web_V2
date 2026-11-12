@@ -110,6 +110,10 @@ interface Rotas {
   perfil?: boolean;
   /** Sessão já existe e é de OUTRO dono (insert 23505 + update sem linhas). */
   sessaoAlheia?: boolean;
+  /** contact_id gravado na sessão alheia (padrão: um contato que não é o do tick). */
+  contatoDaSessao?: string;
+  /** contacts.assigned_to do contato do tick (padrão: o perfil do chamador). */
+  responsavelDoContato?: string;
   provedor?: () => Response;
 }
 
@@ -154,8 +158,19 @@ async function cenario<T>(rotas: Rotas, fn: (calls: Chamada[]) => Promise<T>): P
             : json({ id: SESSAO_ID }, 201),
         );
       }
-      if (metodo === "PATCH") return Promise.resolve(json({ code: "PGRST116", message: "0 rows" }, 406));
-      return Promise.resolve(json([{ contact_id: "contato-de-outro-dono" }]));
+      if (metodo === "PATCH") {
+        // Só o update filtrado pelo dono (profile_id=eq.) não acha linha; a transferência
+        // (sem esse filtro) teria sucesso, então o 403 tem de vir das guardas.
+        return Promise.resolve(
+          url.includes("profile_id=eq.")
+            ? json({ code: "PGRST116", message: "0 rows" }, 406)
+            : json({ id: SESSAO_ID }),
+        );
+      }
+      return Promise.resolve(json([{ contact_id: rotas.contatoDaSessao ?? "contato-de-outro-dono" }]));
+    }
+    if (url.includes("/rest/v1/contacts")) {
+      return Promise.resolve(json([{ assigned_to: rotas.responsavelDoContato ?? PERFIL_ID }]));
     }
     if (url.includes("/rest/v1/copilot_insights")) return Promise.resolve(new Response(null, { status: 201 }));
     if (url.includes("/rest/v1/rpc/")) return Promise.resolve(json({ code: "PGRST000", message: "rpc indisponivel no stub" }, 400));
@@ -197,6 +212,9 @@ const TICK = {
 const escritas = (calls: Chamada[], tabela: string) =>
   calls.filter((c) => c.metodo !== "GET" && c.url.includes(`/rest/v1/${tabela}`));
 const chamadasAoProvedor = (calls: Chamada[]) => calls.filter((c) => c.url.startsWith(PROVEDOR));
+const houveTransferencia = (calls: Chamada[]) =>
+  calls.some((c) => c.metodo === "PATCH" && (c.corpo as Record<string, unknown> | null)?.profile_id === USER_ID);
+const consultouContato = (calls: Chamada[]) => calls.some((c) => c.url.includes("/rest/v1/contacts"));
 
 Deno.test("copilot-live: preflight OPTIONS responde CORS sem rede", async () => {
   await cenario({}, async (calls) => {
@@ -293,6 +311,20 @@ Deno.test("copilot-live: sessão de outro dono com contato diferente devolve 403
     const res = await chamar(pedido(TICK));
     await res.body?.cancel();
     assertEquals(res.status, 403);
+    assertEquals(consultouContato(calls), false);
+    assertEquals(houveTransferencia(calls), false);
+    assertEquals(chamadasAoProvedor(calls).length, 0);
+    assertEquals(escritas(calls, "copilot_insights").length, 0);
+  });
+});
+
+Deno.test("copilot-live: sessão de outro dono com o mesmo contato, mas contato de outro responsável, devolve 403", async () => {
+  await cenario({ sessaoAlheia: true, contatoDaSessao: CONTATO_ID, responsavelDoContato: "perfil-de-outro-vendedor" }, async (calls) => {
+    const res = await chamar(pedido(TICK));
+    await res.body?.cancel();
+    assertEquals(res.status, 403);
+    assertEquals(consultouContato(calls), true);
+    assertEquals(houveTransferencia(calls), false);
     assertEquals(chamadasAoProvedor(calls).length, 0);
     assertEquals(escritas(calls, "copilot_insights").length, 0);
   });
