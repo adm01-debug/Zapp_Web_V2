@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
-import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
+import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors, internalErrorResponse } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
@@ -18,7 +18,7 @@ function goActionNotSupported(actionName: string, corsHeaders: Record<string, st
 }
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
-import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { EvolutionApiRequestSchema, GROUP_JID_PATTERN, INSTANCE_NAME_PATTERN, evolutionApiRequiresInstance, parseBody, resolveEvolutionInstanceName, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
 import {
   qrFromV2Connect,
@@ -106,7 +106,17 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
 
   try {
     const body: Record<string, unknown> = parsedBody.data;
-    const instance = String(body.instanceName || body.instance || '');
+    // Mesma resolução que o schema validou (resolveEvolutionInstanceName): o
+    // valor checado contra INSTANCE_NAME_PATTERN é o que vira path da URL.
+    const instance = resolveEvolutionInstanceName(body);
+    if (instance && !INSTANCE_NAME_PATTERN.test(instance)) {
+      // Defesa em profundidade: o schema já recusa; nunca montar URL com nome fora do padrão.
+      return validationErrorResponse([{
+        path: 'instanceName',
+        message: 'Nome de instância inválido — use apenas letras, números, "-" e "_" (até 128 caracteres).',
+        code: 'custom',
+      }], req);
+    }
 
     // ─── E17 (plano multi-conexão): instância obrigatória em ação de instância ───
     // list-instances é a única ação realmente global (lista todas as instâncias
@@ -1113,7 +1123,19 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-group-description') return await proxy(`/group/updateGroupDescription/${instance}`, 'PUT', { groupJid: body.groupJid, description: body.description });
     if (action === 'update-participants') return await proxy(`/group/updateParticipant/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action, participants: body.participants });
     if (action === 'update-group-setting') return await proxy(`/group/updateSetting/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action });
-    if (action === 'group-invite-code') return await proxy(`/group/inviteCode/${instance}?groupJid=${body.groupJid}`, 'GET');
+    if (action === 'group-invite-code') {
+      // O JID vira query string da URL do provedor: só JID de grupo válido, e
+      // codificado (antes ia cru — `&`/`#` no valor injetavam parâmetros).
+      const groupJid = typeof body.groupJid === 'string' ? body.groupJid : '';
+      if (!GROUP_JID_PATTERN.test(groupJid)) {
+        return validationErrorResponse([{
+          path: 'groupJid',
+          message: 'groupJid inválido — esperado JID de grupo (ex.: 120363000000000000@g.us).',
+          code: 'custom',
+        }], req);
+      }
+      return await proxy(`/group/inviteCode/${instance}?groupJid=${encodeURIComponent(groupJid)}`, 'GET');
+    }
     if (action === 'revoke-invite-code') return await proxy(`/group/revokeInviteCode/${instance}`, 'PUT', { groupJid: body.groupJid });
     // Restauradas (#2054). `inviteInfo`/`toggleEphemeral` são rotas da v2 sem
     // equivalente no GO → notSupported explícito. O código do convite vai
@@ -1250,11 +1272,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     });
   } catch (error: unknown) {
     const log = new Logger('evolution-api');
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    log.error('Unhandled error', { error: message });
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    log.error('Unhandled error', { error: error instanceof Error ? error.message : 'Unknown error' });
+    // Mensagem crua da exceção fica só no log do servidor: ao cliente vai o 500
+    // padrão (sem detalhe interno, stack ou dado do provedor).
+    return internalErrorResponse(error, req);
   }
 }
 
