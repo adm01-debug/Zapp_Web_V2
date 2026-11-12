@@ -52,6 +52,14 @@ vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div d
 vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div data-testid="scheduled" /> }));
 vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div data-testid="running" /> }));
 vi.mock('@/components/talkx/TalkXCampaignPaused', () => ({ TalkXCampaignPaused: () => <div data-testid="paused" /> }));
+vi.mock('@/components/talkx/report/TalkXCampaignReport', () => ({
+  TalkXCampaignReport: ({ campaign, onBack, onViewMonitor }: { campaign: { id: string }; onBack: () => void; onViewMonitor?: (id: string) => void }) => (
+    <section data-testid="report" data-campaign-id={campaign.id}>
+      <button type="button" onClick={onBack}>Voltar do relatório</button>
+      <button type="button" onClick={() => onViewMonitor?.(campaign.id)}>Ver monitor</button>
+    </section>
+  ),
+}));
 
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
@@ -387,9 +395,8 @@ describe('TalkXWizardReview — linhas com dado real (X134)', () => {
   });
 });
 
-// TL-152 (refazer): ?screen=report não tem tela — a URL é normalizada
-// (parâmetro removido) em vez de reescrever para o monitor.
-describe('TalkXView ?screen=report sem tela própria (TL-152)', () => {
+// X143/X163: campanha concluída abre o relatório (tela 14) com endereço próprio.
+describe('TalkXView ?screen=report abre o relatório (X163)', () => {
   beforeEach(() => {
     f.campaigns = [{
       id: 'cmp_done', name: 'Finalizada', status: 'completed',
@@ -401,14 +408,15 @@ describe('TalkXView ?screen=report sem tela própria (TL-152)', () => {
 
   afterEach(() => vi.clearAllMocks());
 
-  it('normaliza ?screen=report sem abrir outra tela no lugar (fica na lista)', async () => {
+  it('?screen=report abre o relatório da campanha na primeira pintura', async () => {
     render(<TalkXView />);
 
-    await waitFor(() => expect(new URLSearchParams(window.location.search).has('screen')).toBe(false));
-    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    expect(await screen.findByTestId('report')).toHaveAttribute('data-campaign-id', 'cmp_done');
+    expect(new URLSearchParams(window.location.search).get('screen')).toBe('report');
   });
 
-  it('voltar no navegador com ?screen=report também normaliza sem abrir tela', async () => {
+  it('voltar no navegador para ?screen=report abre o relatório', async () => {
+    window.history.replaceState(null, '', '/?view=talkx');
     render(<TalkXView />);
     expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
 
@@ -417,8 +425,41 @@ describe('TalkXView ?screen=report sem tela própria (TL-152)', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
 
+    expect(await screen.findByTestId('report')).toHaveAttribute('data-campaign-id', 'cmp_done');
+  });
+
+  it('"Ver relatório" na lista abre o relatório e grava ?screen=report', async () => {
+    window.history.replaceState(null, '', '/?view=talkx');
+    render(<TalkXView />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver primeira campanha' }));
+
+    expect(await screen.findByTestId('report')).toHaveAttribute('data-campaign-id', 'cmp_done');
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('campaign')).toBe('cmp_done');
+    expect(params.get('screen')).toBe('report');
+  });
+
+  it('o relatório leva ao monitor da mesma campanha e volta à lista', async () => {
+    render(<TalkXView />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver monitor' }));
+    expect(await screen.findByTestId('monitor')).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get('screen')).toBe('monitor');
+
+    cleanup();
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_done&screen=report');
+    render(<TalkXView />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Voltar do relatório' }));
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).has('screen')).toBe(false);
+  });
+
+  it('?screen=report de campanha inexistente normaliza e fica na lista', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=zzz&screen=report');
+    render(<TalkXView />);
+
     await waitFor(() => expect(new URLSearchParams(window.location.search).has('screen')).toBe(false));
     expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    expect(screen.queryByTestId('report')).not.toBeInTheDocument();
   });
 });
 
@@ -465,8 +506,16 @@ describe('TalkXView ?campaign= roteia pela situação (TL-152)', () => {
     expect(await screen.findByTestId('running')).toBeInTheDocument();
   });
 
-  it('sem screen, finalizada cai no monitor em leitura', async () => {
+  it('sem screen, finalizada abre o relatório', async () => {
     window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_done');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('report')).toHaveAttribute('data-campaign-id', 'cmp_done');
+  });
+
+  it('sem screen, cancelada segue no monitor em leitura', async () => {
+    f.campaigns = [{ ...done, id: 'cmp_cancel', status: 'cancelled' }];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_cancel');
     render(<TalkXView />);
 
     expect(await screen.findByTestId('monitor')).toBeInTheDocument();
