@@ -1106,8 +1106,9 @@ Deno.test("#2054 mark-unread (v2): agente com contato visível alcança o proved
     }), { callerClient: agentClient(), supabase: sendSupabase() });
     assertEquals(res.status, 200);
     assertEquals(fake.calls.length, 1);
-    assertEquals(fake.calls[0].path, "/chat/markMessageAsUnread/PRINCIPAL");
-    assertEquals(fake.calls[0].body, { readMessages: [key] });
+    // Evolution v2: MarkChatUnreadDto em /chat/markChatUnread = { chat, lastMessage: { key } }.
+    assertEquals(fake.calls[0].path, "/chat/markChatUnread/PRINCIPAL");
+    assertEquals(fake.calls[0].body, { chat: key.remoteJid, lastMessage: { key } });
   } finally {
     await fake.stop();
   }
@@ -1222,7 +1223,18 @@ Deno.test("#2054 send-template (v2): agente com contato visível envia; sem visi
       { callerClient: agentClient(), supabase: sendSupabase() });
     assertEquals(res.status, 200);
     assertEquals(fake.calls[0].path, "/message/sendTemplate/PRINCIPAL");
-    assertEquals(fake.calls[0].body, { number: "5511999999999", template });
+    // Evolution v2 (templateMessageSchema): campos no topo, sem o envelope `template`.
+    assertEquals(fake.calls[0].body, { number: "5511999999999", name: "boas_vindas", language: "pt_BR", components: [] });
+
+    const topo = await handleEvolutionApi(controlRequest("send-template", {
+      instanceName: "PRINCIPAL", number: "5511999999999", name: "promo", language: "pt_BR",
+      components: [{ type: "body", parameters: [] }], webhookUrl: "https://x/wh",
+    }), { callerClient: agentClient(), supabase: sendSupabase() });
+    assertEquals(topo.status, 200);
+    assertEquals(fake.calls[1].body, {
+      number: "5511999999999", name: "promo", language: "pt_BR",
+      components: [{ type: "body", parameters: [] }], webhookUrl: "https://x/wh",
+    });
   } finally {
     await fake.stop();
   }
@@ -1263,6 +1275,68 @@ Deno.test("#2054 send-template (GO): notSupported com 200, sem I/O no provedor",
     await fake.stop();
   }
 });
+
+
+// Revisão (12/11): o gate de mark-read/mark-unread resolvia o alvo por `number`
+// primeiro — um `number` de contato VISÍVEL liberava a `key` de OUTRA conversa.
+function supabaseComContatoVisivelSo(digitos: string): any {
+  return {
+    from: (table: string) => {
+      if (table === "whatsapp_connections") return makeQuery({ id: "conn-1" });
+      if (table === "contacts") {
+        let phone = "";
+        const q: any = {
+          select: () => q,
+          eq: (col: string, val: string) => { if (col === "phone") phone = val; return q; },
+          maybeSingle: () => Promise.resolve({ data: phone === digitos ? { id: "contact-visivel" } : null, error: null }),
+        };
+        return q;
+      }
+      return makeQuery(null);
+    },
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: "vault-instance-token", error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
+}
+
+for (const action of ["mark-read", "mark-unread"]) {
+  Deno.test(`revisão: ${action} com number de contato visível e key de OUTRA conversa → 403, zero chamadas`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, {
+        instanceName: "PRINCIPAL",
+        number: "5511999999999",
+        key: { remoteJid: "5521888888888@s.whatsapp.net", fromMe: false, id: "OUTRA" },
+      }), { callerClient: agentClient(), supabase: supabaseComContatoVisivelSo("5511999999999") });
+      assertEquals(res.status, 403);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+
+  Deno.test(`revisão: ${action} da própria conversa visível passa e só a key vai ao provedor`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const key = { remoteJid: "5511999999999@s.whatsapp.net", fromMe: false, id: "M1" };
+      const res = await handleEvolutionApi(controlRequest(action, {
+        instanceName: "PRINCIPAL", key,
+        readMessages: [{ remoteJid: "5521888888888@s.whatsapp.net", fromMe: false, id: "X" }],
+      }), { callerClient: agentClient(), supabase: supabaseComContatoVisivelSo("5511999999999") });
+      assertEquals(res.status, 200);
+      assertEquals(fake.calls.length, 1);
+      const enviado = JSON.stringify(fake.calls[0].body);
+      assert(!enviado.includes("5521888888888"), `JID de outra conversa vazou: ${enviado}`);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
 
 // ─── Rotas pendentes do #2054 restauradas por decisão do dono (12/11) ────────
 for (const [action, method, path, body, esperado] of [
@@ -1341,7 +1415,7 @@ Deno.test("#2054 offer-call (v2): agente com contato visível alcança o provedo
     const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999" }),
       { callerClient: agentClient(), supabase: sendSupabase() });
     assertEquals(res.status, 200);
-    assertEquals(fake.calls[0].path, "/call/offerCall/PRINCIPAL");
+    assertEquals(fake.calls[0].path, "/call/offer/PRINCIPAL");
     assertEquals(fake.calls[0].body, { number: "5511999999999", isVideo: false, callDuration: 5 });
   } finally {
     await fake.stop();
@@ -1364,3 +1438,34 @@ for (const action of ["find-chats", "create-template", "find-templates", "delete
     }
   });
 }
+
+for (const callDuration of [0, 61, 3.5, "10"]) {
+  Deno.test(`revisão: offer-call com callDuration=${JSON.stringify(callDuration)} é recusado (422) sem I/O`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999", callDuration }),
+        { callerClient: adminClient(), supabase: sendSupabase() });
+      assertEquals(res.status, 422);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("revisão: offer-call com callDuration=60 passa e vai a /call/offer", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999", callDuration: 60, isVideo: true }),
+      { callerClient: adminClient(), supabase: sendSupabase() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls[0].path, "/call/offer/PRINCIPAL");
+    assertEquals(fake.calls[0].body, { number: "5511999999999", isVideo: true, callDuration: 60 });
+  } finally {
+    await fake.stop();
+  }
+});
