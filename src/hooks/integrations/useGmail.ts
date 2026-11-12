@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
-import { callGmailFunction } from '../gmail/gmailApi';
+import { callGmailFunction, GmailFunctionError } from '../gmail/gmailApi';
 import { useGmailLabelsManagement, gmailLabelsQueryKey } from './useGmailLabels';
 import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 import { normalizeEmailBase64 } from '@/lib/emailAttachments';
@@ -71,6 +71,29 @@ const EMPTY_THREAD_PAGE: { rows: EmailThread[]; total: number | null } = { rows:
  */
 function notifyGmailActionError(action: string, error: unknown): void {
   toast.error(`Não foi possível ${action}`, { description: emailLoadErrorCopy(error).description });
+}
+
+/**
+ * O `gmail-sync` responde 409 quando OUTRA sincronização da mesma conta já
+ * segurou a trava (`claimGmailAccountSync`): é estado esperado, não falha. Antes
+ * o `retry: 1` da mutação repetia a chamada ~1 s depois — a trava ainda estava
+ * com a outra execução, então vinham DOIS 409 no console e um toast de erro.
+ */
+export function isGmailSyncAlreadyRunning(error: unknown): boolean {
+  return error instanceof GmailFunctionError && error.status === 409;
+}
+
+/**
+ * Política de nova tentativa da sincronização: uma só, e nunca para resposta
+ * 4xx do servidor (409 = já sincronizando, 403 = conta alheia/inativa, 400 =
+ * pedido inválido, reautenticação): repetir não muda o resultado. 429 (limite)
+ * e falhas de rede/5xx continuam com a tentativa extra.
+ */
+export function shouldRetryGmailSync(failureCount: number, error: unknown): boolean {
+  if (failureCount >= 1) return false;
+  const status = error instanceof GmailFunctionError ? error.status : undefined;
+  if (status !== undefined && status >= 400 && status < 500 && status !== 429) return false;
+  return true;
 }
 
 /**
@@ -393,7 +416,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-sync', { action: 'sync-inbox', account_id: activeAccount.id, ...options });
     },
-    retry: 1,
+    retry: shouldRetryGmailSync,
     onSuccess: (data) => {
       // O gmail-sync responde HTTP 207 (`success: false`, `failed > 0`) quando a
       // sincronização é parcial. O FunctionsClient trata todo 2xx — inclusive 207 —
@@ -423,7 +446,18 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
         toast.error('Falha na sincronização', { description, action: retry });
       }
     },
-    onError: (error: Error) => { toast.error(`Erro ao sincronizar: ${error.message}`); },
+    onError: (error: Error) => {
+      if (isGmailSyncAlreadyRunning(error)) {
+        // Já há uma sincronização desta conta rodando: o estado salvo na conta
+        // (`sync_status`) é a fonte da verdade — recarrega em vez de acusar erro.
+        queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] });
+        toast.info('Sincronização já em andamento', {
+          description: 'Os e-mails aparecem assim que a sincronização atual terminar.',
+        });
+        return;
+      }
+      toast.error(`Erro ao sincronizar: ${error.message}`);
+    },
   });
 
   const syncLabels = useMutation({
