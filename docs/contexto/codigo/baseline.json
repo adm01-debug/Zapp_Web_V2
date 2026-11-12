@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e408b77812a40907c7b2fb4379368bbf36d9af32",
+  "commit": "bd62fc9d9771a079b712d532d66adbddfb9576bb",
   "branch": "main",
-  "data_commit": "2026-11-11T19:21:07-03:00",
+  "data_commit": "2026-11-11T20:35:56-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "bd62fc9",
+    "data": "2026-11-11",
+    "assunto": "feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)"
+   },
    {
     "sha": "e408b77",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "a7f9d03",
     "data": "2026-11-11",
     "assunto": "fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)"
-   },
-   {
-    "sha": "105ebc1",
-    "data": "2026-11-11",
-    "assunto": "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)"
    }
   ],
-  "arquivos_mudados_7d": 626,
+  "arquivos_mudados_7d": 628,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -218,6 +218,10 @@
     "mudancas": 12
    },
    {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
+   },
+   {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
    },
@@ -226,7 +230,7 @@
     "mudancas": 10
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 10
    },
    {
@@ -235,10 +239,6 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 9
    },
    {
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8392,
-  "arquivos_codigo": 4806,
-  "linhas_codigo": 889904,
+  "arquivos_total": 8398,
+  "arquivos_codigo": 4811,
+  "linhas_codigo": 890700,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 144,
-  "componentes": 898,
-  "hooks": 495,
+  "componentes": 899,
+  "hooks": 496,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1102,
+  "migrations": 1103,
   "cron_jobs": 26,
-  "testes": 2612,
+  "testes": 2614,
   "workflows": 21,
   "scripts": 427,
   "docs_md": 1073
@@ -703,8 +703,8 @@
    "linhas": 616
   },
   "src/components": {
-   "arquivos": 2174,
-   "linhas": 370886
+   "arquivos": 2178,
+   "linhas": 371525
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 393
   },
   "src/services": {
-   "arquivos": 36,
-   "linhas": 5636
+   "arquivos": 37,
+   "linhas": 5793
   },
   "src/styles": {
    "arquivos": 10,
@@ -1271,6 +1271,7 @@
    "edge_rate_limits",
    "feature_flags",
    "global_settings",
+   "instance_pauses",
    "messages",
    "talkx_blacklist",
    "talkx_contact_attributes",

@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 495,
+ "total": 496,
  "hooks": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -999,6 +999,28 @@
     "src/components/monitoring/MonitoringInboxSilence.tsx"
    ],
    "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/components/monitoring/hooks/useInstancePauses.ts",
+   "hooks_exportados": [
+    "useInstancePauses"
+   ],
+   "linhas": 58,
+   "dominio": "components/monitoring",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/monitoring/MonitoringInstancePauses.tsx"
+   ],
+   "coberto_por_testes": 0
   },
   {
    "arquivo": "src/components/monitoring/hooks/useMonitoringActions.ts",

@@ -4869,6 +4869,7 @@
    "src/components/monitoring/MonitoringHealthLogs.tsx",
    "src/components/monitoring/MonitoringInboxSilence.tsx",
    "src/components/monitoring/MonitoringIncidents.tsx",
+   "src/components/monitoring/MonitoringInstancePauses.tsx",
    "src/components/monitoring/MonitoringMessageChart.tsx",
    "src/components/monitoring/MonitoringSLAPanel.tsx",
    "src/components/monitoring/MonitoringSkeletons.tsx",
@@ -4942,6 +4943,17 @@
    "src/components/ui/progress.tsx",
    "src/lib/utils.ts"
   ],
+  "src/components/monitoring/MonitoringInstancePauses.tsx": [
+   "src/components/monitoring/hooks/useInstancePauses.ts",
+   "src/components/ui/alert.tsx",
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/components/ui/label.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/components/ui/textarea.tsx",
+   "src/services/instance-pauses.service.ts"
+  ],
   "src/components/monitoring/MonitoringMessageChart.tsx": [
    "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
    "src/components/ui/button.tsx",
@@ -4990,6 +5002,9 @@
    "src/hooks/realtime/useVisiblePolling.ts",
    "src/lib/logger.ts",
    "src/services/inbox.service.ts"
+  ],
+  "src/components/monitoring/hooks/useInstancePauses.ts": [
+   "src/services/instance-pauses.service.ts"
   ],
   "src/components/monitoring/hooks/useMonitoringActions.ts": [
    "src/components/monitoring/hooks/types.ts",
@@ -10441,6 +10456,10 @@
    "src/services/queue.service.ts",
    "src/services/realtime.service.ts",
    "src/services/role.service.ts"
+  ],
+  "src/services/instance-pauses.service.ts": [
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts"
   ],
   "src/services/mediaMigration.service.ts": [
    "src/integrations/supabase/client.ts"

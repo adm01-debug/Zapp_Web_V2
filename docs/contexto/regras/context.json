@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "e408b77812a40907c7b2fb4379368bbf36d9af32",
+  "sha": "bd62fc9d9771a079b712d532d66adbddfb9576bb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-11 23:00 UTC",
-  "files_total": 8234,
-  "code_files": 6080,
-  "code_lines": 1057748
+  "generated_at": "2026-11-12 01:38 UTC",
+  "files_total": 8240,
+  "code_files": 6086,
+  "code_lines": 1058698
  },
  "version": "1.3.2",
- "facts_hash": "cdbf5742186fc2ec",
+ "facts_hash": "4609536ef16289ca",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -317,9 +317,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2338,
-   ".ts": 1890,
-   ".sql": 1302,
+   ".tsx": 2341,
+   ".ts": 1892,
+   ".sql": 1303,
    ".mjs": 431,
    ".py": 119,
    ".cjs": 19,
@@ -34162,6 +34162,28 @@
      "v_result"
     ]
    },
+   "mark_pause_investigated": {
+    "args": "p_pause_id uuid, p_notes text DEFAULT NULL",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_uid uuid := auth.uid(); v_profile uuid; v_notes text; v_row public.instance_pauses; v_ja boolean; BEGIN IF v_uid IS NULL OR NOT public.is_admin_or_supervisor(v_uid) THEN RAISE EXCEPTION 'sem_permissao_para_investigar_pausa' USING ERRCODE = '42501'; END IF; IF p_pause_id IS NULL THEN RAISE EXCEPTION 'pausa_invalida' USING ERRCODE = '22023'; END IF; v_profile := public.get_profile_id_for_user(v_uid); IF v_profile IS NULL THEN RAISE EXCEPTION 'perfil_nao_encontrado' USING ERRCODE = '42501'; END IF; IF p_notes IS NOT NULL THEN v_notes := btrim(p_notes); IF v_notes = '' THEN v_notes := NULL; END IF; IF v_notes IS NOT NULL THEN IF char_length(v_notes) > 1000 THEN RAISE EXCEPTION 'notas_a …",
+    "raises": [
+     "sem_permissao_para_investigar_pausa",
+     "pausa_invalida",
+     "perfil_nao_encontrado",
+     "notas_acima_do_limite",
+     "notas_com_html",
+     "pausa_nao_encontrada"
+    ],
+    "tables": [
+     "audit_logs",
+     "instance_pauses",
+     "v_row"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -43225,6 +43247,7 @@
    "supabase/migrations/20261108203000_talkx_x058_campaign_queue_segment.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/migrations/20261111160000_outbound_post_started.sql",
+   "supabase/migrations/20261111181000_instance_pause_investigation.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -56260,6 +56283,22 @@
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "mark_pause_investigated",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "mark_pause_investigated",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -61413,6 +61452,36 @@
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
    },
    {
+    "function": "mark_pause_investigated",
+    "msg": "sem_permissao_para_investigar_pausa",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "pausa_invalida",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "perfil_nao_encontrado",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "notas_acima_do_limite",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "notas_com_html",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "pausa_nao_encontrada",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
     "function": "espera_contem",
     "msg": "LA FALHOU [%]: \"%\" nao contem \"%\"",
     "src": "supabase/tests/admin_unlock_login_autorizacao.sql"
@@ -65153,7 +65222,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2174,
+  "components_count": 2178,
   "hooks": [
    {
     "name": "useContacts",
@@ -65326,6 +65395,10 @@
    {
     "name": "useInboxSilence",
     "file": "src/components/monitoring/hooks/useInboxSilence.ts"
+   },
+   {
+    "name": "useInstancePauses",
+    "file": "src/components/monitoring/hooks/useInstancePauses.ts"
    },
    {
     "name": "useMonitoringActions",
@@ -68268,8 +68341,8 @@
   },
   {
    "module": "src/components",
-   "files": 2174,
-   "lines": 370886,
+   "files": 2178,
+   "lines": 371525,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -69352,8 +69425,8 @@
   },
   {
    "module": "src/services",
-   "files": 36,
-   "lines": 5636,
+   "files": 37,
+   "lines": 5793,
    "tables": [
     "ai_conversation_tags",
     "audit_logs",
@@ -69363,6 +69436,7 @@
     "contacts",
     "conversation_sla",
     "csat_surveys",
+    "instance_pauses",
     "messages",
     "profiles",
     "queue_members",
@@ -69380,6 +69454,7 @@
     "contact.service.ts: Contact, CONTACT_NOTES_PAGE_SIZE, SearchContactsParams, ContactService",
     "evolution.service.ts: EvolutionInstance, EvolutionConnectionStatus, EvolutionMessagePayload, getEvolutionInstances, getEvolutionInstanceById, getEvolutionInstanceByName",
     "inbox.service.ts: InboxFilterTag, fetchInboxFilterTags, InboxSilenceConversation, InboxSilenceConnection, fetchInboxSilence",
+    "instance-pauses.service.ts: InstancePause, PAUSE_NOTES_MAX_LENGTH, PAUSES_LIST_LIMIT, PAUSES_LOAD_ERROR, validateInvestigationNotes, fetchInstancePauses",
     "mediaMigration.service.ts: HISTORY_LIMIT, MigrationHistoryEntry, countPendingMedia, fetchMigrationHistory",
     "navigation.service.ts: NavItem, NavGroup, NavigationService",
     "outbound-message.service.ts: OutboundMessageType, SendOutboundMessageInput, OutboundMessageDeliveryResult, RichOutboundMessageInput, PENDING_ACTION_TTL_MS, drainOfflineSendQueue",
@@ -69422,6 +69497,7 @@
     "src/services/evolution.service.ts",
     "src/services/inbox.service.ts",
     "src/services/index.ts",
+    "src/services/instance-pauses.service.ts",
     "src/services/mediaMigration.service.ts",
     "src/services/navigation.service.ts",
     "src/services/outbound-message.service.ts",
@@ -69891,8 +69967,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1102,
-   "lines": 106448,
+   "files": 1103,
+   "lines": 106602,
    "tables": [
     "audit_logs",
     "departments",
@@ -71228,6 +71304,11 @@
    "ignorada": {
     "ref": [
      "scripts/ci/gerar-matriz-edge-tabela.unit.mjs"
+    ]
+   },
+   "instance_pauses": {
+    "select": [
+     "src/services/instance-pauses.service.ts"
     ]
    },
    "inventado": {
@@ -75226,6 +75307,9 @@
    "mark_outbound_post_started": [
     "supabase/functions/message-delivery/index.ts"
    ],
+   "mark_pause_investigated": [
+    "src/services/instance-pauses.service.ts"
+   ],
    "mark_talkx_recipient_dispatch_started": [
     "supabase/functions/talkx-send/process-recipient.ts"
    ],
@@ -76433,7 +76517,6 @@
    "email_signatures",
    "entity_versions",
    "hermes_change_log",
-   "instance_pauses",
    "link_preview_cache_metrics",
    "login_attempts",
    "message_attempts",
@@ -77566,6 +77649,11 @@
     "rules": "min, type=number, min=INBOX_SILENCE_MIN_MINUTES, max=INBOX_SILENCE_MAX_MINUTES, step=1"
    },
    {
+    "file": "src/components/monitoring/MonitoringInstancePauses.tsx",
+    "field": "notesId",
+    "rules": "max"
+   },
+   {
     "file": "src/components/queues/EditQueueDialog.tsx",
     "field": "edit-queue-max-wait",
     "rules": "max, type=number, min=1, max"
@@ -77946,6 +78034,11 @@
     "file": "src/components/monitoring/hooks/useConnectionIncidents.ts",
     "name": "AlertSeverity",
     "values": "critical | warning"
+   },
+   {
+    "file": "src/components/monitoring/hooks/useInstancePauses.ts",
+    "name": "INSTANCE_PAUSES_QUERY_KEY",
+    "values": "'instance-pauses'"
    },
    {
     "file": "src/components/performance/metricThresholds.ts",
@@ -83846,6 +83939,14 @@
     "msg": " className="
    },
    {
+    "file": "src/components/monitoring/MonitoringInstancePauses.tsx",
+    "msg": " className="
+   },
+   {
+    "file": "src/components/monitoring/MonitoringInstancePauses.tsx",
+    "msg": ";\nimport { Badge } from "
+   },
+   {
     "file": "src/components/monitoring/hooks/useMonitoringActions.ts",
     "msg": "Erro ao executar health check (${motivoDeErro(err)})"
    },
@@ -89466,6 +89567,10 @@
     "text": "A edge devolve erro de negócio como 200 + {error:true, message} (convenção"
    },
    {
+    "file": "src/components/monitoring/MonitoringInstancePauses.tsx",
+    "text": "* Instante da leitura (ms): referência estável para \"pausada\" x \"prazo vencido\". */"
+   },
+   {
     "file": "src/components/monitoring/hooks/types.ts",
     "text": "O motivo real (mensagem do PostgREST, rede, permissão) nunca é engolido."
    },
@@ -93484,6 +93589,10 @@
    {
     "file": "src/services/inbox.service.ts",
     "text": "* A leitura NÃO pode ser um `select().not()` sem `range`: o PostgREST devolve só a"
+   },
+   {
+    "file": "src/services/instance-pauses.service.ts",
+    "text": "* Limite e proibição de `<`/`>` são os MESMOS CHECKs da migration IP2 (banco recusa igual). */"
    },
    {
     "file": "src/services/navigation.service.ts",
@@ -107640,6 +107749,21 @@
     "value": "24"
    },
    {
+    "file": "src/services/instance-pauses.service.ts",
+    "name": "PAUSE_NOTES_MAX_LENGTH",
+    "value": "1000"
+   },
+   {
+    "file": "src/services/instance-pauses.service.ts",
+    "name": "PAUSES_LIST_LIMIT",
+    "value": "50"
+   },
+   {
+    "file": "src/services/instance-pauses.service.ts",
+    "name": "PAUSES_LOAD_ERROR",
+    "value": "'Não foi possível carregar as pausas de instância.'"
+   },
+   {
     "file": "src/services/mediaMigration.service.ts",
     "name": "MIGRATION_ACTION",
     "value": "'media_migration'"
@@ -113601,6 +113725,18 @@
     "file": "src/components/monitoring/MonitoringHealthLogs.tsx",
     "field": "status",
     "value": "degraded",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/monitoring/MonitoringInstancePauses.tsx",
+    "field": "state",
+    "value": "ativa",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/monitoring/MonitoringInstancePauses.tsx",
+    "field": "state",
+    "value": "retomada",
     "kind": "compara"
    },
    {
@@ -124914,6 +125050,12 @@
     "name": "applyContactTagChange",
     "params": "ids: string[], change: { add?: string[]; remove?: string[] },",
     "body": "const wanted = [...new Set(ids)]; if (wanted.length === 0) return emptyOutcome(); const { data, error } = await supabase .from('contacts') .select('id, tags') .in('id', wanted); if (error) { return { succeeded: [], refused: [], failed: wanted.map((id) => ({ id, error })) }; } const rows = (data ?? []) as { id: string; tags: string[] | null }[]; const readIds = new Set(rows.map((row) => row.id)); // Invisível no SELECT = recusado pelo RLS (nunca inventamos estado para ele). const refused = wanted …"
+   },
+   {
+    "file": "src/services/instance-pauses.service.ts",
+    "name": "validateInvestigationNotes",
+    "params": "notes: string",
+    "body": "const trimmed = notes.trim(); if (trimmed.length > PAUSE_NOTES_MAX_LENGTH) { return `As notas passam de ${PAUSE_NOTES_MAX_LENGTH} caracteres.`; } if (/[<>]/.test(trimmed)) { return 'As notas não podem conter os caracteres < ou >.'; } return null;"
    },
    {
     "file": "src/services/navigation.service.ts",
@@ -155280,6 +155422,14 @@
     "name": "só consulta a RPC admin_inbox_silence depois de abrir a aba e mostra o painel real"
    },
    {
+    "file": "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.pauses.test.tsx",
+    "name": "EvolutionMonitoringDashboard — aba "
+   },
+   {
+    "file": "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.pauses.test.tsx",
+    "name": "só lê instance_pauses depois de abrir a aba e oferece "
+   },
+   {
     "file": "src/components/monitoring/__tests__/MonitoringDiagnosticPanel.sem-export.test.tsx",
     "name": "SEC-SAIDAS_DE_INFORMACAO-01 — diagnóstico sem botões de exportação"
    },
@@ -155382,6 +155532,58 @@
    {
     "file": "src/components/monitoring/__tests__/MonitoringIncidents.test.tsx",
     "name": "o botão de atualizar recarrega e repinta com o dado novo"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "MonitoringInstancePauses"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "lê instance_pauses (mais recentes primeiro, limitado) e mostra estado, motivo e automática"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "marca investigada: chama a RPC com notas aparadas, relê a lista e avisa"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "nota em branco vira null (sem apagar a anterior no banco)"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "recusa notas > 1000 ou com < > sem chamar a RPC"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "erro 42501 da RPC vira mensagem pt-BR e mantém o formulário aberto"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "P0002 (pausa sumiu) e erro desconhecido têm mensagens próprias"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "cancelar fecha o formulário sem chamar a RPC"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "estado vazio: nenhuma pausa registrada"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "erro de leitura mostra o alerta e "
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "carregando: skeleton acessível até a primeira leitura"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "enabled=false não lê o banco"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    "name": "sem violações de acessibilidade com a lista e o formulário abertos"
    },
    {
     "file": "src/components/monitoring/__tests__/monitoring-a11y.test.tsx",
@@ -229168,6 +229370,28 @@
      "v_result"
     ]
    },
+   "mark_pause_investigated": {
+    "args": "p_pause_id uuid, p_notes text DEFAULT NULL",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_uid uuid := auth.uid(); v_profile uuid; v_notes text; v_row public.instance_pauses; v_ja boolean; BEGIN IF v_uid IS NULL OR NOT public.is_admin_or_supervisor(v_uid) THEN RAISE EXCEPTION 'sem_permissao_para_investigar_pausa' USING ERRCODE = '42501'; END IF; IF p_pause_id IS NULL THEN RAISE EXCEPTION 'pausa_invalida' USING ERRCODE = '22023'; END IF; v_profile := public.get_profile_id_for_user(v_uid); IF v_profile IS NULL THEN RAISE EXCEPTION 'perfil_nao_encontrado' USING ERRCODE = '42501'; END IF; IF p_notes IS NOT NULL THEN v_notes := btrim(p_notes); IF v_notes = '' THEN v_notes := NULL; END IF; IF v_notes IS NOT NULL THEN IF char_length(v_notes) > 1000 THEN RAISE EXCEPTION 'notas_a …",
+    "raises": [
+     "sem_permissao_para_investigar_pausa",
+     "pausa_invalida",
+     "perfil_nao_encontrado",
+     "notas_acima_do_limite",
+     "notas_com_html",
+     "pausa_nao_encontrada"
+    ],
+    "tables": [
+     "audit_logs",
+     "instance_pauses",
+     "v_row"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -234649,6 +234873,36 @@
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
    },
    {
+    "function": "mark_pause_investigated",
+    "msg": "sem_permissao_para_investigar_pausa",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "pausa_invalida",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "perfil_nao_encontrado",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "notas_acima_do_limite",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "notas_com_html",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "mark_pause_investigated",
+    "msg": "pausa_nao_encontrada",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
     "function": "espera_contem",
     "msg": "LA FALHOU [%]: \"%\" nao contem \"%\"",
     "src": "supabase/tests/admin_unlock_login_autorizacao.sql"
@@ -238513,6 +238767,12 @@
      ],
      "active": [
       "compara:src/components/inbox/contact-details/StoryViewer.tsx"
+     ],
+     "ativa": [
+      "compara:src/components/monitoring/MonitoringInstancePauses.tsx"
+     ],
+     "retomada": [
+      "compara:src/components/monitoring/MonitoringInstancePauses.tsx"
      ],
      "closed": [
       "compara:src/components/monitoring/hooks/useMonitoringNotifications.ts",
@@ -242893,6 +243153,7 @@
    "mark_multiplix_item_dispatch_started",
    "mark_multiplix_recipient_dispatch_started",
    "mark_outbound_post_started",
+   "mark_pause_investigated",
    "mark_talkx_recipient_dispatch_started",
    "mark_team_conversation_read",
    "mcp_exec",
@@ -255843,6 +256104,22 @@
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "mark_pause_investigated",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "mark_pause_investigated",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -257721,6 +257998,20 @@
      "compara:src/components/email/EmailChatInbox.tsx",
      "compara:src/hooks/system/useNavigationHistory.ts",
      "compara:src/lib/postLoginRedirect.ts"
+    ]
+   },
+   {
+    "kind": "status",
+    "msg": "valor `ativa` para `state` usado no código não existe em nenhum enum do banco/TS",
+    "where": [
+     "compara:src/components/monitoring/MonitoringInstancePauses.tsx"
+    ]
+   },
+   {
+    "kind": "status",
+    "msg": "valor `retomada` para `state` usado no código não existe em nenhum enum do banco/TS",
+    "where": [
+     "compara:src/components/monitoring/MonitoringInstancePauses.tsx"
     ]
    },
    {
@@ -299330,7 +299621,7 @@
   },
   "src/components/monitoring/EvolutionMonitoringDashboard.tsx": {
    "path": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-   "lines": 417,
+   "lines": 433,
    "exports": [
     "function EvolutionMonitoringDashboard"
    ],
@@ -299597,6 +299888,38 @@
     "// R2-INF-027: sem checks na janela não há uptime a aprovar — \"dado insuficiente\", nunca 100%."
    ]
   },
+  "src/components/monitoring/MonitoringInstancePauses.tsx": {
+   "path": "src/components/monitoring/MonitoringInstancePauses.tsx",
+   "lines": 233,
+   "exports": [
+    "function MonitoringInstancePauses"
+   ],
+   "errors": [
+    " className=",
+    ";\nimport { Badge } from "
+   ],
+   "html_constraints": [
+    {
+     "field": "notesId",
+     "rules": "max"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "state",
+     "value": "ativa",
+     "kind": "compara"
+    },
+    {
+     "field": "state",
+     "value": "retomada",
+     "kind": "compara"
+    }
+   ],
+   "rule_comments": [
+    "* Instante da leitura (ms): referência estável para \"pausada\" x \"prazo vencido\". */"
+   ]
+  },
   "src/components/monitoring/MonitoringMessageChart.tsx": {
    "path": "src/components/monitoring/MonitoringMessageChart.tsx",
    "lines": 84,
@@ -299701,6 +300024,15 @@
     "só consulta a RPC admin_inbox_silence depois de abrir a aba e mostra o painel real"
    ]
   },
+  "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.pauses.test.tsx": {
+   "path": "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.pauses.test.tsx",
+   "lines": 99,
+   "is_test": true,
+   "tests": [
+    "EvolutionMonitoringDashboard — aba ",
+    "só lê instance_pauses depois de abrir a aba e oferece "
+   ]
+  },
   "src/components/monitoring/__tests__/MonitoringDiagnosticPanel.sem-export.test.tsx": {
    "path": "src/components/monitoring/__tests__/MonitoringDiagnosticPanel.sem-export.test.tsx",
    "lines": 74,
@@ -299773,6 +300105,33 @@
     "sem histórico, anuncia o estado vazio em vez de zeros",
     "mostra o erro da consulta quando a leitura falha",
     "o botão de atualizar recarrega e repinta com o dado novo"
+   ]
+  },
+  "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx": {
+   "path": "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+   "lines": 233,
+   "is_test": true,
+   "errors": [
+    ")).textContent).toMatch(/< ou >/);\n\n    fireEvent.change(field, { target: { value: ",
+    ")).textContent).toMatch(/não existe mais/);\n\n    h.rpc.mockResolvedValue({ data: null, error: { code: ",
+    ")).textContent).toMatch(/passam de 1000/);\n\n    expect(h.rpc).not.toHaveBeenCalled();\n  });\n\n  it(",
+    ").textContent).toBe(",
+    ");\n    expect(alert.textContent).toBe("
+   ],
+   "tests": [
+    "MonitoringInstancePauses",
+    "lê instance_pauses (mais recentes primeiro, limitado) e mostra estado, motivo e automática",
+    "marca investigada: chama a RPC com notas aparadas, relê a lista e avisa",
+    "nota em branco vira null (sem apagar a anterior no banco)",
+    "recusa notas > 1000 ou com < > sem chamar a RPC",
+    "erro 42501 da RPC vira mensagem pt-BR e mantém o formulário aberto",
+    "P0002 (pausa sumiu) e erro desconhecido têm mensagens próprias",
+    "cancelar fecha o formulário sem chamar a RPC",
+    "estado vazio: nenhuma pausa registrada",
+    "erro de leitura mostra o alerta e ",
+    "carregando: skeleton acessível até a primeira leitura",
+    "enabled=false não lê o banco",
+    "sem violações de acessibilidade com a lista e o formulário abertos"
    ]
   },
   "src/components/monitoring/__tests__/monitoring-a11y.test.tsx": {
@@ -300119,6 +300478,23 @@
    ],
    "hooks": [
     "useInboxSilence"
+   ]
+  },
+  "src/components/monitoring/hooks/useInstancePauses.ts": {
+   "path": "src/components/monitoring/hooks/useInstancePauses.ts",
+   "lines": 58,
+   "exports": [
+    "const INSTANCE_PAUSES_QUERY_KEY",
+    "function useInstancePauses"
+   ],
+   "enums": [
+    {
+     "name": "INSTANCE_PAUSES_QUERY_KEY",
+     "values": "'instance-pauses'"
+    }
+   ],
+   "hooks": [
+    "useInstancePauses"
    ]
   },
   "src/components/monitoring/hooks/useMonitoringActions.ts": {
@@ -356259,6 +356635,54 @@
    "path": "src/services/index.ts",
    "lines": 10
   },
+  "src/services/instance-pauses.service.ts": {
+   "path": "src/services/instance-pauses.service.ts",
+   "lines": 157,
+   "exports": [
+    "interface InstancePause",
+    "const PAUSE_NOTES_MAX_LENGTH",
+    "const PAUSES_LIST_LIMIT",
+    "const PAUSES_LOAD_ERROR",
+    "function validateInvestigationNotes",
+    "function fetchInstancePauses",
+    "function investigationErrorMessage",
+    "interface MarkInvestigatedResult",
+    "function markPauseInvestigated"
+   ],
+   "tables": [
+    {
+     "table": "instance_pauses",
+     "op": "select"
+    }
+   ],
+   "rpc": [
+    "mark_pause_investigated"
+   ],
+   "params": [
+    {
+     "name": "PAUSE_NOTES_MAX_LENGTH",
+     "value": "1000"
+    },
+    {
+     "name": "PAUSES_LIST_LIMIT",
+     "value": "50"
+    },
+    {
+     "name": "PAUSES_LOAD_ERROR",
+     "value": "'Não foi possível carregar as pausas de instância.'"
+    }
+   ],
+   "rule_comments": [
+    "* Limite e proibição de `<`/`>` são os MESMOS CHECKs da migration IP2 (banco recusa igual). */"
+   ],
+   "calc_fns": [
+    {
+     "name": "validateInvestigationNotes",
+     "params": "notes: string",
+     "body": "const trimmed = notes.trim(); if (trimmed.length > PAUSE_NOTES_MAX_LENGTH) { return `As notas passam de ${PAUSE_NOTES_MAX_LENGTH} caracteres.`; } if (/[<>]/.test(trimmed)) { return 'As notas não podem conter os caracteres < ou >.'; } return null;"
+    }
+   ]
+  },
   "src/services/mediaMigration.service.ts": {
    "path": "src/services/mediaMigration.service.ts",
    "lines": 63,
@@ -383444,6 +383868,10 @@
    "lines": 485,
    "uses_service_role": true
   },
+  "supabase/migrations/20261111181000_instance_pause_investigation.sql": {
+   "path": "supabase/migrations/20261111181000_instance_pause_investigation.sql",
+   "lines": 154
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -387296,10 +387724,27 @@
   }
  },
  "git": {
-  "sha": "e408b77812a40907c7b2fb4379368bbf36d9af32",
+  "sha": "bd62fc9d9771a079b712d532d66adbddfb9576bb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "bd62fc9",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
+     "src/components/monitoring/MonitoringInstancePauses.tsx",
+     "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.pauses.test.tsx",
+     "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+     "src/components/monitoring/hooks/useInstancePauses.ts",
+     "src/services/instance-pauses.service.ts",
+     "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+    ]
+   },
    {
     "sha": "e408b77",
     "date": "2026-11-11",
@@ -387616,19 +388061,13 @@
      "scripts/ci/bundle-budget.mjs",
      "scripts/ci/bundle-budget.unit.mjs"
     ]
-   },
-   {
-    "sha": "db960cd",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(ci): guard de secrets detecta on: pull_request em YAML flow-style (#2936)",
-    "files": [
-     "scripts/ci/check-pr-workflow-secrets.mjs",
-     "scripts/ci/check-pr-workflow-secrets.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/db-audit/grants-baseline.json",
+    2
+   ],
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
@@ -387654,15 +388093,43 @@
     2
    ],
    [
+    "docs/DB-INVENTORY.md",
+    1
+   ],
+   [
+    "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
+    1
+   ],
+   [
+    "src/components/monitoring/MonitoringInstancePauses.tsx",
+    1
+   ],
+   [
+    "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.pauses.test.tsx",
+    1
+   ],
+   [
+    "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
+    1
+   ],
+   [
+    "src/components/monitoring/hooks/useInstancePauses.ts",
+    1
+   ],
+   [
+    "src/services/instance-pauses.service.ts",
+    1
+   ],
+   [
+    "supabase/migrations/20261111181000_instance_pause_investigation.sql",
+    1
+   ],
+   [
     "scripts/maintenance/lib.mjs",
     1
    ],
    [
     "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
-    1
-   ],
-   [
-    "scripts/db-audit/grants-baseline.json",
     1
    ],
    [
@@ -387675,38 +388142,6 @@
    ],
    [
     "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
-    1
-   ],
-   [
-    "scripts/regras_negocio/generate.py",
-    1
-   ],
-   [
-    "scripts/regras_negocio/test_generate.py",
-    1
-   ],
-   [
-    "scripts/ci/run-sh.unit.mjs",
-    1
-   ],
-   [
-    "scripts/maintenance/run.sh",
-    1
-   ],
-   [
-    "ESTADO.md",
-    1
-   ],
-   [
-    "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
-    1
-   ],
-   [
-    "scripts/db-audit/message-delivery-phase1-runtime.sql",
-    1
-   ],
-   [
-    "src/components/inbox/ChatPanel.tsx",
     1
    ]
   ]

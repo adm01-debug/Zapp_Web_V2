@@ -243,6 +243,7 @@
     "useInboxUIState",
     "useInboxUnreadTotal",
     "useInfiniteQuery",
+    "useInstancePauses",
     "useInteractiveMessage",
     "useIsMobile",
     "useIsMutating",
@@ -716,6 +717,7 @@
     "useInboxSilence",
     "useInboxUIState",
     "useInboxUnreadTotal",
+    "useInstancePauses",
     "useInteractiveMessage",
     "useIsMobile",
     "useKeyboardHeight",
@@ -1013,6 +1015,7 @@
     "geo_blocking_settings",
     "global_settings",
     "goals_configurations",
+    "instance_pauses",
     "ip_whitelist",
     "knowledge_base_articles",
     "knowledge_base_files",
@@ -1112,6 +1115,7 @@
     "log_audit_event",
     "log_search_event",
     "log_talkx_campaign_checklist",
+    "mark_pause_investigated",
     "mark_team_conversation_read",
     "merge_contacts_atomic",
     "my_calls_kpi",
@@ -1288,7 +1292,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 1435
+   "arquivos_puxados": 1438
   },
   {
    "protegida": false,
@@ -4444,6 +4448,7 @@
     "useEvolutionMonitoring",
     "useGlobalSettings",
     "useInboxSilence",
+    "useInstancePauses",
     "useMemo",
     "useMessageUpdateBatcher",
     "useMonitoringActions",
@@ -4472,6 +4477,7 @@
     "useEvolutionMonitoring",
     "useGlobalSettings",
     "useInboxSilence",
+    "useInstancePauses",
     "useMessageUpdateBatcher",
     "useMonitoringActions",
     "useMonitoringData",
@@ -4491,6 +4497,7 @@
     "connection_health_logs",
     "contacts",
     "global_settings",
+    "instance_pauses",
     "messages",
     "profiles",
     "user_settings",
@@ -4499,7 +4506,8 @@
    "rpcs": [
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
-    "get_inbox_contact_summaries"
+    "get_inbox_contact_summaries",
+    "mark_pause_investigated"
    ],
    "edges": [
     "auth-login",
@@ -4524,7 +4532,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 86
+   "arquivos_puxados": 90
   },
   {
    "id": "gmail",

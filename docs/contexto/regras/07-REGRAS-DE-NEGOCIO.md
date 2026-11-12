@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e408b77812` · branch `main` · 2026-11-11 23:00 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd62fc9d97` · branch `main` · 2026-11-12 01:38 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1194,7 +1194,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `duplicate_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
-| … +673 linhas — lista completa em `context.json` | | |
+| … +679 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -1612,7 +1612,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `connected` | compara, escreve, filtra | `src/components/connections/ConnectionCard.tsx`<br>`src/components/connections/ConnectionsView.tsx`<br>`src/components/dashboard/systemHealth.ts`<br>`src/components/diagnostics/ConnectionHealthPanel.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>… +36 |
 | `status` | `connecting` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/components/connections/ConnectionCard.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>`src/components/inbox/RealtimeTranscription.tsx`<br>… +6 |
 | `status` | `critical` | compara | `src/components/performance/PerformanceMonitor.tsx` |
-| … +234 linhas — lista completa em `context.json` | | | |
+| … +236 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -1685,6 +1685,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | GlowToken | primary \| success \| warning \| info \| muted | `src/components/inbox/tabs/journey/motion/presets.ts` |
 | TimePeriod | 1h \| 6h \| 12h \| 24h \| 7d | `src/components/monitoring/hooks/types.ts` |
 | AlertSeverity | critical \| warning | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
+| INSTANCE_PAUSES_QUERY_KEY | 'instance-pauses' | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | MetricStatus | good \| warning \| critical | `src/components/performance/metricThresholds.ts` |
 | PeriodOption | 7d \| 14d \| 30d \| custom | `src/components/queues/PeriodSelector.tsx` |
 | ProviderType | lovable_ai \| openai_compatible \| google_gemini \| custom_webhook \| custom_agent | `src/components/settings/ai-providers/types.ts` |
@@ -1917,8 +1918,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | PRIVATE_MEDIA_BUCKETS | 'audio-messages', 'team-chat-files', 'whatsapp-media', | `src/lib/storage_object_reference.ts` |
 | PriorityLevel | critical \| high \| medium \| normal | `src/lib/supervisorPriority.ts` |
 | PRIORITY_RULES_TEXT | 'P1 Crítica → sem atendente há 30 min ou mais, ou risco ≥ 80, ou marcação de urgência da IA.', 'P2 Alta → aguardando há 15 min ou mais, ou risco ≥ 60.', 'P3 Média → aguardando há 5 min ou mais, ou risco ≥ 40.', 'P4 Normal → demais conversas em atendimento.', | `src/lib/supervisorPriority.ts` |
-| TeamChatFileSizeError | empty \| too-large | `src/lib/teamChatRules.ts` |
-| … +127 linhas — lista completa em `context.json` | | |
+| … +128 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2424,6 +2424,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `code` | max | `src/components/mfa/MFAEnroll.tsx` |
 | `mfa-code` | max | `src/components/mfa/MFAVerify.tsx` |
 | `inbox-silence-minutes` | min, type=number, min=INBOX_SILENCE_MIN_MINUTES, max=INBOX_SILENCE_MAX_MINUTES, step=1 | `src/components/monitoring/MonitoringInboxSilence.tsx` |
+| `notesId` | max | `src/components/monitoring/MonitoringInstancePauses.tsx` |
 | `edit-queue-max-wait` | max, type=number, min=1, max | `src/components/queues/EditQueueDialog.tsx` |
 | `duration` | type=number | `src/components/security/BlockedIPDialogs.tsx` |
 | `inactivity-hours` | type=number, min=1, max=168 | `src/components/settings/AutoCloseSettings.tsx` |
@@ -3109,6 +3110,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const wanted = [...new Set(ids)]; if (wanted.length === 0) return emptyOutcome(); const { data, error } = await supabase .from('contacts') .select('id, tags') .in('id', wanted); if (error) { return { succeeded: [], refused: [], failed: wanted.map((id) => ({ id, error })) }; } const rows = (data ?? []) as { id: string; tags: string[] | null }[]; const readIds = new Set(rows.map((row) => row.id)); // Invisível no SELECT = recusado pelo RLS (nunca inventamos estado para ele). const refused = wanted …
   ```
+- **validateInvestigationNotes(notes: string)** — `src/services/instance-pauses.service.ts`
+  ```
+  const trimmed = notes.trim(); if (trimmed.length > PAUSE_NOTES_MAX_LENGTH) { return `As notas passam de ${PAUSE_NOTES_MAX_LENGTH} caracteres.`; } if (/[<>]/.test(trimmed)) { return 'As notas não podem conter os caracteres < ou >.'; } return null;
+  ```
 - **canAccess(viewId: string, userRoles: AppRole[], userPermissions: string[] = [])** — `src/services/navigation.service.ts`
   ```
   const all = [ ...this.getPrimaryNav(), ...this.getGroups().flatMap(g => g.items), ...this.getAdvancedNav(), ]; const item = all.find(i => i.id === viewId); if (!item) return false; if (item.permission) return userPermissions.includes(item.permission); if (!item.roles) return true; return item.roles.some(role => userRoles.includes(role));
@@ -3778,7 +3783,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
 | `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
 | `MIN_CARD_WIDTH` | `168` | `src/hooks/chat/useFilesContainerColumns.ts` |
-| … +626 linhas — lista completa em `context.json` | | |
+| … +629 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4528,7 +4533,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | deno coverage não executou: ${cobertura.error.message} | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | não gero docs com teste vermelho: ${falhas.join( | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | HTTP 502 | `scripts/ci/fila-merge.unit.mjs` |
-| … +1749 linhas — lista completa em `context.json` | |
+| … +1751 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4599,7 +4604,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21326 testes em 2256 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21341 testes em 2258 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4903,7 +4908,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/__tests__/TalkXSuppression.add.test.tsx` | 16 | TalkXSuppression · Ações da lista no rail (X182/T06-053) · mostra o card  · não promete importar nem exportar em nenhum ponto do card · não oferece nenhuma ação de arquivo no card, nem desabilitada (regra: nada entra nem sai por arquivo) … |
 | `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` | 16 | R2-MOD-024 — resposta atrasada não contamina o template seguinte · variantes: resposta lenta de A não sobrescreve o painel de B · histórico: resposta lenta de A não sobrescreve o histórico de B · loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento … |
 | `src/components/talkx/__tests__/segmentValidation.test.ts` | 16 | segmentValidation · nome (X099) · recusa nome menor que o mínimo · aceita nome no mínimo, ignorando espaços nas pontas · recusa nome maior que o máximo … |
-| … +1956 linhas — lista completa em `context.json` | | |
+| … +1958 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5405,4 +5410,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Concluída reabre (volta para "A fazer"); aberta conclui. Mesma regra do módulo. | `src/components/inbox/tabs/TasksTab.tsx` |
 | apenas o tipo — nunca "0 KB" nem separador solto. Acima de 1 GB o `formatSize` segue | `src/components/inbox/tabs/fileDisplay.ts` |
 | medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
-| … +1660 linhas — lista completa em `context.json` | |
+| … +1662 linhas — lista completa em `context.json` | |

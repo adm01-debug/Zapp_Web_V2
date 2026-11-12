@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 198,
+ "total": 199,
  "por_camada": {
   "adapters": 2,
   "config": 2,
@@ -12,7 +12,7 @@
   "providers": 1,
   "python": 9,
   "segments": 1,
-  "services": 18,
+  "services": 19,
   "utils": 8
  },
  "arquivos": [
@@ -727,7 +727,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 374,
+   "usado_por": 375,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -3479,7 +3479,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 204,
+   "usado_por": 205,
    "usado_por_modulos": [
     "components",
     "components/admin",
@@ -5773,6 +5773,41 @@
    "usado_por": 0,
    "usado_por_modulos": [],
    "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/services/instance-pauses.service.ts",
+   "camada": "services",
+   "exports": [
+    "InstancePause",
+    "MarkInvestigatedResult",
+    "PAUSES_LIST_LIMIT",
+    "PAUSES_LOAD_ERROR",
+    "PAUSE_NOTES_MAX_LENGTH",
+    "fetchInstancePauses",
+    "investigationErrorMessage",
+    "markPauseInvestigated",
+    "validateInvestigationNotes"
+   ],
+   "export_default": null,
+   "linhas": 157,
+   "tabelas": [
+    "instance_pauses"
+   ],
+   "rpcs": [
+    "mark_pause_investigated"
+   ],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 2,
+   "usado_por_modulos": [
+    "components/monitoring"
+   ],
+   "coberto_por_testes": 1,
    "orfao": false
   },
   {

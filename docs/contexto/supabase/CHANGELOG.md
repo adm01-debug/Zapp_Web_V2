@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 01:38 UTC
+
+- **functions** alterado (3): `public.get_profile_id_for_user(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.mark_pause_investigated(p_pause_id uuid, p_notes text)`
+
 ## 2026-11-12 00:07 UTC
 
 - **colunas** adicionado (3): `public.instance_pauses.investigated_at`, `public.instance_pauses.investigated_by`, `public.instance_pauses.investigation_notes`

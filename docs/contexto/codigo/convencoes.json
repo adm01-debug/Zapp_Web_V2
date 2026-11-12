@@ -7,22 +7,22 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (864)",
+   "src/components (865)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
    "src/hooks (414)",
-   "src/components (72)",
+   "src/components (73)",
    "src/contexts (2)"
   ],
   "servicos_logica": [
    "src/lib (147)",
-   "src/services (18)",
+   "src/services (19)",
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1955)",
+   "co-localizado (__tests__) (1957)",
    "outro (225)",
    "co-localizado (*.test) (170)"
   ],
@@ -42,13 +42,13 @@
  "nomenclatura": {
   "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
-  "servicos": "camelCase (74%)",
+  "servicos": "camelCase (73%)",
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (92%)"
  },
  "barrels_index": 70,
  "extensao_componentes": [
-  ".tsx (898)"
+  ".tsx (899)"
  ],
  "alias_imports": {
   "(raiz)": {
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)",
    "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)",
    "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)",
    "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)",
-   "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)",
-   "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO (#2496)"
+   "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

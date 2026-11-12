@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2285,
- "arestas": 7918,
+ "nos": 2288,
+ "arestas": 7931,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,27 +10,27 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 410
+   "importado_por": 411
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 394
+   "importado_por": 395
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 218
+   "importado_por": 219
   },
   {
    "arquivo": "src/lib/logger.ts",
-   "importado_por": 218
+   "importado_por": 219
   },
   {
    "arquivo": "src/components/ui/card.tsx",
-   "importado_por": 192
+   "importado_por": 193
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
-   "importado_por": 190
+   "importado_por": 191
   },
   {
    "arquivo": "src/components/ui/input.tsx",
@@ -54,7 +54,7 @@
   },
   {
    "arquivo": "src/components/ui/label.tsx",
-   "importado_por": 106
+   "importado_por": 107
   },
   {
    "arquivo": "src/components/ui/dialog.tsx",
@@ -66,7 +66,7 @@
   },
   {
    "arquivo": "src/components/ui/skeleton.tsx",
-   "importado_por": 74
+   "importado_por": 75
   },
   {
    "arquivo": "src/hooks/ui/use-toast.ts",
@@ -101,11 +101,11 @@
    "importado_por": 50
   },
   {
-   "arquivo": "src/components/ui/popover.tsx",
-   "importado_por": 47
+   "arquivo": "src/components/ui/textarea.tsx",
+   "importado_por": 48
   },
   {
-   "arquivo": "src/components/ui/textarea.tsx",
+   "arquivo": "src/components/ui/popover.tsx",
    "importado_por": 47
   },
   {

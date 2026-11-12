@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e408b77812` · branch `main` · 2026-11-11 23:00 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd62fc9d97` · branch `main` · 2026-11-12 01:38 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -296,6 +296,7 @@
 | `GlowToken` (TS) | primary \| success \| warning \| info \| muted |  | `src/components/inbox/tabs/journey/motion/presets.ts` |
 | `TimePeriod` (TS) | 1h \| 6h \| 12h \| 24h \| 7d |  | `src/components/monitoring/hooks/types.ts` |
 | `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
+| `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
 | `PeriodOption` (TS) | 7d \| 14d \| 30d \| custom |  | `src/components/queues/PeriodSelector.tsx` |
 | `ProviderType` (TS) | lovable_ai \| openai_compatible \| google_gemini \| custom_webhook \| custom_agent |  | `src/components/settings/ai-providers/types.ts` |
@@ -306,8 +307,7 @@
 | `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused |  | `src/components/talkx/TalkXView.tsx` |
 | `AnalyticsPeriod` (TS) | 7d \| 30d \| 90d \| month \| custom |  | `src/components/talkx/talkxAnalyticsFilters.ts` |
 | `TalkxInteractiveButtonType` (TS) | reply \| link |  | `src/components/talkx/talkxInteractive.ts` |
-| `TalkxInteractiveMode` (TS) | none \| buttons \| poll |  | `src/components/talkx/talkxInteractive.ts` |
-| … +349 linhas — lista completa em `context.json` | | | |
+| … +350 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -358,6 +358,8 @@
 | status | valor `unhealthy` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/health/index.ts` |
 | status | valor `suspended` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/calls/IncomingCallAlert.tsx`<br>`compara:src/components/monitoring/hooks/useMonitoringNotifications.ts`<br>`compara:src/hooks/chat/useTeamChatNotifications.ts`<br>`compara:src/lib/mediaVolumeElement.ts` |
 | status | valor `object` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/email/EmailChatInbox.tsx`<br>`compara:src/hooks/system/useNavigationHistory.ts`<br>`compara:src/lib/postLoginRedirect.ts` |
+| status | valor `ativa` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringInstancePauses.tsx` |
+| status | valor `retomada` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringInstancePauses.tsx` |
 | status | valor `Registered` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts` |
 | status | valor `Unregistered` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts` |
 | status | valor `Terminated` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts`<br>`compara:src/lib/calls/adapters/CallEngine.ts` |

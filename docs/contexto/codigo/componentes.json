@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 898,
+ "total": 899,
  "orfaos": 53,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -8568,7 +8568,7 @@
     "EvolutionMonitoringDashboard"
    ],
    "export_default": null,
-   "linhas": 417,
+   "linhas": 433,
    "dominio": "components/monitoring",
    "hooks_locais": [
     "useEvolutionMonitoring"
@@ -8684,6 +8684,22 @@
    "dominio": "components/monitoring",
    "hooks_locais": [
     "useConnectionIncidents"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/monitoring/MonitoringInstancePauses.tsx",
+   "exports": [
+    "MonitoringInstancePauses"
+   ],
+   "export_default": null,
+   "linhas": 233,
+   "dominio": "components/monitoring",
+   "hooks_locais": [
+    "useInstancePauses"
    ],
    "tabelas": [],
    "edges": [],
@@ -12928,7 +12944,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 15,
+   "usado_por": 16,
    "orfao": false
   },
   {
@@ -12962,7 +12978,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 217,
+   "usado_por": 218,
    "orfao": false
   },
   {
@@ -12999,7 +13015,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 390,
+   "usado_por": 391,
    "orfao": false
   },
   {
@@ -13034,7 +13050,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 191,
+   "usado_por": 192,
    "orfao": false
   },
   {
@@ -13464,7 +13480,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 106,
+   "usado_por": 107,
    "orfao": false
   },
   {
@@ -13850,7 +13866,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 73,
+   "usado_por": 74,
    "orfao": false
   },
   {
@@ -14024,7 +14040,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 47,
+   "usado_por": 48,
    "orfao": false
   },
   {

@@ -54489,7 +54489,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 68,
+          "code_total_files": 69,
           "cron": [],
           "db": [
             "public.assume_conversation",
@@ -56766,7 +56766,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 393,
+          "code_total_files": 394,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -58263,8 +58263,13 @@
       {
         "args": "p_pause_id uuid, p_notes text",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "src/services/instance-pauses.service.ts",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],

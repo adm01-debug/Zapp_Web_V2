@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e408b77812` · branch `main` · 2026-11-11 23:00 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd62fc9d97` · branch `main` · 2026-11-12 01:38 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -589,6 +589,7 @@
 - `mark_multiplix_item_dispatch_started`
 - `mark_multiplix_recipient_dispatch_started`
 - `mark_outbound_post_started`
+- `mark_pause_investigated`
 - `mark_talkx_recipient_dispatch_started`
 - `mark_team_conversation_read`
 - `mcp_exec`
@@ -851,7 +852,7 @@ Middleware matcher (Next.js): nenhum
 | grant | anon, authenticated, service_role | all | `talkx_settings` |
 | grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `auth.uid`, `auth.uid` |
 | grant | authenticated | delete | `multiplix_recipients` |
-| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +158 |
+| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +159 |
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
@@ -883,7 +884,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | PUBLIC | execute | `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak`, `increment_agent_messages`, `increment_agent_resolutions`, `set_conversation_status`, `accept_department_invite` … +25 |
 | revoke | PUBLIC, anon | all | `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `close_conversation_atomic`, `replace_talkx_draft_recipients` … +117 |
 | revoke | PUBLIC, anon | execute | `clear_login_attempts`, `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at` … +65 |
-| revoke | PUBLIC, anon, authenticated | all | `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `register_first_response_internal`, `register_first_response_internal`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `upsert_crm_contact_link_guarded`, `redact_crm_sync_on_contact_delete`, `claim_crm_sync_outbox` … +200 |
+| revoke | PUBLIC, anon, authenticated | all | `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `register_first_response_internal`, `register_first_response_internal`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `upsert_crm_contact_link_guarded`, `redact_crm_sync_on_contact_delete`, `claim_crm_sync_outbox` … +201 |
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
 | revoke | PUBLIC, anon, authenticated | execute | `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `reschedule_talkx_recipient`, `transition_talkx_campaign`, `expire_stale_agent_presence`, `handle_message_gamification`, `handle_conversation_closure_gamification`, `get_department_whatsapp_credentials`, `get_department_whatsapp_api_key`, `record_incoming_call_event`, `sanitize_reset_request`, `team_receipts_fill_conversation_id`, `team_reactions_force_conversation_id`, `sanitize_reset_request` … +20 |
 | revoke | PUBLIC, anon, authenticated | truncate, references, trigger | `public` |
