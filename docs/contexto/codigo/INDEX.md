@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `bd417f58db7cde2e875fba23be7e4c958f1343ff` (2026-11-12T06:52:03-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe` (2026-11-12T07:13:01-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -391,16 +391,16 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56904 nós · 117586 arestas · 4234 comunidades · grafo do commit `bd417f58`
-- comunidades maiores: TalkXSuppression.tsx (832), ExternalProductManagement.tsx (649), cn (568), react (558), button.tsx (544), useMyWorkItems.ts (536), lucide-react (517), useAuth (439), @tanstack/react-query (419), useRealtimeMessages.ts (389), AiTab.tsx (385), ref_node_fs (336)
+- 56891 nós · 117568 arestas · 4120 comunidades · grafo do commit `f1d8e5f9`
+- comunidades maiores: vitest (900), react (884), lucide-react (879), TalkXSuppression.tsx (854), ref_node_fs (794), utils.ts (705), WorkItemSheet.tsx (567), cn (477), e2e-isolated-runtime.unit.mjs (422), validation.ts (409), DashboardView.tsx (403), @tanstack/react-query (403)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (16)
-- PENDENCIAS.md (14)
+- PENDENCIAS.md (15)
 - docs/ci/README.md (14)
-- .github/workflows/ci.yml (13)
+- .github/workflows/ci.yml (12)
 - CLAUDE.md (12)
 - docs/DB-INVENTORY.md (11)
 - scripts/db-audit/grants-baseline.json (11)
@@ -473,7 +473,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (163 linhas)
 - `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (89 linhas)
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
-- `PENDENCIAS.md` — PENDENCIAS DE CI (193 linhas)
+- `PENDENCIAS.md` — PENDÊNCIAS CI — 2026-11-12 (92 linhas)
 - `README.md` — 🚀 ZAPP-WEB (Pronto Talk Suite) (369 linhas)
 - `RELATORIO_CI.md` — RELATÓRIO CI — fix-ci-workflows-hxupgs / fix-ci-workflows-261112-0400 (335 linhas)
 - `SECURITY.md` — 🔒 Política de Segurança — ZAPP-WEB (95 linhas)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `f1d8e5f` chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha
 - 2026-11-12 `bd417f5` fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard
 - 2026-11-12 `2d10201` fix(db-audit): wal_level=logical no container descartável do teste E27 replay
 - 2026-11-12 `6f90c93` fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `0d65d57` ci(talkx): ativa validação do corpo das PRs Talk X (#2919)
 - 2026-11-12 `2942f21` fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)
 - 2026-11-12 `13a00e0` fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)
-- 2026-11-12 `daba6eb` chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

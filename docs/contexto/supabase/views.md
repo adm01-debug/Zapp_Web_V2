@@ -270,7 +270,7 @@ SELECT id AS campaign_id,
 | opções | security_invoker=true |
 | depende de | public.talkx_blacklist |
 | populada | n/a |
-| comentário | Talk X (X029): opt-outs por campanha (reason_code opt_out). security_invoker=on: a RLS de talkx_blacklist de quem consulta continua valendo. |
+| comentário | Talk X (X029/X070): opt-outs por campanha (reason_code opt_out). security_invoker=on: a RLS de talkx_blacklist de quem consulta continua valendo. |
 
 
 ```sql
@@ -279,7 +279,7 @@ SELECT campaign_id,
     count(*) FILTER (WHERE origin = 'auto_optout'::text) AS auto_optout_count,
     max(created_at) AS last_optout_at
    FROM talkx_blacklist b
-  WHERE campaign_id IS NOT NULL AND reason_code = 'opt_out'::talkx_blacklist_reason
+  WHERE campaign_id IS NOT NULL AND reason_code = 'opt_out'::text
   GROUP BY campaign_id;
 ```
 

@@ -212,6 +212,7 @@
 | public.talkx_blacklist | blocked_by | public.profiles | id | SET NULL | NO ACTION |
 | public.talkx_blacklist | campaign_id | public.talkx_campaigns | id | SET NULL | NO ACTION |
 | public.talkx_blacklist | contact_id | public.contacts | id | CASCADE | NO ACTION |
+| public.talkx_blacklist | reason_code | public.talkx_suppression_reasons | code | RESTRICT | CASCADE |
 | public.talkx_blacklist | removed_by | public.profiles | id | SET NULL | NO ACTION |
 | public.talkx_blacklist | source_message_id | public.messages | id | SET NULL | NO ACTION |
 | public.talkx_campaign_events | actor_id | public.profiles | id | SET NULL | NO ACTION |

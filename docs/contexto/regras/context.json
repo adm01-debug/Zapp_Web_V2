@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "bd417f58db7cde2e875fba23be7e4c958f1343ff",
+  "sha": "f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 10:02 UTC",
+  "generated_at": "2026-11-12 10:15 UTC",
   "files_total": 8258,
   "code_files": 6091,
   "code_lines": 1059634
@@ -387849,10 +387849,19 @@
   }
  },
  "git": {
-  "sha": "bd417f58db7cde2e875fba23be7e4c958f1343ff",
+  "sha": "f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f1d8e5f",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha",
+    "files": [
+     "PENDENCIAS.md"
+    ]
+   },
    {
     "sha": "bd417f5",
     "date": "2026-11-12",
@@ -388201,22 +388210,16 @@
      "scripts/db-audit/diff.test.mjs",
      "scripts/db-audit/manifest-lib.mjs"
     ]
-   },
-   {
-    "sha": "19ebdd9",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(vercel): protege gravação do GITHUB_STEP_SUMMARY contra exceção (#2964)",
-    "files": [
-     "scripts/ci/verify-release-targets-summary.unit.mjs",
-     "scripts/vercel/verify-release-targets.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
     4
+   ],
+   [
+    "PENDENCIAS.md",
+    3
    ],
    [
     "scripts/db-audit/grants-baseline.json",
@@ -388232,10 +388235,6 @@
    ],
    [
     "scripts/regras_negocio/test_generate.py",
-    2
-   ],
-   [
-    "PENDENCIAS.md",
     2
    ],
    [

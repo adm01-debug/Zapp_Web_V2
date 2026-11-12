@@ -16490,6 +16490,32 @@
         "type": "uuid"
       },
       {
+        "comment": "PD-79: instante em que a Edge marcou o POST ao provedor (mark_outbound_post_started). Com lease vencido, torna o resultado ambiguo e o claim recusa reivindicar de novo (sem reenvio cego). NULL quando o POST nunca comecou.",
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "delivery_post_started_at",
+        "nullable": true,
+        "position": 42,
+        "schema": "public",
+        "table": "messages",
+        "type": "timestamp with time zone"
+      },
+      {
+        "comment": "C110: timestamp da resolução manual por admin/supervisor via resolve_unconfirmed_message. Quando preenchido, o reconciliador e o webhook de recibos ignoram atualizações de status desta mensagem.",
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "manually_resolved_at",
+        "nullable": true,
+        "position": 43,
+        "schema": "public",
+        "table": "messages",
+        "type": "timestamp with time zone"
+      },
+      {
         "comment": null,
         "default": "gen_random_uuid()",
         "generated": null,
@@ -24294,13 +24320,13 @@
         "default": null,
         "generated": null,
         "identity": null,
-        "is_enum": true,
+        "is_enum": false,
         "name": "reason_code",
         "nullable": true,
         "position": 9,
         "schema": "public",
         "table": "talkx_blacklist",
-        "type": "talkx_blacklist_reason"
+        "type": "text"
       },
       {
         "comment": null,
@@ -43161,6 +43187,25 @@
       },
       {
         "columns": [
+          "reason_code"
+        ],
+        "deferrable": false,
+        "definition": "FOREIGN KEY (reason_code) REFERENCES talkx_suppression_reasons(code) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "name": "talkx_blacklist_reason_code_fk",
+        "on_delete": "RESTRICT",
+        "on_update": "CASCADE",
+        "ref_columns": [
+          "code"
+        ],
+        "ref_schema": "public",
+        "ref_table": "talkx_suppression_reasons",
+        "schema": "public",
+        "table": "talkx_blacklist",
+        "type": "FOREIGN KEY",
+        "validated": true
+      },
+      {
+        "columns": [
           "removed_by"
         ],
         "deferrable": false,
@@ -49820,7 +49865,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "dc61fabea8526576",
+        "definition_sha": "8f834f0c610edcd1",
         "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -53220,7 +53265,9 @@
           ],
           "code_total_files": 6,
           "cron": [],
-          "db": [],
+          "db": [
+            "public.claim_outbound_message"
+          ],
           "triggers": [],
           "views": []
         },
@@ -55414,7 +55461,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "566a4df1ac5f4151",
+        "definition_sha": "158ec8595a017712",
         "execute_api_roles": null,
         "execute_public": false,
         "is_trigger_fn": true,
@@ -56837,6 +56884,7 @@
             "public.require_contact_global_admin",
             "public.resolve_sla_alert",
             "public.resolve_talkx_outcome_unknown",
+            "public.resolve_unconfirmed_message",
             "public.resume_instance",
             "public.retry_talkx_recipients",
             "public.return_conversation_to_queue",
@@ -56858,6 +56906,7 @@
             "public.talk_me_list_queues",
             "public.talk_me_list_waiting",
             "public.talkx_benchmarks",
+            "public.talkx_block_recipient",
             "public.talkx_campaign_heatmap",
             "public.talkx_campaign_launch_checks",
             "public.talkx_campaign_logs",
@@ -58255,6 +58304,45 @@
         "name": "mark_multiplix_recipient_dispatch_started",
         "owner": "postgres",
         "returns": "void",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "p_message_id uuid, p_claim_token uuid",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/functions/message-delivery/index.ts",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261111160000_outbound_post_started.sql",
+              "hits": 2
+            }
+          ],
+          "code_total_files": 2,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "PD-79: marca que o POST ao provedor vai sair (fencing por id+token em status=sending). Idempotente no mesmo token; recusa lease vencido. Só service_role.",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "fb06b6db5161a143",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "mark_outbound_post_started",
+        "owner": "postgres",
+        "returns": "messages",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -62098,6 +62186,41 @@
         "volatility": "volatile"
       },
       {
+        "args": "p_message_id uuid, p_outcome text",
+        "callers": {
+          "code": [
+            {
+              "file": "src/hooks/delivery/useUnconfirmedMessages.ts",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "ed8a798481665d87",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "resolve_unconfirmed_message",
+        "owner": "postgres",
+        "returns": "uuid",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_instance text",
         "callers": {
           "code": [
@@ -64271,6 +64394,113 @@
         "volatility": "stable"
       },
       {
+        "args": "",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "778830cfd65fd61b",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": true,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_blacklist_audit_trigger",
+        "owner": "postgres",
+        "returns": "trigger",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [
+            "public.talkx_blacklist.trg_talkx_blacklist_reason_active"
+          ],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "45b3419f6edc6bad",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": true,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_blacklist_reason_active_guard",
+        "owner": "postgres",
+        "returns": "trigger",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "p_recipient_id uuid",
+        "callers": {
+          "code": [
+            {
+              "file": "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "Talk X: bloqueio manual de destinatário pelo gestor (admin/supervisor). Dados vêm do destinatário no servidor; origin/reason_code manual; não altera consentimento. Retorna id da supressão ou NULL se já bloqueado.",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "f9e7837001d801eb",
+        "execute_api_roles": "authenticated",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_block_recipient",
+        "owner": "postgres",
+        "returns": "uuid",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_campaign_id uuid",
         "callers": {
           "code": [],
@@ -64479,7 +64709,7 @@
         "volatility": "stable"
       },
       {
-        "args": "p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text",
+        "args": "p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text, p_segment_id uuid",
         "callers": {
           "code": [
             {
@@ -64497,12 +64727,12 @@
           "triggers": [],
           "views": []
         },
-        "comment": "Talk X (N-131): pagina de destinatarios por cursor keyset (created_at,id) com contato embutido, filtro de status, busca por nome/telefone e KPIs da campanha calculados no servidor. Retorna jsonb {rows,next_cursor,total,kpis}. Nenhum campo de origem/canal.",
+        "comment": null,
         "config": [
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "3b6a6d5baed8eb65",
+        "definition_sha": "6fa89e8d85ea6a1b",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -65754,7 +65984,7 @@
         "volatility": "volatile"
       },
       {
-        "args": "p_contact_id uuid, p_phone text, p_reason text, p_reason_code talkx_blacklist_reason, p_origin text, p_source_message_id uuid, p_campaign_id uuid",
+        "args": "p_contact_id uuid, p_phone text, p_reason text, p_reason_code text, p_origin text, p_source_message_id uuid, p_campaign_id uuid",
         "callers": {
           "code": [
             {
@@ -65788,12 +66018,12 @@
           "triggers": [],
           "views": []
         },
-        "comment": "Talk X (X029 + X032): supressao idempotente nos eixos contact_id e phone. Origem auto_optout marca o contato como consent_status=revoked (N10).",
+        "comment": "Talk X (X029 + X032 + X070): supressao idempotente nos eixos contact_id e phone. reason_code e texto validado pela FK em talkx_suppression_reasons (motivo inativo recusado). Origem auto_optout marca o contato como consent_status=revoked (N10).",
         "config": [
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "c2308e52e89fa1be",
+        "definition_sha": "6a367bd1e416b5e2",
         "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -65900,7 +66130,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "5180ce3b35294783",
+        "definition_sha": "f84d9748d5572627",
         "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": true,
@@ -79568,6 +79798,12 @@
       },
       {
         "code": "fk_without_index",
+        "detail": "FK sem índice nas colunas ['reason_code']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
+        "object": "public.talkx_blacklist.talkx_blacklist_reason_code_fk",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "fk_without_index",
         "detail": "FK sem índice nas colunas ['segment_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
         "object": "public.talkx_campaign_segments.talkx_campaign_segments_segment_id_fkey",
         "severity": "BAIXA"
@@ -88799,9 +89035,21 @@
         "version": "20261107170000"
       },
       {
+        "name": "talkx_campaign_recipients_page_add_segment",
+        "statements": 3,
+        "statements_sha": "cd6271931e3db71e",
+        "version": "20261107180000"
+      },
+      {
         "name": "fix_create_department_invite_search_path",
         "statements": null,
         "version": "20261108090000"
+      },
+      {
+        "name": "talkx_suppression_reasons",
+        "statements": 35,
+        "statements_sha": "5fe531299d4564d3",
+        "version": "20261108100000"
       },
       {
         "name": "talkx_x074_analytics_rpcs",
@@ -88822,10 +89070,28 @@
         "version": "20261108203000"
       },
       {
+        "name": "revoke_anon_select_grants_all_tables",
+        "statements": 2,
+        "statements_sha": "2b75b68c850e007d",
+        "version": "20261108204000"
+      },
+      {
         "name": "talkx_campaign_resume_precheck",
         "statements": 1,
         "statements_sha": "88f1d26dd3389abd",
         "version": "20261108211000"
+      },
+      {
+        "name": "outbound_post_started",
+        "statements": 21,
+        "statements_sha": "058fdc66eb9e2f9f",
+        "version": "20261111160000"
+      },
+      {
+        "name": "talkx_block_recipient",
+        "statements": 4,
+        "statements_sha": "aec1078d42a97ba5",
+        "version": "20261111170000"
       },
       {
         "name": "instance_pause_investigation",
@@ -100680,6 +100946,17 @@
         "timing": "BEFORE"
       },
       {
+        "definition": "CREATE TRIGGER trg_talkx_blacklist_reason_active BEFORE INSERT OR UPDATE OF reason_code ON talkx_blacklist FOR EACH ROW EXECUTE FUNCTION talkx_blacklist_reason_active_guard()",
+        "events": "INSERT OR UPDATE",
+        "function": "public.talkx_blacklist_reason_active_guard",
+        "level": "ROW",
+        "name": "trg_talkx_blacklist_reason_active",
+        "schema": "public",
+        "status": "enabled",
+        "table": "talkx_blacklist",
+        "timing": "BEFORE"
+      },
+      {
         "definition": "CREATE TRIGGER enforce_talkx_campaign_mutability BEFORE INSERT OR DELETE OR UPDATE ON talkx_campaigns FOR EACH ROW EXECUTE FUNCTION enforce_talkx_campaign_mutability()",
         "events": "INSERT OR DELETE OR UPDATE",
         "function": "public.enforce_talkx_campaign_mutability",
@@ -101415,20 +101692,6 @@
           "google_drive",
           "dropbox"
         ]
-      },
-      {
-        "definition": null,
-        "kind": "enum",
-        "name": "talkx_blacklist_reason",
-        "schema": "public",
-        "values": [
-          "opt_out",
-          "invalid_number",
-          "manual",
-          "lgpd",
-          "no_commercial_permission",
-          "bounce"
-        ]
       }
     ],
     "vault": [
@@ -101617,8 +101880,8 @@
         "security_invoker": true
       },
       {
-        "comment": "Talk X (X029): opt-outs por campanha (reason_code opt_out). security_invoker=on: a RLS de talkx_blacklist de quem consulta continua valendo.",
-        "definition": " SELECT campaign_id,\n    count(*) AS optout_count,\n    count(*) FILTER (WHERE origin = 'auto_optout'::text) AS auto_optout_count,\n    max(created_at) AS last_optout_at\n   FROM talkx_blacklist b\n  WHERE campaign_id IS NOT NULL AND reason_code = 'opt_out'::talkx_blacklist_reason\n  GROUP BY campaign_id;",
+        "comment": "Talk X (X029/X070): opt-outs por campanha (reason_code opt_out). security_invoker=on: a RLS de talkx_blacklist de quem consulta continua valendo.",
+        "definition": " SELECT campaign_id,\n    count(*) AS optout_count,\n    count(*) FILTER (WHERE origin = 'auto_optout'::text) AS auto_optout_count,\n    max(created_at) AS last_optout_at\n   FROM talkx_blacklist b\n  WHERE campaign_id IS NOT NULL AND reason_code = 'opt_out'::text\n  GROUP BY campaign_id;",
         "depends_on": [
           "public.talkx_blacklist"
         ],

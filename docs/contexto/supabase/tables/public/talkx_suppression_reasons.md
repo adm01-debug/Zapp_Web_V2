@@ -36,6 +36,13 @@
 | talkx_suppression_reasons_tone_check | CHECK | `CHECK (tone = ANY (ARRAY['informativo'::text, 'alerta'::text, 'crítico'::text]))` |  |  | sim |
 
 
+## Referenciada por (FKs de outras tabelas)
+
+| tabela | constraint | colunas | on delete |
+|---|---|---|---|
+| public.talkx_blacklist | talkx_blacklist_reason_code_fk | reason_code | RESTRICT |
+
+
 ## Índices
 
 | nome | método | colunas | único | válido | predicado | definição |

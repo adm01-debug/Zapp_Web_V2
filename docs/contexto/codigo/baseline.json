@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bd417f58db7cde2e875fba23be7e4c958f1343ff",
+  "commit": "f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe",
   "branch": "main",
-  "data_commit": "2026-11-12T06:52:03-03:00",
+  "data_commit": "2026-11-12T07:13:01-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f1d8e5f",
+    "data": "2026-11-12",
+    "assunto": "chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha"
+   },
    {
     "sha": "bd417f5",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "d4f25e7",
     "data": "2026-11-11",
     "assunto": "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)"
-   },
-   {
-    "sha": "9084db7",
-    "data": "2026-11-11",
-    "assunto": "fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)"
    }
   ],
   "arquivos_mudados_7d": 660,
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 14
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -211,7 +211,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 13
+    "mudancas": 12
    },
    {
     "arquivo": "CLAUDE.md",

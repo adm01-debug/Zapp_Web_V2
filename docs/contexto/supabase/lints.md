@@ -28,6 +28,7 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 | BAIXA | fk_without_index | public.message_favorites.message_favorites_message_id_fkey | FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.message_pins.message_pins_message_id_fkey | FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.message_reports.message_reports_reporter_id_fkey | FK sem índice nas colunas ['reporter_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
+| BAIXA | fk_without_index | public.talkx_blacklist.talkx_blacklist_reason_code_fk | FK sem índice nas colunas ['reason_code']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.talkx_campaign_segments.talkx_campaign_segments_segment_id_fkey | FK sem índice nas colunas ['segment_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.talkx_suppression_reasons.talkx_suppression_reasons_created_by_fkey | FK sem índice nas colunas ['created_by']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.team_message_receipts.team_message_receipts_profile_id_fkey | FK sem índice nas colunas ['profile_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |

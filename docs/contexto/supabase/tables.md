@@ -122,7 +122,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.message_reactions](tables/public/message_reactions.md) | table | sim | 5 | 6 | sim |  |
 | [public.message_reports](tables/public/message_reports.md) | table | sim | 2 | 9 | não |  |
 | [public.message_templates](tables/public/message_templates.md) | table | sim | 4 | 10 | não |  |
-| [public.messages](tables/public/messages.md) | table | sim | 3 | 41 | sim | Mensagens de todas as origens. O trigger trg_sicoob_reply (Sicoob Bridge) foi removido em 29/09/2026. |
+| [public.messages](tables/public/messages.md) | table | sim | 3 | 43 | sim | Mensagens de todas as origens. O trigger trg_sicoob_reply (Sicoob Bridge) foi removido em 29/09/2026. |
 | [public.meta_capi_events](tables/public/meta_capi_events.md) | table | sim | 2 | 11 | não |  |
 | [public.mfa_sessions](tables/public/mfa_sessions.md) | table | sim | 1 | 6 | não |  |
 | [public.multiplix_audience_members](tables/public/multiplix_audience_members.md) | table | sim | 4 | 6 | não |  |

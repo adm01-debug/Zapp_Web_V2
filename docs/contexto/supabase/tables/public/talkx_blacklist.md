@@ -25,7 +25,7 @@
 | 6 | `origin` | `text` | não | `'manual'::text` |  |  |
 | 7 | `campaign_id` | `uuid` | sim |  |  |  |
 | 8 | `phone` | `text` | sim |  |  |  |
-| 9 | `reason_code` | `talkx_blacklist_reason` | sim |  |  |  |
+| 9 | `reason_code` | `text` | sim |  |  |  |
 | 10 | `expires_at` | `timestamp with time zone` | sim |  |  |  |
 | 11 | `source_message_id` | `uuid` | sim |  |  |  |
 | 12 | `removed_by` | `uuid` | sim |  |  |  |
@@ -42,6 +42,7 @@
 | talkx_blacklist_origin_check | CHECK | `CHECK (origin = ANY (ARRAY['manual'::text, 'optout'::text, 'system'::text, 'lgpd'::text, 'list'::text, 'auto_optout'::text]))` |  |  | sim |
 | talkx_blacklist_phone_or_contact | CHECK | `CHECK (phone IS NOT NULL OR contact_id IS NOT NULL)` |  |  | sim |
 | talkx_blacklist_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
+| talkx_blacklist_reason_code_fk | FOREIGN KEY | `FOREIGN KEY (reason_code) REFERENCES talkx_suppression_reasons(code) ON UPDATE CASCADE ON DELETE RESTRICT` | RESTRICT | CASCADE | sim |
 | talkx_blacklist_removed_by_fkey | FOREIGN KEY | `FOREIGN KEY (removed_by) REFERENCES profiles(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | talkx_blacklist_source_message_id_fkey | FOREIGN KEY | `FOREIGN KEY (source_message_id) REFERENCES messages(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 
@@ -118,7 +119,9 @@
 
 ## Triggers
 
-_nenhum_
+| nome | timing | eventos | nível | status | função |
+|---|---|---|---|---|---|
+| trg_talkx_blacklist_reason_active | BEFORE | INSERT OR UPDATE | ROW | enabled | public.talkx_blacklist_reason_active_guard |
 
 
 ## Grants

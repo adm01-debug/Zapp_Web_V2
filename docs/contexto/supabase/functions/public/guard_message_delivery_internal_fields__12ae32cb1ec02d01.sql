@@ -16,6 +16,8 @@ BEGIN
         OR NEW.delivery_claimed_by IS NOT NULL
         OR NEW.delivery_last_claim_token IS NOT NULL
         OR NEW.delivery_attempt_count <> 0
+        OR NEW.delivery_post_started_at IS NOT NULL
+        OR NEW.manually_resolved_at IS NOT NULL
       ))
      OR (TG_OP = 'UPDATE' AND (
         NEW.client_message_id IS DISTINCT FROM OLD.client_message_id
@@ -25,6 +27,8 @@ BEGIN
         OR NEW.delivery_claimed_by IS DISTINCT FROM OLD.delivery_claimed_by
         OR NEW.delivery_last_claim_token IS DISTINCT FROM OLD.delivery_last_claim_token
         OR NEW.delivery_attempt_count IS DISTINCT FROM OLD.delivery_attempt_count
+        OR NEW.delivery_post_started_at IS DISTINCT FROM OLD.delivery_post_started_at
+        OR NEW.manually_resolved_at IS DISTINCT FROM OLD.manually_resolved_at
       )) THEN
     RAISE EXCEPTION 'message_delivery_internal_fields_forbidden'
       USING ERRCODE = '42501';

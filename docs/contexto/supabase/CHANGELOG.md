@@ -2,6 +2,20 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 10:18 UTC
+
+- **colunas** adicionado (2): `public.messages.delivery_post_started_at`, `public.messages.manually_resolved_at`
+- **colunas** alterado (1): `public.talkx_blacklist.reason_code`
+- **constraints** adicionado (1): `public.talkx_blacklist.talkx_blacklist_reason_code_fk`
+- **functions** adicionado (7): `public.mark_outbound_post_started(p_message_id uuid, p_claim_token uuid)`, `public.resolve_unconfirmed_message(p_message_id uuid, p_outcome text)`, `public.talkx_blacklist_audit_trigger()`, `public.talkx_blacklist_reason_active_guard()`, `public.talkx_block_recipient(p_recipient_id uuid)`, `public.talkx_campaign_recipients_page(p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text, p_segment_id uuid)`, `public.talkx_suppress_contact(p_contact_id uuid, p_phone text, p_reason text, p_reason_code text, p_origin text, p_source_message_id uuid, p_campaign_id uuid)`
+- **functions** removido (2): `public.talkx_campaign_recipients_page(p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text)`, `public.talkx_suppress_contact(p_contact_id uuid, p_phone text, p_reason text, p_reason_code talkx_blacklist_reason, p_origin text, p_source_message_id uuid, p_campaign_id uuid)`
+- **functions** alterado (5): `public.claim_outbound_message(p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer)`, `public.fail_outbound_message(p_message_id uuid, p_claim_token uuid, p_retryable boolean)`, `public.guard_message_delivery_internal_fields()`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.talkx_suppression_reasons_guard()`
+- **lints** adicionado (1): `fk_without_index:public.talkx_blacklist.talkx_blacklist_reason_code_fk`
+- **migrations** adicionado (5): `20261107180000_talkx_campaign_recipients_page_add_segment`, `20261108100000_talkx_suppression_reasons`, `20261108204000_revoke_anon_select_grants_all_tables`, `20261111160000_outbound_post_started`, `20261111170000_talkx_block_recipient`
+- **triggers** adicionado (1): `public.talkx_blacklist.trg_talkx_blacklist_reason_active`
+- **types/enums** removido (1): `public.talkx_blacklist_reason`
+- **views** alterado (1): `public.talkx_campaign_optouts`
+
 ## 2026-11-12 09:00 UTC
 
 - **functions** alterado (2): `public.is_admin_or_supervisor(_user_id uuid)`, `public.talkx_suppress_contact(p_contact_id uuid, p_phone text, p_reason text, p_reason_code talkx_blacklist_reason, p_origin text, p_source_message_id uuid, p_campaign_id uuid)`

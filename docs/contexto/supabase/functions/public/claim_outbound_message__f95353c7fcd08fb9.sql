@@ -41,6 +41,13 @@ BEGIN
       )
       AND (message.delivery_claim_token IS NULL
         OR message.delivery_claim_expires_at <= statement_timestamp())
+      -- PD-79: POST já iniciado = resultado ambíguo (pode ter chegado ao
+      -- provedor). NÃO reivindica, haja ou não lease/expiração: um
+      -- fail_outbound_message(retryable) limpa token e expiração mas deixa o
+      -- carimbo, e a linha voltaria a ser reivindicável (reenvio cego). Sem reenvio
+      -- automático: a linha fica em 'sending' até resolução explícita
+      -- (fail_outbound_message com o token do lease que carimbou, ou complete).
+      AND message.delivery_post_started_at IS NULL
     FOR UPDATE OF message SKIP LOCKED
   ), claimed AS (
     UPDATE public.messages AS message

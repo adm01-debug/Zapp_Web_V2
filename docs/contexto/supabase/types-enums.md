@@ -11,4 +11,3 @@
 | public.multiplix_item_status | enum | pending, sending, sent, delivered, read, failed, failed_transient, skipped, cancelled, outcome_unknown | public.multiplix_delivery_items.status |
 | public.multiplix_recipient_status | enum | pending, sending, sent, delivered, read, failed, skipped, cancelled, outcome_unknown | public.multiplix_recipients.status |
 | public.service_account_type | enum | google_sheets, google_docs, google_calendar, google_drive, dropbox | public.user_service_accounts.service_type |
-| public.talkx_blacklist_reason | enum | opt_out, invalid_number, manual, lgpd, no_commercial_permission, bounce | public.talkx_blacklist.reason_code |

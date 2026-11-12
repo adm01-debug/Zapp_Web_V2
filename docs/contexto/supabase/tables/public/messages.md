@@ -59,6 +59,8 @@
 | 39 | `sender_participant_jid` | `text` | sim |  |  |  |
 | 40 | `sender_display_name` | `text` | sim |  |  |  |
 | 41 | `whatsapp_group_id` | `uuid` | sim |  |  | Destino de grupo da fila de envio (whatsapp_groups.id). Mutuamente exclusivo com contact_id em mensagens novas; NULL nas mensagens de contato e no historico. |
+| 42 | `delivery_post_started_at` | `timestamp with time zone` | sim |  |  | PD-79: instante em que a Edge marcou o POST ao provedor (mark_outbound_post_started). Com lease vencido, torna o resultado ambiguo e o claim recusa reivindicar de novo (sem reenvio cego). NULL quando o POST nunca comecou. |
+| 43 | `manually_resolved_at` | `timestamp with time zone` | sim |  |  | C110: timestamp da resolução manual por admin/supervisor via resolve_unconfirmed_message. Quando preenchido, o reconciliador e o webhook de recibos ignoram atualizações de status desta mensagem. |
 
 
 ## Constraints

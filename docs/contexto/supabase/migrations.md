@@ -1097,9 +1097,14 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261107153000 | [fix_gamification_streak_resolutions_guard](migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql) | 2 |
 | 20261107163000 | [fix_copilot_rls_wrong_join_column](migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql) | 4 |
 | 20261107170000 | [fix_message_reactions_rls](migrations/20261107170000_fix_message_reactions_rls.sql) | 6 |
+| 20261107180000 | [talkx_campaign_recipients_page_add_segment](migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql) | 3 |
 | 20261108090000 | [fix_create_department_invite_search_path](migrations/20261108090000_fix_create_department_invite_search_path.sql) | 0 |
+| 20261108100000 | [talkx_suppression_reasons](migrations/20261108100000_talkx_suppression_reasons.sql) | 35 |
 | 20261108201000 | [talkx_x074_analytics_rpcs](migrations/20261108201000_talkx_x074_analytics_rpcs.sql) | 1 |
 | 20261108202000 | [talkx_x086_template_metrics_rpcs](migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql) | 1 |
 | 20261108203000 | [talkx_x058_campaign_queue_segment](migrations/20261108203000_talkx_x058_campaign_queue_segment.sql) | 1 |
+| 20261108204000 | [revoke_anon_select_grants_all_tables](migrations/20261108204000_revoke_anon_select_grants_all_tables.sql) | 2 |
 | 20261108211000 | [talkx_campaign_resume_precheck](migrations/20261108211000_talkx_campaign_resume_precheck.sql) | 1 |
+| 20261111160000 | [outbound_post_started](migrations/20261111160000_outbound_post_started.sql) | 21 |
+| 20261111170000 | [talkx_block_recipient](migrations/20261111170000_talkx_block_recipient.sql) | 4 |
 | 20261111181000 | [instance_pause_investigation](migrations/20261111181000_instance_pause_investigation.sql) | 7 |
