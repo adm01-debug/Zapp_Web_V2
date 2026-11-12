@@ -12,7 +12,7 @@
  *     extra por conversa. Agora `enabled: false` adia o canal.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 
 interface FakeChannel {
   name: string;
@@ -24,6 +24,9 @@ interface FakeChannel {
 const mocks = vi.hoisted(() => ({
   channels: [] as FakeChannel[],
   warn: vi.fn(),
+  // Canais que o cliente Realtime ainda tem na lista (`getChannels`).
+  existing: [] as Array<{ topic: string; state: string }>,
+  removeChannel: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -48,7 +51,9 @@ vi.mock('@/integrations/supabase/client', () => ({
       mocks.channels.push(channel as unknown as FakeChannel);
       return channel;
     },
-    removeChannel: vi.fn((channel: FakeChannel) => channel.emitStatus('CLOSED')),
+    // Como o provedor real: `removeChannel` faz o `unsubscribe` (sair avisa CLOSED).
+    removeChannel: (channel: FakeChannel) => mocks.removeChannel(channel),
+    getChannels: () => mocks.existing,
   },
 }));
 
@@ -63,7 +68,12 @@ import { useTypingPresence } from '@/hooks/chat/useTypingPresence';
 describe('useTypingPresence — desmonte e abertura adiada', () => {
   beforeEach(() => {
     mocks.channels.length = 0;
+    mocks.existing.length = 0;
     vi.clearAllMocks();
+    mocks.removeChannel.mockImplementation(async (channel: FakeChannel) => {
+      channel.emitStatus?.('CLOSED');
+      return 'ok';
+    });
   });
 
   it('o CLOSED gerado pelo próprio desmonte não vira aviso', () => {
@@ -74,7 +84,11 @@ describe('useTypingPresence — desmonte e abertura adiada', () => {
 
     unmount();
 
-    expect(mocks.channels[0].unsubscribe).toHaveBeenCalled();
+    // Sai do canal UMA vez: só `removeChannel` (que já faz o unsubscribe). Antes
+    // havia `unsubscribe()` + `removeChannel()` → dois `leave` e dois CLOSED.
+    expect(mocks.removeChannel).toHaveBeenCalledTimes(1);
+    expect(mocks.removeChannel).toHaveBeenCalledWith(mocks.channels[0]);
+    expect(mocks.channels[0].unsubscribe).not.toHaveBeenCalled();
     expect(mocks.warn).not.toHaveBeenCalled();
   });
 
@@ -86,9 +100,49 @@ describe('useTypingPresence — desmonte e abertura adiada', () => {
     mocks.channels[0].emitStatus('SUBSCRIBED');
 
     rerender({ id: 'conv-2' });
+    rerender({ id: 'conv-3' });
 
-    expect(mocks.channels).toHaveLength(2);
+    expect(mocks.channels).toHaveLength(3);
+    // Nenhum canal vazado: cada canal largado foi removido.
+    expect(mocks.removeChannel).toHaveBeenCalledTimes(2);
+    expect(mocks.removeChannel).toHaveBeenNthCalledWith(1, mocks.channels[0]);
+    expect(mocks.removeChannel).toHaveBeenNthCalledWith(2, mocks.channels[1]);
     expect(mocks.warn).not.toHaveBeenCalled();
+  });
+
+  it('canal do mesmo tópico ainda SAINDO: espera ele sair antes de abrir (não reaproveita)', async () => {
+    let soltar!: () => void;
+    const saindo = { topic: 'realtime:typing:conv-1', state: 'leaving' };
+    mocks.existing.push(saindo);
+    mocks.removeChannel.mockImplementationOnce(() => new Promise<string>((resolve) => { soltar = () => resolve('ok'); }));
+
+    renderHook(() => useTypingPresence({ conversationId: 'conv-1', currentUserId: 'agente-ana' }));
+
+    expect(mocks.removeChannel).toHaveBeenCalledWith(saindo);
+    expect(mocks.channels).toHaveLength(0);
+
+    await act(async () => { soltar(); });
+    expect(mocks.channels).toHaveLength(1);
+  });
+
+  it('canal do mesmo tópico ATIVO (joined) não é derrubado', () => {
+    mocks.existing.push({ topic: 'realtime:typing:conv-1', state: 'joined' });
+    renderHook(() => useTypingPresence({ conversationId: 'conv-1', currentUserId: 'agente-ana' }));
+    expect(mocks.removeChannel).not.toHaveBeenCalled();
+    expect(mocks.channels).toHaveLength(1);
+  });
+
+  it('desmontou enquanto esperava o canal antigo sair: não abre nada', async () => {
+    let soltar!: () => void;
+    mocks.existing.push({ topic: 'realtime:typing:conv-1', state: 'leaving' });
+    mocks.removeChannel.mockImplementationOnce(() => new Promise<string>((resolve) => { soltar = () => resolve('ok'); }));
+
+    const { unmount } = renderHook(() => useTypingPresence({ conversationId: 'conv-1', currentUserId: 'agente-ana' }));
+    unmount();
+    await act(async () => { soltar(); });
+
+    expect(mocks.channels).toHaveLength(0);
+    expect(mocks.removeChannel).toHaveBeenCalledTimes(1);
   });
 
   it('CLOSED/erro com o canal ainda em uso continua avisando (queda real)', () => {

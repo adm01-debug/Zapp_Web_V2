@@ -147,111 +147,131 @@ export function useTypingPresence({
     if (!conversationId || !enabled) return;
 
     // Console de produção (12/11): `Typing presence channel not subscribed: CLOSED`
-    // 2x a cada troca de conversa. Era o PRÓPRIO desmonte: `unsubscribe()` e
-    // `removeChannel()` disparam o callback do `subscribe` com `CLOSED`. Depois
+    // 2x a cada troca de conversa. Era o PRÓPRIO desmonte: sair do canal dispara o
+    // callback do `subscribe` com `CLOSED`. Depois
     // que este efeito começa a limpar, nenhum status do canal é notícia.
     let disposed = false;
 
-    // Create presence channel for this conversation
-    const channel = supabase.channel(`typing:${conversationId}`, {
-      config: {
-        presence: {
-          key: presenceKey,
+    const topic = `typing:${conversationId}`;
+    let channel: RealtimeChannel | null = null;
+
+    const open = () => {
+      if (disposed) return;
+      // Create presence channel for this conversation
+      const ch = supabase.channel(topic, {
+        config: {
+          presence: {
+            key: presenceKey,
+          },
         },
-      },
-    });
+      });
+      channel = ch;
+      channelRef.current = ch;
+      subscribedRef.current = false;
 
-    channelRef.current = channel;
-    subscribedRef.current = false;
+      // Handle presence sync (agent-to-agent typing). Exclui SÓ a própria
+      // identidade (inclusive as outras abas dela) e mantém os colegas; colega
+      // com mais de uma aba entra uma vez só.
+      ch.on('presence', { event: 'sync' }, () => {
+        const state = ch.presenceState();
+        const users: TypingUser[] = [];
+        const seen = new Set<string>();
 
-    // Handle presence sync (agent-to-agent typing). Exclui SÓ a própria
-    // identidade (inclusive as outras abas dela) e mantém os colegas; colega
-    // com mais de uma aba entra uma vez só.
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState();
-      const users: TypingUser[] = [];
-      const seen = new Set<string>();
+        // Sem identidade real não dá para separar as PRÓPRIAS abas dos colegas: uma aba
+        // do mesmo agente entraria aqui como colega digitando (é o defeito que o cartão
+        // recusa). Na dúvida não anunciamos ninguém — o aviso do CONTATO (usuário final)
+        // continua vindo do broadcast, que não passa por este handler.
+        if (!ownUserId) {
+          setTypingUsers([]);
+          return;
+        }
 
-      // Sem identidade real não dá para separar as PRÓPRIAS abas dos colegas: uma aba
-      // do mesmo agente entraria aqui como colega digitando (é o defeito que o cartão
-      // recusa). Na dúvida não anunciamos ninguém — o aviso do CONTATO (usuário final)
-      // continua vindo do broadcast, que não passa por este handler.
-      if (!ownUserId) {
-        setTypingUsers([]);
-        return;
-      }
+        Object.entries(state).forEach(([key, presences]) => {
+          if (key === presenceKey || !Array.isArray(presences)) return;
 
-      Object.entries(state).forEach(([key, presences]) => {
-        if (key === presenceKey || !Array.isArray(presences)) return;
+          presences.forEach((presence) => {
+            const p = presence as unknown as PresenceState;
+            const identity = p.oderId || key;
+            if (identity === scopedIdentity) return; // outra aba do mesmo agente
+            if (!p.isTyping || seen.has(identity)) return;
 
-        presences.forEach((presence) => {
-          const p = presence as unknown as PresenceState;
-          const identity = p.oderId || key;
-          if (identity === scopedIdentity) return; // outra aba do mesmo agente
-          if (!p.isTyping || seen.has(identity)) return;
-
-          seen.add(identity);
-          users.push({
-            oderId: identity,
-            name: p.name || 'Colega',
-            isTyping: true,
-            lastTyped: p.lastTyped || new Date().toISOString()
+            seen.add(identity);
+            users.push({
+              oderId: identity,
+              name: p.name || 'Colega',
+              isTyping: true,
+              lastTyped: p.lastTyped || new Date().toISOString()
+            });
           });
         });
+
+        setTypingUsers(users);
+        // NOTA (R2-INB-026): presença de agente NÃO liga `isContactTyping`. O
+        // indicador do contato (usuário final) vem só do broadcast abaixo; antes,
+        // colega digitando era exibido como se o contato estivesse digitando.
       });
 
-      setTypingUsers(users);
-      // NOTA (R2-INB-026): presença de agente NÃO liga `isContactTyping`. O
-      // indicador do contato (usuário final) vem só do broadcast abaixo; antes,
-      // colega digitando era exibido como se o contato estivesse digitando.
-    });
+      // Handle join event
+      ch.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        log.debug('User joined typing channel:', key, newPresences);
+      });
 
-    // Handle join event
-    channel.on('presence', { event: 'join' }, ({ key, newPresences }) => {
-      log.debug('User joined typing channel:', key, newPresences);
-    });
+      // Handle leave event
+      ch.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        log.debug('User left typing channel:', key, leftPresences);
+      });
 
-    // Handle leave event
-    channel.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-      log.debug('User left typing channel:', key, leftPresences);
-    });
+      // Listen for contact typing broadcast from Evolution API webhook
+      ch.on('broadcast', { event: 'contact_typing' }, ({ payload }) => {
+        const isTyping = payload?.isTyping === true;
+        setIsContactTyping(isTyping);
 
-    // Listen for contact typing broadcast from Evolution API webhook
-    channel.on('broadcast', { event: 'contact_typing' }, ({ payload }) => {
-      const isTyping = payload?.isTyping === true;
-      setIsContactTyping(isTyping);
+        // Auto-clear after 5 seconds if no new event
+        if (contactTypingTimeoutRef.current) {
+          clearTimeout(contactTypingTimeoutRef.current);
+        }
+        if (isTyping) {
+          contactTypingTimeoutRef.current = setTimeout(() => {
+            setIsContactTyping(false);
+          }, 5000);
+        }
+      });
 
-      // Auto-clear after 5 seconds if no new event
-      if (contactTypingTimeoutRef.current) {
-        clearTimeout(contactTypingTimeoutRef.current);
-      }
-      if (isTyping) {
-        contactTypingTimeoutRef.current = setTimeout(() => {
-          setIsContactTyping(false);
-        }, 5000);
-      }
-    });
+      // Subscribe to channel
+      ch.subscribe((status) => {
+        if (disposed) return;
+        if (status === 'SUBSCRIBED') {
+          subscribedRef.current = true;
+          log.debug('Subscribed to typing presence for conversation:', conversationId);
 
-    // Subscribe to channel
-    channel.subscribe((status) => {
-      if (disposed) return;
-      if (status === 'SUBSCRIBED') {
-        subscribedRef.current = true;
-        log.debug('Subscribed to typing presence for conversation:', conversationId);
+          // HZ3-008: reenvia o último estado pedido antes da assinatura — sem isso o
+          // primeiro "digitando" de quem abriu o painel some sem deixar rastro.
+          const pending = pendingTypingRef.current;
+          pendingTypingRef.current = null;
+          if (pending !== null) void setTypingRef.current(pending);
+          return;
+        }
 
-        // HZ3-008: reenvia o último estado pedido antes da assinatura — sem isso o
-        // primeiro "digitando" de quem abriu o painel some sem deixar rastro.
-        const pending = pendingTypingRef.current;
-        pendingTypingRef.current = null;
-        if (pending !== null) void setTypingRef.current(pending);
-        return;
-      }
+        // A partir daqui o canal não está assinando (erro, timeout, fechado): nada de
+        // `track`, e o próximo estado pedido fica guardado para a reconexão.
+        subscribedRef.current = false;
+        log.warn('Typing presence channel not subscribed:', status);
+      });
+    };
 
-      // A partir daqui o canal não está assinando (erro, timeout, fechado): nada de
-      // `track`, e o próximo estado pedido fica guardado para a reconexão.
-      subscribedRef.current = false;
-      log.warn('Typing presence channel not subscribed:', status);
-    });
+    // `supabase.channel(topic)` DEVOLVE o canal já existente com o mesmo tópico. O
+    // canal que acabamos de largar (troca rápida A→B→A, StrictMode, nova
+    // identidade na mesma conversa) só sai da lista quando o servidor confirma a
+    // saída; reaproveitá-lo nesse meio-tempo daria um canal que nunca assina
+    // (`subscribe` num canal saindo não faz nada). Espera ele sair antes de abrir.
+    const saindo = supabase
+      .getChannels?.()
+      ?.find((c) => c.topic === `realtime:${topic}` && (c.state === 'leaving' || c.state === 'closed'));
+    if (saindo) {
+      void Promise.resolve(supabase.removeChannel(saindo)).catch(() => undefined).finally(open);
+    } else {
+      open();
+    }
 
     return () => {
       disposed = true;
@@ -263,6 +283,11 @@ export function useTypingPresence({
       }
       subscribedRef.current = false;
       pendingTypingRef.current = null;
+      channelRef.current = null;
+      if (!channel) {
+        lastSentTypingRef.current = null;
+        return; // ainda esperando o canal antigo sair: nada foi aberto
+      }
       // HZ3-008: sai da presença antes de derrubar o canal. Sem o `untrack`, quem
       // enviou "digitando" e fechou a aba deixa o colega vendo o aviso até o
       // servidor expirar a presença (alguns segundos).
@@ -270,9 +295,9 @@ export function useTypingPresence({
         lastSentTypingRef.current = null;
         void channel.untrack().catch(() => undefined);
       }
-      channelRef.current = null;
-      channel.unsubscribe();
-      supabase.removeChannel(channel);
+      // `removeChannel` já faz o `unsubscribe` (sair do canal) — chamar os dois
+      // mandava o `leave` duas vezes e gerava dois `CLOSED` por troca de conversa.
+      void supabase.removeChannel(channel);
     };
   }, [conversationId, enabled, presenceKey, scopedIdentity, ownUserId]);
 
