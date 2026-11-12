@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 09:00 UTC
+
+- **functions** alterado (2): `public.is_admin_or_supervisor(_user_id uuid)`, `public.talkx_suppress_contact(p_contact_id uuid, p_phone text, p_reason text, p_reason_code talkx_blacklist_reason, p_origin text, p_source_message_id uuid, p_campaign_id uuid)`
+
 ## 2026-11-12 03:35 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_15`

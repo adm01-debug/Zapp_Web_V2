@@ -56766,7 +56766,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 394,
+          "code_total_files": 395,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -65758,10 +65758,6 @@
         "callers": {
           "code": [
             {
-              "file": "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
-              "hits": 1
-            },
-            {
               "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
               "hits": 1
             },
@@ -65779,6 +65775,10 @@
             },
             {
               "file": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261111170000_talkx_block_recipient.sql",
               "hits": 1
             }
           ],
