@@ -109,8 +109,14 @@ interface MaybeSupabaseAuth {
   ) => { data?: { subscription?: { unsubscribe?: () => void } } } | undefined;
 }
 
-function useLoggedAgentIdentity(): LoggedAgentIdentity | null {
+/**
+ * `resolved` diz se a primeira leitura da sessão já terminou (com ou sem
+ * identidade). A presença de digitação só abre o canal depois disso: abrir com a
+ * chave provisória e reabrir com a real gerava um par abrir/fechar por conversa.
+ */
+function useLoggedAgentIdentity(): { identity: LoggedAgentIdentity | null; resolved: boolean } {
   const [identity, setIdentity] = useState<LoggedAgentIdentity | null>(null);
+  const [resolved, setResolved] = useState(false);
 
   useEffect(() => {
     const auth = (supabase as { auth?: MaybeSupabaseAuth }).auth;
@@ -118,7 +124,7 @@ function useLoggedAgentIdentity(): LoggedAgentIdentity | null {
 
     const apply = async (user: LoggedAgentUser | null | undefined) => {
       if (!user?.id) {
-        if (!cancelled) setIdentity(null);
+        if (!cancelled) { setIdentity(null); setResolved(true); }
         return;
       }
       const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : '';
@@ -131,7 +137,7 @@ function useLoggedAgentIdentity(): LoggedAgentIdentity | null {
         // metadados (ou no e-mail); a falha não é engolida em silêncio.
         log.warn('[ChatPanel] nome do perfil indisponível para a presença de digitação', err);
       }
-      if (!cancelled) setIdentity({ userId: user.id, name });
+      if (!cancelled) { setIdentity({ userId: user.id, name }); setResolved(true); }
     };
 
     void (async () => {
@@ -140,10 +146,14 @@ function useLoggedAgentIdentity(): LoggedAgentIdentity | null {
         response = await auth?.getSession?.();
       } catch (err) {
         log.error('[ChatPanel] falha ao ler a sessão para a presença de digitação', err);
+        if (!cancelled) setResolved(true);
         return;
       }
       // Cliente mockado sem `auth` (consumidores de teste isolados): sem identidade.
-      if (!response) return;
+      if (!response) {
+        if (!cancelled) setResolved(true);
+        return;
+      }
       if (response.error) log.warn('[ChatPanel] sessão indisponível para a presença de digitação', response.error);
       await apply(response.data?.session?.user ?? null);
     })();
@@ -158,7 +168,7 @@ function useLoggedAgentIdentity(): LoggedAgentIdentity | null {
     };
   }, []);
 
-  return identity;
+  return { identity, resolved };
 }
 
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
@@ -229,9 +239,10 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   // presença de todos os agentes e `conversation.assignedTo?.name` exibia o nome do
   // agente ATRIBUÍDO à conversa — normalmente quem está olhando a tela — como se
   // fosse o colega que digita.
-  const loggedAgent = useLoggedAgentIdentity();
+  const { identity: loggedAgent, resolved: loggedAgentResolved } = useLoggedAgentIdentity();
   const { isContactTyping, isColleagueTyping, typingUsers, handleTypingStart, handleTypingStop } = useTypingPresence({
     conversationId: conversation.id, currentUserId: loggedAgent?.userId, currentUserName: loggedAgent?.name || undefined,
+    enabled: loggedAgentResolved,
   });
   const { quickReplies: dbQuickReplies, incrementUseCount } = useQuickReplies();
   const { settings, updateSettings, saveSettings } = useUserSettings();
