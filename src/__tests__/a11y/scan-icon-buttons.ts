@@ -1,6 +1,6 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as ts from "typescript";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as ts from 'typescript';
 
 /**
  * Varredura de botões de ícone sem nome acessível (UK-13 / UK-13b).
@@ -17,7 +17,7 @@ import * as ts from "typescript";
  * `=>` (ex.: onClick={() => apagar()}) e JSX multilinha são lidos corretamente.
  */
 
-export type IconTag = "Button" | "IconButton";
+export type IconTag = 'Button' | 'IconButton';
 
 export interface IconButtonFinding {
   /** Caminho relativo ao root do projeto, com barras normais. */
@@ -35,7 +35,7 @@ export interface IconButtonFinding {
   snippet: string;
 }
 
-const ICON_TAGS = new Set<string>(["Button", "IconButton"]);
+const ICON_TAGS = new Set<string>(['Button', 'IconButton']);
 
 /** Elemento de abertura de um JSX: <X ...> ou o próprio <X ... />. */
 type JsxOpeningLike = ts.JsxOpeningElement | ts.JsxSelfClosingElement;
@@ -45,7 +45,7 @@ function openingOf(el: ts.JsxElement | ts.JsxSelfClosingElement): JsxOpeningLike
 }
 
 function normalizeWhitespace(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 /** Todos os literais de string dentro de um nó (para expressões de atributo). */
@@ -76,9 +76,7 @@ function classNameHasSrOnly(attr: ts.JsxAttribute): boolean {
 }
 
 /** true se o elemento tem QUALQUER descendente com classe sr-only. */
-function hasSrOnlyDescendant(
-  node: ts.JsxElement | ts.JsxSelfClosingElement,
-): boolean {
+function hasSrOnlyDescendant(node: ts.JsxElement | ts.JsxSelfClosingElement): boolean {
   let found = false;
   const visit = (n: ts.Node) => {
     if (found) return;
@@ -116,9 +114,9 @@ function isNonEmptyNameAttribute(attr: ts.JsxAttribute): boolean {
 function sizeIsIcon(attr: ts.JsxAttribute): boolean {
   const init = attr.initializer;
   if (!init) return false;
-  if (ts.isStringLiteral(init)) return init.text.trim().startsWith("icon");
+  if (ts.isStringLiteral(init)) return init.text.trim().startsWith('icon');
   if (ts.isJsxExpression(init) && init.expression) {
-    return stringLiteralsIn(init.expression).some((t) => t.trim().startsWith("icon"));
+    return stringLiteralsIn(init.expression).some((t) => t.trim().startsWith('icon'));
   }
   return false;
 }
@@ -126,7 +124,7 @@ function sizeIsIcon(attr: ts.JsxAttribute): boolean {
 function analyzeElement(
   el: ts.JsxElement | ts.JsxSelfClosingElement,
   sourceFile: ts.SourceFile,
-  file: string,
+  file: string
 ): IconButtonFinding | null {
   const tag = openingOf(el).tagName.getText(sourceFile);
   if (!ICON_TAGS.has(tag)) return null;
@@ -137,14 +135,14 @@ function analyzeElement(
   for (const attr of openingOf(el).attributes.properties) {
     if (!ts.isJsxAttribute(attr)) continue;
     const name = attr.name.getText(sourceFile);
-    if (name === "aria-label" || name === "aria-labelledby" || name === "title") {
+    if (name === 'aria-label' || name === 'aria-labelledby' || name === 'title') {
       if (isNonEmptyNameAttribute(attr)) hasAccessibleName = true;
-    } else if (name === "size") {
+    } else if (name === 'size') {
       if (sizeIsIcon(attr)) sizeIsIconButton = true;
     }
   }
 
-  const isIconButton = tag === "IconButton" || (tag === "Button" && sizeIsIconButton);
+  const isIconButton = tag === 'IconButton' || (tag === 'Button' && sizeIsIconButton);
   if (!isIconButton) return null;
 
   if (!hasAccessibleName && hasSrOnlyDescendant(el)) hasAccessibleName = true;
@@ -170,16 +168,13 @@ function walk(node: ts.Node, visit: (n: ts.Node) => void): void {
  * Varre um único texto-fonte TSX. `fileName` só é usado para o relatório.
  * Exportado para os casos sintéticos do teste.
  */
-export function scanSource(
-  sourceText: string,
-  fileName = "Sintetico.tsx",
-): IconButtonFinding[] {
+export function scanSource(sourceText: string, fileName = 'Sintetico.tsx'): IconButtonFinding[] {
   const sourceFile = ts.createSourceFile(
     fileName,
     sourceText,
     ts.ScriptTarget.Latest,
     /* setParentNodes */ true,
-    ts.ScriptKind.TSX,
+    ts.ScriptKind.TSX
   );
   const findings: IconButtonFinding[] = [];
   walk(sourceFile, (node) => {
@@ -198,7 +193,7 @@ function listTsxFiles(root: string): string[] {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walkDir(full);
-      else if (entry.isFile() && full.endsWith(".tsx")) out.push(full);
+      else if (entry.isFile() && full.endsWith('.tsx')) out.push(full);
     }
   };
   walkDir(root);
@@ -207,21 +202,19 @@ function listTsxFiles(root: string): string[] {
 
 /** Varre `src/**\/*.tsx` a partir de `projectRoot`. */
 export function scanProject(projectRoot: string): IconButtonFinding[] {
-  const srcDir = path.join(projectRoot, "src");
+  const srcDir = path.join(projectRoot, 'src');
   const findings: IconButtonFinding[] = [];
   for (const abs of listTsxFiles(srcDir)) {
-    const rel = path.relative(projectRoot, abs).split(path.sep).join("/");
-    const text = fs.readFileSync(abs, "utf8");
+    const rel = path.relative(projectRoot, abs).split(path.sep).join('/');
+    const text = fs.readFileSync(abs, 'utf8');
     findings.push(...scanSource(text, rel));
   }
-  findings.sort(
-    (a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column,
-  );
+  findings.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column);
   return findings;
 }
 
 /** Chave estável (arquivo + assinatura) usada na comparação com a linha de base. */
-export function findingKey(f: Pick<IconButtonFinding, "file" | "snippet">): string {
+export function findingKey(f: Pick<IconButtonFinding, 'file' | 'snippet'>): string {
   return `${f.file}|${f.snippet}`;
 }
 

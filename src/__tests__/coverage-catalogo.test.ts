@@ -13,21 +13,21 @@
  *   2. um mesmo glob do gate alcança TODOS os arquivos do módulo — e nenhum de fora;
  *   3. o Catálogo tem piso próprio, cobrindo o módulo inteiro, de 80% em lines e branches.
  */
-import { readdirSync } from "node:fs";
-import { join, matchesGlob, relative, resolve } from "node:path";
-import { cwd } from "node:process";
-import { loadConfigFromFile } from "vite";
-import { beforeAll, describe, expect, it } from "vitest";
+import { readdirSync } from 'node:fs';
+import { join, matchesGlob, relative, resolve } from 'node:path';
+import { cwd } from 'node:process';
+import { loadConfigFromFile } from 'vite';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 type Piso = { lines?: number; branches?: number };
 
-const MODULO = "src/components/catalog";
+const MODULO = 'src/components/catalog';
 
 /** Arquivo real do módulo: o glob do gate tem de alcançá-lo. */
 const AMOSTRA_DO_MODULO = `${MODULO}/CatalogRail.tsx`;
 
 /** Arquivo real de outro escopo: o glob do Catálogo não pode alcançá-lo. */
-const FORA_DO_MODULO = "src/components/contacts/ContactForm.tsx";
+const FORA_DO_MODULO = 'src/components/contacts/ContactForm.tsx';
 
 let include: string[] = [];
 let thresholds: Record<string, number | Piso> = {};
@@ -35,20 +35,22 @@ let thresholds: Record<string, number | Piso> = {};
 /** Arquivos de produção do módulo (sem os testes, que o `coverage.exclude` tira do gate). */
 function arquivosDoModulo(): string[] {
   const raiz = resolve(cwd());
-  return readdirSync(resolve(raiz, MODULO), { recursive: true, withFileTypes: true })
-    .filter((e) => e.isFile() && /\.(ts|tsx)$/.test(e.name))
-    // `e.parentPath` já é ABSOLUTO (Node >= 20.12 com withFileTypes): usa-se relative(raiz, ...)
-    // e NÃO se prefixa MODULO de novo — o prefixo duplicado gerava
-    // "src/components/catalog/src/components/catalog/X.tsx".
-    .map((e) => relative(raiz, join(e.parentPath ?? raiz, e.name)).replace(/\\/g, "/"))
-    .filter((f) => !f.includes("__tests__") && !/\.(test|spec)\./.test(f));
+  return (
+    readdirSync(resolve(raiz, MODULO), { recursive: true, withFileTypes: true })
+      .filter((e) => e.isFile() && /\.(ts|tsx)$/.test(e.name))
+      // `e.parentPath` já é ABSOLUTO (Node >= 20.12 com withFileTypes): usa-se relative(raiz, ...)
+      // e NÃO se prefixa MODULO de novo — o prefixo duplicado gerava
+      // "src/components/catalog/src/components/catalog/X.tsx".
+      .map((e) => relative(raiz, join(e.parentPath ?? raiz, e.name)).replace(/\\/g, '/'))
+      .filter((f) => !f.includes('__tests__') && !/\.(test|spec)\./.test(f))
+  );
 }
 
 beforeAll(async () => {
   const carregada = await loadConfigFromFile(
-    { command: "serve", mode: "test" },
-    resolve(cwd(), "vitest.config.ts"),
-    cwd(),
+    { command: 'serve', mode: 'test' },
+    resolve(cwd(), 'vitest.config.ts'),
+    cwd()
   );
   const coverage = (
     carregada?.config as unknown as {
@@ -59,12 +61,12 @@ beforeAll(async () => {
   thresholds = coverage?.thresholds ?? {};
 });
 
-describe("gate de cobertura do módulo do Catálogo (SL-154 · DEC-1)", () => {
-  it("o escopo src/components/catalog/** entra no coverage.include", () => {
+describe('gate de cobertura do módulo do Catálogo (SL-154 · DEC-1)', () => {
+  it('o escopo src/components/catalog/** entra no coverage.include', () => {
     expect(include.some((glob) => matchesGlob(AMOSTRA_DO_MODULO, glob))).toBe(true);
   });
 
-  it("um mesmo glob do gate mede todos os arquivos do módulo e nenhum de fora", () => {
+  it('um mesmo glob do gate mede todos os arquivos do módulo e nenhum de fora', () => {
     const arquivos = arquivosDoModulo();
     expect(arquivos.length).toBeGreaterThanOrEqual(20);
     // Formato do caminho: a lista tem de conter um arquivo REAL do módulo. Sem esta asserção um
@@ -72,15 +74,17 @@ describe("gate de cobertura do módulo do Catálogo (SL-154 · DEC-1)", () => {
     // com o glob e o teste passaria com o glob errado.
     expect(arquivos).toContain(AMOSTRA_DO_MODULO);
 
-    const globDoModulo = include.find((glob) => arquivos.every((arquivo) => matchesGlob(arquivo, glob)));
+    const globDoModulo = include.find((glob) =>
+      arquivos.every((arquivo) => matchesGlob(arquivo, glob))
+    );
     expect(globDoModulo).toBeDefined();
     expect(matchesGlob(FORA_DO_MODULO, globDoModulo as string)).toBe(false);
   });
 
-  it("o módulo do Catálogo tem piso próprio, cobrindo o módulo inteiro, de 80% em lines e branches", () => {
+  it('o módulo do Catálogo tem piso próprio, cobrindo o módulo inteiro, de 80% em lines e branches', () => {
     const arquivos = arquivosDoModulo();
     const chaveDoModulo = Object.keys(thresholds).find((chave) =>
-      arquivos.every((arquivo) => matchesGlob(arquivo, chave)),
+      arquivos.every((arquivo) => matchesGlob(arquivo, chave))
     );
     expect(chaveDoModulo).toBeDefined();
 

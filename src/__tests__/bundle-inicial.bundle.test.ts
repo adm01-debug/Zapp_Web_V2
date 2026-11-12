@@ -87,7 +87,7 @@ async function empacotarAppUmaVez(): Promise<BuildChunk[]> {
 function grafoEstatico(chunks: BuildChunk[]): Set<string> {
   const porNome = new Map(chunks.map((chunk) => [chunk.fileName, chunk]));
   const entry = chunks.find(
-    (chunk) => chunk.isEntry || (chunk.facadeModuleId ?? '').endsWith('main.tsx'),
+    (chunk) => chunk.isEntry || (chunk.facadeModuleId ?? '').endsWith('main.tsx')
   );
   if (!entry) throw new Error('chunk do entry não encontrado no pacote');
   const alcancados = new Set<string>();
@@ -108,13 +108,12 @@ describe('bundle inicial', () => {
 
     const vazou = chunks.filter(
       (chunk) =>
-        estaticos.has(chunk.fileName) &&
-        modulosDoChunk(chunk).some((id) => MARCA_SONNER.test(id)),
+        estaticos.has(chunk.fileName) && modulosDoChunk(chunk).some((id) => MARCA_SONNER.test(id))
     );
 
     expect(
       vazou.map((chunk) => chunk.fileName),
-      'sonner voltou ao bundle inicial — importe com lazy()/import()',
+      'sonner voltou ao bundle inicial — importe com lazy()/import()'
     ).toEqual([]);
   }, 120_000);
 
@@ -123,7 +122,7 @@ describe('bundle inicial', () => {
 
     // Sem este controle, um pacote sem o código passaria no teste acima.
     const presentes = chunks.filter((chunk) =>
-      modulosDoChunk(chunk).some((id) => MARCA_SONNER.test(id)),
+      modulosDoChunk(chunk).some((id) => MARCA_SONNER.test(id))
     );
     expect(presentes.length, 'sonner sumiu do pacote inteiro').toBeGreaterThan(0);
     for (const chunk of presentes) {

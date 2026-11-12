@@ -64,7 +64,7 @@ describe('registro do changelog do módulo Multiplix (F99/TL-051)', () => {
 
   it('todo caminho citado nas entradas existe no repositório', () => {
     const citados = caminhosCitados(ler(CHANGELOG_MODULO)).filter(
-      (caminho) => !caminho.startsWith('graphify-out/'),
+      (caminho) => !caminho.startsWith('graphify-out/')
     );
     expect(citados.length).toBeGreaterThan(0);
 
@@ -77,7 +77,7 @@ describe('registro do changelog do módulo Multiplix (F99/TL-051)', () => {
     expect(indice).toContain('(./multiplix/CHANGELOG_MULTIPLIX.md)');
 
     const linksDoModulo = [...indice.matchAll(/\]\(\.\/(multiplix\/[^)]+)\)/g)].map(
-      (achado) => `docs/${achado[1]}`,
+      (achado) => `docs/${achado[1]}`
     );
     expect(linksDoModulo.length).toBeGreaterThan(0);
     for (const alvo of linksDoModulo) {
@@ -102,7 +102,10 @@ describe('registro do changelog do módulo Multiplix (F99/TL-051)', () => {
       .split('\n')
       .find((linha) => linha.includes('composição inline'));
 
-    expect(linhaComposer, 'entrada da composição inline ausente no changelog do módulo').toBeDefined();
+    expect(
+      linhaComposer,
+      'entrada da composição inline ausente no changelog do módulo'
+    ).toBeDefined();
     expect(linhaComposer!).toContain('MultiplixView.tsx');
     expect(linhaComposer!).not.toContain('MultiplixComposerDialog.tsx');
     expect(existe('src/components/multiplix/MultiplixView.tsx')).toBe(true);
@@ -126,9 +129,9 @@ describe('registro do changelog do módulo Multiplix (F99/TL-051)', () => {
     const manifesto = JSON.parse(ler(MANIFESTO_GRAFO)) as { limitations: string[] };
     expect(manifesto.limitations.join(' ')).toMatch(/dead code/i);
 
-    const entradaGrafo = texto.split('\n').find(
-      (linha) => linha.startsWith('- ') && linha.includes('E001'),
-    );
+    const entradaGrafo = texto
+      .split('\n')
+      .find((linha) => linha.startsWith('- ') && linha.includes('E001'));
     expect(entradaGrafo, 'entrada E001 ausente no changelog do módulo').toBeDefined();
     expect(entradaGrafo!).toContain('graphify update . --force');
     expect(entradaGrafo!).toContain('GRAPH_REPORT.md');

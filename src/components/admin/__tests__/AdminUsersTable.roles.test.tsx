@@ -49,7 +49,9 @@ describe('AdminUsersTable — roles', () => {
   });
 
   it('a coluna de nível de acesso se declara informativa', () => {
-    render(<AdminUsersTable users={[usuario('agent', { access_level: 'full' })]} isAdmin {...props} />);
+    render(
+      <AdminUsersTable users={[usuario('agent', { access_level: 'full' })]} isAdmin {...props} />
+    );
 
     expect(screen.getByRole('columnheader', { name: 'Acesso (informativo)' })).toBeInTheDocument();
   });

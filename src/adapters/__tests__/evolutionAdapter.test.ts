@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildExternalConversations, evolutionToRealtimeMessage } from '@/adapters/evolutionAdapter';
+import {
+  buildExternalConversations,
+  evolutionToRealtimeMessage,
+} from '@/adapters/evolutionAdapter';
 import type { EvolutionMessage } from '@/types/evolutionExternal';
 
 const externalMessage: EvolutionMessage = {

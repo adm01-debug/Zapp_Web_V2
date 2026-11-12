@@ -1,14 +1,14 @@
-import { lazy, Suspense, useEffect } from "react";
-import { getLogger } from "@/lib/logger";
-import { BrowserRouter } from "react-router-dom";
-import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
-import { SkipLinks } from "@/components/ui/skip-link";
-import { LiveRegion } from "@/components/ui/visually-hidden";
-import { GlobalKeyboardProvider } from "@/components/keyboard/GlobalKeyboardProvider";
-import { AppProviders } from "@/providers/AppProviders";
-import { AppRoutes } from "@/routes/AppRoutes";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { useGlobalIncomingMessageAlerts } from "@/hooks/realtime/useGlobalIncomingMessageAlerts";
+import { lazy, Suspense, useEffect } from 'react';
+import { getLogger } from '@/lib/logger';
+import { BrowserRouter } from 'react-router-dom';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { SkipLinks } from '@/components/ui/skip-link';
+import { LiveRegion } from '@/components/ui/visually-hidden';
+import { GlobalKeyboardProvider } from '@/components/keyboard/GlobalKeyboardProvider';
+import { AppProviders } from '@/providers/AppProviders';
+import { AppRoutes } from '@/routes/AppRoutes';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useGlobalIncomingMessageAlerts } from '@/hooks/realtime/useGlobalIncomingMessageAlerts';
 
 const log = getLogger('App');
 
@@ -24,58 +24,55 @@ const log = getLogger('App');
 // routing tree is never affected.
 // ---------------------------------------------------------------------------
 const RealtimeSentimentAlertProvider = lazy(() =>
-  import("@/components/notifications/RealtimeSentimentAlertProvider")
-    .then(m => ({ default: m.RealtimeSentimentAlertProvider }))
+  import('@/components/notifications/RealtimeSentimentAlertProvider').then((m) => ({
+    default: m.RealtimeSentimentAlertProvider,
+  }))
 );
 const IncomingCallAlert = lazy(() =>
-  import("@/components/calls/IncomingCallAlert")
-    .then(m => ({ default: m.IncomingCallAlert }))
+  import('@/components/calls/IncomingCallAlert').then((m) => ({ default: m.IncomingCallAlert }))
 );
 // C02: o cartão da chamada de SAÍDA iniciada no inbox — mesmo slot global do
 // alerta de entrada (overlay, não é provider de contexto).
 const OutboundCallDialog = lazy(() =>
-  import("@/components/calls/OutboundCallDialog")
-    .then(m => ({ default: m.OutboundCallDialog }))
+  import('@/components/calls/OutboundCallDialog').then((m) => ({ default: m.OutboundCallDialog }))
 );
 const EasterEggsProvider = lazy(() =>
-  import("@/components/effects/EasterEggs")
-    .then(m => ({ default: m.EasterEggsProvider }))
+  import('@/components/effects/EasterEggs').then((m) => ({ default: m.EasterEggsProvider }))
 );
 // TC-007: listener ÚNICO de notificações do Team Chat, montado no nível do app. É um
 // provedor de efeito (renderiza null) e fica no chunk lazy para não pesar o bundle inicial.
 const TeamChatNotificationsListener = lazy(() =>
-  import("@/components/team-chat/TeamChatNotificationsListener")
-    .then(m => ({ default: m.TeamChatNotificationsListener }))
+  import('@/components/team-chat/TeamChatNotificationsListener').then((m) => ({
+    default: m.TeamChatNotificationsListener,
+  }))
 );
 // HZ1-10: aviso de alerta de segurança no app inteiro (antes só dentro da
 // Central de Segurança). Mesmo slot e mesmo motivo do listener do Team Chat:
 // overlay de efeito, no chunk lazy, para o `sonner` que ele alcança não voltar
 // ao grafo estático do entry.
 const SecurityPushNotificationsListener = lazy(() =>
-  import("@/components/notifications/SecurityPushNotificationsListener")
-    .then(m => ({ default: m.SecurityPushNotificationsListener }))
+  import('@/components/notifications/SecurityPushNotificationsListener').then((m) => ({
+    default: m.SecurityPushNotificationsListener,
+  }))
 );
 // O viewport de toasts do sonner é overlay: nenhum toast existe no first paint e
 // o `toast()` bufferiza chamadas feitas antes do mount (Observer do pacote), então
 // nada se perde na janela de carregamento. Estático, ele colocava a lib (~9 KB
 // gzip) no bundle inicial — medido pelo bundle-budget.mjs em 09/10/2026.
-const Sonner = lazy(() =>
-  import("@/components/ui/sonner")
-    .then(m => ({ default: m.Toaster }))
-);
+const Sonner = lazy(() => import('@/components/ui/sonner').then((m) => ({ default: m.Toaster })));
 // API legada de `@/hooks/ui/use-toast` tem store independente do Sonner. O host
 // segue montado globalmente para não perder esses avisos, mas fica em chunk lazy
 // para manter seus componentes Radix fora do bundle inicial.
 const LegacyToaster = lazy(() =>
-  import("@/components/ui/toaster")
-    .then(m => ({ default: m.Toaster }))
+  import('@/components/ui/toaster').then((m) => ({ default: m.Toaster }))
 );
 // Gamificação: host do toast de conquista/subida de nível. É overlay (renderiza o
 // próprio aviso e não envolve as rotas), então vive no mesmo bloco lazy do Sonner —
 // nada dele existe na primeira pintura.
 const AchievementCelebrationToaster = lazy(() =>
-  import("@/components/gamification/AchievementToast")
-    .then(m => ({ default: m.AchievementCelebrationToaster }))
+  import('@/components/gamification/AchievementToast').then((m) => ({
+    default: m.AchievementCelebrationToaster,
+  }))
 );
 // SL-103 restore: MotionConfig carregado em chunk lazy para manter vendor-motion
 // (43 KB gzip) fora do bundle inicial. As rotas também são lazy — quando qualquer
@@ -169,20 +166,20 @@ function AppContent() {
           return;
         }
       }
-      log.error("Unhandled promise rejection:", event.reason);
+      log.error('Unhandled promise rejection:', event.reason);
       event.preventDefault();
     };
 
     const handleError = (event: ErrorEvent) => {
-      log.error("Uncaught error:", event.error);
+      log.error('Uncaught error:', event.error);
     };
 
-    window.addEventListener("unhandledrejection", handleRejection);
-    window.addEventListener("error", handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+    window.addEventListener('error', handleError);
 
     return () => {
-      window.removeEventListener("unhandledrejection", handleRejection);
-      window.removeEventListener("error", handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+      window.removeEventListener('error', handleError);
     };
   }, []);
 

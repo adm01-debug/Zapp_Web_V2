@@ -26,9 +26,7 @@ import Install from '@/pages/Install';
 
 const RAIZ = process.cwd();
 const HTML = readFileSync(join(RAIZ, 'index.html'), 'utf-8');
-const MANIFEST = JSON.parse(
-  readFileSync(join(RAIZ, 'public', 'manifest.json'), 'utf-8'),
-) as {
+const MANIFEST = JSON.parse(readFileSync(join(RAIZ, 'public', 'manifest.json'), 'utf-8')) as {
   name?: string;
   theme_color?: string;
   start_url?: string;
@@ -38,9 +36,7 @@ const MANIFEST = JSON.parse(
 
 /** `<meta name="x" content="y">` com atributos em qualquer ordem. */
 function metaContent(name: string): string | null {
-  const tag = HTML.match(
-    new RegExp(`<meta\\b(?=[^>]*\\bname="${name}")[^>]*>`, 'i'),
-  )?.[0];
+  const tag = HTML.match(new RegExp(`<meta\\b(?=[^>]*\\bname="${name}")[^>]*>`, 'i'))?.[0];
   return tag?.match(/\bcontent="([^"]*)"/i)?.[1] ?? null;
 }
 
@@ -79,7 +75,7 @@ describe('manifest — requisitos de instalabilidade (t_a7125912)', () => {
     const icones = MANIFEST.icons ?? [];
     for (const tamanho of ['192x192', '512x512']) {
       const icone = icones.find(
-        (i) => i.sizes === tamanho && i.type === 'image/png' && i.purpose !== 'maskable',
+        (i) => i.sizes === tamanho && i.type === 'image/png' && i.purpose !== 'maskable'
       );
       expect(icone, `manifesto sem ícone ${tamanho} "any"`).toBeTruthy();
       expect(existsSync(join(RAIZ, 'public', (icone?.src ?? '').replace(/^\//, '')))).toBe(true);
@@ -92,7 +88,7 @@ describe('Install — a tela não promete offline (t_a7125912)', () => {
     return render(
       <MemoryRouter>
         <Install />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 
