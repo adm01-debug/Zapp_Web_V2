@@ -46,8 +46,8 @@ type EstadoReenvio = 'parado' | 'enviando' | 'concluido';
  */
 function podeReenviarComoTexto(mensagem: Message | null | undefined): boolean {
   if (!mensagem || mensagem.type !== 'text') return false;
-  // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync)
-  return !mensagem.delivery_post_started_at;
+  // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync.
+  return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;
 }
 
 const porHorario = (a: Message, b: Message) => (a.created_at ?? '').localeCompare(b.created_at ?? '');
