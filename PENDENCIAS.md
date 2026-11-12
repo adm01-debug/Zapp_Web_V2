@@ -183,3 +183,24 @@ O campo `report_ready: true` no JSON confirma que a suite Playwright **completou
 1. Resolver o §2 (aplicar as 5 migrations pendentes/divergentes no banco).
 2. Apos o banco sincronizado, dispatchar `types-sync.yml` via `workflow_dispatch` na `main`.
 3. Confirmar `conclusion=success`.
+
+---
+
+## 7. PR #2975 - required checks bloqueados por runner pool esgotado
+
+| Campo | Valor |
+|---|---|
+| PR | [#2975](https://github.com/adm01-debug/Zapp_Web_V2/pull/2975) |
+| Estado | OPEN, MERGEABLE, mergeStateStatus=BLOCKED |
+| HEAD | `ed00ee85114be3b2c0c7ae8405c748f3124274de` |
+| Required checks bloqueados | `🔎 TypeCheck`, `🏗️ Build`, `✅ CI Gate`, `🔒 Security Audit`, `🦕 Edge contracts`, `🛡️ Workflow lint`, `🎭 E2E Tests`, `🧩 Node CI Scripts`, `Replay local das migrations` |
+| Status de todos os jobs | `queued` — nunca iniciados |
+| Causa raiz | Quota de GitHub Actions minutes esgotada (plano free: 2.000 min/mês). Os jobs ficam `queued` indefinidamente sem runner disponivel. |
+| Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 — infra). |
+
+### O que o dono precisa fazer
+
+1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/settings/billing (ou Settings > Billing and plans) e verificar o consumo de GitHub Actions minutes.
+2. Comprar minutes adicionais ou aguardar o proximo ciclo de faturamento (reinicia no inicio do mes).
+3. Apos runners disponiveis, o PR #2975 tera CI executado automaticamente. Se CI passar, mergear com squash.
+4. Apos merge, confirmar que o deploy Vercel subiu e que PENDENCIAS.md e RELATORIO_CI.md estao na `main`.

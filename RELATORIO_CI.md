@@ -213,7 +213,24 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 
 Comandos rodados no container da sessão em `/home/user/Zapp_Web_V2`, SHA `daba6eb8` (main em 2026-11-12T03:42Z).
 
-### 6.1 TypeCheck (ratchet)
+### 6.0 Instalação de dependências
+
+```
+bun install --frozen-lockfile
+# bun install v1.4.4 (38afee6c8)
+# Checked 677 installs across 719 packages (no changes) [120.00ms]
+# BUN_INSTALL_EXIT:0
+```
+
+### 6.1 Build de produção
+
+```
+bun run build
+# ✓ built in 11.68s
+# BUN_BUILD_EXIT:0
+```
+
+### 6.2 TypeCheck (ratchet)
 
 ```
 node scripts/ci/typecheck-ratchet.mjs
@@ -221,7 +238,7 @@ node scripts/ci/typecheck-ratchet.mjs
 # TYPECHECK_EXIT=0
 ```
 
-### 6.2 Lint (ratchet)
+### 6.3 Lint (ratchet)
 
 ```
 node scripts/ci/lint-ratchet.mjs
@@ -230,7 +247,7 @@ node scripts/ci/lint-ratchet.mjs
 # LINT_EXIT=0
 ```
 
-### 6.3 Vitest (suíte completa)
+### 6.4 Vitest (suíte completa)
 
 ```
 npx vitest run
@@ -263,7 +280,8 @@ npx vitest run
 |---|---|---|---|
 | TypeCheck novas falhas | 0 | **0** (ratchet: novas=0) | ✅ Nenhuma |
 | Lint novas falhas | 0 | **0** (ratchet: novas=0) | ✅ Nenhuma |
-| Build local | ✅ exit 0 | ✅ exit 0 | ✅ Nenhuma |
+| `bun install` | ✅ exit 0 | ✅ exit 0 (no changes, 120ms) | ✅ Nenhuma |
+| Build local | ✅ exit 0 | ✅ exit 0 (built in 11.68s) | ✅ Nenhuma |
 | Vitest testes passou | 15729 | **15860** (+131) | ✅ Nenhuma (crescimento) |
 | CI/CD Pipeline na main | ✅ success (`d985c7fc`) | ✅ success (`daba6eb8`, run #43149996916) | ✅ Verde |
 | Workflows antes verdes | 11 ✅ + 2 ⏭️ | Sem regressão — todos os que eram ✅ seguem ✅ | ✅ Nenhuma |
