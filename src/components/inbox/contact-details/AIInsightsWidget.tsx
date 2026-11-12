@@ -26,7 +26,7 @@ interface InsightLine {
 
 const MAX_LINES = 4;
 
-export function buildInsightLines(data: ContactIntelligenceData | null | undefined): InsightLine[] {
+function buildInsightLines(data: ContactIntelligenceData | null | undefined): InsightLine[] {
   if (!data?.found) return [];
   const lines: InsightLine[] = [];
   const push = (key: string, label: string, icon: ReactNode, text: string | null | undefined) => {

@@ -13,27 +13,21 @@
  *    aba IA lê, para as duas telas mostrarem o mesmo número.
  */
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, MapPin, Save, ShieldAlert, ShieldCheck, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { useContactLeadRisk, useUpdateContactLeadRisk, type ContactLeadRisk } from '@/hooks/crm/useContactLeadRisk';
 import { cn } from '@/lib/utils';
 
 interface LeadRiskScorePanelProps {
   contactId: string;
 }
 
-interface LeadRiskRow {
-  lead_score: number | null;
-  risk_score: number | null;
-  lead_origin: string | null;
-  consent_status: string | null;
-}
+type LeadRiskRow = ContactLeadRisk;
 
 interface LeadRiskDraft {
   leadScore: number;
@@ -42,7 +36,7 @@ interface LeadRiskDraft {
   consentStatus: string;
 }
 
-export const LEAD_ORIGINS = [
+const LEAD_ORIGINS = [
   { value: 'organic', label: 'Orgânico' },
   { value: 'paid_ads', label: 'Anúncios pagos' },
   { value: 'referral', label: 'Indicação' },
@@ -55,7 +49,7 @@ export const LEAD_ORIGINS = [
 ] as const;
 
 /** Mesmos valores do CHECK do banco e dos rótulos do Talk X (RuleValueInput). */
-export const CONSENT_OPTIONS = [
+const CONSENT_OPTIONS = [
   { value: 'granted', label: 'Concedido' },
   { value: 'unknown', label: 'Desconhecido' },
   { value: 'revoked', label: 'Revogado' },
@@ -83,7 +77,6 @@ function riskScoreClass(score: number) {
 }
 
 function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow | null }) {
-  const queryClient = useQueryClient();
   const { isAdmin } = useUserRole();
   const initial = toDraft(row);
   const [draft, setDraft] = useState<LeadRiskDraft>(initial);
@@ -95,18 +88,13 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
   if (isAdmin && draft.consentStatus !== initial.consentStatus) changes.consent_status = draft.consentStatus || null;
   const dirty = Object.keys(changes).length > 0;
 
-  const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('contacts').update(changes).eq('id', contactId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success('Scores atualizados');
-      void queryClient.invalidateQueries({ queryKey: ['contact-lead-risk', contactId] });
-      void queryClient.invalidateQueries({ queryKey: ['contact-lead-score', contactId] });
-    },
-    onError: () => toast.error('Não foi possível salvar os scores'),
-  });
+  const save = useUpdateContactLeadRisk(contactId);
+  const handleSave = () => {
+    save.mutate(changes, {
+      onSuccess: () => toast.success('Scores atualizados'),
+      onError: () => toast.error('Não foi possível salvar os scores'),
+    });
+  };
 
   const consentLabel = CONSENT_OPTIONS.find((o) => o.value === draft.consentStatus)?.label ?? 'Não informado';
 
@@ -191,7 +179,7 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
         )}
       </div>
 
-      <Button size="sm" className="w-full h-8 text-xs" onClick={() => save.mutate()} disabled={!dirty || save.isPending}>
+      <Button size="sm" className="w-full h-8 text-xs" onClick={handleSave} disabled={!dirty || save.isPending}>
         <Save className="w-3 h-3 mr-1" aria-hidden="true" />
         {save.isPending ? 'Salvando...' : 'Salvar alterações'}
       </Button>
@@ -200,19 +188,7 @@ function LeadRiskForm({ contactId, row }: { contactId: string; row: LeadRiskRow 
 }
 
 export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['contact-lead-risk', contactId],
-    queryFn: async () => {
-      const { data: row, error } = await supabase
-        .from('contacts')
-        .select('lead_score, risk_score, lead_origin, consent_status')
-        .eq('id', contactId)
-        .maybeSingle();
-      if (error) throw error;
-      return (row ?? null) as LeadRiskRow | null;
-    },
-    enabled: !!contactId,
-  });
+  const { data, isLoading, isError, refetch } = useContactLeadRisk(contactId);
 
   if (isLoading) {
     return (
