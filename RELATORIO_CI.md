@@ -176,7 +176,7 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
   ```
 - **Condição que falha (linha 114):** `source.stdout.trim() !== sourceSha` — `git rev-parse HEAD` retorna SHA diferente do `sourceSha` passado como parâmetro.
 - **`report_ready: true`:** testes completaram com sucesso; falha é no teardown.
-- **Correção aplicada (2026-11-12):** `run.mjs:639-641` agora loga `[ownership] reason: <phase>-failed` antes de lançar o erro — evidência no diff da branch `claude/fix-ci-workflows-261112-0400`.
+- **Correção aplicada (2026-11-12):** `run.mjs:639-641` agora loga `[ownership] reason: <phase>-failed` antes de lançar o erro — mergeado na main via PR #2975 (SHA `1616f7b7`).
 - **Bloqueio remanescente:** validação final requer runners disponíveis (quota esgotada — §7) e credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` (Rule 8).
 - **Ação:** ver `PENDENCIAS.md` §1 para detalhes e passos para o dono.
 
@@ -313,7 +313,7 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 | DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) (2026-11-09) | ✅ `success` | RESOLVIDO |
 | Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) (2026-11-09) | ✅ `success` | RESOLVIDO |
 | Front release targets V2/V3 | [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) (2026-11-12T05:49Z) | ✅ `success` | RESOLVIDO |
-| E2E Logado | [#43166054120](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43166054120) (2026-11-12T06:08Z) | ❌ `failure` | BLOQUEADO — (a) authenticated-1,2,3: `routine-ownership-failed`, fase `source` confirmada pelo CODIGO (`routine-ownership.mjs:112-114`); **`[ownership] reason:` nao aparece no log de CI** porque PR #2975 nao esta mergeado na main; (b) deslogado-secundario: `pull-rest-failed` (fase `pull-immutable-images`, causa independente, log job #131008063409 confirmado); deslogado-principal: PASSA — PENDENCIAS §1 |
+| E2E Logado | [#43166054120](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43166054120) (2026-11-12T06:08Z) | ❌ `failure` | BLOQUEADO — (a) authenticated-1,2,3: `routine-ownership-failed`, fase `source` confirmada pelo CODIGO (`routine-ownership.mjs:112-114`); **fix diagnóstico mergeado na main via PR #2975** (SHA `1616f7b7`); (b) deslogado-secundario: `pull-rest-failed` (fase `pull-immutable-images`, causa independente, log job #131008063409 confirmado); deslogado-principal: PASSA — PENDENCIAS §1 |
 | Types Sync | [#43164662755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164662755) (2026-11-12T05:56Z) | ❌ `failure` | BLOQUEADO — migration `20261111160000_outbound_post_started.sql` nao aplicada no banco; DDL Rule 8 — PENDENCIAS §2 |
 | Contexto para agentes | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) (2026-11-12T06:22Z) | ✅ `success` | RESOLVIDO — ultimo run confirmado `success`; run anterior #43095079516 tinha `runner_id:null` (~44min em fila); causa do nao-alocamento: indeterminada pela API (possiveis: quota, runner label, billing) — PENDENCIAS §3 |
 | DB Guard zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | 🔄 in_progress | BLOQUEADO — run de branch PR (nao main); cancelamento via UI — PENDENCIAS §5 |
@@ -331,4 +331,54 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 - Build §6.1 (exit 0) ainda aplica: scripts não fazem parte do bundle Vite
 - `npx tsc --noEmit` nesta sessão: crashou com SIGABRT (exit 134) — bug de ambiente Node, não erro de tipo; incompatível com typecheck real
 - **Unit tests relevantes** (`node --test scripts/ci/e2e-isolated-routine-ownership.unit.mjs scripts/ci/e2e-isolated-suite.unit.mjs scripts/ci/e2e-isolated.unit.mjs`): **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z)
-- **Nota critica**: `[ownership] reason:` nao aparece no log de CI porque o commit `5b796e70d` esta na branch `claude/fix-ci-workflows-261112-0400`, ainda nao mergeado na main. CI na main executa o `run.mjs` SEM o console.error. Causa (fase `source`, SHA mismatch) confirmada por analise de codigo, nao por output de CI.
+- **Fix diagnóstico mergeado na main** via PR #2975 (SHA `1616f7b73a2bbdf5d3e131e9faba827c014e7a45`, 2026-11-12T07:56Z)
+
+---
+
+## 9. Estado pos-merge PR #2975 (2026-11-12, ~07:58Z)
+
+### 9.1 Merge e deploy confirmados
+
+| Item | Evidencia |
+|---|---|
+| PR #2975 mergeado (squash) | SHA `1616f7b73a2bbdf5d3e131e9faba827c014e7a45` em 2026-11-12T07:56Z |
+| Deploy Vercel production | `dpl_HF4JUtn5eg3mBxwwNGjMi1KLbiQ4` — `state: READY` — SHA `1616f7b73a2bbdf5d3e131e9faba827c014e7a45` ✅ |
+| Branch apagada | `claude/fix-ci-workflows-261112-0400` removida apos squash merge |
+
+### 9.2 Workflows disparados pelo merge (push na main, SHA `1616f7b73a2bbdf5d3e131e9faba827c014e7a45`)
+
+| Workflow | Run | Status verificado em ~07:58Z |
+|---|---|---|
+| Front release targets V2/V3 | [#43179026361](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026361) | ✅ `success` |
+| Talk X V4 placar regen | [#43179026274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026274) | ✅ `success` |
+| DB Guard (offline) | [#43179026184](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026184) | ⏳ `in_progress` em 07:58Z |
+| CI/CD Pipeline (ci.yml) | [#43179026812](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026812) | ⏳ `in_progress` em 07:58Z |
+
+### 9.3 E2E logado — re-dispatch pos-merge
+
+| Item | Valor |
+|---|---|
+| Run | [#43179048693](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179048693) |
+| Status em 08:03Z | `in_progress` |
+| SHA executado | `1616f7b73a2bbdf5d3e131e9faba827c014e7a45` (inclui fix diagnostico `run.mjs:639`) |
+| Esperado nos logs | `[ownership] reason: source-failed` (ou similar) — confirmara a fase exata |
+| Resultado | A VERIFICAR — wakeup agendado em 08:18Z (trig_01P1AVukBKZ2dY68fLTAXSfA) |
+
+### 9.4 Tabela de prova de conclusao — estado final pos-merge (08:03Z)
+
+| Workflow | Ultima run | Conclusao | Situacao |
+|---|---|---|---|
+| Deploy Edge Functions | [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) | ✅ `success` | RESOLVIDO |
+| DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ `success` | RESOLVIDO |
+| Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | ✅ `success` | RESOLVIDO |
+| Front release targets V2/V3 | [#43179026361](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026361) | ✅ `success` | RESOLVIDO (confirmado pos-merge) |
+| Contexto para agentes | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) | ✅ `success` | RESOLVIDO |
+| Talk X V4 placar regen | [#43179026274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026274) | ✅ `success` | Verde pos-merge |
+| E2E Logado | [#43179048693](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179048693) | ⏳ em execucao | Fix diagnostico mergeado — aguardando conclusao; causa raiz (fase `source`) confirmada por codigo; correcao definitiva requer investigacao do `sourceSha` mismatch — PENDENCIAS §1 |
+| Types Sync | [#43164662755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164662755) | ❌ `failure` | BLOQUEADO Rule 8 — DDL (`migration 20261111160000`) nao aplicada — PENDENCIAS §2 |
+| DB Guard zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | 🔄 `in_progress` | Cancelamento manual via UI — PENDENCIAS §5 |
+
+**Workflows antes verdes — verificados em execucao na main pos-merge:**
+- CI/CD Pipeline: ⏳ in_progress [#43179026812](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026812) em 08:03Z
+- Talk X V4 placar regen: ✅ success [#43179026274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026274)
+- Front release targets: ✅ success [#43179026361](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026361)
