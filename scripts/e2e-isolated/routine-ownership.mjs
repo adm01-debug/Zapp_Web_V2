@@ -2,11 +2,12 @@ import {
   OWNER_LABEL, PURPOSE_LABEL, PURPOSE, assertRunId, assertSourceSha, assertContainerIsolation, isAuthenticatedGroup,
 } from './runtime-contract.mjs';
 
-// Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e.
+// Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e, except
+// claim_outbound_message: redefined by migration 20261111160000_outbound_post_started.sql (9727aaedd).
 // These are full SHA256 hashes of pg_get_functiondef, not the snapshot's JSON hash.
 export const OWNERSHIP_ROUTINES = Object.freeze([
   ['public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '7d23e3848086b03e90cb2413f53c4a98cc4e4f0eb72ff57ea910b7e30605d37b'],
-  ['public.claim_outbound_message(uuid,uuid,text,integer)', '13b88acb6aab9e9af151362a45097b6ee8720c82f61322118ced1a1f4f6fe4f3'],
+  ['public.claim_outbound_message(uuid,uuid,text,integer)', 'df82a503c1c4700d4feef6f7f4c8b4a0c5814339cf9669db05bc1b1142d2bf1b'],
   ['public.complete_outbound_message(uuid,uuid,text,text)', '31225dd6be1b4c2ec2b5e081626a45f369b9318554250a5f05738ac760675b68'],
   ['public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'],
   ['public.get_instance_token(text)', '5082afe06f6d581652c74d67a09bdbdb3317e4600ab223ea2a082997b3ff7777'],
@@ -177,7 +178,7 @@ CREATE TEMP TABLE e2e_owner_before ON COMMIT DROP AS
 WITH expected(ordinal, signature, expected_sha256) AS (
   VALUES
     (1, 'public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '7d23e3848086b03e90cb2413f53c4a98cc4e4f0eb72ff57ea910b7e30605d37b'),
-    (2, 'public.claim_outbound_message(uuid,uuid,text,integer)', '13b88acb6aab9e9af151362a45097b6ee8720c82f61322118ced1a1f4f6fe4f3'),
+    (2, 'public.claim_outbound_message(uuid,uuid,text,integer)', 'df82a503c1c4700d4feef6f7f4c8b4a0c5814339cf9669db05bc1b1142d2bf1b'),
     (3, 'public.complete_outbound_message(uuid,uuid,text,text)', '31225dd6be1b4c2ec2b5e081626a45f369b9318554250a5f05738ac760675b68'),
     (4, 'public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'),
     (5, 'public.get_instance_token(text)', '5082afe06f6d581652c74d67a09bdbdb3317e4600ab223ea2a082997b3ff7777'),
