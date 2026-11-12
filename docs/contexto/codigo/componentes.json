@@ -11631,9 +11631,11 @@
     "TalkXRecipientRowActions"
    ],
    "export_default": null,
-   "linhas": 257,
+   "linhas": 272,
    "dominio": "components/talkx",
-   "hooks_locais": [],
+   "hooks_locais": [
+    "useUserRole"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,

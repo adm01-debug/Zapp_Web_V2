@@ -11970,12 +11970,12 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
    "tipo": "unit",
-   "linhas": 194,
+   "linhas": 256,
    "testa": [
     "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
     "src/hooks/integrations/useTalkX.ts"
    ],
-   "casos": 14
+   "casos": 20
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXRecipientsTable.test.tsx",

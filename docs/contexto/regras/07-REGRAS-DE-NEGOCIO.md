@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `93bff67058` · branch `main` · 2026-11-12 08:36 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `376332a243` · branch `main` · 2026-11-12 08:54 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1194,7 +1194,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `duplicate_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
-| … +679 linhas — lista completa em `context.json` | | |
+| … +684 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -4604,7 +4604,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21310 testes em 2257 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21316 testes em 2257 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4790,6 +4790,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx` | 21 | VirtualizedRealtimeList — badge de canal e mini-avatar do atendente · mostra o badge do canal para Instagram, mas não para WhatsApp · esconde o mini-avatar quando a conversa é do próprio usuário logado (compara com o profile.id, não com o auth id — #349) · sem entrada no agentsMap para o assigned_to, não quebra e não mostra mini-avatar … |
 | `src/components/inbox/chat/__tests__/ConversationTabs.cp8.test.tsx` | 21 | CP8 · geometria das 8 abas · a barra mantém a altura do header do painel (53px) e não volta aos 48px do plano · a aba ativa mede 36px (h-9) — dentro do alvo 36±2 do E.2 · todas as 8 abas têm a mesma altura (nenhuma aba encolhe ao ser selecionada) … |
 | `src/components/inbox/tabs/__tests__/fileDisplay.card.test.ts` | 21 | formatCardDate (S22) — data curta do cartão · mesmo dia local vira  · dia anterior vira  · virada de dia 23:59 → 00:01: a mensagem das 23:59 vira  … |
+| `src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx` | 21 | TalkXRecipientRowActions · renderiza  · renderiza  · NÃO renderiza  … |
 | `src/components/ui/__tests__/command-palette.a11y.test.tsx` | 21 | CommandPalette — campo e lista anunciados (combobox/listbox) · não duplica option/id quando um acesso rápido também está nos recentes · o campo é combobox nomeado que aponta para a lista e para o item ativo · as setas mudam o aria-activedescendant e o aria-selected para o item seguinte … |
 | `src/hooks/__tests__/useApplicableSLA.test.ts` | 21 | SLA Resolution Hierarchy · returns system default when no rules or configs exist · returns global config fallback when no granular rules match · prioritizes contact-level rule over company-level … |
 | `src/hooks/business/__tests__/useClientWallet.test.tsx` | 21 | useClientWallet — carga das regras · ordena por prioridade decrescente e resolve agente e conexão por id · regra sem conexão não consulta a tabela de conexões para o join · erro de RLS na primeira leitura não derruba a tela: lista vazia e o resto carrega … |
@@ -4907,7 +4908,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` | 16 | R2-MOD-024 — resposta atrasada não contamina o template seguinte · variantes: resposta lenta de A não sobrescreve o painel de B · histórico: resposta lenta de A não sobrescreve o histórico de B · loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento … |
 | `src/components/talkx/__tests__/segmentValidation.test.ts` | 16 | segmentValidation · nome (X099) · recusa nome menor que o mínimo · aceita nome no mínimo, ignorando espaços nas pontas · recusa nome maior que o máximo … |
 | `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` | 16 | TalkXQueryBoundary (matriz de estados — X047) · carregando: mostra o esqueleto e marca aria-busy · erro: mostra o erro e NUNCA o vazio (nem com a lista vazia) · vazio sem erro: mostra o vazio … |
-| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 16 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | … +1957 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
@@ -5410,4 +5410,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Concluída reabre (volta para "A fazer"); aberta conclui. Mesma regra do módulo. | `src/components/inbox/tabs/TasksTab.tsx` |
 | apenas o tipo — nunca "0 KB" nem separador solto. Acima de 1 GB o `formatSize` segue | `src/components/inbox/tabs/fileDisplay.ts` |
 | medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
-| … +1663 linhas — lista completa em `context.json` | |
+| … +1664 linhas — lista completa em `context.json` | |

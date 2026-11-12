@@ -6705,6 +6705,7 @@
   ],
   "src/components/talkx/tracking/TalkXRecipientRowActions.tsx": [
    "src/components/ui/alert-dialog.tsx",
+   "src/hooks/system/useUserRole.ts",
    "src/lib/supabaseHelpers.ts"
   ],
   "src/components/talkx/tracking/TalkXRecipientsTable.tsx": [

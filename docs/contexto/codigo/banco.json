@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1104,
+ "migrations": 1105,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -525,6 +525,7 @@
   "talkx_blacklist_audit_trigger",
   "talkx_blacklist_no_delete",
   "talkx_blacklist_reason_active_guard",
+  "talkx_block_recipient",
   "talkx_campaign_heatmap",
   "talkx_campaign_launch_checks",
   "talkx_campaign_logs",
@@ -32479,6 +32480,11 @@
    "usada_em": 1
   },
   {
+   "nome": "talkx_block_recipient",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "talkx_campaign_queue_by_segment",
    "definida": true,
    "usada_em": 1
@@ -32551,7 +32557,7 @@
   {
    "nome": "talkx_suppress_contact",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "talkx_top_segments",

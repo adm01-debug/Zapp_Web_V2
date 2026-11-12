@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "93bff6705875e75535a54aaa3ec9406299e14033",
+  "sha": "376332a2432a534866693e57360d8be77de2b6a8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 08:36 UTC",
-  "files_total": 8257,
-  "code_files": 6090,
-  "code_lines": 1059440
+  "generated_at": "2026-11-12 08:54 UTC",
+  "files_total": 8258,
+  "code_files": 6091,
+  "code_lines": 1059618
  },
  "version": "1.3.2",
- "facts_hash": "aedbc6a75a9eac4c",
+ "facts_hash": "193093a150d6000a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -326,7 +326,7 @@
   "languages": {
    ".tsx": 2342,
    ".ts": 1892,
-   ".sql": 1304,
+   ".sql": 1305,
    ".mjs": 433,
    ".py": 119,
    ".cjs": 19,
@@ -34169,6 +34169,31 @@
      "v_result"
     ]
    },
+   "talkx_block_recipient": {
+    "args": "p_recipient_id uuid",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_actor uuid; v_campaign_id uuid; v_contact_id uuid; v_phone text; v_id uuid; BEGIN IF coalesce(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; SELECT profile.id INTO v_actor FROM public.profiles AS profile WHERE profile.user_id = auth.uid() AND profile.is_active = true LIMIT 1; IF v_actor IS NULL THEN RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501'; END IF; IF coalesce(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_block_role_required' USING ERRCODE = '42501'; END IF; IF p_recipient_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_bloc …",
+    "raises": [
+     "authentication_required",
+     "active_profile_not_found",
+     "talkx_block_role_required",
+     "invalid_talkx_block_request",
+     "talkx_block_recipient_not_found"
+    ],
+    "tables": [
+     "contacts",
+     "profiles",
+     "talkx_blacklist",
+     "talkx_recipients",
+     "v_actor",
+     "v_campaign_id",
+     "v_id"
+    ]
+   },
    "mark_pause_investigated": {
     "args": "p_pause_id uuid, p_notes text DEFAULT NULL",
     "returns": "jsonb",
@@ -43255,6 +43280,7 @@
    "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/migrations/20261111160000_outbound_post_started.sql",
+   "supabase/migrations/20261111170000_talkx_block_recipient.sql",
    "supabase/migrations/20261111181000_instance_pause_investigation.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
@@ -56301,6 +56327,22 @@
    {
     "kind": "revoke",
     "privs": "all",
+    "object": "talkx_block_recipient",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, service_role",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_block_recipient",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
     "object": "mark_pause_investigated",
     "objkind": "function",
     "roles": "PUBLIC, anon, authenticated",
@@ -61466,6 +61508,31 @@
     "function": "resolve_unconfirmed_message",
     "msg": "message_not_resolvable",
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "authentication_required",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "active_profile_not_found",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "talkx_block_role_required",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "invalid_talkx_block_request",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "talkx_block_recipient_not_found",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
    },
    {
     "function": "mark_pause_investigated",
@@ -68358,7 +68425,7 @@
   {
    "module": "src/components",
    "files": 2179,
-   "lines": 371860,
+   "lines": 371937,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68998,7 +69065,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15595,
+   "lines": 15599,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -69983,8 +70050,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1104,
-   "lines": 106758,
+   "files": 1105,
+   "lines": 106855,
    "tables": [
     "audit_logs",
     "departments",
@@ -75581,6 +75648,9 @@
    "talkx_benchmarks": [
     "src/components/talkx/TalkXCampaignPaused.tsx"
    ],
+   "talkx_block_recipient": [
+    "src/components/talkx/tracking/TalkXRecipientRowActions.tsx"
+   ],
    "talkx_campaign_queue_by_segment": [
     "src/components/talkx/report/TalkXCampaignReport.tsx"
    ],
@@ -75628,7 +75698,6 @@
     "supabase/functions/talkx-send/index.ts"
    ],
    "talkx_suppress_contact": [
-    "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
     "supabase/functions/_shared/evolution-webhook-messages.ts"
    ],
    "talkx_top_segments": [
@@ -90248,6 +90317,10 @@
    {
     "file": "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
     "text": "espelha a validação de `retry_talkx_recipients` (status terminal 'failed' ou"
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
+    "text": "Bloquear é do gestor (admin/supervisor): mesma regra do banco (talkx_block_recipient"
    },
    {
     "file": "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
@@ -162138,7 +162211,15 @@
    },
    {
     "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
-    "name": "ao confirmar bloqueio, chama talkx_suppress_contact sem uuid vazio e chama onActionDone UMA vez"
+    "name": "ao confirmar bloqueio, chama talkx_block_recipient só com o id do destinatário e chama onActionDone UMA vez"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+    "name": "quem não é gestor (admin/supervisor) não vê o botão "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+    "name": "recusa de papel do servidor vira mensagem clara, não código cru"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
@@ -162159,6 +162240,22 @@
    {
     "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
     "name": "recusa do retry no corpo jsonb (ok:false) mostra toast.warning"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+    "name": "erros do bloqueio nunca chegam crus ao operador"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+    "name": "rejeição de rede vira mensagem genérica em português"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+    "name": "falha no bloqueio NÃO chama onActionDone (a lista não recarrega à toa)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+    "name": "já bloqueado (data null, sem erro) conta como aceito e recarrega a lista"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXRecipientsTable.test.tsx",
@@ -229277,6 +229374,31 @@
      "v_result"
     ]
    },
+   "talkx_block_recipient": {
+    "args": "p_recipient_id uuid",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_actor uuid; v_campaign_id uuid; v_contact_id uuid; v_phone text; v_id uuid; BEGIN IF coalesce(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; SELECT profile.id INTO v_actor FROM public.profiles AS profile WHERE profile.user_id = auth.uid() AND profile.is_active = true LIMIT 1; IF v_actor IS NULL THEN RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501'; END IF; IF coalesce(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_block_role_required' USING ERRCODE = '42501'; END IF; IF p_recipient_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_bloc …",
+    "raises": [
+     "authentication_required",
+     "active_profile_not_found",
+     "talkx_block_role_required",
+     "invalid_talkx_block_request",
+     "talkx_block_recipient_not_found"
+    ],
+    "tables": [
+     "contacts",
+     "profiles",
+     "talkx_blacklist",
+     "talkx_recipients",
+     "v_actor",
+     "v_campaign_id",
+     "v_id"
+    ]
+   },
    "mark_pause_investigated": {
     "args": "p_pause_id uuid, p_notes text DEFAULT NULL",
     "returns": "jsonb",
@@ -234778,6 +234900,31 @@
     "function": "resolve_unconfirmed_message",
     "msg": "message_not_resolvable",
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "authentication_required",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "active_profile_not_found",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "talkx_block_role_required",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "invalid_talkx_block_request",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "function": "talkx_block_recipient",
+    "msg": "talkx_block_recipient_not_found",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
    },
    {
     "function": "mark_pause_investigated",
@@ -242775,6 +242922,7 @@
    "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/migrations/20261111160000_outbound_post_started.sql",
+   "supabase/migrations/20261111170000_talkx_block_recipient.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -243192,6 +243340,7 @@
    "talkx_blacklist_audit_trigger",
    "talkx_blacklist_no_delete",
    "talkx_blacklist_reason_active_guard",
+   "talkx_block_recipient",
    "talkx_campaign_heatmap",
    "talkx_campaign_launch_checks",
    "talkx_campaign_logs",
@@ -256018,6 +256167,22 @@
     "objkind": "function",
     "roles": "authenticated",
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_block_recipient",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, service_role",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_block_recipient",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
    },
    {
     "kind": "revoke",
@@ -309137,7 +309302,7 @@
   },
   "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
-   "lines": 194,
+   "lines": 256,
    "is_test": true,
    "errors": [
     ", async () => {\n    rpcMock.mockResolvedValue({ data: { ok: false, reason: "
@@ -309152,12 +309317,18 @@
     "clicar ",
     "clicar ",
     "clicar ",
-    "ao confirmar bloqueio, chama talkx_suppress_contact sem uuid vazio e chama onActionDone UMA vez",
+    "ao confirmar bloqueio, chama talkx_block_recipient só com o id do destinatário e chama onActionDone UMA vez",
+    "quem não é gestor (admin/supervisor) não vê o botão ",
+    "recusa de papel do servidor vira mensagem clara, não código cru",
     "bloqueio já suprimido (data null) mostra toast.warning",
     "clicar ",
     "ao confirmar reenvio, chama retry_talkx_recipients e mostra sucesso",
     "recusa do retry (contato suprimido) mostra toast.warning e não chama onActionDone",
-    "recusa do retry no corpo jsonb (ok:false) mostra toast.warning"
+    "recusa do retry no corpo jsonb (ok:false) mostra toast.warning",
+    "erros do bloqueio nunca chegam crus ao operador",
+    "rejeição de rede vira mensagem genérica em português",
+    "falha no bloqueio NÃO chama onActionDone (a lista não recarrega à toa)",
+    "já bloqueado (data null, sem erro) conta como aceito e recarrega a lista"
    ]
   },
   "src/components/talkx/__tests__/TalkXRecipientsTable.test.tsx": {
@@ -312180,13 +312351,13 @@
   },
   "src/components/talkx/tracking/TalkXRecipientRowActions.tsx": {
    "path": "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
-   "lines": 257,
+   "lines": 272,
    "exports": [
     "function TalkXRecipientRowActions"
    ],
    "rpc": [
     "retry_talkx_recipients",
-    "talkx_suppress_contact"
+    "talkx_block_recipient"
    ],
    "errors": [
     "Contato já estava bloqueado."
@@ -312205,7 +312376,8 @@
    ],
    "rule_comments": [
     "* A query de destinatários não traz coluna `can_retry` da RPC: esta regra",
-    "espelha a validação de `retry_talkx_recipients` (status terminal 'failed' ou"
+    "espelha a validação de `retry_talkx_recipients` (status terminal 'failed' ou",
+    "Bloquear é do gestor (admin/supervisor): mesma regra do banco (talkx_block_recipient"
    ],
    "doc": "TalkXRecipientRowActions.tsx — ações por linha de destinatário (reenviar, bloquear, abrir conversa)",
    "calc_fns": [
@@ -346170,7 +346342,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15522,
+   "lines": 15526,
    "exports": [
     "type Json",
     "type Database",
@@ -383803,6 +383975,11 @@
    "lines": 485,
    "uses_service_role": true
   },
+  "supabase/migrations/20261111170000_talkx_block_recipient.sql": {
+   "path": "supabase/migrations/20261111170000_talkx_block_recipient.sql",
+   "lines": 97,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261111181000_instance_pause_investigation.sql": {
    "path": "supabase/migrations/20261111181000_instance_pause_investigation.sql",
    "lines": 154
@@ -387659,10 +387836,22 @@
   }
  },
  "git": {
-  "sha": "93bff6705875e75535a54aaa3ec9406299e14033",
+  "sha": "376332a2432a534866693e57360d8be77de2b6a8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "376332a",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)",
+    "files": [
+     "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+     "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
+     "src/integrations/supabase/types.ts",
+     "supabase/migrations/20261111170000_talkx_block_recipient.sql"
+    ]
+   },
    {
     "sha": "93bff67",
     "date": "2026-11-12",
@@ -388012,16 +388201,6 @@
     "files": [
      "scripts/tarefas/seed-local-imagens.ts"
     ]
-   },
-   {
-    "sha": "a6b4ffb",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)",
-    "files": [
-     "scripts/ci/seed-contatos-redesign-local.unit.mjs",
-     "scripts/db/seed-contatos-redesign-local.sh"
-    ]
    }
   ],
   "hot_files": [
@@ -388032,6 +388211,10 @@
    [
     "supabase/deployment-manifest.json",
     3
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    2
    ],
    [
     "scripts/regras_negocio/generate.py",
@@ -388066,6 +388249,18 @@
     2
    ],
    [
+    "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
+    1
+   ],
+   [
+    "supabase/migrations/20261111170000_talkx_block_recipient.sql",
+    1
+   ],
+   [
     "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql",
     1
    ],
@@ -388087,22 +388282,6 @@
    ],
    [
     "supabase/functions/gmail-oauth/index.ts",
-    1
-   ],
-   [
-    "scripts/e2e-isolated/routine-ownership.mjs",
-    1
-   ],
-   [
-    ".github/workflows/check-talkx-pr-body.yml",
-    1
-   ],
-   [
-    "docs/agentes/github-ci.md",
-    1
-   ],
-   [
-    "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     1
    ]
   ]

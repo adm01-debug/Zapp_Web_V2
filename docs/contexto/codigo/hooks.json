@@ -10993,7 +10993,7 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 33,
+   "usado_por": 34,
    "usado_por_arquivos": [
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",
@@ -11023,8 +11023,8 @@
     "src/components/security/SecurityView.tsx",
     "src/components/settings/IntegrationKeysSection.tsx",
     "src/components/settings/SettingsView.tsx",
-    "src/hooks/integrations/useModuleCommandItems.ts",
-    "src/hooks/system/index.ts"
+    "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
+    "src/hooks/integrations/useModuleCommandItems.ts"
    ],
    "coberto_por_testes": 5
   },

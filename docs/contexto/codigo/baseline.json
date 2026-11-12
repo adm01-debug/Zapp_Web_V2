@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "93bff6705875e75535a54aaa3ec9406299e14033",
+  "commit": "376332a2432a534866693e57360d8be77de2b6a8",
   "branch": "main",
-  "data_commit": "2026-11-12T05:34:48-03:00",
+  "data_commit": "2026-11-12T05:52:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "376332a",
+    "data": "2026-11-12",
+    "assunto": "fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)"
+   },
    {
     "sha": "93bff67",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "0d73698",
     "data": "2026-11-11",
     "assunto": "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)"
-   },
-   {
-    "sha": "5829201",
-    "data": "2026-11-11",
-    "assunto": "fix(db-audit): compararManifestos nao reclassifica objeto so-em-A/B como divergente (#2948)"
    }
   ],
-  "arquivos_mudados_7d": 656,
+  "arquivos_mudados_7d": 659,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 268
+    "mudancas": 270
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -246,11 +246,11 @@
     "mudancas": 10
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 9
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 10
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
+    "arquivo": "ESTADO.md",
     "mudancas": 9
    },
    {
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8415,
+  "arquivos_total": 8416,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891286,
+  "linhas_codigo": 891367,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,7 +326,7 @@
   "hooks": 496,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1104,
+  "migrations": 1105,
   "cron_jobs": 26,
   "testes": 2617,
   "workflows": 22,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2179,
-   "linhas": 371860
+   "linhas": 371937
   },
   "src/config": {
    "arquivos": 3,
@@ -732,7 +732,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15595
+   "linhas": 15599
   },
   "src/lib": {
    "arquivos": 283,
@@ -806,7 +806,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15522
+   "linhas": 15526
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
