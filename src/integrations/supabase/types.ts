@@ -8504,9 +8504,7 @@ export type Database = {
           origin: string
           phone: string | null
           reason: string | null
-          reason_code:
-            | Database["public"]["Enums"]["talkx_blacklist_reason"]
-            | null
+          reason_code: string | null
           removed_at: string | null
           removed_by: string | null
           source_message_id: string | null
@@ -8521,9 +8519,7 @@ export type Database = {
           origin?: string
           phone?: string | null
           reason?: string | null
-          reason_code?:
-            | Database["public"]["Enums"]["talkx_blacklist_reason"]
-            | null
+          reason_code?: string | null
           removed_at?: string | null
           removed_by?: string | null
           source_message_id?: string | null
@@ -8538,9 +8534,7 @@ export type Database = {
           origin?: string
           phone?: string | null
           reason?: string | null
-          reason_code?:
-            | Database["public"]["Enums"]["talkx_blacklist_reason"]
-            | null
+          reason_code?: string | null
           removed_at?: string | null
           removed_by?: string | null
           source_message_id?: string | null
@@ -8587,6 +8581,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contacts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_reason_code_fk"
+            columns: ["reason_code"]
+            isOneToOne: false
+            referencedRelation: "talkx_suppression_reasons"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "talkx_blacklist_removed_by_fkey"
@@ -9986,6 +9987,39 @@ export type Database = {
           object_name?: string
           processed_at?: string | null
           reason?: string
+        }
+        Relationships: []
+      }
+      talkx_suppression_reasons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          is_system: boolean
+          label: string
+          sort_order: number
+          tone: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          is_system?: boolean
+          label: string
+          sort_order?: number
+          tone?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          is_system?: boolean
+          label?: string
+          sort_order?: number
+          tone?: string
         }
         Relationships: []
       }
@@ -14801,6 +14835,10 @@ export type Database = {
         Args: { p_days?: number; p_limit?: number }
         Returns: Json
       }
+      talkx_block_recipient: {
+        Args: { p_recipient_id: string }
+        Returns: string
+      }
       talkx_campaign_heatmap: { Args: { p_campaign_id: string }; Returns: Json }
       talkx_campaign_launch_checks: {
         Args: { p_campaign_id: string }
@@ -15033,7 +15071,7 @@ export type Database = {
           p_origin: string
           p_phone: string
           p_reason: string
-          p_reason_code: Database["public"]["Enums"]["talkx_blacklist_reason"]
+          p_reason_code: string
           p_source_message_id: string
         }
         Returns: string
@@ -15289,13 +15327,6 @@ export type Database = {
         | "google_calendar"
         | "google_drive"
         | "dropbox"
-      talkx_blacklist_reason:
-        | "opt_out"
-        | "invalid_number"
-        | "manual"
-        | "lgpd"
-        | "no_commercial_permission"
-        | "bounce"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -15488,14 +15519,6 @@ export const Constants = {
         "google_calendar",
         "google_drive",
         "dropbox",
-      ],
-      talkx_blacklist_reason: [
-        "opt_out",
-        "invalid_number",
-        "manual",
-        "lgpd",
-        "no_commercial_permission",
-        "bounce",
       ],
     },
   },
