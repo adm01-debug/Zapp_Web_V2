@@ -96,6 +96,7 @@
 | public.department_invites | department_invites_created_by_fkey | created_by | SET NULL |
 | public.followup_sequences | followup_sequences_created_by_fkey | created_by | NO ACTION |
 | public.goals_configurations | goals_configurations_profile_id_fkey | profile_id | CASCADE |
+| public.instance_pauses | instance_pauses_investigated_by_fkey | investigated_by | SET NULL |
 | public.instance_pauses | instance_pauses_paused_by_fkey | paused_by | SET NULL |
 | public.instance_pauses | instance_pauses_resumed_by_fkey | resumed_by | SET NULL |
 | public.knowledge_base_articles | knowledge_base_articles_created_by_fkey | created_by | SET NULL |

@@ -24,6 +24,7 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 | MÉDIA | rls_no_policies | public.talkx_test_send_claims | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public.team_chat_media_acl_r2_db_020_rb | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public.voip_profile_credentials | RLS ligado sem policies: inacessível via API (só service_role). |
+| BAIXA | fk_without_index | public.instance_pauses.instance_pauses_investigated_by_fkey | FK sem índice nas colunas ['investigated_by']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.message_favorites.message_favorites_message_id_fkey | FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.message_pins.message_pins_message_id_fkey | FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
 | BAIXA | fk_without_index | public.message_reports.message_reports_reporter_id_fkey | FK sem índice nas colunas ['reporter_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |

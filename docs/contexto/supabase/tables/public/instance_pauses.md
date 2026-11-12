@@ -25,6 +25,9 @@
 | 7 | `resumed_at` | `timestamp with time zone` | sim |  |  |  |
 | 8 | `resumed_by` | `uuid` | sim |  |  |  |
 | 9 | `created_at` | `timestamp with time zone` | não | `now()` |  |  |
+| 10 | `investigated_at` | `timestamp with time zone` | sim |  |  |  |
+| 11 | `investigated_by` | `uuid` | sim |  |  |  |
+| 12 | `investigation_notes` | `text` | sim |  |  |  |
 
 
 ## Constraints
@@ -32,6 +35,10 @@
 | nome | tipo | definição | on delete | on update | validada |
 |---|---|---|---|---|---|
 | instance_pauses_autor_obrigatorio | CHECK | `CHECK (auto OR paused_by IS NOT NULL)` |  |  | sim |
+| instance_pauses_investigacao_completa | CHECK | `CHECK (investigated_by IS NULL OR investigated_at IS NOT NULL)` |  |  | sim |
+| instance_pauses_investigated_by_fkey | FOREIGN KEY | `FOREIGN KEY (investigated_by) REFERENCES profiles(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
+| instance_pauses_notas_sem_html | CHECK | `CHECK (investigation_notes IS NULL OR investigation_notes !~ '[<>]'::text)` |  |  | sim |
+| instance_pauses_notas_tamanho | CHECK | `CHECK (investigation_notes IS NULL OR char_length(investigation_notes) <= 1000)` |  |  | sim |
 | instance_pauses_paused_by_fkey | FOREIGN KEY | `FOREIGN KEY (paused_by) REFERENCES profiles(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | instance_pauses_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
 | instance_pauses_reason_nao_vazio | CHECK | `CHECK (btrim(reason) <> ''::text)` |  |  | sim |

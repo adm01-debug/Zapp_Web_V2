@@ -1102,3 +1102,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261108202000 | [talkx_x086_template_metrics_rpcs](migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql) | 1 |
 | 20261108203000 | [talkx_x058_campaign_queue_segment](migrations/20261108203000_talkx_x058_campaign_queue_segment.sql) | 1 |
 | 20261108211000 | [talkx_campaign_resume_precheck](migrations/20261108211000_talkx_campaign_resume_precheck.sql) | 1 |
+| 20261111181000 | [instance_pause_investigation](migrations/20261111181000_instance_pause_investigation.sql) | 7 |

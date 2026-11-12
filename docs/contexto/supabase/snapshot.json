@@ -14762,6 +14762,45 @@
       },
       {
         "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "investigated_at",
+        "nullable": true,
+        "position": 10,
+        "schema": "public",
+        "table": "instance_pauses",
+        "type": "timestamp with time zone"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "investigated_by",
+        "nullable": true,
+        "position": 11,
+        "schema": "public",
+        "table": "instance_pauses",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "investigation_notes",
+        "nullable": true,
+        "position": 12,
+        "schema": "public",
+        "table": "instance_pauses",
+        "type": "text"
+      },
+      {
+        "comment": null,
         "default": "gen_random_uuid()",
         "generated": null,
         "identity": null,
@@ -38723,6 +38762,77 @@
       },
       {
         "columns": [
+          "investigated_by",
+          "investigated_at"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (investigated_by IS NULL OR investigated_at IS NOT NULL)",
+        "name": "instance_pauses_investigacao_completa",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "instance_pauses",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "investigated_by"
+        ],
+        "deferrable": false,
+        "definition": "FOREIGN KEY (investigated_by) REFERENCES profiles(id) ON DELETE SET NULL",
+        "name": "instance_pauses_investigated_by_fkey",
+        "on_delete": "SET NULL",
+        "on_update": "NO ACTION",
+        "ref_columns": [
+          "id"
+        ],
+        "ref_schema": "public",
+        "ref_table": "profiles",
+        "schema": "public",
+        "table": "instance_pauses",
+        "type": "FOREIGN KEY",
+        "validated": true
+      },
+      {
+        "columns": [
+          "investigation_notes"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (investigation_notes IS NULL OR investigation_notes !~ '[<>]'::text)",
+        "name": "instance_pauses_notas_sem_html",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "instance_pauses",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "investigation_notes"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (investigation_notes IS NULL OR char_length(investigation_notes) <= 1000)",
+        "name": "instance_pauses_notas_tamanho",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "instance_pauses",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
           "paused_by"
         ],
         "deferrable": false,
@@ -54396,6 +54506,7 @@
             "public.guard_talkx_template_update",
             "public.is_contact_visible_to_user",
             "public.mark_first_response",
+            "public.mark_pause_investigated",
             "public.message_sender_atual",
             "public.pause_instance",
             "public.prevent_contact_assignee_hijack",
@@ -56706,6 +56817,7 @@
             "public.list_multiplix_dead_letters",
             "public.log_talkx_campaign_checklist",
             "public.mark_first_response",
+            "public.mark_pause_investigated",
             "public.merge_contacts_atomic",
             "public.message_sender_atual",
             "public.my_calls_kpi",
@@ -58143,6 +58255,36 @@
         "name": "mark_multiplix_recipient_dispatch_started",
         "owner": "postgres",
         "returns": "void",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "p_pause_id uuid, p_notes text",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "eca5ffa582ca40a7",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "mark_pause_investigated",
+        "owner": "postgres",
+        "returns": "jsonb",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -79382,6 +79524,12 @@
       },
       {
         "code": "fk_without_index",
+        "detail": "FK sem índice nas colunas ['investigated_by']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
+        "object": "public.instance_pauses.instance_pauses_investigated_by_fkey",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "fk_without_index",
         "detail": "FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
         "object": "public.message_favorites.message_favorites_message_id_fkey",
         "severity": "BAIXA"
@@ -88658,6 +88806,12 @@
         "statements": 1,
         "statements_sha": "88f1d26dd3389abd",
         "version": "20261108211000"
+      },
+      {
+        "name": "instance_pause_investigation",
+        "statements": 7,
+        "statements_sha": "2d553cc6959f7503",
+        "version": "20261111181000"
       }
     ],
     "policies": [

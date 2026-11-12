@@ -2,6 +2,15 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 00:07 UTC
+
+- **colunas** adicionado (3): `public.instance_pauses.investigated_at`, `public.instance_pauses.investigated_by`, `public.instance_pauses.investigation_notes`
+- **constraints** adicionado (4): `public.instance_pauses.instance_pauses_investigacao_completa`, `public.instance_pauses.instance_pauses_investigated_by_fkey`, `public.instance_pauses.instance_pauses_notas_sem_html`, `public.instance_pauses.instance_pauses_notas_tamanho`
+- **functions** adicionado (1): `public.mark_pause_investigated(p_pause_id uuid, p_notes text)`
+- **functions** alterado (2): `public.get_profile_id_for_user(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`
+- **lints** adicionado (1): `fk_without_index:public.instance_pauses.instance_pauses_investigated_by_fkey`
+- **migrations** adicionado (1): `20261111181000_instance_pause_investigation`
+
 ## 2026-11-11 22:22 UTC
 
 - **colunas** adicionado (9): `public.copilot_sessions.brinde_state`, `public.talkx_suppression_reasons.active`, `public.talkx_suppression_reasons.code`, `public.talkx_suppression_reasons.created_at`, `public.talkx_suppression_reasons.created_by`, `public.talkx_suppression_reasons.is_system`, `public.talkx_suppression_reasons.label`, `public.talkx_suppression_reasons.sort_order`, `public.talkx_suppression_reasons.tone`

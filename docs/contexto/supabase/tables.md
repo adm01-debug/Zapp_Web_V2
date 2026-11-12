@@ -109,7 +109,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.gmail_accounts](tables/public/gmail_accounts.md) | table | sim | 4 | 16 | não |  |
 | [public.gmail_oauth_states](tables/public/gmail_oauth_states.md) | table | sim | 0 | 6 | não | [RLS-sem-policy: intencional] Estados temporários do fluxo OAuth do Gmail (PKCE/state). Criados e consumidos pela edge function gmail-oauth (service_role). Expiração automática. |
 | [public.goals_configurations](tables/public/goals_configurations.md) | table | sim | 2 | 10 | não |  |
-| [public.instance_pauses](tables/public/instance_pauses.md) | table | sim | 1 | 9 | não |  |
+| [public.instance_pauses](tables/public/instance_pauses.md) | table | sim | 1 | 12 | não |  |
 | [public.ip_whitelist](tables/public/ip_whitelist.md) | table | sim | 2 | 5 | não |  |
 | [public.knowledge_base_articles](tables/public/knowledge_base_articles.md) | table | sim | 2 | 11 | não |  |
 | [public.knowledge_base_files](tables/public/knowledge_base_files.md) | table | sim | 2 | 9 | não |  |

@@ -120,6 +120,7 @@
 | public.gmail_oauth_states | user_id | auth.users | id | CASCADE | NO ACTION |
 | public.goals_configurations | profile_id | public.profiles | id | CASCADE | NO ACTION |
 | public.goals_configurations | queue_id | public.queues | id | CASCADE | NO ACTION |
+| public.instance_pauses | investigated_by | public.profiles | id | SET NULL | NO ACTION |
 | public.instance_pauses | paused_by | public.profiles | id | SET NULL | NO ACTION |
 | public.instance_pauses | resumed_by | public.profiles | id | SET NULL | NO ACTION |
 | public.ip_whitelist | added_by | auth.users | id | SET NULL | NO ACTION |
