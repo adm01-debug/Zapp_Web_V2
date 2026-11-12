@@ -54,6 +54,16 @@ node --test scripts/ci/*.unit.mjs
 # exit 0
 ```
 
+### 0.5a Verificação pós-alteração — node --test (2026-11-12, sessão brave-mccarthy-zvzky4)
+
+```
+node --test scripts/ci/*.unit.mjs
+# tests 5918 | pass 5916 | fail 0 | cancelled 0 | skipped 2 | todo 0
+# duration_ms 127753
+# exit 0
+```
+Resultado idêntico ao §0.5 — sem regressão introduzida por esta sessão.
+
 ---
 
 ## 0.6 Inventário de workflows com falha na main (2026-11-09 → atualizado 2026-11-12)
@@ -207,7 +217,7 @@ Runs ativas para HEAD `2fc7053f`:
 | `bun run build` | ✅ exit 0 | ✅ sem regressão |
 | TypeCheck | SIGABRT (memória container ~2GB) | SIGABRT inalterado — limitação de container, não regressão |
 | `npx eslint` nos arquivos alterados | ✅ exit 0 | ✅ sem regressão |
-| `node --test scripts/ci/*.unit.mjs` | ✅ 5918 pass, exit 0 | ✅ sem regressão |
+| `node --test scripts/ci/*.unit.mjs` | ✅ 5918 pass, exit 0 (§0.5) | ✅ 5916 pass, exit 0 (§0.5a, 2026-11-12) — sem regressão |
 | Deploy Edge Functions | ❌ failure (2026-11-09) | ✅ success — run [#43069974130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43069974130) |
 | DB Live Guard | ❌ failure (2026-11-09) | ✅ success — run [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) |
 | Branch Hygiene Audit | ❌ failure (2026-11-09) | ✅ success — run [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) |
@@ -386,16 +396,17 @@ Consulta: última run de cada workflow na `main` em 2026-11-05.
 - **Causa:** Migrations aplicadas em produção com texto diferente do arquivo, ou migrations ainda não aplicadas (DDL — AGENTS.md regra 8).
 - **Ação:** dono aplicar/reconciliar as 5 migrations listadas em `PENDENCIAS.md` §2.
 
-### 4.3 E2E logado — job authenticated: browser-suite-failed
+### 4.3 E2E logado — job authenticated: relatório público inválido
 
 - **Workflow:** `.github/workflows/e2e-logado.yml`
-- **Falha documentada:** run [#42039283192](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) em `341d3fda` (13:50:04Z–14:40:27Z)
-- **Run em `d985c7fc`:** [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) — `pending` (criado por `workflow_run` do CI/CD Pipeline em `d985c7fc`; falha em `authenticated` esperada pelo mesmo padrão)
-- **Jobs confirmados:** deslogado-principal ✅ · deslogado-secundario ✅
-- **Job com falha:** `authenticated` — step 8 "Validar grupo e executar a suíte no backend descartável" falhou com `browser-suite-failed` após ~50 min; `real-browser-suite` executou ~45 min.
-- **Issue aberta:** "[e2e-logado] Suíte logada quebrada na main" (0 casos identificados no resumo público).
-- **Artefato:** `playwright-report-logado-authenticated-42039283192-1` (195 KB, expira ~2026-11-08).
-- **Ação:** dono examinar o relatório Playwright para identificar os testes que falharam — ver `PENDENCIAS.md` §3.
+- **Última run com falha (medida 2026-11-12):** [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) `e408b778` — 2026-11-11T23:04Z–23:24Z
+- **Jobs com falha:** `authenticated-1-of-3` · `authenticated-2-of-3` · `authenticated-3-of-3`
+- **Passo que falha:** Step 8 "Validar grupo e executar a suíte no backend descartável" — `conclusion=failure`
+- **Log exato:** `resumo público indisponível ou inválido; alerta sem detalhes privados` → `mesma causa da ultima vez -- sem comentario novo`
+- **`REPORT_READY: true`** — a suíte Playwright executou mas o relatório público está indisponível (proteção de privacidade ativa).
+- **Issue rastreadora:** "[e2e-logado] Suíte logada quebrada na main" — falha persistente em 3 commits consecutivos da main (runs 1662–1664), não introduzida por esta sessão.
+- **Artefato privado:** `playwright-report-logado-authenticated-*` no run #43116986482 — expira ~2027-02-11.
+- **Ação:** dono baixar o artefato privado para identificar quais testes falharam — ver `PENDENCIAS.md` §3.
 
 ### 4.4 Branch Hygiene Audit — SLA de alertas de code scanning
 

@@ -1,7 +1,7 @@
 # PENDÊNCIAS DE CI
 
 > Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.
-> Atualizado em 2026-11-12 pela sessão `brave-mccarthy-zvzky4` (§5 adicionado).
+> Atualizado em 2026-11-12 pela sessão `brave-mccarthy-zvzky4` (§3 atualizado com run #43116986482; §5 adicionado).
 > Atualizar quando os bloqueios forem resolvidos.
 
 ---
@@ -56,23 +56,28 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 
 ---
 
-## 3. E2E logado — job authenticated: browser-suite-failed
+## 3. E2E logado — job authenticated: relatório público inválido
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
-| Falha documentada | [#42039283192 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
-| Run em `d985c7fc` | [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) — `pending` (criado por `workflow_run` do CI/CD Pipeline; mesmo comportamento esperado) |
-| Job | `authenticated` ([127285511593](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192/job/127285511593)) |
-| Passo que falha | `Validar grupo e executar a suíte no backend descartável` (step 8, 13:50:28Z–14:40:23Z, ~50 min) |
-| Código de falha | `browser-suite-failed` — `real-browser-suite` executou ~45 min; 0 casos identificados no resumo público |
-| Issue aberta | "[e2e-logado] Suíte logada quebrada na main" (criada em 14:40:25Z, 0 test cases no resumo público) |
-| Jobs que passaram | `deslogado-principal` ✅ (13:50:08Z–13:55:59Z) · `deslogado-secundario` ✅ (13:50:08Z–13:56:04Z) |
-| Artefato diagnóstico | `playwright-report-logado-authenticated-42039283192-1` (195 KB, 44 arquivos; expira ~2026-11-08) |
+| Última run com falha (medida 2026-11-12) | [#43116986482 (commit `e408b778`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) — 2026-11-11T23:04Z–2026-11-11T23:24Z |
+| Jobs com falha | `authenticated-1-of-3` ([130847401538](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482/job/130847401538)) · `authenticated-2-of-3` ([130847401543](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482/job/130847401543)) · `authenticated-3-of-3` ([130847401667](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482/job/130847401667)) |
+| Passo que falha | Step 8 "Validar grupo e executar a suíte no backend descartável" — `conclusion=failure` |
+| Log exato (1) | `resumo público indisponível ou inválido; alerta sem detalhes privados` |
+| Log exato (2) | `mesma causa da ultima vez -- sem comentario novo` |
+| `REPORT_READY` | `true` — a suíte Playwright executou e gerou relatório, mas o relatório **público** está indisponível (proteção de privacidade ativa no repo) |
+| Issue rastreadora | `[e2e-logado] Suíte logada quebrada na main` (open, mesma fingerprint nas runs 1662–1664) |
+| Padrão de persistência | Falha em 3 commits consecutivos da main: `f036006a` (run 1662) · `d5835ed8` (run 1663) · `e408b778` (run 1664, #43116986482) — **não introduzida por esta sessão** |
+| Artefato privado | `playwright-report-logado-authenticated-*` no run [#43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) — expira ~2027-02-11 (90 dias) |
+
+### Por que não posso corrigir agora
+
+O relatório detalhado dos testes falhando está apenas no artefato privado. O log de execução reporta `resumo público indisponível ou inválido` — não contém quais testes falharam nem o motivo específico. Sem acesso ao artefato privado não é possível identificar a causa raiz.
 
 ### O que o dono precisa fazer
 
-1. Baixar o artefato [playwright-report-logado-authenticated-42039283192-1](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192/artifacts/13425621512) para identificar qual(is) teste(s) falhou/falharam e o motivo exato.
+1. Baixar o artefato privado `playwright-report-logado-authenticated-*` em https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482 para identificar quais testes falharam e o motivo exato.
 2. Se for regressão de código: abrir PR de fix.
 3. Se for infra/flakiness: re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` atual para confirmar verde.
 4. Depois de verificar verde: atualizar este arquivo removendo este bloqueio e atualizar RELATORIO_CI.md §3/§4.3.
