@@ -122,6 +122,30 @@ Deno.test("ai-lead-temperature: saída do modelo fora do contrato vira 502 com e
   assertEquals(corpo.capability, "ai-lead-temperature");
 });
 
+Deno.test("ai-lead-temperature: provedor com content null vira 502 com envelope de erro (não 500)", async () => {
+  const { deps, chamadas } = depsCom(() => respostaDoProvedor(200, null));
+  const res = await handleAiLeadTemperature(pedido(BODY_VALIDO), deps);
+  assertEquals(res.status, 502);
+  const corpo = await res.json();
+  assertEquals(corpo.status, "error");
+  assertEquals(corpo.capability, "ai-lead-temperature");
+  assertEquals(corpo.error, "Resposta do modelo fora do contrato.");
+  assertEquals(Array.isArray(corpo.evidence?.errors) && corpo.evidence.errors.length > 0, true);
+  assertEquals(chamadas.length, 1);
+});
+
+Deno.test("ai-lead-temperature: resposta do provedor sem JSON vira 502 com envelope de erro", async () => {
+  const { deps, chamadas } = depsCom(() => respostaDoProvedor(200, "Desculpe, não consigo analisar isso agora."));
+  const res = await handleAiLeadTemperature(pedido(BODY_VALIDO), deps);
+  assertEquals(res.status, 502);
+  const corpo = await res.json();
+  assertEquals(corpo.status, "error");
+  assertEquals(corpo.capability, "ai-lead-temperature");
+  assertEquals(corpo.error, "Resposta do modelo fora do contrato.");
+  assertEquals(Array.isArray(corpo.evidence?.errors) && corpo.evidence.errors.length > 0, true);
+  assertEquals(chamadas.length, 1);
+});
+
 Deno.test("ai-lead-temperature: provedor 429/402 propaga o status e falha genérica vira 500", async () => {
   for (const [status, esperado] of [[429, 429], [402, 402], [503, 500]] as const) {
     const { deps } = depsCom(() => respostaDoProvedor(status, null));
