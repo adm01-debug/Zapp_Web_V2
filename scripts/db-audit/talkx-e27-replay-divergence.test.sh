@@ -46,14 +46,14 @@ segunda="$repo_root/supabase/migrations/_superseded/20260927570000_talkx_e27_rea
 [[ -f "$duplicada" ]] || fail 'migration 20260927500001 (irma duplicada) nao existe'
 [[ -f "$segunda" ]] || fail 'migration 20260927570000 arquivada nao existe'
 [[ ! -f "$repo_root/supabase/migrations/$(basename "$segunda")" ]] \
-  || fail 'migration 20260927570000 voltou ao diretorio ativo'
+  || fail 'migration 20260927570000 voluou ao diretorio ativo'
 grep -q '^-- SUPERSEDED' "$segunda" || fail 'migration arquivada perdeu marcador SUPERSEDED'
 allowlist="$repo_root/scripts/db-audit/replay-known-failures.json"
 [[ -f "$allowlist" ]] || fail 'replay-known-failures.json nao existe'
 
 # ---- fixtures: as 3 tabelas do E27 + a publicacao do Realtime --------------------
 subir_pg() {
-  docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=x "$postgres_image" >/dev/null
+  docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=x "$postgres_image" -c wal_level=logical >/dev/null
   local pronto=false
   for _ in $(seq 1 90); do
     if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
