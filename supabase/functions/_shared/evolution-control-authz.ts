@@ -59,6 +59,8 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'update-profile-picture',
   'remove-profile-picture',
   'update-privacy',
+  // presença da CONTA (online/offline para todos os contatos) — restaurada após o #2054
+  'set-presence',
   // grupos (escrita)
   'create-group',
   'update-group-name',
@@ -69,6 +71,8 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'accept-invite',
   'leave-group',
   'update-group-picture',
+  // mensagens temporárias do grupo — restaurada após o #2054
+  'toggle-ephemeral',
   // etiquetas / bloqueio
   'handle-label',
   'update-block-status',
@@ -85,6 +89,8 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   // Status/Stories lidos de `status@broadcast`: instance-wide (de toda a base),
   // mesma regra de find-messages — admin/supervisor.
   'find-status-messages',
+  // configuração da instância/conexão (restauradas após o #2054: têm tela)
+  'get-settings', 'set-settings', 'get-webhook',
   'get-media-base64',
   // perfil da conta/conexão (config) e de número arbitrário (fora da carteira)
   'fetch-profile', 'fetch-profile-picture', 'fetch-business-profile',
@@ -120,9 +126,12 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'send-ptv',
   'send-reaction',
   'send-chat-presence',
+  // template (WhatsApp Business) com destinatário — restaurada após o #2054
+  'send-template',
   // mutações de estado da conversa no provedor (não entregam conteúdo, mas
   // seguem o mesmo escopo: o contato da conversa)
   'mark-read',
+  'mark-unread',
   'archive-chat',
 ]);
 
@@ -148,6 +157,8 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
   'group-info',
   'group-participants',
   'group-invite-code',
+  // prévia de um convite (nome/participantes) antes de aceitar — restaurada após o #2054
+  'invite-info',
 ]);
 
 /**
