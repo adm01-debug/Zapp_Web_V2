@@ -85,3 +85,19 @@ describe('sidebarSections — migração do localStorage (etapa 44)', () => {
     expect(DEFAULT_OPEN_SECTIONS).toContain('delivery');
   });
 });
+
+// Seções restauradas em 2026-11-12 (Memória da conversa e Atendimento): valores
+// conhecidos que começam recolhidos — não entram no default aberto.
+describe('sidebarSections — memoria e atendimento (2026-11-12)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('memoria e atendimento são conhecidas e persistem ao reabrir', () => {
+    saveSidebarState(['memoria', 'atendimento']);
+    expect(getStoredSidebarState()).toEqual(['memoria', 'atendimento']);
+  });
+
+  it('começam recolhidas: ficam fora do default aberto', () => {
+    expect(DEFAULT_OPEN_SECTIONS).not.toContain('memoria');
+    expect(DEFAULT_OPEN_SECTIONS).not.toContain('atendimento');
+  });
+});
