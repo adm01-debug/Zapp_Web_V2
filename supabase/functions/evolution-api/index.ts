@@ -146,9 +146,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const raw = String(value ?? '');
       return (raw.includes('@') ? raw.split('@')[0] : raw).replace(/\D/g, '');
     };
-    const resolveSendTarget = (): string =>
-      jidToDigits(body.number) || jidToDigits(body.remoteJid) || jidToDigits(body.chat) ||
-      jidToDigits((body.key as Record<string, unknown> | undefined)?.remoteJid);
+    // mark-read / mark-unread agem SÓ sobre a conversa da `key` (é ela que vai ao
+    // provedor): o alvo do gate vem só de `key.remoteJid`. Antes um `number` de
+    // contato visível passava no gate e a `key` de OUTRA conversa ia ao provedor.
+    const KEY_TARGET_ACTIONS = new Set(['mark-read', 'mark-unread']);
+    const resolveSendTarget = (): string => {
+      const keyJid = jidToDigits((body.key as Record<string, unknown> | undefined)?.remoteJid);
+      if (KEY_TARGET_ACTIONS.has(action)) return keyJid;
+      return jidToDigits(body.number) || jidToDigits(body.remoteJid) || jidToDigits(body.chat) || keyJid;
+    };
     const resolveSendAccess = async (): Promise<EvolutionAuthzDecision> => {
       if (await isCallerAdminOrSupervisor()) return { allowed: true };
       // Falha de modo seguro: sem vínculo com a conexão, sem número ou sem
@@ -1046,14 +1052,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
     }
-    if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
+    // Só a `key` validada pelo gate vai ao provedor (sem `readMessages` livre, que
+    // podia levar JIDs de outras conversas sem checagem de visibilidade).
+    if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: [body.key] });
     // Restaurada (#2054): "Marcar como não lida" (MessageHoverToolbar / MessageContextActions).
-    // Categoria send (alvo = a conversa da `key`). Só a `key` validada pelo gate
-    // segue ao provedor: `readMessages` livre (aceito antes do #2054) podia levar
-    // JIDs de outras conversas sem passar pela checagem de visibilidade.
+    // Categoria send (alvo = a conversa da `key`). Evolution v2: `MarkChatUnreadDto`
+    // em POST /chat/markChatUnread/{instância} = { chat, lastMessage: { key } }
+    // (`/chat/markMessageAsUnread` não existe na v2). Só a `key` validada pelo gate
+    // segue ao provedor.
     if (action === 'mark-unread') {
       if (isGoFlavor) return goActionNotSupported('mark-unread', corsHeaders);
-      return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: [body.key] });
+      const key = (body.key ?? {}) as Record<string, unknown>;
+      return await proxy(`/chat/markChatUnread/${instance}`, 'POST', { chat: key.remoteJid, lastMessage: { key } });
     }
     if (action === 'archive-chat') return await proxy(`/message/archiveChat/${instance}`, 'POST', { lastMessage: body.lastMessage, chat: body.chat, archive: body.archive ?? true });
     if (action === 'delete-message') return await proxy(`/message/delete/${instance}`, 'DELETE', { id: body.id, remoteJid: body.remoteJid, fromMe: body.fromMe });
@@ -1181,7 +1191,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // Cloud API na v2). Categoria send: o gate valida o `number` como contato.
     if (action === 'send-template') {
       if (isGoFlavor) return goActionNotSupported('send-template', corsHeaders);
-      return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
+      // Evolution v2 (`templateMessageSchema`): campos no TOPO — number, name,
+      // language, components e webhookUrl opcional. Aceita também o formato antigo
+      // `{ template: { name, language, components } }` por compatibilidade.
+      const tpl = (body.template && typeof body.template === 'object' ? body.template : {}) as Record<string, unknown>;
+      const webhookUrl = body.webhookUrl ?? tpl.webhookUrl;
+      return await proxy(`/message/sendTemplate/${instance}`, 'POST', {
+        number: body.number,
+        name: body.name ?? tpl.name,
+        language: body.language ?? tpl.language,
+        components: body.components ?? tpl.components ?? [],
+        ...(webhookUrl ? { webhookUrl } : {}),
+      });
     }
     // Restauradas (#2054, decisão do dono): templates da Meta (WhatsApp Business
     // Cloud API) e catálogo/coleções de um número business, e a oferta de chamada.
@@ -1195,9 +1216,11 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
       return await proxy(`/business/${action === 'get-catalog' ? 'getCatalog' : 'getCollections'}/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
     }
+    // Evolution v2: POST /call/offer/{instância} (OfferCallDto). `callDuration` já
+    // chega validado pelo schema (inteiro de 1 a 60 s, padrão 5).
     if (action === 'offer-call') {
       if (isGoFlavor) return goActionNotSupported('offer-call', corsHeaders);
-      return await proxy(`/call/offerCall/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo ?? false, callDuration: body.callDuration ?? 5 });
+      return await proxy(`/call/offer/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo === true, callDuration: body.callDuration ?? 5 });
     }
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;
