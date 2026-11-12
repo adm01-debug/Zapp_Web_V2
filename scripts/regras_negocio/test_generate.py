@@ -163,6 +163,17 @@ export type Database = {
         self.assertFalse((self.root / "AGENTS.md").exists())
 
 
+class ModuleKeyTests(unittest.TestCase):
+    def test_monorepo_package_root_file_joins_its_package_module(self):
+        # Arquivo direto na raiz do pacote (ex.: packages/ui/index.ts) tem só 3 segmentos
+        # (pacote/arquivo, sem subpasta) e precisa cair no módulo "packages/ui" — não virar
+        # seu próprio módulo com o path completo (fragmenta 03-MODULOS.md em 1 módulo por arquivo).
+        self.assertEqual(generator.module_key("packages/ui/index.ts"), "packages/ui")
+        self.assertEqual(generator.module_key("apps/web/main.ts"), "apps/web")
+        # Com subpasta real, o agrupamento fica por subpasta (comportamento existente preservado).
+        self.assertEqual(generator.module_key("packages/ui/src/Button.tsx"), "packages/ui/src")
+
+
 class CacheValidityTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix="context-rules-cache-")
@@ -290,6 +301,22 @@ class CacheValidityTests(unittest.TestCase):
         self.run_generator("--index-path", "contexto/00-INDEX.md")
         self.assertTrue((self.root / "AGENTS.md").is_file())
         self.assertEqual(self.run_generator("--no-pointer", "--check"), 1)
+
+    def test_manual_rule_with_unbalanced_fence_does_not_swallow_rest_of_doc(self):
+        manual = self.out / "manual/regras.md"
+        manual.parent.mkdir(parents=True)
+        manual.write_text("Regra A: só admin pode cancelar.\n\n```\nexemplo sem fechar\n", encoding="utf-8")
+        self.assertEqual(self.run_generator("--no-pointer", "--profile", "regras"), 0)
+        rendered = (self.out / "07-REGRAS-DE-NEGOCIO.md").read_text(encoding="utf-8")
+        idx_a = rendered.find("## A. Regras escritas por humanos")
+        idx_b = rendered.find("## B. Quem pode ver")
+        self.assertGreater(idx_b, idx_a, "seção B precisa existir depois da A")
+        # O bloco de código aberto em A tem de estar fechado ANTES de B começar — senão
+        # B inteira (e todo o resto do documento) fica dentro do bloco de código.
+        self.assertEqual(rendered[idx_a:idx_b].count("```") % 2, 0)
+        self.assertIn("tem um bloco de código sem fechar", rendered[idx_a:idx_b])
+        # Não escreve no arquivo fonte em manual/.
+        self.assertNotIn("```\n```", manual.read_text(encoding="utf-8"))
 
     def test_unchanged_cache_performs_no_writes_and_force_regenerates(self):
         self.run_generator("--no-pointer")

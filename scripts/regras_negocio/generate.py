@@ -113,6 +113,11 @@ def redact(s: str) -> str:
     return SECRET_RE.sub("[REDACTED]", s)
 
 
+def unbalanced_fences(md: str) -> bool:
+    """``` ímpar = bloco de código aberto e nunca fechado."""
+    return md.count("```") % 2 != 0
+
+
 def rel(p: Path, root: Path) -> str:
     return p.relative_to(root).as_posix()
 
@@ -1164,7 +1169,7 @@ def detect_features(root: Path, files: list[Path], code: dict[str, dict], stack:
 def module_key(r: str) -> str:
     parts = r.split("/")
     if parts[0] in ("src", "app", "lib", "packages", "apps") and len(parts) > 2:
-        key = "/".join(parts[:2]) if parts[0] not in ("packages", "apps") else "/".join(parts[:3])
+        key = "/".join(parts[:2]) if parts[0] not in ("packages", "apps") or len(parts) <= 3 else "/".join(parts[:3])
         if parts[1] in ("features", "modules", "domains") and len(parts) > 3:
             key = "/".join(parts[:3])
         return key
@@ -1458,6 +1463,9 @@ def build_audit(code, schema, feats, dataflow, rules, access, docs) -> dict:
     for ef in feats["edge_functions"]:
         if ef["webhook_events"] and not ef["idempotency"]:
             issues.append({"kind": "webhook", "msg": f"edge function `{ef['name']}` processa eventos de webhook sem sinal de idempotência (evento duplicado = efeito duplicado)", "where": [ef["file"]]})
+    for m in docs["manual"]:
+        if unbalanced_fences(m["content"]):
+            issues.append({"kind": "manual", "msg": f"`manual/{m['file']}` tem um bloco de código (```) sem fechar — engole o resto de `07-REGRAS-DE-NEGOCIO.md` dentro do bloco quando renderizado", "where": [f"manual/{m['file']}"]})
     # lacunas para humanos
     if not docs["manual"]:
         gaps.append("Nenhuma regra manual em `manual/`: prazos, limites, exceções comerciais, quem aprova o quê — só o negócio sabe.")
@@ -1836,7 +1844,15 @@ def render_rules(meta, rules, docs, schema) -> str:
     s += "## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)\n\n"
     if docs["manual"]:
         for m in docs["manual"]:
-            s += f"### {m['file']}\n\n{redact(m['content']).strip()}\n\n"
+            content = redact(m["content"]).strip()
+            aviso = ""
+            # Crase impar = bloco de codigo nunca fechado, que engoliria TODO o resto deste
+            # documento (secoes B em diante) dentro de um unico bloco de codigo. Fecha aqui
+            # para conter o dano e avisa — o arquivo fonte em manual/ nao e alterado.
+            if unbalanced_fences(content):
+                content += "\n```"
+                aviso = f"\n\n> ⚠️ **`manual/{m['file']}` tem um bloco de código sem fechar** — uma crase tripla de fechamento foi adicionada aqui só para não quebrar o resto deste documento. Corrija o arquivo em `manual/{m['file']}`.\n"
+            s += f"### {m['file']}\n\n{content}{aviso}\n\n"
     else:
         s += "_Nenhum arquivo em `manual/`. Copie `manual/TEMPLATE-regras-de-negocio.md` para `manual/regras.md` e preencha._\n\n"
     s += "## B. Quem pode ver/alterar o quê (RLS — conforme migrations do repo; schema real em `06`)\n\n" + md_table(["Tabela", "Política", "Comando", "Roles", "Modo", "USING", "WITH CHECK"],
