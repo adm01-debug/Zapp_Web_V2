@@ -2,7 +2,8 @@
 
 > Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.  
 > Atualizado em 2026-11-12 (PR #2881, sessão `brave-mccarthy-zvzky4`).  
-> Inventário completo em 2026-11-12T04:00Z (sessão `brave-mccarthy-zvzky4`, branch `claude/fix-ci-workflows-261112-0400`).
+> Inventário completo em 2026-11-12T04:00Z (sessão `brave-mccarthy-zvzky4`, branch `claude/fix-ci-workflows-261112-0400`).  
+> §3 atualizado com log exato do run #43148791130 (sessão `brave-mccarthy-zvzky4`, 2026-11-12T05:30Z).
 
 ---
 
@@ -54,39 +55,76 @@ DDL em banco de produção — requer aprovação explícita do dono (AGENTS.md 
 | Grupos afetados | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` |
 | Grupos OK | `anon-*` passam normalmente |
 
-### Diagnóstico detalhado
+### Log exato do CI (run #43148791130 — idêntico nos 3 grupos authenticated)
 
-A função `restoreRoutineOwnership` em `scripts/e2e-isolated/routine-ownership.mjs:95-149` valida o isolamento Docker dos containers E2E em 6 fases sequenciais:
+```
+[e2e-isolated] restore-versioned-routine-owners
+[e2e-isolated] cleanup
+{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}
+##[error]Process completed with exit code 1.
+```
 
-| Fase | O que valida |
+### Análise crítica do log
+
+**`report_ready: true`** — os testes Playwright **rodaram com sucesso** e produziram artefato de relatório **antes** da verificação de ownership. A falha **não é nos testes em si**, é na fase de verificação de isolamento que ocorre **após** os testes.
+
+**Sequência exata de execução:**
+1. Testes Playwright rodam → relatório gerado → artefato disponível
+2. `restore-versioned-routine-owners` é invocado (`run.mjs:635`)
+3. Chama `restoreRoutineOwnership(...)` em `routine-ownership.mjs:95`
+4. Função retorna `{ confirmed: false, reason: '{phase}-failed' }` — mas **NÃO imprime o `reason`**
+5. `run.mjs:639` lança `Error('routine-ownership-failed')` **sem logar `routineOwnership.reason`**
+6. `cleanup` é executado imediatamente
+7. JSON final é emitido com `code: "routine-ownership-failed"` — sem a sub-fase
+
+### Por que a sub-fase interna NÃO aparece nos logs
+
+O campo `reason` do objeto retornado por `restoreRoutineOwnership` (`scope-failed`, `source-failed`, `container-failed`, `volume-failed`, `namespace-failed` ou `sql-process-failed`) existe apenas dentro do objeto JavaScript. O código em `run.mjs:639` é:
+
+```javascript
+if (!routineOwnership.confirmed) throw new Error('routine-ownership-failed');
+// ^ lança o erro sem logar routineOwnership.reason
+```
+
+Para expor a fase seria necessário modificar para:
+```javascript
+if (!routineOwnership.confirmed) throw new Error(`routine-ownership-failed: ${routineOwnership.reason}`);
+```
+
+Essa mudança é em código de infraestrutura de isolamento de CI/segurança (AGENTS.md regra 8).
+
+### As 6 fases de `restoreRoutineOwnership` (routine-ownership.mjs:95-149)
+
+| Fase | O que valida | Hipótese para grupos authenticated |
+|---|---|---|
+| `scope` | Parâmetros: scope='suite', grupo autenticado, IDs de container, imagens, volume, namespace de rede | Improvável — parâmetros são passados pelo orquestrador |
+| `source` | `git rev-parse HEAD === sourceSha` — commit atual deve ser exatamente o esperado | Possível se o runner faz checkout diferente para grupos authenticated |
+| `container` | Inspeciona containers Docker: nome, imagem, estado Running, configuração de rede | Mais provável — containers authenticated podem ter configuração de rede diferente |
+| `volume` | Inspeciona volume Postgres: labels de ownership, mountpoint em `allowedWritableSources` | Possível — volumes reutilizados entre shards podem ter labels incorretos |
+| `namespace` | Verifica namespace de rede via `readlink /proc/self/ns/net` no container | Possível — namespace compartilhado entre shards |
+| `sql-process` | Executa SQL de verificação de ownership no banco | Improvável se `namespace` passou |
+
+### Artefatos disponíveis (expiram ~2026-11-15)
+
+| Grupo | Artefato ID |
 |---|---|
-| `scope` | Parâmetros: scope='suite', grupo autenticado, IDs de container, imagens, volume, namespace de rede |
-| `source` | `git rev-parse HEAD === sourceSha` — commit atual deve ser exatamente o esperado |
-| `container` | Inspeciona containers Docker: nome, imagem, estado Running, configuração de rede |
-| `volume` | Inspeciona volume Postgres: labels de ownership, mountpoint em `allowedWritableSources` |
-| `namespace` | Verifica namespace de rede via `readlink /proc/self/ns/net` no container |
-| `sql-process` | Executa SQL de verificação de ownership no banco |
+| authenticated-1-of-3 | 13913791221 |
+| authenticated-2-of-3 | 13913470743 |
+| authenticated-3-of-3 | 13913896170 |
 
-Qualquer falha retorna `{ confirmed: false, reason: '{phase}-failed' }`. Quando `confirmed === false`, `run.mjs:639` lança `Error('routine-ownership-failed')`.
-
-### Por que falha apenas nos grupos authenticated
-
-Os grupos `anon-*` passam. Os grupos `authenticated-*` falham. Hipóteses:
-- Containers de grupos authenticated recebem configuração diferente (imagem, rede, volume) que não passa a inspeção Docker
-- O `sourceSha` passado para o grupo authenticated não corresponde ao HEAD do repositório no momento da execução
-- O volume `{runId}-postgres` dos grupos authenticated não tem o label de ownership correto
+Os artefatos contêm o relatório Playwright e possivelmente o JSON de resultado com o `reason` interno. Baixar antes de 2026-11-15T03:38Z.
 
 ### Por que não posso corrigir agora
 
-Sem acesso a logs detalhados da fase exata que falha (o objeto `reason` não aparece no log de erro — apenas `routine-ownership-failed`), não é possível confirmar qual das 6 fases rejeita. Para reproduzir precisaria de um runner com Docker e ambiente idêntico ao CI.
-
-Além disso, `routine-ownership-failed` é uma verificação de segurança/isolamento — qualquer alteração requer análise cuidadosa de impacto de segurança (AGENTS.md regra 8: mudança de arquitetura).
+1. **Fase exata desconhecida sem os artefatos**: O log do CI não expõe `routineOwnership.reason`. Sem saber qual das 6 fases rejeita, qualquer fix seria chute.
+2. **Modificar `run.mjs` para logar o `reason`** é alteração em código de infraestrutura de isolamento de CI/segurança — Rule 8.
+3. **Fix da causa raiz** (qualquer que seja a fase) envolve configuração Docker ou lógica de verificação de isolamento — Rule 8.
 
 ### O que o dono precisa fazer
 
-1. Re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` e baixar artefato de diagnóstico antes de expirar.
-2. Buscar no artefato o campo `reason` do objeto retornado por `restoreRoutineOwnership` para identificar a fase exata.
-3. Abrir issue com a fase exata para diagnóstico cirúrgico.
+1. Baixar artefato `authenticated-1-of-3` (ID 13913791221) antes de 2026-11-15T03:38Z e buscar o campo `reason` para identificar a fase exata.
+2. Com a fase identificada, abrir issue para diagnóstico cirúrgico e autorizar a correção.
+3. Ou: autorizar a adição de logging em `run.mjs:639` para expor o `reason` na próxima run.
 
 ---
 
