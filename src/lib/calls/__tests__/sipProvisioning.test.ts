@@ -126,3 +126,60 @@ describe('provisionarSip — telefonia não configurada não repete a cada carre
     expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
   });
 });
+describe('provisionarSip — trava só no SIP_NOT_CONFIGURED explícito, com prazo limitado', () => {
+  // Como o SDK real entrega: `context` é a Response com o corpo JSON da função.
+  const respostaErro = (status: number, body: unknown) => ({
+    data: null,
+    error: { name: 'FunctionsHttpError', message: 'non-2xx', context: new Response(JSON.stringify(body), { status }) },
+  });
+  const ok = { data: { password: 'p', server: 'sip.example', user: 'u', wsPort: 8089 }, error: null };
+
+  it('503 SIP_NOT_CONFIGURED lido do corpo da Response trava', async () => {
+    mockInvoke.mockResolvedValue(respostaErro(503, { error: 'SIP não configurado', code: 'SIP_NOT_CONFIGURED' }));
+    await provisionarSip();
+    await provisionarSip();
+    expect(mockInvoke).toHaveBeenCalledTimes(1);
+    expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining('administrador'));
+  });
+
+  it('503 passageiro (BOOT_ERROR da Edge) NÃO trava: a próxima tentativa conecta', async () => {
+    mockInvoke.mockResolvedValueOnce(respostaErro(503, { code: 'BOOT_ERROR', message: 'Function failed to start' }));
+    expect(await provisionarSip()).toBeNull();
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+    expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining('Erro ao conectar'));
+    mockInvoke.mockResolvedValueOnce(ok);
+    expect(await provisionarSip()).toEqual(ok.data);
+    expect(mockInvoke).toHaveBeenCalledTimes(2);
+  });
+
+  it('503 sem corpo legível não trava (mas segue com o aviso ao administrador)', async () => {
+    mockInvoke.mockResolvedValue({ data: null, error: { context: new Response('gateway', { status: 503 }) } });
+    await provisionarSip();
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+    expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining('administrador'));
+  });
+
+  it('`até` além do prazo (relógio corrigido / valor adulterado) é ignorado e apagado', async () => {
+    localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, String(Date.now() + 10 * 24 * 3_600_000));
+    mockInvoke.mockResolvedValue(ok);
+    expect(await provisionarSip()).toEqual(ok.data);
+    expect(mockInvoke).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+  });
+
+  it('valor não numérico na trava é ignorado', async () => {
+    localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, 'lixo');
+    mockInvoke.mockResolvedValue(ok);
+    expect(await provisionarSip()).toEqual(ok.data);
+  });
+
+  it('ignorarTrava (pedido explícito) chama a função mesmo travado e solta a trava no sucesso', async () => {
+    localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, String(Date.now() + 60_000));
+    mockInvoke.mockResolvedValue(ok);
+    expect(await provisionarSip()).toBeNull();
+    expect(mockInvoke).not.toHaveBeenCalled();
+    expect(await provisionarSip({ ignorarTrava: true })).toEqual(ok.data);
+    expect(mockInvoke).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+  });
+});
