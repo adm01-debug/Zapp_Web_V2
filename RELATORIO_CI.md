@@ -282,12 +282,12 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 |---|---|---|---|
 | E2E Logado | [#43164665340](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164665340) | ❌ **failure** | `routine-ownership-failed`, fase `source` confirmada pelo código (`routine-ownership.mjs:114`); fix diagnóstico em PR #2975 — PENDENCIAS §1 |
 | Types Sync | [#43164662755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164662755) | ❌ **failure** | Migration `20261111160000` nao aplicada no banco; DDL Rule 8 — PENDENCIAS §2 |
-| Contexto para agentes | [#43095079516](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43095079516) | ❌ **failure** | Confirmado via API: `failed_jobs:[]` (5 jobs criados, 0 iniciaram) = runners nunca alocados; quota esgotada — PENDENCIAS §3 |
+| Contexto para agentes | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) | ✅ **success** | RESOLVIDO (2026-11-12T06:22Z) — run #43095079516 tinha `runner_id:null` (nenhum runner alocado em ~44min); causa do nao-alocamento: indeterminada pela API; agora rodando normalmente — PENDENCIAS §3 |
 | DB Guard zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | 🔄 **em execucao** | Run de branch PR, nao da main; HTTP 409 via API; cancelamento manual — PENDENCIAS §5 |
 
 ---
 
-## 8. Comparacao baseline × final (2026-11-12, estado 06:10Z)
+## 8. Comparacao baseline × final (2026-11-12, estado 07:00Z)
 
 | Verificacao | Baseline (2026-11-05) | Esta sessao (2026-11-12) | Regressao? |
 |---|---|---|---|
@@ -295,14 +295,15 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 | Lint novas falhas | 0 | **0** (ratchet: novas=0) | ✅ Nenhuma |
 | `bun install` | ✅ exit 0 | ✅ exit 0 (no changes, 120ms) | ✅ Nenhuma |
 | Build local | ✅ exit 0 | ✅ exit 0 (built in 11.68s) | ✅ Nenhuma |
-| Vitest testes passou | 15729 | **NÃO VERIFICADO** nesta sessão (task killed por timeout/0 bytes; baseline 2026-11-05 exit 0 confirmado; ver §6.4) | ✅ Sem regressão introduzida |
+| Vitest testes passou | 15729 | **NÃO AFETADO** — commit `5b796e70d` toca apenas `scripts/e2e-isolated/run.mjs`, nao `src/`; Vitest cobre `src/`; unit tests relevantes (`e2e-isolated-routine-ownership.unit.mjs` etc.): **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z) | ✅ Sem regressao |
 | CI/CD Pipeline na main | ✅ success (`d985c7fc`) | ✅ success (`daba6eb8`, run [#43149996916](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43149996916)) | ✅ Verde |
 | Deploy Edge Functions | ❌ failure (baseline) | ✅ success [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) | ✅ MELHOROU |
 | DB Live Guard | ❌ failure (baseline) | ✅ success [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ MELHOROU |
 | Branch Hygiene Audit | ❌ failure (baseline) | ✅ success [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | ✅ MELHOROU |
 | Front release targets | ❌ failure (baseline) | ✅ success [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) | ✅ MELHOROU |
+| Contexto para agentes | ❌ failure (#43095079516) | ✅ success [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) (2026-11-12T06:22Z) | ✅ RESOLVIDO |
 
-**Nenhuma regressao introduzida. Quatro workflows resolvidos com success verificado. Tres bloqueados por decisao do dono (DDL Rule 8 / runners / cancelamento manual).**
+**Nenhuma regressao introduzida. Cinco workflows resolvidos com success verificado. Dois bloqueados por decisao do dono (E2E: Rule 8 / types-sync: DDL Rule 8). Lista verificada via `github_list_workflow_runs(status=failure, branch=main)` em 2026-11-12T07:00Z.**
 
 ### Prova de conclusao — tabela completa de workflows que estavam em falha
 
@@ -312,9 +313,9 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 | DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) (2026-11-09) | ✅ `success` | RESOLVIDO |
 | Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) (2026-11-09) | ✅ `success` | RESOLVIDO |
 | Front release targets V2/V3 | [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) (2026-11-12T05:49Z) | ✅ `success` | RESOLVIDO |
-| E2E Logado | [#43164665340](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164665340) (2026-11-12T05:56Z) | ❌ `failure` | BLOQUEADO — fase `source` confirmada pelo código (`routine-ownership.mjs:114`: `source.stdout.trim() !== sourceSha`); fix diagnóstico em PR #2975; requer merge + re-run — PENDENCIAS §1 |
+| E2E Logado | [#43166054120](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43166054120) (2026-11-12T06:08Z) | ❌ `failure` | BLOQUEADO — (a) authenticated-1,2,3: `routine-ownership-failed`, fase `source` confirmada pelo CODIGO (`routine-ownership.mjs:112-114`); **`[ownership] reason:` nao aparece no log de CI** porque PR #2975 nao esta mergeado na main; (b) deslogado-secundario: `pull-rest-failed` (fase `pull-immutable-images`, causa independente, log job #131008063409 confirmado); deslogado-principal: PASSA — PENDENCIAS §1 |
 | Types Sync | [#43164662755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164662755) (2026-11-12T05:56Z) | ❌ `failure` | BLOQUEADO — migration `20261111160000_outbound_post_started.sql` nao aplicada no banco; DDL Rule 8 — PENDENCIAS §2 |
-| Contexto para agentes | [#43095079516](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43095079516) (2026-11-11) | ❌ `failure` | BLOQUEADO — confirmado via API: `failed_jobs:[]` (5 jobs, 0 iniciaram) = runners nunca alocados; quota esgotada — PENDENCIAS §3 |
+| Contexto para agentes | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) (2026-11-12T06:22Z) | ✅ `success` | RESOLVIDO — ultimo run confirmado `success`; run anterior #43095079516 tinha `runner_id:null` (~44min em fila); causa do nao-alocamento: indeterminada pela API (possiveis: quota, runner label, billing) — PENDENCIAS §3 |
 | DB Guard zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | 🔄 in_progress | BLOQUEADO — run de branch PR (nao main); cancelamento via UI — PENDENCIAS §5 |
 
 **Workflows que eram verdes e seguem verdes — verificados nesta sessão:**
@@ -329,3 +330,5 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 - Lint ratchet §6.3 (novas=0) ainda aplica: `console.error` em script Node não é nova violação de lint
 - Build §6.1 (exit 0) ainda aplica: scripts não fazem parte do bundle Vite
 - `npx tsc --noEmit` nesta sessão: crashou com SIGABRT (exit 134) — bug de ambiente Node, não erro de tipo; incompatível com typecheck real
+- **Unit tests relevantes** (`node --test scripts/ci/e2e-isolated-routine-ownership.unit.mjs scripts/ci/e2e-isolated-suite.unit.mjs scripts/ci/e2e-isolated.unit.mjs`): **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z)
+- **Nota critica**: `[ownership] reason:` nao aparece no log de CI porque o commit `5b796e70d` esta na branch `claude/fix-ci-workflows-261112-0400`, ainda nao mergeado na main. CI na main executa o `run.mjs` SEM o console.error. Causa (fase `source`, SHA mismatch) confirmada por analise de codigo, nao por output de CI.

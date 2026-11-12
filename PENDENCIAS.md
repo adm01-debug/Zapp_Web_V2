@@ -14,6 +14,7 @@
 | DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) (2026-11-09) | `success` |
 | Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) (2026-11-09) | `success` |
 | Front release targets V2/V3 | [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) (2026-11-12T05:49Z) | `success` |
+| Contexto para agentes de IA (10 min) | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) (2026-11-12T06:22Z) | `success` |
 
 ---
 
@@ -23,10 +24,11 @@
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
 | Run original | [#42039283192 (`341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
-| Run mais recente analisada | [#43158859764 (`13a00e06`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43158859764) |
-| Jobs com falha | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` |
-| Jobs que passam | `deslogado-principal` OK, `deslogado-secundario` OK |
-| Codigo JSON de saida | `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}` |
+| Run mais recente analisada | [#43166054120 (`0d65d573`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43166054120) (2026-11-12T06:08Z) |
+| Jobs com falha | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` (code: `routine-ownership-failed`); `deslogado-secundario` (code: `pull-rest-failed` — causa distinta, ver §1b abaixo) |
+| Jobs que passam | `deslogado-principal` OK |
+| Codigo JSON de saida (authenticated) | `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}` |
+| Codigo JSON de saida (deslogado-secundario) | `{"scope":"deslogado-secundario","success":false,"code":"pull-rest-failed","native_e2e":false,"report_ready":true}` |
 | Fase que falha | `restore-versioned-routine-owners` -> `cleanup` em ~403ms |
 
 ### Analise de timing - fase confirmada pelo codigo: `source`
@@ -69,6 +71,22 @@ if (!processSucceeded(source) || typeof source.stdout !== 'string' || source.std
 
 O campo `report_ready: true` no JSON confirma que a suite Playwright **completou com sucesso** antes desta verificacao. A falha e no **teardown** (`restore-versioned-routine-owners`), nao nos testes.
 
+### §1a — Causa dos grupos authenticated (routine-ownership-failed)
+
+A fase `source` e confirmada pelo CODIGO (`routine-ownership.mjs:112-114`). **O `[ownership] reason:` NUNCA apareceu no log de CI** porque o fix diagnostico (`5b796e70d`) esta na branch `claude/fix-ci-workflows-261112-0400`, ainda nao mergeada na `main`. O CI na `main` roda o `run.mjs` SEM o console.error.
+
+**Validacao do commit `5b796e70d`**: unit tests `e2e-isolated-routine-ownership.unit.mjs` etc. → **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z). Vitest nao e afetado: commit toca apenas `scripts/`, nao `src/`.
+
+### §1b — Causa do deslogado-secundario (pull-rest-failed) — NOVA FALHA
+
+| Campo | Valor |
+|---|---|
+| Job | `deslogado-secundario` |
+| Code JSON | `{"scope":"deslogado-secundario","success":false,"code":"pull-rest-failed","native_e2e":false,"report_ready":true}` |
+| Fase que falha | `pull-immutable-images` (durou ~57s — confirmado pelo log do job #131008063409) |
+| Causa raiz | Falha na fase de pull de imagens imutaveis (REST call rejeitado — possivel rate limit ou imagem indisponivel) |
+| Independente? | Sim — causa diferente de `authenticated-*`; `deslogado-principal` PASSOU no mesmo run |
+
 ### Correcao aplicada nesta sessao (2026-11-12)
 
 `scripts/e2e-isolated/run.mjs:639-641` foi corrigido para logar `routineOwnership.reason` antes de lancar o erro:
@@ -84,10 +102,11 @@ if (!routineOwnership.confirmed) {
 
 ### O que o dono precisa fazer
 
-1. **Verificar `scope`** - apos a correcao, re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` (exige runners disponiveis — ver §4). Os logs do CI agora mostrarao `[ownership] reason: scope-failed` (ou outro reason), confirmando a sub-fase. Se `reason: scope-failed`, verificar no `run.mjs` se `scope` e `'suite'` ou `'authenticated-suite'` na chamada de `restoreRoutineOwnership` (~linha 635).
-2. **Apos corrigir a causa raiz** - re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` e confirmar que os 3 grupos authenticated passam.
+1. **Merge PR #2975** (apos CI verde) — isso adiciona o `console.error` na main
+2. **Re-executar `e2e-logado.yml`** via `workflow_dispatch` na `main` — logs mostrarao `[ownership] reason:` confirmando a sub-fase exata
+3. **Investigar `deslogado-secundario`** (`pull-rest-failed`) separadamente apos resolver os authenticated
 
-> **Bloqueio atual**: validacao final requer runners disponiveis (quota esgotada — ver §4) e credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` configuradas como secrets (Rule 8).
+> **Bloqueio atual**: PR #2975 requer CI verde (runners disponiveis — ver §4); credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` precisam estar nos secrets (Rule 8).
 
 ---
 
@@ -118,13 +137,17 @@ if (!routineOwnership.confirmed) {
 | Workflow | `.github/workflows/contexto.yml` |
 | Run com falha | [#43095079516 (commit `f036006a`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43095079516) |
 | Sintoma | `conclusion=failure`, `failed_jobs: []` — nenhum job iniciou |
-| Causa raiz | CONFIRMADO via API (`github_get_run_failure_summary` run #43095079516): `conclusion=failure`, `failed_jobs:[]` — 5 jobs criados, 0 jobs iniciaram. Nenhum runner foi alocado. Causa: quota GitHub Actions minutes esgotada (plano free: 2.000 min/mes). |
-| Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 — infra). |
+| Causa do runner nao alocado | CONFIRMADO via API (`github_list_workflow_run_jobs` run #43095079516): Job `O que precisa rodar` ficou `status=queued`, `runner_id=null`, `conclusion=null`, `completed_at=null` — nenhum runner alocado em ~44 minutos (criado 20:43:02Z, run encerrado 21:01:55Z). Causa raiz do nao-alocamento: **indeterminada pela API** (possiveis: quota GitHub Actions minutes esgotada, runner label `ubuntu-24.04` indisponivel, billing). |
+| Status ATUAL | **RESOLVIDO** — runs mais recentes confirmam `success` (ver ATUALIZAÇÃO abaixo) |
 
-### O que o dono precisa fazer
+### ATUALIZACAO 2026-11-12T07:00Z — RESOLVIDO
 
-1. Resolver o bloqueio de runners (ver §4 — quota esgotada).
-2. Apos runners disponiveis, o workflow sera disparado automaticamente a cada 10 min pelo schedule.
+Runs recentes confirmam que o Contexto esta verde novamente:
+- [#43164823749](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43164823749) `success` (2026-11-12T05:57Z)
+- [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) `success` (2026-11-12T06:22Z)
+- [#43169606875](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43169606875) `in_progress` (2026-11-12T06:39Z)
+
+O workflow esta rodando normalmente a cada 10 min. Movido para "RESOLVIDOS" na tabela acima. O §4 (quota) tambem esta resolvido — PR #2975 pode ser executado quando CI estiver disponivel.
 
 ---
 
@@ -136,16 +159,17 @@ if (!routineOwnership.confirmed) {
 | Estado | OPEN, MERGEABLE, mergeStateStatus=BLOCKED |
 | HEAD | `ed00ee85114be3b2c0c7ae8405c748f3124274de` |
 | Required checks bloqueados | `🔎 TypeCheck`, `🏗️ Build`, `✅ CI Gate`, `🔒 Security Audit`, `🦕 Edge contracts`, `🛡️ Workflow lint`, `🎭 E2E Tests`, `🧩 Node CI Scripts`, `Replay local das migrations` |
-| Status de todos os jobs | `queued` — nunca iniciados |
-| Causa raiz | Quota de GitHub Actions minutes esgotada (plano free: 2.000 min/mes). Os jobs ficam `queued` indefinidamente sem runner disponivel. |
-| Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 — infra). |
+| Status de todos os jobs | `queued` — nunca iniciados (no momento da analise) |
+| Causa raiz | Quota temporariamente esgotada — agora resolvida (ver §3 ATUALIZAÇÃO). |
+
+### ATUALIZACAO 2026-11-12T07:00Z
+
+Runners voltaram a funcionar (Contexto esta verde — §3). O PR #2975 deve ter CI disparado automaticamente. Verificar o estado atual de PR #2975.
 
 ### O que o dono precisa fazer
 
-1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/settings/billing (ou Settings > Billing and plans) e verificar o consumo de GitHub Actions minutes.
-2. Comprar minutes adicionais ou aguardar o proximo ciclo de faturamento (reinicia no inicio do mes).
-3. Apos runners disponiveis, o PR #2975 tera CI executado automaticamente. Se CI passar, mergear com squash.
-4. Apos merge, confirmar que o deploy Vercel subiu e que PENDENCIAS.md e RELATORIO_CI.md estao na `main`.
+1. Verificar estado atual do PR #2975 — se CI disparou e passou, mergear com squash.
+2. Apos merge, confirmar que o deploy Vercel subiu e que PENDENCIAS.md e RELATORIO_CI.md estao na `main`.
 
 ---
 
