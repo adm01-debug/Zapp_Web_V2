@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "491a75d9faabf6d5bc3d835ff3b12021f0ac2034",
+  "commit": "623f37bc13308554b1218383845e81dd6609065d",
   "branch": "main",
-  "data_commit": "2026-11-12T06:47:48Z",
+  "data_commit": "2026-11-12T04:17:37-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "623f37b",
+    "data": "2026-11-12",
+    "assunto": "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)"
+   },
    {
     "sha": "491a75d",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "90a4327",
     "data": "2026-11-11",
     "assunto": "fix(tarefas): exigirLocal normaliza case do host antes da guarda local (#2953)"
-   },
-   {
-    "sha": "a6b4ffb",
-    "data": "2026-11-11",
-    "assunto": "fix(db): host local com caixa diferente não é mais tratado como remoto (#2949)"
    }
   ],
   "arquivos_mudados_7d": 652,
@@ -198,16 +198,16 @@
   ],
   "arquivos_mais_mudados_90d": [
    {
-    "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 14
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
     "mudancas": 14
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 14
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 13
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -238,10 +238,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 9
-   },
-   {
     "arquivo": "ESTADO.md",
     "mudancas": 9
    },
@@ -256,6 +252,10 @@
    {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 9
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 8
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",

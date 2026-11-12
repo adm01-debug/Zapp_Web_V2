@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "491a75d9faabf6d5bc3d835ff3b12021f0ac2034",
+  "sha": "623f37bc13308554b1218383845e81dd6609065d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 06:54 UTC",
+  "generated_at": "2026-11-12 07:19 UTC",
   "files_total": 8256,
   "code_files": 6089,
   "code_lines": 1059213
@@ -387628,10 +387628,20 @@
   }
  },
  "git": {
-  "sha": "491a75d9faabf6d5bc3d835ff3b12021f0ac2034",
+  "sha": "623f37bc13308554b1218383845e81dd6609065d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "623f37b",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)",
+    "files": [
+     "supabase/deployment-manifest.json",
+     "supabase/functions/gmail-oauth/index.ts"
+    ]
+   },
    {
     "sha": "491a75d",
     "date": "2026-11-12",
@@ -387979,19 +387989,13 @@
      "scripts/talkx/gen-estados.mjs",
      "scripts/talkx/gen-estados.unit.mjs"
     ]
-   },
-   {
-    "sha": "15ff5f3",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(ai-context): --out colidindo com diretório real não é mais silencioso (#2941)",
-    "files": [
-     "scripts/ai-context/gerar.mjs",
-     "scripts/ai-context/gerar.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "supabase/deployment-manifest.json",
+    3
+   ],
    [
     "scripts/tarefas/seed-local-imagens.unit.mjs",
     2
@@ -388005,16 +388009,16 @@
     2
    ],
    [
-    "supabase/deployment-manifest.json",
-    2
-   ],
-   [
     "scripts/db-audit/grants-baseline.json",
     2
    ],
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "supabase/functions/gmail-oauth/index.ts",
+    1
    ],
    [
     "scripts/e2e-isolated/routine-ownership.mjs",
@@ -388066,10 +388070,6 @@
    ],
    [
     "scripts/catalog/README.md",
-    1
-   ],
-   [
-    "scripts/catalog/validate-plan.unit.mjs",
     1
    ]
   ]
