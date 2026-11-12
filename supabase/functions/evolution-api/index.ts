@@ -1084,6 +1084,20 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       if (isGoFlavor) return goActionNotSupported('find-chats', corsHeaders);
       return await proxy(`/chat/findChats/${instance}`, 'POST', { where: body.where || {} });
     }
+    // Status/Stories do contato (aba Status do ContactDetails, `useWhatsAppStatus`).
+    // Saiu por engano no #2054 junto com rotas legadas sem chamador — esta TEM
+    // chamador, e a Edge passou a responder 404 "Unknown action" a cada abertura
+    // do painel. Mesmo contrato de antes: array de registros (`[]` quando não há),
+    // `{ error: true }` do provedor repassado com 200, e GO sem histórico.
+    if (action === 'find-status-messages') {
+      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);
+      const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: body.offset ?? 200 });
+      const data = await response.json();
+      if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const records = Array.isArray(data?.messages?.records) ? data.messages.records : [];
+      return new Response(JSON.stringify(records), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
     if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
     if (action === 'get-media-base64') return await proxy(`/chat/getBase64FromMediaMessage/${instance}`, 'POST', { message: body.message, convertToMp4: body.convertToMp4 ?? false });

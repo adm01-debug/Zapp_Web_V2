@@ -1469,3 +1469,62 @@ Deno.test("revisão: offer-call com callDuration=60 passa e vai a /call/offer", 
     await fake.stop();
   }
 });
+
+// Console de produção (12/11): `POST evolution-api/find-status-messages → 404`
+// ao abrir o ContactDetails. A rota saiu do roteador no #2054 e caía no
+// "Unknown action"; o `useWhatsAppStatus` continua chamando.
+Deno.test("find-status-messages (v2, admin): lê status@broadcast e devolve o array de registros", async () => {
+  const fake = createInstanceReadFake(() => ({ messages: { records: [{ id: "s1", key: { remoteJid: "status@broadcast" } }] } }));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", page: 1, offset: 200 }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200, "a rota existe: nada de 404 'Unknown action'");
+    const json = await res.json();
+    assert(Array.isArray(json), "contrato: array de registros");
+    assertEquals(json.length, 1);
+    assert(
+      fake.requests.some((r) => r.method === "POST" && r.path === "/chat/findMessages/PRINCIPAL"),
+      "deve consultar /chat/findMessages da instância",
+    );
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("find-status-messages (GO): notSupported com 200, sem I/O no provedor", async () => {
+  const fake = createInstanceReadFake(() => ({}));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json.notSupported, true);
+    assert(!fake.requests.some((r) => r.path.startsWith("/chat/findMessages")), "GO não tem findMessages");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("find-status-messages sem papel devolve 403 (leitura instance-wide)", async () => {
+  const fake = createInstanceReadFake(() => ({}));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 403);
+    assertEquals(fake.requests.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});
