@@ -13,11 +13,11 @@
 | Deploy Edge Functions | [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) (2026-11-12) | `success` |
 | DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) (2026-11-09) | `success` |
 | Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) (2026-11-09) | `success` |
-| Front release targets V2/V3 | [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) (2026-11-12) | `success` |
+| Front release targets V2/V3 | [#43163880482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43163880482) (2026-11-12T05:49Z) | `success` |
 
 ---
 
-## 1. E2E logado - routine-ownership-failed (sub-fase: source)
+## 1. E2E logado - routine-ownership-failed (sub-fase: scope)
 
 | Campo | Valor |
 |---|---|
@@ -29,7 +29,7 @@
 | Codigo JSON de saida | `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}` |
 | Fase que falha | `restore-versioned-routine-owners` -> `cleanup` em ~403ms |
 
-### Analise de timing - sub-fase identificada
+### Analise de timing - sub-fase identificada: `scope`
 
 Logs do job `authenticated-1-of-3` (run #43148791130, job ID 130952813356):
 ```
@@ -44,14 +44,32 @@ A funcao `restoreRoutineOwnership` (`scripts/e2e-isolated/routine-ownership.mjs:
 
 | Fase | I/O | Tempo tipico | Compativel com 403ms? |
 |---|---|---|---|
-| `scope` | Nenhum (validacao de parametros) | < 1ms | Sim |
-| `source` | `git rev-parse HEAD` | ~50-200ms | **Sim** |
+| `scope` | Nenhum (validacao de parametros) | < 1ms | **Sim** |
+| `source` | `git rev-parse HEAD` | ~50-200ms | Sim |
 | `container` | `docker inspect` x 2 | 500ms-2s | Nao |
 | `volume` | `docker volume inspect` | 200ms-1s | Nao |
 | `namespace` | `docker exec readlink` | 200ms-1s | Nao |
 | `sql-process` | `docker exec psql` | 1-5s | Nao |
 
-**Analise**: fase `scope` descartada — todas as 12 condicoes foram verificadas e nenhuma pode ser TRUE para grupos authenticated normais (scope='suite' sempre, CIDs validos, etc). **Causa suspeita: fase `source`** — `invoke('git', ['rev-parse', 'HEAD'])` retorna SHA diferente de `sourceSha` capturado em `run.mjs:445`.
+**Conclusao: a falha ocorre na fase `scope` (mais provavel) ou `source`. Fases com Docker estao descartadas pelo timing.**
+
+### Condicao da fase `scope` (linhas 100-103 de `routine-ownership.mjs`)
+
+```javascript
+if (scope !== 'suite' || !isAuthenticatedGroup(group) || !CID.test(anchorId) || !CID.test(databaseId)
+    || anchorId === databaseId || !IMAGE.test(anchorImage) || !IMAGE.test(databaseImage)
+    || volumeName !== runId + '-postgres' || !NET.test(networkNamespace)
+    || !(allowedWritableSources instanceof Set) || typeof dockerConfig !== 'string'
+    || !dockerConfig.startsWith('/')) reject();
+```
+
+Hipoteses (da mais provavel para a menos):
+
+| Check | Hipotese |
+|---|---|
+| `scope !== 'suite'` | A variavel `scope` em `run.mjs:635` para grupos authenticated pode ser `'authenticated-suite'` em vez de `'suite'` |
+| `anchorId === databaseId` | Grupos authenticated podem receber os mesmos container IDs para anchor e database |
+| `volumeName !== runId + '-postgres'` | Volume criado com nome diferente quando ha autenticacao |
 
 ### `report_ready: true` - testes completaram; falha e no teardown
 
@@ -72,10 +90,10 @@ if (!routineOwnership.confirmed) {
 
 ### O que o dono precisa fazer
 
-1. **Apos merge do PR #2975** - re-executar `e2e-logado.yml` via `workflow_dispatch` na `main`. Os logs mostrao `[ownership] reason: source-failed` confirmando a sub-fase. Verificar no `run.mjs` (~linha 445) se `sourceSha` e capturado corretamente ou se ha SHA mismatch entre o que foi commitado e o que `git rev-parse HEAD` retorna dentro da funcao.
+1. **Verificar `scope`** - apos a correcao, re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` (exige runners disponiveis — ver §4). Os logs do CI agora mostrarao `[ownership] reason: scope-failed` (ou outro reason), confirmando a sub-fase. Se `reason: scope-failed`, verificar no `run.mjs` se `scope` e `'suite'` ou `'authenticated-suite'` na chamada de `restoreRoutineOwnership` (~linha 635).
 2. **Apos corrigir a causa raiz** - re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` e confirmar que os 3 grupos authenticated passam.
 
-> **Bloqueio atual**: PR #2975 aguarda CI (quota esgotada — ver §4). Apos merge, re-executar para colher o log com `[ownership] reason`.
+> **Bloqueio atual**: validacao final requer runners disponiveis (quota esgotada — ver §4) e credenciais `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` configuradas como secrets (Rule 8).
 
 ---
 
@@ -88,7 +106,7 @@ if (!routineOwnership.confirmed) {
 | Erro exato | Gate 2 (usage-guard): 2 novas violacoes — RPCs chamadas no codigo nao existem no banco |
 | Violacao 1 | `src/hooks/delivery/useUnconfirmedMessages.ts:57` chama `.rpc('resolve_unconfirmed_message')` |
 | Violacao 2 | `supabase/functions/message-delivery/index.ts:711` chama `.rpc('mark_outbound_post_started')` |
-| Causa raiz | `supabase/migrations/20261111160000_outbound_post_started.sql` esta na `main` mas **nao foi aplicada no banco de producao**. O banco saltou direto para `20261111181000_instance_pause_investigation.sql`. Verificado via query: `SELECT routine_name FROM information_schema.routines WHERE routine_name IN ('resolve_unconfirmed_message', 'mark_outbound_post_started')` retornou 0 linhas. |
+| Causa raiz | `supabase/migrations/20261111160000_outbound_post_started.sql` esta na `main` mas **nao foi aplicada no banco de producao**. O banco pulou direto para `20261111181000_instance_pause_investigation.sql`. As funcoes que a migration cria (`mark_outbound_post_started`, `resolve_unconfirmed_message`) nao existem no schema. |
 | Por que nao posso corrigir | DDL em banco de producao — Rule 8. |
 
 ### O que o dono precisa fazer
@@ -111,7 +129,7 @@ if (!routineOwnership.confirmed) {
 
 ### O que o dono precisa fazer
 
-1. Resolver o bloqueio de runners (ver §4).
+1. Resolver o bloqueio de runners (ver §4 — quota esgotada).
 2. Apos runners disponiveis, o workflow sera disparado automaticamente a cada 10 min pelo schedule.
 
 ---
@@ -121,10 +139,10 @@ if (!routineOwnership.confirmed) {
 | Campo | Valor |
 |---|---|
 | PR | [#2975](https://github.com/adm01-debug/Zapp_Web_V2/pull/2975) |
-| Estado | OPEN, MERGEABLE, mergeStateStatus=BEHIND |
-| HEAD | `e972e44a233d41e4f0f0ef761c62b18e5cc615ee` |
-| CI Gate | `success` (verificado — apenas E2E ainda pendente) |
-| Required checks bloqueados | `🎭 E2E Tests (Playwright)` e demais checks em fila |
+| Estado | OPEN, MERGEABLE, mergeStateStatus=BLOCKED |
+| HEAD | `ed00ee85114be3b2c0c7ae8405c748f3124274de` |
+| Required checks bloqueados | `🔎 TypeCheck`, `🏗️ Build`, `✅ CI Gate`, `🔒 Security Audit`, `🦕 Edge contracts`, `🛡️ Workflow lint`, `🎭 E2E Tests`, `🧩 Node CI Scripts`, `Replay local das migrations` |
+| Status de todos os jobs | `queued` — nunca iniciados |
 | Causa raiz | Quota de GitHub Actions minutes esgotada (plano free: 2.000 min/mes). Os jobs ficam `queued` indefinidamente sem runner disponivel. |
 | Por que nao posso corrigir | Envolve billing/quota de CI (AGENTS.md regra 8 — infra). |
 
