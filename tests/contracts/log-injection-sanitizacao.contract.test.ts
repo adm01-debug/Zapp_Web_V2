@@ -17,7 +17,7 @@ import { describe, expect, it } from 'vitest';
 
 const SUITES = [
   'scripts/qa/prova-visao-classificadores.unit.mjs',
-  'scripts/team-chat-db-validate.unit.mjs',
+  'scripts/team-chat/team-chat-db-validate.unit.mjs',
 ];
 
 describe('contrato: sanitizacao de log nos scripts de CLI', () => {

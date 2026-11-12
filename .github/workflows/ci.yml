@@ -171,7 +171,7 @@ jobs:
           scripts/talkx/lado-a-lado.unit.mjs
           scripts/talkx/v4-status.unit.mjs
           scripts/tarefas/seed-local-imagens.unit.mjs
-          scripts/team-chat-db-validate.unit.mjs
+          scripts/team-chat/team-chat-db-validate.unit.mjs
           scripts/ui-audit/contacts-navy-header.unit.mjs
           scripts/ui-audit/layout-guard.unit.mjs
           scripts/ui-audit/view-container-padding.unit.mjs
