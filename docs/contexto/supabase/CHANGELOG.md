@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-12 02:15 UTC
+
+- **functions** alterado (3): `public.talkx_campaign_queue_by_segment(p_campaign_id uuid)`, `public.talkx_campaign_ranking(p_limit integer, p_metric text)`, `public.talkx_top_segments(p_limit integer)`
+
 ## 2026-11-12 01:38 UTC
 
 - **functions** alterado (3): `public.get_profile_id_for_user(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.mark_pause_investigated(p_pause_id uuid, p_notes text)`

@@ -32479,6 +32479,16 @@
    "usada_em": 1
   },
   {
+   "nome": "talkx_campaign_queue_by_segment",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "talkx_campaign_ranking",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "talkx_campaign_recipients_page",
    "definida": true,
    "usada_em": 1
@@ -32542,6 +32552,11 @@
    "nome": "talkx_suppress_contact",
    "definida": true,
    "usada_em": 2
+  },
+  {
+   "nome": "talkx_top_segments",
+   "definida": true,
+   "usada_em": 1
   },
   {
    "nome": "talkx_upsert_link",

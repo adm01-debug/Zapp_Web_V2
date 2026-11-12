@@ -64411,8 +64411,13 @@
       {
         "args": "p_campaign_id uuid",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "src/components/talkx/report/TalkXCampaignReport.tsx",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -64441,8 +64446,13 @@
       {
         "args": "p_limit integer, p_metric text",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "src/components/talkx/TalkXAnalytics.tsx",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -66038,8 +66048,13 @@
       {
         "args": "p_limit integer",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "src/components/talkx/TalkXAnalytics.tsx",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],

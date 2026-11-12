@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "bd62fc9d9771a079b712d532d66adbddfb9576bb",
+  "sha": "7e128bc40305aa6917aec53a822fcc9c70098771",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 01:38 UTC",
-  "files_total": 8240,
-  "code_files": 6086,
-  "code_lines": 1058698
+  "generated_at": "2026-11-12 02:14 UTC",
+  "files_total": 8241,
+  "code_files": 6087,
+  "code_lines": 1059033
  },
  "version": "1.3.2",
- "facts_hash": "4609536ef16289ca",
+ "facts_hash": "7a904cc2b3ec4c82",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -317,7 +317,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2341,
+   ".tsx": 2342,
    ".ts": 1892,
    ".sql": 1303,
    ".mjs": 431,
@@ -65222,7 +65222,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2178,
+  "components_count": 2179,
   "hooks": [
    {
     "name": "useContacts",
@@ -68341,8 +68341,8 @@
   },
   {
    "module": "src/components",
-   "files": 2178,
-   "lines": 371525,
+   "files": 2179,
+   "lines": 371860,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -75563,6 +75563,12 @@
    "talkx_benchmarks": [
     "src/components/talkx/TalkXCampaignPaused.tsx"
    ],
+   "talkx_campaign_queue_by_segment": [
+    "src/components/talkx/report/TalkXCampaignReport.tsx"
+   ],
+   "talkx_campaign_ranking": [
+    "src/components/talkx/TalkXAnalytics.tsx"
+   ],
    "talkx_campaign_recipients_page": [
     "src/components/talkx/tracking/TalkXRecipientsTable.tsx"
    ],
@@ -75606,6 +75612,9 @@
    "talkx_suppress_contact": [
     "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
     "supabase/functions/_shared/evolution-webhook-messages.ts"
+   ],
+   "talkx_top_segments": [
+    "src/components/talkx/TalkXAnalytics.tsx"
    ],
    "talkx_upsert_link": [
     "src/hooks/integrations/useTalkXLinks.ts"
@@ -90145,6 +90154,10 @@
    {
     "file": "src/components/talkx/links/TalkXLinksManager.tsx",
     "text": "autoridade: se a regra mudar, a RPC recusa e o erro aparece em toast."
+   },
+   {
+    "file": "src/components/talkx/report/TalkXCampaignReport.tsx",
+    "text": "não pode afunilar ao contrário."
    },
    {
     "file": "src/components/talkx/report/talkxReportCharts.ts",
@@ -160830,6 +160843,18 @@
     "name": "erro da RPC na tela real vira estado de erro, não "
    },
    {
+    "file": "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
+    "name": "Ranking de campanhas (RPC sem filtros da tela)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
+    "name": "o título diz a janela e o alcance reais: "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
+    "name": "erro do ranking aparece como estado de erro com "
+   },
+   {
     "file": "src/components/talkx/__tests__/TalkXAnalytics.rotulos.test.tsx",
     "name": "rótulos do Analytics (R2-MOD-037)"
    },
@@ -165396,6 +165421,26 @@
    {
     "file": "src/components/talkx/kit/__tests__/useFilterState.test.ts",
     "name": "(extra) período e busca persistem; custom é válido"
+   },
+   {
+    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+    "name": "TalkXCampaignReport — funil por segmento (X058)"
+   },
+   {
+    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+    "name": "sem segmento escolhido o funil usa os totais da campanha"
+   },
+   {
+    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+    "name": "escolher um segmento troca os números do funil e zera Cliques para sem dados"
+   },
+   {
+    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+    "name": "destinatários sem segmento viram item próprio e filtram pela linha deles"
+   },
+   {
+    "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+    "name": "Enviadas do segmento soma sent + delivered: todos entregues (sent=0) não deixa Enviadas < Entregues"
    },
    {
     "file": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
@@ -306611,12 +306656,14 @@
   },
   "src/components/talkx/TalkXAnalytics.tsx": {
    "path": "src/components/talkx/TalkXAnalytics.tsx",
-   "lines": 657,
+   "lines": 728,
    "exports": [
     "function TalkXAnalytics"
    ],
    "rpc": [
-    "talkx_overview_stats"
+    "talkx_campaign_ranking",
+    "talkx_overview_stats",
+    "talkx_top_segments"
    ],
    "status_values": [
     {
@@ -308365,7 +308412,7 @@
   },
   "src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx",
-   "lines": 280,
+   "lines": 285,
    "is_test": true,
    "tests": [
     "TalkXAnalytics — filtros e KPIs da RPC (X185)",
@@ -308382,8 +308429,15 @@
   },
   "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
-   "lines": 311,
+   "lines": 345,
    "is_test": true,
+   "calc_fns": [
+    {
+     "name": "rankingCalls",
+     "params": "",
+     "body": "rpcMock.mock.calls.filter((c) => c[0] === 'talkx_campaign_ranking').length;"
+    }
+   ],
    "tests": [
     "AnalyticsPerformanceChart — séries diárias (X186)",
     "30 pontos diários viram 4 séries, com o dia do tooltip rotulado ",
@@ -308396,7 +308450,10 @@
     "zero medido não é confundido com fonte nula",
     "TalkXAnalytics — funil e gráfico na tela (X186)",
     "renderiza o gráfico de 3 séries com a nota, o funil proporcional e o período próprio ligado à RPC",
-    "erro da RPC na tela real vira estado de erro, não "
+    "erro da RPC na tela real vira estado de erro, não ",
+    "Ranking de campanhas (RPC sem filtros da tela)",
+    "o título diz a janela e o alcance reais: ",
+    "erro do ranking aparece como estado de erro com "
    ]
   },
   "src/components/talkx/__tests__/TalkXAnalytics.rotulos.test.tsx": {
@@ -311526,12 +311583,13 @@
   },
   "src/components/talkx/report/TalkXCampaignReport.tsx": {
    "path": "src/components/talkx/report/TalkXCampaignReport.tsx",
-   "lines": 306,
+   "lines": 365,
    "exports": [
     "interface TalkXCampaignReportProps",
     "function TalkXCampaignReport"
    ],
    "rpc": [
+    "talkx_campaign_queue_by_segment",
     "talkx_campaign_report"
    ],
    "params": [
@@ -311539,6 +311597,9 @@
      "name": "DEFAULT_TIMEZONE",
      "value": "'America/Sao_Paulo'"
     }
+   ],
+   "rule_comments": [
+    "não pode afunilar ao contrário."
    ]
   },
   "src/components/talkx/report/TalkXReportFunnel.tsx": {
@@ -311635,6 +311696,18 @@
      "name": "REPORT_SAMPLE_LIMIT",
      "value": "20"
     }
+   ]
+  },
+  "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx": {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+   "lines": 166,
+   "is_test": true,
+   "tests": [
+    "TalkXCampaignReport — funil por segmento (X058)",
+    "sem segmento escolhido o funil usa os totais da campanha",
+    "escolher um segmento troca os números do funil e zera Cliques para sem dados",
+    "destinatários sem segmento viram item próprio e filtram pela linha deles",
+    "Enviadas do segmento soma sent + delivered: todos entregues (sent=0) não deixa Enviadas < Entregues"
    ]
   },
   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx": {
@@ -387724,10 +387797,24 @@
   }
  },
  "git": {
-  "sha": "bd62fc9d9771a079b712d532d66adbddfb9576bb",
+  "sha": "7e128bc40305aa6917aec53a822fcc9c70098771",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7e128bc",
+    "date": "2026-11-11",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): conectar RPCs analytics ao front — ranking, top segmentos e segmentos do relatório",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXAnalytics.tsx",
+     "src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx",
+     "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
+     "src/components/talkx/report/TalkXCampaignReport.tsx",
+     "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx"
+    ]
+   },
    {
     "sha": "bd62fc9",
     "date": "2026-11-11",
@@ -388051,16 +388138,6 @@
      "scripts/ci/front-release-targets.unit.mjs",
      "scripts/vercel/verify-release-targets.mjs"
     ]
-   },
-   {
-    "sha": "b2967b4",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(ci): bundle-budget reconhece atributos HTML com aspas simples (#2937)",
-    "files": [
-     "scripts/ci/bundle-budget.mjs",
-     "scripts/ci/bundle-budget.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388093,6 +388170,30 @@
     2
    ],
    [
+    "docs/talkx/ESTADOS.md",
+    1
+   ],
+   [
+    "src/components/talkx/TalkXAnalytics.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/report/TalkXCampaignReport.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+    1
+   ],
+   [
     "docs/DB-INVENTORY.md",
     1
    ],
@@ -388118,30 +388219,6 @@
    ],
    [
     "src/services/instance-pauses.service.ts",
-    1
-   ],
-   [
-    "supabase/migrations/20261111181000_instance_pause_investigation.sql",
-    1
-   ],
-   [
-    "scripts/maintenance/lib.mjs",
-    1
-   ],
-   [
-    "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
-    1
-   ],
-   [
-    "scripts/db-audit/talkx-suppression-reasons.smoke.sh",
-    1
-   ],
-   [
-    "src/integrations/supabase/types.ts",
-    1
-   ],
-   [
-    "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
     1
    ]
   ]

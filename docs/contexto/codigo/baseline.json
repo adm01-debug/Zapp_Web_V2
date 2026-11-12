@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bd62fc9d9771a079b712d532d66adbddfb9576bb",
+  "commit": "7e128bc40305aa6917aec53a822fcc9c70098771",
   "branch": "main",
-  "data_commit": "2026-11-11T20:35:56-03:00",
+  "data_commit": "2026-11-11T22:29:42-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7e128bc",
+    "data": "2026-11-11",
+    "assunto": "feat(talkx): conectar RPCs analytics ao front — ranking, top segmentos e segmentos do relatório"
+   },
    {
     "sha": "bd62fc9",
     "data": "2026-11-11",
@@ -126,14 +131,9 @@
     "sha": "b50be19",
     "data": "2026-11-11",
     "assunto": "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)"
-   },
-   {
-    "sha": "a7f9d03",
-    "data": "2026-11-11",
-    "assunto": "fix(db-tests): corpo de erro do RPC podia forjar linha de resultado no log (#2952)"
    }
   ],
-  "arquivos_mudados_7d": 628,
+  "arquivos_mudados_7d": 632,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 263
+    "mudancas": 268
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -286,15 +286,15 @@
     "mudancas": 7
    },
    {
+    "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 7
+   },
+   {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 7
    },
    {
     "arquivo": "scripts/edge-deploy/health-check.mjs",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/supabase_snapshot/snapshot.py",
     "mudancas": 7
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8398,
-  "arquivos_codigo": 4811,
-  "linhas_codigo": 890700,
+  "arquivos_total": 8399,
+  "arquivos_codigo": 4812,
+  "linhas_codigo": 891035,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1103,
   "cron_jobs": 26,
-  "testes": 2614,
+  "testes": 2615,
   "workflows": 21,
   "scripts": 427,
   "docs_md": 1073
@@ -703,8 +703,8 @@
    "linhas": 616
   },
   "src/components": {
-   "arquivos": 2178,
-   "linhas": 371525
+   "arquivos": 2179,
+   "linhas": 371860
   },
   "src/config": {
    "arquivos": 3,

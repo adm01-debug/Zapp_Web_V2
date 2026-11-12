@@ -4152,6 +4152,7 @@
     "talk_me_list_queues",
     "talk_me_list_waiting",
     "talkx_benchmarks",
+    "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
     "talkx_campaign_resume_precheck",
@@ -4159,6 +4160,7 @@
     "talkx_engine_window_open",
     "talkx_overview_stats",
     "talkx_suppress_contact",
+    "talkx_top_segments",
     "talkx_upsert_link",
     "toggle_team_reaction",
     "transfer_conversation",
@@ -6874,8 +6876,8 @@
   {
    "modulo": "components/talkx",
    "arquivos": 100,
-   "testes": 145,
-   "linhas": 23581,
+   "testes": 146,
+   "linhas": 23711,
    "itens_menu": [
     "Campanhas"
    ],
@@ -7019,6 +7021,8 @@
     "retry_talkx_recipients",
     "search_contacts",
     "talkx_benchmarks",
+    "talkx_campaign_queue_by_segment",
+    "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
     "talkx_campaign_resume_precheck",
@@ -7027,6 +7031,7 @@
     "talkx_help_top_topics",
     "talkx_overview_stats",
     "talkx_suppress_contact",
+    "talkx_top_segments",
     "talkx_upsert_link",
     "update_talkx_template_with_snapshot",
     "user_has_permission"
@@ -7081,11 +7086,14 @@
     "rpcs": [
      "retry_talkx_recipients",
      "talkx_benchmarks",
+     "talkx_campaign_queue_by_segment",
+     "talkx_campaign_ranking",
      "talkx_campaign_recipients_page",
      "talkx_campaign_report",
      "talkx_help_top_topics",
      "talkx_overview_stats",
-     "talkx_suppress_contact"
+     "talkx_suppress_contact",
+     "talkx_top_segments"
     ]
    },
    "importado_por_outros_modulos": [
@@ -12533,6 +12541,7 @@
     "talk_me_list_queues",
     "talk_me_list_waiting",
     "talkx_benchmarks",
+    "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
     "talkx_campaign_resume_precheck",
@@ -12540,6 +12549,7 @@
     "talkx_engine_window_open",
     "talkx_overview_stats",
     "talkx_suppress_contact",
+    "talkx_top_segments",
     "talkx_upsert_link",
     "toggle_team_reaction",
     "transfer_conversation",
@@ -14747,6 +14757,7 @@
     "talk_me_list_queues",
     "talk_me_list_waiting",
     "talkx_benchmarks",
+    "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
     "talkx_campaign_resume_precheck",
@@ -14754,6 +14765,7 @@
     "talkx_engine_window_open",
     "talkx_overview_stats",
     "talkx_suppress_contact",
+    "talkx_top_segments",
     "talkx_upsert_link",
     "toggle_team_reaction",
     "transfer_conversation",
@@ -16005,6 +16017,7 @@
     "talk_me_list_queues",
     "talk_me_list_waiting",
     "talkx_benchmarks",
+    "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
     "talkx_campaign_resume_precheck",
@@ -16012,6 +16025,7 @@
     "talkx_engine_window_open",
     "talkx_overview_stats",
     "talkx_suppress_contact",
+    "talkx_top_segments",
     "talkx_upsert_link",
     "toggle_team_reaction",
     "transfer_conversation",

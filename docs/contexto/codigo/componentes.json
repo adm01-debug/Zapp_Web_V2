@@ -10995,7 +10995,7 @@
     "TalkXCampaignReportProps"
    ],
    "export_default": null,
-   "linhas": 306,
+   "linhas": 365,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useDownloadPermission"
@@ -11133,7 +11133,7 @@
     "TalkXAnalytics"
    ],
    "export_default": null,
-   "linhas": 657,
+   "linhas": 728,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useActiveDepartments",

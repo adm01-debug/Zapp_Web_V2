@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2614,
+ "total": 2615,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2321
+  "unit": 2322
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1957
+   "arquivos": 1958
   },
   {
    "padrao": "outro",
@@ -11473,7 +11473,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx",
    "tipo": "unit",
-   "linhas": 280,
+   "linhas": 285,
    "testa": [
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/talkxAnalyticsFilters.ts",
@@ -11484,14 +11484,14 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
    "tipo": "unit",
-   "linhas": 311,
+   "linhas": 345,
    "testa": [
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/analytics/AnalyticsFunnel.tsx",
     "src/components/talkx/analytics/AnalyticsPerformanceChart.tsx",
     "src/hooks/integrations/useTalkX.ts"
    ],
-   "casos": 9
+   "casos": 11
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXAnalytics.rotulos.test.tsx",
@@ -12744,6 +12744,17 @@
     "src/components/talkx/kit/useFilterState.ts"
    ],
    "casos": 6
+  },
+  {
+   "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx",
+   "tipo": "unit",
+   "linhas": 166,
+   "testa": [
+    "src/components/talkx/report/TalkXCampaignReport.tsx",
+    "src/components/talkx/report/talkxReportCharts.ts",
+    "src/hooks/integrations/useTalkX.ts"
+   ],
+   "casos": 4
   },
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
@@ -24502,11 +24513,11 @@
   "src/components/talkx/kit/table.tsx": 1,
   "src/components/talkx/kit/useFilterState.ts": 1,
   "src/components/talkx/links/TalkXLinksManager.tsx": 1,
-  "src/components/talkx/report/TalkXCampaignReport.tsx": 1,
+  "src/components/talkx/report/TalkXCampaignReport.tsx": 2,
   "src/components/talkx/report/TalkXReportFunnel.tsx": 1,
   "src/components/talkx/report/TalkXReportHeatmap.tsx": 1,
   "src/components/talkx/report/TalkXReportPerformance.tsx": 1,
-  "src/components/talkx/report/talkxReportCharts.ts": 3,
+  "src/components/talkx/report/talkxReportCharts.ts": 4,
   "src/components/talkx/report/talkxReportData.ts": 1,
   "src/components/talkx/segments/RuleRow.tsx": 2,
   "src/components/talkx/segments/SegmentSideList.tsx": 1,
@@ -24859,7 +24870,7 @@
   "src/hooks/integrations/useMultiplixReplies.ts": 1,
   "src/hooks/integrations/usePersonalStickers.ts": 3,
   "src/hooks/integrations/useQuarantineMedia.ts": 4,
-  "src/hooks/integrations/useTalkX.ts": 24,
+  "src/hooks/integrations/useTalkX.ts": 25,
   "src/hooks/integrations/useTalkXAnalytics.ts": 3,
   "src/hooks/integrations/useTalkXCampaignList.ts": 1,
   "src/hooks/integrations/useTalkXCampaignSummary.ts": 1,
