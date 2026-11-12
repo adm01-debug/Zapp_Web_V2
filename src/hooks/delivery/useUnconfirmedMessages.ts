@@ -33,7 +33,10 @@ export function useUnconfirmedMessages(
         .select('id, content, created_at, delivery_post_started_at, status, contact_id, agent_id')
         .eq('sender', 'agent')
         .not('delivery_post_started_at', 'is', null)
-        .not('status', 'in', '("sent","delivered","read")')
+        // Só 'sending' é ambígua: 'failed' com carimbo é resultado DEFINITIVO (recusa 4xx
+        // do provedor em fail_outbound_message, ERROR do webhook ou "não entregue" já
+        // resolvido aqui) e não pode virar "entregue" à mão.
+        .eq('status', 'sending')
         .is('manually_resolved_at', null)
         .lt('delivery_post_started_at', threshold)
         .order('created_at', { ascending: false });

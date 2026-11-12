@@ -216,8 +216,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 26272,
-      "sha256": "787214dd32ff1edc8df8e89c0322bc66f5e1bb62a78967266bdee3667279ab67"
+      "bytes": 26338,
+      "sha256": "3d1c93c5a81db6a8be4ca0ab75789a098b83da6829e98686e98ae93e7588a3c6"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -706,8 +706,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 36607,
-      "sha256": "5ea7d2b1028d244604ffcbe296e6ae6403233b6396d6cc8fee4175ac0f89b2ca"
+      "bytes": 37385,
+      "sha256": "12b53538035eeacc9abddf1a43d17ce3f20696a33657110d0785ab781faadeba"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -1959,7 +1959,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "8c7f248028c195be31f12babe749061830e4eb2b53457effafd094f2f3706b73",
+      "source_sha256": "14f0bbcdb153db84317932a070c98daba71f475652d1594b711093519d82e99c",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-jobs.ts",
@@ -2193,7 +2193,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a1ae3f885190f574efed7fb4cb4a6679feab6597e5941b01f801553996ae85d0",
+      "source_sha256": "722de08b653282823b925dc184b1738662dab36248e5ab4cec21e177a5ae0860",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2782,5 +2782,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d3d065dc6ec8f1a6e70e0cf4be2eb8d02730c12ff9eb2af76228ee137c7764fa"
+  "manifest_sha256": "58b5b9b8416246631a5bf5101edd7eec188251328f7f29a938460f50fec5a6da"
 }

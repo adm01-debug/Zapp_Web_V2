@@ -51,7 +51,7 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
           && shouldUpdateStatus((existingMessage as { status?: unknown }).status as string | null, 'sent')) {
         await supabase.from('messages')
           .update({ status: 'sent', external_id: externalId, status_updated_at: now })
-          .eq('id', existingMessage.id);
+          .eq('id', existingMessage.id).is('manually_resolved_at', null);
       }
       updatedMessageId = existingMessage.id as string;
     }
@@ -87,7 +87,7 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
             if (!(pendingMessage as { manually_resolved_at?: unknown }).manually_resolved_at) {
               await supabase.from('messages')
                 .update({ status: 'sent', external_id: externalId, status_updated_at: now })
-                .eq('id', pendingMessage.id);
+                .eq('id', pendingMessage.id).is('manually_resolved_at', null);
             }
             updatedMessageId = pendingMessage.id as string;
           }

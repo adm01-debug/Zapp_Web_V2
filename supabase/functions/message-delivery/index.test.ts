@@ -812,3 +812,57 @@ Deno.test('PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando
   if (provedorChamado) throw new Error('provedor NÃO pode ser chamado quando o carimbo falha por outro motivo');
   resetInstanceTokenCache();
 });
+
+// ── PD-79: claim vazio com POST carimbado — lease vivo x vencido ─────────────
+Deno.test('PD-79: POST carimbado com lease AINDA VIVO é 409 in_progress (duplo clique durante o envio)', async () => {
+  const client = makeClient({
+    messages: [{ data: {
+      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
+      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
+      delivery_post_started_at: new Date(Date.now() - 5_000).toISOString(),
+      delivery_claim_expires_at: new Date(Date.now() + 60_000).toISOString(),
+    }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    throw new Error('provider must not be called');
+  }));
+  assertStatus(response.status, 409);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'in_progress', 'code');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+});
+
+Deno.test('PD-79: POST carimbado com lease VENCIDO continua 502 receipt_unconfirmed (ambíguo, sem reenvio)', async () => {
+  const client = makeClient({
+    messages: [{ data: {
+      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
+      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
+      delivery_post_started_at: new Date(Date.now() - 200_000).toISOString(),
+      delivery_claim_expires_at: new Date(Date.now() - 100_000).toISOString(),
+    }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    throw new Error('provider must not be called');
+  }));
+  assertStatus(response.status, 502);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'receipt_unconfirmed', 'code');
+  assertEqual(body.ambiguous, true, 'ambiguous');
+});
+
+Deno.test('PD-79: 42883 no mark_outbound_post_started NÃO é tolerado (só PGRST202): nada sai, failClaim', async () => {
+  resetInstanceTokenCache();
+  let providerCalled = false;
+  const client = makeClient({
+    claim: { data: [CLAIM], error: null },
+    rpcErrors: { mark_outbound_post_started: { code: '42883', message: 'function x does not exist' } },
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, { key: { id: 'wamid.x' } });
+  }));
+  assertEqual(providerCalled, false, 'provider não chamado');
+  assertStatus(response.status, 503);
+  assertFailClaim(client);
+  resetInstanceTokenCache();
+});

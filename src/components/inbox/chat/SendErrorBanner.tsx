@@ -35,19 +35,19 @@ export interface SendErrorBannerProps {
 type EstadoReenvio = 'parado' | 'enviando' | 'concluido';
 
 /**
- * Só falha de TEXTO sem POST iniciado tem reenvio: `onSendMessage(content)` cria uma
- * mensagem nova de texto (assinatura em `ChatPanel`: `(content: string) => ...`). Os
- * outros tipos reais de `Message['type']` (`image`, `video`, `audio`, `file`, `document`,
- * `location`, `interactive`, `sticker`) não têm como reenviar o binário por aqui.
+ * Só falha de TEXTO tem reenvio: `onSendMessage(content)` cria uma mensagem nova de
+ * texto (assinatura em `ChatPanel`: `(content: string) => ...`). Os outros tipos reais
+ * de `Message['type']` (`image`, `video`, `audio`, `file`, `document`, `location`,
+ * `interactive`, `sticker`) não têm como reenviar o binário por aqui.
  *
- * PD-79: se `delivery_post_started_at` estiver preenchido, o POST ao provedor foi
- * iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve
- * resolver via painel C110 (resolve_unconfirmed_message).
+ * PD-79: o banner só recebe `status === 'failed'`, que é resultado DEFINITIVO (recusa
+ * 4xx do provedor, ERROR do webhook ou "não entregue" confirmado no painel C110), mesmo
+ * com `delivery_post_started_at` preenchido. O caso ambíguo (POST iniciado sem resposta)
+ * fica em 'sending' e é tratado no painel C110 — nunca chega aqui. Por isso o carimbo
+ * não bloqueia o reenvio.
  */
 function podeReenviarComoTexto(mensagem: Message | null | undefined): boolean {
-  if (!mensagem || mensagem.type !== 'text') return false;
-  // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync.
-  return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;
+  return !!mensagem && mensagem.type === 'text';
 }
 
 const porHorario = (a: Message, b: Message) => (a.created_at ?? '').localeCompare(b.created_at ?? '');
