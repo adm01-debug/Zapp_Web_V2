@@ -2,16 +2,20 @@ import {
   OWNER_LABEL, PURPOSE_LABEL, PURPOSE, assertRunId, assertSourceSha, assertContainerIsolation, isAuthenticatedGroup,
 } from './runtime-contract.mjs';
 
-// Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e.
+// Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e, except
+// claim_outbound_message: redefined by migration 20261111160000_outbound_post_started.sql (9727aaedd).
+// mark_outbound_post_started: created by that same migration; SECURITY DEFINER that updates
+// messages, so it must run as postgres (guard_message_delivery_internal_fields rejects supabase_admin).
 // These are full SHA256 hashes of pg_get_functiondef, not the snapshot's JSON hash.
 export const OWNERSHIP_ROUTINES = Object.freeze([
   ['public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '7d23e3848086b03e90cb2413f53c4a98cc4e4f0eb72ff57ea910b7e30605d37b'],
-  ['public.claim_outbound_message(uuid,uuid,text,integer)', '13b88acb6aab9e9af151362a45097b6ee8720c82f61322118ced1a1f4f6fe4f3'],
+  ['public.claim_outbound_message(uuid,uuid,text,integer)', 'df82a503c1c4700d4feef6f7f4c8b4a0c5814339cf9669db05bc1b1142d2bf1b'],
   ['public.complete_outbound_message(uuid,uuid,text,text)', '31225dd6be1b4c2ec2b5e081626a45f369b9318554250a5f05738ac760675b68'],
   ['public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'],
   ['public.get_instance_token(text)', '5082afe06f6d581652c74d67a09bdbdb3317e4600ab223ea2a082997b3ff7777'],
   ['public.enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)', '866a5819d62fcbaa539029b50d83fed2dc985fd621052829d0bacac8b4fbeeba'],
   ['public.close_conversation_atomic(uuid,uuid,text,text,text,text)', 'ab317cb9f04ddb2fb6b15c8d8c85c4833e1b2452f38dfb16c00db9710d444e41'],
+  ['public.mark_outbound_post_started(uuid,uuid)', '7e41c8053d4c2f03704481fd0f8db46c703751113d571422ff85365d5f32dfbb'],
 ].map(([signature, definition_sha256]) => Object.freeze({ signature, definition_sha256 })));
 
 export const OWNERSHIP_EXECUTOR_OPTIONS = Object.freeze({ timeout: 5_000, killSignal: 'SIGKILL', maxBuffer: 8_192 });
@@ -177,12 +181,13 @@ CREATE TEMP TABLE e2e_owner_before ON COMMIT DROP AS
 WITH expected(ordinal, signature, expected_sha256) AS (
   VALUES
     (1, 'public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '7d23e3848086b03e90cb2413f53c4a98cc4e4f0eb72ff57ea910b7e30605d37b'),
-    (2, 'public.claim_outbound_message(uuid,uuid,text,integer)', '13b88acb6aab9e9af151362a45097b6ee8720c82f61322118ced1a1f4f6fe4f3'),
+    (2, 'public.claim_outbound_message(uuid,uuid,text,integer)', 'df82a503c1c4700d4feef6f7f4c8b4a0c5814339cf9669db05bc1b1142d2bf1b'),
     (3, 'public.complete_outbound_message(uuid,uuid,text,text)', '31225dd6be1b4c2ec2b5e081626a45f369b9318554250a5f05738ac760675b68'),
     (4, 'public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'),
     (5, 'public.get_instance_token(text)', '5082afe06f6d581652c74d67a09bdbdb3317e4600ab223ea2a082997b3ff7777'),
     (6, 'public.enqueue_ai_job(text,text,text,uuid,jsonb,integer,timestamp with time zone,timestamp with time zone,integer)', '866a5819d62fcbaa539029b50d83fed2dc985fd621052829d0bacac8b4fbeeba'),
-    (7, 'public.close_conversation_atomic(uuid,uuid,text,text,text,text)', 'ab317cb9f04ddb2fb6b15c8d8c85c4833e1b2452f38dfb16c00db9710d444e41')
+    (7, 'public.close_conversation_atomic(uuid,uuid,text,text,text,text)', 'ab317cb9f04ddb2fb6b15c8d8c85c4833e1b2452f38dfb16c00db9710d444e41'),
+    (8, 'public.mark_outbound_post_started(uuid,uuid)', '7e41c8053d4c2f03704481fd0f8db46c703751113d571422ff85365d5f32dfbb')
 )
 SELECT e.ordinal, e.signature, e.expected_sha256, p.oid AS proc_oid,
        p.proowner AS old_owner, pg_catalog.to_regrole('postgres')::oid AS new_owner,
@@ -211,8 +216,8 @@ DECLARE
   item record;
   acl_ok boolean;
 BEGIN
-  IF (SELECT count(*) FROM pg_temp.e2e_owner_before) <> 7
-     OR (SELECT count(DISTINCT proc_oid) FROM pg_temp.e2e_owner_before) <> 7
+  IF (SELECT count(*) FROM pg_temp.e2e_owner_before) <> 8
+     OR (SELECT count(DISTINCT proc_oid) FROM pg_temp.e2e_owner_before) <> 8
      OR EXISTS (SELECT FROM pg_temp.e2e_owner_before WHERE
        proc_oid IS NULL OR prokind IS DISTINCT FROM 'f' OR prosecdef IS DISTINCT FROM true
        OR old_owner NOT IN (new_owner, pg_catalog.to_regrole('supabase_admin')::oid)
@@ -271,7 +276,7 @@ BEGIN
     UNION ALL
     (SELECT * FROM actual EXCEPT SELECT * FROM expected)
   ), shape AS (
-    SELECT count(*) = 7 AND count(DISTINCT b.proc_oid) = 7
+    SELECT count(*) = 8 AND count(DISTINCT b.proc_oid) = 8
            AND coalesce(bool_and(
              b.old_owner IS NOT NULL
              AND b.new_owner IS NOT NULL

@@ -194,6 +194,9 @@ vi.mock('@/services/chat.service', () => ({
 
 import ChatPopup from '../ChatPopup';
 
+// PD-79: painel de mensagens sem confirmação tem query própria; fora do escopo destes testes.
+vi.mock('@/components/inbox/chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
+
 /** Linha no formato cru que o `useMessages` entrega ao popup. */
 function rawRow(n: number) {
   return {
