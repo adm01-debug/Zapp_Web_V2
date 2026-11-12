@@ -862,6 +862,13 @@ export function resolveEvolutionInstanceName(body: { instanceName?: unknown; ins
 export const GROUP_JID_PATTERN = /^[0-9]{1,32}(-[0-9]{1,32})?@g\.us$/;
 
 /**
+ * Número ou JID de contato aceito onde o valor vira query string da URL do
+ * provedor (`fetch-profile-picture`): dígitos (com `+` opcional) ou JID de
+ * usuário/LID/grupo. Qualquer outro caractere (`&`, `#`, `/`, espaço) é recusado.
+ */
+export const WHATSAPP_NUMBER_OR_JID_PATTERN = /^\+?[0-9]{1,32}(-[0-9]{1,32})?(@(s\.whatsapp\.net|c\.us|lid|g\.us))?$/;
+
+/**
  * Ações globais — as ÚNICAS que não operam sobre uma instância (E17).
  * `list-instances` lista todas as instâncias da GO; `bootstrap-instance-token`
  * migra o token legado para o Vault; `reconcile-instances` compara o provedor
