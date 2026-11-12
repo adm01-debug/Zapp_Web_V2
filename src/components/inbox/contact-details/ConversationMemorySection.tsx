@@ -48,7 +48,7 @@ function MemoryGroupList({ group, items }: { group: MemoryGroup; items: string[]
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5">
-        <Icon className={`w-3.5 h-3.5 shrink-0 ${group.color}`} />
+        <Icon className={`w-3.5 h-3.5 shrink-0 ${group.color}`} aria-hidden="true" />
         <span className="text-xs font-medium text-muted-foreground">{group.label}</span>
         <span className="text-3xs tabular-nums text-muted-foreground/70">{items.length}</span>
       </div>
@@ -89,9 +89,52 @@ function MemoryDate({ updatedAt }: { updatedAt: string | null }) {
   );
 }
 
-export function ConversationMemorySection({ contactId, index = 3 }: ConversationMemorySectionProps) {
+/** Corpo da seção: só monta (e só lê o banco) quando o accordion está aberto. */
+function ConversationMemoryBody({ contactId }: { contactId: string }) {
   const { memory, status, loading } = useConversationMemory(contactId);
 
+  if (loading) {
+    return (
+      <div className="space-y-2" data-testid="memoria-carregando">
+        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-6 w-full" />)}
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-2.5" data-testid="memoria-erro">
+        <AlertCircle className="w-3.5 h-3.5 text-destructive mt-0.5 shrink-0" aria-hidden="true" />
+        <p className="text-xs text-destructive leading-relaxed">
+          Não foi possível ler a memória deste contato. Não trate como "sem pendências" sem confirmar manualmente.
+        </p>
+      </div>
+    );
+  }
+
+  if (!memory || !hasMemoryContent(memory)) {
+    return (
+      <SidebarEmpty
+        cause="memoria-vazia"
+        icon={<Brain />}
+        message="Nenhuma memória registrada para este contato. Os fatos aparecem aqui conforme o atendimento registra."
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {GROUPS.map((group) => (
+        <MemoryGroupList key={group.key} group={group} items={memory[group.key]} />
+      ))}
+      {memory.commercialSummary && <SummaryBlock label="Resumo comercial" text={memory.commercialSummary} />}
+      {memory.cumulativeSummary && <SummaryBlock label="Resumo cumulativo" text={memory.cumulativeSummary} />}
+      <MemoryDate updatedAt={memory.updatedAt} />
+    </div>
+  );
+}
+
+export function ConversationMemorySection({ contactId, index = 3 }: ConversationMemorySectionProps) {
   return (
     <SidebarSection
       index={index}
@@ -101,33 +144,8 @@ export function ConversationMemorySection({ contactId, index = 3 }: Conversation
       title="Memória da conversa"
       subtitle="O que o atendimento lembra deste contato"
     >
-      {loading ? (
-        <div className="space-y-2" data-testid="memoria-carregando">
-          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-6 w-full" />)}
-        </div>
-      ) : status === 'error' ? (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-2.5" data-testid="memoria-erro">
-          <AlertCircle className="w-3.5 h-3.5 text-destructive mt-0.5 shrink-0" />
-          <p className="text-xs text-destructive leading-relaxed">
-            Não foi possível ler a memória deste contato. Não trate como "sem pendências" sem confirmar manualmente.
-          </p>
-        </div>
-      ) : !memory || !hasMemoryContent(memory) ? (
-        <SidebarEmpty
-          cause="memoria-vazia"
-          icon={<Brain />}
-          message="Nenhuma memória registrada para este contato. Os fatos aparecem aqui conforme o atendimento registra."
-        />
-      ) : (
-        <div className="space-y-3">
-          {GROUPS.map((group) => (
-            <MemoryGroupList key={group.key} group={group} items={memory[group.key]} />
-          ))}
-          {memory.commercialSummary && <SummaryBlock label="Resumo comercial" text={memory.commercialSummary} />}
-          {memory.cumulativeSummary && <SummaryBlock label="Resumo cumulativo" text={memory.cumulativeSummary} />}
-          <MemoryDate updatedAt={memory.updatedAt} />
-        </div>
-      )}
+      {/* key: troca de contato remonta o corpo, sem reaproveitar estado do anterior. */}
+      <ConversationMemoryBody key={contactId} contactId={contactId} />
     </SidebarSection>
   );
 }

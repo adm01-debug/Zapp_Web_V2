@@ -130,4 +130,24 @@ describe('ConversationMemorySection — memória da conversa (somente leitura)',
 
     await waitFor(() => expect(screen.getByText('{"produto":"Caneca","qtd":50}')).toBeInTheDocument());
   });
+
+  it('enquanto lê o banco mostra esqueleto, sem vazio nem erro', () => {
+    h.maybeSingle.mockImplementationOnce(() => new Promise(() => {}));
+    renderSection();
+
+    expect(screen.getByTestId('memoria-carregando')).toBeInTheDocument();
+    expect(screen.queryByTestId('sidebar-empty-memoria-vazia')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('memoria-erro')).not.toBeInTheDocument();
+  });
+
+  it('recolhida não consulta o banco (só lê quando o atendente abre)', () => {
+    render(
+      <Accordion type="multiple" defaultValue={[]}>
+        <ConversationMemorySection contactId="c1" index={5} />
+      </Accordion>,
+    );
+
+    expect(screen.getByText('Memória da conversa')).toBeInTheDocument();
+    expect(h.maybeSingle).not.toHaveBeenCalled();
+  });
 });
