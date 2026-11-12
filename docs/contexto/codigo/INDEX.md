@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `623f37bc13308554b1218383845e81dd6609065d` (2026-11-12T04:17:37-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `55361775364dbd53803a5a7d8f185f1b22d0725c` (2026-11-12T04:39:25-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8414 |
 | arquivos_codigo | 4814 |
-| linhas_codigo | 891215 |
+| linhas_codigo | 891251 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56895 nós · 117563 arestas · 4137 comunidades · grafo do commit `623f37bc`
-- comunidades maiores: lucide-react (901), button.tsx (785), vitest (778), TalkXSuppression.tsx (729), react (693), ref_node_assert (579), input.tsx (524), cn (494), DashboardView.tsx (480), errorResponse (475), e2e-isolated-runtime.unit.mjs (396), ref_node_fs (379)
+- 56896 nós · 117565 arestas · 4218 comunidades · grafo do commit `55361775`
+- comunidades maiores: @tanstack/react-query (880), react (874), TalkXSuppression.tsx (809), badge.tsx (759), button.tsx (690), ref_node_fs (474), DashboardView.tsx (446), cn (435), inspect.ts (338), errorResponse (299), @testing-library/react (259), schemas.ts (256)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `5536177` fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)
 - 2026-11-12 `623f37b` fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)
 - 2026-11-12 `491a75d` fix(scripts): guard rodar() contra bun ausente no PATH (#2978)
 - 2026-11-12 `a082adc` fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `d5835ed` feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)
 - 2026-11-11 `f036006` fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)
 - 2026-11-11 `8ea4301` fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)
-- 2026-11-11 `9727aae` feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO 
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

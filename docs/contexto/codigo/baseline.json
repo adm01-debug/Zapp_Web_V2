@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "623f37bc13308554b1218383845e81dd6609065d",
+  "commit": "55361775364dbd53803a5a7d8f185f1b22d0725c",
   "branch": "main",
-  "data_commit": "2026-11-12T04:17:37-03:00",
+  "data_commit": "2026-11-12T04:39:25-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5536177",
+    "data": "2026-11-12",
+    "assunto": "fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)"
+   },
    {
     "sha": "623f37b",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "dd991b0",
     "data": "2026-11-11",
     "assunto": "fix(ci): SLA de code scanning neutraliza quebra de linha de rule.id/path (#2958)"
-   },
-   {
-    "sha": "90a4327",
-    "data": "2026-11-11",
-    "assunto": "fix(tarefas): exigirLocal normaliza case do host antes da guarda local (#2953)"
    }
   ],
-  "arquivos_mudados_7d": 652,
+  "arquivos_mudados_7d": 655,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -157,7 +157,7 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 143
+    "mudancas": 144
    },
    {
     "pasta": "src/components/ui",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8414,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891215,
+  "linhas_codigo": 891251,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -724,7 +724,7 @@
   },
   "src/hooks": {
    "arquivos": 987,
-   "linhas": 160627
+   "linhas": 160663
   },
   "src/i18n": {
    "arquivos": 2,

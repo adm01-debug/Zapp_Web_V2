@@ -14716,7 +14716,7 @@
   {
    "arquivo": "src/hooks/__tests__/useGoalNotifications.test.ts",
    "tipo": "unit",
-   "linhas": 110,
+   "linhas": 117,
    "testa": [
     "src/hooks/analytics/useGoalNotifications.ts"
    ],
@@ -15533,7 +15533,7 @@
   {
    "arquivo": "src/hooks/analytics/__tests__/useGoalNotifications.idempotencia.test.tsx",
    "tipo": "unit",
-   "linhas": 227,
+   "linhas": 244,
    "testa": [
     "src/hooks/analytics/useGoalNotifications.ts",
     "src/lib/logger.ts"

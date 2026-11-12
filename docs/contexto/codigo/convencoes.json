@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)",
    "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)",
    "fix(scripts): guard rodar() contra bun ausente no PATH (#2978)",
    "fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)",
-   "ci(talkx): ativa validação do corpo das PRs Talk X (#2919)",
-   "fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)"
+   "ci(talkx): ativa validação do corpo das PRs Talk X (#2919)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

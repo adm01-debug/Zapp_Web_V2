@@ -2145,7 +2145,7 @@
    "hooks_exportados": [
     "useGoalNotifications"
    ],
-   "linhas": 319,
+   "linhas": 331,
    "dominio": "hooks/analytics",
    "tabelas": [
     "agent_stats",
