@@ -254,8 +254,7 @@ Ver `PENDENCIAS.md` §5 para instruções de cancelamento manual via UI do GitHu
 | #43143335972 | `claude/fix-ci-main...` | queued | 02:43:15Z |
 | #43143197373 | `main` | queued | 02:41:59Z |
 
-**Causa**: Quota de minutos GitHub Actions esgotada (plano free: 2.000 min/mês) ou outage temporário dos runners `ubuntu-24.04`.  
-Todos os jobs da PR #2881 foram corretamente criados e aguardam apenas disponibilidade de runner — o código está sem regressão e os required checks Build e TypeCheck estão com `conclusion=success` no run #43137999344.
+**Causa**: Quota de minutos GitHub Actions do plano free (2.000 min/mês) possivelmente esgotada. Com suítes de ~21 min por run e múltiplos agentes rodando CI simultâneo, a cota se esgota rapidamente. Alternativamente: outage temporário dos runners GitHub-hosted `ubuntu-24.04`.
 
 ### 7.3 Resumo de bloqueios pendentes
 
@@ -267,3 +266,78 @@ Todos os jobs da PR #2881 foram corretamente criados e aguardam apenas disponibi
 | E2E logado authenticated | browser-suite-failed, artefato expirado | PENDENCIAS.md §3 |
 | Branch Hygiene Audit | SLA alertas CodeQL pré-existente | PENDENCIAS.md §4 |
 | DB Guard zombie #40410990313 | Incancelável via API, ocupa slot de runner | PENDENCIAS.md §5 |
+
+---
+
+## 8. Baseline local — saídas literais (sessão 2026-11-12, PR #2881)
+
+> Comandos rodados localmente em `/home/user/Zapp_Web_V2` nesta sessão.  
+> Verificado antes do commit `ba5eeb55`.
+
+### 8.1 TypeCheck (`node scripts/ci/typecheck-ratchet.mjs`)
+
+```
+Typecheck ratchet: baseline=93, atual=0, removidas=93, novas=0
+OK: nenhum novo erro de tipo foi introduzido.
+Lint ratchet: baseline=804, atual=803, mantidas=803, removidas=1, novas=0
+AVISO: 1 ocorrencia(s) do baseline nao existem mais no codigo — divida ja paga que o registro ainda conta. Baixe o baseline (`node scripts/ci/lint-ratchet.mjs --update-baseline`) para o registro voltar a refletir o codigo.
+OK: nenhuma nova divida de lint foi introduzida.
+TYPECHECK_EXIT=0
+[exited with code 0]
+```
+
+### 8.2 Lint (`node scripts/ci/lint-ratchet.mjs`)
+
+```
+Lint ratchet: baseline=803, atual=802, mantidas=802, removidas=1, novas=0
+AVISO: 1 ocorrencia(s) do baseline nao existem mais no codigo — divida ja paga que o registro ainda conta. Baixe o baseline (`node scripts/ci/lint-ratchet.mjs --update-baseline`) para o registro voltar a refletir o codigo.
+OK: nenhuma nova divida de lint foi introduzida.
+LINT_EXIT=0
+[exited with code 0]
+```
+
+### 8.3 Vitest (`npx vitest run`)
+
+```
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > talkxReportData > talkxReportSeriesFromRows > ignora linhas sem sent_at 1ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > talkxReportData > talkxReportSeriesFromRows > granularidade hour — dois envios em horas distintas no mesmo dia geram dois baldes 1ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > talkxReportData > talkxReportHeatmapFromTimestamps > retorna grade 7x24 zerada para entrada vazia 1ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > talkxReportData > talkxReportHeatmapFromTimestamps > incrementa célula [0][7] — 2026-10-05T10:00:00Z é segunda às 7h em Sao_Paulo 0ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > talkxReportData > talkxReportHeatmapFromTimestamps > ignora valores null e undefined 0ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > TalkXCampaignReport > exibe título "Relatório da Campanha" 130ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > TalkXCampaignReport > exibe nome da campanha no cabeçalho 14ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > TalkXCampaignReport > renderiza os três cartões gráficos quando KPIs estão disponíveis 35ms
+ ✓ src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx > TalkXCampaignReport > hasConversionSource é false — série Conversões não é renderizada 25ms
+
+ Test Files  1864 passed | 5 skipped (1869)
+      Tests  15860 passed | 19 expected fail | 41 todo (15920)
+   Start at  23:18:34
+   Duration  1287.77s (transform 51.76s, setup 335.54s, import 568.07s, tests 1172.98s, environment 1469.17s)
+
+VITEST_EXIT=0
+[exited with code 0]
+```
+
+### 8.4 Tabela baseline × final (sessão 2026-11-12)
+
+| Verificação | Baseline (sessão anterior, 2026-11-05) | Esta sessão (2026-11-12) | Regressão? |
+|---|---|---|---|
+| TypeCheck novas falhas | 0 | **0** (baseline=93 → atual=0) | ✅ Nenhuma |
+| Lint novas falhas | 0 | **0** (baseline=803 → atual=802) | ✅ Nenhuma |
+| Build | ✅ exit 0 | ✅ exit 0 | ✅ Nenhuma |
+| Vitest testes passou | 15729 | **15860** (+131 testes) | ✅ Nenhuma |
+| Vitest arquivos | 1858 | **1869** (+11 arquivos) | ✅ Nenhuma |
+
+**Zero regressões. 131 testes a mais que o baseline anterior.**
+
+### 8.5 Estado atual dos required checks (2026-11-12)
+
+> Verificado em 2026-11-12T (após commit `ba5eeb55`).
+
+| Run | SHA | Status | Required checks |
+|---|---|---|---|
+| [#43137999344](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43137999344) | `a60b0507` | cancelled | Build=✅ success, TypeCheck=✅ success, CI Gate=⚠️ cancelled (stuck >2h) |
+| [#43144169836](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43144169836) | `1e078584` | queued | 10 jobs queued — runner pool esgotado (vide PENDENCIAS.md §6) |
+| [#43145464320](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43145464320) | `ba5eeb55` | **pending** | Aguardando runner (03:02Z) — runner pool esgotado |
+
+**Bloqueio externo confirmado**: NENHUM run `in_progress` em toda a conta. Run #43145464320 está `pending` para o HEAD atual (`ba5eeb55`). Assim que runners disponíveis, retomará automaticamente. Requer ação do dono (ver PENDENCIAS.md §6).

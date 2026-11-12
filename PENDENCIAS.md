@@ -99,6 +99,7 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 | Run zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) |
 | Branch | `claude_04/trusting-newton-duiglt` |
 | Em `in_progress` desde | 2026-10-26T22:15Z (run_attempt=14) |
+| Estado atual | `in_progress` — confirmado em 2026-11-12T (ainda não cancelado) |
 | Comportamento da API | Lista como `in_progress`; chamadas `cancel` e `force-cancel` retornam HTTP 409 |
 | Impacto | Ocupa 1 slot virtual de runner GitHub Actions permanentemente — foi a causa do CI Gate (#130934752962) ficar stuck por >2h no run #43137999344 da PR #2881 |
 | Diagnóstico confirmado | Verificado em 2026-11-12. |
@@ -115,9 +116,11 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 
 | Campo | Valor |
 |---|---|
-| Verificado em | 2026-11-12T03:30Z |
+| Verificado em | 2026-11-12T03:30Z (inicial) e 2026-11-12T (esta sessão) |
 | Sintoma | 9 runs `queued` + 1 run `pending` no `ci.yml`; **nenhum run `in_progress`** em toda a conta |
-| Runs afetados | #43144169836 (PR #2881, HEAD `1e078584`), #43144234960 (main), #43144020204 (main), #43143912156, #43143912153, #43143336048, #43143336046, #43143335972, #43143197373 — todos parados sem progresso por 40+ min |
+| Run mais recente (PR #2881) | [#43145464320](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43145464320) — HEAD `ba5eeb559c31802f9113ad26f4ce46321aaacb46`, status=`pending` desde 2026-11-12T03:02:26Z |
+| Run anterior (PR #2881) | [#43144169836](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43144169836) — status=`queued` desde 02:54:49Z (10 jobs criados, sem progresso) |
+| Zombie ainda ativo | Run #40410990313 (`db-guard.yml`) ainda `in_progress` — confirmado nesta sessão |
 | Causa diagnóstica | Quota de minutos GitHub Actions do plano free (2.000 min/mês) possivelmente esgotada. Com suítes de ~21 min por run e múltiplos agentes rodando CI simultâneo, a cota se esgota rapidamente. Alternativamente: outage temporário dos runners GitHub-hosted `ubuntu-24.04`. |
 | Impacto | CI Gate do PR #2881 não pode completar — `conclusion=null` indefinidamente enquanto o pool estiver esgotado. |
 | Verificação recomendada | Acessar https://github.com/settings/billing ou https://github.com/organizations/adm01-debug/settings/billing para ver consumo de minutos restantes. |
@@ -127,5 +130,6 @@ Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação ex
 1. Verificar saldo de minutos em **https://github.com/settings/billing** (seção "Actions").
 2. Se a cota estiver esgotada: aguardar renovação mensal ou comprar minutos adicionais no plano GitHub Pro/Team.
 3. Se for outage do GitHub: verificar https://www.githubstatus.com/ e aguardar resolução.
-4. Quando os runners estiverem disponíveis novamente: o run #43144169836 retomará automaticamente (jobs já criados). Se não retomar em 1h, fazer `rerun` pelo botão "Re-run all jobs" em https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43144169836.
-5. Após CI verde no run #43144169836: squash-merge a PR #2881 (SHA `1e078584d9cf500864f94a1739df76435f8801bd`).
+4. **Cancelar o zombie #40410990313** (PENDENCIAS.md §5) — isso libera 1 slot permanentemente ocupado.
+5. Quando os runners estiverem disponíveis novamente: o run [#43145464320](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43145464320) (HEAD `ba5eeb55`) retomará automaticamente. Se não retomar em 1h, fazer `rerun` pelo botão "Re-run all jobs".
+6. Após CI verde no run #43145464320: squash-merge a PR [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881) com SHA `ba5eeb559c31802f9113ad26f4ce46321aaacb46`.
