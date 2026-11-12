@@ -10,6 +10,7 @@ import { describeReason } from '@/lib/calls/capabilities';
 import { useCallChannels } from '@/hooks/calls/useCallChannels';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { dispatchStartCall } from '@/lib/calls/events';
+import { OfferCallButton } from './OfferCallButton';
 
 export type CanalDeSaida = 'voip' | 'whatsapp';
 
@@ -39,7 +40,7 @@ function canalInicial(): CanalDeSaida {
  * filtrar o historico mudar o canal da discagem - e vice-versa.
  */
 export function NewCallPanel() {
-  const { voip, whatsapp } = useCallChannels();
+  const { voip, whatsapp, linhaWhatsApp } = useCallChannels();
   const { numeroPendente, hangup, session, sipStatus } = useCallSession();
 
   const [canal, setCanal] = useState<CanalDeSaida>(canalInicial);
@@ -217,6 +218,10 @@ export function NewCallPanel() {
           )}
           {!emChamada && capability.canDial && numeroOk && (
             <p className="text-center text-xs text-muted-foreground">Confira o número antes de ligar.</p>
+          )}
+          {/* offer-call (restaurada após o #2054): toque sem áudio pela linha WhatsApp */}
+          {!emChamada && canal === 'whatsapp' && numeroOk && linhaWhatsApp?.id && (
+            <OfferCallButton e164={e164 ?? ''} connectionId={linhaWhatsApp?.id} />
           )}
         </div>
       </CardContent>

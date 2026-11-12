@@ -9,6 +9,7 @@ import { ProfessionalSection } from './ProfessionalSection';
 import { PersonalSection } from './PersonalSection';
 import { SinguProfileSection } from './SinguProfileSection';
 import { WhatsAppStatusSection } from '../WhatsAppStatusSection';
+import { WhatsAppCatalogSection } from '../WhatsAppCatalogSection';
 import type { ConversationContact as Contact } from '@/types/chat';
 import type { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 
@@ -62,6 +63,7 @@ export function ContactSidebarSections({ contact, enrichedData, onQuickAction }:
         onBuscarCRM={buscarCRM} onRetry={() => sidebar.refetch()}
       />
       <WhatsAppStatusSection phone={contact.phone} />
+      <WhatsAppCatalogSection phone={contact.phone} />
       {sidebar.status !== 'disabled' && (
         <ContactCRMDialog
           open={crmDialogOpen}
