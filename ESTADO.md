@@ -85,7 +85,7 @@ partir do código e falha quando:
 | `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
 | `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:77` |
 | `get-mapbox-token` | A | `src/lib/mapboxToken.ts:87` |
-| `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:22` |
+| `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:53` |
 | `gmail-cron-sync` | C | `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:18` · `supabase/config.toml:17` |
 | `gmail-oauth` | A | `src/hooks/integrations/useGmailOAuth.ts:79` |
 | `gmail-send` | E | — sem chamador no repositório — |
