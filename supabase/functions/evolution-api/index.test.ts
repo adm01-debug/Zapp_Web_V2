@@ -962,3 +962,184 @@ Deno.test("R2EXT-STATUS: falha da trilha NÃO publica o status (403/500 e zero I
     await fake.stop();
   }
 });
+
+// ─── Rotas restauradas após o #2054 (tinham tela e respondiam 404/403) ───────
+function createCapturingFake(payload: unknown = { ok: true }) {
+  const calls: Array<{ method: string; path: string; body: any }> = [];
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, async (req) => {
+    const raw = await req.text();
+    let body: any = null;
+    try { body = raw ? JSON.parse(raw) : null; } catch { body = raw; }
+    calls.push({ method: req.method, path: new URL(req.url).pathname, body });
+    return new Response(JSON.stringify(payload), { status: 200, headers: { "Content-Type": "application/json" } });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("fake: listener não TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, calls, stop: () => server.shutdown() };
+}
+
+const adminClient = () => makeCallerClient({ isAdminOrSupervisor: true });
+const agentClient = () => makeCallerClient({ isAdminOrSupervisor: false, contactVisible: true });
+
+Deno.test("#2054 get-settings (v2, admin): GET /settings/find/{instância}", async () => {
+  const fake = createCapturingFake({ rejectCall: true });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("get-settings", { instanceName: "PRINCIPAL" }),
+      { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(res.status, 200);
+    assertEquals((await res.json()).rejectCall, true);
+    assertEquals(fake.calls.map((c) => `${c.method} ${c.path}`), ["GET /settings/find/PRINCIPAL"]);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("#2054 set-settings (v2, admin): POST /settings/set só com os 7 campos do contrato", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("set-settings", {
+      instanceName: "PRINCIPAL", rejectCall: true, msgCall: "ocupado", groupsIgnore: false,
+      alwaysOnline: false, readMessages: true, readStatus: false, syncFullHistory: false, extra: "não vai",
+    }), { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls.length, 1);
+    assertEquals(fake.calls[0].path, "/settings/set/PRINCIPAL");
+    assertEquals(Object.keys(fake.calls[0].body).sort(),
+      ["alwaysOnline", "groupsIgnore", "msgCall", "readMessages", "readStatus", "rejectCall", "syncFullHistory"]);
+  } finally {
+    await fake.stop();
+  }
+});
+
+for (const action of ["get-settings", "set-settings", "get-webhook"]) {
+  Deno.test(`#2054 ${action} sem papel devolve 403 e não produz I/O`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, { instanceName: "PRINCIPAL" }),
+        { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() });
+      assertEquals(res.status, 403);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+for (const action of ["get-settings", "set-settings"]) {
+  Deno.test(`#2054 ${action} (GO): notSupported com 200, sem I/O no provedor`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, { instanceName: "PRINCIPAL" }),
+        { callerClient: adminClient(), supabase: makeServiceClient() });
+      assertEquals(res.status, 200);
+      assertEquals((await res.json()).notSupported, true);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("#2054 get-webhook (v2, admin): GET /webhook/find/{instância}", async () => {
+  const fake = createCapturingFake({ url: "https://x/functions/v1/evolution-webhook", events: ["MESSAGES_UPSERT"] });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("get-webhook", { instanceName: "PRINCIPAL" }),
+      { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(res.status, 200);
+    assertEquals((await res.json()).url, "https://x/functions/v1/evolution-webhook");
+    assertEquals(fake.calls.map((c) => `${c.method} ${c.path}`), ["GET /webhook/find/PRINCIPAL"]);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("#2054 get-webhook (GO, admin): lê a config da listagem de instâncias", async () => {
+  const fake = createCapturingFake({ data: [{ name: "PRINCIPAL", webhook: "https://x/wh", events: "MESSAGE,CONNECTION" }] });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(controlRequest("get-webhook", { instanceName: "PRINCIPAL" }),
+      { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json.webhook.url, "https://x/wh");
+    assertEquals(json.webhook.events, ["MESSAGE", "CONNECTION"]);
+    assertEquals(fake.calls.map((c) => c.path), ["/instance/all"]);
+  } finally {
+    await fake.stop();
+  }
+});
+
+function sendSupabase(): any {
+  return {
+    from: (table: string) => {
+      if (table === "whatsapp_connections") return makeQuery({ id: "conn-1" });
+      if (table === "contacts") return makeQuery({ id: "contact-1" });
+      return makeQuery(null);
+    },
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: "vault-instance-token", error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
+}
+
+Deno.test("#2054 mark-unread (v2): agente com contato visível alcança o provedor só com a key validada", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const key = { remoteJid: "5511999999999@s.whatsapp.net", fromMe: false, id: "M1" };
+    const res = await handleEvolutionApi(controlRequest("mark-unread", {
+      instanceName: "PRINCIPAL", key,
+      // tentativa de carona: JID de OUTRA conversa fora da checagem do gate
+      readMessages: [{ remoteJid: "5521888888888@s.whatsapp.net", fromMe: false, id: "X" }],
+    }), { callerClient: agentClient(), supabase: sendSupabase() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls.length, 1);
+    assertEquals(fake.calls[0].path, "/chat/markMessageAsUnread/PRINCIPAL");
+    assertEquals(fake.calls[0].body, { readMessages: [key] });
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("#2054 mark-unread: agente sem contato visível é negado (403, sem I/O)", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("mark-unread", {
+      instanceName: "PRINCIPAL", key: { remoteJid: "5511999999999@s.whatsapp.net", fromMe: false, id: "M1" },
+    }), { callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: false }), supabase: sendSupabase() });
+    assertEquals(res.status, 403);
+    assertEquals(fake.calls.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("#2054 mark-unread (GO): notSupported com 200, sem I/O no provedor", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(controlRequest("mark-unread", {
+      instanceName: "PRINCIPAL", key: { remoteJid: "5511999999999@s.whatsapp.net", fromMe: false, id: "M1" },
+    }), { callerClient: agentClient(), supabase: sendSupabase() });
+    assertEquals(res.status, 200);
+    assertEquals((await res.json()).notSupported, true);
+    assertEquals(fake.calls.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});

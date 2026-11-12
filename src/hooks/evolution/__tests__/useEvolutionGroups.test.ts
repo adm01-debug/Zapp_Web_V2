@@ -91,12 +91,9 @@ const CASES: Row[] = [
   { name: 'updateGroupSetting(unlocked)', action: 'update-group-setting', body: { instanceName, groupJid, action: 'unlocked' }, success: 'Configuração atualizada', run: (a) => a.updateGroupSetting(instanceName, groupJid, 'unlocked') },
   { name: 'getGroupInviteCode', action: 'group-invite-code', body: { instanceName, groupJid }, run: (a) => a.getGroupInviteCode(instanceName, groupJid) },
   { name: 'revokeGroupInviteCode', action: 'revoke-invite-code', body: { instanceName, groupJid }, success: 'Link revogado', run: (a) => a.revokeGroupInviteCode(instanceName, groupJid) },
-  { name: 'getInviteInfo', action: 'invite-info', body: { instanceName, inviteCode }, run: (a) => a.getInviteInfo(instanceName, inviteCode) },
   { name: 'acceptInvite', action: 'accept-invite', body: { instanceName, inviteCode }, success: 'Entrou no grupo', run: (a) => a.acceptInvite(instanceName, inviteCode) },
   { name: 'leaveGroup', action: 'leave-group', body: { instanceName, groupJid }, success: 'Saiu do grupo', run: (a) => a.leaveGroup(instanceName, groupJid) },
   { name: 'updateGroupPicture', action: 'update-group-picture', body: { instanceName, groupJid, image: 'whatsapp-media/grupos/foto.png' }, success: 'Foto atualizada', run: (a) => a.updateGroupPicture(instanceName, groupJid, 'whatsapp-media/grupos/foto.png') },
-  { name: 'toggleEphemeral(desligar)', action: 'toggle-ephemeral', body: { instanceName, groupJid, expiration: 0 }, run: (a) => a.toggleEphemeral(instanceName, groupJid, 0) },
-  { name: 'toggleEphemeral(24h)', action: 'toggle-ephemeral', body: { instanceName, groupJid, expiration: 86400 }, run: (a) => a.toggleEphemeral(instanceName, groupJid, 86400) },
 ];
 
 beforeEach(() => {

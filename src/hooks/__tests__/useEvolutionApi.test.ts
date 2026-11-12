@@ -45,18 +45,18 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
       const { result } = renderHook(() => useEvolutionApi());
       const expectedFunctions = [
         'createInstance', 'createConnection', 'listInstances', 'connectInstance', 'getInstanceStatus',
-        'getInstanceInfo', 'restartInstance', 'disconnectInstance', 'deleteInstance', 'setPresence',
+        'getInstanceInfo', 'restartInstance', 'disconnectInstance', 'deleteInstance',
         'setSettings', 'getSettings', 'setWebhook', 'getWebhook',
         'sendTextMessage', 'sendMediaMessage', 'sendAudioMessage', 'sendStickerMessage',
         'sendLocationMessage', 'sendContactMessage', 'sendReaction', 'sendPollMessage',
-        'sendListMessage', 'sendButtonsMessage', 'sendStatusMessage', 'sendTemplateMessage',
+        'sendListMessage', 'sendButtonsMessage', 'sendStatusMessage',
         'markMessageAsRead', 'markMessageAsUnread', 'archiveChat', 'deleteMessage', 'updateMessage',
         'findContacts',
         'checkWhatsAppNumbers', 'getMediaBase64', 'deleteMessageForEveryone', 'editMessage',
         'createGroup', 'listGroups', 'getGroupInfo', 'getGroupParticipants',
         'updateGroupName', 'updateGroupDescription', 'updateGroupParticipants',
         'updateGroupSetting', 'getGroupInviteCode', 'revokeGroupInviteCode',
-        'getInviteInfo', 'acceptInvite', 'leaveGroup', 'updateGroupPicture', 'toggleEphemeral',
+        'acceptInvite', 'leaveGroup', 'updateGroupPicture',
         'fetchProfile', 'updateProfileName', 'updateProfileStatus',
         'updateProfilePicture', 'removeProfilePicture', 'fetchProfilePicture',
         'fetchBusinessProfile', 'updatePrivacySettings',
@@ -249,17 +249,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
       expect(response).toEqual({ connection: { id: 'c1' }, evolution: {} });
       expect(mockToast.success).not.toHaveBeenCalled();
     });
-
-    it('setPresence sends presence type', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.setPresence('wpp2', 'composing');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/set-presence', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', presence: 'composing' },
-      });
-    });
   });
 
   // =============================================
@@ -442,18 +431,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         body: { instanceName: 'wpp2', type: 'text', content: 'Status!' },
       });
     });
-
-    it('sendTemplateMessage', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      const template = { name: 'hello_world', language: { code: 'pt_BR' } };
-      await act(async () => {
-        await result.current.sendTemplateMessage('wpp2', '5511999', template);
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/send-template', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', number: '5511999', template },
-      });
-    });
   });
 
   // =============================================
@@ -584,17 +561,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
       expect(mockInvoke).toHaveBeenCalledWith('evolution-api/leave-group', {
         method: 'POST',
         body: { instanceName: 'wpp2', groupJid: 'group@g.us' },
-      });
-    });
-
-    it('toggleEphemeral', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.toggleEphemeral('wpp2', 'group@g.us', 86400);
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/toggle-ephemeral', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', groupJid: 'group@g.us', expiration: 86400 },
       });
     });
   });
