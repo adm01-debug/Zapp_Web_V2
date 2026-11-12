@@ -541,8 +541,8 @@
     },
     {
       "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
-      "bytes": 6172,
-      "sha256": "6f851c4c4500137cfa90a5ccdb2598db77d0758f1bf8e866f674e0a74c2ad082"
+      "bytes": 6161,
+      "sha256": "0a55ad677fa500a11f2932cf437fa529703fce6c898a66f12d021ee01816c0f1"
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
@@ -641,13 +641,13 @@
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "bytes": 9424,
-      "sha256": "d5ac631407b3e03c8680673baa0e1f1e1993aa220bad8a1ff86977743f859cad"
+      "bytes": 10126,
+      "sha256": "7281bbc7ae04c8af342461dbb5e1239fbc4ccc3258c18593775eb80db623a83a"
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
-      "bytes": 9437,
-      "sha256": "dd393b85fd6c4e1137117c66d0681be6e4b35fd1ca89b72298127a19a21ee202"
+      "bytes": 9426,
+      "sha256": "48fadc4dbbbe328ea3414601e7f62841cfde321f0e28f6010fc21a7d3a9d4a89"
     },
     {
       "path": "supabase/functions/fetch-link-preview/index.ts",
@@ -676,8 +676,8 @@
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "bytes": 16986,
-      "sha256": "8af4daac0dfc5781739927b55346fd696f0e19b3dd56ed394ee5b37014ee4e97"
+      "bytes": 16951,
+      "sha256": "4763cafb6f20b19f884f79188da7baf73ed0c8e6631f82eb9f20ed05476c493d"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
@@ -1619,7 +1619,7 @@
       "name": "cleanup-rate-limit-logs",
       "entrypoint": "supabase/functions/cleanup-rate-limit-logs/index.ts",
       "verify_jwt": true,
-      "source_sha256": "619d4d5cf4e75be5d3db4cec2520e229e113b277a140bdda177376d3c051f5ca",
+      "source_sha256": "aba4f321fce3364891d1e13e80d68b075c2d34788b9be97603e3c671c29e6601",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1993,7 +1993,7 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "90bb3394c70f68518f18646a7540e579c225972b4f25936f62d8222f4a2963ce",
+      "source_sha256": "8334cfea60d6efd3372bd766b90e923eedaa9c804cbfcfc4ad663ecb76157489",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2009,7 +2009,7 @@
       "name": "external-db-proxy",
       "entrypoint": "supabase/functions/external-db-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c5322e13014873737140c8c070584df8b61a09207bb13d7d14690d900496a143",
+      "source_sha256": "4f471f35d5a6b60b90e88d5ceb09dffc2ba66087b56b51cc9783e25f297f20bb",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2099,7 +2099,7 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4f04f1e5aa1454a328aceed6954117fb05346da4c5f0c470844538c0544e8151",
+      "source_sha256": "15ff8c33689d4062c9267ac130d23151026913aa4181c1aec13241e5ce1cb6d5",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2782,5 +2782,5 @@
       ]
     }
   ],
-  "manifest_sha256": "258f704ffaa7e71290e9466a5690f48907494e243e8b8f41b4bcf90429469f13"
+  "manifest_sha256": "43f604b0d19cea8a22bce8307ca511b22aaf7f8dc1abe424544d8b4bca6bc583"
 }

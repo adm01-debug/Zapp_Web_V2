@@ -1,0 +1,155 @@
+-- Z060: REVOKE SELECT de anon em todas as tabelas do schema public
+--
+-- Diagnóstico (2026-11-08) no banco canônico tnnnlkbymytvtqngbbqh:
+--   SELECT COUNT(*) FROM information_schema.role_table_grants
+--   WHERE grantee='anon' AND table_schema='public'
+--   → 100 grants (99 SELECT + 1 INSERT em password_reset_requests)
+--
+-- Histórico:
+--   • 20261016250000 removeu INSERT/UPDATE/DELETE de anon em todas as tabelas
+--     e restaurou apenas INSERT em password_reset_requests (fluxo "esqueci senha").
+--   • 20261030135126 removeu TRUNCATE/REFERENCES/TRIGGER.
+--   • SELECT ficou intacto nas 99 tabelas — residual do GRANT ON ALL TABLES
+--     original do Supabase.
+--
+-- Prova em Postgres temporário (2026-11-08):
+--   • anon SELECT em mfa_sessions, user_sessions, user_devices, user_roles,
+--     profiles, gmail_accounts, channel_connections, security_alerts →
+--     0 linhas retornadas em todas (RLS sem policy anon = deny-all). NÃO
+--     exploráveis hoje para exfiltração de dados.
+--   • PORÉM: seguindo o princípio de menor privilégio, grants de SELECT que
+--     nunca são usados pela aplicação como anon ampliam a superfície de ataque
+--     — qualquer policy futura descuidada que esqueça de restringir roles
+--     expõe dados imediatamente.
+--   • Após REVOKE: has_table_privilege('anon','user_roles','SELECT') = f,
+--     has_table_privilege('anon','mfa_sessions','SELECT') = f,
+--     has_table_privilege('anon','profiles','SELECT') = f.
+--     has_table_privilege('anon','password_reset_requests','INSERT') = t  ← preservado.
+--
+-- Fluxos validados intactos após REVOKE:
+--   • Fluxo "esqueci minha senha": anon faz INSERT em password_reset_requests
+--     — INSERT grant e policy RLS preservados, INSERT continua funcionando.
+--   • Login/registro: via auth.signIn/signUp (GoTrue), não usa tabelas de public
+--     como anon — sem impacto.
+--   • App autenticado: role authenticated não é afetado por esta migration.
+--
+-- Rollback (SQL executável): devolve SELECT ao anon EXATAMENTE nas 99 relações que o tinham
+-- em 2026-11-11 no banco canônico (information_schema.role_table_grants, grantee='anon',
+-- privilege_type='SELECT'). NÃO usar GRANT ... ON ALL TABLES: daria SELECT a 223 relações,
+-- inclusive as que migrations posteriores revogaram de propósito do anon.
+-- Extração: sed -n '/^-- Rollback (SQL/,/TO anon;$/p' ARQ | sed -n 's/^--   //p'
+--   GRANT SELECT ON
+--     public.agent_achievements,
+--     public.agent_presence,
+--     public.agent_skills,
+--     public.agent_stats,
+--     public.agent_visibility_grants,
+--     public.ai_providers,
+--     public.ai_usage_logs,
+--     public.allowed_countries,
+--     public.audio_meme_favorites,
+--     public.audio_memes,
+--     public.auto_close_config,
+--     public.automations,
+--     public.away_messages,
+--     public.blocked_countries,
+--     public.blocked_ips,
+--     public.business_hours,
+--     public.calls,
+--     public.campaign_ab_variants,
+--     public.campaigns,
+--     public.channel_connections,
+--     public.channel_connections_safe,
+--     public.channel_routing_rules,
+--     public.chatbot_executions,
+--     public.chatbot_flows,
+--     public.client_wallet_rules,
+--     public.connection_health_logs,
+--     public.crisis_room_alerts,
+--     public.csat_auto_config,
+--     public.csat_surveys,
+--     public.custom_emojis,
+--     public.deal_activities,
+--     public.email_attachments,
+--     public.email_labels,
+--     public.email_messages,
+--     public.email_threads,
+--     public.entity_versions,
+--     public.followup_executions,
+--     public.followup_sequences,
+--     public.followup_steps,
+--     public.geo_blocking_settings,
+--     public.global_settings,
+--     public.gmail_accounts,
+--     public.gmail_accounts_safe,
+--     public.goals_configurations,
+--     public.ip_whitelist,
+--     public.knowledge_base_articles,
+--     public.knowledge_base_files,
+--     public.link_preview_cache_metrics,
+--     public.meta_capi_events,
+--     public.mfa_sessions,
+--     public.notifications,
+--     public.nps_surveys,
+--     public.number_reputation,
+--     public.password_reset_requests,
+--     public.password_reset_requests_safe,
+--     public.performance_snapshots,
+--     public.permissions,
+--     public.playbooks,
+--     public.products,
+--     public.profiles,
+--     public.profiles_public,
+--     public.query_telemetry,
+--     public.queue_goals,
+--     public.queue_positions,
+--     public.queue_skill_requirements,
+--     public.rate_limit_configs,
+--     public.rate_limit_logs,
+--     public.reminders,
+--     public.role_permissions,
+--     public.sales_deals,
+--     public.sales_pipeline_stages,
+--     public.saved_filters,
+--     public.scheduled_report_configs,
+--     public.scheduled_reports,
+--     public.security_alerts,
+--     public.sla_configurations,
+--     public.sla_rules,
+--     public.stickers,
+--     public.talkx_blacklist,
+--     public.talkx_campaign_events,
+--     public.talkx_campaign_metrics,
+--     public.talkx_campaigns,
+--     public.talkx_recipients,
+--     public.talkx_segments,
+--     public.talkx_templates,
+--     public.training_sessions,
+--     public.user_devices,
+--     public.user_roles,
+--     public.user_service_accounts,
+--     public.user_sessions,
+--     public.user_settings,
+--     public.voice_command_logs,
+--     public.warroom_alerts,
+--     public.webauthn_challenges,
+--     public.webhook_rate_limits,
+--     public.whatsapp_connection_queues,
+--     public.whatsapp_flows,
+--     public.whatsapp_templates,
+--     public.whisper_messages
+--   TO anon;
+
+REVOKE SELECT ON ALL TABLES IN SCHEMA public FROM anon;
+
+-- Restaurar SELECT em views públicas que o front usa sem autenticação (nenhuma
+-- identificada no audit; comentário aqui como ponto de extensão se necessário):
+-- GRANT SELECT ON public.<view_publica> TO anon;
+
+-- Ajusta defaults para novas tabelas criadas futuramente pelo postgres (dono das 223
+-- relações de public no canônico; no canônico o default do postgres já não inclui anon,
+-- então isto é cinto-e-suspensório). FOR ROLE supabase_admin NÃO entra: no canônico o
+-- postgres não é membro de supabase_admin (pg_has_role = f) e a migration falharia com
+-- "permission denied to change default privileges".
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE SELECT ON TABLES FROM anon;
