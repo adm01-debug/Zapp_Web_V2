@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8",
+  "commit": "d8854eb31141f2d4b07b5337cdad4382f94acd7a",
   "branch": "main",
-  "data_commit": "2026-11-12T11:15:01Z",
+  "data_commit": "2026-11-12T08:48:45-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d8854eb",
+    "data": "2026-11-12",
+    "assunto": "chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)"
+   },
    {
     "sha": "87c5e97",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "d5835ed",
     "data": "2026-11-11",
     "assunto": "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)"
-   },
-   {
-    "sha": "f036006",
-    "data": "2026-11-11",
-    "assunto": "fix(regras-negocio): module_key agrupa arquivo-raiz do pacote no módulo certo (#2959)"
    }
   ],
-  "arquivos_mudados_7d": 660,
+  "arquivos_mudados_7d": 661,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8416,
-  "arquivos_codigo": 4814,
-  "linhas_codigo": 891391,
+  "arquivos_total": 8417,
+  "arquivos_codigo": 4815,
+  "linhas_codigo": 891518,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1105,
   "cron_jobs": 26,
-  "testes": 2617,
+  "testes": 2618,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -607,8 +607,8 @@
    "linhas": 337
   },
   "scripts/ci": {
-   "arquivos": 213,
-   "linhas": 44013
+   "arquivos": 214,
+   "linhas": 44140
   },
   "scripts/db-audit": {
    "arquivos": 81,

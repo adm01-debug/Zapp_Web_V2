@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8",
+  "sha": "d8854eb31141f2d4b07b5337cdad4382f94acd7a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 11:34 UTC",
-  "files_total": 8258,
-  "code_files": 6091,
-  "code_lines": 1059642
+  "generated_at": "2026-11-12 12:25 UTC",
+  "files_total": 8259,
+  "code_files": 6092,
+  "code_lines": 1059769
  },
  "version": "1.3.2",
- "facts_hash": "f6ce0999e44f0f8d",
+ "facts_hash": "d9e872df3831e1cb",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -327,7 +327,7 @@
    ".tsx": 2342,
    ".ts": 1892,
    ".sql": 1305,
-   ".mjs": 433,
+   ".mjs": 434,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -68092,8 +68092,8 @@
   },
   {
    "module": "scripts",
-   "files": 463,
-   "lines": 92948,
+   "files": 464,
+   "lines": 93075,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68149,6 +68149,7 @@
     "bundle-budget.mjs: extractInitialAssets, gzipKB, measure, evaluate, main",
     "bundle-budget.unit.mjs: lerGruposDeChunking",
     "check-bundle-secrets.mjs: extrairTokens, decodificarPayload, ehArquivoVarrido, listarArquivosVarridos, varrer, varrerEnv",
+    "check-claude-md-integrity.mjs: AGENTS, CLAUDE, DOCS_DIR, SKILL_NAME, SKILL_FILES, REQUIRED_SECTIONS",
     "check-e2e-artifact-secrets.mjs: CAMINHOS_SENSIVEIS, VARIAVEIS_CREDENCIAL, REDATOR, semComentarios, usaCredencial, uploads",
     "check-edge-error-exposure.mjs: acharExposicoes, listarFontes, main",
     "check-pr-workflow-secrets.mjs: hasPullRequestTrigger, hasPushTriggerUnrestricted, findPullRequestSecretLeaks, findPushSecretLeaks, scanWorkflowDirectory",
@@ -68178,8 +68179,7 @@
     "multiplix-send-mutation-ci.unit.mjs: RUNNER, passos, comandos, violacoes",
     "playwright-version-lock.unit.mjs: versaoPlaywrightDoLock, pinsDivergentes",
     "redigir-relatorio.mjs: TAMANHO_MINIMO, extensaoDe, normalizarSegredos, arquivosDeTexto, redigirConteudo, formasDoSegredo",
-    "reuso-arvore.mjs: JOB_REUSO, WORKFLOWS_COM_REUSO, validarEntrada, limparParaLog, decidirReuso, urlDaApi",
-    "revisao-fontes-doc.unit.mjs: violacoesDoDocumento"
+    "reuso-arvore.mjs: JOB_REUSO, WORKFLOWS_COM_REUSO, validarEntrada, limparParaLog, decidirReuso, urlDaApi"
    ],
    "docs": [
     "team-chat-db-validate.mjs: !/usr/bin/env node",
@@ -68261,6 +68261,7 @@
     "scripts/ci/check-bundle-secrets.mjs",
     "scripts/ci/check-bundle-secrets.unit.mjs",
     "scripts/ci/check-claude-md-integrity.mjs",
+    "scripts/ci/check-claude-md-integrity.unit.mjs",
     "scripts/ci/check-disposable-pg-backoff.unit.mjs",
     "scripts/ci/check-e2e-artifact-secrets.mjs",
     "scripts/ci/check-e2e-artifact-secrets.unit.mjs",
@@ -68310,8 +68311,7 @@
     "scripts/ci/dry-run-plan.unit.mjs",
     "scripts/ci/e2e-auth-diagnostics.unit.mjs",
     "scripts/ci/e2e-auth-isolation.unit.mjs",
-    "scripts/ci/e2e-auth-setup.unit.mjs",
-    "scripts/ci/e2e-email-axe-ready.unit.mjs"
+    "scripts/ci/e2e-auth-setup.unit.mjs"
    ]
   },
   {
@@ -264479,7 +264479,21 @@
   },
   "scripts/ci/check-claude-md-integrity.mjs": {
    "path": "scripts/ci/check-claude-md-integrity.mjs",
-   "lines": 163,
+   "lines": 224,
+   "exports": [
+    "const AGENTS",
+    "const CLAUDE",
+    "const DOCS_DIR",
+    "const SKILL_NAME",
+    "const SKILL_FILES",
+    "const REQUIRED_SECTIONS",
+    "const SHRINK_THRESHOLD",
+    "const FILE_SHRINK_THRESHOLD",
+    "function secoesFaltando",
+    "function referenciasDocsInvalidas",
+    "function skillsDivergentes",
+    "function erroDeEncolhimento"
+   ],
    "env": [
     "CLAUDE_MD_ALLOW_NO_BASE",
     "CLAUDE_MD_BASE"
@@ -264490,26 +264504,38 @@
      "value": "'AGENTS.md'"
     },
     {
+     "name": "CLAUDE",
+     "value": "'CLAUDE.md'"
+    },
+    {
      "name": "DOCS_DIR",
      "value": "'docs/agentes'"
     },
     {
      "name": "SHRINK_THRESHOLD",
-     "value": "0.3"
+     "value": "0.30"
     },
     {
      "name": "FILE_SHRINK_THRESHOLD",
-     "value": "0.5"
+     "value": "0.50"
     }
    ],
    "rule_comments": [
-    "100)}% vs ${BASE} (atual: ${agora} bytes, base: ${naBase} bytes); limite por arquivo e ${Math.round(FILE_SHRINK_THRESHOLD * 100)}%.`"
+    "100)}% vs a base (atual: ${agora} bytes, base: ${naBase} bytes); limite por arquivo e ${Math.round(FILE_SHRINK_THRESHOLD * 100)}%.`,"
    ],
    "doc": "!/usr/bin/env node",
    "percents": [
-    "* AGENTS.md + CLAUDE.md + docs/agentes/*.md nao encolheu >30% em bytes vs a base, e cada arquivo",
-    "* vigiado (AGENTS.md e cada docs/agentes/*.md que exista na base) continua existindo com >=50% do",
+    "* com >=50% do tamanho que tem na base (o limiar do conjunto sozinho nao pega o esvaziamento de 1",
+    "* o conjunto AGENTS.md + CLAUDE.md + docs/agentes/*.md nao encolheu >30% em bytes vs a base, com",
     "// com >= 50% do tamanho de la. CLAUDE.md fica de fora: e so `@AGENTS.md` por design."
+   ]
+  },
+  "scripts/ci/check-claude-md-integrity.unit.mjs": {
+   "path": "scripts/ci/check-claude-md-integrity.unit.mjs",
+   "lines": 66,
+   "percents": [
+    "assert.match(erros[0], /encolheram 40%/);",
+    "assert.match(esvaziado[0], /docs\\/agentes\\/banco\\.md encolheu 75%/);"
    ]
   },
   "scripts/ci/check-disposable-pg-backoff.unit.mjs": {
@@ -387846,10 +387872,20 @@
   }
  },
  "git": {
-  "sha": "87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8",
+  "sha": "d8854eb31141f2d4b07b5337cdad4382f94acd7a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d8854eb",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)",
+    "files": [
+     "scripts/ci/check-claude-md-integrity.mjs",
+     "scripts/ci/check-claude-md-integrity.unit.mjs"
+    ]
+   },
    {
     "sha": "87c5e97",
     "date": "2026-11-12",
@@ -388199,16 +388235,6 @@
      "scripts/vercel/ignore-build.sh",
      "scripts/vercel/ignore-build.unit.mjs"
     ]
-   },
-   {
-    "sha": "b548ca0",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)",
-    "files": [
-     "scripts/catalog/validate-plan.mjs",
-     "scripts/catalog/validate-plan.test.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388257,6 +388283,14 @@
     2
    ],
    [
+    "scripts/ci/check-claude-md-integrity.mjs",
+    1
+   ],
+   [
+    "scripts/ci/check-claude-md-integrity.unit.mjs",
+    1
+   ],
+   [
     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
     1
    ],
@@ -388282,14 +388316,6 @@
    ],
    [
     "supabase/functions/external-db-bridge/index.ts",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
     1
    ]
   ]

@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1958)",
-   "outro (229)",
+   "outro (230)",
    "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)",
    "fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)",
    "fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)",
    "chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix",
-   "chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha",
-   "fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard"
+   "chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
