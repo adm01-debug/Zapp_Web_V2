@@ -3995,8 +3995,8 @@
   },
   {
    "arquivo": "scripts/e2e-isolated/routine-ownership.mjs",
-   "descricao": "Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e. These are full SHA256 hashes of pg_get_functiondef, not the snapshot's JSON hash.",
-   "linhas": 306,
+   "descricao": "Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e, except claim_outbound_message: redefined by migration 20261111160000_outbound_post_started.sql (9727aaedd).",
+   "linhas": 307,
    "env": [
     "PATH"
    ],

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0d65d57370204a336c5df32c16c2c50ffd7641e0",
+  "commit": "a082adc179bbab733daf4ffbe3b4865c149770c9",
   "branch": "main",
-  "data_commit": "2026-11-12T02:48:58-03:00",
+  "data_commit": "2026-11-12T03:16:58-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a082adc",
+    "data": "2026-11-12",
+    "assunto": "fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)"
+   },
    {
     "sha": "0d65d57",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "2182f81",
     "data": "2026-11-11",
     "assunto": "fix(supabase_snapshot): timeout parcial em auth some como 0 usuários sem aviso (#2945)"
-   },
-   {
-    "sha": "d1fc5ad",
-    "data": "2026-11-11",
-    "assunto": "fix(edge-deploy): health-check neutraliza quebra de linha no catch de topo (#2955)"
    }
   ],
   "arquivos_mudados_7d": 652,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8414,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891212,
+  "linhas_codigo": 891213,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -624,7 +624,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6432
+   "linhas": 6433
   },
   "scripts/edge-deploy": {
    "arquivos": 30,

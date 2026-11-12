@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `0d65d57370204a336c5df32c16c2c50ffd7641e0` (2026-11-12T02:48:58-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a082adc179bbab733daf4ffbe3b4865c149770c9` (2026-11-12T03:16:58-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8414 |
 | arquivos_codigo | 4814 |
-| linhas_codigo | 891212 |
+| linhas_codigo | 891213 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56895 nós · 117563 arestas · 4137 comunidades · grafo do commit `0d65d573`
+- 56895 nós · 117563 arestas · 4137 comunidades · grafo do commit `a082adc1`
 - comunidades maiores: lucide-react (901), button.tsx (785), vitest (778), TalkXSuppression.tsx (729), react (693), ref_node_assert (579), input.tsx (524), cn (494), DashboardView.tsx (480), errorResponse (475), e2e-isolated-runtime.unit.mjs (396), ref_node_fs (379)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `a082adc` fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)
 - 2026-11-12 `0d65d57` ci(talkx): ativa validação do corpo das PRs Talk X (#2919)
 - 2026-11-12 `2942f21` fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)
 - 2026-11-12 `13a00e0` fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `9727aae` feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO 
 - 2026-11-11 `d4f25e7` fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)
 - 2026-11-11 `9084db7` fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)
-- 2026-11-11 `b548ca0` fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "0d65d57370204a336c5df32c16c2c50ffd7641e0",
+  "sha": "a082adc179bbab733daf4ffbe3b4865c149770c9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 06:00 UTC",
+  "generated_at": "2026-11-12 06:31 UTC",
   "files_total": 8256,
   "code_files": 6089,
-  "code_lines": 1059210
+  "code_lines": 1059211
  },
  "version": "1.3.2",
- "facts_hash": "8eb4431ec4b10968",
+ "facts_hash": "ce9cad70cf41470f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68017,7 +68017,7 @@
   {
    "module": "scripts",
    "files": 463,
-   "lines": 92906,
+   "lines": 92907,
    "tables": [
     "a",
     "alem_do_limite",
@@ -270669,7 +270669,7 @@
   },
   "scripts/e2e-isolated/routine-ownership.mjs": {
    "path": "scripts/e2e-isolated/routine-ownership.mjs",
-   "lines": 306,
+   "lines": 307,
    "exports": [
     "const OWNERSHIP_ROUTINES",
     "const OWNERSHIP_EXECUTOR_OPTIONS",
@@ -387628,10 +387628,19 @@
   }
  },
  "git": {
-  "sha": "0d65d57370204a336c5df32c16c2c50ffd7641e0",
+  "sha": "a082adc179bbab733daf4ffbe3b4865c149770c9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a082adc",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)",
+    "files": [
+     "scripts/e2e-isolated/routine-ownership.mjs"
+    ]
+   },
    {
     "sha": "0d65d57",
     "date": "2026-11-12",
@@ -387982,16 +387991,6 @@
      "scripts/ui-audit/layout-guard.unit.mjs",
      "scripts/ui-audit/root-className.mjs"
     ]
-   },
-   {
-    "sha": "b50be19",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(docs): linha tabela→migration sem crase no .sql não passa mais em silêncio (#2942)",
-    "files": [
-     "scripts/docs/verificar-docs-realtime.mjs",
-     "scripts/docs/verificar-docs-realtime.test.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388014,6 +388013,10 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/e2e-isolated/routine-ownership.mjs",
+    1
    ],
    [
     ".github/workflows/check-talkx-pr-body.yml",
@@ -388069,10 +388072,6 @@
    ],
    [
     "scripts/ci/README.md",
-    1
-   ],
-   [
-    "scripts/db-tests/README.md",
     1
    ]
   ]

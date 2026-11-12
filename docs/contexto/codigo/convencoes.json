@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)",
    "ci(talkx): ativa validação do corpo das PRs Talk X (#2919)",
    "fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)",
    "fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)",
-   "chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares",
-   "fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)"
+   "chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
