@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { PRESENCE_OPTIONS, type Presenca } from './instancePresenceOptions';
 
 /**
  * Aba "Presença" do InstanceSettingsDialog.
@@ -15,13 +16,6 @@ import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
  * ação é de admin/supervisor). Na Evolution GO a rota não existe: a Edge
  * responde `notSupported` e o aviso aparece como erro, nunca como sucesso.
  */
-export const PRESENCE_OPTIONS = [
-  { value: 'available', label: 'Disponível (online)' },
-  { value: 'unavailable', label: 'Indisponível (offline)' },
-] as const;
-
-type Presenca = (typeof PRESENCE_OPTIONS)[number]['value'];
-
 export function PresenceTabContent({ instanceName }: { instanceName: string }) {
   const { setPresence } = useEvolutionApi();
   const [presenca, setPresenca] = useState<Presenca>('available');
