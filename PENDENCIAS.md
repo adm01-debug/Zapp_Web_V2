@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-09 por sessão `claude_05/festive-carson-ub43wu`._
+_Atualizado em 2026-11-12 por sessão `claude_05/festive-carson-ub43wu`._
 
 ---
 
@@ -12,15 +12,14 @@ _Atualizado em 2026-11-09 por sessão `claude_05/festive-carson-ub43wu`._
 - [42525240682](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42525240682) — SHA `e6e467b9` (2026-11-08T21:27Z): idem
 
 **Diagnóstico dos runs de Nov/08 (42525294301 / 42525240682):**
-Ambos rodaram sobre SHA `e6e467b96f12dfca1e12bab7847fad6ddef3c397`, que é **anterior ao HEAD atual** da main (`9183f0f6`). Naquele momento o `types.ts` estava stale e catálogo/manifesto fora de sincronia. O `types-sync` rodou com **sucesso** às 21:44 UTC do mesmo dia (run 42526738975) — depois dessas falhas — corrigindo o `types.ts`. Falhas de Nov/08 são **transitórias** no SHA antigo, muito provavelmente resolvidas pelo types-sync subsequente. Próximo run agendado: `13 6 * * *` UTC (≈ 06:13 UTC de 09/11) confirmará o estado atual do HEAD.
+Ambos rodaram sobre SHA `e6e467b96f12dfca1e12bab7847fad6ddef3c397`, que é **anterior ao HEAD atual** da main (`bd62fc9d`). O `types-sync` rodou com **sucesso** às 21:44 UTC do mesmo dia (run 42526738975) corrigindo o `types.ts`. Falhas de Nov/08 são **transitórias** no SHA antigo.
 
 **Run de Nov/01 (41318522203) — 3 contratos reais:**
 Este run falhou com divergências de DDL/migrations/ACL — requer análise do artifact `db-live-evidence-{run_id}-1`. Este workflow **não é required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
-1. Aguardar o run agendado de 06:13 UTC de 09/11 — se verde, confirma que Nov/08 foi transitório
-2. Se ainda falhar: baixar artifact `db-live-evidence-{run_id}-1` e diagnosticar o contrato que diverge
-3. Se "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` em `main`
+1. Se o próximo run agendado (`13 6 * * *` UTC) falhar: baixar artifact `db-live-evidence-{run_id}-1` e diagnosticar o contrato que diverge
+2. Se "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` em `main`
 
 ---
 
@@ -72,33 +71,16 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 4. CI/CD Pipeline — `🧪 Unit Tests` falhando na main por arquivo truncado
+## 4. CI/CD Pipeline — `🧪 Unit Tests` falhando por arquivo truncado — RESOLVIDO ✅
 
-**Causa raiz:** O commit `9183f0f6` (PR #2550 / TalkX 6 RPCs, 2026-11-08) truncou
-`src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` de 202 para 61 linhas
-(`+4 −141`). Sobraram apenas blocos `vi.mock()` sem nenhum `describe`/`it`, fazendo o Vitest
-falhar com `Error: No test suite found in file`. Isso derrubou o job `🧪 Unit Tests (2/3)` e o
-`CI Gate` na main ([run 42521096687](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42521096687)).
+**Resolvido em:** 2026-11-09  
+**Como:** PR #2851 (`claude/fix-ci-talkx-report-test-261108-2152`) foi fechada sem merge porque o objetivo (`TalkXCampaignReport.test.tsx` com 12 testes) já estava na main via commit `568d3f9326` (PR #2550 / TalkX 6 RPCs). Os `🧪 Unit Tests` passam no HEAD atual da main (`bd62fc9d`): `Unit Tests (1/3)`, `(2/3)` e `(3/3)` = ✅ success.
 
-**Fix pendente:**
-- **PR #2851** (`claude/fix-ci-talkx-report-test-261108-2152`, SHA `5c97aa006ae60c012c1014d3353e85ade115e671`)
-  — restaura os 3 testes de aceite (agrupamento por dia/hora, grade 7×24, renderização com 3
-  gráficos sem a série "Conversões"). CI em `queued` por saturação do pool de runners.
-- Verificado localmente antes do push: `npx vitest run <arquivo>` → `Tests 3 passed (3)`,
-  typecheck e lint OK.
-
-**Estado dos required checks em PR #2851:** `Contrato DB offline` e `Talk X launch` em `queued`;
-demais checks (Lint, Unit Tests, Build, Security Audit, E2E) ainda aguardando runner.
-
-**Estado atual do required check `🧪 Unit Tests` na main:** ❌ **failure** (CI Gate vermelho no
-HEAD `9183f0f6` desde 2026-11-08T18:49Z).
-
-**O que está pendente:** PR #2851 precisa que os 6 required checks fiquem verdes — esperando
-liberação de runners. Auto-merge está ativo na PR (squash), não toca `.github/workflows/`.
+**Nenhuma ação necessária.**
 
 ---
 
-## 5. E2E logado — 3 specs falham por geolocation (fix em andamento)
+## 5. E2E — 3 specs de geolocation (fix em CI queue)
 
 **Specs afetadas:**
 - `location-picker.spec.ts`
@@ -109,21 +91,28 @@ liberação de runners. Auto-merge está ativo na PR (squash), não toca `.githu
 `permissions` configurados no contexto. Por padrão, o Playwright bloqueia
 `navigator.geolocation`, fazendo as 3 specs falharem ao chamar `getCurrentPosition()`.
 
-**Fix criado:**
-- **PR #2883** (`claude/fix-e2e-geolocation-261109-0130`, SHA `16b8e050e590031c754ab4d533f7caf863c4ff38`)
+**Fix:**
+- **PR #2883** (`claude/fix-e2e-geolocation-261109-0130`)
   — adiciona `geolocation: { latitude: 0, longitude: 0 }, permissions: ['geolocation']`
-  ao projeto `chromium-mapa` em `playwright.config.ts`. PR em estado **draft**.
-- CI em `queued`: vários checks aguardando runner. `🧪 Unit Tests (placeholder)` e
-  `Contrato DB offline` aparecem como `skipped` (provável path filter: playwright.config.ts
-  não está em `src/`, jobs com condição `if: contains(...)` podem não disparar — a serem
-  confirmados quando os runners subirem).
+  ao projeto `chromium-mapa` em `playwright.config.ts`.
+- Código correto: Joaquim (commit `13d44c07`, Co-Authored-By Claude Opus 5.5) restaurou
+  `playwright.config.ts` a partir da main e aplicou **apenas** a mudança de geolocation,
+  corrigindo a regressão do commit `16b8e050` desta sessão que havia desfeito mudanças
+  anteriores dos PRs #2716, #2785 e GR-016.
+- HEAD atual do PR #2883: `dc22fcc7` — merge da main em cima do fix.
 
-**Risco:** Se os jobs `🧪 Unit Tests` e `Contrato DB offline` não subirem para os shards reais
-(1/3, 2/3, 3/3) por path filter, os required checks não fecharão como `success` mas como
-`skipped` — que pode ou não ser aceito como "passou" pelo branch protection. A ser verificado
-quando o CI terminar.
+**Estado atual (2026-11-12T01:00Z):**
+- CI em **`queued`** em todos os 14 checks desde 2026-11-11T23:57Z — runner congestion
+- Runs bloqueados: `43123668172`, `43123668182`, `43123668190` — `updated_at` congelado
+- `mergeable: true`, `mergeStateStatus: BLOCKED` — bloqueado apenas porque CI não completou
+- **Auto-merge desativado pelo Joaquim** — requer merge manual após CI passar
 
-**Estado do required check `🎭 E2E Tests (Playwright)` na PR #2883:** `queued`.
+**BLOQUEIO:** Runner congestion. Não há falha de código. CI precisa rodar para confirmar o fix.
+
+**O que o Joaquim precisa fazer:**
+1. Aguardar CI do PR #2883 completar (todos os 14 checks passarem)
+2. Mergear manualmente o PR #2883 (auto-merge foi desativado)
+3. Após merge: confirmar que `🎭 E2E Tests (Playwright)` passa na main e issue `[e2e-logado] Suíte logada quebrada na main` é fechada
 
 ---
 
@@ -139,33 +128,22 @@ O step `Provar encerramento diario de sessoes vencidas (N-008)` em
 1. `N008_POSTGRES_IMAGE` ausente no bloco `env:` — sem ela, `docker run postgres:17-alpine` falha com rate limit/imagem não cacheada. **Fix (commit `68c998e`):** adicionado `N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` e `SKIP_DOCKER_SHIM: "1"`.
 2. `user-sessions-expire.test.sh` usava loop `pg_isready` vulnerável à race condition do servidor temporário do PostgreSQL. **Fix (commit `c61cbe617`):** substituído por `wait-postgres-final-start.sh` que aguarda o marcador "init process complete" nos logs + query real.
 
-**BLOQUEIO PARA CONFIRMAR O FIX — motivo exato: saturação do pool de runners de CI (infraestrutura externa)**
+**BLOQUEIO PARA CONFIRMAR O FIX — motivo exato: runner congestion + DECISAO_HUMANA**
 
 Pool de runners `ubuntu-24.04` da conta `adm01-debug` esgotado por ~40 sessões paralelas
-simultâneas. 4 tentativas de CI ao longo de 3h22min, todas bloqueadas antes de executar:
-
-| Attempt | Run ID | Status | `updated_at` | Duração em queue |
-|---|---|---|---|---|
-| 1 | (anterior a `c61cbe617`) | `queued` → cancelado | — | ~15 min |
-| 2 | (após push `c61cbe617`) | `queued` → cancelado | — | ~20 min |
-| 3 | rerun manual | `queued` → cancelado | 2026-11-02T00:35Z | ~15 min |
-| 4 | [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) | `queued` | congelado desde 2026-11-02T00:46:33Z | 4h+ sem mudar |
+simultâneas. 4 tentativas de CI ao longo de 3h22min, todas bloqueadas antes de executar.
 
 Diagnóstico: `runner_id=0` em todas as tentativas confirma que nenhuma chegou a ser alocada
-a um runner. `conclusion=null` em todas as 4. O run de CI/CD Pipeline
-([41364695618](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695618))
-do mesmo push também está em `queued` desde 2026-11-02T00:44:29Z (4h+ sem mudança).
+a um runner.
 
-**Tipo de bloqueio:** infraestrutura de CI externo (pool de runners GitHub Actions).
-Não há código no repositório que cause ou corrija essa saturação.
+**Tipo de bloqueio:** (1) infraestrutura de CI externo (pool de runners) + (2) PR #2542 requer aprovação do Joaquim pois toca `.github/workflows/` — DECISAO_HUMANA.
 
-**Código do fix está correto** — verificado por code review automático (Codex/Qodo) na PR #2542;
-não há nenhuma falha de lógica, sintaxe ou dependência nos 2 commits do fix.
+**Código do fix está correto** — verificado por code review automático (Codex/Qodo) na PR #2542.
 
 **O que o Joaquim precisa fazer:**
 1. Aguardar redução da contention de runners (horário de menor demanda ou liberação do pool)
 2. Relançar o CI da PR #2542 (botão "Re-run all jobs" em https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562)
-3. PR #2542 requer: (a) `Contrato DB offline` = `conclusion: success`, (b) aprovação do Joaquim (toca `.github/workflows/` — DECISAO_HUMANA)
+3. PR #2542 requer: (a) `Contrato DB offline` = `conclusion: success`, (b) **aprovação do Joaquim** (toca `.github/workflows/` — DECISAO_HUMANA)
 
 ---
 
@@ -193,11 +171,46 @@ não de código. O workflow está correto.
 **Resolvido em:** 2026-11-08T21:44Z  
 **Run com sucesso:** [42526738975](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42526738975) — `conclusion: success` (branch `main`)
 
-O `types-sync.yml` que estava sendo listado como falha em sessões anteriores passou a funcionar
-corretamente após regeneração dos tipos via `workflow_dispatch`. O `types.ts` está em sincronia
-com o schema atual do banco de produção.
+O `types-sync.yml` passou a funcionar corretamente após regeneração dos tipos via `workflow_dispatch`. O `types.ts` está em sincronia com o schema atual do banco de produção.
 
 **Nenhuma ação necessária.**
+
+---
+
+## 9. E2E logado em main — `routine-ownership-failed` recorrente (causa: infra E2E)
+
+**Runs com falha (todos em `main`, não são required check):**
+- [43116986482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43116986482) — SHA `e408b778` (2026-11-11T23:22Z, mais recente)
+- [43108863222](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43108863222) — SHA `d5835ed8`
+- [43094223124](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43094223124) — SHA `f036006a`
+- Múltiplos runs anteriores com o mesmo código de falha
+
+**O que falha:** Os 3 jobs do shard `🎭 E2E logado (backend descartável)` (authenticated-1/2/3-of-3)
+terminam com `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed"}`
+no step "Validar grupo e executar a suíte no backend descartável". O resumo público não
+identifica os casos reprovados (`resumo público indisponível ou inválido`).
+
+**Causa raiz:** A falha ocorre após `restore-versioned-routine-owners` / `cleanup` no sistema
+de E2E isolado — indica falha no restore da propriedade de rotinas do backend descartável.
+**NÃO é relacionada ao problema de geolocation** do PR #2883 (que corrige o `🎭 E2E Tests
+(Playwright)` do CI/CD pipeline, não o `E2E logado`).
+
+**Por que não foi corrigido:** A causa exata requer leitura do artifact
+`playwright-report-logado-authenticated-*-{run_id}-1` para identificar quais specs falharam,
+e análise do sistema `e2e-isolated/` que gerencia propriedade de rotinas. Fora do escopo desta
+sessão — requer investigação do código de orquestração E2E.
+
+**Este workflow NÃO é required check** — não bloqueia merges na `main`.
+
+**Estado da issue `[e2e-logado] Suíte logada quebrada na main`:**
+Ao falhar, o workflow comenta na issue (dedupe de 6h). O log mostra `"mesma causa da ultima vez
+-- sem comentario novo"` — indica que o conjunto de specs quebradas não mudou recentemente.
+
+**O que o Joaquim precisa fazer:**
+1. Baixar artifact `playwright-report-logado-authenticated-1-of-3-43116986482-1` (ID 13899618188)
+   do run 43116986482 para identificar quais specs estão falhando
+2. Investigar `scripts/e2e-isolated/` — especificamente o mecanismo de `restore-versioned-routine-owners`
+3. Verificar se o banco de testes do E2E tem dados de fixture corretos para os specs que falham
 
 ---
 
