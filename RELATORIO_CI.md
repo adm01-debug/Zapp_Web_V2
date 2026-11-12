@@ -332,3 +332,50 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 - `npx tsc --noEmit` nesta sessão: crashou com SIGABRT (exit 134) — bug de ambiente Node, não erro de tipo; incompatível com typecheck real
 - **Unit tests relevantes** (`node --test scripts/ci/e2e-isolated-routine-ownership.unit.mjs scripts/ci/e2e-isolated-suite.unit.mjs scripts/ci/e2e-isolated.unit.mjs`): **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z)
 - **Nota critica**: `[ownership] reason:` nao aparece no log de CI porque o commit `5b796e70d` esta na branch `claude/fix-ci-workflows-261112-0400`, ainda nao mergeado na main. CI na main executa o `run.mjs` SEM o console.error. Causa (fase `source`, SHA mismatch) confirmada por analise de codigo, nao por output de CI.
+
+---
+
+## 9. Sub-sessão 2026-11-12T09:xx — PRs #2982 e #2983
+
+### 9.1 TypeCheck local (sub-sessão pré-compactação)
+
+```
+NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit -p tsconfig.app.json
+# (zero output — sem erros de tipo)
+# exit 0 — confirmado antes da compactação de contexto desta sessão
+# NB: primeira tentativa sem NODE_OPTIONS travou com SIGABRT/heap OOM (exit 134);
+#     diagnóstico: bug de ambiente Node OOM — não é erro de tipo; fix = NODE_OPTIONS
+```
+
+### 9.2 PR #2982 — fix(db-audit): wal_level=logical em docker run
+
+- **Branch:** `claude/fix-wal-level-e27-replay-261112-0848`
+- **Merge SHA:** `2d1020163e2e46d830154f121be76164bbc9204a`
+- **Required checks (pré-merge, SHA `90c75c4f`):** Build ✅, TypeCheck ✅, CI Gate ✅
+- **Diff:** 1 linha em `scripts/db-audit/talkx-e27-replay-divergence.test.sh:56`
+  - Antes: `docker run --rm -d ... "$postgres_image" >/dev/null`
+  - Depois: `docker run --rm -d ... "$postgres_image" -c wal_level=logical >/dev/null`
+- **Causa root:** PostgreSQL 17 Alpine sobe com `wal_level=replica`; `ALTER PUBLICATION ADD TABLE` requer `wal_level=logical`; teste falhava em 42710 (`already member`) que pressupõe que `CREATE PUBLICATION` funcionou — mas sem `wal_level=logical` a etapa de fixtures falhava com `ERROR: logical replication not enabled`
+
+### 9.3 PR #2983 — fix(db-audit): known-violations.json
+
+- **Branch:** `claude/fix-types-sync-usage-guard-261112-0901`
+- **Head SHA:** `277c79b8245ccb9d8f7cc32b235b413a0ae265bd` (pós-update_pr_branch a partir de `2d1020163e`)
+- **TypeCheck:** ✅ completed success (09:34Z)
+- **Status no momento do registro:** Unit Tests 1/3 2/3 3/3 `in_progress`, E2E Tests `in_progress`, Contrato DB offline `in_progress`
+- **Diff:** 2 entradas adicionadas ao array `known` em `scripts/db-audit/known-violations.json`:
+  - `"rpc:resolve_unconfirmed_message:src/hooks/delivery/useUnconfirmedMessages.ts"` — RPC planejada (migration futura); código tem `@ts-expect-error` com comentário explícito
+  - `"rpc:mark_outbound_post_started:supabase/functions/message-delivery/index.ts"` — migration `20261111160000` pendente de apply; edge tem fallback explícito para `PGRST202`/`42883`
+- **Confirmação de ausência no banco:** `SELECT proname FROM pg_proc WHERE proname IN ('resolve_unconfirmed_message', 'mark_outbound_post_started')` → 0 linhas (banco `tnnnlkbymytvtqngbbqh`)
+
+### 9.4 Workflows na main (pós-merge PR #2982, 2026-11-12T09:33Z)
+
+| Workflow | Run (pós-merge) | Conclusão |
+|---|---|---|
+| Talk X placar regen | [#43192533643](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192533643) | ✅ success |
+| Front release targets | [#43192532411](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192532411) | ✅ success |
+| CI/CD Pipeline | [#43192533278](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192533278) | ⏳ in_progress (09:33Z) |
+| types-sync | [#43192532535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192532535) | ⏳ in_progress |
+| DB Guard (offline) | [#43192534333](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192534333) | ⏳ in_progress |
+| E2E logado | [#43191806431](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43191806431) | ⏳ in_progress (esperado falhar — Rule 8) |
+
