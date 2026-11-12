@@ -2,8 +2,17 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ContactIntelligencePanel } from '../ContactIntelligencePanel';
 
+interface Briefing {
+  opening_tip: string;
+  risk_alert: string | null;
+  days_since_last_contact: number | null;
+  total_interactions: number;
+  relationship_score: number | null;
+}
+
 interface Intel {
   found: boolean;
+  briefing: Briefing | null;
   churn: {
     churn_probability: number;
     risk_level: string;
@@ -33,6 +42,13 @@ vi.mock('@/hooks/crm/useContactIntelligence', () => ({
 function fullData(over: Partial<Intel> = {}): Intel {
   return {
     found: true,
+    briefing: {
+      opening_tip: 'Retomar o orçamento de canecas enviado em setembro',
+      risk_alert: 'Cliente reclamou do prazo na última compra',
+      days_since_last_contact: 12,
+      total_interactions: 34,
+      relationship_score: 78,
+    },
     churn: {
       churn_probability: 82.4,
       risk_level: 'high',
@@ -128,5 +144,74 @@ describe('ContactIntelligencePanel — churn e melhores horários', () => {
 
     expect(screen.getByTestId('intelligence-empty')).toHaveTextContent('Integração com o CRM desligada.');
     expect(screen.queryByTestId('intelligence-churn')).toBeNull();
+  });
+});
+
+describe('ContactIntelligencePanel — briefing pré-contato do CRM', () => {
+  it('mostra dica de abordagem, alerta e métricas devolvidos pelo CRM', () => {
+    hook.data = fullData();
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    const briefing = screen.getByTestId('intelligence-briefing');
+    expect(screen.getByText('Briefing pré-contato')).toBeInTheDocument();
+    expect(briefing).toHaveTextContent('Retomar o orçamento de canecas enviado em setembro');
+    expect(screen.getByRole('alert')).toHaveTextContent('Cliente reclamou do prazo na última compra');
+    expect(briefing).toHaveTextContent('Último contato12d');
+    expect(briefing).toHaveTextContent('Interações34');
+    expect(briefing).toHaveTextContent('Score78');
+  });
+
+  it('último contato hoje aparece como "Hoje"', () => {
+    hook.data = fullData({
+      briefing: { opening_tip: 'Oi', risk_alert: null, days_since_last_contact: 0, total_interactions: 1, relationship_score: 10 },
+    });
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    expect(screen.getByTestId('intelligence-briefing')).toHaveTextContent('Último contatoHoje');
+  });
+
+  it('campos vazios do briefing viram "—" e não inventam dica nem alerta', () => {
+    hook.data = fullData({
+      briefing: { opening_tip: '  ', risk_alert: null, days_since_last_contact: null, total_interactions: 0, relationship_score: null },
+    });
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    const briefing = screen.getByTestId('intelligence-briefing');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(briefing).toHaveTextContent('Último contato—');
+    expect(briefing).toHaveTextContent('Interações0');
+    expect(briefing).toHaveTextContent('Score—');
+  });
+
+  it('score zero é mostrado como 0, não como vazio', () => {
+    hook.data = fullData({
+      briefing: { opening_tip: 'Oi', risk_alert: null, days_since_last_contact: 3, total_interactions: 2, relationship_score: 0 },
+    });
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    expect(screen.getByTestId('intelligence-briefing')).toHaveTextContent('Score0');
+  });
+
+  it('ficha sem bloco de briefing mostra vazio honesto', () => {
+    hook.data = fullData({ briefing: null });
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    expect(screen.getByTestId('intelligence-briefing-empty')).toHaveTextContent('Sem briefing do CRM para este contato.');
+    expect(screen.queryByTestId('intelligence-briefing')).toBeNull();
+  });
+
+  it('erro na consulta ao CRM (hook devolve null) não mostra briefing', () => {
+    hook.data = null;
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    expect(screen.getByTestId('intelligence-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('intelligence-briefing')).toBeNull();
+  });
+
+  it('enquanto carrega não mostra briefing', () => {
+    hook.isLoading = true;
+    render(<ContactIntelligencePanel contactId="c1" />);
+
+    expect(screen.queryByTestId('intelligence-briefing')).toBeNull();
   });
 });
