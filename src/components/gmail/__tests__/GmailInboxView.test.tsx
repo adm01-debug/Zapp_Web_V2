@@ -117,6 +117,7 @@ const config: {
 };
 
 const syncInboxMutate = vi.fn();
+const connectGmailMutate = vi.fn();
 const subscribeToThreads = vi.fn(() => vi.fn());
 const refetchAccounts = vi.fn();
 const refetchThreads = vi.fn();
@@ -143,6 +144,8 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
       unreadCount: config.unreadCount,
       starredCount: config.starredCount,
       syncInbox: { mutate: syncInboxMutate, isPending: config.syncInboxPending },
+      connectGmail: { mutate: connectGmailMutate, isPending: false },
+      needsReconnect: config.activeAccount?.sync_status === 'reauth_required',
       subscribeToThreads,
     };
   },
@@ -196,6 +199,7 @@ describe('GmailInboxView', () => {
     config.listQueries = [];
     window.history.replaceState({}, '', '/');
     syncInboxMutate.mockClear();
+    connectGmailMutate.mockClear();
     refetchAccounts.mockClear();
     refetchThreads.mockClear();
     subscribeToThreads.mockClear().mockReturnValue(vi.fn());
@@ -413,5 +417,23 @@ describe('GmailInboxView', () => {
     expect(config.listQuery?.threadStatus).toBeUndefined();
     fireEvent.click(screen.getByRole('button', { name: 'Arquivado' }));
     await waitFor(() => expect(config.listQuery).toMatchObject({ threadStatus: 'archived', page: 1 }));
+  });
+
+  it('conta em reauth_required: Sync vira Reconectar e não sincroniza (evita 409 a cada clique)', () => {
+    config.activeAccount = { ...config.activeAccount!, sync_status: 'reauth_required' };
+    render(<GmailInboxView />);
+    expect(screen.queryByRole('button', { name: /^Sync$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sincronizar emails' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reconectar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reconectar Gmail' }));
+    expect(connectGmailMutate).toHaveBeenCalledTimes(2);
+    expect(syncInboxMutate).not.toHaveBeenCalled();
+  });
+
+  it('conta sincronizada mantém o botão Sync', () => {
+    render(<GmailInboxView />);
+    fireEvent.click(screen.getByRole('button', { name: /Sync/ }));
+    expect(syncInboxMutate).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Reconectar' })).not.toBeInTheDocument();
   });
 });
