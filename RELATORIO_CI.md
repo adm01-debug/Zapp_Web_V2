@@ -242,17 +242,14 @@ node scripts/ci/lint-ratchet.mjs
 
 ### 6.4 Vitest (suíte completa)
 
-Task `bfdmfjg4s` iniciada em 2026-11-12T03:18Z, killed por timeout após 30 minutos (output: 0 bytes).
-Task `b3nr32dv8` confirmou exit 0 para vitest PID 17353 — mas output completo não foi capturado nesta sessão.
-
-Dados abaixo são da sessão 2026-11-05 (shard total confirmado exit 0):
+Task `bhgtzypf7` iniciada em 2026-11-12T11:54Z, concluída em 2026-11-12T12:21Z (**VERIFICADO nesta sessão** ✅).
 
 ```
-npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed por timeout)
-# Test Files  1858 passed | 5 skipped (1869) [estimado 3 shards]
-#      Tests  15729 passed | 19 expected fail | 41 todo (15789)
-#   Duration  ~1300s (3 shards)
-# VITEST_EXIT=0  (confirmado via task b3nr32dv8 desta sessão: exit 0)
+npx vitest run  # task bhgtzypf7 — rodada nesta sessão em 2026-11-12T11:54Z
+Test Files  1864 passed | 5 skipped (1869)
+     Tests  15870 passed | 19 expected fail | 41 todo (15930)
+  Duration  1437.48s (transform 59.38s, setup 371.71s, import 644.63s, tests 1308.68s, environment 1642.20s)
+VITEST_EXIT:0  ✅
 ```
 
 ---
@@ -285,7 +282,7 @@ npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed 
 | Lint novas falhas | 0 | **0** (ratchet: novas=0) | ✅ Nenhuma |
 | `bun install` | ✅ exit 0 | ✅ exit 0 (no changes, 120ms) | ✅ Nenhuma |
 | Build local | ✅ exit 0 | ✅ exit 0 (built in 11.68s) | ✅ Nenhuma |
-| Vitest testes passou | 15729 | **NÃO AFETADO** — commit `5b796e70d` toca apenas `scripts/e2e-isolated/run.mjs`, nao `src/`; Vitest cobre `src/`; unit tests relevantes (`e2e-isolated-routine-ownership.unit.mjs` etc.): **196 pass, 0 fail, exit 0** (verificado 2026-11-12T07:00Z) | ✅ Sem regressao |
+| Vitest testes passou | 15729 (sessão 2026-11-05) | **15870** — task `bhgtzypf7` (2026-11-12T11:54Z–12:21Z): `1864 passed | 5 skipped (1869)`, `VITEST_EXIT:0` ✅ | ✅ Verificado nesta sessão |
 | CI/CD Pipeline na main | ✅ success (`d985c7fc`) | ✅ success (`daba6eb8`, run [#43149996916](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43149996916)) | ✅ Verde |
 | Deploy Edge Functions | ❌ failure (baseline) | ✅ success [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) | ✅ MELHOROU |
 | DB Live Guard | ❌ failure (baseline) | ✅ success [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ MELHOROU |
@@ -367,11 +364,11 @@ NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit -p tsconfig.app.json
 | Deploy Edge Functions | ❌ failure | ✅ success [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) | ✅ RESOLVIDO |
 | DB Live Guard | ❌ failure | ✅ success [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | ✅ RESOLVIDO |
 | Branch Hygiene Audit | ❌ failure | ✅ success [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | ✅ RESOLVIDO |
-| DB Guard step 181 (talkx-e27-replay) | ❌ failure | ✅ success (PR #2982, SHA `2d1020163e`) | ✅ RESOLVIDO |
-| Types Sync Gate 2 (usage-guard) | ❌ failure | ✅ success (PR #2983, SHA `bd417f58`) | ✅ RESOLVIDO |
-| Types Sync Gate 1 (TypeScript) | ❌ failure | ✅ success (PR #2988, SHA `0a1e73f2`) | ✅ RESOLVIDO |
-| E2E Logado (routine-ownership) | ❌ failure | ✅ **RESOLVIDO** — PR [#2987](https://github.com/adm01-debug/Zapp_Web_V2/pull/2987) MERGEADA em 11:15Z (SHA `87c5e97b`) | ✅ RESOLVIDO |
-| DB Guard zombie #40410990313 | 🔄 in_progress | Não cancelado — Rule 8 | ⚠️ Rule 8 (cancelamento manual) |
+| DB Guard (talkx-e27-replay) | ❌ failure | ✅ success (PR #2982, SHA `2d1020163e`) | ✅ RESOLVIDO |
+| Types Sync Gate 2 | ❌ failure | ✅ success (PR #2983, SHA `bd417f58`) | ✅ RESOLVIDO |
+| Types Sync Gate 1 | ❌ failure | ✅ success (PR #2988, SHA `0a1e73f2`) | ✅ RESOLVIDO |
+| E2E Logado | ❌ failure | ✅ **RESOLVIDO** (PR #2987 MERGEADA 11:15Z) | ✅ RESOLVIDO |
+| DB Guard zombie | 🔄 in_progress | Não cancelado — Rule 8 | ⚠️ Rule 8 (cancelamento manual) |
 
 **Baseline local desta sub-sessão (2026-11-12T09:xx):** TypeCheck ratchet 0 novas falhas, lint ratchet 0 novas falhas, build ✅ — ver §6 e §9.1.
 
@@ -381,7 +378,7 @@ NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit -p tsconfig.app.json
 
 ## 11. Sub-sessão 2026-11-12T11:xx — Inventário fresco e PRs #2987/#2988 consolidados
 
-### 11.1 Baseline local verificado (2026-11-12T09:xx–11:xxZ)
+### 11.1 Baseline local verificado (2026-11-12T09:xx–12:21Z)
 
 ```
 bun install --frozen-lockfile
@@ -395,6 +392,12 @@ bun run build
 NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit -p tsconfig.app.json
 # (zero output — sem erros de tipo)
 # BASELINE_OK / exit 0  ✅
+
+npx vitest run  # task bhgtzypf7 — rodada nesta sessão em 2026-11-12T11:54Z
+# Test Files  1864 passed | 5 skipped (1869)
+#      Tests  15870 passed | 19 expected fail | 41 todo (15930)
+#   Duration  1437.48s
+# VITEST_EXIT:0  ✅
 ```
 
 ### 11.2 Inventário fresco na main (2026-11-12T11:12Z)
@@ -445,7 +448,7 @@ Estado `in_progress` via API GET é ghost/stale. Run não está em progresso int
 
 ### 11.6 Comparação baseline × final definitivo
 
-| Workflow | Baseline (2026-11-05) | Final (2026-11-12T11:30Z) | Estado |
+| Workflow | Baseline (2026-11-05) | Final (2026-11-12T12:25Z) | Estado |
 |---|---|---|---|
 | Deploy Edge Functions | ❌ failure | ✅ success | ✅ RESOLVIDO |
 | DB Live Guard | ❌ failure | ✅ success | ✅ RESOLVIDO |
@@ -455,6 +458,7 @@ Estado `in_progress` via API GET é ghost/stale. Run não está em progresso int
 | Types Sync Gate 1 | ❌ failure | ✅ success (PR #2988) | ✅ RESOLVIDO |
 | E2E Logado | ❌ failure | ✅ **RESOLVIDO** (PR #2987 MERGEADA 11:15Z) | ✅ RESOLVIDO |
 | DB Guard zombie | 🔄 stale | ⚠️ ghost/API 409 — Rule 8 (cancelar via UI) | ⚠️ Rule 8 |
-| Baseline local | NÃO VERIFICADO | ✅ VERIFICADO (bun/build/tsc exit 0) | ✅ VERIFICADO |
+| Baseline local — install/build/tsc | NÃO VERIFICADO | ✅ VERIFICADO (bun/build/tsc exit 0) | ✅ VERIFICADO |
+| Baseline local — vitest completo | NÃO VERIFICADO | ✅ VERIFICADO — task `bhgtzypf7`: `1864 passed | 5 skipped`, `15870 tests passed`, `VITEST_EXIT:0` (2026-11-12T11:54Z–12:21Z) | ✅ VERIFICADO |
 
-**7 de 8 workflows resolvidos. 1 bloqueado por Rule 8 (ghost não cancelável via API). Baseline local verificado. Nenhuma regressão introduzida.**
+**7 de 8 workflows resolvidos. 1 bloqueado por Rule 8 (ghost não cancelável via API). Baseline local completo verificado (install + build + tsc + vitest). Nenhuma regressão introduzida.**
