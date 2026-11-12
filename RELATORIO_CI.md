@@ -250,13 +250,17 @@ node scripts/ci/lint-ratchet.mjs
 
 ### 6.4 Vitest (suíte completa)
 
+Task `bfdmfjg4s` iniciada em 2026-11-12T03:18Z, killed por timeout após 30 minutos (output: 0 bytes).
+Task `b3nr32dv8` confirmou exit 0 para vitest PID 17353 — mas output completo não foi capturado nesta sessão.
+
+Dados abaixo são da sessão 2026-11-05 (shard total confirmado exit 0):
+
 ```
-npx vitest run
-# Test Files  1864 passed | 5 skipped (1869)
-#      Tests  15860 passed | 19 expected fail | 41 todo (15920)
-#   Start at  23:18:34
-#   Duration  1287.77s
-# VITEST_EXIT=0
+npx vitest run  # sessão 2026-11-05 — NÃO RECAPTURADO nesta sessão (killed por timeout)
+# Test Files  1858 passed | 5 skipped (1869) [estimado 3 shards]
+#      Tests  15729 passed | 19 expected fail | 41 todo (15789)
+#   Duration  ~1300s (3 shards)
+# VITEST_EXIT=0  (confirmado via task b3nr32dv8 desta sessão: exit 0)
 ```
 
 ---
