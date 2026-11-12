@@ -159,20 +159,20 @@ describe('mapeamento ação -> payload da edge function', () => {
       'isLoading',
       // useEvolutionInstance
       'createInstance', 'createConnection', 'listInstances', 'connectInstance', 'getInstanceStatus',
-      'getInstanceInfo', 'restartInstance', 'disconnectInstance', 'deleteInstance',
+      'getInstanceInfo', 'restartInstance', 'disconnectInstance', 'deleteInstance', 'setPresence',
       'setSettings', 'getSettings', 'setWebhook', 'getWebhook',
       // useEvolutionMessaging
       'sendTextMessage', 'sendMediaMessage', 'sendAudioMessage', 'sendStickerMessage',
       'sendLocationMessage', 'sendContactMessage', 'sendReaction', 'sendPollMessage',
-      'sendListMessage', 'sendButtonsMessage', 'sendStatusMessage',
+      'sendListMessage', 'sendButtonsMessage', 'sendStatusMessage', 'sendTemplateMessage',
       'sendPtvMessage', 'sendChatPresence', 'markMessageAsRead', 'markMessageAsUnread',
       'archiveChat', 'deleteMessage', 'updateMessage', 'deleteMessageForEveryone', 'editMessage',
       'fetchContactProfile',
       // useEvolutionGroups
       'createGroup', 'listGroups', 'getGroupInfo', 'getGroupParticipants', 'updateGroupName',
       'updateGroupDescription', 'updateGroupParticipants', 'updateGroupSetting',
-      'getGroupInviteCode', 'revokeGroupInviteCode', 'acceptInvite',
-      'leaveGroup', 'updateGroupPicture',
+      'getGroupInviteCode', 'revokeGroupInviteCode', 'getInviteInfo', 'acceptInvite',
+      'leaveGroup', 'updateGroupPicture', 'toggleEphemeral',
     ];
 
     // Nada a mais, nada a menos: fora do que vem dos sub-hooks, só o contrato.

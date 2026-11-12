@@ -35,6 +35,9 @@ export function useEvolutionGroups(
   const revokeGroupInviteCode = useCallback((instanceName: string, groupJid: string) =>
     withToast('revoke-invite-code', { instanceName, groupJid }, 'Link revogado', 'Erro ao revogar link'), [withToast]);
 
+  const getInviteInfo = useCallback((instanceName: string, inviteCode: string) =>
+    callApi('invite-info', { instanceName, inviteCode }, 'GET'), [callApi]);
+
   const acceptInvite = useCallback((instanceName: string, inviteCode: string) =>
     withToast('accept-invite', { instanceName, inviteCode }, 'Entrou no grupo', 'Erro ao entrar no grupo'), [withToast]);
 
@@ -44,10 +47,13 @@ export function useEvolutionGroups(
   const updateGroupPicture = useCallback((instanceName: string, groupJid: string, image: string) =>
     withToast('update-group-picture', { instanceName, groupJid, image }, 'Foto atualizada', 'Erro ao atualizar foto'), [withToast]);
 
+  const toggleEphemeral = useCallback((instanceName: string, groupJid: string, expiration: number) =>
+    callApi('toggle-ephemeral', { instanceName, groupJid, expiration }), [callApi]);
+
   return {
     createGroup, listGroups, getGroupInfo, getGroupParticipants,
     updateGroupName, updateGroupDescription, updateGroupParticipants,
     updateGroupSetting, getGroupInviteCode, revokeGroupInviteCode,
-    acceptInvite, leaveGroup, updateGroupPicture,
+    getInviteInfo, acceptInvite, leaveGroup, updateGroupPicture, toggleEphemeral,
   };
 }
