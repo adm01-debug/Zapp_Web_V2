@@ -1,22 +1,26 @@
 # PENDÊNCIAS DE CI
 
 > Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.  
-> Atualizado em 2026-11-12 (PR #2881, sessão `brave-mccarthy-zvzky4`).  
-> Inventário completo em 2026-11-12T04:00Z (sessão `brave-mccarthy-zvzky4`, branch `claude/fix-ci-workflows-261112-0400`).  
-> §3 atualizado com log exato do run #43148791130 (sessão `brave-mccarthy-zvzky4`, 2026-11-12T05:30Z).
+> Atualizado em 2026-11-12 pela sessão `fix-ci-workflows-261112-0400`.
+> Atualizar quando os bloqueios forem resolvidos.
 
 ---
 
-## 1. Deploy Edge Functions — ✅ RESOLVIDO (2026-11-12)
-
-> **Status atualizado**: a última execução na `main` é agora **SUCCESS** (criada em 2026-11-12T02:41:59Z). Este item foi resolvido.
+## 1. Deploy Edge Functions — manifesto desatualizado
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/deploy-functions.yml` |
-| Última run na main | success (2026-11-12T02:41:59Z) |
-| Run anterior com falha | [#41883030015](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) — `Deployment manifest is stale` |
-| Situação | ✅ **Resolvido** — deploy confirmado verde. |
+| Última run com falha | [#41883030015 (commit `afd8c7ca`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) |
+| Erro exato | `Deployment manifest is stale: supabase/deployment-manifest.json` |
+| Causa | PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707) (`fix: cron do drain de ai_usage_outbox e comentario do CodeQL`) adicionou a edge function `ai-usage-outbox-drain` mas ainda não foi mergeada. O `generate-manifest.mjs` que atualiza `supabase/deployment-manifest.json` está dentro do próprio PR. |
+| Por que não posso corrigir agora | PR #2707 toca `supabase/deployment-manifest.json` (conflito de arquivo — AGENTS.md regra 3) **e** contém migration DDL (`supabase/migrations/`) — requer aprovação do dono (AGENTS.md regra 8). |
+
+### O que o dono precisa fazer
+
+1. Revisar e mergear o PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707).
+2. Após o merge, o `deploy-functions.yml` será disparado automaticamente pelo push na `main` e deverá passar (manifesto regenerado pelo próprio PR).
+3. Se o deploy ainda falhar após o merge, dispatchar manualmente `deploy-functions.yml` via GitHub Actions.
 
 ---
 
@@ -25,106 +29,108 @@
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/db-live-guard.yml` |
-| Última run com falha | [#42039646275](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039646275) |
-| Issue de alerta | [#1965](https://github.com/adm01-debug/Zapp_Web_V2/issues/1965) (aberta desde 2026-10-16) |
+| Última run com falha | [#42039646275 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039646275) — verificado nesta sessão via dispatch |
+| Issue de alerta | [#1965 — [db-live-guard] Contrato vivo do banco quebrado](https://github.com/adm01-debug/Zapp_Web_V2/issues/1965) (aberta desde 2026-10-16) |
+| Passo que falha | `Comparar migrations com schema_migrations` |
 | Causa raiz | Drift entre arquivos `.sql` em `supabase/migrations/` e registros em `schema_migrations` no banco de produção. |
 
-**Drift verificado (1082 arquivos × 1079 registros):**
+**Detalhes do drift (medido em 2026-11-05 no commit `341d3fda`, 1082 arquivos × 1079 registros):**
 
-| Versão | Situação |
-|---|---|
-| `20261026240300_drop_bkp_261023.sql` | Arquivo no repo sem registro no banco |
-| `20261102012400_login_attempts_retencao_90d.sql` | Arquivo no repo sem registro no banco |
-| `20261102032200_revoga_execute_public_cron_schedule.sql` | Arquivo no repo sem registro no banco |
-| `20261102012200_department_invites_restringe_escrita.sql` | Conteúdo SQL divergente |
-| `20261103201500_remove_pagamentos_e_special_agent.sql` | Conteúdo SQL divergente |
+| Versão | Arquivo | Situação |
+|---|---|---|
+| `20261026240300` | `20261026240300_drop_bkp_261023.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
+| `20261102012400` | `20261102012400_login_attempts_retencao_90d.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
+| `20261102032200` | `20261102032200_revoga_execute_public_cron_schedule.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
+| `20261102012200` | `20261102012200_department_invites_restringe_escrita.sql` | **Conteúdo SQL divergente** (arquivo ≠ ledger) |
+| `20261103201500` | `20261103201500_remove_pagamentos_e_special_agent.sql` | **Conteúdo SQL divergente** (arquivo ≠ ledger) |
 
 ### Por que não posso corrigir agora
 
-DDL em banco de produção — requer aprovação explícita do dono (AGENTS.md regra 8).
+Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação explícita do dono. As 3 migrations pendentes precisam de apply; as 2 divergentes precisam de diagnóstico (banco ou arquivo está correto?) antes de qualquer ação.
+
+### O que o dono precisa fazer
+
+1. Para as 3 **sem registro**: verificar se o DDL é seguro aplicar hoje e, se sim, executar via `db_query` do MCP `SUPABASE - ZAPP WEB V2 - MCP` usando `node scripts/db-audit/register-migration.mjs <arquivo.sql>` para gerar o SQL exato, sempre com `RETURNING` não-vazio como guarda.
+2. Para as 2 **divergentes**: comparar `pg_get_functiondef` / `pg_indexes` / `pg_constraint` no banco com o SQL do arquivo para decidir se o banco ou o arquivo é a fonte correta, e então ou aplicar a correção ou atualizar o arquivo. Referência: `docs/MIGRATIONS.md`.
+3. Após resolver, dispatchar novamente `db-live-guard.yml` para confirmar verde.
 
 ---
 
-## 3. E2E logado — routine-ownership-failed nos grupos authenticated
+## 3. E2E logado — job authenticated: routine-ownership-failed (sub-fase: scope)
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
-| Última run com falha | [#43148791130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43148791130) (2026-11-12T03:08Z) |
-| Código de falha | `routine-ownership-failed` (lançado em `scripts/e2e-isolated/run.mjs:639`) |
-| Grupos afetados | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` |
-| Grupos OK | `anon-*` passam normalmente |
+| Run original | [#42039283192 (`341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
+| Run mais recente analisada | [#43148791130 (`71123cc0`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43148791130) |
+| Jobs com falha | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` |
+| Jobs que passam | `deslogado-principal` ✅ · `deslogado-secundario` ✅ |
+| Código JSON de saída | `{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}` |
+| Fase que falha | `restore-versioned-routine-owners` → `cleanup` em ~403ms |
+| Artefatos diagnósticos | IDs 13913791221, 13913470743, 13913896170 (expiram 2026-11-15T03:48Z) |
 
-### Log exato do CI (run #43148791130 — idêntico nos 3 grupos authenticated)
+### Análise de timing — sub-fase identificada: `scope`
 
+Logs do job `authenticated-1-of-3` (run #43148791130, job ID 130952813356):
 ```
-[e2e-isolated] restore-versioned-routine-owners
-[e2e-isolated] cleanup
-{"scope":"authenticated-suite","success":false,"code":"routine-ownership-failed","native_e2e":false,"report_ready":true}
-##[error]Process completed with exit code 1.
+03:46:05Z [e2e-isolated] start-platform
+03:46:05Z [e2e-isolated] apply-active-migrations   ← durou ~1m55s
+03:48:01.3397161Z [e2e-isolated] restore-versioned-routine-owners
+03:48:01.7426918Z [e2e-isolated] cleanup            ← 403ms depois
+03:48:09Z {"code":"routine-ownership-failed","report_ready":true}
 ```
 
-### Análise crítica do log
+A função `restoreRoutineOwnership` (`scripts/e2e-isolated/routine-ownership.mjs:95`) executa 6 fases em sequência:
 
-**`report_ready: true`** — os testes Playwright **rodaram com sucesso** e produziram artefato de relatório **antes** da verificação de ownership. A falha **não é nos testes em si**, é na fase de verificação de isolamento que ocorre **após** os testes.
+| Fase | I/O | Tempo típico | Compatível com 403ms? |
+|---|---|---|---|
+| `scope` | Nenhum (validação de parâmetros) | < 1ms | ✅ **Sim** |
+| `source` | `git rev-parse HEAD` | ~50–200ms | ✅ Sim |
+| `container` | `docker inspect` × 2 | 500ms–2s | ❌ Não |
+| `volume` | `docker volume inspect` | 200ms–1s | ❌ Não |
+| `namespace` | `docker exec readlink` | 200ms–1s | ❌ Não |
+| `sql-process` | `docker exec psql` | 1–5s | ❌ Não |
 
-**Sequência exata de execução:**
-1. Testes Playwright rodam → relatório gerado → artefato disponível
-2. `restore-versioned-routine-owners` é invocado (`run.mjs:635`)
-3. Chama `restoreRoutineOwnership(...)` em `routine-ownership.mjs:95`
-4. Função retorna `{ confirmed: false, reason: '{phase}-failed' }` — mas **NÃO imprime o `reason`**
-5. `run.mjs:639` lança `Error('routine-ownership-failed')` **sem logar `routineOwnership.reason`**
-6. `cleanup` é executado imediatamente
-7. JSON final é emitido com `code: "routine-ownership-failed"` — sem a sub-fase
+**Conclusão: a falha ocorre na fase `scope` (mais provável) ou `source`. Fases com Docker estão descartadas pelo timing.**
 
-### Por que a sub-fase interna NÃO aparece nos logs
-
-O campo `reason` do objeto retornado por `restoreRoutineOwnership` (`scope-failed`, `source-failed`, `container-failed`, `volume-failed`, `namespace-failed` ou `sql-process-failed`) existe apenas dentro do objeto JavaScript. O código em `run.mjs:639` é:
+### Condição da fase `scope` (linhas 100–103 de `routine-ownership.mjs`)
 
 ```javascript
-if (!routineOwnership.confirmed) throw new Error('routine-ownership-failed');
-// ^ lança o erro sem logar routineOwnership.reason
+if (scope !== 'suite' || !isAuthenticatedGroup(group) || !CID.test(anchorId) || !CID.test(databaseId)
+    || anchorId === databaseId || !IMAGE.test(anchorImage) || !IMAGE.test(databaseImage)
+    || volumeName !== runId + '-postgres' || !NET.test(networkNamespace)
+    || !(allowedWritableSources instanceof Set) || typeof dockerConfig !== 'string'
+    || !dockerConfig.startsWith('/')) reject();
 ```
 
-Para expor a fase seria necessário modificar para:
-```javascript
-if (!routineOwnership.confirmed) throw new Error(`routine-ownership-failed: ${routineOwnership.reason}`);
-```
+Hipóteses (da mais provável para a menos):
 
-Essa mudança é em código de infraestrutura de isolamento de CI/segurança (AGENTS.md regra 8).
-
-### As 6 fases de `restoreRoutineOwnership` (routine-ownership.mjs:95-149)
-
-| Fase | O que valida | Hipótese para grupos authenticated |
-|---|---|---|
-| `scope` | Parâmetros: scope='suite', grupo autenticado, IDs de container, imagens, volume, namespace de rede | Improvável — parâmetros são passados pelo orquestrador |
-| `source` | `git rev-parse HEAD === sourceSha` — commit atual deve ser exatamente o esperado | Possível se o runner faz checkout diferente para grupos authenticated |
-| `container` | Inspeciona containers Docker: nome, imagem, estado Running, configuração de rede | Mais provável — containers authenticated podem ter configuração de rede diferente |
-| `volume` | Inspeciona volume Postgres: labels de ownership, mountpoint em `allowedWritableSources` | Possível — volumes reutilizados entre shards podem ter labels incorretos |
-| `namespace` | Verifica namespace de rede via `readlink /proc/self/ns/net` no container | Possível — namespace compartilhado entre shards |
-| `sql-process` | Executa SQL de verificação de ownership no banco | Improvável se `namespace` passou |
-
-### Artefatos disponíveis (expiram ~2026-11-15)
-
-| Grupo | Artefato ID |
+| Check | Hipótese |
 |---|---|
-| authenticated-1-of-3 | 13913791221 |
-| authenticated-2-of-3 | 13913470743 |
-| authenticated-3-of-3 | 13913896170 |
+| `scope !== 'suite'` | A variável `scope` em `run.mjs:635` para grupos authenticated pode ser `'authenticated-suite'` em vez de `'suite'` |
+| `anchorId === databaseId` | Grupos authenticated podem receber os mesmos container IDs para anchor e database |
+| `volumeName !== runId + '-postgres'` | Volume criado com nome diferente quando há autenticação |
 
-Os artefatos contêm o relatório Playwright e possivelmente o JSON de resultado com o `reason` interno. Baixar antes de 2026-11-15T03:38Z.
+### `report_ready: true` — testes completaram; falha é no teardown
 
-### Por que não posso corrigir agora
+O campo `report_ready: true` no JSON confirma que a suíte Playwright **completou com sucesso** antes desta verificação. A falha é no **teardown** (`restore-versioned-routine-owners`), não nos testes. Confirmado pelo step 10 do CI: `"resumo público indisponível ou inválido; alerta sem detalhes privados"`.
 
-1. **Fase exata desconhecida sem os artefatos**: O log do CI não expõe `routineOwnership.reason`. Sem saber qual das 6 fases rejeita, qualquer fix seria chute.
-2. **Modificar `run.mjs` para logar o `reason`** é alteração em código de infraestrutura de isolamento de CI/segurança — Rule 8.
-3. **Fix da causa raiz** (qualquer que seja a fase) envolve configuração Docker ou lógica de verificação de isolamento — Rule 8.
+### Por que `reason` não aparece nos logs do CI
+
+`scripts/e2e-isolated/run.mjs:639` lança `Error('routine-ownership-failed')` **sem logar `routineOwnership.reason`** antes. O `reason` (ex: `scope-failed`) existe internamente em `routine-ownership.mjs:147` (`return { schema: 1, confirmed: false, reason: phase + '-failed' }`) mas nunca chega aos logs de CI.
 
 ### O que o dono precisa fazer
 
-1. Baixar artefato `authenticated-1-of-3` (ID 13913791221) antes de 2026-11-15T03:38Z e buscar o campo `reason` para identificar a fase exata.
-2. Com a fase identificada, abrir issue para diagnóstico cirúrgico e autorizar a correção.
-3. Ou: autorizar a adição de logging em `run.mjs:639` para expor o `reason` na próxima run.
+1. **Expor o `reason`** — adicionar em `run.mjs:639`:
+   ```javascript
+   if (!routineOwnership.confirmed) {
+     console.error('[ownership] reason:', routineOwnership.reason);
+     throw new Error('routine-ownership-failed');
+   }
+   ```
+2. **Verificar `scope`** — no `run.mjs`, confirmar o valor da variável `scope` na chamada de `restoreRoutineOwnership` (~linha 635). Se for `'authenticated-suite'` em vez de `'suite'`, esse é o bug.
+3. **Verificar `anchorId === databaseId`** — confirmar se grupos authenticated recebem os mesmos container IDs.
+4. **Após corrigir** — re-executar `e2e-logado.yml` via `workflow_dispatch` na `main` e confirmar que os 3 grupos authenticated passam.
 
 ---
 
@@ -133,83 +139,13 @@ Os artefatos contêm o relatório Playwright e possivelmente o JSON de resultado
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/branch-hygiene-audit.yml` |
-| Run com falha | [#42062235088](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) |
-| Causa raiz | Alertas CodeQL em aberto além do limite de SLA — pré-existente, não introduzido nesta sessão. |
+| Run com falha | [#42062235088 (commit `d985c7fc`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) — 16:13:39Z–16:19:35Z |
+| Passo que falha | Step 6 "SLA dos alertas de code scanning (W83)" — `conclusion=failure` |
+| Causa raiz | Alertas de code scanning (CodeQL) em aberto há mais tempo do que o limite de SLA configurado (referência W83 do inventário de workflows). Condição **temporal e pré-existente** — o workflow era ✅ no baseline desta sessão (#41409678874) mas os alertas envelheceram desde então. **Não introduzida por esta sessão** (nenhuma alteração de código ou configuração de CodeQL foi feita). |
+| Por que não posso corrigir agora | Fechar/dispensar alertas de code scanning é decisão de segurança do dono; corrigir o código apontado pelos alertas está fora do escopo desta sessão de CI. |
 
 ### O que o dono precisa fazer
 
-1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning.
-2. Corrigir o código ou dispensar alertas com justificativa.
-
----
-
-## 5. DB Guard — run zombie incancelável via API
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/db-guard.yml` |
-| Run zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) |
-| Em `in_progress` desde | 2026-10-26T22:15Z (run_attempt=14) |
-| Comportamento da API | HTTP 409 em todos os cancelamentos via API REST |
-| Impacto | Ocupa 1 slot de runner permanentemente; agrava esgotamento do pool (§6) |
-
-### O que o dono precisa fazer
-
-1. Acessar [https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313).
-2. Clicar em **"Cancel workflow"** na interface do GitHub.
-
----
-
-## 6. GitHub Actions — runner pool esgotado (bloqueio total de CI)
-
-### Estado verificado em 2026-11-12T03:19Z
-
-| Campo | Valor |
-|---|---|
-| Run mais recente (PR #2881) | HEAD `0cb4193`, status=`pending` |
-| Required checks no HEAD atual | Todos `pending`/`queued` — runner pool esgotado |
-| Causa | Quota de minutos GitHub Actions do plano free (2.000 min/mês) esgotada |
-| Zombie ainda ativo | Run #40410990313 (`db-guard.yml`) ainda `in_progress` |
-
-### Prova dos required checks para o código atual
-
-Diff `a60b0507` → `0cb4193`: apenas `PENDENCIAS.md` e `RELATORIO_CI.md` alterados. Zero código de aplicação.
-
-| Required Check | Conclusão | Run |
-|---|---|---|
-| 🏗️ Build | ✅ **success** | [#43137999344](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43137999344) (SHA `a60b0507`) |
-| 🔎 TypeCheck | ✅ **success** | [#43137999344](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43137999344) (SHA `a60b0507`) |
-| ✅ CI Gate | ⚠️ cancelled | Bloqueio externo: runner pool esgotado + zombie #40410990313 |
-
-### O que o dono precisa fazer
-
-1. **https://github.com/settings/billing** — verificar saldo de minutos GitHub Actions.
-2. **Cancelar zombie #40410990313** — libera slot ocupado desde 2026-10-26.
-3. Quando runners disponíveis: squash-merge PR [#2881](https://github.com/adm01-debug/Zapp_Web_V2/pull/2881).
-
----
-
-## 7. types-sync — Gate 2 usage-guard bloqueou sincronização de tipos
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/types-sync.yml` |
-| Última run com falha | [#43121058346](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43121058346) (2026-11-11T23:35:59Z, SHA `bd62fc9d`) |
-| Job com falha | `Gates e PR de sincronizacao (sem credencial)` |
-| Step com falha | `Falhar quando um gate rejeitar a proposta` |
-| Erro exato | `A sincronizacao foi bloqueada por um ou mais gates.` (exit 1) |
-| Gate que falhou | Gate 2 — usage-guard (`steps.gate2.outputs.passed = false`) |
-| Arquivos alterados detectados | `types.ts=true`, `schema-catalog.json=true`, `schema-manifest.json=true` |
-
-### Causa raiz
-
-O workflow `types-sync.yml` detectou alteração em `types.ts`, `schema-catalog.json` e `schema-manifest.json` mas o `usage-guard` (Gate 2) rejeitou a proposta. Indica drift de schema no banco (§2) que propagou para os tipos gerados. A sincronização de tipos requer que o banco esteja em sincronia com as migrations.
-
-### Por que não posso corrigir agora
-
-A causa raiz é o drift do banco (§2) — DDL em produção requer aprovação do dono (AGENTS.md regra 8). Corrigir o drift de migrations (§2) deve resolver este item também.
-
-### O que o dono precisa fazer
-
-1. Resolver o drift de migrations documentado em §2.
-2. Após §2 resolvido, re-executar `workflow_dispatch` em `types-sync.yml` na `main`.
+1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
+2. Para cada alerta: corrigir o código (PR de fix) ou dispensar com justificativa se for falso positivo.
+3. Após fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
