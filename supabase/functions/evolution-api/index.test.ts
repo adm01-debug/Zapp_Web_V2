@@ -1143,3 +1143,123 @@ Deno.test("#2054 mark-unread (GO): notSupported com 200, sem I/O no provedor", a
     await fake.stop();
   }
 });
+
+Deno.test("#2054 set-presence (v2, admin): POST /instance/setPresence só com a presença", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("set-presence", { instanceName: "PRINCIPAL", presence: "unavailable", extra: 1 }),
+      { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls.map((c) => `${c.method} ${c.path}`), ["POST /instance/setPresence/PRINCIPAL"]);
+    assertEquals(fake.calls[0].body, { presence: "unavailable" });
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("#2054 toggle-ephemeral (v2, admin): POST /group/toggleEphemeral com grupo e expiração", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("toggle-ephemeral", { instanceName: "PRINCIPAL", groupJid: "123@g.us", expiration: 86400 }),
+      { callerClient: adminClient(), supabase: makeServiceClient() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls[0].path, "/group/toggleEphemeral/PRINCIPAL");
+    assertEquals(fake.calls[0].body, { groupJid: "123@g.us", expiration: 86400 });
+  } finally {
+    await fake.stop();
+  }
+});
+
+for (const action of ["set-presence", "toggle-ephemeral"]) {
+  Deno.test(`#2054 ${action} sem papel devolve 403 e não produz I/O`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, { instanceName: "PRINCIPAL", presence: "available", groupJid: "1@g.us", expiration: 0 }),
+        { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() });
+      assertEquals(res.status, 403);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("#2054 invite-info (v2): leitura com o código codificado na query, permitida sem papel", async () => {
+  const fake = createCapturingFake({ subject: "Grupo X", size: 3 });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(controlRequest("invite-info", { instanceName: "PRINCIPAL", inviteCode: "AbC&x=1#y" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() });
+    assertEquals(res.status, 200);
+    assertEquals((await res.json()).subject, "Grupo X");
+    assertEquals(fake.calls.length, 1);
+    assertEquals(fake.calls[0].method, "GET");
+    assertEquals(fake.calls[0].path, "/group/inviteInfo/PRINCIPAL");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("#2054 send-template (v2): agente com contato visível envia; sem visibilidade, 403", async () => {
+  const fake = createCapturingFake({ key: { id: "T1" } });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const template = { name: "boas_vindas", language: "pt_BR", components: [] };
+    const negado = await handleEvolutionApi(controlRequest("send-template", { instanceName: "PRINCIPAL", number: "5511999999999", template }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: false }), supabase: sendSupabase() });
+    assertEquals(negado.status, 403);
+    assertEquals(fake.calls.length, 0);
+
+    const res = await handleEvolutionApi(controlRequest("send-template", { instanceName: "PRINCIPAL", number: "5511999999999", template }),
+      { callerClient: agentClient(), supabase: sendSupabase() });
+    assertEquals(res.status, 200);
+    assertEquals(fake.calls[0].path, "/message/sendTemplate/PRINCIPAL");
+    assertEquals(fake.calls[0].body, { number: "5511999999999", template });
+  } finally {
+    await fake.stop();
+  }
+});
+
+for (const [action, body] of [
+  ["set-presence", { presence: "available" }],
+  ["toggle-ephemeral", { groupJid: "1@g.us", expiration: 0 }],
+  ["invite-info", { inviteCode: "abc" }],
+] as const) {
+  Deno.test(`#2054 ${action} (GO): notSupported com 200, sem I/O no provedor`, async () => {
+    const fake = createCapturingFake();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+    try {
+      const res = await handleEvolutionApi(controlRequest(action, { instanceName: "PRINCIPAL", ...body }),
+        { callerClient: adminClient(), supabase: makeServiceClient() });
+      assertEquals(res.status, 200);
+      assertEquals((await res.json()).notSupported, true);
+      assertEquals(fake.calls.length, 0);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("#2054 send-template (GO): notSupported com 200, sem I/O no provedor", async () => {
+  const fake = createCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(controlRequest("send-template", { instanceName: "PRINCIPAL", number: "5511999999999", template: { name: "x" } }),
+      { callerClient: agentClient(), supabase: sendSupabase() });
+    assertEquals(res.status, 200);
+    assertEquals((await res.json()).notSupported, true);
+    assertEquals(fake.calls.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});

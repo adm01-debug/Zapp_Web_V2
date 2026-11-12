@@ -870,6 +870,13 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Restaurada (#2054): presença da conta. `/instance/setPresence` é rota da v2
+    // sem equivalente no GO (evolution-go-routes) → notSupported explícito.
+    if (action === 'set-presence') {
+      if (isGoFlavor) return goActionNotSupported('set-presence', corsHeaders);
+      return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
+    }
+
     // ─── 2. Settings ───
     // Rotas restauradas (saíram por engano no #2054 e ainda têm tela): a aba
     // "Configurações" do InstanceSettingsDialog lê e grava por aqui. Contrato
@@ -1078,6 +1085,17 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-group-setting') return await proxy(`/group/updateSetting/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action });
     if (action === 'group-invite-code') return await proxy(`/group/inviteCode/${instance}?groupJid=${body.groupJid}`, 'GET');
     if (action === 'revoke-invite-code') return await proxy(`/group/revokeInviteCode/${instance}`, 'PUT', { groupJid: body.groupJid });
+    // Restauradas (#2054). `inviteInfo`/`toggleEphemeral` são rotas da v2 sem
+    // equivalente no GO → notSupported explícito. O código do convite vai
+    // codificado na query (antes ia cru: `&`/`#` no código quebravam a URL).
+    if (action === 'invite-info') {
+      if (isGoFlavor) return goActionNotSupported('invite-info', corsHeaders);
+      return await proxy(`/group/inviteInfo/${instance}?inviteCode=${encodeURIComponent(String(body.inviteCode ?? ''))}`, 'GET');
+    }
+    if (action === 'toggle-ephemeral') {
+      if (isGoFlavor) return goActionNotSupported('toggle-ephemeral', corsHeaders);
+      return await proxy(`/group/toggleEphemeral/${instance}`, 'POST', { groupJid: body.groupJid, expiration: body.expiration });
+    }
     if (action === 'accept-invite') return await proxy(`/group/acceptInviteCode/${instance}`, 'POST', { inviteCode: body.inviteCode });
     if (action === 'leave-group') return await proxy(`/group/leaveGroup/${instance}`, 'DELETE', { groupJid: body.groupJid });
     if (action === 'update-group-picture') return await proxy(`/group/updateGroupPicture/${instance}`, 'PUT', { groupJid: body.groupJid, image: body.image });
@@ -1153,6 +1171,12 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'handle-label') return await proxy(`/label/handleLabel/${instance}`, 'POST', { number: body.number, labelId: body.labelId, action: body.action });
 
     if (action === 'update-block-status') return await proxy(`/chat/updateBlockStatus/${instance}`, 'POST', { number: body.number, status: body.status });
+    // Restaurada (#2054): template aprovado do WhatsApp Business (só instâncias
+    // Cloud API na v2). Categoria send: o gate valida o `number` como contato.
+    if (action === 'send-template') {
+      if (isGoFlavor) return goActionNotSupported('send-template', corsHeaders);
+      return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
+    }
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;
       if (typeof videoSource === 'string') {

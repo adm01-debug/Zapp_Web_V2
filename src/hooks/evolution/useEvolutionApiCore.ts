@@ -30,6 +30,12 @@ export interface EvolutionApiError extends Error {
   retryAfterMs?: number;
   /** `true` quando o navegador desistiu por tempo limite — o servidor não respondeu. */
   timedOut?: boolean;
+  /**
+   * `true` quando a Edge respondeu `notSupported`: a ação não existe no provedor
+   * em uso (ex.: rotas só da Evolution v2 com a Evolution GO). Não é falha
+   * passageira — tentar de novo não adianta.
+   */
+  notSupported?: boolean;
 }
 
 /** Converte `retryAfter` (segundos ou data HTTP) em milissegundos. Ausente/inválido → undefined. */
@@ -110,6 +116,16 @@ export function useEvolutionApiCore() {
             }
           );
           throw apiError;
+        }
+        // 200 com `notSupported` (Evolution GO sem a rota da v2): antes virava
+        // "sucesso" — ex.: "Marcar como não lida" mostrava ok sem nada acontecer.
+        if (data && typeof data === 'object' && data.notSupported === true) {
+          throw Object.assign(
+            new Error(typeof data.message === 'string' && data.message
+              ? data.message
+              : 'Recurso não suportado pelo provedor de WhatsApp em uso.'),
+            { notSupported: true },
+          );
         }
         return data;
       } catch (error) {
