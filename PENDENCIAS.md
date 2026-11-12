@@ -44,19 +44,49 @@ DDL em banco de produção — requer aprovação explícita do dono (AGENTS.md 
 
 ---
 
-## 3. E2E logado — job authenticated: browser-suite-failed
+## 3. E2E logado — routine-ownership-failed nos grupos authenticated
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/e2e-logado.yml` |
-| Última run com falha | [#43141093798](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43141093798) (2026-11-12T02:23:42Z) |
-| Código de falha | `browser-suite-failed` |
-| Artefato diagnóstico | Expirado ~2026-11-08 — necessário re-executar para novo artefato |
+| Última run com falha | [#43148791130](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43148791130) (2026-11-12T03:08Z) |
+| Código de falha | `routine-ownership-failed` (lançado em `scripts/e2e-isolated/run.mjs:639`) |
+| Grupos afetados | `authenticated-1-of-3`, `authenticated-2-of-3`, `authenticated-3-of-3` |
+| Grupos OK | `anon-*` passam normalmente |
+
+### Diagnóstico detalhado
+
+A função `restoreRoutineOwnership` em `scripts/e2e-isolated/routine-ownership.mjs:95-149` valida o isolamento Docker dos containers E2E em 6 fases sequenciais:
+
+| Fase | O que valida |
+|---|---|
+| `scope` | Parâmetros: scope='suite', grupo autenticado, IDs de container, imagens, volume, namespace de rede |
+| `source` | `git rev-parse HEAD === sourceSha` — commit atual deve ser exatamente o esperado |
+| `container` | Inspeciona containers Docker: nome, imagem, estado Running, configuração de rede |
+| `volume` | Inspeciona volume Postgres: labels de ownership, mountpoint em `allowedWritableSources` |
+| `namespace` | Verifica namespace de rede via `readlink /proc/self/ns/net` no container |
+| `sql-process` | Executa SQL de verificação de ownership no banco |
+
+Qualquer falha retorna `{ confirmed: false, reason: '{phase}-failed' }`. Quando `confirmed === false`, `run.mjs:639` lança `Error('routine-ownership-failed')`.
+
+### Por que falha apenas nos grupos authenticated
+
+Os grupos `anon-*` passam. Os grupos `authenticated-*` falham. Hipóteses:
+- Containers de grupos authenticated recebem configuração diferente (imagem, rede, volume) que não passa a inspeção Docker
+- O `sourceSha` passado para o grupo authenticated não corresponde ao HEAD do repositório no momento da execução
+- O volume `{runId}-postgres` dos grupos authenticated não tem o label de ownership correto
+
+### Por que não posso corrigir agora
+
+Sem acesso a logs detalhados da fase exata que falha (o objeto `reason` não aparece no log de erro — apenas `routine-ownership-failed`), não é possível confirmar qual das 6 fases rejeita. Para reproduzir precisaria de um runner com Docker e ambiente idêntico ao CI.
+
+Além disso, `routine-ownership-failed` é uma verificação de segurança/isolamento — qualquer alteração requer análise cuidadosa de impacto de segurança (AGENTS.md regra 8: mudança de arquitetura).
 
 ### O que o dono precisa fazer
 
-1. Re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` para gerar novo artefato.
-2. Se falha persistir: identificar teste e abrir PR de fix.
+1. Re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` e baixar artefato de diagnóstico antes de expirar.
+2. Buscar no artefato o campo `reason` do objeto retornado por `restoreRoutineOwnership` para identificar a fase exata.
+3. Abrir issue com a fase exata para diagnóstico cirúrgico.
 
 ---
 
