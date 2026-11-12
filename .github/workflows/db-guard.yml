@@ -197,7 +197,7 @@ jobs:
       - name: Executar suites Node antes mantidas na allowlist
         run: |
           node --test \
-            scripts/catalog/validate-plan.test.mjs \
+            scripts/catalog/validate-plan.unit.mjs \
             scripts/ui-audit/view-container-padding.unit.mjs \
             scripts/db-tests/run-all.unit.mjs \
             scripts/talkx/gen-estados.unit.mjs
