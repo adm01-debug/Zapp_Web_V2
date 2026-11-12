@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "65cf38544717f59ee7486e9b10fe07d9cbd42769",
+  "sha": "81f67b0db663d171686a85a1549e43099258d01c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 12:42 UTC",
+  "generated_at": "2026-11-12 14:30 UTC",
   "files_total": 8259,
   "code_files": 6092,
   "code_lines": 1059769
@@ -387872,10 +387872,19 @@
   }
  },
  "git": {
-  "sha": "65cf38544717f59ee7486e9b10fe07d9cbd42769",
+  "sha": "81f67b0db663d171686a85a1549e43099258d01c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "81f67b0",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)",
+    "files": [
+     "playwright.config.ts"
+    ]
+   },
    {
     "sha": "65cf385",
     "date": "2026-11-12",
@@ -388225,16 +388234,6 @@
      "supabase/functions/message-delivery/index.ts",
      "supabase/migrations/20261111160000_outbound_post_started.sql"
     ]
-   },
-   {
-    "sha": "d4f25e7",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(db-tests): detail/id de assertiva podiam forjar linha de log (#2961)",
-    "files": [
-     "scripts/db-tests/run-all.mjs",
-     "scripts/db-tests/run-all.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388283,6 +388282,10 @@
     2
    ],
    [
+    "playwright.config.ts",
+    1
+   ],
+   [
     "scripts/ci/check-claude-md-integrity.mjs",
     1
    ],
@@ -388312,10 +388315,6 @@
    ],
    [
     "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
-    1
-   ],
-   [
-    "supabase/functions/external-db-bridge/index.ts",
     1
    ]
   ]

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `65cf38544717f59ee7486e9b10fe07d9cbd42769` (2026-11-12T12:23:43Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `81f67b0db663d171686a85a1549e43099258d01c` (2026-11-12T10:07:44-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56921 nós · 117619 arestas · 4141 comunidades · grafo do commit `65cf3854`
+- 56921 nós · 117619 arestas · 4141 comunidades · grafo do commit `81f67b0d`
 - comunidades maiores: button.tsx (833), vitest (741), lucide-react (705), validation.ts (573), ref_node_fs (480), date-fns (465), catalogShared.tsx (457), ref_https (434), useTeamChatPanel.ts (382), DashboardCard.tsx (381), cn (379), useTalkXSegments.ts (374)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -409,9 +409,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - scripts/db-audit/migration-evidence.json (10)
 - scripts/e2e-isolated/run.mjs (10)
 - src/integrations/supabase/types.ts (10)
-- .github/workflows/e2e-logado.yml (9)
 - scripts/ci/e2e-isolated-runtime.unit.mjs (9)
 - scripts/e2e-isolated/README.md (9)
+- .github/workflows/db-guard.yml (8)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `81f67b0` fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)
 - 2026-11-12 `65cf385` chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)
 - 2026-11-12 `d8854eb` chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)
 - 2026-11-12 `87c5e97` fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `1c4498d` fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)
 - 2026-11-12 `1616f7b` docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS
 - 2026-11-12 `5536177` fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)
-- 2026-11-12 `623f37b` fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "65cf38544717f59ee7486e9b10fe07d9cbd42769",
+  "commit": "81f67b0db663d171686a85a1549e43099258d01c",
   "branch": "main",
-  "data_commit": "2026-11-12T12:23:43Z",
+  "data_commit": "2026-11-12T10:07:44-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "81f67b0",
+    "data": "2026-11-12",
+    "assunto": "fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)"
+   },
    {
     "sha": "65cf385",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "bd62fc9",
     "data": "2026-11-11",
     "assunto": "feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)"
-   },
-   {
-    "sha": "e408b77",
-    "data": "2026-11-11",
-    "assunto": "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)"
    }
   ],
   "arquivos_mudados_7d": 661,
@@ -246,10 +246,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 9
    },
@@ -263,6 +259,10 @@
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 8
+   },
+   {
+    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 8
    },
    {
