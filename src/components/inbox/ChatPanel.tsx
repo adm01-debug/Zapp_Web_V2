@@ -111,7 +111,7 @@ interface MaybeSupabaseAuth {
 
 /**
  * `resolved` diz se a primeira leitura da sessão já terminou (com ou sem
- * identidade). A presença de digitação só abre o canal depois disso: abrir com a
+ * identidade; o nome do perfil pode chegar depois). A presença de digitação só abre o canal depois disso: abrir com a
  * chave provisória e reabrir com a real gerava um par abrir/fechar por conversa.
  */
 function useLoggedAgentIdentity(): { identity: LoggedAgentIdentity | null; resolved: boolean } {
@@ -122,22 +122,37 @@ function useLoggedAgentIdentity(): { identity: LoggedAgentIdentity | null; resol
     const auth = (supabase as { auth?: MaybeSupabaseAuth }).auth;
     let cancelled = false;
 
+    // Cada `apply` ganha um número: um nome de perfil que chega atrasado nunca
+    // sobrescreve a identidade de uma sessão mais nova (troca de usuário).
+    let seq = 0;
     const apply = async (user: LoggedAgentUser | null | undefined) => {
+      const mine = ++seq;
       if (!user?.id) {
         if (!cancelled) { setIdentity(null); setResolved(true); }
         return;
       }
+      const userId = user.id;
       const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : '';
-      let name = metadataName || user.email || '';
+      const fallbackName = metadataName || user.email || '';
+      // O canal abre assim que o `user.id` é conhecido: a chave da presença só
+      // depende dele. O nome do perfil chega depois e atualiza o payload SEM
+      // reabrir o canal — uma consulta lenta (ou travada) a `profiles` não pode
+      // deixar a conversa sem presença nem sem o aviso de "contato digitando".
+      if (!cancelled) {
+        setIdentity((prev) => (prev?.userId === userId ? prev : { userId, name: fallbackName }));
+        setResolved(true);
+      }
       try {
-        const { data } = await supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle();
-        if (data?.name) name = data.name;
+        const { data } = await supabase.from('profiles').select('name').eq('user_id', userId).maybeSingle();
+        const name = data?.name || fallbackName;
+        if (!cancelled && mine === seq) {
+          setIdentity((prev) => (prev?.userId === userId && prev.name === name ? prev : { userId, name }));
+        }
       } catch (err) {
         // Sem o nome do perfil a identidade continua correta e o rótulo cai nos
         // metadados (ou no e-mail); a falha não é engolida em silêncio.
         log.warn('[ChatPanel] nome do perfil indisponível para a presença de digitação', err);
       }
-      if (!cancelled) { setIdentity({ userId: user.id, name }); setResolved(true); }
     };
 
     void (async () => {
