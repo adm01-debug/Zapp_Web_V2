@@ -1261,7 +1261,9 @@ async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<vo
 
 // A varredura inteira (login + 43 percursos do mapa + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
-test.describe.configure({ timeout: 15 * 60_000 });
+// Sem retry: cada tentativa leva até 22 min e 2 retries (66 min) estouram os 55 min do
+// controller isolado — o processo morria antes de imprimir o erro (run 43210181927).
+test.describe.configure({ timeout: 15 * 60_000, retries: 0 });
 
 /** Relatório da rodada: lacunas e defeitos SEPARADOS (lacuna é conjunto, defeito é produto). */
 function relatarRodada(
