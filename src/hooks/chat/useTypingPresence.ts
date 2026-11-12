@@ -186,12 +186,12 @@ export function useTypingPresence({
           return;
         }
 
-        Object.entries(state).forEach(([key, presences]) => {
-          if (key === presenceKey || !Array.isArray(presences)) return;
+        Object.entries(state).forEach(([chave, presences]) => {
+          if (chave === presenceKey || !Array.isArray(presences)) return;
 
           presences.forEach((presence) => {
             const p = presence as unknown as PresenceState;
-            const identity = p.oderId || key;
+            const identity = p.oderId || chave;
             if (identity === scopedIdentity) return; // outra aba do mesmo agente
             if (!p.isTyping || seen.has(identity)) return;
 

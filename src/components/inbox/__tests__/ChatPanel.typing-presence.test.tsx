@@ -271,7 +271,7 @@ describe('ChatPanel — presença de digitação entre agentes (R2-INB-026)', ()
     expect(mocks.channels).toHaveLength(1);
     const handleTypingStart = mocks.handlerArgs.current?.handleTypingStart as () => void;
     await act(async () => { handleTypingStart(); });
-    expect(mocks.tracked.at(-1)).toMatchObject({ channel: canal.name, payload: { oderId: AGENT_ANA.id, name: AGENT_ANA.name } });
+    expect(mocks.tracked[mocks.tracked.length - 1]).toMatchObject({ channel: canal.name, payload: { oderId: AGENT_ANA.id, name: AGENT_ANA.name } });
   });
 
   it('agente B digitando aparece para o agente A com o nome de B', async () => {
