@@ -408,3 +408,26 @@ test('--out reaproveitando a própria saída anterior continua funcionando (reru
   execFileSync(process.execPath, [GERADOR, '--quiet'], { cwd: fixtureRoot });
   assert.ok(fs.existsSync(path.join(fixtureRoot, 'inventario/ia/manifest.json')));
 });
+
+test('rotas: componente da página com nome Auth/Admin não marca a rota como protegida; só wrapper marca', (t) => {
+  const read = isolatedFixture(t, (dir) => {
+    for (const nome of ['Auth', 'TwoFactorAuth', 'AdminPanel']) w(dir, `src/pages/${nome}.tsx`, `export default function ${nome}() { return <div/>; }`);
+    w(dir, 'src/routes/AuthRoutes.tsx', `import { Routes, Route } from 'react-router-dom';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import Auth from '@/pages/Auth';
+import TwoFactorAuth from '@/pages/TwoFactorAuth';
+import AdminPanel from '@/pages/AdminPanel';
+export const AuthRoutes = () => (<Routes>
+  <Route path="/auth" element={<Auth />} />
+  <Route path="/2fa" element={<TwoFactorAuth />} />
+  <Route path="/painel" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+</Routes>);`);
+  });
+  const by = Object.fromEntries(read('rotas.json').urls.map((u) => [u.caminho, u]));
+  assert.equal(by['/auth'].componente, 'Auth');
+  assert.equal(by['/auth'].protegida, false, '/auth sem wrapper não é protegida');
+  assert.equal(by['/2fa'].protegida, false, '/2fa sem wrapper não é protegida');
+  assert.equal(by['/admin'].protegida, false, '/admin (<Admin/> sem wrapper) não é protegida');
+  assert.equal(by['/painel'].protegida, true, 'wrapper ProtectedRoute continua protegendo');
+  assert.deepEqual(by['/painel'].wrappers, ['ProtectedRoute']);
+});
