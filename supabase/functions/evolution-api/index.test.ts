@@ -1374,13 +1374,16 @@ Deno.test("#2054 create-template / delete-template (v2, admin): repassam o corpo
     assertEquals(fake.calls[0].method, "POST");
     assertEquals(fake.calls[0].path, "/template/create/PRINCIPAL");
     assertEquals(fake.calls[0].body.name, "boas_vindas");
+    // campos do roteador não vão ao provedor
+    assertEquals(fake.calls[0].body.instanceName, undefined);
+    assertEquals(fake.calls[0].body.action, undefined);
 
     const apagar = await handleEvolutionApi(controlRequest("delete-template", { instanceName: "PRINCIPAL", name: "boas_vindas" }),
       { callerClient: adminClient(), supabase: makeServiceClient() });
     assertEquals(apagar.status, 200);
     assertEquals(fake.calls[1].method, "DELETE");
     assertEquals(fake.calls[1].path, "/template/delete/PRINCIPAL");
-    assertEquals(fake.calls[1].body.name, "boas_vindas");
+    assertEquals(fake.calls[1].body, { name: "boas_vindas" });
   } finally {
     await fake.stop();
   }
@@ -1439,7 +1442,8 @@ for (const action of ["find-chats", "create-template", "find-templates", "delete
   });
 }
 
-for (const callDuration of [0, 61, 3.5, "10"]) {
+// offerCallSchema da Evolution v2: callDuration máximo 15 s.
+for (const callDuration of [0, 16, 61, 3.5, "10"]) {
   Deno.test(`revisão: offer-call com callDuration=${JSON.stringify(callDuration)} é recusado (422) sem I/O`, async () => {
     const fake = createCapturingFake();
     Deno.env.set("EVOLUTION_API_URL", fake.url);
@@ -1455,16 +1459,16 @@ for (const callDuration of [0, 61, 3.5, "10"]) {
   });
 }
 
-Deno.test("revisão: offer-call com callDuration=60 passa e vai a /call/offer", async () => {
+Deno.test("revisão: offer-call com callDuration=15 passa e vai a /call/offer", async () => {
   const fake = createCapturingFake();
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   try {
-    const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999", callDuration: 60, isVideo: true }),
+    const res = await handleEvolutionApi(controlRequest("offer-call", { instanceName: "PRINCIPAL", number: "5511999999999", callDuration: 15, isVideo: true }),
       { callerClient: adminClient(), supabase: sendSupabase() });
     assertEquals(res.status, 200);
     assertEquals(fake.calls[0].path, "/call/offer/PRINCIPAL");
-    assertEquals(fake.calls[0].body, { number: "5511999999999", isVideo: true, callDuration: 60 });
+    assertEquals(fake.calls[0].body, { number: "5511999999999", isVideo: true, callDuration: 15 });
   } finally {
     await fake.stop();
   }
