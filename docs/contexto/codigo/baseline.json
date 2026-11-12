@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "55361775364dbd53803a5a7d8f185f1b22d0725c",
+  "commit": "1616f7b73a2bbdf5d3e131e9faba827c014e7a45",
   "branch": "main",
-  "data_commit": "2026-11-12T04:39:25-03:00",
+  "data_commit": "2026-11-12T04:56:52-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1616f7b",
+    "data": "2026-11-12",
+    "assunto": "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS"
+   },
    {
     "sha": "5536177",
     "data": "2026-11-12",
@@ -126,11 +131,6 @@
     "sha": "1507ad9",
     "data": "2026-11-11",
     "assunto": "fix(qa): medir-tipografia reconhece família de fonte com eixo ital,wght (#2954)"
-   },
-   {
-    "sha": "dd991b0",
-    "data": "2026-11-11",
-    "assunto": "fix(ci): SLA de code scanning neutraliza quebra de linha de rule.id/path (#2958)"
    }
   ],
   "arquivos_mudados_7d": 655,
@@ -202,15 +202,15 @@
     "mudancas": 15
    },
    {
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 14
+   },
+   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 14
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 13
-   },
-   {
-    "arquivo": "PENDENCIAS.md",
     "mudancas": 13
    },
    {
@@ -230,6 +230,10 @@
     "mudancas": 10
    },
    {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 10
+   },
+   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 10
    },
@@ -238,15 +242,11 @@
     "mudancas": 10
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "ESTADO.md",
     "mudancas": 9
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8414,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891251,
+  "linhas_codigo": 891254,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -624,7 +624,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6433
+   "linhas": 6436
   },
   "scripts/edge-deploy": {
    "arquivos": 30,

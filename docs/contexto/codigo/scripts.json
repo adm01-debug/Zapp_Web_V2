@@ -4007,7 +4007,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 820,
+   "linhas": 823,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"

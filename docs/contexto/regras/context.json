@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "55361775364dbd53803a5a7d8f185f1b22d0725c",
+  "sha": "1616f7b73a2bbdf5d3e131e9faba827c014e7a45",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 07:40 UTC",
+  "generated_at": "2026-11-12 07:59 UTC",
   "files_total": 8256,
   "code_files": 6089,
-  "code_lines": 1059249
+  "code_lines": 1059252
  },
  "version": "1.3.2",
- "facts_hash": "771b92532c508763",
+ "facts_hash": "2e59cd4f76ae7d43",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68017,7 +68017,7 @@
   {
    "module": "scripts",
    "files": 463,
-   "lines": 92909,
+   "lines": 92912,
    "tables": [
     "a",
     "alem_do_limite",
@@ -270693,7 +270693,7 @@
   },
   "scripts/e2e-isolated/run.mjs": {
    "path": "scripts/e2e-isolated/run.mjs",
-   "lines": 820,
+   "lines": 823,
    "exports": [
     "function parseFilesSeedDiagnostic",
     "function parseQrSeedDiagnostic",
@@ -387638,10 +387638,21 @@
   }
  },
  "git": {
-  "sha": "55361775364dbd53803a5a7d8f185f1b22d0725c",
+  "sha": "1616f7b73a2bbdf5d3e131e9faba827c014e7a45",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1616f7b",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS",
+    "files": [
+     "PENDENCIAS.md",
+     "RELATORIO_CI.md",
+     "scripts/e2e-isolated/run.mjs"
+    ]
+   },
    {
     "sha": "5536177",
     "date": "2026-11-12",
@@ -387990,22 +388001,20 @@
      "scripts/edge-deploy/health-check.mjs",
      "scripts/edge-deploy/health-check.unit.mjs"
     ]
-   },
-   {
-    "sha": "090f5f8",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)",
-    "files": [
-     "scripts/ci/github-settings-guard.mjs",
-     "scripts/ci/github-settings-guard.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
     3
+   ],
+   [
+    "PENDENCIAS.md",
+    2
+   ],
+   [
+    "RELATORIO_CI.md",
+    2
    ],
    [
     "scripts/tarefas/seed-local-imagens.unit.mjs",
@@ -388026,6 +388035,10 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "scripts/e2e-isolated/run.mjs",
+    1
    ],
    [
     "src/hooks/__tests__/useGoalNotifications.test.ts",
@@ -388069,18 +388082,6 @@
    ],
    [
     "scripts/edge-deploy/redigir-log.mjs",
-    1
-   ],
-   [
-    "scripts/edge-deploy/redigir-log.unit.mjs",
-    1
-   ],
-   [
-    "PENDENCIAS.md",
-    1
-   ],
-   [
-    "RELATORIO_CI.md",
     1
    ]
   ]
