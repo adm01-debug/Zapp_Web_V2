@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `13a00e06afa353a5c61951110cccb8561c72519d` (2026-11-12T01:21:03-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `2942f212856851f55841825205cf98f023103177` (2026-11-12T02:09:48-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8413 |
 | arquivos_codigo | 4814 |
-| linhas_codigo | 891159 |
+| linhas_codigo | 891212 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56893 nós · 117557 arestas · 4245 comunidades · grafo do commit `13a00e06`
-- comunidades maiores: lucide-react (923), react (862), cn (831), validation.ts (570), TalkXSuppression.tsx (542), ref_node_fs (521), avatar.tsx (458), ref_https (441), e2e-isolated-runtime.unit.mjs (395), @tanstack/react-query (381), @testing-library/react (301), vitest (296)
+- 56894 nós · 117562 arestas · 4213 comunidades · grafo do commit `2942f212`
+- comunidades maiores: lucide-react (817), cn (700), client.ts (639), vitest (536), validation.ts (442), ref_node_fs (431), @tanstack/react-query (401), chat.ts (396), useTalkXSegments.ts (373), SendProductDialog (334), react (331), catalogShared.tsx (328)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -512,6 +512,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `2942f21` fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)
 - 2026-11-12 `13a00e0` fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)
 - 2026-11-12 `daba6eb` chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares
 - 2026-11-11 `71123cc` fix(edges): substitui esm.sh por npm: nas 2 edge functions restantes (#2865)
@@ -526,7 +527,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-11 `9084db7` fix(vercel): ignore-build detecta clone raso e builda por fail-open (#2966)
 - 2026-11-11 `b548ca0` fix(catalog): validate-plan recusa cabeçalho de etapa com zero a mais (#2963)
 - 2026-11-11 `0e15ed6` fix(maintenance): escopo de correção descartava root que é um arquivo único (#2960)
-- 2026-11-11 `0d73698` fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2493,11 +2493,11 @@
   {
    "arquivo": "scripts/edge-deploy/redigir-log.unit.mjs",
    "tipo": "unit",
-   "linhas": 61,
+   "linhas": 102,
    "testa": [
     "scripts/edge-deploy/redigir-log.mjs"
    ],
-   "casos": 5
+   "casos": 7
   },
   {
    "arquivo": "scripts/edge-deploy/secrets-scope.unit.mjs",

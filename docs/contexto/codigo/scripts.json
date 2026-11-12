@@ -4223,7 +4223,7 @@
   {
    "arquivo": "scripts/edge-deploy/redigir-log.mjs",
    "descricao": "E74: o `deploy-output.log` vai para o artifact do GitHub. A saida do CLI carrega URL com `access_token=` embutido -- publicar isso e' publicar credencial num",
-   "linhas": 86,
+   "linhas": 98,
    "env": [
     "REDIGIR_LOG_BASE",
     "RUNNER_TEMP"

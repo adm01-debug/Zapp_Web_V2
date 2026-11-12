@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "13a00e06afa353a5c61951110cccb8561c72519d",
+  "sha": "2942f212856851f55841825205cf98f023103177",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 04:47 UTC",
+  "generated_at": "2026-11-12 05:33 UTC",
   "files_total": 8255,
   "code_files": 6089,
-  "code_lines": 1059157
+  "code_lines": 1059210
  },
  "version": "1.3.2",
- "facts_hash": "dda9a335d287e133",
+ "facts_hash": "12ca296d12f85c88",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68010,7 +68010,7 @@
   {
    "module": "scripts",
    "files": 463,
-   "lines": 92853,
+   "lines": 92906,
    "tables": [
     "a",
     "alem_do_limite",
@@ -271396,8 +271396,9 @@
   },
   "scripts/edge-deploy/redigir-log.mjs": {
    "path": "scripts/edge-deploy/redigir-log.mjs",
-   "lines": 86,
+   "lines": 98,
    "exports": [
+    "function contarValoresLiterais",
     "function redigir",
     "function confinar"
    ],
@@ -271409,11 +271410,18 @@
     "caminho fora da base permitida (${raiz}): ${arquivo}",
     "caminho resolve para fora da base via link (${raizReal}): ${arquivo}"
    ],
-   "doc": "!/usr/bin/env node E74: o `deploy-output.log` vai para o artifact do GitHub. A saida do CLI carrega URL com `access_token=` embutido -- publicar isso e' publicar credencial num storage de terceiro. Este modulo reescreve o arquivo removendo o valor do segredo e a propria chave antes do upload. O valo …"
+   "doc": "!/usr/bin/env node E74: o `deploy-output.log` vai para o artifact do GitHub. A saida do CLI carrega URL com `access_token=` embutido -- publicar isso e' publicar credencial num storage de terceiro. Este modulo reescreve o arquivo removendo o valor do segredo e a propria chave antes do upload. O valo …",
+   "calc_fns": [
+    {
+     "name": "contarValoresLiterais",
+     "params": "texto, segredos = []",
+     "body": "let total = 0; for (const valor of segredos) { const v = String(valor ?? '').trim(); if (v.length < 8) continue; total += texto.split(v).length - 1; } return total;"
+    }
+   ]
   },
   "scripts/edge-deploy/redigir-log.unit.mjs": {
    "path": "scripts/edge-deploy/redigir-log.unit.mjs",
-   "lines": 61
+   "lines": 102
   },
   "scripts/edge-deploy/register-deployment.mjs": {
    "path": "scripts/edge-deploy/register-deployment.mjs",
@@ -387613,10 +387621,20 @@
   }
  },
  "git": {
-  "sha": "13a00e06afa353a5c61951110cccb8561c72519d",
+  "sha": "2942f212856851f55841825205cf98f023103177",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2942f21",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)",
+    "files": [
+     "scripts/edge-deploy/redigir-log.mjs",
+     "scripts/edge-deploy/redigir-log.unit.mjs"
+    ]
+   },
    {
     "sha": "13a00e0",
     "date": "2026-11-12",
@@ -387964,16 +387982,6 @@
      "scripts/db-tests/run-all.mjs",
      "scripts/db-tests/run-all.unit.mjs"
     ]
-   },
-   {
-    "sha": "105ebc1",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(qa): login recusado com credencial presente não sai mais com exit 2 (#2951)",
-    "files": [
-     "scripts/qa/prova-visao-classificadores.mjs",
-     "scripts/qa/prova-visao-classificadores.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388004,6 +388012,14 @@
    [
     "scripts/db-tests/run-all.unit.mjs",
     2
+   ],
+   [
+    "scripts/edge-deploy/redigir-log.mjs",
+    1
+   ],
+   [
+    "scripts/edge-deploy/redigir-log.unit.mjs",
+    1
    ],
    [
     "PENDENCIAS.md",
@@ -388047,14 +388063,6 @@
    ],
    [
     "scripts/eslint/README.md",
-    1
-   ],
-   [
-    "scripts/graphify/README.md",
-    1
-   ],
-   [
-    "scripts/inventario/README.md",
     1
    ]
   ]

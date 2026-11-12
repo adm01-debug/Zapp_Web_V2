@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "13a00e06afa353a5c61951110cccb8561c72519d",
+  "commit": "2942f212856851f55841825205cf98f023103177",
   "branch": "main",
-  "data_commit": "2026-11-12T01:21:03-03:00",
+  "data_commit": "2026-11-12T02:09:48-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2942f21",
+    "data": "2026-11-12",
+    "assunto": "fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)"
+   },
    {
     "sha": "13a00e0",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "090f5f8",
     "data": "2026-11-11",
     "assunto": "fix(ci): github-settings-guard neutraliza quebra de linha no catch final (#2957)"
-   },
-   {
-    "sha": "d3a132d",
-    "data": "2026-11-11",
-    "assunto": "fix(talkx): varrerTela ignora comentário JSX {/* */}, não só /* */ e // (#2950)"
    }
   ],
-  "arquivos_mudados_7d": 649,
+  "arquivos_mudados_7d": 651,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8413,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891159,
+  "linhas_codigo": 891212,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 30,
-   "linhas": 4647
+   "linhas": 4700
   },
   "scripts/eslint": {
    "arquivos": 1,
