@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `15923813a722c1fe9659ff82e0572455c1194aff` (2026-11-12T07:27:49-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `0a1e73f2a908b87c722109df4836776cd0b34e8c` (2026-11-12T10:56:07Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8416 |
 | arquivos_codigo | 4814 |
-| linhas_codigo | 891383 |
+| linhas_codigo | 891387 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,25 +391,25 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56896 nós · 117573 arestas · 4166 comunidades · grafo do commit `15923813`
-- comunidades maiores: cn (914), framer-motion (790), client.ts (681), vitest (671), button.tsx (663), @tanstack/react-query (471), ref_node_assert (387), ref_node_fs (356), react (327), errorResponse (315), framer-motion (312), workItem.types.ts (300)
+- 56897 nós · 117574 arestas · 4194 comunidades · grafo do commit `0a1e73f2`
+- comunidades maiores: TalkXSuppression.tsx (1075), cn (912), button.tsx (718), framer-motion (702), react (654), client.ts (600), vitest (574), @tanstack/react-query (422), ref_node_assert (380), DashboardView.tsx (375), ref_node_fs (357), validation.ts (293)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (16)
 - PENDENCIAS.md (15)
-- docs/ci/README.md (14)
+- docs/ci/README.md (13)
 - .github/workflows/ci.yml (12)
 - CLAUDE.md (12)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
 - scripts/db-audit/grants-baseline.json (11)
 - supabase/schema-manifest.json (11)
-- .github/workflows/e2e-logado.yml (10)
 - scripts/db-audit/migration-evidence.json (10)
 - scripts/e2e-isolated/run.mjs (10)
 - src/integrations/supabase/types.ts (10)
+- .github/workflows/e2e-logado.yml (9)
 - .github/workflows/db-guard.yml (8)
 - .github/workflows/deploy-functions.yml (8)
 
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-12 `0a1e73f` fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)
 - 2026-11-12 `1592381` chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix
 - 2026-11-12 `f1d8e5f` chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha
 - 2026-11-12 `bd417f5` fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `491a75d` fix(scripts): guard rodar() contra bun ausente no PATH (#2978)
 - 2026-11-12 `a082adc` fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)
 - 2026-11-12 `0d65d57` ci(talkx): ativa validação do corpo das PRs Talk X (#2919)
-- 2026-11-12 `2942f21` fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -35,7 +35,7 @@
    "modulo": "adapters",
    "arquivos": 2,
    "testes": 0,
-   "linhas": 358,
+   "linhas": 362,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -3010,7 +3010,6 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
-    "resolve_unconfirmed_message",
     "search_contacts",
     "set_conversation_status",
     "talk_me_claim",
@@ -4134,7 +4133,6 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
-    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
@@ -5193,7 +5191,6 @@
     "log_audit_event",
     "log_search_event",
     "reopen_conversation",
-    "resolve_unconfirmed_message",
     "search_contacts",
     "search_email_threads",
     "set_conversation_status",
@@ -5938,7 +5935,6 @@
     "merge_contacts_atomic",
     "my_network_status",
     "reopen_conversation",
-    "resolve_unconfirmed_message",
     "search_contacts",
     "search_email_threads",
     "search_team_messages",
@@ -10147,9 +10143,7 @@
    "tabelas": [
     "messages"
    ],
-   "rpcs": [
-    "resolve_unconfirmed_message"
-   ],
+   "rpcs": [],
    "buckets": [],
    "canais_realtime": [],
    "env": [],
@@ -10160,9 +10154,7 @@
     "tabelas": [
      "messages"
     ],
-    "rpcs": [
-     "resolve_unconfirmed_message"
-    ]
+    "rpcs": []
    },
    "importado_por_outros_modulos": [
     "components/inbox"
@@ -12523,7 +12515,6 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
-    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
@@ -14739,7 +14730,6 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
-    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",
@@ -15999,7 +15989,6 @@
     "reassign_absent_agents",
     "reassign_overloaded_agents",
     "reopen_conversation",
-    "resolve_unconfirmed_message",
     "retry_talkx_recipients",
     "search_contacts",
     "search_email_threads",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "15923813a722c1fe9659ff82e0572455c1194aff",
+  "commit": "0a1e73f2a908b87c722109df4836776cd0b34e8c",
   "branch": "main",
-  "data_commit": "2026-11-12T07:27:49-03:00",
+  "data_commit": "2026-11-12T10:56:07Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0a1e73f",
+    "data": "2026-11-12",
+    "assunto": "fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)"
+   },
    {
     "sha": "1592381",
     "data": "2026-11-12",
@@ -126,18 +131,13 @@
     "sha": "8ea4301",
     "data": "2026-11-11",
     "assunto": "fix(maintenance): run.sh emite JSON ao falhar em preparar o state dir (#2965)"
-   },
-   {
-    "sha": "9727aae",
-    "data": "2026-11-11",
-    "assunto": "feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110] — AGUARDANDO APROVAÇÃO "
    }
   ],
   "arquivos_mudados_7d": 660,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 630
+    "mudancas": 631
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 14
+    "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -234,10 +234,6 @@
     "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 10
-   },
-   {
     "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 10
    },
@@ -248,6 +244,10 @@
    {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 10
+   },
+   {
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 9
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8416,
   "arquivos_codigo": 4814,
-  "linhas_codigo": 891383,
+  "linhas_codigo": 891387,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/adapters": {
    "arquivos": 5,
-   "linhas": 616
+   "linhas": 620
   },
   "src/components": {
    "arquivos": 2179,

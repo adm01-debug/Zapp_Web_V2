@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "15923813a722c1fe9659ff82e0572455c1194aff",
+  "sha": "0a1e73f2a908b87c722109df4836776cd0b34e8c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 10:35 UTC",
+  "generated_at": "2026-11-12 10:57 UTC",
   "files_total": 8258,
   "code_files": 6091,
-  "code_lines": 1059634
+  "code_lines": 1059638
  },
  "version": "1.3.2",
- "facts_hash": "b74dcb6b1b91ba26",
+ "facts_hash": "b530c219e902541a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68396,7 +68396,7 @@
   {
    "module": "src/adapters",
    "files": 5,
-   "lines": 616,
+   "lines": 620,
    "tables": [],
    "exports": [
     "evolutionAdapter.ts: jidToPhone, evolutionToRealtimeMessage, deriveContactsFromMessages, derivedToConversationContact, buildExternalConversations",
@@ -75554,9 +75554,6 @@
    ],
    "resolve_network_policy": [
     "supabase/functions/_shared/request-policy.ts"
-   ],
-   "resolve_unconfirmed_message": [
-    "src/hooks/delivery/useUnconfirmedMessages.ts"
    ],
    "retry_talkx_recipient": [
     "supabase/functions/talkx-send/index.ts"
@@ -124403,7 +124400,7 @@
     "file": "src/components/inbox/chat/SendErrorBanner.tsx",
     "name": "podeReenviarComoTexto",
     "params": "mensagem: Message | null | undefined",
-    "body": "if (!mensagem || mensagem.type !== 'text') return false; // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync) return !mensagem.delivery_post_started_at;"
+    "body": "if (!mensagem || mensagem.type !== 'text') return false; // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync. return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;"
    },
    {
     "file": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
@@ -273412,7 +273409,7 @@
   },
   "src/adapters/evolutionAdapter.ts": {
    "path": "src/adapters/evolutionAdapter.ts",
-   "lines": 231,
+   "lines": 235,
    "exports": [
     "function jidToPhone",
     "function evolutionToRealtimeMessage",
@@ -292325,7 +292322,7 @@
     {
      "name": "podeReenviarComoTexto",
      "params": "mensagem: Message | null | undefined",
-     "body": "if (!mensagem || mensagem.type !== 'text') return false; // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync) return !mensagem.delivery_post_started_at;"
+     "body": "if (!mensagem || mensagem.type !== 'text') return false; // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync. return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;"
     }
    ]
   },
@@ -331812,9 +331809,6 @@
      "status"
     ]
    },
-   "rpc": [
-    "resolve_unconfirmed_message"
-   ],
    "params": [
     {
      "name": "AMBIGUOUS_THRESHOLD_MS",
@@ -387849,10 +387843,21 @@
   }
  },
  "git": {
-  "sha": "15923813a722c1fe9659ff82e0572455c1194aff",
+  "sha": "0a1e73f2a908b87c722109df4836776cd0b34e8c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "0a1e73f",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)",
+    "files": [
+     "src/adapters/evolutionAdapter.ts",
+     "src/components/inbox/chat/SendErrorBanner.tsx",
+     "src/hooks/delivery/useUnconfirmedMessages.ts"
+    ]
+   },
    {
     "sha": "1592381",
     "date": "2026-11-12",
@@ -388199,16 +388204,6 @@
      "scripts/maintenance/maintenance.unit.mjs",
      "scripts/maintenance/run.mjs"
     ]
-   },
-   {
-    "sha": "0d73698",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(edge-deploy): escopo extraído do título de outro run não forja log (#2956)",
-    "files": [
-     "scripts/edge-deploy/serialize-scope.mjs",
-     "scripts/edge-deploy/serialize-scope.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388229,6 +388224,14 @@
     3
    ],
    [
+    "src/components/inbox/chat/SendErrorBanner.tsx",
+    2
+   ],
+   [
+    "src/hooks/delivery/useUnconfirmedMessages.ts",
+    2
+   ],
+   [
     "src/integrations/supabase/types.ts",
     2
    ],
@@ -388247,6 +388250,10 @@
    [
     "scripts/maintenance/maintenance.unit.mjs",
     2
+   ],
+   [
+    "src/adapters/evolutionAdapter.ts",
+    1
    ],
    [
     "scripts/db-audit/known-violations.json",
@@ -388278,18 +388285,6 @@
    ],
    [
     "scripts/e2e-isolated/run.mjs",
-    1
-   ],
-   [
-    "src/hooks/__tests__/useGoalNotifications.test.ts",
-    1
-   ],
-   [
-    "src/hooks/analytics/__tests__/useGoalNotifications.idempotencia.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/analytics/useGoalNotifications.ts",
     1
    ]
   ]

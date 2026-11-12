@@ -32355,11 +32355,6 @@
    "usada_em": 1
   },
   {
-   "nome": "resolve_unconfirmed_message",
-   "definida": true,
-   "usada_em": 1
-  },
-  {
    "nome": "retry_talkx_recipient",
    "definida": true,
    "usada_em": 1

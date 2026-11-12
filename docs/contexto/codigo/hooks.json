@@ -6994,9 +6994,7 @@
    "tabelas": [
     "messages"
    ],
-   "rpcs": [
-    "resolve_unconfirmed_message"
-   ],
+   "rpcs": [],
    "edges": [],
    "hooks_internos": [
     "useMutation",

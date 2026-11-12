@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `15923813a7` · branch `main` · 2026-11-12 10:35 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0a1e73f2a9` · branch `main` · 2026-11-12 10:57 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -2608,7 +2608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
 - **podeReenviarComoTexto(mensagem: Message | null | undefined)** — `src/components/inbox/chat/SendErrorBanner.tsx`
   ```
-  if (!mensagem || mensagem.type !== 'text') return false; // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync) return !mensagem.delivery_post_started_at;
+  if (!mensagem || mensagem.type !== 'text') return false; // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync. return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;
   ```
 - **engagementScore(()** — `src/components/inbox/contact-details/ContactHeaderSection.tsx`
   ```
