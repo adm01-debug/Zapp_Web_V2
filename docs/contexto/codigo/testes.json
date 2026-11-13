@@ -607,9 +607,13 @@
   {
    "arquivo": "scripts/ai-context/gerar.unit.mjs",
    "tipo": "unit",
-   "linhas": 411,
-   "testa": [],
-   "casos": 4
+   "linhas": 439,
+   "testa": [
+    "src/components/auth/ProtectedRoute.tsx",
+    "src/pages/Auth.tsx",
+    "src/pages/TwoFactorAuth.tsx"
+   ],
+   "casos": 5
   },
   {
    "arquivo": "scripts/catalog/validate-plan.unit.mjs",
@@ -24022,7 +24026,7 @@
   "src/components/alerts/EvolutionDisconnectBanner.tsx": 4,
   "src/components/auth/HeroBenefits.tsx": 1,
   "src/components/auth/PasswordStrengthMeter.tsx": 3,
-  "src/components/auth/ProtectedRoute.tsx": 3,
+  "src/components/auth/ProtectedRoute.tsx": 4,
   "src/components/auth/ReauthDialog.tsx": 3,
   "src/components/auth/SocialProof.tsx": 1,
   "src/components/automations/AutomationCard.tsx": 1,
@@ -25236,7 +25240,7 @@
   "src/lib/zappSchemas.ts": 1,
   "src/pages/AccessDenied.tsx": 2,
   "src/pages/AdminTelemetriaPage.tsx": 2,
-  "src/pages/Auth.tsx": 4,
+  "src/pages/Auth.tsx": 5,
   "src/pages/ChatPopup.tsx": 6,
   "src/pages/ForgotPassword.tsx": 1,
   "src/pages/Index.tsx": 1,
@@ -25247,7 +25251,7 @@
   "src/pages/SLADashboard.tsx": 1,
   "src/pages/SLAHistory.tsx": 2,
   "src/pages/SSOCallback.tsx": 1,
-  "src/pages/TwoFactorAuth.tsx": 2,
+  "src/pages/TwoFactorAuth.tsx": 3,
   "src/pages/ViewRouter.tsx": 5,
   "src/pages/admin-telemetria/ClientErrorsPanel.tsx": 1,
   "src/pages/admin-telemetria/TelemetryTable.tsx": 1,

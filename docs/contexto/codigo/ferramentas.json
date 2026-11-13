@@ -3063,10 +3063,12 @@
    "src/components/auth/ProtectedRoute.tsx",
    "src/components/copilot/DiscountGuardrailBanner.tsx"
   ],
-  "rotas_protegidas": 10,
+  "rotas_protegidas": 8,
   "rotas_publicas": [
    "/*",
+   "/2fa",
    "/access-denied",
+   "/auth",
    "/auth/callback",
    "/forgot-password",
    "/install",

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)",
    "Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)",
    "Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam nada (#3003)",
    "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)",
-   "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)",
-   "Rascunho de proposta do copilot só mostra \"copiado\" quando a cópia funciona (#3005)"
+   "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

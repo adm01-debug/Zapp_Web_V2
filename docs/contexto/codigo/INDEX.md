@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `51bd8cb8759a2962193e0c6871e3719115520d68` (2026-11-13T07:07:17-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7bdbe2e3f47b883b7a34bfeedb28d6db1f3be486` (2026-11-13T07:47:06-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8424 |
 | arquivos_codigo | 4820 |
-| linhas_codigo | 892412 |
+| linhas_codigo | 892440 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -152,11 +152,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Rotas (url → arquivo)
 - `/` [tela] → src/pages/Index.tsx (protegida)
 - `/*` [tela] → src/pages/NotFound.tsx
-- `/2fa` [tela] → src/pages/TwoFactorAuth.tsx (protegida)
+- `/2fa` [tela] → src/pages/TwoFactorAuth.tsx
 - `/access-denied` [tela] → src/pages/AccessDenied.tsx
 - `/admin/rate-limit` [tela] → src/pages/admin/RateLimitDashboard.tsx (protegida)
 - `/admin/roles` [tela] → src/pages/admin/RolesPage.tsx (protegida)
-- `/auth` [tela] → src/pages/Auth.tsx (protegida)
+- `/auth` [tela] → src/pages/Auth.tsx
 - `/auth/callback` [tela] → src/pages/SSOCallback.tsx
 - `/chat-popup/:contactId` [tela] → src/pages/ChatPopup.tsx (protegida)
 - `/forgot-password` [tela] → src/pages/ForgotPassword.tsx
@@ -370,7 +370,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Permissões / papéis
 - papéis no código: alert (111), status (104), admin (68), agent (60), supervisor (38), user (35), dialog (30), region (21), button (19), img (19), authenticated (17), group (15), tab (15), listbox (14), radiogroup (14), service_role (14), tablist (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (8), alertdialog (7), toolbar (7), list (6), note (6), log (5), menu (4), tabpanel (4), article (3), assistant (3), cliente (3), complementary (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), follower (2), fornecedor (2), gridcell (2), listitem (2), string (2), switch (2), A (1), B (1), RH (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), form (1), fundo (1), gateway (1), grand (1), html (1), intermediary (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), sup (1), target (1), textbox (1), texto (1), timer (1), unknown (1), untrusted (1)
 - enums de papel: app_role: admin|supervisor|agent|special_agent
-- guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 10 · públicas: /*, /access-denied, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
+- guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 8 · públicas: /*, /2fa, /access-denied, /auth, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
 - feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, ENABLE_IMAGE_TRANSFORMATION, FEATURE_AUDIT, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, video_call
 
 ## Alertas (baseline.json → alertas)
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56967 nós · 117741 arestas · 4180 comunidades · grafo do commit `51bd8cb8`
+- 56967 nós · 117741 arestas · 4180 comunidades · grafo do commit `7bdbe2e3`
 - comunidades maiores: TalkXSuppression.tsx (985), react (876), vitest (865), badge.tsx (736), lucide-react (658), ExternalProductManagement.tsx (497), validation.ts (485), cn (453), tooltip.tsx (426), schemas.ts (405), ref_https (397), ref_node_fs (370)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `7bdbe2e` Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)
 - 2026-11-13 `51bd8cb` Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)
 - 2026-11-13 `2bfcdbd` Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam
 - 2026-11-13 `fe4959b` Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `58a7208` fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)
 - 2026-11-12 `2ae0de7` fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)
 - 2026-11-12 `8a14183` Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)
-- 2026-11-12 `b2813f8` feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

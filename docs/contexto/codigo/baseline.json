@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "51bd8cb8759a2962193e0c6871e3719115520d68",
+  "commit": "7bdbe2e3f47b883b7a34bfeedb28d6db1f3be486",
   "branch": "main",
-  "data_commit": "2026-11-13T07:07:17-03:00",
+  "data_commit": "2026-11-13T07:47:06-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7bdbe2e",
+    "data": "2026-11-13",
+    "assunto": "Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)"
+   },
    {
     "sha": "51bd8cb",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "f1d8e5f",
     "data": "2026-11-12",
     "assunto": "chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha"
-   },
-   {
-    "sha": "bd417f5",
-    "data": "2026-11-12",
-    "assunto": "fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard"
    }
   ],
-  "arquivos_mudados_7d": 689,
+  "arquivos_mudados_7d": 688,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8424,
   "arquivos_codigo": 4820,
-  "linhas_codigo": 892412,
+  "linhas_codigo": 892440,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -600,7 +600,7 @@
   },
   "scripts/ai-context": {
    "arquivos": 3,
-   "linhas": 1528
+   "linhas": 1556
   },
   "scripts/catalog": {
    "arquivos": 2,

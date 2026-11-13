@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "51bd8cb8759a2962193e0c6871e3719115520d68",
+  "sha": "7bdbe2e3f47b883b7a34bfeedb28d6db1f3be486",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 10:30 UTC",
+  "generated_at": "2026-11-13 11:54 UTC",
   "files_total": 8266,
   "code_files": 6098,
-  "code_lines": 1060899
+  "code_lines": 1060927
  },
  "version": "1.3.2",
- "facts_hash": "17000963cc769cc5",
+ "facts_hash": "c33ba5a63256133d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -64910,6 +64910,13 @@
    },
    {
     "path": "/2fa",
+    "component": "TwoFactorAuth",
+    "guard": "",
+    "roles": [],
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "path": "/2fa",
     "component": "div",
     "guard": "",
     "roles": [],
@@ -64975,6 +64982,20 @@
     "path": "/app",
     "component": "Shell",
     "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "path": "/area",
+    "component": "ProtectedRoute",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "path": "/auth",
+    "component": "Auth",
+    "guard": "",
     "roles": [],
     "file": "scripts/ai-context/gerar.unit.mjs"
    },
@@ -65133,6 +65154,13 @@
     "file": "scripts/ai-context/gerar.unit.mjs"
    },
    {
+    "path": "/painel",
+    "component": "AdminPanel",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
     "path": "/queue/:id",
     "component": "QueueDetails",
     "guard": "ProtectedRoute",
@@ -65233,6 +65261,13 @@
    {
     "path": "contacts/:id",
     "component": "ContactPage",
+    "guard": "",
+    "roles": [],
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "path": "x",
+    "component": "AdminPanel",
     "guard": "",
     "roles": [],
     "file": "scripts/ai-context/gerar.unit.mjs"
@@ -67737,6 +67772,18 @@
    },
    {
     "guard": "ProtectedRoute",
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "guard": "ProtectedRoute",
     "file": "scripts/ci/inventario-rotas.unit.mjs"
    },
    {
@@ -68170,7 +68217,7 @@
   {
    "module": "scripts",
    "files": 465,
-   "lines": 93258,
+   "lines": 93286,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68217,7 +68264,7 @@
     "x_novo"
    ],
    "exports": [
-    "gerar.unit.mjs: AppRoutes, useContacts, depois, normal",
+    "gerar.unit.mjs: AppRoutes, useContacts, depois, normal, AuthRoutes",
     "a11y-button-name-ratchet.mjs: readTagEnd, listSourceFiles, scanFile, scanAll, runRatchet, main",
     "a11y-button-name-ratchet.unit.mjs: IconButton, SearchSelect, TabsDemo, TabsDemo, IconButton, IconButton",
     "actions-kpi.mjs: duracaoMinutos, runsNaJanela, agregar, paginaTemMais, maisLentos, tabela",
@@ -256857,6 +256904,18 @@
    },
    {
     "guard": "ProtectedRoute",
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
+    "guard": "ProtectedRoute",
     "file": "scripts/ci/inventario-rotas.unit.mjs"
    },
    {
@@ -256968,11 +257027,25 @@
     "file": "scripts/ai-context/gerar.unit.mjs"
    },
    {
+    "path": "/area",
+    "component": "ProtectedRoute",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "scripts/ai-context/gerar.unit.mjs"
+   },
+   {
     "path": "/chat-popup/:contactId",
     "component": "ChatPopup",
     "guard": "ProtectedRoute",
     "roles": [],
     "file": "src/routes/AppRoutes.tsx"
+   },
+   {
+    "path": "/painel",
+    "component": "AdminPanel",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "scripts/ai-context/gerar.unit.mjs"
    },
    {
     "path": "/queue/:id",
@@ -264165,12 +264238,13 @@
   },
   "scripts/ai-context/gerar.unit.mjs": {
    "path": "scripts/ai-context/gerar.unit.mjs",
-   "lines": 411,
+   "lines": 439,
    "exports": [
     "function AppRoutes",
     "function useContacts",
     "const depois",
-    "const normal"
+    "const normal",
+    "const AuthRoutes"
    ],
    "tables": [
     {
@@ -264275,6 +264349,36 @@
      "component": "Navigate",
      "guard": "",
      "roles": []
+    },
+    {
+     "path": "/auth",
+     "component": "Auth",
+     "guard": "",
+     "roles": []
+    },
+    {
+     "path": "/2fa",
+     "component": "TwoFactorAuth",
+     "guard": "",
+     "roles": []
+    },
+    {
+     "path": "/painel",
+     "component": "AdminPanel",
+     "guard": "ProtectedRoute",
+     "roles": []
+    },
+    {
+     "path": "/area",
+     "component": "ProtectedRoute",
+     "guard": "ProtectedRoute",
+     "roles": []
+    },
+    {
+     "path": "x",
+     "component": "AdminPanel",
+     "guard": "",
+     "roles": []
     }
    ],
    "server_routes": [
@@ -264287,6 +264391,9 @@
     "admin"
    ],
    "guards": [
+    "ProtectedRoute",
+    "ProtectedRoute",
+    "ProtectedRoute",
     "ProtectedRoute"
    ],
    "rule_comments": [
@@ -388208,10 +388315,20 @@
   }
  },
  "git": {
-  "sha": "51bd8cb8759a2962193e0c6871e3719115520d68",
+  "sha": "7bdbe2e3f47b883b7a34bfeedb28d6db1f3be486",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7bdbe2e",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)",
+    "files": [
+     "scripts/ai-context/gerar.mjs",
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
    {
     "sha": "51bd8cb",
     "date": "2026-11-13",
@@ -388523,16 +388640,6 @@
      "scripts/db-audit/grants-baseline.json",
      "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql"
     ]
-   },
-   {
-    "sha": "1c4498d",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)",
-    "files": [
-     "scripts/regras_negocio/generate.py",
-     "scripts/regras_negocio/test_generate.py"
-    ]
    }
   ],
   "hot_files": [
@@ -388551,6 +388658,14 @@
    [
     "RELATORIO_CI.md",
     2
+   ],
+   [
+    "scripts/ai-context/gerar.mjs",
+    1
+   ],
+   [
+    "scripts/ai-context/gerar.unit.mjs",
+    1
    ],
    [
     "src/components/inbox/tabs/FileCard.tsx",
@@ -388606,14 +388721,6 @@
    ],
    [
     "src/components/team-chat/TeamChatPanel.tsx",
-    1
-   ],
-   [
-    "src/components/team-chat/__tests__/TeamChatPanel.nao-membro.test.tsx",
-    1
-   ],
-   [
-    "src/components/email/EmailContactPanel.tsx",
     1
    ]
   ]
