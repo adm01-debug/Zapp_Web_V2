@@ -51,12 +51,9 @@ export function TalkXCampaignPaused({ campaignId, onBack, pausedByName, onStatus
     if (campaign && campaign.status !== 'paused') onStatusChange(campaign);
   }, [campaign, onStatusChange]);
 
-  const [resumeOpen, setResumeOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [ending, setEnding] = useState(false);
-  // Recusa da retomada explicada no modal (o toast da recusa já vem do hook).
-  const [resumeError, setResumeError] = useState<string | null>(null);
 
   // Painéis X160 — dados do painel + RPC de benchmarks (T13-050…T13-066).
   // Best-effort por fonte: o painel nunca apaga o cabeçalho nem as ações; fonte
@@ -122,26 +119,18 @@ export function TalkXCampaignPaused({ campaignId, onBack, pausedByName, onStatus
   const panelsLoading = panelsQuery.isLoading;
   const panels = panelsQuery.data;
 
+  // Retomar campanha pausada: um clique, sem confirmação (decisão do dono,
+  // 2026-11-13) — o mesmo comportamento do controlador único `useTalkXLifecycle`.
   const handleResume = useCallback(async () => {
     if (!campaign || resuming) return false;
     setResuming(true);
-    setResumeError(null);
     try {
       // `startCampaign` valida o corpo da resposta (a recusa por janela de envio
-      // volta 200 com ok:false), mostra o toast do erro e devolve false quando o
-      // servidor recusou — por isso aqui não há segundo toast (não duplicar).
-      const started = await startCampaign(campaign.id);
-      // Fecha o modal só com o aceite do servidor: na recusa o operador continua
-      // no modal, com o motivo à vista, para tentar de novo.
-      if (started) {
-        setResumeOpen(false);
-      } else {
-        setResumeError('O servidor não aceitou a retomada. Confira a janela de envio e tente de novo.');
-      }
-      return started;
+      // volta 200 com ok:false) e mostra o próprio toast de sucesso ou de erro —
+      // por isso aqui não há segundo toast (não duplicar).
+      return await startCampaign(campaign.id);
     } catch {
-      // O hook trata o próprio erro, mas se a chamada lançar o operador precisa
-      // ver: o modal continua aberto para tentar de novo.
+      // O hook trata o próprio erro; se a chamada lançar, o operador precisa ver.
       toast.error('Erro ao retomar a campanha.');
       return false;
     } finally {
@@ -242,10 +231,12 @@ export function TalkXCampaignPaused({ campaignId, onBack, pausedByName, onStatus
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => { setResumeError(null); setResumeOpen(true); }}
-                className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20"
+                onClick={() => { void handleResume(); }}
+                disabled={resuming}
+                aria-busy={resuming}
+                className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Play className="w-4 h-4" />Retomar campanha
+                <Play className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar campanha'}
               </button>
               <button
                 type="button"
@@ -256,20 +247,6 @@ export function TalkXCampaignPaused({ campaignId, onBack, pausedByName, onStatus
               </button>
             </div>
           </div>
-
-          {/* Modal: Retomar */}
-          <TalkXConfirmDialog
-            open={resumeOpen}
-            onClose={() => { setResumeOpen(false); setResumeError(null); }}
-            onConfirm={() => handleResume()}
-            icon={Play}
-            iconColor="blue"
-            title="Retomar campanha?"
-            entityName={campaign.name}
-            description={resumeError ?? 'Os envios serão continuados a partir de onde pararam. Contatos já processados não são reenviados.'}
-            confirmLabel="Retomar"
-            loading={resuming}
-          />
 
           {/* Modal: Encerrar */}
           <TalkXConfirmDialog
