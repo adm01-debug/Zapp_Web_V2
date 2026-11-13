@@ -164,7 +164,7 @@ export function replaceTalkXOpenRoute(target: TalkXOpenTarget): void {
 
 // --- Screen routing (TL-152): campaign monitor screen via ?screen= ---
 
-export type TalkXScreen = 'monitor' | 'scheduled' | 'running' | 'paused';
+export type TalkXScreen = 'monitor' | 'scheduled' | 'running' | 'paused' | 'report';
 export type TalkXScreenTarget = TalkXScreen | 'wizard';
 
 export type TalkXRoute = {
@@ -177,14 +177,14 @@ export type ParsedTalkXScreenRoute = {
   needsNormalization: boolean;
 };
 
-const SCREENS = new Set<string>(['monitor', 'scheduled', 'running', 'paused']);
+const SCREENS = new Set<string>(['monitor', 'scheduled', 'running', 'paused', 'report']);
 const CAMPAIGN_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
 
 /**
  * A situação da campanha decide a tela de acompanhamento.
- * `paused` tem tela própria (TalkXCampaignPaused, X156/T13) e `completed`/`cancelled` caem no monitor em
- * leitura (X143: a tela de relatório ainda não existe; sem tela própria, o
- * endereço nunca é `?screen=report`).
+ * `paused` tem tela própria (TalkXCampaignPaused, X156/T13); `completed` abre o
+ * relatório (TalkXCampaignReport, tela 14 — X143/X163). `cancelled` segue no
+ * monitor em leitura: o relatório ainda não mostra os "não enviados" (X163).
  */
 export function screenForStatus(status: string | null | undefined): TalkXScreenTarget {
   switch (status) {
@@ -197,6 +197,7 @@ export function screenForStatus(status: string | null | undefined): TalkXScreenT
     case 'paused':
       return 'paused';
     case 'completed':
+      return 'report';
     case 'cancelled':
       return 'monitor';
     default:

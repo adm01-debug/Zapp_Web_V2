@@ -22,11 +22,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Search, Plus, Users, MessageSquare, MoreVertical, Trash2,
-  RefreshCw, Shield, Link as LinkIcon, Loader2, Send,
+  RefreshCw, Shield, Link as LinkIcon, Loader2, Send, Timer, LogIn,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { useGroupsManager, GROUP_CATEGORIES } from '@/hooks/chat/useGroupsManager';
+import { GroupEphemeralDialog, JoinGroupByInviteDialog } from './GroupEvolutionDialogs';
 
 export function GroupsView() {
   const {
@@ -40,6 +41,8 @@ export function GroupsView() {
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [ephemeralGroup, setEphemeralGroup] = useState<{ instanceName: string; groupJid: string; groupName: string } | null>(null);
   const [newGroup, setNewGroup] = useState({
     name: '', group_id: '', description: '', whatsapp_connection_id: '', category: '',
   });
@@ -87,6 +90,9 @@ export function GroupsView() {
                 Enviar para {selectedGroups.size} grupo(s)
               </Button>
             )}
+            <Button variant="outline" onClick={() => setIsJoinOpen(true)}>
+              <LogIn className="w-4 h-4 mr-2" />Entrar por convite
+            </Button>
             <Button variant="outline" onClick={handleAutoSync} disabled={isSyncing}>
               <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
               {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
@@ -257,6 +263,18 @@ export function GroupsView() {
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); void navigator.clipboard.writeText(group.group_id); toast.success('ID copiado!'); }}>
                             <LinkIcon className="w-4 h-4 mr-2" />Copiar ID
                           </DropdownMenuItem>
+                          {group.is_admin && (
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              setEphemeralGroup({
+                                instanceName: connections.find((c) => c.id === group.whatsapp_connection_id)?.instance_id ?? '',
+                                groupJid: group.group_id,
+                                groupName: group.name,
+                              });
+                            }}>
+                              <Timer className="w-4 h-4 mr-2" />Mensagens temporárias
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }}>
                             <Trash2 className="w-4 h-4 mr-2" />Excluir
                           </DropdownMenuItem>
@@ -291,6 +309,12 @@ export function GroupsView() {
           })
         )}
       </div>
+
+      <JoinGroupByInviteDialog open={isJoinOpen} onOpenChange={setIsJoinOpen} connections={connections} onJoined={handleAutoSync} />
+      {ephemeralGroup && (
+        <GroupEphemeralDialog open onOpenChange={(aberto) => { if (!aberto) setEphemeralGroup(null); }}
+          instanceName={ephemeralGroup.instanceName} groupJid={ephemeralGroup.groupJid} groupName={ephemeralGroup.groupName} />
+      )}
 
       {/* Broadcast Dialog */}
       <Dialog open={isBroadcastOpen} onOpenChange={setIsBroadcastOpen}>
