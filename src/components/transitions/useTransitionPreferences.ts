@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useHighContrast } from '@/components/theme/HighContrastToggle';
+import { useHighContrast } from '@/components/theme/highContrastContext';
 
 export interface TransitionPreferences {
   enabled: boolean;

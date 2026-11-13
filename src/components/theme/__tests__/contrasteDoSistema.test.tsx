@@ -16,7 +16,8 @@ vi.mock('@/components/settings/theme/presets', () => ({
   applyThemePreset: vi.fn(),
 }));
 
-import { HighContrastProvider, useHighContrast } from '@/components/theme/HighContrastToggle';
+import { HighContrastProvider } from '@/components/theme/HighContrastProvider';
+import { useHighContrast } from '@/components/theme/highContrastContext';
 
 /** jsdom não implementa `matchMedia`: este mock é o próprio objeto de mídia, controlável. */
 function mockMatchMedia(matchesInicial: boolean) {
