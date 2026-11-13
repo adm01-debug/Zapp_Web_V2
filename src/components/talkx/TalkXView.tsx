@@ -52,6 +52,7 @@ const TalkXSettings = lazyWithRetry(() => import('./TalkXSettings').then((m) => 
 const TalkXCampaignScheduled = lazyWithRetry(() => import('./TalkXCampaignScheduled').then((m) => ({ default: m.TalkXCampaignScheduled })));
 const TalkXCampaignRunning = lazyWithRetry(() => import('./TalkXCampaignRunning').then((m) => ({ default: m.TalkXCampaignRunning })));
 const TalkXCampaignPaused = lazyWithRetry(() => import('./TalkXCampaignPaused').then((m) => ({ default: m.TalkXCampaignPaused })));
+const TalkXCampaignReport = lazyWithRetry(() => import('./report/TalkXCampaignReport').then((m) => ({ default: m.TalkXCampaignReport })));
 
 /** X194 — enquanto o chunk da tela chega, o módulo mostra a estrutura (esqueleto). */
 function TalkXScreenFallback() {
@@ -62,7 +63,7 @@ function TalkXScreenFallback() {
   );
 }
 
-export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused';
+export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused' | 'report';
 
 // X053: a trilha do cabeçalho sai da rota (?tab=/sub=). Os rótulos são os mesmos
 // que as abas e o menu de Analytics mostram — a trilha não inventa nome novo.
@@ -109,6 +110,7 @@ export default function TalkXView() {
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
   const [pausedCampaignId, setPausedCampaignId] = useState<string | null>(null);
+  const [reportCampaignId, setReportCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentIds?: string[]; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
   // TL-152: a rota de tela resolve os ids quando as campanhas chegam
@@ -138,7 +140,7 @@ export default function TalkXView() {
     const parsedScreen = parseTalkXScreenRoute(window.location.search);
 
     if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
-    // TL-152: ?screen= inválido (ex.: report, que não tem tela) é normalizado
+    // TL-152: ?screen= inválido (fora de SCREENS em talkxRoute.ts) é normalizado
     // aqui também — o parâmetro é removido sem abrir outra tela no lugar.
     if (parsedScreen.needsNormalization) replaceTalkXRoute(null);
 
@@ -161,19 +163,24 @@ export default function TalkXView() {
         setTopView('wizard');
         return;
       }
-      if (screen) {
+      // O relatório precisa da campanha carregada; inexistente/sem acesso cai na lista.
+      if (screen === 'report' && !campaign) {
+        replaceTalkXRoute(null);
+      } else if (screen) {
         setEditingCampaign(null);
         setMonitorId(null);
         setScheduledCampaignId(null);
         setRunningCampaignId(null);
         setPausedCampaignId(null);
+        setReportCampaignId(null);
         switch (screen) {
           case 'scheduled': setScheduledCampaignId(campaignId); break;
           case 'running': setRunningCampaignId(campaignId); break;
           case 'paused': setPausedCampaignId(campaignId); break;
+          case 'report': setReportCampaignId(campaignId); break;
           default: setMonitorId(campaignId); break;
         }
-        setTopView(screen === 'scheduled' || screen === 'running' || screen === 'paused' ? screen : 'monitor');
+        setTopView(screen === 'scheduled' || screen === 'running' || screen === 'paused' || screen === 'report' ? screen : 'monitor');
         return;
       }
     }
@@ -208,13 +215,16 @@ export default function TalkXView() {
     if (initialScreen.needsNormalization) replaceTalkXRoute(null);
     // TL-152: o init só define o topView — os ids da tela roteada resolvem
     // aqui, quando as campanhas chegam (primeira pintura, uma vez só).
-    if (!didInitialScreenSync.current && !isLoading) {
+    // O relatório só abre com a campanha na lista: com a lista em erro, o
+    // ?screen=report fica no endereço e resolve quando o recarregamento der certo.
+    const awaitingReportList = isError && initialScreen.route?.screen === 'report';
+    if (!didInitialScreenSync.current && !isLoading && !awaitingReportList) {
       didInitialScreenSync.current = true;
       syncFromBrowserHistory();
     }
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [isLoading, syncFromBrowserHistory]);
+  }, [isError, isLoading, syncFromBrowserHistory]);
 
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
@@ -285,9 +295,10 @@ export default function TalkXView() {
   const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); writeScreenRoute(c.id, 'scheduled'); }, [writeScreenRoute]);
   const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); writeScreenRoute(c.id, 'running'); }, [writeScreenRoute]);
   const openPaused = useCallback((c: TalkXCampaign) => { setPausedCampaignId(c.id); setTopView('paused'); writeScreenRoute(c.id, 'paused'); }, [writeScreenRoute]);
+  const openReport = useCallback((c: TalkXCampaign) => { setReportCampaignId(c.id); setTopView('report'); writeScreenRoute(c.id, 'report'); }, [writeScreenRoute]);
   const backToList = useCallback(() => {
     setLocalDraftRouteId(null);
-    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setPausedCampaignId(null); setWizardInitial(undefined);
+    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setPausedCampaignId(null); setReportCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
     replaceTalkXRoute(null);
   }, [writeWizardRoute]);
@@ -361,8 +372,9 @@ export default function TalkXView() {
     if (c.status === 'scheduled') { openScheduled(c); return; }
     if (c.status === 'paused') { openPaused(c); return; }
     if (c.status === 'sending') { openRunning(c); return; }
+    if (c.status === 'completed') { openReport(c); return; }
     openMonitor(c);
-  }, [openMonitor, openPaused, openScheduled, openRunning]);
+  }, [openMonitor, openPaused, openScheduled, openRunning, openReport]);
 
   // X156/T13: a ação de linha decide o destino por status antes de chegar aqui; campanha
   // pausada vai para a tela própria (TalkXCampaignPaused), em andamento para a genérica.
@@ -415,6 +427,26 @@ export default function TalkXView() {
           }}
         />
       </Suspense>
+    );
+  }
+
+  const reportCampaign = topView === 'report' && reportCampaignId
+    ? campaigns.find((candidate) => candidate.id === reportCampaignId)
+    : undefined;
+  if (reportCampaign) {
+    return (
+      <div className="min-h-full w-full min-w-0 bg-background">
+        <Suspense fallback={<TalkXScreenFallback />}>
+          <SectionErrorBoundary sectionName="Relatório da campanha">
+            <TalkXCampaignReport
+              campaign={reportCampaign}
+              creators={creators}
+              onBack={backToList}
+              onViewMonitor={(id) => { setReportCampaignId(null); setMonitorId(id); setTopView('monitor'); writeScreenRoute(id, 'monitor'); }}
+            />
+          </SectionErrorBoundary>
+        </Suspense>
+      </div>
     );
   }
 

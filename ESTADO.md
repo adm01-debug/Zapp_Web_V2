@@ -79,13 +79,13 @@ partir do código e falha quando:
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
 | `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks/groups/actions.ts:107` |
 | `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:105` |
-| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:529` · `supabase/functions/evolution-api/index.ts:595` · `supabase/functions/evolution-api/index.ts:756` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
+| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:565` · `supabase/functions/evolution-api/index.ts:631` · `supabase/functions/evolution-api/index.ts:792` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
 | `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
 | `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:77` |
 | `get-mapbox-token` | A | `src/lib/mapboxToken.ts:87` |
-| `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:22` |
+| `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:98` |
 | `gmail-cron-sync` | C | `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:18` · `supabase/config.toml:17` |
 | `gmail-oauth` | A | `src/hooks/integrations/useGmailOAuth.ts:79` |
 | `gmail-send` | E | — sem chamador no repositório — |

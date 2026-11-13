@@ -817,17 +817,61 @@ export const EvolutionApiRequestSchema = z.object({
   }).nullish(),
   instanceName: z.string().max(200).nullish(),
   instance: z.string().max(200).nullish(),
+  // offer-call: duração limitada como no offerCallSchema da Evolution v2 (1 a 15 s).
+  callDuration: z.number().int().min(1, 'callDuration mínimo: 1 s').max(15, 'callDuration máximo: 15 s (offerCallSchema da Evolution v2)').nullish(),
+  isVideo: z.boolean().nullish(),
 }).passthrough().superRefine((value, ctx) => {
   const raw = (value as { instanceName?: unknown; instance?: unknown });
-  const candidate = raw.instanceName ?? raw.instance;
-  if (typeof candidate !== 'string' || candidate.length === 0) return;
+  // `instanceName: ""` com `instance` preenchido é ambíguo: o handler escolhe a
+  // instância por `instanceName || instance` (string vazia é falsy) e usaria o
+  // segundo campo. Recusa em vez de adivinhar qual dos dois vale.
+  if (raw.instanceName === '' && typeof raw.instance === 'string' && raw.instance.length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['instanceName'],
+      message: 'instanceName vazio com instance preenchido — envie só um dos dois.',
+    });
+    return;
+  }
+  // Valida EXATAMENTE o valor que o handler usa (resolveEvolutionInstanceName).
+  // Antes a checagem olhava `instanceName ?? instance` e o handler usava
+  // `instanceName || instance`: com `instanceName: ""` a validação via a string
+  // vazia (e pulava) enquanto o handler montava a URL com `instance` sem checagem.
+  const candidate = resolveEvolutionInstanceName(raw);
+  if (candidate.length === 0) return;
   if (INSTANCE_NAME_PATTERN.test(candidate)) return;
   ctx.addIssue({
     code: z.ZodIssueCode.custom,
-    path: [raw.instanceName != null ? 'instanceName' : 'instance'],
+    path: [typeof raw.instanceName === 'string' && raw.instanceName.length > 0 ? 'instanceName' : 'instance'],
     message: 'Nome de instância inválido — use apenas letras, números, "-" e "_" (até 128 caracteres).',
   });
 });
+
+/**
+ * Instância alvo de uma chamada à `evolution-api`: fonte ÚNICA usada tanto pela
+ * validação do schema quanto pelo handler, para que o valor validado seja o
+ * mesmo que vira path/query da URL do provedor. `instanceName` tem precedência;
+ * `instance` é o alias legado. Tipos não-string viram '' (o schema já os recusa).
+ */
+export function resolveEvolutionInstanceName(body: { instanceName?: unknown; instance?: unknown }): string {
+  if (typeof body.instanceName === 'string' && body.instanceName.length > 0) return body.instanceName;
+  if (typeof body.instance === 'string' && body.instance.length > 0) return body.instance;
+  return '';
+}
+
+/**
+ * JID de grupo do WhatsApp (`<dígitos>@g.us`, ou o formato antigo
+ * `<dígitos>-<dígitos>@g.us`). Usado onde o JID vira query string da URL do
+ * provedor (`group-invite-code`): fora desse formato é payload inválido.
+ */
+export const GROUP_JID_PATTERN = /^[0-9]{1,32}(-[0-9]{1,32})?@g\.us$/;
+
+/**
+ * Número ou JID de contato aceito onde o valor vira query string da URL do
+ * provedor (`fetch-profile-picture`): dígitos (com `+` opcional) ou JID de
+ * usuário/LID/grupo. Qualquer outro caractere (`&`, `#`, `/`, espaço) é recusado.
+ */
+export const WHATSAPP_NUMBER_OR_JID_PATTERN = /^\+?[0-9]{1,32}(-[0-9]{1,32})?(@(s\.whatsapp\.net|c\.us|lid|g\.us))?$/;
 
 /**
  * Ações globais — as ÚNICAS que não operam sobre uma instância (E17).

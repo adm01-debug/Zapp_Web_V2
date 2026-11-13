@@ -77,7 +77,7 @@ CREATE OR REPLACE FUNCTION public.enforce_conversation_status_transition()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO 'public', 'pg_temp'
 AS $function$ BEGIN
   IF OLD.conversation_status IS NOT DISTINCT FROM NEW.conversation_status THEN
     RETURN NEW;

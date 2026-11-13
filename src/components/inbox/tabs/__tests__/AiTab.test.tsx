@@ -28,6 +28,14 @@ vi.mock('../../AISuggestions', () => ({
 }));
 vi.mock('../../ConversationSummary', () => ({ ConversationSummary: () => <div>mock-summary</div> }));
 vi.mock('../../ObjectionDetector', () => ({ ObjectionDetector: () => <div>mock-objections</div> }));
+vi.mock('../../contact-details/AIInsightsWidget', () => ({
+  AIInsightsWidget: ({ contactId }: { contactId: string }) => <div>mock-ai-insights {contactId}</div>,
+}));
+vi.mock('../../KnowledgeBaseSearchPanel', () => ({
+  KnowledgeBaseSearchPanel: ({ onInsertText }: { onInsertText: (text: string) => void }) => (
+    <button onClick={() => onInsertText('artigo da base')}>mock-kb-usar</button>
+  ),
+}));
 
 function chain() {
   const q: Record<string, unknown> = {};
@@ -96,5 +104,18 @@ describe('AiTab', () => {
   it('produtos vazios mostra o empty state honesto', async () => {
     renderTab();
     expect(await screen.findByText('Nenhum produto cadastrado')).toBeInTheDocument();
+  });
+
+  it('mostra os cards restaurados "Insights da IA" e "Base de conhecimento"', () => {
+    renderTab();
+    expect(screen.getByText('Insights da IA')).toBeInTheDocument();
+    expect(screen.getByText('mock-ai-insights contact-1')).toBeInTheDocument();
+    expect(screen.getByText('Base de conhecimento')).toBeInTheDocument();
+  });
+
+  it('"Usar" de um artigo da base vai para a caixa de resposta (onUseSuggestion)', () => {
+    const { onUseSuggestion } = renderTab();
+    fireEvent.click(screen.getByText('mock-kb-usar'));
+    expect(onUseSuggestion).toHaveBeenCalledWith('artigo da base');
   });
 });

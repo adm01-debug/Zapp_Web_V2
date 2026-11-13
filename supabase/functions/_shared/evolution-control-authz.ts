@@ -59,6 +59,8 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'update-profile-picture',
   'remove-profile-picture',
   'update-privacy',
+  // presença da CONTA (online/offline para todos os contatos) — restaurada após o #2054
+  'set-presence',
   // grupos (escrita)
   'create-group',
   'update-group-name',
@@ -69,6 +71,8 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'accept-invite',
   'leave-group',
   'update-group-picture',
+  // mensagens temporárias do grupo — restaurada após o #2054
+  'toggle-ephemeral',
   // etiquetas / bloqueio
   'handle-label',
   'update-block-status',
@@ -78,6 +82,16 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   // agente) e de configuração/credencial do provedor passam a exigir
   // admin/supervisor. (SL-075 removeu integrações e rotas legadas do handler.)
   'find-contacts', 'find-messages',
+  // Status/Stories lidos de `status@broadcast`: instance-wide (de toda a base),
+  // mesma regra de find-messages — admin/supervisor.
+  'find-status-messages',
+  // configuração da instância/conexão (restauradas após o #2054: têm tela)
+  'get-settings', 'set-settings', 'get-webhook',
+  // restauradas após o #2054 (decisão do dono): conversas do aparelho (instance-wide),
+  // templates da Meta (configuração comercial) e catálogo/coleções de business
+  'find-chats',
+  'create-template', 'find-templates', 'delete-template',
+  'get-catalog', 'get-collections',
   'get-media-base64',
   // perfil da conta/conexão (config) e de número arbitrário (fora da carteira)
   'fetch-profile', 'fetch-profile-picture', 'fetch-business-profile',
@@ -113,9 +127,14 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'send-ptv',
   'send-reaction',
   'send-chat-presence',
+  // template (WhatsApp Business) com destinatário — restaurada após o #2054
+  'send-template',
+  // oferta de chamada para o número (toque no aparelho) — restaurada após o #2054
+  'offer-call',
   // mutações de estado da conversa no provedor (não entregam conteúdo, mas
   // seguem o mesmo escopo: o contato da conversa)
   'mark-read',
+  'mark-unread',
   'archive-chat',
 ]);
 
@@ -156,6 +175,8 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
   'group-info',
   'group-participants',
   'group-invite-code',
+  // prévia de um convite (nome/participantes) antes de aceitar — restaurada após o #2054
+  'invite-info',
 ]);
 
 /**
