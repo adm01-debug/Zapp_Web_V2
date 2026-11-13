@@ -11,6 +11,7 @@
  * que expõe `scrollToMessage` e imprime as props de destaque que o ChatPanel passa — nada além
  * disso é mockado no caminho sob teste.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -181,7 +182,10 @@ const arquivo = {
 /** Aba controlada: troca de aba de verdade, como o RealtimeInboxView faz. */
 function Harness({ messages }: { messages: Message[] }) {
   const [aba, setAba] = useState<ConversationTab>('files');
+  // O ChatPanel monta a "Próxima melhor ação", que lê pelo React Query (P1-8).
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
+    <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <ConversationTabContent
         activeTab={aba}
@@ -192,6 +196,7 @@ function Harness({ messages }: { messages: Message[] }) {
         <ChatPanel conversation={conversation} messages={messages} onSendMessage={vi.fn()} />
       </ConversationTabContent>
     </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

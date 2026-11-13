@@ -200,16 +200,15 @@ describe('canais fixos virados canais por instância', () => {
     segundo.unmount();
   });
 
-  it('(4) AudioMessagePlayer: duas montagens da mesma mensagem pedem canais distintos', () => {
+  it('(4) AudioMessagePlayer: nenhuma bolha abre canal próprio (P1-9 — transcrição vem pelo canal da conversa)', () => {
     const primeiro = render(<AudioMessagePlayer audioUrl="https://exemplo/a.ogg" messageId="m1" isSent={false} />);
     const segundo = render(<AudioMessagePlayer audioUrl="https://exemplo/a.ogg" messageId="m1" isSent={false} />);
 
-    const nomes = h.nomesComPrefixo('transcription-m1');
-    expect(nomes).toHaveLength(2);
-    expect(new Set(nomes).size).toBe(2);
+    // Sem canal por bolha não há colisão de tópico a evitar: a transcrição chega
+    // pela linha da mensagem que `useMessages` já entrega (props).
+    expect(h.nomesComPrefixo('transcription-m1')).toHaveLength(0);
 
     primeiro.unmount();
     segundo.unmount();
-    expect(h.removidos).toEqual(expect.arrayContaining(nomes));
   });
 });
