@@ -33,7 +33,7 @@ interface RecordedCall {
   filters: Record<string, unknown>;
 }
 interface UndoOptions {
-  successMessage: string;
+  successMessage: string | ((result: unknown) => string);
   undoMessage?: string;
   action: () => Promise<unknown>;
   undoAction: () => Promise<void>;
@@ -68,6 +68,12 @@ let selectQueue: DbResult[] = [];
 let recorded: RecordedCall[] = [];
 let updateGate: Promise<void> | null = null;
 let lastUndo: UndoOptions | null = null;
+let lastResult: unknown = undefined;
+/** Texto do toast de sucesso como o useUndoableAction monta (string ou função do resultado). */
+function sucesso(): string | undefined {
+  const msg = lastUndo?.successMessage;
+  return typeof msg === 'function' ? msg(lastResult) : msg;
+}
 // Estado da RPC de transferência: cada `p_contact_id` pode falhar de forma
 // independente, então o mapa abaixo permite provar o caminho de sucesso PARCIAL.
 let rpcFailures: Record<string, unknown> = {};
@@ -163,7 +169,7 @@ beforeEach(() => {
 
   mocks.execute.mockImplementation(async (options: UndoOptions) => {
     lastUndo = options;
-    await options.action();
+    lastResult = await options.action();
   });
   mocks.invoke.mockResolvedValue({ data: { updated: 0, processed: 0 }, error: null });
   mocks.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
@@ -581,7 +587,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
       filters: { id: [c1, c2] },
     });
     expect(mocks.execute).toHaveBeenCalledTimes(1);
-    expect(lastUndo?.successMessage).toBe('2 contato(s) arquivado(s)');
+    expect(sucesso()).toBe('2 contato(s) arquivado(s)');
     expect(lastUndo?.undoMessage).toBe('Arquivamento desfeito');
     expect(contactUpdates()[0]).toMatchObject({
       payload: { conversation_status: 'archived' },
@@ -716,7 +722,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
       payload: { conversation_status: 'archived' },
       filters: { id: [c1] },
     });
-    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+    expect(sucesso()).toBe('1 contato(s) arquivado(s)');
 
     await act(async () => {
       await lastUndo?.undoAction();
@@ -744,10 +750,22 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     expect(contactUpdates()[0]).toMatchObject({ payload: { conversation_status: 'archived' }, filters: { id: [c1] } });
-    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+    expect(sucesso()).toBe('1 contato(s) arquivado(s)');
     expect(mocks.toast.info).toHaveBeenCalledWith(
       '1 conversa(s) aguardando atendimento não foram arquivadas — atenda ou encerre antes.',
     );
+  });
+
+  it('revisão #3037: o toast de sucesso conta o que o BANCO arquivou, não o que foi pedido', async () => {
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'open' }, { id: c2, conversation_status: 'open' }], error: null });
+    // A RPC de lote só confirma c1 (c2 perdeu a permissão no meio-tempo).
+    updateQueue.push({ data: [{ id: c1 }], error: null });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2]);
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    expect(sucesso()).toBe('1 contato(s) arquivado(s)');
   });
 
   it('decisão do dono: só conversas aguardando selecionadas — nada é arquivado', async () => {

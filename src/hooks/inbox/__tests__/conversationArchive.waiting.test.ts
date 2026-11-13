@@ -60,3 +60,23 @@ describe('arquivar conversa aguardando (decisão do dono 2026-11-13)', () => {
     expect(isWaitingArchiveError(null)).toBe(false);
   });
 });
+
+describe('moveConversationsStatus (revisão #3037)', () => {
+  it('lote acima de 500 vai em pedaços e só conta outcome=changed', async () => {
+    const { moveConversationsStatus } = await import('../conversationArchive');
+    const ids = Array.from({ length: 1200 }, (_, i) => `id-${i}`);
+    mocks.rpc.mockImplementation(async (_fn: string, args: { p_contact_ids: string[] }) => ({
+      data: args.p_contact_ids.map((id, i) => ({
+        contact_id: id,
+        previous_status: 'open',
+        outcome: i === 0 ? 'not_authorized' : 'changed',
+      })),
+      error: null,
+    }));
+    const moved = await moveConversationsStatus(ids, 'archived');
+    expect(mocks.rpc).toHaveBeenCalledTimes(3);
+    expect(mocks.rpc.mock.calls.map((c) => (c[1] as { p_contact_ids: string[] }).p_contact_ids.length)).toEqual([500, 500, 200]);
+    expect(moved.size).toBe(1200 - 3);
+    expect(moved.has('id-0')).toBe(false);
+  });
+});

@@ -8,6 +8,7 @@ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 // usada em `useCalls` — uma fonte só para o formato de uuid.
 import { isValidUUID } from '@/hooks/communication/useCalls';
 import { canArchiveConversation, moveConversationsStatus, type ConversationStatus } from '@/hooks/inbox/conversationArchive';
+import { transferConversation, transferErrorMessage } from '@/lib/inbox/transferConversation';
 
 interface UseInboxBulkActionsProps {
   refetch: () => void;
@@ -141,12 +142,12 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       // CONVERSA (UPDATE em contacts + INSERT do evento na mesma transação).
       // Chamadas concorrentes sobre o mesmo lote só gerariam corrida de erro.
       for (const contactId of contactIds) {
-        const { error } = await supabase.rpc('transfer_conversation', {
-          p_contact_id: contactId,
-          p_to_agent_id: type === 'agent' ? targetId : undefined,
-          p_to_queue_id: type === 'queue' ? targetId : undefined,
-          p_note: undefined,
-          p_expected_agent_id: donoVisto.get(contactId) ?? undefined,
+        const { error } = await transferConversation({
+          contactId,
+          toAgentId: type === 'agent' ? targetId : undefined,
+          toQueueId: type === 'queue' ? targetId : undefined,
+          // null = sem dono na lista; fora da lista = sem compare-and-set.
+          expectedAgentId: donoVisto.has(contactId) ? donoVisto.get(contactId) ?? null : undefined,
         });
         if (error) failures.push(error);
         else transferidos += 1;
@@ -164,8 +165,10 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     // seleção — quem chamou precisa saber que falhou (a sidebar usa a rejeição
     // para manter o diálogo/alvo abertos).
     if (failures.length > 0) {
+      const conflitos = failures.filter((f) => (f as { code?: unknown })?.code === '40001').length;
       toast.error(
-        `Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam`,
+        `Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam`
+          + (conflitos > 0 ? ` (${conflitos} já tinham sido transferido(s) ou assumido(s) por outro atendente — atualize a lista)` : ''),
       );
       throw failures[0];
     }
@@ -210,14 +213,17 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       }
       if (targetIds.length === 0) { toast.info('Nenhum contato disponível para arquivar'); return; }
 
+      // Quantas o BANCO arquivou de fato (resultado da RPC), não quantas foram pedidas.
       await executeUndoable({
-        successMessage: `${targetIds.length} contato(s) arquivado(s)`,
+        successMessage: (arquivadas: number) => `${arquivadas} contato(s) arquivado(s)`,
         undoMessage: 'Arquivamento desfeito',
         action: async () => {
           // P1-2: pela RPC de lote (UPDATE direto em conversation_status é recusado no banco).
-          await moveConversationsStatus(targetIds, 'archived');
+          const arquivadas = (await moveConversationsStatus(targetIds, 'archived')).size;
+          if (arquivadas === 0) throw new Error('Nenhuma conversa foi arquivada');
           clearSelection();
           refetch();
+          return arquivadas;
         },
         undoAction: async () => {
           // Trigger enforce_conversation_status_transition: de 'archived' só é

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   describeWhatsAppDisconnected,
   isTestFixtureConnection,
@@ -37,5 +37,36 @@ describe('describeWhatsAppDisconnected', () => {
     expect(describeWhatsAppDisconnected(new Error('rede caiu'))).toBeNull();
     expect(describeWhatsAppDisconnected(null)).toBeNull();
     expect(describeWhatsAppDisconnected(42)).toBeNull();
+  });
+});
+
+describe('surfaceWhatsAppDisconnected (ponto único de tradução no serviço de envio)', () => {
+  it('erro de conexão caída vira WhatsAppDisconnectedError amigável e avisa UMA vez', async () => {
+    const { surfaceWhatsAppDisconnected, WhatsAppDisconnectedError } = await import('../sendConnection');
+    const notify = vi.fn();
+    const original = { message: 'contact_whatsapp_connection_disconnected', code: '22023' };
+    const out = surfaceWhatsAppDisconnected(original, notify);
+    expect(out).toBeInstanceOf(WhatsAppDisconnectedError);
+    expect((out as Error).message).toBe(WHATSAPP_DISCONNECTED_DESCRIPTION);
+    expect(describeWhatsAppDisconnected(out)).toBe(WHATSAPP_DISCONNECTED_DESCRIPTION);
+    expect(notify).toHaveBeenCalledTimes(1);
+    // Já traduzido: não avisa de novo.
+    expect(surfaceWhatsAppDisconnected(out, notify)).toBe(out);
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('recusa da edge (instance_unavailable) também vira o aviso', async () => {
+    const { surfaceWhatsAppDisconnected } = await import('../sendConnection');
+    const notify = vi.fn();
+    surfaceWhatsAppDisconnected(new Error('A conexão do WhatsApp está desconectada. Reconecte a instância e tente de novo.'), notify);
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('outros erros voltam intactos e sem aviso', async () => {
+    const { surfaceWhatsAppDisconnected } = await import('../sendConnection');
+    const notify = vi.fn();
+    const erro = new Error('rede caiu');
+    expect(surfaceWhatsAppDisconnected(erro, notify)).toBe(erro);
+    expect(notify).not.toHaveBeenCalled();
   });
 });

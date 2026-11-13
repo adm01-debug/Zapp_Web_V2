@@ -49,7 +49,12 @@ export function isWaitingArchiveError(error: unknown): boolean {
 interface StatusChangeRow {
   contact_id: string;
   previous_status: string | null;
+  /** changed | already_in_state | state_changed | waiting_cannot_be_archived | invalid_transition | not_authorized */
+  outcome?: string | null;
 }
+
+/** Teto por chamada da RPC de lote (o banco recusa acima disso). */
+export const SET_CONVERSATIONS_STATUS_CHUNK = 500;
 
 type SetConversationsStatusRpc = {
   rpc: (
@@ -74,14 +79,20 @@ export async function moveConversationsStatus(
   const moved = new Map<string, ConversationStatus>();
   if (contactIds.length === 0) return moved;
   const client = supabase as unknown as SetConversationsStatusRpc;
-  const { data, error } = await client.rpc('set_conversations_status', {
-    p_contact_ids: contactIds,
-    p_next: next,
-    ...(expectedCurrent ? { p_expected_current: expectedCurrent } : {}),
-  });
-  if (error) throw error;
-  for (const row of data ?? []) {
-    moved.set(row.contact_id, (row.previous_status ?? 'open') as ConversationStatus);
+  // Lotes acima de 500 vão em pedaços (o banco recusa mais que isso por chamada).
+  for (let i = 0; i < contactIds.length; i += SET_CONVERSATIONS_STATUS_CHUNK) {
+    const { data, error } = await client.rpc('set_conversations_status', {
+      p_contact_ids: contactIds.slice(i, i + SET_CONVERSATIONS_STATUS_CHUNK),
+      p_next: next,
+      ...(expectedCurrent ? { p_expected_current: expectedCurrent } : {}),
+    });
+    if (error) throw error;
+    for (const row of data ?? []) {
+      // A RPC devolve UMA linha por id com o resultado; só 'changed' mudou de verdade.
+      // (Sem `outcome` = versão antiga da RPC, que só devolvia as que mudaram.)
+      if (row.outcome && row.outcome !== 'changed') continue;
+      moved.set(row.contact_id, (row.previous_status ?? 'open') as ConversationStatus);
+    }
   }
   return moved;
 }

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
-import { describeWhatsAppDisconnected, withoutTestFixtureConnections, WHATSAPP_DISCONNECTED_TITLE } from '@/lib/whatsapp/sendConnection';
+import { describeWhatsAppDisconnected, withoutTestFixtureConnections } from '@/lib/whatsapp/sendConnection';
 
 interface ContactResult {
   id: string;
@@ -156,9 +156,8 @@ export function useNewConversation(
       onClose?.();
       resetForm();
     } catch (err) {
-      const desconectado = describeWhatsAppDisconnected(err);
-      if (desconectado) toast.error(WHATSAPP_DISCONNECTED_TITLE, { description: desconectado });
-      else toast.error('Erro ao enviar mensagem');
+      // "WhatsApp desconectado" já foi avisado pelo serviço de envio.
+      if (!describeWhatsAppDisconnected(err)) toast.error('Erro ao enviar mensagem');
     }
     finally { setIsSending(false); }
   };

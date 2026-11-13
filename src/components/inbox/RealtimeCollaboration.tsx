@@ -9,6 +9,7 @@ import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts'
 import { ViewersIndicator } from './collaboration/ViewersIndicator';
 import { InternalNotesPanel } from './collaboration/InternalNotesPanel';
 import { HandoffDialog, type HandoffResult } from './collaboration/HandoffDialog';
+import { transferConversation, transferErrorMessage } from '@/lib/inbox/transferConversation';
 
 interface RealtimeCollaborationProps {
   contactId: string;
@@ -61,14 +62,18 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
 
     const trimmedComment = comment.trim();
 
-    const { data: eventId, error: transferError } = await supabase.rpc('transfer_conversation', {
-      p_contact_id: contactId,
-      p_to_agent_id: agentId,
-      p_to_queue_id: undefined,
-      p_note: trimmedComment || undefined,
-      p_expected_agent_id: contactRouting?.assignedTo ?? undefined,
+    const { data: eventId, error: transferError } = await transferConversation({
+      contactId,
+      toAgentId: agentId,
+      note: trimmedComment || undefined,
+      // Dono lido do banco (null = sem dono); sem leitura ainda, sem compare-and-set.
+      expectedAgentId: contactRouting ? contactRouting.assignedTo : undefined,
     });
-    if (transferError) throw transferError;
+    if (transferError) {
+      // 40001: alguém transferiu/assumiu antes — o diálogo mostra a mensagem clara.
+      if (transferError.code === '40001') throw new Error(transferErrorMessage(transferError, ''));
+      throw transferError;
+    }
     if (!eventId) {
       throw new Error('Nenhuma transferência foi gravada.');
     }

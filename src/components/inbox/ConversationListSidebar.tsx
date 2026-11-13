@@ -242,7 +242,10 @@ export function ConversationListSidebar({
     const alvo = (inboxFilters.filteredConversations ?? []).find(
       (c: { contact: { id: string; assigned_to?: string | null } }) => c.contact.id === transferTarget,
     );
-    await conversationActions.transferContact(transferTarget, type, targetId, note, alvo?.contact.assigned_to ?? null);
+    await conversationActions.transferContact(
+      transferTarget, type, targetId, note,
+      alvo ? alvo.contact.assigned_to ?? null : undefined,
+    );
     inbox.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mesmo motivo acima.
   }, [transferTarget, conversationActions, inbox.refetch, inboxFilters.filteredConversations]);
