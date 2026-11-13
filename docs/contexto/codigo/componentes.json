@@ -12591,7 +12591,7 @@
     "TeamChatHeader"
    ],
    "export_default": null,
-   "linhas": 303,
+   "linhas": 305,
    "dominio": "components/team-chat",
    "hooks_locais": [],
    "tabelas": [],
@@ -12623,7 +12623,7 @@
     "TeamChatPanel"
    ],
    "export_default": null,
-   "linhas": 202,
+   "linhas": 201,
    "dominio": "components/team-chat",
    "hooks_locais": [
     "useTeamChatPanel"

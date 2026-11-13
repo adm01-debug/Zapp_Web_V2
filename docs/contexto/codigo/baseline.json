@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "fe4959bbc7d885f3cc0274d92167f6b30800400a",
+  "commit": "2bfcdbdd0629d52f2b11f9034f90f77d340da826",
   "branch": "main",
-  "data_commit": "2026-11-13T05:26:51-03:00",
+  "data_commit": "2026-11-13T06:09:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2bfcdbd",
+    "data": "2026-11-13",
+    "assunto": "Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam"
+   },
    {
     "sha": "fe4959b",
     "data": "2026-11-13",
@@ -126,18 +131,13 @@
     "sha": "2d10201",
     "data": "2026-11-12",
     "assunto": "fix(db-audit): wal_level=logical no container descartável do teste E27 replay"
-   },
-   {
-    "sha": "6f90c93",
-    "data": "2026-11-12",
-    "assunto": "fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)"
    }
   ],
-  "arquivos_mudados_7d": 676,
+  "arquivos_mudados_7d": 679,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 626
+    "mudancas": 622
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 272
+    "mudancas": 271
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -193,7 +193,7 @@
    },
    {
     "pasta": "src/components/settings",
-    "mudancas": 95
+    "mudancas": 94
    }
   ],
   "arquivos_mais_mudados_90d": [
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8423,
-  "arquivos_codigo": 4819,
-  "linhas_codigo": 892297,
+  "arquivos_total": 8424,
+  "arquivos_codigo": 4820,
+  "linhas_codigo": 892392,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2622,
+  "testes": 2623,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2180,
-   "linhas": 372146
+   "arquivos": 2181,
+   "linhas": 372241
   },
   "src/config": {
    "arquivos": 3,

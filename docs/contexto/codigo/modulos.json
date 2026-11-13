@@ -7258,8 +7258,8 @@
   {
    "modulo": "components/team-chat",
    "arquivos": 27,
-   "testes": 22,
-   "linhas": 4348,
+   "testes": 23,
+   "linhas": 4349,
    "itens_menu": [
     "Teams"
    ],

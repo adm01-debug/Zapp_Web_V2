@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1959)",
+   "co-localizado (__tests__) (1960)",
    "outro (231)",
    "co-localizado (*.test) (170)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam nada (#3003)",
    "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)",
    "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)",
    "Rascunho de proposta do copilot só mostra \"copiado\" quando a cópia funciona (#3005)",
-   "test(contracts): cobre os 7 schemas RADAR AI na tabela de contrato (#3000)",
-   "fix(copilot): badge de alertas do RADAR com contraste AA (#3002)"
+   "test(contracts): cobre os 7 schemas RADAR AI na tabela de contrato (#3000)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
