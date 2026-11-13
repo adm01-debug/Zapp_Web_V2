@@ -24,14 +24,15 @@ export function useKnowledgeBaseSearch() {
   const handleSearch = useCallback((value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedQuery(value), 300);
+    // O termo que vai para a RPC é aparado: "  a" não é uma busca de 2 letras.
+    debounceRef.current = setTimeout(() => setDebouncedQuery(value.trim()), 300);
   }, []);
 
   useEffect(() => {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
 
-  const { data: articles, isLoading, isError } = useQuery({
+  const { data: articles, isLoading, isFetching, isError } = useQuery({
     queryKey: ['knowledge-base-search', debouncedQuery],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('search_knowledge_base', {
@@ -43,6 +44,12 @@ export function useKnowledgeBaseSearch() {
     },
     enabled: debouncedQuery.length >= 2,
   });
+
+  const trimmed = query.trim();
+  /** Há busca válida (≥ 2 letras sem contar espaços). */
+  const isSearching = trimmed.length >= 2;
+  /** O termo digitado ainda não chegou ao debounce: a tela trata como carregando. */
+  const isDebouncing = isSearching && trimmed !== debouncedQuery;
 
   const clear = useCallback(() => {
     // Cancela o debounce que ainda não disparou: sem isso o temporizador antigo
@@ -58,7 +65,11 @@ export function useKnowledgeBaseSearch() {
     handleSearch,
     clear,
     articles: articles ?? [],
+    debouncedQuery,
+    isSearching,
+    isDebouncing,
     isLoading,
+    isFetching,
     isError,
     hasResults: (articles?.length ?? 0) > 0,
   };
