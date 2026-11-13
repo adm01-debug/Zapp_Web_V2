@@ -49,6 +49,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'create-instance',
   'create-connection',
   'connect',
+  // reparo da credencial da instância: busca o token atual na GO (chave
+  // global, /instance/all) e grava no Vault — nunca devolve o token.
+  'sync-instance-token',
   'delete-instance',
   'restart-instance',
   'disconnect',

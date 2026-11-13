@@ -155,4 +155,14 @@ describe('ConnectionAuditDialog — trilha de uma conexão (t_9cc4f1c2)', () => 
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.queryByText(/Nenhum evento de auditoria registrado/)).toBeNull();
   });
+
+  it('13/11: timeout do banco (57014 → 500 do PostgREST) vira mensagem própria, sem derrubar o diálogo', async () => {
+    h.audit = { rows: [], count: 0, error: { code: '57014', message: 'canceling statement due to statement timeout' } };
+
+    renderDialog();
+
+    const alerta = await screen.findByRole('alert');
+    expect(alerta.textContent).toMatch(/demorou demais/);
+    expect(screen.queryByText(/Nenhum evento de auditoria registrado/)).toBeNull();
+  });
 });
