@@ -98,6 +98,8 @@ limite efetivo é o `daily_limit_per_connection`.
 - **ZAPP é de uma empresa só (single-tenant)** — decisão 2026-11-03. Não existe isolamento por empresa e **não deve ser criado**: RLS significa só **papel** (admin / supervisor / agent) e **propriedade** (atendente dono ou membro da fila, `can_edit_contact`). Nenhuma policy nova filtra por `company_id` e nenhuma tabela nova o exige. Estado medido: `company_id` existe só em `multiplix_recipients`, **0 policies** o usam e não há tabela `companies` — a coluna é resíduo, não propagar.
 - Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).
 - Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + telefone `^[0-9]{10,15}$` (decisão D4; `CLAUDE.md` §6).
+- **Multiplix: retomar disparo pausado em um clique; iniciar continua com confirmação** (decisão do dono, 2026-11-13). Retomar só continua a fila que já existe; iniciar um rascunho congela público/blocos e gera a fila, sem volta (`src/components/multiplix/MultiplixMonitor.tsx`).
+- **Talk X: pausar/cancelar mantêm o diálogo aberto até o servidor responder e mostram o erro no próprio diálogo** (decisão do dono, 2026-11-13). Retomar campanha pausada é um clique, sem diálogo.
 
 ## 9. Dúvidas em aberto
 
