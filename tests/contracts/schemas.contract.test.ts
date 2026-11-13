@@ -100,6 +100,26 @@ const suites: Record<string, Suite> = {
     { payload: {}, hint: 'ausente' }, { payload: { contactIds: [] }, hint: 'vazio' }, { payload: { contactIds: ['x'] }, hint: 'uuid' }] },
   AiClassifyTicketsSchema: { schema: S.AiClassifyTicketsSchema, valid: [{}, { limit: 10 }], invalid: [
     { payload: { limit: 'x' }, hint: 'tipo' }, { payload: { limit: 0 }, hint: 'faixa' }] },
+  // RADAR AI (#2834): `messages` é obrigatório (aceita lista vazia); o resto é opcional.
+  AiObjectionHandlerSchema: { schema: S.AiObjectionHandlerSchema, valid: [{ messages: [] }, { messages: [{}], clientText: 'caro', requestId: UUID }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: 'x' }, hint: 'tipo' },
+    { payload: { messages: [], clientText: 'x'.repeat(2001) }, hint: 'tamanho' }, { payload: { messages: [], requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiPriceAnchorSchema: { schema: S.AiPriceAnchorSchema, valid: [{ messages: [] }, { messages: [{}], productType: 'caneca', unitPrice: 10 }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [], unitPrice: 'x' }, hint: 'tipo' },
+    { payload: { messages: [], unitPrice: -1 }, hint: 'faixa' }] },
+  AiLossRiskSchema: { schema: S.AiLossRiskSchema, valid: [{ messages: [] }, { messages: [{}], daysSinceLastContact: 3 }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [], daysSinceLastContact: 'x' }, hint: 'tipo' },
+    { payload: { messages: [], daysSinceLastContact: -1 }, hint: 'faixa' }] },
+  AiDeadlineCalculatorSchema: { schema: S.AiDeadlineCalculatorSchema, valid: [{ messages: [] }, { messages: [{}], eventDate: '2026-12-01', productType: 'p' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [], eventDate: 5 }, hint: 'tipo' }] },
+  AiLeadTemperatureSchema: { schema: S.AiLeadTemperatureSchema, valid: [{ messages: [] }, { messages: [{}], context: 'c', requestId: UUID }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: {} }, hint: 'tipo' }, { payload: { messages: [], requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiProductRecommendationSchema: { schema: S.AiProductRecommendationSchema, valid: [{ messages: [] }, { messages: [{}], eventType: 'e', budget: 100, quantity: 1 }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [], budget: 'x' }, hint: 'tipo' },
+    { payload: { messages: [], quantity: 0 }, hint: 'faixa' }] },
+  AiMultimodalAnalysisSchema: { schema: S.AiMultimodalAnalysisSchema, valid: [{ imageUrl: 'https://x.co/a.png' }, { imageUrl: 'https://x.co/a.png', context: 'c', requestId: UUID }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { imageUrl: 'x' }, hint: 'url' }, { payload: { imageUrl: 5 }, hint: 'tipo' },
+    { payload: { imageUrl: '' }, hint: 'vazio' }] },
   ElevenLabsTTSSchema: { schema: S.ElevenLabsTTSSchema, valid: [{ text: 'a' }, { text: 'a', voiceId: 'EXAVITQu4vr4xnSDxMaL', modelId: 'eleven_v3' }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { text: '' }, hint: 'vazio' }, { payload: { text: 1 }, hint: 'tipo' },
     { payload: { text: 'a', voiceId: 'NAOEXISTEnaLISTA00000' }, hint: 'voiceId fora da lista' },
