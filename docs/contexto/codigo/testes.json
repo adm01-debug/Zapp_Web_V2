@@ -23652,7 +23652,7 @@
   {
    "arquivo": "tests/contracts/schemas.contract.test.ts",
    "tipo": "contrato",
-   "linhas": 295,
+   "linhas": 315,
    "testa": [
     "supabase/functions/_shared/schemas.ts"
    ],

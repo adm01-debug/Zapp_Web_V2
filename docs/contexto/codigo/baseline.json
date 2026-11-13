@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "fb5d0232124390d46bbb46c78363ad51a618a21d",
+  "commit": "8e6f4133399897fe076c0953938893d7913772d5",
   "branch": "main",
-  "data_commit": "2026-11-13T02:54:13-03:00",
+  "data_commit": "2026-11-13T03:15:06-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "8e6f413",
+    "data": "2026-11-13",
+    "assunto": "test(contracts): cobre os 7 schemas RADAR AI na tabela de contrato (#3000)"
+   },
    {
     "sha": "fb5d023",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "1c4498d",
     "data": "2026-11-12",
     "assunto": "fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)"
-   },
-   {
-    "sha": "1616f7b",
-    "data": "2026-11-12",
-    "assunto": "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS"
    }
   ],
-  "arquivos_mudados_7d": 671,
+  "arquivos_mudados_7d": 672,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -222,16 +222,16 @@
     "mudancas": 11
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 11
    },
    {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 10
    },
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8422,
   "arquivos_codigo": 4818,
-  "linhas_codigo": 892202,
+  "linhas_codigo": 892222,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -788,7 +788,7 @@
   },
   "tests/contracts": {
    "arquivos": 95,
-   "linhas": 20890
+   "linhas": 20910
   },
   "vite.config.ts": {
    "arquivos": 1,
