@@ -57,6 +57,8 @@ interface FakeConfig {
   /** INSERT em `messages` devolve 23505 (já enfileirada no dia). */
   duplicada?: boolean;
   assignedTo?: string | null;
+  /** Código de erro de `mark_outbound_post_started` (undefined = sucesso). */
+  markErro?: string;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -144,6 +146,9 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
         case "should_send_away_message":
           if (cfg.decisaoErro) return { data: null, error: { code: "PGRST202", message: cfg.decisaoErro } };
           return { data: "decisao" in cfg ? cfg.decisao : TEXTO_AUSENCIA, error: null };
+        case "mark_outbound_post_started":
+          if (cfg.markErro) return { data: null, error: { code: cfg.markErro, message: "falha do carimbo (fixture)" } };
+          return { data: true, error: null };
         case "record_away_message":
           if (cfg.recordErro) return { data: null, error: { code: "42883", message: cfg.recordErro } };
           return { data: "log-1", error: null };
@@ -469,6 +474,61 @@ Deno.test("AWAY: provedor recusando (4xx) deixa a linha terminal e não derruba 
     assertEquals(falha[0].args?.p_retryable, false, "não é retentável: sem reenvio automático");
     assertEquals(rpcs(chamadas, "complete_outbound_message").length, 0, "não confirma o que foi recusado");
     assertEquals(rpcs(chamadas, "attribute_talkx_reply").length, 1, "a mensagem recebida segue processada");
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+// P1-1 (auditoria Conversas 2026-11-13): carimbo PD-79 antes do POST também na ausência,
+// para a varredura de `sending` nunca marcar como falha algo que saiu.
+Deno.test("AWAY: carimba mark_outbound_post_started com o token do claim antes do POST", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200);
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA });
+    const carimbo = rpcs(chamadas, "mark_outbound_post_started");
+    assertEquals(carimbo.length, 1, "carimba 1x");
+    assertEquals(carimbo[0].args?.p_message_id, "away-msg-1");
+    assertEquals(carimbo[0].args?.p_claim_token, "token-claim-1");
+    const iClaim = indiceDe(chamadas, (c) => c.tipo === "rpc" && c.nome === "claim_outbound_message");
+    const iMark = indiceDe(chamadas, (c) => c.tipo === "rpc" && c.nome === "mark_outbound_post_started");
+    const iComplete = indiceDe(chamadas, (c) => c.tipo === "rpc" && c.nome === "complete_outbound_message");
+    assertEquals(iClaim < iMark && iMark < iComplete, true, "claim → carimbo → (POST) → recibo");
+    assertEquals(fetchCalls.length, 1, "envia");
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("AWAY: carimbo recusado (lease vencido) NÃO chama o provedor e encerra a linha", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200);
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA, markErro: "P0001" });
+    assertEquals(fetchCalls.length, 0, "nada sai para o provedor");
+    assertEquals(rpcs(chamadas, "fail_outbound_message").length, 1, "linha terminal (nada saiu)");
+    assertEquals(rpcs(chamadas, "complete_outbound_message").length, 0);
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("AWAY: RPC de carimbo ainda inexistente (pré-DDL) não derruba o envio", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200);
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA, markErro: "PGRST202" });
+    assertEquals(fetchCalls.length, 1, "envia sem carimbo, como a edge message-delivery");
+    assertEquals(rpcs(chamadas, "complete_outbound_message").length, 1);
   } finally {
     restaurarFetch();
     resetOptOutKeywordCache();

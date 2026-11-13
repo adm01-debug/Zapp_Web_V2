@@ -51,11 +51,22 @@ Deno.test("P1-GO-5: editar/apagar mensagem é 'message' (autor ou admin/supervis
 
 Deno.test("P1-GO-5: extractTargetMessageExternalId lê messageId, id e key.id; rejeita lixo", () => {
   assertEquals(extractTargetMessageExternalId({ messageId: "ABC" }), "ABC");
-  assertEquals(extractTargetMessageExternalId({ id: " XYZ " }), "XYZ");
-  assertEquals(extractTargetMessageExternalId({ key: { id: "K1" } }), "K1");
+  assertEquals(extractTargetMessageExternalId({ id: "XYZ" }), "XYZ");
+  assertEquals(extractTargetMessageExternalId({ key: { id: "K1", remoteJid: "x@s.whatsapp.net" } }), "K1");
+  assertEquals(extractTargetMessageExternalId({ messageId: "A", id: "A", key: { id: "A" } }), "A");
   assertEquals(extractTargetMessageExternalId({ messageId: "", id: 123, key: { id: null } }), null);
+  assertEquals(extractTargetMessageExternalId({ id: " XYZ " }), null, "espaço vira id diferente no provedor: nega");
   assertEquals(extractTargetMessageExternalId({ id: "x".repeat(513) }), null);
   assertEquals(extractTargetMessageExternalId({}), null);
+});
+
+Deno.test("P1-GO-5 (revisão): ids divergentes entre campos são negados — o id checado é o que sai", () => {
+  // PoC do revisor: autoria checada em `messageId` e provedor recebendo `id`/`key.id`.
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", id: "VICTIM" }), null);
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", key: { id: "VICTIM" } }), null);
+  assertEquals(extractTargetMessageExternalId({ id: "OWN", key: { id: "VICTIM" } }), null);
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", key: { id: "VICTIM" }, id: "VICTIM" }), null);
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", id: { $ne: null } }), null);
 });
 
 Deno.test("P1-GO-5: decideMessageAuthorAuthz — autor edita/apaga a própria; o resto é 403", () => {

@@ -200,20 +200,29 @@ export function decideSendAuthz(opts: {
 }
 
 /**
- * Id do provedor (WhatsApp) da mensagem-alvo de editar/apagar, nas formas que o
- * front e o tradutor GO usam: `messageId` (edit-message), `id` (delete-message),
- * `key.id` (update-message / delete-for-everyone). Só aceita string não vazia de
- * até 512 caracteres; qualquer outra coisa devolve null (o gate nega).
+ * Id do provedor (WhatsApp) da mensagem-alvo de editar/apagar.
+ *
+ * Cada ação repassa ao provedor um campo DIFERENTE (delete-message manda `id`;
+ * update-message manda `key.id`; edit-message e delete-for-everyone repassam o
+ * corpo inteiro, e o tradutor GO lê `id`, `key.id` ou `messageId`). Por isso a
+ * autoria NÃO pode ser checada num campo e o envio sair por outro: aqui TODOS os
+ * campos de id presentes (`messageId`, `id`, `key.id`) precisam ser string não
+ * vazia (até 512) e IGUAIS entre si. Se algum vier com outro tipo, ou se dois
+ * divergirem (ex.: `{messageId: "MINHA", id: "DE_OUTRO"}`), devolve null e o gate
+ * nega com 403 — o id checado é exatamente o id que chega ao provedor.
  */
 export function extractTargetMessageExternalId(body: Record<string, unknown>): string | null {
   const key = body.key && typeof body.key === 'object' ? body.key as Record<string, unknown> : null;
-  for (const candidate of [body.messageId, body.id, key?.id]) {
-    if (typeof candidate === 'string') {
-      const value = candidate.trim();
-      if (value.length > 0 && value.length <= 512) return value;
-    }
+  const presentes = [body.messageId, body.id, key?.id].filter((v) => v !== undefined && v !== null);
+  if (presentes.length === 0) return null;
+  const ids = new Set<string>();
+  for (const candidate of presentes) {
+    if (typeof candidate !== 'string') return null;
+    const value = candidate.trim();
+    if (value.length === 0 || value.length > 512 || value !== candidate) return null;
+    ids.add(value);
   }
-  return null;
+  return ids.size === 1 ? [...ids][0] : null;
 }
 
 /** Linha de `messages` relevante para decidir autoria (lida com service role). */

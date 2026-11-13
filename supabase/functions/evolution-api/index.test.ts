@@ -962,3 +962,100 @@ Deno.test("R2EXT-STATUS: falha da trilha NÃO publica o status (403/500 e zero I
     await fake.stop();
   }
 });
+
+// ─── P1-GO-5 (auditoria Conversas 2026-11-13) — autor edita/apaga a PRÓPRIA mensagem ───
+// O id checado na autoria tem de ser EXATAMENTE o id que sai para o provedor. PoC da
+// revisão: `{messageId: "OWN", id: "VICTIM"}` checava OWN e o provedor recebia VICTIM.
+
+function messageAuthorService(authorProfileId: string): any {
+  return {
+    from: (table: string) => {
+      if (table === "profiles") return makeQuery({ id: "profile-1" });
+      if (table === "messages") {
+        return makeQuery({ sender: "agent", agent_id: authorProfileId, whatsapp_connection_id: "conn-1" });
+      }
+      if (table === "whatsapp_connections") return makeQuery({ instance_id: "PRINCIPAL", id: "conn-1" });
+      return makeQuery(null);
+    },
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: "vault-instance-token", error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
+}
+
+const JID = "5511999999999@s.whatsapp.net";
+const MESSAGE_ACTION_BODIES: Record<string, { own: Record<string, unknown>; spoof: Record<string, unknown> }> = {
+  "delete-message": {
+    own: { instanceName: "PRINCIPAL", id: "OWN", remoteJid: JID, fromMe: true },
+    spoof: { instanceName: "PRINCIPAL", messageId: "OWN", id: "VICTIM", remoteJid: JID, fromMe: true },
+  },
+  "update-message": {
+    own: { instanceName: "PRINCIPAL", number: JID, key: { id: "OWN", remoteJid: JID, fromMe: true }, text: "novo" },
+    spoof: { instanceName: "PRINCIPAL", number: JID, messageId: "OWN", key: { id: "VICTIM", remoteJid: JID, fromMe: true }, text: "x" },
+  },
+  "edit-message": {
+    own: { instanceName: "PRINCIPAL", number: JID, messageId: "OWN", key: { id: "OWN", remoteJid: JID, fromMe: true }, text: "novo" },
+    spoof: { instanceName: "PRINCIPAL", number: JID, messageId: "OWN", key: { id: "VICTIM", remoteJid: JID, fromMe: true }, text: "x" },
+  },
+  "delete-for-everyone": {
+    own: { instanceName: "PRINCIPAL", id: "OWN", remoteJid: JID, fromMe: true },
+    spoof: { instanceName: "PRINCIPAL", messageId: "OWN", id: "VICTIM", key: { id: "VICTIM" }, remoteJid: JID },
+  },
+};
+
+for (const flavor of ["v2", "go"]) {
+  for (const [action, bodies] of Object.entries(MESSAGE_ACTION_BODIES)) {
+    Deno.test(`P1-GO-5 [${flavor}] ${action}: autor passa e o provedor recebe SÓ o id verificado`, async () => {
+      const fake = createPrivacyFake(() => new Response("{}", { status: 200 }));
+      Deno.env.set("EVOLUTION_API_URL", fake.url);
+      Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
+      resetInstanceTokenCache();
+      try {
+        const res = await handleEvolutionApi(controlRequest(action, bodies.own), {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+          supabase: messageAuthorService("profile-1"),
+        });
+        assert(res.status !== 403, `autor deve passar (veio ${res.status})`);
+        assertEquals(fake.writes.length, 1, "1 escrita no provedor");
+        const enviado = JSON.stringify(fake.writes[0].body) + fake.writes[0].path;
+        assert(enviado.includes("OWN"), `provedor recebe o id verificado: ${enviado}`);
+        assert(!enviado.includes("VICTIM"), "nenhum outro id");
+      } finally {
+        await fake.stop();
+        resetInstanceTokenCache();
+      }
+    });
+
+    Deno.test(`P1-GO-5 [${flavor}] ${action}: PoC de ids divergentes é 403 e nada sai`, async () => {
+      const fake = createPrivacyFake(() => new Response("{}", { status: 200 }));
+      Deno.env.set("EVOLUTION_API_URL", fake.url);
+      Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
+      try {
+        const res = await handleEvolutionApi(controlRequest(action, bodies.spoof), {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+          supabase: messageAuthorService("profile-1"),
+        });
+        assertEquals(res.status, 403);
+        assertEquals(fake.writes.length, 0, `nada pode chegar ao provedor (veio ${JSON.stringify(fake.writes)})`);
+      } finally {
+        await fake.stop();
+      }
+    });
+
+    Deno.test(`P1-GO-5 [${flavor}] ${action}: mensagem de OUTRO atendente é 403`, async () => {
+      const fake = createPrivacyFake(() => new Response("{}", { status: 200 }));
+      Deno.env.set("EVOLUTION_API_URL", fake.url);
+      Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
+      try {
+        const res = await handleEvolutionApi(controlRequest(action, bodies.own), {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+          supabase: messageAuthorService("profile-OUTRO"),
+        });
+        assertEquals(res.status, 403);
+        assertEquals(fake.writes.length, 0);
+      } finally {
+        await fake.stop();
+      }
+    });
+  }
+}

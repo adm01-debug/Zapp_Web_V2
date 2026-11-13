@@ -42,6 +42,8 @@ type Chamada = {
 };
 
 interface FakeConfig {
+  /** Código de erro de `mark_outbound_post_started` (undefined = sucesso). */
+  markErro?: string;
   /** Linha de `feature_flags` devolvida pela leitura da flag (ausente = null). */
   flag?: { enabled: boolean } | null;
   /** Erro devolvido pela leitura da flag. */
@@ -159,6 +161,9 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
           };
         case "get_instance_token":
           return { data: "token-inst-bot", error: null };
+        case "mark_outbound_post_started":
+          if (cfg.markErro) return { data: null, error: { code: cfg.markErro, message: "falha do carimbo (fixture)" } };
+          return { data: true, error: null };
         case "complete_outbound_message":
           return { data: [{ id: "bot-msg-1" }], error: null };
         default:
@@ -496,4 +501,40 @@ Deno.test("CHATBOT-L1: a flag lida é a chave de capacidade canônica da edge", 
   const ausente: Chamada[] = [];
   const semFlag = await readChatbotL1Flag(fakeSupabase(ausente, { flag: null }) as unknown as EvolutionDbClient);
   assertEquals(semFlag, false, "ausência da linha = desligado");
+});
+
+// P1-1 (auditoria Conversas 2026-11-13): carimbo PD-79 antes do POST também no chatbot L1.
+Deno.test("CHATBOT-L1: carimba mark_outbound_post_started antes do POST ao provedor", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso();
+  statusEdge = 200;
+  payloadEdge = { handled: true, response: "Resposta do bot." };
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { flag: { enabled: true }, fluxo: { id: "flow-1" } });
+    const carimbo = rpcs(chamadas, "mark_outbound_post_started");
+    assertEquals(carimbo.length, 1, "carimba 1x");
+    assertEquals(carimbo[0].args?.p_message_id, "bot-msg-1");
+    assertEquals(carimbo[0].args?.p_claim_token, "token-claim-bot");
+    assertEquals(chamadasProvedor().length, 1, "envia");
+  } finally {
+    restaurarFetch();
+  }
+});
+
+Deno.test("CHATBOT-L1: carimbo recusado NÃO chama o provedor e encerra a linha", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso();
+  statusEdge = 200;
+  payloadEdge = { handled: true, response: "Resposta do bot." };
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { flag: { enabled: true }, fluxo: { id: "flow-1" }, markErro: "P0001" });
+    assertEquals(chamadasProvedor().length, 0, "nada sai para o provedor");
+    assertEquals(rpcs(chamadas, "fail_outbound_message").length, 1, "linha terminal (nada saiu)");
+  } finally {
+    restaurarFetch();
+  }
 });
