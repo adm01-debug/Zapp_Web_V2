@@ -30,6 +30,16 @@ export interface QrCodeDialogState {
   qrCode: string | null;
   status: 'loading' | 'pending' | 'connected' | 'error';
   errorMessage?: string;
+  /** `code` do erro da Edge (ex.: instance_token_invalid) — decide se a tela oferece "Sincronizar credencial". */
+  errorCode?: string;
+}
+
+/** Erros de credencial da instância que o botão "Sincronizar credencial" resolve. */
+export const INSTANCE_TOKEN_ERROR_CODES: readonly string[] = ['instance_token_invalid', 'instance_token_missing'];
+
+function errorCodeOf(error: unknown): string | undefined {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === 'string' ? code : undefined;
 }
 
 const INITIAL_QR_STATE: QrCodeDialogState = {
@@ -90,6 +100,7 @@ export function useConnectionsManager() {
     isLoading: evolutionLoading,
     createConnection,
     connectInstance,
+    syncInstanceToken,
     getInstanceStatus,
     disconnectInstance,
     deleteInstance,
@@ -267,6 +278,7 @@ export function useConnectionsManager() {
         setQrCodeDialog((prev) => ({
           ...prev, status: 'error',
           errorMessage: error instanceof Error ? error.message : 'Erro ao gerar QR Code',
+          errorCode: errorCodeOf(error),
         }));
       }
     }
@@ -278,7 +290,7 @@ export function useConnectionsManager() {
     // Cada "Gerar novo codigo" abre uma nova identidade para a MESMA conexao.
     const generation = qrSessionRef.current.generation + 1;
     qrSessionRef.current = { generation, connectionId: connection.id };
-    setQrCodeDialog((prev) => ({ ...prev, status: 'loading', qrCode: null }));
+    setQrCodeDialog((prev) => ({ ...prev, status: 'loading', qrCode: null, errorMessage: undefined, errorCode: undefined }));
     try {
       const result = await connectInstance(connection.instance_id);
       if (qrSessionRef.current.generation !== generation
@@ -297,8 +309,39 @@ export function useConnectionsManager() {
       setQrCodeDialog((prev) => ({
         ...prev, status: 'error',
         errorMessage: error instanceof Error ? error.message : 'Erro ao atualizar QR Code',
+        errorCode: errorCodeOf(error),
       }));
     }
+  };
+
+  // 13/11 — "o sistema deve buscar a chave sozinho": a Edge busca na Evolution
+  // GO a credencial atual da instância e grava no Vault; em seguida gera o QR
+  // de novo ("Gerar novo código"). Falha da sincronização fica no próprio
+  // diálogo, com a mensagem da Edge.
+  const [syncingCredential, setSyncingCredential] = useState(false);
+  const handleSyncCredential = async () => {
+    const connection = connections.find((c) => c.id === qrCodeDialog.connectionId);
+    if (!connection?.instance_id || syncingCredential) return;
+    const generation = qrSessionRef.current.generation;
+    setSyncingCredential(true);
+    try {
+      const result = await syncInstanceToken(connection.instance_id);
+      if (qrSessionRef.current.generation !== generation
+        || qrSessionRef.current.connectionId !== connection.id) return;
+      toast({ title: 'Credencial sincronizada', description: result?.message ?? 'Gerando um novo QR Code.' });
+    } catch (error: unknown) {
+      if (qrSessionRef.current.generation !== generation
+        || qrSessionRef.current.connectionId !== connection.id) return;
+      setQrCodeDialog((prev) => ({
+        ...prev, status: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Não foi possível sincronizar a credencial.',
+        errorCode: errorCodeOf(error),
+      }));
+      return;
+    } finally {
+      if (isMountedRef.current) setSyncingCredential(false);
+    }
+    await handleRefreshQrCode();
   };
 
   const handleCopyId = async (id: string) => {
@@ -425,6 +468,8 @@ export function useConnectionsManager() {
     handleAddConnection,
     handleShowQrCode,
     handleRefreshQrCode,
+    handleSyncCredential,
+    syncingCredential,
     handleCopyId,
     handleReconnect,
     handleDisconnect,
