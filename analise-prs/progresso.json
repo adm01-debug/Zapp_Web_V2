@@ -1,0 +1,9 @@
+{
+  "sessao": "claude/intelligent-wright-oto3y0",
+  "atualizado": "2026-11-12T08:20Z",
+  "fase0_inventario": "concluida (30 PRs abertas em bd62fc9)",
+  "faseA_dossies": "concluida (29 dossies + verificacao adversarial; #2847 ja mergeada antes)",
+  "faseB_execucao": "interrompida: outro agente executa o mesmo backlog (mergeou #2835 #2847 #2865 #2881 #2919 #2946; fechou #2811 #2879 e abriu #2976 #2977). Para evitar supersedes duplicados e corrida de merges, esta sessao parou apos a #2974.",
+  "mergeadas_por_esta_sessao": [{"pr": 2974, "sha": "a082adc17"}],
+  "proxima_acao": "retomar a fila MERGEAR/CORRIGIR so apos combinar com o dono qual sessao fica com o backlog"
+}
