@@ -168,14 +168,16 @@ describe('FileCard — quem enviou (R04, S31 / D01–D03)', () => {
 });
 
 describe('FileCard — acoes do cartao (R04, S32 / D06, D07)', () => {
-  it('S32: as acoes sao olho, baixar/cadeado, encaminhar (em breve) e ⋮ — sem Copiar link', () => {
-    renderCard();
+  it('S32: as acoes sao olho, baixar/cadeado, encaminhar e ⋮ — sem Copiar link', () => {
+    const { props } = renderCard();
     expect(screen.getByRole('button', { name: 'Visualizar' })).toBeEnabled();
     expect(screen.getByRole('button', { name: /Baixar/ })).toBeInTheDocument();
-    // O encaminhamento do cartao segue desabilitado ("em breve"), como nas outras vistas.
+    // B3: o encaminhamento do cartao chama o mesmo handler do painel de detalhes.
     const encaminhar = screen.getByRole('button', { name: 'Encaminhar' });
-    expect(encaminhar).toBeDisabled();
-    expect(encaminhar).toHaveAttribute('title', 'Disponível em breve');
+    expect(encaminhar).toBeEnabled();
+    expect(encaminhar).not.toHaveAttribute('title', 'Disponível em breve');
+    fireEvent.click(encaminhar);
+    expect(props.onForward).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Mais ações' })).toBeInTheDocument();
     expect(screen.queryByText(/Copiar link/)).not.toBeInTheDocument();
   });
