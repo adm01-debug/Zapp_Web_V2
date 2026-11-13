@@ -2,6 +2,15 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-13 16:05 UTC
+
+- **functions** adicionado (2): `public.force_conversation_closure_author()`, `public.resolve_outbound_whatsapp_connection(p_explicit_connection_id uuid, p_assigned_connection_id uuid)`
+- **functions** removido (1): `public.transfer_conversation(p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text)`
+- **functions** alterado (5): `public.enqueue_group_outbound_message(p_group_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid, p_caption text)`, `public.enqueue_outbound_message(p_contact_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid, p_caption text)`, `public.enqueue_rich_outbound_message(p_contact_id uuid, p_client_message_id uuid, p_display_content text, p_message_type text, p_delivery_payload jsonb, p_reply_to_id uuid, p_whatsapp_connection_id uuid)`, `public.get_profile_id_for_user(_user_id uuid)`, `public.transfer_conversation(p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid)`
+- **migrations** adicionado (3): `20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso`, `20261113130100_transfer_conversation_unica_e_fila_aguardando`, `20261113130300_conversation_closures_closed_by_do_autor`
+- **policies (RLS)** alterado (1): `public.conversation_closures.Agents can create closures for their contacts`
+- **triggers** adicionado (1): `public.conversation_closures.trg_conversation_closures_force_author`
+
 ## 2026-11-13 03:45 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_16`

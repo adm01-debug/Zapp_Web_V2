@@ -67,7 +67,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| WITH CHECK | `(is_contact_visible_to_user(contact_id, auth.uid()) AND (NOT (closed_by IS DISTINCT FROM get_profile_id_for_user(auth.uid()))))` |
 
 ### `Agents or admins can view closures`
 
@@ -84,6 +84,7 @@
 
 | nome | timing | eventos | nível | status | função |
 |---|---|---|---|---|---|
+| trg_conversation_closures_force_author | BEFORE | INSERT OR UPDATE | ROW | enabled | public.force_conversation_closure_author |
 | trg_enqueue_crm_sync_from_closure | AFTER | INSERT | ROW | enabled | public.enqueue_crm_sync_from_closure |
 | trg_gamification_on_closure | AFTER | INSERT OR UPDATE | ROW | enabled | public.handle_conversation_closure_gamification |
 | trg_guard_conversation_closure_request_id | BEFORE | INSERT OR UPDATE | ROW | enabled | public.guard_conversation_closure_request_id |

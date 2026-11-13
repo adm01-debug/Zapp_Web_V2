@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d1af577e142587abaf4007742ddb24ca3545793d",
+  "sha": "e942c672a71be8ba775400097a8030b01ba3f69d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 14:58 UTC",
+  "generated_at": "2026-11-13 16:02 UTC",
   "files_total": 8271,
   "code_files": 6103,
-  "code_lines": 1061462
+  "code_lines": 1061475
  },
  "version": "1.3.2",
- "facts_hash": "75efaae48f53f252",
+ "facts_hash": "2f340f10ba25403a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68097,7 +68097,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18566,
+   "lines": 18579,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -128925,6 +128925,10 @@
    {
     "file": "e2e/talkx.spec.ts",
     "name": "segments and templates render via deep links"
+   },
+   {
+    "file": "e2e/talkx.spec.ts",
+    "name": "reload on Segments tab preserves tab state (X052)"
    },
    {
     "file": "e2e/talkx.spec.ts",
@@ -263297,7 +263301,7 @@
   },
   "e2e/talkx.spec.ts": {
    "path": "e2e/talkx.spec.ts",
-   "lines": 303,
+   "lines": 316,
    "is_test": true,
    "errors": [
     "Falha ao limpar ${cleanupErrors.length} draft(s) E2E: ${cleanupErrors.join("
@@ -263305,6 +263309,7 @@
    "rule_comments": [
     "has no saved group-open state, so the group must be expanded before clicking",
     "the pointer-event interception that required force: true at 1280×720.",
+    "deve restaurar a mesma aba sem depender de localStorage ou sessionStorage.",
     "V25: o mínimo do nome subiu de \"não vazio\" para 3 caracteres (e o passo 1",
     "The name field must be non-empty for canProceed[1] to be satisfied."
    ],
@@ -263319,6 +263324,7 @@
     "Cmd/Ctrl+K inside the help focuses the search and does not open the palette",
     "Cmd/Ctrl+K outside the help still opens the command palette",
     "segments and templates render via deep links",
+    "reload on Segments tab preserves tab state (X052)",
     "wizard step 1 shows audience fields and stepper",
     "wizard stepper shows all four steps and continuar is initially disabled",
     "wizard advances to step 2 (Mensagem) after filling step 1"
@@ -388582,10 +388588,20 @@
   }
  },
  "git": {
-  "sha": "d1af577e142587abaf4007742ddb24ca3545793d",
+  "sha": "e942c672a71be8ba775400097a8030b01ba3f69d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e942c67",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "test(talkx): E2E de reload preserva a aba na URL — cobertura da etapa X052 (#2556)",
+    "files": [
+     "docs/talkx/OPERACAO.md",
+     "e2e/talkx.spec.ts"
+    ]
+   },
    {
     "sha": "d1af577",
     "date": "2026-11-13",
@@ -388899,24 +388915,11 @@
     "files": [
      "scripts/db-audit/known-violations.json"
     ]
-   },
-   {
-    "sha": "2d10201",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): wal_level=logical no container descartável do teste E27 replay",
-    "files": [
-     "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    2
-   ],
-   [
-    "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
     2
    ],
    [
@@ -388926,6 +388929,14 @@
    [
     "RELATORIO_CI.md",
     2
+   ],
+   [
+    "docs/talkx/OPERACAO.md",
+    1
+   ],
+   [
+    "e2e/talkx.spec.ts",
+    1
    ],
    [
     "src/components/talkx/TalkXTemplateEditor.tsx",
@@ -388985,10 +388996,6 @@
    ],
    [
     "src/components/inbox/tabs/FilesTableView.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
     1
    ]
   ]

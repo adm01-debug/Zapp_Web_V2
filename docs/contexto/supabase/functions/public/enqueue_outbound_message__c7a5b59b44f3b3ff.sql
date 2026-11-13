@@ -17,16 +17,9 @@ BEGIN
   IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
     RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
   END IF;
-
-  -- L9 (docs/ia/IA-004-matriz-autorizacao.md): a permissao send_messages so era
-  -- checada no cliente (hasPermission sobre um array). Esconder o botao nao impedia
-  -- a acao: qualquer authenticated enfileirava mensagem por esta RPC. A checagem passa
-  -- a ser imposta aqui, no banco. user_has_permission() e SECURITY DEFINER e casa
-  -- user_roles.user_id com o auth.uid() do chamador (nao com profiles.id).
   IF public.user_has_permission(auth.uid(), 'send_messages') IS NOT TRUE THEN
     RAISE EXCEPTION 'send_messages_permission_required' USING ERRCODE = '42501';
   END IF;
-
   IF p_contact_id IS NULL OR p_client_message_id IS NULL
      OR p_content IS NULL OR length(p_content) > 65536
      OR v_message_type NOT IN ('text', 'image', 'audio', 'video', 'document', 'sticker', 'location')
@@ -37,15 +30,6 @@ BEGIN
      OR (v_message_type = 'location' AND p_media_url IS NOT NULL) THEN
     RAISE EXCEPTION 'invalid_outbound_message' USING ERRCODE = '22023';
   END IF;
-
-  -- SEC-DEFINER_GRANTS_STORAGE-01: a URL de midia e controlada pelo cliente. Se apontar para
-  -- um bucket interno, o caminho do objeto tem de estar na pasta deste contato (ou de um
-  -- contato do proprio chamador). Sem isso, a mensagem carregaria a URL do objeto de outra
-  -- conversa e a policy de leitura do Storage liberaria a midia alheia.
-  -- Fail-closed: qualquer URL que mencione um bucket interno tem de estar no formato canonico
-  -- acima (object|render/image + public|sign|authenticated). Formas alternativas do Storage
-  -- (ex.: /object/download/, /object/upload/, variante de sign fora do padrao) cairiam fora do
-  -- IF abaixo e passariam sem escopo -- por isso sao recusadas aqui com 22023.
   IF p_media_url IS NOT NULL
      AND (p_media_url LIKE '%/whatsapp-media/%' OR p_media_url LIKE '%/audio-messages/%')
      AND p_media_url !~ '^https://[^/]+/storage/v1/(object|render/image)/(public|sign|authenticated)/(whatsapp-media|audio-messages)/' THEN
@@ -76,7 +60,6 @@ BEGIN
       RAISE EXCEPTION 'media_url_out_of_contact_scope' USING ERRCODE = '42501';
     END IF;
   END IF;
-
   SELECT contact.whatsapp_connection_id INTO v_assigned_connection_id
   FROM public.contacts AS contact
   WHERE contact.id = p_contact_id
@@ -84,53 +67,9 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'message_contact_not_authorized' USING ERRCODE = '42501';
   END IF;
-  -- Preserve the established inbox behavior for legacy contacts that predate
-  -- per-contact connection assignment. The resolved connection is persisted on
-  -- the queued message, making the subsequent lease deterministic.
-  -- An explicit operator choice takes precedence, but must be a live
-  -- connection. Otherwise use the assigned connection only while it is live,
-  -- then deliberately fall back for historical/disconnected assignments.
-  IF p_whatsapp_connection_id IS NOT NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.id = p_whatsapp_connection_id
-      AND connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL;
-    IF v_connection_id IS NULL THEN
-      RAISE EXCEPTION 'selected_whatsapp_connection_unavailable' USING ERRCODE = '22023';
-    END IF;
-  ELSIF v_assigned_connection_id IS NOT NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.id = v_assigned_connection_id
-      AND connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL;
-  END IF;
-  IF v_connection_id IS NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL
-    ORDER BY connection.updated_at DESC, connection.id
-    LIMIT 1;
-  END IF;
-  IF v_connection_id IS NULL THEN
-    RAISE EXCEPTION 'no_connected_whatsapp_connection' USING ERRCODE = '22023';
-  END IF;
-
-  -- L7 (docs/ia/IA-004-matriz-autorizacao.md): a escolha da conexao de envio nao
-  -- distinguia fila/departamento -- um agente podia enviar pelo numero de qualquer
-  -- conexao 'connected' (parametro explicito ou o fallback da linha de cima), sem
-  -- relacao com as filas dele. A regra passa a ser imposta aqui:
-  --   * admin/supervisor escolhem qualquer conexao;
-  --   * a conexao atribuida ao proprio contato continua valendo (o front manda
-  --     justamente a conexao do contato);
-  --   * conexao SEM vinculo em whatsapp_connection_queues nao tem escopo para
-  --     comparar -- permanece utilizavel (mesma filosofia de fallback historico
-  --     das conexoes atribuidas acima), entao a mudanca e inerte enquanto a
-  --     tabela de vinculos nao estiver configurada;
-  --   * conexao COM vinculo so pode ser usada por quem e membro ativo de uma das
-  --     filas dela.
+  v_connection_id := public.resolve_outbound_whatsapp_connection(
+    p_whatsapp_connection_id, v_assigned_connection_id
+  );
   IF public.is_admin_or_supervisor(auth.uid()) IS NOT TRUE
      AND v_connection_id IS DISTINCT FROM v_assigned_connection_id
      AND EXISTS (
@@ -166,11 +105,9 @@ BEGIN
       RAISE EXCEPTION 'reply_message_contact_mismatch' USING ERRCODE = '22023';
     END IF;
   END IF;
-
   PERFORM pg_advisory_xact_lock(
     hashtextextended(p_contact_id::text || ':' || p_client_message_id::text, 0)
   );
-
   INSERT INTO public.messages (
     contact_id, client_message_id, whatsapp_connection_id, agent_id,
     sender, content, message_type, media_url, caption, reply_to_id,
@@ -183,7 +120,6 @@ BEGIN
   ON CONFLICT (contact_id, client_message_id)
     WHERE client_message_id IS NOT NULL
   DO NOTHING RETURNING * INTO v_message;
-
   IF v_message.id IS NULL THEN
     SELECT * INTO v_message
     FROM public.messages AS message

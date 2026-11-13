@@ -16,12 +16,9 @@ BEGIN
   IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
     RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
   END IF;
-
-  -- L9 (docs/ia/IA-004-matriz-autorizacao.md): mesma guarda de permissao da versao de contato.
   IF public.user_has_permission(auth.uid(), 'send_messages') IS NOT TRUE THEN
     RAISE EXCEPTION 'send_messages_permission_required' USING ERRCODE = '42501';
   END IF;
-
   IF p_group_id IS NULL OR p_client_message_id IS NULL
      OR p_content IS NULL OR length(p_content) > 65536
      OR v_message_type NOT IN ('text', 'image', 'audio', 'video', 'document', 'sticker', 'location')
@@ -32,11 +29,6 @@ BEGIN
      OR (v_message_type = 'location' AND p_media_url IS NOT NULL) THEN
     RAISE EXCEPTION 'invalid_outbound_message' USING ERRCODE = '22023';
   END IF;
-
-  -- Acesso ao grupo: a policy de SELECT de public.whatsapp_groups ja autoriza todo authenticated
-  -- ("Authenticated users can view whatsapp groups", USING (true)); a fronteira real de escrita e a
-  -- permissao send_messages acima + o escopo de conexao abaixo. Grupo inexistente e grupo sem
-  -- acesso tem a MESMA resposta (sem oraculo de enumeracao).
   SELECT grp.whatsapp_connection_id, grp.group_id
     INTO v_assigned_connection_id, v_group_jid
   FROM public.whatsapp_groups AS grp
@@ -45,46 +37,12 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'message_group_not_authorized' USING ERRCODE = '42501';
   END IF;
-  -- Sem JID de grupo valido a mensagem ficaria presa na fila para sempre (Evolution recebe `number`
-  -- invalido). Recusa cedo, como o telefone invalido e recusado no ramo de contato.
   IF v_group_jid IS NULL OR v_group_jid !~ '^[0-9][0-9-]*@g[.]us$' THEN
     RAISE EXCEPTION 'message_group_not_deliverable' USING ERRCODE = '22023';
   END IF;
-
-  -- Mesma resolucao de conexao da versao de contato: conexao atribuida ao grupo, escolha explicita
-  -- valida, e fallback para a conexao 'connected' mais recente.
-  IF p_whatsapp_connection_id IS NOT NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.id = p_whatsapp_connection_id
-      AND connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL;
-    IF v_connection_id IS NULL THEN
-      RAISE EXCEPTION 'selected_whatsapp_connection_unavailable' USING ERRCODE = '22023';
-    END IF;
-  ELSIF v_assigned_connection_id IS NOT NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.id = v_assigned_connection_id
-      AND connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL;
-  END IF;
-  IF v_connection_id IS NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL
-    ORDER BY connection.updated_at DESC, connection.id
-    LIMIT 1;
-  END IF;
-  IF v_connection_id IS NULL THEN
-    RAISE EXCEPTION 'no_connected_whatsapp_connection' USING ERRCODE = '22023';
-  END IF;
-
-  -- Visibilidade do grupo: se a conexao do grupo (ou a conexao resolvida, quando o grupo
-  -- ainda nao tem conexao atribuida) esta vinculada a fila, usuario comum precisa ser
-  -- membro ativo de alguma dessas filas. A resposta fica igual a grupo inexistente para
-  -- nao criar oraculo de enumeracao.
+  v_connection_id := public.resolve_outbound_whatsapp_connection(
+    p_whatsapp_connection_id, v_assigned_connection_id
+  );
   IF public.is_admin_or_supervisor(auth.uid()) IS NOT TRUE
      AND EXISTS (
        SELECT 1
@@ -103,9 +61,6 @@ BEGIN
      ) THEN
     RAISE EXCEPTION 'message_group_not_authorized' USING ERRCODE = '42501';
   END IF;
-
-  -- L7: mesma regra de escopo de conexao por fila da versao de contato para a conexao
-  -- efetivamente usada no envio quando ela difere da conexao propria do grupo.
   IF public.is_admin_or_supervisor(auth.uid()) IS NOT TRUE
      AND v_connection_id IS DISTINCT FROM v_assigned_connection_id
      AND EXISTS (
@@ -124,7 +79,6 @@ BEGIN
      ) THEN
     RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501';
   END IF;
-
   SELECT profile.id INTO v_profile_id
   FROM public.profiles AS profile
   WHERE profile.user_id = auth.uid() AND profile.is_active = true
@@ -133,7 +87,6 @@ BEGIN
   IF v_profile_id IS NULL THEN
     RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
   END IF;
-
   IF p_reply_to_id IS NOT NULL THEN
     SELECT reply.whatsapp_group_id INTO v_reply_group_id
     FROM public.messages AS reply WHERE reply.id = p_reply_to_id;
@@ -141,11 +94,9 @@ BEGIN
       RAISE EXCEPTION 'reply_message_group_mismatch' USING ERRCODE = '22023';
     END IF;
   END IF;
-
   PERFORM pg_advisory_xact_lock(
     hashtextextended('group:' || p_group_id::text || ':' || p_client_message_id::text, 0)
   );
-
   INSERT INTO public.messages (
     contact_id, whatsapp_group_id, client_message_id, whatsapp_connection_id, agent_id,
     sender, content, message_type, media_url, caption, reply_to_id,
@@ -158,7 +109,6 @@ BEGIN
   ON CONFLICT (whatsapp_group_id, client_message_id)
     WHERE client_message_id IS NOT NULL AND whatsapp_group_id IS NOT NULL
   DO NOTHING RETURNING * INTO v_message;
-
   IF v_message.id IS NULL THEN
     SELECT * INTO v_message
     FROM public.messages AS message

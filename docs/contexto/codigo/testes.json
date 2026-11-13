@@ -565,9 +565,9 @@
   {
    "arquivo": "e2e/talkx.spec.ts",
    "tipo": "e2e",
-   "linhas": 303,
+   "linhas": 316,
    "testa": [],
-   "casos": 9
+   "casos": 10
   },
   {
    "arquivo": "e2e/tarefas-linha-de-base.spec.ts",

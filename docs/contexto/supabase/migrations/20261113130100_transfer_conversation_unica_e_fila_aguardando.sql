@@ -1,0 +1,1 @@
+-- file-sha256: 2fb18283aaa5bd52f61725507679b4b21ff63afa0b94e73e7042435fd1c62d1b (fonte: arquivo 20261113130100_transfer_conversation_unica_e_fila_aguardando.sql, aplicada via MCP em 2026-11-13 com OK do dono)

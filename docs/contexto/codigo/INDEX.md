@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d1af577e142587abaf4007742ddb24ca3545793d` (2026-11-13T11:09:15-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e942c672a71be8ba775400097a8030b01ba3f69d` (2026-11-13T12:02:34-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8429 |
 | arquivos_codigo | 4825 |
-| linhas_codigo | 892975 |
+| linhas_codigo | 892988 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,17 +391,17 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56984 nós · 117781 arestas · 4198 comunidades · grafo do commit `d1af577e`
+- 56984 nós · 117781 arestas · 4198 comunidades · grafo do commit `e942c672`
 - comunidades maiores: cn (866), lucide-react (784), react (739), input.tsx (706), DashboardView.tsx (640), vitest (620), ExternalProductManagement.tsx (594), @tanstack/react-query (408), ref_node_assert (394), ref_node_fs (390), validation.ts (386), multiplix-send/index.ts (327)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (16)
-- PENDENCIAS.md (12)
 - docs/ci/README.md (12)
 - .github/workflows/ci.yml (11)
 - CLAUDE.md (11)
+- PENDENCIAS.md (11)
 - RELATORIO_CI.md (11)
 - scripts/db-audit/grants-baseline.json (10)
 - scripts/e2e-isolated/run.mjs (10)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `e942c67` test(talkx): E2E de reload preserva a aba na URL — cobertura da etapa X052 (#2556)
 - 2026-11-13 `d1af577` feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)
 - 2026-11-13 `7c3ef80` Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)
 - 2026-11-13 `af1bc25` Verificação de email: "Reenviar Email" na tela de erro pede o email em vez de enviar vazio (#3015)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-13 `943a646` Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)
 - 2026-11-13 `382307a` Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)
 - 2026-11-13 `e903a7e` fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)
-- 2026-11-13 `7c9a188` fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

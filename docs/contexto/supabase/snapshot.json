@@ -52991,7 +52991,7 @@
           "search_path=pg_catalog, public"
         ],
         "definition": null,
-        "definition_sha": "467c698a7cabcf2d",
+        "definition_sha": "da48556e38df2569",
         "execute_api_roles": "authenticated",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -53057,7 +53057,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "740616969bc98a14",
+        "definition_sha": "59e90310a5c0b366",
         "execute_api_roles": "authenticated",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -53092,7 +53092,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "be9c886f24b0f513",
+        "definition_sha": "9b5caa7fc4b401d9",
         "execute_api_roles": "authenticated",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -53655,6 +53655,38 @@
         "name": "fn_toggle_user_meme_favorite",
         "owner": "postgres",
         "returns": "boolean",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [
+            "public.conversation_closures.trg_conversation_closures_force_author"
+          ],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=pg_catalog, public"
+        ],
+        "definition": null,
+        "definition_sha": "19aab3c7665d6a2c",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": true,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "force_conversation_closure_author",
+        "owner": "postgres",
+        "returns": "trigger",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -54669,6 +54701,7 @@
             "public.dashboard_kpi",
             "public.delete_contact",
             "public.delete_contacts",
+            "public.force_conversation_closure_author",
             "public.get_connection_instance",
             "public.get_connection_qr_code",
             "public.guard_talkx_template_update",
@@ -62237,6 +62270,40 @@
         "volatility": "stable"
       },
       {
+        "args": "p_explicit_connection_id uuid, p_assigned_connection_id uuid",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [
+            "public.enqueue_group_outbound_message",
+            "public.enqueue_outbound_message",
+            "public.enqueue_rich_outbound_message"
+          ],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "P0-1 (auditoria Conversas 2026-11-13): conexão de envio. Explícita viva; atribuída viva ou erro contact_whatsapp_connection_disconnected (sem fallback silencioso); contato sem conexão -> connected mais recente fora da fixture E2E. Nunca devolve instance_id E2E_FIXTURE.",
+        "config": [
+          "search_path=pg_catalog, public"
+        ],
+        "definition": null,
+        "definition_sha": "b8194378ee4aebb5",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "resolve_outbound_whatsapp_connection",
+        "owner": "postgres",
+        "returns": "uuid",
+        "schema": "public",
+        "security_definer": false,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
         "args": "p_event_id uuid",
         "callers": {
           "code": [
@@ -66931,57 +66998,6 @@
         "volatility": "volatile"
       },
       {
-        "args": "p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text",
-        "callers": {
-          "code": [
-            {
-              "file": "src/components/inbox/ChatPanel.tsx",
-              "hits": 1
-            },
-            {
-              "file": "src/components/inbox/RealtimeCollaboration.tsx",
-              "hits": 1
-            },
-            {
-              "file": "src/hooks/chat/useConversationActions.ts",
-              "hits": 1
-            },
-            {
-              "file": "src/hooks/inbox/useInboxBulkActions.ts",
-              "hits": 1
-            },
-            {
-              "file": "supabase/migrations/20261015182236_transfer_conversation_limpa_agente_e_cas.sql",
-              "hits": 1
-            }
-          ],
-          "code_total_files": 5,
-          "cron": [],
-          "db": [],
-          "triggers": [],
-          "views": []
-        },
-        "comment": "R2-INB-009 item 88: transferência atômica de conversa — UPDATE em contacts + INSERT em conversation_events na mesma transação (se o evento falha, o contato não muda). SECURITY DEFINER com o mesmo predicado da policy de UPDATE de contacts (can_edit_contact); service_role livre. Retorna o id do evento gravado.",
-        "config": [
-          "search_path=public, pg_temp"
-        ],
-        "definition": null,
-        "definition_sha": "8600f9180de4b977",
-        "execute_api_roles": "authenticated, service_role",
-        "execute_public": false,
-        "is_trigger_fn": false,
-        "kind": "function",
-        "language": "plpgsql",
-        "leakproof": false,
-        "name": "transfer_conversation",
-        "owner": "postgres",
-        "returns": "uuid",
-        "schema": "public",
-        "security_definer": true,
-        "strict": false,
-        "volatility": "volatile"
-      },
-      {
         "args": "p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid",
         "callers": {
           "code": [
@@ -67012,12 +67028,12 @@
           "triggers": [],
           "views": []
         },
-        "comment": "R2-INB-009 item 88 + PK-03: transferência atômica de conversa — UPDATE em contacts + INSERT em conversation_events na mesma transação (se o evento falha, o contato não muda). Destino fila libera o contato (assigned_to = NULL); destino agente mantém a fila atual. p_expected_agent_id faz compare-and-set do dono (40001 se o contato já mudou de mão), com a linha travada por FOR UPDATE. SECURITY DEFINER com o mesmo predicado da policy de UPDATE de contacts (can_edit_contact); service_role livre. Retorna o id do evento gravado.",
+        "comment": "R2-INB-009 item 88 + PK-03 + P0-3/P1-3 (2026-11-13): ÚNICA versão. Transferência atômica (UPDATE contacts + INSERT conversation_events). Destino fila libera o contato (assigned_to NULL) e open->waiting; destino agente mantém a fila e waiting->open. p_expected_agent_id = compare-and-set do dono (40001). SECURITY DEFINER com can_edit_contact; service_role livre.",
         "config": [
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "31ac4d97ded40759",
+        "definition_sha": "d2e3d792914e73b1",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -89307,6 +89323,24 @@
         "statements": 22,
         "statements_sha": "ad39ea887ab5cf0c",
         "version": "20261112160000"
+      },
+      {
+        "name": "envio_sem_conexao_de_teste_nem_fallback_silencioso",
+        "statements": 1,
+        "statements_sha": "ac59726cbed9b1fa",
+        "version": "20261113130000"
+      },
+      {
+        "name": "transfer_conversation_unica_e_fila_aguardando",
+        "statements": 1,
+        "statements_sha": "dee03fd307b96a26",
+        "version": "20261113130100"
+      },
+      {
+        "name": "conversation_closures_closed_by_do_autor",
+        "statements": 1,
+        "statements_sha": "2627016ff0da58ca",
+        "version": "20261113130300"
       }
     ],
     "policies": [
@@ -90725,7 +90759,7 @@
         "schema": "public",
         "table": "conversation_closures",
         "using": null,
-        "with_check": "is_contact_visible_to_user(contact_id, auth.uid())"
+        "with_check": "(is_contact_visible_to_user(contact_id, auth.uid()) AND (NOT (closed_by IS DISTINCT FROM get_profile_id_for_user(auth.uid()))))"
       },
       {
         "cmd": "SELECT",
@@ -100238,6 +100272,17 @@
         "schema": "public",
         "status": "enabled",
         "table": "contacts",
+        "timing": "BEFORE"
+      },
+      {
+        "definition": "CREATE TRIGGER trg_conversation_closures_force_author BEFORE INSERT OR UPDATE OF closed_by ON conversation_closures FOR EACH ROW EXECUTE FUNCTION force_conversation_closure_author()",
+        "events": "INSERT OR UPDATE",
+        "function": "public.force_conversation_closure_author",
+        "level": "ROW",
+        "name": "trg_conversation_closures_force_author",
+        "schema": "public",
+        "status": "enabled",
+        "table": "conversation_closures",
         "timing": "BEFORE"
       },
       {

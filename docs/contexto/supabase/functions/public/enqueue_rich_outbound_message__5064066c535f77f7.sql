@@ -23,7 +23,6 @@ BEGIN
      OR pg_column_size(v_payload) > 16384 THEN
     RAISE EXCEPTION 'invalid_rich_outbound_message' USING ERRCODE = '22023';
   END IF;
-
   IF p_message_type = 'poll' THEN
     IF jsonb_typeof(v_payload->'name') <> 'string'
        OR length(v_payload->>'name') NOT BETWEEN 1 AND 1024
@@ -152,7 +151,6 @@ BEGIN
       RAISE EXCEPTION 'invalid_list_payload' USING ERRCODE = '22023';
     END IF;
   END IF;
-
   IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
     RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
   END IF;
@@ -163,33 +161,9 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'message_contact_not_authorized' USING ERRCODE = '42501';
   END IF;
-  IF p_whatsapp_connection_id IS NOT NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.id = p_whatsapp_connection_id
-      AND connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL;
-    IF v_connection_id IS NULL THEN
-      RAISE EXCEPTION 'selected_whatsapp_connection_unavailable' USING ERRCODE = '22023';
-    END IF;
-  ELSIF v_assigned_connection_id IS NOT NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.id = v_assigned_connection_id
-      AND connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL;
-  END IF;
-  IF v_connection_id IS NULL THEN
-    SELECT connection.id INTO v_connection_id
-    FROM public.whatsapp_connections AS connection
-    WHERE connection.status = 'connected'
-      AND NULLIF(connection.instance_id, '') IS NOT NULL
-    ORDER BY connection.updated_at DESC, connection.id
-    LIMIT 1;
-  END IF;
-  IF v_connection_id IS NULL THEN
-    RAISE EXCEPTION 'no_connected_whatsapp_connection' USING ERRCODE = '22023';
-  END IF;
+  v_connection_id := public.resolve_outbound_whatsapp_connection(
+    p_whatsapp_connection_id, v_assigned_connection_id
+  );
   SELECT profile.id INTO v_profile_id
   FROM public.profiles AS profile
   WHERE profile.user_id = auth.uid() AND profile.is_active = true
@@ -202,7 +176,6 @@ BEGIN
     RAISE EXCEPTION 'message_contact_not_authorized' USING ERRCODE = '42501';
   END IF;
   PERFORM pg_advisory_xact_lock(hashtextextended(p_contact_id::text || ':' || p_client_message_id::text, 0));
-
   SELECT * INTO v_message
   FROM public.messages AS message
   WHERE message.contact_id = p_contact_id
@@ -220,7 +193,6 @@ BEGIN
     RAISE EXCEPTION 'client_message_id_reused_with_different_payload'
       USING ERRCODE = '23505';
   END IF;
-
   PERFORM public.enqueue_outbound_message(
     p_contact_id,
     p_client_message_id,
@@ -231,7 +203,6 @@ BEGIN
     p_whatsapp_connection_id,
     NULL
   );
-
   UPDATE public.messages
   SET message_type = p_message_type,
       media_meta = jsonb_build_object('outbound_delivery_payload', v_payload),

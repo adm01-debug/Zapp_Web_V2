@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d1af577e142587abaf4007742ddb24ca3545793d",
+  "commit": "e942c672a71be8ba775400097a8030b01ba3f69d",
   "branch": "main",
-  "data_commit": "2026-11-13T11:09:15-03:00",
+  "data_commit": "2026-11-13T12:02:34-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e942c67",
+    "data": "2026-11-13",
+    "assunto": "test(talkx): E2E de reload preserva a aba na URL — cobertura da etapa X052 (#2556)"
+   },
    {
     "sha": "d1af577",
     "data": "2026-11-13",
@@ -126,11 +131,6 @@
     "sha": "d8854eb",
     "data": "2026-11-12",
     "assunto": "chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)"
-   },
-   {
-    "sha": "87c5e97",
-    "data": "2026-11-12",
-    "assunto": "fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)"
    }
   ],
   "arquivos_mudados_7d": 692,
@@ -202,10 +202,6 @@
     "mudancas": 16
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 12
-   },
-   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 12
    },
@@ -215,6 +211,10 @@
    },
    {
     "arquivo": "CLAUDE.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 11
    },
    {
@@ -258,15 +258,15 @@
     "mudancas": 9
    },
    {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 9
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 8
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8429,
   "arquivos_codigo": 4825,
-  "linhas_codigo": 892975,
+  "linhas_codigo": 892988,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -560,7 +560,7 @@
   },
   "e2e/talkx.spec.ts": {
    "arquivos": 1,
-   "linhas": 303
+   "linhas": 316
   },
   "e2e/tarefas-linha-de-base.spec.ts": {
    "arquivos": 1,
