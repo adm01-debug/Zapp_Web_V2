@@ -110,6 +110,13 @@ test.describe('Talk X module', () => {
 
     const busca = page.getByPlaceholder('O que você precisa de ajuda hoje?');
     await expect(busca).toBeVisible();
+    // Mesma corrida do WebKit do teste abaixo: a Ajuda (lazy) registra o ouvinte de
+    // captura do Ctrl+K ao montar. Esperar o título e o foco automático da busca
+    // garante que os efeitos de montagem rodaram; o blur faz o foco após o atalho
+    // provar o comportamento, não o autofoco.
+    await expect(page.getByRole('heading', { name: 'Ajuda do Talk X' })).toBeVisible();
+    await expect(busca).toBeFocused();
+    await busca.blur();
 
     await page.keyboard.press('Control+k');
     await expect(busca).toBeFocused();
