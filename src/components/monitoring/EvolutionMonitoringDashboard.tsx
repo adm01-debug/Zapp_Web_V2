@@ -22,6 +22,7 @@ import { MonitoringIncidents } from './MonitoringIncidents';
 import { MonitoringInboxSilence } from './MonitoringInboxSilence';
 import { MonitoringInstancePauses } from './MonitoringInstancePauses';
 import { DashboardSkeleton } from './MonitoringSkeletons';
+import { DeviceChatsPanel } from './DeviceChatsPanel';
 
 const PERIODS: { value: TimePeriod; label: string }[] = [
   { value: '1h', label: '1h' },
@@ -354,6 +355,7 @@ export function EvolutionMonitoringDashboard() {
                 onReconfigureWebhook={reconfigureWebhook}
                 reconfiguring={reconfiguring}
               />
+              <DeviceChatsPanel />
             </motion.div>
           </TabsContent>
 

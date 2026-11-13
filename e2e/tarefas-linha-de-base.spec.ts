@@ -33,7 +33,7 @@ import { FAKE_USER_ID, installFakeSession } from './fixtures/talkx-demo';
  * (a guarda de shell não deixa o caminho literal aparecer na linha de comando). Sem
  * configuração, a spec falha antes de criar PNG dentro do repositório.
  */
-function resolverSaida(): string {
+function resolverSaida(): string | null {
   const doEnv = process.env.CAPTURA_DIR?.trim();
   if (doEnv) return doEnv;
   try {
@@ -42,12 +42,16 @@ function resolverSaida(): string {
   } catch {
     // sem ponteiro: falha claramente abaixo
   }
-  throw new Error(
-    'Defina CAPTURA_DIR ou escreva .tmp/captura-dir.txt com um diretório fora do repositório para salvar as capturas.',
-  );
+  // Sem destino a spec é PULADA (não lança no carregamento): lançar aqui derrubava a
+  // rodada inteira de `npx playwright test`, inclusive as outras specs.
+  return null;
 }
 
-const SAIDA = resolverSaida();
+const MOTIVO_SEM_SAIDA =
+  'Defina CAPTURA_DIR ou escreva .tmp/captura-dir.txt com um diretório fora do repositório para salvar as capturas.';
+
+const SAIDA_CONFIGURADA = resolverSaida();
+const SAIDA = SAIDA_CONFIGURADA ?? '';
 
 const LARGURAS = [360, 768, 1280] as const;
 const MODOS = ['light', 'dark'] as const;
@@ -278,6 +282,7 @@ async function tirar(page: Page, nn: string, superficie: string, largura: number
 }
 
 test.describe('Linha de base visual do módulo de Tarefas (etapa 003)', () => {
+  test.skip(SAIDA_CONFIGURADA === null, MOTIVO_SEM_SAIDA);
   let registro: Registro;
 
   test.beforeEach(async ({ page }) => {
