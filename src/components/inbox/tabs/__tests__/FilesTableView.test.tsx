@@ -39,6 +39,7 @@ function renderTable(overrides: Partial<React.ComponentProps<typeof FilesTableVi
     onSelect: vi.fn(),
     onToggleSelection: vi.fn(),
     onPreview: vi.fn(),
+    onForward: vi.fn(),
     onRequestDelete: vi.fn(),
     ...overrides,
   };
