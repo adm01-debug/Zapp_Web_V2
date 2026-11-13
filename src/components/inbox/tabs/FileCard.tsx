@@ -9,7 +9,7 @@ import { typeSizeLine, formatCardDate } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
-import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
+import { FILE_ACTION_BUTTON } from './fileActionButton';
 import { SenderAvatar } from './SenderAvatar';
 
 interface FileCardProps {
@@ -145,7 +145,7 @@ export function FileCard({
         />
       </div>
 
-      {/* Etapa 19: Visualizar, Encaminhar (desabilitado até a Fase 7) e Mais ações.
+      {/* Etapa 19: Visualizar, Encaminhar e Mais ações.
           Sem "Copiar link"; "Baixar" vive no menu, desabilitado e com o motivo à vista. */}
       <div className="mt-auto flex items-center justify-end gap-1 px-2 pb-2">
         {/* A02: play/pause do áudio direto no cartão, só para itens de áudio. */}
@@ -183,9 +183,8 @@ export function FileCard({
         <button
           type="button"
           aria-label="Encaminhar"
-          title="Disponível em breve"
-          disabled
-          className={FILE_ACTION_BUTTON_DISABLED}
+          className={FILE_ACTION_BUTTON}
+          onClick={onForward}
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>
