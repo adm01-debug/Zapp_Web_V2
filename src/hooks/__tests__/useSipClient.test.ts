@@ -172,6 +172,12 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
   isLeader: () => tabStore.snapshot.role === 'leader',
 }));
 
+// Sessão do usuário: o provisionamento automático (aba líder) só roda logado —
+// sem sessão a função `get-sip-password` responde 401 e virava toast falso na
+// tela de login. Padrão logado; os testes de "sem usuário" zeram.
+const { authState } = vi.hoisted(() => ({ authState: { user: { id: 'user-1' } as { id: string } | null } }));
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: authState.user }) }));
+
 import { useSipClient } from '../communication/useSipClient';
 import { claimLeadership as claimLeadershipMock } from '@/lib/calls/tabLeaderStore';
 import type { CallEndOutcome } from '@/lib/calls/callStatus';
@@ -232,6 +238,7 @@ describe('useSipClient', () => {
     // Snapshot novo a cada teste: um teste que deixou a aba como seguidora não
     // pode envenenar o seguinte (o mock guarda estado no escopo do módulo).
     tabStore.snapshot = { role: 'leader', leaderId: 'tab-propria', expiresAt: null, tabId: 'tab-propria' };
+    authState.user = { id: 'user-1' };
     mockStateChangeListeners.length = 0;
     mockRegisterStateListeners.length = 0;
     mockRpc.mockResolvedValue({ data: 'call-1', error: null });
@@ -1073,6 +1080,78 @@ describe('useSipClient', () => {
     expect(result.current.sipStatus).toBe('connecting');
     expect(mockMakeURI).toHaveBeenCalledWith('sip:phone9@sip.prov.com');
     expect(lastUserAgentOptions?.transportOptions?.server).toBe('wss://sip.prov.com:5066/ws');
+  });
+
+  it('sem usuário, virar líder não chama get-sip-password nem mostra toast', async () => {
+    authState.user = null;
+    mockFunctionsInvoke.mockResolvedValue({ data: null, error: { context: { status: 401 } } });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).not.toHaveBeenCalledWith('get-sip-password');
+    expect(vi.mocked(toast.error)).not.toHaveBeenCalled();
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('logar com a aba já líder provisiona uma vez', async () => {
+    authState.user = null;
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { result, rerender } = renderHook(() => useSipClient());
+    // A eleição termina ANTES do login (tela /auth): nada de provisionar.
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+    // Login sem nova transição de papel: provisiona uma vez.
+    await act(async () => {
+      authState.user = { id: 'user-1' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('get-sip-password');
+    expect(result.current.sipStatus).toBe('connecting');
+    // Re-render sem mudança de usuário nem de papel não provisiona de novo.
+    await act(async () => { rerender(); await escoar(12); });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+  });
+
+  it('login e promoção a líder no MESMO render provisionam uma vez só', async () => {
+    authState.user = null;
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      authState.user = { id: 'user-1' };
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+  });
+
+  it('logado, virar líder provisiona uma vez só (sem duplicar com o login)', async () => {
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
   });
 
   it('T20: 2ª chamada com a linha ocupada vira missed/busy_here + toast, sem tocar a em curso', async () => {

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useSipConnection } from '../sip/useSipConnection';
@@ -98,17 +99,33 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
     claimLeadership();
   }, [connectWithStoredCredentials]);
 
+  // Sem sessão (tela de login) `get-sip-password` responde 401 e virava toast falso.
+  // A ref é atualizada no efeito de login ABAIXO, que roda DEPOIS do de transição:
+  // login e promoção no mesmo render provisionam uma vez só (pelo efeito de login).
+  const userId = useAuth().user?.id ?? null;
+  const userIdRef = useRef(userId);
+
   // T20: só a TRANSIÇÃO de papel age (o papel de nascença não conecta). Os
   // callbacks vão numa ref dentro do hook — a identidade deles não agenda o
   // efeito, então não há loop de disconnect a cada render.
-  useTabLeaderRole({
+  const tabRole = useTabLeaderRole({
     onBecameLeader: () => {
+      if (!userIdRef.current) return;
       const explicito = Date.now() <= pedidoExplicitoAteRef.current;
       pedidoExplicitoAteRef.current = 0;
       void connectWithStoredCredentials({ ignorarTrava: explicito });
     },
     onBecameFollower: () => { void disconnect().then(() => setSipReason('line_in_use_other_tab')); },
   });
+
+  // Login com a aba JÁ líder (eleita na tela de login): não há nova transição de
+  // papel, então provisiona aqui — uma vez por login, respeitando a trava.
+  useEffect(() => {
+    const anterior = userIdRef.current;
+    userIdRef.current = userId;
+    if (!userId || anterior === userId || tabRole !== 'leader') return;
+    void connectWithStoredCredentials({ ignorarTrava: false });
+  }, [userId, tabRole, connectWithStoredCredentials]);
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
 
