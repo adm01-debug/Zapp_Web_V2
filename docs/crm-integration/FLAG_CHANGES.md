@@ -19,6 +19,7 @@ Cada entrada lista a tela, o efeito e o risco quando a chave está ativa.
 | Detalhes do contato — ações | `src/components/inbox/contact-details/ContactActionButtons.tsx` | Mostra o item de menu "Sincronizar com CRM" no dropdown de ações | Se a sincronização falhar, o contato pode ficar inconsistente entre Zapp e CRM |
 | Detalhes do contato — cabeçalho | `src/components/inbox/contact-details/ContactHeaderSection.tsx` | Busca dados CRM para exibir informações adicionais no cabeçalho do contato | Se a API do CRM falhar, o cabeçalho mostra dados incompletos |
 | Detalhes do contato — inteligência | `src/components/inbox/contact-details/ContactIntelligencePanel.tsx` | Exibe painel com dados de inteligência do contato (risco de churn, melhores horários) vindos do CRM | Se o CRM retornar dados incompletos ou falhar, o painel exibe informações imprecisas |
+| Detalhes do contato — insights de IA | `src/components/inbox/contact-details/AIInsightsWidget.tsx` | Busca dados do CRM para enriquecer os insights de IA do contato | Se o CRM falhar, o widget mostra insights só com os dados locais |
 
 ## Hooks (camada de dados)
 
