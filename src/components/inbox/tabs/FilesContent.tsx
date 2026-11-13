@@ -269,6 +269,7 @@ export function FilesContent({
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
       onPreview={actions.onPreview}
+      onForward={actions.onForward}
       onRequestDelete={actions.onRequestDelete}
     />
   ) : viewMode === 'table' ? (
@@ -285,6 +286,7 @@ export function FilesContent({
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
       onPreview={actions.onPreview}
+      onForward={actions.onForward}
       onRequestDelete={actions.onRequestDelete}
     />
   ) : (
