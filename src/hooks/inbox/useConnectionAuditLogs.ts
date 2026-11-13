@@ -89,6 +89,22 @@ export async function fetchConnectionAuditPage(
   return { entries, actorNames, total: count ?? 0 };
 }
 
+/**
+ * 13/11: em produção a consulta `details @> {instance_id}` estourou o
+ * statement_timeout (8 s) do papel authenticated e o PostgREST devolveu 500
+ * (57014) — a migration 20261113150000 corrige o banco. A trilha é só
+ * leitura e não pode derrubar o diálogo: o erro vira mensagem honesta, com
+ * o caso "demorou demais" separado do genérico.
+ */
+export function connectionAuditErrorMessage(err: unknown): string {
+  const e = (err ?? {}) as { code?: unknown; message?: unknown; status?: unknown };
+  const message = typeof e.message === 'string' ? e.message : '';
+  if (e.code === '57014' || /statement timeout|canceling statement/i.test(message)) {
+    return 'A auditoria desta conexão demorou demais para carregar. Tente novamente em instantes.';
+  }
+  return 'Não foi possível carregar a auditoria.';
+}
+
 export interface ConnectionAuditLogsState {
   entries: ConnectionAuditEntry[];
   actorNames: Map<string, string>;
@@ -126,12 +142,12 @@ export function useConnectionAuditLogs(
         setEntries(result.entries);
         setActorNames(result.actorNames);
         setTotal(result.total);
-      } catch {
+      } catch (err: unknown) {
         if (requestRef.current !== requestId) return;
         setEntries([]);
         setActorNames(new Map());
         setTotal(0);
-        setError('Não foi possível carregar a auditoria.');
+        setError(connectionAuditErrorMessage(err));
       } finally {
         if (requestRef.current === requestId) setLoading(false);
       }

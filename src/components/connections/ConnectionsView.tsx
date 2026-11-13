@@ -24,7 +24,8 @@ import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
 import { NumberReputationMonitor } from './NumberReputationMonitor';
 import { ConnectionCard } from './ConnectionCard';
-import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
+import { INSTANCE_TOKEN_ERROR_CODES, useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
+import { SyncCredentialAction } from './SyncCredentialAction';
 
 /** E42 — texto único da trava de nova conexão (cabeçalho e estado vazio). */
 const MULTI_CONNECTION_LOCKED_MESSAGE = 'Múltiplas conexões ainda não estão habilitadas neste sistema';
@@ -36,7 +37,7 @@ export function ConnectionsView() {
     isAddDialogOpen, setIsAddDialogOpen,
     qrCodeDialog, newConnection, setNewConnection, isCreating,
     syncingHistory, setSyncingHistory, evolutionLoading,
-    handleAddConnection, handleShowQrCode, handleRefreshQrCode,
+    handleAddConnection, handleShowQrCode, handleRefreshQrCode, handleSyncCredential, syncingCredential,
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
     addConnectionError, clearAddConnectionError,
   } = useConnectionsManager();
@@ -45,6 +46,10 @@ export function ConnectionsView() {
   // implementado — hoje ela nasceria sem credencial própria e usando o token
   // global da PRINCIPAL. Ver docs/audits/PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS_2026-09-25.md.
   const [multiConnectionEnabled, setMultiConnectionEnabled] = useState(false);
+  // Credencial da instância recusada/ausente na Evolution GO: o diálogo de QR
+  // oferece "Sincronizar credencial" (SyncCredentialAction decide pelo papel).
+  const credencialDaInstanciaFalhou = qrCodeDialog.status === 'error'
+    && !!qrCodeDialog.errorCode && INSTANCE_TOKEN_ERROR_CODES.includes(qrCodeDialog.errorCode);
   useEffect(() => {
     let active = true;
     supabase.from('global_settings').select('value').eq('key', 'multi_connection_enabled').maybeSingle()
@@ -209,6 +214,9 @@ export function ConnectionsView() {
                 </div>
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground"><Loader2 className="w-3 h-3 animate-spin" />Aguardando conexão...</div>
               </>
+            )}
+            {credencialDaInstanciaFalhou && (
+              <SyncCredentialAction syncing={syncingCredential} onSync={() => void handleSyncCredential()} />
             )}
             {(qrCodeDialog.status === 'pending' || qrCodeDialog.status === 'error') && (
               <Button variant="outline" onClick={handleRefreshQrCode} disabled={evolutionLoading && qrCodeDialog.status !== 'error'}>

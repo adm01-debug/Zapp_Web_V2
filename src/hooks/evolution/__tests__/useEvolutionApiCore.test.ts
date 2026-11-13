@@ -281,6 +281,22 @@ describe('mapa de erro do corpo { error: true } (HTTP 200)', () => {
     expect(failure.timedOut).toBeUndefined();
   });
 
+  it('13/11: sobe o `code` da Edge (credencial da instância recusada) para a tela decidir a ação', async () => {
+    h.invoke.mockResolvedValue({
+      data: { error: true, status: 401, code: 'instance_token_invalid', message: 'Credencial da instância inválida (401).' },
+      error: null,
+    });
+    const { result } = renderHook(() => useEvolutionApiCore());
+    let failure!: Error & { code?: string; apiStatus?: number };
+    await act(async () => {
+      await result.current
+        .callApi('connect', { instanceName })
+        .catch((error: unknown) => { failure = error as typeof failure; });
+    });
+    expect(failure.code).toBe('instance_token_invalid');
+    expect(failure.apiStatus).toBe(401);
+  });
+
   it('aceita `retry_after` (snake_case) e devolve undefined quando o campo não vem', async () => {
     h.invoke
       .mockResolvedValueOnce({ data: { error: true, message: 'ocupado', retry_after: '1.5' }, error: null })
