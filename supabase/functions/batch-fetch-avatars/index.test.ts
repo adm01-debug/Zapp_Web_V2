@@ -211,3 +211,24 @@ Deno.test("batch-fetch-avatars: caminho feliz (cron) baixa a foto, sobe no Stora
     );
   });
 });
+
+Deno.test("batch-fetch-avatars: 6ª chamada do mesmo IP em 60s recebe 429 sem varrer contatos", async () => {
+  const { client, fake } = fakeSupabase({ contatos: [] });
+  const doMesmoIp = () => new Request("https://edge.test/batch-fetch-avatars", {
+    method: "POST",
+    headers: { "x-forwarded-for": "203.0.113.250", authorization: `Bearer ${SERVICE_KEY}` },
+  });
+  await comEvolution(async (chamadas) => {
+    for (let i = 1; i <= 5; i++) {
+      const res = await handleBatchFetchAvatars(doMesmoIp(), { supabase: client, serviceKey: SERVICE_KEY });
+      assertEquals(res.status, 200, `chamada ${i} não pode ser limitada`);
+      await res.body?.cancel();
+    }
+    const tabelasAntes = fake.tabelas.length;
+    const res = await handleBatchFetchAvatars(doMesmoIp(), { supabase: client, serviceKey: SERVICE_KEY });
+    assertEquals(res.status, 429);
+    assertEquals((await res.json()).error, "Rate limit exceeded");
+    assertEquals(fake.tabelas.length, tabelasAntes);
+    assertEquals(chamadas.length, 0);
+  });
+});
