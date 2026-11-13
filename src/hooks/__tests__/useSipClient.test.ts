@@ -25,6 +25,8 @@ let lastOnInvite: ((invitation: unknown) => void) | undefined;
 // construtor do UserAgent recebe `wss://server:porta/ws`.
 const mockMakeURI = vi.fn((uri: string) => uri);
 let lastUserAgentOptions: { transportOptions?: { server?: string } } | undefined;
+// `ua.stop()` lento (rede) para simular desconexão ainda pendente.
+let uaStopImpl: () => Promise<void> = () => Promise.resolve();
 
 const mockSessionDescriptionHandler = {
   peerConnection: {
@@ -51,7 +53,7 @@ vi.mock('sip.js', () => {
       configuration = { uri: { host: 'test.server.com' } };
       transport: { onDisconnect: (() => void) | null } = { onDisconnect: null };
       start = vi.fn().mockResolvedValue(undefined);
-      stop = vi.fn().mockResolvedValue(undefined);
+      stop = vi.fn().mockImplementation(() => uaStopImpl());
       constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void }; transportOptions?: { server?: string } }) {
         lastUserAgentOptions = options;
         lastOnInvite = options.delegate?.onInvite;
@@ -1156,6 +1158,49 @@ describe('useSipClient', () => {
       await escoar(12);
     });
     expect(mockFunctionsInvoke).toHaveBeenCalledTimes(2);
+    expect(result.current.sipStatus).toBe('connecting');
+  });
+
+  it('logout e login de outro usuário antes de a desconexão terminar: o novo usuário conecta', async () => {
+    authState.user = { id: 'user-1' };
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+    // A linha do user-1 fica REGISTRADA (uaRef publicado) antes do logout.
+    await act(async () => { mockRegisterStateListeners.forEach(fn => fn('Registered')); await escoar(12); });
+    expect(result.current.sipStatus).toBe('registered');
+    const uaDoUser1 = lastUserAgentOptions;
+    // O `ua.stop()` do user-1 demora (rede): o user-2 entra antes de a desconexão terminar.
+    let terminarStop: () => void = () => {};
+    uaStopImpl = () => new Promise<void>((resolve) => { terminarStop = resolve; });
+    try {
+      await act(async () => {
+        authState.user = null;
+        rerender();
+        await escoar(4);
+      });
+      await act(async () => {
+        authState.user = { id: 'user-2' };
+        rerender();
+        await escoar(12);
+      });
+      await act(async () => { terminarStop(); await escoar(20); });
+    } finally {
+      uaStopImpl = () => Promise.resolve();
+    }
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(2);
+    // Um UA NOVO foi criado para o user-2 (antes, o connect era descartado pela guarda
+    // `uaRef` enquanto a desconexão do user-1 ainda não tinha terminado).
+    expect(lastUserAgentOptions).not.toBe(uaDoUser1);
     expect(result.current.sipStatus).toBe('connecting');
   });
 

@@ -122,18 +122,20 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   // papel, então provisiona aqui — uma vez por login, respeitando a trava.
   // Logout (ou troca de usuário na mesma aba): a linha registrada é do usuário
   // anterior — derruba antes; o próximo usuário provisiona a própria credencial.
+  // A conexão do próximo usuário espera a desconexão pendente: enquanto o
+  // `disconnect()` aguarda unregister/stop, `uaRef` segue preenchido e o
+  // `connect()` seria descartado pela guarda de UA único.
+  const desconexaoPendenteRef = useRef<Promise<void>>(Promise.resolve());
   useEffect(() => {
     const anterior = userIdRef.current;
     userIdRef.current = userId;
     if (anterior === userId) return;
-    if (anterior) {
-      void disconnect().then(() => {
-        if (userId && userIdRef.current === userId && isLeader()) void connectWithStoredCredentials({ ignorarTrava: false });
-      });
-      return;
-    }
-    if (!userId || tabRole !== 'leader') return;
-    void connectWithStoredCredentials({ ignorarTrava: false });
+    if (anterior) desconexaoPendenteRef.current = desconexaoPendenteRef.current.then(() => disconnect());
+    if (!userId || (!anterior && tabRole !== 'leader')) return;
+    const alvo = userId;
+    void desconexaoPendenteRef.current.then(() => {
+      if (userIdRef.current === alvo && isLeader()) void connectWithStoredCredentials({ ignorarTrava: false });
+    });
   }, [userId, tabRole, connectWithStoredCredentials, disconnect]);
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
