@@ -11,11 +11,11 @@ function makeWrapper(client: QueryClient) {
 describe('useTalkXCommandItems', () => {
   it('mapeia status `sending` para "Em andamento"', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(['talkx-campaigns'], [
+    client.setQueryData(['talkx-campaigns', 'cmd-palette'], [
       { id: 'c1', name: 'Black Friday', status: 'sending' },
     ]);
-    client.setQueryData(['talkx-segments'], []);
-    client.setQueryData(['talkx-templates'], []);
+    client.setQueryData(['talkx-segments', 'cmd-palette'], []);
+    client.setQueryData(['talkx-templates', 'cmd-palette'], []);
 
     const { result } = renderHook(
       () => useTalkXCommandItems(undefined, true),
@@ -30,11 +30,11 @@ describe('useTalkXCommandItems', () => {
 
   it('action de campanha grava ?campaign= na URL', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(['talkx-campaigns'], [
+    client.setQueryData(['talkx-campaigns', 'cmd-palette'], [
       { id: 'camp-42', name: 'Promo', status: 'draft' },
     ]);
-    client.setQueryData(['talkx-segments'], []);
-    client.setQueryData(['talkx-templates'], []);
+    client.setQueryData(['talkx-segments', 'cmd-palette'], []);
+    client.setQueryData(['talkx-templates', 'cmd-palette'], []);
 
     const { result } = renderHook(
       () => useTalkXCommandItems(undefined, true),
@@ -49,11 +49,11 @@ describe('useTalkXCommandItems', () => {
 
   it('action de segmento grava ?segment= e ?tab=segments', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(['talkx-campaigns'], []);
-    client.setQueryData(['talkx-segments'], [
+    client.setQueryData(['talkx-campaigns', 'cmd-palette'], []);
+    client.setQueryData(['talkx-segments', 'cmd-palette'], [
       { id: 'seg-7', name: 'VIPs' },
     ]);
-    client.setQueryData(['talkx-templates'], []);
+    client.setQueryData(['talkx-templates', 'cmd-palette'], []);
 
     const { result } = renderHook(
       () => useTalkXCommandItems(undefined, true),
