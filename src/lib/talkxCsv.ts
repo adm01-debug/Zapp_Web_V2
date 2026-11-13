@@ -29,9 +29,10 @@ const BOM = '﻿';
 const SEP = ';';
 
 function esc(value: unknown): string {
-  const str = String(value ?? '');
+  let str = String(value ?? '');
   // CSV-injection guard: prefixar com ' células que iniciam com chars perigosos
-  if (/^[=+\-@\t\r]/.test(str)) return `'${str}`;
+  // (e seguir para a regra de aspas: o prefixo não protege `;` nem quebra de linha)
+  if (/^[=+\-@\t\r]/.test(str)) str = `'${str}`;
   // Encapsular em aspas quando o valor contém sep, nova linha ou aspas duplas
   if (str.includes('"') || str.includes(SEP) || str.includes('\n') || str.includes('\r')) {
     return `"${str.replace(/"/g, '""')}"`;

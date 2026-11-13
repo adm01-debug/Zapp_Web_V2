@@ -45,6 +45,8 @@ const mocks = vi.hoisted(() => ({
   sessionUser: null as SessionUser | null,
   /** linha de `profiles` usada como rótulo do agente logado */
   profileName: null as string | null,
+  /** quando definido, a consulta a `profiles` só responde depois desta promessa */
+  profileGate: null as Promise<void> | null,
   /** props recebidas por `useChatPanelHandlers` — dá acesso ao `handleTypingStart` real */
   handlerArgs: { current: null as null | Record<string, unknown> },
 }));
@@ -86,7 +88,10 @@ vi.mock('@/integrations/supabase/client', () => {
       from: () => ({
         select: () => ({
           eq: () => ({
-            maybeSingle: async () => ({ data: mocks.profileName ? { name: mocks.profileName } : null, error: null }),
+            maybeSingle: async () => {
+              if (mocks.profileGate) await mocks.profileGate;
+              return { data: mocks.profileName ? { name: mocks.profileName } : null, error: null };
+            },
           }),
         }),
       }),
@@ -223,6 +228,7 @@ beforeEach(() => {
   mocks.handlerArgs.current = null;
   mocks.sessionUser = { id: AGENT_ANA.id, email: 'ana@promobrindes.com.br', user_metadata: { name: 'nome-dos-metadados' } };
   mocks.profileName = AGENT_ANA.name;
+  mocks.profileGate = null;
 });
 
 describe('ChatPanel — presença de digitação entre agentes (R2-INB-026)', () => {
@@ -248,6 +254,24 @@ describe('ChatPanel — presença de digitação entre agentes (R2-INB-026)', ()
       isTyping: true,
     });
     expect(mocks.tracked[0].payload.name).not.toBe(ASSIGNED.name);
+  });
+
+  it('consulta lenta a `profiles` não segura o canal: abre UM canal com o user.id e o nome chega depois sem reabrir', async () => {
+    let liberarPerfil!: () => void;
+    mocks.profileGate = new Promise<void>((resolve) => { liberarPerfil = resolve; });
+
+    await act(async () => { renderPanel(); });
+    // Perfil ainda não respondeu, mas o canal já está aberto com a identidade real.
+    const canal = await canalDoAgenteLogado();
+    expect(mocks.channels).toHaveLength(1);
+
+    await act(async () => { liberarPerfil(); });
+
+    // O nome do perfil atualizou o payload sem abrir outro canal.
+    expect(mocks.channels).toHaveLength(1);
+    const handleTypingStart = mocks.handlerArgs.current?.handleTypingStart as () => void;
+    await act(async () => { handleTypingStart(); });
+    expect(mocks.tracked[mocks.tracked.length - 1]).toMatchObject({ channel: canal.name, payload: { oderId: AGENT_ANA.id, name: AGENT_ANA.name } });
   });
 
   it('agente B digitando aparece para o agente A com o nome de B', async () => {

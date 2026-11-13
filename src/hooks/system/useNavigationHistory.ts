@@ -199,6 +199,7 @@ const EMAIL_TO_MAX_LENGTH = 254;
 const NAV_PARAM_SANITIZERS: Record<string, (value: string) => string | null> = {
   emailContact: value => (UUID_PARAM_RE.test(value) ? value : null),
   emailTo: value => (value.length <= EMAIL_TO_MAX_LENGTH && EMAIL_PARAM_RE.test(value) ? value : null),
+  cid: value => (UUID_PARAM_RE.test(value) ? value : null),
 };
 
 /**

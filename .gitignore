@@ -138,3 +138,9 @@ docs/contexto/*
 !docs/contexto/regras/
 docs/contexto/regras/*
 !docs/contexto/regras/manual/
+
+# CI local (scripts/ci/ci-local.mjs): logs e segredos ficam só na máquina
+.ci-local/
+.env.ci.local
+audit-report.txt
+audit-status.txt

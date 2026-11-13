@@ -203,6 +203,12 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const [confirmPause, setConfirmPause] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
+  // Retomar um disparo PAUSADO e um clique so (decisao do dono, 2026-11-13 — a
+  // mesma regra do Talk X): a fila ja existe e o envio so continua de onde
+  // parou. O ref e o espelho sincrono do `resuming`: um duplo clique no mesmo
+  // render nao manda dois pedidos ao worker.
+  const [resuming, setResuming] = useState(false);
+  const resumingRef = useRef(false);
 
   // F80: a leitura do disparo tem TRES estados na tela — carregando, erro e pronto.
   // Antes so o `data` era lido: qualquer falha (disparo removido, sem permissao,
@@ -298,6 +304,22 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     }
   };
 
+  const resumeDispatch = async () => {
+    if (resumingRef.current) return;
+    resumingRef.current = true;
+    setResuming(true);
+    try {
+      await action.mutateAsync({ dispatchId, action: 'start' });
+      qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] });
+      toast.success('Disparo retomado');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao retomar disparo');
+    } finally {
+      resumingRef.current = false;
+      setResuming(false);
+    }
+  };
+
   // F80: LER o disparo pode falhar (removido, de outro usuario, edge/rede fora) —
   // e falha explicada na tela, com saida. Antes este caminho caia no skeleton
   // abaixo e ficava nele para sempre: o operador esperava uma resposta que nunca
@@ -352,7 +374,6 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   // F10: 'scheduled' nao mostra "Iniciar" — quem inicia e o cron quando o
   // horario chega; antes disso o operador so cancela.
   const isDraft = dispatch.status === 'draft';
-  const canStart = isPaused || isDraft;
   const isDone = dispatch.status === 'completed' || dispatch.status === 'completed_with_failures'
     || dispatch.status === 'cancelled' || dispatch.status === 'failed';
 
@@ -396,7 +417,9 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             <StatusPill status={dispatch.status} map={DISPATCH_STATUS} />
             {!isDone && (<>
               {isRunning && <button type="button" onClick={() => setConfirmPause(true)} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4" />Pausar</button>}
-              {canStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />{isPaused ? 'Retomar' : 'Iniciar'}</button>}
+              {isPaused && <button type="button" onClick={() => { void resumeDispatch(); }} disabled={resuming} aria-busy={resuming} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"><Play className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}</button>}
+              {/* Iniciar um RASCUNHO continua confirmando: congela publico/blocos e gera a fila, sem volta. */}
+              {isDraft && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />Iniciar</button>}
               <button type="button" onClick={() => setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4" />Cancelar</button>
             </>)}
           </div>
@@ -554,8 +577,8 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction onClick={async () => { await runAction('cancel'); setConfirmCancel(false); }}>Cancelar disparo</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{isPaused ? 'Retomar disparo?' : 'Iniciar disparo?'}</AlertDialogTitle><AlertDialogDescription>{isPaused ? 'O envio continua de onde parou.' : 'Isso congela o público e os blocos revisados, gera a fila do disparo e envia mensagens reais no WhatsApp para os destinatários — sem volta.'}</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction disabled={action.isPending || confirmDispatch.isPending} onClick={async () => { if (isDraft) { await startDraft(); } else { await runAction('start'); } setConfirmResume(false); }}>{isPaused ? 'Retomar' : 'Iniciar agora'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Iniciar disparo?</AlertDialogTitle><AlertDialogDescription>Isso congela o público e os blocos revisados, gera a fila do disparo e envia mensagens reais no WhatsApp para os destinatários — sem volta.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction disabled={action.isPending || confirmDispatch.isPending} onClick={async () => { await startDraft(); setConfirmResume(false); }}>Iniciar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
     </div>
   );

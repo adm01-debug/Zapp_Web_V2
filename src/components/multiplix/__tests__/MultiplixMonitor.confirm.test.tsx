@@ -143,9 +143,9 @@ beforeEach(() => {
   });
 });
 
-/** Clica em "Iniciar/Retomar" e confirma na acao do AlertDialog. */
+/** Clica em "Iniciar" (rascunho) e confirma na acao do AlertDialog. */
 async function confirmarNoDialogo(acionLabel: string) {
-  fireEvent.click(screen.getByRole('button', { name: /^(Iniciar|Retomar)$/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Iniciar' }));
   const dialog = await screen.findByRole('alertdialog');
   fireEvent.click(within(dialog).getByRole('button', { name: acionLabel }));
 }
@@ -185,18 +185,88 @@ describe('MultiplixMonitor — rascunho se inicia pelo confirm (F51/MX01)', () =
     expect(confirmCount).toBe(5);
   });
 
-  it('retomar um disparo pausado continua pelo worker: nao confirma o que ja tem fila', async () => {
+  it('o dialogo de confirmacao so existe para iniciar o rascunho', async () => {
+    render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
+    await screen.findByText('Disparo em rascunho');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('Iniciar disparo?')).toBeTruthy();
+    expect(confirmCalls()).toHaveLength(0);
+    expect(sendCalls()).toHaveLength(0);
+  });
+});
+
+describe('MultiplixMonitor — retomar disparo pausado em um clique (decisao do dono, 2026-11-13)', () => {
+  it('um clique em Retomar chama o worker direto, sem dialogo e sem confirm', async () => {
     dispatch = dispatchRow({ status: 'paused', dispatch_version: 5 });
     render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
     await screen.findByText('Disparo em rascunho');
 
-    await confirmarNoDialogo('Retomar');
+    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
 
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     await waitFor(() => expect(sendCalls()).toHaveLength(1));
     expect(sendCalls()[0]?.body).toEqual({ dispatchId: 'd1', action: 'start' });
     expect(confirmCalls()).toHaveLength(0);
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
+  it('enquanto o pedido esta pendente o botao fica desabilitado em "Retomando…" e o duplo clique e ignorado', async () => {
+    dispatch = dispatchRow({ status: 'paused', dispatch_version: 5 });
+    let release: () => void = () => {};
+    const base = functionsInvoke.getMockImplementation()!;
+    functionsInvoke.mockImplementation((fn: string, options: { body: InvokeCall['body'] }) => {
+      if (fn === 'multiplix-send') {
+        calls.push({ fn, body: options.body });
+        return new Promise((resolve) => {
+          release = () => resolve({ data: { success: true, status: 'sending' }, error: null });
+        });
+      }
+      return base(fn, options);
+    });
+    render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
+    await screen.findByText('Disparo em rascunho');
+
+    const botao = screen.getByRole('button', { name: 'Retomar' });
+    fireEvent.click(botao);
+    fireEvent.click(botao);
+
+    const pendente = await screen.findByRole('button', { name: 'Retomando…' });
+    expect((pendente as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(pendente);
+    expect(sendCalls()).toHaveLength(1);
+
+    release();
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(sendCalls()).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('falha do worker vira um unico toast de erro e o botao volta a ficar disponivel', async () => {
+    dispatch = dispatchRow({ status: 'paused', dispatch_version: 5 });
+    const base = functionsInvoke.getMockImplementation()!;
+    functionsInvoke.mockImplementation((fn: string, options: { body: InvokeCall['body'] }) => {
+      if (fn === 'multiplix-send') {
+        calls.push({ fn, body: options.body });
+        return Promise.reject(new Error('Worker indisponivel'));
+      }
+      return base(fn, options);
+    });
+    render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
+    await screen.findByText('Disparo em rascunho');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    expect(toast.success).not.toHaveBeenCalled();
+    const botao = await screen.findByRole('button', { name: 'Retomar' });
+    expect((botao as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
+describe('MultiplixMonitor — revalidacao do rascunho (F49)', () => {
   it('revalidacao (F49) recusada explica o motivo na tela em vez de iniciar em silencio', async () => {
     confirmFailures = ['multiplix_confirm_no_blocks'];
     render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
