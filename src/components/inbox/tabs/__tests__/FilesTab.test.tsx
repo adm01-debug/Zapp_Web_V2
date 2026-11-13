@@ -231,6 +231,20 @@ describe('FilesTab', () => {
 
   // R07/S52: o painel recebe o MESMO handler de encaminhamento do cartão — o caminho
   // completo (diálogo + transporte) é o desta aba, não um atalho novo do painel.
+  it('B3: o Encaminhar do cartão abre o diálogo e encaminha a mídia', async () => {
+    renderTab();
+    const cartao = screen.getByTestId('files-item-m1');
+    fireEvent.click(within(cartao).getByRole('button', { name: 'Encaminhar' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Encaminhar Mensagem' });
+    fireEvent.click(await within(dialog).findByText('Bob Destino'));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Encaminhar' }));
+
+    await waitFor(() => expect(encaminhar.forwardMediaMessages).toHaveBeenCalledTimes(1));
+    const payload = encaminhar.forwardMediaMessages.mock.calls[0][0] as Array<{ id: string }>;
+    expect(payload.map((midia) => midia.id)).toEqual(['m1']);
+  });
+
   it('R07/S52: o Encaminhar do painel de detalhes usa o mesmo caminho do cartão', async () => {
     renderTab();
     fireEvent.click(screen.getByText('foto-praia.jpg'));
