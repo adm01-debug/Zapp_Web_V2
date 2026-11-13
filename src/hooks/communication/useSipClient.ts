@@ -120,12 +120,21 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
 
   // Login com a aba JÁ líder (eleita na tela de login): não há nova transição de
   // papel, então provisiona aqui — uma vez por login, respeitando a trava.
+  // Logout (ou troca de usuário na mesma aba): a linha registrada é do usuário
+  // anterior — derruba antes; o próximo usuário provisiona a própria credencial.
   useEffect(() => {
     const anterior = userIdRef.current;
     userIdRef.current = userId;
-    if (!userId || anterior === userId || tabRole !== 'leader') return;
+    if (anterior === userId) return;
+    if (anterior) {
+      void disconnect().then(() => {
+        if (userId && userIdRef.current === userId && isLeader()) void connectWithStoredCredentials({ ignorarTrava: false });
+      });
+      return;
+    }
+    if (!userId || tabRole !== 'leader') return;
     void connectWithStoredCredentials({ ignorarTrava: false });
-  }, [userId, tabRole, connectWithStoredCredentials]);
+  }, [userId, tabRole, connectWithStoredCredentials, disconnect]);
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
 

@@ -1126,6 +1126,39 @@ describe('useSipClient', () => {
     expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
   });
 
+  it('logout derruba a linha e o próximo usuário da mesma aba provisiona a própria', async () => {
+    authState.user = { id: 'user-1' };
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+    expect(result.current.sipStatus).toBe('connecting');
+    // Logout: a linha do usuário anterior não pode continuar registrada nesta aba.
+    await act(async () => {
+      authState.user = null;
+      rerender();
+      await escoar(12);
+    });
+    expect(result.current.sipStatus).toBe('idle');
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+    // Outro usuário entra na mesma aba (ainda líder): provisiona a credencial DELE.
+    await act(async () => {
+      authState.user = { id: 'user-2' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(2);
+    expect(result.current.sipStatus).toBe('connecting');
+  });
+
   it('login e promoção a líder no MESMO render provisionam uma vez só', async () => {
     authState.user = null;
     mockFunctionsInvoke.mockResolvedValue({
