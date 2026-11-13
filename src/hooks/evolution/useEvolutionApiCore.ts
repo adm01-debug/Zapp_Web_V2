@@ -52,6 +52,25 @@ export function parseRetryAfter(raw: unknown): number | undefined {
 }
 
 /**
+ * Mensagem do corpo de um `FunctionsHttpError` (Edge respondeu non-2xx): o
+ * supabase-js põe só "Edge Function returned a non-2xx status code" em
+ * `error.message`; o motivo real fica no JSON de `error.context`. `null` quando
+ * não há corpo legível.
+ */
+async function edgeErrorBodyMessage(error: unknown): Promise<string | null> {
+  const context = (error as { context?: { json?: () => Promise<unknown> } } | null)?.context;
+  if (typeof context?.json !== 'function') return null;
+  try {
+    const body = (await context.json()) as { message?: unknown; error?: unknown } | null;
+    if (typeof body?.message === 'string' && body.message) return body.message;
+    if (typeof body?.error === 'string' && body.error) return body.error;
+  } catch {
+    /* corpo não-JSON: fica a mensagem do SDK */
+  }
+  return null;
+}
+
+/**
  * Opções do `functions.invoke` no mesmo formato visível de antes (`method` +
  * `body`): os testes de contrato destes hooks (`useEvolutionGroups`,
  * `useEvolutionMessaging`) comparam o objeto inteiro e o corpo que a Edge
@@ -104,7 +123,10 @@ export function useEvolutionApiCore() {
           `evolution-api/${action}`,
           invokeOptionsWithSignal(body ?? {}, controller.signal)
         );
-        if (error) throw error;
+        if (error) {
+          const bodyMessage = await edgeErrorBodyMessage(error);
+          throw bodyMessage ? Object.assign(new Error(bodyMessage), { cause: error }) : error;
+        }
         if (data && typeof data === 'object' && data.error === true) {
           const apiError = Object.assign(
             new Error(data.message || 'Erro na API Evolution'),

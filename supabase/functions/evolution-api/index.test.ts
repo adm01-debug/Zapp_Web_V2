@@ -1744,3 +1744,97 @@ Deno.test("fetch-profile-picture: aceita JID de usuário e LID", async () => {
     Deno.env.delete("EVOLUTION_API_FLAVOR");
   }
 });
+
+// ─── connect (GO): falha de rede/timeout na Evolution GO ──────────────────────
+// RED: um fetch() à GO que lançava (rede caída, AbortSignal.timeout) escapava do
+// bloco connect e virava 500 opaco no catch geral — o operador ficava sem
+// mensagem com a PRINCIPAL em sessão órfã. GREEN: 200 com {error:true, status
+// 504 (timeout) / 502 (rede), message dizendo a etapa} — o mesmo contrato das
+// outras saídas do connect. Caso DELETE ok + create lança: a instância já saiu
+// da GO, então a mensagem é a mesma do 503 de recriação falha.
+
+type GoStage = "connect" | "qr" | "status" | "delete" | "create";
+function stageOf(method: string, path: string): GoStage | "all" | null {
+  if (path === "/instance/connect") return "connect";
+  if (path === "/instance/qr") return "qr";
+  if (path === "/instance/status") return "status";
+  if (path === "/instance/all") return "all";
+  if (path.startsWith("/instance/delete/") && method === "DELETE") return "delete";
+  if (path === "/instance/create") return "create";
+  return null;
+}
+
+/** Stub de fetch da GO: sessão órfã (sem QR, LoggedIn:false, registro com jid) e `throwAt` lança. */
+async function connectComGoLancando(throwAt: GoStage, err: unknown, vezes = Infinity) {
+  let lancou = 0;
+  const originalFetch = globalThis.fetch;
+  const calls: string[] = [];
+  globalThis.fetch = ((input: Request | URL | string, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+    const stage = stageOf(method, url.pathname);
+    calls.push(`${method} ${url.pathname}`);
+    if (stage === throwAt && lancou < vezes) { lancou++; return Promise.reject(err); }
+    const json = (body: unknown) => Promise.resolve(new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } }));
+    if (stage === "qr") return json({ data: {} });
+    if (stage === "status") return json({ data: { Connected: false, LoggedIn: false } });
+    if (stage === "all") return json({ data: [{ name: "PRINCIPAL", id: "go-1", jid: "5511999990001@s.whatsapp.net" }] });
+    if (stage) return json({});
+    return originalFetch(input, init);
+  }) as typeof fetch;
+  Deno.env.set("EVOLUTION_API_URL", "http://go.invalid");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  Deno.env.set("EVOLUTION_INSTANCE_NAME", "PRINCIPAL");
+  resetInstanceTokenCache();
+  try {
+    const res = await handleEvolutionApi(controlRequest("connect", { instanceName: "PRINCIPAL" }), {
+      callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient(),
+    });
+    const text = await res.text();
+    return { res, text, body: JSON.parse(text), calls };
+  } finally {
+    globalThis.fetch = originalFetch;
+    Deno.env.delete("EVOLUTION_API_FLAVOR");
+  }
+}
+
+const NET_ERR = () => new TypeError("error sending request for url (http://go.invalid/x): connection refused");
+const TIMEOUT_ERR = () => new DOMException("Signal timed out.", "TimeoutError");
+
+const CONNECT_GO_FALHAS: Array<{ stage: GoStage; err: () => unknown; status: number; trecho: string }> = [
+  { stage: "connect", err: NET_ERR, status: 502, trecho: "iniciar a conexão" },
+  { stage: "connect", err: TIMEOUT_ERR, status: 504, trecho: "iniciar a conexão" },
+  { stage: "qr", err: TIMEOUT_ERR, status: 504, trecho: "QR Code" },
+  { stage: "status", err: NET_ERR, status: 502, trecho: "status da instância" },
+  { stage: "status", err: TIMEOUT_ERR, status: 504, trecho: "status da instância" },
+  { stage: "delete", err: TIMEOUT_ERR, status: 504, trecho: "sessão órfã" },
+];
+for (const c of CONNECT_GO_FALHAS) {
+  const tipo = c.err() instanceof TypeError ? "TypeError de rede" : "TimeoutError";
+  Deno.test(`connect (GO): ${tipo} em ${c.stage} → 200 {error:true, status:${c.status}} com a etapa, nunca 500`, async () => {
+    const r = await connectComGoLancando(c.stage, c.err());
+    assertEquals(r.res.status, 200, r.text);
+    assertEquals(r.body.error, true);
+    assertEquals(r.body.status, c.status);
+    assert(String(r.body.message).includes(c.trecho), r.body.message);
+    assert(String(r.body.message).includes("Tente novamente"), r.body.message);
+    assertEquals(r.text.includes("connection refused"), false, "erro cru da rede não vai ao cliente");
+  });
+}
+
+Deno.test("connect (GO): DELETE ok + create lança → 503 com a mesma mensagem da recriação falha", async () => {
+  const r = await connectComGoLancando("create", NET_ERR());
+  assertEquals(r.res.status, 200, r.text);
+  assertEquals(r.body.error, true);
+  assertEquals(r.body.status, 503);
+  assert(String(r.body.message).includes("foi removida da Evolution GO"), r.body.message);
+  assert(r.calls.includes("DELETE /instance/delete/go-1"), r.calls.join(","));
+  assertEquals(r.calls.filter((c) => c === "POST /instance/create").length, 2, "rede na 1ª tentativa ainda ganha o retry");
+});
+
+Deno.test("connect (GO): create lança só na 1ª tentativa → retry recria e não devolve o 503", async () => {
+  const r = await connectComGoLancando("create", NET_ERR(), 1);
+  assertEquals(r.res.status, 200, r.text);
+  assertEquals(r.calls.filter((c) => c === "POST /instance/create").length, 2, r.calls.join(","));
+  assertEquals(String(r.body.message ?? "").includes("foi removida da Evolution GO"), false, r.text);
+});

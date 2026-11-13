@@ -309,7 +309,7 @@ describe('erros', () => {
     expect(h.toast.error).toHaveBeenCalledWith('network down');
   });
 
-  it.fails('403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js', async () => {
+  it('403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js', async () => {
     h.invoke.mockResolvedValue({
       data: null,
       error: functionsHttpError('Sem permissão para atualizar o nome desta conexão.', 403),
