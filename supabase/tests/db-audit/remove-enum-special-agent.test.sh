@@ -63,7 +63,6 @@ cleanup() {
   rm -rf "$WORK"
 }
 trap cleanup EXIT
-[[ -n "${KEEP_CONTAINER:-}" ]] && trap - EXIT
 docker rm -f "$CID" >/dev/null 2>&1 || true
 docker run -d --name "$CID" -e POSTGRES_PASSWORD=postgres "$IMAGE" >/dev/null \
   || fail "subir postgres descartavel ($IMAGE)"
@@ -367,7 +366,7 @@ ok "B: sessao aberta antes da migration continua funcionando (sem cache de tipo 
 # ================================================================== D. rollback
 while IFS= read -r stmt; do
   [[ -z "$stmt" ]] && continue
-  run "$stmt" >/dev/null || fail "D: rollback falhou em: $stmt"
+  run "$stmt" </dev/null >/dev/null || fail "D: rollback falhou em: $stmt"
 done <<< "$ROLLBACK_SQL"
 [[ "$(run "SELECT string_agg(enumlabel, ',' ORDER BY enumsortorder) FROM pg_enum WHERE enumtypid = 'public.app_role'::regtype;")" == "admin,supervisor,agent,special_agent" ]] \
   || fail "D: rollback nao devolveu o rotulo"
