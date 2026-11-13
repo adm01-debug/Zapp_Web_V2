@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "382307ab5943456065180f8144917d74bb6411ae",
+  "sha": "943a646b2ff307c95c279a3f4039b58cb06aaa3c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 05:31 UTC",
-  "files_total": 8263,
-  "code_files": 6095,
-  "code_lines": 1060618
+  "generated_at": "2026-11-13 05:41 UTC",
+  "files_total": 8264,
+  "code_files": 6096,
+  "code_lines": 1060689
  },
  "version": "1.3.2",
- "facts_hash": "4d6bc340adaba87b",
+ "facts_hash": "3ddd795ab8a6eddd",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -327,7 +327,7 @@
    ".tsx": 2342,
    ".ts": 1894,
    ".sql": 1306,
-   ".mjs": 434,
+   ".mjs": 435,
    ".py": 119,
    ".cjs": 19,
    ".js": 7,
@@ -68169,8 +68169,8 @@
   },
   {
    "module": "scripts",
-   "files": 464,
-   "lines": 93187,
+   "files": 465,
+   "lines": 93258,
    "tables": [
     "a",
     "alem_do_limite",
@@ -81390,6 +81390,10 @@
    {
     "file": "scripts/ci/verify-crm-integration-doc.unit.mjs",
     "msg": "grep falhou: "
+   },
+   {
+    "file": "scripts/ci/verify-release-targets-sucessor.unit.mjs",
+    "msg": "não deveria consultar"
    },
    {
     "file": "scripts/ci/verify-release-targets-timeout.unit.mjs",
@@ -268077,6 +268081,23 @@
    "lines": 120,
    "doc": "E65: prova de que o registro no ledger nao passa com `statements` NULL, vazio ou divergente do arquivo. Antes desta etapa, o passo \"Validar registro no ledger\" do db-migrate.yml provava so' `count(*) = 1`: uma linha com statements NULL ou vazio era aceita, e a trilha de auditoria perdia o conteudo e …"
   },
+  "scripts/ci/verify-release-targets-sucessor.unit.mjs": {
+   "path": "scripts/ci/verify-release-targets-sucessor.unit.mjs",
+   "lines": 52,
+   "errors": [
+    "não deveria consultar"
+   ],
+   "params": [
+    {
+     "name": "ESPERADO",
+     "value": "'a'"
+    },
+    {
+     "name": "PUBLICADO",
+     "value": "'b'"
+    }
+   ]
+  },
   "scripts/ci/verify-release-targets-summary.unit.mjs": {
    "path": "scripts/ci/verify-release-targets-summary.unit.mjs",
    "lines": 75,
@@ -273207,10 +273228,11 @@
   },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
-   "lines": 232,
+   "lines": 251,
    "exports": [
     "const TARGETS",
     "function parseArgs",
+    "function gitEhAncestral",
     "function validarVersao",
     "function verificarAlvo",
     "function resumoMarkdown",
@@ -273245,7 +273267,11 @@
      "value": "15"
     }
    ],
-   "doc": "!/usr/bin/env node"
+   "doc": "!/usr/bin/env node",
+   "temporal": [
+    "execFileSync('git', ['fetch', '--quiet', '--no-tags', '--filter=tree:0', 'origin', 'main'], { stdio: 'ignore', timeout: 60_000 });",
+    "execFileSync('git', ['merge-base', '--is-ancestor', ancestral, descendente], { stdio: 'ignore', timeout: 10_000 });"
+   ]
   },
   "src/App.tsx": {
    "path": "src/App.tsx",
@@ -388121,10 +388147,20 @@
   }
  },
  "git": {
-  "sha": "382307ab5943456065180f8144917d74bb6411ae",
+  "sha": "943a646b2ff307c95c279a3f4039b58cb06aaa3c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "943a646",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)",
+    "files": [
+     "scripts/ci/verify-release-targets-sucessor.unit.mjs",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "382307a",
     "date": "2026-11-13",
@@ -388424,30 +388460,19 @@
      "scripts/edge-deploy/redigir-log.mjs",
      "scripts/edge-deploy/redigir-log.unit.mjs"
     ]
-   },
-   {
-    "sha": "13a00e0",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)",
-    "files": [
-     "PENDENCIAS.md",
-     "RELATORIO_CI.md",
-     "e2e/email-navy-visual.spec.ts"
-    ]
    }
   ],
   "hot_files": [
    [
+    "supabase/deployment-manifest.json",
+    3
+   ],
+   [
     "PENDENCIAS.md",
-    4
+    3
    ],
    [
     "RELATORIO_CI.md",
-    4
-   ],
-   [
-    "supabase/deployment-manifest.json",
     3
    ],
    [
@@ -388457,6 +388482,14 @@
    [
     "scripts/e2e-isolated/routine-ownership.mjs",
     2
+   ],
+   [
+    "scripts/ci/verify-release-targets-sucessor.unit.mjs",
+    1
+   ],
+   [
+    "scripts/vercel/verify-release-targets.mjs",
+    1
    ],
    [
     "scripts/db-audit/login_gate_rpc.test.sh",
@@ -388508,14 +388541,6 @@
    ],
    [
     "supabase/functions/talkx-send/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/talkx-send/safe-db-error-code.test.ts",
-    1
-   ],
-   [
-    ".github/workflows/db-guard.yml",
     1
    ]
   ]

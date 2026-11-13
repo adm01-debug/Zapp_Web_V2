@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "382307ab5943456065180f8144917d74bb6411ae",
+  "commit": "943a646b2ff307c95c279a3f4039b58cb06aaa3c",
   "branch": "main",
-  "data_commit": "2026-11-13T02:02:25-03:00",
+  "data_commit": "2026-11-13T02:31:20-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "943a646",
+    "data": "2026-11-13",
+    "assunto": "Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)"
+   },
    {
     "sha": "382307a",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "5536177",
     "data": "2026-11-12",
     "assunto": "fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)"
-   },
-   {
-    "sha": "623f37b",
-    "data": "2026-11-12",
-    "assunto": "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)"
    }
   ],
-  "arquivos_mudados_7d": 670,
+  "arquivos_mudados_7d": 671,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8421,
-  "arquivos_codigo": 4817,
-  "linhas_codigo": 892131,
+  "arquivos_total": 8422,
+  "arquivos_codigo": 4818,
+  "linhas_codigo": 892202,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2620,
+  "testes": 2621,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -607,8 +607,8 @@
    "linhas": 337
   },
   "scripts/ci": {
-   "arquivos": 214,
-   "linhas": 44252
+   "arquivos": 215,
+   "linhas": 44304
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -688,7 +688,7 @@
   },
   "scripts/vercel": {
    "arquivos": 2,
-   "linhas": 349
+   "linhas": 368
   },
   "src/App.tsx": {
    "arquivos": 1,

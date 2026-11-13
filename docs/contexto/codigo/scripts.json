@@ -4611,7 +4611,7 @@
   {
    "arquivo": "scripts/vercel/verify-release-targets.mjs",
    "descricao": null,
-   "linhas": 232,
+   "linhas": 251,
    "env": [],
    "npm_scripts": [],
    "workflows": [
