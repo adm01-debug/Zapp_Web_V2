@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7c9a188438787d68fb4278a1cbf7975e0c3a51a9",
+  "commit": "e903a7e514191d3c7d6f8bb9957e3ee9af69de5f",
   "branch": "main",
-  "data_commit": "2026-11-13T00:46:55-03:00",
+  "data_commit": "2026-11-13T01:45:20-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e903a7e",
+    "data": "2026-11-13",
+    "assunto": "fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)"
+   },
    {
     "sha": "7c9a188",
     "data": "2026-11-13",
@@ -126,11 +131,6 @@
     "sha": "491a75d",
     "data": "2026-11-12",
     "assunto": "fix(scripts): guard rodar() contra bun ausente no PATH (#2978)"
-   },
-   {
-    "sha": "a082adc",
-    "data": "2026-11-12",
-    "assunto": "fix(e2e): atualiza hash de claim_outbound_message no gate de owners do E2E isolado (#2974)"
    }
   ],
   "arquivos_mudados_7d": 669,
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 117
+    "mudancas": 119
    },
    {
     "pasta": "src/lib/__tests__",
@@ -274,10 +274,6 @@
     "mudancas": 8
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
-    "mudancas": 7
-   },
-   {
     "arquivo": ".github/workflows/e2e-logado-isolado.yml",
     "mudancas": 7
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/edge-deploy/health-check.mjs",
     "mudancas": 7
    }
   ],
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8421,
   "arquivos_codigo": 4817,
-  "linhas_codigo": 892125,
+  "linhas_codigo": 892131,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2179,
-   "linhas": 372047
+   "linhas": 372048
   },
   "src/config": {
    "arquivos": 3,
@@ -724,7 +724,7 @@
   },
   "src/hooks": {
    "arquivos": 987,
-   "linhas": 160782
+   "linhas": 160787
   },
   "src/i18n": {
    "arquivos": 2,

@@ -8665,7 +8665,7 @@
    "hooks_exportados": [
     "useTalkXCommandItems"
    ],
-   "linhas": 146,
+   "linhas": 151,
    "dominio": "hooks/integrations",
    "tabelas": [
     "talkx_campaigns",

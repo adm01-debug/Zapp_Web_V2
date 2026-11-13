@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7c9a188438` · branch `main` · 2026-11-13 04:07 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e903a7e514` · branch `main` · 2026-11-13 04:47 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -5414,4 +5414,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Concluída reabre (volta para "A fazer"); aberta conclui. Mesma regra do módulo. | `src/components/inbox/tabs/TasksTab.tsx` |
 | apenas o tipo — nunca "0 KB" nem separador solto. Acima de 1 GB o `formatSize` segue | `src/components/inbox/tabs/fileDisplay.ts` |
 | medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
-| … +1664 linhas — lista completa em `context.json` | |
+| … +1665 linhas — lista completa em `context.json` | |
