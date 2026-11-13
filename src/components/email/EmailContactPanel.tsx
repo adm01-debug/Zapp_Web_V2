@@ -11,6 +11,7 @@ import { useContactNotes } from '@/hooks/crm/useContactNotes';
 import { useEmailContactContext } from '@/hooks/crm/useEmailContactContext';
 import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { formatEmailFileSize } from '@/lib/emailAttachments';
+import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { companySocialLinks, normalizeExternalUrl } from '@/lib/emailCompanyLinks';
 import { resolveEmailConversationPerson } from '@/lib/emailContactIdentity';
 import { format, isValid } from 'date-fns';
@@ -84,8 +85,8 @@ export function EmailContactPanel({
   const tags = uniqueTags(thread.tags || [], contact?.tags || [], displayLabels);
   const [accordionValue, setAccordionValue] = useState<string[]>(['info', 'participants', 'files', 'tags']);
   const copyEmail = async () => {
-    if (!displayEmail || !navigator.clipboard?.writeText) return;
-    try { await navigator.clipboard.writeText(displayEmail); } catch { /* Clipboard may be unavailable in embedded clients. */ }
+    if (!displayEmail) return;
+    avisarCopia(await copiarTexto(displayEmail));
   };
 
   return (
