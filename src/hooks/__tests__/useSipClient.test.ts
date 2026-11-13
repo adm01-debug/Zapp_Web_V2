@@ -27,6 +27,9 @@ const mockMakeURI = vi.fn((uri: string) => uri);
 let lastUserAgentOptions: { transportOptions?: { server?: string } } | undefined;
 // `ua.stop()` lento (rede) para simular desconexão ainda pendente.
 let uaStopImpl: () => Promise<void> = () => Promise.resolve();
+// UAs criados e ainda não parados (o `stop()` resolvido tira daqui): prova que
+// nenhum registro da linha sobrevive a unmount/logout.
+const uasVivos = new Set<object>();
 
 const mockSessionDescriptionHandler = {
   peerConnection: {
@@ -53,8 +56,9 @@ vi.mock('sip.js', () => {
       configuration = { uri: { host: 'test.server.com' } };
       transport: { onDisconnect: (() => void) | null } = { onDisconnect: null };
       start = vi.fn().mockResolvedValue(undefined);
-      stop = vi.fn().mockImplementation(() => uaStopImpl());
+      stop = vi.fn().mockImplementation(() => uaStopImpl().then(() => { uasVivos.delete(this); }));
       constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void }; transportOptions?: { server?: string } }) {
+        uasVivos.add(this);
         lastUserAgentOptions = options;
         lastOnInvite = options.delegate?.onInvite;
       }
@@ -246,6 +250,7 @@ describe('useSipClient', () => {
     mockRpc.mockResolvedValue({ data: 'call-1', error: null });
     mockFunctionsInvoke.mockResolvedValue({ data: { password: 'test-pass' }, error: null });
     lastOnInvite = undefined;
+    uasVivos.clear();
     // A trava "SIP não configurado" fica no localStorage (vale entre carregamentos):
     // um teste que simulou o 503 não pode silenciar o provisionamento do seguinte.
     localStorage.removeItem(SIP_NOT_CONFIGURED_STORAGE_KEY);
@@ -1202,6 +1207,101 @@ describe('useSipClient', () => {
     // `uaRef` enquanto a desconexão do user-1 ainda não tinha terminado).
     expect(lastUserAgentOptions).not.toBe(uaDoUser1);
     expect(result.current.sipStatus).toBe('connecting');
+  });
+
+  it('logout com a busca da senha SIP ainda pendente não registra a linha sem usuário', async () => {
+    authState.user = null;
+    let responder: (v: unknown) => void = () => {};
+    mockFunctionsInvoke.mockImplementation(() => new Promise((resolve) => { responder = resolve; }));
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+    const { result, rerender } = renderHook(() => useSipClient());
+    const uaAntes = lastUserAgentOptions;
+    // Login com a aba já líder: a busca da senha começa e fica pendente.
+    await act(async () => { authState.user = { id: 'user-1' }; rerender(); await escoar(8); });
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('get-sip-password');
+    // Logout ANTES de a senha chegar.
+    await act(async () => { authState.user = null; rerender(); await escoar(8); });
+    // A senha chega depois do logout: não pode registrar a linha na tela de login.
+    await act(async () => {
+      responder({ data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' }, error: null });
+      await escoar(20);
+    });
+    expect(lastUserAgentOptions).toBe(uaAntes);
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('virar seguidora e voltar a líder antes do stop terminar: UA novo e sem "outra aba"', async () => {
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    await act(async () => { mockRegisterStateListeners.forEach(fn => fn('Registered')); await escoar(12); });
+    expect(result.current.sipStatus).toBe('registered');
+    const uaAntigo = lastUserAgentOptions;
+    // O `ua.stop()` da desconexão (virou seguidora) demora: a aba volta a líder antes.
+    let terminarStop: () => void = () => {};
+    uaStopImpl = () => new Promise<void>((resolve) => { terminarStop = resolve; });
+    try {
+      await act(async () => {
+        tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: 'outra-aba' };
+        rerender();
+        await escoar(4);
+      });
+      await act(async () => {
+        tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+        rerender();
+        await escoar(12);
+      });
+      await act(async () => { terminarStop(); await escoar(20); });
+    } finally {
+      uaStopImpl = () => Promise.resolve();
+    }
+    // A aba é líder: reconecta com UA novo e não diz que a linha está em outra aba.
+    expect(lastUserAgentOptions).not.toBe(uaAntigo);
+    expect(result.current.sipReason).not.toBe('line_in_use_other_tab');
+    expect(result.current.sipStatus).toBe('connecting');
+  });
+
+  it('logout e promoção a líder no MESMO render não buscam a senha SIP', async () => {
+    authState.user = { id: 'user-1' };
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      authState.user = null;
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).not.toHaveBeenCalledWith('get-sip-password');
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('remontagem + login + logout terminam sem UA vivo (o unmount solta a linha)', async () => {
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    const primeiro = await montarRegistrado();
+    expect(uasVivos.size).toBe(1);
+    // O painel desmonta (troca de rota/remontagem) com a linha registrada.
+    await act(async () => { primeiro.unmount(); await escoar(12); });
+    mockRegisterStateListeners.length = 0;
+    // Remonta na tela de login, o usuário entra (aba líder provisiona) e sai.
+    authState.user = null;
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => { authState.user = { id: 'user-1' }; rerender(); await escoar(12); });
+    await act(async () => { mockRegisterStateListeners.forEach(fn => fn('Registered')); await escoar(12); });
+    expect(result.current.sipStatus).toBe('registered');
+    await act(async () => { authState.user = null; rerender(); await escoar(20); });
+    expect(result.current.sipStatus).toBe('idle');
+    expect(uasVivos.size).toBe(0);
   });
 
   it('login e promoção a líder no MESMO render provisionam uma vez só', async () => {
