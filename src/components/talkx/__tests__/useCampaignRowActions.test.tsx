@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
 
 const talkxMocks = vi.hoisted(() => ({
   startCampaign: vi.fn(),
@@ -167,6 +168,44 @@ describe('useCampaignRowActions — ações de linha (X080)', () => {
     expect(screen.queryByRole('button', { name: 'Confirmar' })).toBeNull();
   });
 
+  it('sem onLifecycle, "Retomar" é UM clique: chama onStart sem modal (decisão do dono, 2026-11-13)', async () => {
+    const erro = vi.spyOn(toast, 'error');
+    const { api, handlers } = montar();
+    await act(async () => { api.current!.run('resume', campanha('paused')); });
+    expect(handlers.onStart).toHaveBeenCalledTimes(1);
+    expect(handlers.onStart).toHaveBeenCalledWith('c-paused');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(screen.queryByText('Retomar campanha?')).toBeNull();
+    // o aviso de sucesso é de quem grava (onStart); o hook não soma outro
+    expect(erro).not.toHaveBeenCalled();
+    erro.mockRestore();
+  });
+
+  it('sem onLifecycle, "Retomar" que falha avisa UMA vez por toast e não abre modal', async () => {
+    const erro = vi.spyOn(toast, 'error').mockImplementation(() => 'id');
+    const { api } = montar({ onStart: vi.fn().mockRejectedValue(new Error('Fora da janela de envio.')) });
+    await act(async () => { api.current!.run('resume', campanha('paused')); });
+    expect(erro).toHaveBeenCalledTimes(1);
+    expect(erro).toHaveBeenCalledWith('Fora da janela de envio.');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(api.current!.pendingId).toBeNull();
+    erro.mockRestore();
+  });
+
+  it('sem onLifecycle, clique repetido em "Retomar" durante o envio não dispara duas vezes', async () => {
+    let resolver: () => void = () => undefined;
+    const onStart = vi.fn(() => new Promise<void>((r) => { resolver = r; }));
+    const { api } = montar({ onStart });
+    act(() => {
+      api.current!.run('resume', campanha('paused'));
+      api.current!.run('resume', campanha('paused'));
+    });
+    expect(onStart).toHaveBeenCalledTimes(1);
+    expect(api.current!.pendingId).toBe('c-paused');
+    await act(async () => { resolver(); });
+    expect(api.current!.pendingId).toBeNull();
+  });
+
   it('"Editar" navega na hora', () => {
     const { api, handlers } = montar();
     const c = campanha('draft');
@@ -277,7 +316,7 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
     sessionStorage.clear();
   });
 
-  it('mostra as ações do status e abre ciclo de vida pelo hook único', async () => {
+  it('mostra as ações do status e retoma pelo hook único em um clique', async () => {
     render(<TalkXOverview {...props} />);
 
     // TL-115: a TalkXTable nomeia o gatilho com a linha (RowActionsMenu + rowLabel).
@@ -292,7 +331,9 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
       fireEvent.click(screen.getByRole('menuitem', { name: 'Retomar' }));
     });
 
-    expect(await screen.findByRole('alertdialog')).toHaveTextContent('Retomar campanha?');
+    // Retomar é um clique (decisão do dono, 2026-11-13): o hook dispara direto, sem diálogo.
+    expect(talkxMocks.startCampaign).toHaveBeenCalledWith('c-paused');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(props.onStart).not.toHaveBeenCalled();
   });
 });

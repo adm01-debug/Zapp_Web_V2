@@ -180,21 +180,25 @@ describe('Monitor — ciclo de vida pelo controlador único (X051)', () => {
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   });
 
-  it('retomar: o hook executa startCampaign e a recusa da Edge (false) aparece como erro no diálogo aberto', async () => {
+  it('retomar: um clique (sem diálogo) executa startCampaign — decisão do dono, 2026-11-13', async () => {
+    h.startCampaign.mockResolvedValue(true);
+    await abrirMonitor('paused');
+
+    clicar('Retomar');
+
+    await waitFor(() => expect(h.startCampaign).toHaveBeenCalledWith('camp-1'));
+    expect(h.startCampaign).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('retomar recusado pela Edge (false) não abre diálogo: o aviso é o toast do próprio startCampaign', async () => {
     h.startCampaign.mockResolvedValue(false);
     await abrirMonitor('paused');
 
     clicar('Retomar');
-    const dialogo = await screen.findByRole('alertdialog');
-    expect(dialogo.textContent).toContain('Retomar campanha?');
-
-    fireEvent.click(within(dialogo).getByRole('button', { name: 'Retomar' }));
 
     await waitFor(() => expect(h.startCampaign).toHaveBeenCalledWith('camp-1'));
-    await waitFor(() =>
-      expect(within(dialogo).getByRole('alert').textContent).toContain('O envio não foi aceito'),
-    );
-    expect(screen.getByRole('alertdialog')).toBe(dialogo);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
   it('a saída "Voltar" fecha o diálogo sem disparar ação nenhuma', async () => {
