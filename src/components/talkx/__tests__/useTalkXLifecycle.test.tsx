@@ -30,15 +30,21 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+import { toast } from 'sonner';
 import {
   useTalkXLifecycle,
+  useTalkXLifecycleWith,
   talkXLifecycleCopy,
   TalkXLifecycleDialog,
 } from '../useTalkXLifecycle';
 import type {
   TalkXLifecycleController,
   TalkXLifecycleKind,
+  TalkXLifecycleOps,
 } from '../useTalkXLifecycle';
+
+/** As operações mockadas no formato que `useTalkXLifecycleWith` recebe. */
+const ops = talkx as unknown as TalkXLifecycleOps;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -92,18 +98,102 @@ describe('useTalkXLifecycle — controlador único (X050)', () => {
     expect(talkx.pauseCampaign).toHaveBeenCalledWith('c1', undefined);
   });
 
-  it.each(['start', 'resume'] as const)('`%s` dispara pela `startCampaign`', async (kind) => {
+  it('`start` abre o diálogo e dispara pela `startCampaign` no confirm', async () => {
     const { result } = renderHook(() => useTalkXLifecycle());
 
     act(() => {
-      result.current.request({ kind, target: TARGET });
+      result.current.request({ kind: 'start', target: TARGET });
     });
+    expect(result.current.intent).not.toBeNull();
+    expect(talkx.startCampaign).not.toHaveBeenCalled();
     await act(async () => {
       await result.current.confirm();
     });
 
     expect(talkx.startCampaign).toHaveBeenCalledWith('c1');
     expect(result.current.intent).toBeNull();
+  });
+
+  it('`resume` é UM clique: `request` já dispara a `startCampaign`, sem diálogo (decisão do dono, 2026-11-13)', async () => {
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useTalkXLifecycleWith(ops, { onSuccess }));
+
+    await act(async () => {
+      expect(result.current.request({ kind: 'resume', target: TARGET })).toBe(true);
+    });
+
+    expect(talkx.startCampaign).toHaveBeenCalledTimes(1);
+    expect(talkx.startCampaign).toHaveBeenCalledWith('c1');
+    expect(result.current.intent).toBeNull();
+    expect(result.current.error).toBeNull();
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    expect(onSuccess.mock.calls[0][0]).toMatchObject({ kind: 'resume' });
+    // Um toast só: o de sucesso é do próprio `startCampaign` (mockado aqui).
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('`resume` enquanto roda fica pendente (`pendingKind`) e ignora o segundo clique', async () => {
+    const pending = deferred<boolean>();
+    talkx.startCampaign.mockReturnValue(pending.promise);
+    const { result } = renderHook(() => useTalkXLifecycle());
+
+    act(() => {
+      result.current.request({ kind: 'resume', target: TARGET });
+    });
+    expect(result.current.isPending).toBe(true);
+    expect(result.current.pendingKind).toBe('resume');
+    expect(result.current.intent).toBeNull();
+    act(() => {
+      expect(result.current.request({ kind: 'resume', target: TARGET })).toBe(false);
+    });
+    await act(async () => {
+      pending.resolve(true);
+    });
+
+    expect(talkx.startCampaign).toHaveBeenCalledTimes(1);
+    expect(result.current.isPending).toBe(false);
+    expect(result.current.pendingKind).toBeNull();
+  });
+
+  it('`resume` recusado (`startCampaign` devolve false) não repete o toast de erro do `startCampaign` nem abre diálogo', async () => {
+    talkx.startCampaign.mockResolvedValue(false);
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useTalkXLifecycleWith(ops, { onSuccess }));
+
+    await act(async () => {
+      result.current.request({ kind: 'resume', target: TARGET });
+    });
+
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(result.current.intent).toBeNull();
+    expect(result.current.error).toBeNull();
+  });
+
+  it('`resume` que lança (falha inesperada) avisa por toast, com o texto da tela', async () => {
+    talkx.startCampaign.mockRejectedValue(new Error('Edge Function returned a non-2xx status code'));
+    const { result } = renderHook(() =>
+      useTalkXLifecycleWith(ops, { errorMessage: () => 'Erro ao retomar a campanha.' }),
+    );
+
+    await act(async () => {
+      result.current.request({ kind: 'resume', target: TARGET });
+    });
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    expect(toast.error).toHaveBeenCalledWith('Erro ao retomar a campanha.');
+    expect(result.current.intent).toBeNull();
+  });
+
+  it('`copy` da tela ajusta o texto do diálogo sem mexer no texto único', () => {
+    const { result } = renderHook(() =>
+      useTalkXLifecycleWith(ops, { copy: { cancel: { confirmLabel: 'Confirmar cancelamento' } } }),
+    );
+    expect(result.current.copy.cancel.confirmLabel).toBe('Confirmar cancelamento');
+    expect(result.current.copy.cancel.title).toBe(talkXLifecycleCopy.cancel.title);
+    expect(talkXLifecycleCopy.cancel.confirmLabel).toBe('Cancelar');
   });
 
   it('cancela pela `cancelCampaign`', async () => {

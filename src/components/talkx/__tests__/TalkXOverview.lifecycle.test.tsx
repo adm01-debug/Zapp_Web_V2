@@ -162,7 +162,7 @@ describe('Visão geral — ciclo de vida pelo controlador único (X051)', () => 
     expect(ciclo.onPause).not.toHaveBeenCalled();
   });
 
-  it('retomar: o diálogo do hook dispara startCampaign, não a prop onStart', async () => {
+  it('retomar: um clique (sem diálogo) dispara startCampaign pelo hook, não a prop onStart', async () => {
     mocks.startCampaign.mockResolvedValue(true);
     const ciclo = propsCicloDeVida();
     renderOverview(campaign({ status: 'paused' }), vi.fn(), ciclo);
@@ -170,12 +170,10 @@ describe('Visão geral — ciclo de vida pelo controlador único (X051)', () => 
     abrirMenuAcoes();
     clicarItemDoMenu('Retomar');
 
-    const dialogo = await screen.findByRole('alertdialog');
-    expect(dialogo.textContent).toContain('Retomar campanha?');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
-
+    // Decisão do dono (2026-11-13): retomar campanha pausada não pede confirmação.
     await waitFor(() => expect(mocks.startCampaign).toHaveBeenCalledWith('c1'));
+    expect(mocks.startCampaign).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(ciclo.onStart).not.toHaveBeenCalled();
   });
 
