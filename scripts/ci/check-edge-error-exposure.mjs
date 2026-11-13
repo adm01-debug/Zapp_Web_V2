@@ -269,7 +269,7 @@ function exposicoesDeErroDoBanco(limpo) {
     if (textoLinha.startsWith("*")) continue;
     const corpo = separarArgumentos(limpo.slice(abre + 1, fecha))[0] ?? "";
     for (const nome of nomes) {
-      const re = new RegExp(`(?<![\\w$.])${nome.replace(/\$/gu, "\\$")}\\??\\.message\\b`, "u");
+      const re = new RegExp(`(?<![\\w$.])${nome.replace(/[\\$]/gu, "\\$&")}\\??\\.message\\b`, "u");
       if (!re.test(corpo)) continue;
       const maisProxima = declaracoes
         .filter((d) => d.nome === nome && d.indice < chamada.index)
