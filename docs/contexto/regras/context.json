@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "b2813f8324faa8444a04fe35743f9c002a561415",
+  "sha": "8a141831d8f082d67aa015839da0981b1e6478dc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-12 22:25 UTC",
+  "generated_at": "2026-11-13 01:35 UTC",
   "files_total": 8259,
   "code_files": 6092,
   "code_lines": 1060051
@@ -387941,10 +387941,19 @@
   }
  },
  "git": {
-  "sha": "b2813f8324faa8444a04fe35743f9c002a561415",
+  "sha": "8a141831d8f082d67aa015839da0981b1e6478dc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "8a14183",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)",
+    "files": [
+     "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
+    ]
+   },
    {
     "sha": "b2813f8",
     "date": "2026-11-12",
@@ -388268,19 +388277,6 @@
      "scripts/maintenance/lib.mjs",
      "scripts/maintenance/maintenance.unit.mjs"
     ]
-   },
-   {
-    "sha": "d5835ed",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): catálogo talkx_suppression_reasons + migra reason_code enum→text (#2817)",
-    "files": [
-     "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
-     "scripts/db-audit/grants-baseline.json",
-     "scripts/db-audit/talkx-suppression-reasons.smoke.sh",
-     "src/integrations/supabase/types.ts",
-     "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -388297,15 +388293,15 @@
     3
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
-    3
+    "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
+    2
    ],
    [
     "scripts/e2e-isolated/routine-ownership.mjs",
     2
    ],
    [
-    "src/integrations/supabase/types.ts",
+    "scripts/db-audit/grants-baseline.json",
     2
    ],
    [

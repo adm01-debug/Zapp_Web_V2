@@ -2639,7 +2639,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
    "descricao": "#464 / CAIXA-7eb1 — Talk X E27: divergencia de replay da publicacao supabase_realtime. O E27 publicou tres tabelas do Talk X (talkx_campaign_events, talkx_segments,",
-   "linhas": 129,
+   "linhas": 133,
    "env": [],
    "npm_scripts": [],
    "workflows": [

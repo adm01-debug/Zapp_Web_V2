@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b2813f8324faa8444a04fe35743f9c002a561415",
+  "commit": "8a141831d8f082d67aa015839da0981b1e6478dc",
   "branch": "main",
-  "data_commit": "2026-11-12T18:02:00-03:00",
+  "data_commit": "2026-11-12T20:12:32-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "8a14183",
+    "data": "2026-11-12",
+    "assunto": "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)"
+   },
    {
     "sha": "b2813f8",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "13a00e0",
     "data": "2026-11-12",
     "assunto": "fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)"
-   },
-   {
-    "sha": "daba6eb",
-    "data": "2026-11-12",
-    "assunto": "chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares"
    }
   ],
-  "arquivos_mudados_7d": 665,
+  "arquivos_mudados_7d": 662,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 14
+    "mudancas": 13
    },
    {
     "arquivo": "docs/ci/README.md",
