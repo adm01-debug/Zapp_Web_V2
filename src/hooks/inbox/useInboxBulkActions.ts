@@ -7,6 +7,7 @@ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 // JID) faria o PostgREST responder 400 e o lote inteiro falharia. Mesma guarda
 // usada em `useCalls` — uma fonte só para o formato de uuid.
 import { isValidUUID } from '@/hooks/communication/useCalls';
+import { moveConversationsStatus, type ConversationStatus } from '@/hooks/inbox/conversationArchive';
 
 interface UseInboxBulkActionsProps {
   refetch: () => void;
@@ -130,6 +131,8 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     const contactIds = Array.from(selectedIds);
+    // Dono visto na lista, por contato: vai como p_expected_agent_id (compare-and-set).
+    const donoVisto = new Map(filteredConversations.map((c) => [c.contact.id, c.contact.assigned_to ?? null]));
     const failures: unknown[] = [];
     let transferidos = 0;
 
@@ -143,6 +146,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           p_to_agent_id: type === 'agent' ? targetId : undefined,
           p_to_queue_id: type === 'queue' ? targetId : undefined,
           p_note: undefined,
+          p_expected_agent_id: donoVisto.get(contactId) ?? undefined,
         });
         if (error) failures.push(error);
         else transferidos += 1;
@@ -169,7 +173,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     toast.success(`${contactIds.length} contato(s) transferido(s)`);
     clearSelection();
     refetch();
-  }, [selectedIds, clearSelection, refetch]);
+  }, [selectedIds, clearSelection, refetch, filteredConversations]);
 
   const bulkArchive = useCallback(async () => {
     if (selectedIds.size === 0) return;
@@ -204,30 +208,30 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         successMessage: `${targetIds.length} contato(s) arquivado(s)`,
         undoMessage: 'Arquivamento desfeito',
         action: async () => {
-          const { error } = await supabase
-            .from('contacts')
-            .update({ conversation_status: 'archived' })
-            .in('id', targetIds);
-          if (error) throw error;
+          // P1-2: pela RPC de lote (UPDATE direto em conversation_status é recusado no banco).
+          await moveConversationsStatus(targetIds, 'archived');
           clearSelection();
           refetch();
         },
         undoAction: async () => {
-          // Trigger enforce_conversation_status_transition: de 'archived' só são
-          // válidos 'open' e 'pending' em um único passo. Para restaurar
-          // waiting/resolved/closed, fazemos dois passos: archived→open→original.
+          // Trigger enforce_conversation_status_transition: de 'archived' só é
+          // válido 'open' em um único passo. Para restaurar waiting/resolved,
+          // fazemos dois passos: archived→open→original.
           //
           // Cada UPDATE só atinge quem AINDA está no estado esperado
           // (`conversation_status='archived'` no 1º passo, `'open'` no 2º) e devolve os
           // ids atingidos: uma conversa reaberta por mensagem nova durante a janela do
           // desfazer não é forçada de volta a resolved/waiting. Um grupo que falha não
           // impede os outros; o resultado é contado por conversa.
-          const validFromArchived = new Set(['open', 'pending']);
+          const validFromArchived = new Set(['open']);
           const directGroups = new Map<string, string[]>();
           const twoStepGroups = new Map<string, string[]>();
 
           for (const id of targetIds) {
-            const original = previousStatus.get(id) ?? 'open';
+            // 'pending'/'closed' são legados (fora de regras.md §4.1): a FSM não deixa
+            // ninguém ENTRAR neles, então o desfazer devolve essas conversas a 'open'.
+            const lido = previousStatus.get(id) ?? 'open';
+            const original = lido === 'pending' || lido === 'closed' ? 'open' : lido;
             const groups = validFromArchived.has(original) ? directGroups : twoStepGroups;
             const g = groups.get(original) ?? [];
             g.push(id);
@@ -238,17 +242,13 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           let failed = false;
 
           const moveTo = async (status: string, ids: string[], from: string): Promise<string[]> => {
-            const { data, error } = await supabase
-              .from('contacts')
-              .update({ conversation_status: status as unknown as string })
-              .in('id', ids)
-              .eq('conversation_status', from as unknown as string)
-              .select('id');
-            if (error) {
+            try {
+              const moved = await moveConversationsStatus(ids, status as ConversationStatus, from as ConversationStatus);
+              return [...moved.keys()];
+            } catch {
               failed = true;
               return [];
             }
-            return ((data ?? []) as Array<{ id: string }>).map((row) => row.id);
           };
 
           try {

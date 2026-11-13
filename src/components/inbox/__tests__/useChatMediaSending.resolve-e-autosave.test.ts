@@ -25,6 +25,7 @@ function mediaChain(table: string) {
   const chain: Record<string, unknown> = {};
   chain.select = () => chain;
   chain.eq = () => chain;
+  chain.order = () => chain;
   chain.limit = () => chain;
   chain.maybeSingle = () => {
     if (table === 'contacts') return mocks.contactsMaybeSingle();
@@ -75,7 +76,7 @@ beforeEach(() => {
     error: null,
   });
   mocks.connectionsMaybeSingle.mockResolvedValue({
-    data: { instance_id: 'instancia-1' },
+    data: { instance_id: 'instancia-1', status: 'connected' },
     error: null,
   });
   mocks.stickersMaybeSingle.mockResolvedValue({ data: { id: 'sticker-existente' }, error: null });
@@ -136,5 +137,32 @@ describe('useChatMediaSending — auto-save de figurinha', () => {
       'Nao foi possivel verificar a figurinha enviada:',
       expect.any(Error),
     );
+  });
+});
+
+describe('useChatMediaSending — P0-1: conexão do contato caída não troca de número', () => {
+  it('avisa "WhatsApp desconectado" e não envia quando a conexão do contato está fora do ar', async () => {
+    mocks.connectionsMaybeSingle.mockResolvedValue({
+      data: { instance_id: 'instancia-1', status: 'disconnected', name: 'Comercial' },
+      error: null,
+    });
+    const { result } = render();
+
+    await act(async () => {
+      await result.current.handleSendSticker('https://cdn.test/figurinha.webp');
+    });
+
+    expect(mocks.sendOutboundMessage).not.toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'WhatsApp desconectado' }));
+  });
+
+  it('a conexão de teste do E2E atribuída ao contato conta como desconectada', async () => {
+    mocks.connectionsMaybeSingle.mockResolvedValue({
+      data: { instance_id: 'E2E_FIXTURE', status: 'connected', name: '[E2E] Conexão WhatsApp Teste' },
+      error: null,
+    });
+    const { result } = render();
+
+    await expect(result.current.resolveInstance()).resolves.toBe('');
   });
 });

@@ -335,6 +335,7 @@ export function useConversationActions() {
     type: 'agent' | 'queue' | 'connection',
     targetId: string,
     note?: string,
+    expectedAgentId?: string | null,
   ) => {
     if (type === 'connection') {
       toast.error('Transferência por conexão ainda não é suportada');
@@ -347,12 +348,19 @@ export function useConversationActions() {
       p_to_agent_id: type === 'agent' ? targetId : undefined,
       p_to_queue_id: type === 'queue' ? targetId : undefined,
       p_note: trimmedNote || undefined,
+      // Compare-and-set do dono visto na lista (40001 se outro atendente transferiu antes).
+      p_expected_agent_id: expectedAgentId ?? undefined,
     });
 
     // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
     // usa a rejeição pra manter o diálogo/alvo abertos. A RPC é transacional:
     // erro nela significa que nem UPDATE em contacts nem evento foram persistidos.
-    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
+    if (error) {
+      toast.error(error.code === '40001'
+        ? 'Esta conversa já foi transferida por outro atendente. Atualize a lista.'
+        : 'Erro ao transferir conversa');
+      throw error;
+    }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 
