@@ -1,0 +1,10 @@
+import { chromium } from 'playwright'; import fs from 'node:fs';
+const [base, dir] = process.argv.slice(2);
+const files = fs.readdirSync(dir + '/assets').filter(f => f.endsWith('.js'));
+const b = await chromium.launch(); const page = await b.newPage();
+const perr = []; page.on('pageerror', e => perr.push(e.message.slice(0,150)));
+await page.goto(base + '/auth', { waitUntil: 'networkidle' });
+const res = await page.evaluate(async (fs_) => { const out = []; for (const f of fs_) { try { await import('/assets/' + f); } catch (e) { out.push(f + ' :: ' + String(e && e.message || e).slice(0,160)); } } return out; }, files);
+console.log('chunks', files.length, 'import errors', res.length, 'pageerrors', perr.length);
+res.slice(0,15).forEach(x => console.log('E', x)); [...new Set(perr)].slice(0,10).forEach(x=>console.log('P', x));
+await b.close();
