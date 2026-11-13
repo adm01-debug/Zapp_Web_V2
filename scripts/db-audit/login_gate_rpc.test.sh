@@ -15,8 +15,9 @@
 #       * as duas escritas são atômicas com a transação do chamador;
 #       * só service_role executa (anon e authenticated recebem permission denied);
 #       * entrada inválida levanta exceção;
-#       * p95 da chamada única < p95 da sequência antiga de três chamadas
-#         (medido no cliente, mesma sessão psql, \timing por statement).
+#       * p95 e p50 da chamada única < os da sequência antiga de três chamadas
+#         (medido no cliente, mesma sessão psql, \timing por statement,
+#         amostras intercaladas ABBA após aquecimento).
 #
 # NAO entra no CI direto (workflows são do dono do workflow): registrada na
 # ALLOWLIST de scripts/ci/check-test-inventory.mjs. Roda via Docker local.
@@ -27,7 +28,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$(ls "$repo_root"/supabase/migrations/*_login_gate_rpc.sql | head -n1)"
 postgres_image="${LOGIN_GATE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-login-gate-test-$$"
-bench_n="${LOGIN_GATE_BENCH_N:-300}"
+bench_n="${LOGIN_GATE_BENCH_N:-1000}"
+bench_warmup="${LOGIN_GATE_BENCH_WARMUP:-100}"
 
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 
@@ -287,43 +289,69 @@ expect_error 'B.27 p_ip_max < 1 levanta exceção' 'p_ip_max invalido' \
 
 printf '\n============ BLOCO C — p95: chamada única vs sequência antiga ============\n'
 # Mesma sessão psql (stdin), \timing por statement: mede execução + round-trip
-# por chamada, como a edge vê. ANTIGA = 3 statements por tentativa; NOVA = 1.
-{
-  printf '\\timing on\n'
-  for _ in $(seq 1 "$bench_n"); do
-    cat <<'SQL'
-SELECT allowed FROM public.consume_rate_limit('auth-login:10.9.9.9', 10, 60);
+# por chamada, como a edge vê. ANTIGA = 3 statements por tentativa (soma dos 3
+# tempos); NOVA = 1.
+#
+# Desenho anti-ruído (falso vermelho na PR #3023: p95_novo=1.199ms contra
+# p95_antigo=0.945ms, quando o histórico do CI mostra o novo em ~0,5x o antigo).
+# Antes eram dois lotes em sequência fixa (300 antigas, DEPOIS 300 novas, ~0,1-0,3 s
+# cada): um único soluço do runner compartilhado (fsync/checkpoint, CPU roubada)
+# caía inteiro num lote só e virava o p95 dele. Agora:
+#   * aquecimento descartado das duas versões (cache de plano, catálogo, plpgsql);
+#   * amostras INTERCALADAS na mesma sessão, em ordem ABBA (antiga->nova,
+#     nova->antiga, ...): ruído transitório e o inchaço da tabela atingem as duas
+#     versões na mesma janela de tempo, e nenhuma ganha por ir primeiro;
+#   * n maior (padrão 1000 por versão).
+# Critério sem margem e mais estrito que antes: p95_novo < p95_antigo E
+# p50_novo < p50_antigo.
+bench_old="SELECT allowed FROM public.consume_rate_limit('auth-login:10.9.9.9', 10, 60);
 SELECT allowed FROM public.consume_rate_limit('auth-login-email:bench@x.com', 20, 60);
-SELECT is_locked FROM public.is_account_locked('bench@x.com');
-SQL
-  done
-} > "$tmp_dir/bench_old.sql"
+SELECT is_locked FROM public.is_account_locked('bench@x.com');"
+bench_new="SELECT allowed FROM public.consume_login_gate('bench@x.com','10.9.9.8',10,60,20,60);"
 {
+  for _ in $(seq 1 "$bench_warmup"); do printf '%s\n%s\n' "$bench_old" "$bench_new"; done
   printf '\\timing on\n'
-  for _ in $(seq 1 "$bench_n"); do
-    echo "SELECT allowed FROM public.consume_login_gate('bench@x.com','10.9.9.8',10,60,20,60);"
+  for i in $(seq 1 "$bench_n"); do
+    if (( i % 2 )); then
+      printf '\\echo @@ANTIGA\n%s\n\\echo @@NOVA\n%s\n' "$bench_old" "$bench_new"
+    else
+      printf '\\echo @@NOVA\n%s\n\\echo @@ANTIGA\n%s\n' "$bench_new" "$bench_old"
+    fi
   done
-} > "$tmp_dir/bench_new.sql"
+  printf '\\echo @@FIM\n'
+} > "$tmp_dir/bench.sql"
 
 docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
-  < "$tmp_dir/bench_old.sql" > "$tmp_dir/bench_old.out" 2>&1
-docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
-  < "$tmp_dir/bench_new.sql" > "$tmp_dir/bench_new.out" 2>&1
+  < "$tmp_dir/bench.sql" > "$tmp_dir/bench.out" 2>&1 \
+  || { tail -n 20 "$tmp_dir/bench.out" >&2; fail 'benchmark interrompido por erro do psql'; }
 
-old_p95="$(grep -c '^Time:' "$tmp_dir/bench_old.out" >/dev/null \
-  && grep '^Time:' "$tmp_dir/bench_old.out" | awk '{s+=$2; n++} n%3==0{print s; s=0}' \
-     | sort -n | awk '{a[NR]=$1} END{print a[int(0.95*NR + 0.999999)]}')"
-new_p95="$(grep '^Time:' "$tmp_dir/bench_new.out" | awk '{print $2}' \
-  | sort -n | awk '{a[NR]=$1} END{print a[int(0.95*NR + 0.999999)]}')"
-old_count="$(grep -c '^Time:' "$tmp_dir/bench_old.out" || true)"
-new_count="$(grep -c '^Time:' "$tmp_dir/bench_new.out" || true)"
-[[ "$old_count" -eq $((bench_n * 3)) ]] || fail "benchmark antigo incompleto: $old_count statements (esperava $((bench_n * 3)))"
-[[ "$new_count" -eq "$bench_n" ]] || fail "benchmark novo incompleto: $new_count statements (esperava $bench_n)"
-printf 'p95_antigo=%sms (sequência de 3 chamadas, n=%s)\n' "$old_p95" "$bench_n"
-printf 'p95_novo=%sms (chamada única, n=%s)\n' "$new_p95" "$bench_n"
+# Uma linha por amostra: "<VERSAO> <soma_ms> <statements>".
+awk '/^@@/{ if (v != "") print v, s, c; v = substr($0, 3); s = 0; c = 0; next }
+     /^Time: /{ s += $2; c++ }' "$tmp_dir/bench.out" > "$tmp_dir/bench.samples"
+old_count="$(awk '$1=="ANTIGA" && $3==3' "$tmp_dir/bench.samples" | wc -l)"
+new_count="$(awk '$1=="NOVA" && $3==1' "$tmp_dir/bench.samples" | wc -l)"
+total_count="$(wc -l < "$tmp_dir/bench.samples")"
+[[ "$old_count" -eq "$bench_n" ]] || fail "benchmark antigo incompleto: $old_count amostras de 3 statements (esperava $bench_n)"
+[[ "$new_count" -eq "$bench_n" ]] || fail "benchmark novo incompleto: $new_count amostras de 1 statement (esperava $bench_n)"
+[[ "$total_count" -eq $((bench_n * 2)) ]] || fail "benchmark com amostras inesperadas: $total_count (esperava $((bench_n * 2)))"
+
+# Percentil por posto mais próximo (nearest-rank), como antes.
+percentil() {
+  awk -v versao="$1" '$1==versao{print $2}' "$tmp_dir/bench.samples" \
+    | sort -n | awk -v p="$2" '{a[NR]=$1} END{print a[int(p*NR + 0.999999)]}'
+}
+old_p95="$(percentil ANTIGA 0.95)"; new_p95="$(percentil NOVA 0.95)"
+old_p50="$(percentil ANTIGA 0.50)"; new_p50="$(percentil NOVA 0.50)"
+printf 'p95_antigo=%sms p50_antigo=%sms (sequência de 3 chamadas, n=%s, intercalado ABBA, aquecimento=%s)\n' \
+  "$old_p95" "$old_p50" "$bench_n" "$bench_warmup"
+printf 'p95_novo=%sms p50_novo=%sms (chamada única, n=%s, intercalado ABBA, aquecimento=%s)\n' \
+  "$new_p95" "$new_p50" "$bench_n" "$bench_warmup"
 awk -v novo="$new_p95" -v antigo="$old_p95" 'BEGIN{exit !(novo < antigo)}' \
   || fail "p95_novo ($new_p95) não é menor que p95_antigo ($old_p95)"
 printf '[PASS] %s\n' "C.1 p95_novo < p95_antigo (${new_p95}ms < ${old_p95}ms)"
+awk -v novo="$new_p50" -v antigo="$old_p50" 'BEGIN{exit !(novo < antigo)}' \
+  || fail "p50_novo ($new_p50) não é menor que p50_antigo ($old_p50)"
+printf '[PASS] %s\n' "C.2 p50_novo < p50_antigo (${new_p50}ms < ${old_p50}ms)"
 
 echo ""
 echo "OK — consume_login_gate: bloqueio antes dos contadores, tetos, atomicidade, grants e p95 verificados."
