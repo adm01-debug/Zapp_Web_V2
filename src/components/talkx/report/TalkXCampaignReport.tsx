@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { ChevronLeft, Download, ExternalLink, FileBarChart2, FileText, Lightbulb } from 'lucide-react';
 
 import { fromTable, supabase } from '@/lib/supabaseHelpers';
@@ -226,6 +227,8 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
     try {
       const blob = await buildTalkXCampaignPdfBlob(campaign, kpis);
       downloadFileWithPermission(blob, `relatorio-${campaign.id}.pdf`, { canDownload });
+    } catch {
+      toast.error('Não foi possível gerar o PDF. Tente novamente.');
     } finally {
       setPdfLoading(false);
     }

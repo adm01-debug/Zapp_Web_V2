@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 
@@ -13,7 +15,7 @@ export default function VerifyEmail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<VerificationStatus>('loading');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => searchParams.get('email') ?? '');
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -68,9 +70,15 @@ export default function VerifyEmail() {
   }, [searchParams]);
 
   const handleResendEmail = async () => {
+    // No erro não há sessão: o email vem da URL (?email=) ou do campo abaixo.
+    const target = email.trim();
+    if (!target) {
+      toast.error('Informe seu email para reenviar a verificação');
+      return;
+    }
     const { error } = await supabase.auth.resend({
       type: 'signup',
-      email: email,
+      email: target,
     });
 
     if (error) {
@@ -148,7 +156,16 @@ export default function VerifyEmail() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button className="w-full" onClick={handleResendEmail}>
+              <Label htmlFor="verify-email-resend">Email</Label>
+              <Input
+                id="verify-email-resend"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+              />
+              <Button className="w-full" onClick={handleResendEmail} disabled={!email.trim()}>
                 <Mail className="w-4 h-4 mr-2" />
                 Reenviar Email
               </Button>

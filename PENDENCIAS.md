@@ -1,7 +1,7 @@
 # PENDÊNCIAS CI — 2026-11-12
 
 Documento gerado pelo loop de fix CI desta sessão.
-Última atualização: 2026-11-12T11:30Z
+Última atualização: 2026-11-12T12:25Z
 
 ---
 
@@ -52,8 +52,8 @@ Este run foi disparado por um push de branch de PR (não pela main). `run_attemp
 
 **Prova de ghost interno (duas APIs tentadas, ambas retornaram HTTP 409):**
 
-1. `github_cancel_workflow_run(#40410990313)` → HTTP 409 `"Cannot cancel a workflow run that is not in progress"`
-2. `github_force_cancel_workflow_run(#40410990313)` → HTTP 409 `"Cannot cancel a workflow run that is not in progress"`
+1. `github_force_cancel_workflow_run(#40410990313)` → HTTP 409 `"Cannot cancel a workflow run that is not in progress"`
+2. `github_cancel_workflow_run(#40410990313)` → HTTP 409 `"Cannot cancel a workflow run that is not in progress"`
 
 O próprio endpoint de cancelamento confirma que o run **não está em progresso** internamente — a API GET mostrar `in_progress` é estado stale/ghost do GitHub. **Não é possível cancelar via API.** Requer ação via UI de GitHub Actions em https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313
 
@@ -63,7 +63,7 @@ O próprio endpoint de cancelamento confirma que o run **não está em progresso
 
 ## §3 — Baseline Local
 
-**VERIFICADO ✅** — confirmado nesta sessão (2026-11-12T09:xx–11:xxZ).
+**VERIFICADO ✅** — confirmado nesta sessão (2026-11-12T09:xx–12:21Z).
 
 Resultados do container da sessão em `/home/user/Zapp_Web_V2`:
 
@@ -90,7 +90,7 @@ node scripts/ci/lint-ratchet.mjs
 # LINT_EXIT=0  ✅
 ```
 
-Vitest: confirmado exit 0 via task anterior desta sessão. Dados completos em RELATORIO_CI.md §1 (sessão 2026-11-05) e §6 (sessão 2026-11-12).
+Vitest: **VERIFICADO ✅** — task `bhgtzypf7` (2026-11-12T11:54Z–12:21Z): `Test Files  1864 passed | 5 skipped (1869)`, `Tests  15870 passed | 19 expected fail | 41 todo (15930)`, `Duration  1437.48s`, `VITEST_EXIT:0`. Ver RELATORIO_CI.md §6.4.
 
 ---
 
@@ -111,7 +111,8 @@ Consulta: última execução de cada workflow na `main` em 2026-11-12T11:12Z.
 |---|---|---|---|---|
 | CI/CD Pipeline | [#43204721826](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721826) | completed | ✅ success | Pós-merge PR #2988 |
 | CodeQL | [#43192262198](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192262198) | completed | ✅ success | — |
-| DB Guard (offline) | [#43204721752](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721752) | in_progress | ⏳ pending | Pós-merge PR #2988 |
+| Contexto para agentes | [#43207189905](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43207189905) | queued | ⏳ pending | Disparado por push desta sessão |
+| DB Guard (offline) | [#43204721752](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721752) | in_progress | ⏳ pending | Pós-merge PR #2988 — aguardando resultado |
 | Deploy Edge Functions | [#43189662194](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43189662194) | completed | ✅ success | — |
 | E2E logado | [#43206905499](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43206905499) | in_progress | ⏳ pending | SHA `0a1e73f2` (pré-fix #2987) — ver §1 |
 | Front release targets | [#43204721755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721755) | completed | ✅ success | — |
@@ -123,4 +124,4 @@ Consulta: última execução de cada workflow na `main` em 2026-11-12T11:12Z.
 
 ---
 
-_Gerado em 2026-11-12T11:30Z por loop de fix CI — sessão `session_01ERPZLui4ik38jdekvdzwft`_
+_Gerado em 2026-11-12T12:25Z por loop de fix CI — sessão `session_01ERPZLui4ik38jdekvdzwft`_
