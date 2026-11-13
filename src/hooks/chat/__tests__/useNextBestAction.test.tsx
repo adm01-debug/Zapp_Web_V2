@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 type Row = Record<string, unknown>;
 interface TableConfig { rows: Row[]; error: { message: string } | null }
@@ -95,7 +97,8 @@ vi.mock('@/integrations/supabase/client', () => {
   return { supabase: { from: (table: string) => makeBuilder(table) } };
 });
 
-import { useNextBestAction, OPEN_TASK_STATUSES } from '@/hooks/chat/useNextBestAction';
+import { useNextBestAction, OPEN_TASK_STATUSES, nextBestActionKey } from '@/hooks/chat/useNextBestAction';
+import { act } from '@testing-library/react';
 
 const CONTACT = 'c1';
 
@@ -110,7 +113,9 @@ function emptyTables() {
 }
 
 async function render(contactId = CONTACT) {
-  const hook = renderHook(() => useNextBestAction(contactId, 'Maria Silva'));
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: qc }, children);
+  const hook = renderHook(() => useNextBestAction(contactId, 'Maria Silva'), { wrapper });
   await waitFor(() => expect(hook.result.current.loading).toBe(false));
   return hook.result.current.actions;
 }
@@ -291,5 +296,38 @@ describe('useNextBestAction', () => {
     expect(actions.some(a => a.type === 'data_unavailable')).toBe(true);
     expect(actions.some(a => a.type === 'escalate')).toBe(false);
     expect(actions.some(a => a.type === 'upsell')).toBe(false);
+  });
+
+  it('P1-8: três montagens do mesmo contato dividem UMA leitura de cada fonte', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: qc }, children);
+    const hook = renderHook(() => [
+      useNextBestAction(CONTACT, 'Maria Silva'),
+      useNextBestAction(CONTACT, 'Maria Silva'),
+      useNextBestAction(CONTACT, 'Maria'),
+    ], { wrapper });
+    await waitFor(() => expect(hook.result.current.every((r) => !r.loading)).toBe(true));
+
+    expect(h.queries.filter((q) => q.table === 'messages')).toHaveLength(1);
+    expect(h.queries.filter((q) => q.table === 'conversation_tasks')).toHaveLength(1);
+    expect(h.queries.filter((q) => q.table === 'conversation_sla')).toHaveLength(1);
+    expect(h.queries.filter((q) => q.table === 'conversation_memory')).toHaveLength(1);
+  });
+
+  it('P1-8: "Responder agora" some depois da resposta quando o painel invalida a chave', async () => {
+    h.tables.messages = {
+      rows: [{ id: 'm1', contact_id: CONTACT, sender: 'contact', created_at: new Date(Date.now() - 3 * 3600_000).toISOString() }],
+      error: null,
+    };
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: qc }, children);
+    const hook = renderHook(() => useNextBestAction(CONTACT, 'Maria Silva'), { wrapper });
+    await waitFor(() => expect(hook.result.current.actions.some((a) => a.type === 'respond')).toBe(true));
+
+    // O atendente respondeu: a mensagem mais recente agora é do agente.
+    h.tables.messages.rows.push({ id: 'm2', contact_id: CONTACT, sender: 'agent', created_at: new Date().toISOString() });
+    await act(async () => { await qc.invalidateQueries({ queryKey: nextBestActionKey(CONTACT) }); });
+
+    await waitFor(() => expect(hook.result.current.actions.some((a) => a.type === 'respond')).toBe(false));
   });
 });

@@ -6,6 +6,7 @@ import { MessageRow } from '@/types/chat';
 import { ContactRow } from '@/types/contact';
 import { RealtimeService } from '@/services/realtime.service';
 import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
+import { GLOBAL_CONTACTS_CHANNEL, GLOBAL_MESSAGES_CHANNEL } from '../realtime/globalChannels';
 import { sendMessageToContact } from '../realtime/messageSender';
 import {
   normalizeMessage, buildConversation,
@@ -212,7 +213,7 @@ export function useRealtimeMessages() {
   // depois. Os dois canais compartilham o callback: o limite por identidade em
   // useSupabaseRealtime colapsa os dois gatilhos em uma unica busca.
   useSupabaseRealtime<RealtimeMessage>({
-    channelName: 'global-messages-realtime',
+    channelName: GLOBAL_MESSAGES_CHANNEL,
     table: 'messages',
     onInsert: handleNewMessage,
     onUpdate: handleMessageUpdate,
@@ -221,7 +222,7 @@ export function useRealtimeMessages() {
   });
 
   useSupabaseRealtime<ConversationContact>({
-    channelName: 'global-contacts-realtime',
+    channelName: GLOBAL_CONTACTS_CHANNEL,
     table: 'contacts',
     onUpdate: handleContactUpdate,
     enabled: true,
