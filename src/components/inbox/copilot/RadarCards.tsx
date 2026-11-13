@@ -189,7 +189,7 @@ interface AlertsCardProps {
 
 export function AlertsCard({ alerts, collapsed, onToggle }: AlertsCardProps) {
   const badge = alerts.length > 0 ? (
-    <span className="ml-auto mr-1 rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">{alerts.length}</span>
+    <span className="ml-auto mr-1 rounded-full bg-warning px-1 text-[9px] font-bold text-warning-foreground">{alerts.length}</span>
   ) : null;
 
   return (

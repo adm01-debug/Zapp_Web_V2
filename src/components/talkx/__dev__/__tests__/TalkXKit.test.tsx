@@ -6,6 +6,15 @@ import {
 } from '../../kit/forcedState';
 import { TalkXQueryBoundary } from '../../kit/states';
 
+// X057: a prancha lê KPIs reais via useTalkXOverviewStats (useQuery). O teste
+// cobre a prancha e o estado forçado, não a RPC — mesmo mock dos testes do Overview.
+const stats = vi.hoisted(() => ({
+  atual: { data: undefined as unknown, isLoading: false, isError: false, refetch: () => Promise.resolve() },
+}));
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: () => stats.atual,
+}));
+
 /**
  * X055 — prancha de referência (`TalkXKit`) e estado forçado por URL.
  *
@@ -28,6 +37,7 @@ function irPara(search: string) {
 
 beforeEach(() => {
   irPara('?view=talkx-kit');
+  stats.atual = { data: undefined, isLoading: false, isError: false, refetch: vi.fn().mockResolvedValue(undefined) };
 });
 
 describe('TalkXKit — prancha de referência (X055)', () => {
@@ -160,5 +170,33 @@ describe('boundary respeita o estado forçado (X055)', () => {
     expect(screen.getByText('conteudo')).toBeTruthy();
     expect(container.querySelector('[data-talkx-query="content"]')).toBeTruthy();
     expect(screen.queryByText('esqueleto')).toBeNull();
+  });
+});
+
+describe('TalkXKit — KPIs reais (X057)', () => {
+  const dados = {
+    active: 2,
+    dailySent: [1, 2, 3],
+    current: { campaignsSent: 3, completed: 1, contactsReached: 900, sent: 1234, deliveryRatePct: 87.5 },
+    previous: null,
+  };
+
+  it('o KPI de envios se chama "Enviadas" (o valor é current.sent, não entregues)', () => {
+    stats.atual = { ...stats.atual, data: dados };
+    render(<TalkXKit />);
+    const kpi = screen.getByTestId('talkx-kit-kpi');
+    expect(kpi.textContent).toContain('Enviadas');
+    expect(kpi.textContent).not.toContain('Entregues');
+  });
+
+  it('erro na leitura dos KPIs mostra o estado de erro com "Tentar novamente", não cartões vazios', () => {
+    stats.atual = { ...stats.atual, isError: true };
+    render(<TalkXKit />);
+    const erro = screen.getByTestId('talkx-kit-kpi-erro');
+    expect(erro.textContent).toContain('Não foi possível carregar as métricas');
+    const botao = Array.from(erro.querySelectorAll('button')).find((b) => /tentar/i.test(b.textContent ?? ''));
+    expect(botao).toBeTruthy();
+    botao!.click();
+    expect(stats.atual.refetch).toHaveBeenCalledTimes(1);
   });
 });
