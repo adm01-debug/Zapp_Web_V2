@@ -247,3 +247,58 @@ test("MUTAÇÃO: vazamento injetado num edge de verdade é detectado (e o diret�
   writeFileSync(path.join(raiz, "create-user", "index.ts"), "export const x = (err) => internalErrorResponse(err, req);\n");
   assert.equal(main(raiz, []), 0, "fonte limpa deveria passar");
 });
+
+// #2880: o `.message` do erro do PostgREST (texto do Postgres: coluna, função,
+// timeout, permissão) ia cru num 409 em talkx-send/multiplix-send. A guarda passa a
+// pegar esse vazamento em QUALQUER status quando a variável veio de `.rpc(`/`.from(`.
+
+test("#2880: error.message do PostgREST num 409 é achado (forma da main antes da correção)", () => {
+  const fonte = [
+    "const { data, error } = await supabase.rpc(\"transition_talkx_campaign\", { p_campaign_id: id });",
+    "if (error) {",
+    "  return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });",
+    "}",
+  ].join("\n");
+  const achados = acharExposicoes(fonte);
+  assert.equal(achados.length, 1);
+  assert.equal(achados[0].padrao, "error.message do banco na resposta");
+  assert.equal(achados[0].linha, 3);
+});
+
+test("#2880: alias do erro (`error: retryError`) e jsonResponse também são achados", () => {
+  const fonte = [
+    "const { data: retried, error: retryError } = await supabase.rpc(\"retry_talkx_recipient\", { p_recipient_id: id });",
+    "if (retryError) return jsonResponse({ error: retryError.message }, 409, req);",
+    "const { error: transitionError } = await supabase.from(\"x\").update({}).eq(\"id\", id);",
+    "if (transitionError) return new Response(JSON.stringify({ error: transitionError?.message }), { status: 409 });",
+  ].join("\n");
+  assert.deepEqual(acharExposicoes(fonte).map((a) => a.linha), [2, 4]);
+});
+
+test("#2880: código saneado não é achado; catch (error) que sombreia o nome não é erro do banco", () => {
+  const fonte = [
+    "const { error } = await supabase.rpc(\"transition_multiplix_dispatch\", { p_dispatch_id: id });",
+    "if (error) return new Response(JSON.stringify({ error: safeDbErrorCode(error) }), { status: 409, headers });",
+    "try { await x(); } catch (error) {",
+    "  if (error instanceof PolicyError) return jsonResponse({ error: 'policy', message: error.message }, 400, req);",
+    "}",
+  ].join("\n");
+  assert.deepEqual(acharExposicoes(fonte), []);
+});
+
+test("#2880 MUTAÇÃO: os três pontos reais revertidos reprovam a varredura do diretório", () => {
+  const raiz = mkdtempSync(path.join(tmpdir(), "edge-exposure-2880-"));
+  mkdirSync(path.join(raiz, "talkx-send"), { recursive: true });
+  const vazando = [
+    "export async function h(supabase, headers) {",
+    "  const { error: transitionError } = await supabase.rpc(\"transition_talkx_campaign\", {});",
+    "  if (transitionError) {",
+    "    return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });",
+    "  }",
+    "}",
+  ].join("\n");
+  writeFileSync(path.join(raiz, "talkx-send", "index.ts"), vazando);
+  assert.equal(main(raiz, []), 1, "a guarda deveria reprovar o 409 com error.message");
+  writeFileSync(path.join(raiz, "talkx-send", "index.ts"), vazando.replace("transitionError.message", "safeDbErrorCode(transitionError)"));
+  assert.equal(main(raiz, []), 0, "com o código saneado a varredura passa");
+});
