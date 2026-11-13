@@ -22,14 +22,3 @@ const AREA_DE_TOQUE =
 export const FILE_ACTION_BUTTON =
   'relative w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ' +
   AREA_DE_TOQUE;
-
-/**
- * O botão "Encaminhar" (ainda inexistente) do cartão, da lista e da tabela:
- * mesma base, sem responder ao ponteiro. O cinza de antes
- * (`text-muted-foreground/50`) segue igual, agora preso ao `:disabled` — mais
- * específico que o `text-muted-foreground` e o `hover:` da base, então não
- * depende da ordem do CSS gerado. No hover não pinta fundo nem acende o ícone,
- * como antes.
- */
-export const FILE_ACTION_BUTTON_DISABLED =
-  `${FILE_ACTION_BUTTON} disabled:text-muted-foreground/50 cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground/50`;
