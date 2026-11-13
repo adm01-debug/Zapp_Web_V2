@@ -8894,7 +8894,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
    "tipo": "unit",
-   "linhas": 557,
+   "linhas": 559,
    "testa": [
     "src/components/inbox/tabs/AudioPlayButton.tsx",
     "src/components/inbox/tabs/FileCard.tsx",
@@ -8932,7 +8932,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/fileActionButton.test.tsx",
    "tipo": "unit",
-   "linhas": 174,
+   "linhas": 167,
    "testa": [
     "src/components/inbox/tabs/FileCard.tsx",
     "src/components/inbox/tabs/fileActionButton.ts",
@@ -8943,7 +8943,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/FileCard.test.tsx",
    "tipo": "unit",
-   "linhas": 340,
+   "linhas": 342,
    "testa": [
     "src/components/inbox/tabs/FileCard.tsx",
     "src/hooks/chat/useContactMedia.ts"
@@ -8996,12 +8996,12 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
    "tipo": "unit",
-   "linhas": 141,
+   "linhas": 154,
    "testa": [
     "src/components/inbox/tabs/FilesContent.tsx",
     "src/hooks/chat/useContactMedia.ts"
    ],
-   "casos": 12
+   "casos": 13
   },
   {
    "arquivo": "src/components/inbox/tabs/__tests__/FilesLayoutPopover.test.tsx",
@@ -9016,7 +9016,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/FilesListView.test.tsx",
    "tipo": "unit",
-   "linhas": 131,
+   "linhas": 132,
    "testa": [
     "src/components/inbox/tabs/FilesListView.tsx",
     "src/hooks/chat/useContactMedia.ts",
@@ -9130,7 +9130,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
    "tipo": "unit",
-   "linhas": 310,
+   "linhas": 324,
    "testa": [
     "src/components/inbox/tabs/FilesTab.tsx",
     "src/hooks/chat/useContactMedia.ts",
@@ -9138,12 +9138,12 @@
     "src/hooks/chat/useFilesViewState.ts",
     "src/lib/fileSenderIdentity.ts"
    ],
-   "casos": 15
+   "casos": 16
   },
   {
    "arquivo": "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx",
    "tipo": "unit",
-   "linhas": 189,
+   "linhas": 190,
    "testa": [
     "src/components/inbox/tabs/FilesTableView.tsx",
     "src/hooks/chat/useContactMedia.ts",

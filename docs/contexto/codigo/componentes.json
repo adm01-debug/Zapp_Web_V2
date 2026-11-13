@@ -7195,7 +7195,7 @@
     "FileCard"
    ],
    "export_default": null,
-   "linhas": 207,
+   "linhas": 206,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -7243,7 +7243,7 @@
     "FilesContentSelection"
    ],
    "export_default": null,
-   "linhas": 325,
+   "linhas": 327,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -7271,7 +7271,7 @@
     "FilesListView"
    ],
    "export_default": null,
-   "linhas": 155,
+   "linhas": 157,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -7325,7 +7325,7 @@
     "FilesTableView"
    ],
    "export_default": null,
-   "linhas": 258,
+   "linhas": 260,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],

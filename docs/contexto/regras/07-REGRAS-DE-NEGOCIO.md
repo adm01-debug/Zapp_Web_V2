@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `2bfcdbdd06` · branch `main` · 2026-11-13 09:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `51bd8cb875` · branch `main` · 2026-11-13 10:30 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4608,7 +4608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21339 testes em 2261 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21341 testes em 2261 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4849,6 +4849,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` | 18 | AutomationEditorDialog — estado por registro (R2-MOD-001) · mostra os dados do registro aberto · ao trocar de registro (mesmo componente montado), não reaproveita o estado do anterior · ao abrir  … |
 | `src/components/groups/__tests__/GroupsView.test.tsx` | 18 | GroupsView · renders the page title · shows empty state when no groups · renders groups when data loads … |
 | `src/components/inbox/__tests__/InboxSavedFiltersMenu.test.tsx` | 18 | InboxSavedFiltersMenu — filtros salvos do inbox · lista vazia: orienta e mantém  · aplicar: o conteúdo do preset chega ao onApply e o menu fecha · salvar: grava o filtro que está na tela, com o nome digitado … |
+| `src/components/inbox/tabs/__tests__/FilesTab.test.tsx` | 18 | FilesTab · etapa 16: a grade vem do mapa literal de colunas, sem breakpoint de viewport · renderiza os chips com as contagens reais por tipo · #144/OTH-002: erro na contagem mostra indisponível, nao um zero confirmado … |
 | `src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx` | 18 | TalkXKit — prancha de referência (X055) · sem ?talkxState= não mostra a faixa de estado forçado, mas monta as três seções · a seção de modais críticos desenha os 5 presets · ?talkxState=${estado} força o título  … |
 | `src/hooks/__tests__/useChatKeyboardNavigation.test.ts` | 18 | useChatKeyboardNavigation · initializes with no selected message · initializes with isNavigating false · exposes exitNavigationMode function … |
 | `src/hooks/__tests__/useIncomingCallListener.test.tsx` | 18 | useIncomingCallListener · subscribes to notifications scoped to the authenticated user · shows one ringing call from notification metadata and deduplicates replay · propagates the real call id from notification metadata (not the notification row id) … |
@@ -4879,7 +4880,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/__tests__/inboxA11yLoteReacoes.test.tsx` | 17 | BulkActionsToolbar — barra do lote · faz a animação de saída: a barra some DEPOIS do AnimatePresence, não de uma vez · expõe a barra como toolbar nomeada e anuncia a contagem · não tem violação de axe com a barra aberta … |
 | `src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx` | 17 | LiveSuggestions CV-041 · renderiza 3 cartões de sugestão · exibe labels de caminho corretos · chama onUse com o texto correto ao clicar em Usar … |
 | `src/components/inbox/tabs/__tests__/FileThumb.test.tsx` | 17 | FileThumb (etapa 26) · loading: mostra skeleton enquanto a URL assinada resolve · ready: imagem do cartão usa object-contain; miniatura usa object-cover · E37: imagem do CF Images recebe srcSet com as variantes; sem srcSet para as demais … |
-| `src/components/inbox/tabs/__tests__/FilesTab.test.tsx` | 17 | FilesTab · etapa 16: a grade vem do mapa literal de colunas, sem breakpoint de viewport · renderiza os chips com as contagens reais por tipo · #144/OTH-002: erro na contagem mostra indisponível, nao um zero confirmado … |
 | `src/components/monitoring/__tests__/useConnectionIncidents.test.ts` | 17 | derivação — uptime 24 h por conexão · calcula o percentual saudável por conexão e ignora check fora da janela · sem nenhum check na janela, o percentual é null (nunca 100%) · derivação — incidentes … |
 | `src/components/onboarding/__tests__/TourOverlay.a11y.test.tsx` | 17 | SHELL-05 — sem alvo de tour no DOM (casco do celular) o tour não abre · não abre cartão nenhum e não avança sozinho pelos passos vazios · o WelcomeModal esconde  · o WelcomeModal mostra o botão quando os alvos existem e ele dispara o tour … |
 | `src/components/talkx/__tests__/TalkXAudienceFilters.test.tsx` | 17 | X126 · os filtros de audiência (mock 08) · na ordem do mock: Status do contato, Empresa, Estágio no funil, Vendedor, RFM, Localização · não oferece mais filtro de Tag: nenhum controle, nenhum checkbox e nenhum texto de tag · Status do contato usa a entrada do catálogo ( … |
@@ -4908,10 +4908,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/calls/__tests__/RecordingPlayer.test.tsx` | 16 | RecordingPlayer (T67) · helpers reais de Edge recebem auth e anon key sinteticos do mock · nao renderiza nada quando a chamada nao tem gravacao · nao renderiza nem requisita quando a chamada nao diz que tem … |
 | `src/components/contacts/__tests__/BulkActionsBar.test.tsx` | 16 | BulkActionsBar — ações em lote (etapa 81) · não renderiza sem seleção · Tag acrescenta a tag só em quem ainda não tem · Atribuir grava assigned_to em todos os selecionados … |
 | `src/components/dashboard/__tests__/useSentimentData.test.tsx` | 16 | useSentimentData · monta sem lançar exceção e sai do loading (guarda contra TDZ de fetchData no useEffect) · erro na RPC é capturado — nunca escapa do hook e loading sempre volta a false · falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta … |
+| `src/components/inbox/tabs/__tests__/FilesContent.test.tsx` | 16 | FilesContent (etapa 25) · invariante: a sequência de ids é a mesma nos três modos · skeleton por modo: 6 cartões, 6 linhas e 6 TableRow · paridade: a mesma ação chama o mesmo handler nos três modos … |
 | `src/components/mobile/__tests__/MiniChatPiP.test.tsx` | 16 | MiniChatPiP · renders contact name when visible · does not render when not visible · shows correct initials … |
 | `src/components/talkx/__tests__/TalkXSuppression.add.test.tsx` | 16 | TalkXSuppression · Ações da lista no rail (X182/T06-053) · mostra o card  · não promete importar nem exportar em nenhum ponto do card · não oferece nenhuma ação de arquivo no card, nem desabilitada (regra: nada entra nem sai por arquivo) … |
 | `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` | 16 | R2-MOD-024 — resposta atrasada não contamina o template seguinte · variantes: resposta lenta de A não sobrescreve o painel de B · histórico: resposta lenta de A não sobrescreve o histórico de B · loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento … |
-| `src/components/talkx/__tests__/segmentValidation.test.ts` | 16 | segmentValidation · nome (X099) · recusa nome menor que o mínimo · aceita nome no mínimo, ignorando espaços nas pontas · recusa nome maior que o máximo … |
 | … +1961 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "2bfcdbdd0629d52f2b11f9034f90f77d340da826",
+  "sha": "51bd8cb8759a2962193e0c6871e3719115520d68",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 09:29 UTC",
+  "generated_at": "2026-11-13 10:30 UTC",
   "files_total": 8266,
   "code_files": 6098,
-  "code_lines": 1060879
+  "code_lines": 1060899
  },
  "version": "1.3.2",
- "facts_hash": "f1c36f932cb1e7aa",
+ "facts_hash": "17000963cc769cc5",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68502,7 +68502,7 @@
   {
    "module": "src/components",
    "files": 2181,
-   "lines": 372241,
+   "lines": 372261,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -152398,7 +152398,7 @@
    },
    {
     "file": "src/components/inbox/tabs/__tests__/FileCard.test.tsx",
-    "name": "S32: as acoes sao olho, baixar/cadeado, encaminhar (em breve) e ⋮ — sem Copiar link"
+    "name": "S32: as acoes sao olho, baixar/cadeado, encaminhar e ⋮ — sem Copiar link"
    },
    {
     "file": "src/components/inbox/tabs/__tests__/FileCard.test.tsx",
@@ -152791,6 +152791,10 @@
    {
     "file": "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
     "name": "paridade: a mesma ação chama o mesmo handler nos três modos"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
+    "name": "B3: Encaminhar fica habilitado e chama o handler com o item nos três modos"
    },
    {
     "file": "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
@@ -153219,6 +153223,10 @@
    {
     "file": "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
     "name": "abre o painel de detalhe ao selecionar um card"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
+    "name": "B3: o Encaminhar do cartão abre o diálogo e encaminha a mídia"
    },
    {
     "file": "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
@@ -296849,7 +296857,7 @@
   },
   "src/components/inbox/tabs/FileCard.tsx": {
    "path": "src/components/inbox/tabs/FileCard.tsx",
-   "lines": 207,
+   "lines": 206,
    "exports": [
     "function FileCard"
    ],
@@ -296976,7 +296984,7 @@
   },
   "src/components/inbox/tabs/FilesContent.tsx": {
    "path": "src/components/inbox/tabs/FilesContent.tsx",
-   "lines": 325,
+   "lines": 327,
    "exports": [
     "interface FilesActions",
     "interface FilesContentSelection",
@@ -297001,7 +297009,7 @@
   },
   "src/components/inbox/tabs/FilesListView.tsx": {
    "path": "src/components/inbox/tabs/FilesListView.tsx",
-   "lines": 155,
+   "lines": 157,
    "exports": [
     "function FilesListView"
    ],
@@ -297097,7 +297105,7 @@
   },
   "src/components/inbox/tabs/FilesTableView.tsx": {
    "path": "src/components/inbox/tabs/FilesTableView.tsx",
-   "lines": 258,
+   "lines": 260,
    "exports": [
     "function FilesTableView"
    ],
@@ -297269,10 +297277,9 @@
   },
   "src/components/inbox/tabs/fileActionButton.ts": {
    "path": "src/components/inbox/tabs/fileActionButton.ts",
-   "lines": 36,
+   "lines": 25,
    "exports": [
-    "const FILE_ACTION_BUTTON",
-    "const FILE_ACTION_BUTTON_DISABLED"
+    "const FILE_ACTION_BUTTON"
    ],
    "params": [
     {
@@ -297344,7 +297351,7 @@
   },
   "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
-   "lines": 557,
+   "lines": 559,
    "is_test": true,
    "rule_comments": [
     "ciclo de vida (metadados, fim, erro) e respeita a regra do navegador de não reemitir"
@@ -297418,7 +297425,7 @@
   },
   "src/components/inbox/tabs/__tests__/FileCard.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/FileCard.test.tsx",
-   "lines": 340,
+   "lines": 342,
    "is_test": true,
    "params": [
     {
@@ -297440,7 +297447,7 @@
     "S31: arquivo do contato mostra o nome do contato",
     "S31/D03: em 5 colunas fica so a foto, com o nome na dica (aria-label)",
     "FileCard — acoes do cartao (R04, S32 / D06, D07)",
-    "S32: as acoes sao olho, baixar/cadeado, encaminhar (em breve) e ⋮ — sem Copiar link",
+    "S32: as acoes sao olho, baixar/cadeado, encaminhar e ⋮ — sem Copiar link",
     "S32: sem permissao o botao e o cadeado com a explicacao e nao baixa nada",
     "S32: com permissao baixa pelo caminho existente (fetch + anchor com o nome do arquivo)",
     "S32: em audio, o play do A01 continua na linha de acoes",
@@ -297600,13 +297607,14 @@
   },
   "src/components/inbox/tabs/__tests__/FilesContent.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
-   "lines": 141,
+   "lines": 154,
    "is_test": true,
    "tests": [
     "FilesContent (etapa 25)",
     "invariante: a sequência de ids é a mesma nos três modos",
     "skeleton por modo: 6 cartões, 6 linhas e 6 TableRow",
     "paridade: a mesma ação chama o mesmo handler nos três modos",
+    "B3: Encaminhar fica habilitado e chama o handler com o item nos três modos",
     "FilesContent — estados distintos (etapa 44)",
     "1. carregando inicial: skeleton do modo, sem estado de vazio",
     "2. vazio real: nenhuma mídia na conversa",
@@ -297635,7 +297643,7 @@
   },
   "src/components/inbox/tabs/__tests__/FilesListView.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/FilesListView.test.tsx",
-   "lines": 131,
+   "lines": 132,
    "is_test": true,
    "params": [
     {
@@ -297833,7 +297841,7 @@
   },
   "src/components/inbox/tabs/__tests__/FilesTab.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
-   "lines": 310,
+   "lines": 324,
    "is_test": true,
    "params": [
     {
@@ -297856,6 +297864,7 @@
     "estado 2 (etapa 44): vazio real quando não há arquivos",
     "estado 3 (etapa 44): busca sem resultado cita o termo e limpa",
     "abre o painel de detalhe ao selecionar um card",
+    "B3: o Encaminhar do cartão abre o diálogo e encaminha a mídia",
     "R07/S52: o Encaminhar do painel de detalhes usa o mesmo caminho do cartão",
     "etapa 43: com páginas pendentes avisa o recorte carregado e ",
     "etapa 41: sem páginas pendentes não há aviso nem rodapé de paginação",
@@ -297867,7 +297876,7 @@
   },
   "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx",
-   "lines": 189,
+   "lines": 190,
    "is_test": true,
    "params": [
     {
@@ -298075,7 +298084,7 @@
   },
   "src/components/inbox/tabs/__tests__/fileActionButton.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/fileActionButton.test.tsx",
-   "lines": 174,
+   "lines": 167,
    "is_test": true,
    "errors": [
     "utilitário sem medida: ${utilitario}"
@@ -388199,10 +388208,30 @@
   }
  },
  "git": {
-  "sha": "2bfcdbdd0629d52f2b11f9034f90f77d340da826",
+  "sha": "51bd8cb8759a2962193e0c6871e3719115520d68",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "51bd8cb",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)",
+    "files": [
+     "src/components/inbox/tabs/FileCard.tsx",
+     "src/components/inbox/tabs/FilesContent.tsx",
+     "src/components/inbox/tabs/FilesListView.tsx",
+     "src/components/inbox/tabs/FilesTableView.tsx",
+     "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
+     "src/components/inbox/tabs/__tests__/FileCard.test.tsx",
+     "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
+     "src/components/inbox/tabs/__tests__/FilesListView.test.tsx",
+     "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
+     "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx",
+     "src/components/inbox/tabs/__tests__/fileActionButton.test.tsx",
+     "src/components/inbox/tabs/fileActionButton.ts"
+    ]
+   },
    {
     "sha": "2bfcdbd",
     "date": "2026-11-13",
@@ -388504,17 +388533,6 @@
      "scripts/regras_negocio/generate.py",
      "scripts/regras_negocio/test_generate.py"
     ]
-   },
-   {
-    "sha": "1616f7b",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS",
-    "files": [
-     "PENDENCIAS.md",
-     "RELATORIO_CI.md",
-     "scripts/e2e-isolated/run.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388523,16 +388541,64 @@
     3
    ],
    [
+    "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
+    2
+   ],
+   [
     "PENDENCIAS.md",
-    3
+    2
    ],
    [
     "RELATORIO_CI.md",
-    3
+    2
    ],
    [
-    "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
-    2
+    "src/components/inbox/tabs/FileCard.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/FilesContent.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/FilesListView.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/FilesTableView.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/__tests__/FileCard.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/__tests__/FilesListView.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/__tests__/fileActionButton.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/tabs/fileActionButton.ts",
+    1
    ],
    [
     "src/components/team-chat/TeamChatHeader.tsx",
@@ -388548,54 +388614,6 @@
    ],
    [
     "src/components/email/EmailContactPanel.tsx",
-    1
-   ],
-   [
-    "src/components/email/__tests__/EmailContactPanel.test.tsx",
-    1
-   ],
-   [
-    "supabase/functions/ai-deadline-calculator/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-lead-temperature/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-loss-risk/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-multimodal-analysis/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-objection-handler/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-price-anchor/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-product-recommendation/index.ts",
-    1
-   ],
-   [
-    "src/components/copilot/QuoteDraftCard.tsx",
-    1
-   ],
-   [
-    "src/components/copilot/__tests__/QuoteDraftCard.copia.test.tsx",
-    1
-   ],
-   [
-    "tests/contracts/schemas.contract.test.ts",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/RadarCards.tsx",
     1
    ]
   ]

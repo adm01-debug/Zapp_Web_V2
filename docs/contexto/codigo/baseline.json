@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2bfcdbdd0629d52f2b11f9034f90f77d340da826",
+  "commit": "51bd8cb8759a2962193e0c6871e3719115520d68",
   "branch": "main",
-  "data_commit": "2026-11-13T06:09:57-03:00",
+  "data_commit": "2026-11-13T07:07:17-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "51bd8cb",
+    "data": "2026-11-13",
+    "assunto": "Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)"
+   },
    {
     "sha": "2bfcdbd",
     "data": "2026-11-13",
@@ -126,18 +131,13 @@
     "sha": "bd417f5",
     "data": "2026-11-12",
     "assunto": "fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard"
-   },
-   {
-    "sha": "2d10201",
-    "data": "2026-11-12",
-    "assunto": "fix(db-audit): wal_level=logical no container descartável do teste E27 replay"
    }
   ],
-  "arquivos_mudados_7d": 679,
+  "arquivos_mudados_7d": 689,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 622
+    "mudancas": 634
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8424,
   "arquivos_codigo": 4820,
-  "linhas_codigo": 892392,
+  "linhas_codigo": 892412,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2181,
-   "linhas": 372241
+   "linhas": 372261
   },
   "src/config": {
    "arquivos": 3,

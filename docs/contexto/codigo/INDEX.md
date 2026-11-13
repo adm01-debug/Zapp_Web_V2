@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `2bfcdbdd0629d52f2b11f9034f90f77d340da826` (2026-11-13T06:09:57-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `51bd8cb8759a2962193e0c6871e3719115520d68` (2026-11-13T07:07:17-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8424 |
 | arquivos_codigo | 4820 |
-| linhas_codigo | 892392 |
+| linhas_codigo | 892412 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,13 +391,13 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56968 nós · 117746 arestas · 4158 comunidades · grafo do commit `2bfcdbdd`
-- comunidades maiores: TalkXSuppression.tsx (1010), react (779), cn (727), ref_node_fs (582), vitest (550), schemas.ts (538), validation.ts (464), ref_https (413), DashboardView.tsx (404), react-router-dom (354), e2e-isolated-runtime.unit.mjs (354), @tanstack/react-query (351)
+- 56967 nós · 117741 arestas · 4180 comunidades · grafo do commit `51bd8cb8`
+- comunidades maiores: TalkXSuppression.tsx (985), react (876), vitest (865), badge.tsx (736), lucide-react (658), ExternalProductManagement.tsx (497), validation.ts (485), cn (453), tooltip.tsx (426), schemas.ts (405), ref_https (397), ref_node_fs (370)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- supabase/deployment-manifest.json (17)
+- supabase/deployment-manifest.json (16)
 - PENDENCIAS.md (12)
 - docs/ci/README.md (12)
 - .github/workflows/ci.yml (11)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `51bd8cb` Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)
 - 2026-11-13 `2bfcdbd` Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam
 - 2026-11-13 `fe4959b` Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)
 - 2026-11-13 `eb93d55` fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `2ae0de7` fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)
 - 2026-11-12 `8a14183` Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)
 - 2026-11-12 `b2813f8` feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)
-- 2026-11-12 `cca5655` fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
