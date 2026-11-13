@@ -8,7 +8,7 @@ import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
 import { SenderAvatar } from './SenderAvatar';
-import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
+import { FILE_ACTION_BUTTON } from './fileActionButton';
 
 /**
  * Lista da aba Arquivos (etapas 21-22). Cada linha segue o `ContactListItem` (h-16, px-3,
@@ -36,6 +36,7 @@ interface FilesListViewProps {
   onSelect: (item: ContactMediaItem) => void;
   onToggleSelection: (id: string) => void;
   onPreview: (item: ContactMediaItem) => void;
+  onForward: (item: ContactMediaItem) => void;
   onRequestDelete: (item: ContactMediaItem) => void;
 }
 
@@ -50,6 +51,7 @@ export function FilesListView({
   onSelect,
   onToggleSelection,
   onPreview,
+  onForward,
   onRequestDelete,
 }: FilesListViewProps) {
   const isNarrow = containerWidth !== null && containerWidth < 640;
@@ -140,7 +142,7 @@ export function FilesListView({
                 <Eye className="w-3.5 h-3.5" />
               </button>
               {!isNarrow && (
-                <button type="button" aria-label="Encaminhar" title="Disponível em breve" disabled className={FILE_ACTION_BUTTON_DISABLED}>
+                <button type="button" aria-label="Encaminhar" className={FILE_ACTION_BUTTON} onClick={() => onForward(item)}>
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
               )}
