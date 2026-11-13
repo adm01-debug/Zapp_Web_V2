@@ -122,6 +122,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     h.refetchCampaigns.mockClear();
     h.startCampaign.mockReset();
     h.cancelCampaign.mockReset();
+    vi.mocked(toast.error).mockClear();
     h.onBack.mockClear();
     h.onStatusChange.mockClear();
     vi.mocked(toast.error).mockClear();
@@ -146,7 +147,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     expect(screen.getByText(/Pausada por Ana Souza em 06 set 2026/)).toBeTruthy();
   });
 
-  it('retomar: o modal não fecha antes de o servidor confirmar', async () => {
+  it('retomar: UM clique, sem modal (decisão do dono, 2026-11-13); o botão espera o servidor', async () => {
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
     let resolveStart: (v: boolean) => void = () => undefined;
     h.startCampaign.mockImplementation(() => new Promise<boolean>((resolve) => { resolveStart = resolve; }));
@@ -154,41 +155,44 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     render(view());
 
     fireEvent.click(screen.getByRole('button', { name: 'Retomar campanha' }));
-    expect(screen.getByText('Retomar campanha?')).toBeTruthy();
-    // o modal nomeia a campanha (o cabeçalho também traz o nome: escopo no modal)
-    expect(within(screen.getByRole('alertdialog')).getByText(/Reativação de Leads/)).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
     expect(h.startCampaign).toHaveBeenCalledWith('camp-pausada-1');
-    // resposta ainda pendente: o modal continua aberto (nada de sucesso antecipado)
-    expect(screen.getByText('Retomar campanha?')).toBeTruthy();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(screen.queryByText('Retomar campanha?')).toBeNull();
+    // resposta pendente: o botão fica ocupado e um segundo clique não dispara de novo
+    const ocupado = await screen.findByRole('button', { name: 'Retomando…' });
+    expect((ocupado as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(ocupado);
+    expect(h.startCampaign).toHaveBeenCalledTimes(1);
 
     await act(async () => { resolveStart(true); });
-    await waitFor(() => expect(screen.queryByText('Retomar campanha?')).toBeNull());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retomar campanha' })).toBeTruthy());
+    // um toast só: o de sucesso é do próprio startCampaign (mockado aqui)
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it('retomar recusado pelo servidor: o modal continua aberto', async () => {
+  it('retomar recusado pelo servidor: sem modal e sem segundo toast (o startCampaign já avisou)', async () => {
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
     h.startCampaign.mockResolvedValue(false);
 
     render(view());
     fireEvent.click(screen.getByRole('button', { name: 'Retomar campanha' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
 
     await waitFor(() => expect(h.startCampaign).toHaveBeenCalledTimes(1));
-    expect(screen.getByText('Retomar campanha?')).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retomar campanha' })).toBeTruthy());
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it('retomar com a chamada estourando: avisa o operador e mantém o modal aberto', async () => {
+  it('retomar com a chamada estourando: avisa o operador uma vez', async () => {
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
     h.startCampaign.mockRejectedValue(new Error('falha de rede T13'));
 
     render(view());
     fireEvent.click(screen.getByRole('button', { name: 'Retomar campanha' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao retomar a campanha.'));
-    expect(screen.getByText('Retomar campanha?')).toBeTruthy();
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
   it('encerrar: chama o servidor e só volta para a lista depois do aceite', async () => {

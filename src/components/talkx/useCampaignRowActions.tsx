@@ -4,6 +4,7 @@ import { Copy, Eye, Pause, Pencil, Play, Square, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { TalkXConfirmDialog, TalkXPrimaryButton, fmtInt } from './talkxShared';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
@@ -15,6 +16,9 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
  * responde — em caso de recusa do servidor o modal fica aberto com a mensagem e
  * nada é anunciado como sucesso antes da hora.
  *
+ * Exceção: RETOMAR é um clique, sem confirmação (decisão do dono, 2026-11-13) —
+ * também aqui, no caminho sem `onLifecycle`, igual ao controlador único.
+ *
  * A confirmação é a mesma em qualquer superfície: quem chama passa os
  * manipuladores (os mesmos que a Visão geral já recebe do contêiner) e usa
  * `actionsFor`/`run` no menu e `dialogs` uma única vez na tela.
@@ -24,7 +28,8 @@ export type CampaignRowActionId = 'view' | 'edit' | 'start' | 'pause' | 'resume'
 export type CampaignRowLifecycleKind = Extract<CampaignRowActionId, 'start' | 'pause' | 'resume' | 'cancel'>;
 
 /** Ações que mudam o estado da campanha e por isso passam por confirmação. */
-export type CampaignRowConfirmKind = 'start' | 'pause' | 'resume' | 'duplicate' | 'cancel' | 'delete';
+/** Ações que pedem confirmação. `resume` não está aqui: retomar é um clique. */
+export type CampaignRowConfirmKind = 'start' | 'pause' | 'duplicate' | 'cancel' | 'delete';
 
 export interface CampaignRowAction {
   id: CampaignRowActionId;
@@ -116,6 +121,27 @@ export function useCampaignRowActions(handlers: CampaignRowActionHandlers): Camp
     handlers.onView(c);
   }, [handlers]);
 
+  /**
+   * Retomar campanha pausada: um clique, sem confirmação (decisão do dono,
+   * 2026-11-13). O aviso de sucesso/recusa é do `onStart` de quem chama (ex.:
+   * `startCampaign`, que já mostra o próprio toast); aqui só a falha que LANÇA
+   * vira um toast — um aviso só.
+   */
+  const resumeNow = useCallback(async (c: TalkXCampaign) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setPendingId(c.id);
+    try {
+      await handlers.onStart(c.id);
+    } catch (e) {
+      const message = e instanceof Error && e.message.trim() ? e.message.trim() : null;
+      toast.error(message ?? 'Não foi possível retomar a campanha.');
+    } finally {
+      inFlight.current = false;
+      setPendingId(null);
+    }
+  }, [handlers]);
+
   const run = useCallback((action: CampaignRowActionId, c: TalkXCampaign) => {
     if (action === 'view') { openView(c); return; }
     if (action === 'edit') { handlers.onEdit(c); return; }
@@ -123,10 +149,11 @@ export function useCampaignRowActions(handlers: CampaignRowActionHandlers): Camp
       handlers.onLifecycle(action, c);
       return;
     }
+    if (action === 'resume') { void resumeNow(c); return; }
     setError(null);
     setReason('');
-    setConfirm({ kind: action as CampaignRowConfirmKind, campaign: c });
-  }, [handlers, openView]);
+    setConfirm({ kind: action, campaign: c });
+  }, [handlers, openView, resumeNow]);
 
   const close = useCallback(() => {
     if (inFlight.current) return;
@@ -145,7 +172,7 @@ export function useCampaignRowActions(handlers: CampaignRowActionHandlers): Camp
     setPendingId(campaign.id);
     setError(null);
     try {
-      if (kind === 'start' || kind === 'resume') await handlers.onStart(campaign.id);
+      if (kind === 'start') await handlers.onStart(campaign.id);
       else if (kind === 'pause') await handlers.onPause(campaign.id, motivo);
       else if (kind === 'duplicate') await handlers.onDuplicate(campaign);
       else if (kind === 'cancel') await handlers.onCancel(campaign.id);
@@ -179,17 +206,6 @@ export function useCampaignRowActions(handlers: CampaignRowActionHandlers): Camp
         description={error ?? `As mensagens serão enviadas agora para ${fmtInt(confirm?.campaign.total_recipients ?? 0)} contatos. Esta ação não pode ser desfeita.`}
         entityName={confirm?.campaign.name}
         confirmLabel="Iniciar envio" cancelLabel="Cancelar"
-      />
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'resume'}
-        onClose={close}
-        onConfirm={onConfirm}
-        loading={pending}
-        icon={Play} iconColor="blue" tone="primary"
-        title="Retomar campanha?"
-        description={error ?? 'O envio continua de onde parou; os contatos pendentes voltam a receber as mensagens.'}
-        entityName={confirm?.campaign.name}
-        confirmLabel="Retomar" cancelLabel="Cancelar"
       />
       <TalkXConfirmDialog
         open={confirm?.kind === 'duplicate'}
