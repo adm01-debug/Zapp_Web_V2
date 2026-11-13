@@ -32,6 +32,21 @@ export function toEventRecords(data: unknown, collectionKeys: string[] = []): Re
   return [data];
 }
 
+/**
+ * P1-6 (auditoria Conversas 2026-11-13): JID/telefone para LOG. Mesmo padrão já
+ * usado nos logs do webhook (6 primeiros dígitos + ***), preservando só o
+ * domínio do JID (@s.whatsapp.net, @lid, @g.us) para diagnóstico. Nunca devolve
+ * o número completo; nulo/vazio vira null.
+ */
+export function maskJidForLog(jid: unknown): string | null {
+  if (typeof jid !== 'string' || jid.length === 0) return null;
+  const at = jid.indexOf('@');
+  const local = at >= 0 ? jid.slice(0, at) : jid;
+  const domain = at >= 0 ? jid.slice(at) : '';
+  const digits = local.replace(/\D/g, '');
+  return `${digits.substring(0, 6)}***${domain}`;
+}
+
 export function normalizePhone(rawJid?: string): string | null {
   if (!rawJid) return null;
 

@@ -8,7 +8,7 @@ import {
 } from "./effect-reconcile.ts";
 
 import {
-  isRecord, normalizePhone, resolveEventJid,
+  isRecord, maskJidForLog, normalizePhone, resolveEventJid,
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
@@ -942,7 +942,7 @@ export async function handleOutgoingWhatsAppMessage(
 
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
-    console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid });
+    console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid: maskJidForLog(bestJid) });
     return;
   }
 
@@ -1042,7 +1042,7 @@ export async function handleIncomingMessage(
 
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
-    console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid });
+    console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid: maskJidForLog(bestJid) });
     return;
   }
   const message = data.message as Record<string, unknown> | undefined;
@@ -1099,7 +1099,7 @@ export async function handleIncomingMessage(
     p_created_at: messageCreatedAt,
   });
   if (txError) {
-    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone: phone ? `${phone.substring(0, 6)}***` : null, messageType });
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid: maskJidForLog(bestJid), phone: phone ? `${phone.substring(0, 6)}***` : null, messageType });
     return;
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
