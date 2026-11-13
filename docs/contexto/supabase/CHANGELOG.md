@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-13 17:50 UTC
+
+- **roles** adicionado (1): `zapp_agente_leitura`
+- **roles** alterado (1): `postgres`
+
 ## 2026-11-13 16:05 UTC
 
 - **functions** adicionado (2): `public.force_conversation_closure_author()`, `public.resolve_outbound_whatsapp_connection(p_explicit_connection_id uuid, p_assigned_connection_id uuid)`

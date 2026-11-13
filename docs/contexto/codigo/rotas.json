@@ -6,7 +6,7 @@
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "lazy": 151
+  "lazy": 152
  },
  "urls": [
   {
@@ -106,6 +106,7 @@
     "useConnectionAuditLogs",
     "useConnectionHealthBanner",
     "useConnectionIncidents",
+    "useConnectionOptions",
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
@@ -115,8 +116,10 @@
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -138,6 +141,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -185,6 +189,7 @@
     "useEnderecoDoBlob",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -250,6 +255,7 @@
     "useKeyboardHeight",
     "useKeyboardNavigation",
     "useKnowledgeBase",
+    "useKnowledgeBaseSearch",
     "useLanguage",
     "useLatest",
     "useLatestAnalysis",
@@ -490,6 +496,7 @@
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -593,6 +600,7 @@
     "useConnectionAuditLogs",
     "useConnectionHealthBanner",
     "useConnectionIncidents",
+    "useConnectionOptions",
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
@@ -601,8 +609,10 @@
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -622,6 +632,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -665,6 +676,7 @@
     "useEmailThreadListQuery",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -723,6 +735,7 @@
     "useKeyboardHeight",
     "useKeyboardNavigation",
     "useKnowledgeBase",
+    "useKnowledgeBaseSearch",
     "useLanguage",
     "useLatestAnalysis",
     "useLayoutContext",
@@ -933,6 +946,7 @@
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -1128,6 +1142,7 @@
     "search_contacts",
     "search_email_threads",
     "search_insights",
+    "search_knowledge_base",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -1142,6 +1157,7 @@
     "talk_me_list_waiting",
     "talkx_benchmarks",
     "talkx_block_recipient",
+    "talkx_campaign_queue_by_segment",
     "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
@@ -1229,7 +1245,6 @@
     "team-messages-${conversationId}",
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
-    "typing:${conversationId}",
     "warroom-alerts-realtime",
     "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
@@ -1293,7 +1308,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 1438
+   "arquivos_puxados": 1475
   },
   {
    "protegida": false,
@@ -1689,7 +1704,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 60
+   "arquivos_puxados": 62
   },
   {
    "protegida": false,
@@ -2102,7 +2117,6 @@
    "canais_realtime": [
     "agent-presence-changes",
     "chat-reactions:${messageId}",
-    "typing:${conversationId}",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "flags": [
@@ -2216,7 +2230,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 52
+   "arquivos_puxados": 54
   },
   {
    "protegida": false,
@@ -2473,7 +2487,7 @@
     "progressbar",
     "status"
    ],
-   "arquivos_puxados": 14
+   "arquivos_puxados": 16
   },
   {
    "protegida": true,
@@ -3789,7 +3803,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 99
+   "arquivos_puxados": 103
   },
   {
    "id": "contacts",
@@ -4490,8 +4504,14 @@
     "useAuth",
     "useCallback",
     "useConnectionIncidents",
+    "useConnectionOptions",
     "useContext",
     "useEffect",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useEvolutionMonitoring",
     "useGlobalSettings",
     "useInboxSilence",
@@ -4521,6 +4541,12 @@
    "hooks_locais": [
     "useAuth",
     "useConnectionIncidents",
+    "useConnectionOptions",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useEvolutionMonitoring",
     "useGlobalSettings",
     "useInboxSilence",
@@ -4579,7 +4605,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 90
+   "arquivos_puxados": 100
   },
   {
    "id": "gmail",
@@ -4724,6 +4750,11 @@
     "useCallback",
     "useContext",
     "useEffect",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useGroupActions",
     "useGroupsManager",
     "useLayoutContext",
@@ -4731,12 +4762,18 @@
     "useMotionGate",
     "useNavigate",
     "useReducedMotion",
+    "useRef",
     "useState",
     "useSyncExternalStore",
     "useToast"
    ],
    "hooks_locais": [
     "useActionFeedback",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useGroupActions",
     "useGroupsManager",
     "useLayoutContext",
@@ -4758,9 +4795,10 @@
    "flags": [],
    "papeis": [
     "link",
+    "note",
     "presentation"
    ],
-   "arquivos_puxados": 32
+   "arquivos_puxados": 41
   },
   {
    "id": "inbox",
@@ -4801,12 +4839,15 @@
     "useChatSearch",
     "useCoachingTip",
     "useConnectionHealthBanner",
+    "useConnectionOptions",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -4822,6 +4863,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -4840,6 +4882,7 @@
     "useEffect",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -4875,6 +4918,7 @@
     "useInteractiveMessage",
     "useIsMobile",
     "useIsMutating",
+    "useKnowledgeBaseSearch",
     "useLatest",
     "useLatestAnalysis",
     "useLayoutContext",
@@ -4976,6 +5020,7 @@
     "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -5019,12 +5064,15 @@
     "useChatSearch",
     "useCoachingTip",
     "useConnectionHealthBanner",
+    "useConnectionOptions",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -5039,6 +5087,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -5055,6 +5104,7 @@
     "useDownloadPermission",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -5085,6 +5135,7 @@
     "useInboxUIState",
     "useInteractiveMessage",
     "useIsMobile",
+    "useKnowledgeBaseSearch",
     "useLatestAnalysis",
     "useLayoutContext",
     "useLeadThermometer",
@@ -5164,6 +5215,7 @@
     "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -5244,6 +5296,7 @@
     "log_search_event",
     "reopen_conversation",
     "search_contacts",
+    "search_knowledge_base",
     "set_conversation_status",
     "talk_me_claim",
     "talk_me_list_pending_messages",
@@ -5281,7 +5334,6 @@
     "chat-reactions:${messageId}",
     "conversation:${contactId}",
     "copilot_insights:${sessionId}",
-    "typing:${conversationId}",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "flags": [
@@ -5329,7 +5381,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 611
+   "arquivos_puxados": 629
   },
   {
    "id": "integrations",
@@ -6054,7 +6106,6 @@
     "agent-presence-changes",
     "chat-reactions:${messageId}",
     "gmail-threads-realtime",
-    "typing:${conversationId}",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "flags": [
@@ -7000,6 +7051,7 @@
     "useCustomShortcuts",
     "useDebounce",
     "useDebouncedValue",
+    "useDownloadPermission",
     "useEffect",
     "useExclusiveAudio",
     "useExternalContact360Batch",
@@ -7091,6 +7143,7 @@
     "useCustomShortcuts",
     "useDebounce",
     "useDebouncedValue",
+    "useDownloadPermission",
     "useExclusiveAudio",
     "useExternalContact360Batch",
     "useFeatureFlag",
@@ -7187,6 +7240,7 @@
     "search_contacts",
     "talkx_benchmarks",
     "talkx_block_recipient",
+    "talkx_campaign_queue_by_segment",
     "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
@@ -7239,7 +7293,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 235
+   "arquivos_puxados": 245
   },
   {
    "id": "talkx-kit",
@@ -7769,9 +7823,15 @@
     "useCallback",
     "useCalls",
     "useCallsKpi",
+    "useConnectionOptions",
     "useContext",
     "useEffect",
     "useEnderecoDoBlob",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useInRouterContext",
     "useLayoutContext",
     "useLayoutEffect",
@@ -7817,6 +7877,12 @@
     "useCallSession",
     "useCalls",
     "useCallsKpi",
+    "useConnectionOptions",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useLayoutContext",
     "useMediaElementVolume",
     "useMediaVolume",
@@ -7892,7 +7958,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 124
+   "arquivos_puxados": 133
   },
   {
    "id": "wa-flows",
@@ -7939,8 +8005,14 @@
     "useAppBootstrap",
     "useAuth",
     "useCallback",
+    "useConnectionOptions",
     "useContext",
     "useEffect",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useMemo",
     "useMessageUpdateBatcher",
     "useNotificationLeader",
@@ -7965,6 +8037,12 @@
    "hooks_locais": [
     "useAppBootstrap",
     "useAuth",
+    "useConnectionOptions",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useMessageUpdateBatcher",
     "useNotificationSettings",
     "useOfflineCache",
@@ -7985,6 +8063,7 @@
     "profiles",
     "user_roles",
     "user_settings",
+    "whatsapp_connections",
     "whatsapp_templates"
    ],
    "rpcs": [
@@ -8004,9 +8083,10 @@
    "flags": [],
    "papeis": [
     "admin",
+    "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 58
+   "arquivos_puxados": 72
   },
   {
    "id": "wallet",
@@ -8931,6 +9011,7 @@
   "SystemFeaturesView": "src/components/docs/SystemFeaturesView.tsx",
   "TalkXAnalytics": "src/components/talkx/TalkXAnalytics.tsx",
   "TalkXCampaignPaused": "src/components/talkx/TalkXCampaignPaused.tsx",
+  "TalkXCampaignReport": "src/components/talkx/report/TalkXCampaignReport.tsx",
   "TalkXCampaignRunning": "src/components/talkx/TalkXCampaignRunning.tsx",
   "TalkXCampaignScheduled": "src/components/talkx/TalkXCampaignScheduled.tsx",
   "TalkXCampaignWizard": "src/components/talkx/TalkXCampaignWizard.tsx",

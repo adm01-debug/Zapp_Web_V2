@@ -8214,7 +8214,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 58,
+   "usada_no_front": 59,
    "usada_em_edges": [
     "_shared",
     "ai-auto-tag",
@@ -8988,7 +8988,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 2,
    "usada_em_edges": [],
    "triggers": [
     "update_conversation_memory_updated_at"
@@ -31007,7 +31007,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 23,
+   "usada_no_front": 24,
    "usada_em_edges": [
     "_shared",
     "batch-fetch-avatars",

@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 899,
- "orfaos": 53,
+ "total": 914,
+ "orfaos": 52,
  "nomes_duplicados": {
   "AchievementBadge": [
    "src/components/gamification/AchievementBadge.tsx",
@@ -1139,11 +1139,29 @@
     "NewCallPanel"
    ],
    "export_default": null,
-   "linhas": 226,
+   "linhas": 247,
    "dominio": "components/calls",
    "hooks_locais": [
     "useCallChannels",
     "useCallSession"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/calls/OfferCallButton.tsx",
+   "exports": [
+    "OfferCallButton",
+    "TOQUE_SEGUNDOS"
+   ],
+   "export_default": null,
+   "linhas": 47,
+   "dominio": "components/calls",
+   "hooks_locais": [
+    "useConnectionOptions",
+    "useEvolutionApi"
    ],
    "tabelas": [],
    "edges": [],
@@ -1503,6 +1521,23 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/catalog/MetaTemplatesDialog.tsx",
+   "exports": [
+    "MetaTemplatesDialog"
+   ],
+   "export_default": null,
+   "linhas": 145,
+   "dominio": "components/catalog",
+   "hooks_locais": [
+    "useConnectionOptions",
+    "useEvolutionApi"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/catalog/ProductDetailDialog.tsx",
    "exports": [
     "ProductDetailDialog"
@@ -1543,12 +1578,29 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/catalog/SendTemplateDialog.tsx",
+   "exports": [
+    "SendTemplateDialog"
+   ],
+   "export_default": null,
+   "linhas": 126,
+   "dominio": "components/catalog",
+   "hooks_locais": [
+    "useConnectionOptions",
+    "useEvolutionApi"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/catalog/WhatsAppTemplatesManager.tsx",
    "exports": [
     "WhatsAppTemplatesManager"
    ],
    "export_default": null,
-   "linhas": 253,
+   "linhas": 268,
    "dominio": "components/catalog",
    "hooks_locais": [
     "useReducedMotion",
@@ -1837,12 +1889,28 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/connections/InstancePresenceTab.tsx",
+   "exports": [
+    "PresenceTabContent"
+   ],
+   "export_default": null,
+   "linhas": 62,
+   "dominio": "components/connections",
+   "hooks_locais": [
+    "useEvolutionApi"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/connections/InstanceSettingsDialog.tsx",
    "exports": [
     "InstanceSettingsDialog"
    ],
    "export_default": null,
-   "linhas": 243,
+   "linhas": 249,
    "dominio": "components/connections",
    "hooks_locais": [
     "useEvolutionApi"
@@ -4146,7 +4214,7 @@
     "EmailThreadList"
    ],
    "export_default": null,
-   "linhas": 303,
+   "linhas": 335,
    "dominio": "components/email",
    "hooks_locais": [],
    "tabelas": [],
@@ -4181,6 +4249,20 @@
    "tabelas": [],
    "edges": [],
    "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/evolution/ConnectionSelect.tsx",
+   "exports": [
+    "ConnectionSelect"
+   ],
+   "export_default": null,
+   "linhas": 24,
+   "dominio": "components/evolution",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 3,
    "orfao": false
   },
   {
@@ -4381,7 +4463,7 @@
     "GmailInboxView"
    ],
    "export_default": "GmailInboxView",
-   "linhas": 216,
+   "linhas": 223,
    "dominio": "components/gmail",
    "hooks_locais": [
     "useGmail"
@@ -4420,12 +4502,29 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/groups/GroupEvolutionDialogs.tsx",
+   "exports": [
+    "GroupEphemeralDialog",
+    "JoinGroupByInviteDialog"
+   ],
+   "export_default": null,
+   "linhas": 200,
+   "dominio": "components/groups",
+   "hooks_locais": [
+    "useEvolutionApi"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/groups/GroupsView.tsx",
    "exports": [
     "GroupsView"
    ],
    "export_default": null,
-   "linhas": 333,
+   "linhas": 357,
    "dominio": "components/groups",
    "hooks_locais": [
     "useGroupsManager",
@@ -5519,7 +5618,7 @@
     "ChatPanel"
    ],
    "export_default": null,
-   "linhas": 532,
+   "linhas": 558,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAmbientColor",
@@ -5631,6 +5730,37 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/inbox/contact-details/AIInsightsWidget.tsx",
+   "exports": [
+    "AIInsightsWidget"
+   ],
+   "export_default": null,
+   "linhas": 106,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useCRMIntegrationEnabled",
+    "useContactIntelligence"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/AtendimentoSection.tsx",
+   "exports": [
+    "AtendimentoSection"
+   ],
+   "export_default": null,
+   "linhas": 62,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/inbox/contact-details/CompactContactHeader.tsx",
    "exports": [
     "CompactContactHeader"
@@ -5682,6 +5812,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/inbox/contact-details/ContactFirstResponseSLA.tsx",
+   "exports": [
+    "ContactFirstResponseSLA"
+   ],
+   "export_default": null,
+   "linhas": 59,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useContactFirstResponseSLA"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
    "exports": [
     "ContactHeaderSection"
@@ -5706,12 +5852,28 @@
     "ContactIntelligencePanel"
    ],
    "export_default": null,
-   "linhas": 182,
+   "linhas": 266,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useCRMIntegrationEnabled",
     "useContactIntelligence",
     "useReducedMotion"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/ConversationMemorySection.tsx",
+   "exports": [
+    "ConversationMemorySection"
+   ],
+   "export_default": null,
+   "linhas": 152,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useConversationMemory"
    ],
    "tabelas": [],
    "edges": [],
@@ -5735,12 +5897,47 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx",
+   "exports": [
+    "EvolutionContactProfileSection"
+   ],
+   "export_default": null,
+   "linhas": 164,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useEvolutionContactProfile",
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/LeadRiskScorePanel.tsx",
+   "exports": [
+    "LeadRiskScorePanel"
+   ],
+   "export_default": null,
+   "linhas": 226,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useContactLeadRisk",
+    "useUpdateContactLeadRisk",
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx",
    "exports": [
     "ContactSidebarSections"
    ],
    "export_default": null,
-   "linhas": 78,
+   "linhas": 80,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactSidebar"
@@ -5789,7 +5986,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "orfao": false
   },
   {
@@ -5820,7 +6017,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 4,
+   "usado_por": 6,
    "orfao": false
   },
   {
@@ -5886,6 +6083,24 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
+   "exports": [
+    "WhatsAppCatalogSection"
+   ],
+   "export_default": null,
+   "linhas": 92,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useConnectionOptions",
+    "useEvolutionApi",
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/inbox/contact-details/WhatsAppStatusSection.tsx",
    "exports": [
     "WhatsAppStatusSection"
@@ -5907,7 +6122,7 @@
     "ContactDetails"
    ],
    "export_default": null,
-   "linhas": 149,
+   "linhas": 154,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactEnrichedData",
@@ -6453,6 +6668,22 @@
    "edges": [],
    "usado_por": 0,
    "orfao": true
+  },
+  {
+   "arquivo": "src/components/inbox/KnowledgeBaseSearchPanel.tsx",
+   "exports": [
+    "KnowledgeBaseSearchPanel"
+   ],
+   "export_default": null,
+   "linhas": 141,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useKnowledgeBaseSearch"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/inbox/LinkPreview.tsx",
@@ -7090,7 +7321,7 @@
     "AiTab"
    ],
    "export_default": null,
-   "linhas": 233,
+   "linhas": 244,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactLeadScore",
@@ -7918,7 +8149,7 @@
     "GmailIntegrationCard"
    ],
    "export_default": null,
-   "linhas": 299,
+   "linhas": 307,
    "dominio": "components/integrations",
    "hooks_locais": [
     "useGmail",
@@ -8563,12 +8794,29 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/monitoring/DeviceChatsPanel.tsx",
+   "exports": [
+    "DeviceChatsPanel"
+   ],
+   "export_default": null,
+   "linhas": 78,
+   "dominio": "components/monitoring",
+   "hooks_locais": [
+    "useConnectionOptions",
+    "useEvolutionApi"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
    "exports": [
     "EvolutionMonitoringDashboard"
    ],
    "export_default": null,
-   "linhas": 433,
+   "linhas": 435,
    "dominio": "components/monitoring",
    "hooks_locais": [
     "useEvolutionMonitoring"
@@ -10997,15 +11245,15 @@
     "TalkXCampaignReportProps"
    ],
    "export_default": null,
-   "linhas": 365,
+   "linhas": 368,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useDownloadPermission"
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/talkx/report/TalkXReportFunnel.tsx",
@@ -11501,7 +11749,7 @@
     "TalkXView"
    ],
    "export_default": "TalkXView",
-   "linhas": 639,
+   "linhas": 671,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useGlobalKeyboard",
@@ -12658,7 +12906,7 @@
     "TeamChatView"
    ],
    "export_default": null,
-   "linhas": 92,
+   "linhas": 174,
    "dominio": "components/team-chat",
    "hooks_locais": [
     "useActiveTeamChatConversation",
@@ -12967,7 +13215,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 62,
+   "usado_por": 63,
    "orfao": false
   },
   {
@@ -12982,7 +13230,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 218,
+   "usado_por": 222,
    "orfao": false
   },
   {
@@ -13019,7 +13267,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 391,
+   "usado_por": 400,
    "orfao": false
   },
   {
@@ -13054,7 +13302,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 192,
+   "usado_por": 193,
    "orfao": false
   },
   {
@@ -13194,7 +13442,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 94,
+   "usado_por": 97,
    "orfao": false
   },
   {
@@ -13470,7 +13718,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 165,
+   "usado_por": 168,
    "orfao": false
   },
   {
@@ -13484,7 +13732,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 108,
+   "usado_por": 113,
    "orfao": false
   },
   {
@@ -13813,7 +14061,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 108,
+   "usado_por": 114,
    "orfao": false
   },
   {
@@ -13870,7 +14118,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 74,
+   "usado_por": 79,
    "orfao": false
   },
   {
@@ -13914,7 +14162,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 10,
+   "usado_por": 11,
    "orfao": false
   },
   {
@@ -14413,7 +14661,7 @@
     "TalkMeView"
    ],
    "export_default": null,
-   "linhas": 960,
+   "linhas": 955,
    "dominio": "features/talk-me",
    "hooks_locais": [
     "useReducedMotion"

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e942c672a71be8ba775400097a8030b01ba3f69d",
+  "commit": "cb6576b2a3a0d3f8b5b091878314cf5087fa10b1",
   "branch": "main",
-  "data_commit": "2026-11-13T12:02:34-03:00",
+  "data_commit": "2026-11-13T13:27:15-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "cb6576b",
+    "data": "2026-11-13",
+    "assunto": "Pacote: 20 PRs aprovadas integradas num único merge (#3035)"
+   },
    {
     "sha": "e942c67",
     "data": "2026-11-13",
@@ -126,18 +131,13 @@
     "sha": "65cf385",
     "data": "2026-11-12",
     "assunto": "chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)"
-   },
-   {
-    "sha": "d8854eb",
-    "data": "2026-11-12",
-    "assunto": "chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)"
    }
   ],
-  "arquivos_mudados_7d": 692,
+  "arquivos_mudados_7d": 796,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 634
+    "mudancas": 662
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 275
+    "mudancas": 282
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -153,11 +153,15 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 206
+    "mudancas": 209
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 144
+    "mudancas": 148
+   },
+   {
+    "pasta": "src/hooks/integrations",
+    "mudancas": 128
    },
    {
     "pasta": "src/components/ui",
@@ -168,12 +172,8 @@
     "mudancas": 124
    },
    {
-    "pasta": "src/hooks/integrations",
-    "mudancas": 119
-   },
-   {
     "pasta": "src/lib/__tests__",
-    "mudancas": 115
+    "mudancas": 118
    },
    {
     "pasta": "src/components/contacts",
@@ -184,12 +184,12 @@
     "mudancas": 107
    },
    {
-    "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
-    "mudancas": 105
+    "pasta": "src/hooks/chat",
+    "mudancas": 107
    },
    {
-    "pasta": "src/hooks/chat",
-    "mudancas": 104
+    "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
+    "mudancas": 105
    },
    {
     "pasta": "src/components/settings",
@@ -199,27 +199,35 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 16
+    "mudancas": 17
+   },
+   {
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 12
    },
    {
     "arquivo": "docs/ci/README.md",
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 11
-   },
-   {
     "arquivo": "CLAUDE.md",
     "mudancas": 11
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 11
+    "arquivo": "ESTADO.md",
+    "mudancas": 10
    },
    {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 11
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
+    "mudancas": 10
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
@@ -242,15 +250,7 @@
     "mudancas": 9
    },
    {
-    "arquivo": "ESTADO.md",
-    "mudancas": 9
-   },
-   {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 9
    },
    {
@@ -260,6 +260,10 @@
    {
     "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 9
+   },
+   {
+    "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 8
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -286,15 +290,11 @@
     "mudancas": 7
    },
    {
-    "arquivo": "docs/talkx/ESTADOS.md",
+    "arquivo": "package.json",
     "mudancas": 7
    },
    {
     "arquivo": "scripts/edge-deploy/health-check.mjs",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/regras_negocio/generate.py",
     "mudancas": 7
    }
   ],
@@ -314,24 +314,24 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8429,
-  "arquivos_codigo": 4825,
-  "linhas_codigo": 892988,
+  "arquivos_total": 8496,
+  "arquivos_codigo": 4890,
+  "linhas_codigo": 906250,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "modulos": 144,
-  "componentes": 899,
-  "hooks": 496,
+  "modulos": 145,
+  "componentes": 914,
+  "hooks": 501,
   "edge_functions": 92,
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2628,
+  "testes": 2663,
   "workflows": 22,
-  "scripts": 427,
-  "docs_md": 1085
+  "scripts": 429,
+  "docs_md": 1087
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -504,7 +504,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "arquivos": 1,
-   "linhas": 1945
+   "linhas": 2002
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "arquivos": 1,
@@ -607,8 +607,8 @@
    "linhas": 337
   },
   "scripts/ci": {
-   "arquivos": 215,
-   "linhas": 44304
+   "arquivos": 219,
+   "linhas": 48261
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -631,8 +631,8 @@
    "linhas": 4700
   },
   "scripts/eslint": {
-   "arquivos": 1,
-   "linhas": 39
+   "arquivos": 2,
+   "linhas": 127
   },
   "scripts/ia": {
    "arquivos": 1,
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2183,
-   "linhas": 372465
+   "arquivos": 2216,
+   "linhas": 376518
   },
   "src/config": {
    "arquivos": 3,
@@ -720,11 +720,11 @@
   },
   "src/features": {
    "arquivos": 6,
-   "linhas": 3298
+   "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 987,
-   "linhas": 160787
+   "arquivos": 996,
+   "linhas": 162121
   },
   "src/i18n": {
    "arquivos": 2,
@@ -735,12 +735,12 @@
    "linhas": 15599
   },
   "src/lib": {
-   "arquivos": 283,
-   "linhas": 38986
+   "arquivos": 289,
+   "linhas": 39430
   },
   "src/main.tsx": {
    "arquivos": 1,
-   "linhas": 95
+   "linhas": 97
   },
   "src/pages": {
    "arquivos": 73,
@@ -779,8 +779,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 392,
-   "linhas": 118932
+   "arquivos": 404,
+   "linhas": 122264
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -821,6 +821,10 @@
    "linhas": 1484
   },
   {
+   "arquivo": "scripts/ci/ci-local.mjs",
+   "linhas": 1471
+  },
+  {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
    "linhas": 1446
   },
@@ -831,6 +835,10 @@
   {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/database/build_report.py",
    "linhas": 1298
+  },
+  {
+   "arquivo": "supabase/functions/evolution-api/index.ts",
+   "linhas": 1295
   },
   {
    "arquivo": "src/components/catalog/ExternalProductManagement.tsx",
@@ -847,10 +855,6 @@
   {
    "arquivo": "supabase/functions/connection-health-check/index.ts",
    "linhas": 1143
-  },
-  {
-   "arquivo": "supabase/functions/evolution-api/index.ts",
-   "linhas": 1123
   },
   {
    "arquivo": "supabase/functions/multiplix-dispatch/actions/audience.ts",
@@ -885,33 +889,29 @@
    "linhas": 998
   },
   {
+   "arquivo": "scripts/ci/ci-local-lib.mjs",
+   "linhas": 997
+  },
+  {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/auth/extend-second-pass.py",
    "linhas": 975
   },
   {
    "arquivo": "src/features/talk-me/TalkMeView.tsx",
-   "linhas": 960
+   "linhas": 955
   },
   {
    "arquivo": "supabase/functions/ai-proxy/index.ts",
    "linhas": 953
-  },
-  {
-   "arquivo": "src/components/multiplix/MultiplixView.tsx",
-   "linhas": 949
-  },
-  {
-   "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
-   "linhas": 947
   }
  ],
  "qualidade": {
-  "any": 357,
-  "console_log": 412,
+  "any": 367,
+  "console_log": 417,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 49,
-  "arquivos_acima_500_linhas": 102
+  "todos": 50,
+  "arquivos_acima_500_linhas": 104
  },
  "todos": [
   {
@@ -1069,6 +1069,12 @@
    "linha": 25,
    "tipo": "TODO",
    "texto": "o schema public bate exatamente"
+  },
+  {
+   "arquivo": "src/lib/calls/sipProvisioning.ts",
+   "linha": 25,
+   "tipo": "TODO",
+   "texto": "carregamento e em toda troca de aba líder, para"
   },
   {
    "arquivo": "src/lib/journey/__tests__/stats.test.ts",
@@ -1335,7 +1341,6 @@
    "src/components/reports/ScheduledReportsManager.tsx",
    "src/components/SearchInput.tsx",
    "src/components/settings/ConnectionAlertPreferences.tsx",
-   "src/components/talkx/report/TalkXCampaignReport.tsx",
    "src/components/talkx/TalkXHelp.tsx",
    "src/components/talkx/TalkXInteractiveEditor.tsx",
    "src/components/talkx/TalkXMediaDropzone.tsx",

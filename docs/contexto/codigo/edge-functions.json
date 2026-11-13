@@ -397,7 +397,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "ai-enhance-message",
@@ -518,7 +518,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "ai-loss-risk",
@@ -546,7 +546,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "ai-multimodal-analysis",
@@ -574,7 +574,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "ai-objection-handler",
@@ -602,7 +602,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "ai-price-anchor",
@@ -630,7 +630,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "ai-product-recommendation",
@@ -658,7 +658,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "ai-proxy",
@@ -970,7 +970,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": true,
    "orfa": false,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "bitrix-api",
@@ -1257,7 +1257,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "create-user",
@@ -1369,7 +1369,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "detect-new-device",
@@ -1674,7 +1674,7 @@
    "nome": "evolution-api",
    "entrada": "supabase/functions/evolution-api/index.ts",
    "arquivos": 1,
-   "linhas": 1123,
+   "linhas": 1295,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -1941,7 +1941,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "get-sip-password",
@@ -2074,7 +2074,7 @@
    "nome": "gmail-sync",
    "entrada": "supabase/functions/gmail-sync/index.ts",
    "arquivos": 1,
-   "linhas": 468,
+   "linhas": 476,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -3135,7 +3135,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 0
+   "testes": 1
   },
   {
    "nome": "voice-changer",

@@ -68758,7 +68758,8 @@
           "acl": [
             "postgres=arwdDxtm/postgres",
             "authenticated=arwdm/postgres",
-            "service_role=arwdDxtm/postgres"
+            "service_role=arwdDxtm/postgres",
+            "zapp_agente_leitura=r/postgres"
           ],
           "object_type": "tables",
           "owner_role": "postgres",
@@ -96330,7 +96331,8 @@
           "pg_signal_backend",
           "service_role",
           "snapshot_reader",
-          "supabase_privileged_role"
+          "supabase_privileged_role",
+          "zapp_agente_leitura"
         ],
         "name": "postgres",
         "superuser": false
@@ -96494,6 +96496,26 @@
           "authenticator"
         ],
         "name": "supabase_storage_admin",
+        "superuser": false
+      },
+      {
+        "bypass_rls": true,
+        "config": [
+          "default_transaction_read_only=on",
+          "statement_timeout=5s",
+          "lock_timeout=2s",
+          "idle_in_transaction_session_timeout=30s",
+          "work_mem=16MB",
+          "search_path=public, extensions",
+          "transaction_timeout=10s"
+        ],
+        "conn_limit": -1,
+        "create_db": false,
+        "create_role": false,
+        "inherit": true,
+        "login": true,
+        "member_of": [],
+        "name": "zapp_agente_leitura",
         "superuser": false
       }
     ],

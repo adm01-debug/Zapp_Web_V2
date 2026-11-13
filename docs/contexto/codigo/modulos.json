@@ -890,9 +890,9 @@
   },
   {
    "modulo": "components/calls",
-   "arquivos": 30,
+   "arquivos": 31,
    "testes": 34,
-   "linhas": 3420,
+   "linhas": 3488,
    "itens_menu": [
     "Telefonia"
    ],
@@ -900,7 +900,7 @@
     "voip"
    ],
    "rotas_http": [],
-   "componentes": 28,
+   "componentes": 29,
    "hooks_locais": [
     "useAcoesDoAlerta",
     "useAppBootstrap",
@@ -912,7 +912,13 @@
     "useCalls",
     "useCallsKpi",
     "useCatalogRecentSends",
+    "useConnectionOptions",
     "useContactSearch",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useFotoDoContato",
     "useIncomingCallListener",
     "useLayoutContext",
@@ -1012,11 +1018,14 @@
     "pages"
    ],
    "depende_de_modulos": [
+    "components/evolution",
     "components/layout",
     "components/ui",
     "hooks/auth",
     "hooks/calls",
     "hooks/communication",
+    "hooks/connections",
+    "hooks/integrations",
     "hooks/system",
     "lib",
     "lib/calls",
@@ -1027,14 +1036,15 @@
     "@tanstack/react-query",
     "date-fns",
     "framer-motion",
-    "lucide-react"
+    "lucide-react",
+    "sonner"
    ]
   },
   {
    "modulo": "components/catalog",
-   "arquivos": 20,
-   "testes": 45,
-   "linhas": 7762,
+   "arquivos": 24,
+   "testes": 46,
+   "linhas": 8076,
    "itens_menu": [
     "Catálogo",
     "Templates WA"
@@ -1044,7 +1054,7 @@
     "wa-templates"
    ],
    "rotas_http": [],
-   "componentes": 15,
+   "componentes": 17,
    "hooks_locais": [
     "useAppBootstrap",
     "useAuth",
@@ -1053,8 +1063,14 @@
     "useCatalogSendHistory",
     "useCatalogSendReadiness",
     "useCatalogStats",
+    "useConnectionOptions",
     "useContactSearch",
     "useDownloadPermission",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useExternalCatalog",
     "useExternalProduct",
     "useIsMobile",
@@ -1150,9 +1166,11 @@
    ],
    "depende_de_modulos": [
     "components/dashboard",
+    "components/evolution",
     "components/talkx",
     "components/ui",
     "hooks/auth",
+    "hooks/connections",
     "hooks/integrations",
     "hooks/system",
     "hooks/ui",
@@ -1344,9 +1362,9 @@
   },
   {
    "modulo": "components/connections",
-   "arquivos": 11,
-   "testes": 22,
-   "linhas": 1859,
+   "arquivos": 13,
+   "testes": 23,
+   "linhas": 1934,
    "itens_menu": [
     "Conexões"
    ],
@@ -1354,7 +1372,7 @@
     "connections"
    ],
    "rotas_http": [],
-   "componentes": 11,
+   "componentes": 12,
    "hooks_locais": [
     "useAppBootstrap",
     "useAuth",
@@ -2291,7 +2309,7 @@
    "modulo": "components/email",
    "arquivos": 8,
    "testes": 18,
-   "linhas": 2159,
+   "linhas": 2191,
    "itens_menu": [
     "Email"
    ],
@@ -2453,6 +2471,46 @@
    ]
   },
   {
+   "modulo": "components/evolution",
+   "arquivos": 2,
+   "testes": 1,
+   "linhas": 56,
+   "itens_menu": [],
+   "telas": [],
+   "rotas_http": [],
+   "componentes": 1,
+   "hooks_locais": [
+    "useConnectionOptions"
+   ],
+   "hooks_definidos": [],
+   "edges": [],
+   "tabelas": [
+    "whatsapp_connections"
+   ],
+   "rpcs": [],
+   "buckets": [],
+   "canais_realtime": [],
+   "env": [],
+   "flags": [],
+   "papeis": [],
+   "diretos": {
+    "edges": [],
+    "tabelas": [],
+    "rpcs": []
+   },
+   "importado_por_outros_modulos": [
+    "components/calls",
+    "components/catalog",
+    "components/inbox",
+    "components/monitoring"
+   ],
+   "depende_de_modulos": [
+    "components/ui",
+    "hooks/connections"
+   ],
+   "pacotes_externos": []
+  },
+  {
    "modulo": "components/gamification",
    "arquivos": 10,
    "testes": 6,
@@ -2539,7 +2597,7 @@
    "modulo": "components/gmail",
    "arquivos": 6,
    "testes": 8,
-   "linhas": 1475,
+   "linhas": 1482,
    "itens_menu": [
     "Gmail"
    ],
@@ -2626,9 +2684,9 @@
   },
   {
    "modulo": "components/groups",
-   "arquivos": 1,
-   "testes": 3,
-   "linhas": 333,
+   "arquivos": 3,
+   "testes": 4,
+   "linhas": 572,
    "itens_menu": [
     "Grupos"
    ],
@@ -2636,9 +2694,14 @@
     "groups"
    ],
    "rotas_http": [],
-   "componentes": 1,
+   "componentes": 2,
    "hooks_locais": [
     "useActionFeedback",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useGroupActions",
     "useGroupsManager",
     "useLayoutContext",
@@ -2665,6 +2728,7 @@
    "flags": [],
    "papeis": [
     "link",
+    "note",
     "presentation"
    ],
    "diretos": {
@@ -2681,7 +2745,9 @@
     "components/effects",
     "components/layout",
     "components/ui",
-    "hooks/chat"
+    "hooks/chat",
+    "hooks/integrations",
+    "lib"
    ],
    "pacotes_externos": [
     "framer-motion",
@@ -2691,9 +2757,9 @@
   },
   {
    "modulo": "components/inbox",
-   "arquivos": 253,
-   "testes": 322,
-   "linhas": 43786,
+   "arquivos": 261,
+   "testes": 329,
+   "linhas": 44922,
    "itens_menu": [
     "Chat"
    ],
@@ -2701,7 +2767,7 @@
     "inbox"
    ],
    "rotas_http": [],
-   "componentes": 212,
+   "componentes": 220,
    "hooks_locais": [
     "useAddressAutocomplete",
     "useAdvanceDealStage",
@@ -2736,12 +2802,15 @@
     "useChatSearch",
     "useCoachingTip",
     "useConnectionHealthBanner",
+    "useConnectionOptions",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -2756,6 +2825,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -2772,6 +2842,7 @@
     "useDownloadPermission",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -2803,6 +2874,7 @@
     "useInboxUIState",
     "useInteractiveMessage",
     "useIsMobile",
+    "useKnowledgeBaseSearch",
     "useLatestAnalysis",
     "useLayoutContext",
     "useLeadThermometer",
@@ -2884,6 +2956,7 @@
     "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -3011,6 +3084,7 @@
     "reassign_overloaded_agents",
     "reopen_conversation",
     "search_contacts",
+    "search_knowledge_base",
     "set_conversation_status",
     "talk_me_claim",
     "talk_me_list_pending_messages",
@@ -3031,7 +3105,6 @@
     "chat-reactions:${messageId}",
     "conversation:${contactId}",
     "copilot_insights:${sessionId}",
-    "typing:${conversationId}",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [
@@ -3138,6 +3211,7 @@
     "components/contacts",
     "components/copilot",
     "components/errors",
+    "components/evolution",
     "components/layout",
     "components/mobile",
     "components/security",
@@ -3152,6 +3226,7 @@
     "hooks/business",
     "hooks/chat",
     "hooks/communication",
+    "hooks/connections",
     "hooks/copilot",
     "hooks/crm",
     "hooks/delivery",
@@ -3193,7 +3268,7 @@
    "modulo": "components/integrations",
    "arquivos": 6,
    "testes": 9,
-   "linhas": 907,
+   "linhas": 915,
    "itens_menu": [
     "Calendário",
     "Integrações"
@@ -3565,6 +3640,7 @@
     "useConnectionAuditLogs",
     "useConnectionHealthBanner",
     "useConnectionIncidents",
+    "useConnectionOptions",
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
@@ -3573,8 +3649,10 @@
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -3594,6 +3672,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -3636,6 +3715,7 @@
     "useEmailThreadListQuery",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -3690,6 +3770,7 @@
     "useIsMobile",
     "useKeyboardHeight",
     "useKnowledgeBase",
+    "useKnowledgeBaseSearch",
     "useLanguage",
     "useLatestAnalysis",
     "useLayoutContext",
@@ -3892,6 +3973,7 @@
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -4137,6 +4219,7 @@
     "search_contacts",
     "search_email_threads",
     "search_insights",
+    "search_knowledge_base",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -4151,6 +4234,7 @@
     "talk_me_list_waiting",
     "talkx_benchmarks",
     "talkx_block_recipient",
+    "talkx_campaign_queue_by_segment",
     "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
@@ -4194,7 +4278,6 @@
     "team-messages-${conversationId}",
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
-    "typing:${conversationId}",
     "warroom-alerts-realtime",
     "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
@@ -4570,9 +4653,9 @@
   },
   {
    "modulo": "components/monitoring",
-   "arquivos": 22,
+   "arquivos": 23,
    "testes": 17,
-   "linhas": 3773,
+   "linhas": 3853,
    "itens_menu": [
     "Monitor Evolution"
    ],
@@ -4580,10 +4663,16 @@
     "evolution-monitor"
    ],
    "rotas_http": [],
-   "componentes": 14,
+   "componentes": 15,
    "hooks_locais": [
     "useAuth",
     "useConnectionIncidents",
+    "useConnectionOptions",
+    "useEvolutionApi",
+    "useEvolutionApiCore",
+    "useEvolutionGroups",
+    "useEvolutionInstance",
+    "useEvolutionMessaging",
     "useEvolutionMonitoring",
     "useGlobalSettings",
     "useInboxSilence",
@@ -4674,7 +4763,10 @@
    ],
    "depende_de_modulos": [
     "components/admin",
+    "components/evolution",
     "components/ui",
+    "hooks/connections",
+    "hooks/integrations",
     "hooks/realtime",
     "hooks/system",
     "integrations/supabase",
@@ -5208,7 +5300,6 @@
     "agent-presence-changes",
     "chat-reactions:${messageId}",
     "gmail-threads-realtime",
-    "typing:${conversationId}",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [
@@ -5489,6 +5580,7 @@
     "useConnectionAlertPreferences",
     "useConnectionAuditLogs",
     "useConnectionHealthBanner",
+    "useConnectionOptions",
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
@@ -5496,8 +5588,10 @@
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -5517,6 +5611,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -5554,6 +5649,7 @@
     "useEmailThreadListQuery",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -5599,6 +5695,7 @@
     "useInteractiveMessage",
     "useIntersectionPrefetch",
     "useIsMobile",
+    "useKnowledgeBaseSearch",
     "useLanguage",
     "useLatestAnalysis",
     "useLayoutContext",
@@ -5738,6 +5835,7 @@
     "useUnconfirmedMessages",
     "useUndoableAction",
     "useUniversityHelp",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -5937,6 +6035,7 @@
     "reopen_conversation",
     "search_contacts",
     "search_email_threads",
+    "search_knowledge_base",
     "search_team_messages",
     "sentiment_trend",
     "set_conversation_status",
@@ -5972,7 +6071,6 @@
     "team-messages-${conversationId}",
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
-    "typing:${conversationId}",
     "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
@@ -6873,7 +6971,7 @@
    "modulo": "components/talkx",
    "arquivos": 100,
    "testes": 147,
-   "linhas": 23814,
+   "linhas": 23850,
    "itens_menu": [
     "Campanhas"
    ],
@@ -7258,8 +7356,8 @@
   {
    "modulo": "components/team-chat",
    "arquivos": 27,
-   "testes": 23,
-   "linhas": 4349,
+   "testes": 25,
+   "linhas": 4431,
    "itens_menu": [
     "Teams"
    ],
@@ -7744,6 +7842,7 @@
     "components/docs",
     "components/email",
     "components/errors",
+    "components/evolution",
     "components/gamification",
     "components/gmail",
     "components/groups",
@@ -8180,7 +8279,7 @@
    "modulo": "features/talk-me",
    "arquivos": 4,
    "testes": 2,
-   "linhas": 1823,
+   "linhas": 1818,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -8253,7 +8352,7 @@
   {
    "modulo": "hooks/__tests__",
    "arquivos": 0,
-   "testes": 142,
+   "testes": 143,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],
@@ -8679,8 +8778,7 @@
     "@supabase/supabase-js",
     "@tanstack/react-query",
     "react-router-dom",
-    "sonner",
-    "zod"
+    "sonner"
    ]
   },
   {
@@ -8961,7 +9059,7 @@
    "modulo": "hooks/chat",
    "arquivos": 48,
    "testes": 51,
-   "linhas": 8068,
+   "linhas": 8109,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -9179,8 +9277,7 @@
     "chat-reactions:${messageId}",
     "team-chat-updates",
     "team-messages-${conversationId}",
-    "team-read-state-${conversationId}",
-    "typing:${conversationId}"
+    "team-read-state-${conversationId}"
    ],
    "env": [
     "DEV"
@@ -9284,7 +9381,7 @@
    "modulo": "hooks/communication",
    "arquivos": 17,
    "testes": 15,
-   "linhas": 3264,
+   "linhas": 3284,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -9425,17 +9522,19 @@
   },
   {
    "modulo": "hooks/connections",
-   "arquivos": 1,
+   "arquivos": 2,
    "testes": 2,
-   "linhas": 368,
+   "linhas": 395,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
    "componentes": 0,
    "hooks_locais": [
+    "useConnectionOptions",
     "useConnectionsHealth"
    ],
    "hooks_definidos": [
+    "useConnectionOptions",
     "useConnectionsHealth"
    ],
    "edges": [],
@@ -9459,13 +9558,20 @@
    },
    "importado_por_outros_modulos": [
     "components/admin",
-    "components/agents"
+    "components/agents",
+    "components/calls",
+    "components/catalog",
+    "components/evolution",
+    "components/inbox",
+    "components/monitoring"
    ],
    "depende_de_modulos": [
     "integrations/supabase",
     "lib"
    ],
-   "pacotes_externos": []
+   "pacotes_externos": [
+    "@tanstack/react-query"
+   ]
   },
   {
    "modulo": "hooks/contacts",
@@ -9816,9 +9922,9 @@
   },
   {
    "modulo": "hooks/crm",
-   "arquivos": 25,
+   "arquivos": 27,
    "testes": 21,
-   "linhas": 2167,
+   "linhas": 2333,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -9839,6 +9945,7 @@
     "useContactEnrichedData",
     "useContactEnrichedQuery",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactNotes",
     "useContactSidebar",
@@ -9846,6 +9953,7 @@
     "useContactSummaryNote",
     "useContactsKpi",
     "useContactsSearch",
+    "useConversationMemory",
     "useConversationTabCounts",
     "useEmailContactContext",
     "useExternalCargos",
@@ -9867,6 +9975,7 @@
     "useTeamAlertsPreference",
     "useTeamProfiles",
     "useToast",
+    "useUpdateContactLeadRisk",
     "useVisibleAgents"
    ],
    "hooks_definidos": [
@@ -9884,12 +9993,15 @@
     "useContactEnrichedData",
     "useContactEnrichedQuery",
     "useContactIntelligence",
+    "useContactLeadRisk",
+    "useUpdateContactLeadRisk",
     "useContactNotes",
     "useContactSidebar",
     "useContactsKpi",
     "useContactsSearch",
     "useContactStats",
     "useContactSummaryNote",
+    "useConversationMemory",
     "useCRMAdminAccess",
     "useEmailContactContext",
     "useExternalCargos",
@@ -9911,6 +10023,7 @@
     "contact_notes",
     "contacts",
     "conversation_events",
+    "conversation_memory",
     "conversation_sla",
     "csat_surveys",
     "deal_activities",
@@ -9957,6 +10070,7 @@
     "tabelas": [
      "contacts",
      "conversation_events",
+     "conversation_memory",
      "deal_activities",
      "profiles",
      "queue_members",
@@ -10206,8 +10320,8 @@
   {
    "modulo": "hooks/evolution",
    "arquivos": 5,
-   "testes": 4,
-   "linhas": 403,
+   "testes": 6,
+   "linhas": 420,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10366,7 +10480,7 @@
    "modulo": "hooks/gmail",
    "arquivos": 5,
    "testes": 4,
-   "linhas": 389,
+   "linhas": 412,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10706,9 +10820,9 @@
   },
   {
    "modulo": "hooks/integrations",
-   "arquivos": 56,
-   "testes": 56,
-   "linhas": 11079,
+   "arquivos": 57,
+   "testes": 57,
+   "linhas": 11288,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10737,6 +10851,7 @@
     "useEmailThreadForContact",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -10829,6 +10944,7 @@
     "useCustomEmojis",
     "useEmailThreadForContact",
     "useEvolutionApi",
+    "useEvolutionContactProfile",
     "useCatalogFavorites",
     "useCatalogStats",
     "useExternalCatalog",
@@ -11059,6 +11175,7 @@
    },
    "importado_por_outros_modulos": [
     "components/admin",
+    "components/calls",
     "components/catalog",
     "components/chatbot",
     "components/connections",
@@ -11066,11 +11183,13 @@
     "components/crm360",
     "components/email",
     "components/gmail",
+    "components/groups",
     "components/inbox",
     "components/integrations",
     "components/keyboard",
     "components/knowledge",
     "components/meta-capi",
+    "components/monitoring",
     "components/multiplix",
     "components/security",
     "components/talkx",
@@ -11566,9 +11685,9 @@
   },
   {
    "modulo": "hooks/sla",
-   "arquivos": 13,
+   "arquivos": 14,
    "testes": 7,
-   "linhas": 1786,
+   "linhas": 1825,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -11577,6 +11696,7 @@
     "useApplicableSLA",
     "useAuth",
     "useCatalogRecentSends",
+    "useContactFirstResponseSLA",
     "useContactSearch",
     "useContactSlaTimeline",
     "useMessageUpdateBatcher",
@@ -11600,6 +11720,7 @@
    ],
    "hooks_definidos": [
     "useApplicableSLA",
+    "useContactFirstResponseSLA",
     "useContactSlaTimeline",
     "useSLACalculation",
     "useSLAConfigurations",
@@ -11615,10 +11736,14 @@
     "detect-new-device"
    ],
    "tabelas": [
+    "ai_conversation_tags",
     "catalog_send_events",
+    "contact_custom_fields",
+    "contact_notes",
     "contacts",
     "conversation_events",
     "conversation_sla",
+    "csat_surveys",
     "messages",
     "profiles",
     "queues",
@@ -11627,9 +11752,13 @@
     "user_settings"
    ],
    "rpcs": [
+    "can_delete_contacts",
+    "contacts_count_by_type",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
-    "get_inbox_contact_summaries"
+    "get_inbox_contact_summaries",
+    "get_last_message_dates",
+    "search_contacts"
    ],
    "buckets": [],
    "canais_realtime": [
@@ -11667,13 +11796,13 @@
     "hooks/system",
     "integrations/supabase",
     "lib",
+    "services",
     "utils"
    ],
    "pacotes_externos": [
     "@tanstack/react-query",
     "date-fns",
-    "sonner",
-    "zod"
+    "sonner"
    ]
   },
   {
@@ -11779,7 +11908,7 @@
    "modulo": "hooks/system",
    "arquivos": 42,
    "testes": 20,
-   "linhas": 6056,
+   "linhas": 6072,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -11865,6 +11994,7 @@
     "useConnectionAuditLogs",
     "useConnectionHealthBanner",
     "useConnectionIncidents",
+    "useConnectionOptions",
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
@@ -11873,8 +12003,10 @@
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -11894,6 +12026,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -11938,6 +12071,7 @@
     "useEmailThreadListQuery",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -11998,6 +12132,7 @@
     "useKeyboardHeight",
     "useKeyboardNavigation",
     "useKnowledgeBase",
+    "useKnowledgeBaseSearch",
     "useLanguage",
     "useLatestAnalysis",
     "useLayoutContext",
@@ -12216,6 +12351,7 @@
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -12519,6 +12655,7 @@
     "search_contacts",
     "search_email_threads",
     "search_insights",
+    "search_knowledge_base",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -12533,6 +12670,7 @@
     "talk_me_list_waiting",
     "talkx_benchmarks",
     "talkx_block_recipient",
+    "talkx_campaign_queue_by_segment",
     "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
@@ -12577,7 +12715,6 @@
     "team-messages-${conversationId}",
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
-    "typing:${conversationId}",
     "warroom-alerts-realtime",
     "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
@@ -13474,9 +13611,9 @@
   },
   {
    "modulo": "lib",
-   "arquivos": 112,
+   "arquivos": 115,
    "testes": 0,
-   "linhas": 10758,
+   "linhas": 10826,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -13603,6 +13740,7 @@
     "components/errors",
     "components/gamification",
     "components/gmail",
+    "components/groups",
     "components/inbox",
     "components/keyboard",
     "components/layout",
@@ -13714,7 +13852,7 @@
   {
    "modulo": "lib/__tests__",
    "arquivos": 0,
-   "testes": 110,
+   "testes": 113,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],
@@ -13838,7 +13976,7 @@
    "modulo": "lib/calls",
    "arquivos": 22,
    "testes": 16,
-   "linhas": 3174,
+   "linhas": 3255,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -14142,6 +14280,7 @@
     "useConnectionAuditLogs",
     "useConnectionHealthBanner",
     "useConnectionIncidents",
+    "useConnectionOptions",
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
@@ -14150,8 +14289,10 @@
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -14171,6 +14312,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -14214,6 +14356,7 @@
     "useEmailThreadListQuery",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -14272,6 +14415,7 @@
     "useKeyboardHeight",
     "useKeyboardNavigation",
     "useKnowledgeBase",
+    "useKnowledgeBaseSearch",
     "useLanguage",
     "useLatestAnalysis",
     "useLayoutContext",
@@ -14485,6 +14629,7 @@
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -14733,6 +14878,7 @@
     "search_contacts",
     "search_email_threads",
     "search_insights",
+    "search_knowledge_base",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -14747,6 +14893,7 @@
     "talk_me_list_waiting",
     "talkx_benchmarks",
     "talkx_block_recipient",
+    "talkx_campaign_queue_by_segment",
     "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
@@ -14791,7 +14938,6 @@
     "team-messages-${conversationId}",
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
-    "typing:${conversationId}",
     "warroom-alerts-realtime",
     "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
@@ -14950,8 +15096,7 @@
     "framer-motion",
     "lucide-react",
     "react-router-dom",
-    "sonner",
-    "zod"
+    "sonner"
    ]
   },
   {
@@ -15391,6 +15536,7 @@
     "useConnectionAuditLogs",
     "useConnectionHealthBanner",
     "useConnectionIncidents",
+    "useConnectionOptions",
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
@@ -15399,8 +15545,10 @@
     "useContactDeliveryStats",
     "useContactEnrichedData",
     "useContactEnrichedQuery",
+    "useContactFirstResponseSLA",
     "useContactFormValidation",
     "useContactIntelligence",
+    "useContactLeadRisk",
     "useContactLeadScore",
     "useContactMedia",
     "useContactMediaCounts",
@@ -15420,6 +15568,7 @@
     "useConversationActions",
     "useConversationAnalyses",
     "useConversationHistoryTimeline",
+    "useConversationMemory",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
     "useConversationViewers",
@@ -15463,6 +15612,7 @@
     "useEmailThreadListQuery",
     "useEvolutionApi",
     "useEvolutionApiCore",
+    "useEvolutionContactProfile",
     "useEvolutionGroups",
     "useEvolutionInstance",
     "useEvolutionMessaging",
@@ -15521,6 +15671,7 @@
     "useKeyboardHeight",
     "useKeyboardNavigation",
     "useKnowledgeBase",
+    "useKnowledgeBaseSearch",
     "useLanguage",
     "useLatestAnalysis",
     "useLayoutContext",
@@ -15738,6 +15889,7 @@
     "useUndoableAction",
     "useUniversityHelp",
     "useUnreadEmailCount",
+    "useUpdateContactLeadRisk",
     "useUpsellSuggestion",
     "useUrlFilters",
     "useUserRole",
@@ -15989,6 +16141,7 @@
     "search_contacts",
     "search_email_threads",
     "search_insights",
+    "search_knowledge_base",
     "search_my_calls",
     "search_team_messages",
     "sentiment_trend",
@@ -16003,6 +16156,7 @@
     "talk_me_list_waiting",
     "talkx_benchmarks",
     "talkx_block_recipient",
+    "talkx_campaign_queue_by_segment",
     "talkx_campaign_ranking",
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
@@ -16047,7 +16201,6 @@
     "team-messages-${conversationId}",
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
-    "typing:${conversationId}",
     "warroom-alerts-realtime",
     "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
@@ -16345,6 +16498,7 @@
     "hooks/inbox",
     "hooks/integrations",
     "hooks/realtime",
+    "hooks/sla",
     "hooks/system",
     "lib",
     "pages",

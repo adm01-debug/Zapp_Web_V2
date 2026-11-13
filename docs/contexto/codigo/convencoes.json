@@ -7,34 +7,34 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (865)",
+   "src/components (880)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (414)",
+   "src/hooks (419)",
    "src/components (73)",
    "src/contexts (2)"
   ],
   "servicos_logica": [
-   "src/lib (147)",
+   "src/lib (150)",
    "src/services (19)",
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1965)",
-   "outro (231)",
-   "co-localizado (*.test) (170)"
+   "co-localizado (__tests__) (1985)",
+   "outro (234)",
+   "co-localizado (*.test) (182)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
    "scripts/db-audit (287)",
-   "scripts/e2e-isolated (41)",
-   "scripts/ci (40)"
+   "scripts/ci (42)",
+   "scripts/e2e-isolated (41)"
   ],
   "docs": [
-   "docs (31)",
+   "docs (32)",
    "(raiz) (12)",
    ".github (1)"
   ]
@@ -42,13 +42,13 @@
  "nomenclatura": {
   "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
-  "servicos": "camelCase (73%)",
+  "servicos": "camelCase (74%)",
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (92%)"
  },
  "barrels_index": 70,
  "extensao_componentes": [
-  ".tsx (899)"
+  ".tsx (914)"
  ],
  "alias_imports": {
   "(raiz)": {
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Pacote: 20 PRs aprovadas integradas num único merge (#3035)",
    "test(talkx): E2E de reload preserva a aba na URL — cobertura da etapa X052 (#2556)",
    "feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)",
    "Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)",
-   "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)",
-   "Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)"
+   "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

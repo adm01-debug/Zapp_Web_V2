@@ -5,26 +5,26 @@
   "vitest",
   "playwright"
  ],
- "total": 2628,
+ "total": 2663,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2335
+  "unit": 2370
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1965
+   "arquivos": 1985
   },
   {
    "padrao": "outro",
-   "arquivos": 231
+   "arquivos": 234
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 170
+   "arquivos": 182
   },
   {
    "padrao": "tests/",
@@ -459,7 +459,7 @@
   {
    "arquivo": "e2e/navegacao-modulos.spec.ts",
    "tipo": "e2e",
-   "linhas": 1945,
+   "linhas": 2002,
    "testa": [
     "scripts/e2e-isolated/fixture-access.mjs",
     "src/lib/productName.ts"
@@ -669,7 +669,7 @@
   {
    "arquivo": "scripts/ci/branch-hygiene-runtime.unit.mjs",
    "tipo": "unit",
-   "linhas": 256,
+   "linhas": 264,
    "testa": [
     "scripts/ci/workflow-test-support.mjs"
    ],
@@ -871,6 +871,22 @@
     "scripts/ci/workflow-test-support.mjs"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "scripts/ci/ci-local-integracao.unit.mjs",
+   "tipo": "unit",
+   "linhas": 744,
+   "testa": [],
+   "casos": 25
+  },
+  {
+   "arquivo": "scripts/ci/ci-local.unit.mjs",
+   "tipo": "unit",
+   "linhas": 718,
+   "testa": [
+    "scripts/ci/ci-local-lib.mjs"
+   ],
+   "casos": 38
   },
   {
    "arquivo": "scripts/ci/codeql-paths.unit.mjs",
@@ -1473,9 +1489,9 @@
   {
    "arquivo": "scripts/ci/evolution-edge-fixes.unit.mjs",
    "tipo": "unit",
-   "linhas": 278,
+   "linhas": 297,
    "testa": [],
-   "casos": 13
+   "casos": 14
   },
   {
    "arquivo": "scripts/ci/fila-merge.unit.mjs",
@@ -2577,6 +2593,15 @@
     "scripts/edge-deploy/unchanged-from-log.mjs"
    ],
    "casos": 9
+  },
+  {
+   "arquivo": "scripts/eslint/no-secret-compare.unit.mjs",
+   "tipo": "unit",
+   "linhas": 56,
+   "testa": [
+    "scripts/eslint/no-secret-compare.js"
+   ],
+   "casos": 6
   },
   {
    "arquivo": "scripts/lib/seguranca-processo.unit.mjs",
@@ -3766,12 +3791,12 @@
   {
    "arquivo": "src/components/calls/__tests__/NewCallPanel.test.tsx",
    "tipo": "unit",
-   "linhas": 210,
+   "linhas": 233,
    "testa": [
     "src/components/calls/NewCallPanel.tsx",
     "src/components/ui/tooltip.tsx"
    ],
-   "casos": 16
+   "casos": 18
   },
   {
    "arquivo": "src/components/calls/__tests__/OutboundCallDialog.test.tsx",
@@ -4312,6 +4337,17 @@
    "casos": 18
   },
   {
+   "arquivo": "src/components/catalog/__tests__/SendTemplateDialog.test.tsx",
+   "tipo": "unit",
+   "linhas": 133,
+   "testa": [
+    "src/components/catalog/SendTemplateDialog.tsx",
+    "src/components/catalog/sendTemplatePayload.ts",
+    "src/hooks/integrations/useWhatsAppTemplates.ts"
+   ],
+   "casos": 8
+  },
+  {
    "arquivo": "src/components/catalog/__tests__/SL038_badgesTokensTema.test.tsx",
    "tipo": "unit",
    "linhas": 239,
@@ -4343,12 +4379,12 @@
   {
    "arquivo": "src/components/catalog/__tests__/WhatsAppTemplatesManager.adminGate.test.tsx",
    "tipo": "unit",
-   "linhas": 154,
+   "linhas": 169,
    "testa": [
     "src/components/catalog/WhatsAppTemplatesManager.tsx",
     "src/hooks/integrations/useWhatsAppTemplates.ts"
    ],
-   "casos": 4
+   "casos": 6
   },
   {
    "arquivo": "src/components/catalog/__tests__/WhatsAppTemplatesManager.confirmacaoExclusao.test.tsx",
@@ -4607,6 +4643,15 @@
     "src/components/connections/ConnectionsView.tsx"
    ],
    "casos": 5
+  },
+  {
+   "arquivo": "src/components/connections/__tests__/InstancePresenceTab.test.tsx",
+   "tipo": "unit",
+   "linhas": 39,
+   "testa": [
+    "src/components/connections/InstancePresenceTab.tsx"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx",
@@ -5900,13 +5945,13 @@
   {
    "arquivo": "src/components/email/__tests__/EmailThreadList.test.tsx",
    "tipo": "unit",
-   "linhas": 124,
+   "linhas": 143,
    "testa": [
     "src/components/email/EmailThreadList.tsx",
     "src/hooks/integrations/useGmail.ts",
     "src/lib/emailThreadQuery.ts"
    ],
-   "casos": 10
+   "casos": 12
   },
   {
    "arquivo": "src/components/email/__tests__/EmailVolumeMedicao.test.tsx",
@@ -5988,6 +6033,20 @@
     "src/components/errors/StaleBundleNotice.tsx"
    ],
    "casos": 4
+  },
+  {
+   "arquivo": "src/components/evolution/__tests__/rotasPendentesUi.test.tsx",
+   "tipo": "unit",
+   "linhas": 143,
+   "testa": [
+    "src/components/calls/OfferCallButton.tsx",
+    "src/components/catalog/MetaTemplatesDialog.tsx",
+    "src/components/catalog/metaTemplatePayload.ts",
+    "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
+    "src/components/monitoring/DeviceChatsPanel.tsx",
+    "src/hooks/integrations/useWhatsAppTemplates.ts"
+   ],
+   "casos": 9
   },
   {
    "arquivo": "src/components/gamification/__tests__/AchievementsSystem.test.tsx",
@@ -6094,12 +6153,12 @@
   {
    "arquivo": "src/components/gmail/__tests__/GmailInboxView.test.tsx",
    "tipo": "unit",
-   "linhas": 418,
+   "linhas": 440,
    "testa": [
     "src/components/gmail/GmailInboxView.tsx",
     "src/hooks/integrations/useGmail.ts"
    ],
-   "casos": 25
+   "casos": 27
   },
   {
    "arquivo": "src/components/gmail/__tests__/GmailLabelSidebar.test.tsx",
@@ -6130,6 +6189,16 @@
     "src/hooks/integrations/useGmail.ts"
    ],
    "casos": 16
+  },
+  {
+   "arquivo": "src/components/groups/__tests__/GroupEvolutionDialogs.test.tsx",
+   "tipo": "unit",
+   "linhas": 158,
+   "testa": [
+    "src/components/groups/GroupEvolutionDialogs.tsx",
+    "src/components/groups/groupEvolutionOptions.ts"
+   ],
+   "casos": 10
   },
   {
    "arquivo": "src/components/groups/__tests__/GroupsView.a11y.test.tsx",
@@ -6342,12 +6411,12 @@
   {
    "arquivo": "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
    "tipo": "unit",
-   "linhas": 310,
+   "linhas": 334,
    "testa": [
     "src/components/inbox/ChatPanel.tsx",
     "src/types/chat.ts"
    ],
-   "casos": 5
+   "casos": 6
   },
   {
    "arquivo": "src/components/inbox/__tests__/ChatPanelHandlers.localizacao.test.tsx",
@@ -6875,6 +6944,15 @@
     "src/components/inbox/KeyboardShortcutsHelp.tsx"
    ],
    "casos": 1
+  },
+  {
+   "arquivo": "src/components/inbox/__tests__/KnowledgeBaseSearchPanel.test.tsx",
+   "tipo": "unit",
+   "linhas": 127,
+   "testa": [
+    "src/components/inbox/KnowledgeBaseSearchPanel.tsx"
+   ],
+   "casos": 11
   },
   {
    "arquivo": "src/components/inbox/__tests__/LinkPreview.dominios-seguros.test.tsx",
@@ -8471,6 +8549,15 @@
    "casos": 8
   },
   {
+   "arquivo": "src/components/inbox/contact-details/__tests__/AIInsightsWidget.test.tsx",
+   "tipo": "unit",
+   "linhas": 93,
+   "testa": [
+    "src/components/inbox/contact-details/AIInsightsWidget.tsx"
+   ],
+   "casos": 7
+  },
+  {
    "arquivo": "src/components/inbox/contact-details/__tests__/click-to-call-origens.test.ts",
    "tipo": "unit",
    "linhas": 87,
@@ -8517,12 +8604,31 @@
   {
    "arquivo": "src/components/inbox/contact-details/__tests__/ContactDetails.inteligencia.test.tsx",
    "tipo": "unit",
-   "linhas": 112,
+   "linhas": 136,
    "testa": [
     "src/components/inbox/ContactDetails.tsx",
     "src/types/chat.ts"
    ],
-   "casos": 2
+   "casos": 3
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/__tests__/ContactDetails.restaurados.test.tsx",
+   "tipo": "unit",
+   "linhas": 100,
+   "testa": [
+    "src/components/inbox/ContactDetails.tsx",
+    "src/types/chat.ts"
+   ],
+   "casos": 3
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/__tests__/ContactFirstResponseSLA.test.tsx",
+   "tipo": "unit",
+   "linhas": 80,
+   "testa": [
+    "src/components/inbox/contact-details/ContactFirstResponseSLA.tsx"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx",
@@ -8537,11 +8643,21 @@
   {
    "arquivo": "src/components/inbox/contact-details/__tests__/ContactIntelligencePanel.test.tsx",
    "tipo": "unit",
-   "linhas": 133,
+   "linhas": 238,
    "testa": [
     "src/components/inbox/contact-details/ContactIntelligencePanel.tsx"
    ],
-   "casos": 8
+   "casos": 17
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/__tests__/ConversationMemorySection.test.tsx",
+   "tipo": "unit",
+   "linhas": 154,
+   "testa": [
+    "src/components/inbox/contact-details/ConversationMemorySection.tsx",
+    "src/components/ui/accordion.tsx"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx",
@@ -8562,6 +8678,25 @@
    "casos": 8
   },
   {
+   "arquivo": "src/components/inbox/contact-details/__tests__/EvolutionContactProfileSection.test.tsx",
+   "tipo": "unit",
+   "linhas": 99,
+   "testa": [
+    "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx",
+    "src/hooks/integrations/useEvolutionContactProfile.ts"
+   ],
+   "casos": 7
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/__tests__/LeadRiskScorePanel.test.tsx",
+   "tipo": "unit",
+   "linhas": 134,
+   "testa": [
+    "src/components/inbox/contact-details/LeadRiskScorePanel.tsx"
+   ],
+   "casos": 10
+  },
+  {
    "arquivo": "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx",
    "tipo": "unit",
    "linhas": 284,
@@ -8575,7 +8710,7 @@
   {
    "arquivo": "src/components/inbox/contact-details/sidebar/__tests__/ContactSidebarSections.test.tsx",
    "tipo": "unit",
-   "linhas": 64,
+   "linhas": 68,
    "testa": [
     "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx",
     "src/components/ui/accordion.tsx",
@@ -8647,11 +8782,11 @@
   {
    "arquivo": "src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts",
    "tipo": "unit",
-   "linhas": 88,
+   "linhas": 104,
    "testa": [
     "src/components/inbox/contact-details/sidebar/sidebarSections.ts"
    ],
-   "casos": 13
+   "casos": 15
   },
   {
    "arquivo": "src/components/inbox/contact-details/sidebar/__tests__/SinguProfileDetailSheet.test.tsx",
@@ -8878,7 +9013,7 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
    "tipo": "unit",
-   "linhas": 91,
+   "linhas": 99,
    "testa": [
     "src/components/inbox/tabs/AiTab.tsx",
     "src/types/chat.ts"
@@ -8888,12 +9023,12 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
    "tipo": "unit",
-   "linhas": 101,
+   "linhas": 122,
    "testa": [
     "src/components/inbox/tabs/AiTab.tsx",
     "src/types/chat.ts"
    ],
-   "casos": 6
+   "casos": 8
   },
   {
    "arquivo": "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
@@ -9428,12 +9563,12 @@
   {
    "arquivo": "src/components/integrations/__tests__/GmailIntegrationCard.falha-consulta.test.tsx",
    "tipo": "unit",
-   "linhas": 90,
+   "linhas": 102,
    "testa": [
     "src/components/integrations/GmailIntegrationCard.tsx",
     "src/hooks/integrations/useGmail.ts"
    ],
-   "casos": 4
+   "casos": 5
   },
   {
    "arquivo": "src/components/integrations/__tests__/GoogleCalendarIntegration.a11y.test.tsx",
@@ -12527,14 +12662,14 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
    "tipo": "unit",
-   "linhas": 556,
+   "linhas": 626,
    "testa": [
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/TalkXView.tsx",
     "src/components/talkx/TalkXWizardDelivery.tsx",
     "src/components/talkx/talkxWizardRoute.ts"
    ],
-   "casos": 30
+   "casos": 35
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXView.routing.test.tsx",
@@ -12825,13 +12960,13 @@
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
    "tipo": "unit",
-   "linhas": 195,
+   "linhas": 216,
    "testa": [
     "src/components/talkx/report/TalkXCampaignReport.tsx",
     "src/components/talkx/report/talkxReportData.ts",
     "src/hooks/integrations/useTalkX.ts"
    ],
-   "casos": 12
+   "casos": 13
   },
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx",
@@ -13584,6 +13719,24 @@
     "src/hooks/team-chat/teamChatTypes.ts"
    ],
    "casos": 1
+  },
+  {
+   "arquivo": "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
+   "tipo": "unit",
+   "linhas": 119,
+   "testa": [
+    "src/components/team-chat/TeamChatView.tsx"
+   ],
+   "casos": 2
+  },
+  {
+   "arquivo": "src/components/team-chat/__tests__/TeamChatView.deeplink.test.tsx",
+   "tipo": "unit",
+   "linhas": 157,
+   "testa": [
+    "src/components/team-chat/TeamChatView.tsx"
+   ],
+   "casos": 10
   },
   {
    "arquivo": "src/components/team-chat/__tests__/TeamConversationList.estados.test.tsx",
@@ -14679,7 +14832,7 @@
   {
    "arquivo": "src/hooks/__tests__/useEvolutionApi.test.ts",
    "tipo": "unit",
-   "linhas": 708,
+   "linhas": 710,
    "testa": [
     "src/hooks/integrations/useEvolutionApi.ts",
     "src/integrations/supabase/client.ts"
@@ -15182,13 +15335,15 @@
   {
    "arquivo": "src/hooks/__tests__/useSipClient.test.ts",
    "tipo": "unit",
-   "linhas": 1110,
+   "linhas": 1194,
    "testa": [
     "src/hooks/communication/useSipClient.ts",
     "src/lib/calls/callStatus.ts",
+    "src/lib/calls/sipProvisioning.ts",
+    "src/lib/calls/tabLeaderStore.ts",
     "src/lib/lazyToast.ts"
    ],
-   "casos": 54
+   "casos": 58
   },
   {
    "arquivo": "src/hooks/__tests__/useSLACalculation.test.ts",
@@ -15352,6 +15507,15 @@
    "casos": 3
   },
   {
+   "arquivo": "src/hooks/__tests__/useTypingPresence.desmonte.test.tsx",
+   "tipo": "unit",
+   "linhas": 176,
+   "testa": [
+    "src/hooks/chat/useTypingPresence.ts"
+   ],
+   "casos": 7
+  },
+  {
    "arquivo": "src/hooks/__tests__/useTypingPresence.identidade.test.tsx",
    "tipo": "unit",
    "linhas": 179,
@@ -15504,11 +15668,11 @@
   {
    "arquivo": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
    "tipo": "unit",
-   "linhas": 214,
+   "linhas": 263,
    "testa": [
     "src/hooks/integrations/useWhatsAppStatus.ts"
    ],
-   "casos": 11
+   "casos": 13
   },
   {
    "arquivo": "src/hooks/admin/__tests__/useSearchInsights.test.ts",
@@ -16361,7 +16525,7 @@
   {
    "arquivo": "src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx",
    "tipo": "unit",
-   "linhas": 214,
+   "linhas": 215,
    "testa": [
     "src/hooks/chat/useTeamChatNotifications.ts"
    ],
@@ -17012,13 +17176,27 @@
    "casos": 8
   },
   {
+   "arquivo": "src/hooks/evolution/__tests__/evolutionRouterGuard.ts",
+   "tipo": "unit",
+   "linhas": 36,
+   "testa": [],
+   "casos": 1
+  },
+  {
+   "arquivo": "src/hooks/evolution/__tests__/rotas-chamadas-existem.test.ts",
+   "tipo": "unit",
+   "linhas": 119,
+   "testa": [],
+   "casos": 9
+  },
+  {
    "arquivo": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
    "tipo": "unit",
-   "linhas": 417,
+   "linhas": 451,
    "testa": [
     "src/hooks/evolution/useEvolutionApiCore.ts"
    ],
-   "casos": 17
+   "casos": 19
   },
   {
    "arquivo": "src/hooks/evolution/__tests__/useEvolutionApiCore.withToast.test.ts",
@@ -17042,7 +17220,7 @@
   {
    "arquivo": "src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts",
    "tipo": "unit",
-   "linhas": 398,
+   "linhas": 381,
    "testa": [
     "src/hooks/evolution/useEvolutionApiCore.ts",
     "src/hooks/evolution/useEvolutionMessaging.ts",
@@ -17079,11 +17257,11 @@
   {
    "arquivo": "src/hooks/gmail/__tests__/gmailApi.test.ts",
    "tipo": "unit",
-   "linhas": 35,
+   "linhas": 51,
    "testa": [
     "src/hooks/gmail/gmailApi.ts"
    ],
-   "casos": 3
+   "casos": 5
   },
   {
    "arquivo": "src/hooks/gmail/__tests__/useContactUnreadEmails.realtime.test.tsx",
@@ -17528,7 +17706,7 @@
   {
    "arquivo": "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
    "tipo": "unit",
-   "linhas": 448,
+   "linhas": 456,
    "testa": [
     "src/hooks/integrations/evolutionApi.types.ts",
     "src/hooks/integrations/useEvolutionApi.ts"
@@ -17554,6 +17732,17 @@
     "src/hooks/integrations/useGmail.ts"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
+   "tipo": "unit",
+   "linhas": 227,
+   "testa": [
+    "src/hooks/gmail/gmailApi.ts",
+    "src/hooks/integrations/useGmail.ts",
+    "src/integrations/supabase/client.ts"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useGmail.syncParcial.test.tsx",
@@ -17660,11 +17849,11 @@
   {
    "arquivo": "src/hooks/integrations/__tests__/useKnowledgeBaseSearch.clear.test.tsx",
    "tipo": "unit",
-   "linhas": 84,
+   "linhas": 109,
    "testa": [
     "src/hooks/integrations/useKnowledgeBaseSearch.ts"
    ],
-   "casos": 3
+   "casos": 5
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useMultiplixAudience.test.ts",
@@ -18373,11 +18562,11 @@
   {
    "arquivo": "src/hooks/system/__tests__/useSupabaseConnectivity.test.ts",
    "tipo": "unit",
-   "linhas": 335,
+   "linhas": 351,
    "testa": [
     "src/hooks/system/useSupabaseConnectivity.ts"
    ],
-   "casos": 13
+   "casos": 15
   },
   {
    "arquivo": "src/hooks/system/__tests__/useVersionsAusente.test.ts",
@@ -19897,6 +20086,16 @@
    "casos": 27
   },
   {
+   "arquivo": "src/lib/__tests__/talkxCsv.test.ts",
+   "tipo": "unit",
+   "linhas": 30,
+   "testa": [
+    "src/hooks/integrations/useTalkX.ts",
+    "src/lib/talkxCsv.ts"
+   ],
+   "casos": 3
+  },
+  {
    "arquivo": "src/lib/__tests__/testIntegrityGuard.test.ts",
    "tipo": "unit",
    "linhas": 46,
@@ -19995,6 +20194,24 @@
     "src/lib/zappSchemas.ts"
    ],
    "casos": 29
+  },
+  {
+   "arquivo": "src/lib/__tests__/zod-jitless-global.test.ts",
+   "tipo": "unit",
+   "linhas": 41,
+   "testa": [
+    "src/lib/zodJitless.ts"
+   ],
+   "casos": 2
+  },
+  {
+   "arquivo": "src/lib/__tests__/zod-jitless.test.ts",
+   "tipo": "unit",
+   "linhas": 118,
+   "testa": [
+    "src/lib/zod.ts"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/lib/aiJobs/__tests__/status.test.ts",
@@ -20110,13 +20327,13 @@
   {
    "arquivo": "src/lib/calls/__tests__/sipProvisioning.test.ts",
    "tipo": "unit",
-   "linhas": 80,
+   "linhas": 186,
    "testa": [
     "src/integrations/supabase/client.ts",
     "src/lib/calls/sipProvisioning.ts",
     "src/lib/lazyToast.ts"
    ],
-   "casos": 3
+   "casos": 12
   },
   {
    "arquivo": "src/lib/calls/__tests__/tabLeaderStore.test.ts",
@@ -21361,7 +21578,7 @@
   {
    "arquivo": "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts",
    "tipo": "unit",
-   "linhas": 143,
+   "linhas": 149,
    "testa": [
     "supabase/functions/_shared/evolution-control-authz.ts"
    ],
@@ -22078,6 +22295,16 @@
    "casos": 11
   },
   {
+   "arquivo": "supabase/functions/ai-deadline-calculator/index.test.ts",
+   "tipo": "unit",
+   "linhas": 156,
+   "testa": [
+    "supabase/functions/_shared/ai-generate.ts",
+    "supabase/functions/ai-deadline-calculator/index.ts"
+   ],
+   "casos": 9
+  },
+  {
    "arquivo": "supabase/functions/ai-jobs-worker/index.test.ts",
    "tipo": "unit",
    "linhas": 470,
@@ -22098,6 +22325,66 @@
     "supabase/functions/ai-kb-ingest/index.ts"
    ],
    "casos": 14
+  },
+  {
+   "arquivo": "supabase/functions/ai-lead-temperature/index.test.ts",
+   "tipo": "unit",
+   "linhas": 157,
+   "testa": [
+    "supabase/functions/_shared/ai-generate.ts",
+    "supabase/functions/ai-lead-temperature/index.ts"
+   ],
+   "casos": 9
+  },
+  {
+   "arquivo": "supabase/functions/ai-loss-risk/index.test.ts",
+   "tipo": "unit",
+   "linhas": 155,
+   "testa": [
+    "supabase/functions/_shared/ai-generate.ts",
+    "supabase/functions/ai-loss-risk/index.ts"
+   ],
+   "casos": 9
+  },
+  {
+   "arquivo": "supabase/functions/ai-multimodal-analysis/index.test.ts",
+   "tipo": "unit",
+   "linhas": 156,
+   "testa": [
+    "supabase/functions/_shared/ai-generate.ts",
+    "supabase/functions/ai-multimodal-analysis/index.ts"
+   ],
+   "casos": 9
+  },
+  {
+   "arquivo": "supabase/functions/ai-objection-handler/index.test.ts",
+   "tipo": "unit",
+   "linhas": 155,
+   "testa": [
+    "supabase/functions/_shared/ai-generate.ts",
+    "supabase/functions/ai-objection-handler/index.ts"
+   ],
+   "casos": 9
+  },
+  {
+   "arquivo": "supabase/functions/ai-price-anchor/index.test.ts",
+   "tipo": "unit",
+   "linhas": 154,
+   "testa": [
+    "supabase/functions/_shared/ai-generate.ts",
+    "supabase/functions/ai-price-anchor/index.ts"
+   ],
+   "casos": 9
+  },
+  {
+   "arquivo": "supabase/functions/ai-product-recommendation/index.test.ts",
+   "tipo": "unit",
+   "linhas": 162,
+   "testa": [
+    "supabase/functions/_shared/ai-generate.ts",
+    "supabase/functions/ai-product-recommendation/index.ts"
+   ],
+   "casos": 9
   },
   {
    "arquivo": "supabase/functions/ai-proxy/index.test.ts",
@@ -22176,6 +22463,15 @@
    "casos": 13
   },
   {
+   "arquivo": "supabase/functions/batch-fetch-avatars/index.test.ts",
+   "tipo": "unit",
+   "linhas": 235,
+   "testa": [
+    "supabase/functions/batch-fetch-avatars/index.ts"
+   ],
+   "casos": 7
+  },
+  {
    "arquivo": "supabase/functions/bitrix-api/index.test.ts",
    "tipo": "unit",
    "linhas": 365,
@@ -22239,6 +22535,15 @@
    "casos": 41
   },
   {
+   "arquivo": "supabase/functions/copilot-live/index.test.ts",
+   "tipo": "unit",
+   "linhas": 332,
+   "testa": [
+    "supabase/functions/copilot-live/index.ts"
+   ],
+   "casos": 9
+  },
+  {
    "arquivo": "supabase/functions/create-user/index.test.ts",
    "tipo": "unit",
    "linhas": 427,
@@ -22255,6 +22560,15 @@
     "supabase/functions/crm-integration/index.ts"
    ],
    "casos": 50
+  },
+  {
+   "arquivo": "supabase/functions/csp-report/index.test.ts",
+   "tipo": "unit",
+   "linhas": 184,
+   "testa": [
+    "supabase/functions/csp-report/index.ts"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "supabase/functions/detect-new-device/index.test.ts",
@@ -22352,13 +22666,13 @@
   {
    "arquivo": "supabase/functions/evolution-api/index.test.ts",
    "tipo": "unit",
-   "linhas": 965,
+   "linhas": 1747,
    "testa": [
     "supabase/functions/_shared/evolution-instance-token.ts",
     "supabase/functions/_shared/schemas.ts",
     "supabase/functions/evolution-api/index.ts"
    ],
-   "casos": 28
+   "casos": 65
   },
   {
    "arquivo": "supabase/functions/evolution-api/session-flavor-routes.test.ts",
@@ -22437,6 +22751,15 @@
    "casos": 23
   },
   {
+   "arquivo": "supabase/functions/get-mapbox-token/index.test.ts",
+   "tipo": "unit",
+   "linhas": 176,
+   "testa": [
+    "supabase/functions/get-mapbox-token/index.ts"
+   ],
+   "casos": 7
+  },
+  {
    "arquivo": "supabase/functions/get-sip-password/index.test.ts",
    "tipo": "unit",
    "linhas": 98,
@@ -22511,11 +22834,11 @@
   {
    "arquivo": "supabase/functions/gmail-sync/reauth-backoff.test.ts",
    "tipo": "unit",
-   "linhas": 130,
+   "linhas": 162,
    "testa": [
     "supabase/functions/gmail-sync/index.ts"
    ],
-   "casos": 2
+   "casos": 4
   },
   {
    "arquivo": "supabase/functions/gmail-webhook/attachments.test.ts",
@@ -22988,6 +23311,15 @@
     "supabase/functions/talkx-storage-purge/index.ts"
    ],
    "casos": 10
+  },
+  {
+   "arquivo": "supabase/functions/voice-agent/index.test.ts",
+   "tipo": "unit",
+   "linhas": 245,
+   "testa": [
+    "supabase/functions/voice-agent/index.ts"
+   ],
+   "casos": 8
   },
   {
    "arquivo": "supabase/functions/voice-changer/index.test.ts",
@@ -23949,6 +24281,7 @@
   "scripts/ci/check-test-inventory.mjs": 1,
   "scripts/ci/check-workflow-pins-resolvem.mjs": 1,
   "scripts/ci/check-workflow-pins.mjs": 2,
+  "scripts/ci/ci-local-lib.mjs": 1,
   "scripts/ci/commit-msg-lint.mjs": 1,
   "scripts/ci/fila-merge.mjs": 1,
   "scripts/ci/gerar-matriz-edge-tabela.mjs": 1,
@@ -24023,6 +24356,7 @@
   "scripts/edge-deploy/stable-inventory.mjs": 2,
   "scripts/edge-deploy/talkx-preflight.mjs": 1,
   "scripts/edge-deploy/unchanged-from-log.mjs": 1,
+  "scripts/eslint/no-secret-compare.js": 1,
   "scripts/ia/ensaio-provisionamento.mjs": 1,
   "scripts/inventario/gerar-banco.mjs": 1,
   "scripts/inventario/gerar-rotas.mjs": 1,
@@ -24099,6 +24433,7 @@
   "src/components/calls/IncomingCallAlert.tsx": 8,
   "src/components/calls/Keypad.tsx": 1,
   "src/components/calls/NewCallPanel.tsx": 1,
+  "src/components/calls/OfferCallButton.tsx": 1,
   "src/components/calls/OutboundCallDialog.tsx": 1,
   "src/components/calls/PostCallSummary.tsx": 1,
   "src/components/calls/RecordingPlayer.tsx": 2,
@@ -24117,12 +24452,16 @@
   "src/components/catalog/ExternalProductCard.tsx": 1,
   "src/components/catalog/ExternalProductCatalog.tsx": 7,
   "src/components/catalog/ExternalProductManagement.tsx": 8,
+  "src/components/catalog/MetaTemplatesDialog.tsx": 1,
   "src/components/catalog/ProductDetailDialog.tsx": 6,
   "src/components/catalog/SendProductDialog.tsx": 5,
+  "src/components/catalog/SendTemplateDialog.tsx": 1,
   "src/components/catalog/WhatsAppTemplatesManager.tsx": 4,
   "src/components/catalog/catalogExport.ts": 3,
   "src/components/catalog/catalogShared.tsx": 10,
+  "src/components/catalog/metaTemplatePayload.ts": 1,
   "src/components/catalog/sendProductUtils.ts": 5,
+  "src/components/catalog/sendTemplatePayload.ts": 1,
   "src/components/catalog/useSendProduct.ts": 7,
   "src/components/chatbot/ChatbotExecutionsDashboard.tsx": 1,
   "src/components/chatbot/ChatbotFlowEditor.tsx": 2,
@@ -24136,6 +24475,7 @@
   "src/components/connections/ConnectionDisconnectDialog.tsx": 1,
   "src/components/connections/ConnectionQueuesDialog.tsx": 1,
   "src/components/connections/ConnectionsView.tsx": 6,
+  "src/components/connections/InstancePresenceTab.tsx": 1,
   "src/components/connections/InstanceSettingsDialog.tsx": 2,
   "src/components/connections/InstanceSettingsTabContent.tsx": 1,
   "src/components/connections/NumberReputationMonitor.tsx": 1,
@@ -24254,7 +24594,9 @@
   "src/components/gmail/GmailInboxView.tsx": 3,
   "src/components/gmail/GmailLabelSidebar.tsx": 1,
   "src/components/gmail/ThreadListItem.tsx": 1,
+  "src/components/groups/GroupEvolutionDialogs.tsx": 1,
   "src/components/groups/GroupsView.tsx": 4,
+  "src/components/groups/groupEvolutionOptions.ts": 1,
   "src/components/inbox/AIConversationAssistant.tsx": 2,
   "src/components/inbox/AISuggestions.tsx": 3,
   "src/components/inbox/AdvancedMessageMenu.tsx": 2,
@@ -24266,7 +24608,7 @@
   "src/components/inbox/CRMAutoSync.tsx": 4,
   "src/components/inbox/ChatPanel.tsx": 9,
   "src/components/inbox/CloseConversationDialog.tsx": 1,
-  "src/components/inbox/ContactDetails.tsx": 3,
+  "src/components/inbox/ContactDetails.tsx": 4,
   "src/components/inbox/ContactDetailsResponsive.tsx": 1,
   "src/components/inbox/ContactTypeFilter.tsx": 2,
   "src/components/inbox/ConversationListSidebar.tsx": 7,
@@ -24282,6 +24624,7 @@
   "src/components/inbox/InteractiveMessage.tsx": 1,
   "src/components/inbox/InteractiveMessageBuilder.tsx": 5,
   "src/components/inbox/KeyboardShortcutsHelp.tsx": 2,
+  "src/components/inbox/KnowledgeBaseSearchPanel.tsx": 1,
   "src/components/inbox/LinkPreview.tsx": 1,
   "src/components/inbox/LocationMessage.tsx": 2,
   "src/components/inbox/LocationPicker.tsx": 4,
@@ -24357,12 +24700,18 @@
   "src/components/inbox/collaboration/InternalNotesPanel.tsx": 3,
   "src/components/inbox/collaboration/MentionInput.tsx": 1,
   "src/components/inbox/collaboration/ViewersIndicator.tsx": 2,
+  "src/components/inbox/contact-details/AIInsightsWidget.tsx": 1,
   "src/components/inbox/contact-details/CompactContactHeader.tsx": 1,
   "src/components/inbox/contact-details/ContactActionButtons.tsx": 3,
   "src/components/inbox/contact-details/ContactDeliveryPanel.tsx": 1,
+  "src/components/inbox/contact-details/ContactFirstResponseSLA.tsx": 1,
   "src/components/inbox/contact-details/ContactHeaderSection.tsx": 2,
   "src/components/inbox/contact-details/ContactIntelligencePanel.tsx": 1,
+  "src/components/inbox/contact-details/ConversationMemorySection.tsx": 1,
   "src/components/inbox/contact-details/EditContactDialog.tsx": 1,
+  "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx": 1,
+  "src/components/inbox/contact-details/LeadRiskScorePanel.tsx": 1,
+  "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx": 1,
   "src/components/inbox/contact-details/WhatsAppStatusSection.tsx": 1,
   "src/components/inbox/contact-details/editContactShape.ts": 1,
   "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx": 1,
@@ -24475,6 +24824,7 @@
   "src/components/mobile/NotificationsPanel.tsx": 1,
   "src/components/mobile/SwipeableMessage.tsx": 1,
   "src/components/mobile/VoiceDictationButton.tsx": 2,
+  "src/components/monitoring/DeviceChatsPanel.tsx": 1,
   "src/components/monitoring/EvolutionMonitoringDashboard.tsx": 2,
   "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx": 1,
   "src/components/monitoring/MonitoringDiagnosticPanel.tsx": 1,
@@ -24722,7 +25072,7 @@
   "src/components/team-chat/TeamChatInputArea.tsx": 1,
   "src/components/team-chat/TeamChatNotificationsListener.tsx": 1,
   "src/components/team-chat/TeamChatPanel.tsx": 4,
-  "src/components/team-chat/TeamChatView.tsx": 2,
+  "src/components/team-chat/TeamChatView.tsx": 4,
   "src/components/team-chat/TeamConversationList.tsx": 4,
   "src/components/team-chat/TeamFileUploader.tsx": 2,
   "src/components/team-chat/TeamMemberDetails.tsx": 1,
@@ -24745,7 +25095,7 @@
   "src/components/ui/VolumeSliderPopoverContent.tsx": 1,
   "src/components/ui/VolumeTriggerButton.tsx": 1,
   "src/components/ui/accessible-toast.tsx": 1,
-  "src/components/ui/accordion.tsx": 5,
+  "src/components/ui/accordion.tsx": 6,
   "src/components/ui/badge.tsx": 1,
   "src/components/ui/breadcrumb.tsx": 1,
   "src/components/ui/button.tsx": 4,
@@ -24877,7 +25227,7 @@
   "src/hooks/chat/useTeamChat.ts": 13,
   "src/hooks/chat/useTeamChatDraft.ts": 3,
   "src/hooks/chat/useTeamChatNotifications.ts": 6,
-  "src/hooks/chat/useTypingPresence.ts": 3,
+  "src/hooks/chat/useTypingPresence.ts": 4,
   "src/hooks/chat/useWhisperCount.ts": 2,
   "src/hooks/chat/useWhisperMessagesMutation.ts": 1,
   "src/hooks/communication/audioPlaybackBus.ts": 1,
@@ -24950,7 +25300,7 @@
   "src/hooks/gamification/useAgentCelebrations.ts": 1,
   "src/hooks/gamification/useAgentGamification.ts": 2,
   "src/hooks/gamification/useLeaderboard.ts": 4,
-  "src/hooks/gmail/gmailApi.ts": 7,
+  "src/hooks/gmail/gmailApi.ts": 8,
   "src/hooks/gmail/gmailTypes.ts": 2,
   "src/hooks/gmail/useContactUnreadEmails.ts": 2,
   "src/hooks/gmail/useUnreadEmailCount.ts": 1,
@@ -24982,9 +25332,10 @@
   "src/hooks/integrations/useCustomEmojis.ts": 4,
   "src/hooks/integrations/useEmailThreadForContact.ts": 1,
   "src/hooks/integrations/useEvolutionApi.ts": 2,
+  "src/hooks/integrations/useEvolutionContactProfile.ts": 1,
   "src/hooks/integrations/useExternalCatalog.ts": 37,
   "src/hooks/integrations/useExternalDB.ts": 1,
-  "src/hooks/integrations/useGmail.ts": 29,
+  "src/hooks/integrations/useGmail.ts": 30,
   "src/hooks/integrations/useGmailDataPurge.ts": 1,
   "src/hooks/integrations/useGmailLabels.ts": 1,
   "src/hooks/integrations/useGmailOAuth.ts": 1,
@@ -24996,7 +25347,7 @@
   "src/hooks/integrations/useMultiplixReplies.ts": 1,
   "src/hooks/integrations/usePersonalStickers.ts": 3,
   "src/hooks/integrations/useQuarantineMedia.ts": 4,
-  "src/hooks/integrations/useTalkX.ts": 25,
+  "src/hooks/integrations/useTalkX.ts": 26,
   "src/hooks/integrations/useTalkXAnalytics.ts": 3,
   "src/hooks/integrations/useTalkXCampaignList.ts": 1,
   "src/hooks/integrations/useTalkXCampaignSummary.ts": 1,
@@ -25016,7 +25367,7 @@
   "src/hooks/integrations/useTalkXTemplates.ts": 5,
   "src/hooks/integrations/useTalkXTemplatesConversion.ts": 1,
   "src/hooks/integrations/useWhatsAppStatus.ts": 2,
-  "src/hooks/integrations/useWhatsAppTemplates.ts": 2,
+  "src/hooks/integrations/useWhatsAppTemplates.ts": 4,
   "src/hooks/payments/usePaymentLinks.ts": 1,
   "src/hooks/queues/useQueueDetails.ts": 1,
   "src/hooks/reactions/useBatchReactions.ts": 1,
@@ -25147,7 +25498,7 @@
   "src/hooks/voice/types.ts": 2,
   "src/hooks/voice/voiceActionPlan.ts": 1,
   "src/i18n/index.ts": 1,
-  "src/integrations/supabase/client.ts": 36,
+  "src/integrations/supabase/client.ts": 37,
   "src/integrations/supabase/externalClient.ts": 1,
   "src/integrations/supabase/types.ts": 2,
   "src/lib/__fixtures__/mapbox/forward-avenida-paulista-1000.json": 2,
@@ -25185,8 +25536,8 @@
   "src/lib/calls/persistence.ts": 8,
   "src/lib/calls/phone.ts": 1,
   "src/lib/calls/session.ts": 3,
-  "src/lib/calls/sipProvisioning.ts": 1,
-  "src/lib/calls/tabLeaderStore.ts": 1,
+  "src/lib/calls/sipProvisioning.ts": 2,
+  "src/lib/calls/tabLeaderStore.ts": 2,
   "src/lib/calls/terminoRemoto.ts": 1,
   "src/lib/calls/toqueDaChamada.ts": 1,
   "src/lib/cfImages.ts": 1,
@@ -25276,6 +25627,7 @@
   "src/lib/storage_object_upload.ts": 1,
   "src/lib/supabaseHelpers.ts": 2,
   "src/lib/supervisorPriority.ts": 1,
+  "src/lib/talkxCsv.ts": 1,
   "src/lib/teamChatDraftSession.ts": 1,
   "src/lib/teamChatRules.ts": 2,
   "src/lib/undoToast.ts": 2,
@@ -25285,6 +25637,8 @@
   "src/lib/volumeLabels.ts": 4,
   "src/lib/web-vitals.ts": 6,
   "src/lib/zappSchemas.ts": 1,
+  "src/lib/zod.ts": 1,
+  "src/lib/zodJitless.ts": 1,
   "src/pages/AccessDenied.tsx": 2,
   "src/pages/AdminTelemetriaPage.tsx": 2,
   "src/pages/Auth.tsx": 5,
@@ -25330,7 +25684,7 @@
   "src/services/outbound-message.service.ts": 1,
   "src/services/realtime.service.ts": 1,
   "src/services/role.service.ts": 1,
-  "src/types/chat.ts": 70,
+  "src/types/chat.ts": 71,
   "src/types/contact.ts": 1,
   "src/types/contactSearch.ts": 3,
   "src/types/contactSidebar.ts": 5,
@@ -25351,7 +25705,7 @@
   "supabase/functions/_shared/ai-circuit.ts": 1,
   "supabase/functions/_shared/ai-conversation-pipeline.ts": 1,
   "supabase/functions/_shared/ai-feature-flags.ts": 1,
-  "supabase/functions/_shared/ai-generate.ts": 9,
+  "supabase/functions/_shared/ai-generate.ts": 16,
   "supabase/functions/_shared/ai-guards.ts": 1,
   "supabase/functions/_shared/ai-image-input.ts": 1,
   "supabase/functions/_shared/ai-jobs.ts": 1,
@@ -25421,8 +25775,15 @@
   "supabase/functions/ai-auto-tag/index.ts": 2,
   "supabase/functions/ai-churn-analysis/churn-risk.ts": 1,
   "supabase/functions/ai-conversation-summary/contact-context.ts": 1,
+  "supabase/functions/ai-deadline-calculator/index.ts": 1,
   "supabase/functions/ai-jobs-worker/index.ts": 2,
   "supabase/functions/ai-kb-ingest/index.ts": 1,
+  "supabase/functions/ai-lead-temperature/index.ts": 1,
+  "supabase/functions/ai-loss-risk/index.ts": 1,
+  "supabase/functions/ai-multimodal-analysis/index.ts": 1,
+  "supabase/functions/ai-objection-handler/index.ts": 1,
+  "supabase/functions/ai-price-anchor/index.ts": 1,
+  "supabase/functions/ai-product-recommendation/index.ts": 1,
   "supabase/functions/ai-proxy/index.ts": 1,
   "supabase/functions/ai-suggest-reply/index.ts": 1,
   "supabase/functions/ai-transcribe-audio/index.ts": 1,
@@ -25431,7 +25792,7 @@
   "supabase/functions/auth-login/index.ts": 1,
   "supabase/functions/auto-close-conversations/index.ts": 1,
   "supabase/functions/automation-suggest-reply/index.ts": 1,
-  "supabase/functions/batch-fetch-avatars/index.ts": 1,
+  "supabase/functions/batch-fetch-avatars/index.ts": 2,
   "supabase/functions/bitrix-api/index.ts": 1,
   "supabase/functions/chatbot-l1/index.ts": 1,
   "supabase/functions/classify-audio-meme/index.ts": 2,
@@ -25439,8 +25800,10 @@
   "supabase/functions/classify-sticker/index.ts": 2,
   "supabase/functions/cleanup-rate-limit-logs/index.ts": 1,
   "supabase/functions/connection-health-check/index.ts": 3,
+  "supabase/functions/copilot-live/index.ts": 1,
   "supabase/functions/create-user/index.ts": 1,
   "supabase/functions/crm-integration/index.ts": 2,
+  "supabase/functions/csp-report/index.ts": 1,
   "supabase/functions/detect-new-device/index.ts": 1,
   "supabase/functions/elevenlabs-dialogue/index.ts": 1,
   "supabase/functions/elevenlabs-sfx/index.ts": 1,
@@ -25455,6 +25818,7 @@
   "supabase/functions/external-db-proxy/index.ts": 1,
   "supabase/functions/fetch-link-preview/index.ts": 2,
   "supabase/functions/get-call-recording/index.ts": 1,
+  "supabase/functions/get-mapbox-token/index.ts": 1,
   "supabase/functions/get-sip-password/index.ts": 1,
   "supabase/functions/gmail-cron-sync/index.ts": 2,
   "supabase/functions/gmail-oauth/index.ts": 1,
@@ -25495,6 +25859,7 @@
   "supabase/functions/talkx-send/index.ts": 11,
   "supabase/functions/talkx-send/process-recipient.ts": 3,
   "supabase/functions/talkx-storage-purge/index.ts": 1,
+  "supabase/functions/voice-agent/index.ts": 1,
   "supabase/functions/voice-changer/index.ts": 1,
   "supabase/functions/voice-copilot-action/index.ts": 2,
   "supabase/functions/webauthn/index.ts": 1,
@@ -25537,6 +25902,7 @@
    "src/hooks/chat/useMessageStatus.ts",
    "src/hooks/communication/useMicrophoneGuard.ts",
    "src/hooks/communication/useTabLeaderRole.ts",
+   "src/hooks/connections/useConnectionOptions.ts",
    "src/hooks/copilot/index.ts",
    "src/hooks/copilot/useAiJudge.ts",
    "src/hooks/copilot/useAudioTone.ts",
@@ -25583,6 +25949,8 @@
    "src/hooks/copilot/useVoiceDictation.ts",
    "src/hooks/copilot/useVouPensarDetector.ts",
    "src/hooks/copilot/useWhisperChannel.ts",
+   "src/hooks/crm/useContactLeadRisk.ts",
+   "src/hooks/crm/useConversationMemory.ts",
    "src/hooks/crm/useCRMAdminAccess.ts",
    "src/hooks/crm/useExternalContact360.ts",
    "src/hooks/crm/useTeamProfiles.ts",
@@ -25608,6 +25976,7 @@
    "src/hooks/performance/useTimingHooks.ts",
    "src/hooks/security/useAuditLogDashboard.ts",
    "src/hooks/security/usePasswordResetRequests.ts",
+   "src/hooks/sla/useContactFirstResponseSLA.ts",
    "src/hooks/system/useFeatureFlag.ts",
    "src/hooks/system/useIdleCallback.ts",
    "src/hooks/system/useNetworkStatus.ts",
@@ -25630,19 +25999,7 @@
   ],
   "edges": [
    "ai-classify-tickets",
-   "ai-deadline-calculator",
-   "ai-enhance-message",
-   "ai-lead-temperature",
-   "ai-loss-risk",
-   "ai-multimodal-analysis",
-   "ai-objection-handler",
-   "ai-price-anchor",
-   "ai-product-recommendation",
-   "batch-fetch-avatars",
-   "copilot-live",
-   "csp-report",
-   "get-mapbox-token",
-   "voice-agent"
+   "ai-enhance-message"
   ],
   "servicos": [
    "src/services/contact-merge.service.ts",

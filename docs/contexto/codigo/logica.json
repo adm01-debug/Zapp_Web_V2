@@ -1,14 +1,14 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 199,
+ "total": 202,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
   "data": 5,
   "integrations": 3,
-  "lib": 147,
+  "lib": 150,
   "providers": 1,
   "python": 9,
   "segments": 1,
@@ -728,7 +728,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 374,
+   "usado_por": 377,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -794,7 +794,7 @@
     "pages/admin",
     "services"
    ],
-   "coberto_por_testes": 36,
+   "coberto_por_testes": 37,
    "orfao": false
   },
   {
@@ -1774,11 +1774,14 @@
    "arquivo": "src/lib/calls/sipProvisioning.ts",
    "camada": "lib",
    "exports": [
+    "ProvisionarSipOptions",
+    "SIP_NOT_CONFIGURED_STORAGE_KEY",
+    "SIP_NOT_CONFIGURED_TTL_MS",
     "SipProvisioning",
     "provisionarSip"
    ],
    "export_default": null,
-   "linhas": 44,
+   "linhas": 125,
    "tabelas": [],
    "rpcs": [],
    "edges": [
@@ -1793,7 +1796,7 @@
    "usado_por_modulos": [
     "hooks/communication"
    ],
-   "coberto_por_testes": 1,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -1826,13 +1829,13 @@
     "follower",
     "leader"
    ],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_modulos": [
     "components/calls",
     "hooks/communication",
     "hooks/sip"
    ],
-   "coberto_por_testes": 1,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -2773,6 +2776,32 @@
    "orfao": false
   },
   {
+   "arquivo": "src/lib/evolutionNotSupported.ts",
+   "camada": "lib",
+   "exports": [
+    "isEvolutionNotSupported",
+    "mensagemNaoSuportado"
+   ],
+   "export_default": null,
+   "linhas": 16,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 3,
+   "usado_por_modulos": [
+    "components/catalog",
+    "components/connections",
+    "components/groups"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
    "arquivo": "src/lib/externalProxy.ts",
    "camada": "lib",
    "exports": [
@@ -2790,7 +2819,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_modulos": [
     "hooks/integrations",
     "providers",
@@ -2936,7 +2965,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 17,
+   "usado_por": 18,
    "usado_por_modulos": [
     "components/calls",
     "components/inbox",
@@ -3482,7 +3511,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 205,
+   "usado_por": 206,
    "usado_por_modulos": [
     "components",
     "components/admin",
@@ -5009,7 +5038,7 @@
     "buildTalkXCampaignCsvBlob"
    ],
    "export_default": null,
-   "linhas": 93,
+   "linhas": 94,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -5023,7 +5052,7 @@
     "components/talkx",
     "lib"
    ],
-   "coberto_por_testes": 0,
+   "coberto_por_testes": 1,
    "orfao": false
   },
   {
@@ -5181,7 +5210,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 470,
+   "usado_por": 472,
    "usado_por_modulos": [
     "components",
     "components/a11y",
@@ -5357,9 +5386,7 @@
    "rpcs": [],
    "edges": [],
    "env": [],
-   "externos": [
-    "zod"
-   ],
+   "externos": [],
    "zod_schemas": 2,
    "flags": [],
    "papeis": [],
@@ -5367,6 +5394,55 @@
    "usado_por_modulos": [],
    "coberto_por_testes": 1,
    "orfao": true
+  },
+  {
+   "arquivo": "src/lib/zod.ts",
+   "camada": "lib",
+   "exports": [
+    "z"
+   ],
+   "export_default": null,
+   "linhas": 25,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [
+    "zod"
+   ],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 5,
+   "usado_por_modulos": [
+    "hooks/auth",
+    "hooks/sla",
+    "lib",
+    "pages"
+   ],
+   "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/zodJitless.ts",
+   "camada": "lib",
+   "exports": [],
+   "export_default": null,
+   "linhas": 26,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 2,
+   "usado_por_modulos": [
+    "lib"
+   ],
+   "coberto_por_testes": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/providers/QuarantineMonitorProvider.tsx",
@@ -5607,7 +5683,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 13,
+   "usado_por": 14,
    "usado_por_modulos": [
     "components/calls",
     "components/contacts",
@@ -5615,6 +5691,7 @@
     "components/tasks",
     "hooks/contacts",
     "hooks/crm",
+    "hooks/sla",
     "lib",
     "services"
    ],

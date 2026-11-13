@@ -52,7 +52,7 @@ _nenhum_
 | graphql_public | supabase_admin | tables | postgres=arwdDxtm/supabase_admin, anon=arwdDxtm/supabase_admin, authenticated=arwdDxtm/supabase_admin, service_role=arwdDxtm/supabase_admin |
 | public | postgres | functions | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres |
 | public | postgres | sequences | postgres=rwU/postgres, authenticated=rwU/postgres, service_role=rwU/postgres |
-| public | postgres | tables | postgres=arwdDxtm/postgres, authenticated=arwdm/postgres, service_role=arwdDxtm/postgres |
+| public | postgres | tables | postgres=arwdDxtm/postgres, authenticated=arwdm/postgres, service_role=arwdDxtm/postgres, zapp_agente_leitura=r/postgres |
 | public | supabase_admin | functions | postgres=X/supabase_admin, anon=X/supabase_admin, authenticated=X/supabase_admin, service_role=X/supabase_admin |
 | public | supabase_admin | sequences | postgres=rwU/supabase_admin, anon=rwU/supabase_admin, authenticated=rwU/supabase_admin, service_role=rwU/supabase_admin |
 | public | supabase_admin | tables | postgres=arwdDxtm/supabase_admin, anon=arwdDxtm/supabase_admin, authenticated=arwdDxtm/supabase_admin, service_role=arwdDxtm/supabase_admin |

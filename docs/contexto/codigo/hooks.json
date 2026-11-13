@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 496,
+ "total": 501,
  "hooks": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3711,8 +3711,9 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_arquivos": [
+    "src/components/groups/GroupEvolutionDialogs.tsx",
     "src/components/groups/GroupsView.tsx",
     "src/hooks/chat/index.ts"
    ],
@@ -4254,7 +4255,7 @@
    "hooks_exportados": [
     "useTypingPresence"
    ],
-   "linhas": 272,
+   "linhas": 313,
    "dominio": "hooks/chat",
    "tabelas": [],
    "rpcs": [],
@@ -4265,15 +4266,13 @@
     "useRef",
     "useState"
    ],
-   "canais_realtime": [
-    "typing:${conversationId}"
-   ],
+   "canais_realtime": [],
    "usado_por": 2,
    "usado_por_arquivos": [
     "src/components/inbox/ChatPanel.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/chat/useWhisperCount.ts",
@@ -4563,7 +4562,7 @@
    "hooks_exportados": [
     "useSipClient"
    ],
-   "linhas": 101,
+   "linhas": 121,
    "dominio": "hooks/communication",
    "tabelas": [
     "contacts"
@@ -4575,6 +4574,7 @@
     "useCallback",
     "useEffect",
     "useMicrophoneGuard",
+    "useRef",
     "useSipConnection",
     "useState",
     "useTabLeaderRole"
@@ -4711,6 +4711,34 @@
     "src/hooks/communication/index.ts"
    ],
    "coberto_por_testes": 4
+  },
+  {
+   "arquivo": "src/hooks/connections/useConnectionOptions.ts",
+   "hooks_exportados": [
+    "useConnectionOptions"
+   ],
+   "linhas": 27,
+   "dominio": "hooks/connections",
+   "tabelas": [
+    "whatsapp_connections"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 7,
+   "usado_por_arquivos": [
+    "src/components/calls/OfferCallButton.tsx",
+    "src/components/catalog/MetaTemplatesDialog.tsx",
+    "src/components/catalog/SendTemplateDialog.tsx",
+    "src/components/evolution/ConnectionSelect.tsx",
+    "src/components/evolution/evolutionUi.ts",
+    "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
+    "src/components/monitoring/DeviceChatsPanel.tsx"
+   ],
+   "coberto_por_testes": 0
   },
   {
    "arquivo": "src/hooks/connections/useConnectionsHealth.ts",
@@ -6433,12 +6461,38 @@
     "useCRMIntegrationEnabled"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_arquivos": [
+    "src/components/inbox/contact-details/AIInsightsWidget.tsx",
     "src/components/inbox/contact-details/ContactIntelligencePanel.tsx",
     "src/hooks/crm/index.ts"
    ],
    "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/crm/useContactLeadRisk.ts",
+   "hooks_exportados": [
+    "useContactLeadRisk",
+    "useUpdateContactLeadRisk"
+   ],
+   "linhas": 51,
+   "dominio": "hooks/crm",
+   "tabelas": [
+    "contacts"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/contact-details/LeadRiskScorePanel.tsx"
+   ],
+   "coberto_por_testes": 0
   },
   {
    "arquivo": "src/hooks/crm/useContactNotes.ts",
@@ -6585,6 +6639,28 @@
     "src/components/inbox/tabs/NotesTab.tsx"
    ],
    "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/crm/useConversationMemory.ts",
+   "hooks_exportados": [
+    "useConversationMemory"
+   ],
+   "linhas": 115,
+   "dominio": "hooks/crm",
+   "tabelas": [
+    "conversation_memory"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useEffect"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/contact-details/ConversationMemorySection.tsx"
+   ],
+   "coberto_por_testes": 0
   },
   {
    "arquivo": "src/hooks/crm/useCRMAdminAccess.ts",
@@ -7037,7 +7113,7 @@
    "hooks_exportados": [
     "useEvolutionApiCore"
    ],
-   "linhas": 159,
+   "linhas": 175,
    "dominio": "hooks/evolution",
    "tabelas": [],
    "rpcs": [],
@@ -7106,7 +7182,7 @@
    "hooks_exportados": [
     "useEvolutionMessaging"
    ],
-   "linhas": 119,
+   "linhas": 120,
    "dominio": "hooks/evolution",
    "tabelas": [],
    "rpcs": [],
@@ -7987,7 +8063,7 @@
    "hooks_exportados": [
     "useEvolutionApi"
    ],
-   "linhas": 68,
+   "linhas": 86,
    "dominio": "hooks/integrations",
    "tabelas": [],
    "rpcs": [],
@@ -8000,20 +8076,45 @@
     "useEvolutionMessaging"
    ],
    "canais_realtime": [],
-   "usado_por": 10,
+   "usado_por": 17,
    "usado_por_arquivos": [
+    "src/components/calls/OfferCallButton.tsx",
+    "src/components/catalog/MetaTemplatesDialog.tsx",
+    "src/components/catalog/SendTemplateDialog.tsx",
+    "src/components/connections/InstancePresenceTab.tsx",
     "src/components/connections/InstanceSettingsDialog.tsx",
+    "src/components/groups/GroupEvolutionDialogs.tsx",
     "src/components/inbox/AdvancedMessageMenu.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/MessageContextActions.tsx",
     "src/components/inbox/chat/MessageHoverToolbar.tsx",
     "src/components/inbox/contact-details/StoryViewer.tsx",
+    "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
+    "src/components/monitoring/DeviceChatsPanel.tsx",
     "src/hooks/inbox/useConnectionsManager.ts",
     "src/hooks/inbox/useContactQuickActions.ts",
     "src/hooks/integrations/index.ts",
     "src/hooks/reactions/useReactionMutations.ts"
    ],
    "coberto_por_testes": 2
+  },
+  {
+   "arquivo": "src/hooks/integrations/useEvolutionContactProfile.ts",
+   "hooks_exportados": [
+    "useEvolutionContactProfile"
+   ],
+   "linhas": 80,
+   "dominio": "hooks/integrations",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
@@ -8120,7 +8221,7 @@
     "useGmail",
     "useGmailLabelsManagement"
    ],
-   "linhas": 595,
+   "linhas": 647,
    "dominio": "hooks/integrations",
    "tabelas": [
     "contacts",
@@ -8164,7 +8265,7 @@
     "src/hooks/integrations/index.ts",
     "src/lib/emailContactIdentity.ts"
    ],
-   "coberto_por_testes": 29
+   "coberto_por_testes": 30
   },
   {
    "arquivo": "src/hooks/integrations/useGmailDataPurge.ts",
@@ -8273,7 +8374,7 @@
    "hooks_exportados": [
     "useKnowledgeBaseSearch"
    ],
-   "linhas": 66,
+   "linhas": 77,
    "dominio": "hooks/integrations",
    "tabelas": [],
    "rpcs": [
@@ -8287,8 +8388,9 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "usado_por_arquivos": [
+    "src/components/inbox/KnowledgeBaseSearchPanel.tsx",
     "src/hooks/integrations/index.ts"
    ],
    "coberto_por_testes": 1
@@ -8568,7 +8670,7 @@
     "src/lib/talkxCsv.ts",
     "src/lib/talkxReportPdf.ts"
    ],
-   "coberto_por_testes": 25
+   "coberto_por_testes": 26
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXAnalytics.ts",
@@ -9109,7 +9211,7 @@
    "hooks_exportados": [
     "useWhatsAppStatus"
    ],
-   "linhas": 295,
+   "linhas": 329,
    "dominio": "hooks/integrations",
    "tabelas": [
     "contacts",
@@ -9138,7 +9240,7 @@
    "hooks_exportados": [
     "useWhatsAppTemplates"
    ],
-   "linhas": 182,
+   "linhas": 196,
    "dominio": "hooks/integrations",
    "tabelas": [
     "whatsapp_templates"
@@ -9152,12 +9254,16 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 6,
    "usado_por_arquivos": [
+    "src/components/catalog/MetaTemplatesDialog.tsx",
+    "src/components/catalog/SendTemplateDialog.tsx",
     "src/components/catalog/WhatsAppTemplatesManager.tsx",
+    "src/components/catalog/metaTemplatePayload.ts",
+    "src/components/catalog/sendTemplatePayload.ts",
     "src/hooks/integrations/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/payments/usePaymentLinks.ts",
@@ -9650,6 +9756,24 @@
    "coberto_por_testes": 1
   },
   {
+   "arquivo": "src/hooks/sla/useContactFirstResponseSLA.ts",
+   "hooks_exportados": [
+    "useContactFirstResponseSLA"
+   ],
+   "linhas": 39,
+   "dominio": "hooks/sla",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/contact-details/ContactFirstResponseSLA.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
    "arquivo": "src/hooks/sla/useContactSlaTimeline.ts",
    "hooks_exportados": [
     "useContactSlaTimeline"
@@ -10052,11 +10176,12 @@
     "useFeatureFlag"
    ],
    "canais_realtime": [],
-   "usado_por": 19,
+   "usado_por": 20,
    "usado_por_arquivos": [
     "src/components/admin/AdminCRMDashboard.tsx",
     "src/components/contacts/ContactsView.tsx",
     "src/components/crm360/CRM360ExplorerView.tsx",
+    "src/components/inbox/contact-details/AIInsightsWidget.tsx",
     "src/components/inbox/contact-details/ContactHeaderSection.tsx",
     "src/components/inbox/contact-details/ContactIntelligencePanel.tsx",
     "src/components/inbox/search/GlobalSearchFilters.tsx",
@@ -10419,7 +10544,7 @@
    "hooks_exportados": [
     "useNavigationHistory"
    ],
-   "linhas": 457,
+   "linhas": 458,
    "dominio": "hooks/system",
    "tabelas": [],
    "rpcs": [],
@@ -10865,7 +10990,7 @@
    "hooks_exportados": [
     "useSupabaseConnectivity"
    ],
-   "linhas": 288,
+   "linhas": 303,
    "dominio": "hooks/system",
    "tabelas": [],
    "rpcs": [],
@@ -10993,7 +11118,7 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 34,
+   "usado_por": 37,
    "usado_por_arquivos": [
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",
@@ -11013,6 +11138,9 @@
     "src/components/inbox/AdvancedMessageMenu.tsx",
     "src/components/inbox/InboxFilters.tsx",
     "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+    "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx",
+    "src/components/inbox/contact-details/LeadRiskScorePanel.tsx",
+    "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
     "src/components/inbox/useGlobalSearchData.ts",
     "src/components/integrations/GmailIntegrationCard.tsx",
     "src/components/layout/Sidebar.tsx",
@@ -11021,10 +11149,7 @@
     "src/components/security/MfaAdminNudge.tsx",
     "src/components/security/SecurityOverview.tsx",
     "src/components/security/SecurityView.tsx",
-    "src/components/settings/IntegrationKeysSection.tsx",
-    "src/components/settings/SettingsView.tsx",
-    "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
-    "src/hooks/integrations/useModuleCommandItems.ts"
+    "src/components/settings/IntegrationKeysSection.tsx"
    ],
    "coberto_por_testes": 5
   },

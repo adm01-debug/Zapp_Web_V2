@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 427,
+ "total": 429,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -252,6 +252,31 @@
    "linhas": 259,
    "env": [],
    "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/ci-local-lib.mjs",
+   "descricao": "Lógica pura do CI local (scripts/ci/ci-local.mjs): lê os workflows do GitHub e decide O QUE rodar, sem executar nada. Tudo aqui é determinístico e coberto",
+   "linhas": 997,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/ci-local.mjs",
+   "descricao": "CI local: roda na máquina os MESMOS passos dos workflows do GitHub, lendo os próprios .github/workflows/*.yml (nada de cópia de comandos que envelhece).",
+   "linhas": 1471,
+   "env": [
+    "CI_LOCAL_GRACA_MS",
+    "GIT_OPTIONAL_LOCKS",
+    "PATH"
+   ],
+   "npm_scripts": [
+    "ci:local",
+    "ci:local:rapido"
+   ],
    "workflows": [],
    "orfao": false
   },
@@ -4318,7 +4343,7 @@
   {
    "arquivo": "scripts/eslint/no-secret-compare.js",
    "descricao": "* Z012 — proíbe comparação direta (===|!==) de identificadores que aludam a credenciais.",
-   "linhas": 39,
+   "linhas": 71,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

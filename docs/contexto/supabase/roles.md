@@ -10,7 +10,7 @@
 | cli_login_postgres | não | sim | não | não | não | -1 |  | postgres |
 | dashboard_user | não | não | não | sim | sim | -1 |  |  |
 | pgbouncer | não | sim | não | não | não | -1 |  |  |
-| postgres | não | sim | sim | sim | sim | -1 | search_path="\$user", public, extensions | anon, authenticated, authenticator, pg_create_subscription, pg_monitor, pg_read_all_data, pg_signal_backend, service_role, snapshot_reader, supabase_privileged_role |
+| postgres | não | sim | sim | sim | sim | -1 | search_path="\$user", public, extensions | anon, authenticated, authenticator, pg_create_subscription, pg_monitor, pg_read_all_data, pg_signal_backend, service_role, snapshot_reader, supabase_privileged_role, zapp_agente_leitura |
 | service_role | não | não | sim | não | não | -1 | statement_timeout=120s |  |
 | snapshot_reader | não | sim | não | não | não | 3 |  |  |
 | supabase_admin | sim | sim | sim | sim | sim | -1 | search_path="$user", public, auth, extensions, log_statement=none |  |
@@ -22,3 +22,4 @@
 | supabase_realtime_admin | não | não | não | não | não | -1 | search_path=public, extensions, realtime | anon, authenticated, service_role |
 | supabase_replication_admin | não | sim | não | não | não | -1 |  |  |
 | supabase_storage_admin | não | sim | não | sim | não | -1 | search_path=storage, log_statement=none | authenticator |
+| zapp_agente_leitura | não | sim | sim | não | não | -1 | default_transaction_read_only=on, statement_timeout=5s, lock_timeout=2s, idle_in_transaction_session_timeout=30s, work_mem=16MB, search_path=public, extensions, transaction_timeout=10s |  |

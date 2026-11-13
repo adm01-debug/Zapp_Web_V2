@@ -834,6 +834,7 @@
   "src/components/calls/NewCallPanel.tsx": [
    "src/components/calls/ContactPicker.tsx",
    "src/components/calls/Keypad.tsx",
+   "src/components/calls/OfferCallButton.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/card.tsx",
    "src/components/ui/tooltip.tsx",
@@ -842,6 +843,12 @@
    "src/lib/calls/events.ts",
    "src/lib/calls/phone.ts",
    "src/providers/CallSessionProvider.tsx"
+  ],
+  "src/components/calls/OfferCallButton.tsx": [
+   "src/components/evolution/evolutionUi.ts",
+   "src/components/ui/button.tsx",
+   "src/hooks/connections/useConnectionOptions.ts",
+   "src/hooks/integrations/useEvolutionApi.ts"
   ],
   "src/components/calls/OutboundCallDialog.tsx": [
    "src/components/calls/CallDialog.tsx",
@@ -1048,6 +1055,19 @@
    "src/lib/calls/phone.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/catalog/MetaTemplatesDialog.tsx": [
+   "src/components/catalog/metaTemplatePayload.ts",
+   "src/components/evolution/ConnectionSelect.tsx",
+   "src/components/evolution/evolutionUi.ts",
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/dialog.tsx",
+   "src/components/ui/label.tsx",
+   "src/components/ui/select.tsx",
+   "src/hooks/connections/useConnectionOptions.ts",
+   "src/hooks/integrations/useEvolutionApi.ts",
+   "src/hooks/integrations/useWhatsAppTemplates.ts"
+  ],
   "src/components/catalog/ProductDetailDialog.tsx": [
    "src/components/catalog/catalogShared.tsx",
    "src/components/catalog/sendProductUtils.ts",
@@ -1087,7 +1107,21 @@
    "src/lib/downloadFile.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/catalog/SendTemplateDialog.tsx": [
+   "src/components/catalog/sendTemplatePayload.ts",
+   "src/components/ui/button.tsx",
+   "src/components/ui/dialog.tsx",
+   "src/components/ui/input.tsx",
+   "src/components/ui/label.tsx",
+   "src/components/ui/select.tsx",
+   "src/hooks/connections/useConnectionOptions.ts",
+   "src/hooks/integrations/useEvolutionApi.ts",
+   "src/hooks/integrations/useWhatsAppTemplates.ts",
+   "src/lib/evolutionNotSupported.ts"
+  ],
   "src/components/catalog/WhatsAppTemplatesManager.tsx": [
+   "src/components/catalog/MetaTemplatesDialog.tsx",
+   "src/components/catalog/SendTemplateDialog.tsx",
    "src/components/ui/alert-dialog.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
@@ -1113,12 +1147,18 @@
    "src/lib/cfImages.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/catalog/metaTemplatePayload.ts": [
+   "src/hooks/integrations/useWhatsAppTemplates.ts"
+  ],
   "src/components/catalog/sendProductUtils.ts": [
    "src/components/catalog/catalogShared.tsx",
    "src/components/catalog/useSendProduct.ts",
    "src/components/talkx/talkxShared.ts",
    "src/hooks/integrations/useExternalCatalog.ts",
    "src/lib/downloadFile.ts"
+  ],
+  "src/components/catalog/sendTemplatePayload.ts": [
+   "src/hooks/integrations/useWhatsAppTemplates.ts"
   ],
   "src/components/catalog/useSendProduct.ts": [
    "src/hooks/integrations/useCatalogContactSearch.ts",
@@ -1280,7 +1320,16 @@
    "src/integrations/supabase/client.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/connections/InstancePresenceTab.tsx": [
+   "src/components/connections/instancePresenceOptions.ts",
+   "src/components/ui/button.tsx",
+   "src/components/ui/label.tsx",
+   "src/components/ui/select.tsx",
+   "src/hooks/integrations/useEvolutionApi.ts",
+   "src/lib/evolutionNotSupported.ts"
+  ],
   "src/components/connections/InstanceSettingsDialog.tsx": [
+   "src/components/connections/InstancePresenceTab.tsx",
    "src/components/connections/InstanceSettingsTabContent.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/dialog.tsx",
@@ -2512,6 +2561,14 @@
    "src/components/ui/card.tsx",
    "src/lib/chunkReload.ts"
   ],
+  "src/components/evolution/ConnectionSelect.tsx": [
+   "src/components/ui/label.tsx",
+   "src/components/ui/select.tsx",
+   "src/hooks/connections/useConnectionOptions.ts"
+  ],
+  "src/components/evolution/evolutionUi.ts": [
+   "src/hooks/connections/useConnectionOptions.ts"
+  ],
   "src/components/gamification/AchievementBadge.tsx": [
    "src/hooks/gamification/useAgentGamification.ts",
    "src/lib/utils.ts"
@@ -2635,9 +2692,21 @@
    "src/components/ui/badge.tsx",
    "src/hooks/integrations/useGmail.ts"
   ],
+  "src/components/groups/GroupEvolutionDialogs.tsx": [
+   "src/components/groups/groupEvolutionOptions.ts",
+   "src/components/ui/button.tsx",
+   "src/components/ui/dialog.tsx",
+   "src/components/ui/input.tsx",
+   "src/components/ui/label.tsx",
+   "src/components/ui/select.tsx",
+   "src/hooks/chat/useGroupsManager.ts",
+   "src/hooks/integrations/useEvolutionApi.ts",
+   "src/lib/evolutionNotSupported.ts"
+  ],
   "src/components/groups/GroupsView.tsx": [
    "src/components/dashboard/FloatingParticles.tsx",
    "src/components/effects/AuroraBorealis.tsx",
+   "src/components/groups/GroupEvolutionDialogs.tsx",
    "src/components/layout/PageHeader.tsx",
    "src/components/ui/avatar.tsx",
    "src/components/ui/badge.tsx",
@@ -2803,9 +2872,11 @@
    "src/integrations/supabase/client.ts"
   ],
   "src/components/inbox/ContactDetails.tsx": [
+   "src/components/inbox/contact-details/AtendimentoSection.tsx",
    "src/components/inbox/contact-details/ContactDeliveryPanel.tsx",
    "src/components/inbox/contact-details/ContactHeaderSection.tsx",
    "src/components/inbox/contact-details/ContactIntelligencePanel.tsx",
+   "src/components/inbox/contact-details/ConversationMemorySection.tsx",
    "src/components/inbox/contact-details/EditContactDialog.tsx",
    "src/components/inbox/contact-details/editContactShape.ts",
    "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx",
@@ -2986,6 +3057,13 @@
    "src/components/ui/tooltip.tsx",
    "src/hooks/shortcuts/defaultShortcuts.ts",
    "src/hooks/ui/useCustomShortcuts.ts"
+  ],
+  "src/components/inbox/KnowledgeBaseSearchPanel.tsx": [
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/input.tsx",
+   "src/hooks/integrations/useKnowledgeBaseSearch.ts",
+   "src/lib/utils.ts"
   ],
   "src/components/inbox/LinkPreview.tsx": [
    "src/components/inbox/hoverActions.ts",
@@ -3865,6 +3943,17 @@
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
   ],
+  "src/components/inbox/contact-details/AIInsightsWidget.tsx": [
+   "src/components/ui/skeleton.tsx",
+   "src/hooks/crm/useContactIntelligence.ts",
+   "src/hooks/system/useCRMIntegrationEnabled.ts"
+  ],
+  "src/components/inbox/contact-details/AtendimentoSection.tsx": [
+   "src/components/inbox/contact-details/ContactFirstResponseSLA.tsx",
+   "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx",
+   "src/components/inbox/contact-details/LeadRiskScorePanel.tsx",
+   "src/components/inbox/contact-details/sidebar/SidebarSection.tsx"
+  ],
   "src/components/inbox/contact-details/CompactContactHeader.tsx": [
    "src/components/ui/avatar.tsx",
    "src/lib/formatters.ts"
@@ -3885,6 +3974,12 @@
   "src/components/inbox/contact-details/ContactDeliveryPanel.tsx": [
    "src/components/ui/skeleton.tsx",
    "src/hooks/inbox/useContactDeliveryStats.ts"
+  ],
+  "src/components/inbox/contact-details/ContactFirstResponseSLA.tsx": [
+   "src/components/ui/badge.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/hooks/sla/slaFirstResponse.ts",
+   "src/hooks/sla/useContactFirstResponseSLA.ts"
   ],
   "src/components/inbox/contact-details/ContactHeaderSection.tsx": [
    "src/components/contacts/CompanyLogo.tsx",
@@ -3912,6 +4007,12 @@
    "src/hooks/system/useCRMIntegrationEnabled.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/inbox/contact-details/ConversationMemorySection.tsx": [
+   "src/components/inbox/contact-details/sidebar/SidebarEmpty.tsx",
+   "src/components/inbox/contact-details/sidebar/SidebarSection.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/hooks/crm/useConversationMemory.ts"
+  ],
   "src/components/inbox/contact-details/EditContactDialog.tsx": [
    "src/components/contacts/ContactForm.tsx",
    "src/components/ui/dialog.tsx",
@@ -3919,6 +4020,23 @@
    "src/integrations/supabase/client.ts",
    "src/integrations/supabase/types.ts",
    "src/lib/logger.ts"
+  ],
+  "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx": [
+   "src/components/ui/avatar.tsx",
+   "src/components/ui/badge.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/hooks/integrations/useEvolutionContactProfile.ts",
+   "src/hooks/system/useUserRole.ts",
+   "src/lib/formatters.ts"
+  ],
+  "src/components/inbox/contact-details/LeadRiskScorePanel.tsx": [
+   "src/components/ui/button.tsx",
+   "src/components/ui/select.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/components/ui/slider.tsx",
+   "src/hooks/crm/useContactLeadRisk.ts",
+   "src/hooks/system/useUserRole.ts",
+   "src/lib/utils.ts"
   ],
   "src/components/inbox/contact-details/StoryViewer.tsx": [
    "src/components/inbox/contact-details/storyUtils.ts",
@@ -3928,6 +4046,14 @@
    "src/hooks/integrations/useWhatsAppStatus.ts",
    "src/lib/motion.ts",
    "src/lib/utils.ts"
+  ],
+  "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx": [
+   "src/components/evolution/ConnectionSelect.tsx",
+   "src/components/evolution/evolutionUi.ts",
+   "src/components/ui/button.tsx",
+   "src/hooks/connections/useConnectionOptions.ts",
+   "src/hooks/integrations/useEvolutionApi.ts",
+   "src/hooks/system/useUserRole.ts"
   ],
   "src/components/inbox/contact-details/WhatsAppStatusSection.tsx": [
    "src/components/inbox/chat/motion/index.ts",
@@ -3941,6 +4067,7 @@
   ],
   "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx": [
    "src/components/contacts/ContactCRMDialog.tsx",
+   "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
    "src/components/inbox/contact-details/WhatsAppStatusSection.tsx",
    "src/components/inbox/contact-details/sidebar/PersonalSection.tsx",
    "src/components/inbox/contact-details/sidebar/ProfessionalSection.tsx",
@@ -4223,7 +4350,9 @@
   "src/components/inbox/tabs/AiTab.tsx": [
    "src/components/inbox/AISuggestions.tsx",
    "src/components/inbox/ConversationSummary.tsx",
+   "src/components/inbox/KnowledgeBaseSearchPanel.tsx",
    "src/components/inbox/ObjectionDetector.tsx",
+   "src/components/inbox/contact-details/AIInsightsWidget.tsx",
    "src/components/inbox/copilot/CopilotPanel.tsx",
    "src/components/inbox/copilot/LiveSuggestions.tsx",
    "src/components/inbox/tabs/SectionCard.tsx",
@@ -4863,7 +4992,16 @@
    "src/hooks/communication/useSpeechToText.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/monitoring/DeviceChatsPanel.tsx": [
+   "src/components/evolution/ConnectionSelect.tsx",
+   "src/components/evolution/evolutionUi.ts",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/hooks/connections/useConnectionOptions.ts",
+   "src/hooks/integrations/useEvolutionApi.ts"
+  ],
   "src/components/monitoring/EvolutionMonitoringDashboard.tsx": [
+   "src/components/monitoring/DeviceChatsPanel.tsx",
    "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx",
    "src/components/monitoring/MonitoringConnectionsList.tsx",
    "src/components/monitoring/MonitoringDiagnosticPanel.tsx",
@@ -6413,6 +6551,7 @@
    "src/components/talkx/help/TalkXHelpCenter.tsx",
    "src/components/talkx/help/talkxHelpRoute.ts",
    "src/components/talkx/kit/ActiveCampaignIndicator.tsx",
+   "src/components/talkx/report/TalkXCampaignReport.tsx",
    "src/components/talkx/talkxRoute.ts",
    "src/components/talkx/talkxShared.ts",
    "src/components/talkx/useCampaignEditor.ts",
@@ -7883,7 +8022,8 @@
    "src/hooks/ui/use-toast.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/loginAttempts.ts",
-   "src/lib/postLoginRedirect.ts"
+   "src/lib/postLoginRedirect.ts",
+   "src/lib/zod.ts"
   ],
   "src/hooks/auth/useMFA.ts": [
    "src/integrations/supabase/client.ts",
@@ -8343,6 +8483,7 @@
    "src/lib/calls/persistence.ts",
    "src/lib/calls/phone.ts",
    "src/lib/calls/sipProvisioning.ts",
+   "src/lib/calls/tabLeaderStore.ts",
    "src/lib/logger.ts"
   ],
   "src/hooks/communication/useSpeechToText.ts": [
@@ -8374,6 +8515,9 @@
    "src/hooks/voice/voiceSessionLimits.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
+  ],
+  "src/hooks/connections/useConnectionOptions.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/connections/useConnectionsHealth.ts": [
    "src/integrations/supabase/client.ts",
@@ -8548,6 +8692,9 @@
    "src/lib/crmIntegration.ts",
    "src/lib/logger.ts"
   ],
+  "src/hooks/crm/useContactLeadRisk.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
   "src/hooks/crm/useContactNotes.ts": [
    "src/hooks/auth/useAuth.tsx",
    "src/hooks/chat/useConversationTabCounts.ts",
@@ -8575,6 +8722,10 @@
    "src/hooks/crm/contactsAggregates.ts",
    "src/lib/tags.ts",
    "src/services/contact.service.ts"
+  ],
+  "src/hooks/crm/useConversationMemory.ts": [
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts"
   ],
   "src/hooks/crm/useEmailContactContext.ts": [
    "src/hooks/auth/useAuth.tsx",
@@ -8916,6 +9067,9 @@
    "src/hooks/evolution/useEvolutionMessaging.ts",
    "src/hooks/integrations/evolutionApi.types.ts"
   ],
+  "src/hooks/integrations/useEvolutionContactProfile.ts": [
+   "src/lib/externalProxy.ts"
+  ],
   "src/hooks/integrations/useExternalCatalog.ts": [
    "src/integrations/supabase/client.ts",
    "src/lib/invokeEdge.ts",
@@ -9245,6 +9399,10 @@
   "src/hooks/sla/useApplicableSLA.ts": [
    "src/integrations/supabase/client.ts"
   ],
+  "src/hooks/sla/useContactFirstResponseSLA.ts": [
+   "src/hooks/sla/slaFirstResponse.ts",
+   "src/services/contact.service.ts"
+  ],
   "src/hooks/sla/useContactSlaTimeline.ts": [
    "src/hooks/sla/useApplicableSLA.ts",
    "src/integrations/supabase/client.ts",
@@ -9273,6 +9431,7 @@
    "src/lib/notificationDedupe.ts",
    "src/lib/realtimeTopic.ts",
    "src/lib/slaTimeline.ts",
+   "src/lib/zod.ts",
    "src/utils/notificationSounds.ts"
   ],
   "src/hooks/sla/useSLARules.ts": [
@@ -10028,6 +10187,12 @@
    "performance-budget.json",
    "src/lib/logger.ts"
   ],
+  "src/lib/zappSchemas.ts": [
+   "src/lib/zod.ts"
+  ],
+  "src/lib/zod.ts": [
+   "src/lib/zodJitless.ts"
+  ],
   "src/main.tsx": [
    "src/App.tsx",
    "src/components/theme/useChatTextSize.ts",
@@ -10038,6 +10203,7 @@
    "src/lib/logger.ts",
    "src/lib/speed-insights.ts",
    "src/lib/web-vitals.ts",
+   "src/lib/zodJitless.ts",
    "src/providers/AppProviders.tsx"
   ],
   "src/pages/AccessDenied.tsx": [
@@ -10099,7 +10265,8 @@
    "src/hooks/auth/useAuth.tsx",
    "src/hooks/auth/useReauthentication.ts",
    "src/lib/logger.ts",
-   "src/lib/supabaseHelpers.ts"
+   "src/lib/supabaseHelpers.ts",
+   "src/lib/zod.ts"
   ],
   "src/pages/Index.tsx": [
    "src/components/alerts/EvolutionDisconnectBanner.tsx",
@@ -10164,7 +10331,8 @@
    "src/components/ui/input.tsx",
    "src/components/ui/label.tsx",
    "src/hooks/auth/useMFA.ts",
-   "src/integrations/supabase/client.ts"
+   "src/integrations/supabase/client.ts",
+   "src/lib/zod.ts"
   ],
   "src/pages/SLADashboard.tsx": [
    "src/components/layout/Sidebar.tsx",

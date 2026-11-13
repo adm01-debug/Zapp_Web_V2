@@ -3,11 +3,11 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4247)",
+   "TypeScript (4307)",
    "SQL (1306)",
-   "Markdown (1085)",
+   "Markdown (1087)",
    "JSON (603)",
-   "JavaScript (461)",
+   "JavaScript (466)",
    "Shell (235)",
    "Python (119)",
    "YAML (30)"
@@ -48,6 +48,8 @@
   "scripts": {
    "build": "vite build",
    "build:dev": "vite build --mode development",
+   "ci:local": "node scripts/ci/ci-local.mjs",
+   "ci:local:rapido": "node scripts/ci/ci-local.mjs --rapido",
    "contexto:ia": "node scripts/ai-context/gerar.mjs --out docs/contexto/codigo",
    "contexto:ia:test": "node --test scripts/ai-context/gerar.unit.mjs",
    "db:guard": "node scripts/db-audit/supabase-usage-guard.mjs && node scripts/db-audit/check-migration-drift.mjs",
@@ -73,7 +75,7 @@
    "typecheck": "tsc -b --force"
   },
   "dependencias": 69,
-  "dev_dependencias": 32,
+  "dev_dependencias": 33,
   "principais": {
    "@supabase/supabase-js": "^2.117.3",
    "@tanstack/react-query": "^5.105.0",
@@ -1145,7 +1147,7 @@
   {
    "arquivo": "PENDENCIAS.md",
    "titulo": "PENDÊNCIAS CI — 2026-11-12",
-   "linhas": 127
+   "linhas": 128
   },
   {
    "arquivo": "README.md",
@@ -1155,7 +1157,7 @@
   {
    "arquivo": "RELATORIO_CI.md",
    "titulo": "RELATÓRIO CI — fix-ci-workflows-hxupgs / fix-ci-workflows-261112-0400",
-   "linhas": 461
+   "linhas": 465
   },
   {
    "arquivo": "SECURITY.md",
@@ -1321,6 +1323,11 @@
    "arquivo": "docs/crm-external-grants.md",
    "titulo": "GRANTs Externos — CRM pgxfvjmuubtbowutlide",
    "linhas": 111
+  },
+  {
+   "arquivo": "docs/prod-readiness.md",
+   "titulo": "Prontidão para produção — Zapp Web V2",
+   "linhas": 1101
   }
  ],
  "docs_em_subpastas": [
@@ -1373,6 +1380,10 @@
    "arquivos_md": 10
   },
   {
+   "pasta": "docs/ci",
+   "arquivos_md": 8
+  },
+  {
    "pasta": "docs/copiloto",
    "arquivos_md": 8
   },
@@ -1383,10 +1394,6 @@
   {
    "pasta": "docs/handoffs",
    "arquivos_md": 8
-  },
-  {
-   "pasta": "docs/ci",
-   "arquivos_md": 7
   },
   {
    "pasta": "docs/agentes",
@@ -1663,8 +1670,12 @@
   ],
   "hosts_externos": [
    {
+    "host": "edge.invalid",
+    "arquivos": 35
+   },
+   {
     "host": "stub.supabase.co",
-    "arquivos": 30
+    "arquivos": 35
    },
    {
     "host": "cdn.test",
@@ -1673,10 +1684,6 @@
    {
     "host": "zapp-web-v2.vercel.app",
     "arquivos": 24
-   },
-   {
-    "host": "edge.invalid",
-    "arquivos": 23
    },
    {
     "host": "proj.supabase.co",
@@ -1688,7 +1695,7 @@
    },
    {
     "host": "edge.test",
-    "arquivos": 19
+    "arquivos": 20
    },
    {
     "host": "tnnnlkbymytvtqngbbqh.supabase.co",
@@ -1759,6 +1766,10 @@
     "arquivos": 7
    },
    {
+    "host": "pps.whatsapp.net",
+    "arquivos": 7
+   },
+   {
     "host": "projeto-de-teste.supabase.co",
     "arquivos": 7
    },
@@ -1767,8 +1778,16 @@
     "arquivos": 7
    },
    {
+    "host": "x.supabase.co",
+    "arquivos": 7
+   },
+   {
     "host": "zappweb.app.br",
     "arquivos": 7
+   },
+   {
+    "host": "cdn.exemplo.com",
+    "arquivos": 6
    },
    {
     "host": "evolution-test.example",
@@ -1779,7 +1798,7 @@
     "arquivos": 6
    },
    {
-    "host": "pps.whatsapp.net",
+    "host": "fonts.googleapis.com",
     "arquivos": 6
    },
    {
@@ -1791,15 +1810,7 @@
     "arquivos": 6
    },
    {
-    "host": "cdn.exemplo.com",
-    "arquivos": 5
-   },
-   {
     "host": "db.invalid",
-    "arquivos": 5
-   },
-   {
-    "host": "fonts.googleapis.com",
     "arquivos": 5
    },
    {
@@ -1816,10 +1827,6 @@
    },
    {
     "host": "x.com",
-    "arquivos": 5
-   },
-   {
-    "host": "x.supabase.co",
     "arquivos": 5
    },
    {
@@ -1872,6 +1879,10 @@
    },
    {
     "host": "attacker.example",
+    "arquivos": 3
+   },
+   {
+    "host": "chat.whatsapp.com",
     "arquivos": 3
    },
    {
@@ -1983,6 +1994,10 @@
     "arquivos": 2
    },
    {
+    "host": "evil.test",
+    "arquivos": 2
+   },
+   {
     "host": "evilzappweb.app.br",
     "arquivos": 2
    },
@@ -2024,6 +2039,10 @@
    },
    {
     "host": "projeto-interno.supabase.co",
+    "arquivos": 2
+   },
+   {
+    "host": "provedor-ia.test",
     "arquivos": 2
    },
    {
@@ -2111,6 +2130,10 @@
     "arquivos": 1
    },
    {
+    "host": "app.exemplo.test",
+    "arquivos": 1
+   },
+   {
     "host": "app.local",
     "arquivos": 1
    },
@@ -2163,6 +2186,10 @@
     "arquivos": 1
    },
    {
+    "host": "cdn.exemplo.test",
+    "arquivos": 1
+   },
+   {
     "host": "cdn.externo.example",
     "arquivos": 1
    },
@@ -2171,7 +2198,7 @@
     "arquivos": 1
    },
    {
-    "host": "chat.whatsapp.com",
+    "host": "cdn.terceiro.test",
     "arquivos": 1
    },
    {
@@ -2195,10 +2222,6 @@
     "arquivos": 1
    },
    {
-    "host": "evil.test",
-    "arquivos": 1
-   },
-   {
     "host": "evil.tld",
     "arquivos": 1
    },
@@ -2219,11 +2242,19 @@
     "arquivos": 1
    },
    {
+    "host": "evolution.stub.test",
+    "arquivos": 1
+   },
+   {
     "host": "ex.com",
     "arquivos": 1
    },
    {
     "host": "example.test",
+    "arquivos": 1
+   },
+   {
+    "host": "exemplo.com.br",
     "arquivos": 1
    },
    {
@@ -2696,7 +2727,6 @@
    "team-typing-${conversationId}",
    "termino-remoto-${callIdEmCurso}",
    "typing:${contact.id}",
-   "typing:${conversationId}",
    "warroom-alerts-realtime",
    "whatsapp-connections-changes",
    "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
@@ -2706,11 +2736,11 @@
   "papeis_no_codigo": [
    {
     "papel": "alert",
-    "ocorrencias": 111
+    "ocorrencias": 117
    },
    {
     "papel": "status",
-    "ocorrencias": 104
+    "ocorrencias": 105
    },
    {
     "papel": "admin",
@@ -2726,7 +2756,7 @@
    },
    {
     "papel": "user",
-    "ocorrencias": 35
+    "ocorrencias": 36
    },
    {
     "papel": "dialog",
@@ -2737,11 +2767,11 @@
     "ocorrencias": 21
    },
    {
-    "papel": "button",
-    "ocorrencias": 19
+    "papel": "img",
+    "ocorrencias": 20
    },
    {
-    "papel": "img",
+    "papel": "button",
     "ocorrencias": 19
    },
    {
@@ -2797,6 +2827,10 @@
     "ocorrencias": 9
    },
    {
+    "papel": "note",
+    "ocorrencias": 8
+   },
+   {
     "papel": "system",
     "ocorrencias": 8
    },
@@ -2810,10 +2844,6 @@
    },
    {
     "papel": "list",
-    "ocorrencias": 6
-   },
-   {
-    "papel": "note",
     "ocorrencias": 6
    },
    {

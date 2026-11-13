@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e942c672a7` · branch `main` · 2026-11-13 16:02 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `cb6576b2a3` · branch `main` · 2026-11-13 17:53 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -250,6 +250,7 @@
 | `MessageTemplate` (TS) | formal \| informal \| promo |  | `src/components/catalog/sendProductUtils.ts` |
 | `SendMode` (TS) | product \| variant |  | `src/components/catalog/sendProductUtils.ts` |
 | `EDGE_CONDITIONS` (TS) | { value: 'true', label: 'Verdadeiro' }, { value: 'false', label: 'Falso' }, |  | `src/components/chatbot/chatbotNodeConfig.ts` |
+| `PRESENCE_OPTIONS` (TS) | { value: 'available', label: 'Disponível (online)' }, { value: 'unavailable', label: 'Indisponível (offline)' }, |  | `src/components/connections/instancePresenceOptions.ts` |
 | `ContactViewMode` (TS) | grid \| list \| table \| map \| kanban \| analytics |  | `src/components/contacts/ContactViewSwitcher.tsx` |
 | `AlertLevel` (TS) | ok \| warning \| critical |  | `src/components/copilot/SpeedToLeadAlert.tsx` |
 | `TransparencyLabelVariant` (TS) | inline \| banner \| badge |  | `src/components/copilot/TransparencyLabel.tsx` |
@@ -266,6 +267,7 @@
 | `FeatureState` (TS) | active \| disabled |  | `src/components/docs/featuresSectionsData.ts` |
 | `AchievementType` (TS) | fast_response \| streak \| first_message \| resolution \| perfect_rating \| level_up \| daily_goal \| speed_demon \| achievement |  | `src/components/gamification/AchievementToast.tsx` |
 | `GameType` (TS) | speed-typing \| quiz \| response-match \| emoji-decode |  | `src/components/gamification/miniGamesData.ts` |
+| `EPHEMERAL_OPTIONS` (TS) | { value: '0', label: 'Desligado' }, { value: '86400', label: '24 horas' }, { value: '604800', label: '7 dias' }, { value: '7776000', label: '90 dias' }, |  | `src/components/groups/groupEvolutionOptions.ts` |
 | `MediaVolumeControlVariant` (TS) | bubble \| overlay \| sidebar |  | `src/components/inbox/MediaVolumeControl.tsx` |
 | `TransferTargetType` (TS) | agent \| queue |  | `src/components/inbox/TransferDialog.tsx` |
 | `ResultType` (TS) | message \| contact \| transcription \| action \| crm |  | `src/components/inbox/useGlobalSearchData.ts` |
@@ -282,7 +284,7 @@
 | `StoryMediaKind` (TS) | image \| video \| text |  | `src/components/inbox/contact-details/storyUtils.ts` |
 | `SidebarSectionTone` (TS) | blue \| purple \| green |  | `src/components/inbox/contact-details/sidebar/SidebarSection.tsx` |
 | `SinguDetailKind` (TS) | metaprograms \| fears \| decision \| budget \| influencers \| rapport \| objections |  | `src/components/inbox/contact-details/sidebar/SinguProfileDetailSheet.tsx` |
-| `SIDEBAR_SECTIONS` (TS) | 'professional', 'personal', 'singu', 'intelligence', 'delivery' |  | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| `SIDEBAR_SECTIONS` (TS) | 'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento' |  | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
 | `ReopenAction` (TS) | reopen \| unarchive |  | `src/components/inbox/conversation-list/ConversationReopenDialog.tsx` |
 | `MainTab` (TS) | open \| resolved \| search |  | `src/components/inbox/conversation-list/StatusChips.tsx` |
 | `SubTab` (TS) | attending \| waiting |  | `src/components/inbox/conversation-list/StatusChips.tsx` |
@@ -304,10 +306,8 @@
 | `PRESET_FIXED_OVERRIDES` (TS) | 'gradient-success' |  | `src/components/settings/theme/presets.ts` |
 | `AudienceFilterKey` (TS) | contact_status \| company \| funnel_stage \| seller \| rfm \| location |  | `src/components/talkx/TalkXAudienceFilters.tsx` |
 | `TalkXPreviewMode` (TS) | raw \| resolved |  | `src/components/talkx/TalkXMessagePreview.tsx` |
-| `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused |  | `src/components/talkx/TalkXView.tsx` |
-| `AnalyticsPeriod` (TS) | 7d \| 30d \| 90d \| month \| custom |  | `src/components/talkx/talkxAnalyticsFilters.ts` |
-| `TalkxInteractiveButtonType` (TS) | reply \| link |  | `src/components/talkx/talkxInteractive.ts` |
-| … +350 linhas — lista completa em `context.json` | | | |
+| `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused \| report |  | `src/components/talkx/TalkXView.tsx` |
+| … +353 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -357,9 +357,10 @@
 | status | valor `approved_email_failed` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/approve-password-reset/index.ts` |
 | status | valor `unhealthy` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/health/index.ts` |
 | status | valor `suspended` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/calls/IncomingCallAlert.tsx`<br>`compara:src/components/monitoring/hooks/useMonitoringNotifications.ts`<br>`compara:src/hooks/chat/useTeamChatNotifications.ts`<br>`compara:src/lib/mediaVolumeElement.ts` |
-| status | valor `object` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/email/EmailChatInbox.tsx`<br>`compara:src/hooks/system/useNavigationHistory.ts`<br>`compara:src/lib/postLoginRedirect.ts` |
+| status | valor `object` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/email/EmailChatInbox.tsx`<br>`compara:src/components/team-chat/TeamChatView.tsx`<br>`compara:src/hooks/system/useNavigationHistory.ts`<br>`compara:src/lib/postLoginRedirect.ts` |
 | status | valor `ativa` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringInstancePauses.tsx` |
 | status | valor `retomada` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringInstancePauses.tsx` |
+| status | valor `leaving` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/chat/useTypingPresence.ts` |
 | status | valor `Registered` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts` |
 | status | valor `Unregistered` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts` |
 | status | valor `Terminated` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts`<br>`compara:src/lib/calls/adapters/CallEngine.ts` |

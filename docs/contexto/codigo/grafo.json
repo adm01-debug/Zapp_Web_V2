@@ -1,32 +1,32 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2288,
- "arestas": 7947,
+ "nos": 2318,
+ "arestas": 8065,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
-   "importado_por": 472
+   "importado_por": 474
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 410
+   "importado_por": 414
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 395
+   "importado_por": 404
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 219
+   "importado_por": 223
   },
   {
    "arquivo": "src/lib/logger.ts",
-   "importado_por": 219
+   "importado_por": 220
   },
   {
    "arquivo": "src/components/ui/card.tsx",
-   "importado_por": 193
+   "importado_por": 194
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
@@ -34,7 +34,7 @@
   },
   {
    "arquivo": "src/components/ui/input.tsx",
-   "importado_por": 165
+   "importado_por": 168
   },
   {
    "arquivo": "supabase/functions/_shared/validation.ts",
@@ -42,31 +42,31 @@
   },
   {
    "arquivo": "src/types/chat.ts",
-   "importado_por": 123
+   "importado_por": 124
+  },
+  {
+   "arquivo": "src/components/ui/select.tsx",
+   "importado_por": 115
   },
   {
    "arquivo": "src/hooks/auth/useAuth.tsx",
    "importado_por": 115
   },
   {
-   "arquivo": "src/components/ui/select.tsx",
-   "importado_por": 109
-  },
-  {
    "arquivo": "src/components/ui/label.tsx",
-   "importado_por": 108
+   "importado_por": 113
   },
   {
    "arquivo": "src/components/ui/dialog.tsx",
-   "importado_por": 99
+   "importado_por": 102
+  },
+  {
+   "arquivo": "src/components/ui/skeleton.tsx",
+   "importado_por": 80
   },
   {
    "arquivo": "src/components/ui/scroll-area.tsx",
    "importado_por": 76
-  },
-  {
-   "arquivo": "src/components/ui/skeleton.tsx",
-   "importado_por": 75
   },
   {
    "arquivo": "src/hooks/ui/use-toast.ts",
@@ -78,7 +78,7 @@
   },
   {
    "arquivo": "src/components/ui/avatar.tsx",
-   "importado_por": 62
+   "importado_por": 63
   },
   {
    "arquivo": "src/components/ui/switch.tsx",
@@ -105,6 +105,10 @@
    "importado_por": 48
   },
   {
+   "arquivo": "src/hooks/integrations/useTalkX.ts",
+   "importado_por": 48
+  },
+  {
    "arquivo": "src/components/ui/popover.tsx",
    "importado_por": 47
   },
@@ -113,12 +117,8 @@
    "importado_por": 47
   },
   {
-   "arquivo": "src/hooks/integrations/useTalkX.ts",
-   "importado_por": 47
-  },
-  {
    "arquivo": "src/hooks/integrations/useGmail.ts",
-   "importado_por": 44
+   "importado_por": 45
   },
   {
    "arquivo": "src/lib/localDay.ts",
@@ -126,6 +126,10 @@
   },
   {
    "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
+   "importado_por": 42
+  },
+  {
+   "arquivo": "src/hooks/system/useUserRole.ts",
    "importado_por": 42
   },
   {
@@ -145,10 +149,6 @@
    "importado_por": 40
   },
   {
-   "arquivo": "src/hooks/system/useUserRole.ts",
-   "importado_por": 39
-  },
-  {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
    "importado_por": 39
   },
@@ -161,8 +161,8 @@
    "importado_por": 35
   },
   {
-   "arquivo": "src/hooks/system/useNavigationHistory.ts",
-   "importado_por": 34
+   "arquivo": "supabase/functions/_shared/ai-generate.ts",
+   "importado_por": 35
   }
  ],
  "ciclos": {
@@ -472,7 +472,6 @@
   "src/components/talkx/TalkXHelp.tsx",
   "src/components/talkx/TalkXInteractiveEditor.tsx",
   "src/components/talkx/TalkXMediaDropzone.tsx",
-  "src/components/talkx/report/TalkXCampaignReport.tsx",
   "src/components/talkx/talkxCampaignDraft.ts",
   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
   "src/components/talkx/tracking/TalkXSegmentProgressTable.tsx",
@@ -555,12 +554,12 @@
   {
    "modulo": "lib",
    "depende_de": 12,
-   "importado_por": 102
+   "importado_por": 103
   },
   {
    "modulo": "components/ui",
    "depende_de": 7,
-   "importado_por": 67
+   "importado_por": 68
   },
   {
    "modulo": "pages",
@@ -574,7 +573,7 @@
   },
   {
    "modulo": "components/inbox",
-   "depende_de": 42,
+   "depende_de": 44,
    "importado_por": 14
   },
   {
@@ -585,7 +584,7 @@
   {
    "modulo": "hooks/integrations",
    "depende_de": 21,
-   "importado_por": 23
+   "importado_por": 26
   },
   {
    "modulo": "hooks/ui",
@@ -608,14 +607,14 @@
    "importado_por": 29
   },
   {
+   "modulo": "services",
+   "depende_de": 6,
+   "importado_por": 25
+  },
+  {
    "modulo": "components/dashboard",
    "depende_de": 18,
    "importado_por": 12
-  },
-  {
-   "modulo": "services",
-   "depende_de": 6,
-   "importado_por": 24
   },
   {
    "modulo": "hooks/crm",
@@ -628,6 +627,11 @@
    "importado_por": 6
   },
   {
+   "modulo": "components/catalog",
+   "depende_de": 12,
+   "importado_por": 12
+  },
+  {
    "modulo": "hooks/communication",
    "depende_de": 12,
    "importado_por": 12
@@ -636,11 +640,6 @@
    "modulo": "hooks/realtime",
    "depende_de": 10,
    "importado_por": 14
-  },
-  {
-   "modulo": "components/catalog",
-   "depende_de": 10,
-   "importado_por": 12
   },
   {
    "modulo": "hooks/inbox",
