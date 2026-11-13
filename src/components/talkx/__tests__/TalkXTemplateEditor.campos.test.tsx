@@ -109,3 +109,15 @@ describe('X094 — campos do editor (descrição) e trilha dentro do shell', () 
     expect(trilha).toHaveTextContent('Templates');
   });
 });
+
+describe('TalkXTemplateEditor — diálogo "Testar template" (X050)', () => {
+  it('tem descrição acessível e o campo "Número de destino" é rotulado', () => {
+    renderEditor();
+    fireEvent.click(screen.getByRole('button', { name: /^Testar$/ }));
+    const dialogo = screen.getByRole('dialog', { name: 'Testar template' });
+    const id = dialogo.getAttribute('aria-describedby');
+    expect(document.getElementById(id ?? '')?.textContent).toBe('Envia a mensagem personalizada para um número via WhatsApp.');
+    expect(screen.getByLabelText('Número de destino').getAttribute('placeholder')).toBe('5541999001234');
+  });
+});
+

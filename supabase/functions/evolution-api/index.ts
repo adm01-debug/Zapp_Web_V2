@@ -1,12 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
-import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
+import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors, internalErrorResponse } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
+
+/**
+ * Ação da Evolution v2 sem equivalente na Evolution GO: responde 200 com
+ * `notSupported` (falha explícita e tratável pela tela) em vez de repassar e
+ * colher o 404 do GO — que, além de virar erro genérico, alimentava o circuit breaker.
+ */
+function goActionNotSupported(actionName: string, corsHeaders: Record<string, string>): Response {
+  return new Response(JSON.stringify({
+    success: false, notSupported: true,
+    message: `${actionName} não é suportado na Evolution GO.`,
+  }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
-import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { EvolutionApiRequestSchema, GROUP_JID_PATTERN, INSTANCE_NAME_PATTERN, WHATSAPP_NUMBER_OR_JID_PATTERN, evolutionApiRequiresInstance, parseBody, resolveEvolutionInstanceName, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
 import {
   qrFromV2Connect,
@@ -94,7 +106,17 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
 
   try {
     const body: Record<string, unknown> = parsedBody.data;
-    const instance = String(body.instanceName || body.instance || '');
+    // Mesma resolução que o schema validou (resolveEvolutionInstanceName): o
+    // valor checado contra INSTANCE_NAME_PATTERN é o que vira path da URL.
+    const instance = resolveEvolutionInstanceName(body);
+    if (instance && !INSTANCE_NAME_PATTERN.test(instance)) {
+      // Defesa em profundidade: o schema já recusa; nunca montar URL com nome fora do padrão.
+      return validationErrorResponse([{
+        path: 'instanceName',
+        message: 'Nome de instância inválido — use apenas letras, números, "-" e "_" (até 128 caracteres).',
+        code: 'custom',
+      }], req);
+    }
 
     // ─── E17 (plano multi-conexão): instância obrigatória em ação de instância ───
     // list-instances é a única ação realmente global (lista todas as instâncias
@@ -134,9 +156,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const raw = String(value ?? '');
       return (raw.includes('@') ? raw.split('@')[0] : raw).replace(/\D/g, '');
     };
-    const resolveSendTarget = (): string =>
-      jidToDigits(body.number) || jidToDigits(body.remoteJid) || jidToDigits(body.chat) ||
-      jidToDigits((body.key as Record<string, unknown> | undefined)?.remoteJid);
+    // mark-read / mark-unread agem SÓ sobre a conversa da `key` (é ela que vai ao
+    // provedor): o alvo do gate vem só de `key.remoteJid`. Antes um `number` de
+    // contato visível passava no gate e a `key` de OUTRA conversa ia ao provedor.
+    const KEY_TARGET_ACTIONS = new Set(['mark-read', 'mark-unread']);
+    const resolveSendTarget = (): string => {
+      const keyJid = jidToDigits((body.key as Record<string, unknown> | undefined)?.remoteJid);
+      if (KEY_TARGET_ACTIONS.has(action)) return keyJid;
+      return jidToDigits(body.number) || jidToDigits(body.remoteJid) || jidToDigits(body.chat) || keyJid;
+    };
     const resolveSendAccess = async (): Promise<EvolutionAuthzDecision> => {
       if (await isCallerAdminOrSupervisor()) return { allowed: true };
       // Falha de modo seguro: sem vínculo com a conexão, sem número ou sem
@@ -225,6 +253,14 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
     };
     const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
+
+    // Valores do corpo que viram query string da URL do provedor: só passam no
+    // formato esperado e sempre codificados (cru, `&`/`#` injetavam parâmetros).
+    // Devolve o valor já codificado, ou null quando é inválido (→ 422, sem I/O).
+    const queryParamOrNull = (value: unknown, pattern: RegExp): string | null =>
+      typeof value === 'string' && pattern.test(value) ? encodeURIComponent(value) : null;
+    const invalidQueryParam = (path: string, message: string): Response =>
+      validationErrorResponse([{ path, message, code: 'custom' }], req);
 
     // ─── E10/E11 (plano multi-conexão): ambas admin-only — mesmo guard usado em
     // evolution-sync/index.ts (JWT válido + is_admin_or_supervisor via RPC).
@@ -858,6 +894,25 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Restaurada (#2054): presença da conta. `/instance/setPresence` é rota da v2
+    // sem equivalente no GO (evolution-go-routes) → notSupported explícito.
+    if (action === 'set-presence') {
+      if (isGoFlavor) return goActionNotSupported('set-presence', corsHeaders);
+      return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
+    }
+
+    // ─── 2. Settings ───
+    // Rotas restauradas (saíram por engano no #2054 e ainda têm tela): a aba
+    // "Configurações" do InstanceSettingsDialog lê e grava por aqui. Contrato
+    // pré-#2054. `/settings/find|set` são rotas da v2 sem equivalente na
+    // Evolution GO (evolution-go-routes: passthrough → 404): no GO a resposta é
+    // `notSupported` explícito, e a tela marca os campos como indisponíveis.
+    if (action === 'set-settings' || action === 'get-settings') {
+      if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
+      if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');
+      return await proxy(`/settings/set/${instance}`, 'POST', { rejectCall: body.rejectCall, msgCall: body.msgCall, groupsIgnore: body.groupsIgnore, alwaysOnline: body.alwaysOnline, readMessages: body.readMessages, readStatus: body.readStatus, syncFullHistory: body.syncFullHistory });
+    }
+
     // ─── 3. Webhook ───
     if (action === 'set-webhook') {
       // Dois contratos em uso: o painel de monitoramento manda `{ instanceName,
@@ -899,6 +954,32 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: wh.enabled ?? true, url: wh.url, webhookByEvents, webhookBase64, events: wh.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
     }
+    // Restaurada (#2054): painel de Monitoramento → "Verificar webhook" (useMonitoringActions).
+    if (action === 'get-webhook') {
+      // `/webhook/find` é rota da v2. No GO a leitura da configuração corrente vem do
+      // registro da instância na listagem admin (`/instance/fetchInstances`, traduzida
+      // para `/instance/all`) — a mesma fonte que o webhook-diagnostic usa. Assim o
+      // painel lê a config real por flavor em vez de bater numa rota inexistente no GO.
+      if (!isGoFlavor) return await proxy(`/webhook/find/${instance}`, 'GET');
+      try {
+        const allRes = await proxy('/instance/fetchInstances', 'GET');
+        const allData = await allRes.json().catch(() => null);
+        const records: Record<string, unknown>[] = Array.isArray(allData?.data) ? allData.data : Array.isArray(allData) ? allData : [];
+        const rec = records.find((r) => r?.name === instance || r?.Name === instance) ?? {};
+        const evRaw = rec.events ?? rec.Events;
+        const events = Array.isArray(evRaw)
+          ? evRaw
+          : typeof evRaw === 'string' && evRaw ? evRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+        const url = typeof rec.webhook === 'string' ? rec.webhook : typeof rec.Webhook === 'string' ? rec.Webhook : '';
+        return new Response(JSON.stringify({
+          webhook: { enabled: !!url, url, events, webhookByEvents: true, webhookBase64: false },
+          ...(url ? {} : { goEnvManaged: true }),
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      } catch (_err) {
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao ler a configuração de webhook da instância no GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // ─── 4. Messaging ───
     if (action === 'send-text') return await proxy(`/message/sendText/${instance}`, 'POST', { number: body.number, text: body.text, delay: body.delay, quoted: body.quoted, mentionsEveryOne: body.mentionsEveryOne, mentioned: body.mentioned });
     if (action === 'send-media') {
@@ -989,7 +1070,19 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
     }
-    if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
+    // Só a `key` validada pelo gate vai ao provedor (sem `readMessages` livre, que
+    // podia levar JIDs de outras conversas sem checagem de visibilidade).
+    if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: [body.key] });
+    // Restaurada (#2054): "Marcar como não lida" (MessageHoverToolbar / MessageContextActions).
+    // Categoria send (alvo = a conversa da `key`). Evolution v2: `MarkChatUnreadDto`
+    // em POST /chat/markChatUnread/{instância} = { chat, lastMessage: { key } }
+    // (`/chat/markMessageAsUnread` não existe na v2). Só a `key` validada pelo gate
+    // segue ao provedor.
+    if (action === 'mark-unread') {
+      if (isGoFlavor) return goActionNotSupported('mark-unread', corsHeaders);
+      const key = (body.key ?? {}) as Record<string, unknown>;
+      return await proxy(`/chat/markChatUnread/${instance}`, 'POST', { chat: key.remoteJid, lastMessage: { key } });
+    }
     if (action === 'archive-chat') return await proxy(`/message/archiveChat/${instance}`, 'POST', { lastMessage: body.lastMessage, chat: body.chat, archive: body.archive ?? true });
     if (action === 'delete-message') return await proxy(`/message/delete/${instance}`, 'DELETE', { id: body.id, remoteJid: body.remoteJid, fromMe: body.fromMe });
     if (action === 'update-message') return await proxy(`/message/update/${instance}`, 'PUT', { number: body.number, key: body.key, text: body.text });
@@ -1001,6 +1094,27 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'find-messages') {
       if (isGoFlavor) return goHistoryNotSupported('find-messages', corsHeaders);
       return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
+    }
+
+    // Restaurada (#2054, decisão do dono): lista de conversas do aparelho na v2
+    // (diagnóstico da conexão). `/chat/findChats` não existe no GO → notSupported.
+    if (action === 'find-chats') {
+      if (isGoFlavor) return goActionNotSupported('find-chats', corsHeaders);
+      return await proxy(`/chat/findChats/${instance}`, 'POST', { where: body.where || {} });
+    }
+
+    // Status/Stories do contato (aba Status do ContactDetails, `useWhatsAppStatus`).
+    // Saiu por engano no #2054 junto com rotas legadas sem chamador — esta TEM
+    // chamador, e a Edge passou a responder 404 "Unknown action" a cada abertura
+    // do painel. Mesmo contrato de antes: array de registros (`[]` quando não há),
+    // `{ error: true }` do provedor repassado com 200, e GO sem histórico.
+    if (action === 'find-status-messages') {
+      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);
+      const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: body.offset ?? 200 });
+      const data = await response.json();
+      if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const records = Array.isArray(data?.messages?.records) ? data.messages.records : [];
+      return new Response(JSON.stringify(records), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
@@ -1017,14 +1131,32 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // ─── 6. Groups ───
     if (action === 'create-group') return await proxy(`/group/create/${instance}`, 'POST', { subject: body.subject, description: body.description, participants: body.participants });
     if (action === 'list-groups') return await proxy(`/group/fetchAllGroups/${instance}?getParticipants=${body.getParticipants ?? 'false'}`, 'GET');
-    if (action === 'group-info') return await proxy(`/group/findGroupInfos/${instance}?groupJid=${body.groupJid}`, 'GET');
-    if (action === 'group-participants') return await proxy(`/group/participants/${instance}?groupJid=${body.groupJid}`, 'GET');
+    if (action === 'group-info' || action === 'group-participants') {
+      const groupJid = queryParamOrNull(body.groupJid, GROUP_JID_PATTERN);
+      if (groupJid === null) return invalidQueryParam('groupJid', 'groupJid inválido — esperado JID de grupo (ex.: 120363000000000000@g.us).');
+      return await proxy(`/group/${action === 'group-info' ? 'findGroupInfos' : 'participants'}/${instance}?groupJid=${groupJid}`, 'GET');
+    }
     if (action === 'update-group-name') return await proxy(`/group/updateGroupSubject/${instance}`, 'PUT', { groupJid: body.groupJid, subject: body.subject });
     if (action === 'update-group-description') return await proxy(`/group/updateGroupDescription/${instance}`, 'PUT', { groupJid: body.groupJid, description: body.description });
     if (action === 'update-participants') return await proxy(`/group/updateParticipant/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action, participants: body.participants });
     if (action === 'update-group-setting') return await proxy(`/group/updateSetting/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action });
-    if (action === 'group-invite-code') return await proxy(`/group/inviteCode/${instance}?groupJid=${body.groupJid}`, 'GET');
+    if (action === 'group-invite-code') {
+      const groupJid = queryParamOrNull(body.groupJid, GROUP_JID_PATTERN);
+      if (groupJid === null) return invalidQueryParam('groupJid', 'groupJid inválido — esperado JID de grupo (ex.: 120363000000000000@g.us).');
+      return await proxy(`/group/inviteCode/${instance}?groupJid=${groupJid}`, 'GET');
+    }
     if (action === 'revoke-invite-code') return await proxy(`/group/revokeInviteCode/${instance}`, 'PUT', { groupJid: body.groupJid });
+    // Restauradas (#2054). `inviteInfo`/`toggleEphemeral` são rotas da v2 sem
+    // equivalente no GO → notSupported explícito. O código do convite vai
+    // codificado na query (antes ia cru: `&`/`#` no código quebravam a URL).
+    if (action === 'invite-info') {
+      if (isGoFlavor) return goActionNotSupported('invite-info', corsHeaders);
+      return await proxy(`/group/inviteInfo/${instance}?inviteCode=${encodeURIComponent(String(body.inviteCode ?? ''))}`, 'GET');
+    }
+    if (action === 'toggle-ephemeral') {
+      if (isGoFlavor) return goActionNotSupported('toggle-ephemeral', corsHeaders);
+      return await proxy(`/group/toggleEphemeral/${instance}`, 'POST', { groupJid: body.groupJid, expiration: body.expiration });
+    }
     if (action === 'accept-invite') return await proxy(`/group/acceptInviteCode/${instance}`, 'POST', { inviteCode: body.inviteCode });
     if (action === 'leave-group') return await proxy(`/group/leaveGroup/${instance}`, 'DELETE', { groupJid: body.groupJid });
     if (action === 'update-group-picture') return await proxy(`/group/updateGroupPicture/${instance}`, 'PUT', { groupJid: body.groupJid, image: body.image });
@@ -1039,7 +1171,11 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-profile-status') return await proxy(`/profile/updateProfileStatus/${instance}`, 'PUT', { status: body.status });
     if (action === 'update-profile-picture') return await proxy(`/profile/updateProfilePicture/${instance}`, 'PUT', { picture: body.picture });
     if (action === 'remove-profile-picture') return await proxy(`/profile/removeProfilePicture/${instance}`, 'DELETE');
-    if (action === 'fetch-profile-picture') return await proxy(`/profile/fetchProfilePicture/${instance}?number=${body.number}`, 'GET');
+    if (action === 'fetch-profile-picture') {
+      const number = queryParamOrNull(body.number, WHATSAPP_NUMBER_OR_JID_PATTERN);
+      if (number === null) return invalidQueryParam('number', 'number inválido — esperado número (só dígitos) ou JID do WhatsApp.');
+      return await proxy(`/profile/fetchProfilePicture/${instance}?number=${number}`, 'GET');
+    }
     if (action === 'fetch-business-profile') return await proxy(`/profile/fetchBusinessProfile/${instance}`, 'POST', { number: body.number });
     if (action === 'update-privacy') {
       // O GO exige os 7 campos no POST /user/privacy (parcial → 400). Faz GET
@@ -1100,6 +1236,43 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'handle-label') return await proxy(`/label/handleLabel/${instance}`, 'POST', { number: body.number, labelId: body.labelId, action: body.action });
 
     if (action === 'update-block-status') return await proxy(`/chat/updateBlockStatus/${instance}`, 'POST', { number: body.number, status: body.status });
+    // Restaurada (#2054): template aprovado do WhatsApp Business (só instâncias
+    // Cloud API na v2). Categoria send: o gate valida o `number` como contato.
+    if (action === 'send-template') {
+      if (isGoFlavor) return goActionNotSupported('send-template', corsHeaders);
+      // Evolution v2 (`templateMessageSchema`): campos no TOPO — number, name,
+      // language, components e webhookUrl opcional. Aceita também o formato antigo
+      // `{ template: { name, language, components } }` por compatibilidade.
+      const tpl = (body.template && typeof body.template === 'object' ? body.template : {}) as Record<string, unknown>;
+      const webhookUrl = body.webhookUrl ?? tpl.webhookUrl;
+      return await proxy(`/message/sendTemplate/${instance}`, 'POST', {
+        number: body.number,
+        name: body.name ?? tpl.name,
+        language: body.language ?? tpl.language,
+        components: body.components ?? tpl.components ?? [],
+        ...(webhookUrl ? { webhookUrl } : {}),
+      });
+    }
+    // Restauradas (#2054, decisão do dono): templates da Meta (WhatsApp Business
+    // Cloud API) e catálogo/coleções de um número business, e a oferta de chamada.
+    // Rotas só da v2 (`/template/*`, `/business/*`, `/call/offer`) → notSupported no GO.
+    if (action === 'create-template' || action === 'find-templates' || action === 'delete-template') {
+      if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
+      if (action === 'find-templates') return await proxy(`/template/find/${instance}`, 'GET');
+      // Só o template vai ao provedor: `action`/`instanceName`/`instance` são do roteador.
+      const { action: _a, instanceName: _i, instance: _n, ...templateBody } = body as Record<string, unknown>;
+      return await proxy(`/template/${action === 'create-template' ? 'create' : 'delete'}/${instance}`, action === 'create-template' ? 'POST' : 'DELETE', templateBody);
+    }
+    if (action === 'get-catalog' || action === 'get-collections') {
+      if (isGoFlavor) return goActionNotSupported(action, corsHeaders);
+      return await proxy(`/business/${action === 'get-catalog' ? 'getCatalog' : 'getCollections'}/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
+    }
+    // Evolution v2: POST /call/offer/{instância} (OfferCallDto). `callDuration` já
+    // chega validado pelo schema (inteiro de 1 a 15 s, padrão 5).
+    if (action === 'offer-call') {
+      if (isGoFlavor) return goActionNotSupported('offer-call', corsHeaders);
+      return await proxy(`/call/offer/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo === true, callDuration: body.callDuration ?? 5 });
+    }
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;
       if (typeof videoSource === 'string') {
@@ -1114,11 +1287,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     });
   } catch (error: unknown) {
     const log = new Logger('evolution-api');
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    log.error('Unhandled error', { error: message });
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    log.error('Unhandled error', { error: error instanceof Error ? error.message : 'Unknown error' });
+    // Mensagem crua da exceção fica só no log do servidor: ao cliente vai o 500
+    // padrão (sem detalhe interno, stack ou dado do provedor).
+    return internalErrorResponse(error, req);
   }
 }
 

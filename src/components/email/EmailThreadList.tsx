@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Mail, Search, RefreshCw, Pencil, Inbox, Star,
-  ChevronLeft, ChevronRight, MailX, Paperclip, X
+  ChevronLeft, ChevronRight, MailX, Paperclip, X, KeyRound
 } from 'lucide-react';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 import { EMAIL_THREAD_PAGE_SIZE, hasActiveEmailThreadFilters, type EmailThreadListFilters } from '@/lib/emailThreadQuery';
@@ -64,6 +64,13 @@ interface EmailThreadListProps {
   onNewEmail: () => void;
   onSync: () => void;
   isSyncing: boolean;
+  /**
+   * Conta em `reauth_required` (token Google revogado/expirado): sincronizar só
+   * devolveria 409 de novo. Os botões de sincronizar viram "Reconectar Gmail".
+   */
+  needsReconnect?: boolean;
+  onReconnect?: () => void;
+  isReconnecting?: boolean;
 }
 
 export function EmailThreadList({
@@ -71,8 +78,10 @@ export function EmailThreadList({
   filters, onFiltersChange, onSearchChange, onResetFilters, onPageChange,
   globalSearchQuery = '', onClearGlobalSearch,
   selectedThreadId, activeAccountEmail,
-  onSelectThread, onNewEmail, onSync, isSyncing
+  onSelectThread, onNewEmail, onSync, isSyncing,
+  needsReconnect = false, onReconnect, isReconnecting = false,
 }: EmailThreadListProps) {
+  const reconnect = needsReconnect && onReconnect ? onReconnect : null;
   const { filter, hasAttachments, labelId, period, search } = filters;
   const safePageCount = Number.isFinite(pageCount) && pageCount >= 1 ? Math.trunc(pageCount) : 1;
   const effectivePage = Math.min(Math.max(1, page), safePageCount);
@@ -95,14 +104,26 @@ export function EmailThreadList({
             <Pencil className="w-3 h-3 mr-1" />
             Novo
           </Button>
-          <Button
-            variant="outline" size="icon" className="h-7 w-7"
-            onClick={onSync}
-            disabled={isSyncing}
-            aria-label="Sincronizar conversas"
-          >
-            <RefreshCw className={cn('w-3.5 h-3.5', isSyncing && 'animate-spin')} />
-          </Button>
+          {reconnect ? (
+            <Button
+              variant="outline" size="sm" className="h-7 text-xs"
+              onClick={reconnect}
+              disabled={isReconnecting}
+              title="Sessão do Gmail expirada"
+            >
+              <KeyRound className="w-3 h-3 mr-1" />
+              Reconectar Gmail
+            </Button>
+          ) : (
+            <Button
+              variant="outline" size="icon" className="h-7 w-7"
+              onClick={onSync}
+              disabled={isSyncing}
+              aria-label="Sincronizar conversas"
+            >
+              <RefreshCw className={cn('w-3.5 h-3.5', isSyncing && 'animate-spin')} />
+            </Button>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -193,10 +214,21 @@ export function EmailThreadList({
               <>
                 <Inbox className="w-12 h-12 mb-3 opacity-20" />
                 <p className="text-sm font-medium mb-1">Inbox vazio</p>
-                <p className="text-xs text-center">Sincronize seus emails para começar.</p>
-                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={onSync}>
-                  <RefreshCw className="w-3 h-3 mr-1" /> Sincronizar agora
-                </Button>
+                {reconnect ? (
+                  <>
+                    <p className="text-xs text-center">Sessão do Gmail expirada. Reconecte a conta para voltar a sincronizar.</p>
+                    <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={reconnect} disabled={isReconnecting}>
+                      <KeyRound className="w-3 h-3 mr-1" /> Reconectar Gmail
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-center">Sincronize seus emails para começar.</p>
+                    <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={onSync}>
+                      <RefreshCw className="w-3 h-3 mr-1" /> Sincronizar agora
+                    </Button>
+                  </>
+                )}
               </>
             )}
           </div>

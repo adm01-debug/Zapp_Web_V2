@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useWhatsAppStatus } from '../integrations/useWhatsAppStatus';
+import { useWhatsAppStatus, __resetStatusIndisponivelParaTestes } from '../integrations/useWhatsAppStatus';
 
 // Mocks
 const mockMaybeSingle = vi.fn();
@@ -45,6 +45,7 @@ vi.mock('@/lib/logger', () => ({
 describe('useWhatsAppStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetStatusIndisponivelParaTestes();
   });
 
   // ========== NO PHONE ==========
@@ -210,5 +211,53 @@ describe('useWhatsAppStatus', () => {
     });
     // Should not set error since allSettled handles individual failures
     expect(result.current.statusMessages).toEqual([]);
+  });
+
+  // ========== STATUS OPCIONAL: 404/403/notSupported (console de produção 12/11) ==========
+  const statusCalls = () => mockInvoke.mock.calls.filter(([fn]) => fn === 'evolution-api/find-status-messages').length;
+  const comConexao = () => mockMaybeSingle
+    .mockResolvedValueOnce({ data: { whatsapp_connection_id: 'conn1' } })
+    .mockResolvedValueOnce({ data: { instance_id: 'inst-status' } });
+
+  it.each([
+    ['404 (Edge sem a rota)', { data: null, error: { name: 'FunctionsHttpError', context: { status: 404 } } }],
+    ['403 (sem papel)', { data: null, error: { name: 'FunctionsHttpError', context: { status: 403 } } }],
+    ['notSupported (Evolution GO)', { data: { success: false, notSupported: true }, error: null }],
+  ])('%s: lista vazia, sem erro, e não chama de novo nesta sessão', async (_rotulo, resposta) => {
+    mockInvoke.mockImplementation(async (fn: string) =>
+      fn === 'evolution-api/find-status-messages' ? resposta : { data: {}, error: null });
+
+    comConexao();
+    const primeiro = renderHook(() => useWhatsAppStatus('5511999999999'));
+    await waitFor(() => expect(primeiro.result.current.loading).toBe(false));
+    expect(primeiro.result.current.statusMessages).toEqual([]);
+    expect(primeiro.result.current.error).toBeNull();
+    expect(statusCalls()).toBe(1);
+    primeiro.unmount();
+
+    // Outro contato na mesma instância: nada de nova chamada (nem 404 no console).
+    comConexao();
+    const segundo = renderHook(() => useWhatsAppStatus('5511988887777'));
+    await waitFor(() => expect(segundo.result.current.loading).toBe(false));
+    expect(segundo.result.current.statusMessages).toEqual([]);
+    expect(statusCalls()).toBe(1);
+  });
+
+  it('falha passageira (500) não trava: a próxima abertura tenta de novo', async () => {
+    mockInvoke.mockImplementation(async (fn: string) =>
+      fn === 'evolution-api/find-status-messages'
+        ? { data: null, error: { name: 'FunctionsHttpError', context: { status: 500 } } }
+        : { data: {}, error: null });
+
+    comConexao();
+    const primeiro = renderHook(() => useWhatsAppStatus('5511999999999'));
+    await waitFor(() => expect(primeiro.result.current.loading).toBe(false));
+    expect(primeiro.result.current.error).toBeNull();
+    primeiro.unmount();
+
+    comConexao();
+    const segundo = renderHook(() => useWhatsAppStatus('5511999999999'));
+    await waitFor(() => expect(segundo.result.current.loading).toBe(false));
+    expect(statusCalls()).toBe(2);
   });
 });

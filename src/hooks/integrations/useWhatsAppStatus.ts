@@ -123,6 +123,31 @@ const extractStatusRecords = (data: unknown): WhatsAppStatusMessage[] => {
 /**
  * Hook to fetch WhatsApp status (stories) and presence for a contact
  */
+/**
+ * Status/Stories é recurso OPCIONAL do painel do contato. Instâncias em que a
+ * leitura não está disponível para esta sessão — a Edge recusou (403: leitura
+ * instance-wide é só de admin/supervisor), não tem a rota (404: Edge antiga) ou
+ * o provedor não suporta histórico (`notSupported`, Evolution GO) — ficam
+ * lembradas aqui até recarregar a página: abrir outro contato não refaz a
+ * chamada (antes, cada abertura do ContactDetails gerava um 404 no console).
+ * Falha passageira (rede, 5xx, instância desconectada) NÃO entra: só vira lista
+ * vazia e a próxima abertura tenta de novo.
+ */
+const statusIndisponivelPorInstancia = new Set<string>();
+
+/** Só para testes: zera a memória de instâncias sem Status. */
+export function __resetStatusIndisponivelParaTestes(): void {
+  statusIndisponivelPorInstancia.clear();
+}
+
+const STATUS_HTTP_PERMANENTES = new Set([401, 403, 404, 405, 501]);
+
+function statusIndisponivelDefinitivo(result: { data?: unknown; error?: unknown }): boolean {
+  if ((result.data as { notSupported?: boolean } | null)?.notSupported === true) return true;
+  const ctx = (result.error as { context?: { status?: number } } | null | undefined)?.context;
+  return typeof ctx?.status === 'number' && STATUS_HTTP_PERMANENTES.has(ctx.status);
+}
+
 export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData {
   const [statusMessages, setStatusMessages] = useState<WhatsAppStatusMessage[]>([]);
   const [presence, setPresence] = useState<WhatsAppPresenceInfo>({ isOnline: false, lastSeen: null, loading: true });
@@ -215,16 +240,25 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
       // 'paused' para o CONTATO a cada abertura da aba — o cliente recebia um
       // sinal de presença sem o atendente estar digitando. Presença só sai do
       // compositor, quando o atendente digita de fato.
+      const consultarStatus = !statusIndisponivelPorInstancia.has(resolvedInstance);
       const [statusResult] = await Promise.allSettled([
-        supabase.functions.invoke('evolution-api/find-status-messages', {
-          method: 'POST',
-          body: { instanceName: resolvedInstance, page: 1, offset: 200 },
-        }),
+        consultarStatus
+          ? supabase.functions.invoke('evolution-api/find-status-messages', {
+              method: 'POST',
+              body: { instanceName: resolvedInstance, page: 1, offset: 200 },
+            })
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
       if (!mountedRef.current) return;
 
-      if (statusResult.status === 'fulfilled') {
+      if (statusResult.status === 'fulfilled' && statusResult.value.error) {
+        // Recurso opcional: falha vira lista vazia, sem erro na tela nem no console.
+        if (statusIndisponivelDefinitivo(statusResult.value)) statusIndisponivelPorInstancia.add(resolvedInstance);
+        log.debug('Status do WhatsApp indisponível para a instância', resolvedInstance);
+        setStatusMessages([]);
+      } else if (statusResult.status === 'fulfilled') {
+        if (statusIndisponivelDefinitivo(statusResult.value)) statusIndisponivelPorInstancia.add(resolvedInstance);
         const allStatuses = extractStatusRecords(statusResult.value.data);
         const phoneNeedles = buildPhoneNeedles(phone);
         const normalizedContactName = contactName?.trim().toLowerCase() ?? null;
