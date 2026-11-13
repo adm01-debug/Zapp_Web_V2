@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -56,6 +57,19 @@ export function parseArgs(argv) {
     attempts: inteiro('--attempts', args.attempts ?? '1', { min: 1, max: 60 }),
     intervalMs: inteiro('--interval-ms', args['interval-ms'] ?? '0', { min: 0, max: 60_000 }),
   };
+}
+
+// Run atrasado na fila (push antigo ou agendado): o alias já pode estar num commit
+// mais novo da main. Isso não é divergência quando o SHA esperado é ancestral do
+// publicado. Falha fechada: qualquer erro de git conta como "não é ancestral".
+export function gitEhAncestral(ancestral, descendente) {
+  try {
+    execFileSync('git', ['fetch', '--quiet', '--no-tags', '--filter=tree:0', 'origin', 'main'], { stdio: 'ignore', timeout: 60_000 });
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestral, descendente], { stdio: 'ignore', timeout: 10_000 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function assetSeguro(value, field) {
@@ -130,7 +144,7 @@ async function resposta(fetchImpl, url, kind, requestTimeoutMs, consume) {
   }
 }
 
-async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeoutMs }) {
+async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeoutMs, ancestralImpl }) {
   const config = TARGETS[target];
   const nonce = `${now}-${Math.random().toString(16).slice(2)}`;
   const version = await resposta(fetchImpl, `${config.url}/version.json?verify=${nonce}`, 'version.json', requestTimeoutMs, async (versionRes) => {
@@ -143,6 +157,10 @@ async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeou
 
     let body;
     try { body = await versionRes.json(); } catch { throw new Error('version.json não é JSON válido'); }
+    if (target === 'v2' && expectedSha && SHA.test(body?.buildId ?? '') && body.buildId !== expectedSha
+      && ancestralImpl(expectedSha, body.buildId)) {
+      return validarVersao(target, body, { now });
+    }
     return validarVersao(target, body, { expectedSha, now });
   });
 
@@ -180,12 +198,13 @@ export async function verificarAlvo({
   sleepImpl = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   nowImpl = () => Date.now(),
   requestTimeoutMs = REQUEST_TIMEOUT_MS,
+  ancestralImpl = gitEhAncestral,
 } = {}) {
   if (!Object.hasOwn(TARGETS, target)) return { ok: false, target, error: 'alvo inválido' };
   let error = 'falha desconhecida';
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const result = await umaTentativa({ target, expectedSha, fetchImpl, now: nowImpl(), requestTimeoutMs });
+      const result = await umaTentativa({ target, expectedSha, fetchImpl, now: nowImpl(), requestTimeoutMs, ancestralImpl });
       return { ok: true, attempt, ...result };
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'falha não identificada';
