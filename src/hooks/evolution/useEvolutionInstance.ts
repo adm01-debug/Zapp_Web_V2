@@ -20,6 +20,11 @@ export function useEvolutionInstance(
   const connectInstance = useCallback((instanceName: string) =>
     callApi('connect', { instanceName }), [callApi]);
 
+  // 13/11: a Edge busca na Evolution GO (chave global) o token atual da
+  // instância e grava no Vault — o token nunca volta para o navegador.
+  const syncInstanceToken = useCallback((instanceName: string): Promise<{ ok: true; changed: boolean; message: string }> =>
+    callApi('sync-instance-token', { instanceName }), [callApi]);
+
   const getInstanceStatus = useCallback((instanceName: string) =>
     callApi('status', { instanceName }), [callApi]);
 
@@ -51,7 +56,7 @@ export function useEvolutionInstance(
     callApi('get-webhook', { instanceName }, 'GET'), [callApi]);
 
   return {
-    createInstance, createConnection, listInstances, connectInstance, getInstanceStatus, getInstanceInfo,
+    createInstance, createConnection, listInstances, connectInstance, syncInstanceToken, getInstanceStatus, getInstanceInfo,
     restartInstance, disconnectInstance, deleteInstance, setPresence,
     setSettings, getSettings, setWebhook, getWebhook,
   };

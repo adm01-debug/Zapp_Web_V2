@@ -36,6 +36,13 @@ export interface EvolutionApiError extends Error {
    * passageira — tentar de novo não adianta.
    */
   notSupported?: boolean;
+  /**
+   * Código estável do erro quando a Edge manda (`code`), ex.:
+   * `instance_token_invalid` / `instance_token_missing` (credencial da
+   * instância recusada/ausente na Evolution GO → a tela oferece "Sincronizar
+   * credencial"), `go_unreachable`, `instance_not_found`.
+   */
+  code?: string;
 }
 
 /** Converte `retryAfter` (segundos ou data HTTP) em milissegundos. Ausente/inválido → undefined. */
@@ -113,6 +120,7 @@ export function useEvolutionApiCore() {
               apiStatus: data.status,
               retries: data.retries,
               retryAfterMs: parseRetryAfter(data.retryAfter ?? data.retry_after),
+              code: typeof data.code === 'string' ? data.code : undefined,
             }
           );
           throw apiError;
