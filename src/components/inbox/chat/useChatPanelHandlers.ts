@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
 import {
   archiveConversations,
+  isWaitingArchiveError,
+  WAITING_CANNOT_ARCHIVE_MESSAGE,
   restoreConversationStatuses,
 } from '@/hooks/inbox/conversationArchive';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
@@ -565,7 +567,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
             });
           } catch (error) {
             log.error('Failed to archive contact:', error);
-            toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
+            toast({
+              title: 'Erro ao arquivar',
+              description: isWaitingArchiveError(error) ? WAITING_CANNOT_ARCHIVE_MESSAGE : 'Não foi possível arquivar a conversa.',
+              variant: 'destructive',
+            });
           }
         })();
         break;

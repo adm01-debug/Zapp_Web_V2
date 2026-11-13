@@ -214,7 +214,10 @@ function ChatPanelHeaderBase({
             <DropdownMenuItem onClick={onOpenSchedule}><Clock className="w-4 h-4 mr-2" />Agendar mensagem</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onCloseConversation}><CheckCircle className="w-4 h-4 mr-2" />Marcar como resolvido</DropdownMenuItem>
-            <DropdownMenuItem onClick={onArchive}><Archive className="w-4 h-4 mr-2" />Arquivar</DropdownMenuItem>
+            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}
+            {conversation.contact.conversation_status !== 'waiting' && (
+              <DropdownMenuItem onClick={onArchive}><Archive className="w-4 h-4 mr-2" />Arquivar</DropdownMenuItem>
+            )}
             {/* Reabrir/Desarquivar: só para conversa resolvida/arquivada e pela RPC
                 reopen_conversation (mesma que o gatilho do contato usa). */}
             {podeReabrir && (

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
 import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
+import { isWaitingArchiveError, WAITING_CANNOT_ARCHIVE_MESSAGE } from '@/hooks/inbox/conversationArchive';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
 const _favBus = new EventTarget();
@@ -289,8 +290,8 @@ export function useConversationActions() {
   const archiveContact = useCallback(async (contactId: string) => {
     try {
       await setConversationStatus(contactId, 'archived');
-    } catch {
-      toast.error('Erro ao arquivar conversa');
+    } catch (error) {
+      toast.error(isWaitingArchiveError(error) ? WAITING_CANNOT_ARCHIVE_MESSAGE : 'Erro ao arquivar conversa');
       return;
     }
     undoToast({

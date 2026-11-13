@@ -20,6 +20,32 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type ConversationStatus = 'open' | 'waiting' | 'resolved' | 'archived';
 
+/**
+ * Decisão do dono (2026-11-13): conversa em 'waiting' (Aguardando, sem atendente)
+ * NÃO pode ser arquivada — ela some da fila sem ninguém atender. Precisa ser
+ * atendida (vira 'open') ou encerrada antes. O banco recusa a transição
+ * (`conversation_waiting_cannot_be_archived`, migration 20261113130200); a tela
+ * esconde o "Arquivar" e o lote pula essas conversas.
+ */
+export const WAITING_CANNOT_ARCHIVE_CODE = 'conversation_waiting_cannot_be_archived';
+export const WAITING_CANNOT_ARCHIVE_MESSAGE =
+  'Conversa aguardando atendimento não pode ser arquivada. Atenda ou encerre antes.';
+
+/** "Arquivar" só aparece/vale para conversa que não está aguardando nem já arquivada. */
+export function canArchiveConversation(status: string | null | undefined): boolean {
+  return status !== 'waiting' && status !== 'archived';
+}
+
+/** true quando o erro é a recusa de arquivar conversa aguardando. */
+export function isWaitingArchiveError(error: unknown): boolean {
+  if (!error) return false;
+  if (typeof error === 'string') return error.includes(WAITING_CANNOT_ARCHIVE_CODE);
+  const e = error as { message?: unknown; code?: unknown; details?: unknown };
+  return [e.message, e.code, e.details].some(
+    (part) => typeof part === 'string' && (part.includes(WAITING_CANNOT_ARCHIVE_CODE) || part === WAITING_CANNOT_ARCHIVE_MESSAGE),
+  );
+}
+
 interface StatusChangeRow {
   contact_id: string;
   previous_status: string | null;
@@ -108,6 +134,9 @@ export async function archiveConversations(
   const anteriores = await readConversationStatuses(contactIds);
   if (anteriores.size !== contactIds.length) {
     throw new Error('Não foi possível ler o estado de todas as conversas selecionadas');
+  }
+  if ([...anteriores.values()].some((status) => status === 'waiting')) {
+    throw new Error(WAITING_CANNOT_ARCHIVE_MESSAGE);
   }
 
   const movidas = await moveConversationsStatus(contactIds, 'archived');

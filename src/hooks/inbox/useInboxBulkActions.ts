@@ -7,7 +7,7 @@ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 // JID) faria o PostgREST responder 400 e o lote inteiro falharia. Mesma guarda
 // usada em `useCalls` — uma fonte só para o formato de uuid.
 import { isValidUUID } from '@/hooks/communication/useCalls';
-import { moveConversationsStatus, type ConversationStatus } from '@/hooks/inbox/conversationArchive';
+import { canArchiveConversation, moveConversationsStatus, type ConversationStatus } from '@/hooks/inbox/conversationArchive';
 
 interface UseInboxBulkActionsProps {
   refetch: () => void;
@@ -200,8 +200,14 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       // desfazer mapearia 'archived' → 'open' (fora de validFromArchived), abrindo
       // uma conversa que estava arquivada antes da ação do operador.
       const targetIds = contactIds.filter(
-        (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
+        (id) => previousStatus.has(id) && canArchiveConversation(previousStatus.get(id)),
       );
+      // Decisão do dono (2026-11-13): conversa 'waiting' não é arquivada — o lote
+      // pula e diz quantas ficaram de fora.
+      const aguardando = contactIds.filter((id) => previousStatus.get(id) === 'waiting').length;
+      if (aguardando > 0) {
+        toast.info(`${aguardando} conversa(s) aguardando atendimento não foram arquivadas — atenda ou encerre antes.`);
+      }
       if (targetIds.length === 0) { toast.info('Nenhum contato disponível para arquivar'); return; }
 
       await executeUndoable({

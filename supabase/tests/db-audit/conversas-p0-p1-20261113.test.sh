@@ -287,6 +287,21 @@ expect_err "P1-2: ninguém entra em 'pending' (CHECK/FSM, nem postgres)" "ERROR"
 [[ "$(val "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname='chk_conversation_status_values'")" != *pending* ]] || fail "CHECK ainda aceita pending"
 ok "P1-2: CHECK só com os 4 estados canônicos (sem linhas legadas)"
 
+# ── Decisão do dono 2026-11-13: waiting NÃO vai direto para archived ───────
+psql_q -c "INSERT INTO public.contacts (id, phone, assigned_to, conversation_status) VALUES ('d0000000-0000-4000-8000-000000000030','5511900000030',NULL,'waiting'), ('d0000000-0000-4000-8000-000000000031','5511900000031','$PA','open')" >/dev/null
+out=$(as_user authenticated "$UA" "SELECT public.set_conversation_status('d0000000-0000-4000-8000-000000000030','archived');" || true)
+expect_err "dono: set_conversation_status waiting -> archived recusado com erro claro" "conversation_waiting_cannot_be_archived" "$out"
+out=$(psql_q -c "UPDATE public.contacts SET conversation_status='archived' WHERE id='d0000000-0000-4000-8000-000000000030'" 2>&1 || true)
+expect_err "dono: nem o dono do banco (FSM) arquiva conversa aguardando" "conversation_waiting_cannot_be_archived" "$out"
+out=$(as_user authenticated "$UA" "SELECT string_agg(contact_id::text, ',') FROM public.set_conversations_status(ARRAY['d0000000-0000-4000-8000-000000000030','d0000000-0000-4000-8000-000000000031']::uuid[], 'archived');")
+[[ "$(val "SELECT string_agg(right(id::text,2)||conversation_status, ',' ORDER BY id) FROM public.contacts WHERE id IN ('d0000000-0000-4000-8000-000000000030','d0000000-0000-4000-8000-000000000031')")" == "30waiting,31archived" ]] || fail "lote com aguardando: $out"
+ok "dono: lote pula a conversa aguardando e arquiva as demais"
+as_user authenticated "$UA" "SELECT public.set_conversation_status('d0000000-0000-4000-8000-000000000030','resolved');" >/dev/null
+[[ "$(val "SELECT conversation_status FROM public.contacts WHERE id='d0000000-0000-4000-8000-000000000030'")" == resolved ]] || fail "waiting -> resolved"
+as_user authenticated "$UA" "SELECT public.set_conversation_status('d0000000-0000-4000-8000-000000000030','archived');" >/dev/null
+[[ "$(val "SELECT conversation_status FROM public.contacts WHERE id='d0000000-0000-4000-8000-000000000030'")" == archived ]] || fail "resolved -> archived"
+ok "dono: aguardando -> encerrada -> arquivada segue possível (caminho correto)"
+
 # ── P1-5 (+ gatilho encadeado de status) ───────────────────────────────────
 out=$(as_user authenticated "$UA" "INSERT INTO public.conversation_closures (contact_id, close_reason, closed_by) VALUES ('d0000000-0000-4000-8000-000000000021','resolved','$PB'); SELECT 'OK';")
 expect_err "P1-5: INSERT direto aceito (contato visível)" "OK" "$out"

@@ -607,10 +607,12 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('desfazer: original fora de open/pending (waiting/resolved) é restaurado em dois passos — archived→open→original', async () => {
+  // 'waiting' não é arquivada (decisão do dono, 2026-11-13): o caminho de dois passos
+  // do desfazer vale para 'resolved'.
+  it('desfazer: original fora de open (resolved) é restaurado em dois passos — archived→open→original', async () => {
     selectQueue.push({
       data: [
-        { id: c1, conversation_status: 'waiting' },
+        { id: c1, conversation_status: 'resolved' },
         { id: c2, conversation_status: 'resolved' },
       ],
       error: null,
@@ -628,21 +630,16 @@ describe('useInboxBulkActions — bulkArchive', () => {
     const restores = contactUpdates().slice(1);
     // Passo 1: todos de archived para open (única transição válida a partir de archived).
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
-    // Passo 2: cada grupo volta ao status original.
-    expect(restores).toHaveLength(3);
-    expect(restores.slice(1)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ payload: { conversation_status: 'waiting' }, filters: { id: [c1], conversation_status: 'open' } }),
-        expect.objectContaining({ payload: { conversation_status: 'resolved' }, filters: { id: [c2], conversation_status: 'open' } }),
-      ]),
-    );
+    // Passo 2: o grupo volta ao status original.
+    expect(restores).toHaveLength(2);
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c1, c2], conversation_status: 'open' } });
   });
 
   it('desfazer com mistura de status e falha no passo 2: segue os outros grupos, recarrega a lista e avisa "X de Y"', async () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'open' },
-        { id: c2, conversation_status: 'waiting' },
+        { id: c2, conversation_status: 'resolved' },
         { id: c3, conversation_status: 'resolved' },
       ],
       error: null,
@@ -654,11 +651,10 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
     refetch.mockClear();
 
-    // undo: [open c1] ok · [passo 1 c2,c3 → open] ok · [waiting c2] ok · [resolved c3] FALHA
+    // undo: [open c1] ok · [passo 1 c2,c3 → open] ok · [resolved c2,c3] FALHA
     updateQueue.push(
       { data: [{ id: c1 }], error: null },
       { data: [{ id: c2 }, { id: c3 }], error: null },
-      { data: [{ id: c2 }], error: null },
       { data: null, error: { message: 'Invalid conversation_status transition' } },
     );
     let thrown: unknown = null;
@@ -667,15 +663,15 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    // Sem o "fallback" para open: c3 já está em open depois do passo 1.
-    expect(restores).toHaveLength(4);
+    // Sem o "fallback" para open: c2/c3 já estão em open depois do passo 1.
+    expect(restores).toHaveLength(3);
     expect(thrown).toBeInstanceOf(Error);
     expect(refetch).toHaveBeenCalledTimes(1);
-    expect(mocks.toast.warning).toHaveBeenCalledWith('2 de 3 restaurados');
+    expect(mocks.toast.warning).toHaveBeenCalledWith('1 de 3 restaurados');
   });
 
   it('desfazer não força de volta quem saiu do arquivo na janela: cada passo filtra o status esperado e só segue com os ids devolvidos', async () => {
-    selectQueue.push({ data: [{ id: c1, conversation_status: 'resolved' }, { id: c2, conversation_status: 'waiting' }], error: null });
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'resolved' }, { id: c2, conversation_status: 'resolved' }], error: null });
     const { result, refetch } = renderInbox();
     selectIds(result, [c1, c2]);
     await act(async () => {
@@ -692,7 +688,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     const restores = contactUpdates().slice(1);
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
     expect(restores).toHaveLength(2);
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: [c2], conversation_status: 'open' } });
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c2], conversation_status: 'open' } });
     // Nenhum UPDATE leva c1 para resolved.
     expect(restores.some((r) => (r.filters.id as string[]).includes(c1) && (r.payload as { conversation_status: string }).conversation_status === 'resolved')).toBe(false);
     expect(refetch).toHaveBeenCalledTimes(1);
@@ -730,6 +726,42 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(restores).toHaveLength(1);
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
     expect(refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('decisão do dono (2026-11-13): conversa aguardando é pulada no lote e o operador é avisado', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'open' },
+        { id: c2, conversation_status: 'waiting' },
+      ],
+      error: null,
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(contactUpdates()[0]).toMatchObject({ payload: { conversation_status: 'archived' }, filters: { id: [c1] } });
+    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+    expect(mocks.toast.info).toHaveBeenCalledWith(
+      '1 conversa(s) aguardando atendimento não foram arquivadas — atenda ou encerre antes.',
+    );
+  });
+
+  it('decisão do dono: só conversas aguardando selecionadas — nada é arquivado', async () => {
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'waiting' }], error: null });
+    const { result } = renderInbox();
+    selectIds(result, [c1]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(contactUpdates()).toHaveLength(0);
+    expect(mocks.execute).not.toHaveBeenCalled();
+    expect(mocks.toast.info).toHaveBeenCalledWith('Nenhum contato disponível para arquivar');
   });
 
   it('sem seleção não lê nem arquiva nada', async () => {

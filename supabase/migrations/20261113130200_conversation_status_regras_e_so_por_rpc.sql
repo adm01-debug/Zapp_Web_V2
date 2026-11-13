@@ -5,6 +5,8 @@
 --   drop function if exists public.set_conversations_status(uuid[], text, text, text);
 --   drop trigger if exists trg_contacts_conversation_status_rpc_only on public.contacts;
 --   drop function if exists public.guard_conversation_status_direct_update();
+--   -- set_conversation_status anterior (aceitava waiting -> archived): reexecutar o
+--   -- CREATE OR REPLACE FUNCTION de 20261016010011_set_conversation_status_waiting_para_archived.sql.
 --   -- FSM e CHECK anteriores: reexecutar o CREATE OR REPLACE FUNCTION
 --   -- public.enforce_conversation_status_transition() e o bloco
 --   -- "ALTER TABLE public.contacts ... chk_conversation_status_values" de
@@ -21,10 +23,15 @@
 -- O QUE MUDA
 --   1. FSM = docs/contexto/regras/manual/regras.md §4.1 + ADR-005:
 --        open     -> waiting | resolved | archived
---        waiting  -> open | resolved | archived      (waiting->archived: ADR-005, já
---                                                    aceito pela RPC desde 20261016010011)
+--        waiting  -> open | resolved
 --        resolved -> open | archived
 --        archived -> open
+--      waiting -> archived é RECUSADO (decisão do dono, 2026-11-13): conversa aguardando
+--      atendimento não pode sumir da fila sem ninguém atender — precisa ser atendida
+--      (open) ou encerrada (resolved) antes. Erro claro:
+--      'conversation_waiting_cannot_be_archived' (check_violation). Isto supera o ponto
+--      da ADR-005 / 20261016010011 que permitia a transição; set_conversation_status é
+--      recriada sem esse ramo.
 --      Reabrir sem dono vai para 'waiting' em DOIS passos (archived/resolved -> open
 --      -> waiting, reopen_conversation_core), então não precisa de resolved->waiting.
 --      Linhas legadas em 'pending'/'closed' (se houver) só podem SAIR para um estado
@@ -46,6 +53,7 @@
 --      "Desfazer" do front, que antes faziam UPDATE direto). Cada contato passa pela
 --      autorização e pela FSM da RPC unitária; o que não pode/não casa é pulado (como
 --      o RLS fazia), e a RPC devolve (contact_id, previous_status) do que mudou.
+--      Conversa 'waiting' pedida como 'archived' também é pulada (o front avisa quantas).
 --
 -- PÓS-CONDIÇÕES: gatilho de guarda presente; RPC de lote só para authenticated.
 
@@ -72,10 +80,17 @@ AS $function$ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Decisão do dono (2026-11-13): aguardando não é arquivada.
+  IF OLD.conversation_status = 'waiting' AND NEW.conversation_status = 'archived' THEN
+    RAISE EXCEPTION 'conversation_waiting_cannot_be_archived'
+      USING ERRCODE = 'check_violation',
+            DETAIL = 'Conversa aguardando atendimento não pode ser arquivada. Atenda ou encerre antes.';
+  END IF;
+
   IF NOT (
     (OLD.conversation_status IS NULL AND NEW.conversation_status IN ('open', 'waiting', 'resolved', 'archived')) OR
     (OLD.conversation_status = 'open'     AND NEW.conversation_status IN ('waiting', 'resolved', 'archived')) OR
-    (OLD.conversation_status = 'waiting'  AND NEW.conversation_status IN ('open', 'resolved', 'archived')) OR
+    (OLD.conversation_status = 'waiting'  AND NEW.conversation_status IN ('open', 'resolved')) OR
     (OLD.conversation_status = 'resolved' AND NEW.conversation_status IN ('open', 'archived')) OR
     (OLD.conversation_status = 'archived' AND NEW.conversation_status = 'open') OR
     -- Legado (pré-§4.1): só sai para um estado canônico.
@@ -112,6 +127,70 @@ BEGIN
   END IF;
 END
 $check$;
+
+-- set_conversation_status: corpo IDÊNTICO ao de 20261016010011, sem waiting -> archived e
+-- com o erro claro da decisão do dono.
+CREATE OR REPLACE FUNCTION public.set_conversation_status(
+  p_contact_id uuid,
+  p_next       text,
+  p_reason     text DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $$
+DECLARE
+  v_current TEXT;
+  v_allowed BOOLEAN := FALSE;
+BEGIN
+  SELECT conversation_status INTO v_current
+  FROM public.contacts
+  WHERE id = p_contact_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'contact not found: %', p_contact_id;
+  END IF;
+
+  PERFORM public.require_contact_edit_permission(p_contact_id);
+
+  IF v_current = p_next THEN
+    RETURN;
+  END IF;
+
+  IF v_current = 'waiting' AND p_next = 'archived' THEN
+    RAISE EXCEPTION 'conversation_waiting_cannot_be_archived'
+      USING ERRCODE = 'check_violation',
+            DETAIL = 'Conversa aguardando atendimento não pode ser arquivada. Atenda ou encerre antes.';
+  END IF;
+
+  IF v_current = 'open'     AND p_next IN ('waiting', 'resolved', 'archived') THEN v_allowed := TRUE; END IF;
+  IF v_current = 'waiting'  AND p_next IN ('open', 'resolved')                THEN v_allowed := TRUE; END IF;
+  IF v_current = 'resolved' AND p_next IN ('open', 'archived')                THEN v_allowed := TRUE; END IF;
+  IF v_current = 'archived' AND p_next = 'open'                               THEN v_allowed := TRUE; END IF;
+
+  IF NOT v_allowed THEN
+    RAISE EXCEPTION 'invalid transition % -> %', v_current, p_next;
+  END IF;
+
+  UPDATE public.contacts
+  SET conversation_status            = p_next,
+      conversation_status_changed_at = NOW()
+  WHERE id = p_contact_id;
+
+  IF p_next = 'resolved' THEN
+    INSERT INTO public.conversation_closures (contact_id, close_reason)
+    VALUES (p_contact_id, COALESCE(p_reason, 'resolved'))
+    ON CONFLICT DO NOTHING;
+  END IF;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) TO service_role;
+GRANT  EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) TO postgres;
 
 CREATE OR REPLACE FUNCTION public.guard_conversation_status_direct_update()
 RETURNS trigger
@@ -214,6 +293,10 @@ BEGIN
   END IF;
   IF has_function_privilege('anon', 'public.set_conversations_status(uuid[], text, text, text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'pos-condicao: anon nao pode executar set_conversations_status';
+  END IF;
+  IF position('conversation_waiting_cannot_be_archived' IN pg_get_functiondef('public.set_conversation_status(uuid, text, text)'::regprocedure)) = 0
+     OR position('conversation_waiting_cannot_be_archived' IN pg_get_functiondef('public.enforce_conversation_status_transition()'::regprocedure)) = 0 THEN
+    RAISE EXCEPTION 'pos-condicao: waiting -> archived ainda aceito';
   END IF;
 END
 $post$;
