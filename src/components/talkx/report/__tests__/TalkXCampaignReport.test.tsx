@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -12,6 +12,13 @@ const { state } = vi.hoisted(() => ({
     report: null as unknown,
   },
 }));
+const { pdfBuilder, toastError } = vi.hoisted(() => ({
+  pdfBuilder: vi.fn(),
+  toastError: vi.fn(),
+}));
+
+vi.mock('@/lib/talkxReportPdf', () => ({ buildTalkXCampaignPdfBlob: pdfBuilder }));
+vi.mock('sonner', () => ({ toast: { error: toastError, success: vi.fn() } }));
 
 vi.mock('@/hooks/system/useDownloadPermission', () => ({
   useDownloadPermission: () => ({ canDownload: false, isLoading: false }),
@@ -190,5 +197,19 @@ describe('TalkXCampaignReport', () => {
     renderReport();
     const perf = await screen.findByTestId('performance');
     expect(perf.getAttribute('data-has-conversion')).toBe('false');
+  });
+  it('falha ao gerar o PDF avisa o usuário e libera o botão', async () => {
+    state.report = {
+      kpis: {
+        total_recipients: 100, sent_count: 100, delivered_count: 90,
+        read_count: 50, failed_count: 5, outcome_unknown_count: 5,
+        delivery_rate_pct: 90, duration_secs: 300,
+      },
+    };
+    pdfBuilder.mockRejectedValueOnce(new Error('chunk jspdf indisponível'));
+    renderReport();
+    fireEvent.click(await screen.findByRole('button', { name: 'PDF' }));
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Não foi possível gerar o PDF. Tente novamente.'));
+    expect(screen.getByRole('button', { name: 'PDF' })).toBeEnabled();
   });
 });
