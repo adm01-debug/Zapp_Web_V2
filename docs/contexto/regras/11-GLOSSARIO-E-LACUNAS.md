@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a49ef4ad58` · branch `main` · 2026-11-13 22:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `098a648f6c` · branch `main` · 2026-11-13 23:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `AudienceFilterKey` (TS) | contact_status \| company \| funnel_stage \| seller \| rfm \| location |  | `src/components/talkx/TalkXAudienceFilters.tsx` |
 | `TalkXPreviewMode` (TS) | raw \| resolved |  | `src/components/talkx/TalkXMessagePreview.tsx` |
 | `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused \| report |  | `src/components/talkx/TalkXView.tsx` |
-| … +353 linhas — lista completa em `context.json` | | | |
+| … +355 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 

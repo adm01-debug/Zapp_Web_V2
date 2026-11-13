@@ -3,8 +3,8 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4309)",
-   "SQL (1306)",
+   "TypeScript (4314)",
+   "SQL (1307)",
    "Markdown (1087)",
    "JSON (603)",
    "JavaScript (466)",
@@ -1826,6 +1826,10 @@
     "arquivos": 5
    },
    {
+    "host": "wa.me",
+    "arquivos": 5
+   },
+   {
     "host": "x.com",
     "arquivos": 5
    },
@@ -1863,10 +1867,6 @@
    },
    {
     "host": "project.test",
-    "arquivos": 4
-   },
-   {
-    "host": "wa.me",
     "arquivos": 4
    },
    {
@@ -1947,6 +1947,10 @@
    },
    {
     "host": "stub.invalid",
+    "arquivos": 3
+   },
+   {
+    "host": "supabase.invalid",
     "arquivos": 3
    },
    {
@@ -2051,10 +2055,6 @@
    },
    {
     "host": "storage.test",
-    "arquivos": 2
-   },
-   {
-    "host": "supabase.invalid",
     "arquivos": 2
    },
    {
@@ -2283,6 +2283,10 @@
    },
    {
     "host": "gmail-sync-fixture.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "go.invalid",
     "arquivos": 1
    },
    {
@@ -2618,6 +2622,10 @@
     "arquivos": 1
    },
    {
+    "host": "x.invalid",
+    "arquivos": 1
+   },
+   {
     "host": "youtu.be",
     "arquivos": 1
    },
@@ -2748,11 +2756,11 @@
    },
    {
     "papel": "agent",
-    "ocorrencias": 60
+    "ocorrencias": 61
    },
    {
     "papel": "supervisor",
-    "ocorrencias": 38
+    "ocorrencias": 39
    },
    {
     "papel": "user",
@@ -3080,6 +3088,7 @@
    "consume_gmail_oauth_state",
    "count_searchbox_sessions_this_month",
    "effective_role",
+   "has_role",
    "is_account_locked",
    "is_admin",
    "is_admin_or_supervisor",

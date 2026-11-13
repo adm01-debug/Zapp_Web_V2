@@ -7116,7 +7116,7 @@
    "hooks_exportados": [
     "useEvolutionApiCore"
    ],
-   "linhas": 175,
+   "linhas": 183,
    "dominio": "hooks/evolution",
    "tabelas": [],
    "rpcs": [],
@@ -7164,7 +7164,7 @@
    "hooks_exportados": [
     "useEvolutionInstance"
    ],
-   "linhas": 59,
+   "linhas": 64,
    "dominio": "hooks/evolution",
    "tabelas": [],
    "rpcs": [],
@@ -7405,7 +7405,7 @@
    "hooks_exportados": [
     "useConnectionAuditLogs"
    ],
-   "linhas": 160,
+   "linhas": 176,
    "dominio": "hooks/inbox",
    "tabelas": [
     "audit_logs",
@@ -7480,7 +7480,7 @@
    "hooks_exportados": [
     "useConnectionsManager"
    ],
-   "linhas": 436,
+   "linhas": 481,
    "dominio": "hooks/inbox",
    "tabelas": [
     "whatsapp_connections"
@@ -7508,7 +7508,7 @@
     "src/components/settings/ScheduleSettings.tsx",
     "src/hooks/inbox/index.ts"
    ],
-   "coberto_por_testes": 8
+   "coberto_por_testes": 9
   },
   {
    "arquivo": "src/hooks/inbox/useContactDeliveryStats.ts",
@@ -11121,7 +11121,7 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 37,
+   "usado_por": 38,
    "usado_por_arquivos": [
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",
@@ -11135,6 +11135,7 @@
     "src/components/catalog/WhatsAppTemplatesManager.tsx",
     "src/components/connections/ConnectionCard.tsx",
     "src/components/connections/NumberReputationMonitor.tsx",
+    "src/components/connections/SyncCredentialAction.tsx",
     "src/components/contacts/ContactsView.tsx",
     "src/components/crm360/CRM360ExplorerView.tsx",
     "src/components/dashboard/DashboardView.tsx",
@@ -11151,8 +11152,7 @@
     "src/components/mobile/MobileDrawerMenu.tsx",
     "src/components/security/MfaAdminNudge.tsx",
     "src/components/security/SecurityOverview.tsx",
-    "src/components/security/SecurityView.tsx",
-    "src/components/settings/IntegrationKeysSection.tsx"
+    "src/components/security/SecurityView.tsx"
    ],
    "coberto_por_testes": 5
   },

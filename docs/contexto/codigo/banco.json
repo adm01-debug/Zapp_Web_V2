@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1106,
+ "migrations": 1107,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -4146,6 +4146,11 @@
     {
      "nome": "idx_audit_logs_created_at",
      "colunas": "created_at DESC",
+     "unico": false
+    },
+    {
+     "nome": "idx_audit_logs_details_path_ops",
+     "colunas": "details jsonb_path_ops",
      "unico": false
     },
     {
@@ -32031,6 +32036,11 @@
   },
   {
    "nome": "get_visible_agent_ids",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "has_role",
    "definida": true,
    "usada_em": 1
   },

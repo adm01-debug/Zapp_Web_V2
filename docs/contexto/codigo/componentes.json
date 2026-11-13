@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 914,
+ "total": 915,
  "orfaos": 52,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -1872,7 +1872,7 @@
     "ConnectionsView"
    ],
    "export_default": null,
-   "linhas": 278,
+   "linhas": 286,
    "dominio": "components/connections",
    "hooks_locais": [
     "useConnectionsManager",
@@ -1950,6 +1950,22 @@
     "number_reputation",
     "whatsapp_connections"
    ],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/connections/SyncCredentialAction.tsx",
+   "exports": [
+    "SyncCredentialAction"
+   ],
+   "export_default": null,
+   "linhas": 38,
+   "dominio": "components/connections",
+   "hooks_locais": [
+    "useUserRole"
+   ],
+   "tabelas": [],
    "edges": [],
    "usado_por": 1,
    "orfao": false
@@ -13272,7 +13288,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 400,
+   "usado_por": 401,
    "orfao": false
   },
   {

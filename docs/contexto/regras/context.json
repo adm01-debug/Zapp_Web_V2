@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a49ef4ad58d62497e3a719f1a647719c8f1f490e",
+  "sha": "098a648f6ce4308202999388a88b6de33d7c6fba",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 22:29 UTC",
-  "files_total": 8341,
-  "code_files": 6170,
-  "code_lines": 1075384
+  "generated_at": "2026-11-13 23:06 UTC",
+  "files_total": 8347,
+  "code_files": 6176,
+  "code_lines": 1076472
  },
  "version": "1.3.2",
- "facts_hash": "6151f105d4c11045",
+ "facts_hash": "8f7d8e8d2ac0ff6e",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -326,9 +326,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2380,
-   ".ts": 1925,
-   ".sql": 1306,
+   ".tsx": 2382,
+   ".ts": 1928,
+   ".sql": 1307,
    ".mjs": 440,
    ".py": 119,
    ".cjs": 19,
@@ -20459,16 +20459,6 @@
     "src": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql"
    },
    {
-    "name": "Only admins can view audit logs",
-    "table": "audit_logs",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.has_role(auth.uid(), 'admin')",
-    "check": "",
-    "src": "supabase/migrations/20260404173036_2283ae7a-ed0d-410a-a7ba-cd1c5c86baf4.sql"
-   },
-   {
     "name": "Users can insert contacts",
     "table": "contacts",
     "cmd": "INSERT",
@@ -24057,6 +24047,16 @@
     "using": "public.is_admin_or_supervisor(auth.uid())",
     "check": "public.is_admin_or_supervisor(auth.uid())",
     "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "Only admins can view audit logs",
+    "table": "audit_logs",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "(SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role))",
+    "check": "",
+    "src": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -41938,6 +41938,14 @@
     "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
+    "name": "idx_audit_logs_details_path_ops",
+    "table": "audit_logs",
+    "columns": "details jsonb_path_ops",
+    "unique": false,
+    "where": "",
+    "src": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql"
+   },
+   {
     "name": "idx_ai_conversation_tags_contact_id",
     "table": "ai_conversation_tags",
     "columns": "contact_id",
@@ -43299,6 +43307,7 @@
    "supabase/migrations/20261111170000_talkx_block_recipient.sql",
    "supabase/migrations/20261111181000_instance_pause_investigation.sql",
    "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+   "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -65454,7 +65463,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2218,
+  "components_count": 2220,
   "hooks": [
    {
     "name": "useContacts",
@@ -68614,8 +68623,8 @@
   },
   {
    "module": "src/components",
-   "files": 2218,
-   "lines": 377160,
+   "files": 2220,
+   "lines": 377255,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68962,8 +68971,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 996,
-   "lines": 162121,
+   "files": 997,
+   "lines": 162346,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -70006,8 +70015,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 404,
-   "lines": 122264,
+   "files": 406,
+   "lines": 122969,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -70136,12 +70145,12 @@
     "evolution-control-authz.ts: EvolutionActionKind, CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS, classifyEvolutionAction, EvolutionAuthzDecision",
     "evolution-go-adapter.ts: isGoPayload, translateGoPayload",
     "evolution-go-routes.ts: GoRoute, translateV2ToGo",
+    "evolution-go-token-sync.ts: SafeFetchResult, safeFetch, readJsonSafe, goErrorText, GoTokenLookupFailure, GoTokenLookup",
     "evolution-helpers.ts: WebhookPayload, isRecord, normalizeEventName, toEventRecords, normalizePhone, isGroupJid",
     "evolution-instance-token.ts: InstanceTokenClient, resetInstanceTokenCache, instanceNameFromV2Path, resolveInstanceToken",
     "evolution-media.ts: isValidMediaBytes, persistMediaToStorage, persistBase64Media, persistMediaViaApi, ParsedMessage, parseMessageContent",
     "evolution-send.ts: evoFetch, extractMessageId, extractBase64Media, extractAvatarUrl, extractConnectionState",
-    "evolution-session-routes.ts: EvolutionFlavor, SessionAction, SessionAuth, SessionRoute, resolveEvolutionFlavor, resolveSessionRoute",
-    "evolution-sync-actions.ts: syncContacts, goHistoryNotSupported, syncMessages, syncAllMessages, setupWebhook, cleanupMock"
+    "evolution-session-routes.ts: EvolutionFlavor, SessionAction, SessionAuth, SessionRoute, resolveEvolutionFlavor, resolveSessionRoute"
    ],
    "docs": [
     "ai-circuit.test.ts: IA-050 — circuit breaker por provedor de IA no despacho central. Defeito provado na auditoria (IA-CIRCUIT-001): `generateWithRouting` retentava e devolvia erro explícito, mas NUNCA suspendia um provedor que só falha — cada request novo voltava a bater no provedor caído (fetch real + espera + custo). …",
@@ -70197,6 +70206,7 @@
     "supabase/functions/_shared/evolution-control-authz.ts",
     "supabase/functions/_shared/evolution-go-adapter.ts",
     "supabase/functions/_shared/evolution-go-routes.ts",
+    "supabase/functions/_shared/evolution-go-token-sync.ts",
     "supabase/functions/_shared/evolution-helpers.ts",
     "supabase/functions/_shared/evolution-instance-token.ts",
     "supabase/functions/_shared/evolution-media.ts",
@@ -70236,14 +70246,13 @@
     "supabase/functions/_shared/validation.ts",
     "supabase/functions/_shared/voice-copilot-authz.ts",
     "supabase/functions/_shared/webhook-signature.ts",
-    "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts",
-    "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts"
+    "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts"
    ]
   },
   {
    "module": "supabase/migrations",
-   "files": 1106,
-   "lines": 107091,
+   "files": 1107,
+   "lines": 107154,
    "tables": [
     "audit_logs",
     "departments",
@@ -75499,7 +75508,8 @@
    ],
    "has_role": [
     "src/__tests__/rls-boundary.test.ts",
-    "src/__tests__/security-and-performance.test.ts"
+    "src/__tests__/security-and-performance.test.ts",
+    "supabase/functions/evolution-api/index.ts"
    ],
    "heartbeat_ai_job": [
     "supabase/functions/_shared/ai-jobs.ts"
@@ -79927,6 +79937,16 @@
     "file": "supabase/functions/_shared/evolution-control-authz.ts",
     "name": "STATUS_ALLOWED_FIELDS",
     "values": "'type', 'content', 'media', 'backgroundColor'"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-go-token-sync.ts",
+    "name": "GoTokenLookupFailure",
+    "values": "global_key_rejected | instance_not_found | token_absent | go_unreachable | unexpected_response"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-go-token-sync.ts",
+    "name": "INSTANCE_TOKEN_ERROR_CODES",
+    "values": "'instance_token_invalid', 'instance_token_missing'"
    },
    {
     "file": "supabase/functions/_shared/evolution-session-routes.ts",
@@ -89209,6 +89229,14 @@
     "text": "erro é o caso do atendente e não pode virar \"Aquecimento iniciado\"."
    },
    {
+    "file": "src/components/connections/SyncCredentialAction.tsx",
+    "text": "* 13/11 — \"o sistema deve buscar a chave sozinho\". Aparece no diálogo de QR"
+   },
+   {
+    "file": "src/components/connections/SyncCredentialAction.tsx",
+    "text": "(`instance_token_invalid` / `instance_token_missing`). Regra do dono"
+   },
+   {
     "file": "src/components/contacts/BulkActionsBar.tsx",
     "text": "precedência — é o dado do banco, não uma segunda cópia da regra."
    },
@@ -91993,12 +92021,20 @@
     "text": "mexer em `assigned_to`. Antes cada tela tinha a sua regra: o painel de"
    },
    {
+    "file": "src/hooks/inbox/useConnectionAuditLogs.ts",
+    "text": "leitura e não pode derrubar o diálogo: o erro vira mensagem honesta, com"
+   },
+   {
     "file": "src/hooks/inbox/useConnectionHealthBanner.ts",
     "text": "* Regra dos três níveis (docs/contexto/regras/manual/regras.md §4.2): o atendente"
    },
    {
     "file": "src/hooks/inbox/useConnectionsManager.ts",
     "text": "outra conexao) e nao pode ir para o dialogo atual."
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionsManager.ts",
+    "text": "13/11 — \"o sistema deve buscar a chave sozinho\": a Edge busca na Evolution"
    },
    {
     "file": "src/hooks/inbox/useConnectionsManager.ts",
@@ -94793,6 +94829,10 @@
     "text": "template/business/proxy/evoai/n8n — GO responde 404, falha explícita)."
    },
    {
+    "file": "supabase/functions/_shared/evolution-go-token-sync.ts",
+    "text": "* fetch com tempo limite que NUNCA lança. `AbortSignal.timeout` rejeita com"
+   },
+   {
     "file": "supabase/functions/_shared/evolution-helpers.ts",
     "text": "tamanho + prefixo, nao validacao real de E.164/DDI — numeros internacionais"
    },
@@ -95806,6 +95846,14 @@
    },
    {
     "file": "supabase/functions/evolution-api/index.ts",
+    "text": "Regra do dono (docs/contexto/regras/manual/regras.md:17 e :58): SÓ o admin"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
+    "text": "─── 13/11: \"o sistema deve buscar a chave sozinho\" ───"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
     "text": "colidem nesse segundo, e a mensagem não pode afirmar que foi o"
    },
    {
@@ -95815,6 +95863,10 @@
    {
     "file": "supabase/functions/evolution-api/index.ts",
     "text": "de tokenError como antes. Mitigado pelo rate-limit da function e"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
+    "text": "(instance_service.go GetQr) e estourava o limite de 5 s. Toda falha"
    },
    {
     "file": "supabase/functions/evolution-api/index.ts",
@@ -95831,18 +95883,6 @@
    {
     "file": "supabase/functions/evolution-api/index.ts",
     "text": "Restaurada (#2054): template aprovado do WhatsApp Business (só instâncias"
-   },
-   {
-    "file": "supabase/functions/evolution-api/index.ts",
-    "text": "Restauradas (#2054, decisão do dono): templates da Meta (WhatsApp Business"
-   },
-   {
-    "file": "supabase/functions/evolution-api/index.ts",
-    "text": "Cloud API) e catálogo/coleções de um número business, e a oferta de chamada."
-   },
-   {
-    "file": "supabase/functions/evolution-api/index.ts",
-    "text": "Rotas só da v2 (`/template/*`, `/business/*`, `/call/offer`) → notSupported no GO."
    },
    {
     "file": "supabase/functions/evolution-sync/index.ts",
@@ -111189,6 +111229,12 @@
    {
     "file": "src/components/connections/ConnectionsView.tsx",
     "field": "status",
+    "value": "error",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/connections/ConnectionsView.tsx",
+    "field": "status",
     "value": "connected",
     "kind": "compara"
    },
@@ -118378,6 +118424,12 @@
     "file": "src/hooks/inbox/useConnectionsManager.ts",
     "field": "status",
     "value": "pending",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionsManager.ts",
+    "field": "status",
+    "value": "error",
     "kind": "escreve"
    },
    {
@@ -127575,6 +127627,10 @@
    {
     "file": "supabase/migrations/20261108202000_talkx_x086_template_metrics_rpcs.sql",
     "line": "v_cutoff timestamptz := now() - interval '90 days';"
+   },
+   {
+    "file": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql",
+    "line": "-- * o papel `authenticated` tem statement_timeout=8s: a frio, com as duas"
    },
    {
     "file": "supabase-export/BLOCO_01_schema_completo.sql",
@@ -137757,6 +137813,10 @@
     "name": "falha de leitura mostra erro e não deixa a tela vazia mentir"
    },
    {
+    "file": "src/components/connections/__tests__/ConnectionAuditDialog.test.tsx",
+    "name": "13/11: timeout do banco (57014 → 500 do PostgREST) vira mensagem própria, sem derrubar o diálogo"
+   },
+   {
     "file": "src/components/connections/__tests__/ConnectionCard.a11y.test.tsx",
     "name": "ConnectionCard — nome acessível do menu (t_90dcdcc8)"
    },
@@ -138275,6 +138335,26 @@
    {
     "file": "src/components/connections/__tests__/NumberReputationMonitor.test.tsx",
     "name": "apresenta a tela como configuração sem execução automática"
+   },
+   {
+    "file": "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
+    "name": "SyncCredentialAction"
+   },
+   {
+    "file": "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
+    "name": "admin vê o botão e o clique sincroniza"
+   },
+   {
+    "file": "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
+    "name": "desabilita o botão durante a sincronização"
+   },
+   {
+    "file": "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
+    "name": "supervisor/atendente não vê o botão; recebe orientação"
+   },
+   {
+    "file": "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
+    "name": "enquanto o papel carrega, não mostra nada"
    },
    {
     "file": "src/components/connections/__tests__/useConnectionsManager.handlers.test.tsx",
@@ -183562,6 +183642,10 @@
    },
    {
     "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    "name": "13/11: sobe o "
+   },
+   {
+    "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
     "name": "aceita "
    },
    {
@@ -184275,6 +184359,18 @@
    {
     "file": "src/hooks/inbox/__tests__/useConnectionsManager.add-connection-error.test.ts",
     "name": "sucesso → erro nulo e diálogo fechado (sem regressão)"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
+    "name": "useConnectionsManager — credencial da instância (13/11)"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
+    "name": "guarda o code do erro da Edge no diálogo"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
+    "name": "falha da sincronização fica no diálogo e não tenta o connect de novo"
    },
    {
     "file": "src/hooks/inbox/__tests__/useConnectionsManager.desconectar.test.ts",
@@ -207049,6 +207145,102 @@
     "name": "evento sem id deduplica pela impressão do corpo"
    },
    {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: erro de rede/DNS na GO → 200 + go_unreachable (antes: 500 do catch-all)"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: tempo esgotado no /instance/connect → 200 + go_unreachable 504"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → go_unreachable, sem lançar"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: QR lento numa instância já pareada (sessão morta) → go_unreachable e ZERO delete/create"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: teto global de 40 s (abaixo dos 45 s do navegador) → 504 amigável, sem recriação"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: corpo do connect com token ecoado pela GO não vaza na resposta"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: supervisor com credencial recusada → não busca a chave (só admin), orienta"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: corpo não-JSON (502 HTML do proxy reverso) → 200 + go_error"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: 404 da GO → instance_not_found em PT-BR"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: 401 no /instance/qr → instance_token_invalid (sem cair no "
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: 401 → busca a chave na GO (chave global), grava no Vault e repete o connect UMA vez"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: sem token nenhum (Vault vazio, sem env) → busca na GO antes do connect"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: 401 e a chave global também é recusada → mensagem clara, sem segunda tentativa"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: 401 e a instância não existe na GO → avisa, NÃO recria"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "connect: 401 mas a GO lista a MESMA chave → não repete; explica"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "status: erro de rede → 200 + go_unreachable (antes: 500)"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "sync-instance-token: admin grava a chave da GO no Vault e não ecoa o token"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "sync-instance-token: ${role} → 403 e nenhuma chamada à GO (só admin, regras.md)"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "sync-instance-token: instância inexistente na GO → instance_not_found, nada gravado"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "sync-instance-token: conexão inexistente no app → connection_not_found, sem chamar a GO"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "sync-instance-token: Evolution v2 → notSupported"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "lookupGoInstanceToken: casa o nome EXATO (nunca prefixo) e aceita Name/Token"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "lookupGoInstanceToken: corpo fora do formato → unexpected_response"
+   },
+   {
+    "file": "supabase/functions/evolution-api/connect-go-token.test.ts",
+    "name": "safeFetch: timeout real não lança"
+   },
+   {
     "file": "supabase/functions/evolution-api/index.test.ts",
     "name": "R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor"
    },
@@ -217993,16 +218185,6 @@
     "src": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql"
    },
    {
-    "name": "Only admins can view audit logs",
-    "table": "audit_logs",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.has_role(auth.uid(), 'admin')",
-    "check": "",
-    "src": "supabase/migrations/20260404173036_2283ae7a-ed0d-410a-a7ba-cd1c5c86baf4.sql"
-   },
-   {
     "name": "Users can insert contacts",
     "table": "contacts",
     "cmd": "INSERT",
@@ -221591,6 +221773,16 @@
     "using": "public.is_admin_or_supervisor(auth.uid())",
     "check": "public.is_admin_or_supervisor(auth.uid())",
     "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "Only admins can view audit logs",
+    "table": "audit_logs",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "(SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role))",
+    "check": "",
+    "src": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -241874,7 +242066,7 @@
    "audit_logs": {
     "rls": "enabled",
     "SELECT": [
-     "authenticated: public.has_role(auth.uid(), 'admin')"
+     "authenticated: (SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role))"
     ],
     "INSERT": [
      "authenticated: false",
@@ -282787,7 +282979,7 @@
   },
   "src/components/connections/ConnectionsView.tsx": {
    "path": "src/components/connections/ConnectionsView.tsx",
-   "lines": 278,
+   "lines": 286,
    "exports": [
     "function ConnectionsView"
    ],
@@ -282821,6 +283013,11 @@
     }
    ],
    "status_values": [
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "compara"
+    },
     {
      "field": "status",
      "value": "connected",
@@ -283013,6 +283210,17 @@
     "erro é o caso do atendente e não pode virar \"Aquecimento iniciado\"."
    ]
   },
+  "src/components/connections/SyncCredentialAction.tsx": {
+   "path": "src/components/connections/SyncCredentialAction.tsx",
+   "lines": 38,
+   "exports": [
+    "function SyncCredentialAction"
+   ],
+   "rule_comments": [
+    "* 13/11 — \"o sistema deve buscar a chave sozinho\". Aparece no diálogo de QR",
+    "(`instance_token_invalid` / `instance_token_missing`). Regra do dono"
+   ]
+  },
   "src/components/connections/instancePresenceOptions.ts": {
    "path": "src/components/connections/instancePresenceOptions.ts",
    "lines": 7,
@@ -283060,8 +283268,11 @@
   },
   "src/components/connections/__tests__/ConnectionAuditDialog.test.tsx": {
    "path": "src/components/connections/__tests__/ConnectionAuditDialog.test.tsx",
-   "lines": 159,
+   "lines": 169,
    "is_test": true,
+   "errors": [
+    ")).toBeTruthy();\n    expect(screen.queryByText(/Nenhum evento de auditoria registrado/)).toBeNull();\n  });\n\n  it("
+   ],
    "doc": "t_9cc4f1c2 — trilha de auditoria por conexão (só leitura, só admin). Antes não havia como ver o que aconteceu com UMA conexão: o painel global de auditoria mistura tudo. Aqui o componente REAL é renderizado e prova-se: - lista ação (rótulo pt-BR), quem e quando, sem pedir a linha inteira; - a conexã …",
    "tests": [
     "ConnectionAuditDialog — trilha de uma conexão (t_9cc4f1c2)",
@@ -283069,7 +283280,8 @@
     "estado vazio honesto quando a conexão ainda não tem evento registrado",
     "paginação: 21 eventos viram 2 páginas e a 2ª página busca o range seguinte",
     "fechado, o diálogo não consulta nada",
-    "falha de leitura mostra erro e não deixa a tela vazia mentir"
+    "falha de leitura mostra erro e não deixa a tela vazia mentir",
+    "13/11: timeout do banco (57014 → 500 do PostgREST) vira mensagem própria, sem derrubar o diálogo"
    ]
   },
   "src/components/connections/__tests__/ConnectionCard.a11y.test.tsx": {
@@ -283378,6 +283590,18 @@
     "não renderiza cartão vazio quando não há nenhuma linha de reputação",
     "distingue erro de leitura de lista vazia",
     "apresenta a tela como configuração sem execução automática"
+   ]
+  },
+  "src/components/connections/__tests__/SyncCredentialAction.test.tsx": {
+   "path": "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
+   "lines": 39,
+   "is_test": true,
+   "tests": [
+    "SyncCredentialAction",
+    "admin vê o botão e o clique sincroniza",
+    "desabilita o botão durante a sincronização",
+    "supervisor/atendente não vê o botão; recebe orientação",
+    "enquanto o papel carrega, não mostra nada"
    ]
   },
   "src/components/connections/__tests__/useConnectionsManager.handlers.test.tsx": {
@@ -335372,7 +335596,7 @@
   },
   "src/hooks/evolution/useEvolutionApiCore.ts": {
    "path": "src/hooks/evolution/useEvolutionApiCore.ts",
-   "lines": 175,
+   "lines": 183,
    "exports": [
     "type HttpMethod",
     "const EVOLUTION_API_TIMEOUT_MS",
@@ -335416,7 +335640,7 @@
   },
   "src/hooks/evolution/useEvolutionInstance.ts": {
    "path": "src/hooks/evolution/useEvolutionInstance.ts",
-   "lines": 59,
+   "lines": 64,
    "exports": [
     "function useEvolutionInstance"
    ],
@@ -335472,7 +335696,7 @@
   },
   "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts": {
    "path": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
-   "lines": 451,
+   "lines": 467,
    "is_test": true,
    "rule_comments": [
     "`{ error: true }` (HTTP 200), tempo limite de 45 s com `AbortController` e"
@@ -335490,6 +335714,7 @@
     "mutação (POST) nunca deduplica: o mesmo envio em voo vira duas viagens",
     "mapa de erro do corpo { error: true } (HTTP 200)",
     "sobe a mensagem do servidor com apiStatus, retries e retryAfterMs",
+    "13/11: sobe o ",
     "aceita ",
     "com withToast, o texto que o usuário vê é o do servidor (pt-BR), não o técnico",
     "no tempo limite, o toast mostra o texto de espera (não o AbortError do fetch)",
@@ -336449,13 +336674,14 @@
   },
   "src/hooks/inbox/useConnectionAuditLogs.ts": {
    "path": "src/hooks/inbox/useConnectionAuditLogs.ts",
-   "lines": 160,
+   "lines": 176,
    "exports": [
     "const CONNECTION_AUDIT_PAGE_SIZE",
     "interface ConnectionAuditEntry",
     "interface ConnectionAuditPage",
     "function connectionAuditActionLabel",
     "function fetchConnectionAuditPage",
+    "function connectionAuditErrorMessage",
     "interface ConnectionAuditLogsState",
     "function useConnectionAuditLogs"
    ],
@@ -336487,6 +336713,9 @@
      "name": "CONNECTION_AUDIT_COLUMNS",
      "value": "'id, action, user_id, created_at'"
     }
+   ],
+   "rule_comments": [
+    "leitura e não pode derrubar o diálogo: o erro vira mensagem honesta, com"
    ],
    "hooks": [
     "useConnectionAuditLogs"
@@ -336586,10 +336815,11 @@
   },
   "src/hooks/inbox/useConnectionsManager.ts": {
    "path": "src/hooks/inbox/useConnectionsManager.ts",
-   "lines": 436,
+   "lines": 481,
    "exports": [
     "interface WhatsAppConnection",
     "interface QrCodeDialogState",
+    "const INSTANCE_TOKEN_ERROR_CODES",
     "function useConnectionsManager"
    ],
    "tables": [
@@ -336699,6 +336929,11 @@
     },
     {
      "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
      "value": "disconnected",
      "kind": "escreve"
     },
@@ -336745,6 +336980,7 @@
    ],
    "rule_comments": [
     "outra conexao) e nao pode ir para o dialogo atual.",
+    "13/11 — \"o sistema deve buscar a chave sozinho\": a Edge busca na Evolution",
     "TRA-005: excluir conexão NÃO pode esconder falha na Evolution GO nem"
    ],
    "hooks": [
@@ -337344,6 +337580,16 @@
     "createConnection rejeita → erro recebe a mensagem e o diálogo continua aberto",
     "clearAddConnectionError apaga o erro da tentativa anterior",
     "sucesso → erro nulo e diálogo fechado (sem regressão)"
+   ]
+  },
+  "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts": {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
+   "lines": 135,
+   "is_test": true,
+   "tests": [
+    "useConnectionsManager — credencial da instância (13/11)",
+    "guarda o code do erro da Edge no diálogo",
+    "falha da sincronização fica no diálogo e não tenta o connect de novo"
    ]
   },
   "src/hooks/inbox/__tests__/useConnectionsManager.desconectar.test.ts": {
@@ -364885,7 +365131,7 @@
   },
   "supabase/functions/_shared/evolution-control-authz.ts": {
    "path": "supabase/functions/_shared/evolution-control-authz.ts",
-   "lines": 299,
+   "lines": 302,
    "exports": [
     "type EvolutionActionKind",
     "const CONTROL_ACTIONS",
@@ -364984,6 +365230,37 @@
    "side_effects": [
     "sendWhatsAppAudio"
    ]
+  },
+  "supabase/functions/_shared/evolution-go-token-sync.ts": {
+   "path": "supabase/functions/_shared/evolution-go-token-sync.ts",
+   "lines": 167,
+   "exports": [
+    "type SafeFetchResult",
+    "function safeFetch",
+    "function readJsonSafe",
+    "function goErrorText",
+    "type GoTokenLookupFailure",
+    "type GoTokenLookup",
+    "function lookupGoInstanceToken",
+    "const INSTANCE_TOKEN_ERROR_CODES",
+    "function instanceTokenInvalidMessage",
+    "function instanceTokenMissingMessage",
+    "function goUnreachableMessage"
+   ],
+   "enums": [
+    {
+     "name": "GoTokenLookupFailure",
+     "values": "global_key_rejected | instance_not_found | token_absent | go_unreachable | unexpected_response"
+    },
+    {
+     "name": "INSTANCE_TOKEN_ERROR_CODES",
+     "values": "'instance_token_invalid', 'instance_token_missing'"
+    }
+   ],
+   "rule_comments": [
+    "* fetch com tempo limite que NUNCA lança. `AbortSignal.timeout` rejeita com"
+   ],
+   "doc": "evolution-go-token-sync.ts — \"o sistema busca a chave sozinho\" (13/11). A Evolution GO seleciona a instância pela CREDENCIAL (apikey) nas rotas de sessão (/instance/connect, /instance/qr, /instance/status…). Quando o token guardado no app (Vault via get_instance_token, ou o fallback de transição EVO …"
   },
   "supabase/functions/_shared/evolution-helpers.ts": {
    "path": "supabase/functions/_shared/evolution-helpers.ts",
@@ -374466,6 +374743,46 @@
    ],
    "uses_service_role": true
   },
+  "supabase/functions/evolution-api/connect-go-token.test.ts": {
+   "path": "supabase/functions/evolution-api/connect-go-token.test.ts",
+   "lines": 359,
+   "is_test": true,
+   "errors": [
+    "connection refused",
+    "error sending request: dns error"
+   ],
+   "role_checks": [
+    "agent",
+    "role"
+   ],
+   "doc": "13/11 — QR quebrado em produção: POST evolution-api/connect respondia HTTP 500 genérico. Causa: fetch do fluxo GO sem proteção — AbortSignal.timeout (TimeoutError) e erro de rede (TypeError) subiam até o catch-all. Estes testes simulam as respostas da Evolution GO com fetch falso (sem rede) e provam …",
+   "tests": [
+    "connect: erro de rede/DNS na GO → 200 + go_unreachable (antes: 500 do catch-all)",
+    "connect: tempo esgotado no /instance/connect → 200 + go_unreachable 504",
+    "connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → go_unreachable, sem lançar",
+    "connect: QR lento numa instância já pareada (sessão morta) → go_unreachable e ZERO delete/create",
+    "connect: teto global de 40 s (abaixo dos 45 s do navegador) → 504 amigável, sem recriação",
+    "connect: corpo do connect com token ecoado pela GO não vaza na resposta",
+    "connect: supervisor com credencial recusada → não busca a chave (só admin), orienta",
+    "connect: corpo não-JSON (502 HTML do proxy reverso) → 200 + go_error",
+    "connect: 404 da GO → instance_not_found em PT-BR",
+    "connect: 401 no /instance/qr → instance_token_invalid (sem cair no ",
+    "connect: 401 → busca a chave na GO (chave global), grava no Vault e repete o connect UMA vez",
+    "connect: sem token nenhum (Vault vazio, sem env) → busca na GO antes do connect",
+    "connect: 401 e a chave global também é recusada → mensagem clara, sem segunda tentativa",
+    "connect: 401 e a instância não existe na GO → avisa, NÃO recria",
+    "connect: 401 mas a GO lista a MESMA chave → não repete; explica",
+    "status: erro de rede → 200 + go_unreachable (antes: 500)",
+    "sync-instance-token: admin grava a chave da GO no Vault e não ecoa o token",
+    "sync-instance-token: ${role} → 403 e nenhuma chamada à GO (só admin, regras.md)",
+    "sync-instance-token: instância inexistente na GO → instance_not_found, nada gravado",
+    "sync-instance-token: conexão inexistente no app → connection_not_found, sem chamar a GO",
+    "sync-instance-token: Evolution v2 → notSupported",
+    "lookupGoInstanceToken: casa o nome EXATO (nunca prefixo) e aceita Name/Token",
+    "lookupGoInstanceToken: corpo fora do formato → unexpected_response",
+    "safeFetch: timeout real não lança"
+   ]
+  },
   "supabase/functions/evolution-api/index.test.ts": {
    "path": "supabase/functions/evolution-api/index.test.ts",
    "lines": 1747,
@@ -374570,7 +374887,7 @@
   },
   "supabase/functions/evolution-api/index.ts": {
    "path": "supabase/functions/evolution-api/index.ts",
-   "lines": 1295,
+   "lines": 1471,
    "exports": [
     "interface EvolutionApiDeps",
     "function handleEvolutionApi"
@@ -374586,6 +374903,10 @@
     },
     {
      "table": "global_settings",
+     "op": "select"
+    },
+    {
+     "table": "whatsapp_connections",
      "op": "select"
     },
     {
@@ -374674,6 +374995,7 @@
     ]
    },
    "rpc": [
+    "has_role",
     "is_admin_or_supervisor",
     "is_contact_visible_to_user",
     "set_instance_token"
@@ -374836,16 +375158,16 @@
     "validação (422 + VALIDATION_ERROR, docs/contracts.md), não na",
     "convenção de erro de negócio do proxy (200 + error:true).",
     "global acima) — somente as ações de READ_ACTIONS.",
+    "Regra do dono (docs/contexto/regras/manual/regras.md:17 e :58): SÓ o admin",
+    "─── 13/11: \"o sistema deve buscar a chave sozinho\" ───",
     "colidem nesse segundo, e a mensagem não pode afirmar que foi o",
     "devolve o mesmo formato tanto pra erro de negócio da GO quanto pra",
     "de tokenError como antes. Mitigado pelo rate-limit da function e",
+    "(instance_service.go GetQr) e estourava o limite de 5 s. Toda falha",
     "disparando a recriação da instância lá embaixo — resposta malformada não pode",
     "loggedIn:false nao pode curto-circuitar o fallback por State (a GO",
     "null explícito = presente mas desconectado — não deve cair no fallback State==='open'",
-    "Restaurada (#2054): template aprovado do WhatsApp Business (só instâncias",
-    "Restauradas (#2054, decisão do dono): templates da Meta (WhatsApp Business",
-    "Cloud API) e catálogo/coleções de um número business, e a oferta de chamada.",
-    "Rotas só da v2 (`/template/*`, `/business/*`, `/call/offer`) → notSupported no GO."
+    "Restaurada (#2054): template aprovado do WhatsApp Business (só instâncias"
    ],
    "calc_fns": [
     {
@@ -388225,6 +388547,13 @@
    "lines": 236,
    "uses_service_role": true
   },
+  "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql": {
+   "path": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql",
+   "lines": 63,
+   "temporal": [
+    "-- * o papel `authenticated` tem statement_timeout=8s: a frio, com as duas"
+   ]
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -392077,10 +392406,37 @@
   }
  },
  "git": {
-  "sha": "a49ef4ad58d62497e3a719f1a647719c8f1f490e",
+  "sha": "098a648f6ce4308202999388a88b6de33d7c6fba",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "098a648",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "fix(evolution-api): connect da go nunca mais devolve 500 e busca a credencial da instância sozinho (#3045)",
+    "files": [
+     "ESTADO.md",
+     "docs/audits/edge-functions-authz-coverage.md",
+     "src/components/connections/ConnectionsView.tsx",
+     "src/components/connections/SyncCredentialAction.tsx",
+     "src/components/connections/__tests__/ConnectionAuditDialog.test.tsx",
+     "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
+     "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+     "src/hooks/evolution/useEvolutionApiCore.ts",
+     "src/hooks/evolution/useEvolutionInstance.ts",
+     "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
+     "src/hooks/inbox/useConnectionAuditLogs.ts",
+     "src/hooks/inbox/useConnectionsManager.ts",
+     "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/evolution-control-authz.ts",
+     "supabase/functions/_shared/evolution-go-token-sync.ts",
+     "supabase/functions/evolution-api/connect-go-token.test.ts",
+     "supabase/functions/evolution-api/index.ts",
+     "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql"
+    ]
+   },
    {
     "sha": "a49ef4a",
     "date": "2026-11-13",
@@ -392568,24 +392924,40 @@
      "scripts/ci/check-claude-md-integrity.mjs",
      "scripts/ci/check-claude-md-integrity.unit.mjs"
     ]
-   },
-   {
-    "sha": "87c5e97",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)",
-    "files": [
-     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/e2e-isolated/README.md",
-     "scripts/e2e-isolated/routine-ownership.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
+    4
+   ],
+   [
+    "ESTADO.md",
     3
+   ],
+   [
+    "docs/audits/edge-functions-authz-coverage.md",
+    2
+   ],
+   [
+    "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    2
+   ],
+   [
+    "src/hooks/evolution/useEvolutionApiCore.ts",
+    2
+   ],
+   [
+    "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
+    2
+   ],
+   [
+    "supabase/functions/_shared/evolution-control-authz.ts",
+    2
+   ],
+   [
+    "supabase/functions/evolution-api/index.ts",
+    2
    ],
    [
     "docs/contexto/regras/manual/regras.md",
@@ -392593,10 +392965,6 @@
    ],
    [
     "docs/talkx/ESTADOS.md",
-    2
-   ],
-   [
-    "ESTADO.md",
     2
    ],
    [
@@ -392616,51 +392984,27 @@
     2
    ],
    [
-    "docs/talkx/v4/etapas/F05-kit-estados-modais-e-navegacao.md",
+    "src/components/connections/ConnectionsView.tsx",
     1
    ],
    [
-    "src/components/talkx/TalkXCampaignPaused.tsx",
+    "src/components/connections/SyncCredentialAction.tsx",
     1
    ],
    [
-    "src/components/talkx/TalkXCampaignRunning.tsx",
+    "src/components/connections/__tests__/ConnectionAuditDialog.test.tsx",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
+    "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "src/hooks/evolution/useEvolutionInstance.ts",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/useCampaignRowActions.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/useTalkXLifecycle.tsx",
+    "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
     1
    ]
   ]

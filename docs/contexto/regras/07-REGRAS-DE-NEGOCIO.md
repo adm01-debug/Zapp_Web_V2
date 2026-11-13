@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a49ef4ad58` · branch `main` · 2026-11-13 22:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `098a648f6c` · branch `main` · 2026-11-13 23:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -325,7 +325,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `team_messages` | Members can view conversation messages | SELECT | authenticated | permissive | `public.is_team_conversation_member(auth.uid(), conversation_id)` |  |
 | `team_messages` | Members can send messages | INSERT | authenticated | permissive |  | `public.is_team_conversation_member(auth.uid(), conversation_id) AND sender_id = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1)` |
 | `team_messages` | Senders can delete own messages | DELETE | authenticated | permissive | `sender_id = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1)` |  |
-| `audit_logs` | Only admins can view audit logs | SELECT | authenticated | permissive | `public.has_role(auth.uid(), 'admin')` |  |
 | `contacts` | Users can insert contacts | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid()) OR ( assigned_to IS NOT NULL AND assigned_to IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() ) )` |
 | `audit_logs` | Block authenticated deletes on audit_logs | DELETE | authenticated | permissive | `false` |  |
 | `audit_logs` | Block authenticated updates on audit_logs | UPDATE | authenticated | permissive | `false` |  |
@@ -422,6 +421,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `link_preview_cache_metrics` | service_role inserts cache metrics | INSERT | service_role | permissive |  | `true` |
 | `email_attachments` | Users can view attachments of own accounts | SELECT | authenticated | permissive | `EXISTS ( SELECT 1 FROM public.email_messages em JOIN public.gmail_accounts ga ON ga.id = em.gmail_account_id WHERE em.id = email_attachments.email_message_id AND (ga.user_id = auth.uid() OR is_admin_or_supervisor(auth.uid())) )` |  |
 | `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
+| `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | … +272 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
@@ -1921,7 +1921,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | SlaTimelinePeriod | 24h \| 7d \| 30d \| all | `src/lib/slaTimeline.ts` |
 | SLA_TRANSFER_EVENT_TYPES | 'transfer', 'queue_transfer', 'overload_reassign', 'absence_reassign', | `src/lib/slaTimeline.ts` |
 | SLA_ASSIGN_EVENT_TYPES | 'assign' | `src/lib/slaTimeline.ts` |
-| … +131 linhas — lista completa em `context.json` | | |
+| … +133 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -4125,7 +4125,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `LEAST(((p_day + 1)::timestamp AT TIME ZONE v_tz) - interval '1 microsecond', v_now), v_tz);` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +73 linhas — lista completa em `context.json` | |
+| … +74 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4640,7 +4640,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21735 testes em 2299 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21769 testes em 2302 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4769,6 +4769,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/ui/__tests__/message-reactions.test.tsx` | 26 | ReactionBadge · mostra emoji e contagem no nome acessível (plural) · usa singular no nome acessível quando é só uma reação · aria-pressed=true quando eu já reagi … |
 | `src/hooks/__tests__/useSearchHistory.test.ts` | 26 | useSearchHistory · initializes with empty history · adds item to history · ignores empty queries … |
 | `src/hooks/chat/__tests__/useConversationActions.test.ts` | 26 | useConversationActions · archiveContact · arquiva pela RPC set_conversation_status (a mesma do diálogo de encerrar) e NÃO mexe no responsável · anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch … |
+| `src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts` | 26 | tempo limite: 45 s com AbortController · aborta a chamada pendurada e sobe erro em pt-BR com  · não aborta antes da hora: em 44,999 s a chamada continua em voo e o signal segue vivo · resposta que chega antes do limite não é abortada depois: o timer não sobra … |
 | `src/hooks/integrations/__tests__/useExternalDB.test.ts` | 26 | useExternalSelect · usa limit 50 / offset 0 por padrão e devolve os dados · repassa select, filtros, ordem, paginacao e modo de contagem · não busca quando a flag do CRM está desligada … |
 | `src/lib/__tests__/quarantineStore.test.ts` | 26 | subscribe / getSnapshot · chama o listener a cada mudança e para depois do unsubscribe · mantém a mesma referência de snapshot enquanto nada muda (contrato do useSyncExternalStore) · get … |
 | `src/segments/__tests__/segmentRules.test.ts` | 26 | normalizeRules · returns an empty v2 set for null input · converts numeric text to number on number fields · keeps numeric-looking text as string on text fields … |
@@ -4776,7 +4777,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useReauthentication.test.tsx` | 25 | useReauthentication · initializes with correct default state · reauthenticate succeeds with correct password · reauthenticate keeps AAL2 untouched when the session is already elevated … |
 | `src/hooks/chat/__tests__/useContactMedia.test.tsx` | 25 | useContactMedia — paginacao por keyset (etapa 41) · pede 60+1 por pagina e para no fim quando a pagina vem incompleta · pagina cheia (61 linhas) tem proxima pagina e o cursor (created_at, id) entra no 2o .or() · aceite etapa 41: 201 itens em 4 paginas de 60 e o 201o aparece no fim … |
 | `src/hooks/chat/__tests__/useFilesViewState.test.tsx` | 25 | useFilesViewState — preferencias (localStorage) · storage ausente: comeca no default decidido em D3 (grid, 4 colunas) · storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default · sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode … |
-| `src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts` | 25 | tempo limite: 45 s com AbortController · aborta a chamada pendurada e sobe erro em pt-BR com  · não aborta antes da hora: em 44,999 s a chamada continua em voo e o signal segue vivo · resposta que chega antes do limite não é abortada depois: o timer não sobra … |
 | `src/hooks/gamification/__tests__/useLeaderboard.test.tsx` | 25 | useLeaderboard — leitura do servidor · pede o ranking à RPC com o período corrente e o teto da equipe inteira · refaz a consulta com o período escolhido na tela · mapeia a linha da RPC para o modelo da tela … |
 | `src/lib/calls/__tests__/persistence.test.ts` | 25 | upsertMyCall — mapa p_* da RPC · grava a chamada tocando com os nomes exatos dos parâmetros · grava o fim com status/motivo/duração e OMITE o que não tem valor · upsertMyCall — retry idempotente … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts` | 25 | F48 preview: cada bloco reproduz EXATAMENTE o payload do worker para o destinatario · F48 preview: conteudo com placeholders é identico ao worker para outro destinatario · F48 preview: sem blocos, cai no template do dispatch — o MESMO payload do worker atual · F48 preview: destinatario de outro dono/inexistente responde 404 nomeado … |
@@ -4790,6 +4790,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/tasks/__tests__/useMyWorkItems.test.tsx` | 24 | useMyWorkItems — Fase B · create envia created_by e assigned_to do perfil autenticado · create recusa aviso no passado (remind_in_past) sem tocar no banco · complete move para done e oferece undo … |
 | `src/lib/__tests__/e2e-messaging-fixture.test.ts` | 24 | e2e/messaging.spec.ts — o spec real (R2-INF-007) · com conversa alheia em PRIMEIRO lugar envia para a fixture e nunca para ela · com a fixture no topo segue enviando (caminho feliz preservado) · sem a fixture visivel aborta sem clicar, digitar ou enviar … |
 | `src/services/__tests__/navigation.service.test.ts` | 24 | NavigationService integration maturity · keeps incomplete integrations out of production-ready groups · exposes every navigation id exactly once across primary and grouped menus · preserves the full-layout contract for workspace views … |
+| `supabase/functions/evolution-api/connect-go-token.test.ts` | 24 | connect: erro de rede/DNS na GO → 200 + go_unreachable (antes: 500 do catch-all) · connect: tempo esgotado no /instance/connect → 200 + go_unreachable 504 · connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → go_unreachable, sem lançar · connect: QR lento numa instância já pareada (sessão morta) → go_unreachable e ZERO delete/create … |
 | `src/components/catalog/__tests__/sendProductUtils.test.ts` | 23 | groupVariantsByColor · agrupa variantes pela cor e coleta thumbs sem duplicar · usa  · lista vazia retorna array vazio … |
 | `src/components/contacts/__tests__/useContactFormValidation.test.ts` | 23 | useContactFormValidation — checkEmailDuplicate · debounces query by 500 ms — no call before timeout · consecutive changes within 500 ms fire only one query (last value wins) · escapes % wildcard in email passed to ilike … |
 | `src/components/email/__tests__/EmailChatReplyBar.test.tsx` | 23 | EmailChatReplyBar · resolvedTo display · reply inbound: mostra from_address no  · reply outbound: mostra to_addresses[0] no  … |
@@ -4943,8 +4944,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/contacts/__tests__/BulkActionsBar.test.tsx` | 16 | BulkActionsBar — ações em lote (etapa 81) · não renderiza sem seleção · Tag acrescenta a tag só em quem ainda não tem · Atribuir grava assigned_to em todos os selecionados … |
 | `src/components/dashboard/__tests__/useSentimentData.test.tsx` | 16 | useSentimentData · monta sem lançar exceção e sai do loading (guarda contra TDZ de fetchData no useEffect) · erro na RPC é capturado — nunca escapa do hook e loading sempre volta a false · falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta … |
 | `src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts` | 16 | sidebarSections — migração do localStorage (etapa 44) · storage antigo só com seções que não existem mais → default (seções atuais abertas) · storage antigo com valor válido sobrevive e migra para a chave nova · chave nova tem precedência sobre a antiga … |
-| `src/components/inbox/tabs/__tests__/FilesContent.test.tsx` | 16 | FilesContent (etapa 25) · invariante: a sequência de ids é a mesma nos três modos · skeleton por modo: 6 cartões, 6 linhas e 6 TableRow · paridade: a mesma ação chama o mesmo handler nos três modos … |
-| … +1999 linhas — lista completa em `context.json` | | |
+| … +2002 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5259,6 +5259,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Validação do telefone antes de criar: número brasileiro (DDI 55) precisa ter | `src/components/connections/ConnectionsView.tsx` |
 | * Valida a URL da foto de perfil (http(s) e tamanho máximo). Devolve o problema em pt-BR, ou null. */ | `src/components/connections/InstanceSettingsDialog.tsx` |
 | erro é o caso do atendente e não pode virar "Aquecimento iniciado". | `src/components/connections/NumberReputationMonitor.tsx` |
+| * 13/11 — "o sistema deve buscar a chave sozinho". Aparece no diálogo de QR | `src/components/connections/SyncCredentialAction.tsx` |
+| (`instance_token_invalid` / `instance_token_missing`). Regra do dono | `src/components/connections/SyncCredentialAction.tsx` |
 | precedência — é o dado do banco, não uma segunda cópia da regra. | `src/components/contacts/BulkActionsBar.tsx` |
 | - `canChangeTypeSelection` (permissão por contato, do banco) tem precedência | `src/components/contacts/BulkActionsBar.tsx` |
 | axe acusa TODO o texto dele com a regra `region` (fora de `<main>`). | `src/components/contacts/ContactActivityTimeline.tsx` |
@@ -5444,6 +5446,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | #144/OTH-002: erro na contagem nao pode virar "0" confirmado — vira "indisponivel" (—). | `src/components/inbox/tabs/FilesTab.tsx` |
 | identidade de cada item sai de `resolveSenderIdentity` no cartao. D06: a permissao de | `src/components/inbox/tabs/FilesTab.tsx` |
 | arquivos que estao nele. Enquanto o item mais antigo carregado nao cruzar o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
-| sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e | `src/components/inbox/tabs/FilesTab.tsx` |
-| Nao cruzou o limite ainda: pode haver arquivo do periodo em pagina mais antiga. Com so | `src/components/inbox/tabs/FilesTab.tsx` |
-| … +1697 linhas — lista completa em `context.json` | |
+| … +1702 linhas — lista completa em `context.json` | |

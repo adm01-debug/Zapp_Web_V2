@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a49ef4ad58d62497e3a719f1a647719c8f1f490e",
+  "commit": "098a648f6ce4308202999388a88b6de33d7c6fba",
   "branch": "main",
-  "data_commit": "2026-11-13T18:04:57-03:00",
+  "data_commit": "2026-11-13T19:41:32-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "098a648",
+    "data": "2026-11-13",
+    "assunto": "fix(evolution-api): connect da go nunca mais devolve 500 e busca a credencial da instância sozinho (#3045)"
+   },
    {
     "sha": "a49ef4a",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "b2813f8",
     "data": "2026-11-12",
     "assunto": "feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)"
-   },
-   {
-    "sha": "cca5655",
-    "data": "2026-11-12",
-    "assunto": "fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)"
    }
   ],
-  "arquivos_mudados_7d": 803,
+  "arquivos_mudados_7d": 814,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -153,7 +153,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 209
+    "mudancas": 211
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 128
+    "mudancas": 129
    },
    {
     "pasta": "src/components/ui",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "src/lib/__tests__",
-    "mudancas": 118
+    "mudancas": 117
    },
    {
     "pasta": "src/components/contacts",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 17
+    "mudancas": 18
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -278,10 +278,6 @@
     "mudancas": 7
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 7
-   },
-   {
     "arquivo": "AGENTS.md",
     "mudancas": 7
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "package.json",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/edge-deploy/health-check.mjs",
     "mudancas": 7
    }
   ],
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8498,
-  "arquivos_codigo": 4892,
-  "linhas_codigo": 906897,
+  "arquivos_total": 8504,
+  "arquivos_codigo": 4897,
+  "linhas_codigo": 907922,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 145,
-  "componentes": 914,
+  "componentes": 915,
   "hooks": 501,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1106,
+  "migrations": 1107,
   "cron_jobs": 26,
-  "testes": 2665,
+  "testes": 2668,
   "workflows": 22,
   "scripts": 429,
   "docs_md": 1087
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2218,
-   "linhas": 377160
+   "arquivos": 2220,
+   "linhas": 377255
   },
   "src/config": {
    "arquivos": 3,
@@ -723,8 +723,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 996,
-   "linhas": 162121
+   "arquivos": 997,
+   "linhas": 162346
   },
   "src/i18n": {
    "arquivos": 2,
@@ -779,8 +779,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 404,
-   "linhas": 122264
+   "arquivos": 406,
+   "linhas": 122969
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -825,6 +825,10 @@
    "linhas": 1471
   },
   {
+   "arquivo": "supabase/functions/evolution-api/index.ts",
+   "linhas": 1471
+  },
+  {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
    "linhas": 1446
   },
@@ -835,10 +839,6 @@
   {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/database/build_report.py",
    "linhas": 1298
-  },
-  {
-   "arquivo": "supabase/functions/evolution-api/index.ts",
-   "linhas": 1295
   },
   {
    "arquivo": "src/components/catalog/ExternalProductManagement.tsx",
@@ -906,7 +906,7 @@
   }
  ],
  "qualidade": {
-  "any": 367,
+  "any": 373,
   "console_log": 417,
   "ts_ignore": 0,
   "eslint_disable": 1,

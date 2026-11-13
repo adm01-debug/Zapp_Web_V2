@@ -1362,9 +1362,9 @@
   },
   {
    "modulo": "components/connections",
-   "arquivos": 13,
-   "testes": 23,
-   "linhas": 1934,
+   "arquivos": 14,
+   "testes": 24,
+   "linhas": 1980,
    "itens_menu": [
     "Conexões"
    ],
@@ -1372,7 +1372,7 @@
     "connections"
    ],
    "rotas_http": [],
-   "componentes": 12,
+   "componentes": 13,
    "hooks_locais": [
     "useAppBootstrap",
     "useAuth",
@@ -10324,7 +10324,7 @@
    "modulo": "hooks/evolution",
    "arquivos": 5,
    "testes": 6,
-   "linhas": 420,
+   "linhas": 433,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10592,8 +10592,8 @@
   {
    "modulo": "hooks/inbox",
    "arquivos": 20,
-   "testes": 33,
-   "linhas": 3445,
+   "testes": 34,
+   "linhas": 3506,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

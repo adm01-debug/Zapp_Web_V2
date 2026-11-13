@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a49ef4ad58` · branch `main` · 2026-11-13 22:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `098a648f6c` · branch `main` · 2026-11-13 23:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -37,7 +37,7 @@
 | `app_settings` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) |
 | `audio_meme_favorites` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `audio_memes` | enabled | authenticated: true | authenticated: uploaded_by = auth.uid() | authenticated: (uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: uploaded_by = auth.uid() OR public.is_admin_or_supervisor(auth.uid()) |
-| `audit_logs` | enabled | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: false<br>authenticated: false | authenticated: false | authenticated: false |
+| `audit_logs` | enabled | authenticated: (SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role)) | authenticated: false<br>authenticated: false | authenticated: false | authenticated: false |
 | `auth.users` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `auto_close_config` | enabled | authenticated: true<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `automations` | enabled | authenticated: true<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
