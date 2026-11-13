@@ -1,4 +1,4 @@
--- 20261113120000_remove_enum_special_agent
+-- 20261113140000_remove_enum_special_agent
 -- Decisao do dono em 2026-11-03 (docs/contexto/regras/manual/regras.md, §2): o papel
 -- `special_agent` deixa de existir. A 20261103201500 tirou o papel de toda funcao, policy e
 -- CHECK, mas deixou o ROTULO no enum public.app_role como residuo deliberado (Postgres nao
@@ -32,6 +32,7 @@
 --
 -- Estrategia (tudo numa transacao; qualquer dependencia nao inventariada faz o DROP sem
 -- CASCADE falhar e a migration inteira volta):
+--   0. LOCK TABLE de todas as tabelas tocadas (e da view) em ACCESS EXCLUSIVE, lock_timeout 2s.
 --   1. guarda: aborta se ainda houver usuario/politica/grant com special_agent; confere md5 das
 --      3 funcoes recriadas (nao sobrescreve corpo que mudou depois da medicao).
 --   2. ALTER TYPE app_role RENAME TO app_role__old; CREATE TYPE app_role (3 rotulos).
@@ -56,8 +57,20 @@
 
 BEGIN;
 
-SET LOCAL lock_timeout = '5s';
+SET LOCAL lock_timeout = '2s';
 SET LOCAL statement_timeout = '120s';
+
+-- Todas as travas de uma vez, numa ordem so, antes de qualquer DDL: sem fila de locks
+-- crescendo atras de um ALTER no meio da migration e sem deadlock com transacao que pegue as
+-- tabelas em outra ordem. Se alguma estiver ocupada por mais de 2s, a migration falha inteira
+-- (nada mudou) e basta reaplicar. LOCK numa view (PG >= 11) trava a view e, recursivamente,
+-- a tabela base (whatsapp_connections).
+LOCK TABLE public.user_roles, public.role_permissions, public.audit_logs,
+  public.contact_protection_policy, public.multiplix_voice_grants, public.multiplix_voice_assets,
+  public.multiplix_audiences, public.multiplix_audience_members, public.agent_visibility_grants,
+  public.ai_providers, public.app_settings, public.blocked_ips, public.channel_connections,
+  public.password_reset_requests, public.whatsapp_connections_safe
+  IN ACCESS EXCLUSIVE MODE;
 
 -- 1. Guarda + 2. troca do tipo (so na primeira aplicacao: o rotulo ainda existe).
 DO $guarda$
@@ -77,17 +90,17 @@ BEGIN
 
   -- Corpos das 3 funcoes recriadas abaixo: iguais aos medidos em producao.
   SELECT md5(prosrc) INTO v_md5 FROM pg_proc
-   WHERE pronamespace = 'public'::regnamespace AND proname = 'has_role';
+   WHERE oid = to_regprocedure('public.has_role(uuid,public.app_role)');
   IF v_md5 IS DISTINCT FROM 'dae5cfc5a8d92461a428f6702e4e65af' THEN
     RAISE EXCEPTION 'remove_enum_special_agent: corpo de has_role mudou (md5 %)', v_md5;
   END IF;
   SELECT md5(prosrc) INTO v_md5 FROM pg_proc
-   WHERE pronamespace = 'public'::regnamespace AND proname = 'effective_role';
+   WHERE oid = to_regprocedure('public.effective_role(uuid)');
   IF v_md5 IS DISTINCT FROM '07814d09481f4979ebbe0e03910835ff' THEN
     RAISE EXCEPTION 'remove_enum_special_agent: corpo de effective_role mudou (md5 %)', v_md5;
   END IF;
   SELECT md5(prosrc) INTO v_md5 FROM pg_proc
-   WHERE pronamespace = 'public'::regnamespace AND proname = 'admin_set_role';
+   WHERE oid = to_regprocedure('public.admin_set_role(uuid,public.app_role)');
   IF v_md5 IS DISTINCT FROM 'a59220e0f3abcc9e06a12b15c67129f6' THEN
     RAISE EXCEPTION 'remove_enum_special_agent: corpo de admin_set_role mudou (md5 %)', v_md5;
   END IF;

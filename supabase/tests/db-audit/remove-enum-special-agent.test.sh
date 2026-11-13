@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 20261113120000_remove_enum_special_agent: recria public.app_role sem 'special_agent'.
+# 20261113140000_remove_enum_special_agent: recria public.app_role sem 'special_agent'.
 #
 # Prova comportamental (PostgreSQL 17 descartavel, papeis reais via SET ROLE +
 # request.jwt.claim.sub, default ACL de producao do Supabase reproduzido):
@@ -8,7 +8,9 @@
 #     role_permissions, has_role/effective_role/admin_set_role com o md5 de producao,
 #     view whatsapp_connections_safe (security_invoker) e as 21 policies dependentes.
 #     Uma sessao "velha" (S1) e aberta ANTES da migration e aquece o cache do plpgsql.
-#  C. Guardas fecham sem mudar nada (banco espelho): usuario com special_agent em
+#  C. Guardas fecham sem mudar nada (banco espelho): a migration trava as 15 relacoes
+#     (14 tabelas + a view, que trava a tabela base) num LOCK so e, com outra sessao
+#     segurando uma delas, falha em ~2s por lock_timeout; usuario com special_agent em
 #     user_roles; corpo de has_role diferente do medido.
 #  B. Migration aplicada 2x (idempotente) e:
 #     1. rotulos = admin,supervisor,agent (mesma ordem); app_role__old nao existe.
@@ -38,7 +40,7 @@ F_AUDIENCES="$MIG_DIR/20261001261230_f35_multiplix_audiences.sql"
 F_VOICE="$MIG_DIR/20261003132707_f64_voz_assets_e_grants.sql"
 F_PROTECTION="$MIG_DIR/20261015225226_ct091_contact_protection_policy.sql"
 F_REMOVE_SA="$MIG_DIR/20261103201500_remove_pagamentos_e_special_agent.sql"
-F_NEW="$MIG_DIR/20261113120000_remove_enum_special_agent.sql"
+F_NEW="$MIG_DIR/20261113140000_remove_enum_special_agent.sql"
 
 fail() { echo "[FAIL] $*" >&2; exit 1; }
 ok()   { echo "[OK] $*"; }
@@ -270,6 +272,38 @@ ok "A: estado de producao reproduzido (4 rotulos, md5, seed, 21 policies depende
 # Espelho = copia do estado A (antes de abrir a sessao S1: o template nao pode ter conexao).
 run "CREATE DATABASE guard_mirror TEMPLATE postgres;"
 MIRROR=(docker exec -i "$CID" psql -U postgres -d guard_mirror -v ON_ERROR_STOP=1 -q -t -A)
+# C0. LOCK unico com lock_timeout 2s: o texto tem 1 LOCK TABLE com as 15 relacoes, antes do
+# primeiro DDL; com uma sessao segurando ACCESS SHARE em ai_providers (a 10a da lista) e
+# outra segurando a tabela base da view, a migration falha rapido e nao muda nada.
+grep -q "^SET LOCAL lock_timeout = '2s';" "$F_NEW" || fail "C0: lock_timeout 2s ausente"
+[[ "$(grep -c '^LOCK TABLE' "$F_NEW")" == "1" ]] || fail "C0: esperava exatamente 1 LOCK TABLE"
+LOCK_LINE=$(awk '/^LOCK TABLE/,/IN ACCESS EXCLUSIVE MODE;/' "$F_NEW" | tr -d '\n')
+for rel in user_roles role_permissions audit_logs contact_protection_policy multiplix_voice_grants \
+           multiplix_voice_assets multiplix_audiences multiplix_audience_members agent_visibility_grants \
+           ai_providers app_settings blocked_ips channel_connections password_reset_requests \
+           whatsapp_connections_safe; do
+  echo "$LOCK_LINE" | grep -q "public\.$rel[,[:space:]]" || fail "C0: LOCK TABLE sem public.$rel"
+done
+FIRST_LOCK=$(grep -n '^LOCK TABLE' "$F_NEW" | cut -d: -f1)
+FIRST_DDL=$(grep -nE '^(DO |DROP |ALTER |CREATE |DELETE )' "$F_NEW" | head -1 | cut -d: -f1)
+(( FIRST_LOCK < FIRST_DDL )) || fail "C0: LOCK TABLE depois do primeiro DDL ($FIRST_LOCK >= $FIRST_DDL)"
+for holder in "public.ai_providers IN ACCESS SHARE MODE" "public.whatsapp_connections IN ROW SHARE MODE"; do
+  docker exec "$CID" psql -U postgres -d guard_mirror -q -c "BEGIN; LOCK TABLE $holder; SELECT pg_sleep(8); COMMIT;" >/dev/null 2>&1 &
+  HOLDER_PID=$!
+  for _ in $(seq 1 50); do
+    [[ "$("${MIRROR[@]}" -c "SELECT count(*) FROM pg_stat_activity WHERE datname = 'guard_mirror' AND query LIKE '%pg_sleep(8)%' AND pid <> pg_backend_pid();")" == "1" ]] && break
+    sleep 0.2
+  done
+  T0=$(date +%s)
+  OUT=$("${MIRROR[@]}" < "$F_NEW" 2>&1 || true)
+  T1=$(date +%s)
+  wait "$HOLDER_PID" || true
+  echo "$OUT" | grep -q "lock timeout" || fail "C0: esperava lock timeout com '$holder' ocupada: $OUT"
+  (( T1 - T0 <= 6 )) || fail "C0: demorou $((T1 - T0))s para desistir da trava"
+  [[ "$("${MIRROR[@]}" -c "SELECT count(*) FROM pg_enum WHERE enumtypid = 'public.app_role'::regtype;")" == "4" ]] \
+    || fail "C0: lock timeout mas o tipo mudou"
+done
+ok "C0: LOCK unico de 15 relacoes antes do DDL; com tabela (ou base da view) ocupada falha em <= 6s sem mudar nada"
 "${MIRROR[@]}" -c "ALTER TABLE public.user_roles DROP CONSTRAINT user_roles_no_special_agent; INSERT INTO public.user_roles (user_id, role) VALUES ('$AGENT_SUB', 'special_agent');" >/dev/null
 OUT=$("${MIRROR[@]}" < "$F_NEW" 2>&1 || true)
 echo "$OUT" | grep -q "linha(s) em user_roles com special_agent" || fail "C: guarda de user_roles nao abortou: $OUT"
