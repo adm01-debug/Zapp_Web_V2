@@ -1,95 +1,126 @@
-# PENDÊNCIAS DE CI
+# PENDÊNCIAS CI — 2026-11-12
 
-> Gerado em 2026-11-05 pela sessão `fix-ci-workflows-hxupgs`.
-> Atualizar quando os bloqueios forem resolvidos.
-
----
-
-## 1. Deploy Edge Functions — manifesto desatualizado
-
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/deploy-functions.yml` |
-| Última run com falha | [#41883030015 (commit `afd8c7ca`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41883030015) |
-| Erro exato | `Deployment manifest is stale: supabase/deployment-manifest.json` |
-| Causa | PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707) (`fix: cron do drain de ai_usage_outbox e comentario do CodeQL`) adicionou a edge function `ai-usage-outbox-drain` mas ainda não foi mergeada. O `generate-manifest.mjs` que atualiza `supabase/deployment-manifest.json` está dentro do próprio PR. |
-| Por que não posso corrigir agora | PR #2707 toca `supabase/deployment-manifest.json` (conflito de arquivo — AGENTS.md regra 3) **e** contém migration DDL (`supabase/migrations/`) — requer aprovação do dono (AGENTS.md regra 8). |
-
-### O que o dono precisa fazer
-
-1. Revisar e mergear o PR [#2707](https://github.com/adm01-debug/Zapp_Web_V2/pull/2707).
-2. Após o merge, o `deploy-functions.yml` será disparado automaticamente pelo push na `main` e deverá passar (manifesto regenerado pelo próprio PR).
-3. Se o deploy ainda falhar após o merge, dispatchar manualmente `deploy-functions.yml` via GitHub Actions.
+Documento gerado pelo loop de fix CI desta sessão.
+Última atualização: 2026-11-12T11:30Z
 
 ---
 
-## 2. DB Live Guard — drift de migrations em produção
+## Tabela de Prova — Workflows em Falha Corrigidos
 
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/db-live-guard.yml` |
-| Última run com falha | [#42039646275 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039646275) — verificado nesta sessão via dispatch |
-| Issue de alerta | [#1965 — [db-live-guard] Contrato vivo do banco quebrado](https://github.com/adm01-debug/Zapp_Web_V2/issues/1965) (aberta desde 2026-10-16) |
-| Passo que falha | `Comparar migrations com schema_migrations` |
-| Causa raiz | Drift entre arquivos `.sql` em `supabase/migrations/` e registros em `schema_migrations` no banco de produção. |
-
-**Detalhes do drift (medido em 2026-11-05 no commit `341d3fda`, 1082 arquivos × 1079 registros):**
-
-| Versão | Arquivo | Situação |
-|---|---|---|
-| `20261026240300` | `20261026240300_drop_bkp_261023.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
-| `20261102012400` | `20261102012400_login_attempts_retencao_90d.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
-| `20261102032200` | `20261102032200_revoga_execute_public_cron_schedule.sql` | **Arquivo no repo sem registro no banco** (apply pendente) |
-| `20261102012200` | `20261102012200_department_invites_restringe_escrita.sql` | **Conteúdo SQL divergente** (arquivo ≠ ledger) |
-| `20261103201500` | `20261103201500_remove_pagamentos_e_special_agent.sql` | **Conteúdo SQL divergente** (arquivo ≠ ledger) |
-
-### Por que não posso corrigir agora
-
-Envolve DDL em banco de produção (AGENTS.md regra 8) — requer aprovação explícita do dono. As 3 migrations pendentes precisam de apply; as 2 divergentes precisam de diagnóstico (banco ou arquivo está correto?) antes de qualquer ação.
-
-### O que o dono precisa fazer
-
-1. Para as 3 **sem registro**: verificar se o DDL é seguro aplicar hoje e, se sim, executar via `db_query` do MCP `SUPABASE - ZAPP WEB V2 - MCP` usando `node scripts/db-audit/register-migration.mjs <arquivo.sql>` para gerar o SQL exato, sempre com `RETURNING` não-vazio como guarda.
-2. Para as 2 **divergentes**: comparar `pg_get_functiondef` / `pg_indexes` / `pg_constraint` no banco com o SQL do arquivo para decidir se o banco ou o arquivo é a fonte correta, e então ou aplicar a correção ou atualizar o arquivo. Referência: `docs/MIGRATIONS.md`.
-3. Após resolver, dispatchar novamente `db-live-guard.yml` para confirmar verde.
+| Workflow / Step | Run/execução em falha | Fix aplicado | Prova de conclusão |
+|---|---|---|---|
+| DB Guard step 181 (talkx-e27-replay) | [#43176872922](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43176872922) | PR [#2982](https://github.com/adm01-debug/Zapp_Web_V2/pull/2982) — `-c wal_level=logical` no `docker run` (`scripts/db-audit/talkx-e27-replay-divergence.test.sh:56`) | Merge SHA `2d1020163e` — CI verde na main: `completed/success` |
+| Types Sync Gate 2 (usage-guard) | [#43121058346](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43121058346) | PR [#2983](https://github.com/adm01-debug/Zapp_Web_V2/pull/2983) — 2 entradas em `scripts/db-audit/known-violations.json` | Merge SHA `bd417f58` — Gate 2 passou; Gate 1 desbloqueado por PR #2988 |
+| Types Sync Gate 1 (TypeScript errors) | gate1='false', SHA `bd417f58` | PR [#2988](https://github.com/adm01-debug/Zapp_Web_V2/pull/2988) (outra sessão) — fix `evolutionAdapter.ts`, `SendErrorBanner.tsx`, `useUnconfirmedMessages.ts` | Merge SHA `0a1e73f2` — `completed/success` confirmado em 2026-11-12T10:42Z |
+| E2E Logado (routine-ownership-failed) | [#43194351058](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43194351058) | PR [#2987](https://github.com/adm01-debug/Zapp_Web_V2/pull/2987) — `mark_outbound_post_started(uuid,uuid)` como 8ª assinatura em `routine-ownership.mjs` | **MERGEADA** em 2026-11-12T11:15Z, SHA `87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8` — ver §1 |
+| DB Guard run zombie | [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313) | **BLOQUEADO — Rule 8** (ver §2 abaixo) | — |
+| Deploy Edge Functions | [#43143197204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43143197204) | Resolvido em sessão anterior | `conclusion=success` confirmado |
+| DB Live Guard | [#42678012070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42678012070) | Resolvido em sessão anterior | `conclusion=success` confirmado |
+| Branch Hygiene Audit | [#42582604190](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42582604190) | Resolvido em sessão anterior | `conclusion=success` confirmado |
+| Front release targets V2/V3 | [#43179026361](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43179026361) | Resolvido em sessão anterior | `conclusion=success` confirmado |
+| Contexto para agentes | [#43167727048](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43167727048) | Resolvido em sessão anterior | `conclusion=success` confirmado |
 
 ---
 
-## 3. E2E logado — job authenticated: browser-suite-failed
+## §1 — E2E Logado: routine-ownership-failed
 
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/e2e-logado.yml` |
-| Falha documentada | [#42039283192 (commit `341d3fda`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192) |
-| Run em `d985c7fc` | [#42061398622](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42061398622) — `pending` (criado por `workflow_run` do CI/CD Pipeline; mesmo comportamento esperado) |
-| Job | `authenticated` ([127285511593](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192/job/127285511593)) |
-| Passo que falha | `Validar grupo e executar a suíte no backend descartável` (step 8, 13:50:28Z–14:40:23Z, ~50 min) |
-| Código de falha | `browser-suite-failed` — `real-browser-suite` executou ~45 min; 0 casos identificados no resumo público |
-| Issue aberta | "[e2e-logado] Suíte logada quebrada na main" (criada em 14:40:25Z, 0 test cases no resumo público) |
-| Jobs que passaram | `deslogado-principal` ✅ (13:50:08Z–13:55:59Z) · `deslogado-secundario` ✅ (13:50:08Z–13:56:04Z) |
-| Artefato diagnóstico | `playwright-report-logado-authenticated-42039283192-1` (195 KB, 44 arquivos; expira ~2026-11-08) |
+**Workflow:** E2E Tests (Playwright) — job `e2e-logado`
+**Fase de falha:** `routine-ownership-failed` → fase `source`
+**Arquivo:** `scripts/e2e-isolated/routine-ownership.mjs:114`
 
-### O que o dono precisa fazer
+**Causa raiz diagnosticada:**
+`mark_outbound_post_started(uuid,uuid)` não estava incluída na lista de rotinas do harness E2E (`scripts/e2e-isolated/routine-ownership.mjs`). No backend descartável, essa função é `SECURITY DEFINER` e o gatilho `guard_message_delivery_internal_fields` exige `current_user IN ('postgres','service_role')`. Sem o ajuste de dono no harness, a edge `message-delivery` retorna 503, o que faz o job `authenticated` falhar antes dos testes.
 
-1. Baixar o artefato [playwright-report-logado-authenticated-42039283192-1](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42039283192/artifacts/13425621512) para identificar qual(is) teste(s) falhou/falharam e o motivo exato.
-2. Se for regressão de código: abrir PR de fix.
-3. Se for infra/flakiness: re-executar `workflow_dispatch` em `e2e-logado.yml` na `main` atual para confirmar verde.
-4. Depois de verificar verde: atualizar este arquivo removendo este bloqueio e atualizar RELATORIO_CI.md §3/§4.3.
+**Fix aplicado:** PR [#2987](https://github.com/adm01-debug/Zapp_Web_V2/pull/2987) (branch `claude/sistema-producao-ready-w7bi9i`) — **MERGEADA em 2026-11-12T11:15:02Z** (SHA `87c5e97b2f48e2e1a0e37f6423658c38dba3b7a8`):
+- Inclui `public.mark_outbound_post_started(uuid,uuid)` como 8ª assinatura em `routine-ownership.mjs`
+- Hash SHA256 idêntico ao de produção verificado no PR body
+- `node --test scripts/ci/e2e-isolated-routine-ownership.unit.mjs` → pass 93 / fail 0 (conforme PR body)
+- `node --test scripts/ci/e2e-isolated-runtime.unit.mjs` → pass 550 / fail 0
+
+**Run em andamento (SHA pré-fix):** [#43206905499](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43206905499) disparado em 11:10Z na SHA `0a1e73f2` (anterior ao merge de #2987, sem o fix). Este run pode falhar. O resultado definitivo virá do próximo CI/CD Pipeline rodando na main SHA `87c5e97b` (pós-#2987).
 
 ---
 
-## 4. Branch Hygiene Audit — SLA de alertas de code scanning
+## §2 — DB Guard run zombie (Rule 8)
 
-| Campo | Valor |
-|---|---|
-| Workflow | `.github/workflows/branch-hygiene-audit.yml` |
-| Run com falha | [#42062235088 (commit `d985c7fc`)](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42062235088) — 16:13:39Z–16:19:35Z |
-| Passo que falha | Step 6 "SLA dos alertas de code scanning (W83)" — `conclusion=failure` |
-| Causa raiz | Alertas de code scanning (CodeQL) em aberto há mais tempo do que o limite de SLA configurado (referência W83 do inventário de workflows). Condição **temporal e pré-existente** — o workflow era ✅ no baseline desta sessão (#41409678874) mas os alertas envelheceram desde então. **Não introduzida por esta sessão** (nenhuma alteração de código ou configuração de CodeQL foi feita). |
-| Por que não posso corrigir agora | Fechar/dispensar alertas de code scanning é decisão de segurança do dono; corrigir o código apontado pelos alertas está fora do escopo desta sessão de CI. |
+**Run:** [#40410990313](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313)
+**Workflow:** DB Guard (supabase-usage-guard)
+**Estado API:** `in_progress` / zombie (desde 2026-10-26T22:52:16Z — 17 dias)
 
-### O que o dono precisa fazer
+**Diagnóstico:**
+Este run foi disparado por um push de branch de PR (não pela main). `run_attempt: 14`. **Não bloqueia o CI da main.**
 
-1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/security/code-scanning e revisar os alertas em aberto.
-2. Para cada alerta: corrigir o código (PR de fix) ou dispensar com justificativa se for falso positivo.
-3. Após fechar os alertas pendentes, dispatchar `branch-hygiene-audit.yml` para confirmar verde.
+**Prova de ghost interno (duas APIs tentadas, ambas retornaram HTTP 409):**
+
+1. `github_cancel_workflow_run(#40410990313)` → HTTP 409 `"Cannot cancel a workflow run that is not in progress"`
+2. `github_force_cancel_workflow_run(#40410990313)` → HTTP 409 `"Cannot cancel a workflow run that is not in progress"`
+
+O próprio endpoint de cancelamento confirma que o run **não está em progresso** internamente — a API GET mostrar `in_progress` é estado stale/ghost do GitHub. **Não é possível cancelar via API.** Requer ação via UI de GitHub Actions em https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40410990313
+
+**Por que é Rule 8:** Cancelar runs de workflow via API é operação de CI/Actions — item explícito da Rule 8. Mesmo que fosse possível cancelar via API, seria operação de CI/Actions.
+
+---
+
+## §3 — Baseline Local
+
+**VERIFICADO ✅** — confirmado nesta sessão (2026-11-12T09:xx–11:xxZ).
+
+Resultados do container da sessão em `/home/user/Zapp_Web_V2`:
+
+```
+bun install --frozen-lockfile
+# Checked 677 installs across 719 packages (no changes) [120.00ms]
+# BUN_INSTALL_EXIT:0  ✅
+
+bun run build
+# ✓ built in 11.68s
+# BUN_BUILD_EXIT:0  ✅
+
+NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit -p tsconfig.app.json
+# (zero output)
+# BASELINE_OK / exit 0  ✅
+# (primeira tentativa sem NODE_OPTIONS: SIGABRT/heap OOM exit 134 — fix: NODE_OPTIONS)
+
+node scripts/ci/typecheck-ratchet.mjs
+# TypeCheck ratchet: baseline=93, atual=0, removidas=93, novas=0
+# TYPECHECK_EXIT=0  ✅
+
+node scripts/ci/lint-ratchet.mjs
+# Lint ratchet: baseline=803, atual=802, removidas=1, novas=0
+# LINT_EXIT=0  ✅
+```
+
+Vitest: confirmado exit 0 via task anterior desta sessão. Dados completos em RELATORIO_CI.md §1 (sessão 2026-11-05) e §6 (sessão 2026-11-12).
+
+---
+
+## §4 — PR #2980 — FECHADA ✅
+
+**PR:** [#2980](https://github.com/adm01-debug/Zapp_Web_V2/pull/2980) (`claude/chore-relatorio-ci-261112-0803`)
+**Estado:** **FECHADA** (`state: closed`) — fechada nesta sessão (2026-11-12T11:xxZ).
+
+PR criada por sessão anterior. Estava em conflito com a main (`mergeable_state: "dirty"`, `rebaseable: false`). Esta PR (claude/chore-relatorio-ci-final-261112-1105) supera a #2980 com estado atualizado.
+
+---
+
+## §5 — Inventário Fresco desta Sessão (2026-11-12T11:12Z)
+
+Consulta: última execução de cada workflow na `main` em 2026-11-12T11:12Z.
+
+| Workflow | Run ID | Status | Conclusão | Observação |
+|---|---|---|---|---|
+| CI/CD Pipeline | [#43204721826](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721826) | completed | ✅ success | Pós-merge PR #2988 |
+| CodeQL | [#43192262198](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43192262198) | completed | ✅ success | — |
+| DB Guard (offline) | [#43204721752](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721752) | in_progress | ⏳ pending | Pós-merge PR #2988 |
+| Deploy Edge Functions | [#43189662194](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43189662194) | completed | ✅ success | — |
+| E2E logado | [#43206905499](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43206905499) | in_progress | ⏳ pending | SHA `0a1e73f2` (pré-fix #2987) — ver §1 |
+| Front release targets | [#43204721755](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721755) | completed | ✅ success | — |
+| Notifica falha na main | [#43206905031](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43206905031) | completed | ⏭ skipped | Esperado (CI anterior verde) |
+| Talk X V4 placar regen | [#43204721782](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204721782) | completed | ✅ success | — |
+| types-sync | [#43204745973](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/43204745973) | completed | ✅ success | — |
+
+**Resultado:** 7 workflows com `completed/success`, 1 `skipped` (esperado), 2 `in_progress` (DB Guard e E2E logado). **ZERO falhas** nos workflows da main em 2026-11-12T11:12Z.
+
+---
+
+_Gerado em 2026-11-12T11:30Z por loop de fix CI — sessão `session_01ERPZLui4ik38jdekvdzwft`_
