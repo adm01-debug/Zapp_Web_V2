@@ -16,6 +16,8 @@ export function jidToPhone(jid: string): string {
   return jid.replace(/@.*$/, '');
 }
 
+const CAMPOS_ENTREGA_PD79 = { delivery_post_started_at: null, manually_resolved_at: null } as const;
+
 /**
  * Convert an EvolutionMessage into the frontend's RealtimeMessage shape.
  *
@@ -71,6 +73,8 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): NormalizedRea
     ptt: null,
     reply_to_id: null,
     transcribed_at: null,
+    // Colunas da migration 20261111160000. Por spread: o tipo gerado antigo não as tem e o novo exige.
+    ...CAMPOS_ENTREGA_PD79,
   };
 }
 

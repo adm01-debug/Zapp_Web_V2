@@ -53,9 +53,21 @@ export function useGoalNotifications() {
       };
 
       // `notifications.dedupe_key` é única por usuário no banco
-      // (`ux_notifications_user_dedupe_key`, IA-047). Quem grava primeiro manda;
-      // a recarga ou a 2ª aba bate no índice e recebe 23505 — conflito é SUCESSO
-      // silencioso: não é erro e o anúncio (toast/som/navegador) não se repete.
+            // (`ux_notifications_user_dedupe_key`, IA-047). A conquista já gravada
+            // (outra aba, recarga, outra rodada) não volta a ser anunciada: o SELECT
+            // de próprio usuário é barato e evita tocar o banco com INSERT duplicado,
+            // que viraria um 409 (23505) no transporte e ruído de console no E2E Y09.
+            // O 23505 continua tratado como SUCESSO silencioso, como defesa caso duas
+            // abas gravem no mesmo instante (corrida real).
+            const { data: existente } = await supabase
+              .from('notifications')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('dedupe_key', dedupeKey)
+              .maybeSingle();
+
+            if (existente) return false;
+
       const { error } = await supabase
         .from('notifications')
         .insert([{
