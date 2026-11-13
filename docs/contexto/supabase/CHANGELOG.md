@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-13 23:34 UTC
+
+- **functions** alterado (2): `public.has_role(_user_id uuid, _role app_role)`, `public.set_instance_token(p_connection_id uuid, p_token text)`
+
 ## 2026-11-13 17:50 UTC
 
 - **roles** adicionado (1): `zapp_agente_leitura`

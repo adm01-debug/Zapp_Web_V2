@@ -56114,6 +56114,10 @@
         "callers": {
           "code": [
             {
+              "file": "supabase/functions/evolution-api/index.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20260404172304_3c3f4a06-e027-4f21-99c4-e9ffd3d45ad0.sql",
               "hits": 4
             },
@@ -56228,13 +56232,9 @@
             {
               "file": "supabase/migrations/20261012134000_auto_reconnect_logs.sql",
               "hits": 4
-            },
-            {
-              "file": "supabase/migrations/20261015225226_ct091_contact_protection_policy.sql",
-              "hits": 6
             }
           ],
-          "code_total_files": 32,
+          "code_total_files": 34,
           "cron": [],
           "db": [
             "public.enforce_contacts_consent_status_guard",
@@ -63535,7 +63535,7 @@
           "code": [
             {
               "file": "supabase/functions/evolution-api/index.ts",
-              "hits": 2
+              "hits": 3
             }
           ],
           "code_total_files": 1,
