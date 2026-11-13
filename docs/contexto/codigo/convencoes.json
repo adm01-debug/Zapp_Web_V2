@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)",
    "Rascunho de proposta do copilot só mostra \"copiado\" quando a cópia funciona (#3005)",
    "test(contracts): cobre os 7 schemas RADAR AI na tabela de contrato (#3000)",
    "fix(copilot): badge de alertas do RADAR com contraste AA (#3002)",
-   "Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)",
-   "Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)"
+   "Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

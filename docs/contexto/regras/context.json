@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "546c6f5d9cf65ce68684c29063ea07bc91ba853b",
+  "sha": "eb93d55ec1654697ac0d5886fc324f27e5d4175e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 07:00 UTC",
+  "generated_at": "2026-11-13 08:10 UTC",
   "files_total": 8265,
   "code_files": 6097,
-  "code_lines": 1060783
+  "code_lines": 1060760
  },
  "version": "1.3.2",
- "facts_hash": "080b34595879a9b3",
+ "facts_hash": "959b9efe138dda4a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -69891,7 +69891,7 @@
   {
    "module": "supabase/functions",
    "files": 392,
-   "lines": 118955,
+   "lines": 118932,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -366831,7 +366831,7 @@
   },
   "supabase/functions/ai-deadline-calculator/index.ts": {
    "path": "supabase/functions/ai-deadline-calculator/index.ts",
-   "lines": 131,
+   "lines": 128,
    "exports": [
     "interface AiDeadlineCalculatorDeps",
     "function handleAiDeadlineCalculator"
@@ -367128,7 +367128,7 @@
   },
   "supabase/functions/ai-lead-temperature/index.ts": {
    "path": "supabase/functions/ai-lead-temperature/index.ts",
-   "lines": 128,
+   "lines": 125,
    "exports": [
     "interface AiLeadTemperatureDeps",
     "function handleAiLeadTemperature"
@@ -367151,7 +367151,7 @@
   },
   "supabase/functions/ai-loss-risk/index.ts": {
    "path": "supabase/functions/ai-loss-risk/index.ts",
-   "lines": 122,
+   "lines": 119,
    "exports": [
     "interface AiLossRiskDeps",
     "function handleAiLossRisk"
@@ -367174,7 +367174,7 @@
   },
   "supabase/functions/ai-multimodal-analysis/index.ts": {
    "path": "supabase/functions/ai-multimodal-analysis/index.ts",
-   "lines": 134,
+   "lines": 131,
    "exports": [
     "interface AiMultimodalAnalysisDeps",
     "function handleAiMultimodalAnalysis"
@@ -367207,7 +367207,7 @@
   },
   "supabase/functions/ai-objection-handler/index.ts": {
    "path": "supabase/functions/ai-objection-handler/index.ts",
-   "lines": 147,
+   "lines": 142,
    "exports": [
     "interface AiObjectionHandlerDeps",
     "function handleAiObjectionHandler"
@@ -367230,7 +367230,7 @@
   },
   "supabase/functions/ai-price-anchor/index.ts": {
    "path": "supabase/functions/ai-price-anchor/index.ts",
-   "lines": 128,
+   "lines": 125,
    "exports": [
     "interface AiPriceAnchorDeps",
     "function handleAiPriceAnchor"
@@ -367253,7 +367253,7 @@
   },
   "supabase/functions/ai-product-recommendation/index.ts": {
    "path": "supabase/functions/ai-product-recommendation/index.ts",
-   "lines": 136,
+   "lines": 133,
    "exports": [
     "interface AiProductRecommendationDeps",
     "function handleAiProductRecommendation"
@@ -388172,10 +388172,26 @@
   }
  },
  "git": {
-  "sha": "546c6f5d9cf65ce68684c29063ea07bc91ba853b",
+  "sha": "eb93d55ec1654697ac0d5886fc324f27e5d4175e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "eb93d55",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)",
+    "files": [
+     "supabase/deployment-manifest.json",
+     "supabase/functions/ai-deadline-calculator/index.ts",
+     "supabase/functions/ai-lead-temperature/index.ts",
+     "supabase/functions/ai-loss-risk/index.ts",
+     "supabase/functions/ai-multimodal-analysis/index.ts",
+     "supabase/functions/ai-objection-handler/index.ts",
+     "supabase/functions/ai-price-anchor/index.ts",
+     "supabase/functions/ai-product-recommendation/index.ts"
+    ]
+   },
    {
     "sha": "546c6f5",
     "date": "2026-11-13",
@@ -388472,21 +388488,12 @@
      "supabase/deployment-manifest.json",
      "supabase/functions/gmail-oauth/index.ts"
     ]
-   },
-   {
-    "sha": "491a75d",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(scripts): guard rodar() contra bun ausente no PATH (#2978)",
-    "files": [
-     "scripts/tarefas/seed-local-imagens.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    3
+    4
    ],
    [
     "PENDENCIAS.md",
@@ -388499,6 +388506,34 @@
    [
     "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
     2
+   ],
+   [
+    "supabase/functions/ai-deadline-calculator/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-lead-temperature/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-loss-risk/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-multimodal-analysis/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-objection-handler/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-price-anchor/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-product-recommendation/index.ts",
+    1
    ],
    [
     "src/components/copilot/QuoteDraftCard.tsx",
@@ -388534,34 +388569,6 @@
    ],
    [
     "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
-    1
-   ],
-   [
-    "src/hooks/integrations/useTalkXCommandItems.ts",
-    1
-   ],
-   [
-    "ESTADO.md",
-    1
-   ],
-   [
-    "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
-    1
-   ],
-   [
-    "src/hooks/inbox/useInboxBulkActions.ts",
-    1
-   ],
-   [
-    "scripts/ci/check-edge-error-exposure.mjs",
-    1
-   ],
-   [
-    "scripts/ci/check-edge-error-exposure.unit.mjs",
-    1
-   ],
-   [
-    "supabase/functions/gmail-webhook/index.ts",
     1
    ]
   ]

@@ -10793,6 +10793,7 @@
   "supabase/functions/ai-deadline-calculator/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-json.ts",
    "supabase/functions/_shared/ai-response-contracts.ts",
    "supabase/functions/_shared/ai-usage.ts",
    "supabase/functions/_shared/schemas.ts",
@@ -10821,6 +10822,7 @@
   "supabase/functions/ai-lead-temperature/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-json.ts",
    "supabase/functions/_shared/ai-response-contracts.ts",
    "supabase/functions/_shared/ai-usage.ts",
    "supabase/functions/_shared/schemas.ts",
@@ -10829,6 +10831,7 @@
   "supabase/functions/ai-loss-risk/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-json.ts",
    "supabase/functions/_shared/ai-response-contracts.ts",
    "supabase/functions/_shared/ai-usage.ts",
    "supabase/functions/_shared/schemas.ts",
@@ -10837,6 +10840,7 @@
   "supabase/functions/ai-multimodal-analysis/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-json.ts",
    "supabase/functions/_shared/ai-response-contracts.ts",
    "supabase/functions/_shared/ai-usage.ts",
    "supabase/functions/_shared/schemas.ts",
@@ -10845,6 +10849,7 @@
   "supabase/functions/ai-objection-handler/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-json.ts",
    "supabase/functions/_shared/ai-response-contracts.ts",
    "supabase/functions/_shared/ai-usage.ts",
    "supabase/functions/_shared/schemas.ts",
@@ -10853,6 +10858,7 @@
   "supabase/functions/ai-price-anchor/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-json.ts",
    "supabase/functions/_shared/ai-response-contracts.ts",
    "supabase/functions/_shared/ai-usage.ts",
    "supabase/functions/_shared/schemas.ts",
@@ -10861,6 +10867,7 @@
   "supabase/functions/ai-product-recommendation/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-json.ts",
    "supabase/functions/_shared/ai-response-contracts.ts",
    "supabase/functions/_shared/ai-usage.ts",
    "supabase/functions/_shared/schemas.ts",

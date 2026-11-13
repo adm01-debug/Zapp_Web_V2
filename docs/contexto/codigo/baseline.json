@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "546c6f5d9cf65ce68684c29063ea07bc91ba853b",
+  "commit": "eb93d55ec1654697ac0d5886fc324f27e5d4175e",
   "branch": "main",
-  "data_commit": "2026-11-13T03:43:01-03:00",
+  "data_commit": "2026-11-13T04:37:41-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "eb93d55",
+    "data": "2026-11-13",
+    "assunto": "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)"
+   },
    {
     "sha": "546c6f5",
     "data": "2026-11-13",
@@ -126,11 +131,6 @@
     "sha": "376332a",
     "data": "2026-11-12",
     "assunto": "fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)"
-   },
-   {
-    "sha": "93bff67",
-    "data": "2026-11-12",
-    "assunto": "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)"
    }
   ],
   "arquivos_mudados_7d": 674,
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 16
+    "mudancas": 17
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8423,
   "arquivos_codigo": 4819,
-  "linhas_codigo": 892296,
+  "linhas_codigo": 892273,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -780,7 +780,7 @@
   },
   "supabase/functions": {
    "arquivos": 392,
-   "linhas": 118955
+   "linhas": 118932
   },
   "tailwind.config.ts": {
    "arquivos": 1,
