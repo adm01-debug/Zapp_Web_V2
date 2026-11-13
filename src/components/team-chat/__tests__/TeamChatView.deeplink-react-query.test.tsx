@@ -21,6 +21,8 @@ const B = '22222222-2222-4222-8222-222222222222';
 const h = vi.hoisted(() => ({
   servidor: [] as Array<{ id: string; name: string }>,
   buscas: 0,
+  // Espelha `enabled: !!profile` do hook real: sem perfil a lista não busca.
+  perfil: true,
 }));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({
@@ -31,6 +33,7 @@ vi.mock('@/hooks/chat/useTeamChat', () => ({
         h.buscas += 1;
         return h.servidor.slice();
       },
+      enabled: h.perfil,
       retry: false,
     }),
 }));
@@ -58,11 +61,13 @@ import { TeamChatView } from '../TeamChatView';
 
 function cenario() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const arvore = () => (
     <QueryClientProvider client={client}>
       <TeamChatView />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const r = render(arvore());
+  return { ...r, rerenderArvore: () => r.rerender(arvore()) };
 }
 
 const notificar = (cid: string) =>
@@ -84,6 +89,7 @@ describe('TeamChatView — deep-link com React Query real', () => {
   beforeEach(() => {
     h.servidor = [{ id: B, name: 'B' }];
     h.buscas = 0;
+    h.perfil = true;
     window.history.replaceState({}, '', '/?view=team-chat');
   });
 
@@ -114,5 +120,21 @@ describe('TeamChatView — deep-link com React Query real', () => {
 
     await waitFor(() => expect(screen.getByTestId('painel').textContent).toBe(A));
     expect(h.buscas).toBe(buscasDepoisDoDescarte + 1);
+  });
+
+  it('?cid= aberto por URL antes do perfil carregar espera a primeira busca real e abre a conversa', async () => {
+    h.servidor = [{ id: A, name: 'A' }, { id: B, name: 'B' }];
+    h.perfil = false; // query desabilitada: isLoading=false, sem dados
+    window.history.replaceState({}, '', `/?view=team-chat&cid=${A}`);
+    const { rerenderArvore } = cenario();
+    await assentar();
+    expect(h.buscas).toBe(0); // não recarregou nem descartou com a lista vazia de "sem perfil"
+    expect(screen.queryByTestId('painel')).toBeNull();
+
+    h.perfil = true; // perfil chegou
+    rerenderArvore();
+
+    await waitFor(() => expect(screen.getByTestId('painel').textContent).toBe(A));
+    expect(h.buscas).toBe(1);
   });
 });

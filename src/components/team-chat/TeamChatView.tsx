@@ -27,9 +27,13 @@ function stripCidParam(): void {
 export function TeamChatView() {
   const {
     data: conversations = [],
-    isLoading: conversationsLoading,
+    isLoading,
+    isPending,
     refetch: refetchConversations,
   } = useTeamConversations();
+  // Sem perfil a query fica desabilitada (`enabled: !!profile`) e `isLoading` é false
+  // sem nenhuma busca feita: `isPending` segura o deep-link até a primeira lista real.
+  const conversationsLoading = isLoading || !!isPending;
   // Conversa aberta (escolha do usuário ou deep-link já resolvido). Um deep-link
   // pendente não a apaga: só a substitui quando a conversa dele existir.
   const [pickedId, setPickedId] = useState<string | null>(null);
