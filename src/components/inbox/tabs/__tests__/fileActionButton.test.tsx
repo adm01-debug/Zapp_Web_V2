@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { FileCard } from '../FileCard';
-import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from '../fileActionButton';
+import { FILE_ACTION_BUTTON } from '../fileActionButton';
 
 /**
  * A07a — área de toque dos botões de ação do cartão de arquivo no celular.
@@ -160,14 +160,7 @@ describe('FILE_ACTION_BUTTON (A07a)', () => {
 
     expect(screen.getByRole('button', { name: 'Visualizar' }).className).toBe(FILE_ACTION_BUTTON);
     expect(screen.getByRole('button', { name: 'Mais ações' }).className).toBe(FILE_ACTION_BUTTON);
-
-    // o "Encaminhar" (desabilitado) mantém o cinza e o ponteiro barrado, sem herdar o hover da base
-    const encaminhar = screen.getByRole('button', { name: 'Encaminhar' });
-    expect(encaminhar).toBeDisabled();
-    expect(encaminhar.className).toBe(FILE_ACTION_BUTTON_DISABLED);
-    expect(FILE_ACTION_BUTTON_DISABLED).toContain('disabled:text-muted-foreground/50');
-    expect(FILE_ACTION_BUTTON_DISABLED).toContain('cursor-not-allowed');
-    expect(FILE_ACTION_BUTTON_DISABLED).toContain('disabled:hover:bg-transparent');
-    expect(FILE_ACTION_BUTTON_DISABLED).toContain('disabled:hover:text-muted-foreground/50');
+    // B3: o "Encaminhar" agora funciona e usa a mesma constante dos outros botões
+    expect(screen.getByRole('button', { name: 'Encaminhar' }).className).toBe(FILE_ACTION_BUTTON);
   });
 });
