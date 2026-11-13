@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7c3ef80de29ca64e4e179a3067861c5a10d50bf9",
+  "commit": "d1af577e142587abaf4007742ddb24ca3545793d",
   "branch": "main",
-  "data_commit": "2026-11-13T12:43:34Z",
+  "data_commit": "2026-11-13T11:09:15-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d1af577",
+    "data": "2026-11-13",
+    "assunto": "feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)"
+   },
    {
     "sha": "7c3ef80",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "87c5e97",
     "data": "2026-11-12",
     "assunto": "fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)"
-   },
-   {
-    "sha": "0a1e73f",
-    "data": "2026-11-12",
-    "assunto": "fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)"
    }
   ],
-  "arquivos_mudados_7d": 688,
+  "arquivos_mudados_7d": 692,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 271
+    "mudancas": 275
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8428,
-  "arquivos_codigo": 4824,
-  "linhas_codigo": 892916,
+  "arquivos_total": 8429,
+  "arquivos_codigo": 4825,
+  "linhas_codigo": 892975,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2627,
+  "testes": 2628,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2182,
-   "linhas": 372406
+   "arquivos": 2183,
+   "linhas": 372465
   },
   "src/config": {
    "arquivos": 3,

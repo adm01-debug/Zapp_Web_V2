@@ -6872,8 +6872,8 @@
   {
    "modulo": "components/talkx",
    "arquivos": 100,
-   "testes": 146,
-   "linhas": 23798,
+   "testes": 147,
+   "linhas": 23814,
    "itens_menu": [
     "Campanhas"
    ],

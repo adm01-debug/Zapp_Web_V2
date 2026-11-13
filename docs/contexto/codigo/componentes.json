@@ -10801,14 +10801,14 @@
     "TalkXTone"
    ],
    "export_default": null,
-   "linhas": 242,
+   "linhas": 251,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useReducedMotion"
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 4,
+   "usado_por": 5,
    "orfao": false
   },
   {
@@ -11461,7 +11461,7 @@
     "TalkXTemplateEditor"
    ],
    "export_default": null,
-   "linhas": 851,
+   "linhas": 858,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useTalkX",
@@ -13194,7 +13194,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 95,
+   "usado_por": 94,
    "orfao": false
   },
   {

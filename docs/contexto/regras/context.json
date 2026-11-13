@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7c3ef80de29ca64e4e179a3067861c5a10d50bf9",
+  "sha": "d1af577e142587abaf4007742ddb24ca3545793d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 13:49 UTC",
-  "files_total": 8270,
-  "code_files": 6102,
-  "code_lines": 1061403
+  "generated_at": "2026-11-13 14:58 UTC",
+  "files_total": 8271,
+  "code_files": 6103,
+  "code_lines": 1061462
  },
  "version": "1.3.2",
- "facts_hash": "0a0f6941567ce58f",
+ "facts_hash": "75efaae48f53f252",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -324,7 +324,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2348,
+   ".tsx": 2349,
    ".ts": 1894,
    ".sql": 1306,
    ".mjs": 435,
@@ -65452,7 +65452,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2182,
+  "components_count": 2183,
   "hooks": [
    {
     "name": "useContacts",
@@ -68583,8 +68583,8 @@
   },
   {
    "module": "src/components",
-   "files": 2182,
-   "lines": 372406,
+   "files": 2183,
+   "lines": 372465,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -90388,6 +90388,10 @@
    {
     "file": "src/components/talkx/help/talkxHelpRoute.ts",
     "text": "* O chamador deve reescrever o endereço sem criar entrada no histórico. */"
+   },
+   {
+    "file": "src/components/talkx/kit/dialogs.tsx",
+    "text": "Sem descrição, o Radix não deve apontar aria-describedby para um id inexistente;"
    },
    {
     "file": "src/components/talkx/kit/forcedState.ts",
@@ -163467,6 +163471,14 @@
     "name": "o editor traz a trilha da tela 05 dentro do shell do módulo"
    },
    {
+    "file": "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx",
+    "name": "TalkXTemplateEditor — diálogo "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx",
+    "name": "tem descrição acessível e o campo "
+   },
+   {
     "file": "src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx",
     "name": "X193 — painel do editor de template abaixo de 1280 px"
    },
@@ -165381,6 +165393,18 @@
    {
     "file": "src/components/talkx/kit/__tests__/ModuleHeader.test.tsx",
     "name": "lista vazia é o mesmo que não ter trilha (não desenha nav vazio)"
+   },
+   {
+    "file": "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx",
+    "name": "TalkXDialogShell — descrição acessível"
+   },
+   {
+    "file": "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx",
+    "name": "com description: o diálogo é descrito pelo texto (aria-describedby → elemento com o texto)"
+   },
+   {
+    "file": "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx",
+    "name": "sem description: sem aria-describedby (nada de id pendurado)"
    },
    {
     "file": "src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx",
@@ -307916,7 +307940,7 @@
   },
   "src/components/talkx/TalkXTemplateEditor.tsx": {
    "path": "src/components/talkx/TalkXTemplateEditor.tsx",
-   "lines": 851,
+   "lines": 858,
    "exports": [
     "function TalkXTemplateEditor"
    ],
@@ -310476,13 +310500,15 @@
   },
   "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx",
-   "lines": 112,
+   "lines": 124,
    "is_test": true,
    "tests": [
     "X094 — campos do editor (descrição) e trilha dentro do shell",
     "mostra a descrição do template no campo de descrição",
     "descrição editada é o que o save manda para o banco",
-    "o editor traz a trilha da tela 05 dentro do shell do módulo"
+    "o editor traz a trilha da tela 05 dentro do shell do módulo",
+    "TalkXTemplateEditor — diálogo ",
+    "tem descrição acessível e o campo "
    ]
   },
   "src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx": {
@@ -311696,7 +311722,7 @@
   },
   "src/components/talkx/kit/dialogs.tsx": {
    "path": "src/components/talkx/kit/dialogs.tsx",
-   "lines": 242,
+   "lines": 251,
    "exports": [
     "type TalkXTone",
     "interface ConfirmCheck",
@@ -311713,6 +311739,9 @@
      "name": "TalkXTone",
      "values": "primary | danger | success | violet"
     }
+   ],
+   "rule_comments": [
+    "Sem descrição, o Radix não deve apontar aria-describedby para um id inexistente;"
    ]
   },
   "src/components/talkx/kit/filters.tsx": {
@@ -312002,6 +312031,16 @@
     "trilha de $caso: nav rotulado com os itens na ordem recebida",
     "sem trilha não desenha nav nenhum (as telas que não passam breadcrumb não mudam)",
     "lista vazia é o mesmo que não ter trilha (não desenha nav vazio)"
+   ]
+  },
+  "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx": {
+   "path": "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx",
+   "lines": 31,
+   "is_test": true,
+   "tests": [
+    "TalkXDialogShell — descrição acessível",
+    "com description: o diálogo é descrito pelo texto (aria-describedby → elemento com o texto)",
+    "sem description: sem aria-describedby (nada de id pendurado)"
    ]
   },
   "src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx": {
@@ -388543,10 +388582,22 @@
   }
  },
  "git": {
-  "sha": "7c3ef80de29ca64e4e179a3067861c5a10d50bf9",
+  "sha": "d1af577e142587abaf4007742ddb24ca3545793d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d1af577",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)",
+    "files": [
+     "src/components/talkx/TalkXTemplateEditor.tsx",
+     "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx",
+     "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx",
+     "src/components/talkx/kit/dialogs.tsx"
+    ]
+   },
    {
     "sha": "7c3ef80",
     "date": "2026-11-13",
@@ -388857,22 +388908,12 @@
     "files": [
      "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
     ]
-   },
-   {
-    "sha": "6f90c93",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)",
-    "files": [
-     "supabase/deployment-manifest.json",
-     "supabase/functions/external-db-bridge/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    3
+    2
    ],
    [
     "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
@@ -388885,6 +388926,22 @@
    [
     "RELATORIO_CI.md",
     2
+   ],
+   [
+    "src/components/talkx/TalkXTemplateEditor.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/kit/dialogs.tsx",
+    1
    ],
    [
     "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
@@ -388932,22 +388989,6 @@
    ],
    [
     "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/FileCard.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/FilesContent.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/FilesListView.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
     1
    ]
   ]
