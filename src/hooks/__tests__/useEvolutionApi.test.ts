@@ -61,6 +61,9 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         'updateProfilePicture', 'removeProfilePicture', 'fetchProfilePicture',
         'fetchBusinessProfile', 'updatePrivacySettings',
         'findLabels', 'handleLabel',
+        // restauradas após o #2054 (decisão do dono)
+        'findChats', 'offerCall', 'createTemplate', 'findTemplates', 'deleteTemplate',
+        'getBusinessCatalog', 'getBusinessCollections',
       ];
       expectedFunctions.forEach(fn => {
         expect(typeof result.current[fn as keyof typeof result.current]).toBe('function');
@@ -71,7 +74,7 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
     it('não expõe mais os métodos das ações que a Evolution GO não tem', () => {
       const { result } = renderHook(() => useEvolutionApi());
       const removidos = [
-        'findChats', 'findMessages', 'findStatusMessages',
+        'findMessages', 'findStatusMessages',
         'setChatwoot', 'getChatwoot', 'deleteChatwoot',
         'setTypebot', 'getTypebot', 'deleteTypebot', 'getTypebotSessions', 'changeTypebotStatus', 'startTypebot',
         'setOpenAI', 'getOpenAI', 'deleteOpenAI',
@@ -79,8 +82,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         'setFlowise', 'getFlowise', 'deleteFlowise',
         'setEvolutionBot', 'getEvolutionBot', 'deleteEvolutionBot',
         'setRabbitMQ', 'getRabbitMQ', 'setSQS', 'getSQS',
-        'createTemplate', 'findTemplates', 'deleteTemplate',
-        'offerCall', 'getBusinessCatalog', 'getBusinessCollections',
         'setProxy', 'getProxy',
         'setEvoAI', 'getEvoAI', 'deleteEvoAI',
         'setN8N', 'getN8N', 'deleteN8N',
@@ -445,13 +446,14 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
 
     it('sendTemplateMessage', async () => {
       const { result } = renderHook(() => useEvolutionApi());
-      const template = { name: 'hello_world', language: { code: 'pt_BR' } };
+      // Evolution v2 (templateMessageSchema): name/language/components no topo do corpo.
+      const template = { name: 'hello_world', language: 'pt_BR', components: [] };
       await act(async () => {
         await result.current.sendTemplateMessage('wpp2', '5511999', template);
       });
       expect(mockInvoke).toHaveBeenCalledWith('evolution-api/send-template', {
         method: 'POST',
-        body: { instanceName: 'wpp2', number: '5511999', template },
+        body: { instanceName: 'wpp2', number: '5511999', ...template },
       });
     });
   });

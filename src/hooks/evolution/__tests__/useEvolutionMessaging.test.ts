@@ -13,6 +13,8 @@
  * function REALMENTE atende (lista própria do roteador, colada abaixo) — é o
  * único jeito de pegar uma função do hook que aponta para ação inexistente.
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -88,7 +90,7 @@ const CASES: Row[] = [
   { name: 'sendListMessage(sem footer)', action: 'send-list', body: { instanceName, number, title: 'Menu', description: 'Escolha um setor', buttonText: 'Abrir', sections }, run: (a) => a.sendListMessage(instanceName, number, 'Menu', 'Escolha um setor', 'Abrir', sections) },
   { name: 'sendButtonsMessage', action: 'send-buttons', body: { instanceName, number, title: 'Confirmar', description: 'Tudo certo?', buttons, footer: 'Promo Brindes' }, run: (a) => a.sendButtonsMessage(instanceName, number, 'Confirmar', 'Tudo certo?', buttons, 'Promo Brindes') },
   { name: 'sendStatusMessage', action: 'send-status', body: { instanceName, status: 'Oi', allContacts: true }, run: (a) => a.sendStatusMessage(instanceName, { status: 'Oi', allContacts: true }) },
-  { name: 'sendTemplateMessage', action: 'send-template', body: { instanceName, number, template: { name: 'boas_vindas', language: 'pt_BR' } }, run: (a) => a.sendTemplateMessage(instanceName, number, { name: 'boas_vindas', language: 'pt_BR' }) },
+  { name: 'sendTemplateMessage', action: 'send-template', body: { instanceName, number, name: 'boas_vindas', language: 'pt_BR' }, run: (a) => a.sendTemplateMessage(instanceName, number, { name: 'boas_vindas', language: 'pt_BR' }) },
   { name: 'sendPtvMessage', action: 'send-ptv', body: { instanceName, number, video: 'whatsapp-media/contato/video.mp4', delay: 500 }, run: (a) => a.sendPtvMessage(instanceName, number, 'whatsapp-media/contato/video.mp4', 500) },
   { name: 'sendChatPresence', action: 'send-chat-presence', body: { instanceName, number, presence: 'composing', delay: 3000 }, run: (a) => a.sendChatPresence(instanceName, number, 'composing', 3000) },
   { name: 'sendChatPresence(sem delay)', action: 'send-chat-presence', body: { instanceName, number, presence: 'recording' }, run: (a) => a.sendChatPresence(instanceName, number, 'recording') },
@@ -110,30 +112,12 @@ const CASES: Row[] = [
   { name: 'fetchContactProfile', action: 'fetch-profile', body: { instanceName, number }, run: (a) => a.fetchContactProfile(instanceName, number) },
 ];
 
-const ACTIONS_OF_THE_ROUTER = new Set<string>([
-  'accept-invite', 'archive-chat', 'bootstrap-instance-token', 'check-numbers', 'connect',
-  'create-connection', 'create-group', 'create-instance', 'create-template', 'delete-chatwoot',
-  'delete-dify', 'delete-evoai', 'delete-evolution-bot', 'delete-flowise', 'delete-for-everyone',
-  'delete-instance', 'delete-message', 'delete-n8n', 'delete-openai', 'delete-template',
-  'delete-typebot', 'disconnect', 'edit-message', 'fetch-business-profile', 'fetch-profile',
-  'fetch-profile-picture', 'find-chats', 'find-contacts', 'find-labels', 'find-messages',
-  'find-status-messages', 'find-templates', 'get-catalog', 'get-chatwoot', 'get-collections',
-  'get-dify', 'get-evoai', 'get-evolution-bot', 'get-flowise', 'get-kafka', 'get-media-base64',
-  'get-n8n', 'get-nats', 'get-openai', 'get-proxy', 'get-pusher', 'get-rabbitmq', 'get-settings',
-  'get-sqs', 'get-typebot', 'get-webhook', 'group-info', 'group-invite-code', 'group-participants',
-  'handle-label', 'instance-info', 'invite-info', 'leave-group', 'list-groups', 'list-instances',
-  'mark-read', 'mark-unread', 'offer-call', 'remove-profile-picture', 'restart-instance',
-  'revoke-invite-code', 'send-audio', 'send-buttons', 'send-chat-presence', 'send-contact',
-  'send-list', 'send-location', 'send-media', 'send-poll', 'send-ptv', 'send-reaction',
-  'send-status', 'send-sticker', 'send-template', 'send-text', 'set-chatwoot', 'set-dify',
-  'set-evoai', 'set-evolution-bot', 'set-flowise', 'set-kafka', 'set-n8n', 'set-nats',
-  'set-openai', 'set-presence', 'set-proxy', 'set-pusher', 'set-rabbitmq', 'set-settings',
-  'set-sqs', 'set-typebot', 'set-webhook', 'start-typebot', 'status', 'toggle-ephemeral',
-  'typebot-change-status', 'typebot-sessions', 'update-block-status', 'update-group-description',
-  'update-group-name', 'update-group-picture', 'update-group-setting', 'update-message',
-  'update-participants', 'update-privacy', 'update-profile-name', 'update-profile-picture',
-  'update-profile-status',
-]);
+// Lido do FONTE do roteador, não colado: a lista colada envelheceu e escondeu
+// que o #2054 apagou rotas ainda chamadas pelo front (get-settings, mark-unread…).
+const ACTIONS_OF_THE_ROUTER = new Set<string>(
+  [...readFileSync(resolve(process.cwd(), 'supabase/functions/evolution-api/index.ts'), 'utf8')
+    .matchAll(/action === '([a-z0-9-]+)'/g)].map((m) => m[1]),
+);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -373,8 +357,8 @@ describe('limites e dado malformado', () => {
 });
 
 describe('contrato com o roteador da edge function', () => {
-  it('o próprio conjunto de ações do roteador é o esperado (108+ ações, todas em kebab-case)', () => {
-    expect(ACTIONS_OF_THE_ROUTER.size).toBeGreaterThanOrEqual(108);
+  it('o próprio conjunto de ações do roteador é lido do fonte (dezenas de ações, todas em kebab-case)', () => {
+    expect(ACTIONS_OF_THE_ROUTER.size).toBeGreaterThanOrEqual(50);
     for (const action of ACTIONS_OF_THE_ROUTER) {
       expect(action).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     }
@@ -384,7 +368,6 @@ describe('contrato com o roteador da edge function', () => {
     expect(ACTIONS_OF_THE_ROUTER.has('pin-chat')).toBe(false);
   });
 
-  // Lista colada de `grep -oE "action === '[a-z0-9-]+'" supabase/functions/evolution-api/index.ts | sort -u`.
   // Fica vermelha se o hook passar a mandar uma ação que o roteador não atende
   // (foi assim que as seis ações sem tratador apareceram).
   it('toda ação enviada pelo hook existe no roteador da edge function', () => {

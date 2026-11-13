@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, CheckCircle, Loader2, Eye, EyeOff, ShieldAlert } from 'lucide-react';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
