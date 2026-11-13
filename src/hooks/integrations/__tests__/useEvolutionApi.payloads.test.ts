@@ -166,7 +166,7 @@ describe('mapeamento ação -> payload da edge function', () => {
     const recompostas = [
       'isLoading',
       // useEvolutionInstance
-      'createInstance', 'createConnection', 'listInstances', 'connectInstance', 'getInstanceStatus',
+      'createInstance', 'createConnection', 'listInstances', 'connectInstance', 'syncInstanceToken', 'getInstanceStatus',
       'getInstanceInfo', 'restartInstance', 'disconnectInstance', 'deleteInstance', 'setPresence',
       'setSettings', 'getSettings', 'setWebhook', 'getWebhook',
       // useEvolutionMessaging

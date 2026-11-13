@@ -62,7 +62,7 @@ partir do código e falha quando:
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:142` |
 | `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1397` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
-| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:130` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:135` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `copilot-live` | E | — sem chamador no repositório — |
 | `create-user` | A | `src/components/admin/useAdminData.ts:485` · `src/components/admin/useAdminData.ts:485` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
@@ -78,8 +78,8 @@ partir do código e falha quando:
 | `elevenlabs-voice-design` | A | `src/components/voice/ElevenLabsVoiceDesign.tsx:32` |
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
 | `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks/groups/actions.ts:106` |
-| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:105` |
-| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:529` · `supabase/functions/evolution-api/index.ts:595` · `supabase/functions/evolution-api/index.ts:756` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
+| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:110` |
+| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:587` · `supabase/functions/evolution-api/index.ts:688` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
 | `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
