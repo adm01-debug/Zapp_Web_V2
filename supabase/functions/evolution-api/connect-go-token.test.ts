@@ -47,10 +47,15 @@ function makeService(state: ServiceState): any {
   };
 }
 
-function makeCaller(isAdmin = true): any {
+type Role = "admin" | "supervisor" | "agent";
+function makeCaller(role: Role = "admin"): any {
   return {
-    auth: { getUser: () => Promise.resolve({ data: { user: { id: "admin-1" } }, error: null }) },
-    rpc: (fn: string) => Promise.resolve({ data: fn === "is_admin_or_supervisor" ? isAdmin : false, error: null }),
+    auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } }, error: null }) },
+    rpc: (fn: string, args: Record<string, unknown>) => {
+      if (fn === "is_admin_or_supervisor") return Promise.resolve({ data: role !== "agent", error: null });
+      if (fn === "has_role") return Promise.resolve({ data: args?._role === role, error: null });
+      return Promise.resolve({ data: false, error: null });
+    },
   };
 }
 
@@ -65,7 +70,7 @@ const QR_OK = { message: "success", data: { qrcode: "data:image/png;base64,QUFB|
 async function run(
   action: string,
   handler: Handler,
-  opts: { vaultToken?: string | null; envToken?: string | null; isAdmin?: boolean; connection?: boolean; flavor?: string } = {},
+  opts: { vaultToken?: string | null; envToken?: string | null; role?: Role; connection?: boolean; flavor?: string } = {},
 ) {
   resetInstanceTokenCache();
   Deno.env.set("EVOLUTION_API_URL", GO);
@@ -92,7 +97,7 @@ async function run(
       headers: { "Content-Type": "application/json", Authorization: "Bearer test", "x-real-ip": nextIp() },
       body: JSON.stringify({ instanceName: "PRINCIPAL" }),
     });
-    const res = await handleEvolutionApi(req, { supabase: makeService(state), callerClient: makeCaller(opts.isAdmin ?? true) });
+    const res = await handleEvolutionApi(req, { supabase: makeService(state), callerClient: makeCaller(opts.role ?? "admin") });
     const text = await res.text();
     return { status: res.status, text, body: JSON.parse(text), calls, state };
   } finally {
@@ -123,7 +128,7 @@ Deno.test("connect: tempo esgotado no /instance/connect → 200 + go_unreachable
   assert(String(r.body.message).includes("não respondeu a tempo"));
 });
 
-Deno.test("connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → não lança; segue para o status", async () => {
+Deno.test("connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → go_unreachable, sem lançar", async () => {
   const r = await run("connect", (url) => {
     if (url === "/instance/connect") return json(200, { message: "success" });
     if (url === "/instance/qr") throw new DOMException("signal timed out", "TimeoutError");
@@ -131,7 +136,64 @@ Deno.test("connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → nã
     return json(500, {});
   }, { vaultToken: OLD_TOKEN });
   assertEquals(r.status, 200);
-  assertEquals(r.body.status, "connecting");
+  assertEquals(r.body.code, "go_unreachable");
+  assertEquals(r.body.status, 504);
+  assert(String(r.body.message).includes("QR Code"));
+});
+
+Deno.test("connect: QR lento numa instância já pareada (sessão morta) → go_unreachable e ZERO delete/create", async () => {
+  const r = await run("connect", (url) => {
+    if (url === "/instance/connect") return json(200, { message: "success" });
+    if (url === "/instance/qr") throw new DOMException("signal timed out", "TimeoutError");
+    if (url === "/instance/status") return json(200, { data: { Connected: false, LoggedIn: false } });
+    if (url === "/instance/all") return goAll([{ id: "u-2", name: "PRINCIPAL", jid: "5511999999999@s.whatsapp.net", token: OLD_TOKEN }]);
+    return json(200, {});
+  }, { vaultToken: OLD_TOKEN });
+  assertEquals(r.body.code, "go_unreachable");
+  assertEquals(r.calls.filter((c) => c.url.startsWith("/instance/delete") || c.url === "/instance/create").length, 0,
+    "lentidão nunca pode apagar/recriar a instância na GO");
+});
+
+Deno.test("connect: teto global de 40 s (abaixo dos 45 s do navegador) → 504 amigável, sem recriação", async () => {
+  const realNow = Date.now;
+  let offset = 0;
+  Date.now = () => realNow() + offset;
+  try {
+    const r = await run("connect", (url) => {
+      if (url === "/instance/connect") { offset = 39_000; return json(200, { message: "success" }); }
+      if (url === "/instance/qr") return json(200, { message: "success", data: { code: "", qrcode: "" } });
+      if (url === "/instance/status") return json(200, { data: { Connected: false, LoggedIn: false } });
+      if (url === "/instance/all") return goAll([{ id: "u-2", name: "PRINCIPAL", jid: "x@s.whatsapp.net", token: OLD_TOKEN }]);
+      return json(200, {});
+    }, { vaultToken: OLD_TOKEN });
+    assertEquals(r.status, 200);
+    assertEquals(r.body.code, "go_unreachable");
+    assertEquals(r.body.status, 504);
+    assert(String(r.body.message).includes("lento demais"));
+    assertEquals(r.calls.filter((c) => c.url.startsWith("/instance/delete") || c.url === "/instance/create").length, 0);
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+Deno.test("connect: corpo do connect com token ecoado pela GO não vaza na resposta", async () => {
+  const r = await run("connect", (url) => {
+    if (url === "/instance/connect") return json(200, { message: "success", data: { token: OLD_TOKEN, jid: "x" } });
+    if (url === "/instance/qr") return json(200, QR_OK);
+    return json(500, {});
+  }, { vaultToken: OLD_TOKEN });
+  assertEquals(r.body.status, "qr_pending");
+  assert(!r.text.includes(OLD_TOKEN), "token ecoado pela GO não pode voltar ao navegador");
+});
+
+Deno.test("connect: supervisor com credencial recusada → não busca a chave (só admin), orienta", async () => {
+  const r = await run("connect", (url) => url === "/instance/all"
+    ? goAll([{ id: "u-2", name: "PRINCIPAL", token: NEW_TOKEN }])
+    : json(401, { error: "not authorized" }), { vaultToken: OLD_TOKEN, role: "supervisor" });
+  assertEquals(r.body.code, "instance_token_invalid");
+  assert(String(r.body.message).includes("administrador"));
+  assert(!r.calls.some((c) => c.url === "/instance/all"), "supervisor não dispara a busca da credencial");
+  assertEquals(r.state.setCalls.length, 0);
 });
 
 Deno.test("connect: corpo não-JSON (502 HTML do proxy reverso) → 200 + go_error", async () => {
@@ -240,11 +302,14 @@ Deno.test("sync-instance-token: admin grava a chave da GO no Vault e não ecoa o
   assert(!r.text.includes(NEW_TOKEN), "token nunca volta na resposta");
 });
 
-Deno.test("sync-instance-token: sem papel admin/supervisor → 403 e nenhuma chamada à GO", async () => {
-  const r = await run("sync-instance-token", () => goAll([]), { isAdmin: false });
-  assertEquals(r.status, 403);
-  assertEquals(r.calls.length, 0);
-});
+for (const role of ["agent", "supervisor"] as const) {
+  Deno.test(`sync-instance-token: ${role} → 403 e nenhuma chamada à GO (só admin, regras.md)`, async () => {
+    const r = await run("sync-instance-token", () => goAll([]), { role });
+    assertEquals(r.status, 403);
+    assertEquals(r.calls.length, 0);
+    assertEquals(r.state.setCalls.length, 0);
+  });
+}
 
 Deno.test("sync-instance-token: instância inexistente na GO → instance_not_found, nada gravado", async () => {
   const r = await run("sync-instance-token", () => goAll([]), {});

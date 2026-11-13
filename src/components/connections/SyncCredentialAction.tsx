@@ -10,17 +10,18 @@ interface SyncCredentialActionProps {
 /**
  * 13/11 — "o sistema deve buscar a chave sozinho". Aparece no diálogo de QR
  * quando a Edge responde que a credencial da instância foi recusada/não existe
- * (`instance_token_invalid` / `instance_token_missing`). A ação na Edge é
- * admin/supervisor (`requireAdmin` → is_admin_or_supervisor; `isSupervisor`
- * já inclui admin); para os demais papéis a tela só orienta.
+ * (`instance_token_invalid` / `instance_token_missing`). Regra do dono
+ * (docs/contexto/regras/manual/regras.md:17/:58): só o ADMIN gerencia conexões
+ * e credenciais — a Edge exige `has_role(admin)`; supervisor e atendente só
+ * recebem a orientação.
  *
  * Componente próprio (e não dentro do ConnectionsView) para que o papel só
  * seja consultado quando esse erro acontece.
  */
 export function SyncCredentialAction({ syncing, onSync }: SyncCredentialActionProps) {
-  const { isSupervisor, loading } = useUserRole();
+  const { isAdmin, loading } = useUserRole();
   if (loading) return null;
-  if (!isSupervisor) {
+  if (!isAdmin) {
     return (
       <p className="text-xs text-muted-foreground">
         Peça a um administrador para sincronizar a credencial desta conexão.

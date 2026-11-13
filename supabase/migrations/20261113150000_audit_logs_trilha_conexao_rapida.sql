@@ -47,6 +47,10 @@
 --   CREATE POLICY "Only admins can view audit logs" ON public.audit_logs
 --     FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
+-- Não ficar na fila atrás de leitura longa de audit_logs segurando todo mundo:
+-- sem o lock em 3 s, a migration falha e pode ser repetida.
+SET LOCAL lock_timeout = '3s';
+
 DROP POLICY IF EXISTS "Only admins can view audit logs" ON public.audit_logs;
 CREATE POLICY "Only admins can view audit logs"
 ON public.audit_logs
