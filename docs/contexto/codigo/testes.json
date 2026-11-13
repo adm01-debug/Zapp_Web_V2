@@ -572,9 +572,9 @@
   {
    "arquivo": "e2e/tarefas-linha-de-base.spec.ts",
    "tipo": "e2e",
-   "linhas": 373,
+   "linhas": 378,
    "testa": [],
-   "casos": 1
+   "casos": 2
   },
   {
    "arquivo": "e2e/tarefas-quadro.spec.ts",

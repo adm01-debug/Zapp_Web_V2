@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `cb6576b2a3a0d3f8b5b091878314cf5087fa10b1` (2026-11-13T13:27:15-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `48f9754f709d7a21bd89b11c57ce07f1967fdd11` (2026-11-13T14:57:00-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8496 |
 | arquivos_codigo | 4890 |
-| linhas_codigo | 906250 |
+| linhas_codigo | 906255 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 57504 nós · 119284 arestas · 4184 comunidades · grafo do commit `cb6576b2`
+- 57504 nós · 119284 arestas · 4184 comunidades · grafo do commit `48f9754f`
 - comunidades maiores: lucide-react (897), cn (882), TalkXSuppression.tsx (739), vitest (580), react (538), ref_node_fs (522), ExternalProductManagement.tsx (460), DashboardView.tsx (439), validation.ts (423), e2e-isolated-runtime.unit.mjs (399), ref_https (384), @tanstack/react-query (375)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -399,10 +399,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (17)
 - .github/workflows/ci.yml (12)
-- PENDENCIAS.md (12)
 - RELATORIO_CI.md (12)
 - docs/ci/README.md (12)
 - CLAUDE.md (11)
+- PENDENCIAS.md (11)
 - ESTADO.md (10)
 - e2e/navegacao-modulos.spec.ts (10)
 - scripts/db-audit/grants-baseline.json (10)
@@ -516,6 +516,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `48f9754` test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)
 - 2026-11-13 `cb6576b` Pacote: 20 PRs aprovadas integradas num único merge (#3035)
 - 2026-11-13 `e942c67` test(talkx): E2E de reload preserva a aba na URL — cobertura da etapa X052 (#2556)
 - 2026-11-13 `d1af577` feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)
@@ -530,7 +531,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-13 `8e6f413` test(contracts): cobre os 7 schemas RADAR AI na tabela de contrato (#3000)
 - 2026-11-13 `fb5d023` fix(copilot): badge de alertas do RADAR com contraste AA (#3002)
 - 2026-11-13 `943a646` Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)
-- 2026-11-13 `382307a` Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "cb6576b2a3a0d3f8b5b091878314cf5087fa10b1",
+  "sha": "48f9754f709d7a21bd89b11c57ce07f1967fdd11",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 17:53 UTC",
+  "generated_at": "2026-11-13 19:11 UTC",
   "files_total": 8339,
   "code_files": 6168,
-  "code_lines": 1074737
+  "code_lines": 1074742
  },
  "version": "1.3.2",
- "facts_hash": "d82c629c21f240fe",
+ "facts_hash": "555c815acf67c2be",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68123,7 +68123,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18636,
+   "lines": 18641,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -265227,13 +265227,10 @@
   },
   "e2e/tarefas-linha-de-base.spec.ts": {
    "path": "e2e/tarefas-linha-de-base.spec.ts",
-   "lines": 373,
+   "lines": 378,
    "is_test": true,
    "env": [
     "CAPTURA_DIR"
-   ],
-   "errors": [
-    "Defina CAPTURA_DIR ou escreva .tmp/captura-dir.txt com um diretório fora do repositório para salvar as capturas."
    ],
    "params": [
     {
@@ -391953,10 +391950,19 @@
   }
  },
  "git": {
-  "sha": "cb6576b2a3a0d3f8b5b091878314cf5087fa10b1",
+  "sha": "48f9754f709d7a21bd89b11c57ce07f1967fdd11",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "48f9754",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)",
+    "files": [
+     "e2e/tarefas-linha-de-base.spec.ts"
+    ]
+   },
    {
     "sha": "cb6576b",
     "date": "2026-11-13",
@@ -392434,22 +392440,9 @@
     "files": [
      "RELATORIO_CI.md"
     ]
-   },
-   {
-    "sha": "f1d8e5f",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha",
-    "files": [
-     "PENDENCIAS.md"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "PENDENCIAS.md",
-    3
-   ],
    [
     "RELATORIO_CI.md",
     3
@@ -392463,12 +392456,20 @@
     2
    ],
    [
+    "PENDENCIAS.md",
+    2
+   ],
+   [
     "e2e/navegacao-modulos.spec.ts",
     2
    ],
    [
     "src/pages/ForgotPassword.tsx",
     2
+   ],
+   [
+    "e2e/tarefas-linha-de-base.spec.ts",
+    1
    ],
    [
     ".env.ci.local.example",
@@ -392520,10 +392521,6 @@
    ],
    [
     "e2e/talkx-visual.spec.ts",
-    1
-   ],
-   [
-    "package.json",
     1
    ]
   ]

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)",
    "Pacote: 20 PRs aprovadas integradas num único merge (#3035)",
    "test(talkx): E2E de reload preserva a aba na URL — cobertura da etapa X052 (#2556)",
    "feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)",
-   "Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)",
-   "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)"
+   "Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

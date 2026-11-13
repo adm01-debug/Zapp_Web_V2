@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "cb6576b2a3a0d3f8b5b091878314cf5087fa10b1",
+  "commit": "48f9754f709d7a21bd89b11c57ce07f1967fdd11",
   "branch": "main",
-  "data_commit": "2026-11-13T13:27:15-03:00",
+  "data_commit": "2026-11-13T14:57:00-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "48f9754",
+    "data": "2026-11-13",
+    "assunto": "test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)"
+   },
    {
     "sha": "cb6576b",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "81f67b0",
     "data": "2026-11-12",
     "assunto": "fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)"
-   },
-   {
-    "sha": "65cf385",
-    "data": "2026-11-12",
-    "assunto": "chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)"
    }
   ],
-  "arquivos_mudados_7d": 796,
+  "arquivos_mudados_7d": 797,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -206,10 +206,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 12
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 12
    },
@@ -219,6 +215,10 @@
    },
    {
     "arquivo": "CLAUDE.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 11
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8496,
   "arquivos_codigo": 4890,
-  "linhas_codigo": 906250,
+  "linhas_codigo": 906255,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -564,7 +564,7 @@
   },
   "e2e/tarefas-linha-de-base.spec.ts": {
    "arquivos": 1,
-   "linhas": 373
+   "linhas": 378
   },
   "e2e/tarefas-quadro.spec.ts": {
    "arquivos": 1,
