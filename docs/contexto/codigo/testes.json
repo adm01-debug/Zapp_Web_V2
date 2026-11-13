@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2623,
+ "total": 2624,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2330
+  "unit": 2331
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1960
+   "arquivos": 1961
   },
   {
    "padrao": "outro",
@@ -20441,6 +20441,15 @@
    "casos": 3
   },
   {
+   "arquivo": "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+   "tipo": "unit",
+   "linhas": 75,
+   "testa": [
+    "src/pages/VerifyEmail.tsx"
+   ],
+   "casos": 3
+  },
+  {
    "arquivo": "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx",
    "tipo": "unit",
    "linhas": 55,
@@ -25252,6 +25261,7 @@
   "src/pages/SLAHistory.tsx": 2,
   "src/pages/SSOCallback.tsx": 1,
   "src/pages/TwoFactorAuth.tsx": 3,
+  "src/pages/VerifyEmail.tsx": 1,
   "src/pages/ViewRouter.tsx": 5,
   "src/pages/admin-telemetria/ClientErrorsPanel.tsx": 1,
   "src/pages/admin-telemetria/TelemetryTable.tsx": 1,
@@ -25455,8 +25465,7 @@
  },
  "sem_teste": {
   "telas": [
-   "src/pages/NotFound.tsx",
-   "src/pages/VerifyEmail.tsx"
+   "src/pages/NotFound.tsx"
   ],
   "hooks": [
    "scripts/ai-context/cenarios.mjs",

@@ -14037,7 +14037,7 @@
    "modulo": "pages",
    "arquivos": 18,
    "testes": 0,
-   "linhas": 3157,
+   "linhas": 3174,
    "itens_menu": [
     "Telemetria BD"
    ],
@@ -14957,7 +14957,7 @@
   {
    "modulo": "pages/__tests__",
    "arquivos": 0,
-   "testes": 28,
+   "testes": 29,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],

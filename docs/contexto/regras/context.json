@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7bdbe2e3f47b883b7a34bfeedb28d6db1f3be486",
+  "sha": "af1bc25f40c9e691da2423fc605c4e46b26f7a89",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 11:54 UTC",
-  "files_total": 8266,
-  "code_files": 6098,
-  "code_lines": 1060927
+  "generated_at": "2026-11-13 12:31 UTC",
+  "files_total": 8267,
+  "code_files": 6099,
+  "code_lines": 1061019
  },
  "version": "1.3.2",
- "facts_hash": "c33ba5a63256133d",
+ "facts_hash": "95fe8c06d9ae755f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -324,7 +324,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2344,
+   ".tsx": 2345,
    ".ts": 1894,
    ".sql": 1306,
    ".mjs": 435,
@@ -62297,7 +62297,7 @@
     "tables_transitive": [],
     "invokes_transitive": [],
     "rpc_transitive": [],
-    "deps_count": 6
+    "deps_count": 8
    }
   ],
   "edge_functions": [
@@ -69392,8 +69392,8 @@
   },
   {
    "module": "src/pages",
-   "files": 70,
-   "lines": 10882,
+   "files": 71,
+   "lines": 10974,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -69506,6 +69506,7 @@
     "src/pages/__tests__/ResetPassword.segundo-fator-sessoes.test.tsx",
     "src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx",
     "src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx",
+    "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
     "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx",
     "src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx",
     "src/pages/__tests__/ViewRouter.search-insights.test.tsx",
@@ -77959,6 +77960,11 @@
     "file": "src/pages/ResetPassword.tsx",
     "field": "confirmPassword",
     "rules": "type=password"
+   },
+   {
+    "file": "src/pages/VerifyEmail.tsx",
+    "field": "verify-email-resend",
+    "rules": "type=email"
    }
   ],
   "enums": [
@@ -86505,6 +86511,10 @@
    {
     "file": "src/pages/VerifyEmail.tsx",
     "msg": "Erro ao reenviar email"
+   },
+   {
+    "file": "src/pages/VerifyEmail.tsx",
+    "msg": "Informe seu email para reenviar a verificação"
    },
    {
     "file": "src/pages/admin/RateLimitDashboard.tsx",
@@ -198278,6 +198288,22 @@
    {
     "file": "src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx",
     "name": "cai no texto genérico quando a URL só traz marcação"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+    "name": "VerifyEmail — reenviar no estado de erro"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+    "name": "sem email conhecido, clicar em Reenviar não chama resend com email vazio"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+    "name": "reenvia para o email digitado no campo"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+    "name": "usa o ?email= da URL quando o link o traz"
    },
    {
     "file": "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx",
@@ -354863,7 +354889,7 @@
   },
   "src/pages/VerifyEmail.tsx": {
    "path": "src/pages/VerifyEmail.tsx",
-   "lines": 194,
+   "lines": 211,
    "exports": [
     "function VerifyEmail"
    ],
@@ -354872,7 +354898,14 @@
     "/auth"
    ],
    "errors": [
-    "Erro ao reenviar email"
+    "Erro ao reenviar email",
+    "Informe seu email para reenviar a verificação"
+   ],
+   "html_constraints": [
+    {
+     "field": "verify-email-resend",
+     "rules": "type=email"
+    }
    ],
    "status_values": [
     {
@@ -355505,6 +355538,21 @@
     "exibe a mensagem sem os caracteres de marcação",
     "limita a mensagem a 200 caracteres na tela",
     "cai no texto genérico quando a URL só traz marcação"
+   ]
+  },
+  "src/pages/__tests__/VerifyEmail.reenvio.test.tsx": {
+   "path": "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+   "lines": 75,
+   "is_test": true,
+   "rule_comments": [
+    "Regra travada: o reenvio nunca sai com email vazio; usa o `?email=` da URL"
+   ],
+   "doc": "Reenvio no estado de erro de `src/pages/VerifyEmail.tsx`. No erro não existe sessão, então o email nunca vinha preenchido e \"Reenviar Email\" chamava `supabase.auth.resend` com `email: ''`. Regra travada: o reenvio nunca sai com email vazio; usa o `?email=` da URL quando existe, ou o que o usuário di …",
+   "tests": [
+    "VerifyEmail — reenviar no estado de erro",
+    "sem email conhecido, clicar em Reenviar não chama resend com email vazio",
+    "reenvia para o email digitado no campo",
+    "usa o ?email= da URL quando o link o traz"
    ]
   },
   "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx": {
@@ -388315,10 +388363,20 @@
   }
  },
  "git": {
-  "sha": "7bdbe2e3f47b883b7a34bfeedb28d6db1f3be486",
+  "sha": "af1bc25f40c9e691da2423fc605c4e46b26f7a89",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "af1bc25",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)",
+    "files": [
+     "src/pages/VerifyEmail.tsx",
+     "src/pages/__tests__/VerifyEmail.reenvio.test.tsx"
+    ]
+   },
    {
     "sha": "7bdbe2e",
     "date": "2026-11-13",
@@ -388630,16 +388688,6 @@
      "src/integrations/supabase/types.ts",
      "supabase/migrations/20261111170000_talkx_block_recipient.sql"
     ]
-   },
-   {
-    "sha": "93bff67",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)",
-    "files": [
-     "scripts/db-audit/grants-baseline.json",
-     "supabase/migrations/20261108204000_revoke_anon_select_grants_all_tables.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -388658,6 +388706,14 @@
    [
     "RELATORIO_CI.md",
     2
+   ],
+   [
+    "src/pages/VerifyEmail.tsx",
+    1
+   ],
+   [
+    "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+    1
    ],
    [
     "scripts/ai-context/gerar.mjs",
@@ -388713,14 +388769,6 @@
    ],
    [
     "src/components/inbox/tabs/fileActionButton.ts",
-    1
-   ],
-   [
-    "src/components/team-chat/TeamChatHeader.tsx",
-    1
-   ],
-   [
-    "src/components/team-chat/TeamChatPanel.tsx",
     1
    ]
   ]

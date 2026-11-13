@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1960)",
+   "co-localizado (__tests__) (1961)",
    "outro (231)",
    "co-localizado (*.test) (170)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)",
    "Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)",
    "Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)",
    "Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam nada (#3003)",
-   "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)",
-   "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)"
+   "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

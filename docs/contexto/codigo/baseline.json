@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7bdbe2e3f47b883b7a34bfeedb28d6db1f3be486",
+  "commit": "af1bc25f40c9e691da2423fc605c4e46b26f7a89",
   "branch": "main",
-  "data_commit": "2026-11-13T07:47:06-03:00",
+  "data_commit": "2026-11-13T08:45:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "af1bc25",
+    "data": "2026-11-13",
+    "assunto": "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)"
+   },
    {
     "sha": "7bdbe2e",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "1592381",
     "data": "2026-11-12",
     "assunto": "chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix"
-   },
-   {
-    "sha": "f1d8e5f",
-    "data": "2026-11-12",
-    "assunto": "chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha"
    }
   ],
-  "arquivos_mudados_7d": 688,
+  "arquivos_mudados_7d": 690,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8424,
-  "arquivos_codigo": 4820,
-  "linhas_codigo": 892440,
+  "arquivos_total": 8425,
+  "arquivos_codigo": 4821,
+  "linhas_codigo": 892532,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2623,
+  "testes": 2624,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -743,8 +743,8 @@
    "linhas": 95
   },
   "src/pages": {
-   "arquivos": 70,
-   "linhas": 10882
+   "arquivos": 71,
+   "linhas": 10974
   },
   "src/providers": {
    "arquivos": 10,
