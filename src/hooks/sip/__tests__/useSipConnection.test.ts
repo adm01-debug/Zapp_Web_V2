@@ -236,6 +236,18 @@ describe('useSipConnection', () => {
     vi.useRealTimers();
   });
 
+  it('unmount com o UA registrado solta o registro e para o UA', async () => {
+    const { result, unmount } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    expect(mockUaInstances).toHaveLength(1);
+    unmount();
+    await act(async () => { for (let i = 0; i < 6; i += 1) await Promise.resolve(); });
+    expect(mockRegistererInstances[0].unregister).toHaveBeenCalledTimes(1);
+    expect(mockUaInstances[0].stop).toHaveBeenCalledTimes(1);
+  });
+
   it('T16: 6ª falha seguida vira "unavailable" e para de tentar', async () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useSipConnection());
