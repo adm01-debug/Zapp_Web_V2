@@ -233,7 +233,7 @@ describe('erros', () => {
     expect(h.toast.error).toHaveBeenCalledWith('network down');
   });
 
-  it.fails('403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js', async () => {
+  it('403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js', async () => {
     h.invoke.mockResolvedValue({
       data: null,
       error: functionsHttpError('Somente admin ou supervisor pode sair de um grupo.', 403),
