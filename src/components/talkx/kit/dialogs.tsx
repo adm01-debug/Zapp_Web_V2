@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { X } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { talkxScaleIn } from '@/components/ui/motion/variants';
 import { cn } from '@/lib/utils';
 import type { TileColor } from './constants';
@@ -44,8 +44,10 @@ function errorMessage(e: unknown): string {
  * ações. Entrada com `talkxScaleIn` (desligada em `prefers-reduced-motion`) e
  * foco inicial opcional (usado pelos destrutivos para abrir no "Cancelar").
  */
-export function TalkXDialogShell({ open, onClose, title, children, footer, className, initialFocusRef, role = 'dialog' }: {
+export function TalkXDialogShell({ open, onClose, title, description, children, footer, className, initialFocusRef, role = 'dialog' }: {
   open: boolean; onClose: () => void; title: string;
+  /** Texto de apoio do modal; vira a descrição acessível (aria-describedby) do diálogo. */
+  description?: ReactNode;
   children: ReactNode; footer?: ReactNode; className?: string;
   initialFocusRef?: { current: HTMLElement | null }; role?: 'dialog' | 'alertdialog';
 }) {
@@ -55,7 +57,9 @@ export function TalkXDialogShell({ open, onClose, title, children, footer, class
       <DialogContent
         showCloseButton={false}
         role={role}
-        aria-describedby={undefined}
+        // Sem descrição, o Radix não deve apontar aria-describedby para um id inexistente;
+        // com descrição, o DialogDescription abaixo é ligado automaticamente.
+        {...(description ? {} : { 'aria-describedby': undefined })}
         onOpenAutoFocus={e => {
           if (initialFocusRef?.current) { e.preventDefault(); initialFocusRef.current.focus(); }
         }}
@@ -74,7 +78,12 @@ export function TalkXDialogShell({ open, onClose, title, children, footer, class
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="px-4 py-4">{children}</div>
+          <div className="px-4 py-4">
+            {description && (
+              <DialogDescription className="mb-3 text-xs text-muted-foreground">{description}</DialogDescription>
+            )}
+            {children}
+          </div>
           {footer !== undefined && (
             <div className="flex items-center justify-end gap-2 border-t border-border/60 bg-muted/20 px-4 py-3">{footer}</div>
           )}
