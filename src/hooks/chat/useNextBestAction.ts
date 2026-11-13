@@ -211,6 +211,10 @@ export function useNextBestAction(contactId: string, contactName: string) {
     // As três montagens (chat, aba IA, aba CRM 360°) dividem a mesma leitura;
     // mensagem nova invalida a chave pelo painel, então 30 s basta.
     staleTime: 30_000,
+    // O QueryClient global usa refetchOnMount:false; aqui a remontagem (voltar
+    // ao inbox depois de concluir tarefas em outra tela) precisa revalidar o que
+    // já venceu, como fazia o efeito por montagem antes.
+    refetchOnMount: true,
   });
 
   const { data, isError } = query;

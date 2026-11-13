@@ -245,9 +245,16 @@ export function useGoalNotifications() {
       };
 
       const periods: Period[] = ['daily', 'weekly', 'monthly'];
-      const measured = await Promise.all(
+      // `allSettled`: uma contagem `strict` que falha derruba só a sua meta
+      // (como antes no laço em série, as outras continuam sendo anunciadas).
+      const settled = await Promise.allSettled(
         (goals as GoalConfiguration[]).flatMap((goal) => periods.map((period) => measure(goal, period))),
       );
+      const measured = settled.map((r) => {
+        if (r.status === 'fulfilled') return r.value;
+        log.error('Erro ao medir meta; as demais seguem', r.reason);
+        return null;
+      });
 
       // O anúncio continua em série e na mesma ordem (meta → período): a
       // gravação do aviso deduplica por chave e não pode correr consigo mesma.
