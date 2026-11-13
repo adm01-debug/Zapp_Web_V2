@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "e903a7e514191d3c7d6f8bb9957e3ee9af69de5f",
+  "sha": "382307ab5943456065180f8144917d74bb6411ae",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 04:47 UTC",
+  "generated_at": "2026-11-13 05:31 UTC",
   "files_total": 8263,
   "code_files": 6095,
   "code_lines": 1060618
@@ -388121,10 +388121,19 @@
   }
  },
  "git": {
-  "sha": "e903a7e514191d3c7d6f8bb9957e3ee9af69de5f",
+  "sha": "382307ab5943456065180f8144917d74bb6411ae",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "382307a",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)",
+    "files": [
+     "scripts/db-audit/login_gate_rpc.test.sh"
+    ]
+   },
    {
     "sha": "e903a7e",
     "date": "2026-11-13",
@@ -388426,34 +388435,6 @@
      "RELATORIO_CI.md",
      "e2e/email-navy-visual.spec.ts"
     ]
-   },
-   {
-    "sha": "daba6eb",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "chore(scripts): adicionar READMEs e testes unitários para scripts auxiliares",
-    "files": [
-     ".github/workflows/ci.yml",
-     ".github/workflows/db-guard.yml",
-     "TESTING_CONVENTION.md",
-     "scripts/catalog/README.md",
-     "scripts/catalog/validate-plan.unit.mjs",
-     "scripts/ci/README.md",
-     "scripts/db-tests/README.md",
-     "scripts/docs/README.md",
-     "scripts/docs/verificar-docs-realtime.unit.mjs",
-     "scripts/eslint/README.md",
-     "scripts/graphify/README.md",
-     "scripts/inventario/README.md",
-     "scripts/lib/README.md",
-     "scripts/lib/seguranca-processo.unit.mjs",
-     "scripts/mutation/README.md",
-     "scripts/qa/README.md",
-     "scripts/talkx/README.md",
-     "scripts/tarefas/README.md",
-     "scripts/tarefas/seed-local-imagens.unit.mjs",
-     "scripts/ui-audit/README.md"
-    ]
    }
   ],
   "hot_files": [
@@ -388470,10 +388451,6 @@
     3
    ],
    [
-    ".github/workflows/db-guard.yml",
-    2
-   ],
-   [
     "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
     2
    ],
@@ -388482,8 +388459,8 @@
     2
    ],
    [
-    "scripts/tarefas/seed-local-imagens.unit.mjs",
-    2
+    "scripts/db-audit/login_gate_rpc.test.sh",
+    1
    ],
    [
     "src/components/keyboard/__tests__/paleta-unica.test.tsx",
@@ -388535,6 +388512,10 @@
    ],
    [
     "supabase/functions/talkx-send/safe-db-error-code.test.ts",
+    1
+   ],
+   [
+    ".github/workflows/db-guard.yml",
     1
    ]
   ]

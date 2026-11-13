@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e903a7e514191d3c7d6f8bb9957e3ee9af69de5f` (2026-11-13T01:45:20-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `382307ab5943456065180f8144917d74bb6411ae` (2026-11-13T02:02:25-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56952 nós · 117677 arestas · 4143 comunidades · grafo do commit `e903a7e5`
-- comunidades maiores: react (955), lucide-react (862), vitest (858), TalkXSuppression.tsx (671), ExternalProductManagement.tsx (649), @tanstack/react-query (635), ref_node_fs (606), validation.ts (506), DashboardView.tsx (451), ref_https (436), framer-motion (422), uniqueRealtimeTopic (396)
+- 56953 nós · 117679 arestas · 4188 comunidades · grafo do commit `382307ab`
+- comunidades maiores: button.tsx (819), react (661), framer-motion (453), useTalkXSegments.ts (412), validation.ts (411), cn (400), @tanstack/react-query (391), ref_node_assert (387), DashboardCard.tsx (374), inspect.ts (373), TalkXCampaignRunning.tsx (345), useAuth (329)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `382307a` Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)
 - 2026-11-13 `e903a7e` fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)
 - 2026-11-13 `7c9a188` fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)
 - 2026-11-12 `58a7208` fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `87c5e97` fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)
 - 2026-11-12 `0a1e73f` fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)
 - 2026-11-12 `1592381` chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix
-- 2026-11-12 `f1d8e5f` chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

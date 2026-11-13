@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e903a7e514191d3c7d6f8bb9957e3ee9af69de5f",
+  "commit": "382307ab5943456065180f8144917d74bb6411ae",
   "branch": "main",
-  "data_commit": "2026-11-13T01:45:20-03:00",
+  "data_commit": "2026-11-13T02:02:25-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "382307a",
+    "data": "2026-11-13",
+    "assunto": "Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)"
+   },
    {
     "sha": "e903a7e",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "623f37b",
     "data": "2026-11-12",
     "assunto": "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)"
-   },
-   {
-    "sha": "491a75d",
-    "data": "2026-11-12",
-    "assunto": "fix(scripts): guard rodar() contra bun ausente no PATH (#2978)"
    }
   ],
-  "arquivos_mudados_7d": 669,
+  "arquivos_mudados_7d": 670,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",

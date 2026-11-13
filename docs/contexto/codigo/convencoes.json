@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)",
    "fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)",
    "fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)",
    "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)",
-   "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)",
-   "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)"
+   "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -1579,7 +1579,7 @@
   {
    "arquivo": "scripts/db-audit/login_gate_rpc.test.sh",
    "descricao": "auth-login — RPC única consume_login_gate (cartão t_105af186, retomada de #113). Prova, em PostgreSQL descartável (postgres:17-alpine), o defeito e a correção:",
-   "linhas": 330,
+   "linhas": 358,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
