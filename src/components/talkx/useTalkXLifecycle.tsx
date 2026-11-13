@@ -2,6 +2,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,9 @@ import { useTalkX } from '@/hooks/integrations/useTalkX';
  * - `request` aceita `details` (linhas de contexto do diálogo) e, para `start`,
  *   `run` (executor próprio da tela): o `confirm()` chama `run()` e só fecha no
  *   aceite — `run()` devolvendo `false` mantém o diálogo aberto com erro.
+ * - RETOMAR É UM CLIQUE (decisão do dono, 2026-11-13): `request({ kind: 'resume' })`
+ *   NÃO abre diálogo — executa na hora. O aviso de sucesso/erro é o do próprio
+ *   `startCampaign` (um toast só); o controlador não repete.
  */
 
 /** `start` é o disparo (iniciar/launch); `resume` retoma uma campanha pausada. */
@@ -80,7 +84,14 @@ export interface TalkXLifecycleController {
   /** Motivo da pausa digitado no diálogo. */
   reason: string;
   setReason: (reason: string) => void;
-  /** Abre o diálogo para a ação. Devolve `false` quando já há ação em andamento. */
+  /** Ação que está rodando agora (inclusive o retomar de um clique, que não tem diálogo). */
+  pendingKind: TalkXLifecycleKind | null;
+  /** Texto efetivo do diálogo por ação (o texto único + o ajuste da tela, se houver). */
+  copy: Record<TalkXLifecycleKind, TalkXLifecycleCopy>;
+  /**
+   * Abre o diálogo para a ação — exceto `resume`, que executa direto (um clique).
+   * Devolve `false` quando já há ação em andamento.
+   */
   request: (request: TalkXLifecycleRequest) => boolean;
   /** Executa a intenção corrente. */
   confirm: () => Promise<void>;
@@ -90,7 +101,7 @@ export interface TalkXLifecycleController {
   clearError: () => void;
 }
 
-interface TalkXLifecycleCopy {
+export interface TalkXLifecycleCopy {
   title: string;
   description: string;
   confirmLabel: string;
@@ -113,6 +124,7 @@ export const talkXLifecycleCopy: Record<TalkXLifecycleKind, TalkXLifecycleCopy> 
     pendingLabel: 'Iniciando…',
     tone: 'default',
   },
+  // `resume` não abre diálogo (um clique); o texto fica para o rótulo de pendência.
   resume: {
     title: 'Retomar campanha?',
     description: 'Os envios serão continuados a partir de onde pararam.',
@@ -150,6 +162,17 @@ export const talkXLifecycleCopy: Record<TalkXLifecycleKind, TalkXLifecycleCopy> 
 
 const ENVIO_NAO_ACEITO = 'O envio não foi aceito. Tente novamente.';
 
+/**
+ * `startCampaign` devolveu `false`: ele mesmo já mostrou o toast de erro. O retomar
+ * de um clique usa esta marca para não avisar duas vezes.
+ */
+class EnvioNaoAceitoError extends Error {
+  constructor() {
+    super(ENVIO_NAO_ACEITO);
+    this.name = 'EnvioNaoAceitoError';
+  }
+}
+
 /** Operações de `useTalkX` que o controlador usa. */
 export type TalkXLifecycleOps = Pick<
   ReturnType<typeof useTalkX>,
@@ -166,6 +189,11 @@ export interface TalkXLifecycleOptions {
   onSuccess?: (intent: TalkXLifecycleIntent) => void;
   /** Texto do erro mostrado no diálogo (ex.: tradução do erro cru da Edge). */
   errorMessage?: (intent: TalkXLifecycleIntent, error: unknown) => string;
+  /**
+   * Ajuste do texto do diálogo por ação (ex.: a tela de execução mantém os rótulos
+   * que já tinha). Passe um objeto estável (constante de módulo).
+   */
+  copy?: Partial<Record<TalkXLifecycleKind, Partial<TalkXLifecycleCopy>>>;
 }
 
 /** Controlador com as operações de `useTalkX` da própria tela (sem abrir outro canal realtime). */
@@ -197,6 +225,7 @@ export function useTalkXLifecycleWith(
 
   const [intent, setIntent] = useState<TalkXLifecycleIntent | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [pendingKind, setPendingKind] = useState<TalkXLifecycleKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   // Espelho síncrono de `isPending`: o estado só vale depois do render e as
@@ -217,12 +246,12 @@ export function useTalkXLifecycleWith(
           const started = await startCampaign(current.target.id);
           // `startCampaign` engole o erro e devolve `false`; sem isto o
           // diálogo fecharia como se tivesse dado certo.
-          if (!started) throw new Error(ENVIO_NAO_ACEITO);
+          if (!started) throw new EnvioNaoAceitoError();
           return;
         }
         case 'resume': {
           const started = await startCampaign(current.target.id);
-          if (!started) throw new Error(ENVIO_NAO_ACEITO);
+          if (!started) throw new EnvioNaoAceitoError();
           return;
         }
         case 'pause':
@@ -253,39 +282,66 @@ export function useTalkXLifecycleWith(
     [startCampaign, pauseCampaign, cancelCampaign, updateCampaign],
   );
 
+  /**
+   * Executa a intenção. `viaDialog = false` é o retomar de um clique: não há diálogo
+   * para mostrar erro, então o aviso é toast — e só quando o `startCampaign` ainda
+   * não avisou (ele já mostra o próprio toast de sucesso e de erro).
+   */
+  const execute = useCallback(
+    async (current: TalkXLifecycleIntent, currentReason: string, viaDialog: boolean) => {
+      pendingRef.current = true;
+      setIsPending(true);
+      setPendingKind(current.kind);
+      setError(null);
+      let accepted = false;
+      try {
+        await runAction(current, currentReason);
+        if (viaDialog) {
+          setIntent(null);
+          setReason('');
+        }
+        accepted = true;
+      } catch (e: unknown) {
+        const translate = optionsRef.current.errorMessage;
+        const message = translate
+          ? translate(current, e)
+          : e instanceof Error ? e.message : 'Não foi possível concluir a ação.';
+        if (viaDialog) {
+          // A intenção fica montada de propósito: o diálogo continua aberto com o
+          // erro para a tela tratar e o usuário tentar de novo.
+          setError(message);
+        } else if (!(e instanceof EnvioNaoAceitoError)) {
+          toast.error(message);
+        }
+      } finally {
+        pendingRef.current = false;
+        setIsPending(false);
+        setPendingKind(null);
+      }
+      // Fora do try: um erro do gancho da tela não pode reabrir o diálogo como falha.
+      if (accepted) optionsRef.current.onSuccess?.(current);
+    },
+    [runAction],
+  );
+
   const request = useCallback((next: TalkXLifecycleRequest): boolean => {
     if (pendingRef.current) return false;
     setError(null);
     setReason('');
+    if (next.kind === 'resume') {
+      // Retomar campanha pausada: um clique, sem confirmação (decisão do dono, 2026-11-13).
+      setIntent(null);
+      void execute(next, '', false);
+      return true;
+    }
     setIntent(next);
     return true;
-  }, []);
+  }, [execute]);
 
   const confirm = useCallback(async () => {
     if (!intent || pendingRef.current) return;
-    pendingRef.current = true;
-    setIsPending(true);
-    setError(null);
-    let accepted = false;
-    try {
-      await runAction(intent, reason);
-      setIntent(null);
-      setReason('');
-      accepted = true;
-    } catch (e: unknown) {
-      // A intenção fica montada de propósito: o diálogo continua aberto com o
-      // erro para a tela tratar e o usuário tentar de novo.
-      const translate = optionsRef.current.errorMessage;
-      setError(translate
-        ? translate(intent, e)
-        : e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
-    } finally {
-      pendingRef.current = false;
-      setIsPending(false);
-    }
-    // Fora do try: um erro do gancho da tela não pode reabrir o diálogo como falha.
-    if (accepted) optionsRef.current.onSuccess?.(intent);
-  }, [intent, reason, runAction]);
+    await execute(intent, reason, true);
+  }, [intent, reason, execute]);
 
   const close = useCallback((): boolean => {
     if (pendingRef.current) return false;
@@ -297,10 +353,22 @@ export function useTalkXLifecycleWith(
 
   const clearError = useCallback(() => setError(null), []);
 
+  const copyOverride = options.copy;
+  const copy = useMemo(() => {
+    if (!copyOverride) return talkXLifecycleCopy;
+    const merged = { ...talkXLifecycleCopy };
+    for (const kind of Object.keys(copyOverride) as TalkXLifecycleKind[]) {
+      merged[kind] = { ...talkXLifecycleCopy[kind], ...copyOverride[kind] };
+    }
+    return merged;
+  }, [copyOverride]);
+
   return useMemo(
     () => ({
       intent,
       isPending,
+      pendingKind,
+      copy,
       error,
       reason,
       setReason,
@@ -309,7 +377,7 @@ export function useTalkXLifecycleWith(
       close,
       clearError,
     }),
-    [intent, isPending, error, reason, request, confirm, close, clearError],
+    [intent, isPending, pendingKind, copy, error, reason, request, confirm, close, clearError],
   );
 }
 
@@ -323,7 +391,7 @@ export function TalkXLifecycleDialog({
   controller: TalkXLifecycleController;
 }) {
   const { intent, isPending, error, reason } = controller;
-  const copy = intent ? talkXLifecycleCopy[intent.kind] : null;
+  const copy = intent ? controller.copy[intent.kind] : null;
   const details = intent?.details ?? [];
 
   return (

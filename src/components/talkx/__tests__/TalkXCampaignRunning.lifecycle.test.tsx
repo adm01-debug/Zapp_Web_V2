@@ -184,7 +184,9 @@ describe('TalkXCampaignRunning · ciclo de vida pelo diálogo único (X051)', ()
     render(view());
     fireEvent.click(screen.getByRole('button', { name: /^Pausar$/ }));
     fireEvent.change(screen.getByLabelText('Motivo da pausa (opcional)'), { target: { value: 'ajuste' } });
-    confirmar(/^Pausar agora$/);
+    // Texto do diálogo desta tela é o de antes do X051 ("Pausar").
+    expect(within(screen.getByRole('alertdialog')).getByText('Pausar Campanha?')).toBeTruthy();
+    confirmar(/^Pausar$/);
     await waitFor(() => expect(toastInfo).toHaveBeenCalledWith('Campanha pausada.'));
     expect(ops.pause).toHaveBeenCalledWith('c1', 'ajuste');
     expect(screen.queryByRole('alertdialog')).toBeNull();
@@ -194,24 +196,33 @@ describe('TalkXCampaignRunning · ciclo de vida pelo diálogo único (X051)', ()
   it('cancelar: avisa "Campanha cancelada." e volta para a lista (onBack), como antes', async () => {
     render(view());
     fireEvent.click(screen.getByRole('button', { name: /^Cancelar campanha$/ }));
-    confirmar(/^Cancelar$/);
+    expect(within(screen.getByRole('alertdialog')).getByRole('button', { name: /^Voltar$/ })).toBeTruthy();
+    confirmar(/^Confirmar cancelamento$/);
     await waitFor(() => expect(onBack).toHaveBeenCalledTimes(1));
     expect(ops.cancel).toHaveBeenCalledWith('c1');
     expect(toastFns.warning).toHaveBeenCalledWith('Campanha cancelada.');
   });
 
-  it('retomar: pede confirmação e chama startCampaign (o aviso de sucesso é o do próprio startCampaign)', async () => {
+  it('retomar: UM clique, sem diálogo (decisão do dono, 2026-11-13), e nenhum toast extra da tela', async () => {
     state.campaignList = [{ ...CAMPAIGN_SENDING, status: 'paused' }];
     render(view());
     fireEvent.click(screen.getByRole('button', { name: /^Retomar$/ }));
-    confirmar(/^Retomar$/);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     await waitFor(() => expect(ops.start).toHaveBeenCalledWith('c1'));
-    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(ops.start).toHaveBeenCalledTimes(1);
+    // O aviso de sucesso é o do próprio startCampaign (mockado aqui): a tela não
+    // soma outro — antes havia toast duplo no retomar.
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Retomar$/ })).toBeTruthy());
+    expect(toastFns.success).not.toHaveBeenCalled();
+    expect(toastInfo).not.toHaveBeenCalled();
+    expect(toastFns.warning).not.toHaveBeenCalled();
+    expect(toastFns.error).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
   it.each([
-    ['pausar', /^Pausar$/, /^Pausar agora$/, 'pause', 'Erro ao pausar a campanha.'],
-    ['cancelar', /^Cancelar campanha$/, /^Cancelar$/, 'cancel', 'Erro ao cancelar a campanha.'],
+    ['pausar', /^Pausar$/, /^Pausar$/, 'pause', 'Erro ao pausar a campanha.'],
+    ['cancelar', /^Cancelar campanha$/, /^Confirmar cancelamento$/, 'cancel', 'Erro ao cancelar a campanha.'],
   ] as const)('erro ao %s aparece em português no diálogo (nunca o texto cru da Edge) e não sai da tela', async (_n, botao, confirma, op, esperado) => {
     ops[op].mockRejectedValue(new Error('Edge Function returned a non-2xx status code'));
     render(view());
@@ -224,13 +235,24 @@ describe('TalkXCampaignRunning · ciclo de vida pelo diálogo único (X051)', ()
     expect(toastInfo).not.toHaveBeenCalledWith('Campanha pausada.');
   });
 
-  it('erro ao retomar (startCampaign devolve false) mostra "Erro ao retomar a campanha." no diálogo', async () => {
+  it('retomar recusado (startCampaign devolve false): sem diálogo e sem toast repetido (o startCampaign já avisou)', async () => {
     state.campaignList = [{ ...CAMPAIGN_SENDING, status: 'paused' }];
     ops.start.mockResolvedValue(false);
     render(view());
     fireEvent.click(screen.getByRole('button', { name: /^Retomar$/ }));
-    confirmar(/^Retomar$/);
-    const alerta = await within(screen.getByRole('alertdialog')).findByRole('alert');
-    expect(alerta.textContent).toBe('Erro ao retomar a campanha.');
+    await waitFor(() => expect(ops.start).toHaveBeenCalledWith('c1'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Retomar$/ })).toBeTruthy());
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(toastFns.error).not.toHaveBeenCalled();
+  });
+
+  it('retomar que lança (falha inesperada) avisa uma vez, em português', async () => {
+    state.campaignList = [{ ...CAMPAIGN_SENDING, status: 'paused' }];
+    ops.start.mockRejectedValue(new Error('Edge Function returned a non-2xx status code'));
+    render(view());
+    fireEvent.click(screen.getByRole('button', { name: /^Retomar$/ }));
+    await waitFor(() => expect(toastFns.error).toHaveBeenCalledTimes(1));
+    expect(toastFns.error).toHaveBeenCalledWith('Erro ao retomar a campanha.');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });

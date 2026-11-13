@@ -7,7 +7,10 @@ import {
   ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useTalkXLifecycleWith, TalkXLifecycleDialog, type TalkXLifecycleIntent } from './useTalkXLifecycle';
+import {
+  useTalkXLifecycleWith, TalkXLifecycleDialog,
+  type TalkXLifecycleIntent, type TalkXLifecycleOptions,
+} from './useTalkXLifecycle';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -600,11 +603,32 @@ interface Props {
   initialCampaignId?: string | null;
 }
 
+/**
+ * Texto dos diálogos desta tela: o mesmo de antes do diálogo único (o E2E
+ * `talkx-launch` e o operador contam com "Pausar" e "Confirmar cancelamento").
+ * Retomar não tem diálogo: é um clique (decisão do dono, 2026-11-13).
+ */
+const RUNNING_LIFECYCLE_COPY: TalkXLifecycleOptions['copy'] = {
+  pause: {
+    title: 'Pausar Campanha?',
+    description: 'O envio será interrompido até você retomar. Mensagens em voo continuarão sendo entregues.',
+    confirmLabel: 'Pausar',
+    cancelLabel: 'Cancelar',
+  },
+  cancel: {
+    title: 'Cancelar Campanha?',
+    description: 'Esta ação é irreversível. Os destinatários restantes não receberão a mensagem.',
+    confirmLabel: 'Confirmar cancelamento',
+    cancelLabel: 'Voltar',
+  },
+};
+
 /** Retorno de sucesso da tela de execução (o mesmo de antes do diálogo único). */
 function runningLifecycleSuccess(onBack: () => void) {
   return (intent: TalkXLifecycleIntent) => {
     if (intent.kind === 'pause') toast.info('Campanha pausada.');
-    // Retomar: `startCampaign` já avisa "Envio iniciado; acompanhe no monitor".
+    // Retomar: nada aqui — `startCampaign` já avisa "Envio iniciado; acompanhe no
+    // monitor" (um toast só; repetir aqui dava aviso duplo).
     if (intent.kind === 'cancel') {
       toast.warning('Campanha cancelada.');
       onBack();
@@ -632,7 +656,11 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   // sucesso, cancelar volta para a lista e erro em português no diálogo.
   const lifecycle = useTalkXLifecycleWith(
     { startCampaign, pauseCampaign, cancelCampaign, updateCampaign },
-    { onSuccess: runningLifecycleSuccess(onBack), errorMessage: runningLifecycleError },
+    {
+      onSuccess: runningLifecycleSuccess(onBack),
+      errorMessage: runningLifecycleError,
+      copy: RUNNING_LIFECYCLE_COPY,
+    },
   );
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
@@ -874,7 +902,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               onCancel={() => lifecycle.request({ kind: 'cancel', target: { id: campaign.id, name: campaign.name } })}
               onEditLimits={handleOpenLimits}
               onViewMonitor={() => onViewMonitor(campaign.id)}
-              resuming={lifecycle.isPending && lifecycle.intent?.kind === 'resume'}
+              resuming={lifecycle.pendingKind === 'resume'}
             />
           </>
         ) : null}
@@ -891,7 +919,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
         saving={lSaving}
       />
 
-      {/* X051 — diálogo único do ciclo de vida (pausar/retomar/cancelar). */}
+      {/* X051 — diálogo único do ciclo de vida (pausar/cancelar; retomar é um clique). */}
       <TalkXLifecycleDialog controller={lifecycle} />
     </div>
   );
