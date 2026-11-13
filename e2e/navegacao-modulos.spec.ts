@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { PRODUCT_NAME } from '../src/lib/productName';
@@ -825,14 +825,33 @@ interface CancelamentoLocal {
  * Cancelamentos do CONJUNTO LOCAL, exatos e medidos. Não são HTTP >= 400 do app:
  * o navegador bloqueia o script de debug do Speed Insights por ORB antes de haver
  * resposta, porque a rodada local não roda dentro da infraestrutura da Vercel.
+ * Desde o #2713 (46a025733) o navegador do conjunto isolado roda em rede só-loopback
+ * (network-proof: loopback_only=true): os dois únicos hosts externos do boot — o
+ * Speed Insights (src/lib/speed-insights.ts) e a folha de fontes do index.html —
+ * caem com net::ERR_INTERNET_DISCONNECTED (medido no run 43252583272, celular).
  * Qualquer outro script, URL ou motivo continua reprovando.
  */
+const URL_FONTES_INDEX_HTML =
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap';
+
 const CANCELAMENTOS_DO_CONJUNTO_LOCAL: CancelamentoLocal[] = [
   {
     metodo: 'GET',
     url: 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js',
     motivo: 'net::ERR_BLOCKED_BY_ORB',
     sintoma: 'Speed Insights debug externo é bloqueado por ORB no navegador local antes de responder',
+  },
+  {
+    metodo: 'GET',
+    url: 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js',
+    motivo: 'net::ERR_INTERNET_DISCONNECTED',
+    sintoma: 'Speed Insights debug externo não sai da rede só-loopback do conjunto isolado',
+  },
+  {
+    metodo: 'GET',
+    url: URL_FONTES_INDEX_HTML,
+    motivo: 'net::ERR_INTERNET_DISCONNECTED',
+    sintoma: 'folha de fontes do index.html não sai da rede só-loopback do conjunto isolado',
   },
 ];
 
@@ -1606,11 +1625,37 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
           url: 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js',
           motivo: 'net::ERR_FAILED',
         },
+        {
+          metodo: 'GET',
+          url: 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js',
+          motivo: 'net::ERR_INTERNET_DISCONNECTED',
+        },
+        { metodo: 'GET', url: URL_FONTES_INDEX_HTML, motivo: 'net::ERR_INTERNET_DISCONNECTED' },
+        { metodo: 'GET', url: URL_FONTES_INDEX_HTML, motivo: 'net::ERR_FAILED' },
+        {
+          metodo: 'GET',
+          url: 'https://fonts.googleapis.com/css2?family=Roboto&display=swap',
+          motivo: 'net::ERR_INTERNET_DISCONNECTED',
+        },
+        { metodo: 'GET', url: 'https://cdn.exemplo.com/lib.js', motivo: 'net::ERR_INTERNET_DISCONNECTED' },
         { metodo: 'GET', url: `${HOST_LOCAL}/functions/v1/get-sip-password`, motivo: 'net::ERR_ABORTED' },
       ],
     };
 
-    expect(resumir(canceladasSemProva(trafego)), 'cancelamento não medido passou pela varredura').toHaveLength(2);
+    expect(
+      canceladasSemProva(trafego).map((c) => `${c.url} ${c.motivo}`),
+      'cancelamento não medido passou pela varredura',
+    ).toEqual([
+      'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js net::ERR_FAILED',
+      `${URL_FONTES_INDEX_HTML} net::ERR_FAILED`,
+      'https://fonts.googleapis.com/css2?family=Roboto&display=swap net::ERR_INTERNET_DISCONNECTED',
+      'https://cdn.exemplo.com/lib.js net::ERR_INTERNET_DISCONNECTED',
+      `${HOST_LOCAL}/functions/v1/get-sip-password net::ERR_ABORTED`,
+    ]);
+    expect(
+      readFileSync(join(process.cwd(), 'index.html'), 'utf8'),
+      'a tolerância das fontes vale só para a URL que o index.html carrega',
+    ).toContain(`href="${URL_FONTES_INDEX_HTML}" rel="stylesheet"`);
   });
 
   test('console.error sem resposta justificada REPROVA (status solto não tolera)', () => {
