@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-13 03:45 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_16`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_09`
+
 ## 2026-11-13 02:51 UTC
 
 - **functions** alterado (5): `public.is_admin_or_supervisor(_user_id uuid)`, `public.mark_pause_investigated(p_pause_id uuid, p_notes text)`, `public.talkx_blacklist_audit_trigger()`, `public.talkx_blacklist_no_delete()`, `public.talkx_campaign_recipients_page(p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text, p_segment_id uuid)`

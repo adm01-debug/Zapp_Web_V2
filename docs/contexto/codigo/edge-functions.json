@@ -2382,7 +2382,7 @@
    "nome": "multiplix-send",
    "entrada": "supabase/functions/multiplix-send/index.ts",
    "arquivos": 1,
-   "linhas": 1199,
+   "linhas": 1216,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -2442,7 +2442,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": true,
    "orfa": false,
-   "testes": 1
+   "testes": 2
   },
   {
    "nome": "multiplix-voices",
@@ -2997,7 +2997,7 @@
    "nome": "talkx-send",
    "entrada": "supabase/functions/talkx-send/index.ts",
    "arquivos": 3,
-   "linhas": 2675,
+   "linhas": 2692,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -3079,7 +3079,7 @@
    ],
    "chamada_por_sql_ou_cron": true,
    "orfa": false,
-   "testes": 11
+   "testes": 12
   },
   {
    "nome": "talkx-storage-purge",

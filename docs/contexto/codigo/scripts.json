@@ -170,7 +170,7 @@
   {
    "arquivo": "scripts/ci/check-edge-error-exposure.mjs",
    "descricao": "E33 do PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01: trava a invariante que fechou o alerta de Code Scanning #13 (js/stack-trace-exposure, supabase/functions/_shared/validation.ts).",
-   "linhas": 293,
+   "linhas": 350,
    "env": [],
    "npm_scripts": [],
    "workflows": [

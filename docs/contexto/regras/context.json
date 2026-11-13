@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "2ae0de787883980124508b8fc22f4e7e74f15080",
+  "sha": "58a72088fee58ac15bea749bdfc55fd4a8605971",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 02:51 UTC",
-  "files_total": 8261,
-  "code_files": 6093,
-  "code_lines": 1060287
+  "generated_at": "2026-11-13 03:39 UTC",
+  "files_total": 8263,
+  "code_files": 6095,
+  "code_lines": 1060493
  },
  "version": "1.3.2",
- "facts_hash": "767d03f1dc465bf5",
+ "facts_hash": "1460a85fef687355",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -325,7 +325,7 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2342,
-   ".ts": 1892,
+   ".ts": 1894,
    ".sql": 1306,
    ".mjs": 434,
    ".py": 119,
@@ -68170,7 +68170,7 @@
   {
    "module": "scripts",
    "files": 464,
-   "lines": 93075,
+   "lines": 93187,
    "tables": [
     "a",
     "alem_do_limite",
@@ -69890,8 +69890,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 390,
-   "lines": 118861,
+   "files": 392,
+   "lines": 118955,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -95781,6 +95781,10 @@
    },
    {
     "file": "supabase/functions/multiplix-send/index.ts",
+    "text": "outra mensagem do Postgres (nome de coluna/função, timeout, permissão) vira o"
+   },
+   {
+    "file": "supabase/functions/multiplix-send/index.ts",
     "text": "F06 (corrigido em 01/10/2026): a permissao nomeada agora e avaliada"
    },
    {
@@ -95814,10 +95818,6 @@
    {
     "file": "supabase/functions/multiplix-send/index.ts",
     "text": "F11a: cada passada reivindica no maximo MULTIPLIX_BATCH_SIZE (default 20)"
-   },
-   {
-    "file": "supabase/functions/multiplix-send/index.ts",
-    "text": "destinatarios — uma invocacao com a fila inteira estourava o tempo/limite"
    },
    {
     "file": "supabase/functions/multiplix-voices/index.ts",
@@ -96053,6 +96053,10 @@
    },
    {
     "file": "supabase/functions/talkx-send/index.ts",
+    "text": "outra mensagem do Postgres (nome de coluna/função, timeout, permissão) vira o"
+   },
+   {
+    "file": "supabase/functions/talkx-send/index.ts",
     "text": "X067: limite de envios de teste — 5 por janela de 10 minutos."
    },
    {
@@ -96106,10 +96110,6 @@
    {
     "file": "supabase/functions/talkx-send/index.ts",
     "text": "desconhecido não pode confundir \"sem link cadastrado\" (missing, por"
-   },
-   {
-    "file": "supabase/functions/talkx-send/index.ts",
-    "text": "V20: horário comercial + limite diário por conexão (talkx_settings)"
    },
    {
     "file": "supabase/functions/talkx-send/process-recipient.ts",
@@ -206753,6 +206753,18 @@
     "name": "R2-API-013: o timer do heartbeat morre em toda saida do item (inclusive opt-out tardio)"
    },
    {
+    "file": "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
+    "name": "multiplix-send safeDbErrorCode: código de RAISE EXCEPTION passa intacto"
+   },
+   {
+    "file": "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
+    "name": "multiplix-send safeDbErrorCode: texto do Postgres vira SQLSTATE (nunca o texto)"
+   },
+   {
+    "file": "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
+    "name": "multiplix-send safeDbErrorCode: bypasses da regra antiga (!includes("
+   },
+   {
     "file": "supabase/functions/multiplix-voices/index.test.ts",
     "name": "F64: grant por PAPEL alcanca quem tem o papel, e nao alcanca quem nao tem"
    },
@@ -208131,6 +208143,18 @@
    {
     "file": "supabase/functions/talkx-send/r3-delta-012-quarentena-attempt-no-log.test.ts",
     "name": "R3-DELTA-012: log de quarentena mantém o attempt do logger filho (e não o do contexto da chamada)"
+   },
+   {
+    "file": "supabase/functions/talkx-send/safe-db-error-code.test.ts",
+    "name": "talkx-send safeDbErrorCode: código de RAISE EXCEPTION passa intacto"
+   },
+   {
+    "file": "supabase/functions/talkx-send/safe-db-error-code.test.ts",
+    "name": "talkx-send safeDbErrorCode: texto do Postgres vira SQLSTATE (nunca o texto)"
+   },
+   {
+    "file": "supabase/functions/talkx-send/safe-db-error-code.test.ts",
+    "name": "talkx-send safeDbErrorCode: bypasses da regra antiga (!includes("
    },
    {
     "file": "supabase/functions/talkx-send/t-afa5df1d-excecao-nao-perde-evento-agregado.test.ts",
@@ -264730,7 +264754,7 @@
   },
   "scripts/ci/check-edge-error-exposure.mjs": {
    "path": "scripts/ci/check-edge-error-exposure.mjs",
-   "lines": 293,
+   "lines": 350,
    "exports": [
     "function acharExposicoes",
     "function listarFontes",
@@ -264745,18 +264769,21 @@
    "rule_comments": [
     "alerta de Code Scanning #13 (js/stack-trace-exposure, supabase/functions/_shared/validation.ts).",
     "// Contexto: o alerta foi aberto em 05/09/2026 sobre `validation.ts` devolvendo detalhe interno ao",
-    "`auth.admin.createUser` num 400). O que nao pode vazar e detalhe interno num 5xx, ou stack trace"
+    "`auth.admin.createUser` num 400). O que nao pode vazar e detalhe interno num 5xx, ou stack trace",
+    "O `.message` delas é texto do Postgres (`column \"x\" does not exist`, `permission",
+    "tabela/coluna/função interna. Ele não pode ir cru ao corpo da resposta em"
    ],
    "doc": "!/usr/bin/env node E33 do PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01: trava a invariante que fechou o alerta de Code Scanning #13 (js/stack-trace-exposure, supabase/functions/_shared/validation.ts). Contexto: o alerta foi aberto em 05/09/2026 sobre `validation.ts` devolvendo detalhe interno ao clien …"
   },
   "scripts/ci/check-edge-error-exposure.unit.mjs": {
    "path": "scripts/ci/check-edge-error-exposure.unit.mjs",
-   "lines": 250,
+   "lines": 305,
    "errors": [
     "), { recursive: true });\n  mkdirSync(path.join(raiz, "
    ],
    "rule_comments": [
-    "Caso real de _shared/validation.ts: a docstring cita o bug que corrigiu."
+    "Caso real de _shared/validation.ts: a docstring cita o bug que corrigiu.",
+    "timeout, permissão) ia cru num 409 em talkx-send/multiplix-send. A guarda passa a"
    ]
   },
   "scripts/ci/check-pr-workflow-secrets.mjs": {
@@ -374472,9 +374499,10 @@
   },
   "supabase/functions/multiplix-send/index.ts": {
    "path": "supabase/functions/multiplix-send/index.ts",
-   "lines": 1199,
+   "lines": 1216,
    "exports": [
     "function connectionCapabilityDenial",
+    "function safeDbErrorCode",
     "function handleMultiplixSend"
    ],
    "tables": [
@@ -374739,6 +374767,7 @@
     "F25/MX09: permissao nomeada que o produto usa para liberar a ENTRADA no",
     "essa permissao aqui, o papel minimo autorizado pelo front (que nao acumula",
     "abre a ENTRADA apenas: o dono continua exigido por `canManageDispatch`.",
+    "outra mensagem do Postgres (nome de coluna/função, timeout, permissão) vira o",
     "F06 (corrigido em 01/10/2026): a permissao nomeada agora e avaliada",
     "barrava quem nao tem papel, na pratica a permissao nunca valia para",
     "papel OU permissao (quem tem so a permissao, sem papel, ja passava).",
@@ -374747,8 +374776,7 @@
     "`canManageDispatch` logo abaixo — a permissao abre a entrada, nao o",
     "ou de quem tem a permissao nomeada multiplix.dispatch.manage_all. Cron",
     "cria o disparo por `multiplix_create_draft` (SOMENTE dispatches +",
-    "F11a: cada passada reivindica no maximo MULTIPLIX_BATCH_SIZE (default 20)",
-    "destinatarios — uma invocacao com a fila inteira estourava o tempo/limite"
+    "F11a: cada passada reivindica no maximo MULTIPLIX_BATCH_SIZE (default 20)"
    ],
    "doc": "Multiplix — motor de envio (claim/lease/backoff) Mesmo padrao de talkx-send (claim_talkx_recipient/complete_talkx_recipient/ reschedule_talkx_recipient/complete_talkx_campaign_if_drained), adaptado para multiplix_dispatches/multiplix_recipients. Sem variantes A/B e sem link de rastreamento {{link}} …",
    "calc_fns": [
@@ -374765,6 +374793,23 @@
     "1"
    ],
    "uses_service_role": true
+  },
+  "supabase/functions/multiplix-send/safe-db-error-code.test.ts": {
+   "path": "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
+   "lines": 30,
+   "is_test": true,
+   "errors": [
+    "${label}: esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}"
+   ],
+   "rule_comments": [
+    "nunca o texto cru do Postgres (coluna, função, timeout, permissão)."
+   ],
+   "doc": "#2880: o corpo do 409 das transições só carrega CÓDIGO (allowlist ^[a-z0-9_]{1,80}$), nunca o texto cru do Postgres (coluna, função, timeout, permissão).",
+   "tests": [
+    "multiplix-send safeDbErrorCode: código de RAISE EXCEPTION passa intacto",
+    "multiplix-send safeDbErrorCode: texto do Postgres vira SQLSTATE (nunca o texto)",
+    "multiplix-send safeDbErrorCode: bypasses da regra antiga (!includes("
+   ]
   },
   "supabase/functions/multiplix-voices/index.test.ts": {
    "path": "supabase/functions/multiplix-voices/index.test.ts",
@@ -377092,11 +377137,12 @@
   },
   "supabase/functions/talkx-send/index.ts": {
    "path": "supabase/functions/talkx-send/index.ts",
-   "lines": 1467,
+   "lines": 1484,
    "exports": [
     "function hmacTokenForRecipient",
     "function buildTalkxTrackingLinkHelpers",
     "function buildTalkxTrackingUrl",
+    "function safeDbErrorCode",
     "function handleTalkxSend"
    ],
    "tables": [
@@ -377407,6 +377453,7 @@
     }
    ],
    "rule_comments": [
+    "outra mensagem do Postgres (nome de coluna/função, timeout, permissão) vira o",
     "X067: limite de envios de teste — 5 por janela de 10 minutos.",
     "negativo) não pode desligar o limite — cai no padrão 5. Antes,",
     "Repetir o mesmo pedido NÃO pode virar um segundo POST ao provedor.",
@@ -377420,8 +377467,7 @@
     "typing_delay máximo + 25s de folga (timeout por envio).",
     "expira sozinho em 90s — nunca mascara a resposta.",
     "trackingUrl de prova: {{link}} é nativo/known — a validação de nome",
-    "desconhecido não pode confundir \"sem link cadastrado\" (missing, por",
-    "V20: horário comercial + limite diário por conexão (talkx_settings)"
+    "desconhecido não pode confundir \"sem link cadastrado\" (missing, por"
    ],
    "doc": "Talk X — Humanized bulk messaging edge function Simulates typing, personalized messages with {{nome}}, {{apelido}}, {{empresa}}, {{saudacao}} Supports text + media (image, video, document, audio)",
    "temporal": [
@@ -377661,6 +377707,23 @@
    ],
    "tests": [
     "R3-DELTA-012: log de quarentena mantém o attempt do logger filho (e não o do contexto da chamada)"
+   ]
+  },
+  "supabase/functions/talkx-send/safe-db-error-code.test.ts": {
+   "path": "supabase/functions/talkx-send/safe-db-error-code.test.ts",
+   "lines": 30,
+   "is_test": true,
+   "errors": [
+    "${label}: esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}"
+   ],
+   "rule_comments": [
+    "nunca o texto cru do Postgres (coluna, função, timeout, permissão)."
+   ],
+   "doc": "#2880: o corpo do 409 das transições só carrega CÓDIGO (allowlist ^[a-z0-9_]{1,80}$), nunca o texto cru do Postgres (coluna, função, timeout, permissão).",
+   "tests": [
+    "talkx-send safeDbErrorCode: código de RAISE EXCEPTION passa intacto",
+    "talkx-send safeDbErrorCode: texto do Postgres vira SQLSTATE (nunca o texto)",
+    "talkx-send safeDbErrorCode: bypasses da regra antiga (!includes("
    ]
   },
   "supabase/functions/talkx-send/t-afa5df1d-excecao-nao-perde-evento-agregado.test.ts": {
@@ -388031,10 +388094,26 @@
   }
  },
  "git": {
-  "sha": "2ae0de787883980124508b8fc22f4e7e74f15080",
+  "sha": "58a72088fee58ac15bea749bdfc55fd4a8605971",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "58a7208",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)",
+    "files": [
+     "scripts/ci/check-edge-error-exposure.mjs",
+     "scripts/ci/check-edge-error-exposure.unit.mjs",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/gmail-webhook/index.ts",
+     "supabase/functions/multiplix-send/index.ts",
+     "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
+     "supabase/functions/talkx-send/index.ts",
+     "supabase/functions/talkx-send/safe-db-error-code.test.ts"
+    ]
+   },
    {
     "sha": "2ae0de7",
     "date": "2026-11-12",
@@ -388351,26 +388430,13 @@
      "src/components/talkx/report/TalkXCampaignReport.tsx",
      "src/components/talkx/report/__tests__/TalkXCampaignReport.segmento.test.tsx"
     ]
-   },
-   {
-    "sha": "bd62fc9",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "feat(monitoring): painel investigação de pausas de instância (IP2) (#2822)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/grants-baseline.json",
-     "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-     "src/components/monitoring/MonitoringInstancePauses.tsx",
-     "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.pauses.test.tsx",
-     "src/components/monitoring/__tests__/MonitoringInstancePauses.behavior.test.tsx",
-     "src/components/monitoring/hooks/useInstancePauses.ts",
-     "src/services/instance-pauses.service.ts",
-     "supabase/migrations/20261111181000_instance_pause_investigation.sql"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "supabase/deployment-manifest.json",
+    4
+   ],
    [
     "PENDENCIAS.md",
     4
@@ -388378,10 +388444,6 @@
    [
     "RELATORIO_CI.md",
     4
-   ],
-   [
-    "supabase/deployment-manifest.json",
-    3
    ],
    [
     ".github/workflows/db-guard.yml",
@@ -388396,12 +388458,36 @@
     2
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
+    "scripts/tarefas/seed-local-imagens.unit.mjs",
     2
    ],
    [
-    "scripts/tarefas/seed-local-imagens.unit.mjs",
-    2
+    "scripts/ci/check-edge-error-exposure.mjs",
+    1
+   ],
+   [
+    "scripts/ci/check-edge-error-exposure.unit.mjs",
+    1
+   ],
+   [
+    "supabase/functions/gmail-webhook/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/multiplix-send/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/talkx-send/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/talkx-send/safe-db-error-code.test.ts",
+    1
    ],
    [
     "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
@@ -388425,30 +388511,6 @@
    ],
    [
     "src/pages/ForgotPassword.tsx",
-    1
-   ],
-   [
-    "src/pages/__tests__/ForgotPassword.test.tsx",
-    1
-   ],
-   [
-    "e2e/navegacao-modulos.spec.ts",
-    1
-   ],
-   [
-    "playwright.config.ts",
-    1
-   ],
-   [
-    "scripts/ci/check-claude-md-integrity.mjs",
-    1
-   ],
-   [
-    "scripts/ci/check-claude-md-integrity.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
     1
    ]
   ]

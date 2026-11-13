@@ -24,7 +24,7 @@
   "testes": [
    "co-localizado (__tests__) (1958)",
    "outro (230)",
-   "co-localizado (*.test) (168)"
+   "co-localizado (*.test) (170)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)",
    "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)",
    "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)",
    "feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)",
-   "fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)",
-   "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)"
+   "fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

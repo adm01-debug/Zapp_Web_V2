@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2ae0de787883980124508b8fc22f4e7e74f15080",
+  "commit": "58a72088fee58ac15bea749bdfc55fd4a8605971",
   "branch": "main",
-  "data_commit": "2026-11-12T22:05:47-03:00",
+  "data_commit": "2026-11-12T23:43:41-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "58a7208",
+    "data": "2026-11-12",
+    "assunto": "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)"
+   },
    {
     "sha": "2ae0de7",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "0d65d57",
     "data": "2026-11-12",
     "assunto": "ci(talkx): ativa validação do corpo das PRs Talk X (#2919)"
-   },
-   {
-    "sha": "2942f21",
-    "data": "2026-11-12",
-    "assunto": "fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)"
    }
   ],
-  "arquivos_mudados_7d": 664,
+  "arquivos_mudados_7d": 667,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 16
+    "mudancas": 17
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8419,
-  "arquivos_codigo": 4815,
-  "linhas_codigo": 891800,
+  "arquivos_total": 8421,
+  "arquivos_codigo": 4817,
+  "linhas_codigo": 892006,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2618,
+  "testes": 2620,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 214,
-   "linhas": 44140
+   "linhas": 44252
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -779,8 +779,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 390,
-   "linhas": 118861
+   "arquivos": 392,
+   "linhas": 118955
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -818,7 +818,7 @@
   },
   {
    "arquivo": "supabase/functions/talkx-send/index.ts",
-   "linhas": 1467
+   "linhas": 1484
   },
   {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -838,7 +838,7 @@
   },
   {
    "arquivo": "supabase/functions/multiplix-send/index.ts",
-   "linhas": 1199
+   "linhas": 1216
   },
   {
    "arquivo": "src/components/talkx/useCampaignEditor.ts",
