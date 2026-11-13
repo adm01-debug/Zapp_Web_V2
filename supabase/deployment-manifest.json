@@ -691,8 +691,8 @@
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "bytes": 12679,
-      "sha256": "a0f202121028febcc9b4a9789f0298f8be2f531ba66b2cb087fcc4b0107fd43c"
+      "bytes": 12614,
+      "sha256": "29b4c9a52a90f1a1ff7b8fe8d2245c1ac55695819d506977f634c358db56ec95"
     },
     {
       "path": "supabase/functions/health/index.ts",
@@ -756,8 +756,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 65085,
-      "sha256": "b1ee6b5ae71fa74cbf9ce5a13fb03df769253e8835037fbe613855382bb1b998"
+      "bytes": 65812,
+      "sha256": "a9d8144f8c2f1b168d421dba1b0214a756210aa092b546993de56aacdbfa0fb4"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -846,8 +846,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 71757,
-      "sha256": "d6cf2119ff0c57f4314b0521c6323d6e73092c0ce7a5f39d3493208fcdbd9b0d"
+      "bytes": 72493,
+      "sha256": "17bffd8d9260ecc0e63e0e85372b0b8d8be7f36177e0ae72075346f8619900ba"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
@@ -2156,7 +2156,7 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "8103a26ef1c866c6ac4259c2c6b29842ab2bfc6f71bc795188b6db017e8bb642",
+      "source_sha256": "d259b32cb5f1a7bc97ff25fd39a8389503470df51e060fa8ba406615ca21e7ee",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/gmail-helpers.ts",
@@ -2314,7 +2314,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3ae4dc39b8e12f030423a1386f77f0256b46a145ff4975ab746190e151dfff09",
+      "source_sha256": "65fe80d20631bfed6ac5d5ef45e23f7a007ed0c1839f03bf0fb06369dc724b9e",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -2622,7 +2622,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d56f2c4d59b96e40184c698d0b8752026bd98fbabd01efe2abc3e9001fc0b2d5",
+      "source_sha256": "80db73b80ab6970b629be5ca51b372a442f6115c8a8be9397a5069b56869e401",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2789,5 +2789,5 @@
       ]
     }
   ],
-  "manifest_sha256": "ad0fd34842e4ae12452ec5a8cde5bb61414e73a778f247029ba4672f75f91bf3"
+  "manifest_sha256": "3cc01dd987dd74c6a6a768e9e07969e4f555fcbf38b1e46156dbd05a508c1a52"
 }
