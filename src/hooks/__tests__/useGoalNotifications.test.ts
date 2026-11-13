@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 const mockFrom = vi.fn();
@@ -48,16 +48,20 @@ describe('useGoalNotifications', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'p1' }, error: null }),
-          or: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-        or: vi.fn().mockResolvedValue({ data: [], error: null }),
-      }),
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    });
+    const baseResolver = (table: string): { data: unknown; count?: number; error: unknown } => {
+      if (table === 'profiles') return { data: { id: 'p1' }, error: null };
+      return { data: [], error: null };
+    };
+    const fazerBuilder = (table: string) => {
+      const fake: Record<string, unknown> = {};
+      for (const metodo of ['select', 'eq', 'or', 'gte', 'lte', 'neq']) {
+        fake[metodo] = vi.fn<(...args: unknown[]) => typeof fake>(() => fake);
+      }
+      fake.maybeSingle = vi.fn().mockResolvedValue(baseResolver(table));
+      fake.insert = vi.fn().mockResolvedValue({ error: null });
+      return fake;
+    };
+    mockFrom.mockImplementation((table: string) => fazerBuilder(table));
   });
 
   afterEach(() => {
@@ -96,13 +100,16 @@ describe('useGoalNotifications', () => {
   });
 
   it('handles missing profile gracefully', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        }),
-      }),
-    });
+      const fazerBuilder = (table: string) => {
+        const fake: Record<string, unknown> = {};
+        for (const metodo of ['select', 'eq', 'or', 'gte', 'lte', 'neq']) {
+          fake[metodo] = vi.fn<(...args: unknown[]) => typeof fake>(() => fake);
+        }
+        fake.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+        fake.insert = vi.fn().mockResolvedValue({ error: null });
+        return fake;
+      };
+      mockFrom.mockImplementation((table: string) => fazerBuilder(table));
     const { result } = renderHook(() => useGoalNotifications());
     await expect(result.current.checkGoalProgress()).resolves.not.toThrow();
   });
