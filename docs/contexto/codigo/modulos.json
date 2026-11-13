@@ -3929,6 +3929,7 @@
     "useTalkXHelpSearch",
     "useTalkXInsights",
     "useTalkXLifecycle",
+    "useTalkXLifecycleWith",
     "useTalkXLinks",
     "useTalkXLiveChannel",
     "useTalkXMediaUrl",
@@ -6970,8 +6971,8 @@
   {
    "modulo": "components/talkx",
    "arquivos": 100,
-   "testes": 147,
-   "linhas": 23850,
+   "testes": 149,
+   "linhas": 23935,
    "itens_menu": [
     "Campanhas"
    ],
@@ -7033,6 +7034,7 @@
     "useTalkXHelpSearch",
     "useTalkXInsights",
     "useTalkXLifecycle",
+    "useTalkXLifecycleWith",
     "useTalkXLinks",
     "useTalkXLiveChannel",
     "useTalkXMediaUpload",
@@ -7063,6 +7065,7 @@
     "useCampaignEditor",
     "useCampaignRowActions",
     "useTalkXLifecycle",
+    "useTalkXLifecycleWith",
     "useTalkXMediaUpload"
    ],
    "edges": [
@@ -12304,6 +12307,7 @@
     "useTalkXHelpSearch",
     "useTalkXInsights",
     "useTalkXLifecycle",
+    "useTalkXLifecycleWith",
     "useTalkXLinks",
     "useTalkXLiveChannel",
     "useTalkXMediaUrl",
@@ -14582,6 +14586,7 @@
     "useTalkXHelpSearch",
     "useTalkXInsights",
     "useTalkXLifecycle",
+    "useTalkXLifecycleWith",
     "useTalkXLinks",
     "useTalkXLiveChannel",
     "useTalkXMediaUrl",
@@ -15841,6 +15846,7 @@
     "useTalkXHelpSearch",
     "useTalkXInsights",
     "useTalkXLifecycle",
+    "useTalkXLifecycleWith",
     "useTalkXLinks",
     "useTalkXLiveChannel",
     "useTalkXMediaUrl",

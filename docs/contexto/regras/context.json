@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "19104e8ab6c45c12717e0fbe9e82328630793c46",
+  "sha": "a49ef4ad58d62497e3a719f1a647719c8f1f490e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 20:39 UTC",
-  "files_total": 8339,
-  "code_files": 6168,
-  "code_lines": 1074835
+  "generated_at": "2026-11-13 22:29 UTC",
+  "files_total": 8341,
+  "code_files": 6170,
+  "code_lines": 1075384
  },
  "version": "1.3.2",
- "facts_hash": "f9cfe0e97baca495",
+ "facts_hash": "6151f105d4c11045",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -326,8 +326,8 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2379,
-   ".ts": 1924,
+   ".tsx": 2380,
+   ".ts": 1925,
    ".sql": 1306,
    ".mjs": 440,
    ".py": 119,
@@ -65454,7 +65454,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2216,
+  "components_count": 2218,
   "hooks": [
    {
     "name": "useContacts",
@@ -65714,6 +65714,10 @@
    },
    {
     "name": "useTalkXLifecycle",
+    "file": "src/components/talkx/useTalkXLifecycle.tsx"
+   },
+   {
+    "name": "useTalkXLifecycleWith",
     "file": "src/components/talkx/useTalkXLifecycle.tsx"
    },
    {
@@ -68610,8 +68614,8 @@
   },
   {
    "module": "src/components",
-   "files": 2216,
-   "lines": 376611,
+   "files": 2218,
+   "lines": 377160,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -78432,7 +78436,7 @@
    {
     "file": "src/components/talkx/useCampaignRowActions.tsx",
     "name": "CampaignRowConfirmKind",
-    "values": "start | pause | resume | duplicate | cancel | delete"
+    "values": "start | pause | duplicate | cancel | delete"
    },
    {
     "file": "src/components/talkx/useTalkXLifecycle.tsx",
@@ -84721,18 +84725,6 @@
     "msg": "Campanha cancelada."
    },
    {
-    "file": "src/components/talkx/TalkXCampaignRunning.tsx",
-    "msg": "Erro ao cancelar a campanha."
-   },
-   {
-    "file": "src/components/talkx/TalkXCampaignRunning.tsx",
-    "msg": "Erro ao pausar a campanha."
-   },
-   {
-    "file": "src/components/talkx/TalkXCampaignRunning.tsx",
-    "msg": "Erro ao retomar campanha."
-   },
-   {
     "file": "src/components/talkx/TalkXCampaignScheduled.tsx",
     "msg": "A data de término da repetição deve ser igual ou posterior à data de início."
    },
@@ -90571,6 +90563,10 @@
    {
     "file": "src/components/talkx/useCampaignRowActions.tsx",
     "text": "Trava de reentrada: o mesmo modal não pode disparar a ação duas vezes"
+   },
+   {
+    "file": "src/components/talkx/useTalkXLifecycle.tsx",
+    "text": "Fora do try: um erro do gancho da tela não pode reabrir o diálogo como falha."
    },
    {
     "file": "src/components/talkx/useTalkXMediaUpload.ts",
@@ -162178,15 +162174,15 @@
    },
    {
     "file": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
-    "name": "retomar: o modal não fecha antes de o servidor confirmar"
+    "name": "retomar: UM clique, sem modal (decisão do dono, 2026-11-13); o botão espera o servidor"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
-    "name": "retomar recusado pelo servidor: o modal continua aberto"
+    "name": "retomar recusado pelo servidor: sem modal e sem segundo toast (o startCampaign já avisou)"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
-    "name": "retomar com a chamada estourando: avisa o operador e mantém o modal aberto"
+    "name": "retomar com a chamada estourando: avisa o operador uma vez"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
@@ -162239,6 +162235,38 @@
    {
     "file": "src/components/talkx/__tests__/TalkXCampaignRunning.janela-historico.test.tsx",
     "name": "envios no minuto atual: ritmo medido sobre 10 minutos consecutivos e prazo calculado"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "TalkXCampaignRunning · ciclo de vida pelo diálogo único (X051)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "a tela usa as funções do PRÓPRIO useTalkX: o wrapper que instancia outro useTalkX (outro canal realtime) não é chamado"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "pausar: leva o motivo, fecha o diálogo e avisa "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "cancelar: avisa "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "retomar: UM clique, sem diálogo (decisão do dono, 2026-11-13), e nenhum toast extra da tela"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "erro ao %s aparece em português no diálogo (nunca o texto cru da Edge) e não sai da tela"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "retomar recusado (startCampaign devolve false): sem diálogo e sem toast repetido (o startCampaign já avisou)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+    "name": "retomar que lança (falha inesperada) avisa uma vez, em português"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXCampaignRunning.limits.test.tsx",
@@ -162954,7 +162982,11 @@
    },
    {
     "file": "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
-    "name": "retomar: o hook executa startCampaign e a recusa da Edge (false) aparece como erro no diálogo aberto"
+    "name": "retomar: um clique (sem diálogo) executa startCampaign — decisão do dono, 2026-11-13"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
+    "name": "retomar recusado pela Edge (false) não abre diálogo: o aviso é o toast do próprio startCampaign"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
@@ -163266,7 +163298,7 @@
    },
    {
     "file": "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
-    "name": "retomar: o diálogo do hook dispara startCampaign, não a prop onStart"
+    "name": "retomar: um clique (sem diálogo) dispara startCampaign pelo hook, não a prop onStart"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
@@ -165345,6 +165377,18 @@
     "name": "copies configuration but never execution, schedule or authorship"
    },
    {
+    "file": "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
+    "name": "Talk X — diálogos só pelo kit (X051)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
+    "name": "encontra as telas do Talk X (a guarda não roda no vazio)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
+    "name": "%s: sem AlertDialog/Dialog/window.confirm fora do kit"
+   },
+   {
     "file": "src/components/talkx/__tests__/talkxLimits.test.ts",
     "name": "talkxLimits (X006 — unidade ms × s)"
    },
@@ -166122,6 +166166,18 @@
    },
    {
     "file": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
+    "name": "sem onLifecycle, "
+   },
+   {
+    "file": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
+    "name": "sem onLifecycle, "
+   },
+   {
+    "file": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
+    "name": "sem onLifecycle, clique repetido em "
+   },
+   {
+    "file": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
     "name": "confirmar "
    },
    {
@@ -166146,7 +166202,7 @@
    },
    {
     "file": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
-    "name": "mostra as ações do status e abre ciclo de vida pelo hook único"
+    "name": "mostra as ações do status e retoma pelo hook único em um clique"
    },
    {
     "file": "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx",
@@ -261771,7 +261827,7 @@
  "manual": [
   {
    "file": "regras.md",
-   "content": "# Regras de negócio — decididas pelo dono do produto\n\n> Escrito por humanos (entrevista com o dono, 2026-11-03). Entra em `07-REGRAS-DE-NEGOCIO.md` seção A com\n> prioridade sobre o que foi extraído do código. Cada regra diz se **já existe no código** (com a evidência)\n> ou se é **decisão pendente de implementação** — agente que for mexer nesses fluxos deve respeitar a\n> decisão, não o comportamento atual.\n\n## 2. Atores / perfis e o que cada um pode fazer\n\nPapéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent` · `special_agent`**.\n`leader`, `owner` e `customer` **não são papéis**: `owner`/`admin`/`member` são papéis *dentro de um grupo do Team Chat*\n(`team_conversation_members.member_role`, migration `20260927270019`); \"líder\" = supervisor. Medido em 2026-11-03:\n4 admins, 3 supervisores, 4 agentes, 0 `special_agent`.\n\n| Perfil | Pode | Não pode |\n|---|---|---|\n| **admin** | **Só ele** cria e remove a infraestrutura do atendimento: conexões WhatsApp, filas e membros, usuários e seus papéis (`user_roles`), horário comercial, SLA (`sla_configurations`), limites de campanha (`talkx_settings`), automações, chatbot, templates, blacklist, `app_settings`, provedores de IA, bloqueio de IP/país, logs de auditoria. **Único** que apaga dados em massa (contatos, campanhas, playbooks, logs). | — |\n| **supervisor** | Tudo do agente **mais**: enxerga e intervém em **qualquer** conversa e contato (reatribui, muda status, encerra — `is_admin_or_supervisor` em ~120 funções); configura regras de SLA, automações e relatórios agendados; amplia a visibilidade de um agente (`agent_visibility_grants`); vê tentativas de login; **dispara campanhas** (`confirm_talkx_campaign_launch` → `talkx_confirm_launch_unauthorized` para quem não é admin/supervisor). | Criar ou apagar conexão, fila ou usuário; mexer em configuração global. |\n| **agent** | Só o que é dele ou da sua fila (`can_edit_contact` = atendente dono **ou** membro da fila): cria contato, envia mensagem, cria/edita suas tarefas, agendamentos e **rascunhos** de campanha. | Ver ou mexer em conversa que não é sua nem da sua fila; mudar o próprio papel/permissões (`prevent_profile_privilege_escalation`); apagar contato ou mensagem; alterar qualquer configuração; **disparar** campanha. |\n| **special_agent** | **Papel excluído por decisão do dono (2026-11-03).** Era agent + flag `profiles.can_download`; a flag continua existindo no agente comum (protegida por `20261012032331`). Nenhum agente de IA deve atribuir, tratar ou exibir esse papel; a tarefa pendente é removê-lo (enum `app_role`, CHECK de `profiles.role`, `effective_role`, 16 arquivos em `src/`, 4 edge functions — DDL em produção, PR aguardando o dono). | **pendente de remoção** — 0 usuários hoje |\n\nEvidência: 18 policies RLS citam só `admin`, 10 tabelas só admin lê; funções `effective_role`, `is_admin`,\n`is_admin_or_supervisor`, `can_edit_contact`, `require_contact_edit_permission` (banco ao vivo, 2026-11-03).\n\n## 4. Ciclo de vida / estados e transições permitidas\n\n### 4.1 Conversa (`contacts.conversation_status`)\n\n| Regra | Estado | Evidência |\n|---|---|---|\n| Estados: `open`, `waiting`, `resolved`, `archived`. Transições permitidas: open → waiting/resolved/archived · waiting → open/resolved · resolved → open/archived · archived → open. | **existe** | `supabase/migrations/20260905090000_contacts_fsm_trigger.sql` |\n| Quem muda status: admin/supervisor, ou o atendente dono da conversa / membro da fila dela (`can_edit_contact`). | **existe** | `supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql` (`set_conversation_status`, `require_contact_edit_permission`) |\n| Cliente manda mensagem em conversa `resolved`/`archived` → reabre sozinha: volta para `open` **com o mesmo atendente** se ela tinha dono; sem dono vai para `waiting`. Decisão do dono: manter — as conversas tendem a ficar sempre com os mesmos atendentes, e isso é desejado. | **existe** | `supabase/migrations/20261013210003_reabre_conversa_com_nova_mensagem.sql` (`trg_conversation_reopen_on_inbound`) |\n| Tempo sem resposta do atendente **não** muda o status para `waiting`. Continua como está. | **decisão** (nada a implementar) | — |\n| **SLA de primeira resposta** (decisão 2026-11-03): padrão quando a fila não tem configuração = **amarelo aos 15 min, vermelho aos 30 min**, contando **só em horário comercial** (seg–sex 08:00–18:00; fora dele o relógio para). Amarelo: só a tela do atendente. Vermelho: **push para atendente e supervisor**. **1 h** sem resposta: **e-mail ao supervisor**. **Admin** é avisado quando a **mesma fila** tem **3 ou mais** conversas no vermelho ao mesmo tempo (fila sem gente, não atendente lento). | **parcial** — alertas na tela existem; minutos padrão, pausa fora do horário, push/e-mail e regra do admin são **pendentes** | `sla_alert_events` (`20261011180337`, severidades `warning`/`breached`, visíveis para dono + admin/supervisor); minutos por fila em `sla_configurations` (`20261005151753`); horário comercial em `talkx_settings.business_hours` |\n| Conversa sem nenhuma interação (nem cliente, nem atendente) por **30 dias** → arquivada automaticamente (`archived`). Cliente que escrever depois reabre pela regra acima. | **pendente de implementação** (job `pg_cron` — DDL em produção, exige PR aberta para o dono) | hoje não há job de arquivamento (NÃO VERIFICADO em `cron.job` ao vivo; grep nas migrations não achou) |\n| Fechar de novo uma conversa **sem ela ter sido reaberta** desde o último fechamento é rejeitado (`conversation_closure_requires_reopen`). Reabrir e fechar no mesmo dia **é permitido** — o limite \"um fechamento por dia\" foi removido da operação e vale só nos indicadores. | **existe** | `supabase/migrations/20261007013217_conversation_closures_reopen_same_day.sql:143` (drop do índice diário) e `:175-179` (guarda) |\n\n### 4.2 Conexão WhatsApp (`whatsapp_connections`) — regra dos três níveis\n\nPrincípio: **o atendente nunca pode mandar mensagem sem saber que a conexão caiu**, mas queda rápida não\nvira alerta para ninguém. A sonda `connection-health-check` roda a cada 5 min (pg_cron) e classifica\n`healthy` / `degraded` / `disconnected` com motivos `phantom_session` / `stale_session` / `webhook_silent`\n(`supabase/functions/connection-health-check/index.ts`); reconexão automática por conexão usa\n`auto_reconnect_enabled`, `reconnect_max_attempts`, `reconnect_interval_seconds` (migration `20261012134000`).\n\n| Nível | Quando | O que acontece | Estado |\n|---|---|---|---|\n| **0 — queda rápida** | `disconnected`/`degraded` enquanto a reconexão automática ainda tem tentativas (~15 min) | Ninguém recebe push/e-mail. Na tela, conexão em **amarelo** e a caixa de mensagem avisa \"sem conexão com o WhatsApp — o envio vai falhar até a conexão voltar\". **Hoje o envio falha** (não existe fila offline): `enqueue_outbound_message` recusa com `no_connected_whatsapp_connection` quando não há conexão `connected`. | **implementado** (PR #2677, merge em 2026-11-03): aviso amarelo/vermelho em `src/components/inbox/chat/ConnectionHealthBanner.tsx` + `src/hooks/inbox/useConnectionHealthBanner.ts`. **Lacuna:** o atendente só vê o aviso quando a RPC `get_contact_connection_health` entrar (RLS de `whatsapp_connections` é só admin/supervisor) — DDL pendente |\n| **1 — queda confirmada** | reconexão esgotou as tentativas **ou** motivo `phantom_session` (celular desvinculou; precisa de QR Code) | **Admin e supervisores recebem push + e-mail sempre**, independentemente das preferências (`alert_on_disconnected` etc. só **adicionam** gente, nunca tiram). Atendentes e supervisores da conexão veem bloqueio **vermelho**: \"WhatsApp desconectado — precisa de um novo QR Code (só o admin conecta). Envios falham até reconectar.\" | **implementado** (PR #2677, merge em 2026-11-03): `connection-health-check` escala por nível (`decideEscalation`), push + e-mail obrigatórios para admin/supervisor via `user_roles`, opt-in só adiciona; marcadores por canal em `notifications` (`conn-l1:v1:<tipo>:<id>`) |\n| **2 — persistente** | > 1 h desconectada | Repete o aviso **de hora em hora só para o admin** (nível 2 implica nível 1). Campanhas pausadas por `connection_lost` **retomam** quando a conexão volta (`onConnectionRecovered` → `transition_talkx_campaign` `start`). | **implementado** (PR #2677, merge em 2026-11-03): chave `conn-l2:v1:<tipo>:<id>:<hora>`. Pausa automática ao cair: já existia (`connection_lost`), NÃO VERIFICADO neste PR |\n\nRegra adicional: `degraded` (webhook mudo) conta como nível 0; se durar **mais de 30 min**, sobe para nível 1 —\nwebhook mudo por meia hora significa que mensagens de clientes não estão chegando, tão grave quanto não enviar.\n\nTempos decididos: **15 min** (esgota reconexão) · **30 min** (`degraded` vira nível 1) · **1 h** (nível 2).\n\nReconexão por QR Code (nível 1 em diante): **só o admin** conecta/escaneia — supervisor e atendente **não** (decisão 2026-11-03, corrigida pelo dono). **Pendente de implementação:** hoje o supervisor ainda vê conexões e consegue pedir QR (`get_connection_qr_code` e `get_connection_instance` usam `is_admin_or_supervisor`; policy `whatsapp_connections: Admin supervisor view connections`). O bloqueio vermelho do atendente/supervisor diz \"avise o admin\", não oferece o QR. Alerta de nível 1 continua indo para admin **e** supervisor (supervisor precisa saber, mesmo sem poder reconectar).\n\n## 6. Prazos, limites e quotas — Talk X / campanhas\n\nValores de consentimento: `granted` / `unknown` / `revoked` (não existe `opt_in`;\n`supabase/migrations/20261016010744_consent_status_guard.sql:40`).\n\n| Regra | Estado | Evidência |\n|---|---|---|\n| **Consentimento:** `unknown` **recebe** campanha; `revoked` **nunca** recebe. O setting `require_granted_consent` fica **desligado** (base é de clientes/leads da própria empresa; legítimo interesse com saída fácil). Ligar esse setting hoje zeraria toda campanha: 100% dos contatos ativos estão `unknown`. | **existe** (decisão: manter) | `20261003232707_talkx_lgpd_consentimento_expurgo.sql:32,163`; banco `talkx_settings.require_granted_consent = false` (medido 2026-11-03) |\n| **Toda campanha inclui instrução de saída.** Contato que pedir saída (\"sair\"/\"parar\") vira `revoked` e entra na supressão por **contato e por telefone** — **nunca mais** entra em campanha, nem se for reimportado com outro cadastro. | **existe** (supressão por telefone); instrução de saída no texto é **regra de uso**, não validada pelo sistema | `20261003232707…sql:449,469` (`talkx_suppress_contact`, eixos `contact_id` e `phone`) |\n| **Limite diário: 500 envios por conexão por dia.** Não há limite por hora — o ritmo vem do `speed_profile` (`slow`/`moderate`/`fast`) + intervalo entre envios. | **existe** | banco `talkx_settings.daily_limit_per_connection = 500`; `supabase/functions/talkx-send/index.ts:513-530`; `20260908120000_talkx_segments_templates_events.sql:82` |\n| **Horário comercial é o padrão:** seg–sex 08:00–18:00 (America/Sao_Paulo). **Campanha nova nasce com `business_hours_only = true`**; quem quiser enviar fora do horário desliga de propósito. | **pendente de implementação** — hoje o padrão é `false` no banco e no formulário | `20260908120000…sql:74` (`DEFAULT false`); `src/components/talkx/TalkXCampaignScheduled.tsx:204` (`?? false`); janela avaliada por `talkx_engine_window_open` |\n| **Legado / telefone inválido nunca entra em campanha:** `deleted_at`, `is_lid_legacy` ou telefone fora de `^[0-9]{10,15}$` ficam fora da audiência. O toggle \"Mostrar legados\" da tela de contatos **não** os faz entrar em campanha. | **existe** | `20261003232707…sql:347-349` (`talkx_audience_query`) |\n\nLacuna registrada: `number_reputation.daily_limit` (200, migration `20260409014536…sql:151`) é um contador de\naquecimento de número que **`talkx-send` não consulta** (grep vazio em 2026-11-03) — coluna morta; o único\nlimite efetivo é o `daily_limit_per_connection`.\n\n## 7. Dados pessoais, retenção e LGPD\n\n| Regra | Estado | Evidência |\n|---|---|---|\n| **Dados de atendimento** (contato, mensagens, mídia, gravação de chamada em `calls`) **não expiram**: ficam até um admin excluir (`delete_contact` / `delete_contacts` = soft-delete, registrado em `contact_deletion_audit`; eliminação física só via o fluxo LGPD abaixo). Nenhum agente cria job de expurgo nessas tabelas. | **existe** (não há expurgo; decisão: manter) | cron ao vivo 2026-11-03: só logs técnicos têm retenção (`reconnection-logs-retention-30d`, `search-events-retention`, `purge-qr-attempts`, caches) |\n| **Histórico de campanha Talk X também fica para sempre** (`talkx_recipients`, cliques, IA, mídia, `talkx_delivery_log`). O expurgo `purge_talkx_expired_data` (chamado por `trigger_talkx_engine_tick`, 1×/dia) obedece os prazos em `talkx_settings`: `retention_days_message/clicks/ai = 36.500` dias (a função não tem \"0 = desligado\"; NULL cai no padrão 180 — **não** zere nem apague essas chaves) e, desde 2026-11-03, `talkx_delivery_log` segue `retention_days_message` (antes: 30 dias fixos). **Exceção deliberada:** `retention_days_test_sends = 90` — `talkx_test_send_claims` é idempotência operacional (sem `idempotencyKey` do front, `talkx-send` deriva a chave de instância+telefone+template+mídia; guardar o claim para sempre impediria repetir o mesmo teste). Prazo ≤ 0 em qualquer chave é tratado como 1 dia. | **existe** | migrations `20261102042200` (aplicada 2026-11-03, `delivery_log` sem prazo fixo) e `20261102052200` (guarda ≤ 0 + `test_sends` 90; PR #2686) |\n| **Pedido de exclusão (LGPD, art. 18): atender em até 15 dias**, eliminando **de verdade** contato + mensagens + mídia + gravações. **Atenção:** a exclusão de admin na tela é **soft-delete** — `delete_contact`/`delete_contacts` só fazem `UPDATE contacts SET deleted_at = now()`; mensagens, mídia e `calls` continuam no banco. Hoje **não existe** eliminação definitiva — é **implementação pendente** (função de purga por contato, só admin, registrada em `contact_deletion_audit`). Até lá, o pedido LGPD **não** pode ser dado como atendido só com a exclusão da tela. \"Sair\" de campanha (`revoked`) não apaga dados — só bloqueia envio. | **pendente** (hoje só oculta) | `20260929810000_contacts_can_edit_contact_hoisted_params.sql:143-151,177-185`; `src/components/contacts/useContactsCRUD.ts:244-274` |\n| **Encerramento automático por inatividade (24 h) fica desligado** — coerente com \"sem `waiting`/fechamento por tempo\" (§4.1). Único fechamento automático é o arquivamento aos 30 dias (§4.1, pendente). | **existe** (desligado) | `auto_close_config.is_enabled = false`, `inactivity_hours = 24` (banco ao vivo) |\n\n## 8. Decisões já tomadas (o que NÃO mudar e por quê)\n\n- Reabertura automática mantém o atendente anterior — o dono quer continuidade de atendimento.\n- Não existe \"waiting por inatividade\" — `waiting` é só ação humana ou reabertura sem dono.\n- Alerta de desconexão nível 1 para admin/supervisor **não é opt-out**.\n- **Alerta de conexão sem preferência cadastrada = ligado** (comportamento herdado, `connection-health-check/index.ts` `buildConnectionAlertPrefs`): hoje `connection_alert_preferences` está vazia e os 4 atendentes também recebem push + e-mail no nível 1. **Decisão pendente do dono:** manter (todos avisados) ou padrão desligado para atendente (só admin/supervisor obrigatórios + quem ligar o cartão).\n- **Envio com WhatsApp caído: hoje falha, não enfileira** (medido 2026-11-03: `enqueue_outbound_message` → `no_connected_whatsapp_connection`). **Decisão pendente do dono:** (A) manter — aviso na tela + erro de envio, zero DDL; ou (B) fila offline — guardar a mensagem e enviar quando voltar (exige DDL + worker + regra de expiração). Até decidir, a tela diz a verdade: \"o envio vai falhar\".\n- SLA: 15/30 min em horário comercial; push atendente+supervisor no vermelho; e-mail supervisor após 1 h; admin só com 3+ no vermelho na mesma fila.\n- **Nenhuma área congelada** (decisão 2026-11-03): qualquer módulo pode ser alterado por agente de IA, seguindo o fluxo de PR do `AGENTS.md` (regra 8 continua valendo para DDL, CI, segredos e deleção).\n- Papel `special_agent` **excluído** — só existem admin, supervisor e agent; exportar/baixar é a flag `can_download` do agente.\n- Campanhas: `require_granted_consent` fica desligado; `revoked` nunca recebe; 500/dia por conexão; sem limite por hora.\n- **Pagamentos (`payment_links`, `contact_purchases`) será removido do sistema** (decisão 2026-11-03). Nenhum agente corrige, estende ou constrói sobre esse módulo; a tarefa pendente é a remoção. Estado medido: as duas tabelas têm **0 linhas** (`inventario/estado/banco.json`), não há edge function de pagamento, e a UI vive em `src/components/inbox/ContactPurchasesPanel.tsx` (aba vendas do inbox), `src/components/contacts/ContactPurchaseHistory.tsx` (painel do contato), `src/hooks/crm/useContactPurchases.ts` e a leitura em `src/hooks/crm/useContactCrm360.ts:181`. Moeda, desconto, expiração e permissões: **não se aplicam**.\n- **ZAPP é de uma empresa só (single-tenant)** — decisão 2026-11-03. Não existe isolamento por empresa e **não deve ser criado**: RLS significa só **papel** (admin / supervisor / agent) e **propriedade** (atendente dono ou membro da fila, `can_edit_contact`). Nenhuma policy nova filtra por `company_id` e nenhuma tabela nova o exige. Estado medido: `company_id` existe só em `multiplix_recipients`, **0 policies** o usam e não há tabela `companies` — a coluna é resíduo, não propagar.\n- Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).\n- Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + telefone `^[0-9]{10,15}$` (decisão D4; `CLAUDE.md` §6).\n- **Multiplix: retomar disparo pausado em um clique; iniciar continua com confirmação** (decisão do dono, 2026-11-13). Retomar só continua a fila que já existe; iniciar um rascunho congela público/blocos e gera a fila, sem volta (`src/components/multiplix/MultiplixMonitor.tsx`).\n- **Talk X: pausar/cancelar mantêm o diálogo aberto até o servidor responder e mostram o erro no próprio diálogo** (decisão do dono, 2026-11-13). Retomar campanha pausada é um clique, sem diálogo.\n\n## 9. Dúvidas em aberto\n\n1. **Mensagem enviada com WhatsApp caído: falhar (A) ou guardar em fila offline (B)?** — ver §8. Hoje falha.\n2. **Atendente recebe push/e-mail de queda de conexão por padrão?** — ver §8. Hoje recebe (padrão ligado sem preferência).\n\nDemais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: adicionar aqui e avisar o dono.\n"
+   "content": "# Regras de negócio — decididas pelo dono do produto\n\n> Escrito por humanos (entrevista com o dono, 2026-11-03). Entra em `07-REGRAS-DE-NEGOCIO.md` seção A com\n> prioridade sobre o que foi extraído do código. Cada regra diz se **já existe no código** (com a evidência)\n> ou se é **decisão pendente de implementação** — agente que for mexer nesses fluxos deve respeitar a\n> decisão, não o comportamento atual.\n\n## 2. Atores / perfis e o que cada um pode fazer\n\nPapéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent` · `special_agent`**.\n`leader`, `owner` e `customer` **não são papéis**: `owner`/`admin`/`member` são papéis *dentro de um grupo do Team Chat*\n(`team_conversation_members.member_role`, migration `20260927270019`); \"líder\" = supervisor. Medido em 2026-11-03:\n4 admins, 3 supervisores, 4 agentes, 0 `special_agent`.\n\n| Perfil | Pode | Não pode |\n|---|---|---|\n| **admin** | **Só ele** cria e remove a infraestrutura do atendimento: conexões WhatsApp, filas e membros, usuários e seus papéis (`user_roles`), horário comercial, SLA (`sla_configurations`), limites de campanha (`talkx_settings`), automações, chatbot, templates, blacklist, `app_settings`, provedores de IA, bloqueio de IP/país, logs de auditoria. **Único** que apaga dados em massa (contatos, campanhas, playbooks, logs). | — |\n| **supervisor** | Tudo do agente **mais**: enxerga e intervém em **qualquer** conversa e contato (reatribui, muda status, encerra — `is_admin_or_supervisor` em ~120 funções); configura regras de SLA, automações e relatórios agendados; amplia a visibilidade de um agente (`agent_visibility_grants`); vê tentativas de login; **dispara campanhas** (`confirm_talkx_campaign_launch` → `talkx_confirm_launch_unauthorized` para quem não é admin/supervisor). | Criar ou apagar conexão, fila ou usuário; mexer em configuração global. |\n| **agent** | Só o que é dele ou da sua fila (`can_edit_contact` = atendente dono **ou** membro da fila): cria contato, envia mensagem, cria/edita suas tarefas, agendamentos e **rascunhos** de campanha. | Ver ou mexer em conversa que não é sua nem da sua fila; mudar o próprio papel/permissões (`prevent_profile_privilege_escalation`); apagar contato ou mensagem; alterar qualquer configuração; **disparar** campanha. |\n| **special_agent** | **Papel excluído por decisão do dono (2026-11-03).** Era agent + flag `profiles.can_download`; a flag continua existindo no agente comum (protegida por `20261012032331`). Nenhum agente de IA deve atribuir, tratar ou exibir esse papel; a tarefa pendente é removê-lo (enum `app_role`, CHECK de `profiles.role`, `effective_role`, 16 arquivos em `src/`, 4 edge functions — DDL em produção, PR aguardando o dono). | **pendente de remoção** — 0 usuários hoje |\n\nEvidência: 18 policies RLS citam só `admin`, 10 tabelas só admin lê; funções `effective_role`, `is_admin`,\n`is_admin_or_supervisor`, `can_edit_contact`, `require_contact_edit_permission` (banco ao vivo, 2026-11-03).\n\n## 4. Ciclo de vida / estados e transições permitidas\n\n### 4.1 Conversa (`contacts.conversation_status`)\n\n| Regra | Estado | Evidência |\n|---|---|---|\n| Estados: `open`, `waiting`, `resolved`, `archived`. Transições permitidas: open → waiting/resolved/archived · waiting → open/resolved · resolved → open/archived · archived → open. | **existe** | `supabase/migrations/20260905090000_contacts_fsm_trigger.sql` |\n| Quem muda status: admin/supervisor, ou o atendente dono da conversa / membro da fila dela (`can_edit_contact`). | **existe** | `supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql` (`set_conversation_status`, `require_contact_edit_permission`) |\n| Cliente manda mensagem em conversa `resolved`/`archived` → reabre sozinha: volta para `open` **com o mesmo atendente** se ela tinha dono; sem dono vai para `waiting`. Decisão do dono: manter — as conversas tendem a ficar sempre com os mesmos atendentes, e isso é desejado. | **existe** | `supabase/migrations/20261013210003_reabre_conversa_com_nova_mensagem.sql` (`trg_conversation_reopen_on_inbound`) |\n| Tempo sem resposta do atendente **não** muda o status para `waiting`. Continua como está. | **decisão** (nada a implementar) | — |\n| **SLA de primeira resposta** (decisão 2026-11-03): padrão quando a fila não tem configuração = **amarelo aos 15 min, vermelho aos 30 min**, contando **só em horário comercial** (seg–sex 08:00–18:00; fora dele o relógio para). Amarelo: só a tela do atendente. Vermelho: **push para atendente e supervisor**. **1 h** sem resposta: **e-mail ao supervisor**. **Admin** é avisado quando a **mesma fila** tem **3 ou mais** conversas no vermelho ao mesmo tempo (fila sem gente, não atendente lento). | **parcial** — alertas na tela existem; minutos padrão, pausa fora do horário, push/e-mail e regra do admin são **pendentes** | `sla_alert_events` (`20261011180337`, severidades `warning`/`breached`, visíveis para dono + admin/supervisor); minutos por fila em `sla_configurations` (`20261005151753`); horário comercial em `talkx_settings.business_hours` |\n| Conversa sem nenhuma interação (nem cliente, nem atendente) por **30 dias** → arquivada automaticamente (`archived`). Cliente que escrever depois reabre pela regra acima. | **pendente de implementação** (job `pg_cron` — DDL em produção, exige PR aberta para o dono) | hoje não há job de arquivamento (NÃO VERIFICADO em `cron.job` ao vivo; grep nas migrations não achou) |\n| Fechar de novo uma conversa **sem ela ter sido reaberta** desde o último fechamento é rejeitado (`conversation_closure_requires_reopen`). Reabrir e fechar no mesmo dia **é permitido** — o limite \"um fechamento por dia\" foi removido da operação e vale só nos indicadores. | **existe** | `supabase/migrations/20261007013217_conversation_closures_reopen_same_day.sql:143` (drop do índice diário) e `:175-179` (guarda) |\n\n### 4.2 Conexão WhatsApp (`whatsapp_connections`) — regra dos três níveis\n\nPrincípio: **o atendente nunca pode mandar mensagem sem saber que a conexão caiu**, mas queda rápida não\nvira alerta para ninguém. A sonda `connection-health-check` roda a cada 5 min (pg_cron) e classifica\n`healthy` / `degraded` / `disconnected` com motivos `phantom_session` / `stale_session` / `webhook_silent`\n(`supabase/functions/connection-health-check/index.ts`); reconexão automática por conexão usa\n`auto_reconnect_enabled`, `reconnect_max_attempts`, `reconnect_interval_seconds` (migration `20261012134000`).\n\n| Nível | Quando | O que acontece | Estado |\n|---|---|---|---|\n| **0 — queda rápida** | `disconnected`/`degraded` enquanto a reconexão automática ainda tem tentativas (~15 min) | Ninguém recebe push/e-mail. Na tela, conexão em **amarelo** e a caixa de mensagem avisa \"sem conexão com o WhatsApp — o envio vai falhar até a conexão voltar\". **Hoje o envio falha** (não existe fila offline): `enqueue_outbound_message` recusa com `no_connected_whatsapp_connection` quando não há conexão `connected`. | **implementado** (PR #2677, merge em 2026-11-03): aviso amarelo/vermelho em `src/components/inbox/chat/ConnectionHealthBanner.tsx` + `src/hooks/inbox/useConnectionHealthBanner.ts`. **Lacuna:** o atendente só vê o aviso quando a RPC `get_contact_connection_health` entrar (RLS de `whatsapp_connections` é só admin/supervisor) — DDL pendente |\n| **1 — queda confirmada** | reconexão esgotou as tentativas **ou** motivo `phantom_session` (celular desvinculou; precisa de QR Code) | **Admin e supervisores recebem push + e-mail sempre**, independentemente das preferências (`alert_on_disconnected` etc. só **adicionam** gente, nunca tiram). Atendentes e supervisores da conexão veem bloqueio **vermelho**: \"WhatsApp desconectado — precisa de um novo QR Code (só o admin conecta). Envios falham até reconectar.\" | **implementado** (PR #2677, merge em 2026-11-03): `connection-health-check` escala por nível (`decideEscalation`), push + e-mail obrigatórios para admin/supervisor via `user_roles`, opt-in só adiciona; marcadores por canal em `notifications` (`conn-l1:v1:<tipo>:<id>`) |\n| **2 — persistente** | > 1 h desconectada | Repete o aviso **de hora em hora só para o admin** (nível 2 implica nível 1). Campanhas pausadas por `connection_lost` **retomam** quando a conexão volta (`onConnectionRecovered` → `transition_talkx_campaign` `start`). | **implementado** (PR #2677, merge em 2026-11-03): chave `conn-l2:v1:<tipo>:<id>:<hora>`. Pausa automática ao cair: já existia (`connection_lost`), NÃO VERIFICADO neste PR |\n\nRegra adicional: `degraded` (webhook mudo) conta como nível 0; se durar **mais de 30 min**, sobe para nível 1 —\nwebhook mudo por meia hora significa que mensagens de clientes não estão chegando, tão grave quanto não enviar.\n\nTempos decididos: **15 min** (esgota reconexão) · **30 min** (`degraded` vira nível 1) · **1 h** (nível 2).\n\nReconexão por QR Code (nível 1 em diante): **só o admin** conecta/escaneia — supervisor e atendente **não** (decisão 2026-11-03, corrigida pelo dono). **Pendente de implementação:** hoje o supervisor ainda vê conexões e consegue pedir QR (`get_connection_qr_code` e `get_connection_instance` usam `is_admin_or_supervisor`; policy `whatsapp_connections: Admin supervisor view connections`). O bloqueio vermelho do atendente/supervisor diz \"avise o admin\", não oferece o QR. Alerta de nível 1 continua indo para admin **e** supervisor (supervisor precisa saber, mesmo sem poder reconectar).\n\n## 6. Prazos, limites e quotas — Talk X / campanhas\n\nValores de consentimento: `granted` / `unknown` / `revoked` (não existe `opt_in`;\n`supabase/migrations/20261016010744_consent_status_guard.sql:40`).\n\n| Regra | Estado | Evidência |\n|---|---|---|\n| **Consentimento:** `unknown` **recebe** campanha; `revoked` **nunca** recebe. O setting `require_granted_consent` fica **desligado** (base é de clientes/leads da própria empresa; legítimo interesse com saída fácil). Ligar esse setting hoje zeraria toda campanha: 100% dos contatos ativos estão `unknown`. | **existe** (decisão: manter) | `20261003232707_talkx_lgpd_consentimento_expurgo.sql:32,163`; banco `talkx_settings.require_granted_consent = false` (medido 2026-11-03) |\n| **Toda campanha inclui instrução de saída.** Contato que pedir saída (\"sair\"/\"parar\") vira `revoked` e entra na supressão por **contato e por telefone** — **nunca mais** entra em campanha, nem se for reimportado com outro cadastro. | **existe** (supressão por telefone); instrução de saída no texto é **regra de uso**, não validada pelo sistema | `20261003232707…sql:449,469` (`talkx_suppress_contact`, eixos `contact_id` e `phone`) |\n| **Limite diário: 500 envios por conexão por dia.** Não há limite por hora — o ritmo vem do `speed_profile` (`slow`/`moderate`/`fast`) + intervalo entre envios. | **existe** | banco `talkx_settings.daily_limit_per_connection = 500`; `supabase/functions/talkx-send/index.ts:513-530`; `20260908120000_talkx_segments_templates_events.sql:82` |\n| **Horário comercial é o padrão:** seg–sex 08:00–18:00 (America/Sao_Paulo). **Campanha nova nasce com `business_hours_only = true`**; quem quiser enviar fora do horário desliga de propósito. | **pendente de implementação** — hoje o padrão é `false` no banco e no formulário | `20260908120000…sql:74` (`DEFAULT false`); `src/components/talkx/TalkXCampaignScheduled.tsx:204` (`?? false`); janela avaliada por `talkx_engine_window_open` |\n| **Legado / telefone inválido nunca entra em campanha:** `deleted_at`, `is_lid_legacy` ou telefone fora de `^[0-9]{10,15}$` ficam fora da audiência. O toggle \"Mostrar legados\" da tela de contatos **não** os faz entrar em campanha. | **existe** | `20261003232707…sql:347-349` (`talkx_audience_query`) |\n\nLacuna registrada: `number_reputation.daily_limit` (200, migration `20260409014536…sql:151`) é um contador de\naquecimento de número que **`talkx-send` não consulta** (grep vazio em 2026-11-03) — coluna morta; o único\nlimite efetivo é o `daily_limit_per_connection`.\n\n## 7. Dados pessoais, retenção e LGPD\n\n| Regra | Estado | Evidência |\n|---|---|---|\n| **Dados de atendimento** (contato, mensagens, mídia, gravação de chamada em `calls`) **não expiram**: ficam até um admin excluir (`delete_contact` / `delete_contacts` = soft-delete, registrado em `contact_deletion_audit`; eliminação física só via o fluxo LGPD abaixo). Nenhum agente cria job de expurgo nessas tabelas. | **existe** (não há expurgo; decisão: manter) | cron ao vivo 2026-11-03: só logs técnicos têm retenção (`reconnection-logs-retention-30d`, `search-events-retention`, `purge-qr-attempts`, caches) |\n| **Histórico de campanha Talk X também fica para sempre** (`talkx_recipients`, cliques, IA, mídia, `talkx_delivery_log`). O expurgo `purge_talkx_expired_data` (chamado por `trigger_talkx_engine_tick`, 1×/dia) obedece os prazos em `talkx_settings`: `retention_days_message/clicks/ai = 36.500` dias (a função não tem \"0 = desligado\"; NULL cai no padrão 180 — **não** zere nem apague essas chaves) e, desde 2026-11-03, `talkx_delivery_log` segue `retention_days_message` (antes: 30 dias fixos). **Exceção deliberada:** `retention_days_test_sends = 90` — `talkx_test_send_claims` é idempotência operacional (sem `idempotencyKey` do front, `talkx-send` deriva a chave de instância+telefone+template+mídia; guardar o claim para sempre impediria repetir o mesmo teste). Prazo ≤ 0 em qualquer chave é tratado como 1 dia. | **existe** | migrations `20261102042200` (aplicada 2026-11-03, `delivery_log` sem prazo fixo) e `20261102052200` (guarda ≤ 0 + `test_sends` 90; PR #2686) |\n| **Pedido de exclusão (LGPD, art. 18): atender em até 15 dias**, eliminando **de verdade** contato + mensagens + mídia + gravações. **Atenção:** a exclusão de admin na tela é **soft-delete** — `delete_contact`/`delete_contacts` só fazem `UPDATE contacts SET deleted_at = now()`; mensagens, mídia e `calls` continuam no banco. Hoje **não existe** eliminação definitiva — é **implementação pendente** (função de purga por contato, só admin, registrada em `contact_deletion_audit`). Até lá, o pedido LGPD **não** pode ser dado como atendido só com a exclusão da tela. \"Sair\" de campanha (`revoked`) não apaga dados — só bloqueia envio. | **pendente** (hoje só oculta) | `20260929810000_contacts_can_edit_contact_hoisted_params.sql:143-151,177-185`; `src/components/contacts/useContactsCRUD.ts:244-274` |\n| **Encerramento automático por inatividade (24 h) fica desligado** — coerente com \"sem `waiting`/fechamento por tempo\" (§4.1). Único fechamento automático é o arquivamento aos 30 dias (§4.1, pendente). | **existe** (desligado) | `auto_close_config.is_enabled = false`, `inactivity_hours = 24` (banco ao vivo) |\n\n## 8. Decisões já tomadas (o que NÃO mudar e por quê)\n\n- Reabertura automática mantém o atendente anterior — o dono quer continuidade de atendimento.\n- Não existe \"waiting por inatividade\" — `waiting` é só ação humana ou reabertura sem dono.\n- Alerta de desconexão nível 1 para admin/supervisor **não é opt-out**.\n- **Alerta de conexão sem preferência cadastrada = ligado** (comportamento herdado, `connection-health-check/index.ts` `buildConnectionAlertPrefs`): hoje `connection_alert_preferences` está vazia e os 4 atendentes também recebem push + e-mail no nível 1. **Decisão pendente do dono:** manter (todos avisados) ou padrão desligado para atendente (só admin/supervisor obrigatórios + quem ligar o cartão).\n- **Envio com WhatsApp caído: hoje falha, não enfileira** (medido 2026-11-03: `enqueue_outbound_message` → `no_connected_whatsapp_connection`). **Decisão pendente do dono:** (A) manter — aviso na tela + erro de envio, zero DDL; ou (B) fila offline — guardar a mensagem e enviar quando voltar (exige DDL + worker + regra de expiração). Até decidir, a tela diz a verdade: \"o envio vai falhar\".\n- SLA: 15/30 min em horário comercial; push atendente+supervisor no vermelho; e-mail supervisor após 1 h; admin só com 3+ no vermelho na mesma fila.\n- **Nenhuma área congelada** (decisão 2026-11-03): qualquer módulo pode ser alterado por agente de IA, seguindo o fluxo de PR do `AGENTS.md` (regra 8 continua valendo para DDL, CI, segredos e deleção).\n- Papel `special_agent` **excluído** — só existem admin, supervisor e agent; exportar/baixar é a flag `can_download` do agente.\n- Campanhas: `require_granted_consent` fica desligado; `revoked` nunca recebe; 500/dia por conexão; sem limite por hora.\n- **Talk X — Retomar campanha pausada: um clique, sem confirmação (decisão do dono, 2026-11-13).** O botão \"Retomar\" dispara o envio direto, sem diálogo \"Retomar campanha?\"; o aviso é o do próprio envio (um toast só). Continuam pedindo confirmação: o primeiro disparo (\"Confirmar disparo?\"), pausar (motivo opcional) e cancelar (irreversível). Implementação: `request({ kind: 'resume' })` em `src/components/talkx/useTalkXLifecycle.tsx` executa sem abrir o diálogo, e o mesmo vale para `TalkXCampaignPaused.tsx` e para o caminho sem `onLifecycle` de `useCampaignRowActions.tsx`; trava E2E `e2e/talkx-launch.spec.ts` (passo 4).\n- **Pagamentos (`payment_links`, `contact_purchases`) será removido do sistema** (decisão 2026-11-03). Nenhum agente corrige, estende ou constrói sobre esse módulo; a tarefa pendente é a remoção. Estado medido: as duas tabelas têm **0 linhas** (`inventario/estado/banco.json`), não há edge function de pagamento, e a UI vive em `src/components/inbox/ContactPurchasesPanel.tsx` (aba vendas do inbox), `src/components/contacts/ContactPurchaseHistory.tsx` (painel do contato), `src/hooks/crm/useContactPurchases.ts` e a leitura em `src/hooks/crm/useContactCrm360.ts:181`. Moeda, desconto, expiração e permissões: **não se aplicam**.\n- **ZAPP é de uma empresa só (single-tenant)** — decisão 2026-11-03. Não existe isolamento por empresa e **não deve ser criado**: RLS significa só **papel** (admin / supervisor / agent) e **propriedade** (atendente dono ou membro da fila, `can_edit_contact`). Nenhuma policy nova filtra por `company_id` e nenhuma tabela nova o exige. Estado medido: `company_id` existe só em `multiplix_recipients`, **0 policies** o usam e não há tabela `companies` — a coluna é resíduo, não propagar.\n- Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).\n- Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + telefone `^[0-9]{10,15}$` (decisão D4; `CLAUDE.md` §6).\n- **Multiplix: retomar disparo pausado em um clique; iniciar continua com confirmação** (decisão do dono, 2026-11-13). Retomar só continua a fila que já existe; iniciar um rascunho congela público/blocos e gera a fila, sem volta (`src/components/multiplix/MultiplixMonitor.tsx`).\n- **Talk X: pausar/cancelar mantêm o diálogo aberto até o servidor responder e mostram o erro no próprio diálogo** (decisão do dono, 2026-11-13). Retomar campanha pausada é um clique, sem diálogo.\n\n## 9. Dúvidas em aberto\n\n1. **Mensagem enviada com WhatsApp caído: falhar (A) ou guardar em fila offline (B)?** — ver §8. Hoje falha.\n2. **Atendente recebe push/e-mail de queda de conexão por padrão?** — ver §8. Hoje recebe (padrão ligado sem preferência).\n\nDemais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: adicionar aqui e avisar o dono.\n"
   }
  ],
  "readme": "# 🚀 ZAPP-WEB (Pronto Talk Suite)\n\n> ⚠️ **Agentes (Claude & afins): leiam [`CLAUDE.md`](./CLAUDE.md) antes de qualquer ação** — define o banco oficial do projeto e a Evolution GO (Hostinger).\n\n![CI](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/ci.yml/badge.svg)\n![DB Live Guard](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/db-live-guard.yml/badge.svg)\n![E2E logado](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/e2e-logado.yml/badge.svg)\n![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)\n![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)\n![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)\n![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwindcss)\n![License](https://img.shields.io/badge/license-MIT-green)\n\n> Plataforma omnichannel de atendimento ao cliente com WhatsApp, IA integrada, CRM e automações.\n\n**Deploy**: [zapp-web-v2.vercel.app](https://zapp-web-v2.vercel.app)\n\n---\n\n## 📋 Índice\n\n- [Visão Geral](#visão-geral)\n- [Stack Tecnológico](#stack-tecnológico)\n- [Setup Local](#setup-local)\n- [Arquitetura](#arquitetura)\n- [Estrutura do Projeto](#estrutura-do-projeto)\n- [Funcionalidades Principais](#funcionalidades-principais)\n- [Edge Functions](#edge-functions)\n- [Integrações](#integrações)\n- [Segurança](#segurança)\n- [Testes](#testes)\n - [Auditoria](#-auditoria-e-conformidade)\n - [Deploy](#deploy)\n - [Documentação Adicional](#documentação-adicional)\n - [Contribuição](#contribuição)\n\n---\n\n ## 🛡️ Auditoria e Conformidade\n \n O sistema passa por auditorias regulares de segurança e funcionalidade.\n - **Relatório em Markdown:** [docs/audit_report.md](docs/audit_report.md)\n - **Relatório em PDF:** [docs/audit_report.pdf](docs/audit_report.pdf)\n \n *O PDF é gerado manualmente; a geração automática via CI foi removida (PR #915).*\n \n ---\n \n## Visão Geral\n\nZAPP-WEB (Pronto Talk Suite) é uma plataforma completa de atendimento ao cliente que centraliza comunicações via WhatsApp, oferece sugestões de IA, CRM integrado, gamificação de agentes, dashboards analíticos e automações de fluxo.\n\n### Público-alvo\n- Equipes de atendimento ao cliente\n- Gestores de suporte e vendas\n- Empresas que usam WhatsApp Business como canal principal\n\n---\n\n## Stack Tecnológico\n\n| Camada | Tecnologia |\n|--------|-----------|\n| **Frontend** | React 18, TypeScript 5, Vite 5 |\n| **Estilização** | TailwindCSS 3, shadcn/ui, Framer Motion |\n| **Estado** | TanStack React Query, Context API |\n| **Backend** | Supabase (Auth, Database, Storage, Edge Functions, Realtime) |\n| **IA** | Gemini, GPT via Edge Functions |\n| **WhatsApp** | Evolution API v2.3.7+ |\n| **CRM** | Bitrix24 API |\n| **Áudio** | ElevenLabs (TTS, STT, SFX) |\n| **Mapas** | Mapbox GL |\n| **Email** | Resend |\n| **VoIP** | SIP.js |\n\n---\n\n## Setup Local\n\n```bash\n# 1. Clone o repositório\ngit clone git@github.com:adm01-debug/zapp-web.git\ncd zapp-web\n\n# 2. Use a versão correta do Node.js\nnvm use\n\n# 3. Instale dependências\nbun install  # ou npm install\n\n# 4. Configure variáveis de ambiente\ncp .env.example .env.local\n\n# 5. Inicie o servidor de desenvolvimento\nbun run dev\n```\n\n### Variáveis de ambiente obrigatórias:\n- `VITE_SUPABASE_URL` - URL do projeto Supabase\n- `VITE_SUPABASE_ANON_KEY` - Chave pública do Supabase\n\n---\n\n## Arquitetura\n\n```\n┌─────────────────────────────────────────┐\n│            React SPA (Vite)             │\n│  ┌───────┐ ┌────────┐ ┌──────────────┐ │\n│  │ Pages │ │ Hooks  │ │ Components   │ │\n│  └───┬───┘ └───┬────┘ └──────┬───────┘ │\n│      └─────────┼─────────────┘         │\n│            ┌───┴───┐                    │\n│            │ Query │ (TanStack)         │\n│            └───┬───┘                    │\n└────────────────┼────────────────────────┘\n                 │ HTTPS\n┌────────────────┼────────────────────────┐\n│              Supabase                   │\n│  ┌──────┐ ┌────┐ ┌─────────┐ ┌──────┐  │\n│  │ Auth │ │ DB │ │ Storage │ │ Real │  │\n│  └──────┘ └────┘ …",
@@ -309943,7 +309999,7 @@
   },
   "src/components/talkx/TalkXCampaignPaused.tsx": {
    "path": "src/components/talkx/TalkXCampaignPaused.tsx",
-   "lines": 293,
+   "lines": 270,
    "exports": [
     "function TalkXCampaignPaused"
    ],
@@ -309970,7 +310026,7 @@
   },
   "src/components/talkx/TalkXCampaignRunning.tsx": {
    "path": "src/components/talkx/TalkXCampaignRunning.tsx",
-   "lines": 947,
+   "lines": 927,
    "exports": [
     "function TalkXCampaignRunning"
    ],
@@ -309978,10 +310034,7 @@
     "talkx-logs-${campaignId}"
    ],
    "errors": [
-    "Campanha cancelada.",
-    "Erro ao cancelar a campanha.",
-    "Erro ao pausar a campanha.",
-    "Erro ao retomar campanha."
+    "Campanha cancelada."
    ],
    "params": [
     {
@@ -311228,7 +311281,7 @@
   },
   "src/components/talkx/useCampaignRowActions.tsx": {
    "path": "src/components/talkx/useCampaignRowActions.tsx",
-   "lines": 267,
+   "lines": 283,
    "exports": [
     "type CampaignRowActionId",
     "type CampaignRowLifecycleKind",
@@ -311246,7 +311299,7 @@
     },
     {
      "name": "CampaignRowConfirmKind",
-     "values": "start | pause | resume | duplicate | cancel | delete"
+     "values": "start | pause | duplicate | cancel | delete"
     }
    ],
    "status_values": [
@@ -311306,7 +311359,7 @@
   },
   "src/components/talkx/useTalkXLifecycle.tsx": {
    "path": "src/components/talkx/useTalkXLifecycle.tsx",
-   "lines": 360,
+   "lines": 472,
    "exports": [
     "type TalkXLifecycleKind",
     "interface TalkXLifecycleTarget",
@@ -311314,8 +311367,12 @@
     "interface TalkXLifecycleRequest",
     "type TalkXLifecycleIntent",
     "interface TalkXLifecycleController",
+    "interface TalkXLifecycleCopy",
     "const talkXLifecycleCopy",
+    "type TalkXLifecycleOps",
+    "interface TalkXLifecycleOptions",
     "function useTalkXLifecycle",
+    "function useTalkXLifecycleWith",
     "function TalkXLifecycleDialog"
    ],
    "errors": [
@@ -311346,9 +311403,13 @@
      "kind": "escreve"
     }
    ],
+   "rule_comments": [
+    "Fora do try: um erro do gancho da tela não pode reabrir o diálogo como falha."
+   ],
    "doc": "eslint-disable react-refresh/only-export-components -- TL-054A (X050): o contrato do cartão mantém o controlador, o texto (`talkXLifecycleCopy`) e o diálogo único no mesmo arquivo.",
    "hooks": [
-    "useTalkXLifecycle"
+    "useTalkXLifecycle",
+    "useTalkXLifecycleWith"
    ]
   },
   "src/components/talkx/useTalkXMediaUpload.ts": {
@@ -311742,15 +311803,15 @@
   },
   "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
-   "lines": 251,
+   "lines": 255,
    "is_test": true,
    "tests": [
     "TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)",
     "cabeçalho nomeia a campanha pausada e o banner mostra a data da pausa",
     "quem pausou é nomeado quando o contêiner resolve paused_by",
-    "retomar: o modal não fecha antes de o servidor confirmar",
-    "retomar recusado pelo servidor: o modal continua aberto",
-    "retomar com a chamada estourando: avisa o operador e mantém o modal aberto",
+    "retomar: UM clique, sem modal (decisão do dono, 2026-11-13); o botão espera o servidor",
+    "retomar recusado pelo servidor: sem modal e sem segundo toast (o startCampaign já avisou)",
+    "retomar com a chamada estourando: avisa o operador uma vez",
     "encerrar: chama o servidor e só volta para a lista depois do aceite",
     "encerrar com a chamada estourando: avisa o operador, não navega e mantém o modal",
     "consulta com erro: mostra o erro e não o conteúdo",
@@ -311786,6 +311847,28 @@
     "pede os envios MAIS RECENTES (sent_at decrescente, teto 2000) — o envio 2001+ entra na série",
     "dez minutos sem envio: ritmo zero e prazo INDISPONÍVEL, sem previsão otimista",
     "envios no minuto atual: ritmo medido sobre 10 minutos consecutivos e prazo calculado"
+   ]
+  },
+  "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+   "lines": 259,
+   "is_test": true,
+   "errors": [
+    ");\n    expect(alerta.textContent).toBe(esperado);\n    expect(document.body.textContent).not.toContain("
+   ],
+   "rule_comments": [
+    "Cadeia thenable genérica: o componente só lê listas via .select().eq().order().limit().not().",
+    "O wrapper `useTalkXLifecycle()` chama `useTalkX()` de novo; a tela deve usar o"
+   ],
+   "tests": [
+    "TalkXCampaignRunning · ciclo de vida pelo diálogo único (X051)",
+    "a tela usa as funções do PRÓPRIO useTalkX: o wrapper que instancia outro useTalkX (outro canal realtime) não é chamado",
+    "pausar: leva o motivo, fecha o diálogo e avisa ",
+    "cancelar: avisa ",
+    "retomar: UM clique, sem diálogo (decisão do dono, 2026-11-13), e nenhum toast extra da tela",
+    "erro ao %s aparece em português no diálogo (nunca o texto cru da Edge) e não sai da tela",
+    "retomar recusado (startCampaign devolve false): sem diálogo e sem toast repetido (o startCampaign já avisou)",
+    "retomar que lança (falha inesperada) avisa uma vez, em português"
    ]
   },
   "src/components/talkx/__tests__/TalkXCampaignRunning.limits.test.tsx": {
@@ -312227,7 +312310,7 @@
   },
   "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
-   "lines": 213,
+   "lines": 217,
    "is_test": true,
    "errors": [
     ").textContent).toContain(",
@@ -312238,7 +312321,8 @@
     "pausar: o confirmar do kit fica pendente (botões travados) e o motivo digitado chega em pauseCampaign",
     "pausar com erro da Edge: o diálogo do kit continua aberto com o alerta, sem engolir a falha",
     "cancelar: o diálogo é o do kit — ação ",
-    "retomar: o hook executa startCampaign e a recusa da Edge (false) aparece como erro no diálogo aberto",
+    "retomar: um clique (sem diálogo) executa startCampaign — decisão do dono, 2026-11-13",
+    "retomar recusado pela Edge (false) não abre diálogo: o aviso é o toast do próprio startCampaign",
     "a saída "
    ]
   },
@@ -312403,7 +312487,7 @@
   },
   "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
-   "lines": 217,
+   "lines": 215,
    "is_test": true,
    "rule_comments": [
     "* Props de ciclo de vida passadas de propósito: a tela NÃO deve chamá-las. */"
@@ -312412,7 +312496,7 @@
     "Visão geral — ciclo de vida pelo controlador único (X051)",
     "iniciar: o diálogo do hook confirma e dispara startCampaign, não a prop onStart",
     "pausar: o motivo digitado no diálogo do hook chega em pauseCampaign",
-    "retomar: o diálogo do hook dispara startCampaign, não a prop onStart",
+    "retomar: um clique (sem diálogo) dispara startCampaign pelo hook, não a prop onStart",
     "cancelar: o diálogo do hook dispara cancelCampaign, não a prop onCancel",
     "excluir continua no diálogo local: chama onDelete e não passa pelo ciclo de vida"
    ]
@@ -313641,6 +313725,16 @@
     "copies configuration but never execution, schedule or authorship"
    ]
   },
+  "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts": {
+   "path": "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
+   "lines": 68,
+   "is_test": true,
+   "tests": [
+    "Talk X — diálogos só pelo kit (X051)",
+    "encontra as telas do Talk X (a guarda não roda no vazio)",
+    "%s: sem AlertDialog/Dialog/window.confirm fora do kit"
+   ]
+  },
   "src/components/talkx/__tests__/talkxLimits.test.ts": {
    "path": "src/components/talkx/__tests__/talkxLimits.test.ts",
    "lines": 53,
@@ -313943,7 +314037,7 @@
   },
   "src/components/talkx/__tests__/useCampaignRowActions.test.tsx": {
    "path": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
-   "lines": 299,
+   "lines": 340,
    "is_test": true,
    "rule_comments": [
     "* X080 — ações de linha persistidas: duplicar, excluir com regra, pausar,",
@@ -313962,18 +314056,21 @@
     "rótulos de ",
     "ações destrutivas são só cancelar e excluir",
     "useCampaignRowActions — ações de linha (X080)",
+    "sem onLifecycle, ",
+    "sem onLifecycle, ",
+    "sem onLifecycle, clique repetido em ",
     "confirmar ",
     "recusa ao duplicar mantém o modal aberto com a mensagem do servidor",
     "recusa ",
     "pausar exige o motivo e entrega o motivo junto com a ação",
     "clique repetido durante a espera não dispara a ação duas vezes",
     "TalkXOverview — o menu da linha sai do hook (X080)",
-    "mostra as ações do status e abre ciclo de vida pelo hook único"
+    "mostra as ações do status e retoma pelo hook único em um clique"
    ]
   },
   "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx": {
    "path": "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx",
-   "lines": 472,
+   "lines": 562,
    "is_test": true,
    "errors": [
     ");\n    expect(alert).toHaveTextContent("
@@ -391980,10 +392077,32 @@
   }
  },
  "git": {
-  "sha": "19104e8ab6c45c12717e0fbe9e82328630793c46",
+  "sha": "a49ef4ad58d62497e3a719f1a647719c8f1f490e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a49ef4a",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051) (#2555)",
+    "files": [
+     "docs/contexto/regras/manual/regras.md",
+     "docs/talkx/ESTADOS.md",
+     "docs/talkx/v4/etapas/F05-kit-estados-modais-e-navegacao.md",
+     "src/components/talkx/TalkXCampaignPaused.tsx",
+     "src/components/talkx/TalkXCampaignRunning.tsx",
+     "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
+     "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+     "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
+     "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
+     "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
+     "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
+     "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx",
+     "src/components/talkx/useCampaignRowActions.tsx",
+     "src/components/talkx/useTalkXLifecycle.tsx"
+    ]
+   },
    {
     "sha": "19104e8",
     "date": "2026-11-13",
@@ -392461,23 +392580,20 @@
      "scripts/e2e-isolated/README.md",
      "scripts/e2e-isolated/routine-ownership.mjs"
     ]
-   },
-   {
-    "sha": "0a1e73f",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)",
-    "files": [
-     "src/adapters/evolutionAdapter.ts",
-     "src/components/inbox/chat/SendErrorBanner.tsx",
-     "src/hooks/delivery/useUnconfirmedMessages.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
     3
+   ],
+   [
+    "docs/contexto/regras/manual/regras.md",
+    2
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    2
    ],
    [
     "ESTADO.md",
@@ -392500,59 +392616,51 @@
     2
    ],
    [
-    "docs/contexto/regras/manual/regras.md",
+    "docs/talkx/v4/etapas/F05-kit-estados-modais-e-navegacao.md",
     1
    ],
    [
-    "src/components/multiplix/MultiplixMonitor.tsx",
+    "src/components/talkx/TalkXCampaignPaused.tsx",
     1
    ],
    [
-    "src/components/multiplix/__tests__/MultiplixMonitor.confirm.test.tsx",
+    "src/components/talkx/TalkXCampaignRunning.tsx",
     1
    ],
    [
-    "e2e/tarefas-linha-de-base.spec.ts",
+    "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
     1
    ],
    [
-    ".env.ci.local.example",
+    "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
     1
    ],
    [
-    ".github/workflows/ci.yml",
+    "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
     1
    ],
    [
-    ".gitignore",
+    "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
     1
    ],
    [
-    "TESTING_CONVENTION.md",
+    "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
     1
    ],
    [
-    "bun.lock",
+    "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
     1
    ],
    [
-    "docs/audits/edge-functions-authz-coverage.md",
+    "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx",
     1
    ],
    [
-    "docs/ci/CI_LOCAL.md",
+    "src/components/talkx/useCampaignRowActions.tsx",
     1
    ],
    [
-    "docs/crm-integration/FLAG_CHANGES.md",
-    1
-   ],
-   [
-    "docs/design/evidence/sidebar-3-secoes/orfaos.md",
-    1
-   ],
-   [
-    "docs/prod-readiness.md",
+    "src/components/talkx/useTalkXLifecycle.tsx",
     1
    ]
   ]

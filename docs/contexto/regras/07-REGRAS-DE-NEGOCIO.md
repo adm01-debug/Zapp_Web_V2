@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `19104e8ab6` · branch `main` · 2026-11-13 20:39 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a49ef4ad58` · branch `main` · 2026-11-13 22:29 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -103,6 +103,7 @@ limite efetivo é o `daily_limit_per_connection`.
 - **Nenhuma área congelada** (decisão 2026-11-03): qualquer módulo pode ser alterado por agente de IA, seguindo o fluxo de PR do `AGENTS.md` (regra 8 continua valendo para DDL, CI, segredos e deleção).
 - Papel `special_agent` **excluído** — só existem admin, supervisor e agent; exportar/baixar é a flag `can_download` do agente.
 - Campanhas: `require_granted_consent` fica desligado; `revoked` nunca recebe; 500/dia por conexão; sem limite por hora.
+- **Talk X — Retomar campanha pausada: um clique, sem confirmação (decisão do dono, 2026-11-13).** O botão "Retomar" dispara o envio direto, sem diálogo "Retomar campanha?"; o aviso é o do próprio envio (um toast só). Continuam pedindo confirmação: o primeiro disparo ("Confirmar disparo?"), pausar (motivo opcional) e cancelar (irreversível). Implementação: `request({ kind: 'resume' })` em `src/components/talkx/useTalkXLifecycle.tsx` executa sem abrir o diálogo, e o mesmo vale para `TalkXCampaignPaused.tsx` e para o caminho sem `onLifecycle` de `useCampaignRowActions.tsx`; trava E2E `e2e/talkx-launch.spec.ts` (passo 4).
 - **Pagamentos (`payment_links`, `contact_purchases`) será removido do sistema** (decisão 2026-11-03). Nenhum agente corrige, estende ou constrói sobre esse módulo; a tarefa pendente é a remoção. Estado medido: as duas tabelas têm **0 linhas** (`inventario/estado/banco.json`), não há edge function de pagamento, e a UI vive em `src/components/inbox/ContactPurchasesPanel.tsx` (aba vendas do inbox), `src/components/contacts/ContactPurchaseHistory.tsx` (painel do contato), `src/hooks/crm/useContactPurchases.ts` e a leitura em `src/hooks/crm/useContactCrm360.ts:181`. Moeda, desconto, expiração e permissões: **não se aplicam**.
 - **ZAPP é de uma empresa só (single-tenant)** — decisão 2026-11-03. Não existe isolamento por empresa e **não deve ser criado**: RLS significa só **papel** (admin / supervisor / agent) e **propriedade** (atendente dono ou membro da fila, `can_edit_contact`). Nenhuma policy nova filtra por `company_id` e nenhuma tabela nova o exige. Estado medido: `company_id` existe só em `multiplix_recipients`, **0 policies** o usam e não há tabela `companies` — a coluna é resíduo, não propagar.
 - Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).
@@ -1706,7 +1707,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TalkXTemplateTab | conteudo \| ab \| historico | `src/components/talkx/talkxTemplateRoute.ts` |
 | AudienceSource | contacts \| segment \| crm360 | `src/components/talkx/useCampaignEditor.ts` |
 | CampaignRowActionId | view \| edit \| start \| pause \| resume \| duplicate \| cancel \| delete | `src/components/talkx/useCampaignRowActions.tsx` |
-| CampaignRowConfirmKind | start \| pause \| resume \| duplicate \| cancel \| delete | `src/components/talkx/useCampaignRowActions.tsx` |
+| CampaignRowConfirmKind | start \| pause \| duplicate \| cancel \| delete | `src/components/talkx/useCampaignRowActions.tsx` |
 | TalkXLifecycleKind | start \| pause \| resume \| cancel \| schedule | `src/components/talkx/useTalkXLifecycle.tsx` |
 | TalkxMediaType | image \| video \| document \| audio | `src/components/talkx/useTalkXMediaUpload.ts` |
 | TALKX_MEDIA_MIME_TYPES | 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'audio/ogg', 'audio/mpeg', 'audio/mp4', | `src/components/talkx/useTalkXMediaUpload.ts` |
@@ -4568,7 +4569,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | blocked | `scripts/ci/e2e-media-volume-fixture.unit.mjs` |
 | seed-exit- | `scripts/ci/e2e-media-volume-fixture.unit.mjs` |
 | rede proibida neste teste | `scripts/ci/e2e-recovery.unit.mjs` |
-| … +1787 linhas — lista completa em `context.json` | |
+| … +1784 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4639,7 +4640,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21720 testes em 2297 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21735 testes em 2299 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4842,6 +4843,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/__tests__/AdvancedMessageMenu.menu-avancado.test.tsx` | 20 | AdvancedMessageMenu — Status/Story só para quem pode publicar · o agente (não supervisor) não vê a opção Status/Story · enquanto os papéis carregam a opção fica escondida (não pisca para o agente) · o admin vê a opção e publicar exige confirmação de que todos os contatos verão … |
 | `src/components/inbox/__tests__/SLAIndicator.test.tsx` | 20 | SLAIndicator · renders nothing when first response given and within SLA · shows first response countdown when waiting for response · renders nothing after on-time response even if conversation stays open (sem SLA de resolução) … |
 | `src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx` | 20 | ContactActionButtons · abre o dropdown de  · abre o dropdown de  · desabilita o botão de e-mail quando o contato não tem e-mail … |
+| `src/components/talkx/__tests__/useCampaignRowActions.test.tsx` | 20 | campaignRowActions — matriz das ações por status (X080) · rascunho: ver, editar, iniciar (com público), duplicar e excluir · rascunho sem público não oferece  · agendada: ver agendamento, editar, iniciar, duplicar, cancelar e excluir … |
 | `src/hooks/__tests__/useTextToSpeech.test.ts` | 20 | useTextToSpeech · initializes with isLoading false · initializes with isPlaying false · initializes with null currentMessageId … |
 | `src/hooks/admin/__tests__/useSupervisorQueue.test.tsx` | 20 | useSupervisorQueue — leitura e priorização · lê conversas abertas com os filtros certos, resolve nomes e ordena P1→P4 · conversas resolvidas/fechadas/deletadas não entram na fila · corta em 200 mantendo as MAIS ANTIGAS e sinaliza  … |
 | `src/hooks/chat/__tests__/useConversationHistoryTimeline.test.ts` | 20 | buildTimeline · agrupa mensagens consecutivas do mesmo remetente em <=10min numa unica rajada · nao agrupa mensagens do mesmo remetente além de 10 minutos · agrupa eventos por dia (yyyy-MM-dd) … |
@@ -4915,7 +4917,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/monitoring/__tests__/useConnectionIncidents.test.ts` | 17 | derivação — uptime 24 h por conexão · calcula o percentual saudável por conexão e ignora check fora da janela · sem nenhum check na janela, o percentual é null (nunca 100%) · derivação — incidentes … |
 | `src/components/onboarding/__tests__/TourOverlay.a11y.test.tsx` | 17 | SHELL-05 — sem alvo de tour no DOM (casco do celular) o tour não abre · não abre cartão nenhum e não avança sozinho pelos passos vazios · o WelcomeModal esconde  · o WelcomeModal mostra o botão quando os alvos existem e ele dispara o tour … |
 | `src/components/talkx/__tests__/TalkXAudienceFilters.test.tsx` | 17 | X126 · os filtros de audiência (mock 08) · na ordem do mock: Status do contato, Empresa, Estágio no funil, Vendedor, RFM, Localização · não oferece mais filtro de Tag: nenhum controle, nenhum checkbox e nenhum texto de tag · Status do contato usa a entrada do catálogo ( … |
-| `src/components/talkx/__tests__/useCampaignRowActions.test.tsx` | 17 | campaignRowActions — matriz das ações por status (X080) · rascunho: ver, editar, iniciar (com público), duplicar e excluir · rascunho sem público não oferece  · agendada: ver agendamento, editar, iniciar, duplicar, cancelar e excluir … |
 | `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 17 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/components/ui/__tests__/timers-unmount.test.tsx` | 17 | skip-link · não abre varredura por intervalo e limpa o aviso de Tab no unmount · não renderiza <nav> vazio quando nenhum alvo existe na tela · a detecção de alvo é por mutação do documento, não por intervalo … |
 | `src/hooks/__tests__/useAudioRecorder.test.ts` | 17 | useAudioRecorder · initializes with isRecording false · initializes with duration 0 · initializes with audioUrl null … |
@@ -4943,7 +4944,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/dashboard/__tests__/useSentimentData.test.tsx` | 16 | useSentimentData · monta sem lançar exceção e sai do loading (guarda contra TDZ de fetchData no useEffect) · erro na RPC é capturado — nunca escapa do hook e loading sempre volta a false · falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta … |
 | `src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts` | 16 | sidebarSections — migração do localStorage (etapa 44) · storage antigo só com seções que não existem mais → default (seções atuais abertas) · storage antigo com valor válido sobrevive e migra para a chave nova · chave nova tem precedência sobre a antiga … |
 | `src/components/inbox/tabs/__tests__/FilesContent.test.tsx` | 16 | FilesContent (etapa 25) · invariante: a sequência de ids é a mesma nos três modos · skeleton por modo: 6 cartões, 6 linhas e 6 TableRow · paridade: a mesma ação chama o mesmo handler nos três modos … |
-| … +1997 linhas — lista completa em `context.json` | | |
+| … +1999 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5445,4 +5446,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | arquivos que estao nele. Enquanto o item mais antigo carregado nao cruzar o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
 | sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e | `src/components/inbox/tabs/FilesTab.tsx` |
 | Nao cruzou o limite ainda: pode haver arquivo do periodo em pagina mais antiga. Com so | `src/components/inbox/tabs/FilesTab.tsx` |
-| … +1696 linhas — lista completa em `context.json` | |
+| … +1697 linhas — lista completa em `context.json` | |

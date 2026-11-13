@@ -93,12 +93,12 @@
    "importado_por": 52
   },
   {
-   "arquivo": "src/components/ui/alert-dialog.tsx",
+   "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
    "importado_por": 50
   },
   {
-   "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
-   "importado_por": 50
+   "arquivo": "src/components/ui/alert-dialog.tsx",
+   "importado_por": 49
   },
   {
    "arquivo": "src/components/ui/textarea.tsx",

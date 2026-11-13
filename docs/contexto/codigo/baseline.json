@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "19104e8ab6c45c12717e0fbe9e82328630793c46",
+  "commit": "a49ef4ad58d62497e3a719f1a647719c8f1f490e",
   "branch": "main",
-  "data_commit": "2026-11-13T16:42:33-03:00",
+  "data_commit": "2026-11-13T18:04:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a49ef4a",
+    "data": "2026-11-13",
+    "assunto": "feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051) (#2555)"
+   },
    {
     "sha": "19104e8",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "cca5655",
     "data": "2026-11-12",
     "assunto": "fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)"
-   },
-   {
-    "sha": "cfa8959",
-    "data": "2026-11-12",
-    "assunto": "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)"
    }
   ],
-  "arquivos_mudados_7d": 792,
+  "arquivos_mudados_7d": 803,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 282
+    "mudancas": 293
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -218,11 +218,11 @@
     "mudancas": 11
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 11
+    "arquivo": "ESTADO.md",
+    "mudancas": 10
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 10
    },
    {
@@ -254,16 +254,16 @@
     "mudancas": 9
    },
    {
+    "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 9
+   },
+   {
     "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
     "mudancas": 9
    },
    {
     "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 9
-   },
-   {
-    "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 8
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -290,11 +290,11 @@
     "mudancas": 7
    },
    {
-    "arquivo": "package.json",
+    "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 7
    },
    {
-    "arquivo": "scripts/edge-deploy/health-check.mjs",
+    "arquivo": "package.json",
     "mudancas": 7
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8496,
-  "arquivos_codigo": 4890,
-  "linhas_codigo": 906348,
+  "arquivos_total": 8498,
+  "arquivos_codigo": 4892,
+  "linhas_codigo": 906897,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2663,
+  "testes": 2665,
   "workflows": 22,
   "scripts": 429,
   "docs_md": 1087
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2216,
-   "linhas": 376611
+   "arquivos": 2218,
+   "linhas": 377160
   },
   "src/config": {
    "arquivos": 3,

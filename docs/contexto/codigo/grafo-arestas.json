@@ -6319,7 +6319,7 @@
    "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
    "src/components/talkx/tracking/TalkXResumeChecklist.tsx",
    "src/components/talkx/tracking/talkxCampaignRules.ts",
-   "src/components/ui/alert-dialog.tsx",
+   "src/components/talkx/useTalkXLifecycle.tsx",
    "src/components/ui/input.tsx",
    "src/components/ui/select.tsx",
    "src/hooks/integrations/useTalkX.ts",

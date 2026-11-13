@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2663,
+ "total": 2665,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2370
+  "unit": 2372
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1985
+   "arquivos": 1987
   },
   {
    "padrao": "outro",
@@ -11740,7 +11740,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
    "tipo": "unit",
-   "linhas": 251,
+   "linhas": 255,
    "testa": [
     "src/components/talkx/TalkXCampaignPaused.tsx"
    ],
@@ -11763,6 +11763,16 @@
     "src/components/talkx/TalkXCampaignRunning.tsx"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+   "tipo": "unit",
+   "linhas": 259,
+   "testa": [
+    "src/components/talkx/TalkXCampaignRunning.tsx",
+    "src/components/talkx/useTalkXLifecycle.tsx"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXCampaignRunning.limits.test.tsx",
@@ -11928,6 +11938,13 @@
    "casos": 7
   },
   {
+   "arquivo": "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
+   "tipo": "unit",
+   "linhas": 68,
+   "testa": [],
+   "casos": 3
+  },
+  {
    "arquivo": "src/components/talkx/__tests__/talkxLimits.test.ts",
    "tipo": "unit",
    "linhas": 53,
@@ -11978,11 +11995,11 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
    "tipo": "unit",
-   "linhas": 213,
+   "linhas": 217,
    "testa": [
     "src/components/talkx/TalkXLiveMonitor.tsx"
    ],
-   "casos": 5
+   "casos": 6
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx",
@@ -12079,7 +12096,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
    "tipo": "unit",
-   "linhas": 217,
+   "linhas": 215,
    "testa": [
     "src/components/talkx/TalkXOverview.tsx",
     "src/hooks/integrations/useTalkX.ts"
@@ -12775,22 +12792,22 @@
   {
    "arquivo": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
    "tipo": "unit",
-   "linhas": 299,
+   "linhas": 340,
    "testa": [
     "src/components/talkx/TalkXOverview.tsx",
     "src/components/talkx/useCampaignRowActions.tsx",
     "src/hooks/integrations/useTalkX.ts"
    ],
-   "casos": 16
+   "casos": 19
   },
   {
    "arquivo": "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx",
    "tipo": "unit",
-   "linhas": 472,
+   "linhas": 562,
    "testa": [
     "src/components/talkx/useTalkXLifecycle.tsx"
    ],
-   "casos": 21
+   "casos": 26
   },
   {
    "arquivo": "src/components/talkx/help/__tests__/TalkXHelpCenter.test.tsx",
@@ -24946,7 +24963,7 @@
   "src/components/talkx/TalkXAnalytics.tsx": 7,
   "src/components/talkx/TalkXAudienceFilters.tsx": 1,
   "src/components/talkx/TalkXCampaignPaused.tsx": 1,
-  "src/components/talkx/TalkXCampaignRunning.tsx": 9,
+  "src/components/talkx/TalkXCampaignRunning.tsx": 10,
   "src/components/talkx/TalkXCampaignScheduled.tsx": 8,
   "src/components/talkx/TalkXCampaignWizard.tsx": 10,
   "src/components/talkx/TalkXContactSelector.tsx": 1,
@@ -25032,7 +25049,7 @@
   "src/components/talkx/tracking/talkxTimelineCopy.ts": 1,
   "src/components/talkx/useCampaignEditor.ts": 3,
   "src/components/talkx/useCampaignRowActions.tsx": 1,
-  "src/components/talkx/useTalkXLifecycle.tsx": 1,
+  "src/components/talkx/useTalkXLifecycle.tsx": 2,
   "src/components/talkx/useTalkXMediaUpload.ts": 1,
   "src/components/tasks/TasksEmptyState.tsx": 1,
   "src/components/tasks/TasksModule.tsx": 9,

@@ -1416,7 +1416,7 @@
    "hooks_exportados": [
     "useCampaignRowActions"
    ],
-   "linhas": 267,
+   "linhas": 283,
    "dominio": "components/talkx",
    "tabelas": [],
    "rpcs": [],
@@ -1436,29 +1436,32 @@
   {
    "arquivo": "src/components/talkx/useTalkXLifecycle.tsx",
    "hooks_exportados": [
-    "useTalkXLifecycle"
+    "useTalkXLifecycle",
+    "useTalkXLifecycleWith"
    ],
-   "linhas": 360,
+   "linhas": 472,
    "dominio": "components/talkx",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
     "useCallback",
+    "useLayoutEffect",
     "useMemo",
     "useRef",
     "useState",
     "useTalkX"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 5,
    "usado_por_arquivos": [
+    "src/components/talkx/TalkXCampaignRunning.tsx",
     "src/components/talkx/TalkXCampaignScheduled.tsx",
     "src/components/talkx/TalkXLiveMonitor.tsx",
     "src/components/talkx/TalkXOverview.tsx",
     "src/components/talkx/TalkXWizardDelivery.tsx"
    ],
-   "coberto_por_testes": 1
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/components/talkx/useTalkXMediaUpload.ts",
