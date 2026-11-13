@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `58a72088fe` · branch `main` · 2026-11-13 03:39 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7c9a188438` · branch `main` · 2026-11-13 04:07 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4537,7 +4537,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | deno coverage não executou: ${cobertura.error.message} | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | não gero docs com teste vermelho: ${falhas.join( | `scripts/ci/edge-coverage-authz.unit.mjs` |
 | HTTP 502 | `scripts/ci/fila-merge.unit.mjs` |
-| … +1753 linhas — lista completa em `context.json` | |
+| … +1755 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4608,7 +4608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21330 testes em 2259 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21332 testes em 2259 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4639,8 +4639,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/ai-routing.contract.test.ts` | 47 | IA-031/034 — resolveProvider: um padrão por finalidade, nunca arbitrário · exatamente 1 padrão ativo para a finalidade → resolve para ele · 0 padrões → NO_PROVIDER (a ausência vira indisponibilidade explícita) · 2+ padrões para a mesma finalidade → AMBIGUOUS_PROVIDER (jamais escolher uma) … |
 | `src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx` | 46 | ChurnPredictionDashboard · Rendering · renders title · renders subtitle … |
 | `src/components/performance/__tests__/PerformanceMonitor.test.tsx` | 46 | PerformanceMonitor · Rendering · renders title · renders subtitle … |
+| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 45 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
 | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` | 43 | ExternalProductManagement · mostra o título e a contagem total de produtos · E32: chip de sync recente mostra  · E32: chip de sync com mais de 24h mostra data/hora (tom neutro) … |
-| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 43 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
 | `src/components/catalog/__tests__/CatalogRail.test.tsx` | 42 | CatalogRail — E51 banner · renderiza a copy do banner e nao inclui o placeholder do mock · usa o 1o produto em destaque COM imagem (ignora destaque sem foto) · le a foto de primary_image_url (campo canonico do ExternalProduct) … |
 | `src/components/catalog/__tests__/SendProductDialog.test.tsx` | 42 | SendProductDialog — Fase 7 (E72-E75 parcial) · mostra o contador de caracteres da mensagem (E73) · acima de 2000 caracteres, desabilita  · dentro do limite,  … |
 | `src/components/security/__tests__/AuditLogDashboard.test.tsx` | 42 | AuditLogDashboard · Query columns · selects explicit columns instead of * for audit_logs · a lista de 200 pede ordem determinística, com desempate por id … |

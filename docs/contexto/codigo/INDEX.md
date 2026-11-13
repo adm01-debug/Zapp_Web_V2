@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `58a72088fee58ac15bea749bdfc55fd4a8605971` (2026-11-12T23:43:41-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7c9a188438787d68fb4278a1cbf7975e0c3a51a9` (2026-11-13T00:46:55-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8421 |
 | arquivos_codigo | 4817 |
-| linhas_codigo | 892006 |
+| linhas_codigo | 892125 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -391,16 +391,16 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56951 nós · 117676 arestas · 4224 comunidades · grafo do commit `58a72088`
-- comunidades maiores: TalkXSuppression.tsx (1077), lucide-react (866), react (828), cn (709), vitest (505), DashboardView.tsx (477), ref_node_assert (387), ref_node_fs (375), @tanstack/react-query (374), tooltip.tsx (321), RealtimeInboxView.tsx (295), framer-motion (284)
+- 56952 nós · 117677 arestas · 4143 comunidades · grafo do commit `7c9a1884`
+- comunidades maiores: react (955), lucide-react (862), vitest (858), TalkXSuppression.tsx (671), ExternalProductManagement.tsx (649), @tanstack/react-query (635), ref_node_fs (606), validation.ts (506), DashboardView.tsx (451), ref_https (436), framer-motion (422), uniqueRealtimeTopic (396)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (17)
 - PENDENCIAS.md (13)
-- docs/ci/README.md (13)
 - CLAUDE.md (12)
+- docs/ci/README.md (12)
 - .github/workflows/ci.yml (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
@@ -410,8 +410,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - scripts/e2e-isolated/run.mjs (10)
 - src/integrations/supabase/types.ts (10)
 - .github/workflows/db-guard.yml (9)
+- ESTADO.md (9)
 - e2e/navegacao-modulos.spec.ts (9)
-- scripts/ci/e2e-isolated-runtime.unit.mjs (9)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `7c9a188` fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)
 - 2026-11-12 `58a7208` fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)
 - 2026-11-12 `2ae0de7` fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)
 - 2026-11-12 `8a14183` Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `1592381` chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix
 - 2026-11-12 `f1d8e5f` chore(ci): PENDENCIAS.md — tabela de prova dos workflows em falha
 - 2026-11-12 `bd417f5` fix(db-audit): registrar dívidas técnicas no known-violations do usage-guard
-- 2026-11-12 `2d10201` fix(db-audit): wal_level=logical no container descartável do teste E27 replay
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

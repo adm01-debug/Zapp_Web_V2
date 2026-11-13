@@ -10476,7 +10476,7 @@
    "modulo": "hooks/inbox",
    "arquivos": 20,
    "testes": 33,
-   "linhas": 3403,
+   "linhas": 3445,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

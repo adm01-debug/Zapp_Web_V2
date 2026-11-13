@@ -17173,13 +17173,13 @@
   {
    "arquivo": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
    "tipo": "unit",
-   "linhas": 845,
+   "linhas": 922,
    "testa": [
     "src/hooks/chat/useRealtimeMessages.ts",
     "src/hooks/inbox/useInboxBulkActions.ts",
     "src/types/contact.ts"
    ],
-   "casos": 37
+   "casos": 39
   },
   {
    "arquivo": "src/hooks/inbox/__tests__/useInboxFilterPresets.test.tsx",

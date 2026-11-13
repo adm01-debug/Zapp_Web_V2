@@ -7480,7 +7480,7 @@
    "hooks_exportados": [
     "useInboxBulkActions"
    ],
-   "linhas": 279,
+   "linhas": 321,
    "dominio": "hooks/inbox",
    "tabelas": [
     "contacts",
