@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2621,
+ "total": 2622,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2328
+  "unit": 2329
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1958
+   "arquivos": 1959
   },
   {
    "padrao": "outro",
@@ -5165,6 +5165,16 @@
     "src/components/contacts/useContactsViewState.ts"
    ],
    "casos": 11
+  },
+  {
+   "arquivo": "src/components/copilot/__tests__/QuoteDraftCard.copia.test.tsx",
+   "tipo": "unit",
+   "linhas": 71,
+   "testa": [
+    "src/components/copilot/QuoteDraftCard.tsx",
+    "src/hooks/copilot/useQuoteDraft.ts"
+   ],
+   "casos": 2
   },
   {
    "arquivo": "src/components/crm360/__tests__/CompanyFormDialog.cnpj.test.tsx",
@@ -24103,6 +24113,7 @@
   "src/components/contacts/useContactFormValidation.ts": 1,
   "src/components/contacts/useContactsCRUD.ts": 1,
   "src/components/contacts/useContactsViewState.ts": 1,
+  "src/components/copilot/QuoteDraftCard.tsx": 1,
   "src/components/crm360/CRM360ExplorerView.tsx": 3,
   "src/components/crm360/CRM360StatsCards.tsx": 1,
   "src/components/crm360/CompanyFormDialog.tsx": 3,
@@ -24836,7 +24847,7 @@
   "src/hooks/copilot/useObjectionHandler.ts": 1,
   "src/hooks/copilot/useOccasionKits.ts": 1,
   "src/hooks/copilot/usePostRejection.ts": 1,
-  "src/hooks/copilot/useQuoteDraft.ts": 1,
+  "src/hooks/copilot/useQuoteDraft.ts": 2,
   "src/hooks/copilot/useRadarPanel.ts": 1,
   "src/hooks/copilot/useSmartTemplates.ts": 1,
   "src/hooks/copilot/useUpsellSuggestion.ts": 1,

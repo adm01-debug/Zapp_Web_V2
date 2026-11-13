@@ -1713,6 +1713,7 @@
   ],
   "src/components/copilot/QuoteDraftCard.tsx": [
    "src/hooks/copilot/useQuoteDraft.ts",
+   "src/lib/clipboard.ts",
    "src/lib/utils.ts"
   ],
   "src/components/copilot/RadarPhase10Panel.tsx": [

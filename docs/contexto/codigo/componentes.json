@@ -2626,7 +2626,7 @@
     "QuoteDraftCard"
    ],
    "export_default": null,
-   "linhas": 75,
+   "linhas": 78,
    "dominio": "components/copilot",
    "hooks_locais": [],
    "tabelas": [],

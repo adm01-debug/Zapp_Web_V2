@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `8e6f413339` · branch `main` · 2026-11-13 06:31 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `546c6f5d9c` · branch `main` · 2026-11-13 07:00 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4608,7 +4608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21332 testes em 2259 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21335 testes em 2260 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4912,7 +4912,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/talkx/__tests__/TalkXSuppression.add.test.tsx` | 16 | TalkXSuppression · Ações da lista no rail (X182/T06-053) · mostra o card  · não promete importar nem exportar em nenhum ponto do card · não oferece nenhuma ação de arquivo no card, nem desabilitada (regra: nada entra nem sai por arquivo) … |
 | `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` | 16 | R2-MOD-024 — resposta atrasada não contamina o template seguinte · variantes: resposta lenta de A não sobrescreve o painel de B · histórico: resposta lenta de A não sobrescreve o histórico de B · loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento … |
 | `src/components/talkx/__tests__/segmentValidation.test.ts` | 16 | segmentValidation · nome (X099) · recusa nome menor que o mínimo · aceita nome no mínimo, ignorando espaços nas pontas · recusa nome maior que o máximo … |
-| … +1959 linhas — lista completa em `context.json` | | |
+| … +1960 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

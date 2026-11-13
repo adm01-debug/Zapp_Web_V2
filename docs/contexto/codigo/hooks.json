@@ -5898,7 +5898,7 @@
     "src/components/copilot/RadarPhase8to15Panel.tsx",
     "src/hooks/copilot/index.ts"
    ],
-   "coberto_por_testes": 1
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/copilot/useRadarPanel.ts",

@@ -1676,8 +1676,8 @@
   {
    "modulo": "components/copilot",
    "arquivos": 22,
-   "testes": 0,
-   "linhas": 2050,
+   "testes": 1,
+   "linhas": 2053,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

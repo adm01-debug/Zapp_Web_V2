@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "8e6f4133399897fe076c0953938893d7913772d5",
+  "commit": "546c6f5d9cf65ce68684c29063ea07bc91ba853b",
   "branch": "main",
-  "data_commit": "2026-11-13T03:15:06-03:00",
+  "data_commit": "2026-11-13T03:43:01-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "546c6f5",
+    "data": "2026-11-13",
+    "assunto": "Rascunho de proposta do copilot só mostra \"copiado\" quando a cópia funciona (#3005)"
+   },
    {
     "sha": "8e6f413",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "93bff67",
     "data": "2026-11-12",
     "assunto": "fix(security): revoga 99 grants SELECT de anon em todas as tabelas públicas (#2859)"
-   },
-   {
-    "sha": "1c4498d",
-    "data": "2026-11-12",
-    "assunto": "fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo (#2944)"
    }
   ],
-  "arquivos_mudados_7d": 672,
+  "arquivos_mudados_7d": 674,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -177,7 +177,7 @@
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 109
+    "mudancas": 108
    },
    {
     "pasta": "src/components/tasks",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 13
+    "mudancas": 12
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -223,18 +223,6 @@
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 11
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 11
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 10
    },
    {
@@ -246,11 +234,19 @@
     "mudancas": 10
    },
    {
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 10
+   },
+   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 9
    },
    {
     "arquivo": "ESTADO.md",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 9
    },
    {
@@ -262,15 +258,15 @@
     "mudancas": 9
    },
    {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "mudancas": 9
+   },
+   {
     "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 9
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 8
    },
    {
@@ -296,6 +292,10 @@
    {
     "arquivo": "scripts/edge-deploy/health-check.mjs",
     "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/regras_negocio/generate.py",
+    "mudancas": 7
    }
   ],
   "autores_30d": [
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8422,
-  "arquivos_codigo": 4818,
-  "linhas_codigo": 892222,
+  "arquivos_total": 8423,
+  "arquivos_codigo": 4819,
+  "linhas_codigo": 892296,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2621,
+  "testes": 2622,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2179,
-   "linhas": 372048
+   "arquivos": 2180,
+   "linhas": 372122
   },
   "src/config": {
    "arquivos": 3,
