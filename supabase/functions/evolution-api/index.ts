@@ -40,14 +40,6 @@ export interface EvolutionApiDeps {
   anonKey?: string;
 }
 
-/** Fetch à Evolution GO no `connect` que lançou (rede/timeout): o catch geral responde 200 {error:true}, nunca 500. */
-class GoConnectFetchError extends Error {
-  constructor(readonly status: number, message: string) {
-    super(message);
-    this.name = 'GoConnectFetchError';
-  }
-}
-
 export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiDeps): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -602,23 +594,8 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         subscribe: ['ALL'], immediate: true,
         webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
       });
-      const GO_RECREATE_FAILED_MESSAGE = 'A instância do WhatsApp foi removida da Evolution GO mas não pôde ser recriada automaticamente. É necessário recriar a instância manualmente no painel da Evolution GO.';
-      const GO_STAGE_LABEL = { connect: 'iniciar a conexão da instância', qr: 'buscar o QR Code', status: 'consultar o status da instância', delete: 'remover a sessão órfã', create: 'recriar a instância', reconnect: 'reconectar a instância recriada' };
-      // Exceção de rede/timeout num fetch à GO vira o mesmo contrato das outras
-      // saídas do connect (200 + error:true + etapa) em vez do 500 opaco.
-      const goFetch = async (stage: keyof typeof GO_STAGE_LABEL, url: string, init: RequestInit): Promise<Response> => {
-        try {
-          return await fetch(url, init);
-        } catch (err: unknown) {
-          const timedOut = err instanceof DOMException && (err.name === 'TimeoutError' || err.name === 'AbortError');
-          new Logger('evolution-api').error('connect: falha de rede/timeout na Evolution GO', { stage, instance, timedOut, error: err instanceof Error ? err.message : String(err) });
-          // DELETE já tirou a instância da GO: o operador precisa do mesmo aviso do 503 de recriação falha.
-          if (stage === 'create') throw new GoConnectFetchError(503, GO_RECREATE_FAILED_MESSAGE);
-          throw new GoConnectFetchError(timedOut ? 504 : 502, `A Evolution GO ${timedOut ? 'não respondeu a tempo' : 'não pôde ser alcançada'} ao ${GO_STAGE_LABEL[stage]}. Tente novamente.`);
-        }
-      };
       const goConnectRoute = resolveSessionRoute('go', 'connect', instance);
-      const response = await goFetch('connect', `${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSessionApiKey(goConnectRoute, instToken, evolutionApiKey), 'Content-Type': 'application/json' }, body: connectBody, signal: AbortSignal.timeout(15000) });
+      const response = await fetch(`${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSessionApiKey(goConnectRoute, instToken, evolutionApiKey), 'Content-Type': 'application/json' }, body: connectBody });
       if (!response.ok) {
         let errData: { message?: unknown } = {};
         try { const _t = await response.text(); errData = JSON.parse(_t); } catch { /* non-JSON */ }
@@ -635,7 +612,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
       const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
-        const qrRes = await goFetch('qr', `${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
+        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
         let qrData: { data?: { code?: string; qrcode?: unknown } } = {};
         try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
         const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
@@ -669,7 +646,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // (JID persistido + LoggedIn:false; logout/reconnect da GO respondem 400/500).
       // Distingue pelo status para NUNCA devolver qrcode:undefined silencioso — era
       // isso que deixava o front em 'loading' eterno.
-      const stRes = await goFetch('status', `${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(15000) });
+      const stRes = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
       let stData: { data?: Record<string, unknown>; state?: string } = {};
       try { const _t = await stRes.text(); stData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       // status !ok (token inválido, GO 500) NÃO é "sessão órfã": não mandar o
@@ -747,27 +724,21 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-        const delRes = await goFetch('delete', `${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
+        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
         if (!delRes.ok) {
           new Logger('evolution-api').error('connect: falha ao deletar instância órfã na GO', { instance, goId: goOrphan.id, httpStatus: delRes.status });
         }
         if (delRes.ok) {
-          // Falha de rede/timeout na 1ª tentativa também ganha o retry de 2s (só a 2ª vira 503).
-          let createRes: Response | null = null;
-          try {
-            createRes = await goFetch('create', `${evolutionApiUrl}/instance/create`, {
-              method: 'POST',
-              headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: instance, token: instToken }),
-              signal: AbortSignal.timeout(10000),
-            });
-          } catch (err: unknown) {
-            if (!(err instanceof GoConnectFetchError)) throw err;
-          }
-          if (!createRes || !createRes.ok) {
+          let createRes = await fetch(`${evolutionApiUrl}/instance/create`, {
+            method: 'POST',
+            headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: instance, token: instToken }),
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!createRes.ok) {
             // GO pode levar um momento para liberar o nome após o DELETE — retry único após 2s
             await new Promise((r) => setTimeout(r, 2000));
-            createRes = await goFetch('create', `${evolutionApiUrl}/instance/create`, {
+            createRes = await fetch(`${evolutionApiUrl}/instance/create`, {
               method: 'POST',
               headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ name: instance, token: instToken }),
@@ -776,10 +747,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           }
           if (!createRes.ok) {
             new Logger('evolution-api').error('connect: instância deletada da GO mas recriação falhou após retry', { instance, goId: goOrphan.id });
-            return new Response(JSON.stringify({ error: true, status: 503, message: GO_RECREATE_FAILED_MESSAGE }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            return new Response(JSON.stringify({ error: true, status: 503, message: 'A instância do WhatsApp foi removida da Evolution GO mas não pôde ser recriada automaticamente. É necessário recriar a instância manualmente no painel da Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
           // Mesmo body do connect normal: o GO PERSISTE webhook/subscribe daqui.
-          await goFetch('reconnect', `${evolutionApiUrl}/instance/connect`, {
+          await fetch(`${evolutionApiUrl}/instance/connect`, {
             method: 'POST',
             headers: { 'apikey': instToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
@@ -1310,10 +1281,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
-    // Falha de rede/timeout na GO durante o connect: já logada em goFetch (etapa, instância).
-    if (error instanceof GoConnectFetchError) {
-      return new Response(JSON.stringify({ error: true, status: error.status, message: error.message }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
     const log = new Logger('evolution-api');
     log.error('Unhandled error', { error: error instanceof Error ? error.message : 'Unknown error' });
     // Mensagem crua da exceção fica só no log do servidor: ao cliente vai o 500
