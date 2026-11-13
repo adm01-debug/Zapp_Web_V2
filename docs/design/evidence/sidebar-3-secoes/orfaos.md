@@ -93,3 +93,22 @@ Removidos (inclui os órfãos em cascata, só consumidos pelos 11):
 - **Acesso ao banco do Singu**: a RPC (PR A) foi validada com testes SQL
   locais (~35 asserts em PostgreSQL local); o apply em produção é ação do
   Joaquim na Fase 9 (DDL gateado por merge + deploy, regra do repo).
+
+## Restauração (2026-11-12)
+
+Regra do dono: função pronta e não ligada se completa e se liga, não se apaga.
+Voltaram, ligados no layout atual (sem reverter as 3 seções):
+
+- **Memória da conversa** (`ConversationMemorySection` + `useConversationMemory`):
+  seção `memoria` do painel do contato, recolhida por padrão, só leitura.
+- **Atendimento** (`AtendimentoSection`, seção `atendimento`, recolhida):
+  SLA da 1ª resposta (`ContactFirstResponseSLA`, `conversation_sla`),
+  Score e LGPD (`LeadRiskScorePanel`) e Perfil do WhatsApp
+  (`EvolutionContactProfileSection` + `useEvolutionContactProfile`).
+- **Aba IA**: cards "Insights da IA" (`AIInsightsWidget`) e "Base de
+  conhecimento" (`KnowledgeBaseSearchPanel`, insere o artigo na resposta).
+
+Não voltou: a metade "Tags geradas por IA" do `SLAAndAITagsSection`
+(`ai_conversation_tags`) — depende da função de tags removida pelo dono em 12/10.
+O `ConversationMemoryPanel` editável também não voltou: a seção só leitura
+(paridade V3) é a versão que o substituiu.

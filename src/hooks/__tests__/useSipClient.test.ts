@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { SIP_NOT_CONFIGURED_STORAGE_KEY } from '@/lib/calls/sipProvisioning';
 import { renderHook, act } from '@testing-library/react';
 import type { Invitation } from 'sip.js';
 
@@ -172,6 +173,7 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
 }));
 
 import { useSipClient } from '../communication/useSipClient';
+import { claimLeadership as claimLeadershipMock } from '@/lib/calls/tabLeaderStore';
 import type { CallEndOutcome } from '@/lib/calls/callStatus';
 import { toast } from '@/lib/lazyToast';
 
@@ -235,6 +237,9 @@ describe('useSipClient', () => {
     mockRpc.mockResolvedValue({ data: 'call-1', error: null });
     mockFunctionsInvoke.mockResolvedValue({ data: { password: 'test-pass' }, error: null });
     lastOnInvite = undefined;
+    // A trava "SIP não configurado" fica no localStorage (vale entre carregamentos):
+    // um teste que simulou o 503 não pode silenciar o provisionamento do seguinte.
+    localStorage.removeItem(SIP_NOT_CONFIGURED_STORAGE_KEY);
   });
 
   afterEach(() => {
@@ -967,6 +972,85 @@ describe('useSipClient', () => {
 
     expect(result.current.sipStatus).toBe('idle');
     expect(result.current.sipReason).toBe('line_in_use_other_tab');
+  });
+
+  it('trava SIP não configurado: aba líder automática respeita; reconectar explícito ignora', async () => {
+    localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, String(Date.now() + 60_000));
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: 'outra-aba' };
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    // Automático (virou líder) + trava ativa: nem chama a função.
+    expect(mockFunctionsInvoke).not.toHaveBeenCalledWith('get-sip-password');
+    expect(result.current.sipStatus).toBe('idle');
+
+    // Pedido explícito do usuário: tenta na hora e, com sucesso, solta a trava.
+    await act(async () => {
+      await result.current.connectWithStoredCredentials();
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('get-sip-password');
+    expect(result.current.sipStatus).toBe('connecting');
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+  });
+
+  it('reconectarLinha (clique) com a aba já líder: provisiona na hora ignorando a trava', async () => {
+    localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, String(Date.now() + 60_000));
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+    const { result } = renderHook(() => useSipClient());
+    await act(async () => { await result.current.reconectarLinha(); await escoar(); });
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('get-sip-password');
+    expect(vi.mocked(claimLeadershipMock)).not.toHaveBeenCalled();
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+  });
+
+  it('reconectarLinha (clique) numa aba seguidora: reivindica e a promoção que segue ignora a trava', async () => {
+    localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, String(Date.now() + 60_000));
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+    const { result, rerender } = renderHook(() => useSipClient());
+    await act(async () => { await result.current.reconectarLinha(); });
+    expect(vi.mocked(claimLeadershipMock)).toHaveBeenCalledTimes(1);
+    expect(mockFunctionsInvoke).not.toHaveBeenCalledWith('get-sip-password');
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('get-sip-password');
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+  });
+
+  it('promoção automática FORA da janela do clique continua respeitando a trava', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, String(Date.now() + 60_000));
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: null };
+      const { result, rerender } = renderHook(() => useSipClient());
+      await act(async () => { await result.current.reconectarLinha(); });
+      vi.setSystemTime(Date.now() + 5_000); // o clique não virou liderança a tempo
+      await act(async () => {
+        tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+        rerender();
+        await escoar(12);
+      });
+      expect(mockFunctionsInvoke).not.toHaveBeenCalledWith('get-sip-password');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('T20: virar aba LÍDER conecta com as credenciais provisionadas', async () => {

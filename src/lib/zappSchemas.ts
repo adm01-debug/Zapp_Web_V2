@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 
 export const contatoSchema = z.object({
   nome: z.string().min(1),
