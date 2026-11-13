@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
@@ -276,10 +276,12 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
     expect(screen.getByText('Conversões: sem dados ainda')).toBeInTheDocument();
 
     // O seletor do gráfico nasce no filtro da tela (30 dias) e, tocado, refaz a consulta.
-    await waitFor(() => expect(rpcMock).toHaveBeenCalled());
+    // A tela também chama talkx_campaign_ranking/talkx_top_segments (X074); a conta
+    // abaixo olha só a RPC de performance.
+    const overviewCalls = () => rpcMock.mock.calls.filter((call) => call[0] === 'talkx_overview_stats');
+    await waitFor(() => expect(overviewCalls().length).toBeGreaterThan(0));
     // A primeira chamada é a RPC principal (talkx_overview_stats com 30 dias).
-    expect(rpcMock.mock.calls[0][0]).toBe('talkx_overview_stats');
-    const firstArgs = rpcMock.mock.calls[0][1] as { p_from: string; p_to: string };
+    const firstArgs = overviewCalls()[0][1] as { p_from: string; p_to: string };
     expect((new Date(firstArgs.p_to).getTime() - new Date(firstArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(30, 1);
 
     fireEvent.click(screen.getByRole('button', { name: '90 dias' }));
@@ -289,10 +291,9 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
     // O comparativo usa a mesma queryKey do resumo e o React Query deduplica,
     // por isso não há chamada extra dele.
     await waitFor(() => {
-      expect(rpcMock).toHaveBeenCalledTimes(3);
+      expect(overviewCalls()).toHaveLength(3);
     });
-    const lastArgs = rpcMock.mock.calls[2][1] as { p_from: string; p_to: string };
-    expect(rpcMock.mock.calls[2][0]).toBe('talkx_overview_stats');
+    const lastArgs = overviewCalls()[2][1] as { p_from: string; p_to: string };
     expect((new Date(lastArgs.p_to).getTime() - new Date(lastArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(90, 1);
   });
 
@@ -307,4 +308,37 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
     expect(screen.queryByText(/Sem envios registrados/)).toBeNull();
     expect(screen.queryByTestId('perf-chart')).toBeNull();
   });
+
+  describe('Ranking de campanhas (RPC sem filtros da tela)', () => {
+    const ranking = {
+      campaigns: [
+        { campaign_id: 'r1', campaign_name: 'Reativação', total_recipients: 300, delivery_rate_pct: 95, reply_rate_pct: 12 },
+      ],
+    };
+
+    it('o título diz a janela e o alcance reais: "Últimos 90 dias · todas as campanhas"', async () => {
+      rpcMock.mockImplementation(async (name: string) =>
+        name === 'talkx_campaign_ranking' ? { data: ranking, error: null } : { data: { daily }, error: null });
+      withClient(<TalkXAnalytics campaigns={[campaign]} isLoading={false} isError={false} />);
+
+      const secao = await screen.findByTestId('talkx-ranking');
+      expect(secao).toHaveTextContent('Top 5 por taxa de resposta · Últimos 90 dias · todas as campanhas');
+      expect(secao).toHaveTextContent('Reativação');
+    });
+
+    it('erro do ranking aparece como estado de erro com "Tentar novamente" (não some calado) e tenta de novo', async () => {
+      rpcMock.mockImplementation(async (name: string) =>
+        name === 'talkx_campaign_ranking' ? { data: null, error: new Error('permission denied') } : { data: { daily }, error: null });
+      withClient(<TalkXAnalytics campaigns={[campaign]} isLoading={false} isError={false} />);
+
+      const secao = await screen.findByTestId('talkx-ranking');
+      expect(secao).toHaveTextContent('Não foi possível carregar as campanhas do ranking');
+      expect(secao).not.toHaveTextContent('permission denied');
+      const rankingCalls = () => rpcMock.mock.calls.filter((c) => c[0] === 'talkx_campaign_ranking').length;
+      const antes = rankingCalls();
+      fireEvent.click(within(secao).getByRole('button', { name: /tentar novamente/i }));
+      await waitFor(() => expect(rankingCalls()).toBeGreaterThan(antes));
+    });
+  });
 });
+
