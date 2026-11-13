@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "943a646b2ff307c95c279a3f4039b58cb06aaa3c",
+  "sha": "fb5d0232124390d46bbb46c78363ad51a618a21d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 05:41 UTC",
+  "generated_at": "2026-11-13 05:55 UTC",
   "files_total": 8264,
   "code_files": 6096,
   "code_lines": 1060689
@@ -388147,10 +388147,19 @@
   }
  },
  "git": {
-  "sha": "943a646b2ff307c95c279a3f4039b58cb06aaa3c",
+  "sha": "fb5d0232124390d46bbb46c78363ad51a618a21d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "fb5d023",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "fix(copilot): badge de alertas do RADAR com contraste AA (#3002)",
+    "files": [
+     "src/components/inbox/copilot/RadarCards.tsx"
+    ]
+   },
    {
     "sha": "943a646",
     "date": "2026-11-13",
@@ -388450,16 +388459,6 @@
      "docs/ci/README.md",
      "scripts/ci/ci-docs-baseline.unit.mjs"
     ]
-   },
-   {
-    "sha": "2942f21",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)",
-    "files": [
-     "scripts/edge-deploy/redigir-log.mjs",
-     "scripts/edge-deploy/redigir-log.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388482,6 +388481,10 @@
    [
     "scripts/e2e-isolated/routine-ownership.mjs",
     2
+   ],
+   [
+    "src/components/inbox/copilot/RadarCards.tsx",
+    1
    ],
    [
     "scripts/ci/verify-release-targets-sucessor.unit.mjs",
@@ -388537,10 +388540,6 @@
    ],
    [
     "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/talkx-send/index.ts",
     1
    ]
   ]

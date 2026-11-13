@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `943a646b2ff307c95c279a3f4039b58cb06aaa3c` (2026-11-13T02:31:20-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `fb5d0232124390d46bbb46c78363ad51a618a21d` (2026-11-13T02:54:13-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -391,7 +391,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56959 nós · 117689 arestas · 4176 comunidades · grafo do commit `943a646b`
+- 56959 nós · 117689 arestas · 4176 comunidades · grafo do commit `fb5d0232`
 - comunidades maiores: TalkXSuppression.tsx (1034), lucide-react (856), react (787), cn (594), tooltip.tsx (495), ref_node_assert (430), DashboardView.tsx (412), e2e-isolated-runtime.unit.mjs (394), useTeamChatPanel.ts (383), ref_https (370), dialog.tsx (362), ref_node_fs (348)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -399,9 +399,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (16)
 - PENDENCIAS.md (13)
-- CLAUDE.md (12)
 - docs/ci/README.md (12)
 - .github/workflows/ci.yml (11)
+- CLAUDE.md (11)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
 - scripts/db-audit/grants-baseline.json (11)
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `fb5d023` fix(copilot): badge de alertas do RADAR com contraste AA (#3002)
 - 2026-11-13 `943a646` Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)
 - 2026-11-13 `382307a` Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)
 - 2026-11-13 `e903a7e` fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-12 `65cf385` chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)
 - 2026-11-12 `d8854eb` chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)
 - 2026-11-12 `87c5e97` fix(e2e): E2E logado volta a rodar — dono postgres para mark_outbound_post_started no backend descartável (#2987)
-- 2026-11-12 `0a1e73f` fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

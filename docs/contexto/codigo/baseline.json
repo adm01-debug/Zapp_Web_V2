@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "943a646b2ff307c95c279a3f4039b58cb06aaa3c",
+  "commit": "fb5d0232124390d46bbb46c78363ad51a618a21d",
   "branch": "main",
-  "data_commit": "2026-11-13T02:31:20-03:00",
+  "data_commit": "2026-11-13T02:54:13-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "fb5d023",
+    "data": "2026-11-13",
+    "assunto": "fix(copilot): badge de alertas do RADAR com contraste AA (#3002)"
+   },
    {
     "sha": "943a646",
     "data": "2026-11-13",
@@ -126,18 +131,13 @@
     "sha": "1616f7b",
     "data": "2026-11-12",
     "assunto": "docs(ci): inventário completo workflows + registra types-sync em PENDENCIAS"
-   },
-   {
-    "sha": "5536177",
-    "data": "2026-11-12",
-    "assunto": "fix: evita 409 ao gravar notificação de meta duplicada (pré-check de dedupe_key) (#2929)"
    }
   ],
   "arquivos_mudados_7d": 671,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 627
+    "mudancas": 628
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -206,15 +206,15 @@
     "mudancas": 13
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 12
-   },
-   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 12
    },
    {
     "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "CLAUDE.md",
     "mudancas": 11
    },
    {
