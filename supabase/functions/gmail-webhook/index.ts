@@ -295,7 +295,7 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
   } catch (error) {
     log.error("Gmail Webhook error", { error: error instanceof Error ? error.message : String(error) });
     log.done(200);
-    return jsonResponse({ acknowledged: true, error: error instanceof Error ? error.message : "Unknown error" }, 200, req);
+    return jsonResponse({ acknowledged: true }, 200, req);
   }
 }
 
