@@ -4370,7 +4370,7 @@
   {
    "modulo": "components/meta-capi",
    "arquivos": 1,
-   "testes": 0,
+   "testes": 1,
    "linhas": 177,
    "itens_menu": [
     "Meta CAPI"
@@ -14957,7 +14957,7 @@
   {
    "modulo": "pages/__tests__",
    "arquivos": 0,
-   "testes": 29,
+   "testes": 31,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `af1bc25f40c9e691da2423fc605c4e46b26f7a89` (2026-11-13T08:45:14-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7c3ef80de29ca64e4e179a3067861c5a10d50bf9` (2026-11-13T12:43:34Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4243), SQL (1306), Markdown (1085), JSON (603), JavaScript (461), Shell (235), Python (119), YAML (30)
+- linguagens: TypeScript (4246), SQL (1306), Markdown (1085), JSON (603), JavaScript (461), Shell (235), Python (119), YAML (30)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8425 |
-| arquivos_codigo | 4821 |
-| linhas_codigo | 892532 |
+| arquivos_total | 8428 |
+| arquivos_codigo | 4824 |
+| linhas_codigo | 892916 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -48,7 +48,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 218 |
 | migrations | 1106 |
 | cron_jobs | 26 |
-| testes | 2624 |
+| testes | 2627 |
 | workflows | 22 |
 | scripts | 427 |
 | docs_md | 1085 |
@@ -58,7 +58,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (865), src/pages (26), src/features (2)
 - hooks: src/hooks (414), src/components (73), src/contexts (2)
 - servicos_logica: src/lib (147), src/services (19), src/utils (8)
-- testes: co-localizado (__tests__) (1961), outro (231), co-localizado (*.test) (170)
+- testes: co-localizado (__tests__) (1964), outro (231), co-localizado (*.test) (170)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (287), scripts/e2e-isolated (41), scripts/ci (40)
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 56970 nós · 117752 arestas · 4163 comunidades · grafo do commit `af1bc25f`
-- comunidades maiores: lucide-react (874), cn (802), react (715), vitest (693), schemas.ts (461), ref_node_assert (430), validation.ts (428), @tanstack/react-query (424), ref_node_fs (412), useMyWorkItems.ts (403), ref_https (395), e2e-isolated-runtime.unit.mjs (367)
+- 56983 nós · 117780 arestas · 4219 comunidades · grafo do commit `7c3ef80d`
+- comunidades maiores: lucide-react (700), chat.ts (667), utils.ts (634), vitest (620), ExternalProductManagement.tsx (540), cn (427), ref_node_assert (411), react (407), useAuth (365), ref_node_fs (329), useTalkXSegments.ts (313), AIConversationAssistant.tsx (304)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), parseBody() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -513,6 +513,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-13 `7c3ef80` Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)
 - 2026-11-13 `af1bc25` Verificação de email: "Reenviar Email" na tela de erro pede o email em vez de enviar vazio (#3015)
 - 2026-11-13 `7bdbe2e` Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)
 - 2026-11-13 `51bd8cb` Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)
@@ -527,7 +528,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-13 `e903a7e` fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)
 - 2026-11-13 `7c9a188` fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)
 - 2026-11-12 `58a7208` fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)
-- 2026-11-12 `2ae0de7` fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

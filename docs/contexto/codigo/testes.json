@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2624,
+ "total": 2627,
  "por_tipo": {
   "contrato": 114,
   "e2e": 76,
   "pytest": 3,
   "qa": 9,
-  "unit": 2331
+  "unit": 2334
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1961
+   "arquivos": 1964
   },
   {
    "padrao": "outro",
@@ -9692,6 +9692,16 @@
     "src/lib/secureRandom.ts"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+   "tipo": "unit",
+   "linhas": 145,
+   "testa": [
+    "src/components/meta-capi/MetaCAPIView.tsx",
+    "src/components/ui/tooltip.tsx"
+   ],
+   "casos": 4
   },
   {
    "arquivo": "src/components/mfa/__tests__/MFABackupCodes.crypto.test.tsx",
@@ -20375,6 +20385,15 @@
    "casos": 8
   },
   {
+   "arquivo": "src/pages/__tests__/NotFound.test.tsx",
+   "tipo": "unit",
+   "linhas": 74,
+   "testa": [
+    "src/pages/NotFound.tsx"
+   ],
+   "casos": 3
+  },
+  {
    "arquivo": "src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx",
    "tipo": "unit",
    "linhas": 107,
@@ -20448,6 +20467,15 @@
     "src/pages/VerifyEmail.tsx"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "src/pages/__tests__/VerifyEmail.test.tsx",
+   "tipo": "unit",
+   "linhas": 165,
+   "testa": [
+    "src/pages/VerifyEmail.tsx"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx",
@@ -24426,6 +24454,7 @@
   "src/components/layout/VoiceActionBridge.tsx": 1,
   "src/components/leaderboard/Leaderboard.tsx": 2,
   "src/components/leaderboard/LeaderboardHelpers.tsx": 1,
+  "src/components/meta-capi/MetaCAPIView.tsx": 1,
   "src/components/mfa/MFABackupCodes.tsx": 3,
   "src/components/mfa/MFAEnroll.tsx": 1,
   "src/components/mfa/MFASettings.tsx": 1,
@@ -24741,7 +24770,7 @@
   "src/components/ui/tabs.tsx": 1,
   "src/components/ui/toast.tsx": 1,
   "src/components/ui/toggle-group.tsx": 1,
-  "src/components/ui/tooltip.tsx": 94,
+  "src/components/ui/tooltip.tsx": 95,
   "src/components/voice/ElevenLabsDialogue.tsx": 1,
   "src/components/voice/ElevenLabsVoiceDesign.tsx": 1,
   "src/components/voice/VoiceSearchOverlay.tsx": 1,
@@ -25254,6 +25283,7 @@
   "src/pages/ForgotPassword.tsx": 1,
   "src/pages/Index.tsx": 1,
   "src/pages/Install.tsx": 2,
+  "src/pages/NotFound.tsx": 1,
   "src/pages/QueueDetails.tsx": 4,
   "src/pages/QueuesComparison.tsx": 1,
   "src/pages/ResetPassword.tsx": 3,
@@ -25261,7 +25291,7 @@
   "src/pages/SLAHistory.tsx": 2,
   "src/pages/SSOCallback.tsx": 1,
   "src/pages/TwoFactorAuth.tsx": 3,
-  "src/pages/VerifyEmail.tsx": 1,
+  "src/pages/VerifyEmail.tsx": 2,
   "src/pages/ViewRouter.tsx": 5,
   "src/pages/admin-telemetria/ClientErrorsPanel.tsx": 1,
   "src/pages/admin-telemetria/TelemetryTable.tsx": 1,
@@ -25464,9 +25494,7 @@
   "supabase/functions/whatsapp-webhook/index.ts": 2
  },
  "sem_teste": {
-  "telas": [
-   "src/pages/NotFound.tsx"
-  ],
+  "telas": [],
   "hooks": [
    "scripts/ai-context/cenarios.mjs",
    "src/components/a11y/a11yHooks.tsx",

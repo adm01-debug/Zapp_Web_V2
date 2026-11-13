@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "af1bc25f40c9e691da2423fc605c4e46b26f7a89",
+  "commit": "7c3ef80de29ca64e4e179a3067861c5a10d50bf9",
   "branch": "main",
-  "data_commit": "2026-11-13T08:45:14-03:00",
+  "data_commit": "2026-11-13T12:43:34Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7c3ef80",
+    "data": "2026-11-13",
+    "assunto": "Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)"
+   },
    {
     "sha": "af1bc25",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "0a1e73f",
     "data": "2026-11-12",
     "assunto": "fix(types-sync): código do envio (PD-79) compila com os tipos novos — destrava o types-sync (#2988)"
-   },
-   {
-    "sha": "1592381",
-    "data": "2026-11-12",
-    "assunto": "chore(ci): RELATORIO_CI.md — §9 baseline e estado pós-fix"
    }
   ],
-  "arquivos_mudados_7d": 690,
+  "arquivos_mudados_7d": 688,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8425,
-  "arquivos_codigo": 4821,
-  "linhas_codigo": 892532,
+  "arquivos_total": 8428,
+  "arquivos_codigo": 4824,
+  "linhas_codigo": 892916,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1106,
   "cron_jobs": 26,
-  "testes": 2624,
+  "testes": 2627,
   "workflows": 22,
   "scripts": 427,
   "docs_md": 1085
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2181,
-   "linhas": 372261
+   "arquivos": 2182,
+   "linhas": 372406
   },
   "src/config": {
    "arquivos": 3,
@@ -743,8 +743,8 @@
    "linhas": 95
   },
   "src/pages": {
-   "arquivos": 71,
-   "linhas": 10974
+   "arquivos": 73,
+   "linhas": 11213
   },
   "src/providers": {
    "arquivos": 10,

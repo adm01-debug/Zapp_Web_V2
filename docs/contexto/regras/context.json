@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "af1bc25f40c9e691da2423fc605c4e46b26f7a89",
+  "sha": "7c3ef80de29ca64e4e179a3067861c5a10d50bf9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 12:31 UTC",
-  "files_total": 8267,
-  "code_files": 6099,
-  "code_lines": 1061019
+  "generated_at": "2026-11-13 13:49 UTC",
+  "files_total": 8270,
+  "code_files": 6102,
+  "code_lines": 1061403
  },
  "version": "1.3.2",
- "facts_hash": "95fe8c06d9ae755f",
+ "facts_hash": "0a0f6941567ce58f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -324,7 +324,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2345,
+   ".tsx": 2348,
    ".ts": 1894,
    ".sql": 1306,
    ".mjs": 435,
@@ -64864,6 +64864,13 @@
     "component": "NotFound",
     "guard": "",
     "roles": [],
+    "file": "src/pages/__tests__/NotFound.test.tsx"
+   },
+   {
+    "path": "*",
+    "component": "NotFound",
+    "guard": "",
+    "roles": [],
     "file": "src/routes/AppRoutes.tsx"
    },
    {
@@ -64889,10 +64896,24 @@
    },
    {
     "path": "/",
+    "component": "p",
+    "guard": "",
+    "roles": [],
+    "file": "src/pages/__tests__/NotFound.test.tsx"
+   },
+   {
+    "path": "/",
     "component": "Destino",
     "guard": "",
     "roles": [],
     "file": "src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx"
+   },
+   {
+    "path": "/",
+    "component": "p",
+    "guard": "",
+    "roles": [],
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx"
    },
    {
     "path": "/",
@@ -65026,6 +65047,13 @@
     "guard": "",
     "roles": [],
     "file": "src/pages/__tests__/ResetPassword.segundo-fator-sessoes.test.tsx"
+   },
+   {
+    "path": "/auth",
+    "component": "p",
+    "guard": "",
+    "roles": [],
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx"
    },
    {
     "path": "/auth",
@@ -65242,6 +65270,13 @@
     "component": "VerifyEmail",
     "guard": "",
     "roles": [],
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx"
+   },
+   {
+    "path": "/verify-email",
+    "component": "VerifyEmail",
+    "guard": "",
+    "roles": [],
     "file": "src/routes/AppRoutes.tsx"
    },
    {
@@ -65417,7 +65452,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2181,
+  "components_count": 2182,
   "hooks": [
    {
     "name": "useContacts",
@@ -68548,8 +68583,8 @@
   },
   {
    "module": "src/components",
-   "files": 2181,
-   "lines": 372261,
+   "files": 2182,
+   "lines": 372406,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -69392,8 +69427,8 @@
   },
   {
    "module": "src/pages",
-   "files": 71,
-   "lines": 10974,
+   "files": 73,
+   "lines": 11213,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -69440,7 +69475,7 @@
     "ChatPopup.a11y.test.tsx: N-043 — botões da janela avulsa (ChatPopup) têm nome acessível. Auditoria: os 3 botões da barra de controle (minimizar, maximizar, fechar) não tinham `aria-label`, causando violação `button-name` no axe.",
     "ChatPopup.titulo.test.tsx: Título da aba da janela destacada do chat. O popup escrevia `document.title = \"Chat — <nome>\"` com um literal solto: sem o nome do produto, a janela destoava do resto da aplicação (e do `index.html`, que já diz \"ZAPP WEB\"). Aqui o título passa a vir da mesma constante de `@/lib/productName` usada po …",
     "Install.limpeza-listeners.test.tsx: Polimento das telas de auth (t_051c55b9). Antes: o listener de \"appinstalled\" era registrado com uma arrow inline e nunca removido — o cleanup só tratava \"beforeinstallprompt\". Ao desmontar a tela, sobrava um handler vivo mexendo no estado de um componente morto. Agora os dois listeners são removido …",
-    "QueuesComparisonSLA.landmarks.test.tsx: A11Y-03 / A11Y-06 — landmarks e cabeçalho: cada página avulsa renderiza EXATAMENTE um <main> e um <h1>. O <main> de /queues/comparison vive no arquivo da PÁGINA (QueuesComparison.tsx) e o <h1> de /sla/history no dashboard (SLAHistoryDashboard.tsx): só o teste que renderiza a página inteira prova os …"
+    "NotFound.test.tsx: Testes de `src/pages/NotFound.tsx` — a tela 404 servida pela rota curinga (`path=\"*\"` em `src/routes/AppRoutes.tsx`). A tela REAL é montada dentro de um MemoryRouter; a única fronteira dublada é o logger. Trava: o caminho inexistente aparece para o usuário e vai para o log, \"Início\" leva de volta pa …"
    ],
    "deps": [
     "@supabase/supabase-js",
@@ -69500,6 +69535,7 @@
     "src/pages/__tests__/ForgotPassword.test.tsx",
     "src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx",
     "src/pages/__tests__/Install.limpeza-listeners.test.tsx",
+    "src/pages/__tests__/NotFound.test.tsx",
     "src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx",
     "src/pages/__tests__/ResetPassword.acessivel.test.tsx",
     "src/pages/__tests__/ResetPassword.redirect-cancelavel.test.tsx",
@@ -69507,6 +69543,7 @@
     "src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx",
     "src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx",
     "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
+    "src/pages/__tests__/VerifyEmail.test.tsx",
     "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx",
     "src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx",
     "src/pages/__tests__/ViewRouter.search-insights.test.tsx",
@@ -155082,6 +155119,26 @@
     "name": "nao renderiza particula nenhuma quando invisivel"
    },
    {
+    "file": "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+    "name": "MetaCAPIView (demonstração)"
+   },
+   {
+    "file": "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+    "name": "anuncia o modo demonstração e mantém "
+   },
+   {
+    "file": "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+    "name": "sem eventos nem configuração: contadores zerados, pixel não configurado e estado vazio"
+   },
+   {
+    "file": "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+    "name": "com eventos e configuração: conta enviados, mostra pixel, auto-tracking e a lista"
+   },
+   {
+    "file": "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+    "name": "erro ao carregar eventos aparece como alerta de erro"
+   },
+   {
     "file": "src/components/mfa/__tests__/MFABackupCodes.crypto.test.tsx",
     "name": "MFABackupCodes — os codigos de backup vem de fonte criptografica"
    },
@@ -198162,6 +198219,14 @@
     "name": "ainda atualiza o estado quando o app é instalado (listener ativo)"
    },
    {
+    "file": "src/pages/__tests__/NotFound.test.tsx",
+    "name": "NotFound (rota curinga)"
+   },
+   {
+    "file": "src/pages/__tests__/NotFound.test.tsx",
+    "name": "mostra o 404 com o caminho inexistente e registra no log"
+   },
+   {
     "file": "src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx",
     "name": "a11y: um <main> e um <h1> por página"
    },
@@ -198304,6 +198369,38 @@
    {
     "file": "src/pages/__tests__/VerifyEmail.reenvio.test.tsx",
     "name": "usa o ?email= da URL quando o link o traz"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "VerifyEmail (/verify-email)"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "link de cadastro com sessão: mostra sucesso com o email e leva ao dashboard"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "erro ao ler a sessão: mostra erro, reenvia o email e volta ao login"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "falha no reenvio aparece como erro, não como sucesso"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "link de cadastro sem sessão: mostra link expirado e manda para o login"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "sem type: fica em "
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "sem type e sem sessão após 2s: mostra link expirado"
+   },
+   {
+    "file": "src/pages/__tests__/VerifyEmail.test.tsx",
+    "name": "evento SIGNED_IN do Supabase leva ao sucesso e a saída cancela a assinatura"
    },
    {
     "file": "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx",
@@ -299641,6 +299738,29 @@
     ";\nimport { Tooltip, TooltipContent, TooltipTrigger } from "
    ]
   },
+  "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx": {
+   "path": "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+   "lines": 145,
+   "is_test": true,
+   "errors": [
+    "tabela inesperada na tela: ${table}"
+   ],
+   "doc": "Testes de `src/components/meta-capi/MetaCAPIView.tsx` — a tela de Meta Conversions API, hoje em modo demonstração (nada é enviado à Meta). A tela REAL é montada com o hook real `useMetaCAPIData` (React Query); a única fronteira dublada é o `supabase.from` das tabelas `meta_capi_events` e `global_set …",
+   "calc_fns": [
+    {
+     "name": "valorDoCard",
+     "params": "rotulo: string",
+     "body": "const card = screen.getByText(rotulo).closest('div')!.parentElement!; return card.querySelector('p')!.textContent;"
+    }
+   ],
+   "tests": [
+    "MetaCAPIView (demonstração)",
+    "anuncia o modo demonstração e mantém ",
+    "sem eventos nem configuração: contadores zerados, pixel não configurado e estado vazio",
+    "com eventos e configuração: conta enviados, mostra pixel, auto-tracking e a lista",
+    "erro ao carregar eventos aparece como alerta de erro"
+   ]
+  },
   "src/components/mfa/MFABackupCodes.tsx": {
    "path": "src/components/mfa/MFABackupCodes.tsx",
    "lines": 150,
@@ -355349,6 +355469,30 @@
     "ainda atualiza o estado quando o app é instalado (listener ativo)"
    ]
   },
+  "src/pages/__tests__/NotFound.test.tsx": {
+   "path": "src/pages/__tests__/NotFound.test.tsx",
+   "lines": 74,
+   "is_test": true,
+   "routes": [
+    {
+     "path": "/",
+     "component": "p",
+     "guard": "",
+     "roles": []
+    },
+    {
+     "path": "*",
+     "component": "NotFound",
+     "guard": "",
+     "roles": []
+    }
+   ],
+   "doc": "Testes de `src/pages/NotFound.tsx` — a tela 404 servida pela rota curinga (`path=\"*\"` em `src/routes/AppRoutes.tsx`). A tela REAL é montada dentro de um MemoryRouter; a única fronteira dublada é o logger. Trava: o caminho inexistente aparece para o usuário e vai para o log, \"Início\" leva de volta pa …",
+   "tests": [
+    "NotFound (rota curinga)",
+    "mostra o 404 com o caminho inexistente e registra no log"
+   ]
+  },
   "src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx": {
    "path": "src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx",
    "lines": 107,
@@ -355553,6 +355697,42 @@
     "sem email conhecido, clicar em Reenviar não chama resend com email vazio",
     "reenvia para o email digitado no campo",
     "usa o ?email= da URL quando o link o traz"
+   ]
+  },
+  "src/pages/__tests__/VerifyEmail.test.tsx": {
+   "path": "src/pages/__tests__/VerifyEmail.test.tsx",
+   "lines": 165,
+   "is_test": true,
+   "routes": [
+    {
+     "path": "/verify-email",
+     "component": "VerifyEmail",
+     "guard": "",
+     "roles": []
+    },
+    {
+     "path": "/",
+     "component": "p",
+     "guard": "",
+     "roles": []
+    },
+    {
+     "path": "/auth",
+     "component": "p",
+     "guard": "",
+     "roles": []
+    }
+   ],
+   "doc": "Testes de `src/pages/VerifyEmail.tsx` — a tela pública `/verify-email` (`src/routes/AppRoutes.tsx`) aberta pelo link de confirmação de email. A tela REAL é montada num MemoryRouter; a única fronteira dublada é o `supabase.auth` (getSession, onAuthStateChange e resend) e o toast. Trava os quatro esta …",
+   "tests": [
+    "VerifyEmail (/verify-email)",
+    "link de cadastro com sessão: mostra sucesso com o email e leva ao dashboard",
+    "erro ao ler a sessão: mostra erro, reenvia o email e volta ao login",
+    "falha no reenvio aparece como erro, não como sucesso",
+    "link de cadastro sem sessão: mostra link expirado e manda para o login",
+    "sem type: fica em ",
+    "sem type e sem sessão após 2s: mostra link expirado",
+    "evento SIGNED_IN do Supabase leva ao sucesso e a saída cancela a assinatura"
    ]
   },
   "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx": {
@@ -388363,10 +388543,21 @@
   }
  },
  "git": {
-  "sha": "af1bc25f40c9e691da2423fc605c4e46b26f7a89",
+  "sha": "7c3ef80de29ca64e4e179a3067861c5a10d50bf9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7c3ef80",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)",
+    "files": [
+     "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+     "src/pages/__tests__/NotFound.test.tsx",
+     "src/pages/__tests__/VerifyEmail.test.tsx"
+    ]
+   },
    {
     "sha": "af1bc25",
     "date": "2026-11-13",
@@ -388676,18 +388867,6 @@
      "supabase/deployment-manifest.json",
      "supabase/functions/external-db-bridge/index.ts"
     ]
-   },
-   {
-    "sha": "376332a",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)",
-    "files": [
-     "src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx",
-     "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
-     "src/integrations/supabase/types.ts",
-     "supabase/migrations/20261111170000_talkx_block_recipient.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -388706,6 +388885,18 @@
    [
     "RELATORIO_CI.md",
     2
+   ],
+   [
+    "src/components/meta-capi/__tests__/MetaCAPIView.test.tsx",
+    1
+   ],
+   [
+    "src/pages/__tests__/NotFound.test.tsx",
+    1
+   ],
+   [
+    "src/pages/__tests__/VerifyEmail.test.tsx",
+    1
    ],
    [
     "src/pages/VerifyEmail.tsx",
@@ -388757,18 +388948,6 @@
    ],
    [
     "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/__tests__/fileActionButton.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/tabs/fileActionButton.ts",
     1
    ]
   ]
