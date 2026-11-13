@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)",
    "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)",
    "feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)",
    "fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)",
-   "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)",
-   "fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)"
+   "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

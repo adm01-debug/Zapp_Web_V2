@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `8a141831d8` · branch `main` · 2026-11-13 01:35 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `2ae0de7878` · branch `main` · 2026-11-13 02:51 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -365,7 +365,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `number_reputation` | Admins can insert reputation | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `number_reputation` | Admins can update reputation | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `talkx_blacklist` | Admins can add to blacklist | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
-| `talkx_blacklist` | Admins can remove from blacklist | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `training_sessions` | Users can view own training sessions | SELECT | authenticated | permissive | `profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
 | `training_sessions` | Users can insert own training sessions | INSERT | authenticated | permissive |  | `profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid())` |
 | `training_sessions` | Users can update own training sessions | UPDATE | authenticated | permissive | `profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
@@ -419,7 +418,8 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `link_preview_cache_metrics` | Admins/supervisors can read metrics | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `link_preview_cache_metrics` | service_role inserts cache metrics | INSERT | service_role | permissive |  | `true` |
 | `email_attachments` | Users can view attachments of own accounts | SELECT | authenticated | permissive | `EXISTS ( SELECT 1 FROM public.email_messages em JOIN public.gmail_accounts ga ON ga.id = em.gmail_account_id WHERE em.id = email_attachments.email_message_id AND (ga.user_id = auth.uid() OR is_admin_or_supervisor(auth.uid())) )` |  |
-| … +273 linhas — lista completa em `context.json` | | | | | | |
+| `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
+| … +272 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -857,8 +857,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | team_receipts_fill_conversation_id_trig | BEFORE INSERT OR UPDATE | `team_message_receipts` | `team_receipts_fill_conversation_id` |  |
 | trg_talkx_recipients_failed_at | BEFORE INSERT OR UPDATE OF STATUS | `talkx_recipients` | `trg_talkx_recipients_failed_at` |  |
 | trg_conversation_events_default_performed_by | BEFORE INSERT | `conversation_events` | `conversation_events_default_performed_by` |  |
-| trg_talkx_blacklist_audit | BEFORE INSERT OR UPDATE | `talkx_blacklist` | `talkx_blacklist_audit_trigger` |  |
-| trg_talkx_blacklist_no_delete | BEFORE DELETE | `talkx_blacklist` | `talkx_blacklist_no_delete` |  |
 | trg_conversation_event_assign_performed_by | BEFORE INSERT | `conversation_events` | `conversation_event_assign_performed_by` |  |
 | message_pins_force_contact_id | BEFORE INSERT OR UPDATE | `message_pins` | `message_pins_force_contact_id` |  |
 | sla_alert_preferences_set_updated_at | BEFORE UPDATE | `sla_alert_preferences` | `update_updated_at_column` |  |
@@ -884,6 +882,8 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | trg_copilot_sessions_updated_at | BEFORE UPDATE | `copilot_sessions` | `copilot_sessions_updated_at` |  |
 | talkx_suppression_reasons_guard_trigger | BEFORE INSERT OR UPDATE | `talkx_suppression_reasons` | `talkx_suppression_reasons_guard` |  |
 | trg_talkx_blacklist_reason_active | BEFORE INSERT OR UPDATE OF REASON_CODE | `talkx_blacklist` | `talkx_blacklist_reason_active_guard` |  |
+| trg_talkx_blacklist_audit | BEFORE INSERT OR UPDATE | `talkx_blacklist` | `talkx_blacklist_audit_trigger` |  |
+| trg_talkx_blacklist_no_delete | BEFORE DELETE | `talkx_blacklist` | `talkx_blacklist_no_delete` |  |
 | update_queues_updated_at | BEFORE UPDATE | `queues` | `update_updated_at_column` |  |
 | update_rate_limit_configs_updated_at | BEFORE UPDATE | `rate_limit_configs` | `update_updated_at_column` |  |
 | update_messages_updated_at | BEFORE UPDATE | `messages` | `update_updated_at_column` |  |

@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-13 02:51 UTC
+
+- **functions** alterado (5): `public.is_admin_or_supervisor(_user_id uuid)`, `public.mark_pause_investigated(p_pause_id uuid, p_notes text)`, `public.talkx_blacklist_audit_trigger()`, `public.talkx_blacklist_no_delete()`, `public.talkx_campaign_recipients_page(p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text, p_segment_id uuid)`
+
 ## 2026-11-12 22:24 UTC
 
 - **migrations** alterado (2): `20261031160000_copilot_radar_delta_columns`, `20261112160000_talkx_blacklist_reconcilia_e_higiene`

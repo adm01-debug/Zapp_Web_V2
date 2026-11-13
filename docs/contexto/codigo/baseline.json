@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "8a141831d8f082d67aa015839da0981b1e6478dc",
+  "commit": "2ae0de787883980124508b8fc22f4e7e74f15080",
   "branch": "main",
-  "data_commit": "2026-11-12T20:12:32-03:00",
+  "data_commit": "2026-11-12T22:05:47-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2ae0de7",
+    "data": "2026-11-12",
+    "assunto": "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)"
+   },
    {
     "sha": "8a14183",
     "data": "2026-11-12",
@@ -126,14 +131,9 @@
     "sha": "2942f21",
     "data": "2026-11-12",
     "assunto": "fix(edge-deploy): contagem de valor literal redigido mentia no log do CI (#2946)"
-   },
-   {
-    "sha": "13a00e0",
-    "data": "2026-11-12",
-    "assunto": "fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit (#2881)"
    }
   ],
-  "arquivos_mudados_7d": 662,
+  "arquivos_mudados_7d": 664,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -246,6 +246,10 @@
     "mudancas": 10
    },
    {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 9
+   },
+   {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 9
    },
@@ -256,14 +260,6 @@
    {
     "arquivo": "scripts/e2e-isolated/README.md",
     "mudancas": 9
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 8
-   },
-   {
-    "arquivo": ".github/workflows/deploy-functions.yml",
-    "mudancas": 8
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
@@ -280,6 +276,10 @@
    {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 8
+   },
+   {
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 7
    },
    {
     "arquivo": ".github/workflows/e2e-logado-isolado.yml",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8417,
+  "arquivos_total": 8419,
   "arquivos_codigo": 4815,
   "linhas_codigo": 891800,
   "rotas": 18,
@@ -326,7 +326,7 @@
   "hooks": 496,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1105,
+  "migrations": 1106,
   "cron_jobs": 26,
   "testes": 2618,
   "workflows": 22,

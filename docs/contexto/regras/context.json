@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "8a141831d8f082d67aa015839da0981b1e6478dc",
+  "sha": "2ae0de787883980124508b8fc22f4e7e74f15080",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 01:35 UTC",
-  "files_total": 8259,
-  "code_files": 6092,
-  "code_lines": 1060051
+  "generated_at": "2026-11-13 02:51 UTC",
+  "files_total": 8261,
+  "code_files": 6093,
+  "code_lines": 1060287
  },
  "version": "1.3.2",
- "facts_hash": "572f4b49def027b0",
+ "facts_hash": "767d03f1dc465bf5",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -326,7 +326,7 @@
   "languages": {
    ".tsx": 2342,
    ".ts": 1892,
-   ".sql": 1305,
+   ".sql": 1306,
    ".mjs": 434,
    ".py": 119,
    ".cjs": 19,
@@ -20887,16 +20887,6 @@
     "src": "supabase/migrations/20260409190343_9e6b4939-a27d-4294-b9d8-516db9a02b21.sql"
    },
    {
-    "name": "Admins can remove from blacklist",
-    "table": "talkx_blacklist",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409190343_9e6b4939-a27d-4294-b9d8-516db9a02b21.sql"
-   },
-   {
     "name": "Users can view own training sessions",
     "table": "training_sessions",
     "cmd": "SELECT",
@@ -25293,24 +25283,6 @@
     "src": "supabase/migrations/20261010071402_conversation_events_insert_autor_e_contato_visivel.sql"
    },
    {
-    "name": "trg_talkx_blacklist_audit",
-    "when": "BEFORE INSERT OR UPDATE",
-    "table": "talkx_blacklist",
-    "function": "talkx_blacklist_audit_trigger",
-    "condition": "",
-    "each": "row",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
-   },
-   {
-    "name": "trg_talkx_blacklist_no_delete",
-    "when": "BEFORE DELETE",
-    "table": "talkx_blacklist",
-    "function": "talkx_blacklist_no_delete",
-    "condition": "",
-    "each": "row",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
-   },
-   {
     "name": "trg_conversation_event_assign_performed_by",
     "when": "BEFORE INSERT",
     "table": "conversation_events",
@@ -25534,6 +25506,24 @@
     "condition": "",
     "each": "row",
     "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "trg_talkx_blacklist_audit",
+    "when": "BEFORE INSERT OR UPDATE",
+    "table": "talkx_blacklist",
+    "function": "talkx_blacklist_audit_trigger",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "name": "trg_talkx_blacklist_no_delete",
+    "when": "BEFORE DELETE",
+    "table": "talkx_blacklist",
+    "function": "talkx_blacklist_no_delete",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
     "name": "update_queues_updated_at",
@@ -32192,7 +32182,7 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
     "security_definer": true,
     "search_path": true,
     "body": "BEGIN RAISE EXCEPTION 'talkx_blacklist_delete_bloqueado: use remocao logica via removed_at'; END;",
@@ -41922,6 +41912,30 @@
     "src": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql"
    },
    {
+    "name": "idx_talkx_blacklist_reason_code",
+    "table": "talkx_blacklist",
+    "columns": "reason_code",
+    "unique": false,
+    "where": "",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "name": "idx_instance_pauses_investigated_by",
+    "table": "instance_pauses",
+    "columns": "investigated_by",
+    "unique": false,
+    "where": "",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "name": "idx_talkx_suppression_reasons_created_by",
+    "table": "talkx_suppression_reasons",
+    "columns": "created_by",
+    "unique": false,
+    "where": "",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
     "name": "idx_ai_conversation_tags_contact_id",
     "table": "ai_conversation_tags",
     "columns": "contact_id",
@@ -43282,6 +43296,7 @@
    "supabase/migrations/20261111160000_outbound_post_started.sql",
    "supabase/migrations/20261111170000_talkx_block_recipient.sql",
    "supabase/migrations/20261111181000_instance_pause_investigation.sql",
+   "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -56357,6 +56372,46 @@
     "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_audit_trigger",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_no_delete",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "mark_pause_investigated",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "insert, update, delete",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "talkx_campaign_recipients_page",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -60210,11 +60265,6 @@
     "src": "supabase/migrations/20261011003006_talkx_n102b_cast.sql"
    },
    {
-    "function": "talkx_blacklist_no_delete",
-    "msg": "talkx_blacklist_delete_bloqueado: use remocao logica via removed_at",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
-   },
-   {
     "function": "talkx_campaign_window_open",
     "msg": "talkx_campaign_not_found",
     "src": "supabase/migrations/20261011003008_talkx_n102c_window_open.sql"
@@ -61563,6 +61613,11 @@
     "function": "mark_pause_investigated",
     "msg": "pausa_nao_encontrada",
     "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "talkx_blacklist_no_delete",
+    "msg": "talkx_blacklist_delete_bloqueado: use remocao logica via removed_at",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
     "function": "espera_contem",
@@ -70071,8 +70126,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1105,
-   "lines": 106855,
+   "files": 1106,
+   "lines": 107091,
    "tables": [
     "audit_logs",
     "departments",
@@ -216152,16 +216207,6 @@
     "src": "supabase/migrations/20260409190343_9e6b4939-a27d-4294-b9d8-516db9a02b21.sql"
    },
    {
-    "name": "Admins can remove from blacklist",
-    "table": "talkx_blacklist",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409190343_9e6b4939-a27d-4294-b9d8-516db9a02b21.sql"
-   },
-   {
     "name": "Users can view own training sessions",
     "table": "training_sessions",
     "cmd": "SELECT",
@@ -220558,24 +220603,6 @@
     "src": "supabase/migrations/20261010071402_conversation_events_insert_autor_e_contato_visivel.sql"
    },
    {
-    "name": "trg_talkx_blacklist_audit",
-    "when": "BEFORE INSERT OR UPDATE",
-    "table": "talkx_blacklist",
-    "function": "talkx_blacklist_audit_trigger",
-    "condition": "",
-    "each": "row",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
-   },
-   {
-    "name": "trg_talkx_blacklist_no_delete",
-    "when": "BEFORE DELETE",
-    "table": "talkx_blacklist",
-    "function": "talkx_blacklist_no_delete",
-    "condition": "",
-    "each": "row",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
-   },
-   {
     "name": "trg_conversation_event_assign_performed_by",
     "when": "BEFORE INSERT",
     "table": "conversation_events",
@@ -220799,6 +220826,24 @@
     "condition": "",
     "each": "row",
     "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
+   },
+   {
+    "name": "trg_talkx_blacklist_audit",
+    "when": "BEFORE INSERT OR UPDATE",
+    "table": "talkx_blacklist",
+    "function": "talkx_blacklist_audit_trigger",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "name": "trg_talkx_blacklist_no_delete",
+    "when": "BEFORE DELETE",
+    "table": "talkx_blacklist",
+    "function": "talkx_blacklist_no_delete",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
     "name": "update_queues_updated_at",
@@ -227457,7 +227502,7 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
     "security_definer": true,
     "search_path": true,
     "body": "BEGIN RAISE EXCEPTION 'talkx_blacklist_delete_bloqueado: use remocao logica via removed_at'; END;",
@@ -233662,11 +233707,6 @@
     "src": "supabase/migrations/20261011003006_talkx_n102b_cast.sql"
    },
    {
-    "function": "talkx_blacklist_no_delete",
-    "msg": "talkx_blacklist_delete_bloqueado: use remocao logica via removed_at",
-    "src": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
-   },
-   {
     "function": "talkx_campaign_window_open",
     "msg": "talkx_campaign_not_found",
     "src": "supabase/migrations/20261011003008_talkx_n102c_window_open.sql"
@@ -235015,6 +235055,11 @@
     "function": "mark_pause_investigated",
     "msg": "pausa_nao_encontrada",
     "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "function": "talkx_blacklist_no_delete",
+    "msg": "talkx_blacklist_delete_bloqueado: use remocao logica via removed_at",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
     "function": "espera_contem",
@@ -241620,7 +241665,6 @@
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
     "DELETE": [
-     "authenticated: public.is_admin_or_supervisor(auth.uid())",
      "authenticated: false"
     ]
    },
@@ -242983,6 +243027,7 @@
    "supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql",
    "supabase/migrations/20261111160000_outbound_post_started.sql",
    "supabase/migrations/20261111170000_talkx_block_recipient.sql",
+   "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -256259,6 +256304,46 @@
     "objkind": "function",
     "roles": "authenticated",
     "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_audit_trigger",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_blacklist_no_delete",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "mark_pause_investigated",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "insert, update, delete",
+    "object": "talkx_campaign_optouts",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "talkx_campaign_recipients_page",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
     "kind": "grant",
@@ -384089,6 +384174,11 @@
    "path": "supabase/migrations/20261111181000_instance_pause_investigation.sql",
    "lines": 154
   },
+  "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql": {
+   "path": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+   "lines": 236,
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -387941,10 +388031,21 @@
   }
  },
  "git": {
-  "sha": "8a141831d8f082d67aa015839da0981b1e6478dc",
+  "sha": "2ae0de787883980124508b8fc22f4e7e74f15080",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2ae0de7",
+    "date": "2026-11-12",
+    "author": "adm01-debug",
+    "subject": "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+     "supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh"
+    ]
+   },
    {
     "sha": "8a14183",
     "date": "2026-11-12",
@@ -388267,16 +388368,6 @@
      "src/services/instance-pauses.service.ts",
      "supabase/migrations/20261111181000_instance_pause_investigation.sql"
     ]
-   },
-   {
-    "sha": "e408b77",
-    "date": "2026-11-11",
-    "author": "adm01-debug",
-    "subject": "fix(maintenance): run() não corrompe mais UTF-8 multibyte entre chunks (#2962)",
-    "files": [
-     "scripts/maintenance/lib.mjs",
-     "scripts/maintenance/maintenance.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -388293,6 +388384,10 @@
     3
    ],
    [
+    ".github/workflows/db-guard.yml",
+    2
+   ],
+   [
     "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
     2
    ],
@@ -388307,6 +388402,14 @@
    [
     "scripts/tarefas/seed-local-imagens.unit.mjs",
     2
+   ],
+   [
+    "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+    1
+   ],
+   [
+    "supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh",
+    1
    ],
    [
     "FEATURE_REGISTRY.md",
@@ -388346,18 +388449,6 @@
    ],
    [
     "scripts/ci/e2e-isolated-routine-ownership.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/e2e-isolated-runtime.unit.mjs",
-    1
-   ],
-   [
-    "scripts/e2e-isolated/README.md",
-    1
-   ],
-   [
-    "src/adapters/evolutionAdapter.ts",
     1
    ]
   ]

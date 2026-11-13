@@ -56934,7 +56934,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 395,
+          "code_total_files": 396,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -58480,9 +58480,13 @@
             {
               "file": "src/services/instance-pauses.service.ts",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -64524,9 +64528,13 @@
             {
               "file": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+              "hits": 7
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [
@@ -64561,9 +64569,13 @@
             {
               "file": "supabase/migrations/20261011003007_talkx_blacklist_audit_trilha_guarda.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [
@@ -64882,9 +64894,13 @@
             {
               "file": "supabase/migrations/20261011003004_talkx_campaign_timeline_page.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [],
           "triggers": [],

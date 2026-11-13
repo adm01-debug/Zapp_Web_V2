@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1105,
+ "migrations": 1106,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -14328,6 +14328,11 @@
    ],
    "indices": [
     {
+     "nome": "idx_instance_pauses_investigated_by",
+     "colunas": "investigated_by",
+     "unico": false
+    },
+    {
      "nome": "idx_instance_pauses_paused_by",
      "colunas": "paused_by",
      "unico": false
@@ -24063,12 +24068,6 @@
      "tipo": "permissive"
     },
     {
-     "nome": "Admins can remove from blacklist",
-     "comando": "delete",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
      "nome": "Only admins can view blacklist",
      "comando": "select",
      "para": "authenticated",
@@ -24116,6 +24115,11 @@
     {
      "nome": "idx_talkx_blacklist_phone",
      "colunas": "phone",
+     "unico": false
+    },
+    {
+     "nome": "idx_talkx_blacklist_reason_code",
+     "colunas": "reason_code",
      "unico": false
     },
     {
@@ -27381,7 +27385,13 @@
      "tipo": "permissive"
     }
    ],
-   "indices": [],
+   "indices": [
+    {
+     "nome": "idx_talkx_suppression_reasons_created_by",
+     "colunas": "created_by",
+     "unico": false
+    }
+   ],
    "fks": [
     "created_by->auth"
    ],
