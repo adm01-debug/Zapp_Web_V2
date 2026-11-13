@@ -21,7 +21,6 @@ vi.mock('@/hooks/system/useUserRole', () => ({
     permissions: papel.permissions,
     isAdmin: papel.roles.includes('admin'),
     isSupervisor: papel.roles.includes('supervisor'),
-    isSpecialAgent: false,
     hasRole: (r: string) => papel.roles.includes(r),
     loading: false,
     permissionsLoading: false,
