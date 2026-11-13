@@ -11,7 +11,7 @@ const cases = [
   {
     name: 'TalkX',
     file: 'src/components/talkx/TalkXView.tsx',
-    expectedRoots: 6,
+    expectedRoots: 7,
   },
   {
     name: 'Multiplix',

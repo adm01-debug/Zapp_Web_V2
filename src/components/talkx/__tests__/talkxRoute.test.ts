@@ -172,10 +172,10 @@ describe('Talk X screen routing (TL-152)', () => {
     expect(unknown.needsNormalization).toBe(true);
   });
 
-  it('?screen=report é normalização (sem tela de relatório: não reescreve para outra tela)', () => {
+  it('?screen=report abre o relatório (tela 14, X163)', () => {
     const report = parseTalkXScreenRoute('?campaign=cmp_1&screen=report');
-    expect(report.route).toBeNull();
-    expect(report.needsNormalization).toBe(true);
+    expect(report.route).toEqual({ campaignId: 'cmp_1', screen: 'report' });
+    expect(report.needsNormalization).toBe(false);
   });
 
   it('campaign malformado é normalização', () => {
@@ -220,7 +220,7 @@ describe('Talk X screen routing (TL-152)', () => {
     expect(screenForStatus('scheduled')).toBe('scheduled');
     expect(screenForStatus('sending')).toBe('running');
     expect(screenForStatus('paused')).toBe('paused');
-    expect(screenForStatus('completed')).toBe('monitor');
+    expect(screenForStatus('completed')).toBe('report');
     expect(screenForStatus('cancelled')).toBe('monitor');
     expect(screenForStatus(null)).toBe('monitor');
     expect(screenForStatus(undefined)).toBe('monitor');

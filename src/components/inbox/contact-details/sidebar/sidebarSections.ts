@@ -16,8 +16,14 @@
  * `delivery` (Entrega de mensagens: enviadas/entregues/lidas por hora) entrou em
  * 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais,
  * chave de storage intacta, preferência já salva preservada.
+ *
+ * `memoria` (Memória da conversa) e `atendimento` (SLA da 1ª resposta, score e
+ * LGPD, perfil do WhatsApp) voltaram em 2026-11-12: eram painéis prontos que
+ * tinham saído como "órfãos" (#1886/#2112). Também são valores conhecidos a
+ * mais, mas ficam FORA de DEFAULT_OPEN_SECTIONS: começam recolhidas e só
+ * buscam dado quando o atendente abre (o Radix desmonta o conteúdo fechado).
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence', 'delivery'];
