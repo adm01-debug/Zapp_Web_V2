@@ -184,7 +184,8 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
     act(() => { emitidas()[0].onclick?.(); });
 
     expect(h.focus).toHaveBeenCalled();
-    expect(h.navigate).toHaveBeenCalledWith('team-chat');
+    // Deep-link: o clique abre a conversa da mensagem (?cid=), não só a tela.
+    expect(h.navigate).toHaveBeenCalledWith('team-chat', { cid: 'c1' });
   });
 
   it('o clique repassado pelo service worker continua abrindo o Chat Interno', () => {
@@ -197,7 +198,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
     });
 
     expect(h.focus).toHaveBeenCalled();
-    expect(h.navigate).toHaveBeenCalledWith('team-chat');
+    expect(h.navigate).toHaveBeenCalledWith('team-chat', { cid: 'c9' });
   });
 
   it('ignora um clique de notificação de outro tipo', () => {

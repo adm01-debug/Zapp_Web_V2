@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Phone, PhoneOff, Delete, Loader2 } from 'lucide-react';
+import { Phone, PhoneOff, Delete, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -10,6 +10,7 @@ import { describeReason } from '@/lib/calls/capabilities';
 import { useCallChannels } from '@/hooks/calls/useCallChannels';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { dispatchStartCall } from '@/lib/calls/events';
+import { OfferCallButton } from './OfferCallButton';
 
 export type CanalDeSaida = 'voip' | 'whatsapp';
 
@@ -39,8 +40,8 @@ function canalInicial(): CanalDeSaida {
  * filtrar o historico mudar o canal da discagem - e vice-versa.
  */
 export function NewCallPanel() {
-  const { voip, whatsapp } = useCallChannels();
-  const { numeroPendente, hangup, session, sipStatus } = useCallSession();
+  const { voip, whatsapp, linhaWhatsApp } = useCallChannels();
+  const { numeroPendente, hangup, session, sipStatus, sipReason, reconectarLinha } = useCallSession();
 
   const [canal, setCanal] = useState<CanalDeSaida>(canalInicial);
   const [numero, setNumero] = useState('');
@@ -79,6 +80,11 @@ export function NewCallPanel() {
 
   const emChamada = session?.status === 'dialing' || session?.status === 'ringing_out' || session?.status === 'connecting' || session?.status === 'active';
   const reconectando = sipStatus === 'reconnecting';
+  // Linha VoIP parada nesta aba (trava "SIP não configurado", falha, ou ainda sem
+  // registro) e sem outra aba segurando a linha: o agente pode pedir a reconexão
+  // na hora — o clique ignora a trava; o automático da aba líder a respeita.
+  const podeReconectar = canal === 'voip' && !emChamada && typeof reconectarLinha === 'function'
+    && (sipStatus === 'idle' || sipStatus === 'unavailable') && sipReason !== 'line_in_use_other_tab';
   const numeroOk = Boolean(e164);
   const motivo = capability.reason ? describeReason(capability.reason) : null;
 
@@ -215,8 +221,23 @@ export function NewCallPanel() {
               {motivo}
             </p>
           )}
+          {podeReconectar && (
+            <Button
+              variant="outline"
+              size="sm"
+              data-testid="tel-reconnect-line"
+              onClick={() => { void reconectarLinha(); }}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reconectar linha
+            </Button>
+          )}
           {!emChamada && capability.canDial && numeroOk && (
             <p className="text-center text-xs text-muted-foreground">Confira o número antes de ligar.</p>
+          )}
+          {/* offer-call (restaurada após o #2054): toque sem áudio pela linha WhatsApp */}
+          {!emChamada && canal === 'whatsapp' && numeroOk && linhaWhatsApp?.id && (
+            <OfferCallButton e164={e164 ?? ''} connectionId={linhaWhatsApp?.id} />
           )}
         </div>
       </CardContent>

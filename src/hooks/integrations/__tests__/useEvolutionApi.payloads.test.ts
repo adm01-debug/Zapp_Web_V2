@@ -108,6 +108,14 @@ const CASES: Row[] = [
   // Block / unblock (duas mensagens distintas)
   { name: 'updateBlockStatus(block)', action: 'update-block-status', body: { instanceName, number, status: 'block' }, success: 'Contato bloqueado', run: (a) => a.updateBlockStatus(instanceName, number, 'block') },
   { name: 'updateBlockStatus(unblock)', action: 'update-block-status', body: { instanceName, number, status: 'unblock' }, success: 'Contato desbloqueado', run: (a) => a.updateBlockStatus(instanceName, number, 'unblock') },
+  // Restauradas após o #2054 (decisão do dono)
+  { name: 'findChats', action: 'find-chats', body: { instanceName, page: 1, offset: 50 }, run: (a) => a.findChats(instanceName, 1, 50) },
+  { name: 'offerCall', action: 'offer-call', body: { instanceName, number, isVideo: false, callDuration: 5 }, run: (a) => a.offerCall(instanceName, number, false, 5) },
+  { name: 'createTemplate', action: 'create-template', body: { instanceName, name: 'boas_vindas', language: 'pt_BR' }, success: 'Template enviado para aprovação', run: (a) => a.createTemplate(instanceName, { name: 'boas_vindas', language: 'pt_BR' }) },
+  { name: 'findTemplates', action: 'find-templates', body: { instanceName }, run: (a) => a.findTemplates(instanceName) },
+  { name: 'deleteTemplate', action: 'delete-template', body: { instanceName, name: 'boas_vindas' }, success: 'Template excluído', run: (a) => a.deleteTemplate(instanceName, { name: 'boas_vindas' }) },
+  { name: 'getBusinessCatalog', action: 'get-catalog', body: { instanceName, number, limit: 20, cursor: undefined }, run: (a) => a.getBusinessCatalog(instanceName, number, 20) },
+  { name: 'getBusinessCollections', action: 'get-collections', body: { instanceName, number, limit: 20, cursor: undefined }, run: (a) => a.getBusinessCollections(instanceName, number, 20) },
 ];
 
 beforeEach(() => {
@@ -182,9 +190,11 @@ describe('mapeamento ação -> payload da edge function', () => {
       expect(typeof (result.current as Record<string, unknown>)[nome]).toBe('function');
     }
 
-    // Nenhuma ação sem equivalente na Evolution GO pode ter sobrado exposta.
+    // Integrações sem equivalente na GO seguem fora. As ações restauradas após o #2054
+    // (findChats, offerCall, templates da Meta, catálogo) voltaram por decisão do dono e
+    // respondem `notSupported` na GO — viram erro no callApi, não sucesso.
     const semEquivalenteNaGo = [
-      'findChats', 'findMessages', 'findStatusMessages',
+      'findMessages', 'findStatusMessages',
       'setChatwoot', 'getChatwoot', 'deleteChatwoot',
       'setTypebot', 'getTypebot', 'deleteTypebot', 'getTypebotSessions', 'changeTypebotStatus', 'startTypebot',
       'setOpenAI', 'getOpenAI', 'deleteOpenAI',
@@ -192,8 +202,6 @@ describe('mapeamento ação -> payload da edge function', () => {
       'setFlowise', 'getFlowise', 'deleteFlowise',
       'setEvolutionBot', 'getEvolutionBot', 'deleteEvolutionBot',
       'setRabbitMQ', 'getRabbitMQ', 'setSQS', 'getSQS',
-      'createTemplate', 'findTemplates', 'deleteTemplate',
-      'offerCall', 'getBusinessCatalog', 'getBusinessCollections',
       'setProxy', 'getProxy',
       'setEvoAI', 'getEvoAI', 'deleteEvoAI',
       'setN8N', 'getN8N', 'deleteN8N',

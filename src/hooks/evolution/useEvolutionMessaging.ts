@@ -51,8 +51,9 @@ export function useEvolutionMessaging(
   const sendStatusMessage = useCallback((instanceName: string, body: object) =>
     callApi('send-status', { instanceName, ...body }), [callApi]);
 
-  const sendTemplateMessage = useCallback((instanceName: string, number: string, template: object) =>
-    callApi('send-template', { instanceName, number, template }), [callApi]);
+  // Evolution v2 (`templateMessageSchema`): name/language/components/webhookUrl no TOPO do corpo.
+  const sendTemplateMessage = useCallback((instanceName: string, number: string, template: { name: string; language: string; components?: unknown[]; webhookUrl?: string }) =>
+    callApi('send-template', { instanceName, number, ...template }), [callApi]);
 
   const sendPtvMessage = useCallback((instanceName: string, number: string, video: string, delay?: number) =>
     callApi('send-ptv', { instanceName, number, video, delay }), [callApi]);
