@@ -686,8 +686,8 @@
     },
     {
       "path": "supabase/functions/gmail-sync/index.ts",
-      "bytes": 23427,
-      "sha256": "e91c76f78cc0b3282faa55b7aea756686442b25b5872b5cc21f5a86e84ff21e9"
+      "bytes": 24029,
+      "sha256": "bbfa5b1c16a93c29fcec40e8fd292711a3a43e32c8913f9a37f98f57ce8716d0"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
@@ -2141,7 +2141,7 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d91c9dfbccec43766041bb8f3a40177cbae0ac1c30e608119fd046799942a1b3",
+      "source_sha256": "9176e9d9ec8d96b27e900fd0da615b15c7c863853943faa477896c188a5d5b39",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/gmail-helpers.ts",
@@ -2789,5 +2789,5 @@
       ]
     }
   ],
-  "manifest_sha256": "5872cf3a226dec822436d3c64e07b395b46d4331a8aff53c7a57973fc4a3fe01"
+  "manifest_sha256": "77b6de0a933e42b66de7faba9fcc103eb4224b07523bb7e5f372ecdd941f37ef"
 }
