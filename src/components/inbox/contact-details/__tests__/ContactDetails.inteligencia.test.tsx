@@ -6,6 +6,13 @@ import type { Conversation } from '@/types/chat';
 
 interface Intel {
   found: boolean;
+  briefing?: {
+    opening_tip: string;
+    risk_alert: string | null;
+    days_since_last_contact: number | null;
+    total_interactions: number;
+    relationship_score: number | null;
+  };
   churn: {
     churn_probability: number;
     risk_level: string;
@@ -66,6 +73,13 @@ const conversation: Conversation = {
 
 const foundData = (): Intel => ({
   found: true,
+  briefing: {
+    opening_tip: 'Retomar o orçamento enviado',
+    risk_alert: null,
+    days_since_last_contact: 5,
+    total_interactions: 12,
+    relationship_score: 64,
+  },
   churn: { churn_probability: 82.4, risk_level: 'high', risk_factors: { dias_sem_contato: 45 }, recommended_actions: ['Ligar hoje'] },
   best_times: [{ day_of_week: 1, hour: 9, success_rate: 60 }],
 });
@@ -99,6 +113,16 @@ describe('ContactDetails — seção Inteligência comercial (12/10/2026)', () =
     expect(screen.getByText('Inteligência comercial')).toBeInTheDocument();
     expect(screen.getByTestId('intelligence-churn')).toHaveTextContent('Alto · 82%');
     expect(screen.getByTestId('intelligence-best-times')).toHaveTextContent('9h');
+  });
+
+  it('o briefing pré-contato do CRM aparece dentro da seção Inteligência comercial', () => {
+    renderPanel();
+
+    const section = screen.getByTestId('sidebar-section-intelligence');
+    const briefing = screen.getByTestId('intelligence-briefing');
+    expect(section).toContainElement(briefing);
+    expect(briefing).toHaveTextContent('Retomar o orçamento enviado');
+    expect(briefing).toHaveTextContent('Score64');
   });
 
   it('sem ficha no CRM a seção continua lá, com estado vazio honesto', () => {
