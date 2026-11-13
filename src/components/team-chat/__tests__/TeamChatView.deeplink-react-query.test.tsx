@@ -41,8 +41,8 @@ vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({
   useActiveTeamChatConversation: () => undefined,
 }));
 vi.mock('../TeamConversationList', () => ({
-  TeamConversationList: ({ conversations, onSelect }: { conversations: Array<{ id: string }>; onSelect: (id: string) => void }) => (
-    <div>
+  TeamConversationList: ({ conversations, onSelect, loading }: { conversations: Array<{ id: string }>; onSelect: (id: string) => void; loading?: boolean }) => (
+    <div data-testid="lista" data-loading={loading ? 'sim' : 'nao'}>
       {conversations.map((c) => (
         <button key={c.id} onClick={() => onSelect(c.id)}>{`abrir-${c.id}`}</button>
       ))}
@@ -136,5 +136,13 @@ describe('TeamChatView — deep-link com React Query real', () => {
 
     await waitFor(() => expect(screen.getByTestId('painel').textContent).toBe(A));
     expect(h.buscas).toBe(1);
+  });
+
+  it('perfil que nunca carrega: a lista NÃO fica presa em "carregando" (comportamento da main)', async () => {
+    h.perfil = false;
+    cenario();
+    await assentar();
+    expect(screen.getByTestId('lista').getAttribute('data-loading')).toBe('nao');
+    expect(h.buscas).toBe(0);
   });
 });

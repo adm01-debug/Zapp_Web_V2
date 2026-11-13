@@ -31,9 +31,12 @@ export function TeamChatView() {
     isPending,
     refetch: refetchConversations,
   } = useTeamConversations();
+  // A lista mostra "carregando" só durante uma busca real (`isLoading`, como antes).
   // Sem perfil a query fica desabilitada (`enabled: !!profile`) e `isLoading` é false
-  // sem nenhuma busca feita: `isPending` segura o deep-link até a primeira lista real.
-  const conversationsLoading = isLoading || !!isPending;
+  // sem nenhuma busca feita: `isPending` segura SÓ o deep-link até a primeira lista real
+  // (se o perfil nunca chegar, a lista fica vazia — não presa em "carregando").
+  const conversationsLoading = isLoading;
+  const deepLinkAguardaLista = isLoading || !!isPending;
   // Conversa aberta (escolha do usuário ou deep-link já resolvido). Um deep-link
   // pendente não a apaga: só a substitui quando a conversa dele existir.
   const [pickedId, setPickedId] = useState<string | null>(null);
@@ -76,7 +79,7 @@ export function TeamChatView() {
   // apagada), o pedido é descartado e não abre sozinho quando surgir mais tarde.
   // Ajuste de estado no render (padrão do React para estado derivado de props).
   const deepLinkAusente =
-    !conversationsLoading && !!deepLinkCid && !conversations.some(c => c.id === deepLinkCid);
+    !deepLinkAguardaLista && !!deepLinkCid && !conversations.some(c => c.id === deepLinkCid);
   if (deepLinkAusente && recarga?.cid !== deepLinkCid) setRecarga({ cid: deepLinkCid as string, feita: false });
   useEffect(() => {
     if (!recarga || recarga.feita) return;
@@ -88,7 +91,7 @@ export function TeamChatView() {
   }, [recarga, refetchConversations]);
   const deepLinkMissing = deepLinkAusente && recarga?.cid === deepLinkCid && recarga.feita;
   if (deepLinkMissing) setDeepLinkCid(null);
-  const deepLinkedId = !conversationsLoading && !deepLinkAusente ? deepLinkCid : null;
+  const deepLinkedId = !deepLinkAguardaLista && !deepLinkAusente ? deepLinkCid : null;
   // Deep-link resolvido para conversa existente: vira a escolha atual (substitui a
   // conversa aberta e fecha os detalhes dela). Até resolver, a anterior continua.
   if (deepLinkedId) {
