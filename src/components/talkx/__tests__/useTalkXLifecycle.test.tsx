@@ -40,7 +40,11 @@ import {
 import type {
   TalkXLifecycleController,
   TalkXLifecycleKind,
+  TalkXLifecycleOps,
 } from '../useTalkXLifecycle';
+
+/** As operações mockadas no formato que `useTalkXLifecycleWith` recebe. */
+const ops = talkx as unknown as TalkXLifecycleOps;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -112,7 +116,7 @@ describe('useTalkXLifecycle — controlador único (X050)', () => {
 
   it('`resume` é UM clique: `request` já dispara a `startCampaign`, sem diálogo (decisão do dono, 2026-11-13)', async () => {
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useTalkXLifecycleWith(talkx, { onSuccess }));
+    const { result } = renderHook(() => useTalkXLifecycleWith(ops, { onSuccess }));
 
     await act(async () => {
       expect(result.current.request({ kind: 'resume', target: TARGET })).toBe(true);
@@ -155,7 +159,7 @@ describe('useTalkXLifecycle — controlador único (X050)', () => {
   it('`resume` recusado (`startCampaign` devolve false) não repete o toast de erro do `startCampaign` nem abre diálogo', async () => {
     talkx.startCampaign.mockResolvedValue(false);
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useTalkXLifecycleWith(talkx, { onSuccess }));
+    const { result } = renderHook(() => useTalkXLifecycleWith(ops, { onSuccess }));
 
     await act(async () => {
       result.current.request({ kind: 'resume', target: TARGET });
@@ -171,7 +175,7 @@ describe('useTalkXLifecycle — controlador único (X050)', () => {
   it('`resume` que lança (falha inesperada) avisa por toast, com o texto da tela', async () => {
     talkx.startCampaign.mockRejectedValue(new Error('Edge Function returned a non-2xx status code'));
     const { result } = renderHook(() =>
-      useTalkXLifecycleWith(talkx, { errorMessage: () => 'Erro ao retomar a campanha.' }),
+      useTalkXLifecycleWith(ops, { errorMessage: () => 'Erro ao retomar a campanha.' }),
     );
 
     await act(async () => {
@@ -185,7 +189,7 @@ describe('useTalkXLifecycle — controlador único (X050)', () => {
 
   it('`copy` da tela ajusta o texto do diálogo sem mexer no texto único', () => {
     const { result } = renderHook(() =>
-      useTalkXLifecycleWith(talkx, { copy: { cancel: { confirmLabel: 'Confirmar cancelamento' } } }),
+      useTalkXLifecycleWith(ops, { copy: { cancel: { confirmLabel: 'Confirmar cancelamento' } } }),
     );
     expect(result.current.copy.cancel.confirmLabel).toBe('Confirmar cancelamento');
     expect(result.current.copy.cancel.title).toBe(talkXLifecycleCopy.cancel.title);
