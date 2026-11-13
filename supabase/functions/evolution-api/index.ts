@@ -2,8 +2,18 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors, internalErrorResponse } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
-import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
+import { resetInstanceTokenCache, resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
+import {
+  goErrorText,
+  goUnreachableMessage,
+  instanceTokenInvalidMessage,
+  instanceTokenMissingMessage,
+  lookupGoInstanceToken,
+  readJsonSafe,
+  safeFetch,
+} from "../_shared/evolution-go-token-sync.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
+import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
 
 /**
  * Ação da Evolution v2 sem equivalente na Evolution GO: responde 200 com
@@ -220,7 +230,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // bloqueadas — reconectar em loop durante um bloqueio tende a estendê-lo.
     // create-instance entra na mesma trava (nasceria conectando outro número
     // durante a mesma janela de risco).
-    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance', 'create-connection']);
+    // sync-instance-token entra junto: é o passo de reparo do mesmo fluxo de
+    // reconexão (e o connect o executa por dentro no auto-reparo).
+    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance', 'create-connection', 'sync-instance-token']);
     if (MAINTENANCE_GATED_ACTIONS.has(action)) {
       const { data: maint } = await supabase.from('global_settings').select('value').eq('key', 'whatsapp_maintenance_until').maybeSingle();
       const until = maint?.value ? new Date(maint.value) : null;
@@ -274,6 +286,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         return new Response(JSON.stringify({ error: true, message: 'Apenas administradores podem executar esta ação.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       return null;
+    };
+
+    // Regra do dono (docs/contexto/regras/manual/regras.md:17 e :58): SÓ o admin
+    // gerencia conexões e credenciais do WhatsApp — supervisor não. Usada pela
+    // sincronização de credencial (ação e auto-reparo do connect).
+    const isCallerAdmin = async (): Promise<boolean> => {
+      const { data } = await callerClient.rpc('has_role', { _user_id: callerUserId, _role: 'admin' });
+      return data === true;
+    };
+    const requireAdminOnly = async (): Promise<Response | null> => {
+      if (await isCallerAdmin()) return null;
+      return new Response(JSON.stringify({ error: true, message: 'Apenas administradores podem sincronizar a credencial da conexão.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     };
 
     // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
@@ -332,6 +356,52 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         return new Response(JSON.stringify({ error: true, message: 'Falha ao gravar o token no Vault.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       return new Response(JSON.stringify({ ok: true, instance: principalName }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // ─── 13/11: "o sistema deve buscar a chave sozinho" ───
+    // Busca na GO (GET /instance/all, chave GLOBAL) o token atual da instância,
+    // grava no Vault (set_instance_token) e zera o cache do resolvedor. O token
+    // nunca vai para a resposta nem para log. Usado pela ação admin
+    // sync-instance-token e pelo auto-reparo do connect (401 da GO).
+    type TokenSyncResult =
+      | { ok: true; token: string; changed: boolean }
+      | { ok: false; code: string; status: number; message: string };
+    const syncInstanceTokenFromGo = async (): Promise<TokenSyncResult> => {
+      const { data: conn, error: connErr } = await supabase
+        .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
+      if (connErr || !conn?.id) {
+        return { ok: false, code: 'connection_not_found', status: 404, message: `Conexão '${instance}' não encontrada no sistema.` };
+      }
+      const lookup = await lookupGoInstanceToken(evolutionApiUrl, evolutionApiKey, instance);
+      if (!lookup.ok) {
+        new Logger('evolution-api').warn('sync-instance-token: GO não devolveu a credencial', { instance, code: lookup.code, httpStatus: lookup.status });
+        return { ok: false, code: lookup.code, status: lookup.status ?? 502, message: lookup.message };
+      }
+      const current = await resolveInstanceToken(supabase, instance);
+      const { error: setError } = await supabase.rpc('set_instance_token', { p_connection_id: conn.id, p_token: lookup.token });
+      if (setError) {
+        new Logger('evolution-api').error('sync-instance-token: falha ao gravar no Vault', { instance, error: setError.message });
+        return { ok: false, code: 'vault_write_failed', status: 500, message: 'A credencial foi encontrada no servidor WhatsApp, mas não foi possível guardá-la no cofre (Vault). Tente novamente.' };
+      }
+      resetInstanceTokenCache(instance);
+      return { ok: true, token: lookup.token, changed: current === null || !timingSafeStringEqual(current, lookup.token) };
+    };
+
+    if (action === 'sync-instance-token') {
+      const adminError = await requireAdminOnly();
+      if (adminError) return adminError;
+      if (!isGoFlavor) return goActionNotSupported('sync-instance-token', corsHeaders);
+      const result = await syncInstanceTokenFromGo();
+      if (!result.ok) {
+        return new Response(JSON.stringify({ error: true, code: result.code, status: result.status, message: result.message }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      new Logger('evolution-api').info('sync-instance-token: credencial sincronizada', { instance, changed: result.changed });
+      return new Response(JSON.stringify({
+        ok: true, instance, changed: result.changed,
+        message: result.changed
+          ? 'Credencial sincronizada com o servidor WhatsApp. Gere o QR Code novamente.'
+          : 'A credencial já estava em dia com o servidor WhatsApp.',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // ─── 1. Instance Management ───
@@ -550,13 +620,17 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // o pareamento no PRÓPRIO corpo.
       if (!isGoFlavor) {
         const route = resolveSessionRoute('v2', 'connect', instance);
-        const response = await fetch(`${evolutionApiUrl}${route.path}`, {
+        const v2Fetch = await safeFetch(`${evolutionApiUrl}${route.path}`, {
           method: route.method,
           headers: {
             'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey),
             'Content-Type': 'application/json',
           },
-        });
+        }, 15_000);
+        if (!v2Fetch.ok) {
+          return new Response(JSON.stringify({ error: true, status: v2Fetch.kind === 'timeout' ? 504 : 502, code: 'go_unreachable', message: goUnreachableMessage(v2Fetch.kind, 'ao conectar').replace('(Evolution GO)', '(Evolution API v2)') }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const response = v2Fetch.response;
         let data: { message?: unknown; [k: string]: unknown } = {};
         try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from v2 */ }
         if (!response.ok) {
@@ -578,13 +652,57 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         // error/message; um 409 cru cairia no ramo de erro de rede).
         return new Response(JSON.stringify({ error: true, status: 409, message: 'A Evolution API v2 respondeu ao connect sem QR Code e sem sessão aberta. Verifique a instância e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
+      // 13/11 (QR quebrado em produção): nenhum fetch deste fluxo pode LANÇAR.
+      // Antes, timeout (AbortSignal.timeout → TimeoutError) e erro de rede
+      // (TypeError) subiam até o catch-all e viravam HTTP 500 genérico — o
+      // /instance/qr da GO dorme 3 s + StartInstance quando não há cliente
+      // (instance_service.go GetQr) e estourava o limite de 5 s. Toda falha
+      // agora sai como 200 + { error: true, code, status, message } em PT-BR.
+      const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' };
+      // Teto global do connect ABAIXO dos 45 s do navegador
+      // (EVOLUTION_API_TIMEOUT_MS): passou disso, responde 504 amigável em vez de
+      // deixar o navegador desistir sem mensagem.
+      const hardDeadline = Date.now() + 40_000;
+      const remaining = () => hardDeadline - Date.now();
+      const within = (ms: number) => Math.max(1, Math.min(ms, remaining()));
+      const deadlineMessage = 'O servidor WhatsApp (Evolution GO) está lento demais para gerar o QR Code agora. Tente "Gerar novo código" em instantes.';
+      const fail = (status: number, code: string, message: string, extra: Record<string, unknown> = {}) =>
+        new Response(JSON.stringify({ error: true, status, code, message, ...extra }), { status: 200, headers: jsonHeaders });
+      const failDeadline = () => fail(504, 'go_unreachable', deadlineMessage);
+
       // TRA-002 / #18: o token DA instância vem do Vault (get_instance_token);
       // a GO seleciona a instância pela CREDENCIAL — autenticar o connect de
       // outra conexão com a da padrão parearia a instância errada. Sem token
-      // resolvido, nega (nunca cai na key global).
-      const instToken = await resolveInstanceToken(supabase, instance);
+      // resolvido, o sistema busca a chave sozinho na GO (sync) — nunca cai na
+      // key global.
+      let healAttempted = false;
+      let healFailure: string | null = null;
+      const heal = async (): Promise<string | null> => {
+        healAttempted = true;
+        // Buscar/gravar credencial é gestão de conexão: só admin (regras.md:58).
+        if (!(await isCallerAdmin())) {
+          healFailure = 'só um administrador pode sincronizar a credencial desta conexão — avise o admin.';
+          return null;
+        }
+        const synced = await syncInstanceTokenFromGo();
+        if (!synced.ok) { healFailure = synced.message; return null; }
+        new Logger('evolution-api').info('connect: credencial da instância sincronizada com a GO (auto-reparo)', { instance, changed: synced.changed });
+        if (!synced.changed) {
+          // A GO lista exatamente a chave que já usamos e mesmo assim recusou:
+          // não é credencial desatualizada (provável reinício/recriação em curso).
+          healFailure = 'o servidor WhatsApp lista a mesma chave que o sistema já usa (o serviço pode estar reiniciando). Tente novamente em instantes.';
+          return null;
+        }
+        return synced.token;
+      };
+      let instToken = await resolveInstanceToken(supabase, instance);
       if (!instToken) {
-        return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        instToken = await heal();
+        if (!instToken) {
+          return fail(401, 'instance_token_missing', healFailure
+            ? `Credencial da instância '${instance}' não encontrada e a busca automática da chave falhou: ${healFailure}`
+            : instanceTokenMissingMessage(instance));
+        }
       }
       // NUNCA body vazio: o GO persiste webhook/subscribe do body — {} apagaria
       // o webhook da instância e derrubaria a entrega de eventos (o guard
@@ -595,14 +713,39 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
       });
       const goConnectRoute = resolveSessionRoute('go', 'connect', instance);
-      const response = await fetch(`${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSessionApiKey(goConnectRoute, instToken, evolutionApiKey), 'Content-Type': 'application/json' }, body: connectBody });
-      if (!response.ok) {
-        let errData: { message?: unknown } = {};
-        try { const _t = await response.text(); errData = JSON.parse(_t); } catch { /* non-JSON */ }
-        return new Response(JSON.stringify({ error: true, status: response.status, message: errData?.message ?? 'Falha ao conectar instância na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const callConnect = (token: string) => safeFetch(`${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSessionApiKey(goConnectRoute, token, evolutionApiKey), 'Content-Type': 'application/json' }, body: connectBody }, within(15_000));
+      let connectRes = await callConnect(instToken);
+      // Auto-reparo: 401 = o token que temos não é mais o da instância na GO.
+      // Busca o atual (chave global) UMA vez e tenta o connect UMA vez de novo.
+      if (connectRes.ok && connectRes.response.status === 401 && !healAttempted) {
+        await connectRes.response.body?.cancel().catch(() => {});
+        const fresh = await heal();
+        if (fresh) {
+          instToken = fresh;
+          connectRes = await callConnect(instToken);
+        } else {
+          return fail(401, 'instance_token_invalid', healFailure
+            ? `Credencial da instância '${instance}' recusada pelo servidor WhatsApp (401) e a busca automática da chave falhou: ${healFailure}`
+            : instanceTokenInvalidMessage(instance));
+        }
       }
-      let data: Record<string, unknown> = {};
-      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      if (!connectRes.ok) {
+        new Logger('evolution-api').error('connect: /instance/connect sem resposta da GO', { instance, kind: connectRes.kind, error: connectRes.message });
+        return fail(connectRes.kind === 'timeout' ? 504 : 502, 'go_unreachable', goUnreachableMessage(connectRes.kind, 'ao conectar'));
+      }
+      const response = connectRes.response;
+      if (!response.ok) {
+        const errData = await readJsonSafe(response);
+        if (response.status === 401 || response.status === 403) {
+          return fail(response.status, 'instance_token_invalid', instanceTokenInvalidMessage(instance));
+        }
+        if (response.status === 404) {
+          return fail(404, 'instance_not_found', `A instância '${instance}' não foi encontrada no servidor WhatsApp (Evolution GO).`);
+        }
+        const detail = goErrorText(errData);
+        return fail(response.status, 'go_error', `O servidor WhatsApp recusou a conexão (HTTP ${response.status})${detail ? `: ${detail}` : ''}.`);
+      }
+      const data: Record<string, unknown> = await readJsonSafe(response);
       // A GO emite o QR de forma ASSÍNCRONA depois do connect: ler /instance/qr
       // uma única vez logo após o connect pega o payload ainda vazio (corrida) e
       // devolvia qrcode:undefined, o que travava o front no spinner. Poll curto até
@@ -611,10 +754,21 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // O leitor de "Conectar aparelho" do WhatsApp so aceita o payload cru "2@...": com a URL
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
+      // Orçamento total do poll: o navegador desiste em 45 s (EVOLUTION_API_TIMEOUT_MS).
+      let qrDeadline = Math.min(Date.now() + 28_000, hardDeadline);
+      let qrAuthRejected = false;
+      let qrUnreachable: 'timeout' | 'network' | null = null;
       const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
-        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
-        let qrData: { data?: { code?: string; qrcode?: unknown } } = {};
-        try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+        const qrLeft = qrDeadline - Date.now();
+        if (qrLeft <= 0) return {};
+        const qrRes = await safeFetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken! } }, Math.min(10_000, qrLeft, within(10_000)));
+        if (!qrRes.ok) { qrUnreachable = qrRes.kind; return {}; }
+        if (qrRes.response.status === 401 || qrRes.response.status === 403) {
+          qrAuthRejected = true;
+          await qrRes.response.body?.cancel().catch(() => {});
+          return {};
+        }
+        const qrData = await readJsonSafe(qrRes.response) as { data?: { code?: string; qrcode?: unknown } };
         const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
         let base64 = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
         if (rawQrCode.startsWith('2@')) {
@@ -633,26 +787,43 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         return { base64, code: rawQrCode || qrData?.data?.code };
       };
       let qr = await fetchQr();
-      for (let i = 0; i < 3 && !qr.base64; i++) {
+      for (let i = 0; i < 3 && !qr.base64 && !qrAuthRejected && Date.now() < qrDeadline; i++) {
         await new Promise((r) => setTimeout(r, 1500));
         qr = await fetchQr();
       }
       if (qr.base64) {
         await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-        return new Response(JSON.stringify({ ...data, status: 'qr_pending', qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        // stripInstanceToken: a GO pode ecoar credencial no corpo do connect.
+        return new Response(JSON.stringify({ ...(stripInstanceToken(data) as Record<string, unknown>), status: 'qr_pending', qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: jsonHeaders });
       }
+      if (qrAuthRejected) {
+        return fail(401, 'instance_token_invalid', instanceTokenInvalidMessage(instance));
+      }
+      // QR sem resposta (lento/fora do ar) NÃO é sessão órfã: nunca seguir para
+      // o status → recriação. Lentidão jamais apaga/recria a instância na GO.
+      if (qrUnreachable) {
+        return fail(qrUnreachable === 'timeout' ? 504 : 502, 'go_unreachable', goUnreachableMessage(qrUnreachable, 'ao buscar o QR Code'));
+      }
+      if (remaining() <= 0) return failDeadline();
       // Sem QR após o poll: a instância ou já está logada (reconectou sozinha a
       // partir da sessão salva) ou tem uma sessão órfã na GO que não emite QR novo
       // (JID persistido + LoggedIn:false; logout/reconnect da GO respondem 400/500).
       // Distingue pelo status para NUNCA devolver qrcode:undefined silencioso — era
       // isso que deixava o front em 'loading' eterno.
-      const stRes = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
-      let stData: { data?: Record<string, unknown>; state?: string } = {};
-      try { const _t = await stRes.text(); stData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      const stFetch = await safeFetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } }, within(8_000));
+      if (!stFetch.ok) {
+        new Logger('evolution-api').error('connect: /instance/status sem resposta da GO', { instance, kind: stFetch.kind, qrUnreachable });
+        return fail(stFetch.kind === 'timeout' ? 504 : 502, 'go_unreachable', goUnreachableMessage(stFetch.kind, 'ao consultar o status da instância'));
+      }
+      const stRes = stFetch.response;
+      const stData = await readJsonSafe(stRes) as { data?: Record<string, unknown>; state?: string };
       // status !ok (token inválido, GO 500) NÃO é "sessão órfã": não mandar o
       // operador para logout/reset quando o problema é auth/disponibilidade.
+      if (stRes.status === 401 || stRes.status === 403) {
+        return fail(stRes.status, 'instance_token_invalid', instanceTokenInvalidMessage(instance));
+      }
       if (!stRes.ok) {
-        return new Response(JSON.stringify({ error: true, status: stRes.status, message: 'Não foi possível verificar o status da instância na Evolution GO (token inválido ou serviço indisponível). Tente novamente em instantes.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return fail(stRes.status, 'go_error', 'Não foi possível verificar o status da instância no servidor WhatsApp (Evolution GO). Tente novamente em instantes.');
       }
       const stInner = stData.data ?? {};
       // Exige Connected=true E LoggedIn=true para considerar aberta: {Connected:false,
@@ -698,7 +869,11 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         return new Response(JSON.stringify({ error: false, status: 'connecting', message: 'A instância está reconectando. Aguarde alguns segundos e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       let goOrphan: { id: string; jid: string } | null = null;
-      if (isGoFlavor && sessionIsDead) {
+      // Recriar a instância (delete + create + connect + poll) precisa de folga:
+      // com menos de 20 s até o teto, não começa — apagar e não conseguir
+      // recriar a tempo é pior que pedir para tentar de novo.
+      if (isGoFlavor && sessionIsDead && remaining() < 20_000) return failDeadline();
+      if (isGoFlavor && sessionIsDead && !qrUnreachable) {
         // Security: verificar admin ANTES de chamar /instance/all para evitar
         // exposição de metadados de instâncias a usuários não-admin.
         const adminError = await requireAdmin();
@@ -707,9 +882,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           return new Response(JSON.stringify({ error: true, status: 409, message: 'A sessão do WhatsApp está com credenciais inconsistentes na Evolution GO e precisa ser recriada. Peça a um administrador para reconectar.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         try {
-          const allRes = await fetch(`${evolutionApiUrl}/instance/all`, { headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
-          if (allRes.ok) {
-            const allJson = await allRes.json();
+          const allFetch = await safeFetch(`${evolutionApiUrl}/instance/all`, { method: 'GET', headers: { 'apikey': evolutionApiKey } }, within(8_000));
+          if (allFetch.ok && allFetch.response.ok) {
+            const allJson = await readJsonSafe(allFetch.response);
             const records: Record<string, unknown>[] = Array.isArray(allJson?.data) ? allJson.data : [];
             const rec = records.find((r) => r?.name === instance || r?.Name === instance);
             const recId = String(rec?.id ?? rec?.ID ?? '');
@@ -724,38 +899,35 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
-        if (!delRes.ok) {
-          new Logger('evolution-api').error('connect: falha ao deletar instância órfã na GO', { instance, goId: goOrphan.id, httpStatus: delRes.status });
+        const delFetch = await safeFetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } }, within(8_000));
+        const delOk = delFetch.ok && delFetch.response.ok;
+        if (!delOk) {
+          new Logger('evolution-api').error('connect: falha ao deletar instância órfã na GO', { instance, goId: goOrphan.id, httpStatus: delFetch.ok ? delFetch.response.status : delFetch.kind });
         }
-        if (delRes.ok) {
-          let createRes = await fetch(`${evolutionApiUrl}/instance/create`, {
+        if (delOk) {
+          const createInstance = () => safeFetch(`${evolutionApiUrl}/instance/create`, {
             method: 'POST',
             headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: instance, token: instToken }),
-            signal: AbortSignal.timeout(10000),
-          });
-          if (!createRes.ok) {
+          }, within(10_000));
+          let createFetch = await createInstance();
+          if (!(createFetch.ok && createFetch.response.ok) && remaining() > 2_000) {
             // GO pode levar um momento para liberar o nome após o DELETE — retry único após 2s
             await new Promise((r) => setTimeout(r, 2000));
-            createRes = await fetch(`${evolutionApiUrl}/instance/create`, {
-              method: 'POST',
-              headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: instance, token: instToken }),
-              signal: AbortSignal.timeout(10000),
-            });
+            createFetch = await createInstance();
           }
-          if (!createRes.ok) {
+          if (!(createFetch.ok && createFetch.response.ok)) {
             new Logger('evolution-api').error('connect: instância deletada da GO mas recriação falhou após retry', { instance, goId: goOrphan.id });
             return new Response(JSON.stringify({ error: true, status: 503, message: 'A instância do WhatsApp foi removida da Evolution GO mas não pôde ser recriada automaticamente. É necessário recriar a instância manualmente no painel da Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
           // Mesmo body do connect normal: o GO PERSISTE webhook/subscribe daqui.
-          await fetch(`${evolutionApiUrl}/instance/connect`, {
+          await safeFetch(`${evolutionApiUrl}/instance/connect`, {
             method: 'POST',
             headers: { 'apikey': instToken, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
-            signal: AbortSignal.timeout(8000),
-          });
+            body: connectBody,
+          }, within(8_000));
+          // Novo orçamento de poll para o QR da instância recriada.
+          qrDeadline = Math.min(Date.now() + 15_000, hardDeadline);
           let healed = await fetchQr();
           for (let i = 0; i < 4 && !healed.base64; i++) {
             await new Promise((r) => setTimeout(r, 1500));
@@ -790,10 +962,13 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         }
         sessionKey = token;
       }
-      const response = await fetch(`${evolutionApiUrl}${route.path}`, {
-        method: route.method,
-        headers: { 'apikey': sessionKey },
-      });
+      // 13/11: o polling do diálogo de QR chama status a cada 3 s — falha de
+      // rede/tempo aqui também virava 500 no catch-all.
+      const statusFetch = await safeFetch(`${evolutionApiUrl}${route.path}`, { method: route.method, headers: { 'apikey': sessionKey } }, 10_000);
+      if (!statusFetch.ok) {
+        return new Response(JSON.stringify({ error: true, status: statusFetch.kind === 'timeout' ? 504 : 502, code: 'go_unreachable', message: goUnreachableMessage(statusFetch.kind, 'ao consultar o status') }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const response = statusFetch.response;
       // Resposta de /instance/status. A GO manda `data` aninhado e nem sempre concorda
       // entre loggedIn/connected/State; o DTO mantém o índice aberto porque o payload varia.
       let data: {
@@ -863,10 +1038,11 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         }
         disconnectKey = token;
       }
-      const response = await fetch(`${evolutionApiUrl}${route.path}`, {
-        method: route.method,
-        headers: { 'apikey': disconnectKey },
-      });
+      const disconnectFetch = await safeFetch(`${evolutionApiUrl}${route.path}`, { method: route.method, headers: { 'apikey': disconnectKey } }, 15_000);
+      if (!disconnectFetch.ok) {
+        return new Response(JSON.stringify({ error: true, status: disconnectFetch.kind === 'timeout' ? 504 : 502, code: 'go_unreachable', message: goUnreachableMessage(disconnectFetch.kind, 'ao desconectar') }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const response = disconnectFetch.response;
       let data: { message?: unknown; [k: string]: unknown } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
