@@ -277,7 +277,7 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
     sessionStorage.clear();
   });
 
-  it('mostra as ações do status e abre ciclo de vida pelo hook único', async () => {
+  it('mostra as ações do status e retoma pelo hook único em um clique', async () => {
     render(<TalkXOverview {...props} />);
 
     // TL-115: a TalkXTable nomeia o gatilho com a linha (RowActionsMenu + rowLabel).
@@ -292,7 +292,9 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
       fireEvent.click(screen.getByRole('menuitem', { name: 'Retomar' }));
     });
 
-    expect(await screen.findByRole('alertdialog')).toHaveTextContent('Retomar campanha?');
+    // Retomar é um clique (decisão do dono, 2026-11-13): o hook dispara direto, sem diálogo.
+    expect(talkxMocks.startCampaign).toHaveBeenCalledWith('c-paused');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(props.onStart).not.toHaveBeenCalled();
   });
 });
