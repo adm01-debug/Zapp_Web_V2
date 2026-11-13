@@ -15274,7 +15274,7 @@ export type Database = {
         | "google_gemini"
         | "custom_webhook"
         | "custom_agent"
-      app_role: "admin" | "supervisor" | "agent" | "special_agent"
+      app_role: "admin" | "supervisor" | "agent"
       channel_type:
         | "whatsapp"
         | "instagram"
@@ -15461,7 +15461,7 @@ export const Constants = {
         "custom_webhook",
         "custom_agent",
       ],
-      app_role: ["admin", "supervisor", "agent", "special_agent"],
+      app_role: ["admin", "supervisor", "agent"],
       channel_type: [
         "whatsapp",
         "instagram",

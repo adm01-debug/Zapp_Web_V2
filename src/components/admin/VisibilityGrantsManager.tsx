@@ -25,23 +25,23 @@ interface Grant {
 
 export function VisibilityGrantsManager() {
   const [grants, setGrants] = useState<Grant[]>([]);
-  const [specialAgents, setSpecialAgents] = useState<Profile[]>([]);
+  const [grantableAgents, setGrantableAgents] = useState<Profile[]>([]);
   const [allAgents, setAllAgents] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [selectedSpecialAgent, setSelectedSpecialAgent] = useState('');
+  const [selectedGrantAgent, setSelectedGrantAgent] = useState('');
   const [selectedTargetAgent, setSelectedTargetAgent] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
 
     // Fetch agents (users with agent role)
-    const { data: specialAgentRoles } = await supabase
+    const { data: agentRoles } = await supabase
       .from('user_roles')
       .select('user_id')
       .eq('role', 'agent');
 
-    const specialAgentUserIds = specialAgentRoles?.map(r => r.user_id) || [];
+    const agentUserIds = agentRoles?.map(r => r.user_id) || [];
 
     // Fetch all profiles
     const { data: profiles } = await supabase
@@ -51,7 +51,7 @@ export function VisibilityGrantsManager() {
 
     if (profiles) {
       setAllAgents(profiles);
-      setSpecialAgents(profiles.filter(p => specialAgentUserIds.includes(p.user_id)));
+      setGrantableAgents(profiles.filter(p => agentUserIds.includes(p.user_id)));
     }
 
     // Fetch existing grants
@@ -76,8 +76,8 @@ export function VisibilityGrantsManager() {
   }, [fetchData]);
 
   const handleAddGrant = async () => {
-    if (!selectedSpecialAgent || !selectedTargetAgent) return;
-    if (selectedSpecialAgent === selectedTargetAgent) {
+    if (!selectedGrantAgent || !selectedTargetAgent) return;
+    if (selectedGrantAgent === selectedTargetAgent) {
       toast.error('O agente não pode visualizar a si mesmo');
       return;
     }
@@ -99,7 +99,7 @@ export function VisibilityGrantsManager() {
     const { error } = await supabase
       .from('agent_visibility_grants')
       .insert({
-        agent_id: selectedSpecialAgent,
+        agent_id: selectedGrantAgent,
         can_see_agent_id: selectedTargetAgent,
         granted_by: grantedBy,
       });
@@ -132,14 +132,14 @@ export function VisibilityGrantsManager() {
     }
   };
 
-  // Group grants by special agent
-  const grantsByAgent = specialAgents.map(agent => ({
+  // Group grants by agent
+  const grantsByAgent = grantableAgents.map(agent => ({
     agent,
     grants: grants.filter(g => g.agent_id === agent.id),
   }));
 
-  // Filter target agents (exclude the selected special agent)
-  const availableTargets = allAgents.filter(a => a.id !== selectedSpecialAgent);
+  // Filter target agents (exclude the selected agent)
+  const availableTargets = allAgents.filter(a => a.id !== selectedGrantAgent);
 
   if (loading) {
     return (
@@ -149,7 +149,7 @@ export function VisibilityGrantsManager() {
     );
   }
 
-  if (specialAgents.length === 0) {
+  if (grantableAgents.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6 text-center">
@@ -176,13 +176,13 @@ export function VisibilityGrantsManager() {
         <CardContent>
           <div className="flex items-end gap-3 flex-wrap">
             <div className="space-y-2 min-w-[200px] flex-1">
-              <label id="special-agent-select-label" className="text-sm font-medium" htmlFor="special-agent-select">Agente</label>
-              <Select value={selectedSpecialAgent} onValueChange={setSelectedSpecialAgent}>
-                <SelectTrigger id="special-agent-select" aria-labelledby="special-agent-select-label">
+              <label id="grant-agent-select-label" className="text-sm font-medium" htmlFor="grant-agent-select">Agente</label>
+              <Select value={selectedGrantAgent} onValueChange={setSelectedGrantAgent}>
+                <SelectTrigger id="grant-agent-select" aria-labelledby="grant-agent-select-label">
                   <SelectValue placeholder="Selecione o agente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {specialAgents.map(agent => (
+                  {grantableAgents.map(agent => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.name}
                     </SelectItem>
@@ -213,7 +213,7 @@ export function VisibilityGrantsManager() {
 
             <Button
               onClick={handleAddGrant}
-              disabled={!selectedSpecialAgent || !selectedTargetAgent || saving}
+              disabled={!selectedGrantAgent || !selectedTargetAgent || saving}
               className="mb-0"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
