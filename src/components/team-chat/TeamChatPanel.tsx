@@ -79,8 +79,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
       <div className="flex flex-col h-full w-full relative">
         <TeamChatHeader conversation={conversation} showDetails={showDetails} voiceId={s.tts.voiceId} speed={s.tts.speed}
           showSearch={false} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
-          onToggleSearch={() => {}} onAddMembers={() => {}} onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed}
-          onToggleMute={() => {}} />
+          onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed} />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 bg-muted/5">
           <div className="rounded-full bg-muted p-4">
             <Lock className="w-8 h-8 text-muted-foreground" aria-hidden />

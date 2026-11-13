@@ -51,9 +51,9 @@ interface TeamChatHeaderProps {
   isGroupCreator?: boolean;
   onBack: () => void;
   onToggleDetails?: () => void;
-  onToggleSearch: () => void;
+  onToggleSearch?: () => void;
   onToggleStats?: () => void;
-  onAddMembers: () => void;
+  onAddMembers?: () => void;
   onVoiceChange: (voiceId: string) => void;
   onSpeedChange: (speed: number) => void;
   onToggleMute?: () => void;
@@ -113,6 +113,7 @@ export function TeamChatHeader({
       </div>
 
       <div className="flex items-center gap-0.5">
+        {onToggleSearch && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -129,6 +130,7 @@ export function TeamChatHeader({
           </TooltipTrigger>
           <TooltipContent side="bottom">Buscar mensagens (⌘K)</TooltipContent>
         </Tooltip>
+        )}
 
         {onToggleStats !== undefined && (
           <Tooltip>
@@ -165,7 +167,7 @@ export function TeamChatHeader({
           <TooltipContent side="bottom">Performance (em breve)</TooltipContent>
         </Tooltip>
 
-        {isGroup && (
+        {isGroup && onAddMembers && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
