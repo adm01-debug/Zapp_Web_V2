@@ -4115,7 +4115,7 @@
     "EmailContactPanel"
    ],
    "export_default": null,
-   "linhas": 338,
+   "linhas": 339,
    "dominio": "components/email",
    "hooks_locais": [
     "useContactNotes",

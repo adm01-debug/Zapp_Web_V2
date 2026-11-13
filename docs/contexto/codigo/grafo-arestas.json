@@ -2478,6 +2478,7 @@
    "src/hooks/crm/useContactNotes.ts",
    "src/hooks/crm/useEmailContactContext.ts",
    "src/hooks/integrations/useGmail.ts",
+   "src/lib/clipboard.ts",
    "src/lib/emailAttachments.ts",
    "src/lib/emailCompanyLinks.ts",
    "src/lib/emailContactIdentity.ts"

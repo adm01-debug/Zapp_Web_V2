@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "eb93d55ec1654697ac0d5886fc324f27e5d4175e",
+  "sha": "fe4959bbc7d885f3cc0274d92167f6b30800400a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 08:10 UTC",
+  "generated_at": "2026-11-13 08:51 UTC",
   "files_total": 8265,
   "code_files": 6097,
-  "code_lines": 1060760
+  "code_lines": 1060784
  },
  "version": "1.3.2",
- "facts_hash": "959b9efe138dda4a",
+ "facts_hash": "fdb4b50c760fef45",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68502,7 +68502,7 @@
   {
    "module": "src/components",
    "files": 2180,
-   "lines": 372122,
+   "lines": 372146,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -141587,6 +141587,10 @@
    {
     "file": "src/components/email/__tests__/EmailContactPanel.test.tsx",
     "name": "exibe somente dados CRM que realmente existem"
+   },
+   {
+    "file": "src/components/email/__tests__/EmailContactPanel.test.tsx",
+    "name": "confirma a cópia do e-mail só quando ela acontece e avisa na falha"
    },
    {
     "file": "src/components/email/__tests__/EmailFullViewDialog.test.tsx",
@@ -285423,7 +285427,7 @@
   },
   "src/components/email/EmailContactPanel.tsx": {
    "path": "src/components/email/EmailContactPanel.tsx",
-   "lines": 338,
+   "lines": 339,
    "exports": [
     "function EmailContactPanel"
    ],
@@ -285732,7 +285736,7 @@
   },
   "src/components/email/__tests__/EmailContactPanel.test.tsx": {
    "path": "src/components/email/__tests__/EmailContactPanel.test.tsx",
-   "lines": 335,
+   "lines": 358,
    "is_test": true,
    "errors": [
     ").textContent).toMatch(/não foi possível vincular esta empresa/i));\n    expect(mutateAsync).toHaveBeenCalledWith("
@@ -285765,7 +285769,8 @@
     "clique no X chama onClose",
     "deriva participantes reais das mensagens e permite baixar anexos autenticados",
     "preserva conversas relacionadas além da amostra inicial",
-    "exibe somente dados CRM que realmente existem"
+    "exibe somente dados CRM que realmente existem",
+    "confirma a cópia do e-mail só quando ela acontece e avisa na falha"
    ]
   },
   "src/components/email/__tests__/EmailFullViewDialog.test.tsx": {
@@ -388172,10 +388177,20 @@
   }
  },
  "git": {
-  "sha": "eb93d55ec1654697ac0d5886fc324f27e5d4175e",
+  "sha": "fe4959bbc7d885f3cc0274d92167f6b30800400a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "fe4959b",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)",
+    "files": [
+     "src/components/email/EmailContactPanel.tsx",
+     "src/components/email/__tests__/EmailContactPanel.test.tsx"
+    ]
+   },
    {
     "sha": "eb93d55",
     "date": "2026-11-13",
@@ -388478,22 +388493,12 @@
      "src/hooks/analytics/__tests__/useGoalNotifications.idempotencia.test.tsx",
      "src/hooks/analytics/useGoalNotifications.ts"
     ]
-   },
-   {
-    "sha": "623f37b",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(gmail-oauth): remover access_token da resposta HTTP (SEC-Z017)",
-    "files": [
-     "supabase/deployment-manifest.json",
-     "supabase/functions/gmail-oauth/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    4
+    3
    ],
    [
     "PENDENCIAS.md",
@@ -388506,6 +388511,14 @@
    [
     "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
     2
+   ],
+   [
+    "src/components/email/EmailContactPanel.tsx",
+    1
+   ],
+   [
+    "src/components/email/__tests__/EmailContactPanel.test.tsx",
+    1
    ],
    [
     "supabase/functions/ai-deadline-calculator/index.ts",
@@ -388561,14 +388574,6 @@
    ],
    [
     "scripts/db-audit/login_gate_rpc.test.sh",
-    1
-   ],
-   [
-    "src/components/keyboard/__tests__/paleta-unica.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
     1
    ]
   ]

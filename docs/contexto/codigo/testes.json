@@ -5868,13 +5868,14 @@
   {
    "arquivo": "src/components/email/__tests__/EmailContactPanel.test.tsx",
    "tipo": "unit",
-   "linhas": 335,
+   "linhas": 358,
    "testa": [
     "src/components/email/EmailContactPanel.tsx",
     "src/hooks/crm/useEmailContactContext.ts",
-    "src/hooks/integrations/useGmail.ts"
+    "src/hooks/integrations/useGmail.ts",
+    "src/lib/clipboard.ts"
    ],
-   "casos": 22
+   "casos": 23
   },
   {
    "arquivo": "src/components/email/__tests__/EmailFullViewDialog.test.tsx",
@@ -25128,7 +25129,7 @@
   "src/lib/cfImages.ts": 1,
   "src/lib/chartColors.ts": 1,
   "src/lib/chunkReload.ts": 3,
-  "src/lib/clipboard.ts": 1,
+  "src/lib/clipboard.ts": 2,
   "src/lib/cnpjUtils.ts": 1,
   "src/lib/contactHealth.ts": 1,
   "src/lib/crmIntegration.ts": 1,

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `eb93d55ec1` · branch `main` · 2026-11-13 08:10 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `fe4959bbc7` · branch `main` · 2026-11-13 08:51 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4608,7 +4608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21335 testes em 2260 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21336 testes em 2260 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4709,13 +4709,13 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/supervisorPriority.test.ts` | 30 | computePriority (regras P1-P4) · P1: sem atendente há exatamente 30 min (fronteira) · P1: 29 min sem atendente NÃO é P1 (fronteira abaixo) · P1: com atendente, 30 min de espera não dispara a regra de  … |
 | `tests/contracts/ai-resilience-prazos-retry.contract.test.ts` | 30 | (1) classifyFailure: transitório × permanente × estado desconhecido (IA-042) · %s → transient (pode reenviar) · %s → permanent (NUNCA reenviar) · erro de REDE (sem resposta HTTP) → transient … |
 | `src/components/catalog/__tests__/ContactSelectionStep.test.tsx` | 29 | ContactSelectionStep · botão de enviar fica desabilitado sem contato selecionado · com contato selecionado, o botão habilita e mostra o nome · sem busca e sem resultados, mostra o estado vazio de  … |
+| `src/components/email/__tests__/EmailContactPanel.test.tsx` | 29 | EmailContactPanel · renders only the safe company fields returned by the Email context · does not mistake a disabled CRM integration for a missing company · informs an authorized user when the explicit company link fails … |
 | `src/components/inbox/tabs/journey/__tests__/JourneyStatsHero.test.tsx` | 29 | JourneyStatsHero — estrutura e dados · renderiza os dois blocos com os valores do contato e do período · mantém a grade de 2 colunas no celular e 4 no desktop nos dois blocos de cartões · com dados vazios mostra traços e estados vazios, sem quebrar … |
 | `src/components/tasks/__tests__/WorkItemSheet.test.tsx` | 29 | WorkItemSheet — FASE C (etapas 23–25) · 23: abre com os 8 campos e fecha no Esc · 25: Salvar só habilita com mudança, salva o patch e fecha · 24: após preencher o motivo, salvar leva o motivo pelo move … |
 | `src/components/team-chat/__tests__/team-chat-comprehensive.test.ts` | 29 | Team Chat — autenticação · useSendTeamMessage recusa o envio sem perfil e não chega ao banco · useSendTeamMessage grava a mensagem quando há perfil · Team Chat — regras usadas pela produção … |
 | `src/hooks/__tests__/useChatSearch.test.ts` | 29 | useChatSearch · returns empty results initially · searches text content after debounce · excludes deleted messages … |
 | `src/services/__tests__/contact-bulk.service.test.ts` | 29 | emptyOutcome / pendingIds · emptyOutcome devolve listas NOVAS a cada chamada (mutar uma não afeta a outra) · pendingIds junta recusados e falhos, na ordem (recusados primeiro) · applyContactFieldUpdate … |
 | `src/components/contacts/__tests__/ExternalDataIntegration.test.tsx` | 28 | useExternalEmpresas · usa a ação estreita  · não cai mais no RPC admin-only nem no select genérico · sem  … |
-| `src/components/email/__tests__/EmailContactPanel.test.tsx` | 28 | EmailContactPanel · renders only the safe company fields returned by the Email context · does not mistake a disabled CRM integration for a missing company · informs an authorized user when the explicit company link fails … |
 | `src/components/layout/__tests__/Sidebar.test.tsx` | 28 | Sidebar — nav primária e grupos compartilham uma única área de rolagem · Multiplix continua entre Contatos e Catálogo, e todos os três estão dentro do mesmo container com scroll · staff SEM a permissão nomeada não vê Multiplix na nav primária (papel não basta — F25) · agente COM a permissão nomeada vê Multiplix na nav primária (F25) … |
 | `src/components/ui/__tests__/VolumeDial.test.tsx` | 28 | VolumeDial — papel, nome e valores acessíveis · expõe role=slider focável com min/max/now/valuetext · usa valueLabel no centro e no texto falado quando informado · não tem violação de acessibilidade … |
 | `src/hooks/system/__tests__/useGeoBlocking.test.ts` | 28 | useGeoBlocking — leitura dos dados · carrega settings e as duas listas, com ordem decrescente por created_at · lista vazia (data null) não quebra e vira lista vazia · exceção de rede na primeira leitura avisa e encerra o carregamento … |

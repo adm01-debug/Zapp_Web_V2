@@ -2095,13 +2095,14 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 4,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/copilot",
+    "components/email",
     "components/inbox",
     "hooks/inbox"
    ],
-   "coberto_por_testes": 1,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {

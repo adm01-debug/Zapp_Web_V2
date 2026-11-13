@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "eb93d55ec1654697ac0d5886fc324f27e5d4175e",
+  "commit": "fe4959bbc7d885f3cc0274d92167f6b30800400a",
   "branch": "main",
-  "data_commit": "2026-11-13T04:37:41-03:00",
+  "data_commit": "2026-11-13T05:26:51-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "fe4959b",
+    "data": "2026-11-13",
+    "assunto": "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)"
+   },
    {
     "sha": "eb93d55",
     "data": "2026-11-13",
@@ -126,18 +131,13 @@
     "sha": "6f90c93",
     "data": "2026-11-12",
     "assunto": "fix(external-db-bridge): validar coluna e operador antes do PostgREST (SEC-Z018)"
-   },
-   {
-    "sha": "376332a",
-    "data": "2026-11-12",
-    "assunto": "fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor (#2969)"
    }
   ],
-  "arquivos_mudados_7d": 674,
+  "arquivos_mudados_7d": 676,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 628
+    "mudancas": 626
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8423,
   "arquivos_codigo": 4819,
-  "linhas_codigo": 892273,
+  "linhas_codigo": 892297,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2180,
-   "linhas": 372122
+   "linhas": 372146
   },
   "src/config": {
    "arquivos": 3,

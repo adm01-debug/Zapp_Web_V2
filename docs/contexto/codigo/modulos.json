@@ -2291,7 +2291,7 @@
    "modulo": "components/email",
    "arquivos": 8,
    "testes": 18,
-   "linhas": 2158,
+   "linhas": 2159,
    "itens_menu": [
     "Email"
    ],
