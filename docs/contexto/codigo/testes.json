@@ -10166,12 +10166,12 @@
   {
    "arquivo": "src/components/multiplix/__tests__/MultiplixMonitor.confirm.test.tsx",
    "tipo": "unit",
-   "linhas": 213,
+   "linhas": 283,
    "testa": [
     "src/components/multiplix/MultiplixMonitor.tsx",
     "src/hooks/integrations/useMultiplixDispatches.ts"
    ],
-   "casos": 4
+   "casos": 7
   },
   {
    "arquivo": "src/components/multiplix/__tests__/MultiplixMonitor.estados.test.tsx",

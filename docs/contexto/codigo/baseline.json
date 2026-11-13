@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "48f9754f709d7a21bd89b11c57ce07f1967fdd11",
+  "commit": "19104e8ab6c45c12717e0fbe9e82328630793c46",
   "branch": "main",
-  "data_commit": "2026-11-13T14:57:00-03:00",
+  "data_commit": "2026-11-13T16:42:33-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "19104e8",
+    "data": "2026-11-13",
+    "assunto": "feat(multiplix): retomar disparo pausado em um clique (#3043)"
+   },
    {
     "sha": "48f9754",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "cfa8959",
     "data": "2026-11-12",
     "assunto": "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)"
-   },
-   {
-    "sha": "81f67b0",
-    "data": "2026-11-12",
-    "assunto": "fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)"
    }
   ],
-  "arquivos_mudados_7d": 797,
+  "arquivos_mudados_7d": 792,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -177,7 +177,7 @@
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 108
+    "mudancas": 107
    },
    {
     "pasta": "src/components/tasks",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8496,
   "arquivos_codigo": 4890,
-  "linhas_codigo": 906255,
+  "linhas_codigo": 906348,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -704,7 +704,7 @@
   },
   "src/components": {
    "arquivos": 2216,
-   "linhas": 376518
+   "linhas": 376611
   },
   "src/config": {
    "arquivos": 3,

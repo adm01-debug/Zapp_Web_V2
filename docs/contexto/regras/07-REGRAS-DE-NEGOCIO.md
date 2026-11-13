@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `48f9754f70` · branch `main` · 2026-11-13 19:11 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `19104e8ab6` · branch `main` · 2026-11-13 20:39 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -107,6 +107,8 @@ limite efetivo é o `daily_limit_per_connection`.
 - **ZAPP é de uma empresa só (single-tenant)** — decisão 2026-11-03. Não existe isolamento por empresa e **não deve ser criado**: RLS significa só **papel** (admin / supervisor / agent) e **propriedade** (atendente dono ou membro da fila, `can_edit_contact`). Nenhuma policy nova filtra por `company_id` e nenhuma tabela nova o exige. Estado medido: `company_id` existe só em `multiplix_recipients`, **0 policies** o usam e não há tabela `companies` — a coluna é resíduo, não propagar.
 - Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).
 - Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + telefone `^[0-9]{10,15}$` (decisão D4; `CLAUDE.md` §6).
+- **Multiplix: retomar disparo pausado em um clique; iniciar continua com confirmação** (decisão do dono, 2026-11-13). Retomar só continua a fila que já existe; iniciar um rascunho congela público/blocos e gera a fila, sem volta (`src/components/multiplix/MultiplixMonitor.tsx`).
+- **Talk X: pausar/cancelar mantêm o diálogo aberto até o servidor responder e mostram o erro no próprio diálogo** (decisão do dono, 2026-11-13). Retomar campanha pausada é um clique, sem diálogo.
 
 ## 9. Dúvidas em aberto
 
@@ -4637,7 +4639,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21715 testes em 2297 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21720 testes em 2297 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5443,4 +5445,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | arquivos que estao nele. Enquanto o item mais antigo carregado nao cruzar o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
 | sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e | `src/components/inbox/tabs/FilesTab.tsx` |
 | Nao cruzou o limite ainda: pode haver arquivo do periodo em pagina mais antiga. Com so | `src/components/inbox/tabs/FilesTab.tsx` |
-| … +1695 linhas — lista completa em `context.json` | |
+| … +1696 linhas — lista completa em `context.json` | |
