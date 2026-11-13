@@ -30,6 +30,14 @@ vi.mock('../../AISuggestions', () => ({
 }));
 vi.mock('../../ConversationSummary', () => ({ ConversationSummary: () => <div>mock-summary</div> }));
 vi.mock('../../ObjectionDetector', () => ({ ObjectionDetector: () => <div>mock-objections</div> }));
+vi.mock('../../contact-details/AIInsightsWidget', () => ({
+  AIInsightsWidget: ({ contactId }: { contactId: string }) => <div>mock-ai-insights {contactId}</div>,
+}));
+vi.mock('../../KnowledgeBaseSearchPanel', () => ({
+  KnowledgeBaseSearchPanel: ({ onInsertText }: { onInsertText: (text: string) => void }) => (
+    <button onClick={() => onInsertText('artigo da base')}>mock-kb-usar</button>
+  ),
+}));
 
 function chain() {
   const q: Record<string, unknown> = {};

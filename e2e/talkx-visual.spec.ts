@@ -98,7 +98,7 @@ const TELAS: Tela[] = [
   { n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: 30_000 }); } },
   { n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: 30_000 }); } },
   { n: '10', nome: 'Campanha agendada', existe: true, abrir: (p) => abrirCampanha(p, 'Promoção de Outubro') },
-  { n: '11', nome: 'Monitor ao vivo', existe: true, abrir: (p) => abrirCampanha(p, 'Dia do Cliente') },
+  { n: '11', nome: 'Monitor ao vivo', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&campaign=camp-501&screen=monitor'); await expect(p.getByRole('tab', { name: 'Visão geral' })).toBeHidden(); await expect(p.getByRole('button', { name: 'Linha do Tempo', exact: true })).toBeVisible({ timeout: 30_000 }); } },
   { n: '12', nome: 'Campanha em andamento', existe: true, abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office') },
   { n: '13', nome: 'Campanha pausada e retomada', existe: false },
   { n: '14', nome: 'Relatório da campanha concluída', existe: false },

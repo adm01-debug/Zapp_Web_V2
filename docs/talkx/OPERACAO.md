@@ -94,16 +94,17 @@ aprovação no environment `producao-edge-functions`).
 `e2e/talkx.spec.ts` roda no job **E2E logado** (`e2e-logado.yml`), que dispara
 após cada merge em `main` e via `workflow_dispatch`.
 
-Cobertura atual (9 testes):
+Cobertura atual (10 testes):
 1. `campaigns overview renders after navigating from the sidebar` — Overview do módulo renderiza ao navegar pela barra lateral.
 2. `new campaign wizard opens on the audience step` — o wizard de nova campanha abre no passo de audiência.
 3. `help screen opens, searches, reads an article and goes back` — a tela de Ajuda (X189) abre, busca, abre um artigo e volta.
 4. `Cmd/Ctrl+K inside the help focuses the search and does not open the palette` — dentro da Ajuda, Cmd/Ctrl+K foca a busca e NÃO abre a paleta de comandos.
 5. `Cmd/Ctrl+K outside the help still opens the command palette` — fora da Ajuda, Cmd/Ctrl+K continua abrindo a paleta de comandos.
 6. `segments and templates render via deep links` — Segmentos e Templates renderizam por deep link.
-7. `wizard step 1 shows audience fields and stepper` — o passo 1 mostra os campos de audiência e o stepper.
-8. `wizard stepper shows all four steps and continuar is initially disabled` — o stepper mostra os quatro passos e "Continuar" começa desabilitado.
-9. `wizard advances to step 2 (Mensagem) after filling step 1` — avança para o passo 2 (Mensagem) após preencher o passo 1.
+7. `reload on Segments tab preserves tab state (X052)` — recarregar a página na aba Segmentos mantém a aba (X052).
+8. `wizard step 1 shows audience fields and stepper` — o passo 1 mostra os campos de audiência e o stepper.
+9. `wizard stepper shows all four steps and continuar is initially disabled` — o stepper mostra os quatro passos e "Continuar" começa desabilitado.
+10. `wizard advances to step 2 (Mensagem) after filling step 1` — avança para o passo 2 (Mensagem) após preencher o passo 1.
 
 O usuário de teste (`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`) tem perfil
 **supervisor** e enxerga "Campanhas".

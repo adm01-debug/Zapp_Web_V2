@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import {
-  Sparkles, MessageSquare, FileText, ShieldQuestion, Zap, Package, Smile, Meh, Frown, AlertTriangle, ChevronRight, Brain, Lightbulb,
+  Sparkles, MessageSquare, FileText, ShieldQuestion, Zap, Package, Smile, Meh, Frown, AlertTriangle, ChevronRight, Brain, Lightbulb, BookOpen,
 } from 'lucide-react';
 import { normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,8 @@ import { ConversationSummary } from '../ConversationSummary';
 import { ObjectionDetector } from '../ObjectionDetector';
 import { CopilotPanel } from '../copilot/CopilotPanel';
 import { LiveSuggestions } from '../copilot/LiveSuggestions';
+import { KnowledgeBaseSearchPanel } from '../KnowledgeBaseSearchPanel';
+import { AIInsightsWidget } from '../contact-details/AIInsightsWidget';
 import { useCopilotSession } from '@/hooks/copilot/useCopilotSession';
 import { useLiveSuggestions } from '@/hooks/copilot/useLiveSuggestions';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -124,6 +126,15 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
       </SectionCard>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {/* Restaurados em 2026-11-12 (saíram como órfãos na #1886). */}
+        <SectionCard icon={Sparkles} title="Insights da IA" subtitle="Ações, abordagem DISC e última interação do CRM" tone="purple">
+          <AIInsightsWidget contactId={contactId} />
+        </SectionCard>
+
+        <SectionCard icon={BookOpen} title="Base de conhecimento" subtitle="Pesquise artigos e use na resposta" tone="blue">
+          <KnowledgeBaseSearchPanel onInsertText={onUseSuggestion} />
+        </SectionCard>
+
         <SectionCard icon={MessageSquare} title="Sugestão de resposta" tone="blue">
           <p className="text-xs text-muted-foreground -mt-1">Gere uma sugestão de resposta com base nas últimas mensagens.</p>
           <AISuggestions messages={messages} contactName={contactName} contactId={contactId} onSelectSuggestion={onUseSuggestion} />

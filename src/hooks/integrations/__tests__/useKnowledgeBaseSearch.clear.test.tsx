@@ -81,3 +81,28 @@ describe('useKnowledgeBaseSearch — limpar cancela o debounce pendente', () => 
     expect(mocks.rpc).not.toHaveBeenCalledWith('search_knowledge_base', expect.objectContaining({ search_query: 'termo-antigo' }));
   });
 });
+
+describe('useKnowledgeBaseSearch — termo aparado e estado do debounce', () => {
+  it('espaços não contam: "  a" não chama a RPC', async () => {
+    const { result } = renderHook(() => useKnowledgeBaseSearch(), { wrapper: criarWrapper() });
+
+    act(() => { result.current.handleSearch('  a'); });
+    await passarDebounce();
+
+    expect(result.current.isSearching).toBe(false);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it('o termo vai aparado para a RPC e isDebouncing vale até o debounce vencer', async () => {
+    const { result } = renderHook(() => useKnowledgeBaseSearch(), { wrapper: criarWrapper() });
+
+    act(() => { result.current.handleSearch('  prazo  '); });
+    expect(result.current.isDebouncing).toBe(true);
+
+    await passarDebounce();
+
+    expect(result.current.isDebouncing).toBe(false);
+    expect(result.current.debouncedQuery).toBe('prazo');
+    expect(mocks.rpc).toHaveBeenCalledWith('search_knowledge_base', { search_query: 'prazo', max_results: 5 });
+  });
+});

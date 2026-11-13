@@ -120,4 +120,23 @@ describe('EmailThreadList (OTH-005)', () => {
     expect(screen.getByPlaceholderText('Buscar...')).toHaveValue('Maria');
     expect(screen.getByText('Limpar')).toBeInTheDocument();
   });
+
+  it('needsReconnect: sincronizar vira "Reconectar Gmail" (cabeçalho e inbox vazio)', () => {
+    const onSync = vi.fn();
+    const onReconnect = vi.fn();
+    render(<EmailThreadList {...baseProps} threads={[]} totalCount={0} onSync={onSync} needsReconnect onReconnect={onReconnect} />);
+    expect(screen.queryByRole('button', { name: 'Sincronizar conversas' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sincronizar agora/)).not.toBeInTheDocument();
+    const botoes = screen.getAllByRole('button', { name: /Reconectar Gmail/ });
+    expect(botoes).toHaveLength(2);
+    botoes.forEach((b) => fireEvent.click(b));
+    expect(onReconnect).toHaveBeenCalledTimes(2);
+    expect(onSync).not.toHaveBeenCalled();
+  });
+
+  it('sem needsReconnect o botão de sincronizar continua', () => {
+    render(<EmailThreadList {...baseProps} threads={[]} totalCount={0} />);
+    expect(screen.getByRole('button', { name: 'Sincronizar conversas' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reconectar Gmail/ })).not.toBeInTheDocument();
+  });
 });

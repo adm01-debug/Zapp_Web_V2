@@ -110,9 +110,7 @@ function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
       onFocus={onFocus}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
-        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove?.(-1); }
-        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove?.(1); }
       }}
       tabIndex={active ? 0 : -1}
@@ -199,9 +197,7 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onFocus, onMove, bu
       onFocus={onFocus}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
-        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove(-1); }
-        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove(1); }
       }}
       disabled={disabled}
@@ -876,7 +872,6 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                 aria-describedby="talk-me-history-description"
                 tabIndex={-1}
                 onKeyDown={(event) => {
-                  // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
                   if (event.key !== 'Escape') return;
                   event.preventDefault();
                   event.stopPropagation();

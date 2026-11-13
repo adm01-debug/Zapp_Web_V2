@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle, Loader2, Clock, KeyRound } from 'lucide-react';
 import { log } from '@/lib/logger';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useReauthentication } from '@/hooks/auth/useReauthentication';

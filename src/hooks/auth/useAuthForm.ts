@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useWebAuthn } from '@/hooks/auth/useWebAuthn';
 import { toast } from '@/hooks/ui/use-toast';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { supabase } from '@/integrations/supabase/client';
 import { clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
 import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
