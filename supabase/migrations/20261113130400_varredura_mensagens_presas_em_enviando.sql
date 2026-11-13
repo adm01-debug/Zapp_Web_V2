@@ -25,13 +25,21 @@
 --     c) nunca reivindicada (delivery_attempt_count = 0): o POST não pode ter saído
 --        -> 'failed' (motivo nunca_despachada); o atendente vê "Falha no envio" e
 --        pode reenviar com segurança;
---     d) reivindicada, sem carimbo de POST, e o claim é POSTERIOR ao marcador desta
---        migration (a Edge carimba ANTES do POST): o POST não saiu -> 'failed'
---        (motivo lease_vencido_sem_post);
+--     d) reivindicada PELA EDGE message-delivery (delivery_claimed_by =
+--        'edge:message-delivery'), sem carimbo de POST, e o claim é POSTERIOR ao
+--        marcador desta migration (essa Edge carimba ANTES do POST): o POST não saiu
+--        -> 'failed' (motivo lease_vencido_sem_post). Claims de OUTROS workers
+--        (mensagem de ausência, chatbot L1...) não entram aqui: vão para (e);
 --     e) reivindicada, sem carimbo, claim ANTERIOR ao marcador (época em que a Edge
 --        ainda não carimbava): não dá para saber se o POST saiu -> é tratada como
 --        ambígua: recebe delivery_post_started_at = instante do claim e entra no
 --        painel de resolução manual. Conservador: nunca vira 'failed' às cegas.
+--        Os QUATRO campos do claim são zerados juntos (CHECK messages_delivery_claim_state)
+--        e o token vai para delivery_last_claim_token.
+--   Cada linha é tratada num bloco próprio: erro numa linha vira WARNING e a varredura
+--   segue com as demais (uma linha ruim não trava o job de minuto em minuto).
+--   Mensagens criadas por agendamento (scheduled_messages.message_id) NÃO entram: o
+--   servidor as enfileira mas ainda não chama a entrega (TODO na PR #3037).
 --   Cada decisão grava uma linha em message_attempts (log_message_attempt), que até
 --   aqui ninguém preenchia.
 --
@@ -51,7 +59,10 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns
                   WHERE table_schema = 'public' AND table_name = 'messages'
                     AND column_name = 'manually_resolved_at')
-     OR to_regprocedure('public.log_message_attempt(uuid, integer, text, text, text, integer, jsonb, integer)') IS NULL THEN
+     OR to_regprocedure('public.log_message_attempt(uuid, integer, text, text, text, integer, jsonb, integer)') IS NULL
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema = 'public' AND table_name = 'scheduled_messages'
+                    AND column_name = 'message_id') THEN
     RAISE EXCEPTION 'pre-condicao: aplique 20261011124430 e 20261111160000 antes';
   END IF;
 END
@@ -78,6 +89,7 @@ DECLARE
   v_failed   integer := 0;
   v_legacy   integer := 0;
   v_ambig    integer := 0;
+  v_errors   integer := 0;
 BEGIN
   IF p_min_age IS NULL OR p_min_age < interval '2 minutes'
      OR p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 1000 THEN
@@ -90,7 +102,7 @@ BEGIN
   v_marker := COALESCE(v_marker, 'infinity'::timestamptz);
 
   FOR v_row IN
-    SELECT m.id, m.delivery_attempt_count, m.delivery_claimed_at,
+    SELECT m.id, m.delivery_attempt_count, m.delivery_claimed_at, m.delivery_claimed_by,
            m.delivery_post_started_at, m.status_updated_at, m.created_at,
            c.instance_id
       FROM public.messages AS m
@@ -103,50 +115,63 @@ BEGIN
        AND (m.delivery_claim_token IS NULL OR m.delivery_claim_expires_at <= statement_timestamp())
        -- (b) ambíguas já carimbadas ficam para o painel manual; só as da fixture saem.
        AND (m.delivery_post_started_at IS NULL OR c.instance_id = 'E2E_FIXTURE')
+       -- Agendadas (scheduled_messages.message_id) ficam FORA: hoje o servidor enfileira
+       -- mas não chama a entrega; marcá-las 'failed' aos 10 min seria errado.
+       -- TODO (cartão na PR #3037): ligar o dispatch de agendadas à message-delivery.
+       AND NOT EXISTS (SELECT 1 FROM public.scheduled_messages AS s WHERE s.message_id = m.id)
      ORDER BY COALESCE(m.status_updated_at, m.created_at)
      LIMIT p_limit
      FOR UPDATE OF m SKIP LOCKED
   LOOP
-    v_reason := CASE
-      WHEN v_row.instance_id = 'E2E_FIXTURE' THEN 'conexao_de_teste'
-      WHEN COALESCE(v_row.delivery_attempt_count, 0) = 0 THEN 'nunca_despachada'
-      WHEN v_row.delivery_claimed_at IS NOT NULL AND v_row.delivery_claimed_at >= v_marker THEN 'lease_vencido_sem_post'
-      ELSE NULL
+    BEGIN
+      v_reason := CASE
+        WHEN v_row.instance_id = 'E2E_FIXTURE' THEN 'conexao_de_teste'
+        WHEN COALESCE(v_row.delivery_attempt_count, 0) = 0 THEN 'nunca_despachada'
+        WHEN v_row.delivery_claimed_by = 'edge:message-delivery'
+             AND v_row.delivery_claimed_at IS NOT NULL
+             AND v_row.delivery_claimed_at >= v_marker THEN 'lease_vencido_sem_post'
+        ELSE NULL
+      END;
+
+      IF v_reason IS NULL THEN
+        -- (e) não dá para provar que o POST não saiu: vai para a resolução manual.
+        UPDATE public.messages
+           SET delivery_post_started_at = COALESCE(v_row.delivery_claimed_at, v_row.status_updated_at, v_row.created_at),
+               delivery_last_claim_token = COALESCE(delivery_claim_token, delivery_last_claim_token),
+               delivery_claim_token = NULL, delivery_claimed_at = NULL,
+               delivery_claim_expires_at = NULL, delivery_claimed_by = NULL,
+               updated_at = statement_timestamp()
+         WHERE id = v_row.id;
+        PERFORM public.log_message_attempt(
+          v_row.id, GREATEST(COALESCE(v_row.delivery_attempt_count, 0), 1), 'failed_retryable',
+          'ambiguo_sem_carimbo', 'Envio sem confirmação de saída: aguardando resolução manual.',
+          NULL, NULL, NULL);
+        v_legacy := v_legacy + 1;
+      ELSE
+        UPDATE public.messages
+           SET status = 'failed',
+               status_updated_at = statement_timestamp(),
+               delivery_last_claim_token = COALESCE(delivery_claim_token, delivery_last_claim_token),
+               delivery_claim_token = NULL, delivery_claimed_at = NULL,
+               delivery_claim_expires_at = NULL, delivery_claimed_by = NULL,
+               updated_at = statement_timestamp()
+         WHERE id = v_row.id;
+        PERFORM public.log_message_attempt(
+          v_row.id, GREATEST(COALESCE(v_row.delivery_attempt_count, 0), 1), 'failed_final',
+          v_reason,
+          CASE v_reason
+            WHEN 'conexao_de_teste' THEN 'Mensagem gravada na conexão de teste (E2E); nunca saiu para o cliente.'
+            WHEN 'nunca_despachada' THEN 'A entrega nunca foi iniciada; nada saiu para o WhatsApp.'
+            ELSE 'O envio parou antes de sair para o WhatsApp.'
+          END,
+          NULL, NULL, NULL);
+        v_failed := v_failed + 1;
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      -- Uma linha ruim não derruba a varredura inteira (o bloco desfaz só esta linha).
+      RAISE WARNING 'sweep_stuck_outbound_messages: mensagem % ignorada (%: %)', v_row.id, SQLSTATE, SQLERRM;
+      v_errors := v_errors + 1;
     END;
-
-    IF v_reason IS NULL THEN
-      -- (e) claim antigo sem carimbo: pode ter saído. Vai para a resolução manual.
-      UPDATE public.messages
-         SET delivery_post_started_at = COALESCE(v_row.delivery_claimed_at, v_row.status_updated_at, v_row.created_at),
-             delivery_claim_token = NULL, delivery_claim_expires_at = NULL,
-             updated_at = statement_timestamp()
-       WHERE id = v_row.id;
-      PERFORM public.log_message_attempt(
-        v_row.id, GREATEST(COALESCE(v_row.delivery_attempt_count, 0), 1), 'failed_retryable',
-        'ambiguo_sem_carimbo', 'Envio sem confirmação de saída: aguardando resolução manual.',
-        NULL, NULL, NULL);
-      v_legacy := v_legacy + 1;
-      CONTINUE;
-    END IF;
-
-    UPDATE public.messages
-       SET status = 'failed',
-           status_updated_at = statement_timestamp(),
-           delivery_last_claim_token = COALESCE(delivery_claim_token, delivery_last_claim_token),
-           delivery_claim_token = NULL, delivery_claimed_at = NULL,
-           delivery_claim_expires_at = NULL, delivery_claimed_by = NULL,
-           updated_at = statement_timestamp()
-     WHERE id = v_row.id;
-    PERFORM public.log_message_attempt(
-      v_row.id, GREATEST(COALESCE(v_row.delivery_attempt_count, 0), 1), 'failed_final',
-      v_reason,
-      CASE v_reason
-        WHEN 'conexao_de_teste' THEN 'Mensagem gravada na conexão de teste (E2E); nunca saiu para o cliente.'
-        WHEN 'nunca_despachada' THEN 'A entrega nunca foi iniciada; nada saiu para o WhatsApp.'
-        ELSE 'O envio parou antes de sair para o WhatsApp.'
-      END,
-      NULL, NULL, NULL);
-    v_failed := v_failed + 1;
   END LOOP;
 
   SELECT count(*) INTO v_ambig
@@ -158,7 +183,8 @@ BEGIN
   RETURN jsonb_build_object(
     'failed', v_failed,
     'moved_to_manual', v_legacy,
-    'awaiting_manual', v_ambig
+    'awaiting_manual', v_ambig,
+    'errors', v_errors
   );
 END;
 $function$;

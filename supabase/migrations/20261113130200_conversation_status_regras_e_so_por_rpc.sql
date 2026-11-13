@@ -5,8 +5,10 @@
 --   drop function if exists public.set_conversations_status(uuid[], text, text, text);
 --   drop trigger if exists trg_contacts_conversation_status_rpc_only on public.contacts;
 --   drop function if exists public.guard_conversation_status_direct_update();
---   -- set_conversation_status anterior (aceitava waiting -> archived): reexecutar o
---   -- CREATE OR REPLACE FUNCTION de 20261016010011_set_conversation_status_waiting_para_archived.sql.
+--   -- set_conversation_status anterior: reexecutar o CREATE OR REPLACE FUNCTION
+--   -- public.set_conversation_status de 20261009055051_sec_rls_02_03_oraculo_uuid_contato.sql
+--   -- (corpo vigente em produção, sem oráculo de UUID). NÃO usar o de 20261016010011
+--   -- (reabre o oráculo SEC-RLS-02).
 --   -- FSM e CHECK anteriores: reexecutar o CREATE OR REPLACE FUNCTION
 --   -- public.enforce_conversation_status_transition() e o bloco
 --   -- "ALTER TABLE public.contacts ... chk_conversation_status_values" de
@@ -30,8 +32,8 @@
 --      atendimento não pode sumir da fila sem ninguém atender — precisa ser atendida
 --      (open) ou encerrada (resolved) antes. Erro claro:
 --      'conversation_waiting_cannot_be_archived' (check_violation). Isto supera o ponto
---      da ADR-005 / 20261016010011 que permitia a transição; set_conversation_status é
---      recriada sem esse ramo.
+--      da ADR-005 / 20261016010011 que permitia a transição. set_conversation_status é
+--      recriada a partir do corpo de PRODUÇÃO (20261009055051, sem oráculo de UUID — SEC-RLS-02).
 --      Reabrir sem dono vai para 'waiting' em DOIS passos (archived/resolved -> open
 --      -> waiting, reopen_conversation_core), então não precisa de resolved->waiting.
 --      Linhas legadas em 'pending'/'closed' (se houver) só podem SAIR para um estado
@@ -51,9 +53,10 @@
 --   4. RPC nova public.set_conversations_status(ids[], próximo, esperado, motivo): o
 --      mesmo set_conversation_status para um LOTE numa ida só (arquivar em massa e o
 --      "Desfazer" do front, que antes faziam UPDATE direto). Cada contato passa pela
---      autorização e pela FSM da RPC unitária; o que não pode/não casa é pulado (como
---      o RLS fazia), e a RPC devolve (contact_id, previous_status) do que mudou.
---      Conversa 'waiting' pedida como 'archived' também é pulada (o front avisa quantas).
+--      autorização e pela FSM da RPC unitária, em ordem de id (sem deadlock entre lotes).
+--      Devolve uma linha por id com `outcome` (changed, already_in_state, state_changed,
+--      waiting_cannot_be_archived, invalid_transition, not_authorized) — nada é engolido
+--      em silêncio. Autorização vem antes de qualquer leitura de estado (sem oráculo).
 --
 -- PÓS-CONDIÇÕES: gatilho de guarda presente; RPC de lote só para authenticated.
 
@@ -128,8 +131,11 @@ BEGIN
 END
 $check$;
 
--- set_conversation_status: corpo IDÊNTICO ao de 20261016010011, sem waiting -> archived e
--- com o erro claro da decisão do dono.
+-- set_conversation_status: parte do corpo VIGENTE EM PRODUÇÃO (20261009055051, SEC-RLS-02 —
+-- sem oráculo de UUID: inexistente e fora do alcance recebem a MESMA recusa
+-- 'contact_not_authorized' 42501, depois da autorização). Muda só: recusa explícita de
+-- waiting -> archived (decisão do dono) DEPOIS da autorização e do no-op, para não virar
+-- oráculo de estado.
 CREATE OR REPLACE FUNCTION public.set_conversation_status(
   p_contact_id uuid,
   p_next       text,
@@ -141,24 +147,30 @@ SECURITY DEFINER
 SET search_path TO 'public', 'pg_temp'
 AS $$
 DECLARE
-  v_current TEXT;
-  v_allowed BOOLEAN := FALSE;
+  v_current    TEXT;
+  v_encontrado boolean;
+  v_allowed    BOOLEAN := FALSE;
 BEGIN
   SELECT conversation_status INTO v_current
   FROM public.contacts
   WHERE id = p_contact_id
   FOR UPDATE;
+  v_encontrado := FOUND;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'contact not found: %', p_contact_id;
-  END IF;
-
+  -- Autorização (e, para o chamador comum, também a EXISTÊNCIA) em UM único ponto (SEC-RLS-02).
   PERFORM public.require_contact_edit_permission(p_contact_id);
+
+  -- Chamador privilegiado: require_contact_edit_permission não checa existência; a inexistência
+  -- é recusada com a MESMA exceção de autorização.
+  IF NOT v_encontrado THEN
+    RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
+  END IF;
 
   IF v_current = p_next THEN
     RETURN;
   END IF;
 
+  -- Decisão do dono (2026-11-13): aguardando não é arquivada.
   IF v_current = 'waiting' AND p_next = 'archived' THEN
     RAISE EXCEPTION 'conversation_waiting_cannot_be_archived'
       USING ERRCODE = 'check_violation',
@@ -219,13 +231,14 @@ FOR EACH ROW
 WHEN (OLD.conversation_status IS DISTINCT FROM NEW.conversation_status)
 EXECUTE FUNCTION public.guard_conversation_status_direct_update();
 
-CREATE OR REPLACE FUNCTION public.set_conversations_status(
+DROP FUNCTION IF EXISTS public.set_conversations_status(uuid[], text, text, text);
+CREATE FUNCTION public.set_conversations_status(
   p_contact_ids      uuid[],
   p_next             text,
   p_expected_current text DEFAULT NULL,
   p_reason           text DEFAULT NULL
 )
-RETURNS TABLE (contact_id uuid, previous_status text)
+RETURNS TABLE (contact_id uuid, previous_status text, outcome text)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public', 'pg_temp'
@@ -251,26 +264,50 @@ BEGIN
     RAISE EXCEPTION 'too_many_contacts' USING ERRCODE = '22023';
   END IF;
 
-  FOR v_id IN SELECT DISTINCT unnest(p_contact_ids) LOOP
-    CONTINUE WHEN v_id IS NULL;
+  -- ORDER BY: duas chamadas concorrentes travam as linhas na MESMA ordem (sem deadlock).
+  FOR v_id IN SELECT DISTINCT u.id FROM unnest(p_contact_ids) AS u(id) WHERE u.id IS NOT NULL ORDER BY u.id LOOP
+    contact_id := v_id;
+    previous_status := NULL;
+
+    -- Autorização PRIMEIRO (SEC-RLS-02): inexistente e fora do alcance têm a MESMA
+    -- resposta ('not_authorized') e nenhum estado é revelado antes disso.
+    BEGIN
+      PERFORM public.require_contact_edit_permission(v_id);
+    EXCEPTION WHEN insufficient_privilege THEN
+      outcome := 'not_authorized';
+      RETURN NEXT;
+      CONTINUE;
+    END;
+
     SELECT c.conversation_status INTO v_current
       FROM public.contacts c
      WHERE c.id = v_id
      FOR UPDATE;
-    CONTINUE WHEN NOT FOUND;
-    CONTINUE WHEN v_current IS NOT DISTINCT FROM p_next;
-    CONTINUE WHEN p_expected_current IS NOT NULL AND v_current IS DISTINCT FROM p_expected_current;
-    BEGIN
-      -- Mesma autorização (require_contact_edit_permission) e mesma FSM da RPC unitária.
-      PERFORM public.set_conversation_status(v_id, p_next, p_reason);
-      contact_id := v_id;
-      previous_status := v_current;
+    IF NOT FOUND THEN
+      outcome := 'not_authorized';
       RETURN NEXT;
-    EXCEPTION
-      WHEN insufficient_privilege OR raise_exception OR check_violation THEN
-        -- Sem permissão / transição inválida: pula este contato, como o RLS fazia.
-        NULL;
-    END;
+      CONTINUE;
+    END IF;
+    previous_status := v_current;
+
+    IF v_current IS NOT DISTINCT FROM p_next THEN
+      outcome := 'already_in_state';
+    ELSIF p_expected_current IS NOT NULL AND v_current IS DISTINCT FROM p_expected_current THEN
+      outcome := 'state_changed';
+    ELSE
+      BEGIN
+        -- Mesma autorização e mesma FSM da RPC unitária.
+        PERFORM public.set_conversation_status(v_id, p_next, p_reason);
+        outcome := 'changed';
+      EXCEPTION
+        WHEN insufficient_privilege THEN outcome := 'not_authorized';
+        WHEN check_violation THEN
+          outcome := CASE WHEN SQLERRM LIKE '%conversation_waiting_cannot_be_archived%'
+                          THEN 'waiting_cannot_be_archived' ELSE 'invalid_transition' END;
+        WHEN raise_exception THEN outcome := 'invalid_transition';
+      END;
+    END IF;
+    RETURN NEXT;
   END LOOP;
 END;
 $function$;
@@ -279,7 +316,7 @@ REVOKE ALL ON FUNCTION public.set_conversations_status(uuid[], text, text, text)
 GRANT EXECUTE ON FUNCTION public.set_conversations_status(uuid[], text, text, text) TO authenticated;
 
 COMMENT ON FUNCTION public.set_conversations_status(uuid[], text, text, text) IS
-  'P1-2 (2026-11-13): set_conversation_status em lote (até 500). p_expected_current = só muda quem ainda está nesse estado. Pula sem erro quem não pode/não casa. Devolve (contact_id, previous_status) do que mudou.';
+  'P1-2 (2026-11-13): set_conversation_status em lote (até 500, em ordem de id). p_expected_current = só muda quem ainda está nesse estado. Devolve UMA linha por id: outcome changed | already_in_state | state_changed | waiting_cannot_be_archived | invalid_transition | not_authorized (inexistente e sem permissão têm a mesma resposta; previous_status só é devolvido depois da autorização).';
 
 DO $post$
 BEGIN
@@ -297,6 +334,9 @@ BEGIN
   IF position('conversation_waiting_cannot_be_archived' IN pg_get_functiondef('public.set_conversation_status(uuid, text, text)'::regprocedure)) = 0
      OR position('conversation_waiting_cannot_be_archived' IN pg_get_functiondef('public.enforce_conversation_status_transition()'::regprocedure)) = 0 THEN
     RAISE EXCEPTION 'pos-condicao: waiting -> archived ainda aceito';
+  END IF;
+  IF position('contact not found' IN pg_get_functiondef('public.set_conversation_status(uuid, text, text)'::regprocedure)) > 0 THEN
+    RAISE EXCEPTION 'pos-condicao: set_conversation_status reabriu o oraculo de UUID (SEC-RLS-02)';
   END IF;
 END
 $post$;

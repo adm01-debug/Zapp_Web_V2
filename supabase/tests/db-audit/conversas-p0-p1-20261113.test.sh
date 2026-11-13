@@ -35,11 +35,13 @@ F2="$MIG/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql"
 F3="$MIG/20261113130200_conversation_status_regras_e_so_por_rpc.sql"
 F4="$MIG/20261113130300_conversation_closures_closed_by_do_autor.sql"
 F5="$MIG/20261113130400_varredura_mensagens_presas_em_enviando.sql"
+F6="$MIG/20261113130500_transfer_conversation_cas_sem_dono.sql"
+F7="$MIG/20261113130600_agendadas_conexao_do_contato_caida.sql"
 
 fail() { echo "[FAIL] $*" >&2; exit 1; }
 ok()   { echo "[OK] $*"; }
 
-for f in "$F_TRANSFER_OLD" "$F_SET_STATUS" "$F_CLOSURE_SYNC" "$F_ATTEMPTS" "$F1" "$F2" "$F3" "$F4" "$F5"; do
+for f in "$F_TRANSFER_OLD" "$F_SET_STATUS" "$F_CLOSURE_SYNC" "$F_ATTEMPTS" "$F1" "$F2" "$F3" "$F4" "$F5" "$F6" "$F7"; do
   [[ -f "$f" ]] || fail "migration real ausente: $f"
 done
 
@@ -119,7 +121,19 @@ CREATE TABLE public.messages (
   delivery_claimed_at timestamptz, delivery_claim_expires_at timestamptz,
   delivery_claimed_by text, delivery_last_claim_token uuid,
   delivery_post_started_at timestamptz, manually_resolved_at timestamptz,
-  created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now());
+  created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(),
+  -- CHECK real de 20260909220000: os 4 campos do claim são todos nulos ou todos preenchidos.
+  CONSTRAINT messages_delivery_claim_state CHECK (
+    (delivery_claim_token IS NULL AND delivery_claimed_at IS NULL AND delivery_claim_expires_at IS NULL AND delivery_claimed_by IS NULL)
+    OR (delivery_claim_token IS NOT NULL AND delivery_claimed_at IS NOT NULL AND delivery_claim_expires_at IS NOT NULL
+        AND delivery_claimed_by IS NOT NULL AND delivery_claim_expires_at > delivery_claimed_at
+        AND length(delivery_claimed_by) BETWEEN 1 AND 100)));
+-- HARNESS: agendamentos (20261011133612) — só o vínculo com a mensagem enfileirada.
+CREATE TABLE public.scheduled_messages (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), message_id uuid);
+-- HARNESS: assinatura vigente de dispatch_scheduled_messages (corpo real recriado pela 130600).
+CREATE FUNCTION public.dispatch_scheduled_messages(p_limit integer DEFAULT 50)
+  RETURNS TABLE (scheduled_message_id uuid, outcome text, message_id uuid, failure_reason text)
+  LANGUAGE sql AS $$ SELECT NULL::uuid, NULL::text, NULL::uuid, NULL::text WHERE false $$;
 CREATE UNIQUE INDEX messages_client_msg_uq ON public.messages (contact_id, client_message_id) WHERE client_message_id IS NOT NULL;
 CREATE UNIQUE INDEX messages_group_client_msg_uq ON public.messages (whatsapp_group_id, client_message_id)
   WHERE client_message_id IS NOT NULL AND whatsapp_group_id IS NOT NULL;
@@ -136,7 +150,7 @@ CREATE FUNCTION public.require_contact_edit_permission(p_contact_id uuid) RETURN
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = p_contact_id
                   AND public.can_edit_contact(c.assigned_to, c.queue_id)) THEN
-    RAISE EXCEPTION 'sem permissao' USING ERRCODE = '42501';
+    RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
   END IF;
 END $$;
 CREATE FUNCTION public.is_contact_visible_to_user(uuid, uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT true $$;
@@ -214,8 +228,8 @@ expect_err "pré-condição da 130400 falha fechado sem log_message_attempt" "pr
 psql_q -c "ALTER FUNCTION public.log_message_attempt_x(uuid, integer, text, text, text, integer, jsonb, integer) RENAME TO log_message_attempt" >/dev/null
 
 # ── Aplicar as 5 migrations, 2x cada ─────────────────────────────────────────
-for f in "$F1" "$F2" "$F3" "$F4" "$F5"; do apply "$f"; apply "$f"; done
-ok "5 migrations aplicadas duas vezes (idempotentes)"
+for f in "$F1" "$F2" "$F3" "$F4" "$F5" "$F6" "$F7"; do apply "$f"; apply "$f"; done
+ok "7 migrations aplicadas duas vezes (idempotentes)"
 
 # ── P0-1 ───────────────────────────────────────────────────────────────────
 [[ "$(val "SELECT status FROM public.whatsapp_connections WHERE instance_id='E2E_FIXTURE'")" == disconnected ]] || fail "fixture continua connected"
@@ -259,6 +273,17 @@ out=$(as_user authenticated "$UB" "SELECT public.transfer_conversation(p_contact
 expect_err "P0-3: compare-and-set com dono velho -> 40001" "40001" "$out"
 [[ "$(val "SELECT count(*) FROM public.conversation_events WHERE event_type='transfer'")" == 2 ]] || fail "eventos de transferência"
 ok "P0-3: 2 eventos 'transfer' gravados (antes: 0 em toda a história)"
+[[ "$(val "SELECT oid::regprocedure::text FROM pg_proc WHERE proname='transfer_conversation'")" == "transfer_conversation(uuid,uuid,uuid,text,uuid,boolean)" ]] || fail "130500 não deixou só a de 6 args"
+psql_q -c "INSERT INTO public.contacts (id, phone, assigned_to, conversation_status) VALUES ('d0000000-0000-4000-8000-000000000002','5511900000002',NULL,'waiting')" >/dev/null
+psql_q -c "UPDATE public.contacts SET assigned_to='$PB', conversation_status='open' WHERE id='d0000000-0000-4000-8000-000000000002'" >/dev/null
+out=$(as_user authenticated "$UB" "SELECT public.transfer_conversation(p_contact_id => 'd0000000-0000-4000-8000-000000000002', p_to_agent_id => '$PA', p_expect_unassigned => true);" || true)
+expect_err "130500: tela viu SEM dono, alguém assumiu antes -> 40001" "40001" "$out"
+out=$(as_user authenticated "$UB" "SELECT public.transfer_conversation(p_contact_id => 'd0000000-0000-4000-8000-000000000002', p_to_agent_id => '$PA', p_expected_agent_id => '$PB', p_expect_unassigned => true);" || true)
+expect_err "130500: os dois compare-and-set juntos -> 22023" "22023" "$out"
+psql_q -c "UPDATE public.contacts SET assigned_to=NULL, conversation_status='waiting' WHERE id='d0000000-0000-4000-8000-000000000002'" >/dev/null
+as_user authenticated "$UA" "SELECT public.transfer_conversation(p_contact_id => 'd0000000-0000-4000-8000-000000000002', p_to_agent_id => '$PA', p_expect_unassigned => true);" >/dev/null
+[[ "$(val "SELECT assigned_to||'/'||conversation_status FROM public.contacts WHERE id='d0000000-0000-4000-8000-000000000002'")" == "$PA/open" ]] || fail "sem dono -> agente"
+ok "130500: sem dono de verdade -> transfere (waiting -> open)"
 
 # ── P1-2 ───────────────────────────────────────────────────────────────────
 psql_q >/dev/null <<SQL
@@ -272,9 +297,10 @@ out=$(as_user authenticated "$UA" "UPDATE public.contacts SET conversation_statu
 expect_err "P1-2: UPDATE direto de conversation_status por authenticated recusado" "conversation_status_requires_rpc" "$out"
 out=$(as_user authenticated "$UA" "UPDATE public.contacts SET name='novo' WHERE id='d0000000-0000-4000-8000-000000000020'; SELECT 'OK';")
 expect_err "P1-2: UPDATE de outra coluna segue liberado" "OK" "$out"
-out=$(as_user authenticated "$UA" "SELECT contact_id||':'||previous_status FROM public.set_conversations_status(ARRAY['d0000000-0000-4000-8000-000000000020','d0000000-0000-4000-8000-000000000021','d0000000-0000-4000-8000-000000000022','d0000000-0000-4000-8000-000000000023']::uuid[], 'archived');")
+out=$(as_user authenticated "$UA" "SELECT string_agg(right(contact_id::text,2)||':'||coalesce(previous_status,'-')||':'||outcome, ',' ORDER BY contact_id) FROM public.set_conversations_status(ARRAY['d0000000-0000-4000-8000-000000000023','d0000000-0000-4000-8000-000000000022','d0000000-0000-4000-8000-000000000021','d0000000-0000-4000-8000-000000000020','d0000000-0000-4000-8000-0000000000ff']::uuid[], 'archived');")
 [[ "$(val "SELECT string_agg(right(id::text,2)||conversation_status, ',' ORDER BY id) FROM public.contacts WHERE id::text LIKE 'd0000000-0000-4000-8000-00000000002%'")" == "20archived,21archived,22open,23archived" ]] || fail "lote: $out"
-ok "P1-2: lote arquiva o que pode; pula contato de outro dono (sem erro)"
+[[ "$out" == *"20:open:changed,21:open:changed,22:-:not_authorized,23:resolved:changed,ff:-:not_authorized"* ]] || fail "outcomes do lote: $out"
+ok "P1-2: lote devolve o resultado de CADA id (nada engolido); de outro dono e inexistente = not_authorized, sem estado"
 as_user authenticated "$UA" "SELECT count(*) FROM public.set_conversations_status(ARRAY['d0000000-0000-4000-8000-000000000020']::uuid[], 'resolved');" >/dev/null
 [[ "$(val "SELECT conversation_status FROM public.contacts WHERE id='d0000000-0000-4000-8000-000000000020'")" == archived ]] || fail "archived->resolved deveria ser recusado"
 ok "P1-2: archived -> resolved recusado pela FSM (pulado no lote)"
@@ -286,6 +312,13 @@ out=$(psql_q -c "UPDATE public.contacts SET conversation_status='pending' WHERE 
 expect_err "P1-2: ninguém entra em 'pending' (CHECK/FSM, nem postgres)" "ERROR" "$out"
 [[ "$(val "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname='chk_conversation_status_values'")" != *pending* ]] || fail "CHECK ainda aceita pending"
 ok "P1-2: CHECK só com os 4 estados canônicos (sem linhas legadas)"
+# SEC-RLS-02 (revisão #3037): set_conversation_status não pode virar oráculo de UUID.
+o1=$(as_user authenticated "$UA" "SELECT public.set_conversation_status('d0000000-0000-4000-8000-0000000000fe','archived');" || true)
+o2=$(as_user authenticated "$UA" "SELECT public.set_conversation_status('d0000000-0000-4000-8000-000000000022','archived');" || true)
+[[ "$o1" == *42501*contact_not_authorized* && "$o2" == *42501*contact_not_authorized* ]] || fail "oráculo: inexistente=[$o1] alheio=[$o2]"
+[[ "$(val "SELECT position('contact not found' IN pg_get_functiondef('public.set_conversation_status(uuid,text,text)'::regprocedure))")" == 0 ]] || fail "corpo ainda tem 'contact not found'"
+o3=$(psql_q -c "SET ROLE service_role; SELECT set_config('request.jwt.claims','{\"role\":\"service_role\"}',false); SELECT public.set_conversation_status('d0000000-0000-4000-8000-0000000000fe','archived');" 2>&1 || true)
+expect_err "SEC-RLS-02: inexistente e alheio têm a MESMA recusa (42501 contact_not_authorized); sem 'contact not found'" "contact_not_authorized" "$o3"
 
 # ── Decisão do dono 2026-11-13: waiting NÃO vai direto para archived ───────
 psql_q -c "INSERT INTO public.contacts (id, phone, assigned_to, conversation_status) VALUES ('d0000000-0000-4000-8000-000000000030','5511900000030',NULL,'waiting'), ('d0000000-0000-4000-8000-000000000031','5511900000031','$PA','open')" >/dev/null
@@ -321,41 +354,59 @@ MARK=$(val "SELECT value FROM public.global_settings WHERE key='outbound_sweeper
 [[ -n "$MARK" ]] || fail "marcador ausente"
 C=d0000000-0000-4000-8000-000000000011
 REAL=c0000000-0000-4000-8000-000000000001; FIX=e2e0e2e0-0000-4000-a000-e2e000000001
+M=90000000-0000-4000-8000-0000000000
 psql_q >/dev/null <<SQL
 INSERT INTO public.messages (id, contact_id, sender, status, whatsapp_connection_id, agent_id, created_at, status_updated_at,
-  delivery_attempt_count, delivery_claimed_at, delivery_claim_token, delivery_claim_expires_at, delivery_post_started_at) VALUES
+  delivery_attempt_count, delivery_claimed_at, delivery_claim_token, delivery_claim_expires_at, delivery_claimed_by, delivery_post_started_at) VALUES
  -- 91 fixture, mesmo com POST carimbado: nenhum cliente real -> failed
- ('90000000-0000-4000-8000-000000000091','$C','agent','sending','$FIX','$PA', now()-interval '3 days', now()-interval '3 days', 1, now()-interval '3 days', NULL, NULL, now()-interval '3 days'),
+ ('${M}91','$C','agent','sending','$FIX','$PA', now()-interval '3 days', now()-interval '3 days', 1, NULL, NULL, NULL, NULL, now()-interval '3 days'),
  -- 92 nunca reivindicada -> failed
- ('90000000-0000-4000-8000-000000000092','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 0, NULL, NULL, NULL, NULL),
- -- 93 claim depois do marcador, lease vencido, sem carimbo -> failed (POST não saiu)
- ('90000000-0000-4000-8000-000000000093','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 1, clock_timestamp()+interval '1 second', gen_random_uuid(), now()-interval '1 second', NULL),
- -- 94 claim ANTES do marcador, sem carimbo -> ambígua: vai para resolução manual
- ('90000000-0000-4000-8000-000000000094','$C','agent','sending','$REAL','$PA', now()-interval '2 days', now()-interval '2 days', 2, now()-interval '2 days', NULL, NULL, NULL),
+ ('${M}92','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 0, NULL, NULL, NULL, NULL, NULL),
+ -- 93 claim da edge message-delivery DEPOIS do marcador, lease vencido, sem carimbo -> failed
+ ('${M}93','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 1, clock_timestamp(), gen_random_uuid(), clock_timestamp()+interval '1 second', 'edge:message-delivery', NULL),
+ -- 94 claim ANTES do marcador (4 campos preenchidos, vencido), sem carimbo -> resolução manual
+ ('${M}94','$C','agent','sending','$REAL','$PA', now()-interval '2 days', now()-interval '2 days', 2, now()-interval '2 days', gen_random_uuid(), now()-interval '2 days'+interval '90 seconds', 'edge:message-delivery', NULL),
  -- 95 POST carimbado (ambígua) -> intocada
- ('90000000-0000-4000-8000-000000000095','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 1, now()-interval '1 hour', NULL, NULL, now()-interval '1 hour'),
+ ('${M}95','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 1, NULL, NULL, NULL, NULL, now()-interval '1 hour'),
  -- 96 recente -> intocada
- ('90000000-0000-4000-8000-000000000096','$C','agent','sending','$REAL','$PA', now(), now(), 0, NULL, NULL, NULL, NULL),
+ ('${M}96','$C','agent','sending','$REAL','$PA', now(), now(), 0, NULL, NULL, NULL, NULL, NULL),
  -- 97 lease vivo -> intocada
- ('90000000-0000-4000-8000-000000000097','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 1, now(), gen_random_uuid(), now()+interval '5 minutes', NULL),
+ ('${M}97','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 1, now(), gen_random_uuid(), now()+interval '5 minutes', 'edge:message-delivery', NULL),
  -- 98 já resolvida manualmente -> intocada
- ('90000000-0000-4000-8000-000000000098','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 0, NULL, NULL, NULL, NULL);
-UPDATE public.messages SET manually_resolved_at = now() WHERE id = '90000000-0000-4000-8000-000000000098';
+ ('${M}98','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 0, NULL, NULL, NULL, NULL, NULL),
+ -- 99 claim da AUSÊNCIA (outro worker) depois do marcador, vencido, sem carimbo -> manual (não failed)
+ ('${M}99','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 1, clock_timestamp(), gen_random_uuid(), clock_timestamp()+interval '1 second', 'edge:evolution-webhook:away', NULL),
+ -- 9a criada por AGENDAMENTO -> fora da varredura
+ ('${M}9a','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 0, NULL, NULL, NULL, NULL, NULL),
+ -- 9b linha que falha no UPDATE (gatilho do teste) -> WARNING, não derruba as outras
+ ('${M}9b','$C','agent','sending','$REAL','$PA', now()-interval '1 hour', now()-interval '1 hour', 0, NULL, NULL, NULL, NULL, NULL);
+UPDATE public.messages SET manually_resolved_at = now() WHERE id = '${M}98';
+INSERT INTO public.scheduled_messages (message_id) VALUES ('${M}9a');
+CREATE FUNCTION pg_temp_falha_9b() RETURNS trigger LANGUAGE plpgsql AS \$f\$ BEGIN
+  IF NEW.id = '${M}9b' THEN RAISE EXCEPTION 'falha simulada'; END IF; RETURN NEW; END \$f\$;
+CREATE TRIGGER trg_teste_falha_9b BEFORE UPDATE ON public.messages FOR EACH ROW EXECUTE FUNCTION pg_temp_falha_9b();
 SQL
-sleep 2
+sleep 3
 out=$(as_user authenticated "$UA" "SELECT public.sweep_stuck_outbound_messages();" || true)
 expect_err "P1-1: authenticated não executa a varredura" "42501" "$out"
-RES=$(val "SELECT public.sweep_stuck_outbound_messages()")
-[[ "$RES" == '{"failed":3,"awaiting_manual":2,"moved_to_manual":1}' ]] || fail "resultado da varredura: $RES"
-ok "P1-1: varredura -> 3 failed, 1 movida para resolução manual, 2 aguardando manual"
+RES=$(val "WITH r AS (SELECT public.sweep_stuck_outbound_messages() AS j) SELECT (j->>'failed')||'/'||(j->>'moved_to_manual')||'/'||(j->>'awaiting_manual')||'/'||(j->>'errors') FROM r")
+[[ "$RES" == "3/2/3/1" ]] || fail "resultado da varredura (failed/manual/aguardando/erros): $RES"
+ok "P1-1: varredura -> 3 failed, 2 para resolução manual, 1 linha com erro não derrubou as demais"
 STATES=$(val "SELECT string_agg(right(id::text,2)||':'||status||':'||(delivery_post_started_at IS NOT NULL)::text, ',' ORDER BY id) FROM public.messages WHERE id::text LIKE '90000000%'")
-[[ "$STATES" == "91:failed:true,92:failed:false,93:failed:false,94:sending:true,95:sending:true,96:sending:false,97:sending:false,98:sending:false" ]] || fail "estados: $STATES"
-ok "P1-1: nunca reenvia; ambíguas ficam para o painel; recentes/lease vivo/resolvidas intocadas"
+[[ "$STATES" == "91:failed:true,92:failed:false,93:failed:false,94:sending:true,95:sending:true,96:sending:false,97:sending:false,98:sending:false,99:sending:true,9a:sending:false,9b:sending:false" ]] || fail "estados: $STATES"
+ok "P1-1: nunca reenvia; ambíguas e outros workers vão para o painel; agendada/recente/lease vivo/resolvida intocadas"
+CLAIM=$(val "SELECT string_agg(right(id::text,2)||':'||(delivery_claim_token IS NULL AND delivery_claimed_at IS NULL AND delivery_claim_expires_at IS NULL AND delivery_claimed_by IS NULL)::text||':'||(delivery_last_claim_token IS NOT NULL)::text, ',' ORDER BY id) FROM public.messages WHERE id IN ('${M}93','${M}94','${M}99')")
+[[ "$CLAIM" == "93:true:true,94:true:true,99:true:true" ]] || fail "campos do claim: $CLAIM"
+ok "P1-1: os 4 campos do claim são zerados juntos (CHECK messages_delivery_claim_state) e o token vai para delivery_last_claim_token"
 ATT=$(val "SELECT string_agg(right(message_id::text,2)||':'||outcome||':'||error_code, ',' ORDER BY message_id) FROM public.message_attempts")
-[[ "$ATT" == "91:failed_final:conexao_de_teste,92:failed_final:nunca_despachada,93:failed_final:lease_vencido_sem_post,94:failed_retryable:ambiguo_sem_carimbo" ]] || fail "message_attempts: $ATT"
+[[ "$ATT" == "91:failed_final:conexao_de_teste,92:failed_final:nunca_despachada,93:failed_final:lease_vencido_sem_post,94:failed_retryable:ambiguo_sem_carimbo,99:failed_retryable:ambiguo_sem_carimbo" ]] || fail "message_attempts: $ATT"
 ok "P1-1: message_attempts preenchida com o motivo de cada decisão"
-RES2=$(val "SELECT public.sweep_stuck_outbound_messages()")
-[[ "$RES2" == '{"failed":0,"awaiting_manual":2,"moved_to_manual":0}' ]] || fail "segunda varredura não é idempotente: $RES2"
-ok "P1-1: segunda varredura não mexe em nada (idempotente)"
+RES2=$(val "WITH r AS (SELECT public.sweep_stuck_outbound_messages() AS j) SELECT (j->>'failed')||'/'||(j->>'moved_to_manual')||'/'||(j->>'errors') FROM r")
+[[ "$RES2" == "0/0/1" ]] || fail "segunda varredura: $RES2"
+ok "P1-1: segunda varredura não mexe em nada (só a linha que sempre falha avisa de novo)"
+
+# ── 130600: agendada com conexão do contato caída -> conexao_invalida ──────
+[[ "$(val "SELECT position('contact_whatsapp_connection_disconnected' IN pg_get_functiondef('public.dispatch_scheduled_messages(integer)'::regprocedure)) > 0")" == t ]] || fail "130600"
+ok "130600: dispatch_scheduled_messages mapeia contact_whatsapp_connection_disconnected -> conexao_invalida"
 
 echo "TODOS OS CENÁRIOS PASSARAM"
