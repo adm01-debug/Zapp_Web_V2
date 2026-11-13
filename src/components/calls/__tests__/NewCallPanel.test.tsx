@@ -8,6 +8,8 @@ const renderPainel = () => render(<TooltipProvider><NewCallPanel /></TooltipProv
 
 const dispatchStartCall = vi.fn();
 const hangup = vi.fn();
+const reconectarLinha = vi.fn();
+let sipReason: string | null = null;
 const buscarContatos = vi.fn();
 const contatoJoao = { id: 'c1', name: 'João Silva', phone: '11999998888' };
 let sessao = { status: 'idle' };
@@ -25,7 +27,8 @@ vi.mock('@/providers/CallSessionProvider', () => ({
     hangup,
     session: sessao,
     sipStatus,
-    sipReason: null,
+    sipReason,
+    reconectarLinha,
   }),
 }));
 vi.mock('@/hooks/calls/useCallChannels', () => ({
@@ -39,6 +42,8 @@ describe('NewCallPanel (T56/T59/T60)', () => {
   beforeEach(() => {
     dispatchStartCall.mockReset();
     hangup.mockReset();
+    reconectarLinha.mockReset();
+    sipReason = null;
     buscarContatos.mockReset().mockResolvedValue({ data: [contatoJoao] });
     sessao = { status: 'idle' };
     pendente = null;
@@ -205,5 +210,23 @@ describe('NewCallPanel (T56/T59/T60)', () => {
 
     expect(dispatchStartCall).toHaveBeenCalledTimes(1);
     expect(dispatchStartCall.mock.calls[0][0]).not.toHaveProperty('contactId');
+  });
+
+  it('linha VoIP parada nesta aba: oferece "Reconectar linha" e o clique pede a reconexão', () => {
+    sipStatus = 'idle';
+    voip = { canDial: false, reason: 'voip_unavailable' };
+    renderPainel();
+    fireEvent.click(screen.getByTestId('tel-reconnect-line'));
+    expect(reconectarLinha).toHaveBeenCalledTimes(1);
+  });
+
+  it('não oferece reconectar com a linha registrada, conectando ou em outra aba', () => {
+    for (const [status, motivo] of [['registered', null], ['connecting', null], ['reconnecting', null], ['idle', 'line_in_use_other_tab']] as const) {
+      sipStatus = status;
+      sipReason = motivo;
+      const { unmount } = renderPainel();
+      expect(screen.queryByTestId('tel-reconnect-line')).toBeNull();
+      unmount();
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { SUPABASE_URL } from '@/integrations/supabase/client';
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
 import { useNetworkStatus } from './useNetworkStatus';
 
@@ -85,9 +85,24 @@ export const CONNECTIVITY_FAILURES_BEFORE_OFFLINE = 3;
  */
 export const CONNECTIVITY_HEALTH_PATH = '/auth/v1/health';
 
-/** URL sondada: o endpoint de saúde do próprio projeto Supabase. */
-export function connectivityProbeUrl(baseUrl: string = SUPABASE_URL): string {
-  return `${baseUrl.replace(/\/+$/, '')}${CONNECTIVITY_HEALTH_PATH}`;
+/**
+ * URL sondada: o endpoint de saúde do próprio projeto Supabase, com a chave
+ * pública (`anon`) na QUERY STRING.
+ *
+ * Sem a chave, o gateway (Kong) do Supabase Cloud responde 401 a
+ * `/auth/v1/health` — a sonda "funcionava" (401 também prova que o backend
+ * respondeu), mas cada batida virava um `Failed to load resource: 401` no
+ * console de produção. A chave vai na query (o Kong aceita `?apikey=`) e NÃO
+ * em cabeçalho: um cabeçalho próprio tiraria o GET do grupo "simples" e
+ * obrigaria um preflight de CORS a cada sonda. A `anon` é pública por design
+ * (já vai no bundle, ver `@/integrations/supabase/client`).
+ */
+export function connectivityProbeUrl(
+  baseUrl: string = SUPABASE_URL,
+  anonKey: string | undefined = SUPABASE_ANON_KEY,
+): string {
+  const url = `${baseUrl.replace(/\/+$/, '')}${CONNECTIVITY_HEALTH_PATH}`;
+  return anonKey ? `${url}?apikey=${encodeURIComponent(anonKey)}` : url;
 }
 
 /** Delay da próxima tentativa: dobra por falha, limitado ao teto. */

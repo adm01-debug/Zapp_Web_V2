@@ -45,6 +45,21 @@ export function useEvolutionApi() {
   const checkWhatsAppNumbers = useCallback((instanceName: string, numbers: string[]) => callApi('check-numbers', { instanceName, numbers }), [callApi]);
   const getMediaBase64 = useCallback((instanceName: string, message: object, convertToMp4?: boolean) => callApi('get-media-base64', { instanceName, message, convertToMp4 }), [callApi]);
 
+  // Restauradas após o #2054 (decisão do dono, 12/11) — contrato pré-SL-075.
+  // Só existem na Evolution v2; na GO a Edge responde `notSupported` (vira erro no callApi).
+  const findChats = useCallback((instanceName: string, page?: number, offset?: number) => callApi('find-chats', { instanceName, page, offset }, 'GET'), [callApi]);
+  const offerCall = useCallback((instanceName: string, number: string, isVideo?: boolean, callDuration?: number) =>
+    callApi('offer-call', { instanceName, number, isVideo, callDuration }), [callApi]);
+  // Templates da Meta (WhatsApp Business Cloud API), não os templates locais (`whatsapp_templates`).
+  const createTemplate = useCallback((instanceName: string, templateData: object) => withToast('create-template', { instanceName, ...templateData }, 'Template enviado para aprovação', 'Erro ao criar template'), [withToast]);
+  const findTemplates = useCallback((instanceName: string) => callApi('find-templates', { instanceName }, 'GET'), [callApi]);
+  const deleteTemplate = useCallback((instanceName: string, templateData: object) => withToast('delete-template', { instanceName, ...templateData }, 'Template excluído', 'Erro ao excluir template', 'DELETE'), [withToast]);
+  // Catálogo / coleções de um número WhatsApp Business
+  const getBusinessCatalog = useCallback((instanceName: string, number: string, limit?: number, cursor?: string) =>
+    callApi('get-catalog', { instanceName, number, limit, cursor }), [callApi]);
+  const getBusinessCollections = useCallback((instanceName: string, number: string, limit?: number, cursor?: string) =>
+    callApi('get-collections', { instanceName, number, limit, cursor }), [callApi]);
+
   // Bloquear / desbloquear
   const updateBlockStatus = useCallback((instanceName: string, number: string, status: 'block' | 'unblock') =>
     withToast('update-block-status', { instanceName, number, status }, status === 'block' ? 'Contato bloqueado' : 'Contato desbloqueado', 'Erro ao atualizar bloqueio'), [withToast]);
@@ -63,5 +78,8 @@ export function useEvolutionApi() {
     findContacts, checkWhatsAppNumbers, getMediaBase64,
     // Bloquear / desbloquear
     updateBlockStatus,
+    // Restauradas após o #2054
+    findChats, offerCall, createTemplate, findTemplates, deleteTemplate,
+    getBusinessCatalog, getBusinessCollections,
   };
 }
