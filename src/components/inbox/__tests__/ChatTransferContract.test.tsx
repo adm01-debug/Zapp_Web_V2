@@ -265,6 +265,8 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
       p_to_agent_id: 'colega-profile',
       p_to_queue_id: undefined,
       p_note: 'Cliente pediu urgência',
+      // P0-3: compare-and-set do dono que a tela mostra (40001 se mudou de mão).
+      p_expected_agent_id: 'me-profile',
     });
     // Nenhuma escrita solta: update+evento vivem dentro da transação da função.
     expect(mocks.from).not.toHaveBeenCalled();
@@ -292,6 +294,8 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
       p_to_agent_id: undefined,
       p_to_queue_id: 'queue-2',
       p_note: 'Fila com contexto',
+      // P0-3: compare-and-set do dono que a tela mostra (40001 se mudou de mão).
+      p_expected_agent_id: 'me-profile',
     });
     expect(mocks.from).not.toHaveBeenCalled();
 

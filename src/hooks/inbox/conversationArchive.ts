@@ -20,6 +20,46 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type ConversationStatus = 'open' | 'waiting' | 'resolved' | 'archived';
 
+interface StatusChangeRow {
+  contact_id: string;
+  previous_status: string | null;
+}
+
+type SetConversationsStatusRpc = {
+  rpc: (
+    fn: 'set_conversations_status',
+    args: { p_contact_ids: string[]; p_next: ConversationStatus; p_expected_current?: string },
+  ) => PromiseLike<{ data: StatusChangeRow[] | null; error: Error | null }>;
+};
+
+/**
+ * Muda o status de um lote pela RPC `set_conversations_status` (migration
+ * 20261113130200). UPDATE direto em `contacts.conversation_status` passou a ser
+ * recusado no banco (P1-2): toda mudança passa pela mesma autorização e pela
+ * mesma máquina de estados de `set_conversation_status`. `expectedCurrent` só
+ * mexe em quem AINDA está nesse estado. Devolve (id → status anterior) do que
+ * mudou; contato sem permissão/transição inválida é pulado (como o RLS fazia).
+ */
+export async function moveConversationsStatus(
+  contactIds: string[],
+  next: ConversationStatus,
+  expectedCurrent?: ConversationStatus,
+): Promise<Map<string, ConversationStatus>> {
+  const moved = new Map<string, ConversationStatus>();
+  if (contactIds.length === 0) return moved;
+  const client = supabase as unknown as SetConversationsStatusRpc;
+  const { data, error } = await client.rpc('set_conversations_status', {
+    p_contact_ids: contactIds,
+    p_next: next,
+    ...(expectedCurrent ? { p_expected_current: expectedCurrent } : {}),
+  });
+  if (error) throw error;
+  for (const row of data ?? []) {
+    moved.set(row.contact_id, (row.previous_status ?? 'open') as ConversationStatus);
+  }
+  return moved;
+}
+
 interface ContactStatusRow {
   id: string;
   conversation_status: string | null;
@@ -70,22 +110,14 @@ export async function archiveConversations(
     throw new Error('Não foi possível ler o estado de todas as conversas selecionadas');
   }
 
-  const { data, error } = await supabase
-    .from('contacts')
-    .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
-    .in('id', contactIds)
-    .select('id');
-  if (error) throw error;
-
-  const arquivadas = ((data ?? []) as { id: string }[]).map((row) => row.id);
-  if (arquivadas.length === 0) {
+  const movidas = await moveConversationsStatus(contactIds, 'archived');
+  if (movidas.size === 0) {
     throw new Error('Nenhuma conversa foi arquivada');
   }
 
   const confirmadas = new Map<string, ConversationStatus>();
-  for (const id of arquivadas) {
-    const anterior = anteriores.get(id);
-    if (anterior) confirmadas.set(id, anterior);
+  for (const [id, anteriorNoBanco] of movidas) {
+    confirmadas.set(id, anteriores.get(id) ?? anteriorNoBanco);
     announce(id, 'archived');
   }
   return confirmadas;
@@ -93,7 +125,10 @@ export async function archiveConversations(
 
 /**
  * Restaura o status anterior de cada conversa: agrupa os ids pelo valor
- * anterior e faz UMA escrita por valor distinto.
+ * anterior e faz UMA escrita por valor distinto. A máquina de estados só deixa
+ * sair de 'archived' para 'open'; para voltar a waiting/resolved são dois passos
+ * (archived → open → anterior), sempre só em quem AINDA está no estado esperado —
+ * conversa reaberta por mensagem nova durante a janela do desfazer não é forçada.
  */
 export async function restoreConversationStatuses(
   anteriores: Map<string, ConversationStatus>,
@@ -108,11 +143,12 @@ export async function restoreConversationStatuses(
   }
 
   for (const [status, ids] of porStatus) {
-    const { error } = await supabase
-      .from('contacts')
-      .update({ conversation_status: status, updated_at: new Date().toISOString() })
-      .in('id', ids);
-    if (error) throw error;
-    for (const id of ids) announce(id, status);
+    if (status === 'archived') continue;
+    const abertas = [...(await moveConversationsStatus(ids, 'open', 'archived')).keys()];
+    if (status === 'open') {
+      for (const id of abertas) announce(id, 'open');
+      continue;
+    }
+    for (const id of (await moveConversationsStatus(abertas, status, 'open')).keys()) announce(id, status);
   }
 }

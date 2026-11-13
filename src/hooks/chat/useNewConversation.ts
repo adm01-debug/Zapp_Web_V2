@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
+import { describeWhatsAppDisconnected, withoutTestFixtureConnections, WHATSAPP_DISCONNECTED_TITLE } from '@/lib/whatsapp/sendConnection';
 
 interface ContactResult {
   id: string;
@@ -39,14 +40,16 @@ export function useNewConversation(
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    supabase.from('whatsapp_connections').select('id, name').eq('status', 'connected')
+    supabase.from('whatsapp_connections').select('id, name, instance_id').eq('status', 'connected')
       .then(({ data, error }) => {
         if (cancelled) return;
         // Sem resposta boa não dá para afirmar que a conexão do contato caiu.
         if (error) return;
-        setConnections(data ?? []);
-        if (data && data.length > 0) {
-          setSelectedConnection(data[0].id);
+        // P0-1: a conexão de teste do E2E nunca aparece no seletor de envio.
+        const reais = withoutTestFixtureConnections(data).map(({ id, name }) => ({ id, name }));
+        setConnections(reais);
+        if (reais.length > 0) {
+          setSelectedConnection(reais[0].id);
         }
         connectionsLoadedRef.current = true;
       });
@@ -152,7 +155,11 @@ export function useNewConversation(
       onConversationStarted?.(contactId);
       onClose?.();
       resetForm();
-    } catch { toast.error('Erro ao enviar mensagem'); }
+    } catch (err) {
+      const desconectado = describeWhatsAppDisconnected(err);
+      if (desconectado) toast.error(WHATSAPP_DISCONNECTED_TITLE, { description: desconectado });
+      else toast.error('Erro ao enviar mensagem');
+    }
     finally { setIsSending(false); }
   };
 

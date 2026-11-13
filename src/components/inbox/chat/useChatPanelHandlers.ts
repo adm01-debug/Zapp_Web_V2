@@ -27,6 +27,7 @@ import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { CHAR_LIMIT } from './useChatInputLogic';
 import { sendQueue } from '@/hooks/chat/sendQueue';
+import { describeWhatsAppDisconnected, WHATSAPP_DISCONNECTED_TITLE } from '@/lib/whatsapp/sendConnection';
 
 /** Tipos de mensagem do chat com representação textual direta no transporte. */
 const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
@@ -369,7 +370,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // texto novo — nada some e o toast "Tente novamente" tem o que reenviar.
       setInputValue((atual) => (atual === '' ? originalText : `${originalText}\n${atual}`));
       if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
-      toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+      // P0-1: conexão do contato fora do ar diz isso, em vez de "tente novamente".
+      const desconectado = describeWhatsAppDisconnected(err);
+      toast(desconectado
+        ? { title: WHATSAPP_DISCONNECTED_TITLE, description: desconectado, variant: 'destructive' }
+        : { title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
     }
   }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
 

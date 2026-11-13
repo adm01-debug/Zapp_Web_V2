@@ -33,7 +33,7 @@
  * para o gate de catálogo continuar vendo os literais de RPC no chamador.
  */
 
-export type EvolutionActionKind = 'control' | 'send' | 'read';
+export type EvolutionActionKind = 'control' | 'send' | 'read' | 'message';
 
 /**
  * Ações que mudam estado/configuração da conexão, da instância, da conta, das
@@ -72,12 +72,8 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   // etiquetas / bloqueio
   'handle-label',
   'update-block-status',
-  // mensagens — editar/apagar conteúdo (inclusive "para todos") destrói ou
-  // reescreve a trilha de mensagens: restrito a admin/supervisor.
-  'delete-message',
-  'update-message',
-  'edit-message',
-  'delete-for-everyone',
+  // mensagens: editar/apagar saíram daqui para MESSAGE_AUTHOR_ACTIONS (decisão
+  // do dono, 2026-11-13 — o autor edita/apaga a PRÓPRIA mensagem).
   // R2EXT-AGENDA: leituras de dado instance-wide (fora da visibilidade do
   // agente) e de configuração/credencial do provedor passam a exigir
   // admin/supervisor. (SL-075 removeu integrações e rotas legadas do handler.)
@@ -124,6 +120,21 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * P1-GO-5 (auditoria Conversas 2026-11-13, decisão do dono): editar/apagar
+ * mensagem. Admin/supervisor seguem com acesso total; o atendente pode editar ou
+ * apagar SÓ a mensagem que ELE enviou. A autoria é verificada no servidor
+ * (`messages.external_id` = id do provedor no corpo, `sender = 'agent'`,
+ * `agent_id` = perfil do chamador, conexão da mensagem = instância da chamada);
+ * o corpo do chamador nunca decide sozinho.
+ */
+export const MESSAGE_AUTHOR_ACTIONS: ReadonlySet<string> = new Set([
+  'delete-message',
+  'update-message',
+  'edit-message',
+  'delete-for-everyone',
+]);
+
+/**
  * Leituras: GETs e consultas (POST de find/check) que não alteram estado no
  * provedor E não entregam dado fora da visibilidade do agente nem configuração
  * do provedor. Continuam liberadas para qualquer usuário autenticado —
@@ -155,6 +166,7 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
  */
 export function classifyEvolutionAction(action: string): EvolutionActionKind {
   if (CONTROL_ACTIONS.has(action)) return 'control';
+  if (MESSAGE_AUTHOR_ACTIONS.has(action)) return 'message';
   if (SEND_ACTIONS.has(action)) return 'send';
   if (READ_ACTIONS.has(action)) return 'read';
   return 'control';
@@ -184,6 +196,61 @@ export function decideSendAuthz(opts: {
     allowed: false,
     status: 403,
     message: 'Sem permissão para enviar para este contato/conexão.',
+  };
+}
+
+/**
+ * Id do provedor (WhatsApp) da mensagem-alvo de editar/apagar, nas formas que o
+ * front e o tradutor GO usam: `messageId` (edit-message), `id` (delete-message),
+ * `key.id` (update-message / delete-for-everyone). Só aceita string não vazia de
+ * até 512 caracteres; qualquer outra coisa devolve null (o gate nega).
+ */
+export function extractTargetMessageExternalId(body: Record<string, unknown>): string | null {
+  const key = body.key && typeof body.key === 'object' ? body.key as Record<string, unknown> : null;
+  for (const candidate of [body.messageId, body.id, key?.id]) {
+    if (typeof candidate === 'string') {
+      const value = candidate.trim();
+      if (value.length > 0 && value.length <= 512) return value;
+    }
+  }
+  return null;
+}
+
+/** Linha de `messages` relevante para decidir autoria (lida com service role). */
+export interface MessageAuthorRow {
+  sender: string | null;
+  agent_id: string | null;
+  /** instance_id da conexão gravada na mensagem (null se a mensagem não tem conexão). */
+  connection_instance: string | null;
+}
+
+/**
+ * Decisão de editar/apagar mensagem: admin/supervisor sempre; atendente só a
+ * própria mensagem enviada pela MESMA instância da chamada. Sem linha, sem
+ * perfil, de outro autor, recebida do contato ou de outra instância: 403.
+ */
+export function decideMessageAuthorAuthz(opts: {
+  isAdminOrSupervisor: boolean;
+  callerProfileId: string | null;
+  instance: string;
+  message: MessageAuthorRow | null;
+}): EvolutionAuthzDecision {
+  if (opts.isAdminOrSupervisor) return { allowed: true };
+  const m = opts.message;
+  if (
+    opts.callerProfileId
+    && m
+    && m.sender === 'agent'
+    && m.agent_id === opts.callerProfileId
+    && m.connection_instance !== null
+    && m.connection_instance === opts.instance
+  ) {
+    return { allowed: true };
+  }
+  return {
+    allowed: false,
+    status: 403,
+    message: 'Você só pode editar ou apagar mensagens enviadas por você.',
   };
 }
 

@@ -2,12 +2,11 @@ import type { Page } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-env';
-// Conexão WhatsApp dedicada para E2E, semeada em produção (2026-09-28).
-// DEVE ter status='connected' e instance_id preenchido — useCampaignEditor filtra
-// por .eq('status','connected') e !instance_id; conexão disconnected não aparece no dropdown
-// e o 7º spec (wizard avança para step 2) falharia com "Continuar" desabilitado.
-// Ver supabase/migrations/_foreign/seed-talkx-connection.sql para reproduzir.
-// NUNCA apagar esta linha do banco.
+// Conexão WhatsApp dedicada para E2E. No backend descartável da suíte logada ela é
+// semeada 'connected' (scripts/e2e-isolated/seed-suite.mjs) — useCampaignEditor só
+// lista conexão connected com instance_id. Em PRODUÇÃO a linha fica 'disconnected'
+// (auditoria Conversas 2026-11-13, P0-1: conectada, recebia envios reais).
+// Ver supabase/migrations/_foreign/seed-talkx-connection.sql. NUNCA apagar a linha.
 export const E2E_TALKX_CONNECTION_ID = 'e2e0e2e0-0000-4000-a000-e2e000000001';
 export const E2E_TALKX_CONNECTION_LABEL = '[E2E] Conexão WhatsApp Teste (00000000000)';
 

@@ -5,7 +5,7 @@
 import { z } from "npm:zod@3.23.8";
 // E45: a lista de ações válidas do `evolution-api` NÃO é reescrita aqui — vem
 // dos conjuntos que o próprio handler usa para autorizar (fonte única).
-import { CONTROL_ACTIONS, READ_ACTIONS, SEND_ACTIONS } from "./evolution-control-authz.ts";
+import { CONTROL_ACTIONS, MESSAGE_AUTHOR_ACTIONS, READ_ACTIONS, SEND_ACTIONS } from "./evolution-control-authz.ts";
 import { allowedOriginFor } from "./cors-origins.ts";
 
 export { z };
@@ -785,6 +785,7 @@ export const AvatarsRefreshHeadersSchema = z.object({
 // handler seria recusada em 422 até alguém lembrar de copiá-la para cá).
 export const EVOLUTION_API_ACTIONS: readonly string[] = [
   ...CONTROL_ACTIONS,
+  ...MESSAGE_AUTHOR_ACTIONS,
   ...SEND_ACTIONS,
   ...READ_ACTIONS,
 ].sort();

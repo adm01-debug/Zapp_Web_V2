@@ -4,7 +4,7 @@ import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from 
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
-import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
+import { classifyEvolutionAction, decideControlAuthz, decideMessageAuthorAuthz, decideSendAuthz, extractTargetMessageExternalId, sanitizeStatusPayload, type EvolutionAuthzDecision, type MessageAuthorRow } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
@@ -162,7 +162,43 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return { allowed: true };
     };
+    // P1-GO-5 (decisão do dono, 2026-11-13): editar/apagar mensagem — admin/
+    // supervisor sempre; atendente só a PRÓPRIA mensagem, provada no banco (service
+    // role) pelo id do provedor: sender 'agent', agent_id = perfil do chamador e
+    // conexão da mensagem = instância desta chamada.
+    const resolveMessageAuthorAccess = async (): Promise<EvolutionAuthzDecision> => {
+      const isAdmin = await isCallerAdminOrSupervisor();
+      if (isAdmin) return { allowed: true };
+      const externalId = extractTargetMessageExternalId(body as Record<string, unknown>);
+      let callerProfileId: string | null = null;
+      let message: MessageAuthorRow | null = null;
+      if (externalId) {
+        const { data: profile } = await supabase
+          .from('profiles').select('id').eq('user_id', callerUserId).maybeSingle();
+        callerProfileId = (profile as { id?: string } | null)?.id ?? null;
+        const { data: row, error: rowErr } = await supabase
+          .from('messages').select('sender, agent_id, whatsapp_connection_id')
+          .eq('external_id', externalId).maybeSingle();
+        const msg = rowErr ? null : row as { sender?: string | null; agent_id?: string | null; whatsapp_connection_id?: string | null } | null;
+        if (msg) {
+          let connectionInstance: string | null = null;
+          if (msg.whatsapp_connection_id) {
+            const { data: conn } = await supabase
+              .from('whatsapp_connections').select('instance_id').eq('id', msg.whatsapp_connection_id).maybeSingle();
+            connectionInstance = (conn as { instance_id?: string | null } | null)?.instance_id ?? null;
+          }
+          message = { sender: msg.sender ?? null, agent_id: msg.agent_id ?? null, connection_instance: connectionInstance };
+        }
+      }
+      return decideMessageAuthorAuthz({ isAdminOrSupervisor: false, callerProfileId, instance: instance ?? '', message });
+    };
     const actionKind = classifyEvolutionAction(action);
+    if (actionKind === 'message') {
+      const decision = await resolveMessageAuthorAccess();
+      if (!decision.allowed) {
+        return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
     if (actionKind === 'control') {
       const decision = decideControlAuthz(await isCallerAdminOrSupervisor());
       if (!decision.allowed) {

@@ -26,16 +26,20 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
   // fila, o guard só permite atribuir para o próprio usuário (mesma regra do
   // TransferDialog). Em erro/falha fica `undefined` → tratado como sem fila,
   // o lado conservador (nunca oferece um destino que o trigger vai recusar).
-  const { data: contactQueueId } = useQuery({
-    queryKey: ['contact-queue-id', contactId],
+  // O mesmo SELECT traz o dono atual (`assigned_to`): ele vai para a RPC como
+  // `p_expected_agent_id` (compare-and-set — se outro atendente transferiu antes,
+  // a RPC recusa com 40001 em vez de sobrescrever).
+  const { data: contactRouting } = useQuery({
+    queryKey: ['contact-queue-owner', contactId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contacts')
-        .select('queue_id')
+        .select('queue_id, assigned_to')
         .eq('id', contactId)
         .maybeSingle();
       if (error) throw error;
-      return ((data as { queue_id?: string | null } | null)?.queue_id ?? null) as string | null;
+      const row = data as { queue_id?: string | null; assigned_to?: string | null } | null;
+      return { queueId: row?.queue_id ?? null, assignedTo: row?.assigned_to ?? null };
     },
     enabled: UUID_RE.test(contactId),
   });
@@ -62,6 +66,7 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
       p_to_agent_id: agentId,
       p_to_queue_id: undefined,
       p_note: trimmedComment || undefined,
+      p_expected_agent_id: contactRouting?.assignedTo ?? undefined,
     });
     if (transferError) throw transferError;
     if (!eventId) {
@@ -74,6 +79,7 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
     // sido salva. `contact-notes` é invalidado pela família porque a chave
     // inclui o id do usuário (ver `contactNotesKey`).
     void queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
+    void queryClient.invalidateQueries({ queryKey: ['contact-queue-owner', contactId] });
     void queryClient.invalidateQueries({ queryKey: ['contact-notes'] });
     void queryClient.invalidateQueries({ queryKey: ['internal-notes', contactId] });
 
@@ -117,7 +123,7 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
         </Button>
       </div>
       <InternalNotesPanel contactId={contactId} />
-      <HandoffDialog open={handoffOpen} onOpenChange={setHandoffOpen} contactId={contactId} queueId={contactQueueId} onHandoff={handleHandoff} />
+      <HandoffDialog open={handoffOpen} onOpenChange={setHandoffOpen} contactId={contactId} queueId={contactRouting?.queueId} onHandoff={handleHandoff} />
     </div>
   );
 }

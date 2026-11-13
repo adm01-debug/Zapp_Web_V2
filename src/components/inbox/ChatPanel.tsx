@@ -380,6 +380,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       p_to_agent_id: type === 'agent' ? targetId : undefined,
       p_to_queue_id: type === 'queue' ? targetId : undefined,
       p_note: message ?? undefined,
+      // Compare-and-set: o dono que esta tela mostra. Mudou de mão? 40001, nada é gravado.
+      p_expected_agent_id: conversation.contact.assigned_to ?? undefined,
     });
     if (error) {
       log.error('Failed to transfer conversation:', error);

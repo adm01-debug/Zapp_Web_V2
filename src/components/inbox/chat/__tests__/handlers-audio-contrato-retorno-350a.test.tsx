@@ -60,6 +60,7 @@ function chainOf(...results: Array<{ data: unknown }>) {
   const chain = {
     select: vi.fn(() => chain),
     eq: vi.fn(() => chain),
+    order: vi.fn(() => chain),
     limit: vi.fn(() => chain),
     maybeSingle,
   };
@@ -70,7 +71,7 @@ function chainOf(...results: Array<{ data: unknown }>) {
 function chainComInstancia() {
   return chainOf(
     { data: { whatsapp_connection_id: 'conn-1' } },
-    { data: { instance_id: 'inst-1' } },
+    { data: { instance_id: 'inst-1', status: 'connected' } },
   );
 }
 

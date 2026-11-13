@@ -167,6 +167,30 @@ beforeEach(() => {
   });
   mocks.invoke.mockResolvedValue({ data: { updated: 0, processed: 0 }, error: null });
   mocks.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
+    // P1-2: arquivar/desfazer passam pela RPC de lote `set_conversations_status`
+    // (UPDATE direto em conversation_status é recusado no banco). O dublê registra
+    // a chamada no MESMO formato de "update em contacts" (payload + filtros id e
+    // status esperado) e consome a mesma fila de resultados — os casos continuam
+    // provando o que vai para o banco.
+    if (name === 'set_conversations_status') {
+      const call: RecordedCall = {
+        table: 'contacts',
+        op: 'update',
+        payload: { conversation_status: args.p_next },
+        filters: {
+          id: args.p_contact_ids,
+          ...(args.p_expected_current ? { conversation_status: args.p_expected_current } : {}),
+        },
+      };
+      recorded.push(call);
+      if (updateGate) await updateGate;
+      const result = updateQueue.shift() ?? ECHO_ROWS;
+      if (result !== ECHO_ROWS && result.error) return { data: null, error: result.error };
+      const ids = result === ECHO_ROWS
+        ? (args.p_contact_ids as string[])
+        : ((result.data as Array<{ id: string }> | null) ?? []).map((row) => row.id);
+      return { data: ids.map((id) => ({ contact_id: id, previous_status: null })), error: null };
+    }
     rpcCalls.push({ name, args });
     const failure = rpcFailures[args.p_contact_id as string];
     if (failure) return { data: null, error: failure };
@@ -573,9 +597,13 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    expect(restores).toHaveLength(2);
-    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: [c2] } });
+    // 'pending' é legado (fora de regras.md §4.1): o desfazer devolve a 'open', e só
+    // quem AINDA está arquivado.
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({
+      payload: { conversation_status: 'open' },
+      filters: { id: [c1, c2], conversation_status: 'archived' },
+    });
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
