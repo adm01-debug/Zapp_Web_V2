@@ -132,6 +132,8 @@ Deno.test("P1-GO-4: botões sem cabeçalho recebem title válido (GO: 'title is 
   });
   assertEquals((r?.body as GoBody).title, " ");
   assertEquals((r?.body as GoBody).description, "Escolha");
+  const semCorpo = translateV2ToGo("/message/sendButtons/i", "POST", { number: "n", buttons: [] });
+  assertEquals((semCorpo?.body as GoBody).description, " ", "GO exige description");
   const comTitulo = translateV2ToGo("/message/sendButtons/i", "POST", { number: "n", title: "Oferta", buttons: [] });
   assertEquals((comTitulo?.body as GoBody).title, "Oferta");
 });
@@ -155,4 +157,11 @@ Deno.test("P1-GO-4: localização sem nome/endereço recebe defaults em vez de 4
   });
   assertEquals((completa?.body as GoBody).name, "Loja");
   assertEquals((completa?.body as GoBody).address, "Rua X, 10");
+});
+
+Deno.test("P1-GO-4: latitude/longitude em string viram número (bind float64 da GO)", () => {
+  const r = translateV2ToGo("/message/sendLocation/i", "POST", { number: "n", latitude: "-23.55", longitude: "-46.63" });
+  assertEquals((r?.body as GoBody).latitude, -23.55);
+  assertEquals((r?.body as GoBody).longitude, -46.63);
+  assertEquals((r?.body as GoBody).address, "-23.55, -46.63");
 });

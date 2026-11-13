@@ -117,13 +117,23 @@ export function translateV2ToGo(fullPath: string, method: string, body: unknown)
   if (m(/^\/message\/sendLocation\/[^/]+$/)) {
     // O GO exige name e address (400 "name is required"); no v2 eram opcionais e
     // o Zapp envia o pino sem eles quando o atendente só escolhe o ponto no mapa.
+    // A GO faz bind em float64: latitude/longitude em string ("-23.5") davam 400.
+    const toCoord = (v: unknown): unknown => {
+      if (typeof v === 'string' && v.trim() !== '') {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : v;
+      }
+      return v;
+    };
+    const latitude = toCoord(b.latitude);
+    const longitude = toCoord(b.longitude);
     const name = typeof b.name === 'string' && b.name.trim() ? b.name : 'Localização';
     const address = typeof b.address === 'string' && b.address.trim()
       ? b.address
-      : (typeof b.latitude === 'number' && typeof b.longitude === 'number'
-        ? `${b.latitude}, ${b.longitude}` : name);
+      : (typeof latitude === 'number' && typeof longitude === 'number'
+        ? `${latitude}, ${longitude}` : name);
     return { path: '/send/location', method: 'POST', auth: 'instance', body: {
-      number: b.number, name, address, latitude: b.latitude, longitude: b.longitude,
+      number: b.number, name, address, latitude, longitude,
       ...(b.delay ? { delay: b.delay } : {}),
       ...quotedToGo(b.quoted),
     }};
@@ -157,7 +167,8 @@ export function translateV2ToGo(fullPath: string, method: string, body: unknown)
     }};
   if (m(/^\/message\/sendButtons\/[^/]+$/))
     return { path: '/send/button', method: 'POST', auth: 'instance', body: {
-      ...b, title: goRequiredText(b.title), footer: b.footer || ' ',
+      // description também é obrigatório no send_handler da GO.
+      ...b, title: goRequiredText(b.title), description: goRequiredText(b.description), footer: b.footer || ' ',
     }};
   if (m(/^\/message\/sendStatus\/[^/]+$/)) {
     const type = b.type ?? (b.content && !/^https?:\/\//.test(String(b.content)) ? 'text' : 'media');

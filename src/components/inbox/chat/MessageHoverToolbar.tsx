@@ -97,9 +97,11 @@ export function MessageHoverToolbar({
   }, [instanceName, externalId, contactJid, isSent, markMessageAsRead]);
 
   const handleMarkUnread = useCallback(async () => {
-    // Estado do Zapp primeiro (é o que o selo e a lista leem). A Evolution GO não
-    // tem essa ação: a edge responde `notSupported` e isso NÃO é erro para o
-    // atendente — a conversa já está marcada aqui.
+    // Estado do Zapp primeiro (é o que o selo e a lista leem). Depois, bônus no
+    // WhatsApp pela ação `mark-unread` da edge (evolution-api): na Evolution v2 ela
+    // chama /chat/markChatUnread; na Evolution GO, que não tem essa rota, responde
+    // 200 com `notSupported` — isso NÃO é erro para o atendente, a marcação do Zapp
+    // já valeu. Falha do provedor também só vira log.
     const local = await markUnreadInZapp(message);
     if (local === 'erro') {
       toast.error('Erro ao marcar como não lida');
