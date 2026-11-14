@@ -41,6 +41,9 @@ import {
   lerListaContainers,
   shimDocker,
   containersOrfaos,
+  lerDiffRawZ,
+  migrationsEditadas,
+  checarMigrationsEditadas,
 } from './ci-local-lib.mjs';
 
 const ctx = {
@@ -714,4 +717,174 @@ test('--rapido: saída do vitest sem teste relacionado é reconhecida', () => {
   assert.equal(semTestesRelacionados('No test files found, exiting with code 0\n'), true);
   assert.equal(semTestesRelacionados('No affected test files found'), true);
   assert.equal(semTestesRelacionados(' Test Files  3 passed (3)'), false);
+});
+
+// ---------------------------------------- db-guard: migration existente editada
+test('lerDiffRawZ: M, rename com e sem edição e A (saída -z, sem aspas)', () => {
+  const z = (...c) => `${c.join('\0')}\0`;
+  const a = 'a'.repeat(40);
+  const b = 'b'.repeat(40);
+  assert.deepEqual(
+    lerDiffRawZ(
+      z(
+        `:100644 100644 ${a} ${b} M`,
+        'supabase/migrations/20260101000000_x.sql',
+        `:100644 100644 ${a} ${b} R093`,
+        'velho.sql',
+        'novo "com aspas".sql',
+        `:100644 100644 ${a} ${a} R100`,
+        'p.sql',
+        'q.sql',
+        `:000000 100644 ${'0'.repeat(40)} ${b} A`,
+        'n.sql'
+      )
+    ).map((e) => [e.status, e.origem, e.arquivo, e.blobAntes === e.blobDepois]),
+    [
+      [
+        'M',
+        'supabase/migrations/20260101000000_x.sql',
+        'supabase/migrations/20260101000000_x.sql',
+        false,
+      ],
+      ['R', 'velho.sql', 'novo "com aspas".sql', false],
+      ['R', 'p.sql', 'q.sql', true],
+      ['A', 'n.sql', 'n.sql', false],
+    ]
+  );
+});
+
+test('migrationsEditadas: mesmos critérios e exceções do passo do db-guard.yml', () => {
+  const M = 'supabase/migrations';
+  const e = (status, arquivo, mudou = true) => ({
+    status,
+    arquivo,
+    origem: arquivo,
+    blobAntes: 'a',
+    blobDepois: mudou ? 'b' : 'a',
+  });
+  const bases = {
+    [`${M}/20260101000001_stub.sql`]: '-- so comentario\n\n  -- outro\n',
+    [`${M}/20260101000000_real.sql`]: 'create table t();\n',
+  };
+  const evidencia = {
+    exceptions: [
+      { filename: '20260101000002_pin.sql', kind: 'ledger-only/name-and-file-pinned' },
+      { filename: '20260101000003_rep.sql', kind: 'ledger-divergence/pinned-replay' },
+      { filename: '20260101000004_mk.sql', kind: 'ledger-divergence/pinned-sql-marker' },
+    ],
+  };
+  const v = migrationsEditadas(
+    [
+      e('M', `${M}/20260101000000_real.sql`),
+      e('R', `${M}/20260202000000_renomeada.sql`),
+      e('R', `${M}/20260202000001_rename_puro.sql`, false),
+      e('M', `${M}/20260101000001_stub.sql`),
+      e('M', `${M}/20260101000002_pin.sql`),
+      e('R', `${M}/20260101000003_rep.sql`),
+      e('M', `${M}/20260101000004_mk.sql`),
+      e('M', `${M}/20260101000005_sem_base.sql`),
+      e('M', `${M}/20260101000006_so_modo.sql`, false),
+      e('A', `${M}/20260101000007_nova.sql`),
+      e('D', `${M}/20260101000008_apagada.sql`),
+      e('M', `${M}/_foreign/20260101000009_x.sql`),
+      e('M', `${M}/2026010100001_curta.sql`),
+    ],
+    { evidencia, conteudoBase: (f) => bases[f] ?? null }
+  );
+  assert.deepEqual(v, [
+    `${M}/20260101000000_real.sql`,
+    `${M}/20260202000000_renomeada.sql`,
+    `${M}/20260101000004_mk.sql`,
+    `${M}/20260101000005_sem_base.sql`,
+  ]);
+});
+
+test('checarMigrationsEditadas: repo git real (rename+edição rejeita; rename puro e stub promovido passam)', (t) => {
+  const raiz = mkdtempSync(join(tmpdir(), 'ci-local-migrations-'));
+  t.after(() => rmSync(raiz, { recursive: true, force: true }));
+  const g = (...a) => {
+    const r = spawnSync(
+      'git',
+      [
+        '-c',
+        'user.name=ci',
+        '-c',
+        'user.email=ci@local',
+        '-c',
+        'commit.gpgsign=false',
+        '-c',
+        'core.hooksPath=/dev/null',
+        ...a,
+      ],
+      { cwd: raiz, encoding: 'utf8' }
+    );
+    assert.equal(r.status, 0, r.stderr);
+    return r.stdout.trim();
+  };
+  const M = 'supabase/migrations';
+  // >= 50% de similaridade: o git (e o GitHub) ainda veem rename, não remove+add.
+  const sql = Array.from({ length: 10 }, (_, i) => `create table t${i} (id int);\n`).join('');
+  g('init', '-q', '-b', 'main');
+  mkdirSync(join(raiz, M), { recursive: true });
+  mkdirSync(join(raiz, 'scripts/db-audit'), { recursive: true });
+  writeFileSync(join(raiz, 'scripts/db-audit/migration-evidence.json'), '{"exceptions":[]}');
+  writeFileSync(join(raiz, M, '20260101000000_real.sql'), sql);
+  writeFileSync(join(raiz, M, '20260101000001_stub.sql'), '-- aplicada via MCP\n');
+  g('add', '-A');
+  g('commit', '-q', '-m', 'base');
+  const base = g('rev-parse', 'HEAD');
+  const caso = (mudar) => {
+    g('reset', '-q', '--hard', base);
+    mudar();
+    g('add', '-A');
+    g('commit', '-q', '-m', 'caso');
+    return checarMigrationsEditadas(raiz, base);
+  };
+  const p = (f) => join(raiz, M, f);
+  assert.deepEqual(
+    caso(() => {
+      g('mv', p('20260101000000_real.sql'), p('20260202000000_real.sql'));
+      writeFileSync(p('20260202000000_real.sql'), `${sql}alter table t add column x int;\n`);
+    }),
+    [`${M}/20260202000000_real.sql`]
+  );
+  assert.deepEqual(
+    caso(() => g('mv', p('20260101000000_real.sql'), p('20260202000000_real.sql'))),
+    []
+  );
+  assert.deepEqual(
+    caso(() => writeFileSync(p('20260101000001_stub.sql'), sql)),
+    []
+  );
+  // --incluir-nao-commitado: edição e rename+edição AINDA NÃO commitados também são barrados.
+  const semCommit = (mudar) => {
+    g('reset', '-q', '--hard', base);
+    g('clean', '-qfd');
+    mudar();
+    return [
+      checarMigrationsEditadas(raiz, base),
+      checarMigrationsEditadas(raiz, base, { workingTree: true }),
+    ];
+  };
+  assert.deepEqual(
+    semCommit(() => writeFileSync(p('20260101000000_real.sql'), `${sql}-- mudou\n`)),
+    [[], [`${M}/20260101000000_real.sql`]]
+  );
+  assert.deepEqual(
+    semCommit(() => {
+      g('mv', p('20260101000000_real.sql'), p('20260202000000_real.sql'));
+      writeFileSync(p('20260202000000_real.sql'), `${sql}alter table t add column x int;\n`);
+    }),
+    [[], [`${M}/20260202000000_real.sql`]]
+  );
+  assert.deepEqual(
+    semCommit(() => writeFileSync(p('20260303000000_nova.sql'), sql)),
+    [[], []]
+  );
+  g('reset', '-q', '--hard', base);
+  g('clean', '-qfd');
+  assert.deepEqual(
+    caso(() => writeFileSync(p('20260101000000_real.sql'), `${sql}-- mudou\n`)),
+    [`${M}/20260101000000_real.sql`]
+  );
 });

@@ -483,7 +483,8 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-sync', { action: 'sync-labels', account_id: activeAccount.id });
     },
-    retry: 1,
+    // Mesma política do syncInbox: 4xx (409 reauth/em andamento, 403) não repete.
+    retry: shouldRetryGmailSync,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-labels'] }); },
     onError: (error: Error) => notifyGmailActionError('sincronizar os marcadores', error),
   });
