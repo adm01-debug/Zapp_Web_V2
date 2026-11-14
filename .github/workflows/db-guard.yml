@@ -669,6 +669,14 @@ jobs:
           REMOVE_ENUM_SPECIAL_AGENT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash supabase/tests/db-audit/remove-enum-special-agent.test.sh
+      # 20261113130000..130300 e 171300..171600 (auditoria Conversas): envio sem conexao de
+      # teste, transferencia unica/CAS, FSM so por RPC (inclui restore e transferencia
+      # concorrente segurando a trava), closed_by do autor, varredura e agendadas. Migrations
+      # reais aplicadas 2x sobre harness minimo, papeis reais via SET ROLE + jwt claims.
+      - name: Simular auditoria Conversas P0/P1 (FSM so por RPC, envio, transferencia, varredura)
+        env:
+          CONVERSAS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash supabase/tests/db-audit/conversas-p0-p1-20261113.test.sh
       - name: Simular publicação Realtime da blacklist Talk X com escopo de colunas
         env:
           TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
