@@ -60,7 +60,18 @@ for (const f of edges) {
   const url = `functions/v1/${q}${fimNome}`;
   // Aspa de fechamento OU `/` logo após o nome: cobre invoke(`nome/${acao}`).
   const src = rgFiles(`(functions\\.invoke\\(\\s*['"\`]${q}(['"\`]|/)|${url}|['"\`]${q}['"\`]\\s*[,)])`, ['src']);
-  const migrations = rgFiles(url, ['supabase/migrations']);
+  // A URL literal `functions/v1/<nome>` só aparece em migrations quando o link é hardcodado.
+  // Convenção deste repo para cron/pg_net (talkx-scheduler, talkx-storage-purge): a URL fica só
+  // no Vault (`vault.decrypted_secrets`) e o nome da edge só aparece em texto solto (nome do
+  // cron job, `regexp_replace` da URL do Vault). Sem esse fallback,
+  // toda edge chamada só por cron+Vault entrava como "sem_chamador" — falso positivo real,
+  // confirmado em produção (talkx-scheduler, talkx-storage-purge).
+  // Comentário SQL (`-- ...`) não conta: o nome tem que aparecer antes de qualquer `--` na linha.
+  // Senão edge órfã citada só em comentário (auto-close-conversations, recover-corrupted-audios)
+  // sumia da lista de sem_chamador.
+  const migrationsUrl = rgFiles(url, ['supabase/migrations']);
+  const migrationsNomeSolto = rgFiles(`^([^-]|-[^-])*${q}`, ['supabase/migrations']);
+  const migrations = [...new Set([...migrationsUrl, ...migrationsNomeSolto])];
   const outrasEdges = rgFiles(`${url}|['"\`]${q}['"\`]`, ['supabase/functions']).filter((p) => !p.startsWith(`supabase/functions/${f}/`));
   const e2e = rgFiles(q, ['e2e']);
   const ci = rgFiles(q, ['.github/workflows', 'supabase/config.toml']);
@@ -75,8 +86,16 @@ const semChamador = Object.entries(inventario).filter(([, v]) => v.sem_chamador)
 writeFileSync(join(OUT, 'edges.json'), JSON.stringify({ gerado_em: new Date().toISOString(), total: edges.length, sem_chamador_no_repo: semChamador, edge_functions: inventario }) + '\n');
 console.log(`edges: ${edges.length} | sem chamador no repo (src/migrations/edges): ${semChamador.length}`);
 
+// stdin lido pelo stream (assíncrono, até o EOF): quando o pai entrega um pipe não
+// bloqueante (ex.: spawnSync com `input` grande), readFileSync(0) lança EAGAIN no meio.
+async function lerStdin() {
+  const pedacos = [];
+  for await (const pedaco of process.stdin) pedacos.push(pedaco);
+  return Buffer.concat(pedacos).toString('utf8');
+}
+
 if (!process.stdin.isTTY) {
-  const nomes = readFileSync(0, 'utf8').split(/\s+/).filter(Boolean);
+  const nomes = (await lerStdin()).split(/\s+/).filter(Boolean);
   if (nomes.length > 0) {
     const uso = {};
     for (const t of nomes) {

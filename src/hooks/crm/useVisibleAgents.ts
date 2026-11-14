@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 
 /**
  * Uses get_visible_agent_ids RPC for RBAC-filtered agent visibility.
- * Special agents only see explicitly granted agent IDs.
+ * Agents with visibility grants also see the explicitly granted agent IDs.
  */
 export function useVisibleAgents() {
   const { user } = useAuth();

@@ -196,7 +196,8 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     const onTransfer = transferDialogOnTransfer.current;
     expect(onTransfer).toBeTypeOf('function');
     await expect(onTransfer?.('queue', 'q1', 'nota de teste')).rejects.toBe(eventError);
-    expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste');
+    // 5º argumento = dono visto na lista (compare-and-set; null quando sem dono).
+    expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste', null);
 
     // Alvo e diálogo continuam abertos; nada de refetch.
     rerender(<ConversationListSidebar {...props} />);

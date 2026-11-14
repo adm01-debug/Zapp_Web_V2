@@ -7,6 +7,8 @@ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 // JID) faria o PostgREST responder 400 e o lote inteiro falharia. Mesma guarda
 // usada em `useCalls` — uma fonte só para o formato de uuid.
 import { isValidUUID } from '@/hooks/communication/useCalls';
+import { canArchiveConversation, moveConversationsStatus, type ConversationStatus } from '@/hooks/inbox/conversationArchive';
+import { transferConversation, transferErrorMessage } from '@/lib/inbox/transferConversation';
 
 interface UseInboxBulkActionsProps {
   refetch: () => void;
@@ -130,6 +132,8 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     const contactIds = Array.from(selectedIds);
+    // Dono visto na lista, por contato: vai como p_expected_agent_id (compare-and-set).
+    const donoVisto = new Map(filteredConversations.map((c) => [c.contact.id, c.contact.assigned_to ?? null]));
     const failures: unknown[] = [];
     let transferidos = 0;
 
@@ -138,11 +142,12 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       // CONVERSA (UPDATE em contacts + INSERT do evento na mesma transação).
       // Chamadas concorrentes sobre o mesmo lote só gerariam corrida de erro.
       for (const contactId of contactIds) {
-        const { error } = await supabase.rpc('transfer_conversation', {
-          p_contact_id: contactId,
-          p_to_agent_id: type === 'agent' ? targetId : undefined,
-          p_to_queue_id: type === 'queue' ? targetId : undefined,
-          p_note: undefined,
+        const { error } = await transferConversation({
+          contactId,
+          toAgentId: type === 'agent' ? targetId : undefined,
+          toQueueId: type === 'queue' ? targetId : undefined,
+          // null = sem dono na lista; fora da lista = sem compare-and-set.
+          expectedAgentId: donoVisto.has(contactId) ? donoVisto.get(contactId) ?? null : undefined,
         });
         if (error) failures.push(error);
         else transferidos += 1;
@@ -160,8 +165,10 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     // seleção — quem chamou precisa saber que falhou (a sidebar usa a rejeição
     // para manter o diálogo/alvo abertos).
     if (failures.length > 0) {
+      const conflitos = failures.filter((f) => (f as { code?: unknown })?.code === '40001').length;
       toast.error(
-        `Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam`,
+        `Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam`
+          + (conflitos > 0 ? ` (${conflitos} já tinham sido transferido(s) ou assumido(s) por outro atendente — atualize a lista)` : ''),
       );
       throw failures[0];
     }
@@ -169,7 +176,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     toast.success(`${contactIds.length} contato(s) transferido(s)`);
     clearSelection();
     refetch();
-  }, [selectedIds, clearSelection, refetch]);
+  }, [selectedIds, clearSelection, refetch, filteredConversations]);
 
   const bulkArchive = useCallback(async () => {
     if (selectedIds.size === 0) return;
@@ -196,38 +203,49 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       // desfazer mapearia 'archived' → 'open' (fora de validFromArchived), abrindo
       // uma conversa que estava arquivada antes da ação do operador.
       const targetIds = contactIds.filter(
-        (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
+        (id) => previousStatus.has(id) && canArchiveConversation(previousStatus.get(id)),
       );
+      // Decisão do dono (2026-11-13): conversa 'waiting' não é arquivada — o lote
+      // pula e diz quantas ficaram de fora.
+      const aguardando = contactIds.filter((id) => previousStatus.get(id) === 'waiting').length;
+      if (aguardando > 0) {
+        toast.info(`${aguardando} conversa(s) aguardando atendimento não foram arquivadas — atenda ou encerre antes.`);
+      }
       if (targetIds.length === 0) { toast.info('Nenhum contato disponível para arquivar'); return; }
 
+      // Quantas o BANCO arquivou de fato (resultado da RPC), não quantas foram pedidas.
       await executeUndoable({
-        successMessage: `${targetIds.length} contato(s) arquivado(s)`,
+        successMessage: (arquivadas: number) => `${arquivadas} contato(s) arquivado(s)`,
         undoMessage: 'Arquivamento desfeito',
         action: async () => {
-          const { error } = await supabase
-            .from('contacts')
-            .update({ conversation_status: 'archived' })
-            .in('id', targetIds);
-          if (error) throw error;
+          // P1-2: pela RPC de lote (UPDATE direto em conversation_status é recusado no banco).
+          const arquivadas = (await moveConversationsStatus(targetIds, 'archived')).size;
+          if (arquivadas === 0) throw new Error('Nenhuma conversa foi arquivada');
           clearSelection();
           refetch();
+          return arquivadas;
         },
         undoAction: async () => {
-          // Trigger enforce_conversation_status_transition: de 'archived' só são
-          // válidos 'open' e 'pending' em um único passo. Para restaurar
-          // waiting/resolved/closed, fazemos dois passos: archived→open→original.
+          // Trigger enforce_conversation_status_transition: de 'archived' só é
+          // válido 'open' em um único passo. 'resolved' volta pela RPC em modo
+          // restore (archived→open→resolved no banco, SEM novo encerramento — pela
+          // RPC comum o 2º passo gravaria outro encerramento e o banco recusaria com
+          // 23505). Para restaurar waiting (legado), dois passos: archived→open→original.
           //
           // Cada UPDATE só atinge quem AINDA está no estado esperado
           // (`conversation_status='archived'` no 1º passo, `'open'` no 2º) e devolve os
           // ids atingidos: uma conversa reaberta por mensagem nova durante a janela do
           // desfazer não é forçada de volta a resolved/waiting. Um grupo que falha não
           // impede os outros; o resultado é contado por conversa.
-          const validFromArchived = new Set(['open', 'pending']);
+          const validFromArchived = new Set(['open', 'resolved']);
           const directGroups = new Map<string, string[]>();
           const twoStepGroups = new Map<string, string[]>();
 
           for (const id of targetIds) {
-            const original = previousStatus.get(id) ?? 'open';
+            // 'pending'/'closed' são legados (fora de regras.md §4.1): a FSM não deixa
+            // ninguém ENTRAR neles, então o desfazer devolve essas conversas a 'open'.
+            const lido = previousStatus.get(id) ?? 'open';
+            const original = lido === 'pending' || lido === 'closed' ? 'open' : lido;
             const groups = validFromArchived.has(original) ? directGroups : twoStepGroups;
             const g = groups.get(original) ?? [];
             g.push(id);
@@ -238,17 +256,14 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           let failed = false;
 
           const moveTo = async (status: string, ids: string[], from: string): Promise<string[]> => {
-            const { data, error } = await supabase
-              .from('contacts')
-              .update({ conversation_status: status as unknown as string })
-              .in('id', ids)
-              .eq('conversation_status', from as unknown as string)
-              .select('id');
-            if (error) {
+            try {
+              const restore = status === 'resolved' && from === 'archived';
+              const moved = await moveConversationsStatus(ids, status as ConversationStatus, from as ConversationStatus, restore);
+              return [...moved.keys()];
+            } catch {
               failed = true;
               return [];
             }
-            return ((data ?? []) as Array<{ id: string }>).map((row) => row.id);
           };
 
           try {

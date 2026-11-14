@@ -33,6 +33,7 @@ import { UnconfirmedMessagesPanel } from './chat/UnconfirmedMessagesPanel';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 import type { TransferTargetType } from './TransferDialog';
 import { fillQuickReplyVariables } from './template-utils';
+import { transferConversation, transferErrorMessage } from '@/lib/inbox/transferConversation';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
 const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
@@ -401,15 +402,17 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   // transação): se a RPC falha, NADA persiste — o callback rejeita, o diálogo
   // exibe erro e permanece aberto. Não há estado otimista nem escrita solta.
   const handleTransfer = async (type: TransferTargetType, targetId: string, message?: string) => {
-    const { error } = await supabase.rpc('transfer_conversation', {
-      p_contact_id: conversation.contact.id,
-      p_to_agent_id: type === 'agent' ? targetId : undefined,
-      p_to_queue_id: type === 'queue' ? targetId : undefined,
-      p_note: message ?? undefined,
+    const { error } = await transferConversation({
+      contactId: conversation.contact.id,
+      toAgentId: type === 'agent' ? targetId : undefined,
+      toQueueId: type === 'queue' ? targetId : undefined,
+      note: message ?? undefined,
+      // Compare-and-set: o dono que esta tela mostra (null = sem dono). Mudou? 40001, nada é gravado.
+      expectedAgentId: conversation.contact.assigned_to ?? null,
     });
     if (error) {
       log.error('Failed to transfer conversation:', error);
-      toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
+      toast({ title: 'Erro ao transferir', description: transferErrorMessage(error, 'Não foi possível transferir a conversa.'), variant: 'destructive' });
       throw error;
     }
     toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });

@@ -753,6 +753,8 @@ const ConversationRow = memo(({
                 </PopoverContent>
               )}
             </Popover>
+            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}
+            {conversation.contact.conversation_status !== 'waiting' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -765,6 +767,7 @@ const ConversationRow = memo(({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs font-medium">Arquivar</TooltipContent>
             </Tooltip>
+            )}
           </TooltipProvider>
         </div>
 

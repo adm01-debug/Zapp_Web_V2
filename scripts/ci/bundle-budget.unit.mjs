@@ -135,7 +135,7 @@ const gruposQueCapturam = (id) => gruposDeChunking.filter((grupo) => grupo.test.
 
 test("le as regras reais de chunking do vite.config.ts", () => {
   assert.ok(gruposDeChunking.length >= 8, `grupos lidos: ${gruposDeChunking.length}`);
-  for (const nome of ["vendor-core", "vendor-data", "vendor-ui", "vendor-motion", "vendor-utils"]) {
+  for (const nome of ["vendor-core", "vendor-data", "vendor-ui", "vendor-radix", "vendor-motion", "vendor-utils"]) {
     assert.ok(gruposDeChunking.some((grupo) => grupo.name === nome), `grupo ausente: ${nome}`);
   }
   const core = gruposDeChunking.find((grupo) => grupo.name === "vendor-core");
@@ -156,10 +156,13 @@ test("framer-motion fica em grupo proprio, fora do vendor-ui do Radix", () => {
   const nome = capturas[0].name;
   assert.notEqual(nome, "vendor-ui", "framer-motion voltou para o mesmo chunk do Radix (peso de first paint)");
 
-  // O vendor-ui continua dono do Radix e nao pode reivindicar o runtime de animacao.
+  // O vendor-ui (utilitarios de classe do shell) nao pode reivindicar o runtime de animacao.
   const vendorUi = gruposDeChunking.find((grupo) => grupo.name === "vendor-ui");
   assert.equal(vendorUi.test.test(framerMotion), false);
-  assert.equal(vendorUi.test.test(idModulo("@radix-ui/react-dialog/dist/index.mjs")), true);
+  // Nem o grupo do Radix lazy.
+  const vendorRadix = gruposDeChunking.find((grupo) => grupo.name === "vendor-radix");
+  assert.equal(vendorRadix.test.test(framerMotion), false);
+  assert.equal(vendorRadix.test.test(idModulo("@radix-ui/react-dialog/dist/index.mjs")), true);
 
   // As dependencias do runtime acompanham o mesmo grupo.
   for (const dependencia of ["motion-dom/dist/index.mjs", "motion-utils/dist/index.mjs"]) {
@@ -167,6 +170,64 @@ test("framer-motion fica em grupo proprio, fora do vendor-ui do Radix", () => {
     assert.equal(capturadas.length, 1, `${dependencia}: ${capturadas.length} grupo(s)`);
     assert.equal(capturadas[0].name, nome);
   }
+});
+
+// Radix em dois grupos (13/11/2026): com o Radix inteiro no vendor-ui (alcancado
+// pelo entry) o bundle inicial media 323,8 KB gzip (teto 325), porque Select,
+// Menu, Dialog, Slider... iam para o first paint. Sem grupo nenhum o inicial cai,
+// mas o Radix e o date-fns se fragmentam em dezenas de chunks e o total-assets
+// passa do teto de 4100 KB (+34 KB, PR #3034). Por isso: so os primitivos do
+// shell no vendor-ui; o resto no vendor-radix (lazy); date-fns segue no vendor-utils.
+const grupoVencedor = (modulo) => {
+  const capturas = gruposQueCapturam(idModulo(modulo));
+  return capturas.reduce((melhor, grupo) => (!melhor || grupo.priority > melhor.priority ? grupo : melhor), null)?.name;
+};
+
+test("so os primitivos Radix do shell ficam no vendor-ui; o resto vai para o vendor-radix", () => {
+  for (const modulo of [
+    "@radix-ui/react-tooltip/dist/index.mjs",
+    "@radix-ui/react-toast/dist/index.mjs",
+    "@radix-ui/react-popper/dist/index.mjs",
+    "@radix-ui/react-primitive/dist/index.mjs",
+    "@radix-ui/primitive/dist/index.mjs",
+    "@floating-ui/dom/dist/floating-ui.dom.mjs",
+  ]) {
+    assert.equal(grupoVencedor(modulo), "vendor-ui", modulo);
+  }
+  for (const modulo of [
+    "@radix-ui/react-dialog/dist/index.mjs",
+    "@radix-ui/react-select/dist/index.mjs",
+    "@radix-ui/react-slider/dist/index.mjs",
+    "@radix-ui/react-dropdown-menu/dist/index.mjs",
+    "react-remove-scroll/dist/es2015/index.js",
+    "aria-hidden/dist/es2015/index.js",
+  ]) {
+    assert.equal(grupoVencedor(modulo), "vendor-radix", modulo);
+  }
+  // Os primitivos do shell sao deps de select/menu: o dono deles precisa vencer
+  // a recursao do vendor-radix, senao o entry passa a importar o vendor-radix.
+  const ui = gruposDeChunking.find((grupo) => grupo.name === "vendor-ui");
+  const radix = gruposDeChunking.find((grupo) => grupo.name === "vendor-radix");
+  assert.ok(ui.priority > radix.priority, "vendor-ui precisa vencer a recursao do vendor-radix");
+});
+
+test("date-fns fica inteiro no vendor-utils (sem fragmentar em um chunk por funcao)", () => {
+  for (const modulo of ["date-fns/format.mjs", "date-fns/locale/pt-BR.mjs", "date-fns/addDays.mjs"]) {
+    assert.equal(grupoVencedor(modulo), "vendor-utils", modulo);
+  }
+});
+
+// Deps do recharts que o shell tambem usa precisam de dono com prioridade maior
+// que o vendor-charts; senao a recursao do grupo de graficos as reivindica e o
+// entry passa a importar o vendor-charts inteiro.
+test("deps compartilhadas com o recharts ficam no vendor-ui, nao no vendor-charts", () => {
+  for (const modulo of ["clsx/dist/clsx.mjs", "use-sync-external-store/shim/index.js", "tailwind-merge/dist/bundle-mjs.mjs"]) {
+    const capturas = gruposQueCapturam(idModulo(modulo));
+    assert.deepEqual(capturas.map((grupo) => grupo.name), ["vendor-ui"], modulo);
+  }
+  const ui = gruposDeChunking.find((grupo) => grupo.name === "vendor-ui");
+  const charts = gruposDeChunking.find((grupo) => grupo.name === "vendor-charts");
+  assert.ok(ui.priority > charts.priority, "vendor-ui precisa vencer a recursao do vendor-charts");
 });
 
 test("o grupo do runtime de animacao nao captura pacotes vizinhos por nome parecido", () => {

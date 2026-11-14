@@ -47,9 +47,16 @@ Transições permitidas:
 | De \ Para | open | waiting | resolved | archived |
 |---|---|---|---|---|
 | open | — | atribuição removida | agente / automação | agente |
-| waiting | atribuição | — | agente / automação | agente |
+| waiting | atribuição | — | agente / automação | ~~agente~~ **recusado** (ver nota) |
 | resolved | **mensagem inbound** / agente | — | — | agente |
 | archived | **mensagem inbound** / agente | — | — | — |
+
+> **Superada neste ponto (2026-11-13, decisão do dono):** `waiting → archived` **não** é
+> permitido. Conversa aguardando atendimento precisa ser atendida (`open`) ou encerrada
+> (`resolved`) antes de ser arquivada. Banco recusa com `conversation_waiting_cannot_be_archived`
+> (`supabase/migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql`, que também
+> recria `set_conversation_status` sem o ramo introduzido em `20261016010011`). Regra registrada
+> em `docs/contexto/regras/manual/regras.md` §4.1. O resto desta tabela continua valendo.
 
 ## Rollout
 

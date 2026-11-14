@@ -90,14 +90,39 @@ export default defineConfig(({ mode }) => {
               // Data layer
               { name: "vendor-data", priority: 90,
                 test: /node_modules[\\/](@tanstack[\\/]react-query|@supabase[\\/]supabase-js)[\\/]/ },
-              // UI components from node_modules. framer-motion NAO entra aqui:
-              // o grupo vendor-ui e alcancado estaticamente pelo entry (Radix),
-              // entao qualquer modulo do grupo vira peso de first paint mesmo sem
-              // uso inicial. Com grupo proprio (vendor-motion, abaixo) o runtime
-              // de animacao segue a alcancabilidade dos importadores: sai do
-              // chunk inicial quando o uso fica so sob demanda (SL-103A/SL-103C).
+              // Utilitarios de classe usados pelo shell inteiro (cn, cva), o shim
+              // use-sync-external-store e SO os primitivos Radix que o shell usa no
+              // boot (Tooltip, Toast e o que eles importam). O grupo e alcancado
+              // estaticamente pelo entry, entao TODO modulo dele vira peso de first
+              // paint: por isso ele so leva o que o first paint usa de qualquer jeito.
+              // - O resto do Radix (select, menu, dialog, slider...) fica no
+              //   vendor-radix, abaixo (13/11/2026): com o Radix inteiro aqui ele
+              //   ia junto para o first paint (66,8 KB gzip). Se o shell passar a
+              //   importar um primitivo que nao esta nesta lista, o vendor-radix
+              //   inteiro vira inicial (~33 KB gzip): inclua o primitivo aqui (o
+              //   bundle-budget lista os chunks iniciais; vendor-radix nao pode
+              //   aparecer nela).
+              // - Os primitivos do shell e o @floating-ui PRECISAM de dono aqui, com
+              //   prioridade maior que a do vendor-radix: sao deps de select/menu/
+              //   popover; sem dono, a recursao (includeDependenciesRecursively) do
+              //   vendor-radix os reivindica e o entry passa a importar o vendor-radix.
+              // - clsx/use-sync-external-store PRECISAM de dono aqui pelo mesmo
+              //   motivo: sao deps do recharts; sem este grupo a recursao do
+              //   vendor-charts os reivindica e o entry passa a importar o
+              //   vendor-charts inteiro (medido: 426 KB gzip iniciais).
+              // - Radix sem grupo nenhum (cada primitivo seguindo o importador)
+              //   tambem tira o peso do first paint, mas fragmenta em dezenas de
+              //   chunks e soma +34 KB gzip no total-assets (estourou o teto de
+              //   4100 KB na PR #3034); com os dois grupos o total fica em ~+4 KB.
+              // - framer-motion tem grupo proprio (vendor-motion, abaixo), que
+              //   segue a alcancabilidade dos importadores (SL-103A/SL-103C).
               { name: "vendor-ui", priority: 80,
-                test: /node_modules[\\/](@radix-ui|class-variance-authority|clsx|tailwind-merge)[\\/]/ },
+                test: /node_modules[\\/](class-variance-authority|clsx|tailwind-merge|use-sync-external-store|@floating-ui[\\/][^\\/]+|@radix-ui[\\/](primitive|react-(collection|compose-refs|context|dismissable-layer|focus-scope|id|popper|portal|presence|primitive|slot|toast|tooltip|use-callback-ref|use-controllable-state|use-effect-event|use-layout-effect|use-size|visually-hidden)))[\\/]/ },
+              // Radix usado so por telas lazy + as deps de scroll-lock/aria do
+              // Dialog/Select/Menu. Nao e alcancado pelo entry: so baixa quando a
+              // primeira tela com um desses primitivos abre (depois, cache).
+              { name: "vendor-radix", priority: 75,
+                test: /node_modules[\\/](@radix-ui|aria-hidden|react-remove-scroll|react-remove-scroll-bar|react-style-singleton|use-callback-ref|use-sidecar|detect-node-es|get-nonce)[\\/]/ },
               // Runtime de animacao (framer-motion + deps). Grupo separado de
               // proposito: junto do Radix ele era baixado no first paint sem
               // nenhuma animacao ter sido pedida (medido 107,5 KB gzip em
@@ -105,7 +130,9 @@ export default defineConfig(({ mode }) => {
               // componente que anima realmente carrega.
               { name: "vendor-motion", priority: 80,
                 test: /node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/ },
-              // Date utilities
+              // Date utilities. Fica agrupado de proposito: sem grupo, cada funcao do
+              // date-fns vira um chunk proprio (36 chunks, +13 KB gzip no total-assets)
+              // para economizar ~3 KB do first paint. O shell ja usa format/locale.
               { name: "vendor-utils", priority: 70, test: /node_modules[\\/]date-fns[\\/]/ },
               // Charts (loaded only by dashboards/reports)
               { name: "vendor-charts", priority: 60,

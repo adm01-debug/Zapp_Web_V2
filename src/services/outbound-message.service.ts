@@ -461,6 +461,9 @@ export async function sendOutboundMessage(
     const result = await enqueueAndDispatch(input, clientMessageId, key);
     clearPendingAction(key, clientMessageId);
     return result;
+  } catch (erro) {
+    // "WhatsApp desconectado" é traduzido AQUI, uma vez para todos os envios.
+    throw await surfaceDisconnected(erro);
   } finally {
     // A reivindicação sai até quando o envio falha: sem isso a aba fica "dona"
     // da ação e uma tentativa deliberada igual em outra aba nunca mandaria.
@@ -494,8 +497,32 @@ async function dispatchQueuedMessage(
   };
 }
 
+/**
+ * Tradução "WhatsApp desconectado" (sendConnection) por import dinâmico: este serviço
+ * está no grafo inicial (fila offline) e o tradutor só é preciso quando um envio
+ * falha — import estático estourava o orçamento de JS inicial (325 KB gzip).
+ */
+async function surfaceDisconnected(erro: unknown): Promise<unknown> {
+  try {
+    const { surfaceWhatsAppDisconnected } = await import('@/lib/whatsapp/sendConnection');
+    return surfaceWhatsAppDisconnected(erro);
+  } catch {
+    return erro;
+  }
+}
+
 /** Queue an outbound poll, contact card or interactive message (buttons/list) with an immutable transport payload. */
 export async function sendRichOutboundMessage(
+  input: RichOutboundMessageInput,
+): Promise<OutboundMessageDeliveryResult> {
+  try {
+    return await sendRichOutboundMessageInner(input);
+  } catch (erro) {
+    throw await surfaceDisconnected(erro);
+  }
+}
+
+async function sendRichOutboundMessageInner(
   input: RichOutboundMessageInput,
 ): Promise<OutboundMessageDeliveryResult> {
   const { id: clientMessageId, key } = resolveClientMessageId(input);

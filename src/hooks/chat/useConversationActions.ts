@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
 import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
+import { isWaitingArchiveError, WAITING_CANNOT_ARCHIVE_MESSAGE } from '@/hooks/inbox/conversationArchive';
+import { transferConversation, transferErrorMessage } from '@/lib/inbox/transferConversation';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
 const _favBus = new EventTarget();
@@ -289,8 +291,8 @@ export function useConversationActions() {
   const archiveContact = useCallback(async (contactId: string) => {
     try {
       await setConversationStatus(contactId, 'archived');
-    } catch {
-      toast.error('Erro ao arquivar conversa');
+    } catch (error) {
+      toast.error(isWaitingArchiveError(error) ? WAITING_CANNOT_ARCHIVE_MESSAGE : 'Erro ao arquivar conversa');
       return;
     }
     undoToast({
@@ -335,6 +337,7 @@ export function useConversationActions() {
     type: 'agent' | 'queue' | 'connection',
     targetId: string,
     note?: string,
+    expectedAgentId?: string | null,
   ) => {
     if (type === 'connection') {
       toast.error('Transferência por conexão ainda não é suportada');
@@ -342,17 +345,22 @@ export function useConversationActions() {
     }
 
     const trimmedNote = note?.trim();
-    const { error } = await supabase.rpc('transfer_conversation', {
-      p_contact_id: contactId,
-      p_to_agent_id: type === 'agent' ? targetId : undefined,
-      p_to_queue_id: type === 'queue' ? targetId : undefined,
-      p_note: trimmedNote || undefined,
+    const { error } = await transferConversation({
+      contactId,
+      toAgentId: type === 'agent' ? targetId : undefined,
+      toQueueId: type === 'queue' ? targetId : undefined,
+      note: trimmedNote || undefined,
+      // Compare-and-set do dono visto na lista (null = sem dono; 40001 se mudou).
+      expectedAgentId,
     });
 
     // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
     // usa a rejeição pra manter o diálogo/alvo abertos. A RPC é transacional:
     // erro nela significa que nem UPDATE em contacts nem evento foram persistidos.
-    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
+    if (error) {
+      toast.error(transferErrorMessage(error, 'Erro ao transferir conversa'));
+      throw error;
+    }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 
