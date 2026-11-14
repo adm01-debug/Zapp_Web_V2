@@ -86,8 +86,16 @@ const semChamador = Object.entries(inventario).filter(([, v]) => v.sem_chamador)
 writeFileSync(join(OUT, 'edges.json'), JSON.stringify({ gerado_em: new Date().toISOString(), total: edges.length, sem_chamador_no_repo: semChamador, edge_functions: inventario }) + '\n');
 console.log(`edges: ${edges.length} | sem chamador no repo (src/migrations/edges): ${semChamador.length}`);
 
+// stdin lido pelo stream (assíncrono, até o EOF): quando o pai entrega um pipe não
+// bloqueante (ex.: spawnSync com `input` grande), readFileSync(0) lança EAGAIN no meio.
+async function lerStdin() {
+  const pedacos = [];
+  for await (const pedaco of process.stdin) pedacos.push(pedaco);
+  return Buffer.concat(pedacos).toString('utf8');
+}
+
 if (!process.stdin.isTTY) {
-  const nomes = readFileSync(0, 'utf8').split(/\s+/).filter(Boolean);
+  const nomes = (await lerStdin()).split(/\s+/).filter(Boolean);
   if (nomes.length > 0) {
     const uso = {};
     for (const t of nomes) {
