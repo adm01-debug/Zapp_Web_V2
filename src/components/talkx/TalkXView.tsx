@@ -147,7 +147,15 @@ export default function TalkXView() {
     // The browser history event, rather than a render effect, is the source of
     // truth for back/forward. Resetting here also guarantees a draft from the
     // previous route cannot survive navigation to another campaign.
-    setLocalDraftRouteId(null);
+    // Exceção: voltar/avançar entre passos do rascunho que o autosave desta sessão criou
+    // (onDraftIdentity) — a entrada anterior já tem ?wizard=<id>; zerar aqui remontaria o
+    // wizard (lista com o rascunho) ou expulsaria o usuário (lista ainda sem ele).
+    // Só enquanto a campanha segue editável: se a lista já a traz fora de draft/scheduled
+    // (disparo começou, lançada em outra aba), o voltar cai no aviso e na lista, como antes.
+    const listedLocalDraft = campaigns.find((candidate) => candidate.id === localDraftRouteId);
+    const keepLocalDraft = localDraftRouteId !== null && parsedWizard.route?.campaignId === localDraftRouteId
+      && (!listedLocalDraft || listedLocalDraft.status === 'draft' || listedLocalDraft.status === 'scheduled');
+    if (!keepLocalDraft) setLocalDraftRouteId(null);
     setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
 
@@ -197,9 +205,9 @@ export default function TalkXView() {
     }
 
     const campaign = campaigns.find((candidate) => candidate.id === parsedWizard.route?.campaignId);
-    setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
+    if (!keepLocalDraft) setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
     setTopView('wizard');
-  }, [campaigns]);
+  }, [campaigns, localDraftRouteId]);
 
   useEffect(() => {
     const initialWizard = parseTalkXRoute(window.location.search).wizard;
@@ -492,6 +500,10 @@ export default function TalkXView() {
             campaign={wizardCampaign}
             onClose={backToList}
             onLaunched={(id, status) => {
+              // Lançada, deixa de ser rascunho local: voltar no navegador para ?wizard=<id>
+              // não pode reabrir o wizard (a guarda avisa e devolve à lista).
+              setLocalDraftRouteId(null);
+              setEditingCampaign(null);
               writeWizardRoute(null, true);
               if (status === 'scheduled') {
                 setScheduledCampaignId(id);

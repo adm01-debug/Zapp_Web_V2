@@ -30,17 +30,23 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
 vi.mock('@/components/talkx/TalkXCampaignWizard', async () => {
-  const { useEffect } = await import('react');
+  const { useEffect, useRef } = await import('react');
   return {
-    TalkXCampaignWizard: ({ campaign, initial, onClose, onDraftIdentity }: {
+    TalkXCampaignWizard: ({ campaign, initial, onClose, onDraftIdentity, onLaunched }: {
       campaign: { id?: string } | null; initial?: { step?: number }; onClose: () => void;
       onDraftIdentity?: (id: string) => void;
+      onLaunched?: (id: string, status: string) => void;
     }) => {
+      // Id que o wizard lançaria: o da campanha aberta ou o do rascunho criado pelo autosave.
+      const savedId = useRef<string | null>(campaign?.id ?? null);
       useEffect(() => { f.wizardMounts += 1; }, []);
+      // Como o wizard real (useCampaignEditor): no mount, informa o id da campanha aberta.
+      useEffect(() => { if (campaign?.id) onDraftIdentity?.(campaign.id); }, [campaign?.id, onDraftIdentity]);
       return (
         <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} data-step={initial?.step}>
           <button type="button" onClick={onClose}>Fechar wizard</button>
-          <button type="button" onClick={() => onDraftIdentity?.('draft_auto')}>Autosave cria rascunho</button>
+          <button type="button" onClick={() => { savedId.current = 'draft_auto'; onDraftIdentity?.('draft_auto'); }}>Autosave cria rascunho</button>
+          <button type="button" onClick={() => onLaunched?.(savedId.current ?? 'new', 'sending')}>Lançar campanha</button>
         </section>
       );
     },
@@ -74,6 +80,7 @@ vi.mock('@/components/talkx/report/TalkXCampaignReport', () => ({
   ),
 }));
 
+import { toast } from 'sonner';
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
 import { replaceTalkXWizardRoute } from '@/components/talkx/talkxWizardRoute';
@@ -120,6 +127,123 @@ describe('TalkXView wizard route integration', () => {
     await waitFor(() => expect(screen.getByTestId('wizard')).toBeInTheDocument());
     expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'new');
     expect(f.wizardMounts).toBe(1);
+  });
+
+  // Voltar no navegador entre passos do rascunho que o autosave desta sessão criou: a entrada
+  // anterior do histórico já aponta para ?wizard=<id>; antes o popstate zerava o rascunho local
+  // e o wizard era expulso (lista sem o rascunho) ou remontado (lista com o rascunho).
+  async function voltarParaPassoDoRascunhoAutosalvo() {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=1');
+    f.wizardMounts = 0;
+    const view = render(<TalkXView />);
+    await screen.findByTestId('wizard');
+    fireEvent.click(screen.getByRole('button', { name: 'Autosave cria rascunho' }));
+    await waitFor(() => expect(window.location.search).toContain('wizard=draft_auto'));
+    return view;
+  }
+
+  it('voltar entre passos do rascunho novo não expulsa o usuário enquanto a lista não traz o rascunho', async () => {
+    await voltarParaPassoDoRascunhoAutosalvo();
+
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_auto&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'new');
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-step', '2');
+    expect(window.location.search).toContain('wizard=draft_auto');
+    expect(f.wizardMounts).toBe(1);
+  });
+
+  it('voltar entre passos do rascunho novo não remonta o wizard quando a lista já traz o rascunho', async () => {
+    const { rerender } = await voltarParaPassoDoRascunhoAutosalvo();
+    f.campaigns = [draft, { ...draft, id: 'draft_auto', name: 'Rascunho do autosave' }];
+    rerender(<TalkXView />);
+
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_auto&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'new');
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-step', '2');
+    expect(f.wizardMounts).toBe(1);
+  });
+
+  it('voltar entre passos de uma campanha existente mantém a campanha aberta no wizard', async () => {
+    // O wizard informa o id da campanha aberta no mount (onDraftIdentity); voltar entre passos
+    // dela não pode reabrir o wizard como campanha nova em branco.
+    f.wizardMounts = 0;
+    render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1'));
+
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_1&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1');
+    expect(f.wizardMounts).toBe(1);
+  });
+
+  it('campanha que deixa de ser editável durante a edição (disparo começou) + voltar: aviso e lista', async () => {
+    const toastError = vi.spyOn(toast, 'error');
+    const { rerender } = render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1'));
+
+    f.campaigns = [{ ...draft, status: 'sending' }];
+    rerender(<TalkXView />);
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_1&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('Somente rascunhos'));
+    toastError.mockRestore();
+  });
+
+  // Lançar e voltar no navegador: o monitor substitui a entrada atual, a anterior ainda aponta
+  // para ?wizard=<id>&step=3, mas a campanha já está enviando. Como na main, o wizard não reabre:
+  // aparece o aviso de que só rascunhos/agendadas são editáveis e o usuário volta à lista.
+  async function lancarEVoltar(id: string) {
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar campanha' }));
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(new URLSearchParams(window.location.search).get('screen')).toBe('monitor');
+    await act(async () => {
+      window.history.replaceState(null, '', `/?view=talkx&wizard=${id}&step=3`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  }
+
+  it('lançar campanha existente e voltar no navegador não reabre o wizard da campanha enviando', async () => {
+    const toastError = vi.spyOn(toast, 'error');
+    const { rerender } = render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1'));
+
+    f.campaigns = [{ ...draft, status: 'sending' }];
+    rerender(<TalkXView />);
+    await lancarEVoltar('draft_1');
+
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('Somente rascunhos'));
+    expect(new URLSearchParams(window.location.search).has('wizard')).toBe(false);
+    toastError.mockRestore();
+  });
+
+  it('lançar o rascunho novo e voltar no navegador não abre um wizard em branco', async () => {
+    const toastError = vi.spyOn(toast, 'error');
+    const { rerender } = await voltarParaPassoDoRascunhoAutosalvo();
+
+    f.campaigns = [draft, { ...draft, id: 'draft_auto', name: 'Rascunho do autosave', status: 'sending' }];
+    rerender(<TalkXView />);
+    await lancarEVoltar('draft_auto');
+
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('Somente rascunhos'));
+    expect(new URLSearchParams(window.location.search).has('wizard')).toBe(false);
+    toastError.mockRestore();
   });
 
   it('handles browser history changes without retaining the previous campaign', async () => {
