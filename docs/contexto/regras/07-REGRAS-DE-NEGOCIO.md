@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `732936826f` · branch `main` · 2026-11-14 12:30 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `6663bfee5c` · branch `main` · 2026-11-14 13:18 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4573,7 +4573,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | not-visible | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | private-file-canary | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | synthetic-login-failure | `scripts/ci/e2e-isolated-tour.unit.mjs` |
-| … +1791 linhas — lista completa em `context.json` | |
+| … +1792 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4644,7 +4644,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21936 testes em 2315 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21937 testes em 2315 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4671,8 +4671,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/journey/__tests__/stats.test.ts` | 50 | computeJourneyStats — totais por categoria (S074) · conta cada categoria separada e a soma em  · linha com data inválida não entra na conta nem produz NaN · entrada vazia devolve zeros sem estourar … |
 | `src/components/ai/__tests__/AutoTicketClassifier.test.tsx` | 49 | AutoTicketClassifier · Rendering · renders title · renders auto-classify switch … |
 | `src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx` | 49 | OmnichannelInbox · Projeção canônica de conversas · mostra a última mensagem de cada conversa em vez de só o cadastro · marca não lidas com a contagem vinda da projeção … |
+| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 49 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
 | `supabase/functions/message-delivery/index.test.ts` | 49 | message delivery rejects methods other than POST before reading secrets · message delivery rejects unauthenticated callers before reading the body · message delivery builds an Evolution poll only from a valid persisted payload · message delivery rejects a malformed persisted contact payload … |
-| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 48 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
 | `src/hooks/system/__tests__/useDiagnosticsData.test.ts` | 48 | useDiagnosticsData — mensagens da janela de 24 h · conta só as mensagens do agente dentro da janela e calcula as taxas · as falhas recentes trazem só id, horário e motivo — sem nome nem conteúdo · base vazia: taxas 0 (sem divisão por zero) e nenhuma busca de contato … |
 | `src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx` | 47 | ContactHeaderSection · renders contact first name · renders company name · does not render phone number or WhatsApp link … |
 | `tests/contracts/ai-routing.contract.test.ts` | 47 | IA-031/034 — resolveProvider: um padrão por finalidade, nunca arbitrário · exatamente 1 padrão ativo para a finalidade → resolve para ele · 0 padrões → NO_PROVIDER (a ausência vira indisponibilidade explícita) · 2+ padrões para a mesma finalidade → AMBIGUOUS_PROVIDER (jamais escolher uma) … |

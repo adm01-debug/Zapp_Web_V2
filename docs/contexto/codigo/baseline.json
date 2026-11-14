@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "732936826f00a436d5ffcf461fc1f2aad50e185f",
+  "commit": "6663bfee5c010899597040cdb5048aae7c88ffde",
   "branch": "main",
-  "data_commit": "2026-11-14T09:00:53-03:00",
+  "data_commit": "2026-11-14T09:46:04-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "6663bfe",
+    "data": "2026-11-14",
+    "assunto": "fix(inbox): arquivar em lote acima de 500 mantém o desfazer quando um pedaço falha (#3082)"
+   },
    {
     "sha": "7329368",
     "data": "2026-11-14",
@@ -126,14 +131,9 @@
     "sha": "7c3ef80",
     "data": "2026-11-13",
     "assunto": "Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)"
-   },
-   {
-    "sha": "af1bc25",
-    "data": "2026-11-13",
-    "assunto": "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)"
    }
   ],
-  "arquivos_mudados_7d": 979,
+  "arquivos_mudados_7d": 894,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -202,11 +202,11 @@
     "mudancas": 21
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 13
+    "arquivo": "ESTADO.md",
+    "mudancas": 14
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": ".github/workflows/ci.yml",
     "mudancas": 13
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8583,
   "arquivos_codigo": 4917,
-  "linhas_codigo": 912669,
+  "linhas_codigo": 912725,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -720,7 +720,7 @@
   },
   "src/hooks": {
    "arquivos": 1003,
-   "linhas": 163743
+   "linhas": 163799
   },
   "src/i18n": {
    "arquivos": 2,

@@ -10602,7 +10602,7 @@
    "modulo": "hooks/inbox",
    "arquivos": 20,
    "testes": 36,
-   "linhas": 3684,
+   "linhas": 3707,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

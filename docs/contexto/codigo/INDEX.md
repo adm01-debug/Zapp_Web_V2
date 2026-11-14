@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `732936826f00a436d5ffcf461fc1f2aad50e185f` (2026-11-14T09:00:53-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6663bfee5c010899597040cdb5048aae7c88ffde` (2026-11-14T09:46:04-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8583 |
 | arquivos_codigo | 4917 |
-| linhas_codigo | 912669 |
+| linhas_codigo | 912725 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -393,15 +393,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 58024 nós · 120144 arestas · 4180 comunidades · grafo do commit `73293682`
-- comunidades maiores: react (805), lucide-react (755), vitest (637), utils.ts (605), ExternalProductManagement.tsx (582), cn (504), ref_node_fs (370), react-router-dom (359), tooltip.tsx (355), validation.ts (326), sonner (311), chat.ts (305)
+- 58025 nós · 120147 arestas · 4331 comunidades · grafo do commit `6663bfee`
+- comunidades maiores: react (738), lucide-react (671), button.tsx (658), vitest (578), ExternalProductManagement.tsx (564), utils.ts (503), avatar.tsx (470), ref_node_assert (442), validation.ts (436), framer-motion (404), cn (400), @tanstack/react-query (398)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (21)
+- ESTADO.md (14)
 - .github/workflows/ci.yml (13)
-- ESTADO.md (13)
 - scripts/db-audit/grants-baseline.json (12)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
@@ -518,6 +518,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-14 `6663bfe` fix(inbox): arquivar em lote acima de 500 mantém o desfazer quando um pedaço falha (#3082)
 - 2026-11-14 `7329368` fix(db-audit): baseline do pg_cron inclui o job outbound-sending-sweeper (#3081)
 - 2026-11-14 `3f5e642` test(e2e): discador espera o aviso SIP sair sozinho em vez de clicar no fechar (corrida no WebKit) (#3080)
 - 2026-11-14 `371a7c0` fix(e2e): discador da Telefonia espera e fecha o aviso de SIP antes de digitar (#3079)
@@ -532,7 +533,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-14 `e50daef` docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)
 - 2026-11-14 `d084ca7` chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)
 - 2026-11-13 `ee9218b` chore(db): pacote de 11 migrations aprovadas — segurança, horário noturno, scheduler do Talk X e reaplicações do ledger 
-- 2026-11-13 `a97aeac` chore(db-audit): regenera baselines de storage.buckets e cron.job (#3053)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

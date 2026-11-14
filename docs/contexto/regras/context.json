@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "732936826f00a436d5ffcf461fc1f2aad50e185f",
+  "sha": "6663bfee5c010899597040cdb5048aae7c88ffde",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 12:30 UTC",
+  "generated_at": "2026-11-14 13:18 UTC",
   "files_total": 8426,
   "code_files": 6218,
-  "code_lines": 1085437
+  "code_lines": 1085493
  },
  "version": "1.3.2",
- "facts_hash": "94fd860adfa28c88",
+ "facts_hash": "e882035ff881bfb6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -69630,7 +69630,7 @@
   {
    "module": "src/hooks",
    "files": 1003,
-   "lines": 163743,
+   "lines": 163799,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -86421,6 +86421,10 @@
    {
     "file": "src/hooks/inbox/useContactQuickActions.ts",
     "msg": "Não foi possível bloquear: conexão WhatsApp não encontrada"
+   },
+   {
+    "file": "src/hooks/inbox/useInboxBulkActions.ts",
+    "msg": "${parcial.size} de ${targetIds.length} arquivados — o restante falhou. Tente de novo."
    },
    {
     "file": "src/hooks/inbox/useInboxBulkActions.ts",
@@ -185905,6 +185909,10 @@
    {
     "file": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
     "name": "lê o conversation_status dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+    "name": "lote acima de 500 com erro num pedaço do meio: mantém o desfazer das já arquivadas, recarrega e avisa"
    },
    {
     "file": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
@@ -338961,7 +338969,7 @@
   },
   "src/hooks/inbox/conversationArchive.ts": {
    "path": "src/hooks/inbox/conversationArchive.ts",
-   "lines": 255,
+   "lines": 264,
    "exports": [
     "type ConversationStatus",
     "const WAITING_CANNOT_ARCHIVE_CODE",
@@ -338970,6 +338978,7 @@
     "function isWaitingArchiveError",
     "const RESTORE_RESOLVED_UNAVAILABLE_MESSAGE",
     "const SET_CONVERSATIONS_STATUS_CHUNK",
+    "function movedBeforeError",
     "function moveConversationsStatus",
     "function readConversationStatuses",
     "function archiveConversations",
@@ -339466,7 +339475,7 @@
   },
   "src/hooks/inbox/useInboxBulkActions.ts": {
    "path": "src/hooks/inbox/useInboxBulkActions.ts",
-   "lines": 336,
+   "lines": 350,
    "exports": [
     "function useInboxBulkActions"
    ],
@@ -339493,6 +339502,7 @@
     "batch-fetch-avatars"
    ],
    "errors": [
+    "${parcial.size} de ${targetIds.length} arquivados — o restante falhou. Tente de novo.",
     "${restored.size} de ${total} restaurados",
     "Erro ao arquivar contatos",
     "Erro ao buscar avatares: ",
@@ -340139,7 +340149,7 @@
   },
   "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts": {
    "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
-   "lines": 999,
+   "lines": 1032,
    "is_test": true,
    "rule_comments": [
     "A RPC de lote só confirma c1 (c2 perdeu a permissão no meio-tempo)."
@@ -340172,6 +340182,7 @@
     "rejeição crua da RPC (rede): preserva o toast de erro, mantém a seleção e propaga",
     "useInboxBulkActions — bulkArchive",
     "lê o conversation_status dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato",
+    "lote acima de 500 com erro num pedaço do meio: mantém o desfazer das já arquivadas, recarrega e avisa",
     "desfazer: original resolved volta em UMA chamada em modo restore — sem novo encerramento",
     "desfazer com mistura de status e falha no grupo resolved: segue os outros grupos, recarrega a lista e avisa ",
     "desfazer não força de volta quem saiu do arquivo na janela: cada passo filtra o status esperado e só segue com os ids devolvidos",
@@ -395284,10 +395295,22 @@
   }
  },
  "git": {
-  "sha": "732936826f00a436d5ffcf461fc1f2aad50e185f",
+  "sha": "6663bfee5c010899597040cdb5048aae7c88ffde",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "6663bfe",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "fix(inbox): arquivar em lote acima de 500 mantém o desfazer quando um pedaço falha (#3082)",
+    "files": [
+     "ESTADO.md",
+     "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+     "src/hooks/inbox/conversationArchive.ts",
+     "src/hooks/inbox/useInboxBulkActions.ts"
+    ]
+   },
    {
     "sha": "7329368",
     "date": "2026-11-14",
@@ -396016,31 +396039,15 @@
      "src/components/email/EmailContactPanel.tsx",
      "src/components/email/__tests__/EmailContactPanel.test.tsx"
     ]
-   },
-   {
-    "sha": "eb93d55",
-    "date": "2026-11-13",
-    "author": "adm01-debug",
-    "subject": "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)",
-    "files": [
-     "supabase/deployment-manifest.json",
-     "supabase/functions/ai-deadline-calculator/index.ts",
-     "supabase/functions/ai-lead-temperature/index.ts",
-     "supabase/functions/ai-loss-risk/index.ts",
-     "supabase/functions/ai-multimodal-analysis/index.ts",
-     "supabase/functions/ai-objection-handler/index.ts",
-     "supabase/functions/ai-price-anchor/index.ts",
-     "supabase/functions/ai-product-recommendation/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
-    "supabase/deployment-manifest.json",
+    "ESTADO.md",
     6
    ],
    [
-    "ESTADO.md",
+    "supabase/deployment-manifest.json",
     5
    ],
    [
@@ -396088,6 +396095,18 @@
     3
    ],
    [
+    "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+    2
+   ],
+   [
+    "src/hooks/inbox/conversationArchive.ts",
+    2
+   ],
+   [
+    "src/hooks/inbox/useInboxBulkActions.ts",
+    2
+   ],
+   [
     "scripts/db-audit/pg-cron-jobs-baseline.json",
     2
    ],
@@ -396101,18 +396120,6 @@
    ],
    [
     "src/components/talkx/__tests__/TalkXView.route.test.tsx",
-    2
-   ],
-   [
-    "docs/DB-INVENTORY.md",
-    2
-   ],
-   [
-    "scripts/db-audit/grants-baseline.json",
-    2
-   ],
-   [
-    "scripts/db-audit/known-violations.json",
     2
    ]
   ]
