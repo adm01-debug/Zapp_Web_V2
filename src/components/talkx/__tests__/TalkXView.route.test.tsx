@@ -5,6 +5,7 @@ const f = vi.hoisted(() => ({
   campaigns: [] as Array<Record<string, unknown>>,
   isLoading: false,
   isError: false,
+  wizardMounts: 0,
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
@@ -28,13 +29,23 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: (
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
-vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
-  TalkXCampaignWizard: ({ campaign, initial, onClose }: { campaign: { id?: string } | null; initial?: { step?: number }; onClose: () => void }) => (
-    <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} data-step={initial?.step}>
-      <button type="button" onClick={onClose}>Fechar wizard</button>
-    </section>
-  ),
-}));
+vi.mock('@/components/talkx/TalkXCampaignWizard', async () => {
+  const { useEffect } = await import('react');
+  return {
+    TalkXCampaignWizard: ({ campaign, initial, onClose, onDraftIdentity }: {
+      campaign: { id?: string } | null; initial?: { step?: number }; onClose: () => void;
+      onDraftIdentity?: (id: string) => void;
+    }) => {
+      useEffect(() => { f.wizardMounts += 1; }, []);
+      return (
+        <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} data-step={initial?.step}>
+          <button type="button" onClick={onClose}>Fechar wizard</button>
+          <button type="button" onClick={() => onDraftIdentity?.('draft_auto')}>Autosave cria rascunho</button>
+        </section>
+      );
+    },
+  };
+});
 vi.mock('@/components/talkx/TalkXOverview', () => ({
   TalkXOverview: ({ campaigns, onNew, onView }: {
     campaigns: Array<{ id: string }>; onNew: () => void; onView: (c: { id: string }) => void;
@@ -87,6 +98,28 @@ describe('TalkXView wizard route integration', () => {
     const wizard = await screen.findByTestId('wizard');
     expect(wizard).toHaveAttribute('data-campaign-id', 'draft_1');
     expect(wizard).toHaveAttribute('data-step', '3');
+  });
+
+  it('autosave do rascunho novo não remonta o wizard quando a lista de campanhas recarrega', async () => {
+    // Antes: onDraftIdentity grava ?wizard=<id>; quando a lista traz o rascunho, wizardCampaign
+    // virava o routedCampaign, a key ia de 'new' para o id e o wizard remontava, voltando o
+    // público ao snapshot salvo (flaky webkit-talkx talkx.spec.ts:213 e perda do que o usuário
+    // marcou depois do autosave).
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=1');
+    f.wizardMounts = 0;
+    const { rerender } = render(<TalkXView />);
+    await screen.findByTestId('wizard');
+    expect(f.wizardMounts).toBe(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Autosave cria rascunho' }));
+    await waitFor(() => expect(window.location.search).toContain('wizard=draft_auto'));
+
+    f.campaigns = [draft, { ...draft, id: 'draft_auto', name: 'Rascunho do autosave' }];
+    rerender(<TalkXView />);
+
+    await waitFor(() => expect(screen.getByTestId('wizard')).toBeInTheDocument());
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'new');
+    expect(f.wizardMounts).toBe(1);
   });
 
   it('handles browser history changes without retaining the previous campaign', async () => {
