@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 // F44: a criacao do disparo passa a viver na MESMA edge de dominio das leituras
 // (`multiplix-dispatch`/`draft.create`, a acao que absorve o F08) — antes ela ia
@@ -12,6 +11,9 @@ import { supabase } from '@/integrations/supabase/client';
 // (abaixo, F44) — o import morto do cartao original foi removido no rebase.
 import { MultiplixOverLimitError, type MultiplixResolvedRecipient, type MultiplixSearchFilters } from './useMultiplixAudience';
 import { EDGE_ERROR_NETWORK, EDGE_ERROR_UNKNOWN, parseEdgeError } from '@/lib/invokeEdge';
+import {
+  MULTIPLIX_OUTSIDE_WINDOW, MultiplixSendError, multiplixActionErrorText,
+} from './multiplixActionErrors';
 
 export interface MultiplixDispatch {
   id: string;
@@ -402,21 +404,33 @@ export interface CreateMultiplixDispatchInput {
   confirmOverLimit?: boolean;
 }
 
-async function invokeMultiplixSend(dispatchId: string, action: 'start' | 'pause' | 'cancel') {
+/**
+ * Chama o worker `multiplix-send` (`start` = retomar pausado com fila; `pause`;
+ * `cancel`). Falha sai como `MultiplixSendError` com o CODIGO do corpo
+ * (`safeDbErrorCode` do banco ou texto fixo da edge) — a tela traduz por
+ * `multiplixActionErrorText`, nunca mostra o codigo cru.
+ *
+ * ATENCAO (`start`): a resposta so chega depois de um LOTE inteiro (minutos).
+ * Quem retoma nao espera esta promessa: ver `confirmResumeByStatus`.
+ */
+export async function invokeMultiplixSend(dispatchId: string, action: 'start' | 'pause' | 'cancel') {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Not authenticated');
+  if (!session) throw new MultiplixSendError('Not authenticated');
   const response = await supabase.functions.invoke('multiplix-send', {
     body: { dispatchId, action },
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) {
+    const parsed = await parseEdgeError(response.error, 'Falha ao chamar multiplix-send');
+    throw new MultiplixSendError(parsed.code, parsed.message, parsed.status);
+  }
   // 'start' fora da janela de envio responde 200 com {ok:false, reason,
   // next_window} em vez de status de erro (nao ha transicao pra reverter),
   // entao invoke() nao rejeita sozinho -- sem isso, "Retomar" fecha o dialog
   // como sucesso mas o disparo continua pausado.
   const body = response.data as { ok?: boolean; reason?: string } | null;
   if (body?.ok === false) {
-    throw new Error(body.reason ? `Fora da janela de envio: ${body.reason}` : 'Disparo recusado pelo motor de envio');
+    throw new MultiplixSendError(MULTIPLIX_OUTSIDE_WINDOW, body.reason ?? 'Disparo recusado pelo motor de envio');
   }
   return response.data;
 }
@@ -425,6 +439,12 @@ export interface CreateMultiplixDispatchResult {
   id: string;
   recipientCount: number;
   created: boolean;
+  /**
+   * So quando `startNow`: o que aconteceu com o INICIO (o `confirm`). O disparo
+   * existe nos dois casos — falhar o inicio deixa o rascunho salvo, nao e erro
+   * da criacao.
+   */
+  start?: { confirmed: true; status: MultiplixDispatch['status'] | null } | { confirmed: false; message: string };
 }
 
 /**
@@ -450,6 +470,33 @@ function dispatchRequestIdentity(input: CreateMultiplixDispatchInput): string {
     input.companyIds,
     input.contactIds ?? [],
   ]);
+}
+
+/**
+ * Confirma o rascunho recem-criado (versao lida do servidor: um reenvio
+ * idempotente pode devolver um rascunho ja existente). Nunca lanca: o rascunho
+ * ja esta salvo, entao a falha do inicio volta como texto para a tela.
+ */
+async function confirmCreatedDraft(dispatchId: string): Promise<NonNullable<CreateMultiplixDispatchResult['start']>> {
+  try {
+    const got = (await invokeMultiplixDispatch('draft.get', { dispatch_id: dispatchId })) as
+      { data?: { dispatch_version?: unknown } | null } | null;
+    const version = Number(got?.data?.dispatch_version);
+    if (!Number.isInteger(version) || version < 1) {
+      throw new MultiplixDispatchEdgeError('multiplix_draft_shape', 'draft.get sem dispatch_version');
+    }
+    const confirmed = readMultiplixConfirm(await invokeMultiplixDispatch('confirm', {
+      dispatch_id: dispatchId,
+      dispatch_version: version,
+    }));
+    return { confirmed: true, status: confirmed.status };
+  } catch (startError) {
+    console.error('multiplix confirm (Iniciar agora) falhou:', startError);
+    return {
+      confirmed: false,
+      message: multiplixActionErrorText(startError, 'Não foi possível iniciar o disparo agora. Tente de novo pelo monitor.'),
+    };
+  }
 }
 
 export function useCreateMultiplixDispatch() {
@@ -500,22 +547,19 @@ export function useCreateMultiplixDispatch() {
       const dispatchId = draft.dispatch_id;
 
       if (input.startNow) {
-        // Nao aguarda: multiplix-send processa o loop de envio inteiro dentro
-        // da mesma invocacao (sleep real de digitacao/intervalo por
-        // destinatario), entao esperar aqui travaria o composer pelo tempo
-        // total do disparo, sem permitir pausar/cancelar/acompanhar. Dispara
-        // em background e deixa o monitor (que abre logo em seguida) refletir
-        // o progresso via realtime/polling; se a janela de envio recusar o
-        // start, o dispatch fica em 'draft' e o botao "Iniciar" do monitor
-        // permite tentar de novo (com o erro real, via toast do runAction).
-        invokeMultiplixSend(dispatchId, 'start').catch((startError) => {
-          // Nao e so o caso esperado (fora da janela): auth/409/500/rede
-          // tambem caem aqui, e sem avisar o usuario o disparo fica parado
-          // (draft) ou preso em 'sending' sem ninguem saber o motivo.
-          const message = startError instanceof Error ? startError.message : 'Erro ao iniciar disparo';
-          console.error('multiplix-send start (background) falhou:', startError);
-          toast.error(`Disparo salvo, mas o início falhou: ${message}`);
-        });
+        // Regra do dono (regras.md §8): iniciar e irreversivel e passa pelo
+        // `confirm` (F51) — revalida (F49), congela publico/bloco e gera a fila
+        // numa transacao. O caminho antigo (`multiplix-send/start` no rascunho)
+        // materializava a fila no worker sem nada disso e o banco agora o recusa
+        // (`multiplix_dispatch_confirm_required`, migration 20261114130000). O
+        // confirm e UMA RPC (rapida): da para esperar; o envio em si e o cron
+        // que leva ao worker.
+        return {
+          id: dispatchId,
+          recipientCount: draft.recipient_count ?? 0,
+          created: draft.created !== false,
+          start: await confirmCreatedDraft(dispatchId),
+        };
       }
 
       return {

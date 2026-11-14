@@ -33,7 +33,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
 
 import { MultiplixMonitor } from '@/components/multiplix/MultiplixMonitor';
 import { toast } from 'sonner';
@@ -263,6 +263,111 @@ describe('MultiplixMonitor — retomar disparo pausado em um clique (decisao do 
     expect(toast.success).not.toHaveBeenCalled();
     const botao = await screen.findByRole('button', { name: 'Retomar' });
     expect((botao as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
+describe('MultiplixMonitor — Retomar nao espera o lote do worker (status confirma a retomada)', () => {
+  it('worker LENTO: o status vira sending enquanto o pedido esta pendente -> um unico toast de sucesso, sem esperar o lote', async () => {
+    dispatch = dispatchRow({ status: 'paused', dispatch_version: 5, pause_reason: 'connection_lost' });
+    const base = functionsInvoke.getMockImplementation()!;
+    functionsInvoke.mockImplementation((fn: string, options: { body: InvokeCall['body'] }) => {
+      if (fn === 'multiplix-send') {
+        calls.push({ fn, body: options.body });
+        // O worker transiciona na hora e segue processando o lote por minutos.
+        dispatch = { ...dispatch, status: 'sending', pause_reason: null };
+        return new Promise(() => {});
+      }
+      return base(fn, options);
+    });
+    render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
+    await screen.findByText('Disparo em rascunho');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1), { timeout: 5000 });
+    expect(vi.mocked(toast.success).mock.calls[0]?.[0]).toBe('Disparo retomado');
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(sendCalls()).toHaveLength(1);
+    // A tela ja mostra o disparo andando (Pausar), sem o botao preso em "Retomando…".
+    expect(await screen.findByRole('button', { name: 'Pausar' })).toBeTruthy();
+  });
+
+  it('recusa por falta de fila (confirm_required) vira toast em PT-BR e abre o "Iniciar" com confirmacao', async () => {
+    dispatch = dispatchRow({ status: 'paused', dispatch_version: 5, pause_reason: 'connection_lost' });
+    const base = functionsInvoke.getMockImplementation()!;
+    functionsInvoke.mockImplementation((fn: string, options: { body: InvokeCall['body'] }) => {
+      if (fn === 'multiplix-send') {
+        calls.push({ fn, body: options.body });
+        const context = new Response(JSON.stringify({ error: 'multiplix_dispatch_confirm_required' }), {
+          status: 409, headers: { 'Content-Type': 'application/json' },
+        });
+        return Promise.resolve({ data: null, error: { message: 'Edge Function returned a non-2xx status code', context } });
+      }
+      return base(fn, options);
+    });
+    render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
+    await screen.findByText('Disparo em rascunho');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    const texto = String(vi.mocked(toast.error).mock.calls[0]?.[0]);
+    expect(texto).toContain('Iniciar');
+    expect(texto).not.toContain('multiplix_');
+    expect(toast.success).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('Iniciar disparo?')).toBeTruthy();
+    expect(confirmCalls()).toHaveLength(0);
+  });
+
+  it('ja enviando (already_running) vira frase amigavel, nunca o codigo cru', async () => {
+    dispatch = dispatchRow({ status: 'paused', dispatch_version: 5 });
+    const base = functionsInvoke.getMockImplementation()!;
+    functionsInvoke.mockImplementation((fn: string, options: { body: InvokeCall['body'] }) => {
+      if (fn === 'multiplix-send') {
+        calls.push({ fn, body: options.body });
+        const context = new Response(JSON.stringify({ error: 'multiplix_dispatch_already_running' }), {
+          status: 409, headers: { 'Content-Type': 'application/json' },
+        });
+        return Promise.resolve({ data: null, error: { message: 'Edge Function returned a non-2xx status code', context } });
+      }
+      return base(fn, options);
+    });
+    render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
+    await screen.findByText('Disparo em rascunho');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    const texto = String(vi.mocked(toast.error).mock.calls[0]?.[0]);
+    expect(texto).toContain('já está enviando');
+    expect(texto).not.toContain('multiplix_');
+  });
+});
+
+describe('MultiplixMonitor — legado pausado SEM fila se inicia com confirmacao (regras.md §8)', () => {
+  it('mostra "Iniciar" (nao "Retomar"), explica o motivo e so gera a fila pelo confirm', async () => {
+    dispatch = dispatchRow({ status: 'paused', dispatch_version: 7, pause_reason: 'legacy_queue_unmaterialized' });
+    render(<MultiplixMonitor dispatchId="d1" onBack={() => {}} />, { wrapper: createWrapper() });
+    await screen.findByText('Disparo em rascunho');
+
+    expect(screen.queryByRole('button', { name: 'Retomar' })).toBeNull();
+    expect(screen.getByText(/Disparo antigo sem fila de envio/)).toBeTruthy();
+    expect(screen.queryByText(/legacy_queue_unmaterialized/)).toBeNull();
+
+    // Um clique NAO envia: abre a confirmacao.
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(sendCalls()).toHaveLength(0);
+    expect(confirmCalls()).toHaveLength(0);
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Iniciar agora' }));
+    await waitFor(() => expect(confirmCalls()).toHaveLength(1));
+    expect(confirmCalls()[0]?.body.payload).toEqual({ dispatch_id: 'd1', dispatch_version: 7 });
+    expect(sendCalls()).toHaveLength(0);
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });
 
