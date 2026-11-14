@@ -637,6 +637,16 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
     expect(typeof lastUndo?.undoAction).toBe('function');
+
+    // O desfazer restaura e conta só as 500 que o banco arquivou (a 501ª nunca foi).
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+    const restores = contactUpdates().slice(2);
+    expect(restores).toHaveLength(1);
+    expect((restores[0].filters as { id: string[] }).id).toEqual(ids.slice(0, 500));
+    expect(mocks.toast.info).not.toHaveBeenCalledWith(expect.stringContaining('restaurados'));
+    expect(mocks.toast.warning).toHaveBeenCalledTimes(1);
   });
 
   // 'waiting' não é arquivada (decisão do dono, 2026-11-13); 'resolved' volta pelo modo

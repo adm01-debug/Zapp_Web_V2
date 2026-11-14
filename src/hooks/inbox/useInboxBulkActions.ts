@@ -213,7 +213,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       }
       if (targetIds.length === 0) { toast.info('Nenhum contato disponível para arquivar'); return; }
 
-      // Quantas o BANCO arquivou de fato (resultado da RPC), não quantas foram pedidas.
+      // Quantas o BANCO arquivou de fato (resultado da RPC), não quantas foram pedidas;
+      // o desfazer restaura e conta só essas.
+      let arquivadasIds: string[] = [];
       await executeUndoable({
         successMessage: (arquivadas: number) => `${arquivadas} contato(s) arquivado(s)`,
         undoMessage: 'Arquivamento desfeito',
@@ -230,6 +232,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
             movidas = parcial;
             toast.warning(`${parcial.size} de ${targetIds.length} arquivados — o restante falhou. Tente de novo.`);
           }
+          arquivadasIds = [...movidas.keys()];
           const arquivadas = movidas.size;
           if (arquivadas === 0) throw new Error('Nenhuma conversa foi arquivada');
           clearSelection();
@@ -252,7 +255,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           const directGroups = new Map<string, string[]>();
           const twoStepGroups = new Map<string, string[]>();
 
-          for (const id of targetIds) {
+          for (const id of arquivadasIds) {
             // 'pending'/'closed' são legados (fora de regras.md §4.1): a FSM não deixa
             // ninguém ENTRAR neles, então o desfazer devolve essas conversas a 'open'.
             const lido = previousStatus.get(id) ?? 'open';
@@ -296,7 +299,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
             refetch();
           }
 
-          const total = targetIds.length;
+          const total = arquivadasIds.length;
           if (failed) {
             toast.warning(`${restored.size} de ${total} restaurados`);
             throw new Error('desfazer parcial');
