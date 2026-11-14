@@ -1592,16 +1592,31 @@ jobs:
       # Estes contratos mantêm containers próprios ou exercitam o shim/harness.
       # SKIP_DOCKER_SHIM garante PostgreSQL real e isolado por teste, sem tocar
       # no serviço compartilhado do job. A imagem usada pelo tag é fixada por digest.
-      - name: Provar EXECUTE de merge_brinde_state (PostgreSQL nativo do runner)
+      - name: Provar EXECUTE de merge_brinde_state (cluster nativo do runner, porta livre)
         # Este teste conecta por SOCKET UNIX com `sudo -u postgres psql` e cria banco
-        # proprio no cluster nativo: nao serve nem o docker-shim (Postgres compartilhado
-        # por TCP) nem o retry-disposable, que esperava /var/run/postgresql/.s.PGSQL.5432
-        # e falhou 6 vezes no run 43629536345 ("o PostgreSQL descartavel nao subiu").
-        # O runner ubuntu-24.04 traz PostgreSQL instalado e PARADO; basta inicia-lo.
+        # proprio: nao serve nem o docker-shim (o Postgres compartilhado deste job e por
+        # TCP, e criar nele as roles globais anon/authenticated/service_role contaminaria
+        # os outros testes) nem o retry-disposable, que esperava
+        # /var/run/postgresql/.s.PGSQL.5432 e falhou 6 vezes no run 43629536345.
+        #
+        # A 1a versao deste passo (14/11, run 43633207624) so fazia `systemctl start
+        # postgresql` e tambem falhou, deixando a main vermelha. Causa: o cluster nativo
+        # do runner ja vem criado na porta 5432 -- a MESMA que o service container deste
+        # job publica no host --, entao o bind falha; e `postgresql.service` no Ubuntu e
+        # um meta-servico que sai 0 mesmo assim. O socket nunca aparecia e as 6
+        # tentativas esgotavam ("connection to server on socket ... No such file or
+        # directory"). Aqui o cluster e movido para a 5433 antes de subir; o pg_wrapper
+        # do Debian faz `sudo -u postgres psql` achar a porta sozinho.
         env:
           SKIP_DOCKER_SHIM: "1"
         run: |
-          sudo systemctl start postgresql
+          ver="$(pg_lsclusters -h | awk 'NR==1{print $1}')"
+          echo "cluster nativo: versao $ver"
+          if [ "$(pg_lsclusters -h | awk 'NR==1{print $4}')" = "online" ]; then
+            sudo pg_ctlcluster "$ver" main stop
+          fi
+          sudo pg_conftool "$ver" main set port 5433
+          sudo pg_ctlcluster "$ver" main start
           for i in 1 2 3 4 5 6; do
             if sudo -u postgres psql -At -c "SELECT 1;" >/dev/null 2>&1; then break; fi
             echo "aguardando o cluster nativo ($i/6)"; sleep 5
