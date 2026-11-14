@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-14 03:48 UTC
+
+- **lints** removido (1): `view_security_definer:public.catalog_send_stats`
+- **views** alterado (1): `public.catalog_send_stats`
+
 ## 2026-11-14 03:15 UTC
 
 - **constraints** alterado (1): `public.chatbot_flows.chatbot_flows_trigger_type_check`

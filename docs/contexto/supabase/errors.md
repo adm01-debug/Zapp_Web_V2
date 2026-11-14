@@ -2,4 +2,4 @@
 
 | seção | erro |
 |---|---|
-| db_stats.auth | permission denied for schema auth |
+| db_stats.auth | role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta |

@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 202,
+ "total": 203,
  "por_camada": {
   "adapters": 2,
   "config": 2,
@@ -12,7 +12,7 @@
   "providers": 1,
   "python": 9,
   "segments": 1,
-  "services": 19,
+  "services": 20,
   "utils": 8
  },
  "arquivos": [
@@ -359,7 +359,7 @@
     "valid_previous_snapshot",
     "write"
    ],
-   "linhas": 1794,
+   "linhas": 1802,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -436,7 +436,7 @@
     "mapRealtimeMessageToMessage"
    ],
    "export_default": null,
-   "linhas": 127,
+   "linhas": 131,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -728,7 +728,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 377,
+   "usado_por": 378,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -794,7 +794,7 @@
     "pages/admin",
     "services"
    ],
-   "coberto_por_testes": 37,
+   "coberto_por_testes": 38,
    "orfao": false
   },
   {
@@ -4334,7 +4334,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 22,
+   "usado_por": 20,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/analytics",
@@ -5917,6 +5917,32 @@
    "usado_por": 1,
    "usado_por_modulos": [
     "components/admin"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/services/message-unread.service.ts",
+   "camada": "services",
+   "exports": [
+    "MarkUnreadLocalResult",
+    "markUnreadInZapp"
+   ],
+   "export_default": null,
+   "linhas": 46,
+   "tabelas": [
+    "messages"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "components/inbox"
    ],
    "coberto_por_testes": 0,
    "orfao": false

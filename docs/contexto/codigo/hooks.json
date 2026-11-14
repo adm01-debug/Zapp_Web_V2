@@ -2148,7 +2148,7 @@
    "hooks_exportados": [
     "useGoalNotifications"
    ],
-   "linhas": 331,
+   "linhas": 382,
    "dominio": "hooks/analytics",
    "tabelas": [
     "agent_stats",
@@ -3940,7 +3940,7 @@
    "hooks_exportados": [
     "useNextBestAction"
    ],
-   "linhas": 197,
+   "linhas": 235,
    "dominio": "hooks/chat",
    "tabelas": [
     "conversation_memory",
@@ -3951,8 +3951,8 @@
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useEffect",
-    "useState"
+    "useMemo",
+    "useQuery"
    ],
    "canais_realtime": [],
    "usado_por": 4,
@@ -4025,7 +4025,7 @@
    "hooks_exportados": [
     "useRealtimeMessages"
    ],
-   "linhas": 283,
+   "linhas": 284,
    "dominio": "hooks/chat",
    "tabelas": [],
    "rpcs": [],
@@ -7117,7 +7117,7 @@
    "hooks_exportados": [
     "useEvolutionApiCore"
    ],
-   "linhas": 183,
+   "linhas": 205,
    "dominio": "hooks/evolution",
    "tabelas": [],
    "rpcs": [],
@@ -7666,7 +7666,7 @@
    "hooks_exportados": [
     "useInboxUnreadTotal"
    ],
-   "linhas": 115,
+   "linhas": 142,
    "dominio": "hooks/inbox",
    "tabelas": [],
    "rpcs": [
@@ -7674,6 +7674,7 @@
    ],
    "edges": [],
    "hooks_internos": [
+    "useCallback",
     "useDocumentBadge",
     "useEffect",
     "useQuery",
@@ -9534,7 +9535,7 @@
    "hooks_exportados": [
     "useGlobalIncomingMessageAlerts"
    ],
-   "linhas": 107,
+   "linhas": 109,
    "dominio": "hooks/realtime",
    "tabelas": [],
    "rpcs": [],
@@ -9616,13 +9617,14 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 7,
+   "usado_por": 8,
    "usado_por_arquivos": [
     "src/features/talk-me/useTalkMeQueue.ts",
     "src/hooks/business/useQueues.ts",
     "src/hooks/chat/useMessages.ts",
     "src/hooks/chat/useRealtimeMessages.ts",
     "src/hooks/crm/useContactEnrichedData.ts",
+    "src/hooks/inbox/useInboxUnreadTotal.ts",
     "src/hooks/realtime/index.ts",
     "src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx"
    ],
@@ -11670,7 +11672,7 @@
    "hooks_exportados": [
     "useTeamPerformance"
    ],
-   "linhas": 39,
+   "linhas": 42,
    "dominio": "hooks/team-chat",
    "tabelas": [
     "team_messages"

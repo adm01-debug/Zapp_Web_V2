@@ -80021,12 +80021,6 @@
     ],
     "lints": [
       {
-        "code": "view_security_definer",
-        "detail": "View em public sem security_invoker: executa como owner e ignora RLS das tabelas base.",
-        "object": "public.catalog_send_stats",
-        "severity": "ALTA"
-      },
-      {
         "code": "no_primary_key",
         "detail": "Sem chave primária: Realtime/replicação e updates por linha ficam frágeis.",
         "object": "public._zapp_fn_before",
@@ -102281,7 +102275,7 @@
         "owner": "postgres",
         "populated": null,
         "schema": "public",
-        "security_invoker": false
+        "security_invoker": true
       },
       {
         "comment": null,
@@ -102483,7 +102477,7 @@
   },
   "errors": [
     {
-      "error": "permission denied for schema auth",
+      "error": "role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta",
       "section": "db_stats.auth"
     }
   ],

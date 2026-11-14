@@ -51,6 +51,7 @@
   "supabase/functions/_shared/__tests__/evolution-connection-lookup-failure.test.ts",
   "supabase/functions/_shared/__tests__/evolution-connection-state.test.ts",
   "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts",
+  "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
   "supabase/functions/_shared/__tests__/evolution-go-group-routing.test.ts",
   "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts",
   "supabase/functions/_shared/__tests__/evolution-helpers-phone-status.test.ts",
@@ -1677,7 +1678,7 @@
    "nome": "evolution-api",
    "entrada": "supabase/functions/evolution-api/index.ts",
    "arquivos": 1,
-   "linhas": 1471,
+   "linhas": 1479,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -2977,7 +2978,7 @@
    "nome": "talkx-scheduler",
    "entrada": "supabase/functions/talkx-scheduler/index.ts",
    "arquivos": 1,
-   "linhas": 401,
+   "linhas": 406,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [

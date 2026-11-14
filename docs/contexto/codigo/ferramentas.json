@@ -3,10 +3,10 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4319)",
+   "TypeScript (4324)",
    "SQL (1321)",
-   "Markdown (1087)",
-   "JSON (603)",
+   "Markdown (1118)",
+   "JSON (605)",
    "JavaScript (466)",
    "Shell (235)",
    "Python (119)",
@@ -1287,7 +1287,7 @@
   {
    "arquivo": "docs/REALTIME-CHANNELS-INVENTORY.md",
    "titulo": "Inventário dos canais Realtime — Zapp Web V2",
-   "linhas": 145
+   "linhas": 144
   },
   {
    "arquivo": "docs/SLA-ESCALATION-CRON.md",
@@ -2744,7 +2744,7 @@
   "papeis_no_codigo": [
    {
     "papel": "alert",
-    "ocorrencias": 117
+    "ocorrencias": 118
    },
    {
     "papel": "status",

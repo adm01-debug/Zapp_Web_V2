@@ -2149,6 +2149,7 @@
   ],
   "src/components/dashboard/ScheduledReportsManager.tsx": [
    "src/components/dashboard/overview/DashboardCard.tsx",
+   "src/components/ui/alert-dialog.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/dialog.tsx",
    "src/components/ui/input.tsx",
@@ -2800,7 +2801,6 @@
    "src/hooks/ui/use-toast.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts",
-   "src/lib/realtimeTopic.ts",
    "src/lib/utils.ts"
   ],
   "src/components/inbox/AudioRecorder.tsx": [
@@ -3786,6 +3786,7 @@
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts",
    "src/lib/utils.ts",
+   "src/services/message-unread.service.ts",
    "src/types/chat.ts"
   ],
   "src/components/inbox/chat/MessageSendHistorySheet.tsx": [
@@ -5292,6 +5293,7 @@
    "src/hooks/business/useNPSSurveys.ts"
   ],
   "src/components/omnichannel/ChannelRoutingRules.tsx": [
+   "src/components/ui/alert-dialog.tsx",
    "src/components/ui/alert.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
@@ -5334,6 +5336,7 @@
   ],
   "src/components/omnichannel/OmnichannelManager.tsx": [
    "src/components/omnichannel/ChannelRoutingRules.tsx",
+   "src/components/ui/alert-dialog.tsx",
    "src/components/ui/alert.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
@@ -6102,6 +6105,7 @@
    "src/lib/utils.ts"
   ],
   "src/components/settings/SkillBasedRoutingSettings.tsx": [
+   "src/components/ui/alert-dialog.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/card.tsx",
@@ -7301,6 +7305,7 @@
    "src/components/team-chat/TeamChatHeader.tsx",
    "src/components/team-chat/TeamChatInputArea.tsx",
    "src/components/team-chat/TeamMessageItem.tsx",
+   "src/components/team-chat/TeamPerformancePanel.tsx",
    "src/components/team-chat/useTeamChatPanel.ts",
    "src/components/ui/button.tsx",
    "src/components/ui/input.tsx",
@@ -7400,10 +7405,12 @@
    "src/hooks/team-chat/useDepartmentManagement.ts"
   ],
   "src/components/team-chat/department-management/DepartmentInvitesView.tsx": [
+   "src/components/ui/alert-dialog.tsx",
    "src/components/ui/button.tsx",
    "src/hooks/team-chat/useDepartmentManagement.ts"
   ],
   "src/components/team-chat/department-management/DepartmentMembersView.tsx": [
+   "src/components/ui/alert-dialog.tsx",
    "src/components/ui/avatar.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
@@ -8335,6 +8342,7 @@
    "src/lib/logger.ts"
   ],
   "src/hooks/chat/useRealtimeMessages.ts": [
+   "src/hooks/realtime/globalChannels.ts",
    "src/hooks/realtime/messageSender.ts",
    "src/hooks/realtime/realtimeUtils.ts",
    "src/hooks/realtime/useMessageUpdateBatcher.ts",
@@ -8955,10 +8963,11 @@
    "src/hooks/ui/use-mobile.tsx"
   ],
   "src/hooks/inbox/useInboxUnreadTotal.ts": [
+   "src/hooks/realtime/globalChannels.ts",
+   "src/hooks/realtime/useSupabaseRealtime.ts",
    "src/hooks/system/useDocumentBadge.ts",
    "src/hooks/team-chat/useTeamUnreadTotal.ts",
-   "src/integrations/supabase/client.ts",
-   "src/lib/realtimeTopic.ts"
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/inbox/useMentionableProfiles.ts": [
    "src/integrations/supabase/client.ts",
@@ -10647,6 +10656,10 @@
   ],
   "src/services/mediaMigration.service.ts": [
    "src/integrations/supabase/client.ts"
+  ],
+  "src/services/message-unread.service.ts": [
+   "src/integrations/supabase/client.ts",
+   "src/types/chat.ts"
   ],
   "src/services/navigation.service.ts": [
    "src/services/role.service.ts"

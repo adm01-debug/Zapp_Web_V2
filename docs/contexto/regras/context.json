@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ee9218b888eb715f1bc6f8fe7273127bf0bbcd01",
+  "sha": "d084ca7530e7e6ac72a081bfbd77bac3014b16b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 03:18 UTC",
-  "files_total": 8366,
-  "code_files": 6195,
-  "code_lines": 1079518
+  "generated_at": "2026-11-14 03:48 UTC",
+  "files_total": 8404,
+  "code_files": 6200,
+  "code_lines": 1080745
  },
  "version": "1.3.2",
- "facts_hash": "2ba0dfb547a40cb8",
+ "facts_hash": "0d3484156b271ee6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -326,8 +326,8 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2385,
-   ".ts": 1930,
+   ".tsx": 2387,
+   ".ts": 1933,
    ".sql": 1321,
    ".mjs": 440,
    ".py": 119,
@@ -62310,7 +62310,7 @@
      "log_audit_event",
      "user_has_permission"
     ],
-    "deps_count": 168
+    "deps_count": 170
    },
    {
     "path": "/2fa",
@@ -62327,7 +62327,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 38
+    "deps_count": 39
    },
    {
     "path": "/auth",
@@ -62385,7 +62385,7 @@
      "get_last_message_dates",
      "search_contacts"
     ],
-    "deps_count": 47
+    "deps_count": 48
    },
    {
     "path": "/forgot-password",
@@ -62402,7 +62402,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 40
+    "deps_count": 41
    },
    {
     "path": "/install",
@@ -62431,7 +62431,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 62
+    "deps_count": 63
    },
    {
     "path": "/queues/comparison",
@@ -62450,7 +62450,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 45
+    "deps_count": 46
    },
    {
     "path": "/reset-password",
@@ -65671,7 +65671,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2221,
+  "components_count": 2223,
   "hooks": [
    {
     "name": "useContacts",
@@ -68344,7 +68344,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18641,
+   "lines": 18654,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -68499,7 +68499,7 @@
   {
    "module": "scripts",
    "files": 470,
-   "lines": 97726,
+   "lines": 97746,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68803,7 +68803,7 @@
   {
    "module": "src/adapters",
    "files": 5,
-   "lines": 620,
+   "lines": 638,
    "tables": [],
    "exports": [
     "evolutionAdapter.ts: jidToPhone, evolutionToRealtimeMessage, deriveContactsFromMessages, derivedToConversationContact, buildExternalConversations",
@@ -68831,8 +68831,8 @@
   },
   {
    "module": "src/components",
-   "files": 2221,
-   "lines": 377436,
+   "files": 2223,
+   "lines": 377929,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -69179,8 +69179,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 999,
-   "lines": 162869,
+   "files": 1000,
+   "lines": 163207,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -69294,7 +69294,7 @@
     "useActiveAIProvider.ts: ActiveAIProvider, useActiveAIProvider",
     "useDashboardData.ts: useDashboardData, formatResponseTime",
     "useDashboardWidgets.ts: DashboardWidget, WidgetSize, DisclosureLevel, useDashboardWidgets",
-    "useGoalNotifications.ts: useGoalNotifications",
+    "useGoalNotifications.ts: GOAL_CHECK_INTERVAL_MS, useGoalNotifications",
     "useGoalsDashboard.ts: Goal, PERIOD_OPTIONS, getProgressColor, getProgressBgColor, useGoalsDashboard",
     "usePerformanceOptimizations.ts: usePerformanceMetrics, useThrottledCallback, useIdleCallback, useIntersectionObserver, useMemoryPressure, useNetworkStatus",
     "usePerformanceSnapshots.ts: PerformanceSnapshot, usePerformanceSnapshots",
@@ -69498,7 +69498,7 @@
   {
    "module": "src/lib",
    "files": 289,
-   "lines": 39430,
+   "lines": 39429,
    "tables": [
     "contacts",
     "security_alerts"
@@ -69917,8 +69917,8 @@
   },
   {
    "module": "src/services",
-   "files": 37,
-   "lines": 5793,
+   "files": 38,
+   "lines": 5839,
    "tables": [
     "ai_conversation_tags",
     "audit_logs",
@@ -69948,6 +69948,7 @@
     "inbox.service.ts: InboxFilterTag, fetchInboxFilterTags, InboxSilenceConversation, InboxSilenceConnection, fetchInboxSilence",
     "instance-pauses.service.ts: InstancePause, PAUSE_NOTES_MAX_LENGTH, PAUSES_LIST_LIMIT, PAUSES_LOAD_ERROR, validateInvestigationNotes, fetchInstancePauses",
     "mediaMigration.service.ts: HISTORY_LIMIT, MigrationHistoryEntry, countPendingMedia, fetchMigrationHistory",
+    "message-unread.service.ts: MarkUnreadLocalResult, markUnreadInZapp",
     "navigation.service.ts: NavItem, NavGroup, NavigationService",
     "outbound-message.service.ts: OutboundMessageType, SendOutboundMessageInput, OutboundMessageDeliveryResult, RichOutboundMessageInput, PENDING_ACTION_TTL_MS, drainOfflineSendQueue",
     "queue.service.ts: QueueService",
@@ -69991,6 +69992,7 @@
     "src/services/index.ts",
     "src/services/instance-pauses.service.ts",
     "src/services/mediaMigration.service.ts",
+    "src/services/message-unread.service.ts",
     "src/services/navigation.service.ts",
     "src/services/outbound-message.service.ts",
     "src/services/queue.service.ts",
@@ -70223,8 +70225,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 408,
-   "lines": 123296,
+   "files": 409,
+   "lines": 123596,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -70351,7 +70353,7 @@
     "email-font-stack.ts: EMAIL_FONT_STACK",
     "evolution-api-proxy.ts: normalizeGoSendResponse, normalizeGoResponse, proxyToEvolution, CONFIGURED_MEDIA_HOST_SUFFIXES, outboundMediaEgressPolicy, resolveAllowedMediaEgressUrl",
     "evolution-control-authz.ts: EvolutionActionKind, CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS, classifyEvolutionAction, EvolutionAuthzDecision",
-    "evolution-go-adapter.ts: isGoPayload, translateGoPayload",
+    "evolution-go-adapter.ts: splitGoJid, inferGoReceiptFromMe, isGoPayload, translateGoPayload",
     "evolution-go-routes.ts: GoRoute, translateV2ToGo",
     "evolution-go-token-sync.ts: SafeFetchResult, safeFetch, readJsonSafe, goErrorText, GoTokenLookupFailure, GoTokenLookup",
     "evolution-helpers.ts: WebhookPayload, isRecord, normalizeEventName, toEventRecords, normalizePhone, isGroupJid",
@@ -71942,6 +71944,7 @@
      "src/services/chat.service.ts",
      "src/services/contact.service.ts",
      "src/services/mediaMigration.service.ts",
+     "src/services/message-unread.service.ts",
      "src/services/realtime.service.ts",
      "supabase/functions/_shared/ai-audio-authz.ts",
      "supabase/functions/_shared/copilot-tick.ts",
@@ -71973,6 +71976,7 @@
      "src/hooks/chat/useFilesActions.ts",
      "src/hooks/inbox/useInboxBulkActions.ts",
      "src/services/chat.service.ts",
+     "src/services/message-unread.service.ts",
      "src/services/realtime.service.ts",
      "supabase/functions/_shared/evolution-helpers.ts",
      "supabase/functions/_shared/evolution-webhook-handlers.ts",
@@ -79928,6 +79932,11 @@
     "values": "text | array | number | date | enum | uuid"
    },
    {
+    "file": "src/services/message-unread.service.ts",
+    "name": "MarkUnreadLocalResult",
+    "values": "ok | sem_mensagem_do_contato | erro"
+   },
+   {
     "file": "src/services/outbound-message.service.ts",
     "name": "OutboundMessageType",
     "values": "text | image | audio | video | document | sticker | location"
@@ -82990,6 +82999,10 @@
     "msg": "bloco fontSize nao encontrado em tailwind.config.ts"
    },
    {
+    "file": "scripts/supabase_snapshot/snapshot.py",
+    "msg": "role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta"
+   },
+   {
     "file": "scripts/supabase_snapshot/test_snapshot.py",
     "msg": "O teste offline não permite consultas ao banco"
    },
@@ -85244,6 +85257,10 @@
    {
     "file": "src/components/team-chat/TeamFileUploader.tsx",
     "msg": "Erro ao enviar arquivo"
+   },
+   {
+    "file": "src/components/team-chat/TeamPerformancePanel.tsx",
+    "msg": " className="
    },
    {
     "file": "src/components/team-chat/teamChatParts.tsx",
@@ -91486,6 +91503,10 @@
     "text": "e a janela crescia sob o mesmo rotulo. Agora cada consulta recalcula o limite"
    },
    {
+    "file": "src/hooks/analytics/useGoalNotifications.ts",
+    "text": "gravação do aviso deduplica por chave e não pode correr consigo mesma."
+   },
+   {
     "file": "src/hooks/analytics/useQueueGoalAlerts.ts",
     "text": "* Avisos de limite das metas de fila (PM-02, cartão t_549f87e1)."
    },
@@ -91855,7 +91876,7 @@
    },
    {
     "file": "src/hooks/chat/useNextBestAction.ts",
-    "text": "Leituras que falharam: ausência de dado não pode ser lida como ausência de urgência."
+    "text": "* Leituras que falharam: ausência de dado não pode ser lida como ausência de urgência. */"
    },
    {
     "file": "src/hooks/chat/useNextBestAction.ts",
@@ -95058,8 +95079,28 @@
     "text": "* Normaliza JID/telefone para dígitos (mesma regra do handler). */"
    },
    {
+    "file": "supabase/functions/_shared/evolution-go-adapter.ts",
+    "text": "* Regra (P1-GO-1): recibo de entrega/leitura vindo de OUTRA pessoa é sempre"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-go-routes.ts",
+    "text": "opcionais (footer/title de botões e listas): espaço passa na validação e não"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-go-routes.ts",
+    "text": "O GO exige name e address (400 \"name is required\"); no v2 eram opcionais e"
+   },
+   {
     "file": "supabase/functions/_shared/evolution-go-routes.ts",
     "text": "O GO rejeita footer vazio (\"footer is required\") — v2 tratava como opcional."
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-go-routes.ts",
+    "text": "Idem para title (\"title is required\"): lista sem cabeçalho é válida no"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-go-routes.ts",
+    "text": "400 \"messageId is required\" em toda edição."
    },
    {
     "file": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -106721,6 +106762,11 @@
     "value": "1"
    },
    {
+    "file": "src/hooks/analytics/useGoalNotifications.ts",
+    "name": "GOAL_CHECK_INTERVAL_MS",
+    "value": "600"
+   },
+   {
     "file": "src/hooks/analytics/useQueueGoalAlerts.ts",
     "name": "QUEUE_GOAL_ALERTS_INTERVAL_MS",
     "value": "5"
@@ -107479,6 +107525,16 @@
     "file": "src/hooks/reactions/useBatchReactions.ts",
     "name": "REACTIONS_BATCH_SIZE",
     "value": "100"
+   },
+   {
+    "file": "src/hooks/realtime/globalChannels.ts",
+    "name": "GLOBAL_MESSAGES_CHANNEL",
+    "value": "'global-messages-realtime'"
+   },
+   {
+    "file": "src/hooks/realtime/globalChannels.ts",
+    "name": "GLOBAL_CONTACTS_CHANNEL",
+    "value": "'global-contacts-realtime'"
    },
    {
     "file": "src/hooks/realtime/realtimeStatusStore.ts",
@@ -117657,6 +117713,12 @@
    },
    {
     "file": "src/hooks/analytics/useGoalNotifications.ts",
+    "field": "status",
+    "value": "fulfilled",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/analytics/useGoalNotifications.ts",
     "field": "conversation_status",
     "value": "resolved",
     "kind": "filtra"
@@ -118763,12 +118825,6 @@
     "file": "src/hooks/inbox/useInboxBulkActions.ts",
     "field": "type",
     "value": "queue",
-    "kind": "compara"
-   },
-   {
-    "file": "src/hooks/inbox/useInboxUnreadTotal.ts",
-    "field": "status",
-    "value": "SUBSCRIBED",
     "kind": "compara"
    },
    {
@@ -122450,6 +122506,18 @@
     "kind": "escreve"
    },
    {
+    "file": "supabase/functions/_shared/evolution-go-adapter.ts",
+    "field": "type",
+    "value": "readself",
+    "kind": "compara"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-go-adapter.ts",
+    "field": "state",
+    "value": "readself",
+    "kind": "compara"
+   },
+   {
     "file": "supabase/functions/_shared/evolution-go-routes.ts",
     "field": "type",
     "value": "ptt",
@@ -125752,12 +125820,6 @@
     "body": "const value = (name ?? '').trim(); if (value.length === 0) { return { ok: false, value: '', error: 'Informe um nome para o filtro.' }; } if (value.length > PRESET_NAME_MAX_LENGTH) { return { ok: false, value, error: `O nome deve ter no máximo ${PRESET_NAME_MAX_LENGTH} caracteres.`, }; } if (CONTROL_CHARS.test(value)) { return { ok: false, value, error: 'O nome contém caracteres inválidos.' }; } const duplicated = presets.some( (p) => p.id !== ignoreId && (p.name ?? '').trim().toLowerCase() === v …"
    },
    {
-    "file": "src/hooks/inbox/useInboxUnreadTotal.ts",
-    "name": "invalidate",
-    "params": "",
-    "body": "if (debounce) clearTimeout(debounce); debounce = setTimeout(() => { debounce = undefined; void queryClient.invalidateQueries({ queryKey: inboxUnreadTotalQueryKey }); }, DEBOUNCE_MS);"
-   },
-   {
     "file": "src/hooks/integrations/useGmail.ts",
     "name": "shouldRetryGmailSync",
     "params": "failureCount: number, error: unknown",
@@ -126861,7 +126923,7 @@
    },
    {
     "file": "src/hooks/chat/useNextBestAction.ts",
-    "line": "const hoursSinceLastMsg = (Date.now() - new Date(lastMsg.created_at).getTime()) / (1000 * 60 * 60);"
+    "line": "const hoursSinceLastMsg = (now - new Date(lastMsg.created_at).getTime()) / (1000 * 60 * 60);"
    },
    {
     "file": "src/hooks/chat/useTypingPresence.ts",
@@ -132038,6 +132100,10 @@
    {
     "file": "src/adapters/__tests__/inboxAdapter.test.ts",
     "name": "normaliza a nota de voz ptt para o player canonico de audio"
+   },
+   {
+    "file": "src/adapters/__tests__/inboxAdapter.test.ts",
+    "name": "expõe transcription_status como transcriptionStatus para o player de áudio (P1-9)"
    },
    {
     "file": "src/components/__tests__/CT70_reduzirMovimentoAutomacaoIa.test.tsx",
@@ -141284,6 +141350,14 @@
     "name": "o relatório gravado com a frequência personalizada aparece na lista com o rótulo da tile"
    },
    {
+    "file": "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
+    "name": "ScheduledReportsManager — exclusão pede confirmação"
+   },
+   {
+    "file": "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
+    "name": "clicar na lixeira abre o diálogo e NÃO exclui antes de confirmar"
+   },
+   {
     "file": "src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx",
     "name": "SentimentAlertsDashboard — acessibilidade"
    },
@@ -143966,6 +144040,10 @@
    {
     "file": "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
     "name": "uma nova falha não apaga a transcrição já conhecida"
+   },
+   {
+    "file": "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+    "name": "P1-9: a bolha de áudio não abre canal realtime próprio; a transcrição chega pelas props"
    },
    {
     "file": "src/components/inbox/__tests__/AudioRecorder.test.tsx",
@@ -150338,6 +150416,30 @@
    {
     "file": "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx",
     "name": "a mensagem do contato NÃO tem a entrada de Histórico de envio"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+    "name": "MessageHoverToolbar — marcar como não lida (P2-GO-6)"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+    "name": "Evolution GO (notSupported): marca no Zapp e confirma sucesso, sem erro"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+    "name": "falha do provedor (403/404 antigo) não derruba a marcação do Zapp"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+    "name": "escrita negada no banco (0 linhas) é erro e não chama o provedor"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+    "name": "em mensagem nossa, marca a última mensagem do cliente"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+    "name": "conversa sem mensagem do cliente avisa em vez de dizer sucesso"
    },
    {
     "file": "src/components/inbox/chat/__tests__/MessageSendHistorySheet.test.tsx",
@@ -169612,6 +169714,34 @@
     "name": "funciona por teclado: ArrowRight move o foco, Space/Enter ativam"
    },
    {
+    "file": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+    "name": "TeamChatHeader — botão Performance"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+    "name": "sem onTogglePerformance não há botão nem placeholder "
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+    "name": "com onTogglePerformance o botão fica habilitado e chama o callback"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+    "name": "com o painel aberto o botão indica estado pressionado e oferece fechar"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+    "name": "TeamPerformancePanel — estados"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+    "name": "mostra aviso de erro quando a consulta falha"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+    "name": "mostra carregando enquanto busca"
+   },
+   {
     "file": "src/components/team-chat/__tests__/TeamChatPanel.nao-membro.test.tsx",
     "name": "TeamChatPanel — cabeçalho na visão bloqueada (B7)"
    },
@@ -169642,6 +169772,18 @@
    {
     "file": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
     "name": "falha da busca aparece como aviso de erro, não como "
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
+    "name": "TeamChatPanel — painel de performance"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
+    "name": "fechado por padrão: o painel não é montado"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
+    "name": "aberto: monta TeamPerformancePanel com o id da conversa"
    },
    {
     "file": "src/components/team-chat/__tests__/TeamChatPanel.wiring.test.tsx",
@@ -174788,6 +174930,14 @@
     "name": "não trata tipo desconhecido como progresso zero silencioso"
    },
    {
+    "file": "src/hooks/__tests__/useGoalNotifications.goal-types.test.ts",
+    "name": "P1-7: contatos atendidos e taxa de resolução no mesmo período dividem a contagem do total"
+   },
+   {
+    "file": "src/hooks/__tests__/useGoalNotifications.goal-types.test.ts",
+    "name": "P1-7: aba em segundo plano não consulta metas"
+   },
+   {
     "file": "src/hooks/__tests__/useGoalNotifications.test.ts",
     "name": "useGoalNotifications"
    },
@@ -178233,7 +178383,7 @@
    },
    {
     "file": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
-    "name": "fetches status and presence when connection exists"
+    "name": "busca os status quando há conexão e NÃO manda presença ao contato"
    },
    {
     "file": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
@@ -178261,7 +178411,7 @@
    },
    {
     "file": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
-    "name": "handles one API call failing while other succeeds"
+    "name": "falha na leitura dos status não vira erro da aba"
    },
    {
     "file": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
@@ -181328,6 +181478,14 @@
     "name": "erro de leitura do SLA vira aviso explícito, sem escalar nem sugerir oportunidade"
    },
    {
+    "file": "src/hooks/chat/__tests__/useNextBestAction.test.tsx",
+    "name": "P1-8: três montagens do mesmo contato dividem UMA leitura de cada fonte"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useNextBestAction.test.tsx",
+    "name": "P1-8: "
+   },
+   {
     "file": "src/hooks/chat/__tests__/usePdfThumbnail.test.tsx",
     "name": "usePdfThumbnail — portões e estados"
    },
@@ -184104,6 +184262,26 @@
     "name": "withToast mostra o aviso de não suportado em vez do toast de sucesso"
    },
    {
+    "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    "name": "Edge non-2xx (FunctionsHttpError): mensagem vem do corpo"
+   },
+   {
+    "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    "name": "usa body.message no lugar do texto genérico do SDK"
+   },
+   {
+    "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    "name": "cai em body.error (string) quando não há message"
+   },
+   {
+    "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    "name": "corpo não-JSON mantém o erro original do SDK"
+   },
+   {
+    "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    "name": "withToast mostra a mensagem do corpo ao operador"
+   },
+   {
     "file": "src/hooks/evolution/__tests__/useEvolutionApiCore.withToast.test.ts",
     "name": "withToast — caminho de sucesso"
    },
@@ -184170,6 +184348,10 @@
    {
     "file": "src/hooks/evolution/__tests__/useEvolutionGroups.test.ts",
     "name": "falha de rede em mutação com toast avisa o usuário e propaga"
+   },
+   {
+    "file": "src/hooks/evolution/__tests__/useEvolutionGroups.test.ts",
+    "name": "403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js"
    },
    {
     "file": "src/hooks/evolution/__tests__/useEvolutionGroups.test.ts",
@@ -185329,7 +185511,11 @@
    },
    {
     "file": "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
-    "name": "reconexão: a primeira inscrição não consulta de novo; a volta do canal revalida"
+    "name": "recibo de mensagem nossa não recalcula o selo; is_read do contato mudando recalcula"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
+    "name": "reconexão: a volta do canal revalida na hora"
    },
    {
     "file": "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
@@ -185337,7 +185523,7 @@
    },
    {
     "file": "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
-    "name": "tópico exclusivo por instância e canal limpo ao desmontar"
+    "name": "assina os canais GLOBAIS compartilhados, não um canal exclusivo do selo"
    },
    {
     "file": "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
@@ -186002,6 +186188,10 @@
    {
     "file": "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
     "name": "falha de rede sobe o erro e o item de mutação avisa no toast"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
+    "name": "403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js"
    },
    {
     "file": "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
@@ -191637,6 +191827,14 @@
    },
    {
     "file": "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
+    "name": "tempo médio de resposta só conta trocas entre remetentes diferentes"
+   },
+   {
+    "file": "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
+    "name": "sem troca entre pessoas o tempo médio de resposta fica nulo"
+   },
+   {
+    "file": "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
     "name": "E92: returns isLoading=true initially"
    },
    {
@@ -195813,7 +196011,7 @@
    },
    {
     "file": "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
-    "name": "(4) AudioMessagePlayer: duas montagens da mesma mensagem pedem canais distintos"
+    "name": "(4) AudioMessagePlayer: nenhuma bolha abre canal próprio (P1-9 — transcrição vem pelo canal da conversa)"
    },
    {
     "file": "src/lib/__tests__/reload-blockers.test.ts",
@@ -203716,6 +203914,70 @@
     "name": "matriz é exaustiva: toda ação do handler está em exatamente um conjunto"
    },
    {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: lido no WhatsApp Web do contato (Sender com sufixo de aparelho) é recibo NOSSO"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: recibo com Sender em @lid e o telefone em SenderAlt é recibo NOSSO"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: IsFromMe=false (recibo vindo do contato) decide mesmo sem casar os JIDs"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: read-self (li no meu celular a mensagem do contato) NUNCA é recibo nosso"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: read-self sem IsFromMe e com Sender igual ao Chat continua não sendo nosso"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: recibo de participante em grupo é de mensagem nossa"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: sem IsFromMe e com pessoas diferentes segue inbound (comportamento antigo preservado)"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-1: @lid e telefone com o mesmo número NÃO são tratados como a mesma pessoa"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "splitGoJid tira aparelho/agente e normaliza @c.us"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-2: edição no formato da tela ({number, messageId}) chega à GO com messageId"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-2: edição no formato v2 (key) continua funcionando e sem id vira invalid"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-3: remover reação (reaction "
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-4: botões sem cabeçalho recebem title válido (GO: "
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-4: lista sem cabeçalho recebe title válido"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-4: localização sem nome/endereço recebe defaults em vez de 400"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+    "name": "P1-GO-4: latitude/longitude em string viram número (bind float64 da GO)"
+   },
+   {
     "file": "supabase/functions/_shared/__tests__/evolution-go-group-routing.test.ts",
     "name": "R2-API-005: evento GO de grupo resolve o CHAT (grupo), nunca o telefone do participante"
    },
@@ -210566,6 +210828,14 @@
    {
     "file": "supabase/functions/talkx-scheduler/index.test.ts",
     "name": "N-102: campanha com respect_dnd=false é despachada mesmo dentro de DND"
+   },
+   {
+    "file": "supabase/functions/talkx-scheduler/index.test.ts",
+    "name": "N-102: resposta tabular da RPC com allowed=true despacha a campanha"
+   },
+   {
+    "file": "supabase/functions/talkx-scheduler/index.test.ts",
+    "name": "N-102: resposta tabular da RPC com allowed=false não despacha"
    },
    {
     "file": "supabase/functions/talkx-scheduler/index.test.ts",
@@ -238528,6 +238798,10 @@
     "limit": "200"
    },
    {
+    "file": "src/services/message-unread.service.ts",
+    "limit": "1"
+   },
+   {
     "file": "supabase/functions/_shared/ai-conversation-pipeline.ts",
     "limit": "3"
    },
@@ -240537,6 +240811,9 @@
      "unanswered_question": [
       "escreve:supabase/functions/_shared/copilot-tick.ts"
      ],
+     "readself": [
+      "compara:supabase/functions/_shared/evolution-go-adapter.ts"
+     ],
      "ptt": [
       "escreve:supabase/functions/_shared/evolution-go-routes.ts"
      ],
@@ -241223,7 +241500,6 @@
       "compara:src/hooks/chat/useTypingPresence.ts",
       "compara:src/hooks/communication/useAudioMemes.ts",
       "compara:src/hooks/gamification/useAgentCelebrations.ts",
-      "compara:src/hooks/inbox/useInboxUnreadTotal.ts",
       "compara:src/hooks/integrations/useTalkX.ts",
       "compara:src/hooks/integrations/useTalkXCampaignList.ts",
       "compara:src/hooks/realtime/useSupabaseRealtime.ts",
@@ -241454,6 +241730,12 @@
      "published": [
       "compara:src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx"
      ],
+     "fulfilled": [
+      "compara:src/hooks/analytics/useGoalNotifications.ts",
+      "compara:src/hooks/integrations/useWhatsAppStatus.ts",
+      "compara:src/lib/commandPaletteSearch.ts",
+      "compara:supabase/functions/gmail-cron-sync/index.ts"
+     ],
      "unverified": [
       "compara:src/hooks/auth/useMFA.ts"
      ],
@@ -241518,11 +241800,6 @@
      ],
      "segstatus": [
       "escreve:src/hooks/integrations/useTalkXSegments.ts"
-     ],
-     "fulfilled": [
-      "compara:src/hooks/integrations/useWhatsAppStatus.ts",
-      "compara:src/lib/commandPaletteSearch.ts",
-      "compara:supabase/functions/gmail-cron-sync/index.ts"
      ],
      "CLOSED": [
       "compara:src/hooks/realtime/useSupabaseRealtime.ts"
@@ -241916,6 +242193,9 @@
      ],
      "unconfirmed": [
       "escreve:supabase/functions/_shared/effect-reconcile.ts"
+     ],
+     "readself": [
+      "compara:supabase/functions/_shared/evolution-go-adapter.ts"
      ],
      "online": [
       "compara:supabase/functions/_shared/evolution-webhook-handlers.ts"
@@ -261165,6 +261445,16 @@
    },
    {
     "kind": "status",
+    "msg": "valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS",
+    "where": [
+     "compara:src/hooks/analytics/useGoalNotifications.ts",
+     "compara:src/hooks/integrations/useWhatsAppStatus.ts",
+     "compara:src/lib/commandPaletteSearch.ts",
+     "compara:supabase/functions/gmail-cron-sync/index.ts"
+    ]
+   },
+   {
+    "kind": "status",
     "msg": "valor `unverified` para `status` usado no código não existe em nenhum enum do banco/TS",
     "where": [
      "compara:src/hooks/auth/useMFA.ts"
@@ -261235,15 +261525,6 @@
     "msg": "valor `segstatus` para `status` usado no código não existe em nenhum enum do banco/TS",
     "where": [
      "escreve:src/hooks/integrations/useTalkXSegments.ts"
-    ]
-   },
-   {
-    "kind": "status",
-    "msg": "valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS",
-    "where": [
-     "compara:src/hooks/integrations/useWhatsAppStatus.ts",
-     "compara:src/lib/commandPaletteSearch.ts",
-     "compara:supabase/functions/gmail-cron-sync/index.ts"
     ]
    },
    {
@@ -261410,6 +261691,13 @@
     "msg": "valor `unconfirmed` para `state` usado no código não existe em nenhum enum do banco/TS",
     "where": [
      "escreve:supabase/functions/_shared/effect-reconcile.ts"
+    ]
+   },
+   {
+    "kind": "status",
+    "msg": "valor `readself` para `state` usado no código não existe em nenhum enum do banco/TS",
+    "where": [
+     "compara:supabase/functions/_shared/evolution-go-adapter.ts"
     ]
    },
    {
@@ -265658,7 +265946,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "path": "e2e/navegacao-modulos.spec.ts",
-   "lines": 2002,
+   "lines": 2015,
    "is_test": true,
    "env": [
     "E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE",
@@ -276034,7 +276322,7 @@
   },
   "scripts/supabase_snapshot/snapshot.py": {
    "path": "scripts/supabase_snapshot/snapshot.py",
-   "lines": 1794,
+   "lines": 1802,
    "exports": [
     "def env_int",
     "def log",
@@ -276137,9 +276425,13 @@
      "path": "statement_timeout"
     }
    ],
+   "errors": [
+    "role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta"
+   ],
    "rule_comments": [
     "Somente leitura no banco (sessão read-only, statement_timeout, lock_timeout).",
     "Role sem SELECT em auth.* (ex.: role de leitura do workflow) nao pode derrubar a secao inteira:",
+    "Consultar auth.* sem grant gera \"permission denied for schema auth\" no log do Postgres a cada",
     "Auth\\n\", \"Contagens de usuários em `stats.md` (apenas agregados — sem dados pessoais).\\n\"]",
     "Vault (somente nomes — valores nunca são exportados)\\n\\n\" + banner(\"vault\") + md_table(",
     "# Secrets (apenas nomes)\\n\\n\" + md_table([\"nome\"], [[s] for s in api_.get(\"secrets_names\") or []]))",
@@ -276157,7 +276449,7 @@
   },
   "scripts/supabase_snapshot/test_snapshot.py": {
    "path": "scripts/supabase_snapshot/test_snapshot.py",
-   "lines": 889,
+   "lines": 901,
    "exports": [
     "class OfflineConnection",
     "def function",
@@ -276927,7 +277219,7 @@
   },
   "src/adapters/inboxAdapter.ts": {
    "path": "src/adapters/inboxAdapter.ts",
-   "lines": 127,
+   "lines": 131,
    "exports": [
     "function mapMessageRowToMessage",
     "function mapRealtimeContactToContact",
@@ -276990,13 +277282,14 @@
   },
   "src/adapters/__tests__/inboxAdapter.test.ts": {
    "path": "src/adapters/__tests__/inboxAdapter.test.ts",
-   "lines": 35,
+   "lines": 49,
    "is_test": true,
    "tests": [
     "mapMessageRowToMessage",
     "hydrates a safe location object from the canonical atomic payload",
     "does not render coordinates from malformed location content",
-    "normaliza a nota de voz ptt para o player canonico de audio"
+    "normaliza a nota de voz ptt para o player canonico de audio",
+    "expõe transcription_status como transcriptionStatus para o player de áudio (P1-9)"
    ]
   },
   "src/components/CommandPalette.tsx": {
@@ -286965,7 +287258,7 @@
   },
   "src/components/dashboard/ScheduledReportsManager.tsx": {
    "path": "src/components/dashboard/ScheduledReportsManager.tsx",
-   "lines": 269,
+   "lines": 287,
    "exports": [
     "function ScheduledReportsManager"
    ],
@@ -287665,12 +287958,14 @@
   },
   "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx": {
    "path": "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
-   "lines": 68,
+   "lines": 108,
    "is_test": true,
    "tests": [
     "ScheduledReportsManager — frequência ",
     "a tile ",
-    "o relatório gravado com a frequência personalizada aparece na lista com o rótulo da tile"
+    "o relatório gravado com a frequência personalizada aparece na lista com o rótulo da tile",
+    "ScheduledReportsManager — exclusão pede confirmação",
+    "clicar na lixeira abre o diálogo e NÃO exclui antes de confirmar"
    ]
   },
   "src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx": {
@@ -290226,7 +290521,7 @@
   },
   "src/components/inbox/AudioMessagePlayer.tsx": {
    "path": "src/components/inbox/AudioMessagePlayer.tsx",
-   "lines": 206,
+   "lines": 211,
    "exports": [
     "function AudioMessagePlayer"
    ],
@@ -292332,7 +292627,7 @@
   },
   "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx": {
    "path": "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
-   "lines": 123,
+   "lines": 137,
    "is_test": true,
    "tables": [
     {
@@ -292351,7 +292646,8 @@
     "resposta sem texto não deixa o player preso em ",
     "erro da Edge mostra ",
     "fallback de áudio não suportado mostra falha visível e nenhuma escrita",
-    "uma nova falha não apaga a transcrição já conhecida"
+    "uma nova falha não apaga a transcrição já conhecida",
+    "P1-9: a bolha de áudio não abre canal realtime próprio; a transcrição chega pelas props"
    ],
    "uses_service_role": true
   },
@@ -294782,7 +295078,7 @@
   },
   "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx": {
    "path": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
-   "lines": 274,
+   "lines": 279,
    "is_test": true,
    "rule_comments": [
     "Cadeia tolerante: qualquer encadeamento (`select().eq().order().limit()`) resolve vazio.",
@@ -296013,7 +296309,7 @@
   },
   "src/components/inbox/chat/MessageHoverToolbar.tsx": {
    "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
-   "lines": 216,
+   "lines": 233,
    "exports": [
     "function MessageHoverToolbar"
    ],
@@ -297187,6 +297483,19 @@
     "a mensagem do contato NÃO tem a entrada de Histórico de envio"
    ]
   },
+  "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx": {
+   "path": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+   "lines": 159,
+   "is_test": true,
+   "tests": [
+    "MessageHoverToolbar — marcar como não lida (P2-GO-6)",
+    "Evolution GO (notSupported): marca no Zapp e confirma sucesso, sem erro",
+    "falha do provedor (403/404 antigo) não derruba a marcação do Zapp",
+    "escrita negada no banco (0 linhas) é erro e não chama o provedor",
+    "em mensagem nossa, marca a última mensagem do cliente",
+    "conversa sem mensagem do cliente avisa em vez de dizer sucesso"
+   ]
+  },
   "src/components/inbox/chat/__tests__/MessageSendHistorySheet.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/MessageSendHistorySheet.test.tsx",
    "lines": 184,
@@ -297354,7 +297663,7 @@
   },
   "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
-   "lines": 246,
+   "lines": 259,
    "is_test": true,
    "tests": [
     "menu do balão — R2-INB-021",
@@ -305701,7 +306010,7 @@
   },
   "src/components/omnichannel/ChannelRoutingRules.tsx": {
    "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
-   "lines": 222,
+   "lines": 239,
    "exports": [
     "function ChannelRoutingRules"
    ],
@@ -305873,7 +306182,7 @@
   },
   "src/components/omnichannel/OmnichannelManager.tsx": {
    "path": "src/components/omnichannel/OmnichannelManager.tsx",
-   "lines": 291,
+   "lines": 308,
    "exports": [
     "function OmnichannelManager"
    ],
@@ -308981,7 +309290,7 @@
   },
   "src/components/settings/SkillBasedRoutingSettings.tsx": {
    "path": "src/components/settings/SkillBasedRoutingSettings.tsx",
-   "lines": 369,
+   "lines": 401,
    "exports": [
     "function SkillBasedRoutingSettings"
    ],
@@ -313730,7 +314039,7 @@
   },
   "src/components/talkx/__tests__/TalkXSegments.route.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXSegments.route.test.tsx",
-   "lines": 238,
+   "lines": 240,
    "is_test": true,
    "rule_comments": [
     "A regra real do segmento, não uma lista vazia: o link direto carrega a cópia do banco."
@@ -319013,7 +319322,7 @@
   },
   "src/components/team-chat/TeamChatHeader.tsx": {
    "path": "src/components/team-chat/TeamChatHeader.tsx",
-   "lines": 305,
+   "lines": 312,
    "exports": [
     "function TeamChatHeader"
    ],
@@ -319054,7 +319363,7 @@
   },
   "src/components/team-chat/TeamChatPanel.tsx": {
    "path": "src/components/team-chat/TeamChatPanel.tsx",
-   "lines": 201,
+   "lines": 205,
    "exports": [
     "function TeamChatPanel"
    ],
@@ -319195,9 +319504,12 @@
   },
   "src/components/team-chat/TeamPerformancePanel.tsx": {
    "path": "src/components/team-chat/TeamPerformancePanel.tsx",
-   "lines": 57,
+   "lines": 59,
    "exports": [
     "function TeamPerformancePanel"
+   ],
+   "errors": [
+    " className="
    ]
   },
   "src/components/team-chat/TransferConversationDialog.tsx": {
@@ -319397,6 +319709,24 @@
     "funciona por teclado: ArrowRight move o foco, Space/Enter ativam"
    ]
   },
+  "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx": {
+   "path": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+   "lines": 86,
+   "is_test": true,
+   "errors": [
+    ")).toHaveTextContent("
+   ],
+   "doc": "Botão \"Performance\" do cabeçalho do chat de equipe: deixou de ser placeholder `disabled` \"(em breve)\" e segue o padrão dos outros painéis (`onToggleX` + `showX`). Sem callback (não-membro do canal) o botão não aparece. O painel `TeamPerformancePanel` mostra erro quando a consulta falha.",
+   "tests": [
+    "TeamChatHeader — botão Performance",
+    "sem onTogglePerformance não há botão nem placeholder ",
+    "com onTogglePerformance o botão fica habilitado e chama o callback",
+    "com o painel aberto o botão indica estado pressionado e oferece fechar",
+    "TeamPerformancePanel — estados",
+    "mostra aviso de erro quando a consulta falha",
+    "mostra carregando enquanto busca"
+   ]
+  },
   "src/components/team-chat/__tests__/TeamChatPanel.nao-membro.test.tsx": {
    "path": "src/components/team-chat/__tests__/TeamChatPanel.nao-membro.test.tsx",
    "lines": 94,
@@ -319409,7 +319739,7 @@
   },
   "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx": {
    "path": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
-   "lines": 153,
+   "lines": 174,
    "is_test": true,
    "errors": [
     ")).toHaveTextContent("
@@ -319419,7 +319749,10 @@
     "durante a busca mostra ",
     "o spinner da busca respeita reduzir movimento (motion-safe:)",
     "o spinner do ",
-    "falha da busca aparece como aviso de erro, não como "
+    "falha da busca aparece como aviso de erro, não como ",
+    "TeamChatPanel — painel de performance",
+    "fechado por padrão: o painel não é montado",
+    "aberto: monta TeamPerformancePanel com o id da conversa"
    ]
   },
   "src/components/team-chat/__tests__/TeamChatPanel.wiring.test.tsx": {
@@ -319827,7 +320160,7 @@
   },
   "src/components/team-chat/department-management/DepartmentInvitesView.tsx": {
    "path": "src/components/team-chat/department-management/DepartmentInvitesView.tsx",
-   "lines": 93,
+   "lines": 110,
    "exports": [
     "function DepartmentInvitesView"
    ],
@@ -319837,7 +320170,7 @@
   },
   "src/components/team-chat/department-management/DepartmentMembersView.tsx": {
    "path": "src/components/team-chat/department-management/DepartmentMembersView.tsx",
-   "lines": 135,
+   "lines": 152,
    "exports": [
     "function DepartmentMembersView"
    ]
@@ -324024,7 +324357,7 @@
   },
   "src/hooks/__tests__/useGoalNotifications.goal-types.test.ts": {
    "path": "src/hooks/__tests__/useGoalNotifications.goal-types.test.ts",
-   "lines": 212,
+   "lines": 249,
    "is_test": true,
    "tests": [
     "useGoalNotifications — metas configuráveis da UI (contacts_handled / resolution_rate)",
@@ -324032,7 +324365,9 @@
     "cria notificação quando a meta de taxa de resolução é atingida, sem análise de IA (R2-MOD-063)",
     "sem atendimento no período a taxa não é anunciada (0/0 não é 0% cumprido)",
     "não cria notificação quando a meta de contatos não é atingida",
-    "não trata tipo desconhecido como progresso zero silencioso"
+    "não trata tipo desconhecido como progresso zero silencioso",
+    "P1-7: contatos atendidos e taxa de resolução no mesmo período dividem a contagem do total",
+    "P1-7: aba em segundo plano não consulta metas"
    ]
   },
   "src/hooks/__tests__/useGoalNotifications.test.ts": {
@@ -325700,21 +326035,24 @@
   },
   "src/hooks/__tests__/useWhatsAppStatus.test.ts": {
    "path": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
-   "lines": 263,
+   "lines": 264,
    "is_test": true,
+   "rule_comments": [
+    "Abrir a aba Status não pode sinalizar presença ('paused') ao cliente:"
+   ],
    "tests": [
     "useWhatsAppStatus",
     "returns empty data when phone is undefined",
     "returns empty data when phone is empty string",
     "sets error when no WhatsApp connection available",
-    "fetches status and presence when connection exists",
+    "busca os status quando há conexão e NÃO manda presença ao contato",
     "uses fallback connection when contact has no whatsapp_connection_id",
     "handles API errors gracefully",
     "starts with loading false and empty data",
     "exposes refresh function",
     "handles non-array status response",
     "filters statuses by cleaned phone number",
-    "handles one API call failing while other succeeds",
+    "falha na leitura dos status não vira erro da aba",
     "falha passageira (500) não trava: a próxima abertura tenta de novo"
    ]
   },
@@ -326307,8 +326645,9 @@
   },
   "src/hooks/analytics/useGoalNotifications.ts": {
    "path": "src/hooks/analytics/useGoalNotifications.ts",
-   "lines": 331,
+   "lines": 382,
    "exports": [
+    "const GOAL_CHECK_INTERVAL_MS",
     "function useGoalNotifications"
    ],
    "tables": [
@@ -326338,10 +326677,6 @@
     },
     {
      "table": "conversation_sla",
-     "op": "select"
-    },
-    {
-     "table": "contacts",
      "op": "select"
     },
     {
@@ -326384,6 +326719,12 @@
      "created_at"
     ]
    },
+   "params": [
+    {
+     "name": "GOAL_CHECK_INTERVAL_MS",
+     "value": "600"
+    }
+   ],
    "status_values": [
     {
      "field": "type",
@@ -326391,10 +326732,18 @@
      "kind": "escreve"
     },
     {
+     "field": "status",
+     "value": "fulfilled",
+     "kind": "compara"
+    },
+    {
      "field": "conversation_status",
      "value": "resolved",
      "kind": "filtra"
     }
+   ],
+   "rule_comments": [
+    "gravação do aviso deduplica por chave e não pode correr consigo mesma."
    ],
    "hooks": [
     "useGoalNotifications"
@@ -330095,11 +330444,14 @@
   },
   "src/hooks/chat/useNextBestAction.ts": {
    "path": "src/hooks/chat/useNextBestAction.ts",
-   "lines": 197,
+   "lines": 235,
    "exports": [
     "interface NextAction",
     "const OPEN_TASK_STATUSES",
     "const nextBestActionKey",
+    "interface NextBestActionSources",
+    "function fetchNextBestActionSources",
+    "function buildNextBestActions",
     "function useNextBestAction"
    ],
    "tables": [
@@ -330184,7 +330536,7 @@
     }
    ],
    "rule_comments": [
-    "Leituras que falharam: ausência de dado não pode ser lida como ausência de urgência.",
+    "* Leituras que falharam: ausência de dado não pode ser lida como ausência de urgência. */",
     "ordem/limite, o `.maybeSingle()` devolve erro de \"múltiplas linhas\" e o alerta",
     "Escala só pelo prazo de 1ª resposta (SLA de Resolução está fora do escopo)."
    ],
@@ -330192,7 +330544,7 @@
     "useNextBestAction"
    ],
    "temporal": [
-    "const hoursSinceLastMsg = (Date.now() - new Date(lastMsg.created_at).getTime()) / (1000 * 60 * 60);"
+    "const hoursSinceLastMsg = (now - new Date(lastMsg.created_at).getTime()) / (1000 * 60 * 60);"
    ],
    "pagination": [
     "1"
@@ -330283,7 +330635,7 @@
   },
   "src/hooks/chat/useRealtimeMessages.ts": {
    "path": "src/hooks/chat/useRealtimeMessages.ts",
-   "lines": 283,
+   "lines": 284,
    "exports": [
     "interface NewMessageNotification",
     "type RealtimeMessage",
@@ -331558,7 +331910,7 @@
   },
   "src/hooks/chat/__tests__/useNextBestAction.test.tsx": {
    "path": "src/hooks/chat/__tests__/useNextBestAction.test.tsx",
-   "lines": 296,
+   "lines": 334,
    "is_test": true,
    "params": [
     {
@@ -331585,7 +331937,9 @@
     "nenhum prazo estourado não sugere escalar",
     "com várias linhas de SLA lê a mais recente (order created_at desc + limit 1) e não perde o alerta",
     "sem nenhuma linha de SLA não escala nem aponta falha de leitura",
-    "erro de leitura do SLA vira aviso explícito, sem escalar nem sugerir oportunidade"
+    "erro de leitura do SLA vira aviso explícito, sem escalar nem sugerir oportunidade",
+    "P1-8: três montagens do mesmo contato dividem UMA leitura de cada fonte",
+    "P1-8: "
    ]
   },
   "src/hooks/chat/__tests__/usePdfThumbnail.test.tsx": {
@@ -336304,7 +336658,7 @@
   },
   "src/hooks/evolution/useEvolutionApiCore.ts": {
    "path": "src/hooks/evolution/useEvolutionApiCore.ts",
-   "lines": 183,
+   "lines": 205,
    "exports": [
     "type HttpMethod",
     "const EVOLUTION_API_TIMEOUT_MS",
@@ -336404,7 +336758,7 @@
   },
   "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts": {
    "path": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
-   "lines": 467,
+   "lines": 517,
    "is_test": true,
    "rule_comments": [
     "`{ error: true }` (HTTP 200), tempo limite de 45 s com `AbortController` e"
@@ -336435,7 +336789,12 @@
     "devolve undefined para ausente, vazio ou ilegível",
     "resposta ",
     "callApi sobe erro com ",
-    "withToast mostra o aviso de não suportado em vez do toast de sucesso"
+    "withToast mostra o aviso de não suportado em vez do toast de sucesso",
+    "Edge non-2xx (FunctionsHttpError): mensagem vem do corpo",
+    "usa body.message no lugar do texto genérico do SDK",
+    "cai em body.error (string) quando não há message",
+    "corpo não-JSON mantém o erro original do SDK",
+    "withToast mostra a mensagem do corpo ao operador"
    ]
   },
   "src/hooks/evolution/__tests__/useEvolutionApiCore.withToast.test.ts": {
@@ -336468,6 +336827,7 @@
     "leitura com erro sobe a exceção sem toast (a tela mostra o estado de erro)",
     "erro do corpo sem message cai no texto padrão da API Evolution (não sobe vazio)",
     "falha de rede em mutação com toast avisa o usuário e propaga",
+    "403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js",
     "concorrência: dedupe só em leitura (method GET)",
     "duas listagens iguais em voo viram UMA viagem e recebem o mesmo resultado",
     "a chave é liberada ao terminar: a próxima listagem igual invoca de novo",
@@ -337949,9 +338309,10 @@
   },
   "src/hooks/inbox/useInboxUnreadTotal.ts": {
    "path": "src/hooks/inbox/useInboxUnreadTotal.ts",
-   "lines": 115,
+   "lines": 142,
    "exports": [
     "const inboxUnreadTotalQueryKey",
+    "function unreadMayHaveChanged",
     "interface InboxUnreadTotal",
     "function useInboxUnreadTotal"
    ],
@@ -337964,22 +338325,8 @@
      "value": "500"
     }
    ],
-   "status_values": [
-    {
-     "field": "status",
-     "value": "SUBSCRIBED",
-     "kind": "compara"
-    }
-   ],
    "hooks": [
     "useInboxUnreadTotal"
-   ],
-   "calc_fns": [
-    {
-     "name": "invalidate",
-     "params": "",
-     "body": "if (debounce) clearTimeout(debounce); debounce = setTimeout(() => { debounce = undefined; void queryClient.invalidateQueries({ queryKey: inboxUnreadTotalQueryKey }); }, DEBOUNCE_MS);"
-    }
    ]
   },
   "src/hooks/inbox/useMentionableProfiles.ts": {
@@ -338604,8 +338951,11 @@
   },
   "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx": {
    "path": "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
-   "lines": 271,
+   "lines": 298,
    "is_test": true,
+   "rule_comments": [
+    "O limite de reconexão do useSupabaseRealtime é por identidade do callback:"
+   ],
    "calc_fns": [
     {
      "name": "mockTotal",
@@ -338614,6 +338964,7 @@
     }
    ],
    "temporal": [
+    "await waitFor(() => expect(result.current.count).toBe(2), { timeout: 2000 });",
     "await waitFor(() => expect(result.current.count).toBe(3), { timeout: 2000 });",
     "await waitFor(() => expect(result.current.count).toBe(4), { timeout: 2000 });",
     "await waitFor(() => expect(result.current.count).toBe(9), { timeout: 2000 });"
@@ -338624,9 +338975,10 @@
     "não lança e zera o selo quando a RPC falha (a barra lateral não pode quebrar)",
     "revalida por realtime nos DOIS canais: messages e contacts",
     "rajada de eventos vira UMA recontagem (debounce), não uma por evento",
-    "reconexão: a primeira inscrição não consulta de novo; a volta do canal revalida",
+    "recibo de mensagem nossa não recalcula o selo; is_read do contato mudando recalcula",
+    "reconexão: a volta do canal revalida na hora",
     "desabilitado não consulta nem assina e fica sem selo",
-    "tópico exclusivo por instância e canal limpo ao desmontar",
+    "assina os canais GLOBAIS compartilhados, não um canal exclusivo do selo",
     "expõe o total do Teams lido do cache do inbox, sem consulta nova",
     "título da aba: ",
     "resposta atrasada depois do desmonte não quebra nem escreve no título"
@@ -341995,6 +342347,7 @@
     "leitura pura com erro sobe a exceção sem toast (quem lê trata o erro)",
     "data.error precisa ser true (booleano): payload com error false resolve normalmente",
     "falha de rede sobe o erro e o item de mutação avisa no toast",
+    "403 da edge function mostra no toast a mensagem pt-BR do servidor, não o texto técnico do supabase-js",
     "concorrência: dedupe só em leitura (method GET)",
     "duas leituras iguais em voo viram UMA viagem e as duas recebem o mesmo resultado",
     "leituras iguais com argumentos DIFERENTES não são confundidas (paginação/offset entram na chave)",
@@ -343470,6 +343823,25 @@
     "remover: sem contexto de transporte continua removendo local (contrato preservado)"
    ]
   },
+  "src/hooks/realtime/globalChannels.ts": {
+   "path": "src/hooks/realtime/globalChannels.ts",
+   "lines": 10,
+   "exports": [
+    "const GLOBAL_MESSAGES_CHANNEL",
+    "const GLOBAL_CONTACTS_CHANNEL"
+   ],
+   "params": [
+    {
+     "name": "GLOBAL_MESSAGES_CHANNEL",
+     "value": "'global-messages-realtime'"
+    },
+    {
+     "name": "GLOBAL_CONTACTS_CHANNEL",
+     "value": "'global-contacts-realtime'"
+    }
+   ],
+   "doc": "Nomes canônicos dos canais globais (sem filtro) de `messages` e `contacts`. Todo consumidor que precisa ouvir a tabela inteira usa ESTES nomes: o `useSupabaseRealtime` divide o canal físico entre eles (contagem de donos), então a aba mantém uma assinatura por tabela — cada recibo passa pela RLS do R …"
+  },
   "src/hooks/realtime/incomingAlertScope.ts": {
    "path": "src/hooks/realtime/incomingAlertScope.ts",
    "lines": 133,
@@ -343613,7 +343985,7 @@
   },
   "src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx": {
    "path": "src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx",
-   "lines": 107,
+   "lines": 109,
    "exports": [
     "const GLOBAL_MESSAGE_ALERTS_CHANNEL",
     "interface GlobalIncomingMessageAlertsOptions",
@@ -349144,7 +349516,7 @@
   },
   "src/hooks/team-chat/useTeamPerformance.ts": {
    "path": "src/hooks/team-chat/useTeamPerformance.ts",
-   "lines": 39,
+   "lines": 42,
    "exports": [
     "interface PerformanceStat",
     "function useTeamPerformance"
@@ -349689,12 +350061,14 @@
   },
   "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts": {
    "path": "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
-   "lines": 67,
+   "lines": 98,
    "is_test": true,
    "tests": [
     "useTeamPerformance",
     "computes messageCount from returned rows",
     "counts unique activeParticipants",
+    "tempo médio de resposta só conta trocas entre remetentes diferentes",
+    "sem troca entre pessoas o tempo médio de resposta fica nulo",
     "E92: returns isLoading=true initially",
     "E93: uses departmentChat queryKey namespace"
    ]
@@ -355209,7 +355583,7 @@
   },
   "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx": {
    "path": "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
-   "lines": 216,
+   "lines": 215,
    "is_test": true,
    "errors": [
     "canal "
@@ -355220,7 +355594,7 @@
     "canais fixos virados canais por instância",
     "(2) useMessageReactions: dois hooks da mesma mensagem pedem canais distintos",
     "(3) WhisperMode: duas montagens do mesmo contato pedem canais distintos",
-    "(4) AudioMessagePlayer: duas montagens da mesma mensagem pedem canais distintos"
+    "(4) AudioMessagePlayer: nenhuma bolha abre canal próprio (P1-9 — transcrição vem pelo canal da conversa)"
    ]
   },
   "src/lib/__tests__/reload-blockers.test.ts": {
@@ -361634,6 +362008,40 @@
     }
    ]
   },
+  "src/services/message-unread.service.ts": {
+   "path": "src/services/message-unread.service.ts",
+   "lines": 46,
+   "exports": [
+    "type MarkUnreadLocalResult",
+    "function markUnreadInZapp"
+   ],
+   "tables": [
+    {
+     "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "messages",
+     "op": "select,update"
+    }
+   ],
+   "table_cols": {
+    "messages": [
+     "contact_id",
+     "id",
+     "sender"
+    ]
+   },
+   "enums": [
+    {
+     "name": "MarkUnreadLocalResult",
+     "values": "ok | sem_mensagem_do_contato | erro"
+    }
+   ],
+   "pagination": [
+    "1"
+   ]
+  },
   "src/services/navigation.service.ts": {
    "path": "src/services/navigation.service.ts",
    "lines": 217,
@@ -365886,8 +366294,10 @@
   },
   "supabase/functions/_shared/evolution-go-adapter.ts": {
    "path": "supabase/functions/_shared/evolution-go-adapter.ts",
-   "lines": 319,
+   "lines": 376,
    "exports": [
+    "function splitGoJid",
+    "function inferGoReceiptFromMe",
     "function isGoPayload",
     "function translateGoPayload"
    ],
@@ -365896,13 +366306,26 @@
      "field": "status",
      "value": "ringing",
      "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "readself",
+     "kind": "compara"
+    },
+    {
+     "field": "state",
+     "value": "readself",
+     "kind": "compara"
     }
+   ],
+   "rule_comments": [
+    "* Regra (P1-GO-1): recibo de entrega/leitura vindo de OUTRA pessoa é sempre"
    ],
    "doc": "evolution-go-adapter.ts — traduz payloads do Evolution GO (whatsmeow) para o formato Evolution API v2 que os handlers existentes esperam. Detecção: presença de `instanceName` sem `instance`. Payload v2 passa intacto — zero impacto se voltar para Evolution API v2."
   },
   "supabase/functions/_shared/evolution-go-routes.ts": {
    "path": "supabase/functions/_shared/evolution-go-routes.ts",
-   "lines": 326,
+   "lines": 368,
    "exports": [
     "interface GoRoute",
     "function translateV2ToGo"
@@ -365933,7 +366356,11 @@
     }
    ],
    "rule_comments": [
+    "opcionais (footer/title de botões e listas): espaço passa na validação e não",
+    "O GO exige name e address (400 \"name is required\"); no v2 eram opcionais e",
     "O GO rejeita footer vazio (\"footer is required\") — v2 tratava como opcional.",
+    "Idem para title (\"title is required\"): lista sem cabeçalho é válida no",
+    "400 \"messageId is required\" em toda edição.",
     "template/business/proxy/evoai/n8n — GO responde 404, falha explícita)."
    ],
    "doc": "evolution-go-routes.ts — traduz chamadas outbound Evolution API v2 → Evolution GO. Ativo quando EVOLUTION_API_FLAVOR != 'v2' (default: go). Rotas não mapeadas passam intactas (paths nativos do GO continuam funcionando; endpoints v2 sem equivalente no GO retornam 404 do próprio GO — falha explícita). …",
@@ -369237,6 +369664,39 @@
     "decideControlAuthz - agente sem papel recebe 403",
     "decideSendAuthz - admin passa; agente exige contato visível",
     "matriz é exaustiva: toda ação do handler está em exatamente um conjunto"
+   ]
+  },
+  "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+   "lines": 168,
+   "is_test": true,
+   "params": [
+    {
+     "name": "CONTATO",
+     "value": "\"5511900000001@s.whatsapp.net\""
+    },
+    {
+     "name": "NOSSO",
+     "value": "\"5511900000099@s.whatsapp.net\""
+    }
+   ],
+   "tests": [
+    "P1-GO-1: lido no WhatsApp Web do contato (Sender com sufixo de aparelho) é recibo NOSSO",
+    "P1-GO-1: recibo com Sender em @lid e o telefone em SenderAlt é recibo NOSSO",
+    "P1-GO-1: IsFromMe=false (recibo vindo do contato) decide mesmo sem casar os JIDs",
+    "P1-GO-1: read-self (li no meu celular a mensagem do contato) NUNCA é recibo nosso",
+    "P1-GO-1: read-self sem IsFromMe e com Sender igual ao Chat continua não sendo nosso",
+    "P1-GO-1: recibo de participante em grupo é de mensagem nossa",
+    "P1-GO-1: sem IsFromMe e com pessoas diferentes segue inbound (comportamento antigo preservado)",
+    "P1-GO-1: @lid e telefone com o mesmo número NÃO são tratados como a mesma pessoa",
+    "splitGoJid tira aparelho/agente e normaliza @c.us",
+    "P1-GO-2: edição no formato da tela ({number, messageId}) chega à GO com messageId",
+    "P1-GO-2: edição no formato v2 (key) continua funcionando e sem id vira invalid",
+    "P1-GO-3: remover reação (reaction ",
+    "P1-GO-4: botões sem cabeçalho recebem title válido (GO: ",
+    "P1-GO-4: lista sem cabeçalho recebe title válido",
+    "P1-GO-4: localização sem nome/endereço recebe defaults em vez de 400",
+    "P1-GO-4: latitude/longitude em string viram número (bind float64 da GO)"
    ]
   },
   "supabase/functions/_shared/__tests__/evolution-go-group-routing.test.ts": {
@@ -375638,7 +376098,7 @@
   },
   "supabase/functions/evolution-api/index.ts": {
    "path": "supabase/functions/evolution-api/index.ts",
-   "lines": 1471,
+   "lines": 1479,
    "exports": [
     "interface EvolutionApiDeps",
     "function handleEvolutionApi"
@@ -381821,7 +382281,7 @@
   },
   "supabase/functions/talkx-scheduler/index.test.ts": {
    "path": "supabase/functions/talkx-scheduler/index.test.ts",
-   "lines": 620,
+   "lines": 640,
    "is_test": true,
    "params": [
     {
@@ -381849,6 +382309,8 @@
     "N-102: campanha fora de send_weekdays não é despachada",
     "N-102: campanha dentro de DND com respect_dnd=true não é despachada",
     "N-102: campanha com respect_dnd=false é despachada mesmo dentro de DND",
+    "N-102: resposta tabular da RPC com allowed=true despacha a campanha",
+    "N-102: resposta tabular da RPC com allowed=false não despacha",
     "N-102: p_at enviado à RPC é o relógio injetado, não o relógio real",
     "recorrência: só ocorrências ",
     "recorrência: cada ocorrência concluída chama a RPC uma vez e o tick reporta quantas foram agendadas",
@@ -381863,7 +382325,7 @@
   },
   "supabase/functions/talkx-scheduler/index.ts": {
    "path": "supabase/functions/talkx-scheduler/index.ts",
-   "lines": 401,
+   "lines": 406,
    "exports": [
     "const MAX_CAMPAIGNS_PER_TICK",
     "const MAX_RESUMES_PER_CONNECTION",
@@ -393228,10 +393690,108 @@
   }
  },
  "git": {
-  "sha": "ee9218b888eb715f1bc6f8fe7273127bf0bbcd01",
+  "sha": "d084ca7530e7e6ac72a081bfbd77bac3014b16b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d084ca7",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)",
+    "files": [
+     ".claude/commands/merge-prs.md",
+     ".github/workflows/deploy-functions.yml",
+     "ESTADO.md",
+     "analise-prs/RELATORIO_PRS.md",
+     "analise-prs/baseline/main.json",
+     "analise-prs/dossies/pr-2553.md",
+     "analise-prs/dossies/pr-2555.md",
+     "analise-prs/dossies/pr-2556.md",
+     "analise-prs/dossies/pr-2811.md",
+     "analise-prs/dossies/pr-2813.md",
+     "analise-prs/dossies/pr-2818.md",
+     "analise-prs/dossies/pr-2835.md",
+     "analise-prs/dossies/pr-2838.md",
+     "analise-prs/dossies/pr-2846.md",
+     "analise-prs/dossies/pr-2856.md",
+     "analise-prs/dossies/pr-2859.md",
+     "analise-prs/dossies/pr-2869.md",
+     "analise-prs/dossies/pr-2879.md",
+     "analise-prs/dossies/pr-2880.md",
+     "analise-prs/dossies/pr-2881.md",
+     "analise-prs/dossies/pr-2883.md",
+     "analise-prs/dossies/pr-2894.md",
+     "analise-prs/dossies/pr-2919.md",
+     "analise-prs/dossies/pr-2929.md",
+     "analise-prs/dossies/pr-2932.md",
+     "analise-prs/dossies/pr-2943.md",
+     "analise-prs/dossies/pr-2944.md",
+     "analise-prs/dossies/pr-2946.md",
+     "analise-prs/dossies/pr-2968.md",
+     "analise-prs/dossies/pr-2969.md",
+     "analise-prs/dossies/pr-2970.md",
+     "analise-prs/dossies/pr-2971.md",
+     "analise-prs/dossies/pr-2972.md",
+     "analise-prs/dossies/pr-2973.md",
+     "analise-prs/progresso.json",
+     "analise-prs/prs.json",
+     "docs/REALTIME-CHANNELS-INVENTORY.md",
+     "e2e/navegacao-modulos.spec.ts",
+     "scripts/ci/check-edge-error-exposure.mjs",
+     "scripts/supabase_snapshot/snapshot.py",
+     "scripts/supabase_snapshot/test_snapshot.py",
+     "src/adapters/__tests__/inboxAdapter.test.ts",
+     "src/adapters/inboxAdapter.ts",
+     "src/components/dashboard/ScheduledReportsManager.tsx",
+     "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
+     "src/components/inbox/AudioMessagePlayer.tsx",
+     "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+     "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+     "src/components/inbox/chat/MessageHoverToolbar.tsx",
+     "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+     "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
+     "src/components/omnichannel/ChannelRoutingRules.tsx",
+     "src/components/omnichannel/OmnichannelManager.tsx",
+     "src/components/settings/SkillBasedRoutingSettings.tsx",
+     "src/components/talkx/TalkXSegments.tsx",
+     "src/components/talkx/__tests__/TalkXSegments.route.test.tsx",
+     "src/components/team-chat/TeamChatHeader.tsx",
+     "src/components/team-chat/TeamChatPanel.tsx",
+     "src/components/team-chat/TeamPerformancePanel.tsx",
+     "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+     "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
+     "src/components/team-chat/department-management/DepartmentInvitesView.tsx",
+     "src/components/team-chat/department-management/DepartmentMembersView.tsx",
+     "src/hooks/__tests__/useGoalNotifications.goal-types.test.ts",
+     "src/hooks/__tests__/useGoalNotifications.test.ts",
+     "src/hooks/__tests__/useWhatsAppStatus.test.ts",
+     "src/hooks/analytics/useGoalNotifications.ts",
+     "src/hooks/chat/__tests__/useNextBestAction.test.tsx",
+     "src/hooks/chat/useNextBestAction.ts",
+     "src/hooks/chat/useRealtimeMessages.ts",
+     "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+     "src/hooks/evolution/__tests__/useEvolutionGroups.test.ts",
+     "src/hooks/evolution/useEvolutionApiCore.ts",
+     "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
+     "src/hooks/inbox/useInboxUnreadTotal.ts",
+     "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
+     "src/hooks/integrations/useWhatsAppStatus.ts",
+     "src/hooks/realtime/globalChannels.ts",
+     "src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx",
+     "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
+     "src/hooks/team-chat/useTeamPerformance.ts",
+     "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
+     "src/services/message-unread.service.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+     "supabase/functions/_shared/evolution-go-adapter.ts",
+     "supabase/functions/_shared/evolution-go-routes.ts",
+     "supabase/functions/evolution-api/index.ts",
+     "supabase/functions/talkx-scheduler/index.test.ts",
+     "supabase/functions/talkx-scheduler/index.ts"
+    ]
+   },
    {
     "sha": "ee9218b",
     "date": "2026-11-13",
@@ -393783,25 +394343,60 @@
      "src/pages/ForgotPassword.tsx",
      "src/pages/__tests__/ForgotPassword.test.tsx"
     ]
-   },
-   {
-    "sha": "cfa8959",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)",
-    "files": [
-     "e2e/navegacao-modulos.spec.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    5
+    6
    ],
    [
     "ESTADO.md",
-    4
+    5
+   ],
+   [
+    "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+    3
+   ],
+   [
+    "src/hooks/evolution/useEvolutionApiCore.ts",
+    3
+   ],
+   [
+    "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
+    3
+   ],
+   [
+    "supabase/functions/evolution-api/index.ts",
+    3
+   ],
+   [
+    "e2e/navegacao-modulos.spec.ts",
+    2
+   ],
+   [
+    "scripts/ci/check-edge-error-exposure.mjs",
+    2
+   ],
+   [
+    "src/components/talkx/TalkXSegments.tsx",
+    2
+   ],
+   [
+    "src/components/team-chat/TeamChatHeader.tsx",
+    2
+   ],
+   [
+    "src/components/team-chat/TeamChatPanel.tsx",
+    2
+   ],
+   [
+    "src/hooks/__tests__/useWhatsAppStatus.test.ts",
+    2
+   ],
+   [
+    "src/hooks/integrations/useWhatsAppStatus.ts",
+    2
    ],
    [
     "docs/ci/CI_LOCAL.md",
@@ -393829,50 +394424,6 @@
    ],
    [
     "src/components/team-chat/TeamChatView.tsx",
-    2
-   ],
-   [
-    "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
-    2
-   ],
-   [
-    "src/hooks/__tests__/useSipClient.test.ts",
-    2
-   ],
-   [
-    "src/hooks/communication/useSipClient.ts",
-    2
-   ],
-   [
-    "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
-    2
-   ],
-   [
-    "src/hooks/integrations/useGmail.ts",
-    2
-   ],
-   [
-    "docs/audits/edge-functions-authz-coverage.md",
-    2
-   ],
-   [
-    "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
-    2
-   ],
-   [
-    "src/hooks/evolution/useEvolutionApiCore.ts",
-    2
-   ],
-   [
-    "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
-    2
-   ],
-   [
-    "supabase/functions/_shared/evolution-control-authz.ts",
-    2
-   ],
-   [
-    "supabase/functions/evolution-api/index.ts",
     2
    ]
   ]

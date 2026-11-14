@@ -34,8 +34,8 @@ Gerado automaticamente a cada 10 min pelo workflow `contexto` (job `banco`). **N
 | buckets | 0 |
 | edge functions | n/d |
 | webhooks | 0 |
-| lints ALTA | 1 |
-| lints total | 496 |
+| lints ALTA | 0 |
+| lints total | 495 |
 
 ## Estado das fontes do mapa de referências
 
@@ -93,4 +93,4 @@ Cada fonte é atualizada independentemente; referências anteriores não comprov
 
 | seção | erro |
 |---|---|
-| db_stats.auth | permission denied for schema auth |
+| db_stats.auth | role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta |

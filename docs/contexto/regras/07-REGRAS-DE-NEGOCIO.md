@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ee9218b888` · branch `main` · 2026-11-14 03:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d084ca7530` · branch `main` · 2026-11-14 03:48 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1518,6 +1518,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `queue` | compara | `src/components/inbox/ChatPanel.tsx`<br>`src/hooks/chat/useConversationActions.ts`<br>`src/hooks/inbox/useInboxBulkActions.ts` |
 | `type` | `queues` | compara, escreve | `src/components/dashboard/DashboardWidgetRenderer.tsx`<br>`src/hooks/analytics/useDashboardWidgets.ts` |
 | `type` | `reactivation` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
+| `type` | `readself` | compara | `supabase/functions/_shared/evolution-go-adapter.ts` |
 | `type` | `redo` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `registration` | escreve, filtra | `supabase/functions/webauthn/index.ts` |
 | `type` | `reminder_due` | compara, escreve | `src/components/notifications/NotificationItem.tsx`<br>`src/hooks/system/useNotifications.ts`<br>`src/hooks/tasks/useWorkItemNotifications.ts` |
@@ -1592,7 +1593,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `403` | compara | `src/lib/rlsError.ts` |
 | `status` | `CHANNEL_ERROR` | compara | `src/hooks/communication/useAudioMemes.ts`<br>`src/hooks/realtime/useSupabaseRealtime.ts`<br>`src/hooks/team-chat/useTeamConversations.ts`<br>`src/hooks/team-chat/useTeamMessageReactions.ts`<br>`src/hooks/team-chat/useTeamMessages.ts`<br>… +1 |
 | `status` | `CLOSED` | compara | `src/hooks/realtime/useSupabaseRealtime.ts` |
-| `status` | `SUBSCRIBED` | compara | `src/components/inbox/collaboration/ViewersIndicator.tsx`<br>`src/hooks/analytics/useRealtimeDashboard.ts`<br>`src/hooks/chat/useTypingPresence.ts`<br>`src/hooks/communication/useAudioMemes.ts`<br>`src/hooks/gamification/useAgentCelebrations.ts`<br>… +7 |
+| `status` | `SUBSCRIBED` | compara | `src/components/inbox/collaboration/ViewersIndicator.tsx`<br>`src/hooks/analytics/useRealtimeDashboard.ts`<br>`src/hooks/chat/useTypingPresence.ts`<br>`src/hooks/communication/useAudioMemes.ts`<br>`src/hooks/gamification/useAgentCelebrations.ts`<br>… +6 |
 | `status` | `TIMED_OUT` | compara | `src/hooks/communication/useAudioMemes.ts`<br>`src/hooks/realtime/useSupabaseRealtime.ts`<br>`src/hooks/team-chat/useTeamConversations.ts`<br>`src/hooks/team-chat/useTeamMessageReactions.ts`<br>`src/hooks/team-chat/useTeamMessages.ts`<br>… +1 |
 | `status` | `action` | escreve | `src/components/security/SecuritySettingsPanel.tsx` |
 | `status` | `active` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/components/payments/PaymentLinksView.tsx`<br>`src/components/talkx/TalkXCampaignWizard.tsx`<br>`src/components/talkx/TalkXSegments.tsx`<br>… +5 |
@@ -1614,8 +1615,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `busy` | compara | `src/hooks/business/useWarRoomData.ts`<br>`src/lib/calls/callStatus.ts` |
 | `status` | `cancelled` | compara, escreve | `src/components/multiplix/MultiplixMonitor.tsx`<br>`src/components/talkx/TalkXLiveMonitor.tsx`<br>`src/components/talkx/talkxRoute.ts`<br>`src/components/talkx/useCampaignRowActions.tsx`<br>`src/components/tasks/list/taskRowCells.tsx`<br>… +9 |
 | `status` | `checking` | compara, escreve | `src/components/auth/ProtectedRoute.tsx`<br>`src/hooks/system/useSupabaseConnectivity.ts`<br>`src/pages/TwoFactorAuth.tsx` |
-| `status` | `completed` | compara, escreve, filtra | `src/components/admin/TrainingMode.tsx`<br>`src/components/chatbot/ChatbotExecutionsDashboard.tsx`<br>`src/components/knowledge/KnowledgeBaseView.tsx`<br>`src/components/multiplix/MultiplixMonitor.tsx`<br>`src/components/talkx/TalkXLiveMonitor.tsx`<br>… +9 |
-| … +241 linhas — lista completa em `context.json` | | | |
+| … +243 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -1921,7 +1921,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | SlaTimelinePeriod | 24h \| 7d \| 30d \| all | `src/lib/slaTimeline.ts` |
 | SLA_TRANSFER_EVENT_TYPES | 'transfer', 'queue_transfer', 'overload_reassign', 'absence_reassign', | `src/lib/slaTimeline.ts` |
 | SLA_ASSIGN_EVENT_TYPES | 'assign' | `src/lib/slaTimeline.ts` |
-| … +133 linhas — lista completa em `context.json` | | |
+| … +134 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2894,10 +2894,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const value = (name ?? '').trim(); if (value.length === 0) { return { ok: false, value: '', error: 'Informe um nome para o filtro.' }; } if (value.length > PRESET_NAME_MAX_LENGTH) { return { ok: false, value, error: `O nome deve ter no máximo ${PRESET_NAME_MAX_LENGTH} caracteres.`, }; } if (CONTROL_CHARS.test(value)) { return { ok: false, value, error: 'O nome contém caracteres inválidos.' }; } const duplicated = presets.some( (p) => p.id !== ignoreId && (p.name ?? '').trim().toLowerCase() === v …
   ```
-- **invalidate()** — `src/hooks/inbox/useInboxUnreadTotal.ts`
-  ```
-  if (debounce) clearTimeout(debounce); debounce = setTimeout(() => { debounce = undefined; void queryClient.invalidateQueries({ queryKey: inboxUnreadTotalQueryKey }); }, DEBOUNCE_MS);
-  ```
 - **shouldRetryGmailSync(failureCount: number, error: unknown)** — `src/hooks/integrations/useGmail.ts`
   ```
   if (failureCount >= 1) return false; const status = error instanceof GmailFunctionError ? error.status : undefined; if (status !== undefined && status >= 400 && status < 500 && status !== 429) return false; return true;
@@ -3794,6 +3790,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `LOGS_PER_PAGE` | `50` | `src/hooks/analytics/useAIUsageDashboard.ts` |
 | `MESMO_CICLO_MS` | `1` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `GOAL_CHECK_INTERVAL_MS` | `600` | `src/hooks/analytics/useGoalNotifications.ts` |
 | `QUEUE_GOAL_ALERTS_INTERVAL_MS` | `5` | `src/hooks/analytics/useQueueGoalAlerts.ts` |
 | `MAX_HISTORY` | `60` | `src/hooks/analytics/useRealtimeDashboard.ts` |
 | `JANELA_HORA_MS` | `60` | `src/hooks/analytics/useRealtimeDashboard.ts` |
@@ -3818,8 +3815,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `AGENT_SENDER_LABEL` | `'Atendente'` | `src/hooks/chat/useContactMedia.ts` |
 | `MEDIA_PAGE_SIZE` | `60` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
-| `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
-| … +634 linhas — lista completa em `context.json` | | |
+| … +637 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -3935,7 +3931,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `gcTime: 10 * 60 * 1000,` | `src/hooks/chat/useMessageReactions.ts` |
 | `gcTime: 5 * 60 * 1000,` | `src/hooks/chat/useMessageReactions.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/chat/useMessageReactions.ts` |
-| `const hoursSinceLastMsg = (Date.now() - new Date(lastMsg.created_at).getTime()) / (1000 * 60 * 60);` | `src/hooks/chat/useNextBestAction.ts` |
+| `const hoursSinceLastMsg = (now - new Date(lastMsg.created_at).getTime()) / (1000 * 60 * 60);` | `src/hooks/chat/useNextBestAction.ts` |
 | `contactTypingTimeoutRef.current = setTimeout(() => { setIsContactTyping(false); }, 5000);` | `src/hooks/chat/useTypingPresence.ts` |
 | `typingTimeoutRef.current = setTimeout(() => { setTyping(false); }, 3000);` | `src/hooks/chat/useTypingPresence.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/chat/journey/useJourneyActors.ts` |
@@ -4230,6 +4226,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 500 | `src/pages/AdminTelemetriaPage.tsx` |
 | 1 | `src/services/contact.service.ts` |
 | 200 | `src/services/contact.service.ts` |
+| 1 | `src/services/message-unread.service.ts` |
 | 3 | `supabase/functions/_shared/ai-conversation-pipeline.ts` |
 | 1 | `supabase/functions/_shared/ai-usage.ts` |
 | 1 | `supabase/functions/_shared/evolution-helpers.ts` |
@@ -4569,7 +4566,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | not-visible | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | private-file-canary | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | synthetic-login-failure | `scripts/ci/e2e-isolated-tour.unit.mjs` |
-| … +1790 linhas — lista completa em `context.json` | |
+| … +1792 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4640,7 +4637,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21814 testes em 2307 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21866 testes em 2310 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4734,6 +4731,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx` | 31 | useLocationPicker · carrega o mapa e limpa o spinner no evento load · container que só aparece depois da troca de aba ainda cria o mapa e arma o watchdog · timeout do token vira mensagem de timeout e é reportado … |
 | `src/components/notifications/__tests__/SoundVolumeControl.test.tsx` | 31 | SoundVolumeControl — sobe e desce o volume dos alertas · com o painel aberto, sobe o volume de 5 em 5 com a roda para cima · com o painel aberto, desce o volume de 5 em 5 com a roda para baixo · com o painel FECHADO a roda não mexe no volume (B5 — rolar a sidebar não ajusta) … |
 | `src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx` | 31 | Tela 10 — configurações de agendamento (X137) · separa data e horário na parede local do fuso da campanha · o mínimo da data é hoje NO FUSO DA CAMPANHA, não hoje em UTC · salvar grava o mesmo instante e o mesmo fuso que foram lidos, com o perfil e a supressão … |
+| `src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts` | 31 | tempo limite: 45 s com AbortController · aborta a chamada pendurada e sobe erro em pt-BR com  · não aborta antes da hora: em 44,999 s a chamada continua em voo e o signal segue vivo · resposta que chega antes do limite não é abortada depois: o timer não sobra … |
 | `src/components/gmail/__tests__/EmailComposer.test.tsx` | 30 | EmailComposer — inicialização e comportamento de envio · modo new: campo Para vazio e botão Enviar desabilitado · restaura rascunho isolado da conta e sinaliza anexos que precisam ser selecionados novamente · remove a sessão local e o draft remoto ao confirmar descarte de conteúdo restaurado … |
 | `src/components/inbox/chat/motion/__tests__/chat-motion.test.tsx` | 30 | AnimatedNumber · (1) com movimento reduzido entrega o valor final na hora, em pt-BR · (2) sem redução conta de 0 até o valor EXATO (não para em  · ShimmerSkeleton … |
 | `src/components/inbox/tabs/__tests__/FileCard.test.tsx` | 30 | FileCard — layout do mockup (R04, S28–S31) · S28: a linha 1 e o nome; o nome completo/tecnico fica na dica · S29: a linha 2 e so tipo · tamanho, com virgula no decimal · S30: a linha 3 e a data curta do cartao … |
@@ -4769,7 +4767,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/ui/__tests__/message-reactions.test.tsx` | 26 | ReactionBadge · mostra emoji e contagem no nome acessível (plural) · usa singular no nome acessível quando é só uma reação · aria-pressed=true quando eu já reagi … |
 | `src/hooks/__tests__/useSearchHistory.test.ts` | 26 | useSearchHistory · initializes with empty history · adds item to history · ignores empty queries … |
 | `src/hooks/chat/__tests__/useConversationActions.test.ts` | 26 | useConversationActions · archiveContact · arquiva pela RPC set_conversation_status (a mesma do diálogo de encerrar) e NÃO mexe no responsável · anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch … |
-| `src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts` | 26 | tempo limite: 45 s com AbortController · aborta a chamada pendurada e sobe erro em pt-BR com  · não aborta antes da hora: em 44,999 s a chamada continua em voo e o signal segue vivo · resposta que chega antes do limite não é abortada depois: o timer não sobra … |
 | `src/hooks/integrations/__tests__/useExternalDB.test.ts` | 26 | useExternalSelect · usa limit 50 / offset 0 por padrão e devolve os dados · repassa select, filtros, ordem, paginacao e modo de contagem · não busca quando a flag do CRM está desligada … |
 | `src/lib/__tests__/quarantineStore.test.ts` | 26 | subscribe / getSnapshot · chama o listener a cada mudança e para depois do unsubscribe · mantém a mesma referência de snapshot enquanto nada muda (contrato do useSyncExternalStore) · get … |
 | `src/segments/__tests__/segmentRules.test.ts` | 26 | normalizeRules · returns an empty v2 set for null input · converts numeric text to number on number fields · keeps numeric-looking text as string on text fields … |
@@ -4791,6 +4788,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/e2e-messaging-fixture.test.ts` | 24 | e2e/messaging.spec.ts — o spec real (R2-INF-007) · com conversa alheia em PRIMEIRO lugar envia para a fixture e nunca para ela · com a fixture no topo segue enviando (caminho feliz preservado) · sem a fixture visivel aborta sem clicar, digitar ou enviar … |
 | `src/services/__tests__/navigation.service.test.ts` | 24 | NavigationService integration maturity · keeps incomplete integrations out of production-ready groups · exposes every navigation id exactly once across primary and grouped menus · preserves the full-layout contract for workspace views … |
 | `supabase/functions/evolution-api/connect-go-token.test.ts` | 24 | connect: erro de rede/DNS na GO → 200 + go_unreachable (antes: 500 do catch-all) · connect: tempo esgotado no /instance/connect → 200 + go_unreachable 504 · connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → go_unreachable, sem lançar · connect: QR lento numa instância já pareada (sessão morta) → go_unreachable e ZERO delete/create … |
+| `supabase/functions/talkx-scheduler/index.test.ts` | 24 | X015 auth: sem x-cron-secret e sem Authorization → 401 · X015 auth: x-cron-secret errado → 401 · X015 auth: x-cron-secret correto → passa e o tick sem campanhas fecha 200 · X015 auth: Authorization Bearer com a service key → passa (não é 401) … |
 | `src/components/catalog/__tests__/sendProductUtils.test.ts` | 23 | groupVariantsByColor · agrupa variantes pela cor e coleta thumbs sem duplicar · usa  · lista vazia retorna array vazio … |
 | `src/components/contacts/__tests__/useContactFormValidation.test.ts` | 23 | useContactFormValidation — checkEmailDuplicate · debounces query by 500 ms — no call before timeout · consecutive changes within 500 ms fire only one query (last value wins) · escapes % wildcard in email passed to ilike … |
 | `src/components/email/__tests__/EmailChatReplyBar.test.tsx` | 23 | EmailChatReplyBar · resolvedTo display · reply inbound: mostra from_address no  · reply outbound: mostra to_addresses[0] no  … |
@@ -4800,6 +4798,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useDashboardWidgets.test.ts` | 23 | useDashboardWidgets · initializes with default widgets · all widgets have required fields · visibleWidgets only contains visible widgets … |
 | `src/hooks/__tests__/useSLACalculation.test.ts` | 23 | calculateStatus · returns ok when completed on time · returns breached when completed late · returns ok with plenty of time remaining … |
 | `src/hooks/calls/__tests__/useCallChannels.test.ts` | 23 | capacidadesPorCanal — VoIP · registrado e sem problema de microfone: disca, recebe e recusa · reconectando: não disca nem recebe, motivo  · conectando cai na mesma família de reconexão … |
+| `src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts` | 23 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · expõe exatamente as funções do contrato (nada a mais, nada a menos) · leitura devolve o dado da edge function … |
 | `src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx` | 23 | useMultiplixDispatches — leituras via edge  · useMultiplixDispatchesList chama dispatch.list com JWT e entrega as linhas · useMultiplixDispatchesList aceita a lista direta em data · useMultiplixDispatch pede o disparo por id na edge (dispatch_id no payload) … |
 | `src/lib/__tests__/filesPeriod.adversarial.test.ts` | 23 | filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fatia UTC do ISO · premissa: a suíte roda a oeste de UTC (UTC-3) · o último milissegundo do dia local entra, mesmo com a fatia UTC já no dia seguinte · o primeiro milissegundo do dia local entra (fatia UTC ainda é o MESMO dia, em UTC-3) … |
 | `src/lib/calls/__tests__/events.test.ts` | 23 | events — constantes do contrato · usa os nomes de evento do Apêndice D (novo) e do legado · events — round-trip de dispatchStartCall/onStartCall · emite CustomEvent tipado em document e entrega o payload intacto … |
@@ -4813,15 +4812,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/tasks/__tests__/cardAcoes.test.tsx` | 22 | FASE C2 — 28: o Sheet aberto por DnD/kebab já vem em Aguardando com o motivo pedido · 28: precisaMotivoDeEspera barra Aguardando sem motivo e libera o resto · focusField=waiting_reason inicia em Aguardando e mostra o motivo · sem focusField, um item em todo NÃO mostra o motivo … |
 | `src/components/tasks/__tests__/taskComponents.test.tsx` | 22 | Tarefas — componentes dos três modos · B9: a Lista rotula as seções com acento (Amanhã, Próximas, Concluídas) · B12: Backspace NÃO apaga a tarefa, Delete apaga · etapa 15: o Quadro leva o índice de destino no onMove … |
 | `src/hooks/communication/__tests__/useCallEngineSink.test.ts` | 22 | useCallEngineSink — ponte para estado, timer e toast (T09) · status, mute e erro caem no setter/toast certos · onSession escreve a direção na REF (o sink é memoizado) e no estado · atendida liga o cronômetro e encerrada o para (nunca invertidos) … |
+| `src/hooks/evolution/__tests__/useEvolutionGroups.test.ts` | 22 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · expõe exatamente as funções do contrato (nada a mais, nada a menos) · leitura devolve o dado da edge function … |
 | `src/hooks/inbox/__tests__/chipCounts.test.ts` | 22 | countByChip — contadores pelas regras da lista · conta pelo estado persistido, não por  · exclui adiadas de todos os chips, como a lista · showAll acompanha a lista: Em atendimento passa a ser Todas … |
-| `src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts` | 22 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · expõe exatamente as funções do contrato (nada a mais, nada a menos) · leitura devolve o dado da edge function … |
 | `src/hooks/sip/__tests__/useSipConnection.test.ts` | 22 | useSipConnection · registers the incoming-invitation delegate on connect · SL-002: as opções do SessionDescriptionHandler exigem RTCP muxado e bundle (mídia só pela sessão DTLS) · T15: 403 no REGISTER vira  … |
 | `src/hooks/tasks/__tests__/workItemMachine.test.ts` | 22 | canTransition – WIP doing · bloqueia quando doingCount >= 3 · permite quando doingCount = 2 · permite mover dentro de doing (reordenação) … |
 | `src/hooks/ui/__tests__/useSwipeNavigation.test.tsx` | 22 | zona de borda · arrasto que começa fora da borda não navega · borda esquerda com histórico volta ao arrastar além do limite · borda direita com histórico avança ao arrastar para a esquerda … |
 | `src/hooks/voice/__tests__/voiceActionPlan.test.ts` | 22 | navigate · navega para a seção pedida · sem seção não anuncia navegação · search … |
 | `src/styles/__tests__/cp1FidelidadeCarvao.test.ts` | 22 | SL181 · CP1 ΔE — page/card/sidebar em carvão (dark) · fundo da página é #0e0e10 (ΔE = 0) — o mesmo rgb(14,14,16) do ledger CP1 · card é hsl(240 5% 10%) (ΔE = 0 contra o alvo do plano) · sidebar fica na família carvão, um degrau mais fundo que a página (ΔE ≤ 1,5) … |
 | `supabase/functions/create-user/index.test.ts` | 22 | R2-AUTH-016 (a): falha no upsert de user_roles -> erro + deleteUser · R2-AUTH-016b (a2): sem role no corpo grava  · R2-AUTH-016b (a3): domínio não confiável recebe o papel pedido · R2-AUTH-016 (b): update de profiles falha -> erro + deleteUser … |
-| `supabase/functions/talkx-scheduler/index.test.ts` | 22 | X015 auth: sem x-cron-secret e sem Authorization → 401 · X015 auth: x-cron-secret errado → 401 · X015 auth: x-cron-secret correto → passa e o tick sem campanhas fecha 200 · X015 auth: Authorization Bearer com a service key → passa (não é 401) … |
 | `tests/contracts/contraste-aa-componentes.contract.test.ts` | 22 | contraste AA — o parser de tokens não pode quebrar por causa do arquivo · acha o token no SEGUNDO bloco :root (tokens.css com 2 blocos) · ignora menção ao seletor dentro de comentário · não se perde com chave aninhada dentro do bloco … |
 | `src/__tests__/a11y/icon-button-names.test.ts` | 21 | varredura de botões de ícone — casos sintéticos · detecta <Button size=\ · não acusa quando há aria-label · não acusa quando há title … |
 | `src/components/calls/__tests__/calls-access.test.ts` | 21 | Telefonia — acesso e fronteiras (T07) · encontra a superfície de telefonia (o teste não passa por vacuidade) · nenhum arquivo da telefonia carrega a chave service_role · o hook de SIP não fala SIP direto: a fronteira é o adapter (invariante do T09) … |
@@ -4833,7 +4831,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useApplicableSLA.test.ts` | 21 | SLA Resolution Hierarchy · returns system default when no rules or configs exist · returns global config fallback when no granular rules match · prioritizes contact-level rule over company-level … |
 | `src/hooks/business/__tests__/useClientWallet.test.tsx` | 21 | useClientWallet — carga das regras · ordena por prioridade decrescente e resolve agente e conexão por id · regra sem conexão não consulta a tabela de conexões para o join · erro de RLS na primeira leitura não derruba a tela: lista vazia e o resto carrega … |
 | `src/hooks/crm/__tests__/useContactsKpi.test.ts` | 21 | aggregateKpi · conta novos30 e novosPrev30 corretamente e calcula o delta · deltaNovosPct = null quando prev < MIN_PREV 50 · deltaNovosPct = null quando não há registros em nenhuma janela e prev < 50 … |
-| `src/hooks/evolution/__tests__/useEvolutionGroups.test.ts` | 21 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · expõe exatamente as funções do contrato (nada a mais, nada a menos) · leitura devolve o dado da edge function … |
 | `src/hooks/system/__tests__/useSupabaseConnectivity.test.ts` | 21 | connectivityProbeUrl — chave pública na query (sem 401 no console) · anexa a anon key como ?apikey= (codificada) e tira barras finais da base · sem chave, cai na URL nua (comportamento antigo) · useSupabaseConnectivity — sonda leve, sem a Edge  … |
 | `src/lib/__tests__/rlsConversationAccess.test.ts` | 21 | RLS real: contacts (schema resolvido das migrations) · o conjunto de policies bate com o manifest do schema real · SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin) · INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil) … |
 | `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts` | 21 | whatsapp-webhook: POST sem assinatura -> 401 antes de qualquer efeito (sem SUPABASE_URL configurada) · whatsapp-webhook: assinatura HMAC inválida -> 401 · whatsapp-webhook: replay — assinatura válida de OUTRO corpo -> 401 · whatsapp-webhook: sem WHATSAPP_APP_SECRET configurado -> 401 (falha fechada, mesmo com header bem formado) … |
@@ -4944,7 +4941,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/calls/__tests__/RecordingPlayer.test.tsx` | 16 | RecordingPlayer (T67) · helpers reais de Edge recebem auth e anon key sinteticos do mock · nao renderiza nada quando a chamada nao tem gravacao · nao renderiza nem requisita quando a chamada nao diz que tem … |
 | `src/components/contacts/__tests__/BulkActionsBar.test.tsx` | 16 | BulkActionsBar — ações em lote (etapa 81) · não renderiza sem seleção · Tag acrescenta a tag só em quem ainda não tem · Atribuir grava assigned_to em todos os selecionados … |
 | `src/components/dashboard/__tests__/useSentimentData.test.tsx` | 16 | useSentimentData · monta sem lançar exceção e sai do loading (guarda contra TDZ de fetchData no useEffect) · erro na RPC é capturado — nunca escapa do hook e loading sempre volta a false · falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta … |
-| … +2007 linhas — lista completa em `context.json` | | |
+| … +2010 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5446,4 +5443,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | identidade de cada item sai de `resolveSenderIdentity` no cartao. D06: a permissao de | `src/components/inbox/tabs/FilesTab.tsx` |
 | arquivos que estao nele. Enquanto o item mais antigo carregado nao cruzar o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
 | sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e | `src/components/inbox/tabs/FilesTab.tsx` |
-| … +1703 linhas — lista completa em `context.json` | |
+| … +1709 linhas — lista completa em `context.json` | |

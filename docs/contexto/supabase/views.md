@@ -6,7 +6,7 @@
 | campo | valor |
 |---|---|
 | owner | postgres |
-| security_invoker | não |
+| security_invoker | sim |
 | opções | security_invoker=on |
 | depende de | public.catalog_send_events |
 | populada | n/a |

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ee9218b888eb715f1bc6f8fe7273127bf0bbcd01",
+  "commit": "d084ca7530e7e6ac72a081bfbd77bac3014b16b4",
   "branch": "main",
-  "data_commit": "2026-11-13T23:45:11-03:00",
+  "data_commit": "2026-11-14T00:28:03-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d084ca7",
+    "data": "2026-11-14",
+    "assunto": "chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)"
+   },
    {
     "sha": "ee9218b",
     "data": "2026-11-13",
@@ -126,18 +131,13 @@
     "sha": "7c9a188",
     "data": "2026-11-13",
     "assunto": "fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)"
-   },
-   {
-    "sha": "58a7208",
-    "data": "2026-11-12",
-    "assunto": "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)"
    }
   ],
-  "arquivos_mudados_7d": 840,
+  "arquivos_mudados_7d": 906,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 667
+    "mudancas": 673
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -145,11 +145,11 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 293
+    "mudancas": 295
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 215
+    "mudancas": 218
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -157,23 +157,27 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 149
+    "mudancas": 152
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 131
+    "mudancas": 133
+   },
+   {
+    "pasta": "src/components/dashboard",
+    "mudancas": 126
    },
    {
     "pasta": "src/components/ui",
     "mudancas": 125
    },
    {
-    "pasta": "src/components/dashboard",
-    "mudancas": 124
+    "pasta": "src/lib/__tests__",
+    "mudancas": 118
    },
    {
-    "pasta": "src/lib/__tests__",
-    "mudancas": 117
+    "pasta": "src/hooks/chat",
+    "mudancas": 110
    },
    {
     "pasta": "src/components/contacts",
@@ -184,25 +188,25 @@
     "mudancas": 107
    },
    {
-    "pasta": "src/hooks/chat",
-    "mudancas": 107
-   },
-   {
     "pasta": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29",
     "mudancas": 105
    },
    {
     "pasta": "src/components/settings",
-    "mudancas": 94
+    "mudancas": 95
    }
   ],
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 19
+    "mudancas": 20
    },
    {
     "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "ESTADO.md",
     "mudancas": 12
    },
    {
@@ -218,15 +222,11 @@
     "mudancas": 11
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 11
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 10
    },
    {
@@ -274,6 +274,10 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/supabase_snapshot/snapshot.py",
+    "mudancas": 8
+   },
+   {
     "arquivo": ".github/workflows/e2e-logado-isolado.yml",
     "mudancas": 7
    },
@@ -291,10 +295,6 @@
    },
    {
     "arquivo": "package.json",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/edge-deploy/health-check.mjs",
     "mudancas": 7
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8523,
-  "arquivos_codigo": 4902,
-  "linhas_codigo": 909348,
+  "arquivos_total": 8561,
+  "arquivos_codigo": 4907,
+  "linhas_codigo": 910575,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,10 +328,10 @@
   "tabelas": 218,
   "migrations": 1121,
   "cron_jobs": 26,
-  "testes": 2673,
+  "testes": 2676,
   "workflows": 22,
   "scripts": 429,
-  "docs_md": 1087
+  "docs_md": 1118
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -504,7 +504,7 @@
   },
   "e2e/navegacao-modulos.spec.ts": {
    "arquivos": 1,
-   "linhas": 2002
+   "linhas": 2015
   },
   "e2e/onboarding-dispensar.spec.ts": {
    "arquivos": 1,
@@ -664,7 +664,7 @@
   },
   "scripts/supabase_snapshot": {
    "arquivos": 2,
-   "linhas": 2683
+   "linhas": 2703
   },
   "scripts/talkx": {
    "arquivos": 6,
@@ -700,11 +700,11 @@
   },
   "src/adapters": {
    "arquivos": 5,
-   "linhas": 620
+   "linhas": 638
   },
   "src/components": {
-   "arquivos": 2221,
-   "linhas": 377436
+   "arquivos": 2223,
+   "linhas": 377929
   },
   "src/config": {
    "arquivos": 3,
@@ -723,8 +723,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 999,
-   "linhas": 162869
+   "arquivos": 1000,
+   "linhas": 163207
   },
   "src/i18n": {
    "arquivos": 2,
@@ -736,7 +736,7 @@
   },
   "src/lib": {
    "arquivos": 289,
-   "linhas": 39430
+   "linhas": 39429
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -759,8 +759,8 @@
    "linhas": 393
   },
   "src/services": {
-   "arquivos": 37,
-   "linhas": 5793
+   "arquivos": 38,
+   "linhas": 5839
   },
   "src/styles": {
    "arquivos": 10,
@@ -779,8 +779,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 408,
-   "linhas": 123296
+   "arquivos": 409,
+   "linhas": 123596
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -814,7 +814,7 @@
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
-   "linhas": 1794
+   "linhas": 1802
   },
   {
    "arquivo": "scripts/ci/ci-local.mjs",
@@ -826,7 +826,7 @@
   },
   {
    "arquivo": "supabase/functions/evolution-api/index.ts",
-   "linhas": 1471
+   "linhas": 1479
   },
   {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -1096,7 +1096,7 @@
   },
   {
    "arquivo": "supabase/functions/_shared/evolution-go-routes.ts",
-   "linha": 240,
+   "linha": 282,
    "tipo": "TODO",
    "texto": "not working\" no fonte — retornava vazio."
   },
@@ -1352,7 +1352,6 @@
    "src/components/team-chat/GroupManagementDialog.tsx",
    "src/components/team-chat/ParticipantStatsGraph.tsx",
    "src/components/team-chat/TeamChatA11y.tsx",
-   "src/components/team-chat/TeamPerformancePanel.tsx",
    "src/components/team-chat/TransferConversationDialog.tsx",
    "src/components/ui/empty-states.tsx",
    "src/components/ui/form.tsx",

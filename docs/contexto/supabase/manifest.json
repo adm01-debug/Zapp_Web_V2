@@ -3,11 +3,11 @@
   "entrada": "README.md",
   "erros": [
     {
-      "error": "permission denied for schema auth",
+      "error": "role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta",
       "section": "db_stats.auth"
     }
   ],
-  "gerado_em": "2026-11-14T03:15:53Z",
+  "gerado_em": "2026-11-14T03:48:58Z",
   "gerador": "scripts/supabase_snapshot/snapshot.py",
   "produtor": "supabase-snapshot"
 }

@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ee9218b888` · branch `main` · 2026-11-14 03:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d084ca7530` · branch `main` · 2026-11-14 03:48 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `AudienceFilterKey` (TS) | contact_status \| company \| funnel_stage \| seller \| rfm \| location |  | `src/components/talkx/TalkXAudienceFilters.tsx` |
 | `TalkXPreviewMode` (TS) | raw \| resolved |  | `src/components/talkx/TalkXMessagePreview.tsx` |
 | `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused \| report |  | `src/components/talkx/TalkXView.tsx` |
-| … +355 linhas — lista completa em `context.json` | | | |
+| … +356 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -340,6 +340,7 @@
 | status | valor `fallback` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/settings/ai-providers/AIProviderHealthPanel.tsx`<br>`compara:supabase/functions/_shared/ai-usage.ts` |
 | status | valor `suprimido` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/talkx/TalkXSuppression.tsx` |
 | status | valor `published` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
+| status | valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/analytics/useGoalNotifications.ts`<br>`compara:src/hooks/integrations/useWhatsAppStatus.ts`<br>`compara:src/lib/commandPaletteSearch.ts`<br>`compara:supabase/functions/gmail-cron-sync/index.ts` |
 | status | valor `unverified` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/auth/useMFA.ts` |
 | status | valor `won` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/chat/useConversationHistoryTimeline.ts`<br>`compara:src/hooks/crm/useContactCrm360.ts`<br>`compara:src/lib/journey/mappers.ts` |
 | status | valor `lost` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/chat/useConversationHistoryTimeline.ts`<br>`compara:src/lib/journey/mappers.ts` |
@@ -349,7 +350,6 @@
 | status | valor `not-found` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/inbox/useRealtimeInbox.ts` |
 | status | valor `block` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useEvolutionApi.ts`<br>`escreve:src/hooks/integrations/useEvolutionApi.ts` |
 | status | valor `segstatus` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/integrations/useTalkXSegments.ts` |
-| status | valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useWhatsAppStatus.ts`<br>`compara:src/lib/commandPaletteSearch.ts`<br>`compara:supabase/functions/gmail-cron-sync/index.ts` |
 | status | valor `CLOSED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/realtime/useSupabaseRealtime.ts` |
 | status | valor `string` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/calls/terminoRemoto.ts`<br>`compara:src/services/outbound-message.service.ts`<br>`compara:supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:supabase/functions/elevenlabs-webhook/index.ts` |
 | status | valor `request_error` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/ai-usage.ts` |
@@ -372,6 +372,7 @@
 | status | valor `Established` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/calls/adapters/CallEngine.ts`<br>`compara:src/lib/calls/adapters/SipCallAdapter.ts` |
 | status | valor `confirmed` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/effect-reconcile.ts`<br>`escreve:supabase/functions/_shared/effect-reconcile.ts` |
 | status | valor `unconfirmed` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/effect-reconcile.ts` |
+| status | valor `readself` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/evolution-go-adapter.ts` |
 | status | valor `input_error` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/classify-emoji/index.ts`<br>`escreve:supabase/functions/classify-sticker/index.ts` |
 | status | valor `provider_error` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/classify-emoji/index.ts`<br>`escreve:supabase/functions/classify-sticker/index.ts` |
 | status | valor `low_confidence` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/classify-emoji/index.ts`<br>`escreve:supabase/functions/classify-sticker/index.ts` |

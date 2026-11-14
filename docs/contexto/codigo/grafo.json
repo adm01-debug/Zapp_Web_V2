@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2320,
- "arestas": 8072,
+ "nos": 2322,
+ "arestas": 8083,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 414
+   "importado_por": 416
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -30,7 +30,7 @@
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
-   "importado_por": 193
+   "importado_por": 194
   },
   {
    "arquivo": "src/components/ui/input.tsx",
@@ -42,7 +42,7 @@
   },
   {
    "arquivo": "src/types/chat.ts",
-   "importado_por": 124
+   "importado_por": 126
   },
   {
    "arquivo": "src/hooks/auth/useAuth.tsx",
@@ -81,6 +81,10 @@
    "importado_por": 63
   },
   {
+   "arquivo": "src/components/ui/alert-dialog.tsx",
+   "importado_por": 55
+  },
+  {
    "arquivo": "src/components/ui/switch.tsx",
    "importado_por": 55
   },
@@ -95,10 +99,6 @@
   {
    "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
    "importado_por": 50
-  },
-  {
-   "arquivo": "src/components/ui/alert-dialog.tsx",
-   "importado_por": 49
   },
   {
    "arquivo": "src/components/ui/textarea.tsx",
@@ -481,7 +481,6 @@
   "src/components/team-chat/GroupManagementDialog.tsx",
   "src/components/team-chat/ParticipantStatsGraph.tsx",
   "src/components/team-chat/TeamChatA11y.tsx",
-  "src/components/team-chat/TeamPerformancePanel.tsx",
   "src/components/team-chat/TransferConversationDialog.tsx",
   "src/components/ui/SkeletonList.tsx",
   "src/components/ui/empty-states.tsx",
@@ -627,6 +626,11 @@
    "importado_por": 6
   },
   {
+   "modulo": "hooks/realtime",
+   "depende_de": 10,
+   "importado_por": 15
+  },
+  {
    "modulo": "components/catalog",
    "depende_de": 12,
    "importado_por": 12
@@ -637,13 +641,8 @@
    "importado_por": 12
   },
   {
-   "modulo": "hooks/realtime",
-   "depende_de": 10,
-   "importado_por": 14
-  },
-  {
    "modulo": "hooks/inbox",
-   "depende_de": 17,
+   "depende_de": 18,
    "importado_por": 5
   },
   {

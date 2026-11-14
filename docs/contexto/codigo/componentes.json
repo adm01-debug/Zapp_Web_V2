@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "total": 915,
- "orfaos": 52,
+ "orfaos": 51,
  "nomes_duplicados": {
   "AchievementBadge": [
    "src/components/gamification/AchievementBadge.tsx",
@@ -3747,7 +3747,7 @@
     "ScheduledReportsManager"
    ],
    "export_default": null,
-   "linhas": 269,
+   "linhas": 287,
    "dominio": "components/dashboard",
    "hooks_locais": [
     "useScheduledReportConfigs"
@@ -4821,7 +4821,7 @@
     "AudioMessagePlayer"
    ],
    "export_default": null,
-   "linhas": 206,
+   "linhas": 211,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAudioPlayer"
@@ -5362,7 +5362,7 @@
     "MessageHoverToolbar"
    ],
    "export_default": null,
-   "linhas": 216,
+   "linhas": 233,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useEvolutionApi"
@@ -9254,7 +9254,7 @@
     "ChannelRoutingRules"
    ],
    "export_default": null,
-   "linhas": 222,
+   "linhas": 239,
    "dominio": "components/omnichannel",
    "hooks_locais": [],
    "tabelas": [
@@ -9305,7 +9305,7 @@
     "OmnichannelManager"
    ],
    "export_default": null,
-   "linhas": 291,
+   "linhas": 308,
    "dominio": "components/omnichannel",
    "hooks_locais": [],
    "tabelas": [
@@ -10689,7 +10689,7 @@
     "SkillBasedRoutingSettings"
    ],
    "export_default": null,
-   "linhas": 369,
+   "linhas": 401,
    "dominio": "components/settings",
    "hooks_locais": [],
    "tabelas": [
@@ -12691,7 +12691,7 @@
     "DepartmentInvitesView"
    ],
    "export_default": null,
-   "linhas": 93,
+   "linhas": 110,
    "dominio": "components/team-chat",
    "hooks_locais": [
     "useCreateDepartmentInvite",
@@ -12709,7 +12709,7 @@
     "DepartmentMembersView"
    ],
    "export_default": null,
-   "linhas": 135,
+   "linhas": 152,
    "dominio": "components/team-chat",
    "hooks_locais": [
     "useAddDepartmentMember",
@@ -12860,7 +12860,7 @@
     "TeamChatHeader"
    ],
    "export_default": null,
-   "linhas": 305,
+   "linhas": 312,
    "dominio": "components/team-chat",
    "hooks_locais": [],
    "tabelas": [],
@@ -12892,7 +12892,7 @@
     "TeamChatPanel"
    ],
    "export_default": null,
-   "linhas": 201,
+   "linhas": 205,
    "dominio": "components/team-chat",
    "hooks_locais": [
     "useTeamChatPanel"
@@ -13022,15 +13022,15 @@
     "TeamPerformancePanel"
    ],
    "export_default": null,
-   "linhas": 57,
+   "linhas": 59,
    "dominio": "components/team-chat",
    "hooks_locais": [
     "useTeamPerformance"
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/team-chat/TransferConversationDialog.tsx",
@@ -13201,7 +13201,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 49,
+   "usado_por": 55,
    "orfao": false
   },
   {
@@ -14715,7 +14715,7 @@
     "GlobalIncomingMessageAlertsOptions"
    ],
    "export_default": null,
-   "linhas": 107,
+   "linhas": 109,
    "dominio": "hooks/realtime",
    "hooks_locais": [
     "useGlobalIncomingMessageAlerts",

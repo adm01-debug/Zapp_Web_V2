@@ -4,7 +4,6 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 
 | severidade | código | objeto | detalhe |
 |---|---|---|---|
-| ALTA | view_security_definer | public.catalog_send_stats | View em public sem security_invoker: executa como owner e ignora RLS das tabelas base. |
 | MÉDIA | no_primary_key | public._zapp_fn_before | Sem chave primária: Realtime/replicação e updates por linha ficam frágeis. |
 | MÉDIA | rls_no_policies | public._rb_message_reactions_contato_20261007001008 | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public._zapp_fn_before | RLS ligado sem policies: inacessível via API (só service_role). |
