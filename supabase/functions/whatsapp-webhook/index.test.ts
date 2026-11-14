@@ -110,6 +110,7 @@ interface LinhaMensagem {
   external_id: string;
   whatsapp_connection_id: string;
   sender: string;
+  manually_resolved_at?: string | null;
 }
 
 interface LinhaChannelConnection {
@@ -177,7 +178,10 @@ function installFakeDb(config: ConfigDb) {
 
     if (u.pathname === "/rest/v1/messages" && method === "PATCH") {
       const id = eqParam(u, "id");
-      const row = config.messages.find((m) => m.id === id);
+      const soSemResolucao = u.searchParams.get("manually_resolved_at") === "is.null";
+      const row = config.messages.find((m) =>
+        m.id === id && (!soSemResolucao || (m.manually_resolved_at ?? null) === null)
+      );
       if (row && body && typeof body === "object") Object.assign(row, body);
       return Promise.resolve(json([]));
     }
@@ -347,6 +351,33 @@ Deno.test("(c) read seguido de sent atrasado gera um único PATCH com status rea
         ),
         "a busca da mensagem alvo tem de ter escopo de conexão, sender=agent e external_id",
       );
+    } finally {
+      db.restore();
+    }
+  });
+});
+
+Deno.test("(c2) recibo não sobrescreve resolução manual do operador (PATCH com manually_resolved_at=is.null)", async () => {
+  await withEnv(ENV, async () => {
+    const linha: LinhaMensagem = {
+      id: "msg-resolvida",
+      status: "sent",
+      external_id: "wamid.SENT-1",
+      whatsapp_connection_id: CONN_ID,
+      sender: "agent",
+      manually_resolved_at: "2026-11-12T10:00:00Z",
+    };
+    const db = installFakeDb({ channelConnections: [CONN_ROW], messages: [linha] });
+    try {
+      const res = await handleWhatsappWebhook(await postAssinado(envelopeStatus("read")));
+      assertEquals(res.status, 200);
+      const patches = patchCalls(db.calls);
+      assertEquals(patches.length, 1, `esperava 1 PATCH, vieram ${patches.length}`);
+      assert(
+        patches[0].url.includes("manually_resolved_at=is.null"),
+        "o PATCH de status tem de levar o predicado atômico manually_resolved_at=is.null",
+      );
+      assertEquals(linha.status, "sent", "a resolução manual tem de ficar intacta");
     } finally {
       db.restore();
     }

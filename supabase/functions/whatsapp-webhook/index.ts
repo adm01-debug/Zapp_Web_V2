@@ -202,7 +202,9 @@ export async function handleWhatsappWebhook(req: Request): Promise<Response> {
                   status: status.status,
                   status_updated_at: timestampToIso(status.timestamp),
                 })
-                .eq('id', target.id);
+                .eq('id', target.id)
+                // C110: recibo não sobrescreve a resolução manual do operador.
+                .is('manually_resolved_at', null);
               if (updateError) {
                 log.error("Error updating message status", { messageId: status.id, error: updateError.message });
                 throw new Error(`messages update failed: ${updateError.message}`);
