@@ -23,6 +23,7 @@ import { ConversationReopenDialog } from '../conversation-list/ConversationReope
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
 import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
+import { canArchiveConversation } from '@/hooks/inbox/conversationArchive';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
@@ -214,8 +215,8 @@ function ChatPanelHeaderBase({
             <DropdownMenuItem onClick={onOpenSchedule}><Clock className="w-4 h-4 mr-2" />Agendar mensagem</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onCloseConversation}><CheckCircle className="w-4 h-4 mr-2" />Marcar como resolvido</DropdownMenuItem>
-            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}
-            {conversation.contact.conversation_status !== 'waiting' && (
+            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada; já arquivada também não. */}
+            {canArchiveConversation(conversation.contact.conversation_status) && (
               <DropdownMenuItem onClick={onArchive}><Archive className="w-4 h-4 mr-2" />Arquivar</DropdownMenuItem>
             )}
             {/* Reabrir/Desarquivar: só para conversa resolvida/arquivada e pela RPC

@@ -218,9 +218,12 @@ export async function archiveConversations(
     throw new Error('Nenhuma conversa foi arquivada');
   }
 
+  // O anterior que vale é o que a RPC confirmou sob lock, não a leitura prévia: uma
+  // mensagem nova pode ter reaberto a conversa entre as duas, e o desfazer não pode
+  // encerrá-la de novo.
   const confirmadas = new Map<string, ConversationStatus>();
   for (const [id, anteriorNoBanco] of movidas) {
-    confirmadas.set(id, anteriores.get(id) ?? anteriorNoBanco);
+    confirmadas.set(id, anteriorNoBanco);
     announce(id, 'archived');
   }
   return confirmadas;
