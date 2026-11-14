@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)",
    "chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)",
    "chore(db): pacote de 11 migrations aprovadas — segurança, horário noturno, scheduler do Talk X e reaplicações do ledger (#3062)",
    "chore(db-audit): regenera baselines de storage.buckets e cron.job (#3053)",
-   "chore: pacote 2 — login sem 401, linha SIP, Gmail sem 409, Team Chat ?cid=, Talk X e PD79 (#3046)",
-   "fix(evolution-api): connect da go nunca mais devolve 500 e busca a credencial da instância sozinho (#3045)"
+   "chore: pacote 2 — login sem 401, linha SIP, Gmail sem 409, Team Chat ?cid=, Talk X e PD79 (#3046)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

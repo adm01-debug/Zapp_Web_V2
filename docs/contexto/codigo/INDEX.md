@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d084ca7530e7e6ac72a081bfbd77bac3014b16b4` (2026-11-14T00:28:03-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e50daef6a4d1e8bbb3a543413bd0867f8ba9759d` (2026-11-14T00:52:43-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -391,8 +391,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 57886 nós · 119854 arestas · 4325 comunidades · grafo do commit `d084ca75`
-- comunidades maiores: lucide-react (956), cn (942), react (925), vitest (583), DashboardView.tsx (548), errorResponse (518), @tanstack/react-query (462), ref_node_fs (374), ref_node_assert (372), react-router-dom (370), inspect.ts (366), chat.ts (310)
+- 57886 nós · 119858 arestas · 4315 comunidades · grafo do commit `e50daef6`
+- comunidades maiores: react (971), lucide-react (953), client.ts (831), cn (622), vitest (583), DashboardView.tsx (549), errorResponse (518), @tanstack/react-query (462), ref_node_fs (374), ref_node_assert (372), react-router-dom (370), inspect.ts (366)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -511,11 +511,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/audit_report.md` — 🛡️ Relatório de Auditoria Enterprise: Pronto Talk Suite (ZAPP-WEB) (108 linhas)
 - `docs/contracts.md` — Contratos das Edge Functions (51 linhas)
 - `docs/crm-external-grants.md` — GRANTs Externos — CRM pgxfvjmuubtbowutlide (111 linhas)
-- `docs/prod-readiness.md` — Prontidão para produção — Zapp Web V2 (1101 linhas)
+- `docs/prod-readiness.md` — Prontidão para produção — Zapp Web V2 (1113 linhas)
 - subpastas de docs/: docs/_arquivo (332), docs/audits (177), docs/reconciliation (134), docs/design (64), docs/plans (58), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/ci (8), docs/copiloto (8), docs/decisions (8), docs/handoffs (8), docs/agentes (6), docs/migration (6), docs/tipografia (6), docs/evidencias (4), docs/contexto (3), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-14 `e50daef` docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)
 - 2026-11-14 `d084ca7` chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)
 - 2026-11-13 `ee9218b` chore(db): pacote de 11 migrations aprovadas — segurança, horário noturno, scheduler do Talk X e reaplicações do ledger 
 - 2026-11-13 `a97aeac` chore(db-audit): regenera baselines de storage.buckets e cron.job (#3053)
@@ -530,7 +531,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-13 `7c3ef80` Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)
 - 2026-11-13 `af1bc25` Verificação de email: "Reenviar Email" na tela de erro pede o email em vez de enviar vazio (#3015)
 - 2026-11-13 `7bdbe2e` Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)
-- 2026-11-13 `51bd8cb` Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

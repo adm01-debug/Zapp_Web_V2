@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d084ca7530e7e6ac72a081bfbd77bac3014b16b4",
+  "commit": "e50daef6a4d1e8bbb3a543413bd0867f8ba9759d",
   "branch": "main",
-  "data_commit": "2026-11-14T00:28:03-03:00",
+  "data_commit": "2026-11-14T00:52:43-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e50daef",
+    "data": "2026-11-14",
+    "assunto": "docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)"
+   },
    {
     "sha": "d084ca7",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "e903a7e",
     "data": "2026-11-13",
     "assunto": "fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)"
-   },
-   {
-    "sha": "7c9a188",
-    "data": "2026-11-13",
-    "assunto": "fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)"
    }
   ],
   "arquivos_mudados_7d": 906,

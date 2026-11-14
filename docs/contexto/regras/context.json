@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "d084ca7530e7e6ac72a081bfbd77bac3014b16b4",
+  "sha": "e50daef6a4d1e8bbb3a543413bd0867f8ba9759d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 03:48 UTC",
+  "generated_at": "2026-11-14 04:03 UTC",
   "files_total": 8404,
   "code_files": 6200,
   "code_lines": 1080745
@@ -393690,10 +393690,19 @@
   }
  },
  "git": {
-  "sha": "d084ca7530e7e6ac72a081bfbd77bac3014b16b4",
+  "sha": "e50daef6a4d1e8bbb3a543413bd0867f8ba9759d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e50daef",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)",
+    "files": [
+     "docs/prod-readiness.md"
+    ]
+   },
    {
     "sha": "d084ca7",
     "date": "2026-11-14",
@@ -394333,16 +394342,6 @@
      "src/components/talkx/__dev__/TalkXKit.tsx",
      "src/components/talkx/__dev__/__tests__/TalkXKit.test.tsx"
     ]
-   },
-   {
-    "sha": "cca5655",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(auth): esqueci minha senha volta a entregar o pedido ao gestor (#2968)",
-    "files": [
-     "src/pages/ForgotPassword.tsx",
-     "src/pages/__tests__/ForgotPassword.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -394369,6 +394368,10 @@
    [
     "supabase/functions/evolution-api/index.ts",
     3
+   ],
+   [
+    "docs/prod-readiness.md",
+    2
    ],
    [
     "e2e/navegacao-modulos.spec.ts",
@@ -394420,10 +394423,6 @@
    ],
    [
     "src/components/email/EmailChatInbox.tsx",
-    2
-   ],
-   [
-    "src/components/team-chat/TeamChatView.tsx",
     2
    ]
   ]
