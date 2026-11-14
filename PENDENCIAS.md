@@ -217,3 +217,56 @@ Das 52 issues abertas, 24 são alertas de bot (`falha-main`, `kpi-actions`, `bra
 **O que fazer:** responda "limpa as issues de bot resolvidas" e eu fecho cada uma com comentário-resumo citando
 onde a falha foi corrigida, conforme a regra do `AGENTS.md`. Não fiz por iniciativa própria porque fechar issue
 é ação visível e não foi pedida.
+
+## 6. RADAR ao vivo na Inbox — o painel existe, não está ligado, e o teto de bundle não deixa
+
+Diferente do item 3 (que é o **motor** e o custo de IA), aqui o problema é o **painel**: o componente
+`src/components/inbox/copilot/RadarLive.tsx` está na `main`, com teste próprio
+(`src/components/inbox/copilot/__tests__/RadarLive.test.tsx`) e **sem nenhum consumidor** — ninguém o monta,
+então nunca aparece na tela. Ele é o que mostra o que vem do motor de IA (sugestões, próximo passo, alertas) e
+conviveria com os cartões locais do `RadarPhase8to15Panel`, que já está montado.
+
+Montei em `src/components/inbox/chat/ChatInputArea.tsx` (18 linhas) e medi. Dois bloqueios apareceram.
+
+### Bloqueio 1 — o teto de assets está saturado (decisão sua)
+
+| Medição (build real, gzip) | Valor |
+|---|---|
+| `main` hoje | **4097,0 KB** de um teto de 4100 KB — **3,0 KB de folga (0,07%)** |
+| Com o painel ligado, import estático | 4101,6 KB → estoura por 1,6 KB |
+| Com o painel ligado, `lazy()` | 4103,4 KB → estoura por 3,4 KB (pior: o chunk separado duplica módulos) |
+
+O painel custa 4,6 KB e só existem 3,0 KB. **Não é só o RADAR:** com 0,07% de folga, qualquer funcionalidade
+nova de tela esbarra nesse teto. É o verdadeiro freio do front hoje.
+
+Os tetos que medem o que o usuário baixa **não mudam** — medidos idênticos à `main` no mesmo build, porque o
+`ChatInputArea` está em chunk de rota, fora do primeiro carregamento:
+
+| Teto de experiência | `main` | com o painel | Budget |
+|---|---|---|---|
+| JS inicial | 290,9 KB | 290,9 KB | 325 KB |
+| CSS inicial | 42,9 KB | 42,9 KB | 80 KB |
+| Maior chunk JS | 506,8 KB | 506,8 KB | 550 KB |
+
+Tentei caber sem mexer no teto, respeitando o precedente do repositório (em 13/11 o projeto resolveu +34 KB
+mudando a arquitetura de chunks, em `scripts/ci/bundle-budget.unit.mjs:179`, em vez de subir o teto): testei
+`lazy()` e import estático, e o estático já é o melhor agrupamento possível. Não existe rearranjo que faça
+código novo pesar zero.
+
+**Não subi o teto por conta própria** porque sua regra é explícita sobre não afrouxar guardas, e isso é um
+guard de CI. O `performance-budget.json` já foi reajustado 3 vezes com justificativa medida (o `initial-js`
+foi 340 → 341 → 300 → 325 "para acomodar crescimento natural de features"; o `total-assets` levou +100 KB em
+25/09), então existe procedimento — falta sua palavra.
+
+### Bloqueio 2 — 10 rejeições não tratadas nos testes (trabalho meu, depois da sua decisão)
+
+Montar o painel faz os testes **já existentes** do `ChatInputArea` instanciarem o `useCopilotSession`, que vai
+à rede sem mock. Resultado medido: os 444 testes continuam passando, mas aparecem **10 unhandled rejections**
+(a `main` tem 0) e `npx vitest run src/components/inbox/chat` sai com código **1** — a CI ficaria vermelha.
+A correção é adicionar o mock nos testes existentes; é uma PR minha, mas só faz sentido depois do bloqueio 1,
+senão fica trabalho parado.
+
+**O que fazer:** responda **"sobe o teto do bundle para o RADAR"** e eu elevo o `total-assets` para 4150 KB com
+a medição registrada no próprio arquivo, faço os mocks dos testes e mergeio; ou **"deixa o painel desligado"** e
+eu arquivo formalmente. Enquanto não responder, **nada se perde**: o `RadarLive` e o teste dele seguem na
+`main`, intactos.
