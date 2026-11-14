@@ -631,8 +631,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 102528,
-      "sha256": "dc531f0dfe8b30868e7d86270abe7ac20aa62230ab179907a8d6be3646172c64"
+      "bytes": 104679,
+      "sha256": "e841c2f3a4325c9042c4e922cae7937dbf8e8efcea0659107cbd94ef16c3fe28"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -1928,7 +1928,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "05084a0cc2c8252c0264a26acf0cebb9fc22305ae18df8290e8b8dcea3354e37",
+      "source_sha256": "36074444e4050d77b71305b8c52839d0dfff1805f29947d394e9849a078ca78d",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -2796,5 +2796,5 @@
       ]
     }
   ],
-  "manifest_sha256": "42c8282d0b2ec4636bb2e27026387f43301a0189a1bbd8fc95996b359d2ef612"
+  "manifest_sha256": "a03757aa667473888420cf5de8661dc702a662b4e691f19886f33a455b832660"
 }
