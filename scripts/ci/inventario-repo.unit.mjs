@@ -118,3 +118,20 @@ test('detecção com rg real: prefixo não casa, template string conta e segredo
   assert.deepEqual(edges.foo.segredos_lidos, ['SEGREDO_HELPER', 'SEGREDO_INDEX'], 'helper conta, teste não');
   assert.equal(edges.exemplo.sem_chamador, true);
 });
+
+test('stdin grande por pipe (spawnSync com input) é lido inteiro, sem EAGAIN', { skip: !temRg && 'ripgrep ausente' }, () => {
+  const root = fixture();
+  mkdirSync(join(root, 'src/integrations/supabase'), { recursive: true });
+  writeFileSync(join(root, 'src/integrations/supabase/types.ts'), '');
+  // ~320 KB, bem acima do buffer de pipe (64 KB): o pai ainda escreve enquanto o filho lê.
+  const nomes = Array.from({ length: 40 }, (_, i) => `tabela_${i}_${'x'.repeat(8000)}`);
+  const result = spawnSync(process.execPath, [join(root, 'scripts/inventario/gerar-repo.mjs')], {
+    cwd: root,
+    encoding: 'utf8',
+    input: nomes.join('\n'),
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const uso = JSON.parse(readFileSync(join(root, 'inventario/estado/tabelas-uso.json'), 'utf8'));
+  assert.equal(uso.total, nomes.length);
+  assert.deepEqual(Object.keys(uso.tabelas), nomes);
+});
