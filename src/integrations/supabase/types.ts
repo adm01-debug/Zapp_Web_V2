@@ -3248,43 +3248,52 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          data: Json | null
           dismissed_at: string | null
           id: string
           insight_type: string
+          latency_ms: number | null
           model_version: string | null
           profile_id: string
           session_id: string
           shown_at: string | null
           source: string
           state_version: number
+          tier: number
           used_at: string | null
         }
         Insert: {
           content: string
           created_at?: string
+          data?: Json | null
           dismissed_at?: string | null
           id?: string
           insight_type: string
+          latency_ms?: number | null
           model_version?: string | null
           profile_id: string
           session_id: string
           shown_at?: string | null
           source?: string
           state_version?: number
+          tier?: number
           used_at?: string | null
         }
         Update: {
           content?: string
           created_at?: string
+          data?: Json | null
           dismissed_at?: string | null
           id?: string
           insight_type?: string
+          latency_ms?: number | null
           model_version?: string | null
           profile_id?: string
           session_id?: string
           shown_at?: string | null
           source?: string
           state_version?: number
+          tier?: number
           used_at?: string | null
         }
         Relationships: [
@@ -3418,17 +3427,21 @@ export type Database = {
           brinde_meter: number
           brinde_quantity: number | null
           brinde_responsible: string | null
+          brinde_state: Json
           closed_at: string | null
-          comm_style: string[]
+          comm_style: string | null
           contact_id: string
           conversation_id: string
           created_at: string
           decision_role: string | null
           id: string
+          intent: string | null
+          last_processed_message_at: string | null
           last_tick_at: string | null
           occasion: string | null
           profile_id: string
           sale_stage: string
+          sentiment: string | null
           stakeholders: Json
           started_at: string
           state_version: number
@@ -3444,17 +3457,21 @@ export type Database = {
           brinde_meter?: number
           brinde_quantity?: number | null
           brinde_responsible?: string | null
+          brinde_state?: Json
           closed_at?: string | null
-          comm_style?: string[]
+          comm_style?: string | null
           contact_id: string
           conversation_id: string
           created_at?: string
           decision_role?: string | null
           id?: string
+          intent?: string | null
+          last_processed_message_at?: string | null
           last_tick_at?: string | null
           occasion?: string | null
           profile_id: string
           sale_stage?: string
+          sentiment?: string | null
           stakeholders?: Json
           started_at?: string
           state_version?: number
@@ -3470,17 +3487,21 @@ export type Database = {
           brinde_meter?: number
           brinde_quantity?: number | null
           brinde_responsible?: string | null
+          brinde_state?: Json
           closed_at?: string | null
-          comm_style?: string[]
+          comm_style?: string | null
           contact_id?: string
           conversation_id?: string
           created_at?: string
           decision_role?: string | null
           id?: string
+          intent?: string | null
+          last_processed_message_at?: string | null
           last_tick_at?: string | null
           occasion?: string | null
           profile_id?: string
           sale_stage?: string
+          sentiment?: string | null
           stakeholders?: Json
           started_at?: string
           state_version?: number
@@ -4958,6 +4979,9 @@ export type Database = {
           created_at: string
           id: string
           instance: string
+          investigated_at: string | null
+          investigated_by: string | null
+          investigation_notes: string | null
           paused_by: string | null
           paused_until: string
           reason: string
@@ -4969,6 +4993,9 @@ export type Database = {
           created_at?: string
           id?: string
           instance: string
+          investigated_at?: string | null
+          investigated_by?: string | null
+          investigation_notes?: string | null
           paused_by?: string | null
           paused_until: string
           reason: string
@@ -4980,6 +5007,9 @@ export type Database = {
           created_at?: string
           id?: string
           instance?: string
+          investigated_at?: string | null
+          investigated_by?: string | null
+          investigation_notes?: string | null
           paused_by?: string | null
           paused_until?: string
           reason?: string
@@ -4987,6 +5017,20 @@ export type Database = {
           resumed_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "instance_pauses_investigated_by_fkey"
+            columns: ["investigated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_investigated_by_fkey"
+            columns: ["investigated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "instance_pauses_paused_by_fkey"
             columns: ["paused_by"]
@@ -5500,12 +5544,14 @@ export type Database = {
           delivery_claimed_at: string | null
           delivery_claimed_by: string | null
           delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
           link_preview: Json | null
+          manually_resolved_at: string | null
           media_filename: string | null
           media_meta: Json | null
           media_mimetype: string | null
@@ -5543,12 +5589,14 @@ export type Database = {
           delivery_claimed_at?: string | null
           delivery_claimed_by?: string | null
           delivery_last_claim_token?: string | null
+          delivery_post_started_at?: string | null
           external_id?: string | null
           id?: string
           is_deleted?: boolean | null
           is_edited?: boolean
           is_read?: boolean | null
           link_preview?: Json | null
+          manually_resolved_at?: string | null
           media_filename?: string | null
           media_meta?: Json | null
           media_mimetype?: string | null
@@ -5586,12 +5634,14 @@ export type Database = {
           delivery_claimed_at?: string | null
           delivery_claimed_by?: string | null
           delivery_last_claim_token?: string | null
+          delivery_post_started_at?: string | null
           external_id?: string | null
           id?: string
           is_deleted?: boolean | null
           is_edited?: boolean
           is_read?: boolean | null
           link_preview?: Json | null
+          manually_resolved_at?: string | null
           media_filename?: string | null
           media_meta?: Json | null
           media_mimetype?: string | null
@@ -8501,10 +8551,12 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          import_batch_id: string | null
           origin: string
           phone: string | null
           reason: string | null
           reason_code: string | null
+          removal_reason: string | null
           removed_at: string | null
           removed_by: string | null
           source_message_id: string | null
@@ -8516,10 +8568,12 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          import_batch_id?: string | null
           origin?: string
           phone?: string | null
           reason?: string | null
           reason_code?: string | null
+          removal_reason?: string | null
           removed_at?: string | null
           removed_by?: string | null
           source_message_id?: string | null
@@ -8531,10 +8585,12 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          import_batch_id?: string | null
           origin?: string
           phone?: string | null
           reason?: string | null
           reason_code?: string | null
+          removal_reason?: string | null
           removed_at?: string | null
           removed_by?: string | null
           source_message_id?: string | null
@@ -12750,12 +12806,14 @@ export type Database = {
           delivery_claimed_at: string | null
           delivery_claimed_by: string | null
           delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
           link_preview: Json | null
+          manually_resolved_at: string | null
           media_filename: string | null
           media_meta: Json | null
           media_mimetype: string | null
@@ -13075,12 +13133,14 @@ export type Database = {
           delivery_claimed_at: string | null
           delivery_claimed_by: string | null
           delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
           link_preview: Json | null
+          manually_resolved_at: string | null
           media_filename: string | null
           media_meta: Json | null
           media_mimetype: string | null
@@ -13155,12 +13215,14 @@ export type Database = {
           delivery_claimed_at: string | null
           delivery_claimed_by: string | null
           delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
           link_preview: Json | null
+          manually_resolved_at: string | null
           media_filename: string | null
           media_meta: Json | null
           media_mimetype: string | null
@@ -13216,12 +13278,14 @@ export type Database = {
           delivery_claimed_at: string | null
           delivery_claimed_by: string | null
           delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
           link_preview: Json | null
+          manually_resolved_at: string | null
           media_filename: string | null
           media_meta: Json | null
           media_mimetype: string | null
@@ -13276,12 +13340,14 @@ export type Database = {
           delivery_claimed_at: string | null
           delivery_claimed_by: string | null
           delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
           link_preview: Json | null
+          manually_resolved_at: string | null
           media_filename: string | null
           media_meta: Json | null
           media_mimetype: string | null
@@ -13340,12 +13406,14 @@ export type Database = {
           delivery_claimed_at: string | null
           delivery_claimed_by: string | null
           delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
           link_preview: Json | null
+          manually_resolved_at: string | null
           media_filename: string | null
           media_meta: Json | null
           media_mimetype: string | null
@@ -13941,6 +14009,64 @@ export type Database = {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: undefined
       }
+      mark_outbound_post_started: {
+        Args: { p_claim_token: string; p_message_id: string }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          delivery_post_started_at: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          manually_resolved_at: string | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          sender_display_name: string | null
+          sender_participant_jid: string | null
+          status: string | null
+          status_updated_at: string | null
+          transcribed_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+          whatsapp_group_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      mark_pause_investigated: {
+        Args: { p_notes?: string; p_pause_id: string }
+        Returns: Json
+      }
       mark_talkx_recipient_dispatch_started: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: undefined
@@ -14413,6 +14539,13 @@ export type Database = {
           reason: string
         }[]
       }
+      resolve_outbound_whatsapp_connection: {
+        Args: {
+          p_assigned_connection_id: string
+          p_explicit_connection_id: string
+        }
+        Returns: string
+      }
       resolve_sla_alert: { Args: { p_event_id: string }; Returns: string }
       resolve_talkx_outcome_unknown: {
         Args: {
@@ -14423,6 +14556,10 @@ export type Database = {
           p_resolution: string
         }
         Returns: Json
+      }
+      resolve_unconfirmed_message: {
+        Args: { p_message_id: string; p_outcome: string }
+        Returns: string
       }
       resume_instance: { Args: { p_instance: string }; Returns: number }
       retry_talkx_recipient: {
@@ -14880,6 +15017,7 @@ export type Database = {
           p_cursor?: string
           p_page_size?: number
           p_search?: string
+          p_segment_id?: string
           p_status?: string
         }
         Returns: Json
@@ -15126,26 +15264,16 @@ export type Database = {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
       }
-      transfer_conversation:
-        | {
-            Args: {
-              p_contact_id: string
-              p_note?: string
-              p_to_agent_id?: string
-              p_to_queue_id?: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_contact_id: string
-              p_expected_agent_id?: string
-              p_note?: string
-              p_to_agent_id?: string
-              p_to_queue_id?: string
-            }
-            Returns: string
-          }
+      transfer_conversation: {
+        Args: {
+          p_contact_id: string
+          p_expected_agent_id?: string
+          p_note?: string
+          p_to_agent_id?: string
+          p_to_queue_id?: string
+        }
+        Returns: string
+      }
       transfer_team_conversation_department: {
         Args: { p_conversation_id: string; p_to_department_id: string }
         Returns: Json
@@ -15193,7 +15321,6 @@ export type Database = {
           p_avatar_url?: string
           p_birthday?: string
           p_display_name?: string
-          p_email?: string
           p_phone?: string
           p_signature?: string
         }
