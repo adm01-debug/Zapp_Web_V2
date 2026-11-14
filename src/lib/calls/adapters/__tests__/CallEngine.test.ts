@@ -684,6 +684,79 @@ describe('CallEngine — linha ocupada (busy here)', () => {
   });
 });
 
+describe('CallEngine — janela cosmética de `ended` não é linha ocupada (QA sweep)', () => {
+  /** Deixa a cadeia do sink (`callIdPromise.then`) rodar. */
+  async function escoar(voltas = 5): Promise<void> {
+    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
+  }
+
+  /** Disca, desliga e devolve o motor já de volta a `ended` (ainda nos 2s da janela). */
+  async function discarEDesligar(engine: CallEngine, adapter: TestAdapter, numero: string) {
+    const sessao = { ...sessionWithTrack(fakeAudioTrack(true)), cancel: vi.fn() };
+    adapter.inviter = sessao;
+    await engine.makeCall(numero, fakeUa(), true);
+    engine.hangUp();
+    engine.handleStateChange('Terminated', sessao as unknown as Session, numero, 'outbound');
+    await escoar();
+  }
+
+  it('discar no 1º segundo depois do fim da chamada anterior INICIA (não trava em "calling")', async () => {
+    vi.useFakeTimers();
+    const adapter = new TestAdapter();
+    const sink = fakeSink();
+    const engine = new CallEngine(adapter, sink);
+
+    await discarEDesligar(engine, adapter, '111');
+    expect(vi.mocked(sink.onStatus)).toHaveBeenLastCalledWith('ended');
+
+    // 1º segundo depois: a chamada anterior já acabou de verdade, mas o
+    // motor ainda mostra `ended` (janela cosmética de IDLE_RESET_MS = 2s).
+    vi.advanceTimersByTime(1000);
+
+    adapter.inviter = { ...sessionWithTrack(fakeAudioTrack(true)), cancel: vi.fn() };
+    await engine.makeCall('222', fakeUa(), true, 'sessao-2');
+
+    // Antes do fix: `status` ainda era `ended` (!== 'idle') e `makeCall`
+    // recusava com este erro, sem nunca discar — a UI ficava presa em
+    // "Chamando..." (CallSessionProvider.dial já tinha despachado `DIAL`).
+    expect(sink.onError).not.toHaveBeenCalledWith('Já existe uma chamada em andamento.');
+    expect(vi.mocked(sink.onStatus)).toHaveBeenLastCalledWith('calling');
+    vi.useRealTimers();
+  });
+
+  it('INVITE de entrada no 1º segundo depois do fim da chamada anterior TOCA (não recusa 486)', async () => {
+    vi.useFakeTimers();
+    const adapter = new TestAdapter();
+    const sink = fakeSink();
+    const engine = new CallEngine(adapter, sink);
+
+    await discarEDesligar(engine, adapter, '111');
+    vi.advanceTimersByTime(1000);
+
+    const convite = {
+      id: 'convite-entrante',
+      state: 'Initial',
+      stateChange: { addListener: vi.fn() },
+      remoteIdentity: { uri: { user: '5511988887777' }, displayName: '' },
+      reject: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Invitation;
+
+    engine.handleInvitation(convite);
+
+    // Antes do fix: `status` ainda era `ended`, então `handleInvitation`
+    // tratava a linha como ocupada e recusava este INVITE real com 486.
+    expect(sink.onBusyHere).not.toHaveBeenCalled();
+    expect(sink.onSession).toHaveBeenCalledWith('inbound', '5511988887777');
+    expect(vi.mocked(sink.onStatus)).toHaveBeenLastCalledWith('ringing');
+
+    // O timer que voltaria o `ended` anterior para `idle` não pode
+    // sobrescrever este `ringing` novo.
+    vi.advanceTimersByTime(2000);
+    expect(vi.mocked(sink.onStatus)).toHaveBeenLastCalledWith('ringing');
+    vi.useRealTimers();
+  });
+});
+
 // ─── R2-CALL-001: evento tardio da sessão anterior não altera a próxima ─────
 
 /**

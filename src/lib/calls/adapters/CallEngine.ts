@@ -119,7 +119,20 @@ export class CallEngine {
 
   /** `true` quando há chamada em curso — o guard de "já existe uma". */
   get isBusy(): boolean {
-    return this.status !== 'idle';
+    return this.isLineBusy();
+  }
+
+  /**
+   * QA sweep: `status !== 'idle'` tratava `ended` (a janela cosmética de
+   * `IDLE_RESET_MS` em que o desfecho fica na tela) como linha ocupada. Isso
+   * recusava com 486 um INVITE de entrada real e travava `makeCall` de uma
+   * nova discagem legítima — ambos nos 2s seguintes a uma chamada que já
+   * tinha acabado de verdade (sessão/convite/callIdPromise já zerados em
+   * `encerrar`, antes de `ended` entrar na tela). Ocupada é só enquanto a
+   * chamada está de fato em curso.
+   */
+  private isLineBusy(): boolean {
+    return this.status === 'calling' || this.status === 'ringing' || this.status === 'active';
   }
 
   get isMuted(): boolean {
@@ -128,7 +141,7 @@ export class CallEngine {
 
   /** Convite SIP recebido (delegate do UserAgent). */
   handleInvitation(invitation: Invitation): void {
-    if (this.status !== 'idle') {
+    if (this.isLineBusy()) {
       // Linha ocupada: recusa com 486, avisa o dono do estado (a segunda
       // chamada vira `missed`/`busy_here` FORA da máquina) e sai cedo — nada
       // abaixo pode tocar a sessão da chamada em curso, que não pode cair.
@@ -136,6 +149,10 @@ export class CallEngine {
       void this.adapter.reject(invitation, 486);
       return;
     }
+    // A chamada anterior já acabou de verdade (só a janela cosmética de
+    // `ended` segue na tela) — este convite é uma sessão nova: o timer que
+    // voltaria o status para `idle` não pode sobrescrever o `ringing` dela.
+    this.clearIdleReset();
 
     const remoteUser = this.adapter.remoteNumberOf(invitation);
     this.invitation = invitation;
@@ -216,11 +233,15 @@ export class CallEngine {
 
   async makeCall(number: string, ua: UserAgent | null, registered: boolean, sessionId?: string): Promise<void> {
     if (!ua || !registered) { this.sink.onError('VoIP não conectado.'); return; }
-    if (this.status !== 'idle') { this.sink.onError('Já existe uma chamada em andamento.'); return; }
+    if (this.isLineBusy()) { this.sink.onError('Já existe uma chamada em andamento.'); return; }
     try {
       if (!await this.adapter.isDialable(ua, number)) { this.sink.onError('Número inválido'); return; }
       // O carregamento de sip.js é assíncrono: recheca para não abrir duas.
-      if (this.status !== 'idle') { this.sink.onError('Já existe uma chamada em andamento.'); return; }
+      if (this.isLineBusy()) { this.sink.onError('Já existe uma chamada em andamento.'); return; }
+      // Mesmo motivo do `handleInvitation`: esta discagem é legítima mesmo
+      // dentro da janela cosmética de `ended` — o timer de volta a `idle` não
+      // pode sobrescrever o `calling` dela.
+      this.clearIdleReset();
 
       this.answeredAt = null;
       this.direction = 'outbound';
