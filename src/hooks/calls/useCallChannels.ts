@@ -271,9 +271,17 @@ export function useCallChannels(options?: {
     };
   }, [user]);
 
+  // Depende do id, não do objeto: TOKEN_REFRESHED troca a referência de `user`
+  // sem trocar de usuário e não deve refazer a consulta.
+  const userId = user?.id ?? null;
   useEffect(() => {
     let ativo = true;
     void (async () => {
+      // Sem sessão (tela de login: o alerta é global) a consulta volta 401 — não consulta.
+      if (!userId) {
+        if (ativo) setWhatsapp([]);
+        return;
+      }
       try {
         // T30: dentro do inbox a consulta busca a linha DA CONVERSA — a `is_default`
         // é só o caso de fora do inbox (ou de linha da conversa invisível por RLS).
@@ -295,7 +303,7 @@ export function useCallChannels(options?: {
     return () => {
       ativo = false;
     };
-  }, [connectionId]);
+  }, [connectionId, userId]);
 
   const capacidades = useMemo(
     () =>

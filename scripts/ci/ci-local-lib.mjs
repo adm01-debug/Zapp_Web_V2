@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -652,6 +653,95 @@ export function arquivosParaVitestRelated(lista) {
   return [...new Set(arquivos)].filter(
     (l) => l && /\.(m?[jt]sx?)$/.test(l) && !l.startsWith('supabase/functions/')
   );
+}
+
+// --------------------------------------- db-guard: migration existente editada
+// Equivalente local do passo "Rejeitar edicao de migration ja existente" do
+// .github/workflows/db-guard.yml, com os MESMOS critérios: 'modified' ou
+// 'renamed' com conteúdo alterado, nome ^supabase/migrations/\d{14}_.*\.sql$,
+// exceção 1 (stub comment-only na base promovido, só 'modified') e exceção 2
+// (kind fixado no scripts/db-audit/migration-evidence.json). Mudou lá, mude aqui.
+export const MIGRATION_VERSIONADA = /^supabase\/migrations\/\d{14}_.*\.sql$/;
+const KINDS_EDICAO_PERMITIDA = new Set([
+  'ledger-only/name-and-file-pinned',
+  'ledger-divergence/pinned-replay',
+]);
+
+/** Saída de `git diff --raw -z -M --no-abbrev` → [{ status, blobAntes, blobDepois, origem, arquivo }]. */
+export function lerDiffRawZ(saida) {
+  const campos = String(saida ?? '').split('\0');
+  const entradas = [];
+  for (let i = 0; i < campos.length;) {
+    const cabecalho = campos[i++];
+    if (!cabecalho) continue;
+    const m = /^:\d+ \d+ ([0-9a-f]+) ([0-9a-f]+) ([A-Z])\d*$/.exec(cabecalho);
+    if (!m) throw new Error(`git diff --raw: linha inesperada "${cabecalho}"`);
+    const origem = campos[i++];
+    const arquivo = m[3] === 'R' || m[3] === 'C' ? campos[i++] : origem;
+    entradas.push({ status: m[3], blobAntes: m[1], blobDepois: m[2], origem, arquivo });
+  }
+  return entradas;
+}
+
+/**
+ * Migrations já existentes cujo CONTEÚDO a branch mudou. 'M' com o mesmo blob é
+ * só troca de modo ('changed' no GitHub) e 'R' com o mesmo blob é rename puro.
+ * `conteudoBase(arquivo)` devolve o texto na base ou null (null = violação, como
+ * o catch do workflow).
+ */
+export function migrationsEditadas(entradas, { conteudoBase, evidencia }) {
+  const violacoes = [];
+  for (const f of entradas) {
+    if (!MIGRATION_VERSIONADA.test(f.arquivo)) continue;
+    if ((f.status !== 'M' && f.status !== 'R') || f.blobAntes === f.blobDepois) continue;
+    const basename = f.arquivo.split('/').pop();
+    const entry = (evidencia?.exceptions || []).find((e) => e.filename === basename);
+    if (entry && KINDS_EDICAO_PERMITIDA.has(entry.kind)) continue;
+    if (f.status === 'M') {
+      const texto = conteudoBase(f.arquivo);
+      if (
+        texto !== null &&
+        texto.split('\n').every((l) => l.trim() === '' || l.trim().startsWith('--'))
+      )
+        continue;
+    }
+    violacoes.push(f.arquivo);
+  }
+  return violacoes;
+}
+
+/**
+ * Roda a checagem no repositório `cwd`: diff `base...HEAD` (o mesmo que a PR lista).
+ * Com `workingTree` (--incluir-nao-commitado), o diff vai da merge-base até o working
+ * tree, com os não rastreados marcados como intent-to-add (o `cwd` é o clone
+ * descartável): o que ainda não foi commitado também é barrado, como seria no GitHub
+ * depois do commit.
+ */
+export function checarMigrationsEditadas(cwd, base, { workingTree = false } = {}) {
+  const git = (...args) => spawnSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 30 });
+  // Lido sempre, como no workflow (sem o arquivo o passo falha lá também).
+  const evidencia = JSON.parse(
+    readFileSync(join(cwd, 'scripts/db-audit/migration-evidence.json'), 'utf8')
+  );
+  // Sem pathspec: um rename de fora para supabase/migrations/ também conta.
+  let alvo = `${base}...HEAD`;
+  if (workingTree) {
+    const ita = git('add', '-A', '--intent-to-add');
+    if (ita.status !== 0)
+      throw new Error(`git add --intent-to-add falhou: ${(ita.stderr ?? '').trim()}`);
+    const mb = git('merge-base', base, 'HEAD');
+    if (mb.status !== 0) throw new Error(`git merge-base falhou: ${(mb.stderr ?? '').trim()}`);
+    alvo = mb.stdout.trim();
+  }
+  const d = git('diff', '--raw', '-z', '-M', '--no-abbrev', '--no-color', alvo);
+  if (d.status !== 0) throw new Error(`git diff ${alvo} falhou: ${(d.stderr ?? '').trim()}`);
+  return migrationsEditadas(lerDiffRawZ(d.stdout), {
+    evidencia,
+    conteudoBase: (arquivo) => {
+      const r = git('cat-file', 'blob', `${base}:${arquivo}`);
+      return r.status === 0 ? r.stdout : null;
+    },
+  });
 }
 
 // ------------------------------------------------------------- root/sudo
