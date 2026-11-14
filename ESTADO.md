@@ -64,7 +64,7 @@ partir do código e falha quando:
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:135` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `copilot-live` | E | — sem chamador no repositório — |
-| `create-user` | A | `src/components/admin/useAdminData.ts:485` · `src/components/admin/useAdminData.ts:485` |
+| `create-user` | A | `src/components/admin/useAdminData.ts:496` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
 | `detect-new-device` | A | `src/lib/avisoDispositivo.ts:117` |
@@ -79,7 +79,7 @@ partir do código e falha quando:
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
 | `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks/groups/actions.ts:107` |
 | `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:110` |
-| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:263` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:635` · `supabase/functions/evolution-api/index.ts:749` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
+| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:263` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:635` · `supabase/functions/evolution-api/index.ts:764` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
 | `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
@@ -97,7 +97,7 @@ partir do código e falha quando:
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:97` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
-| `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |
+| `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:134` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
 | `multiplix-voices` | E | — sem chamador no repositório — |
 | `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:182` · `supabase/config.toml:44` |

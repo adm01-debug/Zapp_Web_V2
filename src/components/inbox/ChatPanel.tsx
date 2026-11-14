@@ -486,7 +486,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onClose={() => { handleSetActiveTool('chatSearch'); setTimeout(() => handlers.inputRef.current?.focus(), 150); }}
           onNavigateToMessage={(id) => messagesAreaRef.current?.scrollToMessage(id)}
           onHighlightChange={(ids, activeId) => { setHighlightedMessageIds(ids); setActiveHighlightId(activeId); }}
-          onSearchQueryChange={setSearchQuery} />
+          onSearchQueryChange={setSearchQuery} hasOlderMessages={hasOlderMessages} />
 
         {/* ChatAssignedBar removida da renderização — conteúdo migrou para o chip
             de agente + estrela em ChatPanelHeader (fase 2, redesign carvão). */}

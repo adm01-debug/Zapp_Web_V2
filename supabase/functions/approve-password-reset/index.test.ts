@@ -50,6 +50,9 @@ function fakeAdmin(
     auditError?: { message: string };
     /** Linhas devolvidas pelo UPDATE (o CAS: [] = nenhuma linha casou). */
     updateRows?: Array<{ id: string }> | null;
+    /** `profiles.is_active` do caller, lido pela checagem de perfil ativo (default: ativo). */
+    profileActive?: boolean | null;
+    profileError?: { message: string } | null;
   } = {},
 ) {
   const calls: DbCall[] = [];
@@ -82,6 +85,16 @@ function fakeAdmin(
         single: () => {
           calls.push({ table, op: op || "select" });
           return Promise.resolve({ data: row, error: row ? null : { message: "not found" } });
+        },
+        maybeSingle: () => {
+          calls.push({ table, op: op || "select" });
+          if (table === "profiles") {
+            return Promise.resolve({
+              data: opts.profileActive === undefined ? { is_active: true } : { is_active: opts.profileActive },
+              error: opts.profileError ?? null,
+            });
+          }
+          return Promise.resolve({ data: row, error: null });
         },
         then: (
           onOk: (v: { data: unknown; error: unknown }) => unknown,
@@ -168,6 +181,34 @@ Deno.test("supervisor (não-admin) NÃO decide reset — 403 e nenhum efeito", a
   );
   assert(email.calls.length === 0, "supervisor não pode disparar e-mail");
   assert(calls.length === 0, "supervisor não pode tocar o banco");
+});
+
+Deno.test("admin DESATIVADO (is_active=false) NÃO decide reset — 403 e nenhum efeito", async () => {
+  // t_qa-sweep-isactive: is_admin confere só o ROLE; o JWT de um admin
+  // desativado continua válido até expirar. Sem reconsultar profiles.is_active
+  // no momento da ação, este handler aprovava o reset de terceiros mesmo com
+  // o admin já desativado.
+  const { caller } = fakeCaller({ isAdmin: true });
+  const { admin, calls } = fakeAdmin(pendingRow(), { profileActive: false });
+  const email = fakeEmail();
+
+  const res = await handleApprovePasswordResetRequest(makeRequest(APPROVE_BODY), {
+    ...baseDeps,
+    caller,
+    admin,
+    emailClient: email.client,
+  });
+
+  assert(res.status === 403, `admin desativado deve receber 403, veio ${res.status}`);
+  assert(email.calls.length === 0, "admin desativado não pode disparar e-mail");
+  assert(
+    !calls.some((c) => c.table === "password_reset_requests"),
+    `admin desativado não pode tocar password_reset_requests: ${JSON.stringify(calls)}`,
+  );
+  assert(
+    !calls.some((c) => c.table === "audit_logs"),
+    `admin desativado não pode gerar auditoria de decisão: ${JSON.stringify(calls)}`,
+  );
 });
 
 Deno.test("admin aprova: e-mail sai pelo GoTrue e a resposta NÃO traz link", async () => {

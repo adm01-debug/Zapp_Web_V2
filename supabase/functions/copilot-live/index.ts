@@ -9,6 +9,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { allowedOriginFor } from '../_shared/cors-origins.ts';
 import { generateWithRouting } from '../_shared/ai-generate.ts';
+import { enforceAiGuards } from '../_shared/ai-guards.ts';
 
 function cors(req: Request) {
   return {
@@ -59,6 +60,12 @@ serve(async (req) => {
     // copilot_sessions.profile_id e copilot_insights.profile_id referenciam
     // auth.users(id) — usar user.id para todas as escritas/filtros nessas tabelas.
     const userId = user.id;
+
+    // CV-141: mesma guarda de IA (kill switch de capacidade, rate limit por
+    // usuário e cota diária via ai_usage_logs) que as demais funções de IA do
+    // repo aplicam antes de chamar generateWithRouting (ex.: ai-enhance-message).
+    const guardResponse = await enforceAiGuards({ functionName: 'copilot-live', userId, req });
+    if (guardResponse) return guardResponse;
 
     // contacts.assigned_to armazena profiles.id (não auth.users.id).
     // Resolver o profiles.id do chamador apenas para comparar com assigned_to.

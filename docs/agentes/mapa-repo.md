@@ -22,7 +22,7 @@ Ler quando precisar saber onde fica algo antes de buscar por texto.
 | `supabase/migrations/` | arquivos `.sql` (+ `_foreign/` e `_superseded/`, arquivo morto) |
 | `supabase/schema-manifest.json` · `schema-catalog.json` | snapshot da estrutura real da produção — o esperado dos testes de contrato vem daqui |
 | `scripts/db-audit/` | testes de banco em Postgres descartável (`*.test.sh`), `register-migration.mjs`, `supabase-usage-guard.mjs`, `replay-local.sh` |
-| `scripts/ci/` | guardas do CI (`fila-merge.mjs`, `render-workflow-docs.mjs`, `check-claude-md-integrity.mjs`, baselines) |
+| `scripts/ci/` | guardas do CI (`check-workflow-pins.mjs`, `render-workflow-docs.mjs`, `check-claude-md-integrity.mjs`, baselines) |
 | `e2e/` | specs Playwright; fixtures em `e2e/fixtures/` |
 | `docs/` | `DEPLOYMENT.md`, `MIGRATIONS.md`, `INCIDENT-RUNBOOK.md`, `CONEXOES_WHATSAPP_RUNBOOK.md`, `ci/README.md` (gerado), `talkx/`, `audits/`, `agentes/` (esta pasta) |
 | `inventario/estado/` | **estado real gerado por script — consulte antes de buscar por texto:** `banco.json` (tabelas, RLS, uso no código, órfãs, cron com falhas, WhatsApp, edges publicadas, `alertas`), `rotas.json` (URL/tela → menu, papéis, hooks, edges, RPCs, tabelas), `edges.json`. Refeito toda segunda pelo `inventario-estado-semanal.yml` (PR automático); como gerar à mão em `inventario/estado/README.md` |

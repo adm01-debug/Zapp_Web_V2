@@ -7,9 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
   useConfirmMultiplixDispatch, MultiplixDispatchEdgeError,
-  fetchMultiplixRecipientsTotal, useMultiplixEstimate,
+  fetchMultiplixRecipientsTotal, useMultiplixEstimate, invokeMultiplixSend,
   type MultiplixRecipientRow,
 } from '@/hooks/integrations/useMultiplixDispatches';
+import { multiplixActionErrorCode, multiplixActionErrorText } from '@/hooks/integrations/multiplixActionErrors';
+import { confirmResumeByStatus } from '@/hooks/integrations/multiplixResume';
 import { useMultiplixReplies, type MultiplixReplyAttribution } from '@/hooks/integrations/useMultiplixReplies';
 import { openContactChat } from '@/components/catalog/useSendProduct';
 import {
@@ -69,24 +71,20 @@ function dispatchLoadErrorText(error: unknown): string {
 /**
  * F49 — a revalidacao que o `confirm` roda ANTES de congelar devolve erro
  * NOMEADO (a RPC recusa a materializacao inteira, nunca deixa fila pela metade).
- * Sem esta traducao o operador leria o codigo cru da edge
- * ("multiplix_confirm_no_blocks") e nao saberia o que corrigir — e o disparo
- * continua sem enviar nada enquanto isso.
+ * Sem a traducao (`multiplixActionErrorText`, compartilhada com o composer) o
+ * operador leria o codigo cru da edge ("multiplix_confirm_no_blocks") e nao
+ * saberia o que corrigir.
  */
-const CONFIRM_BLOCKERS: Record<string, string> = {
-  multiplix_confirm_no_recipients: 'o disparo ficou sem destinatário',
-  multiplix_confirm_no_eligible_recipients: 'nenhum destinatário está apto a receber',
-  multiplix_confirm_no_blocks: 'o disparo ainda não tem bloco de mensagem',
-  multiplix_confirm_connection_required: 'o disparo não tem conexão de envio definida',
-  multiplix_confirm_connection_unavailable: 'a conexão de envio do disparo está desconectada',
-};
-
 function confirmErrorMessage(error: unknown): string {
-  const code = error instanceof MultiplixDispatchEdgeError ? error.code : null;
-  const blocker = code ? CONFIRM_BLOCKERS[code] : undefined;
-  if (blocker) return `Não foi possível iniciar: ${blocker}.`;
-  return error instanceof Error ? error.message : 'Erro ao confirmar disparo';
+  return multiplixActionErrorText(error, 'Não foi possível iniciar o disparo agora. Tente de novo em instantes.');
 }
+
+/**
+ * Legado pausado pela 20261005150259 SEM fila: "Retomar" nao existe para ele —
+ * gerar a fila e enviar e decisao irreversivel e passa pelo `confirm`, como um
+ * rascunho (regras.md §8). O banco recusa o atalho (multiplix_dispatch_confirm_required).
+ */
+const LEGACY_UNQUEUED_PAUSE_REASON = 'legacy_queue_unmaterialized';
 
 const REPLY_ATTRIBUTION_TEXT: Record<MultiplixReplyAttribution, string> = {
   linked: 'Respondeu à mensagem do disparo',
@@ -300,20 +298,38 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
       await action.mutateAsync({ dispatchId, action: a });
       qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar disparo');
+      toast.error(multiplixActionErrorText(e, 'Não foi possível atualizar o disparo agora. Tente de novo em instantes.'));
     }
   };
 
+  /**
+   * Retomar = um clique (regras.md §8), sem esperar o LOTE: o worker so responde
+   * depois de processar um lote inteiro (minutos) e o gateway corta em ~150 s.
+   * O pedido sai e a retomada e confirmada pela transicao de status no servidor
+   * (paused -> sending), com espera limitada — um toast so, o primeiro resultado.
+   */
   const resumeDispatch = async () => {
     if (resumingRef.current) return;
     resumingRef.current = true;
     setResuming(true);
     try {
-      await action.mutateAsync({ dispatchId, action: 'start' });
+      const outcome = await confirmResumeByStatus({
+        request: invokeMultiplixSend(dispatchId, 'start'),
+        readStatus: async () => (await refetchDispatch()).data?.status,
+        onLateError: (lateError) => console.error('multiplix-send start (depois da retomada) falhou:', lateError),
+      });
       qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] });
-      toast.success('Disparo retomado');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao retomar disparo');
+      if (outcome.kind === 'resumed') {
+        toast.success('Disparo retomado');
+      } else if (outcome.kind === 'pending') {
+        toast.info('Retomada pedida. O status do disparo atualiza em instantes.');
+      } else {
+        toast.error(multiplixActionErrorText(outcome.error, 'Não foi possível retomar o disparo agora. Tente de novo em instantes.'));
+        // Sem fila (o banco exige confirmacao): o caminho certo e o "Iniciar" com dialogo.
+        if (multiplixActionErrorCode(outcome.error) === 'multiplix_dispatch_confirm_required') {
+          setConfirmResume(true);
+        }
+      }
     } finally {
       resumingRef.current = false;
       setResuming(false);
@@ -374,6 +390,9 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   // F10: 'scheduled' nao mostra "Iniciar" — quem inicia e o cron quando o
   // horario chega; antes disso o operador so cancela.
   const isDraft = dispatch.status === 'draft';
+  // Legado pausado sem fila: mostra "Iniciar" (com confirmacao) no lugar de "Retomar".
+  const isLegacyUnqueued = isPaused && dispatch.pause_reason === LEGACY_UNQUEUED_PAUSE_REASON;
+  const needsConfirmToStart = isDraft || isLegacyUnqueued;
   const isDone = dispatch.status === 'completed' || dispatch.status === 'completed_with_failures'
     || dispatch.status === 'cancelled' || dispatch.status === 'failed';
 
@@ -391,8 +410,11 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
    */
   const startDraft = async () => {
     try {
-      await confirmDispatch.mutateAsync({ dispatchId, dispatchVersion: dispatch.dispatch_version });
+      const confirmed = await confirmDispatch.mutateAsync({ dispatchId, dispatchVersion: dispatch.dispatch_version });
       qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] });
+      toast.success(confirmed.status === 'scheduled'
+        ? 'Disparo confirmado e agendado.'
+        : 'Disparo confirmado. O envio começa em instantes.');
     } catch (e) {
       toast.error(confirmErrorMessage(e));
     }
@@ -417,9 +439,9 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             <StatusPill status={dispatch.status} map={DISPATCH_STATUS} />
             {!isDone && (<>
               {isRunning && <button type="button" onClick={() => setConfirmPause(true)} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4" />Pausar</button>}
-              {isPaused && <button type="button" onClick={() => { void resumeDispatch(); }} disabled={resuming} aria-busy={resuming} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"><Play className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}</button>}
-              {/* Iniciar um RASCUNHO continua confirmando: congela publico/blocos e gera a fila, sem volta. */}
-              {isDraft && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />Iniciar</button>}
+              {isPaused && !isLegacyUnqueued && <button type="button" onClick={() => { void resumeDispatch(); }} disabled={resuming} aria-busy={resuming} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"><Play className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}</button>}
+              {/* Iniciar um RASCUNHO (ou um legado pausado SEM fila) continua confirmando: congela publico/blocos e gera a fila, sem volta. */}
+              {needsConfirmToStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />Iniciar</button>}
               <button type="button" onClick={() => setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4" />Cancelar</button>
             </>)}
           </div>
@@ -457,7 +479,9 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         {isPaused && dispatch.pause_reason && (
           <p className="text-2xs text-dash-amber flex items-center gap-1.5 mt-2">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-            {dispatch.pause_reason === 'daily_limit'
+            {dispatch.pause_reason === LEGACY_UNQUEUED_PAUSE_REASON
+              ? 'Disparo antigo sem fila de envio: use “Iniciar” e confirme para gerar a fila e começar o envio.'
+              : dispatch.pause_reason === 'daily_limit'
               ? 'Pausado automaticamente: limite diário da conexão atingido'
               : dispatch.pause_reason === 'connection_lost'
                 ? 'Pausado automaticamente: conexão do WhatsApp caiu'

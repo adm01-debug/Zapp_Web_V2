@@ -444,3 +444,26 @@ describe('useLeaderboard — amostra ausente vira null (não 0)', () => {
     expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('truncado'));
   });
 });
+
+describe('useLeaderboard — rank anterior real (bug: previousRank sempre igual ao rank)', () => {
+  beforeEach(() => estado());
+
+  it('após o rank mudar numa releitura, previousRank guarda o rank ANTERIOR, não o atual recalculado', async () => {
+    // 1ª leitura: Bruno em 2º, Ana em 1º. Sem leitura anterior, previousRank cai no
+    // fallback (= rank atual) — não há variação ficticia na carga inicial.
+    estado([linha({ profile_id: ANA, rank: 1 }), linha({ profile_id: BRUNO, name: 'Bruno', rank: 2 })]);
+    const { result } = await montar();
+
+    expect(result.current.agents.find((a) => a.profile_id === BRUNO)).toMatchObject({ rank: 2, previousRank: 2 });
+
+    // 2ª leitura (ex.: refresh/realtime): Bruno sobe para 1º. Se o bug persistisse,
+    // previousRank seria recalculado como o rank NOVO (1) e a seta de subida nunca
+    // apareceria. Corrigido, previousRank tem de ser o rank da leitura anterior (2).
+    h.rpcRows = [linha({ profile_id: BRUNO, name: 'Bruno', rank: 1 }), linha({ profile_id: ANA, rank: 2 })];
+    await act(async () => { void result.current.handleRefresh(); });
+    await waitFor(() => expect(result.current.isRefreshing).toBe(false));
+
+    const bruno = result.current.agents.find((a) => a.profile_id === BRUNO);
+    expect(bruno).toMatchObject({ rank: 1, previousRank: 2 });
+  });
+});

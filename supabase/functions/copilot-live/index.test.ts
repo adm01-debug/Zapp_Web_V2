@@ -115,6 +115,10 @@ interface Rotas {
   /** contacts.assigned_to do contato do tick (padrão: o perfil do chamador). */
   responsavelDoContato?: string;
   provedor?: () => Response;
+  /** ai.capability.copilot_live desligada explicitamente (kill switch do IA-009). */
+  capacidadeDesligada?: boolean;
+  /** Contagem de ai_usage_logs nas últimas 24h já no limite da cota diária (500). */
+  cotaDiariaExcedida?: boolean;
 }
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
@@ -174,7 +178,30 @@ async function cenario<T>(rotas: Rotas, fn: (calls: Chamada[]) => Promise<T>): P
     }
     if (url.includes("/rest/v1/copilot_insights")) return Promise.resolve(new Response(null, { status: 201 }));
     if (url.includes("/rest/v1/rpc/")) return Promise.resolve(json({ code: "PGRST000", message: "rpc indisponivel no stub" }, 400));
-    if (url.includes("/rest/v1/ai_usage_logs")) return Promise.resolve(json({}, 201));
+    if (url.includes("/rest/v1/feature_flags")) {
+      // enforceAiGuards (ai-feature-flags.ts): .maybeSingle() — ausência da
+      // linha (padrão, LIGADA) vira PGRST116/406; capacidadeDesligada devolve a
+      // linha com enabled=false explícito.
+      return Promise.resolve(
+        rotas.capacidadeDesligada
+          ? json({ enabled: false })
+          : json({
+            code: "PGRST116",
+            details: "Results contain 0 rows, application/vnd.pgrst.object+json requires 1 row",
+            hint: null,
+            message: "JSON object requested, multiple (or no) rows returned",
+          }, 406),
+      );
+    }
+    if (url.includes("/rest/v1/ai_usage_logs")) {
+      // enforceAiGuards (ai-guards.ts): select(..., { count: "exact", head: true })
+      // lê a contagem via header Content-Range, não do corpo (HEAD sem corpo).
+      return Promise.resolve(
+        rotas.cotaDiariaExcedida
+          ? new Response(null, { status: 200, headers: { "content-range": "0-0/500" } })
+          : json({}, 201),
+      );
+    }
     if (url.includes("/rest/v1/ai_providers")) return Promise.resolve(json([PROVEDOR_PADRAO]));
     if (url.startsWith(PROVEDOR)) {
       return Promise.resolve((rotas.provedor ?? (() => new Response("sem stub de provedor", { status: 599 })))());
@@ -326,6 +353,35 @@ Deno.test("copilot-live: sessão de outro dono com o mesmo contato, mas contato 
     assertEquals(consultouContato(calls), true);
     assertEquals(houveTransferencia(calls), false);
     assertEquals(chamadasAoProvedor(calls).length, 0);
+    assertEquals(escritas(calls, "copilot_insights").length, 0);
+  });
+});
+
+// CV-141 (achado de QA): copilot-live chamava generateWithRouting sem passar
+// por enforceAiGuards (rate limit por usuário + cota diária de ai_usage_logs +
+// kill switch de capacidade) — a mesma guarda que ai-enhance-message, ai-suggest-reply
+// etc. já respeitam. Sem ela, nenhum desligamento de capacidade nem cota de uso
+// continham as chamadas ao provedor de IA deste tick em tempo real.
+
+Deno.test("copilot-live: cota diária de IA excedida devolve 429 sem chamar o provedor nem gravar sessão", async () => {
+  await cenario({ cotaDiariaExcedida: true }, async (calls) => {
+    const res = await chamar(pedido(TICK));
+    const corpo = await res.json();
+    assertEquals(res.status, 429);
+    assertEquals(typeof corpo.error, "string");
+    assertEquals(chamadasAoProvedor(calls).length, 0);
+    assertEquals(escritas(calls, "copilot_sessions").length, 0);
+    assertEquals(escritas(calls, "copilot_insights").length, 0);
+  });
+});
+
+Deno.test("copilot-live: capacidade ai.capability.copilot_live desligada devolve erro sem chamar o provedor", async () => {
+  await cenario({ capacidadeDesligada: true }, async (calls) => {
+    const res = await chamar(pedido(TICK));
+    await res.body?.cancel();
+    assertEquals(res.status >= 400, true);
+    assertEquals(chamadasAoProvedor(calls).length, 0);
+    assertEquals(escritas(calls, "copilot_sessions").length, 0);
     assertEquals(escritas(calls, "copilot_insights").length, 0);
   });
 });

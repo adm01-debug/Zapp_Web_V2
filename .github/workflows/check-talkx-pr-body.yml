@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: pull_request em main (opened, synchronize, reopened e edited)
+#   gatilho: pull_request em main (opened, synchronize, reopened e edited); o job só roda quando o título traz `(X<NNN>)`
 #   prova: valida a definição de pronto das etapas Talk X pelo título e corpo da PR
 #   falha: check fica vermelho com a seção ausente ou incompatível com a etapa
 #   avisa: autor e revisores pelo check do GitHub
@@ -26,6 +26,10 @@ concurrency:
 jobs:
   check-body:
     name: "📋 Talk X PR body (X005)"
+    # Mesmo critério de `etapaIdDoTitulo` (scripts/ci/check-talkx-pr-body.mjs): só PR de etapa V4,
+    # com `(X<NNN>)` no título, tem corpo a validar. Nas demais o job é pulado sem alocar runner
+    # (614 runs até 14/11/2026, quase todos "não se aplica"). Check informativo, não é required.
+    if: contains(github.event.pull_request.title, '(X')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

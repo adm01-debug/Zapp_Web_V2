@@ -69,6 +69,12 @@ export function useLeaderboard() {
   // período que já não é o atual (chegou depois da nova) é descartada, em vez de
   // voltar com a tela para o recorte anterior.
   const requisicaoRef = useRef(0);
+  // Snapshot do rank da ULTIMA leitura bem-sucedida, por profile_id. previousRank
+  // vem daqui (nao do rank recem-calculado) -- sem isso, previousRank = rank sempre
+  // e a seta de subiu/caiu e a celebracao de 1o lugar nunca disparam (bug confirmado
+  // em useLeaderboard.ts). Agente sem leitura anterior (1a carga ou recem-entrou no
+  // ranking) cai no fallback row.rank, sem variacao ficticia.
+  const previousRanksRef = useRef<Record<string, number>>({});
 
   // Antes, fetchLeaderboard tinha deps [] e sempre buscava agent_stats (contadores
   // all-time) -- o useEffect refazia a chamada ao trocar timeRange, mas a query
@@ -114,6 +120,7 @@ export function useLeaderboard() {
           achievementsByProfile[a.profile_id].push(a.achievement_type);
       });
 
+      const previousRanks = previousRanksRef.current;
       setAgents(rows.map(row => ({
         id: row.profile_id, profile_id: row.profile_id,
         name: row.name || 'Agente', avatar: row.avatar || undefined,
@@ -124,11 +131,13 @@ export function useLeaderboard() {
         // real); 0 vira null para a tela mostrar "—" e deixar o agente fora das medias.
         avgResponseTime: row.avg_response_time > 0 ? row.avg_response_time : null,
         satisfaction: row.satisfaction > 0 ? row.satisfaction : null,
-        rank: row.rank, previousRank: row.rank,
+        rank: row.rank, previousRank: previousRanks[row.profile_id] ?? row.rank,
         achievements: (achievementsByProfile[row.profile_id] || []).slice(0, 5),
         achievementsCount: row.achievements_count,
         isOnline: row.is_online ?? false,
       })));
+      // Snapshot pra PROXIMA leitura comparar contra este rank (nao contra ele mesmo).
+      previousRanksRef.current = Object.fromEntries(rows.map(row => [row.profile_id, row.rank]));
     } catch (error) {
       log.error('Error fetching leaderboard:', error);
       // Só a leitura ATUAL publica o erro: uma resposta antiga que falhou depois da troca
