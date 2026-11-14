@@ -184,6 +184,10 @@ BEGIN
             DETAIL = 'Conversa aguardando atendimento não pode ser arquivada. Atenda ou encerre antes.';
   END IF;
 
+  -- Origem legada (pending/closed/NULL) de propósito sem caminho aqui (revisão #3064): em
+  -- produção há 0 linhas nesses estados (SELECT de 2026-11-14: 4328 open, 17 resolved), a
+  -- coluna é NOT NULL DEFAULT 'open' e nenhuma função/tela grava pending/closed; com 0 linhas
+  -- o bloco $check$ acima troca o CHECK pelos 4 estados canônicos, então elas deixam de existir.
   IF v_current = 'open'     AND p_next IN ('waiting', 'resolved', 'archived') THEN v_allowed := TRUE; END IF;
   IF v_current = 'waiting'  AND p_next IN ('open', 'resolved')                THEN v_allowed := TRUE; END IF;
   IF v_current = 'resolved' AND p_next IN ('open', 'archived')                THEN v_allowed := TRUE; END IF;
