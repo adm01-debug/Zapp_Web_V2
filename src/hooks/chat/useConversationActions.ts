@@ -3,7 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
 import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
-import { isWaitingArchiveError, WAITING_CANNOT_ARCHIVE_MESSAGE } from '@/hooks/inbox/conversationArchive';
+import {
+  archiveConversations,
+  isWaitingArchiveError,
+  restoreConversationStatuses,
+  WAITING_CANNOT_ARCHIVE_MESSAGE,
+} from '@/hooks/inbox/conversationArchive';
 import { transferConversation, transferErrorMessage } from '@/lib/inbox/transferConversation';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
@@ -267,30 +272,15 @@ export function useConversationActions() {
     toast.success('Conversa adiada');
   }, [profileId]);
 
-  // Arquivar é mudar o ESTADO da conversa, não tirar o responsável: a RPC
-  // set_conversation_status é a mesma usada pelo CloseConversationDialog e é o
-  // campo lido pelo chip "Arquivadas" (chipCounts.isArchived). O UPDATE direto
-  // em contacts.assigned_to que existia aqui não gravava conversation_status
-  // (a conversa continuava na lista), zerava o atendente sem trilha e só dava
-  // para desfazer enquanto o toast estava vivo.
-  const setConversationStatus = useCallback(async (contactId: string, next: 'archived' | 'open') => {
-    const { error } = await supabase.rpc('set_conversation_status', {
-      p_contact_id: contactId,
-      p_next: next,
-    });
-    if (error) throw error;
-    // Mesmo evento do CloseConversationDialog: o useRealtimeMessages aplica o
-    // patch otimista em memória, então o chip/lista reagem sem esperar refetch.
-    window.dispatchEvent(
-      new CustomEvent('zapp:contact-status-changed', {
-        detail: { contactId, status: next },
-      })
-    );
-  }, []);
-
+  // Arquivar é mudar o ESTADO da conversa, não tirar o responsável: grava
+  // conversation_status (lido pelo chip "Arquivadas") pela mesma semântica do
+  // /archive e do lote. O Desfazer devolve o status ANTERIOR: conversa
+  // encerrada volta a 'resolved' pelo modo restore da RPC (sem novo
+  // encerramento) em vez de ser reaberta como 'open'.
   const archiveContact = useCallback(async (contactId: string) => {
+    let anteriores: Awaited<ReturnType<typeof archiveConversations>>;
     try {
-      await setConversationStatus(contactId, 'archived');
+      anteriores = await archiveConversations([contactId]);
     } catch (error) {
       toast.error(isWaitingArchiveError(error) ? WAITING_CANNOT_ARCHIVE_MESSAGE : 'Erro ao arquivar conversa');
       return;
@@ -299,12 +289,11 @@ export function useConversationActions() {
       message: 'Conversa arquivada',
       icon: '📦',
       onUndo: async () => {
-        // Reabre pela mesma RPC. Sem reabrir nada o toast de desfazer mentiria
-        // ("Arquivamento desfeito") — undoToast já avisa e reoferece em erro.
-        await setConversationStatus(contactId, 'open');
+        // undoToast já avisa e reoferece em erro.
+        await restoreConversationStatuses(anteriores);
       },
     });
-  }, [setConversationStatus]);
+  }, []);
 
   /**
    * Reabre conversa RESOLVIDA/ARQUIVADA pela RPC `reopen_conversation`

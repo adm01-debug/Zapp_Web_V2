@@ -24,6 +24,7 @@ import { QuickPeek } from '@/components/ui/quick-peek';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
+import { canArchiveConversation } from '@/hooks/inbox/conversationArchive';
 
 // Alturas calibradas para o conteudo real da linha (nome + linha de cargo
 // opcional + previa + cluster de badges com SLA/tags, que pode quebrar em 2
@@ -753,8 +754,8 @@ const ConversationRow = memo(({
                 </PopoverContent>
               )}
             </Popover>
-            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}
-            {conversation.contact.conversation_status !== 'waiting' && (
+            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada; já arquivada também não. */}
+            {canArchiveConversation(conversation.contact.conversation_status) && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

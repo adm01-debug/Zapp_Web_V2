@@ -616,6 +616,39 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
+  it('lote acima de 500 com erro num pedaço do meio: mantém o desfazer das já arquivadas, recarrega e avisa', async () => {
+    const ids = Array.from({ length: 501 }, (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`);
+    selectQueue.push({ data: ids.map((id) => ({ id, conversation_status: 'open' })), error: null });
+    // 1º pedaço (500) passa; o 2º (1 id) falha no banco.
+    updateQueue.push(ECHO_ROWS, { data: null, error: { message: 'statement timeout', code: '57014' } });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ids);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(contactUpdates()).toHaveLength(2);
+    expect((contactUpdates()[0].filters as { id: string[] }).id).toHaveLength(500);
+    expect((contactUpdates()[1].filters as { id: string[] }).id).toEqual([ids[500]]);
+    expect(sucesso()).toBe('500 contato(s) arquivado(s)');
+    expect(mocks.toast.warning).toHaveBeenCalledWith('500 de 501 arquivados — o restante falhou. Tente de novo.');
+    expect(mocks.toast.error).not.toHaveBeenCalled();
+    expect(result.current.selectedIds.size).toBe(0);
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(typeof lastUndo?.undoAction).toBe('function');
+
+    // O desfazer restaura e conta só as 500 que o banco arquivou (a 501ª nunca foi).
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+    const restores = contactUpdates().slice(2);
+    expect(restores).toHaveLength(1);
+    expect((restores[0].filters as { id: string[] }).id).toEqual(ids.slice(0, 500));
+    expect(mocks.toast.info).not.toHaveBeenCalledWith(expect.stringContaining('restaurados'));
+    expect(mocks.toast.warning).toHaveBeenCalledTimes(1);
+  });
+
   // 'waiting' não é arquivada (decisão do dono, 2026-11-13); 'resolved' volta pelo modo
   // restore da RPC de lote (sem gravar outro encerramento).
   it('desfazer: original resolved volta em UMA chamada em modo restore — sem novo encerramento', async () => {

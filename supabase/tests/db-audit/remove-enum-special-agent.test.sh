@@ -292,7 +292,7 @@ for rel in user_roles role_permissions audit_logs contact_protection_policy mult
   echo "$LOCK_LINE" | grep -q "public\.$rel[,[:space:]]" || fail "C0: LOCK TABLE sem public.$rel"
 done
 FIRST_LOCK=$(grep -n '^LOCK TABLE' "$F_NEW" | cut -d: -f1)
-FIRST_DDL=$(grep -nE '^(DO |DROP |ALTER |CREATE |DELETE )' "$F_NEW" | head -1 | cut -d: -f1)
+FIRST_DDL=$(grep -m1 -nE '^(DO |DROP |ALTER |CREATE |DELETE )' "$F_NEW" | cut -d: -f1)
 (( FIRST_LOCK < FIRST_DDL )) || fail "C0: LOCK TABLE depois do primeiro DDL ($FIRST_LOCK >= $FIRST_DDL)"
 for holder in "public.ai_providers IN ACCESS SHARE MODE" "public.whatsapp_connections IN ROW SHARE MODE"; do
   docker exec "$CID" psql -U postgres -d guard_mirror -q -c "BEGIN; LOCK TABLE $holder; SELECT pg_sleep(8); COMMIT;" >/dev/null 2>&1 &
