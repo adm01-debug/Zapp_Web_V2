@@ -102,9 +102,11 @@ export { expect };
 
 /** Preserve contact readiness without the helper that dismisses the tour. */
 export async function gotoOnboardingContacts(page: Page): Promise<void> {
-  const heading = page
-    .getByRole('main', { name: 'Conteúdo principal' })
-    .getByRole('heading', { level: 1, name: 'Contatos' });
+  // includeHidden: o WelcomeModal (Dialog modal do Radix) aplica aria-hidden fora dele ao
+  // montar (hideOthers); se abrir antes desta prontidão, a busca por papel some da árvore de
+  // acessibilidade mesmo com a tela renderizada. A prontidão é da TELA, não do modal.
+  const main = page.getByRole('main', { name: 'Conteúdo principal', includeHidden: true });
+  const heading = main.getByRole('heading', { level: 1, name: 'Contatos', includeHidden: true });
   await page.goto('/?view=contacts');
   // O primeiro documento pode ser substituído pela navegação pós-login ainda
   // pendente. Uma única repetição idempotente, acionada pela ausência exata da
@@ -116,6 +118,6 @@ export async function gotoOnboardingContacts(page: Page): Promise<void> {
     await expect(heading).toBeAttached({ timeout: 20_000 });
   }
   await expect(page.getByTestId('kpi-card').first()).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole('tab', { name: /Todos/ })).toBeVisible();
+  await expect(main.getByRole('tab', { name: /Todos/, includeHidden: true })).toBeVisible();
   await expect(page.getByText('Carregando contatos', { exact: false })).toHaveCount(0, { timeout: 20_000 });
 }
