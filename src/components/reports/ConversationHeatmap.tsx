@@ -22,6 +22,7 @@
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,29 +47,30 @@ export function ConversationHeatmap() {
     const since = new Date();
     since.setDate(since.getDate() - Number.parseInt(period));
 
-    const { data: messages } = await supabase
-      .from('messages')
-      .select('created_at')
-      .gte('created_at', since.toISOString())
-      .eq('sender', 'contact')
-      .limit(1000);
+    const result = await fetchAllRows<{ created_at: string }>((from, to) =>
+      supabase
+        .from('messages')
+        .select('created_at')
+        .gte('created_at', since.toISOString())
+        .eq('sender', 'contact')
+        .order('id')
+        .range(from, to),
+    );
 
-    if (messages) {
-      const heatmap: Record<string, number> = {};
-      messages.forEach((m) => {
-        const date = new Date(m.created_at);
-        const key = `${date.getDay()}-${date.getHours()}`;
-        heatmap[key] = (heatmap[key] || 0) + 1;
-      });
+    const heatmap: Record<string, number> = {};
+    result.rows.forEach((m) => {
+      const date = new Date(m.created_at);
+      const key = `${date.getDay()}-${date.getHours()}`;
+      heatmap[key] = (heatmap[key] || 0) + 1;
+    });
 
-      const cells: HeatmapCell[] = [];
-      for (let d = 0; d < 7; d++) {
-        for (let h = 0; h < 24; h++) {
-          cells.push({ day: d, hour: h, count: heatmap[`${d}-${h}`] || 0 });
-        }
+    const cells: HeatmapCell[] = [];
+    for (let d = 0; d < 7; d++) {
+      for (let h = 0; h < 24; h++) {
+        cells.push({ day: d, hour: h, count: heatmap[`${d}-${h}`] || 0 });
       }
-      setData(cells);
     }
+    setData(cells);
     setLoading(false);
   }, [period]);
 

@@ -21,6 +21,7 @@ import { format, subDays, startOfWeek, eachDayOfInterval, isSameDay, getDay } fr
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 
 interface ActivityData {
   date: Date;
@@ -63,16 +64,20 @@ export const ActivityHeatmap = ({
       const days = selectedPeriod === '3m' ? 90 : selectedPeriod === '6m' ? 180 : 365;
       const startDate = subDays(new Date(), days);
       
-      const { data: messages, error } = await supabase
-        .from('messages')
-        .select('created_at')
-        .gte('created_at', startDate.toISOString());
-      
-      if (error) throw error;
-      
+      const result = await fetchAllRows<{ created_at: string }>((from, to) =>
+        supabase
+          .from('messages')
+          .select('created_at')
+          .gte('created_at', startDate.toISOString())
+          .order('id')
+          .range(from, to),
+      );
+
+      if (result.error) throw result.error;
+
       // Group by day
       const dayCounts = new Map<string, number>();
-      (messages || []).forEach(m => {
+      result.rows.forEach(m => {
         const dateKey = format(new Date(m.created_at), 'yyyy-MM-dd');
         dayCounts.set(dateKey, (dayCounts.get(dateKey) || 0) + 1);
       });

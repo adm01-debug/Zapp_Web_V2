@@ -15,6 +15,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       eq: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
       order: mockOrder,
+      range: vi.fn().mockReturnThis(),
       then: mockThen,
     })),
   },
