@@ -94,11 +94,11 @@ export async function moveConversationsStatus(
       // Banco ainda sem a RPC (front publicado antes do apply da 20261113171300):
       // segue pelo UPDATE direto, que o banco antigo ainda aceita. Mesma postura de
       // transferConversation — a ação nunca quebra por ordem de deploy.
-      const legado = await moveConversationsStatusLegacy(
-        contactIds.slice(i, i + SET_CONVERSATIONS_STATUS_CHUNK),
-        next,
-        expectedCurrent,
-      );
+      const lote = contactIds.slice(i, i + SET_CONVERSATIONS_STATUS_CHUNK);
+      const legado =
+        restore && next === 'resolved'
+          ? await restoreResolvedLegacy(lote)
+          : await moveConversationsStatusLegacy(lote, next, expectedCurrent);
       for (const [id, anterior] of legado) moved.set(id, anterior);
       continue;
     }
@@ -141,6 +141,23 @@ async function moveConversationsStatusLegacy(
     const anterior = anteriores.get(row.id);
     if (anterior) moved.set(row.id, anterior);
   }
+  return moved;
+}
+
+/**
+ * Desfazer de arquivamento de conversa encerrada no banco SEM a 20261113171300: a
+ * FSM antiga (20260929560000) só deixa sair de 'archived' para open/pending, então
+ * archived -> resolved direto dá 23514. Vai em dois passos por UPDATE direto (que
+ * não grava encerramento), cada um só em quem AINDA está no estado esperado e o 2º
+ * só nos ids que o 1º confirmou. Nunca pela RPC unitária: ela gravaria outro
+ * encerramento. Devolve (id → 'archived') dos que voltaram a 'resolved'.
+ */
+async function restoreResolvedLegacy(contactIds: string[]): Promise<Map<string, ConversationStatus>> {
+  const abertas = await moveConversationsStatusLegacy(contactIds, 'open', 'archived');
+  const moved = new Map<string, ConversationStatus>();
+  if (abertas.size === 0) return moved;
+  const resolvidas = await moveConversationsStatusLegacy([...abertas.keys()], 'resolved', 'open');
+  for (const id of resolvidas.keys()) moved.set(id, abertas.get(id) ?? 'archived');
   return moved;
 }
 
