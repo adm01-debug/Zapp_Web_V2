@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ff0a5dbca72a7ccd2904c854660ef5921accf8e2",
+  "commit": "58f1713bae92d439f42ede735c1bdb3cbef2bebc",
   "branch": "main",
-  "data_commit": "2026-11-14T03:27:14-03:00",
+  "data_commit": "2026-11-14T04:33:02-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "58f1713",
+    "data": "2026-11-14",
+    "assunto": "fix(e2e): prontidão de Contatos imune ao aria-hidden do modal de boas-vindas (#3071)"
+   },
    {
     "sha": "ff0a5db",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "546c6f5",
     "data": "2026-11-13",
     "assunto": "Rascunho de proposta do copilot só mostra \"copiado\" quando a cópia funciona (#3005)"
-   },
-   {
-    "sha": "8e6f413",
-    "data": "2026-11-13",
-    "assunto": "test(contracts): cobre os 7 schemas RADAR AI na tabela de contrato (#3000)"
    }
   ],
   "arquivos_mudados_7d": 973,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8581,
   "arquivos_codigo": 4915,
-  "linhas_codigo": 912422,
+  "linhas_codigo": 912424,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -464,7 +464,7 @@
   },
   "e2e/fixtures": {
    "arquivos": 19,
-   "linhas": 3275
+   "linhas": 3277
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "arquivos": 1,

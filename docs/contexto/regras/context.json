@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ff0a5dbca72a7ccd2904c854660ef5921accf8e2",
+  "sha": "58f1713bae92d439f42ede735c1bdb3cbef2bebc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 06:28 UTC",
+  "generated_at": "2026-11-14 07:55 UTC",
   "files_total": 8424,
   "code_files": 6216,
-  "code_lines": 1085190
+  "code_lines": 1085192
  },
  "version": "1.3.2",
- "facts_hash": "7638442cd62e275b",
+ "facts_hash": "54dfd411be58f85f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68794,7 +68794,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18653,
+   "lines": 18655,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -268086,7 +268086,7 @@
   },
   "e2e/fixtures/onboarding-isolated.ts": {
    "path": "e2e/fixtures/onboarding-isolated.ts",
-   "lines": 122,
+   "lines": 124,
    "exports": [
     "function withFreshOnboardingUser",
     "const test",
@@ -395197,10 +395197,19 @@
   }
  },
  "git": {
-  "sha": "ff0a5dbca72a7ccd2904c854660ef5921accf8e2",
+  "sha": "58f1713bae92d439f42ede735c1bdb3cbef2bebc",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "58f1713",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): prontidão de Contatos imune ao aria-hidden do modal de boas-vindas (#3071)",
+    "files": [
+     "e2e/fixtures/onboarding-isolated.ts"
+    ]
+   },
    {
     "sha": "ff0a5db",
     "date": "2026-11-14",
@@ -395934,27 +395943,16 @@
      "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
      "src/hooks/integrations/useTalkXCommandItems.ts"
     ]
-   },
-   {
-    "sha": "7c9a188",
-    "date": "2026-11-13",
-    "author": "adm01-debug",
-    "subject": "fix(inbox): toast neutro em RLS e undo dois passos no bulk archive (#2813)",
-    "files": [
-     "ESTADO.md",
-     "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
-     "src/hooks/inbox/useInboxBulkActions.ts"
-    ]
    }
   ],
   "hot_files": [
    [
-    "ESTADO.md",
+    "supabase/deployment-manifest.json",
     6
    ],
    [
-    "supabase/deployment-manifest.json",
-    6
+    "ESTADO.md",
+    5
    ],
    [
     "supabase/functions/evolution-api/index.ts",

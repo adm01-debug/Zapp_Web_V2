@@ -356,7 +356,7 @@
   {
    "arquivo": "e2e/fixtures/onboarding-isolated.ts",
    "tipo": "e2e",
-   "linhas": 122,
+   "linhas": 124,
    "testa": [
     "scripts/e2e-isolated/admission.mjs"
    ],
