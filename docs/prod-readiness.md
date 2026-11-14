@@ -18,7 +18,7 @@
 
 | categoria | itens | OK | BLOQUEADO |
 |---|---|---|---|
-| Telas e rotas | 85 | 79 | 6 |
+| Telas e rotas | 85 | 82 | 3 |
 | Edge functions | 94 | 80 | 14 |
 | Banco (RLS, advisors, migrations) | 9 | 7 | 2 |
 | GitHub Actions | 29 | 25 | 4 |
@@ -103,7 +103,7 @@ Fontes: `origin/contexto:docs/contexto/codigo/rotas.json` (18 urls, 55 vistas, 6
 
 ### Resumo
 - Total de itens: 85 (18 rotas URL + 55 vistas `?view=` + 8 itens de menu internos do Gmail + 4 conferências globais)
-- OK: 79 · BLOQUEADO: 6
+- OK: 82 · BLOQUEADO: 3 (em 14/11 as conferências "Produção = HEAD", "E2E Y09" e "`rotas.json` protegida" passaram a OK)
 
 ### Rotas URL (`src/routes/AppRoutes.tsx`)
 
@@ -208,9 +208,9 @@ Todas as 54 entradas de `lazyViews.ts` resolvem para arquivo existente com o exp
 | item | status | prova |
 |---|---|---|
 | Inventário contexto × código (contagens) | OK | rotas.json: 18 urls = 18 `<Route>` em AppRoutes.tsx:93-159; 55 vistas = 54 VIEW_MAP + 1 SPECIAL (achievements); 61 menu = 53 itens em navigation.service.ts (10 primários :56-65, 34 em grupos :75-147, 9 avançados :155-163) + 8 rótulos Gmail. Script: "nav sem view: []"; "view sem nav: ['public-api','talkx-kit']". Nenhum item de menu sem destino. Destinos de navegação fora do VIEW_MAP achados no código são abas internas (`goals`/`team` = abas do Dashboard, DashboardView.tsx:80,83) ou redirect legado (`pipeline`/`tags`, useNavigationHistory.ts:98-112) — não são menus quebrados. |
-| Produção = HEAD e rotas no bundle | BLOQUEADO (desatualizado — ver auditoria; revalidar no fechamento) | Vercel prod `81f67b0db` READY; 18/18 `path:` no bundle `index-CFJIkylk.js` (244734B); 18/18 chunks lazy de página HTTP 200. |
-| E2E de navegação por todos os módulos (Y09) na main | BLOQUEADO | e2e/navegacao-modulos.spec.ts:1329 ("abre as 42 entradas mapeadas…") **falhou 3x (retry #1, #2)** na última suíte logada concluída da main: workflow e2e-logado.yml run 43216785856 (sha d8854eb31), job 131186396197 `authenticated-2-of-3` → `{"success":false,"code":"browser-suite-failed"}`; artefato `results-summary.json`: `reasons: [PLAYWRIGHT_REPORT_INVALID_SHAPE]`, `browser-result-diagnostic.json`: `error_code: ETIMEDOUT`, relatório Playwright ausente (ENOENT) → asserção exata que falhou não está no artefato. Issue aberta #2913 "[e2e-logado] Suíte logada quebrada na main". Run de 81f67b0db (43235977461) ainda `pending`. Os 2 commits depois de d8854eb31 só tocam docs e playwright.config.ts:1 linha (geolocation chromium-mapa). |
-| `rotas.json` fiel ao roteador (flag `protegida`) | BLOQUEADO | rotas.json marca `/auth` e `/2fa` como `protegida: true`, mas AppRoutes.tsx:95 e :100 não têm `ProtectedRoute` (wrappers `[]` no próprio JSON). Causa: scripts/ai-context/gerar.mjs:341 testa `/Protected\|Private\|Auth\|Guard\|Require\|Admin/i` sobre `tags` que inclui o próprio componente → `Auth` e `TwoFactorAuth` casam com `Auth`. Agentes que leem o contexto recebem rota pública como protegida. |
+| Produção = HEAD e rotas no bundle | OK | **14/11 (fechamento):** `main` = `a97aeacf5`; status Vercel desse commit `success` (deploy Production 7780500314, 01:21:59Z); `zapp-web-v2.vercel.app` serve `assets/index-Ch82fXMJ.js` e as 18/18 rotas de `rotas.json` estão no bundle (`path:` com crase). Histórico anterior: Vercel prod `81f67b0db` READY; 18/18 `path:` no bundle `index-CFJIkylk.js` (244734B); 18/18 chunks lazy de página HTTP 200. |
+| E2E de navegação por todos os módulos (Y09) na main | OK | **14/11:** `e2e-logado.yml` run 43540368513 (main `a97aeacf5`), artefato `playwright-report-logado-authenticated-2-of-3`: `results-summary.json` com 21/21 casos de `navegacao-modulos.spec.ts` `passed`, incl. `:1362` (42 entradas, desktop) e `:1440` (42 entradas, celular 390x844); grupo inteiro 84/84 `passed`. Histórico anterior: e2e/navegacao-modulos.spec.ts:1329 ("abre as 42 entradas mapeadas…") **falhou 3x (retry #1, #2)** na última suíte logada concluída da main: workflow e2e-logado.yml run 43216785856 (sha d8854eb31), job 131186396197 `authenticated-2-of-3` → `{"success":false,"code":"browser-suite-failed"}`; artefato `results-summary.json`: `reasons: [PLAYWRIGHT_REPORT_INVALID_SHAPE]`, `browser-result-diagnostic.json`: `error_code: ETIMEDOUT`, relatório Playwright ausente (ENOENT) → asserção exata que falhou não está no artefato. Issue aberta #2913 "[e2e-logado] Suíte logada quebrada na main". Run de 81f67b0db (43235977461) ainda `pending`. Os 2 commits depois de d8854eb31 só tocam docs e playwright.config.ts:1 linha (geolocation chromium-mapa). |
+| `rotas.json` fiel ao roteador (flag `protegida`) | OK | **14/11:** corrigido pela #3010 (7bdbe2e); `origin/contexto` (34075672b) traz `/auth` e `/2fa` com `protegida: false`, 18 urls. Histórico anterior: rotas.json marca `/auth` e `/2fa` como `protegida: true`, mas AppRoutes.tsx:95 e :100 não têm `ProtectedRoute` (wrappers `[]` no próprio JSON). Causa: scripts/ai-context/gerar.mjs:341 testa `/Protected\|Private\|Auth\|Guard\|Require\|Admin/i` sobre `tags` que inclui o próprio componente → `Auth` e `TwoFactorAuth` casam com `Auth`. Agentes que leem o contexto recebem rota pública como protegida. |
 
 ---
 
