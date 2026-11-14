@@ -18,7 +18,7 @@
 
 | categoria | itens | OK | BLOQUEADO |
 |---|---|---|---|
-| Telas e rotas | 85 | 82 | 3 |
+| Telas e rotas | 85 | 84 | 1 |
 | Edge functions | 94 | 80 | 14 |
 | Banco (RLS, advisors, migrations) | 9 | 7 | 2 |
 | GitHub Actions | 29 | 25 | 4 |
@@ -103,14 +103,14 @@ Fontes: `origin/contexto:docs/contexto/codigo/rotas.json` (18 urls, 55 vistas, 6
 
 ### Resumo
 - Total de itens: 85 (18 rotas URL + 55 vistas `?view=` + 8 itens de menu internos do Gmail + 4 conferências globais)
-- OK: 82 · BLOQUEADO: 3 (em 14/11 as conferências "Produção = HEAD", "E2E Y09" e "`rotas.json` protegida" passaram a OK)
+- OK: 84 · BLOQUEADO: 1 (`public-api`, inalcançável). Em 14/11 passaram a OK: as conferências "Produção = HEAD", "E2E Y09" e "`rotas.json` protegida", e as telas NotFound, VerifyEmail e `meta-capi` (testes da #3007 + Y09)
 
 ### Rotas URL (`src/routes/AppRoutes.tsx`)
 
 | item | status | prova |
 |---|---|---|
 | `/` → Index (ProtectedRoute) | OK | Registro AppRoutes.tsx:94, import :10 → src/pages/Index.tsx:198 (export default). Unit: src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx:146 (5/5 passou). E2E: 78 `goto('/')` em e2e/. curl prod 200 (SPA, shell `index-CFJIkylk.js`). |
-| `/*` → NotFound | BLOQUEADO | Registro AppRoutes.tsx:159, import :12 → src/pages/NotFound.tsx:81; chunk prod `NotFound-CDX-btqg.js` 200. **Sem teste que monte a tela real**: único uso é `vi.mock('../../../pages/NotFound')` em src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx:59; nenhum spec E2E abre rota inexistente. |
+| `/*` → NotFound | OK | **14/11:** `src/pages/__tests__/NotFound.test.tsx` monta a tela real (#3007, 7c3ef80); `npx vitest run` nos 3 arquivos da #3007 na `main` atual → `Test Files 3 passed (3) · Tests 14 passed (14)`. Antes: Registro AppRoutes.tsx:159, import :12 → src/pages/NotFound.tsx:81; chunk prod `NotFound-CDX-btqg.js` 200. **Sem teste que monte a tela real**: único uso é `vi.mock('../../../pages/NotFound')` em src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx:59; nenhum spec E2E abre rota inexistente. |
 | `/2fa` → TwoFactorAuth | OK | Registro AppRoutes.tsx:100, import :17 → src/pages/TwoFactorAuth.tsx:14. Unit: src/pages/__tests__/twoFactorAuth.retrySaida.test.tsx:46 (3/3 passou). curl prod 200 (SPA, shell `index-CFJIkylk.js`); path no bundle. |
 | `/access-denied` → AccessDenied | OK | Registro AppRoutes.tsx:93, import :25 → src/pages/AccessDenied.tsx:17. Unit: src/pages/__tests__/AccessDenied.test.tsx:30 (7/7 passou). curl prod 200 (SPA, shell `index-CFJIkylk.js`); chunk `AccessDenied-Bw9GJ9VL.js` 200. |
 | `/admin/rate-limit` → RateLimitDashboard (admin) | OK | Registro AppRoutes.tsx:150-157, import :23 → src/pages/admin/RateLimitDashboard.tsx:40. Unit: src/pages/admin/__tests__/RateLimitDashboard.logs.test.tsx:86 (12/12 passou). Prod: chunk 200. |
@@ -126,7 +126,7 @@ Fontes: `origin/contexto:docs/contexto/codigo/rotas.json` (18 urls, 55 vistas, 6
 | `/reset-password` → ResetPassword | OK | Registro AppRoutes.tsx:97, import :14 → src/pages/ResetPassword.tsx:27. Unit: src/pages/__tests__/ResetPassword.acessivel.test.tsx:65 (5/5 passou). curl prod 200 (SPA, shell `index-CFJIkylk.js`); chunk 200. |
 | `/sla` → SLADashboard (página) | OK | Registro AppRoutes.tsx:126-133, import :20 → src/pages/SLADashboard.tsx:30. Unit: src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx:67/85/112 (4/4 passou). Prod: curl 200, chunk 200. |
 | `/sla/history` → SLAHistory | OK | Registro AppRoutes.tsx:134-141, import :21 → src/pages/SLAHistory.tsx:36. Unit: src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx:133 e QueuesComparisonSLA.landmarks.test.tsx:98 (passou). Prod: chunk 200. |
-| `/verify-email` → VerifyEmail | BLOQUEADO | Registro AppRoutes.tsx:98, import :15 → src/pages/VerifyEmail.tsx:12; curl prod 200 (SPA, shell `index-CFJIkylk.js`); chunk `VerifyEmail-B14Pl-xr.js` 200. **Nenhum teste**: `grep -rln "verify-email\|VerifyEmail"` em src/**/*.test.* e e2e/ = 0 arquivos. |
+| `/verify-email` → VerifyEmail | OK | **14/11:** `src/pages/__tests__/VerifyEmail.test.tsx` monta a tela real (#3007, 7c3ef80); `npx vitest run` nos 3 arquivos da #3007 na `main` atual → `Test Files 3 passed (3) · Tests 14 passed (14)`. Antes: Registro AppRoutes.tsx:98, import :15 → src/pages/VerifyEmail.tsx:12; curl prod 200 (SPA, shell `index-CFJIkylk.js`); chunk `VerifyEmail-B14Pl-xr.js` 200. **Nenhum teste**: `grep -rln "verify-email\|VerifyEmail"` em src/**/*.test.* e e2e/ = 0 arquivos. |
 
 ### Vistas `?view=` (ViewRouter.tsx VIEW_MAP:46-102 + SPECIAL_VIEWS:105-111; acesso por `NavigationService.canAccess`, navigation.service.ts:195-206)
 
@@ -158,7 +158,7 @@ Todas as 54 entradas de `lazyViews.ts` resolvem para arquivo existente com o exp
 | view `tasks` | OK | Registro: navigation.service.ts:63 'Tarefas' · ViewRouter.tsx:68 · lazyViews.ts:21 → src/components/tasks/TasksModule.tsx:54. E2E: e2e/navegacao-modulos.spec.ts:104. Unit: src/components/tasks/__tests__/TasksModule.test.tsx:32 (42/42 passou). |
 | view `knowledge` | OK | Registro: navigation.service.ts:90 'Base de Conhecimento' · ViewRouter.tsx:69 · lazyViews.ts:27 → src/components/knowledge/KnowledgeBaseView.tsx:30. E2E: e2e/navegacao-modulos.spec.ts:128. Unit: src/components/knowledge/__tests__/KnowledgeBaseView.erro.test.tsx:40 (3/3 passou). |
 | view `wa-flows` | OK | Registro: navigation.service.ts:89 'WhatsApp Flows' · ViewRouter.tsx:70 · lazyViews.ts:28 → src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:57. E2E: e2e/navegacao-modulos.spec.ts:127. Unit: src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.salvar.test.tsx:70 (4/4 passou). |
-| view `meta-capi` | BLOQUEADO | Registro: navigation.service.ts:146 'Meta CAPI' · ViewRouter.tsx:71 · lazyViews.ts:29 → src/components/meta-capi/MetaCAPIView.tsx:23. E2E: e2e/navegacao-modulos.spec.ts:171. Unit: NENHUM. **Sem teste unit** que monte `MetaCAPIView` (grep em src/**/*.test.* = 0). Única cobertura é e2e/navegacao-modulos.spec.ts:171, cujo teste :1329 FALHOU 3x na última suíte logada concluída da main (run 43216785856, job 131186396197). |
+| view `meta-capi` | OK | **14/11:** `src/components/meta-capi/__tests__/MetaCAPIView.test.tsx` monta a tela (#3007; 3 arquivos/14 testes passed na `main`) e o E2E Y09 passou (run 43540368513, 21/21 de `navegacao-modulos.spec.ts`). Que a tela é demonstração continua registrado em "Produto" (seção 5). Antes: Registro: navigation.service.ts:146 'Meta CAPI' · ViewRouter.tsx:71 · lazyViews.ts:29 → src/components/meta-capi/MetaCAPIView.tsx:23. E2E: e2e/navegacao-modulos.spec.ts:171. Unit: NENHUM. **Sem teste unit** que monte `MetaCAPIView` (grep em src/**/*.test.* = 0). Única cobertura é e2e/navegacao-modulos.spec.ts:171, cujo teste :1329 FALHOU 3x na última suíte logada concluída da main (run 43216785856, job 131186396197). |
 | view `diagnostics` | OK | Registro: navigation.service.ts:157 'Diagnóstico' · ViewRouter.tsx:72 · lazyViews.ts:30 → src/components/diagnostics/DiagnosticsView.tsx:91. E2E: —. Unit: src/components/diagnostics/__tests__/DiagnosticsView.health.test.tsx:97 (7/7 passou). |
 | view `voip` | OK | Registro: navigation.service.ts:62 'Telefonia' · ViewRouter.tsx:73 · lazyViews.ts:31 → src/components/calls/TelefoniaView.tsx:60. E2E: e2e/navegacao-modulos.spec.ts:103. Unit: src/components/calls/__tests__/TelefoniaView.painel.test.tsx:104 (14/14 passou). |
 | view `google-calendar` | OK | Registro: navigation.service.ts:147 'Calendário' · ViewRouter.tsx:74 · lazyViews.ts:32 → src/components/integrations/GoogleCalendarIntegration.tsx:15. E2E: e2e/navegacao-modulos.spec.ts:172. Unit: src/components/integrations/__tests__/GoogleCalendarIntegration.test.tsx:16 (2/2 passou). |
