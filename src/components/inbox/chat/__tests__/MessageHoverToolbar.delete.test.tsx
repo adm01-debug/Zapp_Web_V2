@@ -29,7 +29,7 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
 }));
 
 vi.mock('sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -67,13 +67,17 @@ const makeMessage = (over: Partial<Message> = {}): Message => ({
   ...over,
 } as Message);
 
-function renderToolbar(message: Message, onMessageDeleted = vi.fn()) {
+function renderToolbar(
+  message: Message,
+  onMessageDeleted = vi.fn(),
+  overrides: { instanceName?: string; contactJid?: string } = {}
+) {
   render(
     <MessageHoverToolbar
       message={message}
       isSent
-      instanceName="inst-1"
-      contactJid="5511999999999@s.whatsapp.net"
+      instanceName={'instanceName' in overrides ? overrides.instanceName : 'inst-1'}
+      contactJid={'contactJid' in overrides ? overrides.contactJid : '5511999999999@s.whatsapp.net'}
       ttsLoading={false}
       ttsPlaying={false}
       ttsMessageId={null}
@@ -138,7 +142,12 @@ describe('MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014)', () =>
     fireEvent.click(screen.getByText('Apagar para todos'));
 
     await waitFor(() => expect(onMessageDeleted).toHaveBeenCalledWith('m-1'));
-    expect(toast.success).toHaveBeenCalledWith('Mensagem deletada para todos');
+    // QA-SWEEP: a Evolution API falhou (mensagem segue visível no WhatsApp do
+    // contato) — o toast tem que avisar isso, não comemorar "para todos".
+    expect(toast.warning).toHaveBeenCalledWith(
+      'Mensagem removida apenas no Zapp — o contato pode continuar vendo ela no WhatsApp dele'
+    );
+    expect(toast.success).not.toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();
     expect(mocks.deleteMessage).toHaveBeenCalledWith(
       'inst-1',
@@ -146,6 +155,20 @@ describe('MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014)', () =>
       '5511999999999@s.whatsapp.net',
       true
     );
+  });
+
+  it('QA-SWEEP: sem instanceName/contactJid a Evolution nem é chamada — toast avisa, não comemora "para todos"', async () => {
+    mocks.updateEq.mockResolvedValue({ error: null });
+    const onMessageDeleted = renderToolbar(makeMessage(), vi.fn(), { instanceName: undefined, contactJid: undefined });
+
+    fireEvent.click(screen.getByText('Apagar para todos'));
+
+    await waitFor(() => expect(onMessageDeleted).toHaveBeenCalledWith('m-1'));
+    expect(mocks.deleteMessage).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith(
+      'Mensagem removida apenas no Zapp — o contato pode continuar vendo ela no WhatsApp dele'
+    );
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('sem external_id local rejeitado: erro, sem "Mensagem removida" e sem callback', async () => {
