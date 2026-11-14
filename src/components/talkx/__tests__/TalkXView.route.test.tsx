@@ -122,6 +122,48 @@ describe('TalkXView wizard route integration', () => {
     expect(f.wizardMounts).toBe(1);
   });
 
+  // Voltar no navegador entre passos do rascunho que o autosave desta sessão criou: a entrada
+  // anterior do histórico já aponta para ?wizard=<id>; antes o popstate zerava o rascunho local
+  // e o wizard era expulso (lista sem o rascunho) ou remontado (lista com o rascunho).
+  async function voltarParaPassoDoRascunhoAutosalvo() {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=1');
+    f.wizardMounts = 0;
+    const view = render(<TalkXView />);
+    await screen.findByTestId('wizard');
+    fireEvent.click(screen.getByRole('button', { name: 'Autosave cria rascunho' }));
+    await waitFor(() => expect(window.location.search).toContain('wizard=draft_auto'));
+    return view;
+  }
+
+  it('voltar entre passos do rascunho novo não expulsa o usuário enquanto a lista não traz o rascunho', async () => {
+    await voltarParaPassoDoRascunhoAutosalvo();
+
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_auto&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'new');
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-step', '2');
+    expect(window.location.search).toContain('wizard=draft_auto');
+    expect(f.wizardMounts).toBe(1);
+  });
+
+  it('voltar entre passos do rascunho novo não remonta o wizard quando a lista já traz o rascunho', async () => {
+    const { rerender } = await voltarParaPassoDoRascunhoAutosalvo();
+    f.campaigns = [draft, { ...draft, id: 'draft_auto', name: 'Rascunho do autosave' }];
+    rerender(<TalkXView />);
+
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_auto&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'new');
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-step', '2');
+    expect(f.wizardMounts).toBe(1);
+  });
+
   it('handles browser history changes without retaining the previous campaign', async () => {
     const second = { ...draft, id: 'draft_2', name: 'Outro rascunho' };
     f.campaigns = [draft, second];

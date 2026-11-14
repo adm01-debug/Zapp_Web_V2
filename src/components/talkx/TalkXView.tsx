@@ -147,7 +147,11 @@ export default function TalkXView() {
     // The browser history event, rather than a render effect, is the source of
     // truth for back/forward. Resetting here also guarantees a draft from the
     // previous route cannot survive navigation to another campaign.
-    setLocalDraftRouteId(null);
+    // Exceção: voltar/avançar entre passos do rascunho que o autosave desta sessão criou
+    // (onDraftIdentity) — a entrada anterior já tem ?wizard=<id>; zerar aqui remontaria o
+    // wizard (lista com o rascunho) ou expulsaria o usuário (lista ainda sem ele).
+    const keepLocalDraft = localDraftRouteId !== null && parsedWizard.route?.campaignId === localDraftRouteId;
+    if (!keepLocalDraft) setLocalDraftRouteId(null);
     setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
 
@@ -197,9 +201,9 @@ export default function TalkXView() {
     }
 
     const campaign = campaigns.find((candidate) => candidate.id === parsedWizard.route?.campaignId);
-    setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
+    setEditingCampaign(!keepLocalDraft && campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
     setTopView('wizard');
-  }, [campaigns]);
+  }, [campaigns, localDraftRouteId]);
 
   useEffect(() => {
     const initialWizard = parseTalkXRoute(window.location.search).wizard;
