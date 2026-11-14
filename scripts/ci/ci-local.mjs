@@ -580,7 +580,7 @@ function dockerReal() {
 // --------------------------------------------------- equivalentes de `uses:`
 // Steps `uses:` que fazem VERIFICAÇÃO ganham equivalente local; os de
 // infraestrutura (checkout, setup-*, cache, upload) não se aplicam à máquina.
-function equivalenteLocal(uses, step, gh) {
+function equivalenteLocal(uses, step, gh, { workingTree = false } = {}) {
   const acao = uses.split('@')[0];
   const base = gh.event.pull_request?.base?.sha;
   if (acao === 'gitleaks/gitleaks-action' && base) {
@@ -594,12 +594,21 @@ function equivalenteLocal(uses, step, gh) {
     /Rejeitar edicao de migration/i.test(step.name ?? '') &&
     base
   ) {
-    // Mesmo critério do workflow: só 'modified' em supabase/migrations/*.sql.
+    // Mesmos critérios e exceções do workflow: checarMigrationsEditadas (ci-local-lib.mjs).
+    const lib = new URL('./ci-local-lib.mjs', import.meta.url).href;
     return {
       desc: 'migration existente editada? (equivalente local)',
-      cmd:
-        `m=$(git diff --diff-filter=M --name-only "${base}"...HEAD -- 'supabase/migrations/*.sql'); ` +
-        `if [ -n "$m" ]; then echo "::error::migration já existente editada:"; echo "$m"; exit 1; fi; echo "nenhuma migration existente editada"`,
+      processo: {
+        bin: process.execPath,
+        args: [
+          '--input-type=module',
+          '-e',
+          `import { checarMigrationsEditadas } from ${JSON.stringify(lib)};\n` +
+            `const v = checarMigrationsEditadas(${JSON.stringify(gh.workspace)}, ${JSON.stringify(base)}, { workingTree: ${workingTree ? 'true' : 'false'} });\n` +
+            `if (v.length) { console.log('::error::migration já existente editada (mesmo nome ou renomeada):\\n' + v.join('\\n')); process.exit(1); }\n` +
+            `console.log('nenhuma migration existente editada');`,
+        ],
+      },
     };
   }
   return null;
@@ -780,21 +789,31 @@ function ultimasLinhas(arquivo, n = 15) {
 }
 
 // ------------------------------------------------------------------ workflows
-function carregarWorkflows(nomes) {
-  const dir = join(ORIGEM, '.github/workflows');
-  const disponiveis = existsSync(dir)
-    ? readdirSync(dir)
-        .filter((f) => /\.ya?ml$/.test(f))
-        .map((f) => f.replace(/\.ya?ml$/, ''))
-    : [];
+/**
+ * Lê os workflows da MESMA árvore que o clone descartável roda: o commit `rev`
+ * (padrão) ou, sem `rev` (--incluir-nao-commitado), o working tree.
+ */
+function carregarWorkflows(nomes, rev) {
+  const rel = '.github/workflows';
+  const dir = join(ORIGEM, rel);
+  let arquivos = [];
+  if (rev) {
+    const r = git('ls-tree', '-z', '--name-only', `${rev}:${rel}`);
+    if (r.ok) arquivos = r.out.split('\0').filter(Boolean);
+  } else if (existsSync(dir)) arquivos = readdirSync(dir);
+  const ler = (f) =>
+    rev ? git('show', `${rev}:${rel}/${f}`).out : readFileSync(join(dir, f), 'utf8');
+  const disponiveis = arquivos
+    .filter((f) => /\.ya?ml$/.test(f))
+    .map((f) => f.replace(/\.ya?ml$/, ''));
   return nomes.map((nome) => {
     const limpo = nome.replace(/\.ya?ml$/, '');
-    const arq = ['.yml', '.yaml'].map((e) => join(dir, `${limpo}${e}`)).find((p) => existsSync(p));
+    const arq = ['.yml', '.yaml'].map((e) => `${limpo}${e}`).find((f) => arquivos.includes(f));
     if (!arq)
       throw new ErroUso(`workflow "${nome}" não existe. Disponíveis: ${disponiveis.join(', ')}`);
-    const wf = parseYaml(readFileSync(arq, 'utf8'));
-    if (!wf?.jobs || typeof wf.jobs !== 'object') throw new ErroUso(`${arq}: sem jobs`);
-    return { nome: limpo, arquivo: arq.slice(dir.length + 1), wf };
+    const wf = parseYaml(ler(arq));
+    if (!wf?.jobs || typeof wf.jobs !== 'object') throw new ErroUso(`${rel}/${arq}: sem jobs`);
+    return { nome: limpo, arquivo: arq, wf };
   });
 }
 
@@ -1017,7 +1036,7 @@ async function rodarJob(p) {
         descricao = `${nome} [rápido: ${arquivosRapido.length} arquivo(s) mudado(s)]`;
       }
       if (step.uses) {
-        const eq = equivalenteLocal(step.uses, step, gh);
+        const eq = equivalenteLocal(step.uses, step, gh, { workingTree: args.incluirNaoCommitado });
         if (!eq) {
           log(
             `   ·  ${nome} — infraestrutura do runner (${step.uses.split('@')[0]}), não se aplica`
@@ -1025,7 +1044,8 @@ async function rodarJob(p) {
           marcarPulado();
           continue;
         }
-        script = eq.cmd;
+        if (eq.processo) processo = eq.processo;
+        else script = eq.cmd;
         descricao = eq.desc;
       }
       if (script === undefined && !processo) {
@@ -1202,7 +1222,11 @@ async function rodarJob(p) {
 // --------------------------------------------------------------------- main
 async function main() {
   const args = lerArgs(process.argv.slice(2));
-  const workflows = carregarWorkflows(args.workflows ?? PADRAO_WORKFLOWS);
+  const headSha = git('rev-parse', 'HEAD').out;
+  const workflows = carregarWorkflows(
+    args.workflows ?? PADRAO_WORKFLOWS,
+    args.incluirNaoCommitado ? null : headSha
+  );
   if (args.jobs) {
     const existentes = new Set(workflows.flatMap((w) => Object.keys(w.wf.jobs)));
     const faltam = args.jobs.filter((j) => !existentes.has(j));
@@ -1244,6 +1268,8 @@ async function main() {
   };
 
   const gh = contextoGithub(args, join(runRoot, 'workspace'));
+  if (gh.sha !== headSha)
+    throw new ErroUso('HEAD mudou enquanto o CI local lia os workflows — rode de novo');
   let arquivosRapido = [];
   if (args.rapido) {
     const mb = git('merge-base', args.base, 'HEAD');
