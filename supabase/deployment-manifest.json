@@ -696,8 +696,8 @@
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "bytes": 12614,
-      "sha256": "29b4c9a52a90f1a1ff7b8fe8d2245c1ac55695819d506977f634c358db56ec95"
+      "bytes": 14559,
+      "sha256": "bc2cc23c437b15ab7d51847c7055e0d4003b110fc5f100e3034ec2069819c5e1"
     },
     {
       "path": "supabase/functions/health/index.ts",
@@ -2163,7 +2163,7 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "d259b32cb5f1a7bc97ff25fd39a8389503470df51e060fa8ba406615ca21e7ee",
+      "source_sha256": "e5f7a0a55d1f3c7b5429d31148da1f61396488b9f2fa67bbd24875fc1a5ee323",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/gmail-helpers.ts",
@@ -2796,5 +2796,5 @@
       ]
     }
   ],
-  "manifest_sha256": "3e3167e461347402efbf809326ca31884bdc9aadb0a112b0eb66c0e2c384e4ad"
+  "manifest_sha256": "fa8ee547758873ac9f92e20d287a1450fd75fe8a07abd247952fac4c5136af91"
 }
