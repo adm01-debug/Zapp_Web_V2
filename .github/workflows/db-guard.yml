@@ -677,6 +677,15 @@ jobs:
         env:
           CONVERSAS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash supabase/tests/db-audit/conversas-p0-p1-20261113.test.sh
+      # 20261114130000 (Multiplix, regras.md §8): 'start' de rascunho/pausado SEM fila exige o
+      # confirm; confirm cobre rascunho do composer (bloco do template, conexao) e legado
+      # pausado; gatilho de versao do F05 sem 42703. Cadeia real f51c/f59/mx01 + harness,
+      # aplicada 2x, rollback do cabecalho e reaplicacao. SKIP_DOCKER_SHIM=1: cria papeis.
+      - name: Simular Multiplix start exige confirmacao (retomar so com fila)
+        env:
+          MULTIPLIX_START_CONFIRM_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash supabase/tests/db-audit/multiplix-start-exige-confirmacao.test.sh
       - name: Simular publicação Realtime da blacklist Talk X com escopo de colunas
         env:
           TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

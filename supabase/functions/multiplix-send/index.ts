@@ -314,6 +314,19 @@ export async function handleMultiplixSend(
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
     }
 
+    // Regra do dono (regras.md §8): iniciar rascunho / materializar fila e irreversivel e
+    // passa pelo `confirm` (multiplix-dispatch, F51). O banco ja recusa
+    // (transition_multiplix_dispatch -> multiplix_dispatch_confirm_required, migration
+    // 20261114130000); aqui a recusa vem ANTES de qualquer escrita — fixar a conexao num
+    // rascunho subiria a versao revisada e o confirm seguinte cairia em review_stale. O
+    // pausado legado sem fila e reconhecido pelo motivo; outro pausado sem fila o banco barra.
+    if (
+      initialDispatch.status === "draft"
+      || (initialDispatch.status === "paused" && initialDispatch.pause_reason === "legacy_queue_unmaterialized")
+    ) {
+      return new Response(JSON.stringify({ error: "multiplix_dispatch_confirm_required" }), { status: 409, headers });
+    }
+
     // Conexao WhatsApp: usa a escolhida no dispatch; sem uma, cai na primeira
     // conexao conectada (composer ainda nao oferece selecao de conexao).
     // F60: `capabilities` vem junto na MESMA leitura — e ela que o laco consulta
@@ -379,8 +392,8 @@ export async function handleMultiplixSend(
     // O disparo AGENDADO tambem nasce sem bloco/item. Nesse caminho o cron acabou
     // de transicionar 'scheduled' -> 'sending' antes de chamar este worker. Os
     // legados que ja estavam em 'sending' quando a migration entrou foram pausados
-    // uma unica vez com `legacy_queue_unmaterialized`; eles so chegam aqui depois
-    // do clique Retomar.
+    // uma unica vez com `legacy_queue_unmaterialized`; desde a 20261114130000 eles
+    // so voltam pelo `confirm` (que ja gera a fila) — aqui a chamada vira no-op.
     const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
       p_dispatch_id: dispatchId,
       p_correlation_id: uuidOrNull(correlationId),
