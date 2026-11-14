@@ -93,6 +93,15 @@ export async function handleConnectionUpdate(supabase: EvolutionDbClient, instan
   }
 
   if (status === 'disconnected' && prevConn?.status === 'connected') {
+    // Simétrico à linha 88-93: fecha a chave única da reconexão ao iniciar um novo ciclo
+    // de queda. Sem isso, a 2ª reconexão da vida da conexão colidiria (23505) com a chave
+    // da 1ª e nunca mais alertaria uma reconexão real.
+    if (typeof prevConn.id === 'string') {
+      const { error: resetUpError } = await supabase.from('warroom_alerts').update({ dedupe_key: null })
+        .eq('dedupe_key', `conn-up:v1:${prevConn.id}`);
+      if (resetUpError) console.warn(`Falha ao encerrar alerta de reconexão do ciclo da conexão ${instance}: ${resetUpError.message}`);
+    }
+
     // E26 (dedup): a GO entrega o evento de queda em dobro e o retry do webhook reenvia o
     // POST, entao o MESMO alerta saia 2x no War Room. O guard de transicao acima nao segura
     // a corrida em que as duas entregas leem o status ANTES de qualquer uma gravar.
@@ -152,12 +161,36 @@ export async function handleConnectionUpdate(supabase: EvolutionDbClient, instan
   }
 
   if (status === 'connected' && prevConn?.status !== 'connected') {
-    await supabase.from('warroom_alerts').insert({
-      alert_type: 'info',
-      title: `🟢 Conexão ${instance} restaurada`,
-      message: `A instância ${instance} reconectou com sucesso ao WhatsApp.`,
-      source: 'evolution-webhook',
-    });
+    // E26 (dedup): mesma corrida do alerta de queda — a GO entrega o evento de reconexão em
+    // dobro e o retry do webhook reenvia o POST, duplicando o alerta no War Room. Mesma defesa:
+    // dedupe_key + índice único parcial arbitra a corrida com id estável; sem id (legado), janela
+    // temporal sem chave.
+    const title = `🟢 Conexão ${instance} restaurada`;
+    let recentAlert: unknown[] | null = null;
+    if (typeof prevConn?.id !== 'string') {
+      const since = new Date(Date.now() - ALERT_DEDUP_WINDOW_MS).toISOString();
+      const { data } = await supabase.from('warroom_alerts')
+        .select('id')
+        .eq('source', 'evolution-webhook')
+        .eq('title', title)
+        .gte('created_at', since)
+        .limit(1);
+      recentAlert = data;
+    }
+    if (recentAlert?.length) {
+      console.log(`Alerta de reconexão de ${instance} deduplicado (E26)`);
+    } else {
+      const { error } = await supabase.from('warroom_alerts').insert({
+        alert_type: 'info',
+        title,
+        message: `A instância ${instance} reconectou com sucesso ao WhatsApp.`,
+        source: 'evolution-webhook',
+        ...(typeof prevConn?.id === 'string' ? { dedupe_key: `conn-up:v1:${prevConn.id}` } : {}),
+      });
+      // Índice único parcial em warroom_alerts.dedupe_key arbitra a corrida select-then-insert;
+      // 23505 significa que outra entrega já venceu esta reconexão.
+      if (error && error.code !== '23505') console.error(`Falha ao gravar alerta de reconexão ${instance}: ${error.message}`);
+    }
   }
 }
 
