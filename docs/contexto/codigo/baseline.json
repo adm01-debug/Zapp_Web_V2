@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "88f50d0d3845034cfd3e07dac23c54416db67adf",
+  "commit": "1706a81d5ff4fc07c534729bfeaa1642c50050a0",
   "branch": "main",
-  "data_commit": "2026-11-14T02:36:55-03:00",
+  "data_commit": "2026-11-14T03:06:53-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1706a81",
+    "data": "2026-11-14",
+    "assunto": "fix(e2e): atualizar hash de enqueue_outbound_message no harness isolado (#3069)"
+   },
    {
     "sha": "88f50d0",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "fb5d023",
     "data": "2026-11-13",
     "assunto": "fix(copilot): badge de alertas do RADAR com contraste AA (#3002)"
-   },
-   {
-    "sha": "943a646",
-    "data": "2026-11-13",
-    "assunto": "Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)"
    }
   ],
   "arquivos_mudados_7d": 973,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8581,
   "arquivos_codigo": 4915,
-  "linhas_codigo": 912403,
+  "linhas_codigo": 912404,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -624,7 +624,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6440
+   "linhas": 6441
   },
   "scripts/edge-deploy": {
    "arquivos": 30,

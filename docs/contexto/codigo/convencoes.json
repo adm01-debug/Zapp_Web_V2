@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(e2e): atualizar hash de enqueue_outbound_message no harness isolado (#3069)",
    "docs(prod-readiness): fechamento — repo = ledger (exceto 5 do #3064), contexto verde e produção sem erro (#3066)",
    "chore(pacote): pacote 5 — #3037, #3034, #3033, #2971, #2943, #2838 e #2894 concluídas e num ciclo de CI (#3064)",
    "docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)",
-   "chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)",
-   "chore(db): pacote de 11 migrations aprovadas — segurança, horário noturno, scheduler do Talk X e reaplicações do ledger (#3062)"
+   "chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "88f50d0d3845034cfd3e07dac23c54416db67adf",
+  "sha": "1706a81d5ff4fc07c534729bfeaa1642c50050a0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 05:40 UTC",
+  "generated_at": "2026-11-14 06:23 UTC",
   "files_total": 8424,
   "code_files": 6216,
-  "code_lines": 1085171
+  "code_lines": 1085172
  },
  "version": "1.3.2",
- "facts_hash": "9ecc92e1c2a62f73",
+ "facts_hash": "ecc1998c14a347c9",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68949,7 +68949,7 @@
   {
    "module": "scripts",
    "files": 470,
-   "lines": 97877,
+   "lines": 97878,
    "tables": [
     "a",
     "alem_do_limite",
@@ -275792,7 +275792,7 @@
   },
   "scripts/e2e-isolated/routine-ownership.mjs": {
    "path": "scripts/e2e-isolated/routine-ownership.mjs",
-   "lines": 311,
+   "lines": 312,
    "exports": [
     "const OWNERSHIP_ROUTINES",
     "const OWNERSHIP_EXECUTOR_OPTIONS",
@@ -395197,10 +395197,19 @@
   }
  },
  "git": {
-  "sha": "88f50d0d3845034cfd3e07dac23c54416db67adf",
+  "sha": "1706a81d5ff4fc07c534729bfeaa1642c50050a0",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1706a81",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): atualizar hash de enqueue_outbound_message no harness isolado (#3069)",
+    "files": [
+     "scripts/e2e-isolated/routine-ownership.mjs"
+    ]
+   },
    {
     "sha": "88f50d0",
     "date": "2026-11-14",
@@ -395938,17 +395947,6 @@
      "supabase/functions/talkx-send/index.ts",
      "supabase/functions/talkx-send/safe-db-error-code.test.ts"
     ]
-   },
-   {
-    "sha": "2ae0de7",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)",
-    "files": [
-     ".github/workflows/db-guard.yml",
-     "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
-     "supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh"
-    ]
    }
   ],
   "hot_files": [
@@ -396005,10 +396003,6 @@
     2
    ],
    [
-    ".github/workflows/db-guard.yml",
-    2
-   ],
-   [
     "TESTING_CONVENTION.md",
     2
    ],
@@ -396030,6 +396024,10 @@
    ],
    [
     "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+    2
+   ],
+   [
+    "src/hooks/inbox/useInboxBulkActions.ts",
     2
    ]
   ]
