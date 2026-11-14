@@ -16,6 +16,7 @@ const {
   CHUNK_RELOAD_COOLDOWN_MS,
   LEGACY_CHUNK_RELOAD_KEY,
   MAX_CHUNK_RELOADS,
+  SAIDA_CANCELADA_MS,
 } = await import('@/lib/chunkReload');
 
 const reload = vi.fn();
@@ -145,5 +146,52 @@ describe('chunkReload — orcamento e cooldown', () => {
     expect(triggerChunkReload()).toBe(false);
     expect(hasExhaustedChunkReloads()).toBe(true);
     expect(reload).not.toHaveBeenCalled();
+  });
+});
+
+describe('chunkReload — pagina saindo (navegacao em curso)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    window.dispatchEvent(new Event('pageshow'));
+    sessionStorage.clear();
+    resetChunkReloadGuard();
+    reload.mockClear();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { reload },
+    });
+  });
+
+  afterEach(() => {
+    window.dispatchEvent(new Event('pageshow'));
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('import cancelado pela saida da pagina nao recarrega nem gasta o orcamento', () => {
+    // Firefox/WebKit cancelam os imports em voo ao navegar; a rejeicao chega
+    // depois do beforeunload. Recarregar ali atropelava a navegacao pedida.
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(CHUNK_RELOAD_COUNT_KEY)).toBeNull();
+    expect(sessionStorage.getItem(CHUNK_RELOAD_AT_KEY)).toBeNull();
+  });
+
+  it('saida cancelada ("Ficar na pagina") devolve a recarga automatica', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    vi.advanceTimersByTime(SAIDA_CANCELADA_MS - 1);
+    expect(triggerChunkReload()).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(triggerChunkReload()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('pageshow (volta do bfcache) devolve a recarga automatica na hora', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    window.dispatchEvent(new Event('pageshow'));
+    expect(triggerChunkReload()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });
