@@ -200,6 +200,42 @@ arquivar formalmente. Enquanto não responder, nada se perde: as três branches 
 usuário e cota diária) entraram no pacote 6 pela PR #3093. Era o item 4 da issue #2967, que a auditoria
 da #2804 dava como perdido na #2831.
 
+## 3-A. SEGREDO DE SERVIDOR na Vercel (achado em 14/11, o mais urgente desta lista)
+
+Medido direto na API da Vercel (`GET /v9/projects/<id>/env`) em 14/11/2026: o projeto tem **20**
+variáveis e **7 delas são segredo de servidor**, todas no target `preview`:
+
+| Variável | O que ela permite a quem tiver acesso |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | ler e escrever **tudo** no banco, ignorando toda a RLS |
+| `SUPABASE_JWT_SECRET` | forjar token de qualquer usuário, inclusive admin |
+| `SUPABASE_SECRET_KEY` | chave secreta do projeto Supabase |
+| `POSTGRES_PASSWORD` | senha do banco |
+| `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING` | conexão direta ao banco |
+
+Mais 5 da mesma lista sem ser segredo: `POSTGRES_DATABASE`, `POSTGRES_HOST`, `POSTGRES_USER`,
+`SUPABASE_ANON_KEY` e `SUPABASE_URL`.
+
+O `AGENTS.md` é explícito: "Nunca segredo de servidor no Vercel". E o item 4 abaixo agrava: o app do
+Supabase cria um deploy de **preview por PR**, e é justamente em `preview` que esses segredos estão.
+
+**Por que não apaguei:** sua própria regra diz que apagar secret exige sua autorização. Também não
+consigo: o secret do repositório é `VERCEL_READONLY_TOKEN`, que lê mas não escreve.
+
+**O que fazer**, do mais rápido ao mais completo:
+
+1. Painel da Vercel → Settings → Environment Variables → remover as 12 listadas acima (todas são
+   `preview`; nenhuma é usada em `production`).
+2. **Rotacionar** as chaves depois de remover: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` e a
+   senha do Postgres. Enquanto não rotacionar, quem já tiver copiado continua com acesso.
+3. Se preferir que eu faça: crie um token Vercel com escrita e me diga; o workflow
+   `vercel-env-cleanup.yml` lista com `DRY_RUN=1` e aplica com `DRY_RUN=0`.
+
+**Erro meu, registrado:** removi esse workflow mais cedo nesta sessão dizendo que as variáveis já não
+existiam. Eu me apoiei no `docs/prod-readiness.md` (item X24, que dizia 8 variáveis e nenhuma da lista)
+em vez de medir na fonte. Quando ganhei a credencial da Vercel, medi e estava errado. O workflow, o
+script e o teste foram restaurados, e o X24 foi retificado.
+
 ## 4. App "Supabase for GitHub" ligado, criando preview em projeto errado
 
 O `AGENTS.md` registra esse app como **desligado**, mas ele está rodando: o check `Supabase Preview` falhou em
@@ -217,3 +253,56 @@ Das 52 issues abertas, 24 são alertas de bot (`falha-main`, `kpi-actions`, `bra
 **O que fazer:** responda "limpa as issues de bot resolvidas" e eu fecho cada uma com comentário-resumo citando
 onde a falha foi corrigida, conforme a regra do `AGENTS.md`. Não fiz por iniciativa própria porque fechar issue
 é ação visível e não foi pedida.
+
+## 6. RADAR ao vivo na Inbox — o painel existe, não está ligado, e o teto de bundle não deixa
+
+Diferente do item 3 (que é o **motor** e o custo de IA), aqui o problema é o **painel**: o componente
+`src/components/inbox/copilot/RadarLive.tsx` está na `main`, com teste próprio
+(`src/components/inbox/copilot/__tests__/RadarLive.test.tsx`) e **sem nenhum consumidor** — ninguém o monta,
+então nunca aparece na tela. Ele é o que mostra o que vem do motor de IA (sugestões, próximo passo, alertas) e
+conviveria com os cartões locais do `RadarPhase8to15Panel`, que já está montado.
+
+Montei em `src/components/inbox/chat/ChatInputArea.tsx` (18 linhas) e medi. Dois bloqueios apareceram.
+
+### Bloqueio 1 — o teto de assets está saturado (decisão sua)
+
+| Medição (build real, gzip) | Valor |
+|---|---|
+| `main` hoje | **4097,0 KB** de um teto de 4100 KB — **3,0 KB de folga (0,07%)** |
+| Com o painel ligado, import estático | 4101,6 KB → estoura por 1,6 KB |
+| Com o painel ligado, `lazy()` | 4103,4 KB → estoura por 3,4 KB (pior: o chunk separado duplica módulos) |
+
+O painel custa 4,6 KB e só existem 3,0 KB. **Não é só o RADAR:** com 0,07% de folga, qualquer funcionalidade
+nova de tela esbarra nesse teto. É o verdadeiro freio do front hoje.
+
+Os tetos que medem o que o usuário baixa **não mudam** — medidos idênticos à `main` no mesmo build, porque o
+`ChatInputArea` está em chunk de rota, fora do primeiro carregamento:
+
+| Teto de experiência | `main` | com o painel | Budget |
+|---|---|---|---|
+| JS inicial | 290,9 KB | 290,9 KB | 325 KB |
+| CSS inicial | 42,9 KB | 42,9 KB | 80 KB |
+| Maior chunk JS | 506,8 KB | 506,8 KB | 550 KB |
+
+Tentei caber sem mexer no teto, respeitando o precedente do repositório (em 13/11 o projeto resolveu +34 KB
+mudando a arquitetura de chunks, em `scripts/ci/bundle-budget.unit.mjs:179`, em vez de subir o teto): testei
+`lazy()` e import estático, e o estático já é o melhor agrupamento possível. Não existe rearranjo que faça
+código novo pesar zero.
+
+**Não subi o teto por conta própria** porque sua regra é explícita sobre não afrouxar guardas, e isso é um
+guard de CI. O `performance-budget.json` já foi reajustado 3 vezes com justificativa medida (o `initial-js`
+foi 340 → 341 → 300 → 325 "para acomodar crescimento natural de features"; o `total-assets` levou +100 KB em
+25/09), então existe procedimento — falta sua palavra.
+
+### Bloqueio 2 — 10 rejeições não tratadas nos testes (trabalho meu, depois da sua decisão)
+
+Montar o painel faz os testes **já existentes** do `ChatInputArea` instanciarem o `useCopilotSession`, que vai
+à rede sem mock. Resultado medido: os 444 testes continuam passando, mas aparecem **10 unhandled rejections**
+(a `main` tem 0) e `npx vitest run src/components/inbox/chat` sai com código **1** — a CI ficaria vermelha.
+A correção é adicionar o mock nos testes existentes; é uma PR minha, mas só faz sentido depois do bloqueio 1,
+senão fica trabalho parado.
+
+**O que fazer:** responda **"sobe o teto do bundle para o RADAR"** e eu elevo o `total-assets` para 4150 KB com
+a medição registrada no próprio arquivo, faço os mocks dos testes e mergeio; ou **"deixa o painel desligado"** e
+eu arquivo formalmente. Enquanto não responder, **nada se perde**: o `RadarLive` e o teste dele seguem na
+`main`, intactos.

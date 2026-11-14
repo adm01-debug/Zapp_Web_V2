@@ -53,8 +53,14 @@
  *
  * A CRIAÇÃO mudou de Edge: o diálogo mandava `create_draft` para
  * `multiplix-audience`; a tela inline usa `useCreateMultiplixDispatch`, que
- * manda `draft.create` para `multiplix-dispatch` (payload `payload`) e depois
- * `start` em `multiplix-send`. O fake reproduz esse contrato.
+ * manda `draft.create` para `multiplix-dispatch` (payload `payload`).
+ *
+ * O INÍCIO também mudou (F51, migration 20261114130000): o caminho antigo era
+ * `start` em `multiplix-send` com o disparo ainda em `draft`; hoje é `draft.get`
+ * + `confirm` no próprio `multiplix-dispatch` (RPC `multiplix_confirm_dispatch`),
+ * que congela público/blocos e gera a fila na MESMA transação. O banco recusa o
+ * start sem confirm (`multiplix_dispatch_confirm_required`). O fake reproduz
+ * esse contrato.
  */
 import { test, expect, type Page, type Route } from '@playwright/test';
 
@@ -281,6 +287,36 @@ async function mockMultiplix(page: Page, backend: BackendFake): Promise<void> {
           },
         });
       }
+      case 'draft.get': {
+        // F51: o `confirm` manda a versão LIDA do servidor (o reenvio idempotente
+        // repete a MESMA versão). O rascunho recém-criado nasce na versão 1.
+        return json(route, { data: { dispatch_id: DISPATCH_ID, dispatch_version: 1 } });
+      }
+      case 'confirm': {
+        // F51 (RPC `multiplix_confirm_dispatch`): revalida a elegibilidade,
+        // congela público e blocos, avança a versão e gera
+        // `multiplix_delivery_items` na MESMA transação. O fake devolve o
+        // envelope que `readMultiplixConfirm` exige (`data.dispatch_id`) e move o
+        // disparo para `sending`, como a RPC faz.
+        const versaoRevisada = Number(payload.dispatch_version ?? 0);
+        const alvoConfirm = backend.disparos.find((d) => d.id === DISPATCH_ID);
+        const naFila = alvoConfirm?.total_recipients ?? 0;
+        backend.disparos = backend.disparos.map((d) => (
+          d.id === DISPATCH_ID ? { ...d, status: 'sending' as const } : d
+        ));
+        return json(route, {
+          data: {
+            dispatch_id: DISPATCH_ID,
+            dispatch_version: versaoRevisada + 1,
+            status: 'sending',
+            scheduled_at: null,
+            recipient_count: naFila,
+            block_count: 1,
+            items_created: naFila,
+            items_total: naFila,
+          },
+        });
+      }
       case 'dispatch.list': {
         const alvo = payload.dispatch_id;
         const linhas = typeof alvo === 'string'
@@ -374,6 +410,16 @@ function backendVazio(): BackendFake {
 /** Quantas vezes uma Edge de criação foi chamada (nunca antes da confirmação). */
 function criacoes(backend: BackendFake) {
   return backend.roteador.filter((c) => c.action === 'draft.create');
+}
+
+/**
+ * F51: as confirmações (`confirm` no roteador). Desde a migration
+ * 20261114130000 é ela, e não mais `multiplix-send/start`, que tira o disparo de
+ * `draft` — um disparo que vai para `sending` sem passar pelo confirm fica com a
+ * fila vazia e não envia nada.
+ */
+function confirmacoes(backend: BackendFake) {
+  return backend.roteador.filter((c) => c.action === 'confirm');
 }
 
 // ---------------------------------------------------------------------------
@@ -501,12 +547,13 @@ test.describe('Multiplix — E2E do módulo (F90, tela de 3 regiões)', () => {
     await expect(confirmacao.getByText('Iniciar disparo agora?')).toBeVisible();
     await expect(confirmacao.getByText(/Isso envia mensagens reais no WhatsApp para 2 empresa\(s\)/)).toBeVisible();
     expect(criacoes(backend)).toHaveLength(0);
+    expect(confirmacoes(backend)).toHaveLength(0);
     expect(backend.envios).toHaveLength(0);
 
     // Só a confirmação explícita chama a Edge: `draft.create` em
     // `multiplix-dispatch` com os company_ids da seleção e o template com os
     // placeholders; o `name` sai do TÍTULO SUGERIDO (o campo ficou vazio), e
-    // depois vem o start em background.
+    // depois vem o `confirm` (F51), que materializa a fila.
     await confirmacao.getByRole('button', { name: 'Iniciar agora' }).click();
 
     await expect.poll(() => criacoes(backend).length).toBe(1);
@@ -519,8 +566,17 @@ test.describe('Multiplix — E2E do módulo (F90, tela de 3 regiões)', () => {
     ]);
     expect(criacao.params.confirm_over_limit).toBe(false);
 
-    await expect.poll(() => backend.envios.length).toBe(1);
-    expect(backend.envios[0]).toEqual({ dispatchId: DISPATCH_ID, action: 'start' });
+    // F51: o que a confirmação dispara é o `confirm` do roteador (RPC
+    // `multiplix_confirm_dispatch`, migration 20261114130000), com a versão lida
+    // no `draft.get` — e NÃO mais `multiplix-send/start`. O caminho antigo punha
+    // o disparo em `sending` com a fila vazia: não enviava nada e não concluía.
+    await expect.poll(() => confirmacoes(backend).length).toBe(1);
+    expect(confirmacoes(backend)[0].params).toEqual({
+      dispatch_id: DISPATCH_ID,
+      dispatch_version: 1,
+    });
+    // E prova que o caminho antigo saiu de vez: nada vai para `multiplix-send`.
+    expect(backend.envios).toHaveLength(0);
 
     // `onCreated` abre o monitor do disparo recém-criado, com o título sugerido.
     await expect(page.getByRole('heading', { name: TITULO_SUGERIDO })).toBeVisible();

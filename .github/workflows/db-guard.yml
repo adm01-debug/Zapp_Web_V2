@@ -1592,22 +1592,23 @@ jobs:
       # Estes contratos mantêm containers próprios ou exercitam o shim/harness.
       # SKIP_DOCKER_SHIM garante PostgreSQL real e isolado por teste, sem tocar
       # no serviço compartilhado do job. A imagem usada pelo tag é fixada por digest.
-      - name: Provar EXECUTE de merge_brinde_state (PostgreSQL nativo do runner)
-        # Este teste conecta por SOCKET UNIX com `sudo -u postgres psql` e cria banco
-        # proprio no cluster nativo: nao serve nem o docker-shim (Postgres compartilhado
-        # por TCP) nem o retry-disposable, que esperava /var/run/postgresql/.s.PGSQL.5432
-        # e falhou 6 vezes no run 43629536345 ("o PostgreSQL descartavel nao subiu").
-        # O runner ubuntu-24.04 traz PostgreSQL instalado e PARADO; basta inicia-lo.
+      - name: Provar EXECUTE de merge_brinde_state (Postgres compartilhado do job)
+        # O teste cria banco proprio e precisa ser SUPERUSUARIO (cria as roles do
+        # projeto e mexe em default ACL). Ele le POSTGRES_SERVICE_* e fala com o
+        # service container deste job por TCP; sem essas variaveis (dev local) cai
+        # no socket Unix com peer auth.
+        #
+        # Por que NAO o cluster nativo do runner: ele ja vem na porta 5432, a mesma
+        # que o service container publica no host, e o `postgresql.service` do Ubuntu
+        # retorna 0 mesmo quando a instancia nao sobe -- o socket
+        # /var/run/postgresql/.s.PGSQL.5432 nunca aparece. Duas tentativas por esse
+        # caminho falharam (runs 43633207624 e o da PR #3120).
+        #
+        # Por que NAO o docker-shim: ele roteia `docker run` para este mesmo servico,
+        # e o teste nao usa docker -- fala psql direto.
         env:
           SKIP_DOCKER_SHIM: "1"
-        run: |
-          sudo systemctl start postgresql
-          for i in 1 2 3 4 5 6; do
-            if sudo -u postgres psql -At -c "SELECT 1;" >/dev/null 2>&1; then break; fi
-            echo "aguardando o cluster nativo ($i/6)"; sleep 5
-          done
-          sudo -u postgres psql -At -c "SELECT version();"
-          bash scripts/db-audit/merge-brinde-state-execute-grant.test.sh
+        run: bash scripts/db-audit/merge-brinde-state-execute-grant.test.sh
 
       - name: Provar contratos shell restantes em serviços descartáveis
         env:
