@@ -102,9 +102,15 @@ export { expect };
 
 /** Preserve contact readiness without the helper that dismisses the tour. */
 export async function gotoOnboardingContacts(page: Page): Promise<void> {
+  // O WelcomeModal (Dialog modal do Radix) chama `hideOthers` ao montar e põe
+  // aria-hidden="true" no wrapper do <main> (AppShell.tsx:123). A abertura dele
+  // disputa com o lazy de Contatos, e este fluxo EXIGE o modal aberto logo
+  // depois (tourVisible). A prontidão da tela não pode depender de quem chega
+  // primeiro; a visibilidade real continua exigida pelos toBeVisible abaixo.
+  const sobModal = { includeHidden: true } as const;
   const heading = page
-    .getByRole('main', { name: 'Conteúdo principal' })
-    .getByRole('heading', { level: 1, name: 'Contatos' });
+    .getByRole('main', { name: 'Conteúdo principal', ...sobModal })
+    .getByRole('heading', { level: 1, name: 'Contatos', ...sobModal });
   await page.goto('/?view=contacts');
   // O primeiro documento pode ser substituído pela navegação pós-login ainda
   // pendente. Uma única repetição idempotente, acionada pela ausência exata da
@@ -116,6 +122,6 @@ export async function gotoOnboardingContacts(page: Page): Promise<void> {
     await expect(heading).toBeAttached({ timeout: 20_000 });
   }
   await expect(page.getByTestId('kpi-card').first()).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole('tab', { name: /Todos/ })).toBeVisible();
+  await expect(page.getByRole('tab', { name: /Todos/, ...sobModal })).toBeVisible();
   await expect(page.getByText('Carregando contatos', { exact: false })).toHaveCount(0, { timeout: 20_000 });
 }
