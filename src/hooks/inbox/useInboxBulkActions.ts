@@ -7,7 +7,7 @@ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 // JID) faria o PostgREST responder 400 e o lote inteiro falharia. Mesma guarda
 // usada em `useCalls` — uma fonte só para o formato de uuid.
 import { isValidUUID } from '@/hooks/communication/useCalls';
-import { canArchiveConversation, moveConversationsStatus, type ConversationStatus } from '@/hooks/inbox/conversationArchive';
+import { canArchiveConversation, moveConversationsStatus, movedBeforeError, type ConversationStatus } from '@/hooks/inbox/conversationArchive';
 import { transferConversation, transferErrorMessage } from '@/lib/inbox/transferConversation';
 
 interface UseInboxBulkActionsProps {
@@ -219,7 +219,18 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         undoMessage: 'Arquivamento desfeito',
         action: async () => {
           // P1-2: pela RPC de lote (UPDATE direto em conversation_status é recusado no banco).
-          const arquivadas = (await moveConversationsStatus(targetIds, 'archived')).size;
+          let movidas: Map<string, ConversationStatus>;
+          try {
+            movidas = await moveConversationsStatus(targetIds, 'archived');
+          } catch (err) {
+            // Lote acima de 500 vai em pedaços: se um pedaço falha, os anteriores JÁ foram
+            // arquivados — mantém o desfazer e recarrega a lista em vez de só dar erro.
+            const parcial = movedBeforeError(err);
+            if (!parcial?.size) throw err;
+            movidas = parcial;
+            toast.warning(`${parcial.size} de ${targetIds.length} arquivados — o restante falhou. Tente de novo.`);
+          }
+          const arquivadas = movidas.size;
           if (arquivadas === 0) throw new Error('Nenhuma conversa foi arquivada');
           clearSelection();
           refetch();
