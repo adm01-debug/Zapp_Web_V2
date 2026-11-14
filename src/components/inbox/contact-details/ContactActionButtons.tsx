@@ -17,6 +17,7 @@ import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { dispatchStartCall } from '@/lib/calls/events';
 import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 import { useContactUnreadEmails } from '@/hooks/gmail/useContactUnreadEmails';
+import { canArchiveConversation } from '@/hooks/inbox/conversationArchive';
 
 interface ContactActionButtonsProps {
   contact: { id: string; name: string; phone: string; email?: string; avatar?: string | null };
@@ -221,8 +222,8 @@ export function ContactActionButtons({
             <DropdownMenuItem onClick={() => onQuickAction?.('edit')} className="gap-2 text-xs">
               <Briefcase className="w-3.5 h-3.5 text-primary" />Editar Contato
             </DropdownMenuItem>
-            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}
-            {conversation?.contact?.conversation_status !== 'waiting' && (
+            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada; já arquivada também não. */}
+            {canArchiveConversation(conversation?.contact?.conversation_status) && (
               <DropdownMenuItem onClick={() => onQuickAction?.('archive')} className="gap-2 text-xs">
                 <Archive className="w-3.5 h-3.5 text-muted-foreground" />Arquivar
               </DropdownMenuItem>

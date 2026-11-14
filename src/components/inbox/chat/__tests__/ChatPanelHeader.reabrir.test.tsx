@@ -160,3 +160,15 @@ describe('ChatPanelHeader — reabrir/desarquivar', () => {
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 });
+
+describe('ChatPanelHeader — item "Arquivar" só para conversa arquivável', () => {
+  it.each(['open', 'resolved'])('%s mostra "Arquivar"', (status) => {
+    renderHeader(status);
+    expect(screen.getByRole('button', { name: 'Arquivar' })).toBeInTheDocument();
+  });
+
+  it.each(['archived', 'waiting'])('%s não mostra "Arquivar"', (status) => {
+    renderHeader(status);
+    expect(screen.queryByRole('button', { name: 'Arquivar' })).not.toBeInTheDocument();
+  });
+});

@@ -442,4 +442,14 @@ describe('VirtualizedRealtimeList — "Arquivar" some para conversa aguardando (
     renderList([makeConversation({ id: 'c1', conversation_status: 'waiting' } as never)], { onArchive: vi.fn() });
     expect(screen.queryByRole('button', { name: 'Arquivar conversa' })).not.toBeInTheDocument();
   });
+
+  it('conversa já arquivada não oferece Arquivar de novo', () => {
+    renderList([makeConversation({ id: 'c1', conversation_status: 'archived' } as never)], { onArchive: vi.fn() });
+    expect(screen.queryByRole('button', { name: 'Arquivar conversa' })).not.toBeInTheDocument();
+  });
+
+  it('conversa resolvida mostra o botão Arquivar', () => {
+    renderList([makeConversation({ id: 'c1', conversation_status: 'resolved' } as never)], { onArchive: vi.fn() });
+    expect(screen.getByRole('button', { name: 'Arquivar conversa' })).toBeInTheDocument();
+  });
 });
