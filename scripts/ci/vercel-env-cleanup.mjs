@@ -160,6 +160,16 @@ export async function executarCleanup({
   let removed = 0;
   let errors = 0;
   for (const env of targets) {
+    // ATENCAO ao "corrigir" esta versao para v9: dois revisores automaticos
+    // (devin-ai-integration e chatgpt-codex-connector) apontaram em 14/11/2026, na
+    // PR do pacote 7, que a Vercel publicaria o DELETE so em /v9 e que o /v10
+    // falharia. MEDIDO na propria API, com um id inexistente para nao apagar nada:
+    //   DELETE /v9/projects/<id>/env/env_naoexiste000000000000000000  -> 404
+    //   DELETE /v10/projects/<id>/env/env_naoexiste000000000000000000 -> 404
+    // e as DUAS devolvem {"error":{"code":"not_found","message":"Project Environment
+    // Variable not found."}} -- erro do RECURSO, nao da rota. Se o /v10 nao
+    // existisse para DELETE, a resposta falaria de rota inexistente. As duas versoes
+    // valem; o /v10 fica, igual ao da listagem (linha 95).
     const { status, ok } = await apiFetch(
       `/v10/projects/${encodeURIComponent(project)}/env/${encodeURIComponent(env.id)}`,
       { method: 'DELETE' },

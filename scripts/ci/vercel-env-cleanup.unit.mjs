@@ -130,6 +130,13 @@ test('apply remove somente allowlist, codifica ID e continua após falha parcial
   assert.equal(deletes.length, 2);
   assert.match(deletes[0].url, /id%2Fum/);
   assert.match(deletes[1].url, /id%20dois/);
+  // O caminho do DELETE tambem e contrato, nao so a contagem: a versao da rota e o
+  // id entram na URL. Sem isto, trocar /v10 por outra versao (ou perder o
+  // `projects/<id>/env/`) passaria sem ninguem ver -- foi o que dois revisores
+  // automaticos pediram em 14/11/2026, com base numa versao errada da rota.
+  for (const item of deletes) {
+    assert.match(new URL(item.url).pathname, /^\/v10\/projects\/prj_[^/]+\/env\/.+$/u);
+  }
   assert.equal(deletes.every((item) => !new URL(item.url).searchParams.has('teamId')), true);
   assert.match(log.texto(), /Concluído: 1 removidas, 1 erros/);
   assert.doesNotMatch(log.texto(), /intocada|não imprimir/);
