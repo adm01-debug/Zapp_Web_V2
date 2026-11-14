@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "nos": 2320,
- "arestas": 8070,
+ "arestas": 8072,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -45,11 +45,11 @@
    "importado_por": 124
   },
   {
-   "arquivo": "src/components/ui/select.tsx",
-   "importado_por": 115
+   "arquivo": "src/hooks/auth/useAuth.tsx",
+   "importado_por": 116
   },
   {
-   "arquivo": "src/hooks/auth/useAuth.tsx",
+   "arquivo": "src/components/ui/select.tsx",
    "importado_por": 115
   },
   {
@@ -70,7 +70,7 @@
   },
   {
    "arquivo": "src/hooks/ui/use-toast.ts",
-   "importado_por": 69
+   "importado_por": 71
   },
   {
    "arquivo": "src/hooks/tasks/workItem.types.ts",

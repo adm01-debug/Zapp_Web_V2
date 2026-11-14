@@ -25,12 +25,12 @@ Gerado automaticamente a cada 10 min pelo workflow `contexto` (job `banco`). **N
 | functions | 495 |
 | triggers | 175 |
 | policies (RLS) | 553 |
-| índices | 772 |
+| índices | 773 |
 | tipos/enums | 9 |
 | extensões | 8 |
 | cron jobs | 0 |
 | filas pgmq | 0 |
-| migrations | 1109 |
+| migrations | 1112 |
 | buckets | 0 |
 | edge functions | n/d |
 | webhooks | 0 |

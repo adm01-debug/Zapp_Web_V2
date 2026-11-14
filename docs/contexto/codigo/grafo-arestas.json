@@ -3811,6 +3811,7 @@
   ],
   "src/components/inbox/chat/SendErrorBanner.tsx": [
    "src/components/ui/button.tsx",
+   "src/hooks/ui/use-toast.ts",
    "src/lib/motion.ts",
    "src/lib/utils.ts",
    "src/types/chat.ts"
@@ -8477,6 +8478,7 @@
    "src/lib/lazyToast.ts"
   ],
   "src/hooks/communication/useSipClient.ts": [
+   "src/hooks/auth/useAuth.tsx",
    "src/hooks/communication/useCallEngineSink.ts",
    "src/hooks/communication/useMicrophoneGuard.ts",
    "src/hooks/communication/useTabLeaderRole.ts",

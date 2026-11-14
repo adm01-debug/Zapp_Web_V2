@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1107,
+ "migrations": 1110,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -27395,6 +27395,11 @@
      "nome": "idx_talkx_suppression_reasons_created_by",
      "colunas": "created_by",
      "unico": false
+    },
+    {
+     "nome": "talkx_suppression_reasons_label_lower_key",
+     "colunas": "lower(btrim(label",
+     "unico": true
     }
    ],
    "fks": [

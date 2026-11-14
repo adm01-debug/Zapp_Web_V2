@@ -53382,9 +53382,13 @@
             {
               "file": "supabase/migrations/20261111160000_outbound_post_started.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 6,
+          "code_total_files": 7,
           "cron": [],
           "db": [
             "public.claim_outbound_message"
@@ -56967,7 +56971,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 396,
+          "code_total_files": 398,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -62391,12 +62395,12 @@
           "triggers": [],
           "views": []
         },
-        "comment": null,
+        "comment": "C110: correção manual (admin/supervisor) de mensagem com entrega ambígua: POST carimbado, status=sending e lease vencido. Recusa failed (recusa definitiva do provedor).",
         "config": [
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "ed8a798481665d87",
+        "definition_sha": "dd449b314851e046",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -64978,7 +64982,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "6fa89e8d85ea6a1b",
+        "definition_sha": "6657a75342a39be9",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -66376,7 +66380,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "f84d9748d5572627",
+        "definition_sha": "3b255d0a7ac9799d",
         "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": true,
@@ -78446,6 +78450,18 @@
         "table": "talkx_suppression_reasons"
       },
       {
+        "columns": [],
+        "definition": "CREATE UNIQUE INDEX talkx_suppression_reasons_label_lower_key ON public.talkx_suppression_reasons USING btree (lower(btrim(label)))",
+        "is_primary": false,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "talkx_suppression_reasons_label_lower_key",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_suppression_reasons"
+      },
+      {
         "columns": [
           "code"
         ],
@@ -89326,6 +89342,24 @@
         "version": "20261112160000"
       },
       {
+        "name": "resolve_unconfirmed_somente_sending",
+        "statements": 7,
+        "statements_sha": "58fe5c2b4bb0e25f",
+        "version": "20261112170000"
+      },
+      {
+        "name": "talkx_recipients_page_aceita_cancelled",
+        "statements": 1,
+        "statements_sha": "99e8e2db0eb64ee9",
+        "version": "20261112171000"
+      },
+      {
+        "name": "talkx_suppression_reasons_hardening",
+        "statements": 5,
+        "statements_sha": "700b7739c021e70c",
+        "version": "20261112172000"
+      },
+      {
         "name": "envio_sem_conexao_de_teste_nem_fallback_silencioso",
         "statements": 1,
         "statements_sha": "ac59726cbed9b1fa",
@@ -96190,11 +96224,6 @@
         {
           "publication": "supabase_realtime_messages_publication",
           "schema": "realtime",
-          "table": "messages_2026_11_10"
-        },
-        {
-          "publication": "supabase_realtime_messages_publication",
-          "schema": "realtime",
           "table": "messages_2026_11_11"
         },
         {
@@ -96221,6 +96250,11 @@
           "publication": "supabase_realtime_messages_publication",
           "schema": "realtime",
           "table": "messages_2026_11_16"
+        },
+        {
+          "publication": "supabase_realtime_messages_publication",
+          "schema": "realtime",
+          "table": "messages_2026_11_17"
         }
       ]
     },

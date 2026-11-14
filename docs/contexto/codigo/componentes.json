@@ -4149,7 +4149,7 @@
     "EmailChatInbox"
    ],
    "export_default": null,
-   "linhas": 352,
+   "linhas": 353,
    "dominio": "components/email",
    "hooks_locais": [
     "useEmailThreadForContact",
@@ -5599,7 +5599,7 @@
     "SendErrorBannerProps"
    ],
    "export_default": null,
-   "linhas": 228,
+   "linhas": 236,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useReducedMotion"
@@ -5616,7 +5616,7 @@
     "UnconfirmedMessagesPanelProps"
    ],
    "export_default": null,
-   "linhas": 127,
+   "linhas": 129,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useReducedMotion",
@@ -12927,7 +12927,7 @@
     "TeamChatView"
    ],
    "export_default": null,
-   "linhas": 174,
+   "linhas": 181,
    "dominio": "components/team-chat",
    "hooks_locais": [
     "useActiveTeamChatConversation",
@@ -14705,7 +14705,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 107,
+   "usado_por": 108,
    "orfao": false
   },
   {

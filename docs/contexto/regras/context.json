@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "098a648f6ce4308202999388a88b6de33d7c6fba",
+  "sha": "f32855df69f21c7bb6b0dba89451fc886b059e58",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-13 23:06 UTC",
-  "files_total": 8347,
-  "code_files": 6176,
-  "code_lines": 1076472
+  "generated_at": "2026-11-14 01:17 UTC",
+  "files_total": 8355,
+  "code_files": 6184,
+  "code_lines": 1078372
  },
  "version": "1.3.2",
- "facts_hash": "8f7d8e8d2ac0ff6e",
+ "facts_hash": "5345e04212bb216c",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -326,9 +326,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2382,
-   ".ts": 1928,
-   ".sql": 1307,
+   ".tsx": 2385,
+   ".ts": 1930,
+   ".sql": 1310,
    ".mjs": 440,
    ".py": 119,
    ".cjs": 19,
@@ -33905,10 +33905,10 @@
     ]
    },
    "talkx_campaign_recipients_page": {
-    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL, p_status text DEFAULT NULL, p_search text DEFAULT NULL, p_segment_id uuid DEFAULT NULL",
+    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_segment_id uuid DEFAULT NULL::uuid",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
     "security_definer": true,
     "search_path": true,
     "body": "DECLARE v_profile_id uuid; v_can_view boolean; v_size integer := LEAST(GREATEST(COALESCE(p_page_size, 50), 1), 100); v_cur_at timestamptz; v_cur_id uuid; v_search text := NULLIF(btrim(p_search), ''); v_rows jsonb := '[]'::jsonb; v_has_more boolean := false; v_next text := NULL; v_total bigint := 0; v_kpis jsonb := '{}'::jsonb; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN v_can_view := true; ELSE IF auth.uid() IS NULL THEN RAISE EXCEPTION 'talkx_campaign_recipients_page: acesso negado' USING ERRCODE = '42501'; END IF; SELECT p.id INTO v_profile_id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1; SELECT EXISTS ( SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = p_ca …",
@@ -33935,10 +33935,10 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql",
     "security_definer": false,
     "search_path": true,
-    "body": "BEGIN IF TG_OP = 'INSERT' THEN IF NEW.is_system AND current_user IN ('authenticated', 'anon') THEN RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema só nasce por migration' USING ERRCODE = '42501'; END IF; RETURN NEW; END IF; IF OLD.code IS DISTINCT FROM NEW.code THEN RAISE EXCEPTION 'talkx_suppression_reasons: code imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system IS DISTINCT FROM NEW.is_system THEN RAISE EXCEPTION 'talkx_suppression_reasons: is_system imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system AND OLD.label IS DISTINCT FROM NEW.label THEN RAISE EXCEPTION 'talkx_suppression_reasons: label de motivo do sistema é imutável' USING …",
+    "body": "BEGIN IF TG_OP = 'INSERT' THEN IF NEW.is_system AND current_user IN ('authenticated', 'anon') THEN RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema só nasce por migration' USING ERRCODE = '42501'; END IF; IF current_user IN ('authenticated', 'anon') THEN NEW.created_by := auth.uid(); END IF; RETURN NEW; END IF; IF OLD.code IS DISTINCT FROM NEW.code THEN RAISE EXCEPTION 'talkx_suppression_reasons: code imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system IS DISTINCT FROM NEW.is_system THEN RAISE EXCEPTION 'talkx_suppression_reasons: is_system imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system AND OLD.label IS DISTINCT FROM NEW.label THEN …",
     "raises": [
      "talkx_suppression_reasons: motivo do sistema só nasce por migration",
      "talkx_suppression_reasons: code imutável após criação",
@@ -34146,10 +34146,10 @@
     "args": "p_message_id uuid, p_outcome text",
     "returns": "uuid",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_result uuid; v_new_status text; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' THEN RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501'; END IF; IF p_outcome NOT IN ('sent', 'not_delivered') THEN RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023'; END IF; IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin_or_supervisor_required' USING ERRCODE = '42501'; END IF; v_new_status := CASE p_outcome WHEN 'sent' THEN 'sent' ELSE 'failed' END; UPDATE public.messages SET status = v_new_status, status_updated_at = statement_timestamp(), manually_resolved_at = statement_timestamp(), updated_at = statement_timestamp() WHERE id = p_mess …",
+    "body": "DECLARE v_result uuid; v_new_status text; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' THEN RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501'; END IF; IF p_outcome IS NULL OR p_outcome NOT IN ('sent', 'not_delivered') THEN RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023'; END IF; IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin_or_supervisor_required' USING ERRCODE = '42501'; END IF; v_new_status := CASE p_outcome WHEN 'sent' THEN 'sent' ELSE 'failed' END; UPDATE public.messages SET status = v_new_status, status_updated_at = statement_timestamp(), manually_resolved_at = statement_timestamp(), updated_at = statement_timestam …",
     "raises": [
      "authenticated_required",
      "invalid_resolve_outcome",
@@ -41938,6 +41938,22 @@
     "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
+    "name": "talkx_suppression_reasons_label_lower_key",
+    "table": "talkx_suppression_reasons",
+    "columns": "lower(btrim(label",
+    "unique": true,
+    "where": "",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "name": "idx_talkx_blacklist_reason_code",
+    "table": "talkx_blacklist",
+    "columns": "reason_code",
+    "unique": false,
+    "where": "",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
     "name": "idx_audit_logs_details_path_ops",
     "table": "audit_logs",
     "columns": "details jsonb_path_ops",
@@ -43307,6 +43323,9 @@
    "supabase/migrations/20261111170000_talkx_block_recipient.sql",
    "supabase/migrations/20261111181000_instance_pause_investigation.sql",
    "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+   "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql",
+   "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
+   "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql",
    "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
@@ -56423,6 +56442,30 @@
     "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppression_reasons_guard",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -61401,46 +61444,6 @@
     "src": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
    },
    {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: status invalido",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: motivo do sistema só nasce por migration",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: code imutável após criação",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: is_system imutável após criação",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: label de motivo do sistema é imutável",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
     "function": "talkx_blacklist_reason_active_guard",
     "msg": "talkx_suppression_reason_inactive",
     "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
@@ -61551,26 +61554,6 @@
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
    },
    {
-    "function": "resolve_unconfirmed_message",
-    "msg": "authenticated_required",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
-    "function": "resolve_unconfirmed_message",
-    "msg": "invalid_resolve_outcome",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
-    "function": "resolve_unconfirmed_message",
-    "msg": "admin_or_supervisor_required",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
-    "function": "resolve_unconfirmed_message",
-    "msg": "message_not_resolvable",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
     "function": "talkx_block_recipient",
     "msg": "authentication_required",
     "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
@@ -61629,6 +61612,66 @@
     "function": "talkx_blacklist_no_delete",
     "msg": "talkx_blacklist_delete_bloqueado: use remocao logica via removed_at",
     "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "authenticated_required",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "invalid_resolve_outcome",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "admin_or_supervisor_required",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "message_not_resolvable",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: status invalido",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema só nasce por migration",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: code imutável após criação",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: is_system imutável após criação",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: label de motivo do sistema é imutável",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
    },
    {
     "function": "espera_contem",
@@ -63926,14 +63969,14 @@
     "invokes": [],
     "doc": "",
     "errors": [
+     ",\n          code: markError.code,\n          detail: ",
      "invalid_buttons_payload",
      "invalid_contact_card_payload",
      "invalid_list_payload",
      "invalid_location_payload",
      "invalid_poll_payload",
      "mark_outbound_post_started_failed",
-     "media_resolve_failed",
-     "missing_media_url"
+     "media_resolve_failed"
     ],
     "side_effects": [
      "sendWhatsAppAudio"
@@ -65463,7 +65506,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2220,
+  "components_count": 2221,
   "hooks": [
    {
     "name": "useContacts",
@@ -68291,7 +68334,7 @@
   {
    "module": "scripts",
    "files": 470,
-   "lines": 97331,
+   "lines": 97726,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68623,8 +68666,8 @@
   },
   {
    "module": "src/components",
-   "files": 2220,
-   "lines": 377255,
+   "files": 2221,
+   "lines": 377436,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -68971,8 +69014,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 997,
-   "lines": 162346,
+   "files": 999,
+   "lines": 162869,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -70015,8 +70058,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 406,
-   "lines": 122969,
+   "files": 408,
+   "lines": 123296,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -70251,8 +70294,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1107,
-   "lines": 107154,
+   "files": 1110,
+   "lines": 107628,
    "tables": [
     "audit_logs",
     "departments",
@@ -73488,6 +73531,7 @@
     "contact_id",
     "content",
     "created_at",
+    "delivery_claim_expires_at",
     "delivery_post_started_at",
     "external_id",
     "id",
@@ -81117,6 +81161,22 @@
     "msg": "delimitador "
    },
    {
+    "file": "scripts/ci/ci-local-lib.mjs",
+    "msg": "git add --intent-to-add falhou: ${(ita.stderr ?? "
+   },
+   {
+    "file": "scripts/ci/ci-local-lib.mjs",
+    "msg": "git diff ${alvo} falhou: ${(d.stderr ?? "
+   },
+   {
+    "file": "scripts/ci/ci-local-lib.mjs",
+    "msg": "git diff --raw: linha inesperada "
+   },
+   {
+    "file": "scripts/ci/ci-local-lib.mjs",
+    "msg": "git merge-base falhou: ${(mb.stderr ?? "
+   },
+   {
     "file": "scripts/ci/ci-local.mjs",
     "msg": "${cmd} ${args.slice(0, 3).join("
    },
@@ -83991,6 +84051,10 @@
    {
     "file": "src/components/inbox/chat/SendErrorBanner.tsx",
     "msg": "\n            data-testid="
+   },
+   {
+    "file": "src/components/inbox/chat/SendErrorBanner.tsx",
+    "msg": "Mensagem não enviada"
    },
    {
     "file": "src/components/inbox/chat/useChatPanelHandlers.ts",
@@ -87706,6 +87770,10 @@
    },
    {
     "file": "supabase/functions/message-delivery/index.ts",
+    "msg": ",\n          code: markError.code,\n          detail: "
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.ts",
     "msg": "invalid_buttons_payload"
    },
    {
@@ -89709,10 +89777,6 @@
     "text": "AA do E.3; `--info` só no ícone), animação apenas com `motion-safe:`, nada de exportar/baixar novo"
    },
    {
-    "file": "src/components/inbox/chat/SendErrorBanner.tsx",
-    "text": "iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve"
-   },
-   {
     "file": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
     "text": "de correção manual — o RPC resolve_unconfirmed_message valida a permissão no banco."
    },
@@ -91434,6 +91498,10 @@
    },
    {
     "file": "src/hooks/calls/useCallChannels.ts",
+    "text": "sem trocar de usuário e não deve refazer a consulta."
+   },
+   {
+    "file": "src/hooks/calls/useCallChannels.ts",
     "text": "T30/D8: qual linha decidiu o canal. Sem permissão de supervisor ela já não veio"
    },
    {
@@ -91971,6 +92039,10 @@
    {
     "file": "src/hooks/dashboard/useSentimentTrend.ts",
     "text": "* HZ2-003: o `select` anterior não tinha limite e, com ordem ASCENDENTE, o"
+   },
+   {
+    "file": "src/hooks/delivery/useUnconfirmedMessages.ts",
+    "text": "resolvido aqui) e não pode virar \"entregue\" à mão."
    },
    {
     "file": "src/hooks/email/useEmailThreadListQuery.ts",
@@ -112980,6 +113052,12 @@
    },
    {
     "file": "src/components/inbox/chat/SendErrorBanner.tsx",
+    "field": "status",
+    "value": "failed",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/chat/SendErrorBanner.tsx",
     "field": "type",
     "value": "text",
     "kind": "compara"
@@ -118175,6 +118253,12 @@
     "kind": "escreve"
    },
    {
+    "file": "src/hooks/delivery/useUnconfirmedMessages.ts",
+    "field": "status",
+    "value": "sending",
+    "kind": "filtra"
+   },
+   {
     "file": "src/hooks/gamification/useAgentCelebrations.ts",
     "field": "status",
     "value": "SUBSCRIBED",
@@ -122459,6 +122543,18 @@
     "kind": "escreve"
    },
    {
+    "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
+    "field": "status",
+    "value": "sending",
+    "kind": "filtra"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
+    "field": "status",
+    "value": "sending",
+    "kind": "filtra"
+   },
+   {
     "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
     "field": "status",
     "value": "sent",
@@ -122481,6 +122577,12 @@
     "field": "status",
     "value": "deleted",
     "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+    "field": "status",
+    "value": "sending",
+    "kind": "filtra"
    },
    {
     "file": "supabase/functions/_shared/gmail-helpers.ts",
@@ -125074,7 +125176,7 @@
     "file": "src/components/inbox/chat/SendErrorBanner.tsx",
     "name": "podeReenviarComoTexto",
     "params": "mensagem: Message | null | undefined",
-    "body": "if (!mensagem || mensagem.type !== 'text') return false; // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync. return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;"
+    "body": "return !!mensagem && mensagem.type === 'text';"
    },
    {
     "file": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
@@ -141874,6 +141976,14 @@
    },
    {
     "file": "src/components/email/__tests__/EmailChatInbox.test.tsx",
+    "name": "conta sem marcadores sincroniza os marcadores ao abrir"
+   },
+   {
+    "file": "src/components/email/__tests__/EmailChatInbox.test.tsx",
+    "name": "conta que precisa reconectar NÃO dispara a sincronização automática de marcadores (gmail-sync 409)"
+   },
+   {
+    "file": "src/components/email/__tests__/EmailChatInbox.test.tsx",
     "name": "distingue carregamento de conta desconectada"
    },
    {
@@ -149189,6 +149299,10 @@
     "name": "pilula na fila foca mensagem com claim invalido (mesma regua do resumo)"
    },
    {
+    "file": "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
+    "name": "C110: painel de entrega ambígua recebe o contato da conversa"
+   },
+   {
     "file": "src/components/inbox/chat/__tests__/ChatPanelHeader.reabrir.test.tsx",
     "name": "ChatPanelHeader — reabrir/desarquivar"
    },
@@ -150166,6 +150280,14 @@
    },
    {
     "file": "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
+    "name": "PD-79: falha DEFINITIVA com POST carimbado (recusa 4xx) ainda oferece reenvio"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
+    "name": "PD-79: mensagem ambígua (sending carimbada) não aparece no banner"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
     "name": "falha de audio/interativa: so o aviso, sem botao de reenvio"
    },
    {
@@ -150207,6 +150329,38 @@
    {
     "file": "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
     "name": "com reduzir movimento o banner já nasce no lugar"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
+    "name": "falha do "
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+    "name": "UnconfirmedMessagesPanel"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+    "name": "sem mensagens não renderiza nada"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+    "name": "em erro não renderiza nada"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+    "name": "agente vê o aviso, mas NÃO os botões de correção"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+    "name": "supervisor resolve como entregue e como não entregue"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+    "name": "enquanto resolve a mensagem, troca os botões dela pelo spinner"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+    "name": "repassa o groupId ao hook (conversa de grupo) e mantém o caso de contato sem grupo"
    },
    {
     "file": "src/components/inbox/chat/__tests__/forwardChatTransport.test.tsx",
@@ -169357,6 +169511,14 @@
     "name": "cid descartado, depois a conversa passa a existir e chega nova notificação: recarrega e abre"
    },
    {
+    "file": "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
+    "name": "?cid= aberto por URL antes do perfil carregar espera a primeira busca real e abre a conversa"
+   },
+   {
+    "file": "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
+    "name": "perfil que nunca carrega: a lista NÃO fica presa em "
+   },
+   {
     "file": "src/components/team-chat/__tests__/TeamChatView.deeplink.test.tsx",
     "name": "TeamChatView — deep-link ?cid="
    },
@@ -176946,6 +177108,46 @@
    },
    {
     "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "sem usuário, virar líder não chama get-sip-password nem mostra toast"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "logar com a aba já líder provisiona uma vez"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "logout derruba a linha e o próximo usuário da mesma aba provisiona a própria"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "logout e login de outro usuário antes de a desconexão terminar: o novo usuário conecta"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "logout com a busca da senha SIP ainda pendente não registra a linha sem usuário"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "virar seguidora e voltar a líder antes do stop terminar: UA novo e sem "
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "logout e promoção a líder no MESMO render não buscam a senha SIP"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "remontagem + login + logout terminam sem UA vivo (o unmount solta a linha)"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "login e promoção a líder no MESMO render provisionam uma vez só"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
+    "name": "logado, virar líder provisiona uma vez só (sem duplicar com o login)"
+   },
+   {
+    "file": "src/hooks/__tests__/useSipClient.test.ts",
     "name": "T20: 2ª chamada com a linha ocupada vira missed/busy_here + toast, sem tocar a em curso"
    },
    {
@@ -179095,6 +179297,22 @@
    {
     "file": "src/hooks/calls/__tests__/useCallChannels.d8.test.ts",
     "name": "com linha conectada visível, a permissão não interfere na capacidade de receber"
+   },
+   {
+    "file": "src/hooks/calls/__tests__/useCallChannels.semUsuario.test.tsx",
+    "name": "useCallChannels — sem usuário logado"
+   },
+   {
+    "file": "src/hooks/calls/__tests__/useCallChannels.semUsuario.test.tsx",
+    "name": "sem usuário não consulta whatsapp_connections"
+   },
+   {
+    "file": "src/hooks/calls/__tests__/useCallChannels.semUsuario.test.tsx",
+    "name": "ao logar, consulta whatsapp_connections uma vez"
+   },
+   {
+    "file": "src/hooks/calls/__tests__/useCallChannels.semUsuario.test.tsx",
+    "name": "renovação de token (mesmo id, objeto novo) não refaz a consulta"
    },
    {
     "file": "src/hooks/calls/__tests__/useCallChannels.test.ts",
@@ -183521,6 +183739,30 @@
     "name": "sem nenhum bucket, todayByHour todo 0/null e avg7dCurrentHour 0"
    },
    {
+    "file": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+    "name": "useUnconfirmedMessages"
+   },
+   {
+    "file": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+    "name": "filtra só status=sending, carimbado, não resolvido e do contato"
+   },
+   {
+    "file": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+    "name": "grupo: mesmo filtro de status, por whatsapp_group_id"
+   },
+   {
+    "file": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+    "name": "erro do PostgREST continua sendo erro"
+   },
+   {
+    "file": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+    "name": "erro message_not_resolvable (P0002) invalida a lista do painel"
+   },
+   {
+    "file": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+    "name": "outro erro da RPC NÃO invalida a lista"
+   },
+   {
     "file": "src/hooks/email/__tests__/useEmailThreadListQuery.test.tsx",
     "name": "useEmailThreadListQuery (OTH-005)"
    },
@@ -185771,6 +186013,10 @@
    {
     "file": "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
     "name": "409 reauth_required NÃO vira "
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
+    "name": "sincronizar marcadores com 409 reauth_required NÃO repete a chamada (console: dois 409)"
    },
    {
     "file": "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
@@ -188327,6 +188573,10 @@
    {
     "file": "src/hooks/sip/__tests__/useSipConnection.test.ts",
     "name": "T16: unmount durante o backoff não cria UserAgent"
+   },
+   {
+    "file": "src/hooks/sip/__tests__/useSipConnection.test.ts",
+    "name": "unmount com o UA registrado solta o registro e para o UA"
    },
    {
     "file": "src/hooks/sip/__tests__/useSipConnection.test.ts",
@@ -204425,6 +204675,18 @@
     "name": "secure egress configuration requires HTTPS and a strong shared secret"
    },
    {
+    "file": "supabase/functions/_shared/__tests__/send-message-manual-resolution.test.ts",
+    "name": "send.message NÃO sobrescreve resolução manual e protege os dois UPDATEs com o predicado"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/send-message-pending-status.test.ts",
+    "name": "send.message casa só a pendente em "
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/send-message-pending-status.test.ts",
+    "name": "FROM_ME casa só a pendente em "
+   },
+   {
     "file": "supabase/functions/_shared/__tests__/ssrf.test.ts",
     "name": "SSRF primitives classify private and special addresses"
    },
@@ -208257,6 +208519,22 @@
     "name": "PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando antes do POST"
    },
    {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-79: POST carimbado com lease AINDA VIVO é 409 in_progress (duplo clique durante o envio)"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-79: POST carimbado com lease VENCIDO continua 502 receipt_unconfirmed (ambíguo, sem reenvio)"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-79: 42883 no mark_outbound_post_started NÃO é tolerado (só PGRST202): nada sai, failClaim"
+   },
+   {
+    "file": "supabase/functions/message-delivery/index.test.ts",
+    "name": "PD-79: exceção LANÇADA no mark_outbound_post_started é infra (503 provider_unavailable, retryable), não 422 media_invalid"
+   },
+   {
     "file": "supabase/functions/metrics/index.test.ts",
     "name": "metrics: sem identidade → 401 e nenhuma consulta"
    },
@@ -210931,6 +211209,10 @@
    {
     "file": "supabase/functions/whatsapp-webhook/index.test.ts",
     "name": "(c) read seguido de sent atrasado gera um único PATCH com status read (monotônico + escopo de conexão)"
+   },
+   {
+    "file": "supabase/functions/whatsapp-webhook/index.test.ts",
+    "name": "(c2) recibo não sobrescreve resolução manual do operador (PATCH com manually_resolved_at=is.null)"
    },
    {
     "file": "supabase/functions/whatsapp-webhook/index.test.ts",
@@ -231631,10 +231913,10 @@
     ]
    },
    "talkx_campaign_recipients_page": {
-    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL, p_status text DEFAULT NULL, p_search text DEFAULT NULL, p_segment_id uuid DEFAULT NULL",
+    "args": "p_campaign_id uuid, p_page_size integer DEFAULT 50, p_cursor text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_segment_id uuid DEFAULT NULL::uuid",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
     "security_definer": true,
     "search_path": true,
     "body": "DECLARE v_profile_id uuid; v_can_view boolean; v_size integer := LEAST(GREATEST(COALESCE(p_page_size, 50), 1), 100); v_cur_at timestamptz; v_cur_id uuid; v_search text := NULLIF(btrim(p_search), ''); v_rows jsonb := '[]'::jsonb; v_has_more boolean := false; v_next text := NULL; v_total bigint := 0; v_kpis jsonb := '{}'::jsonb; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN v_can_view := true; ELSE IF auth.uid() IS NULL THEN RAISE EXCEPTION 'talkx_campaign_recipients_page: acesso negado' USING ERRCODE = '42501'; END IF; SELECT p.id INTO v_profile_id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1; SELECT EXISTS ( SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = p_ca …",
@@ -231661,10 +231943,10 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql",
     "security_definer": false,
     "search_path": true,
-    "body": "BEGIN IF TG_OP = 'INSERT' THEN IF NEW.is_system AND current_user IN ('authenticated', 'anon') THEN RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema só nasce por migration' USING ERRCODE = '42501'; END IF; RETURN NEW; END IF; IF OLD.code IS DISTINCT FROM NEW.code THEN RAISE EXCEPTION 'talkx_suppression_reasons: code imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system IS DISTINCT FROM NEW.is_system THEN RAISE EXCEPTION 'talkx_suppression_reasons: is_system imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system AND OLD.label IS DISTINCT FROM NEW.label THEN RAISE EXCEPTION 'talkx_suppression_reasons: label de motivo do sistema é imutável' USING …",
+    "body": "BEGIN IF TG_OP = 'INSERT' THEN IF NEW.is_system AND current_user IN ('authenticated', 'anon') THEN RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema só nasce por migration' USING ERRCODE = '42501'; END IF; IF current_user IN ('authenticated', 'anon') THEN NEW.created_by := auth.uid(); END IF; RETURN NEW; END IF; IF OLD.code IS DISTINCT FROM NEW.code THEN RAISE EXCEPTION 'talkx_suppression_reasons: code imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system IS DISTINCT FROM NEW.is_system THEN RAISE EXCEPTION 'talkx_suppression_reasons: is_system imutável após criação' USING ERRCODE = '42501'; END IF; IF OLD.is_system AND OLD.label IS DISTINCT FROM NEW.label THEN …",
     "raises": [
      "talkx_suppression_reasons: motivo do sistema só nasce por migration",
      "talkx_suppression_reasons: code imutável após criação",
@@ -231872,10 +232154,10 @@
     "args": "p_message_id uuid, p_outcome text",
     "returns": "uuid",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_result uuid; v_new_status text; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' THEN RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501'; END IF; IF p_outcome NOT IN ('sent', 'not_delivered') THEN RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023'; END IF; IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin_or_supervisor_required' USING ERRCODE = '42501'; END IF; v_new_status := CASE p_outcome WHEN 'sent' THEN 'sent' ELSE 'failed' END; UPDATE public.messages SET status = v_new_status, status_updated_at = statement_timestamp(), manually_resolved_at = statement_timestamp(), updated_at = statement_timestamp() WHERE id = p_mess …",
+    "body": "DECLARE v_result uuid; v_new_status text; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' THEN RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501'; END IF; IF p_outcome IS NULL OR p_outcome NOT IN ('sent', 'not_delivered') THEN RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023'; END IF; IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'admin_or_supervisor_required' USING ERRCODE = '42501'; END IF; v_new_status := CASE p_outcome WHEN 'sent' THEN 'sent' ELSE 'failed' END; UPDATE public.messages SET status = v_new_status, status_updated_at = statement_timestamp(), manually_resolved_at = statement_timestamp(), updated_at = statement_timestam …",
     "raises": [
      "authenticated_required",
      "invalid_resolve_outcome",
@@ -237240,46 +237522,6 @@
     "src": "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql"
    },
    {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: acesso negado",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
-   },
-   {
-    "function": "talkx_campaign_recipients_page",
-    "msg": "talkx_campaign_recipients_page: status invalido",
-    "src": "supabase/migrations/20261107180000_talkx_campaign_recipients_page_add_segment.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: motivo do sistema só nasce por migration",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: code imutável após criação",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: is_system imutável após criação",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: label de motivo do sistema é imutável",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
-    "function": "talkx_suppression_reasons_guard",
-    "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
-    "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
-   },
-   {
     "function": "talkx_blacklist_reason_active_guard",
     "msg": "talkx_suppression_reason_inactive",
     "src": "supabase/migrations/20261108100000_talkx_suppression_reasons.sql"
@@ -237390,26 +237632,6 @@
     "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
    },
    {
-    "function": "resolve_unconfirmed_message",
-    "msg": "authenticated_required",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
-    "function": "resolve_unconfirmed_message",
-    "msg": "invalid_resolve_outcome",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
-    "function": "resolve_unconfirmed_message",
-    "msg": "admin_or_supervisor_required",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
-    "function": "resolve_unconfirmed_message",
-    "msg": "message_not_resolvable",
-    "src": "supabase/migrations/20261111160000_outbound_post_started.sql"
-   },
-   {
     "function": "talkx_block_recipient",
     "msg": "authentication_required",
     "src": "supabase/migrations/20261111170000_talkx_block_recipient.sql"
@@ -237468,6 +237690,66 @@
     "function": "talkx_blacklist_no_delete",
     "msg": "talkx_blacklist_delete_bloqueado: use remocao logica via removed_at",
     "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "authenticated_required",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "invalid_resolve_outcome",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "admin_or_supervisor_required",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "resolve_unconfirmed_message",
+    "msg": "message_not_resolvable",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: acesso negado",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql"
+   },
+   {
+    "function": "talkx_campaign_recipients_page",
+    "msg": "talkx_campaign_recipients_page: status invalido",
+    "src": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema só nasce por migration",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: code imutável após criação",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: is_system imutável após criação",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: label de motivo do sistema é imutável",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "talkx_suppression_reasons_guard",
+    "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
    },
    {
     "function": "espera_contem",
@@ -240197,6 +240479,7 @@
       "compara:src/components/catalog/CatalogRail.tsx",
       "compara:src/components/catalog/useSendProduct.ts",
       "compara:src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+      "compara:src/components/inbox/chat/SendErrorBanner.tsx",
       "compara:src/components/inbox/chat/messageSendTimeline.ts",
       "compara:src/components/inbox/chat/messageUtils.tsx",
       "compara:src/components/multiplix/MultiplixMonitor.tsx",
@@ -240241,8 +240524,11 @@
       "escreve:supabase/functions/_shared/evolution-webhook-messages.ts",
       "escreve:supabase/functions/talkx-send/_test-utils.ts",
       "escreve:supabase/functions/talkx-send/index.ts",
+      "filtra:src/hooks/delivery/useUnconfirmedMessages.ts",
       "filtra:src/hooks/system/useDiagnosticsData.ts",
-      "filtra:src/hooks/system/useSystemHealthSignals.ts"
+      "filtra:src/hooks/system/useSystemHealthSignals.ts",
+      "filtra:supabase/functions/_shared/evolution-webhook-messages.ts",
+      "filtra:supabase/functions/_shared/evolution-webhook-msg-handlers.ts"
      ],
      "success": [
       "compara:src/components/admin/AIUsageLogsTab.tsx",
@@ -245466,6 +245752,8 @@
    "supabase/migrations/20261111160000_outbound_post_started.sql",
    "supabase/migrations/20261111170000_talkx_block_recipient.sql",
    "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+   "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
+   "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -258784,6 +259072,30 @@
     "src": "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resolve_unconfirmed_message",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_suppression_reasons_guard",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -267593,18 +267905,21 @@
   },
   "scripts/ci/ci-local-integracao.unit.mjs": {
    "path": "scripts/ci/ci-local-integracao.unit.mjs",
-   "lines": 744,
+   "lines": 850,
    "env": [
     "PATH"
    ],
    "doc": "Testes de ponta a ponta do CI local (scripts/ci/ci-local.mjs) em repositórios git temporários com workflows sintéticos. Sem docker e sem rede: o \"origin\" é um repositório bare local.",
    "temporal": [
     "timeout: 120_000,"
+   ],
+   "percents": [
+    "// >= 50% de similaridade: o git (e o GitHub) ainda veem rename, não remove+add."
    ]
   },
   "scripts/ci/ci-local-lib.mjs": {
    "path": "scripts/ci/ci-local-lib.mjs",
-   "lines": 997,
+   "lines": 1087,
    "exports": [
     "class ExpressaoNaoSuportada",
     "function usaFuncaoStatus",
@@ -267627,6 +267942,10 @@
     "function portaLocal",
     "function arquivosDoDiffZ",
     "function arquivosParaVitestRelated",
+    "const MIGRATION_VERSIONADA",
+    "function lerDiffRawZ",
+    "function migrationsEditadas",
+    "function checarMigrationsEditadas",
     "const COMANDOS_ROOT",
     "function comandosComSudo",
     "const MSG_SHIM_ROOT",
@@ -267650,7 +267969,11 @@
    ],
    "errors": [
     "ciclo em needs envolvendo ${id}",
-    "delimitador "
+    "delimitador ",
+    "git add --intent-to-add falhou: ${(ita.stderr ?? ",
+    "git diff ${alvo} falhou: ${(d.stderr ?? ",
+    "git diff --raw: linha inesperada ",
+    "git merge-base falhou: ${(mb.stderr ?? "
    ],
    "params": [
     {
@@ -267676,7 +267999,7 @@
   },
   "scripts/ci/ci-local.mjs": {
    "path": "scripts/ci/ci-local.mjs",
-   "lines": 1471,
+   "lines": 1497,
    "env": [
     "CI_LOCAL_GRACA_MS",
     "GIT_OPTIONAL_LOCKS",
@@ -267724,9 +268047,12 @@
   },
   "scripts/ci/ci-local.unit.mjs": {
    "path": "scripts/ci/ci-local.unit.mjs",
-   "lines": 718,
+   "lines": 891,
    "temporal": [
     "timeout: 10_000,"
+   ],
+   "percents": [
+    "// >= 50% de similaridade: o git (e o GitHub) ainda veem rename, não remove+add."
    ]
   },
   "scripts/ci/codeql-paths.unit.mjs": {
@@ -288125,7 +288451,7 @@
   },
   "src/components/email/EmailChatInbox.tsx": {
    "path": "src/components/email/EmailChatInbox.tsx",
-   "lines": 352,
+   "lines": 353,
    "exports": [
     "function EmailChatInbox"
    ],
@@ -288376,13 +288702,15 @@
   },
   "src/components/email/__tests__/EmailChatInbox.test.tsx": {
    "path": "src/components/email/__tests__/EmailChatInbox.test.tsx",
-   "lines": 172,
+   "lines": 187,
    "is_test": true,
    "errors": [
     ")).toHaveTextContent("
    ],
    "tests": [
     "EmailChatInbox",
+    "conta sem marcadores sincroniza os marcadores ao abrir",
+    "conta que precisa reconectar NÃO dispara a sincronização automática de marcadores (gmail-sync 409)",
     "distingue carregamento de conta desconectada",
     "mostra erro recuperável sem fingir inbox vazio",
     "distingue falta de permissão de indisponibilidade genérica",
@@ -295487,13 +295815,14 @@
   },
   "src/components/inbox/chat/SendErrorBanner.tsx": {
    "path": "src/components/inbox/chat/SendErrorBanner.tsx",
-   "lines": 228,
+   "lines": 236,
    "exports": [
     "interface SendErrorBannerProps",
     "function SendErrorBanner"
    ],
    "errors": [
-    "\n            data-testid="
+    "\n            data-testid=",
+    "Mensagem não enviada"
    ],
    "status_values": [
     {
@@ -295502,25 +295831,27 @@
      "kind": "escreve"
     },
     {
+     "field": "status",
+     "value": "failed",
+     "kind": "compara"
+    },
+    {
      "field": "type",
      "value": "text",
      "kind": "compara"
     }
    ],
-   "rule_comments": [
-    "iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve"
-   ],
    "calc_fns": [
     {
      "name": "podeReenviarComoTexto",
      "params": "mensagem: Message | null | undefined",
-     "body": "if (!mensagem || mensagem.type !== 'text') return false; // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync. return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;"
+     "body": "return !!mensagem && mensagem.type === 'text';"
     }
    ]
   },
   "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx": {
    "path": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-   "lines": 127,
+   "lines": 129,
    "exports": [
     "interface UnconfirmedMessagesPanelProps",
     "function UnconfirmedMessagesPanel"
@@ -296091,7 +296422,7 @@
   },
   "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
-   "lines": 312,
+   "lines": 321,
    "is_test": true,
    "errors": [
     ")).toHaveTextContent("
@@ -296106,7 +296437,8 @@
     "com fila e falhas mostra os dois e ",
     "com busca ativa, clicar na pílula não altera os realces da busca",
     "clicar na pílula de falha realça a primeira mensagem naquele estado",
-    "pilula na fila foca mensagem com claim invalido (mesma regua do resumo)"
+    "pilula na fila foca mensagem com claim invalido (mesma regua do resumo)",
+    "C110: painel de entrega ambígua recebe o contato da conversa"
    ]
   },
   "src/components/inbox/chat/__tests__/ChatPanelHeader.reabrir.test.tsx": {
@@ -296595,7 +296927,7 @@
   },
   "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
-   "lines": 214,
+   "lines": 243,
    "is_test": true,
    "errors": [
     ")).toBeInTheDocument();\n\n    fireEvent.click(screen.getByRole(",
@@ -296624,6 +296956,8 @@
     "sem falha não renderiza nada",
     "com 2 mensagens em falha mostra o alerta e reenvia o texto da última falha de texto",
     "o botão de reenvio vira spinner e depois check de enviado",
+    "PD-79: falha DEFINITIVA com POST carimbado (recusa 4xx) ainda oferece reenvio",
+    "PD-79: mensagem ambígua (sending carimbada) não aparece no banner",
     "falha de audio/interativa: so o aviso, sem botao de reenvio",
     "última falha de mídia: só o aviso, sem botão de reenvio",
     "Esc com o foco dentro do banner dispensa",
@@ -296634,7 +296968,22 @@
     "desmontar durante o envio não agenda estado depois",
     "outra falha depois de dispensar traz o banner de volta",
     "com movimento normal o banner nasce deslocado (opacidade 0)",
-    "com reduzir movimento o banner já nasce no lugar"
+    "com reduzir movimento o banner já nasce no lugar",
+    "falha do "
+   ]
+  },
+  "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx": {
+   "path": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+   "lines": 80,
+   "is_test": true,
+   "tests": [
+    "UnconfirmedMessagesPanel",
+    "sem mensagens não renderiza nada",
+    "em erro não renderiza nada",
+    "agente vê o aviso, mas NÃO os botões de correção",
+    "supervisor resolve como entregue e como não entregue",
+    "enquanto resolve a mensagem, troca os botões dela pelo spinner",
+    "repassa o groupId ao hook (conversa de grupo) e mantém o caso de contato sem grupo"
    ]
   },
   "src/components/inbox/chat/__tests__/forwardChatTransport.test.tsx": {
@@ -318410,7 +318759,7 @@
   },
   "src/components/team-chat/TeamChatView.tsx": {
    "path": "src/components/team-chat/TeamChatView.tsx",
-   "lines": 174,
+   "lines": 181,
    "exports": [
     "function TeamChatView"
    ],
@@ -318779,12 +319128,14 @@
   },
   "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx": {
    "path": "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
-   "lines": 119,
+   "lines": 149,
    "is_test": true,
    "tests": [
     "TeamChatView — deep-link com React Query real",
     "notificação de conversa ausente (descartada após a recarga) mantém o painel na conversa aberta",
-    "cid descartado, depois a conversa passa a existir e chega nova notificação: recarrega e abre"
+    "cid descartado, depois a conversa passa a existir e chega nova notificação: recarrega e abre",
+    "?cid= aberto por URL antes do perfil carregar espera a primeira busca real e abre a conversa",
+    "perfil que nunca carrega: a lista NÃO fica presa em "
    ]
   },
   "src/components/team-chat/__tests__/TeamChatView.deeplink.test.tsx": {
@@ -324469,14 +324820,16 @@
   },
   "src/hooks/__tests__/useSipClient.test.ts": {
    "path": "src/hooks/__tests__/useSipClient.test.ts",
-   "lines": 1194,
+   "lines": 1451,
    "is_test": true,
    "role_checks": [
     "leader"
    ],
    "rule_comments": [
     "um teste que simulou o 503 não pode silenciar o provisionamento do seguinte.",
-    "=== D1: INVITE sem resposta final não pode travar a linha ==="
+    "=== D1: INVITE sem resposta final não pode travar a linha ===",
+    "Logout: a linha do usuário anterior não pode continuar registrada nesta aba.",
+    "A senha chega depois do logout: não pode registrar a linha na tela de login."
    ],
    "tests": [
     "useSipClient",
@@ -324533,6 +324886,16 @@
     "reconectarLinha (clique) numa aba seguidora: reivindica e a promoção que segue ignora a trava",
     "promoção automática FORA da janela do clique continua respeitando a trava",
     "T20: virar aba LÍDER conecta com as credenciais provisionadas",
+    "sem usuário, virar líder não chama get-sip-password nem mostra toast",
+    "logar com a aba já líder provisiona uma vez",
+    "logout derruba a linha e o próximo usuário da mesma aba provisiona a própria",
+    "logout e login de outro usuário antes de a desconexão terminar: o novo usuário conecta",
+    "logout com a busca da senha SIP ainda pendente não registra a linha sem usuário",
+    "virar seguidora e voltar a líder antes do stop terminar: UA novo e sem ",
+    "logout e promoção a líder no MESMO render não buscam a senha SIP",
+    "remontagem + login + logout terminam sem UA vivo (o unmount solta a linha)",
+    "login e promoção a líder no MESMO render provisionam uma vez só",
+    "logado, virar líder provisiona uma vez só (sem duplicar com o login)",
     "T20: 2ª chamada com a linha ocupada vira missed/busy_here + toast, sem tocar a em curso",
     "T22: saída com 486 grava busy/busy ponta a ponta (o elo que faltava)",
     "T22: falha ao discar (invite rejeita) grava failed/failed ponta a ponta (o elo que faltava)",
@@ -327777,7 +328140,7 @@
   },
   "src/hooks/calls/useCallChannels.ts": {
    "path": "src/hooks/calls/useCallChannels.ts",
-   "lines": 318,
+   "lines": 326,
    "exports": [
     "interface WhatsappConnectionRow",
     "interface CapacidadesEntrada",
@@ -327835,6 +328198,7 @@
     "* Linha existente → somente-recebidas (`whatsapp_no_outbound`, texto literal do",
     "D8: sem permissão, a linha é invisível por RLS — o canal não pode mentir",
     "* Regra pura das capacidades — sem React e sem I/O. */",
+    "sem trocar de usuário e não deve refazer a consulta.",
     "T30/D8: qual linha decidiu o canal. Sem permissão de supervisor ela já não veio",
     "usuário não pode ver (o painel mostra \"Disponível para supervisores\").",
     "não pode escolher sozinho entre \"pela linha X\" e o motivo da restrição."
@@ -328023,6 +328387,17 @@
     "sem o campo (quem já usava o mapper) o comportamento é o antigo",
     "o texto na tela é exatamente o combinado no D8",
     "com linha conectada visível, a permissão não interfere na capacidade de receber"
+   ]
+  },
+  "src/hooks/calls/__tests__/useCallChannels.semUsuario.test.tsx": {
+   "path": "src/hooks/calls/__tests__/useCallChannels.semUsuario.test.tsx",
+   "lines": 71,
+   "is_test": true,
+   "tests": [
+    "useCallChannels — sem usuário logado",
+    "sem usuário não consulta whatsapp_connections",
+    "ao logar, consulta whatsapp_connections uma vez",
+    "renovação de token (mesmo id, objeto novo) não refaz a consulta"
    ]
   },
   "src/hooks/calls/__tests__/useCallChannels.test.ts": {
@@ -331603,7 +331978,7 @@
   },
   "src/hooks/communication/useSipClient.ts": {
    "path": "src/hooks/communication/useSipClient.ts",
-   "lines": 121,
+   "lines": 165,
    "exports": [
     "type CallStatus",
     "type CallDirection",
@@ -335514,7 +335889,7 @@
   },
   "src/hooks/delivery/useUnconfirmedMessages.ts": {
    "path": "src/hooks/delivery/useUnconfirmedMessages.ts",
-   "lines": 89,
+   "lines": 98,
    "exports": [
     "interface UnconfirmedMessage",
     "function useUnconfirmedMessages"
@@ -335533,7 +335908,6 @@
      "created_at",
      "delivery_post_started_at",
      "id",
-     "manually_resolved_at",
      "sender",
      "status"
     ]
@@ -335544,11 +335918,37 @@
      "value": "2"
     }
    ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "filtra"
+    }
+   ],
+   "rule_comments": [
+    "resolvido aqui) e não pode virar \"entregue\" à mão."
+   ],
    "hooks": [
     "useUnconfirmedMessages"
    ],
    "temporal": [
     "const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;"
+   ]
+  },
+  "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx": {
+   "path": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+   "lines": 97,
+   "is_test": true,
+   "rule_comments": [
+    "'failed' com carimbo é recusa definitiva e não pode ser oferecida como \"entregue\"."
+   ],
+   "tests": [
+    "useUnconfirmedMessages",
+    "filtra só status=sending, carimbado, não resolvido e do contato",
+    "grupo: mesmo filtro de status, por whatsapp_group_id",
+    "erro do PostgREST continua sendo erro",
+    "erro message_not_resolvable (P0002) invalida a lista do painel",
+    "outro erro da RPC NÃO invalida a lista"
    ]
   },
   "src/hooks/email/useEmailThreadListQuery.ts": {
@@ -338755,7 +339155,7 @@
   },
   "src/hooks/integrations/useGmail.ts": {
    "path": "src/hooks/integrations/useGmail.ts",
-   "lines": 647,
+   "lines": 648,
    "exports": [
     "type EmailThreadStatusFilter",
     "interface EmailThreadListQueryWithStatus",
@@ -341353,7 +341753,7 @@
   },
   "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx": {
    "path": "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
-   "lines": 227,
+   "lines": 240,
    "is_test": true,
    "rule_comments": [
     "permissão é concedida para o teste observar o caminho de sempre."
@@ -341363,6 +341763,7 @@
     "409 não repete a chamada e mostra aviso informativo, não erro",
     "409 com corpo ",
     "409 reauth_required NÃO vira ",
+    "sincronizar marcadores com 409 reauth_required NÃO repete a chamada (console: dois 409)",
     "falha de servidor (500) ainda ganha UMA nova tentativa e toast de erro",
     "shouldRetryGmailSync / isGmailSyncAlreadyRunning",
     "nunca repete 4xx (exceto 429) e nunca passa de uma tentativa extra",
@@ -343415,7 +343816,7 @@
   },
   "src/hooks/sip/useSipConnection.ts": {
    "path": "src/hooks/sip/useSipConnection.ts",
-   "lines": 260,
+   "lines": 271,
    "exports": [
     "type SipStatus",
     "function useSipConnection"
@@ -343468,7 +343869,7 @@
   },
   "src/hooks/sip/__tests__/useSipConnection.test.ts": {
    "path": "src/hooks/sip/__tests__/useSipConnection.test.ts",
-   "lines": 503,
+   "lines": 515,
    "is_test": true,
    "rule_comments": [
     "ter sido chamado) não deve reagendar reconexão nem redisparar connect().",
@@ -343485,6 +343886,7 @@
     "clears a pending reconnect timer when disconnect is called mid-backoff",
     "T16: connect() com um UA vivo não cria um segundo UserAgent",
     "T16: unmount durante o backoff não cria UserAgent",
+    "unmount com o UA registrado solta o registro e para o UA",
     "T16: 6ª falha seguida vira ",
     "duas chamadas de connect() em paralelo criam um único UserAgent e um único Registerer",
     "disconnect() durante start() invalida a tentativa: refs nulos, estado idle e UA parado",
@@ -365990,7 +366392,7 @@
   },
   "supabase/functions/_shared/evolution-webhook-messages.ts": {
    "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "lines": 1446,
+   "lines": 1448,
    "exports": [
     "interface OptOutKeyword",
     "function resetOptOutKeywordCache",
@@ -366150,6 +366552,7 @@
      "id",
      "message_type",
      "sender",
+     "status",
      "whatsapp_connection_id"
     ],
     "whatsapp_connections": [
@@ -366282,6 +366685,16 @@
      "field": "transcription_status",
      "value": "failed",
      "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "filtra"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "filtra"
     }
    ],
    "rule_comments": [
@@ -366309,7 +366722,7 @@
   },
   "supabase/functions/_shared/evolution-webhook-msg-handlers.ts": {
    "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-   "lines": 464,
+   "lines": 466,
    "exports": [
     "function handleSendMessage",
     "function handleMessagesUpdate",
@@ -366418,6 +366831,11 @@
      "field": "status",
      "value": "deleted",
      "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "filtra"
     }
    ],
    "rule_comments": [
@@ -369292,6 +369710,31 @@
     "secure egress signs the exact body and never fetches the user URL",
     "secure egress fails closed for bad configuration and malformed proxy payloads",
     "secure egress configuration requires HTTPS and a strong shared secret"
+   ]
+  },
+  "supabase/functions/_shared/__tests__/send-message-manual-resolution.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/send-message-manual-resolution.test.ts",
+   "lines": 73,
+   "is_test": true,
+   "errors": [
+    "${message} — esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}"
+   ],
+   "doc": "C110 / PD-79: `handleSendMessage` (evento send.message) não sobrescreve a resolução manual do operador — nem pela leitura nem por um recibo que chegue entre o SELECT e o UPDATE (o UPDATE leva `.is('manually_resolved_at', null)`).",
+   "tests": [
+    "send.message NÃO sobrescreve resolução manual e protege os dois UPDATEs com o predicado"
+   ]
+  },
+  "supabase/functions/_shared/__tests__/send-message-pending-status.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/send-message-pending-status.test.ts",
+   "lines": 121,
+   "is_test": true,
+   "errors": [
+    "${message} — esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}"
+   ],
+   "doc": "C110 / PD-79: a busca da \"pendente\" (linha do agente ainda sem external_id) nos eventos send.message e FROM_ME só pode casar linha em status 'sending'. Sem o filtro, uma linha mais antiga do mesmo contato já 'failed' — ou resolvida à mão, que também fica com external_id NULL — ganhava o external_id …",
+   "tests": [
+    "send.message casa só a pendente em ",
+    "FROM_ME casa só a pendente em "
    ]
   },
   "supabase/functions/_shared/__tests__/ssrf.test.ts": {
@@ -376734,7 +377177,7 @@
   },
   "supabase/functions/message-delivery/index.test.ts": {
    "path": "supabase/functions/message-delivery/index.test.ts",
-   "lines": 815,
+   "lines": 891,
    "is_test": true,
    "errors": [
     "${label}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}",
@@ -376757,6 +377200,7 @@
     "payload ${JSON.stringify(payload)} should fail with ${expected}, got ${rejected || ",
     "provedor NÃO pode ser chamado quando o carimbo falha por outro motivo",
     "provedor deveria ter sido chamado sem o carimbo",
+    "provider must not be called",
     "quoted reply metadata was not preserved",
     "reply button fields not preserved",
     "resposta vazou telefone",
@@ -376822,13 +377266,17 @@
     "PD-80 [merge main/grupos]: claim vazio de mensagem de GRUPO (sem contact_id) não é classificada como número inválido nem conexão fora — 409 in_progress, sem ler contacts/whatsapp_connections",
     "PD-80 [merge main/E15]: o handler continua entregando com o token da PRÓPRIA instância do claim (get_instance_token), nunca com a key global",
     "PD-79 [pré-DDL]: RPC mark_outbound_post_started ainda inexistente (PGRST202) não derruba o envio — entrega sem carimbo",
-    "PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando antes do POST"
+    "PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando antes do POST",
+    "PD-79: POST carimbado com lease AINDA VIVO é 409 in_progress (duplo clique durante o envio)",
+    "PD-79: POST carimbado com lease VENCIDO continua 502 receipt_unconfirmed (ambíguo, sem reenvio)",
+    "PD-79: 42883 no mark_outbound_post_started NÃO é tolerado (só PGRST202): nada sai, failClaim",
+    "PD-79: exceção LANÇADA no mark_outbound_post_started é infra (503 provider_unavailable, retryable), não 422 media_invalid"
    ],
    "uses_service_role": true
   },
   "supabase/functions/message-delivery/index.ts": {
    "path": "supabase/functions/message-delivery/index.ts",
-   "lines": 799,
+   "lines": 819,
    "exports": [
     "type DeliveryErrorCode",
     "interface DeliveryFailure",
@@ -376893,6 +377341,7 @@
     "messages": [
      "agent_id",
      "contact_id",
+     "delivery_claim_expires_at",
      "delivery_post_started_at",
      "external_id",
      "id",
@@ -376909,6 +377358,7 @@
     "mark_outbound_post_started"
    ],
    "errors": [
+    ",\n          code: markError.code,\n          detail: ",
     "invalid_buttons_payload",
     "invalid_contact_card_payload",
     "invalid_list_payload",
@@ -383069,7 +383519,7 @@
   },
   "supabase/functions/whatsapp-webhook/index.test.ts": {
    "path": "supabase/functions/whatsapp-webhook/index.test.ts",
-   "lines": 544,
+   "lines": 575,
    "is_test": true,
    "rule_comments": [
     "persistida com p_push_name nulo; o lote não pode ser descartado por"
@@ -383080,6 +383530,7 @@
     "(a) inbound de texto de conta conhecida chama ingest_inbound_message e responde 200",
     "(b) a mesma fixture entregue 2x chama o RPC com o mesmo p_external_id e ambas respondem 200",
     "(c) read seguido de sent atrasado gera um único PATCH com status read (monotônico + escopo de conexão)",
+    "(c2) recibo não sobrescreve resolução manual do operador (PATCH com manually_resolved_at=is.null)",
     "(d) status com phone_number_id de outra conta (sem channel_connections) não gera PATCH e responde 400",
     "(e) inbound sem metadata/phone_number_id não chama o RPC e responde != 200",
     "(f) ingest_inbound_message devolvendo erro propaga como 500 (nunca 200 dizendo sucesso)",
@@ -383091,7 +383542,7 @@
   },
   "supabase/functions/whatsapp-webhook/index.ts": {
    "path": "supabase/functions/whatsapp-webhook/index.ts",
-   "lines": 272,
+   "lines": 274,
    "exports": [
     "function handleWhatsappWebhook"
    ],
@@ -388547,6 +388998,20 @@
    "lines": 236,
    "uses_service_role": true
   },
+  "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql": {
+   "path": "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql",
+   "lines": 107
+  },
+  "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql": {
+   "path": "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
+   "lines": 240,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql": {
+   "path": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql",
+   "lines": 127,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql": {
    "path": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql",
    "lines": 63,
@@ -392406,10 +392871,56 @@
   }
  },
  "git": {
-  "sha": "098a648f6ce4308202999388a88b6de33d7c6fba",
+  "sha": "f32855df69f21c7bb6b0dba89451fc886b059e58",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f32855d",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "chore: pacote 2 — login sem 401, linha SIP, Gmail sem 409, Team Chat ?cid=, Talk X e PD79 (#3046)",
+    "files": [
+     "ESTADO.md",
+     "docs/ci/CI_LOCAL.md",
+     "docs/telefonia/CAPACIDADES.md",
+     "scripts/ci/ci-local-integracao.unit.mjs",
+     "scripts/ci/ci-local-lib.mjs",
+     "scripts/ci/ci-local.mjs",
+     "scripts/ci/ci-local.unit.mjs",
+     "src/components/email/EmailChatInbox.tsx",
+     "src/components/email/__tests__/EmailChatInbox.test.tsx",
+     "src/components/inbox/chat/SendErrorBanner.tsx",
+     "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+     "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
+     "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
+     "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+     "src/components/team-chat/TeamChatView.tsx",
+     "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
+     "src/hooks/__tests__/useSipClient.test.ts",
+     "src/hooks/calls/__tests__/useCallChannels.semUsuario.test.tsx",
+     "src/hooks/calls/useCallChannels.ts",
+     "src/hooks/communication/useSipClient.ts",
+     "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+     "src/hooks/delivery/useUnconfirmedMessages.ts",
+     "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
+     "src/hooks/integrations/useGmail.ts",
+     "src/hooks/sip/__tests__/useSipConnection.test.ts",
+     "src/hooks/sip/useSipConnection.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/send-message-manual-resolution.test.ts",
+     "supabase/functions/_shared/__tests__/send-message-pending-status.test.ts",
+     "supabase/functions/_shared/evolution-webhook-messages.ts",
+     "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+     "supabase/functions/message-delivery/index.test.ts",
+     "supabase/functions/message-delivery/index.ts",
+     "supabase/functions/whatsapp-webhook/index.test.ts",
+     "supabase/functions/whatsapp-webhook/index.ts",
+     "supabase/migrations/20261112170000_resolve_unconfirmed_somente_sending.sql",
+     "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
+     "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+    ]
+   },
    {
     "sha": "098a648",
     "date": "2026-11-13",
@@ -392914,26 +393425,64 @@
      "PENDENCIAS.md",
      "RELATORIO_CI.md"
     ]
-   },
-   {
-    "sha": "d8854eb",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "chore(ci): guard GA02 passa a checar referência órfã e skills idênticos (#2846)",
-    "files": [
-     "scripts/ci/check-claude-md-integrity.mjs",
-     "scripts/ci/check-claude-md-integrity.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    4
+    5
    ],
    [
     "ESTADO.md",
-    3
+    4
+   ],
+   [
+    "docs/ci/CI_LOCAL.md",
+    2
+   ],
+   [
+    "scripts/ci/ci-local-integracao.unit.mjs",
+    2
+   ],
+   [
+    "scripts/ci/ci-local-lib.mjs",
+    2
+   ],
+   [
+    "scripts/ci/ci-local.mjs",
+    2
+   ],
+   [
+    "scripts/ci/ci-local.unit.mjs",
+    2
+   ],
+   [
+    "src/components/email/EmailChatInbox.tsx",
+    2
+   ],
+   [
+    "src/components/team-chat/TeamChatView.tsx",
+    2
+   ],
+   [
+    "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
+    2
+   ],
+   [
+    "src/hooks/__tests__/useSipClient.test.ts",
+    2
+   ],
+   [
+    "src/hooks/communication/useSipClient.ts",
+    2
+   ],
+   [
+    "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
+    2
+   ],
+   [
+    "src/hooks/integrations/useGmail.ts",
+    2
    ],
    [
     "docs/audits/edge-functions-authz-coverage.md",
@@ -392958,54 +393507,6 @@
    [
     "supabase/functions/evolution-api/index.ts",
     2
-   ],
-   [
-    "docs/contexto/regras/manual/regras.md",
-    2
-   ],
-   [
-    "docs/talkx/ESTADOS.md",
-    2
-   ],
-   [
-    "PENDENCIAS.md",
-    2
-   ],
-   [
-    "RELATORIO_CI.md",
-    2
-   ],
-   [
-    "e2e/navegacao-modulos.spec.ts",
-    2
-   ],
-   [
-    "src/pages/ForgotPassword.tsx",
-    2
-   ],
-   [
-    "src/components/connections/ConnectionsView.tsx",
-    1
-   ],
-   [
-    "src/components/connections/SyncCredentialAction.tsx",
-    1
-   ],
-   [
-    "src/components/connections/__tests__/ConnectionAuditDialog.test.tsx",
-    1
-   ],
-   [
-    "src/components/connections/__tests__/SyncCredentialAction.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/evolution/useEvolutionInstance.ts",
-    1
-   ],
-   [
-    "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
-    1
    ]
   ]
  }

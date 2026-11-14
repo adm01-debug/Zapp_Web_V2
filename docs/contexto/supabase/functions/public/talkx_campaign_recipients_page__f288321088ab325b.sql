@@ -36,7 +36,7 @@ BEGIN
   END IF;
 
   IF p_status IS NOT NULL
-     AND p_status NOT IN ('pending', 'sending', 'sent', 'delivered', 'failed', 'skipped', 'outcome_unknown') THEN
+     AND p_status NOT IN ('pending', 'sending', 'sent', 'delivered', 'failed', 'skipped', 'outcome_unknown', 'cancelled') THEN
     RAISE EXCEPTION 'talkx_campaign_recipients_page: status invalido' USING ERRCODE = '22023';
   END IF;
 

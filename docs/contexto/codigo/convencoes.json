@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1989)",
+   "co-localizado (__tests__) (1994)",
    "outro (234)",
    "co-localizado (*.test) (183)"
   ],
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore: pacote 2 — login sem 401, linha SIP, Gmail sem 409, Team Chat ?cid=, Talk X e PD79 (#3046)",
    "fix(evolution-api): connect da go nunca mais devolve 500 e busca a credencial da instância sozinho (#3045)",
    "feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051) (#2555)",
    "feat(multiplix): retomar disparo pausado em um clique (#3043)",
-   "test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)",
-   "Pacote: 20 PRs aprovadas integradas num único merge (#3035)"
+   "test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

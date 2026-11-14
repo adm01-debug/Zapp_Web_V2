@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "098a648f6ce4308202999388a88b6de33d7c6fba",
+  "commit": "f32855df69f21c7bb6b0dba89451fc886b059e58",
   "branch": "main",
-  "data_commit": "2026-11-13T19:41:32-03:00",
+  "data_commit": "2026-11-13T21:12:08-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f32855d",
+    "data": "2026-11-13",
+    "assunto": "chore: pacote 2 — login sem 401, linha SIP, Gmail sem 409, Team Chat ?cid=, Talk X e PD79 (#3046)"
+   },
    {
     "sha": "098a648",
     "data": "2026-11-13",
@@ -126,18 +131,13 @@
     "sha": "8a14183",
     "data": "2026-11-12",
     "assunto": "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)"
-   },
-   {
-    "sha": "b2813f8",
-    "data": "2026-11-12",
-    "assunto": "feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057) (#2856)"
    }
   ],
-  "arquivos_mudados_7d": 814,
+  "arquivos_mudados_7d": 827,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 662
+    "mudancas": 667
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -148,20 +148,20 @@
     "mudancas": 293
    },
    {
+    "pasta": "supabase/functions/_shared",
+    "mudancas": 215
+   },
+   {
     "pasta": "docs/_arquivo/analise-prs",
     "mudancas": 211
    },
    {
-    "pasta": "supabase/functions/_shared",
-    "mudancas": 211
-   },
-   {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 148
+    "mudancas": 149
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 129
+    "mudancas": 131
    },
    {
     "pasta": "src/components/ui",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 18
+    "mudancas": 19
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -219,7 +219,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 10
+    "mudancas": 11
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8504,
-  "arquivos_codigo": 4897,
-  "linhas_codigo": 907922,
+  "arquivos_total": 8512,
+  "arquivos_codigo": 4902,
+  "linhas_codigo": 909348,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,9 +326,9 @@
   "hooks": 501,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1107,
+  "migrations": 1110,
   "cron_jobs": 26,
-  "testes": 2668,
+  "testes": 2673,
   "workflows": 22,
   "scripts": 429,
   "docs_md": 1087
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 219,
-   "linhas": 48261
+   "linhas": 48656
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -703,8 +703,8 @@
    "linhas": 620
   },
   "src/components": {
-   "arquivos": 2220,
-   "linhas": 377255
+   "arquivos": 2221,
+   "linhas": 377436
   },
   "src/config": {
    "arquivos": 3,
@@ -723,8 +723,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 997,
-   "linhas": 162346
+   "arquivos": 999,
+   "linhas": 162869
   },
   "src/i18n": {
    "arquivos": 2,
@@ -779,8 +779,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 406,
-   "linhas": 122969
+   "arquivos": 408,
+   "linhas": 123296
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -817,12 +817,12 @@
    "linhas": 1794
   },
   {
-   "arquivo": "supabase/functions/talkx-send/index.ts",
-   "linhas": 1484
+   "arquivo": "scripts/ci/ci-local.mjs",
+   "linhas": 1497
   },
   {
-   "arquivo": "scripts/ci/ci-local.mjs",
-   "linhas": 1471
+   "arquivo": "supabase/functions/talkx-send/index.ts",
+   "linhas": 1484
   },
   {
    "arquivo": "supabase/functions/evolution-api/index.ts",
@@ -830,7 +830,7 @@
   },
   {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "linhas": 1446
+   "linhas": 1448
   },
   {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
@@ -855,6 +855,10 @@
   {
    "arquivo": "supabase/functions/connection-health-check/index.ts",
    "linhas": 1143
+  },
+  {
+   "arquivo": "scripts/ci/ci-local-lib.mjs",
+   "linhas": 1087
   },
   {
    "arquivo": "supabase/functions/multiplix-dispatch/actions/audience.ts",
@@ -889,10 +893,6 @@
    "linhas": 998
   },
   {
-   "arquivo": "scripts/ci/ci-local-lib.mjs",
-   "linhas": 997
-  },
-  {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/auth/extend-second-pass.py",
    "linhas": 975
   },
@@ -907,7 +907,7 @@
  ],
  "qualidade": {
   "any": 373,
-  "console_log": 417,
+  "console_log": 419,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 50,

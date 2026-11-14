@@ -258,7 +258,7 @@
   {
    "arquivo": "scripts/ci/ci-local-lib.mjs",
    "descricao": "Lógica pura do CI local (scripts/ci/ci-local.mjs): lê os workflows do GitHub e decide O QUE rodar, sem executar nada. Tudo aqui é determinístico e coberto",
-   "linhas": 997,
+   "linhas": 1087,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -267,7 +267,7 @@
   {
    "arquivo": "scripts/ci/ci-local.mjs",
    "descricao": "CI local: roda na máquina os MESMOS passos dos workflows do GitHub, lendo os próprios .github/workflows/*.yml (nada de cópia de comandos que envelhece).",
-   "linhas": 1471,
+   "linhas": 1497,
    "env": [
     "CI_LOCAL_GRACA_MS",
     "GIT_OPTIONAL_LOCKS",

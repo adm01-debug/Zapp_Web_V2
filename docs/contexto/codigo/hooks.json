@@ -2434,7 +2434,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 107,
+   "usado_por": 108,
    "usado_por_arquivos": [
     "src/App.tsx",
     "src/components/auth/ProtectedRoute.tsx",
@@ -2996,7 +2996,7 @@
    "hooks_exportados": [
     "useCallChannels"
    ],
-   "linhas": 318,
+   "linhas": 326,
    "dominio": "hooks/calls",
    "tabelas": [
     "user_roles",
@@ -3018,7 +3018,7 @@
     "src/components/calls/NewCallPanel.tsx",
     "src/components/calls/TelefoniaTopActions.tsx"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/calls/useCallRecording.ts",
@@ -4565,7 +4565,7 @@
    "hooks_exportados": [
     "useSipClient"
    ],
-   "linhas": 121,
+   "linhas": 165,
    "dominio": "hooks/communication",
    "tabelas": [
     "contacts"
@@ -4573,6 +4573,7 @@
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
+    "useAuth",
     "useCallEngineSink",
     "useCallback",
     "useEffect",
@@ -7069,7 +7070,7 @@
    "hooks_exportados": [
     "useUnconfirmedMessages"
    ],
-   "linhas": 89,
+   "linhas": 98,
    "dominio": "hooks/delivery",
    "tabelas": [
     "messages"
@@ -7086,7 +7087,7 @@
    "usado_por_arquivos": [
     "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx"
    ],
-   "coberto_por_testes": 0
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/email/useEmailThreadListQuery.ts",
@@ -8224,7 +8225,7 @@
     "useGmail",
     "useGmailLabelsManagement"
    ],
-   "linhas": 647,
+   "linhas": 648,
    "dominio": "hooks/integrations",
    "tabelas": [
     "contacts",
@@ -9713,7 +9714,7 @@
    "hooks_exportados": [
     "useSipConnection"
    ],
-   "linhas": 260,
+   "linhas": 271,
    "dominio": "hooks/sip",
    "tabelas": [],
    "rpcs": [],
@@ -11822,7 +11823,7 @@
     "useSyncExternalStore"
    ],
    "canais_realtime": [],
-   "usado_por": 57,
+   "usado_por": 58,
    "usado_por_arquivos": [
     "src/components/connections/ConnectionCard.tsx",
     "src/components/effects/EasterEggs.tsx",
@@ -11836,6 +11837,7 @@
     "src/components/inbox/chat/ChatInputArea.tsx",
     "src/components/inbox/chat/ChatMessageInput.tsx",
     "src/components/inbox/chat/MessageBubble.tsx",
+    "src/components/inbox/chat/SendErrorBanner.tsx",
     "src/components/inbox/chat/useChatPanelHandlers.ts",
     "src/components/inbox/interactive-builder/useInteractiveMessage.ts",
     "src/components/inbox/location-picker/useLocationPicker.ts",
@@ -11852,10 +11854,9 @@
     "src/components/ui/use-toast.ts",
     "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
     "src/hooks/auth/useAuthForm.ts",
-    "src/hooks/business/useBusinessHours.ts",
-    "src/hooks/business/useCSAT.ts"
+    "src/hooks/business/useBusinessHours.ts"
    ],
-   "coberto_por_testes": 12
+   "coberto_por_testes": 13
   },
   {
    "arquivo": "src/hooks/ui/useActionFeedback.ts",

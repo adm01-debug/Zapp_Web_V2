@@ -1110,6 +1110,9 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261111170000 | [talkx_block_recipient](migrations/20261111170000_talkx_block_recipient.sql) | 4 |
 | 20261111181000 | [instance_pause_investigation](migrations/20261111181000_instance_pause_investigation.sql) | 7 |
 | 20261112160000 | [talkx_blacklist_reconcilia_e_higiene](migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql) | 22 |
+| 20261112170000 | [resolve_unconfirmed_somente_sending](migrations/20261112170000_resolve_unconfirmed_somente_sending.sql) | 7 |
+| 20261112171000 | [talkx_recipients_page_aceita_cancelled](migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql) | 1 |
+| 20261112172000 | [talkx_suppression_reasons_hardening](migrations/20261112172000_talkx_suppression_reasons_hardening.sql) | 5 |
 | 20261113130000 | [envio_sem_conexao_de_teste_nem_fallback_silencioso](migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql) | 1 |
 | 20261113130100 | [transfer_conversation_unica_e_fila_aguardando](migrations/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql) | 1 |
 | 20261113130300 | [conversation_closures_closed_by_do_autor](migrations/20261113130300_conversation_closures_closed_by_do_autor.sql) | 1 |

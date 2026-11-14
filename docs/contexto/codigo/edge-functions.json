@@ -87,6 +87,8 @@
   "supabase/functions/_shared/__tests__/request-policy.test.ts",
   "supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts",
   "supabase/functions/_shared/__tests__/secure-egress.test.ts",
+  "supabase/functions/_shared/__tests__/send-message-manual-resolution.test.ts",
+  "supabase/functions/_shared/__tests__/send-message-pending-status.test.ts",
   "supabase/functions/_shared/__tests__/ssrf.test.ts",
   "supabase/functions/_shared/__tests__/sts-upload.test.ts",
   "supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts",
@@ -2203,7 +2205,7 @@
    "nome": "message-delivery",
    "entrada": "supabase/functions/message-delivery/index.ts",
    "arquivos": 1,
-   "linhas": 799,
+   "linhas": 819,
    "verify_jwt": true,
    "metodos": [
     "POST"
@@ -2839,7 +2841,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": true,
-   "testes": 7
+   "testes": 8
   },
   {
    "nome": "sync-call-records",
@@ -3284,7 +3286,7 @@
    "nome": "whatsapp-webhook",
    "entrada": "supabase/functions/whatsapp-webhook/index.ts",
    "arquivos": 1,
-   "linhas": 272,
+   "linhas": 274,
    "verify_jwt": false,
    "metodos": [
     "GET",

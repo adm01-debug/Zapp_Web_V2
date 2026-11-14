@@ -13,7 +13,9 @@ BEGIN
     RAISE EXCEPTION 'authenticated_required' USING ERRCODE = '42501';
   END IF;
 
-  IF p_outcome NOT IN ('sent', 'not_delivered') THEN
+  -- NULL também é recusado: com NULL o NOT IN dá NULL (não dispara) e o CASE
+  -- abaixo cairia no ELSE 'failed', gravando resolução sem desfecho escolhido.
+  IF p_outcome IS NULL OR p_outcome NOT IN ('sent', 'not_delivered') THEN
     RAISE EXCEPTION 'invalid_resolve_outcome' USING ERRCODE = '22023';
   END IF;
 
@@ -24,6 +26,8 @@ BEGIN
 
   v_new_status := CASE p_outcome WHEN 'sent' THEN 'sent' ELSE 'failed' END;
 
+  -- Só a linha AMBÍGUA: POST carimbado, ainda em 'sending' e com o lease vencido.
+  -- 'failed' (recusa definitiva do provedor) não é resolvível.
   UPDATE public.messages
   SET
     status               = v_new_status,
@@ -33,7 +37,7 @@ BEGIN
   WHERE id                        = p_message_id
     AND delivery_post_started_at IS NOT NULL
     AND manually_resolved_at     IS NULL
-    AND status NOT IN ('sent', 'delivered', 'read')
+    AND status                    = 'sending'
     AND (delivery_claim_expires_at IS NULL OR delivery_claim_expires_at <= statement_timestamp())
   RETURNING id INTO v_result;
 

@@ -9,6 +9,10 @@ BEGIN
       RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema só nasce por migration'
         USING ERRCODE = '42501';
     END IF;
+    -- Autor não é escolhido pelo cliente: sobrescreve o created_by enviado.
+    IF current_user IN ('authenticated', 'anon') THEN
+      NEW.created_by := auth.uid();
+    END IF;
     RETURN NEW;
   END IF;
   IF OLD.code IS DISTINCT FROM NEW.code THEN

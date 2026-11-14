@@ -2,6 +2,14 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-14 01:21 UTC
+
+- **functions** alterado (5): `public.fail_outbound_message(p_message_id uuid, p_claim_token uuid, p_retryable boolean)`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.resolve_unconfirmed_message(p_message_id uuid, p_outcome text)`, `public.talkx_campaign_recipients_page(p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text, p_segment_id uuid)`, `public.talkx_suppression_reasons_guard()`
+- **indexes** adicionado (1): `public.talkx_suppression_reasons_label_lower_key`
+- **migrations** adicionado (3): `20261112170000_resolve_unconfirmed_somente_sending`, `20261112171000_talkx_recipients_page_aceita_cancelled`, `20261112172000_talkx_suppression_reasons_hardening`
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_17`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_10`
+
 ## 2026-11-13 23:34 UTC
 
 - **functions** alterado (2): `public.has_role(_user_id uuid, _role app_role)`, `public.set_instance_token(p_connection_id uuid, p_token text)`
