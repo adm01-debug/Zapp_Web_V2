@@ -14,7 +14,7 @@ import {
   MessageSquare, HelpCircle, GitBranch, Clock, Users, Zap, CheckCircle2,
 } from 'lucide-react';
 import {
-  CONDITION_OPERATORS, DEFAULT_CONDITION_OPERATOR, missingNodeConfig,
+  CONDITION_OPERATORS, DEFAULT_CONDITION_OPERATOR, missingNodeConfig, sanitizeDelaySeconds,
 } from './chatbotNodeConfig';
 import { cn } from '@/lib/utils';
 
@@ -171,7 +171,13 @@ export function EditNodeDialog({ node, onClose, onSave, onChange }: EditNodeDial
           {node.type === 'delay' && (
             <div>
               <Label>Tempo de espera (segundos)</Label>
-              <Input type="number" value={node.data.delaySeconds || 5} onChange={e => updateData({ delaySeconds: Number(e.target.value) })} />
+              <Input
+                type="number"
+                min={1}
+                aria-label="Tempo de espera (segundos)"
+                value={sanitizeDelaySeconds(node.data.delaySeconds)}
+                onChange={e => updateData({ delaySeconds: sanitizeDelaySeconds(e.target.value) })}
+              />
             </div>
           )}
           {mostrarErro && (

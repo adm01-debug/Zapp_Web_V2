@@ -45,6 +45,10 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
 
   const incompletos = useMemo(() => findIncompleteNodes(nodes), [nodes]);
   const mostrarErroSalvar = tentouSalvar && incompletos.length > 0;
+  // O editor permite criar mais de um nó Início (AddNodeDialog não distingue
+  // tipos); só o primeiro é o Início canônico e fica protegido — um Início
+  // duplicado tem que poder ser removido pela UI.
+  const primeiroInicioId = useMemo(() => nodes.find(n => n.type === 'start')?.id, [nodes]);
 
   const addNode = useCallback((type: ChatbotNode['type']) => {
     const newNode: ChatbotNode = {
@@ -132,7 +136,7 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
                           </div>
                           <div className="flex items-center gap-1">
                             <Button size="icon" variant="ghost" className="h-6 w-6" onClick={e => { e.stopPropagation(); setEditingNode(node); }} aria-label="Editar nó"><MessageSquare className="w-3 h-3" /></Button>
-                            {node.type !== 'start' && <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={e => { e.stopPropagation(); removeNode(node.id); }} aria-label="Remover nó"><Trash2 className="w-3 h-3" /></Button>}
+                            {(node.type !== 'start' || node.id !== primeiroInicioId) && <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={e => { e.stopPropagation(); removeNode(node.id); }} aria-label="Remover nó"><Trash2 className="w-3 h-3" /></Button>}
                           </div>
                         </div>
                         {node.data.content && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{node.data.content}</p>}

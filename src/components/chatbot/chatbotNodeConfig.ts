@@ -40,6 +40,22 @@ export const EDGE_CONDITIONS = [
   { value: 'false', label: 'Falso' },
 ] as const;
 
+/** Mínimo aceito para o atraso do nó Aguardar; abaixo disso não tem efeito prático. */
+export const MIN_DELAY_SECONDS = 1;
+
+/** Atraso padrão de um nó Aguardar novo, e usado quando o valor digitado é inválido. */
+export const DEFAULT_DELAY_SECONDS = 5;
+
+/**
+ * Normaliza o atraso do nó Aguardar: aceita só número finito >= MIN_DELAY_SECONDS,
+ * senão cai no padrão. Usado tanto para exibir o campo quanto para gravar o
+ * `onChange`, para que o valor mostrado seja sempre o que de fato é salvo.
+ */
+export function sanitizeDelaySeconds(value: unknown): number {
+  const num = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(num) && num >= MIN_DELAY_SECONDS ? num : DEFAULT_DELAY_SECONDS;
+}
+
 /**
  * Campos obrigatórios que faltam no nó, na ordem em que aparecem no formulário.
  * Lista vazia = nó pronto para salvar. Só os tipos cuja configuração o editor
