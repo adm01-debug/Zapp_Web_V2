@@ -6,18 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface Props { conversationId: string; }
 
 export function TeamPerformancePanel({ conversationId }: Props) {
-  const { data, isLoading } = useTeamPerformance(conversationId);
+  const { data, isLoading, isError } = useTeamPerformance(conversationId);
 
   const chartData = useMemo(() => {
     if (!data) return [];
     return [
       { name: 'Mensagens', value: data.messageCount },
       { name: 'Ativos', value: data.activeParticipants },
-      { name: 'Resp (s)', value: data.avgResponseTimeMs !== null ? Math.round(data.avgResponseTimeMs / 1000) : 0 },
+      // Sem resposta medida não há ponto: zero sugeriria resposta instantânea.
+      ...(data.avgResponseTimeMs !== null ? [{ name: 'Resp (s)', value: Math.round(data.avgResponseTimeMs / 1000) }] : []),
     ];
   }, [data]);
 
   if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Carregando métricas...</div>;
+  if (isError) return <div role="alert" className="p-4 text-sm text-destructive">Não foi possível carregar as métricas.</div>;
   if (!data) return null;
 
   return (

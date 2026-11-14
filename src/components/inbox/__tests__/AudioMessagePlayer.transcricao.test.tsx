@@ -58,6 +58,7 @@ vi.mock('framer-motion', async (importOriginal) => {
 });
 
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
+import { supabase } from '@/integrations/supabase/client';
 
 const props = { audioUrl: 'https://test.com/audio.webm', messageId: 'msg-1', isSent: false };
 
@@ -118,5 +119,18 @@ describe('PE-55 — o cliente só lê a transcrição; quem grava é o servidor'
     await waitFor(() => expect(invokeMock).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText(/transcrição anterior/)).toBeInTheDocument());
     expect(fromMock).not.toHaveBeenCalled();
+  });
+
+  it('P1-9: a bolha de áudio não abre canal realtime próprio; a transcrição chega pelas props', async () => {
+    const { rerender } = render(<AudioMessagePlayer {...props} transcriptionStatus="pending" />);
+    expect(supabase.channel).not.toHaveBeenCalled();
+
+    // O UPDATE da linha chegou pelo canal da conversa (useMessages) → novas props.
+    rerender(<AudioMessagePlayer {...props} transcriptionStatus="processing" />);
+    await waitFor(() => expect(screen.getByText('Transcrevendo...')).toBeInTheDocument());
+
+    rerender(<AudioMessagePlayer {...props} transcriptionStatus="completed" existingTranscription="chegou pelo realtime da conversa" />);
+    await waitFor(() => expect(screen.getByText(/chegou pelo realtime da conversa/)).toBeInTheDocument());
+    expect(supabase.channel).not.toHaveBeenCalled();
   });
 });

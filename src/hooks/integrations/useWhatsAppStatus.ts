@@ -236,6 +236,10 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
         return;
       }
 
+      // Só a leitura dos status. Antes ia junto um `send-chat-presence`
+      // 'paused' para o CONTATO a cada abertura da aba — o cliente recebia um
+      // sinal de presença sem o atendente estar digitando. Presença só sai do
+      // compositor, quando o atendente digita de fato.
       const consultarStatus = !statusIndisponivelPorInstancia.has(resolvedInstance);
       const [statusResult] = await Promise.allSettled([
         consultarStatus
@@ -244,10 +248,6 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
               body: { instanceName: resolvedInstance, page: 1, offset: 200 },
             })
           : Promise.resolve({ data: [], error: null }),
-        supabase.functions.invoke('evolution-api/send-chat-presence', {
-          method: 'POST',
-          body: { instanceName: resolvedInstance, number: phone, presence: 'paused', delay: 0 },
-        }),
       ]);
 
       if (!mountedRef.current) return;

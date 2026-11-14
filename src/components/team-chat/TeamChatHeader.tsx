@@ -44,6 +44,7 @@ interface TeamChatHeaderProps {
   speed: number;
   showSearch: boolean;
   showStats?: boolean;
+  showPerformance?: boolean;
   isMuted?: boolean;
   canTransfer?: boolean;
   /** Move a conversa de departamento (RPC guardada). Vem de `useTeamChatPanel`. */
@@ -53,6 +54,7 @@ interface TeamChatHeaderProps {
   onToggleDetails?: () => void;
   onToggleSearch?: () => void;
   onToggleStats?: () => void;
+  onTogglePerformance?: () => void;
   onAddMembers?: () => void;
   onVoiceChange: (voiceId: string) => void;
   onSpeedChange: (speed: number) => void;
@@ -69,6 +71,7 @@ export function TeamChatHeader({
   speed,
   showSearch,
   showStats,
+  showPerformance,
   isMuted,
   canTransfer,
   canTransferDepartment,
@@ -77,6 +80,7 @@ export function TeamChatHeader({
   onToggleDetails,
   onToggleSearch,
   onToggleStats,
+  onTogglePerformance,
   onAddMembers,
   onVoiceChange: _onVoiceChange,
   onSpeedChange,
@@ -151,21 +155,24 @@ export function TeamChatHeader({
           </Tooltip>
         )}
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="w-9 h-9 text-muted-foreground/40 cursor-not-allowed"
-              disabled
-              aria-label="Performance (em breve)"
-            >
-              <Activity className="w-[18px] h-[18px]" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Performance (em breve)</TooltipContent>
-        </Tooltip>
+        {onTogglePerformance && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showPerformance && 'text-primary bg-primary/10')}
+                onClick={onTogglePerformance}
+                aria-label={showPerformance ? 'Fechar performance' : 'Ver performance'}
+                aria-pressed={showPerformance}
+              >
+                <Activity className="w-[18px] h-[18px]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Performance</TooltipContent>
+          </Tooltip>
+        )}
 
         {isGroup && onAddMembers && (
           <Tooltip>
