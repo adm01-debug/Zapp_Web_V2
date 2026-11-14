@@ -40,11 +40,11 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 211 |
+| Tabelas (`tables`) | 212 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2360 |
-| Funções (`functions`) | 394 |
-| Assinaturas de função (`function_signatures`) | 396 |
+| Colunas (`columns`) | 2364 |
+| Funções (`functions`) | 396 |
+| Assinaturas de função (`function_signatures`) | 398 |
 | Funções de gatilho (`trigger_functions`) | 102 |
 | Restrições de verificação (`check_constraints`) | 249 |
 
@@ -79,6 +79,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `audit_logs` | Trilha de auditoria de ações do sistema (usuário, ação, entidade) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/admin/__tests__/MediaMigrationTool.test.tsx`, `src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts` … |
 | `auto_close_config` | Configuração do fechamento automático por inatividade da conversa | ativo | `src/components/settings/AutomationSettings.tsx`, `src/hooks/__tests__/useUserSettings.test.tsx`, `src/hooks/inbox/useAutoCloseConversations.ts` … |
 | `automations` | Automações client-side (gatilho, configuração e estado) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/__tests__/CT70_reduzirMovimentoAutomacaoIa.test.tsx`, `src/components/automations/AutomationsManager.tsx` … |
+| `away_message_log` | Registro de envio de mensagem de ausência por contato e conexão (evita reenvio na mesma ausência). Criada pela migration `20261113170200_away_message_rpcs.sql`, com RLS ligada e sem policy: o acesso é só pelas RPCs `record_away_message` e `should_send_away_message` (SECURITY DEFINER) da mesma migration. O status é `roadmap` porque a varredura deste inventário não cobre `supabase/migrations/`, não por falta de consumidor | roadmap | — |
 | `away_messages` | Mensagens de ausência por conexão de WhatsApp | ativo | `src/components/settings/MessagesSettings.tsx`, `src/components/settings/__tests__/MessagesSettings.test.tsx`, `src/hooks/__tests__/useUserSettings.test.tsx` … |
 | `blocked_countries` | Países bloqueados no bloqueio geográfico, com motivo | ativo | `src/hooks/system/__tests__/useGeoBlocking.test.ts`, `src/hooks/system/useGeoBlocking.ts`, `scripts/db-audit/network-policy-rpc.test.sh` … |
 | `blocked_ips` | IPs bloqueados, com motivo, autor e validade | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/security/BlockedIPDialogs.tsx`, `src/components/security/BlockedIPsPanel.tsx` … |
