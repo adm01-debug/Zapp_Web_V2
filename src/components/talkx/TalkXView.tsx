@@ -201,7 +201,7 @@ export default function TalkXView() {
     }
 
     const campaign = campaigns.find((candidate) => candidate.id === parsedWizard.route?.campaignId);
-    setEditingCampaign(!keepLocalDraft && campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
+    if (!keepLocalDraft) setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
     setTopView('wizard');
   }, [campaigns, localDraftRouteId]);
 

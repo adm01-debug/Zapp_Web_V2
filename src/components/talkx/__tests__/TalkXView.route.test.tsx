@@ -37,6 +37,8 @@ vi.mock('@/components/talkx/TalkXCampaignWizard', async () => {
       onDraftIdentity?: (id: string) => void;
     }) => {
       useEffect(() => { f.wizardMounts += 1; }, []);
+      // Como o wizard real (useCampaignEditor): no mount, informa o id da campanha aberta.
+      useEffect(() => { if (campaign?.id) onDraftIdentity?.(campaign.id); }, [campaign?.id, onDraftIdentity]);
       return (
         <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} data-step={initial?.step}>
           <button type="button" onClick={onClose}>Fechar wizard</button>
@@ -161,6 +163,22 @@ describe('TalkXView wizard route integration', () => {
 
     expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'new');
     expect(screen.getByTestId('wizard')).toHaveAttribute('data-step', '2');
+    expect(f.wizardMounts).toBe(1);
+  });
+
+  it('voltar entre passos de uma campanha existente mantém a campanha aberta no wizard', async () => {
+    // O wizard informa o id da campanha aberta no mount (onDraftIdentity); voltar entre passos
+    // dela não pode reabrir o wizard como campanha nova em branco.
+    f.wizardMounts = 0;
+    render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1'));
+
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_1&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1');
     expect(f.wizardMounts).toBe(1);
   });
 
