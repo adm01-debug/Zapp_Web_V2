@@ -32457,7 +32457,7 @@
   {
    "nome": "set_conversation_status",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "set_conversations_status",

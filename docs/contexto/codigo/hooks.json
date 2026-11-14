@@ -3360,7 +3360,7 @@
    "hooks_exportados": [
     "useConversationActions"
    ],
-   "linhas": 396,
+   "linhas": 385,
    "dominio": "hooks/chat",
    "tabelas": [
     "conversation_snoozes",
@@ -3369,8 +3369,7 @@
     "profiles"
    ],
    "rpcs": [
-    "reopen_conversation",
-    "set_conversation_status"
+    "reopen_conversation"
    ],
    "edges": [],
    "hooks_internos": [

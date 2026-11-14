@@ -6474,7 +6474,7 @@
   {
    "arquivo": "src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx",
    "tipo": "unit",
-   "linhas": 204,
+   "linhas": 225,
    "testa": [
     "src/components/inbox/ContactDetails.tsx",
     "src/types/chat.ts"
@@ -16278,12 +16278,13 @@
   {
    "arquivo": "src/hooks/chat/__tests__/useConversationActions.test.ts",
    "tipo": "unit",
-   "linhas": 546,
+   "linhas": 631,
    "testa": [
     "src/hooks/chat/useConversationActions.ts",
+    "src/hooks/inbox/conversationArchive.ts",
     "src/lib/undoToast.ts"
    ],
-   "casos": 21
+   "casos": 24
   },
   {
    "arquivo": "src/hooks/chat/__tests__/useConversationHistoryTimeline.chamadas.test.tsx",
@@ -25490,7 +25491,7 @@
   "src/hooks/groups/actions.ts": 1,
   "src/hooks/groups/types.ts": 1,
   "src/hooks/inbox/chipCounts.ts": 1,
-  "src/hooks/inbox/conversationArchive.ts": 2,
+  "src/hooks/inbox/conversationArchive.ts": 3,
   "src/hooks/inbox/useAutoCloseConversations.ts": 1,
   "src/hooks/inbox/useConnectionHealthBanner.ts": 1,
   "src/hooks/inbox/useConnectionQueues.ts": 1,

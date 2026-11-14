@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `9f52b5754ab51dca36cfcb0ae18ec38f514acdc9` (2026-11-14T10:34:29-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d55d73d02dd7e6c56236e3b1f29f94787eba3b29` (2026-11-14T11:06:29-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8583 |
 | arquivos_codigo | 4917 |
-| linhas_codigo | 912725 |
+| linhas_codigo | 912823 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -393,7 +393,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 58025 nós · 120147 arestas · 4331 comunidades · grafo do commit `9f52b575`
+- 58025 nós · 120153 arestas · 4332 comunidades · grafo do commit `d55d73d0`
 - comunidades maiores: react (738), lucide-react (671), button.tsx (658), vitest (578), ExternalProductManagement.tsx (564), utils.ts (503), avatar.tsx (470), ref_node_assert (442), validation.ts (436), framer-motion (404), cn (400), @tanstack/react-query (398)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -518,6 +518,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-14 `d55d73d` fix(inbox): desfazer arquivamento devolve o status anterior da conversa (#3083)
 - 2026-11-14 `9f52b57` fix(db-audit): teste do enum special_agent não morre por broken pipe do grep | head (#3086)
 - 2026-11-14 `6663bfe` fix(inbox): arquivar em lote acima de 500 mantém o desfazer quando um pedaço falha (#3082)
 - 2026-11-14 `7329368` fix(db-audit): baseline do pg_cron inclui o job outbound-sending-sweeper (#3081)
@@ -532,7 +533,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-14 `88f50d0` docs(prod-readiness): fechamento — repo = ledger (exceto 5 do #3064), contexto verde e produção sem erro (#3066)
 - 2026-11-14 `ab657aa` chore(pacote): pacote 5 — #3037, #3034, #3033, #2971, #2943, #2838 e #2894 concluídas e num ciclo de CI (#3064)
 - 2026-11-14 `e50daef` docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)
-- 2026-11-14 `d084ca7` chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

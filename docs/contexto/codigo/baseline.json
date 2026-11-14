@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9f52b5754ab51dca36cfcb0ae18ec38f514acdc9",
+  "commit": "d55d73d02dd7e6c56236e3b1f29f94787eba3b29",
   "branch": "main",
-  "data_commit": "2026-11-14T10:34:29-03:00",
+  "data_commit": "2026-11-14T11:06:29-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d55d73d",
+    "data": "2026-11-14",
+    "assunto": "fix(inbox): desfazer arquivamento devolve o status anterior da conversa (#3083)"
+   },
    {
     "sha": "9f52b57",
     "data": "2026-11-14",
@@ -126,18 +131,13 @@
     "sha": "e942c67",
     "data": "2026-11-13",
     "assunto": "test(talkx): E2E de reload preserva a aba na URL — cobertura da etapa X052 (#2556)"
-   },
-   {
-    "sha": "d1af577",
-    "data": "2026-11-13",
-    "assunto": "feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)"
    }
   ],
-  "arquivos_mudados_7d": 888,
+  "arquivos_mudados_7d": 889,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 689
+    "mudancas": 690
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -177,7 +177,7 @@
    },
    {
     "pasta": "src/hooks/chat",
-    "mudancas": 112
+    "mudancas": 114
    },
    {
     "pasta": "src/components/contacts",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8583,
   "arquivos_codigo": 4917,
-  "linhas_codigo": 912725,
+  "linhas_codigo": 912823,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2226,
-   "linhas": 378225
+   "linhas": 378246
   },
   "src/config": {
    "arquivos": 3,
@@ -720,7 +720,7 @@
   },
   "src/hooks": {
    "arquivos": 1003,
-   "linhas": 163799
+   "linhas": 163876
   },
   "src/i18n": {
    "arquivos": 2,

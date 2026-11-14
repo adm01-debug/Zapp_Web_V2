@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f52b5754a` · branch `main` · 2026-11-14 13:43 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d55d73d02d` · branch `main` · 2026-11-14 14:10 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4644,7 +4644,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21937 testes em 2315 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21940 testes em 2315 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4752,6 +4752,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/tasks/__tests__/WorkItemSheet.test.tsx` | 29 | WorkItemSheet — FASE C (etapas 23–25) · 23: abre com os 8 campos e fecha no Esc · 25: Salvar só habilita com mudança, salva o patch e fecha · 24: após preencher o motivo, salvar leva o motivo pelo move … |
 | `src/components/team-chat/__tests__/team-chat-comprehensive.test.ts` | 29 | Team Chat — autenticação · useSendTeamMessage recusa o envio sem perfil e não chega ao banco · useSendTeamMessage grava a mensagem quando há perfil · Team Chat — regras usadas pela produção … |
 | `src/hooks/__tests__/useChatSearch.test.ts` | 29 | useChatSearch · returns empty results initially · searches text content after debounce · excludes deleted messages … |
+| `src/hooks/chat/__tests__/useConversationActions.test.ts` | 29 | useConversationActions · archiveContact · arquiva pela RPC set_conversations_status (a mesma do /archive e do lote) e NÃO mexe no responsável · anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch … |
 | `src/services/__tests__/contact-bulk.service.test.ts` | 29 | emptyOutcome / pendingIds · emptyOutcome devolve listas NOVAS a cada chamada (mutar uma não afeta a outra) · pendingIds junta recusados e falhos, na ordem (recusados primeiro) · applyContactFieldUpdate … |
 | `src/components/contacts/__tests__/ExternalDataIntegration.test.tsx` | 28 | useExternalEmpresas · usa a ação estreita  · não cai mais no RPC admin-only nem no select genérico · sem  … |
 | `src/components/gmail/__tests__/GmailInboxView.test.tsx` | 28 | GmailInboxView · exibe estado  · renderiza a lista de threads do inbox quando há conta ativa · pasta inicial (Inbox) consulta o rótulo INBOX e não filtra em memória … |
@@ -4773,7 +4774,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `e2e/skins-e2e.spec.ts` | 26 | CP8 — fidelidade das 19 skins · as 19 skins aplicam as vars exatas do catálogo e a cor pintada (sidebar/fundo, ΔE76 ≤ 6) · modo claro mantém a skin: corporate, gx-classic e diversity · raio: GX trava em 10px, clássica em 14px, presets rápidos seguem livres … |
 | `src/components/ui/__tests__/message-reactions.test.tsx` | 26 | ReactionBadge · mostra emoji e contagem no nome acessível (plural) · usa singular no nome acessível quando é só uma reação · aria-pressed=true quando eu já reagi … |
 | `src/hooks/__tests__/useSearchHistory.test.ts` | 26 | useSearchHistory · initializes with empty history · adds item to history · ignores empty queries … |
-| `src/hooks/chat/__tests__/useConversationActions.test.ts` | 26 | useConversationActions · archiveContact · arquiva pela RPC set_conversation_status (a mesma do diálogo de encerrar) e NÃO mexe no responsável · anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch … |
 | `src/hooks/integrations/__tests__/useExternalDB.test.ts` | 26 | useExternalSelect · usa limit 50 / offset 0 por padrão e devolve os dados · repassa select, filtros, ordem, paginacao e modo de contagem · não busca quando a flag do CRM está desligada … |
 | `src/lib/__tests__/quarantineStore.test.ts` | 26 | subscribe / getSnapshot · chama o listener a cada mudança e para depois do unsubscribe · mantém a mesma referência de snapshot enquanto nada muda (contrato do useSyncExternalStore) · get … |
 | `src/segments/__tests__/segmentRules.test.ts` | 26 | normalizeRules · returns an empty v2 set for null input · converts numeric text to number on number fields · keeps numeric-looking text as string on text fields … |
@@ -5451,4 +5451,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * A varredura do periodo pode parar quando o item MAIS ANTIGO carregado ja cruzou o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
 | #144/OTH-002: erro na contagem nao pode virar "0" confirmado — vira "indisponivel" (—). | `src/components/inbox/tabs/FilesTab.tsx` |
 | identidade de cada item sai de `resolveSenderIdentity` no cartao. D06: a permissao de | `src/components/inbox/tabs/FilesTab.tsx` |
-| … +1715 linhas — lista completa em `context.json` | |
+| … +1716 linhas — lista completa em `context.json` | |

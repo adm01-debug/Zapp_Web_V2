@@ -9067,7 +9067,7 @@
    "modulo": "hooks/chat",
    "arquivos": 48,
    "testes": 51,
-   "linhas": 8162,
+   "linhas": 8151,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -9274,7 +9274,6 @@
     "mark_team_conversation_read",
     "reopen_conversation",
     "search_contacts",
-    "set_conversation_status",
     "set_conversations_status",
     "set_team_member_pref",
     "transfer_conversation",
@@ -9332,8 +9331,7 @@
     "rpcs": [
      "get_conversation_tab_counts",
      "get_team_profiles",
-     "reopen_conversation",
-     "set_conversation_status"
+     "reopen_conversation"
     ]
    },
    "importado_por_outros_modulos": [
@@ -10602,7 +10600,7 @@
    "modulo": "hooks/inbox",
    "arquivos": 20,
    "testes": 36,
-   "linhas": 3707,
+   "linhas": 3710,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

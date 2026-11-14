@@ -1,17 +1,17 @@
 # Graph Report - Zapp_Web_V2  (2026-11-14)
 
 ## Corpus Check
-- 7492 files · ~9,254,417 words
+- 7492 files · ~9,254,766 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 95 file(s) not represented in the graph (top: .tsv 32, (none) 13, .csv 13)
 
 ## Summary
-- 58025 nodes · 120147 edges · 4331 communities (2499 shown, 1832 thin omitted)
+- 58025 nodes · 120153 edges · 4332 communities (2500 shown, 1832 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 8109 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9f52b575`
+- Built from commit: `d55d73d0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -139,7 +139,6 @@
 - ia131-audio-meme-conteudo.contract.test.ts
 - test
 - TasksUiProvider
-- useConversationActions
 - AIQuickAccess.tsx
 - useSLANotifications.ts
 - crm-integration/index.ts
@@ -192,7 +191,6 @@
 - Plano de Correções e Melhorias — 50 Etapas (2026-09-16)
 - .value
 - Plano de 50 etapas — Arquivos do Chat Panel
-- resolve
 - LocationPicker.integration.test.tsx
 - evolution-types.ts
 - render-workflow-docs.mjs
@@ -208,11 +206,11 @@
 - useGmail.ts
 - BLOCO_05_triggers.sql
 - copilot-tick.ts
+- useConversationActions
 - verify-release-targets.mjs
 - StickerManager.tsx
 - useAudioRecorder.ts
 - KpiStrip
-- useInboxBulkActions.test.ts
 - journey/motion/index.ts
 - Plano em 50 etapas para simplificar o topo de Contatos e adicionar o botão verde pulsante
 - ci-docs-baseline.unit.mjs
@@ -225,6 +223,7 @@
 - ZAPP_WEB_V2_DARKBLUE_PREMIUM_DESIGN_SYSTEM.md
 - FASE 7 — Qualidade, rollout e fechamento (E46–E50)
 - redigir-relatorio.unit.mjs
+- resolve
 - FASE 7 — Testes de integração, mutação e E2E (E67–E82)
 - HANDOFF — Migração ZAPP WEB V2 (Lovable Cloud → Supabase Cloud novo + VPS Hostinger)
 - useTalkXCampaignList.ts
@@ -248,6 +247,7 @@
 - ChatbotFlowEditor.tsx
 - safeStorage.ts
 - slaTimeline.ts
+- useInboxBulkActions.test.ts
 - pending
 - RELATÓRIO CI — fix-ci-workflows-hxupgs / fix-ci-workflows-261112-0400
 - FASE 3 — Estados de erro, vazio e retry verdadeiros (E23–E34)
@@ -348,6 +348,7 @@
 - SystemHealthCard.tsx
 - TalkXInteractiveEditor.tsx
 - useWarRoomAlerts.ts
+- useConversationActions.ts
 - useSLAMetrics.ts
 - supabase-export/manifest.json
 - engine.integration.test.ts
@@ -870,7 +871,6 @@
 - usePersonalStickers.uso.test.tsx
 - useTalkXInsights.defeito-223.test.tsx
 - useSecurityPushNotifications.test.ts
-- useUndoableAction.ts
 - workItemBoardGroups.ts
 - useDeviceDetection.test.tsx
 - useRealtimeMessages.test.tsx
@@ -1050,6 +1050,7 @@
 - TalkXSegments.builder.test.tsx
 - TalkXSegments.library.test.tsx
 - useSupervisorQueue.test.tsx
+- useConversationActions.snooze.test.ts
 - ContactsView.v2Flags.test.tsx
 - useLeaderboard.test.tsx
 - usePersonalStickers.identidade.test.tsx
@@ -1582,7 +1583,6 @@
 - 9.3 GROUP_PARTICIPANTS_UPDATE
 - IA-001 — Referência técnica da execução
 - E62 — Contraste do combobox de endereços (SuggestionList)
-- Plano de paridade V3 → V2 — doc 11 (inbox/components raiz M–Z), segunda passada
 - Plano de paridade V3 → V2 — doc 16 (components/connections e components/dashboard), segunda passada
 - Runbook — Autocomplete de endereço e mapa de contatos (módulo Mapbox Search Box)
 - PENDÊNCIAS CI — 2026-11-12
@@ -1835,6 +1835,7 @@
 - TalkXSuppression.add.test.tsx
 - TalkXSuppression.search.test.tsx
 - ContextualEmptyState.tsx
+- useConversationActions.reopen.test.ts
 - useMessages.reconexao.test.tsx
 - useBrandColors.ts
 - useEmailContactContext.test.tsx
@@ -3467,7 +3468,7 @@
 ## Import Cycles
 - 5-file cycle: `src/hooks/auth/useAuth.tsx -> src/hooks/system/useOfflineCache.ts -> src/hooks/chat/useRealtimeMessages.ts -> src/hooks/realtime/useRealtimeNotifications.ts -> src/hooks/system/useNotificationSettings.ts -> src/hooks/auth/useAuth.tsx`
 
-## Communities (4331 total, 1832 thin omitted)
+## Communities (4332 total, 1832 thin omitted)
 
 ### Community 0 - "react"
 Cohesion: 0.01
@@ -3961,167 +3962,163 @@ Nodes (67): Padrão de commits, 1. Baseline de contagem, 2. Contagem total da su
 Cohesion: 0.04
 Nodes (65): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+57 more)
 
-### Community 123 - "useConversationActions"
-Cohesion: 0.04
-Nodes (58): 1.1 Comando de inventário, 1.2 Tabela de veredito (pode zerar `address/city/latitude`?), 1.3 Conclusão do §1, §1 — Inventário de TODOS os writers de `contacts` (C1), CP1 Lista      [x] sha=(commit fase 1, ver git log) · shot=BLOQUEADO (ver seção "BLOQUEIO — QA visual") · coluna=w-[350px] (ConversationListSidebar.tsx) · item=min-h-[72px] (VirtualizedRealtimeList.tsx ConversationRow) · avatar=w-12 h-12 =48px · busca=h-10=40px · btn Nova conversa=h-10=40px · btn filtro=w-10 h-10=40×40 · chips=5 (StatusChips, sem Spam — não existe no modelo) h-7=28px · grupos=Fixadas/Hoje/Ontem/Mais antigas via flatRows virtualizado · verificado por leitura de código + testes (`StatusChips.test.tsx` 7/7), não por screenshot (bloqueio de login) · o que ainda difere: dot "Online" não implementado (sem fonte de presença real — pendência já listada), star favorito/pin agora funcionais via `useConversationActions` (novo wiring em `RealtimeInboxView.tsx`), ChannelBadge é um dot verde 20px simplificado (não usa `ChannelBadge` do arquivo morto `ConversationItem.tsx`), CP2 Header     [x] sha=(commit fase 2) · shot=BLOQUEADO (ver "BLOQUEIO — QA visual" no CP1) · header=h-[72px] (ChatPanelHeader.tsx) · avatar=w-12 h-12=48px + dot 12px · btns=4× h-10 w-10=40×40 rounded-[10px] border-border (Ligar, Vídeo, Adicionar participante, ⋮) · pill=ConversationTabs h-9=36px bg-accent border-primary/40 · banner=TabBanner h-14, tile 36px bg-kpi-purple (Chat/IA) · tools antigos → novo lugar (nenhum handler perdido):, CP3 Input      [x] sha=(commit fase 3) · shot=BLOQUEADO (ver "BLOQUEIO — QA visual" no CP1) · chips=6× h-9=36px (Resposta Rápida, Assistente IA, Anexar, Agendar, Transferir, Mais) · input=min-h-[52px] rounded-xl bg-input border-border com 3 ícones dentro (emoji/anexo/câmera) + mic · enviar=w-11 h-11=44×44 rounded-[10px] bg-primary · ferramentas preservadas: 19/19 (nenhum handler perdido), CP4 Primitivos [x] sha=(commit fase 4) · testes: KpiStrip 8/8 (5 tones + default + iconClassName-priority + sublabel) · SectionCard 6/6 (default/tone/link/pill/subtitle+headerRight) · TaskCard 7/7 (atrasada/hoje/futura/concluída/toggle/delete) · consumidores atuais (TasksTab/Crm360Tab/HistoryTab/NotesTab) continuam passando sem alteração — default sem tone/variant é idêntico ao comportamento anterior (verificado via 263/263 testes verdes) (+50 more)
-
-### Community 124 - "AIQuickAccess.tsx"
+### Community 123 - "AIQuickAccess.tsx"
 Cohesion: 0.05
 Nodes (56): P1-C. Página de Sentimento (`useSentimentData`): erro vira zeros, sem paginação, classificação diferente dos outros painéis, FASE 2 — Inteligência Artificial (`ai`) → CP2, 1.2 Arquivos do módulo (`src/components/dashboard/`, 5.704 linhas), 5. Dashboard e analytics, P45 — Card "Modelo de IA Ativo" + 6 cards de features de IA, P46 — Card "Inteligência Artificial" com 4 mini-tiles (overview), P47 — Tela "Tendência de Sentimento" (charts + insights + alertas recentes), P48 — Tela "Consumo de IA" (admin) (+48 more)
 
-### Community 125 - "useSLANotifications.ts"
+### Community 124 - "useSLANotifications.ts"
 Cohesion: 0.04
 Nodes (55): Cenarios de regressao, Correcao do refresh dos paineis operacionais, Evidencia e escopo, Limites e rollout, RealtimeSentimentAlertProvider, RealtimeSentimentAlertProvider, SLANotificationProvider, useRealtimeSentimentAlerts() (+47 more)
 
-### Community 126 - "crm-integration/index.ts"
+### Community 125 - "crm-integration/index.ts"
 Cohesion: 0.06
 Nodes (58): 3.2 Edge `crm-integration`, 1. Arquitetura da ponte, buildSyncInteractionArgs(), ContactLookupBatchDependencies, ContactLookupDependencies, ContactLookupKind, ContactLookupResolution, CRM_SENTIMENT_BY_CANONICAL (+50 more)
 
-### Community 127 - "useConversationHistoryTimeline.ts"
+### Community 126 - "useConversationHistoryTimeline.ts"
 Cohesion: 0.04
 Nodes (53): dayLabel(), formatAvgResponse(), JourneyTab(), JourneyTabProps, KIND_META, PERIOD_OPTIONS, PILL_CLASS, TYPE_OPTIONS (+45 more)
 
-### Community 128 - "useTalkXInsights.ts"
+### Community 127 - "useTalkXInsights.ts"
 Cohesion: 0.04
 Nodes (66): FASE 8 — LINKS, INSIGHTS, SETTINGS, CRM, IMPORTAÇÃO (V81–V90), V49 · Motion aplicado e `InsightCard` no carvão, V81 · UI de links rastreáveis, V82 · Conversão autenticada e relatório de links (P2-8), V83 · Insights com ação e sem regra morta, V84 · Configurações vivas, V85 · Alertas e observabilidade, V86 · Importação de contatos: upload seguro e preview (15) (+58 more)
 
-### Community 129 - "evolution-webhook-messages.ts"
+### Community 128 - "evolution-webhook-messages.ts"
 Cohesion: 0.05
 Nodes (56): V18 · Respostas: janela configurável, tempo médio, sem recálculo no cliente, E88 — Respostas reais (#409), X028 · Ligar o webhook aos recibos de leitura e à atribuição de resposta, 1. Rascunho, 2. Agendamento, 3. Início (`talkx-send`, `action=start`), 4. Lote, 5. Por destinatário (ordem real) (+48 more)
 
-### Community 130 - "package.json"
+### Community 129 - "package.json"
 Cohesion: 0.03
 Nodes (67): engines, bun, node, name, private, type, version, autoprefixer (+59 more)
 
-### Community 131 - "dependencies"
+### Community 130 - "dependencies"
 Cohesion: 0.03
 Nodes (70): dependencies, @axe-core/react, class-variance-authority, clsx, cmdk, date-fns, dompurify, @elevenlabs/react (+62 more)
 
-### Community 132 - "useAddressAutocomplete.ts"
+### Community 131 - "useAddressAutocomplete.ts"
 Cohesion: 0.06
 Nodes (55): 2 · A3-01 clique duplo / Enter segurado — REPRODUZIDO, Frente 2 · Sessão fantasma — DEFEITO (com teste), 1. Resumo executivo, 2.2 Médios (funcionam, mas errado ou frágil), 2.3 Processo, testes e documentação, 2. Defeitos encontrados, 3. Tabela etapa a etapa (E01–E50), 4. O que vem a seguir (+47 more)
 
-### Community 133 - "gerar-banco.mjs"
+### Community 132 - "gerar-banco.mjs"
 Cohesion: 0.04
 Nodes (57): ABAS, APELIDOS, DOCS_DE_ABAS, ENUMERACAO, enumeracoesDeAbas(), FIX_ORDEM_ANTIGA, FIX_ORDEM_DO_PAINEL_DIREITO, FIX_ORDEM_SUPERADA (+49 more)
 
-### Community 134 - "useForwardMedia.ts"
+### Community 133 - "useForwardMedia.ts"
 Cohesion: 0.05
 Nodes (53): mocks, renderChatHandlers(), renderForward(), ForwardMessageDialog(), ForwardMessageDialogProps, truncateMessage(), mediaChain(), mocks (+45 more)
 
-### Community 135 - "⚡ EVOLUTION API v2 — Análise Técnica Completa"
+### Community 134 - "⚡ EVOLUTION API v2 — Análise Técnica Completa"
 Cohesion: 0.03
 Nodes (68): 10.1 Configuração, 10.2 Parâmetros Explicados, 10.3 Fluxo de Funcionamento, 10. Integração: Chatwoot, 11.1 Configuração, 11.2 Triggers (Gatilhos), 11.3 Variáveis Injetadas no Typebot, 11. Integração: Typebot (+60 more)
 
-### Community 136 - "e2e-isolated-tls.unit.mjs"
+### Community 135 - "e2e-isolated-tls.unit.mjs"
 Cohesion: 0.06
 Nodes (56): ref_node_https, ref_node_net, ref_node_stream, gateway(), identity, SHA, temporary(), badMetadata (+48 more)
 
-### Community 137 - "FilesTab.tsx"
+### Community 136 - "FilesTab.tsx"
 Cohesion: 0.05
 Nodes (49): FilesSelectionBar(), FilesSelectionBarProps, CHIPS, FilesTabProps, ForwardMessageDialog, MediaPreviewDialog, senderFilterLabel(), h (+41 more)
 
-### Community 138 - "talkxHelpIndex.ts"
+### Community 137 - "talkxHelpIndex.ts"
 Cohesion: 0.07
 Nodes (57): TalkXHelpArticleProps, Highlighted(), TalkXHelpCenter(), TalkXHelpCenterProps, useTalkXHelpDocs(), countHelpWords(), findHelpDoc(), foldHelpKey() (+49 more)
 
-### Community 139 - "gh"
+### Community 138 - "gh"
 Cohesion: 0.05
 Nodes (62): Achado D — **MÉDIO** — 2º editor abre com endereço vazio, 1 · CRÍTICO (replay) — REPRODUZIDO, com rebaixamento, 3 · A3-04 pausa de 429 que expira — PARCIALMENTE, 4 · A4-B `ContactForm` ignora a flag — REPRODUZIDO (código), 5 · A5-1 contagem da suíte — PARCIALMENTE (o número do auditor também não reproduz), 6 · A1-F03 `audit_contact_address_change()` com EXECUTE para PUBLIC/anon — REPRODUZIDO (fato), severidade derrubada, 7 · A4-D 2º editor de contato abre com endereço VAZIO — REPRODUZIDO (sem perda de dado), Artefatos deste chat (untracked) (+54 more)
 
-### Community 140 - "useEvolutionApi.ts"
+### Community 139 - "useEvolutionApi.ts"
 Cohesion: 0.06
 Nodes (49): abortedError(), failureOf(), h, invokeThatHangsUntilAbort(), Api, CASES, h, participants (+41 more)
 
-### Community 141 - "useRealtimeInbox.ts"
+### Community 140 - "useRealtimeInbox.ts"
 Cohesion: 0.05
 Nodes (49): (b) Testes da V3 em `hooks/__tests__` e subpastas x V2, Testes V3 sem modulo na V2 (SEM-CODIGO, nao cobrar), 3.1 Arquivos alterados (diff cirúrgico), 3.2 Arquivos novos, 3.3 O que NÃO tocar, 3.4 Reescrita autorizada (arquivo inteiro), 3. ARQUITETURA DA MUDANÇA, mapMessageRowToMessage() (+41 more)
 
-### Community 142 - "ViewRouter"
+### Community 141 - "ViewRouter"
 Cohesion: 0.06
 Nodes (36): (d) Rotas, lazyViews, menus e papéis, Diferenças deliberadas, 4.1 Menu e rota, Convenções, Correção em relação ao plano/especificação, Multiplix — De-para protótipo → tokens reais (E010), Receita de módulo completa (F94) — `lazyViews` + rota + nav + permissão + flag, E20 · Motion, densidade e responsividade do módulo (+28 more)
 
-### Community 143 - "model.ts"
+### Community 142 - "model.ts"
 Cohesion: 0.06
 Nodes (55): 4. As 100 etapas, BADGE_CLASS, dataHoraCompleta(), groupLabel(), horaDoEvento(), instanteDoEvento(), JourneyEventCard(), JourneyEventCardProps (+47 more)
 
-### Community 144 - "talkx-demo.ts"
+### Community 143 - "talkx-demo.ts"
 Cohesion: 0.05
 Nodes (55): Fase 0 — Régua e governança (X001–X005), X001 · Tornar o V4 o plano vigente e marcar os planos anteriores como substituídos, X002 · Criar o placar do V4: etapas fechadas e elementos do mock por tela, X003 · Criar a base de demonstração determinística das 17 telas para captura, X004 · Criar a régua visual: captura 1672×941 de cada tela ao lado do mock em toda PR do Talk X, X005 · Exigir a definição de pronto no corpo da PR de cada etapa do V4, b64url(), cache (+47 more)
 
-### Community 145 - "e2e-isolated-seed-diagnostic.unit.mjs"
+### Community 144 - "e2e-isolated-seed-diagnostic.unit.mjs"
 Cohesion: 0.05
 Nodes (46): FASE 4 — KPIs com dados reais (etapas 40–50) → CP4, ref_node_readline, ANON, SERVICE, source, USER, data, dataSource (+38 more)
 
-### Community 146 - "CallSessionProvider.test.tsx"
+### Community 145 - "CallSessionProvider.test.tsx"
 Cohesion: 0.05
 Nodes (51): @axe-core/react, aplicarTamanhoDoChat(), aplicarTamanhoDoChatSalvo(), CHAT_FONT_SIZE_VAR, CHAT_TEXT_SIZE_STORAGE_KEY, CHAT_TEXT_SIZES, ChatTextSizeOption, DEFAULT_CHAT_TEXT_SIZE (+43 more)
 
-### Community 147 - "snapshot.py"
+### Community 146 - "snapshot.py"
 Cohesion: 0.08
 Nodes (59): decimal, Exception, psycopg, psycopg_rows, api(), api_section(), approx(), banner() (+51 more)
 
-### Community 148 - "PLANO EM 100 ETAPAS"
+### Community 147 - "PLANO EM 100 ETAPAS"
 Cohesion: 0.04
 Nodes (44): ADR-008 — Motor de chamadas de voz pelo WhatsApp no Zapp, Alternativas avaliadas, Alternativas rejeitadas, Consequências, Critério de troca (switch), Decisão recomendada, Métricas de sucesso (E007), Problema (+36 more)
 
-### Community 149 - "FilesTab"
+### Community 148 - "FilesTab"
 Cohesion: 0.04
 Nodes (55): 11. Fora de escopo / limites, 1. O que é e para quem, 2. Atalhos e calendário (o mesmo seletor da IA), 4. Como o filtro se combina com tipo, busca e ordem, 5. Carga de páginas antigas (varredura do período), 6. Contadores (cabeçalho e chips), 7. Estado vazio, 8. Onde o período fica guardado (+47 more)
 
-### Community 150 - "MULTIPLIX — ZAPP Web V2"
+### Community 149 - "MULTIPLIX — ZAPP Web V2"
 Cohesion: 0.03
 Nodes (61): 10. Execução, filas e falhas, 11. Retornos: a parte que transforma envio em trabalho concluído, 12. Diferenciais propostos, 13. Integração recomendada, 14. Segurança, privacidade e observabilidade, 15. Priorização, 16. Critérios de aceite de produção, 17. O que o protótipo entregue faz — e o que não faz (+53 more)
 
-### Community 151 - "@playwright/test"
+### Community 150 - "@playwright/test"
 Cohesion: 0.06
 Nodes (36): AXE, CONTATOS_POPULADOS, mockContatosPopulados(), mockContatosVazios(), require, semViolacaoButtonName(), violacoes(), abrirVista() (+28 more)
 
-### Community 152 - ".done"
+### Community 151 - ".done"
 Cohesion: 0.04
 Nodes (56): 0. Resumo, 1.1 Onde o trabalho de cada pai aparece na base, 1.2 Artefato por artefato: blob do pai vs blob da base, 1.3 Por que **não** fiz `git cherry-pick` da faixa, 1. (a) Shas dos pais integrados, 3.1 Etapa 099 (`t_e840b070`) — responsivo do Quadro, 3.2 Etapa 100 (`t_426e784f`) — faixa compacta e estilo das abas (D3), 3. (c) Etapas 099 e 100: o que já existe e onde (+48 more)
 
-### Community 153 - "useChatPanelHandlers.ts"
+### Community 152 - "useChatPanelHandlers.ts"
 Cohesion: 0.05
 Nodes (44): 2. Achados A1..A10 do doc 06 (§8): estado na V2, 4. O que NÃO consegui verificar, Paridade V3 -> V2, doc 06 (2ª passada), recorte 4: dados do contato, mídia, voz e respostas, Harness(), chainComInstancia(), chainOf(), h, applySignature() (+36 more)
 
-### Community 154 - "useConnectionIncidents.ts"
+### Community 153 - "useConnectionIncidents.ts"
 Cohesion: 0.05
 Nodes (51): E23 🔴 QR / connect / logout / restart / status usam o token certo, E24 🔴 `connection-health-check` por instância, E25 🟡 `extractConnectionState` distingue "logado mas sem socket", E26 🟡 Alertas de conexão idempotentes, E27 🟡 UI cria conexão por uma única chamada, E29 🟢 Comentário desatualizado em `evolution-helpers.ts:163`, F3 — Operação de instância por token (E23–E29), SLOs propostos (janela de 30 dias) (+43 more)
 
-### Community 155 - "Especificação dos 60 itens"
+### Community 154 - "Especificação dos 60 itens"
 Cohesion: 0.03
 Nodes (61): Especificação dos 60 itens, TEL-001 — Telefonia como central pessoal, TEL-002 — Retirar configurações da tela operacional, TEL-003 — Aproveitar a largura do desktop, TEL-004 — Histórico e painel contextual lado a lado, TEL-005 — Resumo compacto com escopo explícito, TEL-006 — Tabela de chamadas identificável, TEL-007 — Detalhe de chamada sem perder a lista (+53 more)
 
-### Community 156 - "📋 Levantamento Completo de Funcionalidades do Sistema"
+### Community 155 - "📋 Levantamento Completo de Funcionalidades do Sistema"
 Cohesion: 0.03
 Nodes (61): 10. Dashboard e Métricas, 11. Relatórios e Exportação, 12. CSAT (Satisfação do Cliente), 13. Catálogo de Produtos e E-commerce, 14. Conexões WhatsApp, 15. Templates WhatsApp Oficiais, 16. Grupos WhatsApp, 18. Carteira de Clientes (+53 more)
 
-### Community 157 - "main.go"
+### Community 156 - "main.go"
 Cohesion: 0.06
 Nodes (52): go_pkg_context, go_pkg_crypto_hmac, go_pkg_crypto_sha256, go_pkg_crypto_subtle, go_pkg_crypto_tls, go_pkg_encoding_base64, go_pkg_encoding_hex, go_pkg_encoding_json (+44 more)
 
-### Community 158 - "invokeEdge.ts"
+### Community 157 - "invokeEdge.ts"
 Cohesion: 0.05
 Nodes (48): DeadlineCalcCardProps, LeadThermometerBadgeProps, AiDeadlineResult, DeadlineFeasibility, DeadlineResult, PRODUCTION_DAYS, GhostTextState, log (+40 more)
 
-### Community 159 - "useGoalNotifications.ts"
+### Community 158 - "useGoalNotifications.ts"
 Cohesion: 0.04
 Nodes (46): 1.1 Duas armadilhas de método encontradas (e corrigidas) aqui, 1. Sanidade: repositório × banco canônico × produção (medido pelo coordenador), 2. Frente 1 — timeline agrupada por dia local (`useConversationHistoryTimeline.ts:226`, PR #1336), 3. Frente 2 — data das Notas (`calendarDayKey`, PR #1336), 4. Frente 3 — fonte única da regra e refactor sem regressão, 5.1 Ordem de gravidade (recomendada ao Claude para virar plano), 5. Achados NOVOS (todos re-medidos pelo coordenador), 6. Banco de dados (leitura, gateway somente-leitura) (+38 more)
 
-### Community 160 - "communication/useVoiceAgent.ts"
+### Community 159 - "communication/useVoiceAgent.ts"
 Cohesion: 0.06
 Nodes (37): 3. §4 Exports públicos e §4.6 funções utilitárias, P2, P28 — Overlay de voz global (busca por voz + TTS da resposta), @elevenlabs/react, useAnalysisTts(), useSummaryTts(), toastError, tts (+29 more)
 
-### Community 161 - "useNewConversation"
+### Community 160 - "useNewConversation"
 Cohesion: 0.03
 Nodes (58): 3. Já coberto por cartão (não abrir de novo), 4. MELHOR_NA_V2 (não devolver), 5. O que NÃO consegui verificar, Paridade V3 -> V2, doc 11 (2a passada), recorte 1: indicadores, diálogos e painéis do inbox, E01 🔴 Congelar reconexão manual da PRINCIPAL durante o bloqueio, E02 🔴 Banner "WhatsApp indisponível" e bloqueio de envio com mensagem honesta, E03 🟡 Diagnóstico da causa do bloqueio (evidência, não palpite), E04 👤 Decisão de negócio: número reserva por swap de instância única (plano B operacional) (+50 more)
 
-### Community 162 - "e2e-contact.ts"
+### Community 161 - "e2e-contact.ts"
 Cohesion: 0.06
 Nodes (42): 3.1 Estado atual (medido), 3.2 Recipe mínima (o que muda, se for semeado), 3.3 Riscos de semear isso em produção, 3. Fixture com mensagem de ÁUDIO (E45) — como, e por que é arriscado, ensureFixtureEmail(), ensureFixturePhone(), getAccessToken(), abrirPainelDoContato() (+34 more)
 
-### Community 163 - "SipCallAdapter"
+### Community 162 - "SipCallAdapter"
 Cohesion: 0.05
 Nodes (25): sip.js, builder, CONTATO, {
   mockStartCall,
@@ -4138,227 +4135,227 @@ Nodes (25): sip.js, builder, CONTATO, {
   mockToggleMute,
 }, SAIDAS_DE_AUDIO, DIRETORIOS, FONTES, fontesDe() (+17 more)
 
-### Community 164 - "evolution-sync/index.ts"
+### Community 163 - "evolution-sync/index.ts"
 Cohesion: 0.06
 Nodes (44): 1. Tabela de comportamentos, 2. Lacunas reais SEM cartão (priorizadas), 3. O que a V2 faz melhor (não devolver), 4. O que NÃO consegui verificar, 5. Resumo numérico, Achados 1: Conexões (lista, cartão, QR e saúde): V3 -> V2 (13/10/2026), Melhorias opcionais (sem cartão, sem urgência), P1 (+36 more)
 
-### Community 165 - "FASE 8 — Documentação, rollout, observabilidade e fechamento (E83–E100)"
+### Community 164 - "FASE 8 — Documentação, rollout, observabilidade e fechamento (E83–E100)"
 Cohesion: 0.03
 Nodes (58): Apêndice — mapa defeito → etapa, E100 · Relatório de encerramento, E35 · Sem flag própria: rollback é reverter código, E36 · Token só com o campo de endereço em foco, E37 · `proximity` no cadastro, E38 · `types` do cadastro inclui POI opcional, E39 · Preencher os 5 campos com `context` completo, E40 · Edição preserva endereço mesmo quando o operador não usa o autocomplete (+50 more)
 
-### Community 167 - "Crm360Tab.tsx"
+### Community 166 - "Crm360Tab.tsx"
 Cohesion: 0.07
 Nodes (47): Estado na PR F, CP1 Hooks      [x] sha=2d54c038 · testes novos: 21 (useContactMedia 5, useConversationTasks/deriveTaskGroups 4, useContactCrm360/aggregateCrm360 5, useConversationHistoryTimeline/buildTimeline 8 — vitest 17 arquivos/193 testes total em src/components/inbox+src/hooks/chat+src/hooks/crm, 0 falhas) · event_type reais (grep em ConversationTimeline.tsx): assign, unassign, transfer, queue_transfer, overload_reassign, absence_reassign, close, reopen — NÃO existe 'resolve'/'resolved'; KPI "Resoluções" da aba Histórico usa event_type='close'. Hooks: `useContactMedia` (src/hooks/chat), `useContactNotes` estendido (src/hooks/crm — já existia, extraído category/is_done/due_date + updateNote/toggleNoteDone), `useConversationTasks` novo (src/hooks/chat), `useContactCrm360`+`aggregateCrm360` (src/hooks/crm), `useConversationHistoryTimeline`+`buildTimeline` (src/hooks/chat), `useNextBestAction` extraído de NextBestActionEngine.tsx (src/hooks/chat). `conversationTabCountsKey` invalidado nas mutations de notas e tarefas (badge Notas/Tarefas atualiza via React Query; confirmação end-to-end no clique real fica para o CP8 func check 13/15, quando o app roda no preview)., 2.7 Fluxo: abas CRM 360° e SalesView dentro da conversa, 2.8 Agregação comercial (`src/hooks/crm/useContactCrm360.ts`), 4.1 Contatos, 4.2 CRM 360° / SalesView (deals, atividades, compras), 4. Permissões e regras de acesso, 7. Testes existentes (caminhos) (+39 more)
 
-### Community 168 - "lint-ratchet.mjs"
+### Community 167 - "lint-ratchet.mjs"
 Cohesion: 0.08
 Nodes (50): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+42 more)
 
-### Community 169 - "useConnectionsManager"
+### Community 168 - "useConnectionsManager"
 Cohesion: 0.04
 Nodes (41): 1. O que este documento trouxe de novo, 2. Riscos de segurança confirmados, 3. Defeitos ativos na V2 (mesma classe dos do §8 da V3), com cartão, 4. Buracos de teste (comportamento existe, falta prova), 5. Decisões do dono (11/10, 3ª rodada), 6. Já coberto por cartões anteriores, 7. Onde a V2 é melhor (não portar), 8. Limites (+33 more)
 
-### Community 170 - "teamChatTypes.ts"
+### Community 169 - "teamChatTypes.ts"
 Cohesion: 0.05
 Nodes (41): FASE 4 — Bloco D″: realtime e contratos do front (F49–F52), TeamChatInputAreaProps, Props, convs, N182_RULES, panelState, replyMsg, { capturado } (+33 more)
 
-### Community 171 - "useCatalogContactSearch.ts"
+### Community 170 - "useCatalogContactSearch.ts"
 Cohesion: 0.05
 Nodes (46): FASE 8 — Testes, e2e e ajuda (CT-77–CT-88), mockLogCatalogSendEvent, mockReadiness, mockRecentSends, mockSendOutboundMessage, mockToast, mockUseAuth, product() (+38 more)
 
-### Community 172 - "e2e-isolated-qr.unit.mjs"
+### Community 171 - "e2e-isolated-qr.unit.mjs"
 Cohesion: 0.10
 Nodes (44): QrAdminSession, qrRequestAction(), qrRequestOperation(), test, backend(), access(), fetcher(), seed() (+36 more)
 
-### Community 173 - "ChatPanel"
+### Community 172 - "ChatPanel"
 Cohesion: 0.05
 Nodes (39): HZ3-008 useTypingPresence, E33 🟡 Ratchet dos budgets (travar o ganho do PR #443), E35 🟢 Prefetch das rotas quentes, E36 🟢 Web-vitals reais × alvos do budget, E38 🟢 React 19.3: varredura de deprecações, F5 — Front: performance e bundle (E33–E38), A arquitetura real do roteamento (para constar), Achados fora do escopo (não corrigidos) (+31 more)
 
-### Community 174 - "Plano de Correções e Melhorias — 50 Etapas (2026-09-16)"
+### Community 173 - "Plano de Correções e Melhorias — 50 Etapas (2026-09-16)"
 Cohesion: 0.04
 Nodes (55): Baseline da auditoria (ponto de comparação para E47), Dependências e paralelismo, E01 🟢 Snapshot completo do estado local, E02 🟢 Fast-forward do `main` local, E03 🟢 Remover o branch de trabalho já mergeado, E04 🟢 Atualizar `fix/talkx-template-history-contract` (2 commits atrás do upstream), E05 🟢 Congelar o baseline, E06 🟢 Triage dos 4 stashes (+47 more)
 
-### Community 175 - ".value"
+### Community 174 - ".value"
 Cohesion: 0.04
 Nodes (46): 3.1 Tabelas locais (conferidas em `supabase/schema-catalog.json`), 3.2 RPCs usadas (assinaturas do catálogo local), 3.3 Edge Functions, 3. Dados (tabelas, colunas, RPC, Edge Functions), 1. Bancos envolvidos, 2. ZAPP — o que existe e o que não serve, 3. Singu — o público existe, 4. Ponte atual ZAPP → Singu (GATE C) (+38 more)
 
-### Community 176 - "Plano de 50 etapas — Arquivos do Chat Panel"
+### Community 175 - "Plano de 50 etapas — Arquivos do Chat Panel"
 Cohesion: 0.04
 Nodes (55): 01. Registrar a linha de base do módulo, 02. Restringir o redesenho à área de arquivos, 04. Estabelecer um contrato único para os arquivos, 05. Separar visualização, inspeção e seleção múltipla, 06. Reduzir o peso do cabeçalho, 07. Criar uma barra de ferramentas operacional, 08. Manter categorias separadas dos modos de exibição, 09. Unificar a ordenação (+47 more)
 
-### Community 177 - "resolve"
-Cohesion: 0.04
-Nodes (19): chainable(), node, chain, chain, chain, chain, chain, resultChain() (+11 more)
-
-### Community 178 - "LocationPicker.integration.test.tsx"
+### Community 176 - "LocationPicker.integration.test.tsx"
 Cohesion: 0.04
 Nodes (32): ContactFormValues, callsTo(), digitar(), h, renderForm(), Resp, values(), base (+24 more)
 
-### Community 179 - "evolution-types.ts"
+### Community 177 - "evolution-types.ts"
 Cohesion: 0.04
 Nodes (27): EvolutionDbClient, EvolutionDbError, EvolutionQueryResult, EvolutionRealtimeChannel, EvolutionRow, EvolutionStorageBucket, FakeDb, Broadcast (+19 more)
 
-### Community 180 - "render-workflow-docs.mjs"
+### Community 178 - "render-workflow-docs.mjs"
 Cohesion: 0.04
 Nodes (37): ref_bun_test, basenames, doc, DOC_COMPLETO_FIXTURE, DOC_SEM_35_FIXTURE, DOC_SEM_FUNCAO_FIXTURE, FUNCOES_ESPERADAS, raiz (+29 more)
 
-### Community 181 - "ViewRouter.tsx"
+### Community 179 - "ViewRouter.tsx"
 Cohesion: 0.04
 Nodes (47): Arquitetura Técnica, Checklist de Estados por View Principal, Contacts, F3.1 [CRÍTICO] ConversationItem — Botões de ação silent, F4.1 [MÉDIO] ForceLogoutButton — `window.confirm()` nativo, F4.2 [BAIXO] RateLimitRealtimeAlerts — catch vazio silencia falhas de áudio, F5.1 [MÉDIO] Fonte de display sobrescrita — Plus Jakarta Sans nunca aplicada, FASE 1 — RECONHECIMENTO DO SISTEMA (+39 more)
 
-### Community 182 - "FASE 0/1 — fluxos e contratos"
+### Community 180 - "FASE 0/1 — fluxos e contratos"
 Cohesion: 0.04
 Nodes (53): 0. CONTEXTO, 1. Estado geral, 2. Mapa de conexões (FASE 0), 3.1 SEGURANÇA — o achado mais grave da auditoria, 3.2 BANCO DE DADOS (FASE 2), 3.3 BACKEND / EDGE FUNCTIONS (FASE 3), 3.4 FRONTEND / UX (FASES 4 e 5), 3.5 INTEGRAÇÕES (FASE 6) (+45 more)
 
-### Community 183 - "tabLeaderStore.ts"
+### Community 181 - "tabLeaderStore.ts"
 Cohesion: 0.07
 Nodes (52): Aceite do T09 preservado (não maquiado), Bloqueios, Correções de premissa (com o código citado), Decisões do executor, Dois buracos encontrados na validação (não na leitura do relatório), Duas descobertas na auditoria do fecho, Encerramento do ledger (T100 — 08/10/2026), Fase 1-B — T15 e T16 (01/10/2026 · executor: Hermes) (+44 more)
 
-### Community 184 - "recover-message-media/index.ts"
+### Community 182 - "recover-message-media/index.ts"
 Cohesion: 0.06
 Nodes (37): Estado do adapter — auditoria exaustiva 2026-08-28 (swagger da instância + fonte oficial), detectExtension(), downloadAndUpload(), getBase64Fallback(), MigrateCallerClient, MigrateMediaDeps, MigrateRateLimiter, MIGRATION_BATCH_LIMIT (+29 more)
 
-### Community 185 - "Relatório de Auditoria Supabase — Zapp Web V2"
+### Community 183 - "Relatório de Auditoria Supabase — Zapp Web V2"
 Cohesion: 0.04
 Nodes (53): 10. [MÉDIO] S02-001 — 65 migrations com statements=NULL, 1. [CRÍTICO] S10-001 — pg_cron: 15+ jobs com startup timeout — INCIDENTE ATIVO, 2. [CRÍTICO] S05-001 — user_roles: recursão RLS → 806.755 seq scans, 3. [CRÍTICO] S06-002 — talkx-scheduler-1min: 10% falha crônica em 30 dias, 4. [ALTO] S07-001 — decrypt_gmail_token / encrypt_gmail_token sem SECURITY DEFINER, 5. [ALTO] S03-006 / S03-007 — mcp_exec e talkx_audience_query com EXECUTE dinâmico, 6. [ALTO] S04-002 — 32 FKs sem índice na coluna filho, 7. [ALTO] S06-003 — jobid=19: cron órfão com 302+ execuções históricas (+45 more)
 
-### Community 186 - "mapboxGeocode.ts"
+### Community 184 - "mapboxGeocode.ts"
 Cohesion: 0.06
 Nodes (51): §3 — Callers remanescentes de `retrievePlace`, E06 · `suggestPlaces()` em `mapboxGeocode.ts`, E07 · `retrievePlace()`, E08 · Fallback encadeado, E09 · Cache de sugestões por termo dentro da sessão, E10 · Testes da camada de API, E11 · Teste de mutação da camada, E12 · PR da Fase 1 (+43 more)
 
-### Community 187 - "statements"
+### Community 185 - "statements"
 Cohesion: 0.04
 Nodes (50): Banco de dados — referência para agentes, Banco OFICIAL, Bancos que NÃO são deste projeto (não escrever neles), Onde se trabalha, Regras de migration, 0. Correção do aviso anterior, 1. Fatos que mudam o jeito de trabalhar, 2. Regras para todas as sessões (+42 more)
 
-### Community 188 - "Execução futura em dez fases"
+### Community 186 - "Execução futura em dez fases"
 Cohesion: 0.04
 Nodes (53): EN-001 — Revalidar base e isolamento do trabalho, EN-002 — Fixar a referência visual correta, EN-003 — Inventariar caminhos e contratos compartilhados, EN-004 — Conferir modelo de dados e autorização, EN-005 — Registrar contratos reais das ações Gmail, EN-006 — Resolver decisões que causariam retrabalho, EN-007 — Preparar ambiente isolado e fixtures sintéticas, EN-008 — Reproduzir defeitos antes das correções (+45 more)
 
-### Community 189 - "CT70_reducedMotion.test.tsx"
+### Community 187 - "CT70_reducedMotion.test.tsx"
 Cohesion: 0.04
 Nodes (29): toastError, mockCatalog, mockFavorites, mockTemplates, reduceMotion, baseCatalog(), CONTACT, FAVORITE (+21 more)
 
-### Community 190 - "useGmail.ts"
+### Community 188 - "useGmail.ts"
 Cohesion: 0.06
 Nodes (36): INBOUND_MSG, { sendMutateAsync, replyMutateAsync, gmailMock }, GmailLabelSidebarProps, account, config, connectGmailMutate, disconnectGmailMutate, refetchAccounts (+28 more)
 
-### Community 191 - "BLOCO_05_triggers.sql"
+### Community 189 - "BLOCO_05_triggers.sql"
 Cohesion: 0.07
 Nodes (52): ensure_single_default_ai_provider, update_updated_at_column, update_agent_stats_updated_at, update_ai_providers_updated_at, update_auto_close_config_updated_at, update_automations_updated_at, update_away_messages_updated_at, update_business_hours_updated_at (+44 more)
 
-### Community 192 - "copilot-tick.ts"
+### Community 190 - "copilot-tick.ts"
 Cohesion: 0.06
 Nodes (47): BRINDE_COLUMNS, brindeAtual(), BrindeKey, buildSessionPatch(), buildTier1Insights(), buildTier1System(), buildTier2Insights(), buildTier2System() (+39 more)
 
-### Community 193 - "verify-release-targets.mjs"
+### Community 191 - "useConversationActions"
+Cohesion: 0.05
+Nodes (44): 1.1 Comando de inventário, 1.2 Tabela de veredito (pode zerar `address/city/latitude`?), 1.3 Conclusão do §1, §1 — Inventário de TODOS os writers de `contacts` (C1), CP1 Lista      [x] sha=(commit fase 1, ver git log) · shot=BLOQUEADO (ver seção "BLOQUEIO — QA visual") · coluna=w-[350px] (ConversationListSidebar.tsx) · item=min-h-[72px] (VirtualizedRealtimeList.tsx ConversationRow) · avatar=w-12 h-12 =48px · busca=h-10=40px · btn Nova conversa=h-10=40px · btn filtro=w-10 h-10=40×40 · chips=5 (StatusChips, sem Spam — não existe no modelo) h-7=28px · grupos=Fixadas/Hoje/Ontem/Mais antigas via flatRows virtualizado · verificado por leitura de código + testes (`StatusChips.test.tsx` 7/7), não por screenshot (bloqueio de login) · o que ainda difere: dot "Online" não implementado (sem fonte de presença real — pendência já listada), star favorito/pin agora funcionais via `useConversationActions` (novo wiring em `RealtimeInboxView.tsx`), ChannelBadge é um dot verde 20px simplificado (não usa `ChannelBadge` do arquivo morto `ConversationItem.tsx`), CP2 Header     [x] sha=(commit fase 2) · shot=BLOQUEADO (ver "BLOQUEIO — QA visual" no CP1) · header=h-[72px] (ChatPanelHeader.tsx) · avatar=w-12 h-12=48px + dot 12px · btns=4× h-10 w-10=40×40 rounded-[10px] border-border (Ligar, Vídeo, Adicionar participante, ⋮) · pill=ConversationTabs h-9=36px bg-accent border-primary/40 · banner=TabBanner h-14, tile 36px bg-kpi-purple (Chat/IA) · tools antigos → novo lugar (nenhum handler perdido):, CP3 Input      [x] sha=(commit fase 3) · shot=BLOQUEADO (ver "BLOQUEIO — QA visual" no CP1) · chips=6× h-9=36px (Resposta Rápida, Assistente IA, Anexar, Agendar, Transferir, Mais) · input=min-h-[52px] rounded-xl bg-input border-border com 3 ícones dentro (emoji/anexo/câmera) + mic · enviar=w-11 h-11=44×44 rounded-[10px] bg-primary · ferramentas preservadas: 19/19 (nenhum handler perdido), CP4 Primitivos [x] sha=(commit fase 4) · testes: KpiStrip 8/8 (5 tones + default + iconClassName-priority + sublabel) · SectionCard 6/6 (default/tone/link/pill/subtitle+headerRight) · TaskCard 7/7 (atrasada/hoje/futura/concluída/toggle/delete) · consumidores atuais (TasksTab/Crm360Tab/HistoryTab/NotesTab) continuam passando sem alteração — default sem tone/variant é idêntico ao comportamento anterior (verificado via 263/263 testes verdes) (+36 more)
+
+### Community 192 - "verify-release-targets.mjs"
 Cohesion: 0.06
 Nodes (36): ref_node_http, fetchSaudavel(), headers(), NOW, response(), SHA_V2, SHA_V3, CATEGORIA (+28 more)
 
-### Community 194 - "StickerManager.tsx"
+### Community 193 - "StickerManager.tsx"
 Cohesion: 0.07
 Nodes (35): CategorySelector(), CategorySelectorProps, PersonalStickers(), StickerCategoryBar(), StickerCategoryBarProps, StickerGrid(), StickerGridProps, StickerManager() (+27 more)
 
-### Community 195 - "useAudioRecorder.ts"
+### Community 194 - "useAudioRecorder.ts"
 Cohesion: 0.06
 Nodes (32): describeRecorderError(), mimeToExtension(), pickRecorderMime(), RECORDER_MIME_CANDIDATES, useAudioRecorder(), UseAudioRecorderOptions, FakeRecorder, makeFakeRecorder() (+24 more)
 
-### Community 196 - "KpiStrip"
+### Community 195 - "KpiStrip"
 Cohesion: 0.05
 Nodes (41): 3.5 Journey histórico completo (07/10) — S001–S100 + K01–K11, FASE 6 — Abas Tarefas e Histórico (39–44) → CP6, 1.1 Barra superior do chat (painel central), 1.2 Painel direito (sidebar do contato), 1.4 Quatro achados que mudam o plano, 1. Retrato em 02/10/2026 — o que existe hoje, com arquivo e linha, 3. Fases e PRs, 4. As 50 etapas (+33 more)
 
-### Community 197 - "useInboxBulkActions.test.ts"
-Cohesion: 0.06
-Nodes (41): 4.1 Conversa (`contacts.conversation_status`), 4. Ciclo de vida / estados e transições permitidas, 6. Prazos, limites e quotas — Talk X / campanhas, 7. Dados pessoais, retenção e LGPD, 8. Decisões já tomadas (o que NÃO mudar e por quê), 9. Dúvidas em aberto, Regras de negócio — decididas pelo dono do produto, isValidUUID() (+33 more)
-
-### Community 198 - "journey/motion/index.ts"
+### Community 196 - "journey/motion/index.ts"
 Cohesion: 0.07
 Nodes (33): Reuso que já existe no repo, Collapse(), CollapseProps, FadeSlideIn(), FadeSlideInProps, ANEL_POR_TOKEN, HIGHLIGHT_DURATION_MS, HighlightPulse() (+25 more)
 
-### Community 199 - "Plano em 50 etapas para simplificar o topo de Contatos e adicionar o botão verde pulsante"
+### Community 197 - "Plano em 50 etapas para simplificar o topo de Contatos e adicionar o botão verde pulsante"
 Cohesion: 0.04
 Nodes (50): Aparência e interação, Arquivos previstos para alteração posterior, Comandos de referência para quando a execução for autorizada, Especificação proposta para a execução, Etapa 01 — Atualizar a referência da implementação, Etapa 02 — Registrar a tela anterior à mudança, Etapa 03 — Fixar a fronteira da remoção, Etapa 04 — Mapear montagem e estado dos diálogos (+42 more)
 
-### Community 200 - "ci-docs-baseline.unit.mjs"
+### Community 198 - "ci-docs-baseline.unit.mjs"
 Cohesion: 0.05
 Nodes (48): ABERTURA_COM_EVIDENCIA_TROCADA, ABERTURA_ESPERADA, ABERTURA_FIXTURE, achata(), BASELINE, blocosSuperados(), BUN_LOCK, checkboxesDoPlano() (+40 more)
 
-### Community 201 - "useNavigationHistory.ts"
+### Community 199 - "useNavigationHistory.ts"
 Cohesion: 0.06
 Nodes (29): Probe(), Raiz(), bindEntryIdentity(), createEntryId(), getViewFromUrl(), LEGACY_VIEW_REDIRECTS, Probe(), NAV_PARAM_SANITIZERS (+21 more)
 
-### Community 202 - "20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql"
+### Community 200 - "20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql"
 Cohesion: 0.06
 Nodes (49): ensure_single_default_filter_trigger, idx_versions_date, idx_versions_entity, on_agent_stats_update_level, on_auth_user_created, on_auth_user_created_role, on_contact_created_auto_assign, on_contact_queue_auto_assign (+41 more)
 
-### Community 203 - "Fase 3 — Perímetro de segurança (E35–E50)"
+### Community 201 - "Fase 3 — Perímetro de segurança (E35–E50)"
 Cohesion: 0.04
 Nodes (43): Escrita no GitHub, GitHub (perímetro, CI, workflows) — referência para agentes, Guards do CI que você pode rodar antes do PR, Perímetro do GitHub — estado canônico, 1. O `github-settings-baseline.json` da E13 não existia — agora existe, 2. O `settings-guard` estava quebrado desde a criação, 3. A tabela no `CLAUDE.md` — bloqueada por aprovação, E95 — perímetro do GitHub: baseline criado, guard consertado, tabela pendente de aprovação (+35 more)
 
-### Community 204 - "useContactNotes"
+### Community 202 - "useContactNotes"
 Cohesion: 0.04
 Nodes (40): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+32 more)
 
-### Community 205 - "Relatório de Auditoria Supabase — Zapp Web V2"
+### Community 203 - "Relatório de Auditoria Supabase — Zapp Web V2"
 Cohesion: 0.04
 Nodes (49): 10. [MÉDIO] S02-001 — 65 migrations com statements=NULL, 1. [CRÍTICO] S10-001 — pg_cron: 15+ jobs com startup timeout — INCIDENTE ATIVO, 2. [CRÍTICO] S05-001 — user_roles: recursão RLS → 806.755 seq scans, 3. [CRÍTICO] S06-002 — talkx-scheduler-1min: 10% falha crônica em 30 dias, 4. [ALTO] S07-001 — decrypt_gmail_token / encrypt_gmail_token sem SECURITY DEFINER, 5. [ALTO] S03-006 / S03-007 — mcp_exec e talkx_audience_query com EXECUTE dinâmico, 6. [ALTO] S04-002 — 32 FKs sem índice na coluna filho, 7. [ALTO] S06-003 — jobid=19: cron órfão com 302+ execuções históricas (+41 more)
 
-### Community 206 - "AppShell.tsx"
+### Community 204 - "AppShell.tsx"
 Cohesion: 0.06
 Nodes (29): 1.7 UI consolidada (swipe, sidebar, aria, view transition, tema, zen), Cartões (prefixo HZ; ids em `ids.json`), Plano: paridade V3 → V2, doc 26 (hooks raiz S–Z) — 13/10/2026, Resultado, Validação final (Claude), A11yBoilerplate(), AppShell, AppShellProps (+21 more)
 
-### Community 207 - "ZAPP_WEB_V2_DARKBLUE_PREMIUM_DESIGN_SYSTEM.md"
+### Community 205 - "ZAPP_WEB_V2_DARKBLUE_PREMIUM_DESIGN_SYSTEM.md"
 Cohesion: 0.04
 Nodes (49): 0. PROPÓSITO DESTE DOCUMENTO, 11. SPACING SYSTEM, 14. PAGE HEADER, 15. KPI STRIP, 16. TOOLBAR / FILTER BAR, 18. INPUT / SELECT / TEXTAREA, 19. CARD SYSTEM, 20. CHAT / INBOX — CONVERSATION ROW (+41 more)
 
-### Community 208 - "FASE 7 — Qualidade, rollout e fechamento (E46–E50)"
+### Community 206 - "FASE 7 — Qualidade, rollout e fechamento (E46–E50)"
 Cohesion: 0.04
 Nodes (49): 1. Estado verificado (2026-09-25, contra a API real com o token de produção), 2. Regras do plano (valem para as 50 etapas), Apêndice A — Shapes verificados (2026-09-25), Apêndice B — Custo (a preencher com número medido em E01/E36/E50), Apêndice B — fechamento do primeiro mês (E99, medido 2026-10-02), Apêndice C — Cascata de decisão, Busca de endereço no padrão do playground da Mapbox — Plano em 50 etapas, E01 · Medir a busca real de hoje antes de mexer — MEDIDO (2026-09-25) (+41 more)
 
-### Community 209 - "redigir-relatorio.unit.mjs"
+### Community 207 - "redigir-relatorio.unit.mjs"
 Cohesion: 0.08
 Nodes (43): ref_node_zlib, allAssetFiles(), evaluate(), extractInitialAssets(), gzipKB(), main(), measure(), parseArgs() (+35 more)
 
-### Community 210 - "FASE 7 — Testes de integração, mutação e E2E (E67–E82)"
+### Community 208 - "resolve"
+Cohesion: 0.04
+Nodes (15): chainable(), node, chain, chain, chain, chain, chain, chain (+7 more)
+
+### Community 209 - "FASE 7 — Testes de integração, mutação e E2E (E67–E82)"
 Cohesion: 0.04
 Nodes (47): A3-01 · MÉDIO-ALTO — Enter segurado / clique duplo no item: N−1 toasts de falha **falsos** + N−1 `/retrieve` a mais + N sessões faturadas, A3-02 · MÉDIO — troca de aba com request em voo não aborta; o resultado escreve estado com o hook desabilitado e a volta à aba gasta um `/suggest` a mais, A3-03 · MÉDIO — resposta da consulta antiga é aceita na janela de 300 ms do debounce, A3-04 · MÉDIO — a pausa de 429 não termina sozinha: "pausadas por 0 s" para sempre, sem botão, sem auto-retry, A3-05 · MÉDIO — `/retrieve` em voo sobrevive ao fechar/limpar: a seleção "cancelada" é aplicada depois, A3-06 · BAIXO — `retrieveError` órfão e causa reaproveitada, A3-07 · BAIXO — qualquer mudança de identidade de `proximity` dispara um `/suggest` a mais, A3-08 · BAIXO (pré-existente, **não** da F1) — `generateProtocol` usa data **local**, não epoch (+39 more)
 
-### Community 211 - "HANDOFF — Migração ZAPP WEB V2 (Lovable Cloud → Supabase Cloud novo + VPS Hostinger)"
+### Community 210 - "HANDOFF — Migração ZAPP WEB V2 (Lovable Cloud → Supabase Cloud novo + VPS Hostinger)"
 Cohesion: 0.04
 Nodes (47): 3. Metodologia (reprodutível), E29 🟢 Baseline de queries lentas → E19/20-09 ✅, E30 🔴 Bloat e autovacuum por tabela → E18/20-09 ✅, E31 🔴 Índices faltantes com carga comprovada, E32 🟢 Conexões, pooling e timeouts → E20/20-09 ✅, E33 🟢 Backup e PITR verificados → E21/20-09 🟢, E34 🔴 Integridade referencial não declarada → E17/20-09 ✅, E35 🟢 Alertas operacionais mínimos (+39 more)
 
-### Community 212 - "useTalkXCampaignList.ts"
+### Community 211 - "useTalkXCampaignList.ts"
 Cohesion: 0.06
 Nodes (39): campaign(), h, page(), buildTalkXCampaignListQuery(), buildTalkXCampaignSearchFilter(), cachedCampaignListSortFields(), campaignFieldChanged(), campaignListUpdateAffectsRecorteOrOrder() (+31 more)
 
-### Community 213 - "ContactDetails"
+### Community 212 - "ContactDetails"
 Cohesion: 0.05
 Nodes (40): 0. Regras que valem para os dez desenhos, 01–05. Inventário, 06. Decisões adotadas (seção 6 do plano), 07. Lacunas de evidência (honesto), Fase 0 — Diagnóstico do sidebar "Detalhes do Contato", §5.0 — Sincronização, CP3 — Fase 3 (abas Histórico/Tarefas/Notas/Arquivos), CP4 — Adendo de fidelidade (Fase 4, §5 do plano) (+32 more)
 
-### Community 214 - "Index.tsx"
+### Community 213 - "Index.tsx"
 Cohesion: 0.07
 Nodes (34): A11Y-CONFIG_ADMIN_SHELL-05 — Tour de onboarding não exibe passo nenhum no celular (0 alvos) · **P1**, alvoDeTourNoDom(), DEFAULT_ONBOARDING_STEPS, passosDoTourDisponiveis(), TourContext, TourContextType, TourProvider(), TourProviderProps (+26 more)
 
-### Community 215 - "🚀 Guia de Deploy - ZAPP-WEB"
+### Community 214 - "🚀 Guia de Deploy - ZAPP-WEB"
 Cohesion: 0.04
 Nodes (47): 1. Auth, 1. Build local, 2. Deploy de Edge Functions (automático no push; manual para rollback), 2. RLS, 3. Aplicar migrations, 3. Realtime, 4. Storage, Acessos necessários (+39 more)
 
-### Community 216 - "emailContactContext.ts"
+### Community 215 - "emailContactContext.ts"
 Cohesion: 0.06
 Nodes (44): As 50 etapas, Campos (seis exigidos), Cenários críticos, Decisão vigente e entrega, Email — plano do sidebar de contato e empresa em 50 etapas, Estado da prova (legenda), Evidência da preparação, Execução incremental e evidências (+36 more)
 
-### Community 217 - "TalkXCampaignScheduled"
+### Community 216 - "TalkXCampaignScheduled"
 Cohesion: 0.04
 Nodes (32): 1. O que mudou no carregamento inicial do Talk X, 2. Tamanho dos chunks do Talk X depois da correção, 3. Orçamento de bundle, 4. Listas grandes, 5. Como reproduzir esta medição, Talk X — Desempenho (TL-177), Componente(s) atuais, Componente(s) atuais (+24 more)
 
-### Community 218 - "dashboard-rls-authorization.test.sh"
+### Community 217 - "dashboard-rls-authorization.test.sh"
 Cohesion: 0.07
 Nodes (32): anon(), assert_last_definer(), check_policy(), expect_error(), expect_ok(), expect_value(), extract_between(), fail() (+24 more)
 
-### Community 219 - "ensaio-provisionamento.mjs"
+### Community 218 - "ensaio-provisionamento.mjs"
 Cohesion: 0.09
 Nodes (43): cabecalhoSql(), COLUNAS_USADAS, conferirAlvoLocal(), congelarProfundo(), CONTATOS_POR_DEPARTAMENTO, deleteRegistrosExatos(), DEPARTAMENTOS_ENSAIO, DOMINIO_ENSAIO (+35 more)
 
-### Community 220 - "IncomingCallAlert.tsx"
+### Community 219 - "IncomingCallAlert.tsx"
 Cohesion: 0.06
 Nodes (32): IncomingCallAlert, identidadeDaChamada(), IncomingCallAlert, log, {
   mockAccept,
@@ -4369,53 +4366,57 @@ Nodes (32): IncomingCallAlert, identidadeDaChamada(), IncomingCallAlert, log, {
   estado,
 }, NOTIFICACAO_VOIP, NOTIFICACAO_WHATSAPP, CHAMADA_A (+24 more)
 
-### Community 221 - "useWhatsAppStatus.ts"
+### Community 220 - "useWhatsAppStatus.ts"
 Cohesion: 0.07
 Nodes (38): 8. LACUNAS REAIS sem cartão (priorizadas), Não são lacunas (para o Claude não recriar), P1, 5. O QUE NÃO TOCAR, Fase 10 — Limpeza (PR F) e encerramento, STORY_DURATION_MS, storyCaption(), storyKeyOf() (+30 more)
 
-### Community 222 - "MultiplixView"
+### Community 221 - "MultiplixView"
 Cohesion: 0.07
 Nodes (39): FASE 8 — Front: fundação (E115–E124), FASE 8 — Front: fundação (E115–E124), FASE 8 — Front: fundação (E115–E124), MultiplixView(), normalizaFiltro(), authGetSession, calls(), countError() (+31 more)
 
-### Community 223 - "pdfThumbnail.ts"
+### Community 222 - "pdfThumbnail.ts"
 Cohesion: 0.07
 Nodes (38): pdfjs-dist, aguardarVaga(), baixarPdf(), cache, canvasParaBlob(), carregarPdfjs(), chaveDaMiniatura(), chaveEstavelDaUrl() (+30 more)
 
-### Community 224 - "MultiplixView.tsx"
+### Community 223 - "MultiplixView.tsx"
 Cohesion: 0.07
 Nodes (35): CommandPaletteProps, sidebarGroups, DESTINO_LABELS, DISPATCH_STATUS, PLACEHOLDER_CHIPS, ROLE_LABELS, RoleValue, SELECT_ALL_MAX_PAGES (+27 more)
 
-### Community 225 - "useTalkMeQueue.ts"
+### Community 224 - "useTalkMeQueue.ts"
 Cohesion: 0.07
 Nodes (35): TalkMeViewProps, controller(), first, PaginatedHarness(), pendingMessages, second, toast, claimRows (+27 more)
 
-### Community 226 - "useMessages"
+### Community 225 - "useMessages"
 Cohesion: 0.07
 Nodes (38): 2.2 Traz regressão?, C1-NOVO (P1) Tres semanticas de "arquivar" na V2 e o cartao PH-01 parte de premissa errada, C3-NOVO (P2) Deep link da inbox por URL, C4-NOVO (P1/P2) `bulkMarkAsRead` e `bulkTransfer` com falso sucesso, C6-NOVO (P2) `markAsRead` engole erro, C7-NOVO (P2) Documentacao, C8-NOVO (P2) Teste de `useDebouncedSaveSettings`-equivalente, C-novos: lacunas e riscos que a 1a passada (PD-61..95, PH-00..15) NAO viu (+30 more)
 
-### Community 227 - "q"
+### Community 226 - "q"
 Cohesion: 0.09
 Nodes (45): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+37 more)
 
-### Community 228 - "motion.tsx"
+### Community 227 - "motion.tsx"
 Cohesion: 0.09
 Nodes (42): 0. Resumo (leia isto primeiro), Motion e micro-interações, 1.1 Stack e comandos, MotionButton, MotionButtonProps, MotionCard, MotionCardProps, MotionFadeIn (+34 more)
 
-### Community 229 - "ErrorBoundary"
+### Community 228 - "ErrorBoundary"
 Cohesion: 0.07
 Nodes (25): Demais, 13. OPERACIONALIDADE — **5.5/10** (▼ −0.5), clearReloadFlag(), ErrorBoundary, isStackOverflowError(), montarChunk(), reload, montar() (+17 more)
 
-### Community 230 - "ChatbotFlowEditor.tsx"
+### Community 229 - "ChatbotFlowEditor.tsx"
 Cohesion: 0.06
 Nodes (38): 43. Diagnósticos do Sistema, 9.1 Definition of Done para qualquer funcionalidade, 9.2 Inventário e ação mínima por domínio, 9.3.1 Default seguro imediato para facades, 9.3 Fluxo de decisão para cada F01–F25, 9. Matriz obrigatória de verdade funcional, 036 — `db-health-monitor` + snapshots de tamanho, 3.4 Observabilidade (+30 more)
 
-### Community 231 - "safeStorage.ts"
+### Community 230 - "safeStorage.ts"
 Cohesion: 0.09
 Nodes (35): CommandPalette(), getRecent(), pushRecent(), dismissKey(), MfaAdminNudge(), MfaAdminNudgeProps, readDismissedUntil(), authState (+27 more)
 
-### Community 232 - "slaTimeline.ts"
+### Community 231 - "slaTimeline.ts"
 Cohesion: 0.08
 Nodes (40): comEventos(), comUmaConversa(), h, iso(), linhaSla(), REGRA_CONTATO, setup(), T0 (+32 more)
+
+### Community 232 - "useInboxBulkActions.test.ts"
+Cohesion: 0.06
+Nodes (35): 4.1 Conversa (`contacts.conversation_status`), 4. Ciclo de vida / estados e transições permitidas, 6. Prazos, limites e quotas — Talk X / campanhas, 7. Dados pessoais, retenção e LGPD, 8. Decisões já tomadas (o que NÃO mudar e por quê), 9. Dúvidas em aberto, Regras de negócio — decididas pelo dono do produto, isValidUUID() (+27 more)
 
 ### Community 233 - "pending"
 Cohesion: 0.06
@@ -4817,87 +4818,91 @@ Nodes (20): isHttps(), MAX_BUTTON_LABEL, MAX_INTERACTIVE_BUTTONS, MAX_POLL_OPTIO
 Cohesion: 0.07
 Nodes (17): fetchBreachedConversationIds(), hex32(), slaIncidentKey(), useWarRoomAlerts(), WarRoomAlert, FakeAudio, FakeNotification, h (+9 more)
 
-### Community 333 - "useSLAMetrics.ts"
+### Community 333 - "useConversationActions.ts"
+Cohesion: 0.10
+Nodes (27): amanhaNove(), proximaSegundaNove(), SNOOZE_DURATIONS, SnoozeDuration, snoozeDurationToDate(), HORA_ZERADA, _favBus, FavoriteContact (+19 more)
+
+### Community 334 - "useSLAMetrics.ts"
 Cohesion: 0.11
 Nodes (29): classifyFirstResponse(), emptyFirstResponseTally(), FirstResponseFields, FirstResponseOutcome, firstResponseRatePct(), firstResponseRatePctOrZero(), FirstResponseTally, sumFirstResponseTallies() (+21 more)
 
-### Community 334 - "supabase-export/manifest.json"
+### Community 335 - "supabase-export/manifest.json"
 Cohesion: 0.06
 Nodes (33): applyOrder, auxiliaries, baseline, checkConstraints, enums, foreignKeys, functions, indexes (+25 more)
 
-### Community 335 - "engine.integration.test.ts"
+### Community 336 - "engine.integration.test.ts"
 Cohesion: 0.09
 Nodes (22): createFakeEvolution(), FakeEvolution, FakeEvolutionMode, FakeEvolutionPost, assert(), callSend(), campaignRow(), coletarTelefones() (+14 more)
 
-### Community 336 - "evolutionAdapter.ts"
+### Community 337 - "evolutionAdapter.ts"
 Cohesion: 0.10
 Nodes (25): ADR-009 — Fonte única de mensagens da caixa de entrada, Como revisar (o que um ADR futuro precisa cobrir), Consequências, Consistência com o Zapp Web V3, Contexto, Decisão, Fontes citadas (código de hoje, não intenção), buildExternalConversations() (+17 more)
 
-### Community 337 - "tabelas.md"
+### Community 338 - "tabelas.md"
 Cohesion: 0.06
 Nodes (32): ANTES/DEPOIS -- f1_v0_base (vigente, indices do canonico) x f4_v3_idx3 (vv3 + idx2 + idx3), ANTES/DEPOIS -- f1_v0_base (vigente, indices do canonico) x f4_v3_idx3 (vv3 + idx2 + idx3), ANTES/DEPOIS -- f1_v0_base (vigente, indices do canonico) x f4_v3_idx3 (vv3 + idx2 + idx3), ANTES/DEPOIS -- f1_v0_base (vigente, indices do canonico) x f4_v3_idx3 (vv3 + idx2 + idx3), BASELINE v0 -- 3 MELHORES (por p95), BASELINE v0 -- 3 MELHORES (por p95), BASELINE v0 -- 3 MELHORES (por p95), BASELINE v0 -- 3 MELHORES (por p95) (+24 more)
 
-### Community 338 - "Telefonia — Contrato de domínio"
+### Community 339 - "Telefonia — Contrato de domínio"
 Cohesion: 0.06
 Nodes (30): 17. Chamadas (Calls), FASE 2 — Banco: migration aditiva, RPCs e prova de RLS (etapas 18–28) → CP2 (GATE HUMANO), 1. Estado verificado (dia/2026-10-07), 2. Decisões (o dono pode reverter), 3. Onda 1 — independente (arquivos novos e o item da sidebar), 4. Onda 2 — criada **depois** que C03 e a onda 1 estiverem integrados, 5. Verificações finais (Claude, na pré-visualização `localhost:5500`), 6. Fora de escopo (+22 more)
 
-### Community 339 - "design-comportamento.js"
+### Community 340 - "design-comportamento.js"
 Cohesion: 0.13
 Nodes (31): card(), channelGroup(), closePopovers(), detailPair(), filtered(), moveRail(), nextContact(), openContact() (+23 more)
 
-### Community 340 - "🚨 ZAPP-WEB — Runbook de Incidentes"
+### Community 341 - "🚨 ZAPP-WEB — Runbook de Incidentes"
 Cohesion: 0.06
 Nodes (33): Ação Imediata (< 5 min), Ações de Recuperação, Ações de Recuperação, Ações de Recuperação, Ações de Recuperação, Ações Pós-Incidente, 📋 Checklist Geral de Incidente, 📞 Contatos de Emergência (+25 more)
 
-### Community 341 - "🛡️ ZAPP-WEB — Política de Retenção de Dados (LGPD)"
+### Community 342 - "🛡️ ZAPP-WEB — Política de Retenção de Dados (LGPD)"
 Cohesion: 0.06
 Nodes (32): 10. CONTATO DPO, 11. HISTÓRICO DE REVISÕES, 1. OBJETIVO, 2. ESCOPO, 3. DEFINIÇÕES, 4.1 Dados de Atendimento, 4.2 Dados de Usuários Internos, 4.3 Dados de Operação (+24 more)
 
-### Community 342 - "🔧 Guia de Troubleshooting - ZAPP-WEB"
+### Community 343 - "🔧 Guia de Troubleshooting - ZAPP-WEB"
 Cohesion: 0.06
 Nodes (32): App lento para carregar, Build falha com erro de tipos, Como habilitar debug mode, Contatos de Emergência, CORS Error, Eventos não chegam, Função não é encontrada, Função retorna 500 (+24 more)
 
-### Community 343 - "Testes E2E (Playwright)"
+### Community 344 - "Testes E2E (Playwright)"
 Cohesion: 0.06
 Nodes (31): Aba Arquivos: prova autenticada 100% local (cartão t_6c2d8281), Achado fora do escopo desta suíte, Como rodar, Diagnóstico do setup e limites de execução remota, Execução isolada, Fixture de autenticação, Grupos e GitHub Actions, Lançamento do Talk X com provedor falso (plano V4 · X034) (+23 more)
 
-### Community 344 - "JourneyStatsHero.tsx"
+### Community 345 - "JourneyStatsHero.tsx"
 Cohesion: 0.09
 Nodes (28): CountUp(), Distribuicao(), geometriaDaSerie(), iniciais(), JourneyStatsHero(), JourneyStatsHeroContact, JourneyStatsHeroDistributionSlice, JourneyStatsHeroPeak (+20 more)
 
-### Community 345 - "useTalkXMediaUpload.ts"
+### Community 346 - "useTalkXMediaUpload.ts"
 Cohesion: 0.12
 Nodes (30): MediaTypeIcon(), TalkXMediaDropzone(), applyLink(), clearValue(), handleFile(), removeIfSessionObject(), toggleLink(), TalkXMediaDropzoneProps (+22 more)
 
-### Community 346 - "actions.ts"
+### Community 347 - "actions.ts"
 Cohesion: 0.10
 Nodes (24): FEEDBACK_DURATIONS, FEEDBACK_ICONS, FEEDBACK_TITLES, FEEDBACK_VARIANTS, FeedbackOptions, FeedbackType, WithFeedbackOptions, BROADCAST_ACTION_TTL_MS (+16 more)
 
-### Community 347 - "voice-copilot-action/index.test.ts"
+### Community 348 - "voice-copilot-action/index.test.ts"
 Cohesion: 0.07
 Nodes (22): callSearchTasks(), Cenario, chamar(), ClientCtx, Consulta, fakeAuthedClient(), fakeServiceClient(), Linha (+14 more)
 
-### Community 348 - "docs/ia/README.md"
+### Community 349 - "docs/ia/README.md"
 Cohesion: 0.08
 Nodes (20): 1. Regra de entrega, 2. Mapa bloco → PR, 3. Ordem de execução adotada, 4. Aceite da etapa, IA-008 — Organização das entregas revisáveis, 2. Desenho proposto, 3. Onde implementar, 4. Aceite da etapa (+12 more)
 
-### Community 349 - "PROMPT DE EXECUÇÃO — FUSÃO TAREFAS + LEMBRETES E QUADRO KANBAN PESSOAL | ZAPP WEB V2 — 150 ETAPAS"
+### Community 350 - "PROMPT DE EXECUÇÃO — FUSÃO TAREFAS + LEMBRETES E QUADRO KANBAN PESSOAL | ZAPP WEB V2 — 150 ETAPAS"
 Cohesion: 0.06
 Nodes (31): 1.1 Stack e comandos, 1.2 Arquivos do domínio (todos existem), 1.3 Banco (colunas reais), 1.4 Bugs e lacunas encontrados (entram no plano, não em "próximos passos"), 1. CONTEXTO VERIFICADO (leitura em 28/09/2026, `main` @ `577a213a`), 2.1 Conceito único: **Tarefa**, 2.2 Fluxo (máquina de estados) — padrão Kanban pessoal, 2.3 Três modos de ver o mesmo dado (+23 more)
 
-### Community 350 - "As 20 etapas de execução futura"
+### Community 351 - "As 20 etapas de execução futura"
 Cohesion: 0.06
 Nodes (31): Arquivos previstos, As 20 etapas de execução futura, Comandos de referência para a execução futura, Condição de encerramento, Contrato da ordem, Contrato vigente (atualizado em 20/10/2026), Decisão de implementação, Etapa 01 — Sincronizar a base antes de iniciar (+23 more)
 
-### Community 351 - "e2e-isolated-fixture-access.unit.mjs"
+### Community 352 - "e2e-isolated-fixture-access.unit.mjs"
 Cohesion: 0.12
 Nodes (20): IsolatedHttpEnvironment, before, harness(), h, NOW, rejected(), token(), userInvalid (+12 more)
 
-### Community 352 - "🚀 ZAPP-WEB (Pronto Talk Suite)"
+### Community 353 - "🚀 ZAPP-WEB (Pronto Talk Suite)"
 Cohesion: 0.06
 Nodes (32): 📊 Analytics & Dashboards, Arquitetura, 💬 Atendimento Omnichannel, Autenticação, Bitrix24, 📢 Campanhas, Contribuição, 👥 CRM & Contatos (+24 more)
 
-### Community 353 - "IncomingCallAlert.volume.test.tsx"
+### Community 354 - "IncomingCallAlert.volume.test.tsx"
 Cohesion: 0.08
 Nodes (19): RING_GAIN_CAP, CHAMADA_VOIP, {
   mockAccept,
@@ -4910,2005 +4915,2001 @@ Nodes (19): RING_GAIN_CAP, CHAMADA_VOIP, {
   estado,
 }, NOTIFICACAO_WHATSAPP, ctxs, FakeAudioContext, FakeGainNode, FakeOscillatorNode (+11 more)
 
-### Community 354 - "CT55_57_management.test.tsx"
+### Community 355 - "CT55_57_management.test.tsx"
 Cohesion: 0.07
 Nodes (24): baseHookReturn(), mockFavorites, mockFetchContactPreset, mockProduct(), mockRecentSends, mockSendHistory, mockUseAuth, mockUseCatalogStats (+16 more)
 
-### Community 355 - "useConversationActions.test.ts"
+### Community 356 - "useConversationActions.test.ts"
 Cohesion: 0.07
 Nodes (26): archiveRpcCalls, archiveRpcResult, contactsSelectResult, contactsUpdateCalls, contactsUpdateResult, eventsInsertCalls, eventsInsertResult, fakeFavoriteRows (+18 more)
 
-### Community 356 - "passkey_credentials_grants.sql"
+### Community 357 - "passkey_credentials_grants.sql"
 Cohesion: 0.07
 Nodes (25): auth.users, public.contacts, public.goals_configurations, public.ip_whitelist, public.message_reactions, public.message_templates, public.messages, public.mfa_sessions (+17 more)
 
-### Community 357 - "useGlobalSearchData"
+### Community 358 - "useGlobalSearchData"
 Cohesion: 0.08
 Nodes (26): 1. O que é a estrutura legada, 2. Anatomia completa no banco (lida ao vivo), 3. Atividade real — a prova de que está morta, 4. Produtores e consumidores — censo completo, 5. Viabilidade de exclusão TOTAL — veredito, Artefatos gerados que mudam sozinhos após o DDL (não editar à mão), Auditoria exaustiva — estrutura legada de etiquetas (`tags` + `contact_tags`), Consumidores no front (7 pontos que leem as tabelas) (+18 more)
 
-### Community 358 - "ConversationDeliverySummary.tsx"
+### Community 359 - "ConversationDeliverySummary.tsx"
 Cohesion: 0.09
 Nodes (27): 1. Resultado em uma tela, 2. Diferença que impede copiar (modelo de dados), 4. Código morto na V2 (achado que a V3 não tem), 5. Os 13 achados da V3 aplicados à V2, 7. O que vale trazer para a V2 (proposta, nada criado), 8. Limites desta auditoria, Auditoria de paridade V3 → V2: UI de conversa do inbox (parte 1), 2. Achados graves (bugs ativos e riscos latentes na V2) (+19 more)
 
-### Community 359 - "accessible-toast.tsx"
+### Community 360 - "accessible-toast.tsx"
 Cohesion: 0.08
 Nodes (24): 3. A1–A9 do documento 13 da V3: a V2 tem o mesmo problema?, (a) Código morto e sem teste, Achados U4: auditoria da V2 por si mesma (components/ui e consumidores), à luz do doc 13 da V3, (b) Textos em inglês (fora UI-03 já aberto), (c) localStorage direto, (g) Tokens, (i) Doc 13, seções 1/7/8/9: o que indica funcionalidade ainda não considerada, O que NÃO li / limites (+16 more)
 
-### Community 360 - "🏗️ Template de Projeto Base - WhatsApp CRM"
+### Community 361 - "🏗️ Template de Projeto Base - WhatsApp CRM"
 Cohesion: 0.06
 Nodes (30): 🔧 Arquivos de Configuração Base, 📝 Checklist de Implementação, 🚀 Componentes Base Essenciais, 📦 Dependências Essenciais, 🎨 Design System Base, Estrutura de Componente, 📁 Estrutura de Pastas, Fase 1: Setup Inicial (+22 more)
 
-### Community 361 - "timers-unmount.test.tsx"
+### Community 362 - "timers-unmount.test.tsx"
 Cohesion: 0.09
 Nodes (25): @radix-ui/react-label, react-hook-form, src_components_ui_form_form, FormControl, FormDescription, FormField(), FormFieldContext, FormFieldContextValue (+17 more)
 
-### Community 362 - "ScheduleCalendarView.agenda.test.tsx"
+### Community 363 - "ScheduleCalendarView.agenda.test.tsx"
 Cohesion: 0.10
 Nodes (24): @testing-library/dom, AXE, held, MES, pendentes, AGORA, held, historico() (+16 more)
 
-### Community 363 - "useContactSearchV2.ts"
+### Community 364 - "useContactSearchV2.ts"
 Cohesion: 0.08
 Nodes (16): h, RespostaRpc, h, montarHook(), PropsBusca, RespostaRpc, CONTACT_SEARCH_DEBOUNCE_MS, CONTACT_SEARCH_RESULT_LIMIT (+8 more)
 
-### Community 364 - "RadarPhase9Panel.tsx"
+### Community 365 - "RadarPhase9Panel.tsx"
 Cohesion: 0.09
 Nodes (24): RadarPhase9Panel(), RadarPhase9PanelProps, UpsellCardProps, ALTERNATIVAS, LOW_QTY_KEYWORDS, QuantityAlternative, useMinQuantityAlternative(), UseMinQuantityAlternativeOptions (+16 more)
 
-### Community 365 - "KnowledgeBaseView.fileActions.test.tsx"
+### Community 366 - "KnowledgeBaseView.fileActions.test.tsx"
 Cohesion: 0.07
 Nodes (17): KnowledgeBaseView(), statusIcon(), mocks, mocks, botaoExcluir(), deleteFile, excluirPeloDialogo(), files (+9 more)
 
-### Community 366 - "useSupabaseConnectivity.ts"
+### Community 367 - "useSupabaseConnectivity.ts"
 Cohesion: 0.09
 Nodes (23): SupabaseConnectivityBanner(), mocks, RESPOSTA, log, nav, NavWithConnection, NetworkConnection, NetworkStatus (+15 more)
 
-### Community 367 - "revoke-auth-sessions/index.ts"
+### Community 368 - "revoke-auth-sessions/index.ts"
 Cohesion: 0.09
 Nodes (24): AppRole, AuditSink, buildRevocationAudit(), decideThirdPartyRevocation(), decodeJwtClaims(), KNOWN_ROLES, normalizeRole(), planRevocation() (+16 more)
 
-### Community 368 - "3. Pendências detalhadas"
+### Community 369 - "3. Pendências detalhadas"
 Cohesion: 0.07
 Nodes (25): 1. Fontes lidas, 2. Placar por plano, 3.11 Issues abertas do GitHub (15), 3.1 Inbox / Chat, 3.2 Automação, chatbot e atendimento automático, 3.3 Satisfação (CSAT/NPS), 3.5 Relatórios e exportação, 3.6 Contatos, CRM e Catálogo (+17 more)
 
-### Community 369 - "Inventário da superfície de IA no frontend — Zapp_Web_V2"
+### Community 370 - "Inventário da superfície de IA no frontend — Zapp_Web_V2"
 Cohesion: 0.07
 Nodes (29): 2. Inbox — entrada de texto, áudio e voz, 4. CRM / churn / tickets, 7. Efeitos automáticos (sem clique do usuário), Inventário da superfície de IA no frontend — Zapp_Web_V2, Legenda do formato de cada ponto de UI, P20 — Botão "Aprimorar mensagem com IA" (Sparkles no input), P21 — Botão "Reescrever com IA" (tone picker no input — inbox), P22 — Botão "Voice Changer" (gravar → escolher voz → enviar) (+21 more)
 
-### Community 370 - "e2e-isolated-seed.unit.mjs"
+### Community 371 - "e2e-isolated-seed.unit.mjs"
 Cohesion: 0.08
 Nodes (25): body, execute, fixture(), get(), guards, json(), LO, names (+17 more)
 
-### Community 371 - "useMultiplixReplies.ts"
+### Community 372 - "useMultiplixReplies.ts"
 Cohesion: 0.09
 Nodes (24): pull(), authGetSession, ContactRow, ContactsBuilder, contactsOrder, contactsStats, fromMock, functionsInvoke (+16 more)
 
-### Community 372 - "health-check.mjs"
+### Community 373 - "health-check.mjs"
 Cohesion: 0.13
 Nodes (25): buildLogsSql(), CANONICAL_PROJECT, DEFAULT_THRESHOLD, DEFAULT_WAIT_MS, isoTimestamp(), main(), MAX_LOG_WINDOW_MS, MAX_WAIT_MS (+17 more)
 
-### Community 373 - "VoiceSearchOverlay.tsx"
+### Community 374 - "VoiceSearchOverlay.tsx"
 Cohesion: 0.14
 Nodes (20): AudioFrequencyVisualizer(), AudioFrequencyVisualizerProps, FloatingParticlesProps, Particle, PHASE_CONFIG, PhaseColors, usePhaseColors(), VoiceOrb() (+12 more)
 
-### Community 374 - "useGmail.test.ts"
+### Community 375 - "useGmail.test.ts"
 Cohesion: 0.12
 Nodes (24): createWrapper(), makeFromChain(), MOCK_ACCOUNT, MOCK_THREAD, mockActions(), renderReady(), setupDefaultMocks(), renderOAuthReturn() (+16 more)
 
-### Community 375 - "evolution.service.ts"
+### Community 376 - "evolution.service.ts"
 Cohesion: 0.09
 Nodes (26): EvolutionApiResponse, EvolutionConnectionStatus, EvolutionInstance, EvolutionMessagePayload, getConnectedEvolutionInstances(), getEvolutionInstanceById(), getEvolutionInstanceByName(), getEvolutionInstances() (+18 more)
 
-### Community 377 - "useAuth.aviso-dispositivo.test.tsx"
+### Community 378 - "useAuth.aviso-dispositivo.test.tsx"
 Cohesion: 0.11
 Nodes (24): HZ3-009 useUIInteractionManagement (swipe, device, aria, view transition, sidebar), avisosDisparados(), corpoDoAviso(), harness, montarProvider(), sessao(), tokenJwt(), avisoDeDispositivoEmVoo (+16 more)
 
-### Community 378 - "useAuthForm"
+### Community 379 - "useAuthForm"
 Cohesion: 0.08
 Nodes (20): Metodologia, BLOQUEIO — QA visual automatizada (login), FormularioDeLogin(), signIn, authenticateWithPasskey, BotaoPasskey(), { estadoRota }, navigate (+12 more)
 
-### Community 379 - "Achados"
+### Community 380 - "Achados"
 Cohesion: 0.07
 Nodes (28): A. Gravação em disco (Blob/anchor download, jsPDF), Achados, B. Área de transferência (clipboard) — 20 arquivos / 22 chamadas em produção, ver -09, C. Impressão / captura, D. Canais externos (navegador → app de terceiro), E. Links públicos / assinados, F. Integrações de saída (webhooks/edge/banco/e-mail) — ver -06, Limites desta auditoria (+20 more)
 
-### Community 380 - "PROMPT DE EXECUÇÃO — MELHORIAS DO MÓDULO TELEFONIA (`?view=voip`) | ZAPP WEB V2 — 100 ETAPAS"
+### Community 381 - "PROMPT DE EXECUÇÃO — MELHORIAS DO MÓDULO TELEFONIA (`?view=voip`) | ZAPP WEB V2 — 100 ETAPAS"
 Cohesion: 0.07
 Nodes (28): 0.1 O que este plano é — e o que não é, 0.2 Regras invioláveis (anti-falha), 0.3 Regras da sessão `claude -p` (armadilhas já pagas neste repo), 0. LEIA ANTES DE TOCAR EM QUALQUER ARQUIVO, 1.1 Arquivos reais do módulo, 1.2 O que a tela faz hoje (`VoIPPanel.tsx`, lido linha a linha), 1.3 Banco — estado a partir das migrations (verificar aplicação real na etapa 18), 1.5 Provedores reais (a confirmar na etapa 6 — o plano tem ramo para cada resposta) (+20 more)
 
-### Community 381 - "Onda 5 — Performance, Web Vitals e WCAG 2.2 (041–050)"
+### Community 382 - "Onda 5 — Performance, Web Vitals e WCAG 2.2 (041–050)"
 Cohesion: 0.07
 Nodes (28): 041 — Gerar mapa de bundle por rota e dependência, 042 — Reduzir JavaScript realmente inicial, 043 — Reduzir CSS inicial e duplicação de estilos, 044 — Carregar Mapbox, PDF, charts e planilhas apenas sob demanda, 045 — Otimizar ícones, UI e renderização de listas, 046 — Resolver estratégia de source maps e Sentry, 047 — Substituir Web Vitals manual por telemetria correta, 048 — Auditar React Query, chamadas redundantes e cache (+20 more)
 
-### Community 382 - "table_contacts.sql"
+### Community 383 - "table_contacts.sql"
 Cohesion: 0.10
 Nodes (28): idx_contacts_assigned_to, idx_contacts_company_trgm, idx_contacts_contact_type, idx_contacts_created_at, idx_contacts_email_trgm, idx_contacts_job_title_trgm, idx_contacts_name_asc, idx_contacts_name_trgm (+20 more)
 
-### Community 383 - "FASE 2 — Domínio próprio, DNS e CORS (V013–V040) — **P0**"
+### Community 384 - "FASE 2 — Domínio próprio, DNS e CORS (V013–V040) — **P0**"
 Cohesion: 0.07
 Nodes (29): FASE 2 — Domínio próprio, DNS e CORS (V013–V040) — **P0**, V013 — Confirmar onde o DNS está hospedado, V014 — Identificar o que responde hoje em `209.142.67.51`, V015 — Checar registros que não podem ser perdidos, V016 — Pedido de ajuste de DNS (uma mensagem só), V017 — Inverter o redirect (apex canônico), V018 — Verificar propagação e certificado, V019 — Garantir alias de produção nos dois nomes (+21 more)
 
-### Community 384 - "db-inventory-doc.unit.mjs"
+### Community 385 - "db-inventory-doc.unit.mjs"
 Cohesion: 0.10
 Nodes (26): caminhosCitados(), CATALOGO, citam(), citantesDe(), consumidoresEsperados(), CONTAGENS_OBRIGATORIAS, CONTAGENS_OK, contagensDoDocumento() (+18 more)
 
-### Community 385 - "talkx-engine-window-contract.test.mjs"
+### Community 386 - "talkx-engine-window-contract.test.mjs"
 Cohesion: 0.12
 Nodes (25): agora(), criarCampanha(), definirBusinessHours(), DIA, DOCKER, dormir(), esperarJanela(), fonteAnterior (+17 more)
 
-### Community 386 - "contatos-redesign-baseline.cjs"
+### Community 387 - "contatos-redesign-baseline.cjs"
 Cohesion: 0.10
 Nodes (27): AGORA, alturaDe(), { bloquearRedeReal, json, mockAppShell, querObjetoUnico }, { chromium, expect }, { contactCards, gotoContacts }, CONTAGEM_POR_TIPO, CONTATOS, esperarServidor() (+19 more)
 
-### Community 387 - "contactSidebar.ts"
+### Community 388 - "contactSidebar.ts"
 Cohesion: 0.09
 Nodes (23): PersonalSectionProps, SinguProfileSectionProps, contact, hookResult, rpcData, ContactSidebarData, ContactSidebarStatus, SidebarBudget (+15 more)
 
-### Community 388 - "CommandPaletteHost.tsx"
+### Community 389 - "CommandPaletteHost.tsx"
 Cohesion: 0.10
 Nodes (23): CommandPaletteHost(), CommandPaletteHostProps, CommandPaletteHost, src_components_ui_command_palette_commanditem, CommandPalette(), CommandPaletteProps, CommandCategory, CommandGroup (+15 more)
 
-### Community 389 - "cp1FidelidadeCarvao.test.ts"
+### Community 390 - "cp1FidelidadeCarvao.test.ts"
 Cohesion: 0.07
 Nodes (20): ALVO_CARD, AMOSTRA_NAVY, BASE_CSS, DARK, deltaE76(), Hsl, HUE_CARVAO, HUE_NAVY (+12 more)
 
-### Community 390 - "useAgentPresence.ts"
+### Community 391 - "useAgentPresence.ts"
 Cohesion: 0.12
 Nodes (24): Correção necessária, Evidências (resumo), Motivo, Negócio, PR #2970 — feat(ci): ci local roda na máquina os mesmos passos dos workflows do github, h, load(), emit() (+16 more)
 
-### Community 391 - "invoke"
+### Community 392 - "invoke"
 Cohesion: 0.08
 Nodes (23): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Conflitos identificados, 4. Bloqueio atual (+15 more)
 
-### Community 392 - "email-navy.ts"
+### Community 393 - "email-navy.ts"
 Cohesion: 0.08
 Nodes (22): 1. Ainda é válida?, 2. Traz regressão?, 3. Já está implementada no main?, 4. Regra de negócio está correta?, Dossiê PR #2526 — fix(ci): deno check --config + waitForAppliedTheme, AxeViolationResult, Kind, output (+14 more)
 
-### Community 393 - "RELATÓRIO W4 — PERFORMANCE DO `search_contacts` E OVERHEAD DO TRIGGER DE AUDITORIA"
+### Community 394 - "RELATÓRIO W4 — PERFORMANCE DO `search_contacts` E OVERHEAD DO TRIGGER DE AUDITORIA"
 Cohesion: 0.07
 Nodes (27): 0. Veredicto em 10 linhas (limiar numérico), 1.1 Ambiente, 1.2 Fixture: SQL literal do repo, 1.3 Variantes comparadas (todas com resultado funcional idêntico), 1.4 Carga e distribuição (declarada e conferida), 1.5 Matriz de medição, 1. Método (o que foi medido, sobre o quê, e como), 2.1 As 3 piores e as 3 melhores células por volume (baseline = índices do HEAD) (+19 more)
 
-### Community 394 - "9. PLANO DE MELHORIAS E CORREÇÕES — 100 ETAPAS"
+### Community 395 - "9. PLANO DE MELHORIAS E CORREÇÕES — 100 ETAPAS"
 Cohesion: 0.07
 Nodes (27): 10. Anexo — verificação reprodutível, 1. Veredito, 2. Placar geral (medido em 28/08/2026, mesma query nos dois bancos), 4. Diferenças de definição encontradas (todas intencionais, com evidência), 5. Dados — o que foi migrado, o que foi repopulado, o que foi descartado, 6. Diferenças intencionais × perdas reais — classificação final, 7. Pendências que exigem SUA decisão (nenhuma ação será tomada sem autorização), 8.1 Tabelas sem NENHUMA referência de código (2) (+19 more)
 
-### Community 395 - "useTeamMemberDetails.profiles-rpc.test.tsx"
+### Community 396 - "useTeamMemberDetails.profiles-rpc.test.tsx"
 Cohesion: 0.09
 Nodes (19): HZ3-002 useTeamMemberDetails, OccasionAlert(), OccasionAlertProps, COMMERCIAL_CALENDAR, CommercialEvent, daysUntil(), getOccasionEvent(), directConversation (+11 more)
 
-### Community 396 - "5. Registro minucioso de achados"
+### Community 397 - "5. Registro minucioso de achados"
 Cohesion: 0.07
 Nodes (27): 10. Publicação e conclusão delimitada, 1. Resultado executivo, 2. Revisões e universos separados, 3. O que a revisão da auditoria corrigiu, 4. Evidência viva obtida, e seus limites, 5. Registro minucioso de achados, 6. Cobertura negativa: o que ainda não está certificado, 7. Cauda remota e validade temporal (+19 more)
 
-### Community 397 - "Revalidação integral — recuperação Campanhas / TalkX"
+### Community 398 - "Revalidação integral — recuperação Campanhas / TalkX"
 Cohesion: 0.07
 Nodes (24): Arquivo de auditoria Talk X — triagem de 11/09/2026, Classificação dos achados do diagnóstico inicial, Classificação dos bloqueadores da revalidação, Destino dos probes temporários, Finalidade, Regras de leitura, 11. Limites explícitos e entrega desta rodada, 1. Veredito (+16 more)
 
-### Community 398 - "TALK ME — Relatório de execução e validação"
+### Community 399 - "TALK ME — Relatório de execução e validação"
 Cohesion: 0.07
 Nodes (24): Critérios globais de conclusão futura, Dependências e marcos de controle, Fontes e evidências disponíveis, Objetivo e limite desta entrega, Pontos de integração a avaliar, Registro desta entrega documental, Requisitos confirmados e premissas propostas, TALK ME — Plano de implementação em 100 etapas (+16 more)
 
-### Community 399 - "TALK ME — Plano de refinamento visual e navegação em 50 etapas"
+### Community 400 - "TALK ME — Plano de refinamento visual e navegação em 50 etapas"
 Cohesion: 0.07
 Nodes (28): 011 — Refinar o cartão principal, 012 — Dimensionar os cartões inferiores, 013 — Definir o acabamento em preto e branco, 014 — Definir as informações da faixa inferior, 015 — Tratar conteúdo ausente ou extremo, 016 — Organizar os componentes do refinamento, 017 — Centralizar a identidade selecionada, 018 — Separar semântica e identificadores das variantes (+20 more)
 
-### Community 400 - "Redesign Contatos — Navy Premium — STATUS"
+### Community 401 - "Redesign Contatos — Navy Premium — STATUS"
 Cohesion: 0.07
 Nodes (27): Auditoria final — 100 etapas, CI do PR #261 (verificado via API, todos os checks concluídos), Contrato Seção 4: 23/23 funcionalidades ✅, CP0 Ambiente        [x] sha=61d35bb955cbe999b0217477a202335efc52bc0e · before=/workspace/qa/out/00-before.png (produção, https://zapp-web-v2.vercel.app/?view=contacts, 1672x941) · gates baseline: typecheck=OK(0 erros) lint-ratchet=OK(baseline=1223 atual=1216 novas=0) tc-ratchet=OK(baseline=0 atual=0) implicit=OK(0, após fix) vitest=OK(24/24 em src/components/contacts), CP10 Motion         [x] sha=b2779db0d1e759699200d70f6e3231fabd137057 · reduced-motion: durations≈0 (1e-05s, confirmado via Playwright emulateMedia reduced-motion:reduce em /workspace/qa/reduced-motion-check.mjs — cards, sparklines KPI, pills das tabs) · mecanismo: `<MotionConfig reducedMotion="user">` envolvendo `ContactsView` (framer-motion 12), em vez de checar `useReducedMotion()` manualmente em cada ponto — cobre globalmente sparkline/count-up/pills/cards/dialogs sem precisar tocar cada componente · AnimatePresence mode="wait" na troca de viewMode (120ms) · cards animam entrada só no 1º mount (flag via useState+rAF, não useRef — o novo lint react-hooks/refs proíbe ler ref.current durante render) · ContactContentArea.tsx grid: gap-3 mantido · bundle: ContactsView-*.js = 226.8KB raw / 60.2KB gzip (medido nesta build); Δ vs. antes do redesign não medido — teria exigido rebuild do HEAD pré-fase-3 (df5321b2), não fiz por risco/custo; `node scripts/ci/bundle-budget.mjs` (bundle inicial/entry) passa: 339.5KB de 350KB budget · animate-pulse: só em skeletons (grep confirmado) · vitest 30/30, CP11 Fidelidade     [x] sha=dab7fe465e3d08889093abe00d486710ae555145 · final=/workspace/qa/out/11-final.png · geometria: 17/17 OK (sidebar234 navItem44 title38 headerBtn48 kpiCard108×4 kpiTile60 tabBar52 tabActive40 tabTodosW161 toolbar44 topRightSearch220x36 pager36 card178 avatar64 footerBtn36 kpiTotal==tabBadge fontInter) · cores: 6/6 OK via getComputedStyle(:root) (ΔE 0.78–1.60, todas ≤6) + badge Cliente ΔE1.85 (CP8) · E.4 pulado (sem PNG de referência, etapa 6) · light=/workspace/qa/out/11-light.png OK (scrollWidth=innerWidth=1672) · mobile=/workspace/qa/out/11-mobile.png OK (scrollWidth=innerWidth=390) · vitest 30/30, CP12 Entrega        [x] PR=https://github.com/adm01-debug/Zapp_Web_V2/pull/261 (mergeado — merged=true, merged_at=2026-09-07T14:47:26Z) · CI=amarelo, aceito (ver nota, falha pré-existente confirmada também pós-merge) · merge=5997d4675308499e8dab85d15f6b93f002b3043b (confirmado ancestor de origin/main via `git merge-base --is-ancestor`) · prod=/workspace/qa/out/12-prod.png · colors prod ok, CP1 Paleta/Fonte    [x] sha=ffbb2d12d7ce19825adbb071c5a85c730defa1a7 · shot=/workspace/qa/out/01-after.png (preview local — ver divergência Vercel SSO) · colors (getComputedStyle :root): background=ΔE0.86 card=ΔE0.78 sidebar=ΔE0.91 input=ΔE0.78 primary=ΔE1.60 success=ΔE1.18 · fontInter=true (+19 more)
 
-### Community 401 - "scenario-simulation.test.ts"
+### Community 402 - "scenario-simulation.test.ts"
 Cohesion: 0.12
 Nodes (20): P41 — Botão "Classificar em Lote" (Classificador de Tickets), Seção (a) — Recursos de IA visíveis na UI cujo resultado do backend não é aplicado (recomputação local conflitante), Achado 3 — Resultados de backend não aplicados nos painéis de churn/classificação — CONFIRMADO, Anexo — Reprodução por teste (resumo), ChurnContact, ChurnRisk, computeChurnRisk(), getRiskLevel() (+12 more)
 
-### Community 402 - "5. Matriz etapa a etapa"
+### Community 403 - "5. Matriz etapa a etapa"
 Cohesion: 0.07
 Nodes (27): 1. Método e limites, 2. Resumo executivo, 3. Inventário do que existe (medido), 4. Achados críticos (ordem de gravidade), 5. Matriz etapa a etapa, 6. Conclusão, Auditoria de implementação — Multiplix (2026-09-29), Documentação (+19 more)
 
-### Community 403 - "Plano do módulo Contatos por jornada do vendedor (08/10/2026)"
+### Community 404 - "Plano do módulo Contatos por jornada do vendedor (08/10/2026)"
 Cohesion: 0.07
 Nodes (27): Bloco 10 · itens 91 a 100, Bloco 11 · itens 101 a 110, Bloco 12 · itens 111 a 120, Bloco 13 · itens 121 a 130, Bloco 1 · itens 1 a 10, Bloco 2 · itens 11 a 20, Bloco 3 · itens 21 a 30, Bloco 4 · itens 31 a 40 (+19 more)
 
-### Community 404 - "Banco — inventário de produção (`tnnnlkbymytvtqngbbqh`)"
+### Community 405 - "Banco — inventário de produção (`tnnnlkbymytvtqngbbqh`)"
 Cohesion: 0.07
 Nodes (27): 1. Linha de base (antes de mexer) — `main` @ `81f67b0db`, 2. Resumo do inventário, 3. Correções (PR + evidência), 4. PRs aguardando decisão do dono, Achados que mudam decisão, Apêndice: os 247 arquivos de `src/` inalcançáveis a partir de `src/main.tsx`, B1. Detalhe por relação (schema `public`), B2. Contagem de lints (+19 more)
 
-### Community 405 - "notification-events.ts"
+### Community 406 - "notification-events.ts"
 Cohesion: 0.10
 Nodes (22): Como esta matriz foi obtida (para reprodutibilidade), Consequências para a UI (o que pode aparecer na tela), Matriz, Provedores, Telefonia — Matriz de capacidades reais (por canal), buildIncomingCallNotification(), buildSentimentNotification(), CALL_STATUS_MAP (+14 more)
 
-### Community 406 - "scripts"
+### Community 407 - "scripts"
 Cohesion: 0.07
 Nodes (28): scripts, build, build:dev, ci:local, ci:local:rapido, contexto:ia, contexto:ia:test, db:guard (+20 more)
 
-### Community 407 - "talkx-monitor-panel.test.sh"
+### Community 408 - "talkx-monitor-panel.test.sh"
 Cohesion: 0.11
 Nodes (23): pontos, camp(), case_done(), CASES_EXPECTED, CASES_SEEN, expect(), fail(), panel() (+15 more)
 
-### Community 408 - "ci-local-lib.mjs"
+### Community 409 - "ci-local-lib.mjs"
 Cohesion: 0.13
 Nodes (26): yaml, AMBIENTE_PERMITIDO, ambienteIsolado(), ambientePermitido(), checarMigrationsEditadas(), COMANDOS_ROOT, CONTEXTOS, expandirMatriz() (+18 more)
 
-### Community 409 - "e"
+### Community 410 - "e"
 Cohesion: 0.16
 Nodes (28): acessar(), avaliarBooleano(), avaliarCondicao(), avaliarExpressao(), e(), igualdade(), ou(), posfixo() (+20 more)
 
-### Community 410 - "gerar-rotas.mjs"
+### Community 411 - "gerar-rotas.mjs"
 Cohesion: 0.13
 Nodes (25): raiz, ./lazy, constantesDeString(), ehTeste(), EXTENSOES, extrairChamadas(), extrairImports(), fechoDaTela() (+17 more)
 
-### Community 411 - "supabase-usage-guard.mjs"
+### Community 412 - "supabase-usage-guard.mjs"
 Cohesion: 0.12
 Nodes (25): enumsCitados(), ler(), main(), objetos(), ROOT, scanSqlSegments(), stripSqlComments(), addSignature() (+17 more)
 
-### Community 412 - "chat/motion/index.ts"
+### Community 413 - "chat/motion/index.ts"
 Cohesion: 0.15
 Nodes (21): AnimatedNumber(), AnimatedNumberProps, FLASH_RING_MS, FlashRingProps, DEFAULT_LABELS, MorphButtonProps, MorphState, POP_BURST_MS (+13 more)
 
-### Community 413 - "JourneyHealthChip.tsx"
+### Community 414 - "JourneyHealthChip.tsx"
 Cohesion: 0.11
 Nodes (23): ICONS, JourneyHealthChip(), JourneyHealthChipProps, TONE_CLASS, AGORA, atras(), renderChip(), classifyJourneyHealth() (+15 more)
 
-### Community 414 - "SLAIndicator.contrasteSelos.test.tsx"
+### Community 415 - "SLAIndicator.contrasteSelos.test.tsx"
 Cohesion: 0.09
 Nodes (25): A11Y_CSS, CASOS, CLARO, ESCURO, HC_CLARO, HC_ESCURO, hslParaRgb(), luminancia() (+17 more)
 
-### Community 415 - "VoiceActionBridge.test.tsx"
+### Community 416 - "VoiceActionBridge.test.tsx"
 Cohesion: 0.11
 Nodes (19): Action, dispatch(), openVoiceAssistant(), toast, voice, LazyVoiceOverlay, VoiceActionBridge(), VoiceActionBridgeProps (+11 more)
 
-### Community 416 - "quadroLarguraFocoContraste.test.tsx"
+### Community 417 - "quadroLarguraFocoContraste.test.tsx"
 Cohesion: 0.09
 Nodes (18): acessibilidadeCss, baseCss, claro, escalaTailwind(), escuro, gapDe(), hslToRgb(), item() (+10 more)
 
-### Community 417 - "coresCruasInboxCrm.test.tsx"
+### Community 418 - "coresCruasInboxCrm.test.tsx"
 Cohesion: 0.10
 Nodes (24): acessibilidadeCss, ARQUIVOS, avataresDaFonte(), bgDe(), candidatosFgBg(), claro, conteudo(), escuro (+16 more)
 
-### Community 418 - "y17Selos.contraste.test.tsx"
+### Community 419 - "y17Selos.contraste.test.tsx"
 Cohesion: 0.10
 Nodes (27): A11Y, AGENTES, ALERTA, ALERTA_AVISO, CLARO, comCor(), compor(), ESCURO (+19 more)
 
-### Community 420 - "compilerOptions"
+### Community 421 - "compilerOptions"
 Cohesion: 0.07
 Nodes (27): compilerOptions, allowImportingTsExtensions, alwaysStrict, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+19 more)
 
-### Community 421 - "TrainingMiniGames.creditoXp.test.tsx"
+### Community 422 - "TrainingMiniGames.creditoXp.test.tsx"
 Cohesion: 0.10
 Nodes (16): ADR-0011, EMOJI_CHALLENGES, Game, GAMES, GameType, QUIZ_QUESTIONS, TYPING_PHRASES, mockFloat (+8 more)
 
-### Community 422 - "GoalsDashboard.tsx"
+### Community 423 - "GoalsDashboard.tsx"
 Cohesion: 0.10
 Nodes (22): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+14 more)
 
-### Community 423 - "useContactsKpi.ts"
+### Community 424 - "useContactsKpi.ts"
 Cohesion: 0.10
 Nodes (21): 22. Gestão de Contatos, Componentes (`src/components/contacts/`), Hooks e RPCs, Testes, Vistas, atalhos e permissões, APÊNDICE C — `src/hooks/crm/useContactsKpi.ts` (esqueleto), CONTACT_SHOW_LEGACY_STORAGE_KEY, CONTACT_VISIBLE_PHONE_PATTERN (+13 more)
 
-### Community 424 - "Onda 10 — Decisões finais, release candidata e melhoria contínua (091–100)"
+### Community 425 - "Onda 10 — Decisões finais, release candidata e melhoria contínua (091–100)"
 Cohesion: 0.07
 Nodes (27): 091 — Decidir e concluir a estratégia PWA, 092 — Fechar matriz de browsers, dispositivos e conectividade, 093 — Ratificar modular monolith vs microsserviços, 094 — Definir versionamento e compatibilidade de contratos, 095 — Executar exercício completo de disaster recovery, 096 — Rodar auditoria da release candidata, 097 — Fechar P0/P1 e consolidar o registro de dívida, 098 — Congelar o candidato e obter aprovação de release (+19 more)
 
-### Community 425 - "tarefas-linha-de-base.spec.ts"
+### Community 426 - "tarefas-linha-de-base.spec.ts"
 Cohesion: 0.09
 Nodes (21): agora, botaoDeModo(), caminho(), ContatoFake, CONTATOS, Def, irParaAgenda(), irParaLista() (+13 more)
 
-### Community 426 - "20260403024714_gmail_integration.sql"
+### Community 427 - "20260403024714_gmail_integration.sql"
 Cohesion: 0.13
 Nodes (25): public.update_gmail_updated_at, idx_email_attachments_message, idx_email_labels_account, idx_email_messages_account, idx_email_messages_date, idx_email_messages_from, idx_email_messages_gmail_id, idx_email_messages_thread (+17 more)
 
-### Community 427 - "e2e-isolated-pull-image.unit.mjs"
+### Community 428 - "e2e-isolated-pull-image.unit.mjs"
 Cohesion: 0.09
 Nodes (19): ref_node_perf_hooks, ref_node_timers, clock(), execute(), homonym, primary, product, root (+11 more)
 
-### Community 428 - "cenarios.mjs"
+### Community 429 - "cenarios.mjs"
 Cohesion: 0.08
 Nodes (21): base(), comp(), fails, GERADOR, JS, KEEP, PKG(), scenarios (+13 more)
 
-### Community 429 - "e2e-isolated-provider-readiness.unit.mjs"
+### Community 430 - "e2e-isolated-provider-readiness.unit.mjs"
 Cohesion: 0.09
 Nodes (15): failingStages, get(), interfaces(), invalidCatalogs, loginSeed, mediaFaults, observedPhases, parseRows() (+7 more)
 
-### Community 430 - "run-mapa.mjs"
+### Community 431 - "run-mapa.mjs"
 Cohesion: 0.12
 Nodes (24): BASELINE_VERDE, MUTANTE_MORTO, RESUMOS_SEM_MEDICAO, SAIDA_VERDE, SAIDA_VERMELHA, BACKUP_DIR, contagensDeTestes(), CONTROL (+16 more)
 
-### Community 431 - "slo-docs-honesty.unit.mjs"
+### Community 432 - "slo-docs-honesty.unit.mjs"
 Cohesion: 0.12
 Nodes (24): ALVO_ERRO_EDGE, ALVO_LATENCIA_EDGE, AMB_REPO, analisar(), blocoTabela(), caminhosCitados(), CLASSIFICADORES, contemNoArquivoRepo() (+16 more)
 
-### Community 432 - "ChatbotHonestNotice.test.tsx"
+### Community 433 - "ChatbotHonestNotice.test.tsx"
 Cohesion: 0.07
 Nodes (15): ChatbotFlowsView(), flows, SERIOUS, mocks, fim, flows, inicio, EDGE (+7 more)
 
-### Community 433 - "useSupervisorQueue.ts"
+### Community 434 - "useSupervisorQueue.ts"
 Cohesion: 0.12
 Nodes (23): ContactsRow, DEFAULT_REFRESH_MS, log, OPEN_CONVERSATION_STATUSES, SUPERVISOR_PAGE_SIZE, SUPERVISOR_ROLES, SupervisorQueueRow, SupervisorQueueSummary (+15 more)
 
-### Community 434 - "useGeoBlocking.ts"
+### Community 435 - "useGeoBlocking.ts"
 Cohesion: 0.09
 Nodes (21): BRASIL, EUA, EventoLog, mocks, montar(), Resposta, SETTINGS, builder (+13 more)
 
-### Community 435 - "evolution-api/index.test.ts"
+### Community 436 - "evolution-api/index.test.ts"
 Cohesion: 0.11
 Nodes (21): adminClient(), agentClient(), bareControlRequest(), chamarComToken(), controlRequest(), createKeyCapturingFake(), INSTANCIA_COM_CREDENCIAL, makeCallerClient() (+13 more)
 
-### Community 436 - "5. Achados"
+### Community 437 - "5. Achados"
 Cohesion: 0.08
 Nodes (25): 1. Método (conjunto LOCAL do cartão, banco LOCAL, admin local), 2. Cobertura local executada, 3. Resultado bruto do axe nas 64 medições, 4. Verificado sem problema, 5. Achados, 6. Resumo por severidade, 7. Resumo por tela (nós de violação do axe nas 64 medições e achados), 8. Todos os caminhos pesquisados no código atual (+17 more)
 
-### Community 437 - "useTranscriptionNotifications.ts"
+### Community 438 - "useTranscriptionNotifications.ts"
 Cohesion: 0.10
 Nodes (17): 0.1 Legenda, 0.2 Onde o doc 26 está errado (confirmado no código), 0. Método, fontes e limites, h, carimboRecente(), decidirAvisoPorResponsabilidade(), JANELA_CARIMBO_TRANSCRICAO_MS, MensagemTranscrita (+9 more)
 
-### Community 438 - "FASE 1 — AS 22 DIMENSÕES"
+### Community 439 - "FASE 1 — AS 22 DIMENSÕES"
 Cohesion: 0.08
 Nodes (25): 12. MANUTENIBILIDADE — **6.5/10**, 13. OPERACIONALIDADE — **6/10**, 14. PERFORMANCE — **7.5/10**, 15. QUALIDADE DE CÓDIGO — **7/10**, 17. TESTES — **7/10**, 18. TIPAGEM / TYPE SAFETY — **5.5/10**, 19. VALIDAÇÃO — **6/10**, 1. ARQUITETURA — **7/10** (+17 more)
 
-### Community 439 - "Validação exaustiva das correções recentes — 2026-09-22"
+### Community 440 - "Validação exaustiva das correções recentes — 2026-09-22"
 Cohesion: 0.08
 Nodes (24): 10. Conclusão, 1. Veredito executivo, 2. Coordenação dos cinco especialistas, 3. Escopo das correções examinadas, 4.1 Frontend, contratos e cobertura, 4.2 Edge Functions e contratos, 4.3 Qualidade, segurança estática e build, 4.4 Banco de dados PostgreSQL 17 (+16 more)
 
-### Community 440 - "useExternalContact360"
+### Community 441 - "useExternalContact360"
 Cohesion: 0.08
 Nodes (23): Arquitetura, Cadeia de Dados (Flow Completo), Hooks React, Métricas de Performance, RPCs Criadas no Supabase CRM, Trigger Criado, Variáveis de Ambiente, ZAPP-WEB × CRM 360° — Documentação Técnica (+15 more)
 
-### Community 441 - "8. As 100 etapas"
+### Community 442 - "8. As 100 etapas"
 Cohesion: 0.09
 Nodes (25): 10. Próximos passos (fora deste plano, já vistos no caminho), 1.1 O que o sidebar é hoje, 1.2 De onde o dado Singu já chega ao Zapp (caminho existente), 1. Diagnóstico (medido, não suposto), 2. Resultado pretendido, 3.1 RPC nova no banco do Singu: `get_contact_sidebar_by_phone(p_phone text) RETURNS jsonb`, 3.3 Front, 3.4 Métricas das barras (grade 2×3) (+17 more)
 
-### Community 442 - "PROMPT DE EXECUÇÃO — SISTEMA DE SKINS "OPERA GX" (paridade Promo Gifts V4) | ZAPP WEB V2"
+### Community 443 - "PROMPT DE EXECUÇÃO — SISTEMA DE SKINS "OPERA GX" (paridade Promo Gifts V4) | ZAPP WEB V2"
 Cohesion: 0.08
 Nodes (25): 0.1 Por que a tela atual do Zapp "tem skins" e não muda nada (fatos verificados no código), 0.2 Regras invioláveis (anti-falha), 0. LEIA ANTES DE TOCAR EM QUALQUER ARQUIVO, 1.3 Stack e comandos reais (`package.json`), 1.4 Infra de QA já existente (reutilizar), 1. CONTEXTO VERIFICADO (leitura feita em 23/09/2026), 3.1 Arquivos alterados, 3.2 Arquivos novos (+17 more)
 
-### Community 443 - "FASE 6 — Segurança de borda (V126–V150)"
+### Community 444 - "FASE 6 — Segurança de borda (V126–V150)"
 Cohesion: 0.08
 Nodes (26): FASE 6 — Segurança de borda (V126–V150), V126 — Coletar relatórios de CSP, V127 — Ajustar a CSP às violações legítimas, V128 — `script-src 'unsafe-inline'`, V129 — Promover CSP para enforce, V130 — `report-to` moderno, V131 — `robots.txt` bloqueando tudo, V132 — `X-Robots-Tag: noindex, nofollow` (+18 more)
 
-### Community 444 - "📝 POP — Procedimento Operacional Padrão"
+### Community 445 - "📝 POP — Procedimento Operacional Padrão"
 Cohesion: 0.08
 Nodes (26): 10. REGISTRO E CONTROLE, 11. HISTÓRICO DE REVISÕES, 12. APROVAÇÕES, 1. OBJETIVO, 2. ESCOPO, 3. DEFINIÇÕES, 4. RESPONSÁVEIS, 5. RECURSOS NECESSÁRIOS (+18 more)
 
-### Community 445 - "Webhook Security - HMAC Signature Validation"
+### Community 446 - "Webhook Security - HMAC Signature Validation"
 Cohesion: 0.08
 Nodes (25): 1. Fluxo de Validação, 2. Headers Suportados, 3. Formato da Assinatura, Como Funciona, Configuração, Configuração na Evolution API, Geração de Assinatura (Para Testes), Logs de Auditoria (+17 more)
 
-### Community 446 - "expected"
+### Community 447 - "expected"
 Cohesion: 0.13
 Nodes (17): assertAuthenticatedTarget(), AuthObservation, AuthTarget, AuthTargetError, classifyAuthTarget(), diagnoseAuthFailure(), isAuthLoginRequest(), usesExternalHttpsServer() (+9 more)
 
-### Community 447 - "catalog.spec.ts"
+### Community 448 - "catalog.spec.ts"
 Cohesion: 0.11
 Nodes (20): accessToken(), MessageRow, RestHeaders, SendEventRow, CatalogoHarness, isRead(), json(), prepararCatalogo429() (+12 more)
 
-### Community 448 - "e2e-media-volume-fixture.unit.mjs"
+### Community 449 - "e2e-media-volume-fixture.unit.mjs"
 Cohesion: 0.09
 Nodes (18): auditedSteps(), CONTRACTS, duplicates(), ROOT, SHIM, variants, WRAPPER, wrapperCases (+10 more)
 
-### Community 449 - "db-migrate-contratos.unit.mjs"
+### Community 450 - "db-migrate-contratos.unit.mjs"
 Cohesion: 0.12
 Nodes (21): CONTRATOS, envSemDestinoUrl(), EXECUTOR, raiz, rodaCli(), rodaExecutor(), SUPORTADAS, VALIDADORES (+13 more)
 
-### Community 450 - "edge-coverage-authz.unit.mjs"
+### Community 451 - "edge-coverage-authz.unit.mjs"
 Cohesion: 0.12
 Nodes (25): avaliarRégua(), avaliarStatusTestes(), chaveHelper(), DENO_CONFIG_REL, DIR_CI, DOCS_REL, erroDenoTest(), ESTE_ARQUIVO (+17 more)
 
-### Community 451 - "mapa-bundle-raw-doc.unit.mjs"
+### Community 452 - "mapa-bundle-raw-doc.unit.mjs"
 Cohesion: 0.11
 Nodes (22): blocoDepois(), BUDGET, CABECALHO_MAIOR, CARREGADOR, colunas(), colunasDaTabela(), comLinha(), comPontos() (+14 more)
 
-### Community 452 - "contraste-auditores.unit.mjs"
+### Community 453 - "contraste-auditores.unit.mjs"
 Cohesion: 0.14
 Nodes (20): source, a11yCss, config, tokensCss, alphaDoTema(), bloco(), medir(), parseTemas() (+12 more)
 
-### Community 453 - "n011-storage-policies-dedup.test.mjs"
+### Community 454 - "n011-storage-policies-dedup.test.mjs"
 Cohesion: 0.12
 Nodes (23): aplicarStatementsDePolicy(), arquivosBase, arquivosTodos, bucketDe(), caminhoFix, clausula(), dirMig, divide() (+15 more)
 
-### Community 454 - "dashboard/ConversationHeatmap.tsx"
+### Community 455 - "dashboard/ConversationHeatmap.tsx"
 Cohesion: 0.11
 Nodes (18): ABAS, CallHistoryTabs(), CallHistoryTabsProps, ConversationHeatmap(), ConversationHeatmapProps, DAYS, DAYS_FULL, HeatmapData (+10 more)
 
-### Community 455 - "talkxKeyMetrics.ts"
+### Community 456 - "talkxKeyMetrics.ts"
 Cohesion: 0.17
 Nodes (21): pct(), TalkXCampaignPaused(), src_components_talkx_talkxshared_pct, comBase, metricas, semBase, benchmarkDelta(), benchmarksFromJson() (+13 more)
 
-### Community 456 - "useAutomationSuggestions.ts"
+### Community 457 - "useAutomationSuggestions.ts"
 Cohesion: 0.12
 Nodes (22): Deferred, h, InvokeResult, render(), AUTOMATION_SUGGESTIONS_DEBOUNCE_MS, AutomationSuggestion, AutomationSuggestionFailure, AutomationSuggestionSource (+14 more)
 
-### Community 457 - "useContainerColumns.test.ts"
+### Community 458 - "useContainerColumns.test.ts"
 Cohesion: 0.12
 Nodes (16): Container, observadores, redimensionar(), ResizeObserverStub, clampColumnsPreference(), COLUMNS_BREAKPOINTS, COLUMNS_MAX, COLUMNS_MIN (+8 more)
 
-### Community 458 - "useTalkXTemplates.test.ts"
+### Community 459 - "useTalkXTemplates.test.ts"
 Cohesion: 0.08
 Nodes (20): authGetSession, authProfile, directMutationResult, directResult, fetchMock, fromTable, listResult, makeBuilder() (+12 more)
 
-### Community 459 - "ai-proxy/index.test.ts"
+### Community 460 - "ai-proxy/index.test.ts"
 Cohesion: 0.08
 Nodes (19): assert(), Chamada, ENV_KEYS, ENV_OK, insertsDeUso(), linhaDeUso(), PROVIDER_ROW, ROTA_AUTH (+11 more)
 
-### Community 460 - "admin_unlock_login_autorizacao.sql"
+### Community 461 - "admin_unlock_login_autorizacao.sql"
 Cohesion: 0.08
 Nodes (18): auth.users, pg_temp.espera_contem(), public.contacts, public.messages, public.notifications, public.permissions, public.profiles, public.role_permissions (+10 more)
 
-### Community 461 - "ai-jobs-estados-e-durabilidade.contract.test.ts"
+### Community 462 - "ai-jobs-estados-e-durabilidade.contract.test.ts"
 Cohesion: 0.09
 Nodes (13): AiJobsModule, ARQ_EDGE, ARQ_MIGRATION, createTableBody(), FROZEN_NON_TERMINALS, FROZEN_STATUSES, FROZEN_TERMINALS, FROZEN_TRANSITIONS (+5 more)
 
-### Community 462 - "profiles"
+### Community 463 - "profiles"
 Cohesion: 0.10
 Nodes (25): agent_achievements, agent_skills, agent_visibility_grants, ai_providers, ai_usage_logs, auto_close_config, automations, contact_purchases (+17 more)
 
-### Community 463 - "2. Novas branches desde 23/10 (~80 branches)"
+### Community 464 - "2. Novas branches desde 23/10 (~80 branches)"
 Cohesion: 0.08
 Nodes (24): 0. Resumo executivo, 1.1 Branches MERGEADAS ou DELETADAS desde 23/10, 1.2 Branches da FASE2 ainda abertas, 1. Status das branches mapeadas na FASE2, 2.1 Cluster Copiloto — fases seguintes (5 branches, 24/10), 2.2 Cluster CI verde 25/10 (9 branches novas + 1 da FASE2), 2.3 Cluster fix/f1a-lote-b-* (~25 branches), 2.4 Cluster multi-modelo (11 branches) (+16 more)
 
-### Community 464 - "MobileDrawerMenu.tsx"
+### Community 465 - "MobileDrawerMenu.tsx"
 Cohesion: 0.15
 Nodes (18): A11Y-CONFIG_ADMIN_SHELL-08 — Painel de notificações do celular não é anunciado como diálogo, com h3 fora de hierarquia e conteúdo fora de landmark · **P2**, advancedNav, analyticsNav, automationNav, communicationNav, connectionsNav, inDevelopmentNav, primaryNav (+10 more)
 
-### Community 465 - "EmailThreadView.test.tsx"
+### Community 466 - "EmailThreadView.test.tsx"
 Cohesion: 0.11
 Nodes (19): Empty states (A1, A2, A7), 16. SEGURANÇA — **6.5/10** (▼ −0.5), EmailThreadView(), ANIMATION_PROPS, config, markAsReadMutate, modifyThreadLabelsMutateAsync, refetchMessages (+11 more)
 
-### Community 466 - "3. Achados"
+### Community 467 - "3. Achados"
 Cohesion: 0.08
 Nodes (25): #1265 — policy fraca de reação cross-team `[conferido por mim]`, #1266 — ambiguidade + recursão `[conferido por mim]`, #1267 — guards fail-closed `[conferido por mim]`, 1. Veredicto por domínio, 2. O que foi CONFIRMADO (as correções funcionam), 3. Achados, 4. Falsos positivos que a auditoria derrubou (inclusive dos próprios auditores), 5. Evento de produção observado (não causado por esta sessão) (+17 more)
 
-### Community 467 - "Fase C — Executar a alteração localizada quando houver autorização"
+### Community 468 - "Fase C — Executar a alteração localizada quando houver autorização"
 Cohesion: 0.09
 Nodes (24): 1.1 Causa raiz — flex item sem `w-full`/`flex-1`, 1.3 Scroll duplo + padding duplo, 1.4 Landmine — `src/App.css` órfão, 1.5 Alturas concorrentes, 1. Diagnóstico (causa raiz, lida no código), 3. Ordem mínima para matar o sintoma hoje, 4. Riscos, Plano de correção de layout — 30 etapas (+16 more)
 
-### Community 468 - "FASE 4 — Economia de build (V076–V100) — **P1 custo**"
+### Community 469 - "FASE 4 — Economia de build (V076–V100) — **P1 custo**"
 Cohesion: 0.08
 Nodes (25): FASE 4 — Economia de build (V076–V100) — **P1 custo**, V076 — Script `ignoreCommand`, V077 — Testes do script, V078 — Validar contra o histórico real, V079 — Ligar no `vercel.json`, V080 — Provar no preview do próprio PR, V082 — Produção: não pular quando muda dependência, V083 — Previews de branches de agente sem PR (+17 more)
 
-### Community 469 - "FASE 5 — Cache, cabeçalhos e performance de entrega (V101–V125)"
+### Community 470 - "FASE 5 — Cache, cabeçalhos e performance de entrega (V101–V125)"
 Cohesion: 0.08
 Nodes (25): FASE 5 — Cache, cabeçalhos e performance de entrega (V101–V125), V101 — Mapear tudo que sai em `dist/` fora de `assets/`, V102 — Desenhar a política de cache (regras mutuamente exclusivas), V103 — Aplicar no `vercel.json`, V104 — Teste de contrato dos cabeçalhos, V105 — Verificar no preview, V106 — `version.json` + recarga de chunk, V107 — Skew Protection (+17 more)
 
-### Community 470 - "Campanhas / Talk X — plano de recuperação e implementação em 100 etapas"
+### Community 471 - "Campanhas / Talk X — plano de recuperação e implementação em 100 etapas"
 Cohesion: 0.08
 Nodes (23): Campanhas / Talk X — plano de recuperação e implementação em 100 etapas, Como executar e medir sem repetir a falha, Como iniciar a execução, Contrato de evidência por etapa, Definition of Done aplicável a todas as etapas, Escopo e limites de autorização, Estado de execução em 12/09/2026, Estados e evidência por etapa (+15 more)
 
-### Community 471 - "📡 ZAPP-WEB — WEBHOOK EVENTS DOCUMENTATION"
+### Community 472 - "📡 ZAPP-WEB — WEBHOOK EVENTS DOCUMENTATION"
 Cohesion: 0.08
 Nodes (25): 1. `MESSAGES_UPSERT`, 2. `MESSAGES_UPDATE`, 3. `CONNECTION_UPDATE`, 4. `QRCODE_UPDATED`, 5. `MESSAGES_DELETE`, `CALL`, `CHATS_UPDATE`, Conexão cai frequentemente (+17 more)
 
-### Community 472 - "qb"
+### Community 473 - "qb"
 Cohesion: 0.09
 Nodes (9): qb(), E(), E(), k(), V(), wc(), Y(), zb() (+1 more)
 
-### Community 473 - "check-bundle-secrets.unit.mjs"
+### Community 474 - "check-bundle-secrets.unit.mjs"
 Cohesion: 0.16
 Nodes (20): avaliar(), decodificarPayload(), ehArquivoVarrido(), EXTENSOES, extrairTokens(), guarda(), listarArquivosVarridos(), main() (+12 more)
 
-### Community 474 - "useChatInputLogic.ts"
+### Community 475 - "useChatInputLogic.ts"
 Cohesion: 0.18
 Nodes (19): cenario, montar(), AssinaturaDeTexto, medirPayloadDeEnvio(), prefixoAssinaturaDeTexto(), setNativeValue(), useChatInputLogic(), UseChatInputLogicParams (+11 more)
 
-### Community 475 - "config/supabase.ts"
+### Community 476 - "config/supabase.ts"
 Cohesion: 0.09
 Nodes (10): storageMocks, storageMocks, mocks, IS_LOCAL_SUPABASE, LOCAL_HOSTS, LOCAL_SUPABASE, LocalSupabaseTarget, PRODUCTION_SUPABASE_URL (+2 more)
 
-### Community 476 - "useRateLimitLogs.ts"
+### Community 477 - "useRateLimitLogs.ts"
 Cohesion: 0.10
 Nodes (18): Consulta, Deferred, mocks, Resposta, calculateStats(), DEFAULT_RATE_LIMIT_FILTERS, errorMessage(), likePattern() (+10 more)
 
-### Community 477 - "classify-emoji/index.test.ts"
+### Community 478 - "classify-emoji/index.test.ts"
 Cohesion: 0.11
 Nodes (19): Chamada, DenoMutavel, ENV_KEYS, Handler, handlerDaFuncao(), insertsDeLog(), json(), linhaDeConsumo() (+11 more)
 
-### Community 478 - "useConnectionsHealth.ts"
+### Community 479 - "useConnectionsHealth.ts"
 Cohesion: 0.10
 Nodes (19): 1. Intenção, createHarness(), Harness, mountLoaded(), OrderResult, Row, ConnectionRow, CONNECTIONS_HEALTH_CHANNEL (+11 more)
 
-### Community 479 - "📋 Módulos Implementados mas NÃO Documentados"
+### Community 480 - "📋 Módulos Implementados mas NÃO Documentados"
 Cohesion: 0.08
 Nodes (23): 🔴 10. Meta CAPI (Conversions API), 🔴 11. Gestão de Agentes, 🔴 12. Sequências de Follow-up, 🔴 13. Componentes Cognitivos (UX Avançada), 🔴 14. API Pública (Public API), 🔴 1. Campanhas de Mensagens em Massa, 🔴 2. Chatbot / Fluxos Automatizados, 🔴 3. Pipeline de Vendas (CRM) (+15 more)
 
-### Community 480 - "2. Achados"
+### Community 481 - "2. Achados"
 Cohesion: 0.08
 Nodes (23): 1.1 Itens exigidos no refazer, 1. Método (o que foi realmente executado), 2. Achados, 3. Modais/diálogos verificados, 4.1 Resultado geral, 4.2 Sequência de foco registrada por tela, 4. Foco visível e ordem de tabulação, 6. Tabela-resumo (+15 more)
 
-### Community 481 - "4. Achados"
+### Community 482 - "4. Achados"
 Cohesion: 0.08
 Nodes (23): 1. Método executado desta vez, 2. Cobertura, 3. Resumo bruto do axe na reexecução local, 4. Achados, 5. Verificado sem problema ou sem achado novo, 6. Resumo por severidade, 7. Resumo por tela, 8. O que mudou em relação à entrega recusada (+15 more)
 
-### Community 482 - "Validações pós-apply históricas arquivadas (W31)"
+### Community 483 - "Validações pós-apply históricas arquivadas (W31)"
 Cohesion: 0.08
 Nodes (23): 10. Validar estrutura e privilegios da outbox CRM, 11. Validar fencing e maquina de estados da outbox CRM, 12. Validar rollout seguro, ACL e funcoes atomicas do CRM, 13. Validar kill switch persistente da API publica, 14. Validar autorizacao canonica do Inbox, 15. Validar primitivas atomicas de mensagens e encerramento, 16. Validar entrega atomica de enquetes e contatos, 17. Validar historico canonico de templates Talk X (+15 more)
 
-### Community 483 - "ContactService"
+### Community 484 - "ContactService"
 Cohesion: 0.12
 Nodes (9): F7 — Código morto e dívida (71–78) — mesma PR da F6, campo, { deleteCustomField, fetchCustomFields, upsertCustomField }, ContactService, windowChangePercent(), estado, { colunasPedidas }, { rpc } (+1 more)
 
-### Community 484 - "4. Achados prioritários e critérios de encerramento"
+### Community 485 - "4. Achados prioritários e critérios de encerramento"
 Cohesion: 0.08
 Nodes (23): 10. Revalidação de fechamento — f194c74a após merge da PR351, 11. Onda corretiva local — 10/09/2026, 1. Veredito, 2. Escopo, versões e limites, 3. Resultados realmente executados — baseline 2a42b5e1, 4. Achados prioritários e critérios de encerramento, 5. Matriz canônica de 100 etapas, 6. Integração, publicação e planos paralelos (+15 more)
 
-### Community 485 - "🔐 ZAPP-WEB — Estratégia de Backup e Recovery"
+### Community 486 - "🔐 ZAPP-WEB — Estratégia de Backup e Recovery"
 Cohesion: 0.08
 Nodes (24): 1.1 Point-in-Time Recovery (PITR), 1.2 Backups Automáticos, 1.3 Backup Manual via pg_dump, 1.4 Script de Backup Semanal, 2.1 Buckets Existentes, 2.2 Script de Backup Storage, 3.1 Restore via PITR (Preferido), 3.2 Restore via pg_restore (+16 more)
 
-### Community 486 - "Verificação das etapas S38, S41, S42 e S43 — SalesView + Journey"
+### Community 487 - "Verificação das etapas S38, S41, S42 e S43 — SalesView + Journey"
 Cohesion: 0.08
 Nodes (23): 1. A aba Journey não carrega em produção, 2. O banner de conexão do WhatsApp intercepta os cliques da barra de abas, Alto-contraste — re-medido em 03/10: **tem efeito**, e o registro anterior era falso negativo meu, Contraste por elemento no alto-contraste — medido em 04/10 (fecha o item pendente do S43), DEFEITO ENCONTRADO — o alto-contraste **piora** o chip de filtro ativo, Desvio consciente registrado, Dois achados menores do modo normal (pré-existentes, não corrigidos), Dois bugs de produção encontrados (registrados aqui) (+15 more)
 
-### Community 487 - "8. As 150 etapas"
+### Community 488 - "8. As 150 etapas"
 Cohesion: 0.09
 Nodes (24): 3. Inbox — detalhes do contato e memória, P33 — Widget "Insights da IA" (resumo compacto no painel de contato), P34 — Painel "Inteligência comercial" completo (briefing, DISC, gatilhos, rapport, horários, churn), P35 — Badge de briefing no cabeçalho do chat (hover), P36 — "Análise" (badges de sentimento/urgência/departamento), P37 — Painel "Memória da Conversa" (fatos, objeções tratadas, promessas, pendências), P38 — Busca na Base de Conhecimento (painel do contato), 7. Mapa de sobreposição com o plano de IA e com o código existente (+16 more)
 
-### Community 488 - "CurrentSqlSourcesTests"
+### Community 489 - "CurrentSqlSourcesTests"
 Cohesion: 0.13
 Nodes (12): Fase 0 — Decisões e pré-requisitos (1–8), Fase 1 — Ferramental corrigido (9–16), Fase 2 — Baseline e mapeamento (17–28), Fase 3 — Schema no destino (29–50), Fase 4 — Dados (51–56), Fase 5 — Edge functions, secrets e Evolution (57–66), Fase 6 — Código do app (67–78), Fase 7 — Deploy na VPS Hostinger (79–90) (+4 more)
 
-### Community 489 - "multiplix-voices/index.test.ts"
+### Community 490 - "multiplix-voices/index.test.ts"
 Cohesion: 0.09
 Nodes (17): Voz (F64) — quem enxerga qual voz, CallerContext, canRecoverAsset(), grantReachesCaller(), callerAdmin, callerAgentB, callerAgentC, ENV_KEYS (+9 more)
 
-### Community 490 - "Plano de paridade V3 → V2 do chat do inbox, em 30 etapas"
+### Community 491 - "Plano de paridade V3 → V2 do chat do inbox, em 30 etapas"
 Cohesion: 0.08
 Nodes (23): 10. Documento 01-frontend (11/10/2026, noite): faixa M, 48 cartões, 11. 12/10/2026: urgentes de segurança, faixas N e O e destravamento das linhagens, 1. Objetivo e critério de sucesso, 2. Princípios (aprendidos nesta frente), 3. As 30 etapas, 4. Como acompanho e valido, 5. Riscos e mitigação, 6. Decisões do dono (11/10/2026) (+15 more)
 
-### Community 491 - "GmailInboxView.test.tsx"
+### Community 492 - "GmailInboxView.test.tsx"
 Cohesion: 0.08
 Nodes (20): Achados do doc que NÃO existem na V2 (conferido), Cartões, Correções em cartões JÁ existentes (comentários), Decisões adotadas (padrão do Claude; o Joaquim pode vetar), Decisões que dependem do Joaquim (sem cartão por isso), O que a segunda passada achou de mais grave, O que NÃO foi verificado (e por quê), Paridade V3 → V2: hooks da raiz, doc 24 (`24-hooks-raiz-2.md`), SEGUNDA PASSADA (13/10/2026) (+12 more)
 
-### Community 492 - "secrets-environments.unit.mjs"
+### Community 493 - "secrets-environments.unit.mjs"
 Cohesion: 0.14
 Nodes (20): extractFlowOnBlock(), _findInheritLeaks(), findPullRequestSecretLeaks(), findPushSecretLeaks(), _findSecretRefs(), hasPullRequestTrigger(), hasPushTriggerUnrestricted(), main() (+12 more)
 
-### Community 493 - "SentimentTrendChart"
+### Community 494 - "SentimentTrendChart"
 Cohesion: 0.14
 Nodes (17): sentimentLabel(), SentimentTrendChart(), chamadas, dia(), linha(), linhas, renderComQuery(), rpc (+9 more)
 
-### Community 494 - "BLOCO_15_triggers.sql"
+### Community 495 - "BLOCO_15_triggers.sql"
 Cohesion: 0.08
 Nodes (4): public.auto_assign_contact(), public.notify_sicoob_on_reply(), public.client_wallet_rules, public.password_reset_requests
 
-### Community 495 - "detect-new-device/index.test.ts"
+### Community 496 - "detect-new-device/index.test.ts"
 Cohesion: 0.09
 Nodes (18): assert(), DETECT_AUTH_TOKEN, ENV_KEYS_DETECT, ENV_OK_DETECT, makeDetectRequest(), ROTA_AUTH, ROTA_DEVICE_INSERT, ROTA_DEVICE_NULL (+10 more)
 
-### Community 496 - "_shared/evolution-webhook-messages.test.ts"
+### Community 497 - "_shared/evolution-webhook-messages.test.ts"
 Cohesion: 0.09
 Nodes (10): AWAY_MESSAGE_WORKER, AGORA, Chamada, FakeConfig, fakeSupabase(), chain, fetchCalls, goIncoming() (+2 more)
 
-### Community 497 - "20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql"
+### Community 498 - "20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql"
 Cohesion: 0.14
 Nodes (23): idx_blocked_ips_expires, idx_blocked_ips_ip, idx_mfa_sessions_user, idx_rate_limit_logs_created, idx_rate_limit_logs_ip, idx_rate_limit_logs_user, idx_security_alerts_created, idx_security_alerts_type (+15 more)
 
-### Community 498 - "ai-generate.contract.test.ts"
+### Community 499 - "ai-generate.contract.test.ts"
 Cohesion: 0.12
 Nodes (20): AiProviderRow, blocoChaves(), blocoParenteses(), CAMPOS_GENERATE_PARAMS, CAMPOS_GENERATE_RESULT, capacidades(), chamadas(), corpoDoDespacho() (+12 more)
 
-### Community 499 - "zod-jitless.test.ts"
+### Community 500 - "zod-jitless.test.ts"
 Cohesion: 0.11
 Nodes (11): zod, arquivosFonte(), SRC, ZOD_V4, campanhaSchema, contatoSchema, zappFilterConfigs, zappImportTemplates (+3 more)
 
-### Community 500 - "3. Achados"
+### Community 501 - "3. Achados"
 Cohesion: 0.09
 Nodes (22): 2. Cobertura, 3. Achados, 4. Verificado SEM problema (e como foi verificado), 5. Resumo por severidade, 6. Resumo por tela, 7. Contagem bruta do axe (por regra × tela × viewport/tema), 8. O que o cartão de correção deve considerar, A11Y-CONFIG_ADMIN_SHELL-01 — Abas de Segurança sem nome acessível abaixo de 640 px · **P1** (+14 more)
 
-### Community 501 - "ProtectedRoute"
+### Community 502 - "ProtectedRoute"
 Cohesion: 0.09
 Nodes (20): Achados com cartão (faixa M: 48 cartões, já criados e delegados), Descartes com motivo, Método, Paridade V3 → V2: documento 01-frontend (shell, rotas, autenticação e administração), 11/10/2026, 3. AUTORIZAÇÃO — **8/10**, 2. AUTENTICAÇÃO — **6.0/10** (▼ −2.0) ⚠️ REGRESSÃO EM PRODUÇÃO, 4.1 Navegação (cliente), 4.2 RLS (o que as migrations impõem) (+12 more)
 
-### Community 502 - "FASE 1 — AS 20 DIMENSÕES"
+### Community 503 - "FASE 1 — AS 20 DIMENSÕES"
 Cohesion: 0.09
 Nodes (23): 10. OBSERVABILIDADE — **5/10** (▲ de 4.5), 10. OBSERVABILIDADE — **5.0/10** (=), 12. MANUTENIBILIDADE — **7.0/10** (=), 15. QUALIDADE DE CÓDIGO — **7.0/10** (▼ −0.5), 17. TESTES — **7.5/10** (▲ +0.5), 18. TIPAGEM / TYPE SAFETY — **6.5/10** (=), 1. ARQUITETURA — **7.0/10** (=), 20. OPERAÇÕES (PROCESSOS) — **6.0/10** (▼ −0.5) (+15 more)
 
-### Community 503 - "emailHtml.ts"
+### Community 504 - "emailHtml.ts"
 Cohesion: 0.14
 Nodes (15): Anexo — Rastreabilidade dos 279 achados, O que está bem feito — não refazer, dompurify, buildBodyPreview(), cssUnescape(), decodeEntitiesOnce(), EMAIL_ALLOWED_ATTR, EMAIL_ALLOWED_TAGS (+7 more)
 
-### Community 504 - "4. Plano de correção e melhorias — 100 etapas"
+### Community 505 - "4. Plano de correção e melhorias — 100 etapas"
 Cohesion: 0.09
 Nodes (22): 0. Sumário executivo — o que está quebrado agora, 1. Inventário ao vivo (14/10), 2. O que o plano de 01/10 entregou e o que ficou (medido pelo repo e pela API, não pelos checkboxes), 3. Achados (com evidência), 4. Plano de correção e melhorias — 100 etapas, 5. O que **não** mexer (parece bug, não é), 6. Ordem recomendada e dependências, 6b. Achados de 15/10/2026 fora das 100 etapas (corrigidos no lote pós-#1947) (+14 more)
 
-### Community 505 - "Proveniência e drift — migrations `team_chat` da branch abandonada `claude/confident-babbage-ivgmmn`"
+### Community 506 - "Proveniência e drift — migrations `team_chat` da branch abandonada `claude/confident-babbage-ivgmmn`"
 Cohesion: 0.09
 Nodes (22): 1. Referências verificadas, 2.1 Tabela dos 40 arquivos, 2.2 Resumo, 2.3 Como e por que os 40 chegaram à `main`, 2. Item 1 — existência e identidade dos 40 arquivos na `main`, 3. Item 2 — migrations `202609*team_chat*` na `main` que **nunca** existiram na branch, 4. Item 3 — versions do branch que **não** existem na `main` (arquivo ausente), 5.1 DDL: rota permitida (MCP + registro no ledger no mesmo turno) (+14 more)
 
-### Community 506 - "Detalhe"
+### Community 507 - "Detalhe"
 Cohesion: 0.09
 Nodes (23): Auto Update PR Branches (`auto-update-pr-branch.yml`), Branch Hygiene Audit (`branch-hygiene-audit.yml`), CI/CD Pipeline (`ci.yml`), CodeQL (`codeql.yml`), Contexto para agentes de IA (10 min) (`contexto.yml`), CRM Sync Worker (`crm-sync-worker.yml`), DB Guard (offline) (`db-guard.yml`), DB Live Guard (`db-live-guard.yml`) (+15 more)
 
-### Community 507 - "useDashboardData.ts"
+### Community 508 - "useDashboardData.ts"
 Cohesion: 0.12
 Nodes (16): 2.2 Os três modos, 2.3 Sheet de edição (`shared/WorkItemSheet.tsx`), 2.4 Ações do card, 2.5 Região viva, atalhos e narração, 2.6 Alarme (lembrete), 2.7 Dashboard, 2. Telas e fluxos principais, presence (+8 more)
 
-### Community 508 - "PLANO DE IMPLEMENTAÇÃO — MULTIPLIX (ZAPP Web V2) · v1.1 REVISADO"
+### Community 509 - "PLANO DE IMPLEMENTAÇÃO — MULTIPLIX (ZAPP Web V2) · v1.1 REVISADO"
 Cohesion: 0.09
 Nodes (22): 200 etapas · checklist de conclusão · DarkBlue operacional, Adendo 26/09/2026 — após leitura de `talkx-send` e medições complementares, Como usar, FASE 0 — Descoberta residual e decisões (E001–E010), FASE 10 — Painel 02 · Composição (E139–E150), FASE 11 — Painel 03 · Prévia, aptidão e confirmação (E151–E160), FASE 12 — Monitor, histórico e retornos (E161–E170), FASE 13 — Acessibilidade, responsivo e performance (E171–E178) (+14 more)
 
-### Community 509 - "FASE 7 — Confiabilidade do deploy e observabilidade (V151–V172)"
+### Community 510 - "FASE 7 — Confiabilidade do deploy e observabilidade (V151–V172)"
 Cohesion: 0.09
 Nodes (23): FASE 7 — Confiabilidade do deploy e observabilidade (V151–V172), V151 — Alerta de deploy de produção com ERROR, V152 — Confirmar que a Vercel publica `deployment_status`, V153 — Teste do alerta, V154 — Rollback documentado, V155 — Explicitar build no `vercel.json`, V156 — `scripts/ci/vercel-config.unit.mjs` completo, V157 — Verificação pós-deploy (script) (+15 more)
 
-### Community 510 - "Relatório de Validação Exaustiva — Pós-Onda de Excelência"
+### Community 511 - "Relatório de Validação Exaustiva — Pós-Onda de Excelência"
 Cohesion: 0.09
 Nodes (22): 1. Resumo executivo, 2. Reprodução independente dos achados (gitleaks v8), 3. Gaps novos descobertos nesta validação, 4. Simulações executadas, 5. Baseline de saúde do repositório (medido em 2026-08-30 ~17:40), 6. Limitações desta validação, 7. Ações recomendadas (priorizadas), 8.1 Gate local mínimo (handoff §4.6) — agora 100% executado (+14 more)
 
-### Community 511 - "useDashboardKpi.ts"
+### Community 512 - "useDashboardKpi.ts"
 Cohesion: 0.12
 Nodes (14): roleState, payload, rpc, payload, rpc, aggregateDashboardKpi(), assinaturaNovaAusente(), chamarDashboardKpi() (+6 more)
 
-### Community 512 - "RadarCards.tsx"
+### Community 513 - "RadarCards.tsx"
 Cohesion: 0.15
 Nodes (20): AlertsCard(), AlertsCardProps, BRINDE_LABELS, BRINDE_LETTERS, BrindeCard(), BrindeCardProps, CardProps, DecisionMakerCard() (+12 more)
 
-### Community 513 - "contrastePlayerSlider.test.tsx"
+### Community 514 - "contrastePlayerSlider.test.tsx"
 Cohesion: 0.11
 Nodes (20): A11Y_CSS, ancestralComFundo(), DEBITO_ARCO_TRILHA, ESCURO, ESTADOS, fundoDaClasse(), HC_CLARO, HC_ESCURO (+12 more)
 
-### Community 514 - "AuditLogDashboard.test.tsx"
+### Community 515 - "AuditLogDashboard.test.tsx"
 Cohesion: 0.13
 Nodes (17): AGORA, estado, LOGS, estado, LOGS_PAPEIS, mockLogs, AuditLogsServer, AuditLogsServerOpts (+9 more)
 
-### Community 515 - "AuthProvider"
+### Community 516 - "AuthProvider"
 Cohesion: 0.15
 Nodes (10): AuthProvider(), esvaziarFilaDeEnvioOffline(), authMock(), AuthService, NETWORK_BLOCKED_MESSAGE, NETWORK_UNAVAILABLE_MESSAGE, { authMocks, serverLoginMock }, authMocks (+2 more)
 
-### Community 516 - "lib/ai-vocabulary.ts"
+### Community 517 - "lib/ai-vocabulary.ts"
 Cohesion: 0.12
 Nodes (15): AmbientColors, NEGATIVE, NEUTRAL, POSITIVE, src_lib_ai_vocabulary_normalizesentiment, src_lib_ai_vocabulary_sentiment_values, CANONICAL_TO_LEVEL, SENTIMENT_LEVELS (+7 more)
 
-### Community 517 - "web-vitals.ts"
+### Community 518 - "web-vitals.ts"
 Cohesion: 0.13
 Nodes (15): installPerformanceObserver(), ObserverCallback, runCollector(), COLLECTED_VITALS, getRating(), getVitalTargets(), initWebVitals(), reportTti() (+7 more)
 
-### Community 518 - "scan-icon-buttons.ts"
+### Community 519 - "scan-icon-buttons.ts"
 Cohesion: 0.17
 Nodes (21): BASELINE_PATH, scan(), analyzeElement(), classNameHasSrOnly(), findingKey(), hasSrOnlyDescendant(), ICON_TAGS, IconButtonFinding (+13 more)
 
-### Community 519 - "FakeProductsBuilder"
+### Community 520 - "FakeProductsBuilder"
 Cohesion: 0.15
 Nodes (3): compareValues(), FakeProductsBuilder, FakeProductsClient
 
-### Community 520 - "3. Matriz de lacunas por domínio"
+### Community 521 - "3. Matriz de lacunas por domínio"
 Cohesion: 0.10
 Nodes (19): 3.4 Notificações, PWA e idioma, 093 — PWA: religar Service Worker com banner de atualização, 0. Como este plano se diferencia do plano de excelência já existente, 1.1 O que o V2 tem e V1/V3 não têm (não regredir), 1. Inventário comparativo (contagens por repositório), 2. Método, 3.10 Deploy, infra e PWA, 3.11 Ferramentas de desenvolvedor e arquitetura (+11 more)
 
-### Community 521 - "🎯 HANDOFF: ZAPP-WEB-V2 — Missão 10/10 CONQUISTADA"
+### Community 522 - "🎯 HANDOFF: ZAPP-WEB-V2 — Missão 10/10 CONQUISTADA"
 Cohesion: 0.09
 Nodes (21): 🐛 10 Bugs Críticos de Código Corrigidos, 🏗️ Arquitetura, ✅ AUDITORIA TÉCNICA EXAUSTIVA — 2026-06-12 (Score mantido: 10/10), 📋 CONTEXTO DO PROJETO, 🗄️ DB: Auditoria e Otimizações, 📚 Documentação, 🎯 HANDOFF: ZAPP-WEB-V2 — Missão 10/10 CONQUISTADA, ✅ HISTÓRICO COMPLETO DE MELHORIAS (+13 more)
 
-### Community 522 - "RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows"
+### Community 523 - "RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows"
 Cohesion: 0.09
 Nodes (21): 1. Hash inconsistente do Deno lockfile (`deno.lock`), 1. Origem da sessão — rejeição anterior, 2. Baseline local — início desta sessão (2026-10-31 ~04:00Z), 2. Falha de `gh pr list` no `fila-merge.mjs`, 2a. Budget de bundle, 3. Inventário completo de workflows com falha, 4. Estado dos 6 required checks na main, 5. Causa raiz do bundle estar "359,5 KB" na sessão anterior (+13 more)
 
-### Community 523 - "5. Achados"
+### Community 524 - "5. Achados"
 Cohesion: 0.09
 Nodes (21): 1. Método corrigido nesta rodada (LOCAL + banco LOCAL + admin local), 2. Cobertura local executada, 3. Resultado bruto do axe na rodada local, 4. Verificado sem problema na rodada local, 5. Achados, 6. Resumo por severidade, 7. Resumo por tela (nós de violação do axe na rodada local), 8. Todos os caminhos pesquisados no código atual (+13 more)
 
-### Community 524 - "PLANO — Finalização do Módulo Contatos (100 etapas) — 2026-09-29"
+### Community 525 - "PLANO — Finalização do Módulo Contatos (100 etapas) — 2026-09-29"
 Cohesion: 0.10
 Nodes (18): Decisões (preencher), F0 — Decisões e preparação (1–6), F10 — Entrega, deploy e verificação (96–100), F2 — Encerrar o conflito de planos (19–28) — PR só front/docs, F9 — Documentação e inventário (91–95) — junto da PR da F8, Mapa de origem (para rastreabilidade), PLANO — Finalização do Módulo Contatos (100 etapas) — 2026-09-29, Status por fase (+10 more)
 
-### Community 525 - "5. As 100 etapas"
+### Community 526 - "5. As 100 etapas"
 Cohesion: 0.09
 Nodes (21): 1. Sumário executivo, 2.1 Núcleo (some por inteiro), 2.2 Pontos de entrada (registro da rota/menu), 2.3 Superfície de UI compartilhada (ajustar, não apagar), 2.4 Consumidores do modelo relacional (o risco real), 2.5 Backend (edge functions), 2.6 Banco, 2. Inventário completo do módulo (+13 more)
 
-### Community 526 - "Triagem — o que ainda está local e deve ir ao GitHub ou ao banco"
+### Community 527 - "Triagem — o que ainda está local e deve ir ao GitHub ou ao banco"
 Cohesion: 0.09
 Nodes (22): 10. Entregáveis e preservação, 1. Veredito, 2. Atualização em relação à auditoria da manhã, 3. Escopo e método, 4. Matriz de destino, 5.1. Os quatro merges não equivalem a quatro melhorias perdidas, 5.2. Branches antigas com patches diferentes, 5.3. Sete upgrades recuperáveis já constam da main (+14 more)
 
-### Community 527 - "Relatório de Validação Exaustiva — ZAPP WEB V2"
+### Community 528 - "Relatório de Validação Exaustiva — ZAPP WEB V2"
 Cohesion: 0.09
 Nodes (21): A-01 · Trigger duplicado neutralizando exceção de escalada de privilégio em `profiles`, A-02 · Trigger duplicado em `user_devices` executando a mesma função 2x, A-03 · `get_channel_credentials` callable por `authenticated`, A-04 · 108 FK de coluna única sem índice de suporte, 🔴 ALTOS — Requerem Correção Breve, C-01 · `clear_login_attempts` executável por `anon` e `PUBLIC`, C-02 · `notify_sicoob_on_reply` — Bridge SICOOB completamente morta, C-03 · `decrypt_gmail_token` / `encrypt_gmail_token` — callable por `authenticated` (+13 more)
 
-### Community 528 - "chat-motion.test.tsx"
+### Community 529 - "chat-motion.test.tsx"
 Cohesion: 0.16
 Nodes (18): As oito peças, Exemplos de uso, Microinterações do chat — kit de movimento, Regra de cor, Regra de movimento, Testes, DrawLine(), FlashRing() (+10 more)
 
-### Community 529 - "Distribuição de Atendimentos — Tabela-Verdade de Fallbacks"
+### Community 530 - "Distribuição de Atendimentos — Tabela-Verdade de Fallbacks"
 Cohesion: 0.09
 Nodes (21): 1.1 Algoritmos Disponíveis, 1. Visão Geral, 2.1 Matriz de Decisão Principal, 2.2 Condições Detalhadas, 2. Tabela-Verdade de Distribuição, 3.1 History (Histórico), 3.2 Skillset (Habilidades), 3.3 Least Load (Menor Carga) (+13 more)
 
-### Community 530 - "Handoff mestre para o Cline — execução corretiva exaustiva do Zapp Web V2"
+### Community 531 - "Handoff mestre para o Cline — execução corretiva exaustiva do Zapp Web V2"
 Cohesion: 0.09
 Nodes (22): 0. Prompt pronto para entregar ao Cline, 1. Missão e critério de sucesso, 2.1 Coordenadas canônicas, 2. Fontes de verdade e precedência, 3.1 Execução do Cline, 3.2 Implementação atual das 100 etapas, 3.3 Baseline técnico a preservar como comparação, 3.4 Bloqueadores P0/P1 conhecidos (+14 more)
 
-### Community 531 - "Migrations — procedimento e armadilhas"
+### Community 532 - "Migrations — procedimento e armadilhas"
 Cohesion: 0.09
 Nodes (21): 1. A regra que importa, 3. `CREATE INDEX CONCURRENTLY` nao roda pelo gateway MCP, 4. `_foreign/` e `_superseded/`, 5. Operacao pontual nao e migration, 6. Checklist antes de `supabase db push`, 7. Artefatos gerados automaticamente, 7. Auditoria de arquivos que nao aplicam (replay local, 03/10/2026), 8. Fluxo diário (lote) — como migrations chegam à produção (+13 more)
 
-### Community 532 - "PLANO EM 50 ETAPAS"
+### Community 533 - "PLANO EM 50 ETAPAS"
 Cohesion: 0.09
 Nodes (19): 3. Mapa de cartões do Kanban do Hermes, 4. Critérios de aceite do conjunto, 5. Riscos, 6. Fora de escopo (deliberado), 7. Estado de execução, Fase 2 — O interruptor atômico (E14), Fase 3 — Layout e visual (E15–E16), Fase 5 — Documentação (E24–E29) (+11 more)
 
-### Community 533 - "PLANO DE IMPLEMENTAÇÃO — MULTIPLIX (ZAPP Web V2) · v1.1 REVISADO"
+### Community 534 - "PLANO DE IMPLEMENTAÇÃO — MULTIPLIX (ZAPP Web V2) · v1.1 REVISADO"
 Cohesion: 0.09
 Nodes (21): 200 etapas · checklist de conclusão · DarkBlue operacional, Como usar, FASE 0 — Descoberta residual e decisões (E001–E010), FASE 10 — Painel 02 · Composição (E139–E150), FASE 11 — Painel 03 · Prévia, aptidão e confirmação (E151–E160), FASE 12 — Monitor, histórico e retornos (E161–E170), FASE 13 — Acessibilidade, responsivo e performance (E171–E178), FASE 14 — Testes, QA e observabilidade (E179–E188) (+13 more)
 
-### Community 534 - "HANDOFF — Talk X / Campanhas · Zapp Web V2"
+### Community 535 - "HANDOFF — Talk X / Campanhas · Zapp Web V2"
 Cohesion: 0.09
 Nodes (21): 10. O QUE NÃO FAZER, 11. talkxShared.tsx — EXPORTS DE F1 (referência rápida), 1. CONTEXTO CRÍTICO — LER ANTES DE QUALQUER COISA, 2. ESTADO ATUAL — O QUE JÁ ESTÁ FEITO, 3. PRÓXIMA TAREFA IMEDIATA — FIX 2 ERROS RATCHET, 4. TAREFAS EM ORDEM (próximas sessões), 5. CHECKLIST DE INÍCIO DE SESSÃO, 6. ARQUIVOS CHAVE (+13 more)
 
-### Community 535 - "Talk X / Campanhas — Guia de Operação (v1.0)"
+### Community 536 - "Talk X / Campanhas — Guia de Operação (v1.0)"
 Cohesion: 0.09
 Nodes (21): 10. Preflight de paridade de deploy (X023) — obrigatório antes do primeiro disparo, 1. Acesso e permissões, 2.1 Templates de mensagem, 2.2 Segmentos de audiência, 2. Módulos disponíveis (v1.0), 3. Banco de dados, 4. Edge Functions relacionadas, 5. Evolution GO (WhatsApp) (+13 more)
 
-### Community 536 - "e2e-talkx.ts"
+### Community 537 - "e2e-talkx.ts"
 Cohesion: 0.13
 Nodes (17): assertSafeDraftName(), AuthIdentity, buildE2EDraftCleanupUrl(), cleanupE2EDraftCampaigns(), createE2ETalkXDraftName(), E2E_TALKX_CONNECTION_ID, E2E_TALKX_CONNECTION_LABEL, E2E_TALKX_EXECUTION_ID (+9 more)
 
-### Community 537 - "check-supabase-url-import-meta.unit.mjs"
+### Community 538 - "check-supabase-url-import-meta.unit.mjs"
 Cohesion: 0.13
 Nodes (18): avaliar(), destructuringMultilinha(), ehTeste(), guarda(), ignorar(), normalizar(), PADROES, RAIZ (+10 more)
 
-### Community 538 - "talkx-template-second-update-snapshot.test.sh"
+### Community 539 - "talkx-template-second-update-snapshot.test.sh"
 Cohesion: 0.31
 Nodes (19): apply_real_migrations(), assert_guard_active(), assert_rpc_works(), build_mutations(), call_rpc_as_authenticated(), current_version_row(), expected_updated_at(), fail() (+11 more)
 
-### Community 539 - "verificar-docs-realtime.mjs"
+### Community 540 - "verificar-docs-realtime.mjs"
 Cohesion: 0.12
 Nodes (21): adicionadasPor(), arquivosDoRepo, CITACAO_UM, codigoSrc, conferirCitacao(), DOCS, errar(), erros (+13 more)
 
-### Community 540 - "mobileAreaSeguraRolagem.test.ts"
+### Community 541 - "mobileAreaSeguraRolagem.test.ts"
 Cohesion: 0.10
 Nodes (14): Arquivos, Fontes SQL, Regras humanas, regras_negocio — regras de negócio para agentes de IA, Rodar local, Testes de regressão, entrada(), css (+6 more)
 
-### Community 541 - "a11yComponents.tsx"
+### Community 542 - "a11yComponents.tsx"
 Cohesion: 0.16
 Nodes (18): AccessibleList(), AccessibleListProps, FocusRing(), FocusRingProps, FocusTrap(), FocusTrapProps, KeyboardShortcut(), KeyboardShortcutProps (+10 more)
 
-### Community 542 - "ContactDetails.mobile-iniciais-sentimento.test.tsx"
+### Community 543 - "ContactDetails.mobile-iniciais-sentimento.test.tsx"
 Cohesion: 0.10
 Nodes (16): A11Y, CLARO, CONTATO, conversa, ESCURO, h, HC_CLARO, HC_ESCURO (+8 more)
 
-### Community 543 - "usePerformance.ts"
+### Community 544 - "usePerformance.ts"
 Cohesion: 0.19
 Nodes (14): useOptimizedList(), usePreloadResources(), useFPS(), useMemoryUsage(), usePerformanceMonitor(), useRenderCount(), useEventListener(), useIntersection() (+6 more)
 
-### Community 544 - "uploadTeamMedia.test.tsx"
+### Community 545 - "uploadTeamMedia.test.tsx"
 Cohesion: 0.11
 Nodes (16): h, onFileSent, renderDraft(), authState, onFileSent, renderDraft(), purgeLegacyDrafts(), useTeamChatDraft() (+8 more)
 
-### Community 545 - "system/index.ts"
+### Community 546 - "system/index.ts"
 Cohesion: 0.15
 Nodes (12): clearPrefetchCache(), getPrefetchedData(), pendingPrefetches, prefetchCache, PrefetchOptions, useCriticalDataPrefetch(), useImagePrefetch(), useIntersectionPrefetch() (+4 more)
 
-### Community 546 - "mapboxCostGuard.ts"
+### Community 547 - "mapboxCostGuard.ts"
 Cohesion: 0.19
 Nodes (17): DEFAULT_MONTHLY_SESSION_LIMIT, forceSearchBudgetRefreshForTests(), getMonthlySessionLimit(), isSearchBudgetOk(), jaAvisouAntecipadoEsteMes(), jaAvisouEsteMes(), limiarAntecipado(), marcarAvisoAntecipadoDoMes() (+9 more)
 
-### Community 547 - "auth-login/index.test.ts"
+### Community 548 - "auth-login/index.test.ts"
 Cohesion: 0.10
 Nodes (15): ALLOWED_POLICY, allowedAdmin(), allowedVerifyAdmin(), fakeAdmin(), GATE_DENIED, GATE_ERROR, GATE_LOCKED, GATE_OK (+7 more)
 
-### Community 548 - "chatbot-l1/index.test.ts"
+### Community 549 - "chatbot-l1/index.test.ts"
 Cohesion: 0.13
 Nodes (17): abrirCenario(), afirma(), afirmaErroConnectionId(), aplicaOrdem(), casaFiltros(), Cenario, CenarioVivo, Chamada (+9 more)
 
-### Community 549 - "index.actions.test.ts"
+### Community 550 - "index.actions.test.ts"
 Cohesion: 0.11
 Nodes (13): ACTION_RATE_LIMITS, argOf(), assert(), assertCategoriaEmbedComFullPath(), CatalogResult, ExtClient, invokeRaw(), LocalClient (+5 more)
 
-### Community 550 - "contacts"
+### Community 551 - "contacts"
 Cohesion: 0.10
 Nodes (21): ai_conversation_tags, contact_custom_fields, contact_notes, contact_tags, conversation_analyses, conversation_closures, conversation_memory, conversation_snoozes (+13 more)
 
-### Community 551 - "SLASummaryCard.tsx"
+### Community 552 - "SLASummaryCard.tsx"
 Cohesion: 0.13
 Nodes (18): ADR-010 — Dashboard de SLA sem dados mostra "Sem dados" (nunca 100%), Consequências, Contexto, Decisão, Estado na V2 (o que ainda não está feito), Referências, SLAAgentTable(), getSLARateLabel() (+10 more)
 
-### Community 552 - "createConnectionsHealthStore"
+### Community 553 - "createConnectionsHealthStore"
 Cohesion: 0.18
 Nodes (17): Evolution GO (WhatsApp) — referência para agentes, Runbook: QR Code não aparece / trava no spinner (sessão órfã na GO), Pelo store de saúde, ConnectionsHealthClient, createConnectionsHealthStore(), applyConnections(), attemptReconnect(), clearHistory() (+9 more)
 
-### Community 553 - "inbox.service.ts"
+### Community 554 - "inbox.service.ts"
 Cohesion: 0.14
 Nodes (18): 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária, Dossiê PR #2236 — feat(monitoring): MonitoringInboxSilence — aba "Entrada muda" (+10 more)
 
-### Community 554 - "preview"
+### Community 555 - "preview"
 Cohesion: 0.14
 Nodes (20): Commits e diferenças frente a `origin/main`, Contagem e referência, `git status --porcelain=v1 --untracked-files=all`, Levantamento C — worktrees do Zapp, Planejamento e intenção, Próximo uso deste levantamento, Triagem item a item e limites das propostas, Worktree `preview` (+12 more)
 
-### Community 555 - "FASE 1 — Parar a perda de dados no cadastro de contato (E01–E10)"
+### Community 556 - "FASE 1 — Parar a perda de dados no cadastro de contato (E01–E10)"
 Cohesion: 0.10
 Nodes (19): §8 — Guarda F1 E04/E05 com chave presente e valor `null`, Auditoria adversarial da Fase 8 (E98) — 5 frentes, Frente 1 · Perda de dado nos escritores de `contacts` — RESISTIU, Frente 3 · Estado enganoso — RESISTIU, Frente 4 · a11y — RESISTIU (e ganhou gate onde não havia), Frente 5 · Custo — mesma raiz, O que a auditoria NÃO cobriu, E01 · Teste vermelho: editar contato sem tocar no endereço preserva o endereço (+11 more)
 
-### Community 556 - "Auditoria exaustiva das entregas do Hermes no Zapp Web V2 — 30/09/2026"
+### Community 557 - "Auditoria exaustiva das entregas do Hermes no Zapp Web V2 — 30/09/2026"
 Cohesion: 0.10
 Nodes (20): 0. Placar, 1. Método, 2. Achados do coordenador (frente C), 3. Integridade dos merges, 4. Resultados das cinco frentes, 5. Verificações do coordenador sobre os relatórios, 6. Matriz de aceite, 7. Ações priorizadas (nenhuma executada por esta auditoria) (+12 more)
 
-### Community 557 - "3. Pendências detalhadas"
+### Community 558 - "3. Pendências detalhadas"
 Cohesion: 0.10
 Nodes (20): C2-NOVO (P2) Presets de filtros da inbox e persistencia dos filtros, 1. Fontes lidas, 2. Placar por plano, 3.10 Design System Promo Gifts (CP0–CP12 / PROMPT_FASES_2_12), 3.11 Reauditoria Inbox R2-INB (64 achados, 03/10) — funcionalidades que viraram "retirada honesta", 3.12 Segunda leva (cartões SL do recorte Inbox/Design System/Acessibilidade), 3.1 Arquivos — redesign 50 etapas (01/10) e "Próximos passos", 3.3 Miniaturas/figurinhas, filtro de data, janela, play, A06b/A07 (+12 more)
 
-### Community 558 - "Validacao pos-merge: paridade e transporte PostgreSQL"
+### Community 559 - "Validacao pos-merge: paridade e transporte PostgreSQL"
 Cohesion: 0.10
 Nodes (18): Aceite de producao e limites, Correcao, Correcao do transporte libpq — 22/09/2026, Incidente confirmado, sem inferencia de drift do banco, Por que os testes anteriores nao detectaram, Simulacoes e testes, Criterios de encerramento, Ledger: quinze limitacoes historicas, nao quinze migrations pendentes (+10 more)
 
-### Community 559 - "Plano de Banco Único — ZAPP Web V2 → Singu (Gestão de Clientes)"
+### Community 560 - "Plano de Banco Único — ZAPP Web V2 → Singu (Gestão de Clientes)"
 Cohesion: 0.10
 Nodes (20): 1. O que existe hoje (medido, não estimado), 2. Como o acesso funciona hoje no Singu (o problema real), 3. Riscos críticos encontrados (corrigir antes de qualquer migração), 4. Modelo-alvo (decisão de arquitetura), 5. Decisões que só você pode tomar (marcadas `[decisão]` nas etapas), 6. As 200 etapas, 7. Ordem e dependências, 8. Validação do plano — gaps encontrados (24/09, antes de executar) (+12 more)
 
-### Community 560 - "1. Deploy"
+### Community 561 - "1. Deploy"
 Cohesion: 0.10
 Nodes (19): 1.1 Frontend (Vercel), 1.2 Rollback do frontend (< 2 min), 1.3 Edge Functions (Supabase), 1.4 Migrations de banco, 1.5 Checklist pré-merge, 1. Deploy, 3.1 App não carrega, 3.2 WhatsApp desconectado (+11 more)
 
-### Community 561 - "segmentRules.ts"
+### Community 562 - "segmentRules.ts"
 Cohesion: 0.15
 Nodes (19): X105 · Desenhar os grupos E/OU como no mock 03: selo, divisor, árvore e menu do grupo, coerceValue(), describeRule(), describeRules(), fieldLabel(), fieldName(), formatValue(), hasBetweenBounds() (+11 more)
 
-### Community 562 - "seed-local-imagens.ts"
+### Community 563 - "seed-local-imagens.ts"
 Cohesion: 0.11
 Nodes (14): ref_bun, abrirSql, API_URL, CONTATOS, criar(), DB_URL, LinhasSql, REMOVER (+6 more)
 
-### Community 563 - "check-claude-md-integrity.mjs"
+### Community 564 - "check-claude-md-integrity.mjs"
 Cohesion: 0.18
 Nodes (19): AGENTS, atualPorArquivo(), bytesAtuais(), bytesNaBase(), CLAUDE, CONJUNTO_RAIZ, DOCS_DIR, erroDeEncolhimento() (+11 more)
 
-### Community 564 - "salesview-placar-doc.unit.mjs"
+### Community 565 - "salesview-placar-doc.unit.mjs"
 Cohesion: 0.13
 Nodes (19): assertAcusa(), ATUALIZACAO_OK, BUGS_404_ABERTO, BUGS_404_ROTULADO, CABECALHO, DOC, ETAPAS, FASES (+11 more)
 
-### Community 565 - "ContactIntelligencePanel.tsx"
+### Community 566 - "ContactIntelligencePanel.tsx"
 Cohesion: 0.12
 Nodes (17): BriefingCard(), CHURN_LEVEL_CLASSES, CHURN_LEVEL_LABEL, ChurnAlert(), churnReasons(), ContactIntelligencePanel, ContactIntelligencePanelGate(), ContactIntelligencePanelProps (+9 more)
 
-### Community 566 - "MissingQuestions.tsx"
+### Community 567 - "MissingQuestions.tsx"
 Cohesion: 0.16
 Nodes (17): InsightCard(), InsightCardProps, Source, TYPE_META, MissingQuestions(), MissingQuestionsProps, emptyState, fullState (+9 more)
 
-### Community 567 - "AudioPlayButton.test.tsx"
+### Community 568 - "AudioPlayButton.test.tsx"
 Cohesion: 0.12
 Nodes (10): { attachMediaVolume }, audioItem(), { createSignedUrl }, FakeAudio, IMAGE, MEDIA_URL(), ok(), cadeiaView() (+2 more)
 
-### Community 568 - "crossTabDrainLock.test.ts"
+### Community 569 - "crossTabDrainLock.test.ts"
 Cohesion: 0.15
 Nodes (10): h, freshStore(), StoreModule, abrirCanal(), duasAbas(), abrirAba(), criarCanal(), freshStore() (+2 more)
 
-### Community 569 - "useTypingPresence.ts"
+### Community 570 - "useTypingPresence.ts"
 Cohesion: 0.12
 Nodes (15): createClientScope(), PLACEHOLDER_IDENTITIES, PresenceState, TypingUser, useTypingPresence(), UseTypingPresenceProps, FakeChannel, mocks (+7 more)
 
-### Community 570 - "useWorkItemDraft.ts"
+### Community 571 - "useWorkItemDraft.ts"
 Cohesion: 0.18
 Nodes (17): setup(), applySavedFields(), buildMinimalPatch(), checkRemindCoherence(), DRAFT_BLOCK_MESSAGES, DraftSaveOutcome, fieldsFromItem(), normNullableText() (+9 more)
 
-### Community 571 - "voice-changer/index.test.ts"
+### Community 572 - "voice-changer/index.test.ts"
 Cohesion: 0.10
 Nodes (15): Call, callsTo(), ENV_OK, linhaDoLedger(), oggBytes(), ROTA_AUDIO_OK, ROTA_AUTH, ROTA_FLAG_ON (+7 more)
 
-### Community 572 - "20260409014536_3a836b4b-1e37-411c-b8af-45d918304272.sql"
+### Community 573 - "20260409014536_3a836b4b-1e37-411c-b8af-45d918304272.sql"
 Cohesion: 0.20
 Nodes (20): idx_closures_contact, idx_closures_reason, idx_reminders_profile, idx_reminders_remind_at, idx_snoozes_contact, idx_snoozes_until, idx_tasks_assigned, idx_tasks_contact (+12 more)
 
-### Community 573 - "20261003242707_talkx_log_saude_alertas.sql"
+### Community 574 - "20261003242707_talkx_log_saude_alertas.sql"
 Cohesion: 0.13
 Nodes (17): public.purge_talkx_expired_data(), public.talkx_campaign_logs(), public.talkx_delivery_log, public.talkx_engine_alerts(), public.ai_jobs, public.talkx_alerts, public.talkx_campaigns, public.talkx_engine_health (+9 more)
 
-### Community 574 - "sla_alert_events_and_preferences.sql"
+### Community 575 - "sla_alert_events_and_preferences.sql"
 Cohesion: 0.14
 Nodes (13): auth.users, public.agent_visibility_grants, public.contact_notes, public.contacts, public.conversation_tasks, public.messages, public.profiles, public.queue_members (+5 more)
 
-### Community 575 - "whatsapp_connections"
+### Community 576 - "whatsapp_connections"
 Cohesion: 0.10
 Nodes (20): away_messages, calls, campaign_ab_variants, campaign_contacts, campaigns, chatbot_executions, chatbot_flows, client_wallet_rules (+12 more)
 
-### Community 576 - "React 19.3 — varredura de deprecações e concurrent safety — E38"
+### Community 577 - "React 19.3 — varredura de deprecações e concurrent safety — E38"
 Cohesion: 0.11
 Nodes (17): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+9 more)
 
-### Community 577 - "Relatório de Análise de PRs — Zapp Web V2"
+### Community 578 - "Relatório de Análise de PRs — Zapp Web V2"
 Cohesion: 0.10
 Nodes (19): BASELINE DO MAIN (c4280ef4, 2026-11-02), Cadeia de preflight PromoGifts (#2590 → #2599), Cadeia de testes de contraste (#2587 → #2593 → #2594), Cadeia de workers E2E (#2536 → #2560), CLUSTERS E CADEIAS, CONTAGEM POR VEREDITO (138 PRs totais), CRÍTICO — Segurança, Feature freeze (+11 more)
 
-### Community 578 - "consolidacao/PLANO.md"
+### Community 579 - "consolidacao/PLANO.md"
 Cohesion: 0.10
 Nodes (14): Referência inicial da consolidação, Grupos propostos a partir do clone principal e das fontes F/G, Anexos operacionais que fazem parte deste plano, Base e método, Branches remotas sem PR: candidatas a apagar, Fase 2 — plano de PRs e branches do GitHub, Grupos de PRs úteis por funcionalidade, Sequência de execução futura (+6 more)
 
-### Community 579 - "INVENTARIO.md"
+### Community 580 - "INVENTARIO.md"
 Cohesion: 0.10
 Nodes (15): A — clone principal, B — arquivos locais a processar (prioridade máxima), C — `zapp-worktrees`, D — `hermes-workspaces/Zapp_Web_V2`, Decisões e limites desta fase, E — demais workspaces Hermes do Zapp, F — backups (somente leitura), G — auditorias (somente leitura) (+7 more)
 
-### Community 580 - "Detalhes dos worktrees Zapp em D/E"
+### Community 581 - "Detalhes dos worktrees Zapp em D/E"
 Cohesion: 0.10
 Nodes (20): Detalhes dos worktrees Zapp em D/E, `ga-audit-261020/main`, `ga-fix/ci-contratos`, `ga-fix/consolidada`, `.integra/conflitos-banco`, `.integra/conflitos-inbox`, `.integra/conflitos-integracoes-admin`, `.integra/conflitos-plataforma-talkx` (+12 more)
 
-### Community 581 - "3. Achados"
+### Community 582 - "3. Achados"
 Cohesion: 0.10
 Nodes (19): 2. Cobertura, 3. Achados, 4. Verificado SEM problema (e como foi verificado), 5. Resumo por severidade, 6. Resumo por tela, 8. O que o cartão de correção deve considerar, A11Y-CONTATOS_CRM-01 — Botões só de ícone sem nome acessível nos cartões de contato e no painel de detalhe · **P1**, A11Y-CONTATOS_CRM-02 — Abas da conversa (inclui **SalesView**) sem nome acessível abaixo de 1536 px · **P1** (+11 more)
 
-### Community 582 - "P2"
+### Community 583 - "P2"
 Cohesion: 0.10
 Nodes (19): 2.1 Raiz, 2.2 `ai-tools/`, `summary/`, `templates/`, `quick-replies/`, `slash-commands/`, `stickers/`, `collaboration/`, `interactive-builder/`, `location-picker/`, `media-gallery/`, 2.4 `contact-details/` e `conversation-list/`, 2.5 Testes (45 arquivos) — ver seção 3., 2. Inventário completo M–Z da V3 (`git ls-tree origin/main src/features/inbox/components` e subpastas), 5. Lacunas reais SEM cartão (priorizadas), Complementos a cartões existentes (conferir o cartão antes de criar algo), Decisões que o dono pode querer rever (nenhuma é bug) (+11 more)
 
-### Community 583 - "useTeamUnreadTotal"
+### Community 584 - "useTeamUnreadTotal"
 Cohesion: 0.14
 Nodes (16): 1.4 Team Chat, 0. Sumário executivo, 1. Identificação e reprodução, 2. Fatos de partida (medidos nesta sessão), 4.1 — Migrations (40 arquivos) — veredito: **NÃO PORTAR (já canônico na `main`)**, 4.2 — Arquivos que existem **só** no branch (10) — a triagem decisiva, 4.3 — Demais arquivos divergentes (37) — veredito: **NÃO PORTAR**, 4. Triagem arquivo-a-arquivo (87 arquivos) (+8 more)
 
-### Community 584 - "Por etapa"
+### Community 585 - "Por etapa"
 Cohesion: 0.10
 Nodes (14): Achados de segurança (novos, não estavam no plano), Auditoria — Team Chat V3 → V2 Parity (100 etapas) — 2026-09-28, Bugs bloqueadores do plano original — estado real, Fase 0 — Verificação e decisões (E01–E08) — 0 ✅ · 0 ◐ · 8 ✗, Fase 1 — Banco (E09–E24) — 13 ✅ · 3 ◐ · 0 ✗, Fase 2 — Hooks (E25–E34) — 0 ✅ · 5 ◐ · 5 ✗, Fase 3 — Componentes de mensagem (E35–E48) — 1 ✅ · 8 ◐ · 5 ✗, Fase 4 — Lista, header, diálogos (E49–E60) — 1 ✅ · 8 ◐ · 3 ✗ (+6 more)
 
-### Community 585 - "A4 · Forense de CI + paridade de produção — Onda 3 (30/09/2026)"
+### Community 586 - "A4 · Forense de CI + paridade de produção — Onda 3 (30/09/2026)"
 Cohesion: 0.10
 Nodes (19): 1) Forense dos 3 PRs desta onda, 2) PROVA de que os 3 testes de contrato rodaram no CI, 2a) Referência no workflow do commit certo (`.github/workflows/db-guard.yml`), 2b) O passo REALMENTE executou no job "Contrato DB offline" (log cru), 3) Estado do #1314 (medido duas vezes), 4) PARIDADE DE PRODUÇÃO dos fixes de front da onda 2 (#1290, #1294, #1297), 4a) Ancestralidade (pré-condição), 4b) Qual build está servido? (`/version.json` do próprio deploy) (+11 more)
 
-### Community 586 - "Arquitetura-alvo do GitHub para o ZAPP WEB V2 — velocidade + qualidade, sem desperdício"
+### Community 587 - "Arquitetura-alvo do GitHub para o ZAPP WEB V2 — velocidade + qualidade, sem desperdício"
 Cohesion: 0.10
 Nodes (19): 1. Diagnóstico em uma frase, 2. Princípios (as regras que decidem tudo abaixo), 3.1 Camada 0 — o portão no bolso do agente, 3.2 Camada 1 — PR rápido, e a mudança estrutural do banco, 3.3 Camada 2 — pesado, mas fora do caminho do agente, 3.4 Camada 3 — produção com um clique humano, 3.5 Camada 4 — governança que enxerga, 3. A arquitetura em camadas (+11 more)
 
-### Community 587 - ".isStaff"
+### Community 588 - ".isStaff"
 Cohesion: 0.13
 Nodes (18): Armadilhas de ambiente conhecidas (banco self-hosted, VPS AtomicaBR), Dashboard — fonte de dados por card, Débitos conhecidos (não corrigidos, fora do escopo literal das etapas que os encontraram), Fonte de dados por card (Visão Geral), Matriz de escopo (regra oficial, ratificada E03), Padrão de RLS/RPC do módulo, War Room — fonte de dados por número, 1. O que é e para quem (+10 more)
 
-### Community 588 - "Design System Promo Gifts → ZAPP WEB V2 — STATUS"
+### Community 589 - "Design System Promo Gifts → ZAPP WEB V2 — STATUS"
 Cohesion: 0.10
 Nodes (19): CP0 Ambiente      [~] sha=3bf9a4e1 · worktree criado · node_modules symlinked de main checkout, CP10 Motion/Perf  [~] sha=8998b93b · animations.css: ::view-transition-old/new 300ms fade + reduced-motion 0.001ms · SidebarNavGroup: effectiveOpen pattern (isOpen||hasActiveItem) sem useEffect/useRef · build 15s exit 0, CP11 Fidelidade   [~] sha=abd1b838 · QA Playwright local 1440×900 — 10/10 gates OK:, CP12 Entrega      [ ] sha= · PR=pendente · CI=pendente · merge=pendente, CP1 Paleta/Tipo   [~] sha=9afd393b · tokens navy→charcoal (36 subs .dark), PJS/Outfit, radius 14, sidebar 256px, skin v5→v6 · ΔE: bg≈0 (rgb(14,14,16)=#0e0e10) ✓ · primary 221 83% 53% ✓ · shot=pg-01-after.png · MEDIÇÃO (SL-181, `npx vitest run src/styles/__tests__/cp1FidelidadeCarvao.test.ts`, 17 testes): ΔE76 page=0,00 (`--background: 240 6% 6%` → rgb(14,14,16)=#0e0e10) · card=0,00 (`--card: 240 5% 10%`) · sidebar=0,66 (`--sidebar-background: 240 6% 5%`, um degrau abaixo da página, família carvão matiz 240) · nenhuma das 7 superfícies amostradas é navy (215–218 com sat>40%) · primary ΔE76=0,08 contra #2563eb (`221 83% 53%`) · fonts PJS/Outfit ✓ (tokens.css:54-55; index.html:19-20 pede e pré-carrega as duas; base.css consome) · light ok ✓ (superfícies L≥97% e carvão exclusivo do .dark) · skin ✓ (boot do index.html:29 aceita v6 = STORAGE_VERSION; v5 migra, v4 é descartada) · os gates GLOBAIS (typecheck, suíte, visual/responsivo, console, PR/CI) seguem NÃO DEMONSTRADOS no resumo global — por isso CP1 segue [~], CP2 Header        [~] sha=58d3714f · AppHeader.tsx, HeaderSectionAnchor.tsx, GlobalSearchTrigger.tsx, HeaderUserPill.tsx, RoleBadge.tsx · AppShell reestruturado em coluna flex (Sidebar | [AppHeader sticky + main]) · AgentProfilePopover refatorado: ProfileMenuContent extraído e reusado no HeaderUserPill · tsc 0 erros · eslint limpo · vite build ok, CP3 Breadcrumb    [~] sha=ed0428e1 · BreadcrumbBar.tsx (sticky top-14 z-30, botão Teletransporte Zap sky-400 + trilha breadcrumbTrail) · LayoutContext.tsx (hasBreadcrumbBar) · PageHeader não renderiza breadcrumb próprio quando hasBreadcrumbBar=true · tsc/eslint/build ok, CP4 Sidebar       [~] sha=e6ec3e2f · SidebarNavItem: barra before:3px + hover:translate-x-1 + rounded-xl (expandido); collapsed inalterado · SidebarNavGroup: mantido padrão AnimatePresence existente (já era colapsável) + persistência localStorage['zapp-sidebar-groups'] por label — NÃO trocado para Radix Collapsible (divergência: ledger dizia "sem colapsável" mas o componente já animava abrir/fechar; trocar o motor por Radix seria puro churn sem ganho) · Sidebar: campo de busca removido (GlobalSearchTrigger no header cobre) + AgentProfilePopover removido do rodapé (HeaderUserPill cobre) · AgentProfilePopover.tsx deletado, conteúdo do menu virou ProfileMenuContent.tsx (reusado por HeaderUserPill) · lint: 6 erros pré-existentes confirmados via git stash (0 novos) · tsc/build ok (+11 more)
 
-### Community 589 - "CrisisRoom.metricas.test.tsx"
+### Community 590 - "CrisisRoom.metricas.test.tsx"
 Cohesion: 0.11
 Nodes (13): ADENDA — Validação exaustiva pós-migração GO (28/08/2026), ⚠️ ARMADILHA CRÍTICA: MCP Lovable aponta para banco ERRADO, Estado final do destino (`tnnnlkbymytvtqngbbqh`, PostgreSQL 17.6), Functions no destino (estado final após sessão), Gaps GO sem equivalente (5 rotas — sem UX ativa), Pipeline GO em produção (28/08 ~21h), Vulnerabilidade corrigida nesta sessão, chainable() (+5 more)
 
-### Community 590 - "Plano: módulo de Tarefas no nível das imagens de referência (200 etapas) — v2"
+### Community 591 - "Plano: módulo de Tarefas no nível das imagens de referência (200 etapas) — v2"
 Cohesion: 0.10
 Nodes (19): 10. Riscos, 11. Como validar no fim, 12. Próximo passo, 13. O que mudou da v1 para a v2 (falhas e lacunas achadas), 1. Resumo, 3.1 Imagem 01: Lista (`Tarefas/01.png`), 3.2 Imagem 02: Agenda (`Tarefas/02.png`), 3.3 Imagem 03: Quadro com painel "Detalhes da tarefa" (`Tarefas/03.png`) (+11 more)
 
-### Community 591 - "has"
+### Community 592 - "has"
 Cohesion: 0.17
 Nodes (20): aggregate(), anyFile(), camadaDe(), cap(), closure(), componentes, dominioDe(), enrich() (+12 more)
 
-### Community 592 - "check-quarantine.unit.mjs"
+### Community 593 - "check-quarantine.unit.mjs"
 Cohesion: 0.16
 Nodes (16): AQUI, argumentos(), CAMINHO_PADRAO, CAMPOS_OBRIGATORIOS, carregarQuarentena(), dataISOValida(), hojeISO(), issueValida() (+8 more)
 
-### Community 593 - "ai-projection-version-guard.test.mjs"
+### Community 594 - "ai-projection-version-guard.test.mjs"
 Cohesion: 0.14
 Nodes (15): ANALISE_A, ANALISE_B, DOCKER, expectError(), expectValue(), fail(), MIGRATION_ANTIGA, MIGRATION_NOVA (+7 more)
 
-### Community 594 - "run-all.unit.mjs"
+### Community 595 - "run-all.unit.mjs"
 Cohesion: 0.14
 Nodes (16): codigoDeSaida(), decodificarResposta(), descreverValor(), RESULTADOS, resumirSuite(), __dir, execSQL(), files (+8 more)
 
-### Community 595 - "gen-estados.mjs"
+### Community 596 - "gen-estados.mjs"
 Cohesion: 0.20
 Nodes (17): BOUNDARY_SRC, celula(), coberturaEstadoForcado(), ESTADOS, ESTADOS_FORCADOS, FORCED_STATE_SRC, gerar(), lerEstadoForcadoDoCodigo() (+9 more)
 
-### Community 596 - "StickerManager.envio.test.tsx"
+### Community 597 - "StickerManager.envio.test.tsx"
 Cohesion: 0.11
 Nodes (16): createWrapper(), imageMocks, inserts, makeBuilder(), builder, mocks, Op, PROFILE_ROWS (+8 more)
 
-### Community 597 - "Crm360Tab.test.tsx"
+### Community 598 - "Crm360Tab.test.tsx"
 Cohesion: 0.11
 Nodes (13): conversation, EMPTY_CRM360, h, luminancia(), mockAdvanceMutate, mockCreateTask, mockNavigateToView, mockUseContactCrm360 (+5 more)
 
-### Community 598 - "useContactsV2Flags.test.tsx"
+### Community 599 - "useContactsV2Flags.test.tsx"
 Cohesion: 0.16
 Nodes (17): CHAVE_AREA, comAreasLigadas(), createWrapper(), desligada, h, linha(), LinhaFlag, renderFlags() (+9 more)
 
-### Community 599 - "useTeamChatRealtimeChannelErrors.test.tsx"
+### Community 600 - "useTeamChatRealtimeChannelErrors.test.tsx"
 Cohesion: 0.10
 Nodes (8): h, consulta, f, log, TYPING_HIDE_MS, TYPING_STOP_MS, TYPING_THROTTLE_MS, TypingUser
 
-### Community 600 - "crossTabDrainLock.ts"
+### Community 601 - "crossTabDrainLock.ts"
 Cohesion: 0.17
 Nodes (17): Claim, createCrossTabDrainLock(), handleMessage(), porCanal(), publish(), resolveChannel(), rivalClaim(), wins() (+9 more)
 
-### Community 601 - "20260827120000_fk_indexes_backfill.sql"
+### Community 602 - "20260827120000_fk_indexes_backfill.sql"
 Cohesion: 0.13
 Nodes (19): idx_blocked_countries_blocked_by, idx_conversation_events_from_agent_id, idx_conversation_events_from_queue_id, idx_conversation_events_performed_by, idx_conversation_events_to_agent_id, idx_conversation_events_to_queue_id, idx_ip_whitelist_added_by, idx_meta_capi_events_contact_id (+11 more)
 
-### Community 602 - "20260908120000_talkx_segments_templates_events.sql"
+### Community 603 - "20260908120000_talkx_segments_templates_events.sql"
 Cohesion: 0.16
 Nodes (19): idx_talkx_blacklist_campaign_id, idx_talkx_campaign_events_actor_id, idx_talkx_campaign_events_campaign_created, idx_talkx_campaigns_scheduled_at, idx_talkx_campaigns_segment_id, idx_talkx_campaigns_template_id, idx_talkx_segments_created_by, idx_talkx_templates_category (+11 more)
 
-### Community 603 - "sentiment_trend.sql"
+### Community 604 - "sentiment_trend.sql"
 Cohesion: 0.20
 Nodes (15): b_media_hoje, pg_temp.assert_role(), pg_temp.expect_state(), public.agent_visibility_grants, public.ai_conversation_tags, public.contacts, public.get_profile_id_for_user(), public.get_visible_agent_ids() (+7 more)
 
-### Community 604 - "AUDITORIA A1 — DBA / Postgres (adversarial, pós-merge)"
+### Community 605 - "AUDITORIA A1 — DBA / Postgres (adversarial, pós-merge)"
 Cohesion: 0.11
 Nodes (19): Achados, Afirmação 1 — PARCIAL, Afirmação 2 — VALIDADO, Afirmação 3 — PARCIAL, Afirmação 4 — VALIDADO, Afirmação 5 — VALIDADO, Afirmação 6 — PARCIAL, Afirmação 7 — PARCIAL (+11 more)
 
-### Community 605 - "RELATÓRIO W3 — REPLAY / RESILIÊNCIA de migrations"
+### Community 606 - "RELATÓRIO W3 — REPLAY / RESILIÊNCIA de migrations"
 Cohesion: 0.11
 Nodes (18): 0. Log bruto (artefatos no workspace), 1.1 Medida que importa: ambiente novo com a plataforma Supabase presente, 1.2 Classificação (a pergunta "é cascata?"), 1.3 A cadeia de falhas é dominada por cascata quando o ambiente está incompleto, 1.4 Por que o baseline da plataforma é obrigatório (e onde ele falta), 1. Extensão real da quebra, 2.1 `public.search_contacts` — as-is, 2.2 `public.contacts` — as-is (+10 more)
 
-### Community 606 - "3. Achados críticos fora dos planos"
+### Community 607 - "3. Achados críticos fora dos planos"
 Cohesion: 0.11
 Nodes (19): 0. Resumo executivo, 1. Plano Navy 100 etapas — estado, 2. Plano de 50 etapas (27/09) — etapa por etapa, 3.1 P0 — Exclusão de contato silenciosamente inoperante, 3.2 P0 — Sicoob Bridge quebrada pelo CHECK `chk_contact_type`, 3.3 P1 — CHECKs conflitantes em `contacts.conversation_status`, 3.4 P1 — Superfície de grants, 3.6 P2 — Ligações erradas e props mortas na UI (+11 more)
 
-### Community 607 - "useSpeechToText.ts"
+### Community 608 - "useSpeechToText.ts"
 Cohesion: 0.13
 Nodes (17): 1.6 Voz, STT, TTS, getSpeechRecognition(), log, mapSpeechErrorCode(), SPEECH_ERROR_CODES, SpeechErrorCode, SpeechRecognitionAlternativeLike, SpeechRecognitionCtor (+9 more)
 
-### Community 608 - "workflow-contracts.unit.mjs"
+### Community 609 - "workflow-contracts.unit.mjs"
 Cohesion: 0.11
 Nodes (13): Arquivos, E98 — contratos de workflow: os invariantes do plano agora têm teste, O que a etapa pedia, O que foi entregue, Prova por mutação — e as 3 falhas que ela encontrou no MEU teste, Verificação, arquivos, blocosRun() (+5 more)
 
-### Community 609 - "Plano de correções e evolução da IA — ZAPP WEB V2"
+### Community 610 - "Plano de correções e evolução da IA — ZAPP WEB V2"
 Cohesion: 0.11
 Nodes (19): Achados que motivam a priorização, Bloco 16 — Copilotos operacionais para a Promo Brindes (151–160), Como interpretar os tipos, Critério global de aceite, Escopo e limites, IA-151 — [N] Transformar conversa em briefing comercial, IA-152 — [N] Recomendar produtos com restrições reais, IA-153 — [N] Conferir preço e margem por cálculo (+11 more)
 
-### Community 610 - "TalkXTemplateEditor.race.test.tsx"
+### Community 611 - "TalkXTemplateEditor.race.test.tsx"
 Cohesion: 0.11
 Nodes (13): FASE 3 — Header, breadcrumb e ações do topo (etapas 31–39) → CP3, countVariantRecipients, deleteVariant, fetchVariants, fetchVersionHistory, renderEditor(), saveVariant, TalkXTemplate (+5 more)
 
-### Community 611 - "5. Log detalhado por etapa"
+### Community 612 - "5. Log detalhado por etapa"
 Cohesion: 0.11
 Nodes (18): 1. Ambiente de ferramentas (Etapa 003), 2. Verificação de identidades (Etapa 005), 3. Decisões pendentes, 4. Tabela de estados das 100 etapas, 5.1 — Etapa 001: Ler as regras e declarar entendimento, 5.2 — Etapa 002: Sincronizar a base de trabalho sem destruir alterações, 5.3 — Etapa 003: Fixar e registrar o ambiente de ferramentas, 5.4.1 — Prova da etapa 004 (+10 more)
 
-### Community 612 - "Plano de redesign do módulo Contatos, 100 etapas (12/10/2026)"
+### Community 613 - "Plano de redesign do módulo Contatos, 100 etapas (12/10/2026)"
 Cohesion: 0.11
 Nodes (18): Como as etapas andam, Como convive com o plano CT (funcional), Decisões tomadas (padrão; o Joaquim pode vetar qualquer uma), Fase A · Fundação visual (RD-001 a RD-010), Fase B · Cabeçalho da página (RD-011 a RD-020), Fase C · Indicadores e tipos de contato (RD-021 a RD-030), Fase D · Barra de ferramentas (RD-031 a RD-040), Fase E · Resultados, paginação e estados (RD-041 a RD-050) (+10 more)
 
-### Community 613 - "FASE 8 — Higiene, legado e documentação (V173–V190)"
+### Community 614 - "FASE 8 — Higiene, legado e documentação (V173–V190)"
 Cohesion: 0.11
 Nodes (19): FASE 8 — Higiene, legado e documentação (V173–V190), V173 — Projeto legado `zapp-web`: o que serve, V174 — Tráfego no legado, V175 — Pausar o legado (reversível), V176 — Excluir o legado, V177 — Previews `ERROR` antigos, V178 — Branches de preview com env própria, V179 — `.vercelignore` (+11 more)
 
-### Community 614 - "2. Inventário por sistema"
+### Community 615 - "2. Inventário por sistema"
 Cohesion: 0.11
 Nodes (18): 1. Política de manuseio de segredos (instituída nesta etapa), 2.10 MCP (Cloudflare Worker) — referência cruzada (etapa 006), 2.11 Vercel — referência cruzada (etapa 006), 2.12 Lalamove (legado — removido do HEAD), 2.1 Supabase — projeto oficial (`tnnnlkbymytvtqngbbqh`), 2.2 Supabase — projetos externos, 2.4 Evolution API / WhatsApp (Hostinger), 2.5 Google (Gmail) (+10 more)
 
-### Community 615 - "Relatório — paridade tipográfica ZAPP Web V2 ↔ Promo Gifts V4 (F0–F7)"
+### Community 616 - "Relatório — paridade tipográfica ZAPP Web V2 ↔ Promo Gifts V4 (F0–F7)"
 Cohesion: 0.11
 Nodes (18): Correção ao plano: o DoD do F2 estava incompleto, Decisão: `MessageBubble.tsx:234` — 13,5px → 14px (2026-09-23), Desvio deliberado do F5, F0 — medidor, F1 — escala, F3 — arredondamento aplicado, F4 — mapeamento, F5 — concluído (2026-09-23) (+10 more)
 
-### Community 616 - "width-regression.mjs"
+### Community 617 - "width-regression.mjs"
 Cohesion: 0.19
 Nodes (12): ref_playwright, avaliarLargura(), TOLERANCIA_PX, BASE_URL, main(), medirLargura(), VIEWPORTS, VIEWS_TO_CHECK (+4 more)
 
-### Community 617 - "team-direct-conversation-race.test.sh"
+### Community 618 - "team-direct-conversation-race.test.sh"
 Cohesion: 0.29
 Nodes (17): as_anon(), as_user(), count_pair(), expect_count_pair(), expect_error_anon(), expect_error_as(), expect_error_sql(), expect_value() (+9 more)
 
-### Community 618 - "FilesTab.fase6.test.tsx"
+### Community 619 - "FilesTab.fase6.test.tsx"
 Cohesion: 0.12
 Nodes (11): build56(), DOC, enterSelection(), h, IMAGE, imageItem(), mockUseContactMedia, mockUseContactMediaCounts (+3 more)
 
-### Community 619 - "MobileDrawerMenu.a11y.test.tsx"
+### Community 620 - "MobileDrawerMenu.a11y.test.tsx"
 Cohesion: 0.13
 Nodes (16): A11Y, CLARO, classes(), ESCURO, ESTADOS, fundoProprio(), HC_CLARO, HC_ESCURO (+8 more)
 
-### Community 620 - "HighContrastProvider"
+### Community 621 - "HighContrastProvider"
 Cohesion: 0.17
 Nodes (9): HighContrastContext, HighContrastContextType, useHighContrast(), HighContrastProvider(), preferenciaDoSistemaPorMaisContraste(), AccessibilitySettings, Sonda(), BotaoDeAlternar() (+1 more)
 
-### Community 621 - "serverLogin.ts"
+### Community 622 - "serverLogin.ts"
 Cohesion: 0.14
 Nodes (13): AUTH_LOGIN_TIMEOUT_MS, NETWORK_POLICY_DENIED_BODY, NETWORK_POLICY_UNAVAILABLE_BODY, NO_LOCK, NO_LOCK_RATE_LIMITED, parseLock(), parseRetryAfterSeconds(), RATE_LIMITED_MESSAGE (+5 more)
 
-### Community 622 - "churn-risk.test.ts"
+### Community 623 - "churn-risk.test.ts"
 Cohesion: 0.15
 Nodes (16): analyzeChurnContacts(), ChurnContactRow, ChurnEngagement, ChurnQueryClient, ChurnSignal, computeChurnSignal(), getRiskLevel(), RiskLevel (+8 more)
 
-### Community 623 - "classify-sticker/index.test.ts"
+### Community 624 - "classify-sticker/index.test.ts"
 Cohesion: 0.13
 Nodes (14): assert(), assertEq(), carregarModulo(), Chamada, ENV_KEYS, ENV_OK, Espiao, Handler (+6 more)
 
-### Community 624 - "copilot-live/index.test.ts"
+### Community 625 - "copilot-live/index.test.ts"
 Cohesion: 0.12
 Nodes (12): aguardando, carregarFuncao(), cenario(), Chamada, chamar(), EventoFalso, fila, json() (+4 more)
 
-### Community 625 - "whatsapp-webhook/index.test.ts"
+### Community 626 - "whatsapp-webhook/index.test.ts"
 Cohesion: 0.13
 Nodes (12): Chamada, ConfigDb, CONN_ROW, encode(), ENV, eqParam(), hmacSha256Hex(), installFakeDb() (+4 more)
 
-### Community 626 - "20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql"
+### Community 627 - "20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql"
 Cohesion: 0.19
 Nodes (18): idx_campaign_contacts_campaign_id, idx_campaign_contacts_status, idx_campaigns_created_by, idx_campaigns_status, idx_chatbot_executions_contact_id, idx_chatbot_executions_flow_id, idx_chatbot_executions_status, idx_chatbot_flows_active (+10 more)
 
-### Community 627 - "20261003232707_talkx_lgpd_consentimento_expurgo.sql"
+### Community 628 - "20261003232707_talkx_lgpd_consentimento_expurgo.sql"
 Cohesion: 0.12
 Nodes (15): enforce_talkx_campaign_mutability, public.purge_talkx_expired_data(), public.save_talkx_campaign_draft(), public.talkx_suppress_contact(), public.transition_talkx_campaign(), information_schema.columns, public.ai_jobs, public.enforce_talkx_campaign_mutability (+7 more)
 
-### Community 628 - "ai-central-routing-ratchet.contract.test.ts"
+### Community 629 - "ai-central-routing-ratchet.contract.test.ts"
 Cohesion: 0.12
 Nodes (15): ARQUIVOS, blocoParenteses(), CAPACIDADES_DE_CONVERSA, chamadas(), CONSUMIDORES_MIGRADOS, DIVIDA_IA_033, EDGE, FONTES (+7 more)
 
-### Community 629 - "ai-rate-limit-e-orcamento.contract.test.ts"
+### Community 630 - "ai-rate-limit-e-orcamento.contract.test.ts"
 Cohesion: 0.11
 Nodes (12): ARQ_BUDGET, ARQ_GUARDS, BudgetModule, GenerateModule, GuardsModule, H, PARAMS_BASE, REQ (+4 more)
 
-### Community 630 - "contraste-aa-componentes.contract.test.ts"
+### Community 631 - "contraste-aa-componentes.contract.test.ts"
 Cohesion: 0.14
 Nodes (13): A11Y_CSS, CLARO, ESCURO, FONTES, hslParaRgb(), listar(), luminancia(), razao() (+5 more)
 
-### Community 631 - "public.talkx_recompute_purchase_metrics"
+### Community 632 - "public.talkx_recompute_purchase_metrics"
 Cohesion: 0.14
 Nodes (17): avg_ticket, purchases_synced_at, rfm_frequency, rfm_monetary, rfm_recency_days, rfm_segment, public.talkx_contact_attributes, public.talkx_data_jobs (+9 more)
 
-### Community 632 - "Implementation Plan"
+### Community 633 - "Implementation Plan"
 Cohesion: 0.11
 Nodes (18): ADR-002 — Data Rotation Strategy for evolution_messages_wpp2, Alternative B — pg_cron–only rotation (without pg_partman), Benefits (pg_partman approach), Consequences, Context, Decision, Extension availability (verified 2026-06-12), Implementation Plan (+10 more)
 
-### Community 633 - "useMediaPrivacy.ts"
+### Community 634 - "useMediaPrivacy.ts"
 Cohesion: 0.11
 Nodes (16): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+8 more)
 
-### Community 634 - "readAuthenticatedUserId"
+### Community 635 - "readAuthenticatedUserId"
 Cohesion: 0.18
 Nodes (15): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+7 more)
 
-### Community 635 - "Funções com `verify_jwt = true` (70)"
+### Community 636 - "Funções com `verify_jwt = true` (70)"
 Cohesion: 0.11
 Nodes (16): Achados da auditoria, Auth-relacionadas (R1), Cron / worker (R1 — timingSafeEqual confirmado exceto onde indicado), ElevenLabs tokens e síntese (R0), Funções com `verify_jwt = false` (14), Funções com `verify_jwt = true` (70), Gmail / OAuth (R1), IA / LLM (R0/R1) (+8 more)
 
-### Community 636 - "🚀 Plano de Melhorias - WhatsApp CRM"
+### Community 637 - "🚀 Plano de Melhorias - WhatsApp CRM"
 Cohesion: 0.11
 Nodes (17): Acessibilidade, 🔵 AUDITORIA TÉCNICA PROFUNDA (2026-06-12) — ✅ CONCLUÍDA, Bugs de Código (10/10 corrigidos), 🔧 Como Usar Este Documento, Estatísticas de Progresso, Melhorias de Arquitetura (3/3 concluídas), Melhorias de Banco de Dados (8/8 concluídas), 📊 Métricas de Sucesso (+9 more)
 
-### Community 637 - "fechar"
+### Community 638 - "fechar"
 Cohesion: 0.12
 Nodes (17): 13.10 Execução da Fase 1 (04/10, tarde) — sem tocar na Fase 0 da sessão joaquim-ataides-37, 13.6 Herança do isolamento V1 (handoff `HANDOFF_ISOLAMENTO_HERMES_2026-10-04.md`) — verificado, 13.9 Decisão do Joaquim (04/10): resumo a cada hora, sem IA, 15-bis. Devin — testes práticos (04/10 tarde; artefatos em `~/arquitetura-v2/devin-testes/`), 15. Devin — análise exaustiva da documentação (04/10 tarde), 16.1 A regra, 16.2 O que hoje contradiz a regra, 16.3 O que falta definir (+9 more)
 
-### Community 638 - "FASE 1 — AS 22 DIMENSÕES"
+### Community 639 - "FASE 1 — AS 22 DIMENSÕES"
 Cohesion: 0.11
 Nodes (18): 12. MANUTENIBILIDADE — **7/10** (▲ de 6.5), 13. OPERACIONALIDADE — **6/10** (=), 14. PERFORMANCE — **7.5/10** (=), 15. QUALIDADE DE CÓDIGO — **7.5/10** (▲ de 7), 16. SEGURANÇA — **7/10** (=, com composição diferente), 17. TESTES — **7/10** (=), 18. TIPAGEM / TYPE SAFETY — **6.5/10** (▲ de 5.5), 1. ARQUITETURA — **7/10** (=) (+10 more)
 
-### Community 639 - "FECHAMENTO — PLANO CONTATOS 100 ETAPAS (2026-10-01)"
+### Community 640 - "FECHAMENTO — PLANO CONTATOS 100 ETAPAS (2026-10-01)"
 Cohesion: 0.11
 Nodes (18): Bloqueios e dívidas abertas, Checklist de verificação de produção, Complemento 2026-10-02 — Etapa 98 com usuário QA e etapa 90, Conclusão, Contatos (banco `tnnnlkbymytvtqngbbqh`, lido ao vivo em 01/10), `DB Live Guard` / `Contrato DB vivo` — VERMELHO (linha de base, não regressão), Diff estado-base → final, Escopo deste arquivo (+10 more)
 
-### Community 640 - "P1 em aberto, por módulo"
+### Community 641 - "P1 em aberto, por módulo"
 Cohesion: 0.11
 Nodes (17): Banco/Migrations (6), Catálogo (5), CI/DevOps (4), Configurações/Notificações (1), CRM360 (3), Edge Functions (3), IA (11), Inbox/Chat (7) (+9 more)
 
-### Community 641 - "3. As 100 etapas"
+### Community 642 - "3. As 100 etapas"
 Cohesion: 0.11
 Nodes (17): 0. Sumário executivo — o que está quebrado agora, 1. O plano de 14/10 marcou como feito o que não está feito, 2. O que está certo e não deve ser mexido (medido hoje), 3. As 100 etapas, 4. Ordem de execução, 5. Decisões que só o Joaquim toma (com recomendação), 6. Fora do escopo (anotado, não entra nas 100), 7. Anexo — como foi medido (reprodutível, tudo só leitura) (+9 more)
 
-### Community 642 - "Auditoria do plano de recuperação Talk X — 100 etapas"
+### Community 643 - "Auditoria do plano de recuperação Talk X — 100 etapas"
 Cohesion: 0.11
 Nodes (18): 10. Condição honesta de encerramento, 1. Veredito executivo, 2. Baseline, ambientes e limites, 3. Evidências e fontes do código, 4. Reproduções executáveis, 5.1. Integridade de rascunho, navegação e agendamento, 5.2. Banco, fila e efeitos externos, 5.3. Dados comerciais, visibilidade e funcionalidades faltantes (+10 more)
 
-### Community 643 - "Web Vitals reais × alvos do budget — E36 (PLANO_MELHORIAS_50)"
+### Community 644 - "Web Vitals reais × alvos do budget — E36 (PLANO_MELHORIAS_50)"
 Cohesion: 0.11
 Nodes (17): 1. Coleta real ligada (era isto que faltava), 2. Fonte única para os alvos, 3. Testes, Achados fora do escopo (não corrigidos), Comparação com o campo — E34 (08/10/2026), Gates, Guarda do contrato, Medição do bundle (+9 more)
 
-### Community 644 - "2. Correções aplicadas (7 PRs — todas mergeadas)"
+### Community 645 - "2. Correções aplicadas (7 PRs — todas mergeadas)"
 Cohesion: 0.11
 Nodes (17): 1. Baseline — estado antes das correções, 1a. Baseline local, 1b. Inventário de workflows — último run na `main` antes desta sessão (baseline), 2. Correções aplicadas (7 PRs — todas mergeadas), 3. Tabela de prova — workflows que falhavam no baseline, 4. Tabela baseline × final (comparação), 5. Workflows bloqueados — Regra 8 (ver PENDENCIAS.md), 6. Anti-regressão — workflows que permaneceram verdes (+9 more)
 
-### Community 645 - "Runbook — Conexões de WhatsApp (V2)"
+### Community 646 - "Runbook — Conexões de WhatsApp (V2)"
 Cohesion: 0.11
 Nodes (17): 1. Criação da conexão (atômica), 2. Leitura do QR Code e pareamento, 3. Reconexão, 4. Monitor automático de saúde (cron de 5 min), 5. Janela de manutenção da Meta, 6. O que fazer em caso de 401, 7. Roteiro curto de incidente ("a conexão caiu"), 8. Lacunas conhecidas (documentadas, não corrigidas aqui) (+9 more)
 
-### Community 646 - "useVolumeRocker.ts"
+### Community 647 - "useVolumeRocker.ts"
 Cohesion: 0.14
 Nodes (15): 3. Como abrir o painel de volume, 4. Atalhos, abrir(), gatilho(), Hoste(), onAdjust, onToggleMute, Opcoes (+7 more)
 
-### Community 647 - "Skins Opera GX (paridade Promo Gifts V4) — STATUS"
+### Community 648 - "Skins Opera GX (paridade Promo Gifts V4) — STATUS"
 Cohesion: 0.11
 Nodes (17): CP0 Ambiente      [x] sha=852c70da · before=BLOQUEADO (login QA falhou, ver Pendências) · gates baseline: typecheck=0 lint-ratchet=OK(1097/1097,novas=0) tc-ratchet=OK(0/0,novas=0) implicit=OK(0/0) vitest=299 passed (3 arquivos, settings) · build=OK (17.52s) · PRs abertas conflitantes: nenhuma (#548 dashboard/navigation, #537 hooks unmount — nenhuma toca presets.ts/useThemePreset.ts/ThemeCustomizer.tsx/ThemeInitializer.tsx/index.html/tokens.css), CP10 Técnico      [x] sha=83965bff · typecheck=0 · lint-ratchet=OK(1096/1096,novas=0) · tc-ratchet=OK(0/0) · implicit=OK(0/0) · lint=1096 problemas (=baseline exato, 0 no código tocado por este plano — todos em supabase/functions/*, tailwind.config.ts pré-existentes) · vitest(escopo settings+__tests__)=601/601 · vitest(suíte inteira)=adiado (>590s no VPS, ver CP7) · build=ok (17s) · bundle Δ ThemeCustomizer chunk = 4358−3172 = **1186 B gz (~1.16 KB)**, dentro do orçamento de ≤12 KB gz · `git diff --stat origin/main...HEAD` = 21 arquivos, todos da seção 3.1/3.2 do plano (+ `ui/slider.tsx`, fix aditivo documentado no CP5) · dead code (etapa 93): `applyThemeColors/removeThemeColors/buildCustomPreset/normalizeStoredPresetId/DEFAULT_PRESET_ID/ALL_COLOR_KEYS/label/hue` — 0 referências restantes em `src/` (grep confirma), CP11 Entrega      [x] PR=https://github.com/adm01-debug/Zapp_Web_V2/pull/549 (squash) · CI=verde (14 checks: Build/E2E Playwright/Unit Tests/Security Audit/CodeQL x2/Lint&TypeCheck/Contrato DB offline = success; Vercel Agent Review/cubic = neutral; Supabase Preview/Mermaid/Audit Report = skipped; nenhuma falha) · merge=7e6ceb92 (squash em `main`, branch `claude/feat-skins-opera-gx-260923-1229` apagada automaticamente pelo GitHub) · deploy=verificar externamente (MCP Vercel requer OAuth interativo, indisponível nesta sessão `claude -p`) · prod=BLOQUEADO (etapa 100 pulada — sem deploy confirmado e sem login QA, ver Pendências) · ENTREGA: PR mergeada; QA visual/funcional (Fases 8-9) e verificação de produção (etapa 100) pendentes de ação humana (senha QA + confirmação de deploy Vercel), CP1 Núcleo        [x] sha=7daea57d · presets.test.ts=58 testes verdes (§1,§2,§4,§12; §3/§11/§11.5 completam na Fase 7) · 19 primárias distintas: sim (verificado via tsx) · typecheck: só os 4 consumidores esperados (ThemeInitializer.tsx, ThemeCustomizer.tsx, useThemePreset.ts) quebram — normal até Fases 3-5, CP2 Sincronia     [x] sha=bdd06834 · tokens-sync: 13 divergências → 13 reconciliadas em tokens.css (tabela abaixo) · tokens.css linhas alteradas=13 (git diff --stat confirma 13 insertions/13 deletions) · 150/150 asserts verdes, CP3 Boot          [x] sha=d59afb89 · shot=out/03-boot.png (script /workspace/qa/skins-boot.mjs, roda após Fase 5 destravar o build) · early --background=265 22% 8% (esperado 265 22% 8% ✓), --radius=0.625rem, data-preset-id=gx-classic, mounted=false, readyState=loading (React não montou ainda) · storage event: setItem=0 chamadas (spy, teste unitário) · migração v5→v6 testada (ThemeInitializer.test.tsx + theme-storage.test.ts, 22 testes) · troca dark↔light reaplica preset certo e atualiza cacheMode (etapa 38, testado), CP4 Página        [x] sha=49ca1b18 · cards=10+9 (verificado via ThemeCustomizer.test.tsx: `getAllByRole('radio')` = 19) · gx-classic: primary=347 96% 54% background=265 22% 8% (verificado via teste de componente, não screenshot) · shot=04-page.png BLOQUEADO (login QA, ver Pendências) · typecheck=0, build=ok, 8 testes de página verdes, CP5 Componentes   [x] sha=e47258d6 · swatchBar=h-8 (32px), cardsPerRow=5 (md:grid-cols-5, verificado no CSS/JSX) · radiusPresets=5 (Reto/Sutil/Médio/Suave/Redondo, testado) · dialog=ok (PresetCard/BorderRadiusControl/ThemeResetDialog: 11 testes verdes) · 05-mobile.png BLOQUEADO (login QA) · aria-label do slider corrigido via novo prop `thumbLabel` em ui/slider.tsx (Radix Thumb não herda aria-label do Root — fix aditivo, não quebra os outros 10+ consumidores do componente, 661 testes relacionados continuam verdes) (+9 more)
 
-### Community 648 - "🔬 ZAPP-WEB × EVOLUTION API — ANÁLISE DE GAPS"
+### Community 649 - "🔬 ZAPP-WEB × EVOLUTION API — ANÁLISE DE GAPS"
 Cohesion: 0.11
 Nodes (17): 📁 Arquivos Modificados/Criados, Chat Controller — Novos Métodos (commit `f56a2326`), Documentação (commit `40edca60`), GAP-RESILIENCE: Resiliência de Envio, GAP-SECURITY: Validação de Webhook, GAP-WEBHOOKS: Eventos Não Tratados, ✅ GAPS FECHADOS NESTA SESSÃO, 🟡 GAPS PENDENTES (+9 more)
 
-### Community 649 - "HANDOFF — Multiplix (Zapp_Web_V2) · 2026-10-08"
+### Community 650 - "HANDOFF — Multiplix (Zapp_Web_V2) · 2026-10-08"
 Cohesion: 0.11
 Nodes (17): 1. Onde isto vive, 2. Estado do plano, medido em 08/10/2026, 3.1 Não implementado (15 itens), 3.2 Bloqueado por decisão do dono ou por terceiro (5 itens), 3.3 Validado com falha — precisa voltar ao código (5 itens), 3.4 Regressão ativa (5 itens), 3.5 Parciais (30 itens), 3. O que ficou fora (+9 more)
 
-### Community 650 - "Auth"
+### Community 651 - "Auth"
 Cohesion: 0.11
 Nodes (7): Conferências globais, Auth(), signIn, signUp, estado, signIn, signUp
 
-### Community 651 - "Etapas"
+### Community 652 - "Etapas"
 Cohesion: 0.11
 Nodes (18): Etapas, X059 · Gerar a próxima ocorrência de campanha recorrente no tick, com chave única, X061 · Criar o bucket privado `talkx-media` e aceitar caminho de mídia nas RPCs, X062 · Assinar a mídia do bucket no envio e mandar documento com nome de arquivo, X063 · Modelar mensagem interativa (botões, lista, enquete) em template e campanha, X064 · Enviar mensagem interativa com fallback em texto e registrar a resposta, X065 · Fechar o A/B no banco: pesos, atribuição estável, métrica por variante e vencedor, X066 · Exigir aprovação interna de template e gravar a versão usada pela campanha (+10 more)
 
-### Community 652 - "tarefas-quadro.spec.ts"
+### Community 653 - "tarefas-quadro.spec.ts"
 Cohesion: 0.16
 Nodes (13): abrirQuadro(), BackendFake, botaoDeModo(), cabecalhoDaColuna(), cardEm(), coluna(), Escrita, linha() (+5 more)
 
-### Community 653 - "20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql"
+### Community 654 - "20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql"
 Cohesion: 0.12
 Nodes (14): public.redact_crm_sync_on_contact_delete, idx_crm_sync_outbox_status_completed, public.claim_crm_sync_outbox(), public.merge_contacts_atomic(), public.upsert_crm_contact_link_guarded(), pg_attribute, pg_class, pg_constraint (+6 more)
 
-### Community 654 - "profiles-can-download-authorization.test.sh"
+### Community 655 - "profiles-can-download-authorization.test.sh"
 Cohesion: 0.20
 Nodes (11): antes, assert_eq(), fail(), ok(), psql_file(), psql_sql(), reset_alice(), retornou_true() (+3 more)
 
-### Community 655 - "sec-y25-01-insert-alvo.test.sh"
+### Community 656 - "sec-y25-01-insert-alvo.test.sh"
 Cohesion: 0.20
 Nodes (13): atividade(), atv(), cal(), call_sql(), expect_failure(), expect_ok(), fail(), psql_como() (+5 more)
 
-### Community 657 - "SnapshotDBStatsTests"
+### Community 658 - "SnapshotDBStatsTests"
 Cohesion: 0.22
 Nodes (3): OfflineConnection, Catálogo e resultados sintéticos; nenhum driver, socket ou banco real., SnapshotDBStatsTests
 
-### Community 658 - "TrainingMode.avaliacao.test.tsx"
+### Community 659 - "TrainingMode.avaliacao.test.tsx"
 Cohesion: 0.11
 Nodes (6): criarChain(), chain, estado, Resultado, SESSAO_ANTERIOR, SO_DETALHE
 
-### Community 659 - "SL038_badgesTokensTema.test.tsx"
+### Community 660 - "SL038_badgesTokensTema.test.tsx"
 Cohesion: 0.14
 Nodes (14): acessibilidadeCss, badgeDe(), BADGES, claro, escuro, hslToRgb(), luminancia(), parseHsl() (+6 more)
 
-### Community 660 - "dashboard/metrics/index.ts"
+### Community 661 - "dashboard/metrics/index.ts"
 Cohesion: 0.32
 Nodes (12): AnimatedMetricCard(), AnimatedMetricCardProps, GoalProgressRing(), DashboardMetrics, MetricComparison(), MetricComparisonProps, MiniSparkline(), TrendIndicator() (+4 more)
 
-### Community 661 - "useChatSearch.ts"
+### Community 662 - "useChatSearch.ts"
 Cohesion: 0.18
 Nodes (13): ChatSearchFiltersProps, DatePreset, getPresetRange(), mediaFileName(), normalizeText(), searchableText(), SearchFilter, startOfDay() (+5 more)
 
-### Community 662 - "MessageBubble.contrasteStatus.test.tsx"
+### Community 663 - "MessageBubble.contrasteStatus.test.tsx"
 Cohesion: 0.14
 Nodes (16): A11Y, CLARO, ESCURO, ESTADOS, fundoDaClasse(), HC_CLARO, HC_ESCURO, hslParaRgb() (+8 more)
 
-### Community 663 - "LiveSuggestions.tsx"
+### Community 664 - "LiveSuggestions.tsx"
 Cohesion: 0.14
 Nodes (15): LIVE_TONE_CHIPS, LiveSuggestionsProps, LiveTone, PATH_META, SuggestionCard(), SuggestionCardProps, SuggestionsCardProps, mockSuggestions (+7 more)
 
-### Community 664 - "LocationPicker.gpsAtrasado.test.tsx"
+### Community 665 - "LocationPicker.gpsAtrasado.test.tsx"
 Cohesion: 0.12
 Nodes (7): abrirMapa(), FakeMap, fakeMapbox, FakeMarker, FakeNavigationControl, h, Handler
 
-### Community 665 - "KpiStrip.contraste.test.tsx"
+### Community 666 - "KpiStrip.contraste.test.tsx"
 Cohesion: 0.14
 Nodes (16): A11Y, CLARO, ESCURO, ESTADOS, fundoDaClasse(), HC_CLARO, HC_ESCURO, hslParaRgb() (+8 more)
 
-### Community 666 - "StatusChips.contrasteChipAtendendo.test.tsx"
+### Community 667 - "StatusChips.contrasteChipAtendendo.test.tsx"
 Cohesion: 0.13
 Nodes (16): A11Y, CLARO, conversations, ESCURO, ESTADOS, HC_CLARO, HC_ESCURO, hslParaRgb() (+8 more)
 
-### Community 667 - "TalkXSegments.detailFresh.test.tsx"
+### Community 668 - "TalkXSegments.detailFresh.test.tsx"
 Cohesion: 0.12
 Nodes (9): abrirEditorPeloDetalhe(), antigo, f, regraAntiga, regraNova, renderView(), salvo, state (+1 more)
 
-### Community 668 - "movimentoEContraste.test.tsx"
+### Community 669 - "movimentoEContraste.test.tsx"
 Cohesion: 0.17
 Nodes (14): amostra(), claro, compor(), escuro, hslToRgb(), luminancia(), modulo, parseHsl() (+6 more)
 
-### Community 669 - "chart.tsx"
+### Community 670 - "chart.tsx"
 Cohesion: 0.19
 Nodes (13): ChartConfig, ChartContainer, ChartContext, ChartContextProps, ChartLegendContent, ChartStyle(), ChartTooltipContent, getPayloadConfigFromPayload() (+5 more)
 
-### Community 670 - "useMentionableProfiles.ts"
+### Community 671 - "useMentionableProfiles.ts"
 Cohesion: 0.14
 Nodes (13): Chamada, criarChain(), chain, mocks, PERFIS, MENTIONABLE_PROFILES_DEBOUNCE_MS, MENTIONABLE_PROFILES_LIMIT, MentionableProfile (+5 more)
 
-### Community 671 - "useDiagnosticsData.ts"
+### Community 672 - "useDiagnosticsData.ts"
 Cohesion: 0.16
 Nodes (16): cfg, selects, montar(), classifyHealth(), classifyHeartbeat(), ConnectionHealthLog, ConnectionStatus, erroDeColeta() (+8 more)
 
-### Community 672 - "sendThrottle.ts"
+### Community 673 - "sendThrottle.ts"
 Cohesion: 0.20
 Nodes (13): createSendThrottle(), reserve(), wait(), withinWindow(), positiveInt(), SEND_THROTTLE_BURST, SEND_THROTTLE_MIN_INTERVAL_MS, SEND_THROTTLE_WINDOW_MS (+5 more)
 
-### Community 673 - "public.profiles"
+### Community 674 - "public.profiles"
 Cohesion: 0.12
 Nodes (18): idx_contacts_type, idx_profiles_is_active, idx_team_members_conversation, idx_team_members_profile, public.contacts_count_by_type(), public.get_profile_id_for_user(), public.get_team_profiles(), public.is_contact_visible_to_user() (+10 more)
 
-### Community 674 - "ai-suggest-reply/index.test.ts"
+### Community 675 - "ai-suggest-reply/index.test.ts"
 Cohesion: 0.12
 Nodes (10): ARTIGO_MENTIRA, ARTIGOS_BUSCA, ChamadaFetch, corpo(), corpoComConversa(), FORMAS_INVALIDAS, LinhaArtigo, SEM_DONO (+2 more)
 
-### Community 675 - "elevenlabs-agent-token/index.test.ts"
+### Community 676 - "elevenlabs-agent-token/index.test.ts"
 Cohesion: 0.11
 Nodes (11): Call, ENV_KEYS, ENV_OK, ROTA_AUTH, ROTA_FLAG_OFF, ROTA_FLAG_ON, ROTA_NETWORK_POLICY, ROTA_PROFILE (+3 more)
 
-### Community 676 - "elevenlabs-scribe-token/index.test.ts"
+### Community 677 - "elevenlabs-scribe-token/index.test.ts"
 Cohesion: 0.11
 Nodes (11): Call, ENV_KEYS, ENV_OK, ROTA_AUTH, ROTA_FLAG_OFF, ROTA_FLAG_ON, ROTA_NETWORK_POLICY, ROTA_PROFILE (+3 more)
 
-### Community 677 - "elevenlabs-sfx/index.test.ts"
+### Community 678 - "elevenlabs-sfx/index.test.ts"
 Cohesion: 0.11
 Nodes (11): Call, ENV_KEYS, ENV_OK, ROTA_AUTH, ROTA_FLAG_OFF, ROTA_FLAG_ON, ROTA_NETWORK_POLICY, ROTA_PROFILE (+3 more)
 
-### Community 678 - "elevenlabs-tts/index.test.ts"
+### Community 679 - "elevenlabs-tts/index.test.ts"
 Cohesion: 0.11
 Nodes (11): Call, ENV_KEYS, ENV_OK, ROTA_AUTH, ROTA_FLAG_OFF, ROTA_FLAG_ON, ROTA_NETWORK_POLICY, ROTA_PROFILE (+3 more)
 
-### Community 679 - "elevenlabs-tts-stream/index.test.ts"
+### Community 680 - "elevenlabs-tts-stream/index.test.ts"
 Cohesion: 0.11
 Nodes (11): Call, ENV_KEYS, ENV_OK, ROTA_AUTH, ROTA_FLAG_OFF, ROTA_FLAG_ON, ROTA_NETWORK_POLICY, ROTA_PROFILE (+3 more)
 
-### Community 680 - "image-proxy.test.ts"
+### Community 681 - "image-proxy.test.ts"
 Cohesion: 0.14
 Nodes (12): Call, ENV_KEYS, GRANDE_BASE64, jsonResp(), makeRequest(), PAGINAS, ROTA_EGRESS, rotaAuth() (+4 more)
 
-### Community 682 - "20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
+### Community 683 - "20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
 Cohesion: 0.20
 Nodes (17): public.deal_activities, public.knowledge_base_articles, public.knowledge_base_files, public.meta_capi_events, public.payment_links, public.sales_deals, public.sales_pipeline_stages, public.whatsapp_flows (+9 more)
 
-### Community 683 - "contact_protection_policy_rls.sql"
+### Community 684 - "contact_protection_policy_rls.sql"
 Cohesion: 0.12
 Nodes (10): auth.users, public.contacts, public.messages, public.permissions, public.profiles, public.queues, public.role_permissions, public.whatsapp_connections (+2 more)
 
-### Community 684 - "profiles_self_update_sensitive_columns.sql"
+### Community 685 - "profiles_self_update_sensitive_columns.sql"
 Cohesion: 0.12
 Nodes (12): auth.users, public.contacts, public.conversation_sla, public.gmail_accounts, public.permissions, public.profiles, public.rate_limit_configs, public.role_permissions (+4 more)
 
-### Community 685 - "contraste-balao-midia.contract.test.ts"
+### Community 686 - "contraste-balao-midia.contract.test.ts"
 Cohesion: 0.12
 Nodes (13): ACESSIBILIDADE, CLASSES_OVERLAY, COMPONENTE, CONTROLE_VOLUME, ESTADOS, hslParaRgb(), luminancia(), razao() (+5 more)
 
-### Community 686 - "components.json"
+### Community 687 - "components.json"
 Cohesion: 0.12
 Nodes (16): aliases, components, hooks, lib, ui, utils, rsc, $schema (+8 more)
 
-### Community 687 - "useLiveSuggestions.ts"
+### Community 688 - "useLiveSuggestions.ts"
 Cohesion: 0.18
 Nodes (14): 2.1 Ainda válida?, RadarLive(), RadarLiveProps, RadarPanel(), LINHA, { maybeSingle }, useCopilotSession(), InsightRow (+6 more)
 
-### Community 688 - "Runbook: segredos do nível repo para os environments (W11, W12, W62, W63)"
+### Community 689 - "Runbook: segredos do nível repo para os environments (W11, W12, W62, W63)"
 Cohesion: 0.12
 Nodes (16): 17.1 Pré-visualização ao vivo (pedido do Joaquim: acompanhar as mudanças pela interface), 17.2 E2E contra o banco local — primeira medição, 17. Pré-visualização local e E2E local (04/10, ~13:35, sessão do WSL), 1. Por que dá para migrar um secret de cada vez sem quebrar nada, 2. W11 + W12: token de leitura administrativa do `settings-guard`, 3. W62: segredos de deploy → `producao-edge-functions`, 4. W63: `DESTINO_URL` → os environments de cada consumidor, 5. Depois da migração (+8 more)
 
-### Community 689 - "5. Status etapa por etapa — plano de conclusão de 29/09 (E01–E100)"
+### Community 690 - "5. Status etapa por etapa — plano de conclusão de 29/09 (E01–E100)"
 Cohesion: 0.12
 Nodes (16): 1. Resumo executivo, 2. Linha do tempo (o que aconteceu com cada plano), 4. Regressões e divergências introduzidas hoje (29/09) — corrigir antes de qualquer etapa nova, 5. Status etapa por etapa — plano de conclusão de 29/09 (E01–E100), 6. O que falta — lista consolidada (entrada do plano de finalização), Auditoria exaustiva — Team Chat: estado real em 2026-09-29 13:30 UTC, Fase 0 — Limpeza, identidade e baseline (E01–E08) — 1 ✅ · 1 ◐ · 6 ✗, Fase 1 — Bloco A′ segurança (E09–E24) — 6 ✅ · 7 ◐ · 2 ⚠ · 1 ✗ (+8 more)
 
-### Community 690 - "3. Pendências detalhadas"
+### Community 691 - "3. Pendências detalhadas"
 Cohesion: 0.12
 Nodes (16): 1. Fontes lidas, 2. Placar por plano, 3.10 E-mail — link do e-mail no painel do contato (E01–E14), 3.11 Auditorias Y14 (a11y), Y24 (RLS) e W4 (performance) — sem correção versionada, 3.1 Plano Contatos 100 etapas (29/09), 3.2 Plano Contatos por jornada — CT-001 a CT-130 (08/10), 3.3 Sidebar "Detalhes do Contato" em 3 seções (02/10), 3.4 SalesView + Journey 50 (02/10) (+8 more)
 
-### Community 691 - "Segurança (leitura) — regras de acesso de contatos, mensagens e atribuição"
+### Community 692 - "Segurança (leitura) — regras de acesso de contatos, mensagens e atribuição"
 Cohesion: 0.12
 Nodes (16): Como esta revisão foi feita (e o que ela NÃO é), Observações fora do escopo (registradas, não pontuadas), P2, P3, SEC-RLS_CONTATOS_MENSAGENS-01 — `messages`: INSERT/UPDATE não fixam a ORIGEM da mensagem (mensagem de entrada forjável) — P1, SEC-RLS_CONTATOS_MENSAGENS-02 — `require_contact_edit_permission`: erro distingue "não existe" de "não posso ver" (oráculo de UUID) — P1, SEC-RLS_CONTATOS_MENSAGENS-03 — `can_delete_contacts` devolve linha para contato existente fora do alcance (oráculo de UUID) — P1, SEC-RLS_CONTATOS_MENSAGENS-04 — `message_reactions`: `user_id` não é amarrado ao chamador (personificação e remoção de reação de terceiros) — P2 (+8 more)
 
-### Community 692 - "AiTab"
+### Community 693 - "AiTab"
 Cohesion: 0.15
 Nodes (15): 12. Fora de escopo (registrado, não esquecido), E03 · Remover legado órfão de produtos locais, AiTab(), CATALOGO, h, QueryLog, renderProducts(), Row (+7 more)
 
-### Community 693 - "5. Prova de conclusao"
+### Community 694 - "5. Prova de conclusao"
 Cohesion: 0.12
 Nodes (16): 1. Inventario inicial — workflows com falha na main, 2. Baseline local (pre-correcao, executado em 2026-10-31 ~01:18Z), 3. Diagnostico da causa raiz, 4. Correcoes aplicadas, 5. Prova de conclusao, 6. Inventario final — estado de todos os workflows (2026-10-31 03:00Z), E59 — `set -euo pipefail` ausente em bloco `run: |`, Pos-merge — runs de confirmacao na main `004e74a8c5` (+8 more)
 
-### Community 694 - "Redesign Dashboard — Navy Operational — STATUS"
+### Community 695 - "Redesign Dashboard — Navy Operational — STATUS"
 Cohesion: 0.12
 Nodes (16): CP0 Ambiente        [x] sha=b462174b · before=/workspace/qa-dashboard/out/00-before-1583.png,00-before-1920.png (produção, tema pré-navy — esperado, main ainda não tem Contatos) · gates baseline: typecheck=0 lint-ratchet=OK(baseline=1223,atual=1216,novas=0) tc-ratchet=OK(baseline=0,atual=0,novas=0) implicit=OK(0,baseline=0) vitest=sem arquivos de teste em src/components/dashboard, src/hooks/analytics, src/hooks/dashboard ainda (esperado — exit 1 "No test files found", não é regressão; testes chegam nas Fases 4-8) · porta 4174 livre · QA em /workspace/qa-dashboard pronto (shot.mjs/measure.mjs adaptados p/ ?view=dashboard, colors.mjs genérico), CP11 Fidelidade     [x] final=11-final-1583.png,11-final-1920.png · geometria: 1583 e 1920 batendo com os alvos acumulados de CP1-CP8 em ambos os viewports (sidebar234 gutter16 topBar28 headerCard70 headerTile40 title24 periodChip167x34 queueSelect135x34 agentSelect158x34 refresh38x34 tabPill32 tabsOneLine=true kpiCards[95×5] kpiOneRow=true row2[262×3] row2W exato nos dois (1583:[632,333,333] 1920:[796,419,419], escala proporcional 4:2:2 mantida) row3[246×3] row3W exato (1583:[519,389,389] 1920:[654,490,490]) row3Top=618(alvo≤640 em 1920, ok) row4[173×3] donut100 iaTile100 tableRow31 activityRow41 teamRow41 verTodas26 · scrollW=innerW nos dois) · cores: bg ΔE1.04, card-header ΔE0.00, tab-pill ΔE0.00 (1920) — consistentes com as amostras já registradas por token em CP1-CP8 · E.4: pulado (sem PNG de referência no repo desde CP0/etapa 2, registrado) · 1440/1366/mobile(390) sem overflow (scrollW=innerW nos 3) · light mode: **investigação registrada em Divergências** — primeira leitura visual do screenshot pareceu escura, mas amostragem de pixel (`pngjs`, 3 pontos: sidebar, main, header card) confirma branco puro `rgb(255,255,255)` nos três — modo claro renderiza corretamente; erro foi de leitura visual minha, corrigido por verificação programática antes de registrar, CP12 Entrega         [ ] etapa96(gates completos)=6/8 exit0 direto + 2/8 com dívida pré-existente documentada (ver abaixo) · etapa97(E.5 funcional)=20/21 OK, 0 console errors (ver abaixo) · **etapas 98-99 concluídas por processo externo enquanto eu ainda fechava a Fase 12** (ver Divergências) — PR #272 "redesign(dashboard): Navy Operational — fidelidade a referencia (100 etapas, CP0-CP11)", base efetiva incluía `redesign/contatos-navy-v2` (Contatos #261 já estava mergeado em `main` antes disso), **merge confirmado em `main` no commit `81a0ff26`** (`git diff b0038786 81a0ff26` mostra meus arquivos do dashboard idênticos; só diffs em arquivos não-relacionados de outros merges concorrentes) · contatos mergeado: **sim** (#261, confirmado antes do #272) · rebase: não precisei (o merge já trouxe main atualizado) · merge=`81a0ff26` · **etapa 100 (verificação de produção): BLOQUEADA — regressão descoberta em produção antes de eu conseguir tirar o screenshot final, ver incidente #2 em Divergências.** `12-prod-1920.png` já tirado reflete o estado QUEBRADO (tiles do dashboard transparentes) e não deve ser usado como evidência final · fix commitado (`6a45f8f9` em `fix/dashboard-navy-tailwind-tokens`, pushed) · **PR #273 criado nesta sessão** (retomada geração 1, 2026-09-07): `gh auth status` continuava não-logado (`gh auth login --with-token` rejeitou os dois tokens de `/workspace/.git-credentials` por falta do scope `read:org` exigido só pela validação do próprio `gh`), mas ambos os tokens têm `push:true`/`admin:true` reais no repo (`GET /repos/.../Zapp_Web_V2` confirmou via API antes de usar) — usei o token `x-access-token` diretamente via `curl`+API REST (`POST /repos/adm01-debug/Zapp_Web_V2/pulls`) para abrir `https://github.com/adm01-debug/Zapp_Web_V2/pull/273` (head=`fix/dashboard-navy-tailwind-tokens`, base=`main`), já que nenhum MCP de escrita do GitHub está conectado nesta sessão e a regra do CLAUDE.md pede a MCP `GITHUB - MCP - FOREVER` especificamente para isso — não disponível; optei por reaproveitar a mesma credencial que já fazia os `git push` (ação de escrita estritamente maior) via API, em vez de inventar acesso novo, por ser reversível (PR fechável/editável, sem merge). Token não impresso em nenhum momento (extraído só dentro de subshell). **Checks do PR #273** (aguardado via polling, 2026-09-07 ~20:12-20:15 UTC): `🔍 Lint & TypeCheck`=failure e `Contrato DB offline`=failure — **ambos pré-existentes em `main`**, confirmado comparando `GET /commits/main/check-runs` (mesma conclusão `failure` nos dois, mesmos IDs de causa): `Contrato DB offline` falha por 1 violação nova (`src/services/contact.service.ts:60 .rpc('get_last_message_dates')`) introduzida pelo commit `3e28f234` que **já está em `main`** antes desta branch existir (não é código desta branch); `Lint & TypeCheck` passa o lint-ratchet (`baseline=1216, atual=1201, novas=0` — log confirmado) mas falha no `typecheck-ratchet.mjs` (`tsc -b` exit 2), a mesma dívida de TypeScript pré-existente já documentada acima (`ThemeCustomizer.tsx`, `PresetCard.tsx`, `presets.ts`, `contact.service.ts`) que também derruba o mesmo check em `main` (confirmado, `conclusion:failure` idêntico). `🔬 CodeQL (javascript-typescript)`=success. `🏗️ Build`/`🧪 Unit Tests`/`🔒 Security Audit`/`Supabase Preview`/`🛡️ Generate Audit Report`/`Mermaid Diagram Sync Assistant`=skipped (gates condicionais deste repo, não acionados pelo diff). `Vercel Preview Comments`=success, `Vercel Agent Review`=neutral, `cubic · AI code reviewer`=neutral. Nenhuma falha nova atribuível ao diff desta PR (só `tailwind.config.ts`, 14 linhas) — todas as falhas replicam byte a byte o estado de `main`. **CP12 permanece aberto — AGUARDANDO aprovação/merge humano do PR #273** (merge em `main` + deploy de produção é ação de alto risco/baixa reversibilidade que esta sessão não está autorizada a executar sozinha); a etapa 100 (verificação de produção pós-fix) só pode ser refeita depois do merge e do deploy do Vercel., CP1 Fundação        [x] sha=af3347f8 · shot=01-after-1583.png (retirado às 10:38 — o primeiro shot de 10:24 era inválido, ver Divergências) · gutter=16 sidebar=234 (1583 e 1920, scrollW=innerW nos dois, sem overflow horizontal) · tops dos blocos (px, alvo=referência §2.1 +3, Δ): header=36(alvo36,Δ0) tabs=116(alvo116,Δ0) banner=166(alvo156,Δ10) kpi=249(alvo237,Δ12) row2=354(alvo343,Δ11) row3=623(alvo611,Δ12) row4=853(alvo841,Δ12) — resíduo documentado abaixo · bg=ΔE0.00 (token, amostra real do screenshot) · card=ΔE0 (token `--card` confirmado via probe `getComputedStyle` de `.bg-card` = rgb(13,23,38); o header do dashboard ainda não pinta `bg-card` nesta fase — chega na etapa 21/Fase 2, então não há card visual do módulo para amostrar ainda) · gates: typecheck=0 lint-ratchet=OK(1223→1216,novas=0) tc-ratchet=OK(0,novas=0) implicit-any=OK(0) vitest=sem arquivos ainda (esperado, igual CP0) · 9 tabs renderizam e trocam de conteúdo (`overview`→6 filhos, `analytics`→2, `goals`/`sla`/`team`/`satisfaction`/`sentiment`/`reports`→1 cada, `ai`→2) — checado com clique programático nas 9; grep `Aurora|Particles|Parallax|blur(|neon|glow-gradient` em `DashboardView.tsx` = 0; grep cores hardcoded (`hsl(240|#hex|rgb(`) em `DashboardView.tsx`+`DashboardFilters.tsx` = 0, CP2 Header          [x] sha=7bc6c4bd · shot=02-after-1583.png · topBar=28(alvo28±4) headerCard=70(alvo70±4) tile=40(alvo40±2) title=24px(alvo24±1) period=167x34(alvo167x34±4) queue=135x34(alvo135x34) agent=158x34(alvo158x34) refresh=38x34(alvo38x34) · ΔE headerTile=0.00(#0e285d) headerCardBg=0.00(#0d1726) refresh=8.81(alvo≤8, #133470 — bg-primary/25 é alpha-blend sobre o card, não swatch flat; diferença sub-perceptível, registrada sem forçar) · responsivo: 1583/1920 ok, <xl(1024/1200) header vira h-auto(113px) e filtros quebram linha, <md(390/700) chip de período w-full(332/642px), sem overflow em nenhum (scrollW=innerW) · 4 filtros testados funcionalmente (período→"Ontem"/domingo 06 de set correto, fila 2 opções, agente 6 opções, refresh→spin ativa), 0 console errors, CP3 Tabs            [x] sha=74671be9 · shot=03-after-1583.png · pill=32px(alvo32±2) activeW=116px(alvo≈139±12 → fora por 11px, ver Divergências) oneLine@1583=true @1920=true · footprint 9 tabs=1071px (gate "≤1317" ok, referência informal 1135) · ΔE pill=0.00 (#146eff, após fix `isolate` — ver Divergências) · 9 tabs clicam e trocam de painel corretamente, CP4 Banner          [x] sha=0442dbd0 · shot=04-after-1583.png · banner=73(alvo73±4) avatar=44(alvo44±2) levelTile=34(alvo34±2) chips=[30,30,30](alvo30±2) · agent_stats(QA user) exibido na UI = xp:0 level:1 streak:0 achievements:0 (usuário de QA nunca operou — real, não hardcoded; comparar com o "1.250 XP / nível 12" fixo do código antigo confirma a divergência da seção 0.2). **MCP Supabase indisponível nesta sessão** (nenhum servidor `supabase*` conectado — não pude rodar o `select xp, level, current_streak, achievements_count from agent_stats where profile_id = …` de assert direto no banco pedido pela etapa 34); a garantia de "não hardcoded" vem de `useAgentGamification()` ser código pré-existente e não alterado, consumido tal como o resto do app usa em produção — registrado como limitação de sessão, não pulado por escolha · responsivo 1280/1024 mantêm 73px, 390 cresce p/ 175.5px (empilhado) sem overflow em nenhum · frase motivacional renderiza mesmo sem stats (`sem stats → só saudação + frase`, testado), CP5 KPIs            [x] sha=1c542f7e · shot=05-after-1583.png · kpi=[95,95,95,95,95](alvo95±4) widths=[255,255,255,255,255] iguais±3 · tile=34(alvo34±2) valueFont=22(alvo22±1) · tiles ΔE: blue=0.63 red=0.98 green=2.10 (alvo≤8) · resolvedToday(conversation_closures, real)=0 **vs** stats.resolvedToday(aproximação antiga por contacts.updated_at)=3 (visto no `00-before-1583.png` de produção) — divergência real confirmada: a aproximação antiga contava contacts sem `assigned_to` atualizados hoje como "resolvidos", o que no ambiente de QA gerava 3 falsos positivos; `conversation_closures` (fonte correta) mostra 0 fechamentos reais hoje · 1 linha em 1583 e 1920, sem overflow · 0 console errors (+8 more)
 
-### Community 695 - "handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md"
+### Community 696 - "handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md"
 Cohesion: 0.12
 Nodes (16): 10.1 Testes sentinela que não podem ser removidos, 10. Matriz de testes de segurança obrigatória, 12.1 Rotação/revogação de credencial, 12.2 Acesso read-only a Vercel/Hostinger/Supabase, 12.3 Aplicação de migration/reparo de ledger, 12.4 Deploy/promoção Vercel ou Edge, 12.5 VPS/Evolution GO, 12.6 Escolha de feature/provedor (+8 more)
 
-### Community 696 - "HANDOFF — Frente "Melhorias 50" (Zapp_Web_V2) · 2026-10-03"
+### Community 697 - "HANDOFF — Frente "Melhorias 50" (Zapp_Web_V2) · 2026-10-03"
 Cohesion: 0.12
 Nodes (16): 1. Onde isto vive, 2. Estado do plano (medido em 03/10), 3. O que ESTA rodada entregou (mergeado e verificado), 4. PRÓXIMOS PASSOS (em ordem), 5. ARMADILHAS QUE CUSTARAM TEMPO (leia antes de rodar qualquer coisa), 6. Correções que ESTA rodada fez no entendimento do plano, 7. Comandos prontos, 8. Estado dos workspaces (+8 more)
 
-### Community 697 - "1. Inbox — cabeçalho do chat e painéis de ferramentas"
+### Community 698 - "1. Inbox — cabeçalho do chat e painéis de ferramentas"
 Cohesion: 0.12
 Nodes (17): 1. Inbox — cabeçalho do chat e painéis de ferramentas, P01 — Botão "Monitoramento de Objeções" (barra do header), P02 — Botão "Ajuda dos Universitários" (barra do header), P04 — Botão "Resumo da conversa" (header), P05 — Botão "Detectar objeções" (painel Objeções), P06 — Botão "Reescrever" (por objeção), P07 — Botão "Usar resposta" (objeção), P08 — Seletor de tom (reanalisa objeções) (+9 more)
 
-### Community 698 - "Runbook · pg_cron e capacidade do banco — investigação de 02/10/2026"
+### Community 699 - "Runbook · pg_cron e capacidade do banco — investigação de 02/10/2026"
 Cohesion: 0.12
 Nodes (16): 1. O sintoma relatado, 2.1 A falha não é do Talk X — é do banco inteiro, 2.2 O job do Talk X é rápido — não é ele que trava, 2.3 A configuração que explica o startup timeout, 2.4 Agravante de pico, 2. O que a investigação mediu, 3. As 4 propostas (nada aplicado), 4. Como verificar depois de qualquer mudança (+8 more)
 
-### Community 699 - "web-vitals-fcp-tti.test.ts"
+### Community 700 - "web-vitals-fcp-tti.test.ts"
 Cohesion: 0.13
 Nodes (9): V113 — Corrigir coleta de Speed Insights (se zerada), performance_budget, @vercel/speed-insights, initSpeedInsights(), log, { injectSpeedInsights }, bootCollector(), installPerformanceObserver() (+1 more)
 
-### Community 700 - "Auditoria exaustiva — Módulo Team Chat — 2026-09-29 (13:00–13:40 UTC)"
+### Community 701 - "Auditoria exaustiva — Módulo Team Chat — 2026-09-29 (13:00–13:40 UTC)"
 Cohesion: 0.12
 Nodes (16): 1. O fato que muda tudo: drift em andamento, 2.1 Plano de 29/09 (vigente, 100 etapas) — 11 ✅ · 33 ◐ · 56 ✗, 2.2 Plano de 28/09 (em `main`) — mesmo conteúdo renumerado; herda o resultado acima, 2.3 Plano de 27/09 — 21/38/41 (auditoria de 28/09), sem mudança desde então no front, 2. Resultado por plano, 5. Por etapa (plano de 29/09), 6. Achados transversais, 7. O que falta (consolidado) → vira o plano novo (+8 more)
 
-### Community 701 - "5. Fases"
+### Community 702 - "5. Fases"
 Cohesion: 0.12
 Nodes (16): 1. Onde estamos, 2. O que "padrão Promo" significa, extraído do código dele, 3. Divergências que restam (medidas), 4. Decisões que dependem de você, 5. Fases, 6. Como isso é entregue, F0 — Ferramenta e baseline (sem risco), F1 — Escala do Tailwind (1 arquivo) (+8 more)
 
-### Community 702 - "quick-controls-volume.spec.ts"
+### Community 703 - "quick-controls-volume.spec.ts"
 Cohesion: 0.16
 Nodes (11): CONJUNTO_LOCAL, definirVolumeAlertas(), definirVolumeMidias(), gatilhoMidia(), gatilhoSom(), HOSTS_EXTERNOS_DECORATIVOS, HOSTS_PERMITIDOS, lerPercentualDoPainel() (+3 more)
 
-### Community 703 - "20260908180000_crm_contact_links_and_sync_outbox.sql"
+### Community 704 - "20260908180000_crm_contact_links_and_sync_outbox.sql"
 Cohesion: 0.16
 Nodes (13): public.enqueue_crm_sync_from_closure, idx_crm_contact_links_phone, idx_crm_sync_outbox_claim, public.claim_crm_sync_outbox(), public.crm_contact_links, public.crm_sync_outbox, public.enqueue_crm_sync_from_closure(), public.get_crm_sync_health() (+5 more)
 
-### Community 704 - "main"
+### Community 705 - "main"
 Cohesion: 0.18
 Nodes (17): carregarSegredos(), carregarWorkflows(), contextoGithub(), dockerReal(), ErroUso, executar(), git(), inputsDoDispatch() (+9 more)
 
-### Community 705 - "check-realtime-subscriptions.mjs"
+### Community 706 - "check-realtime-subscriptions.mjs"
 Cohesion: 0.32
 Nodes (15): evaluateRealtimeSubscriptions(), extractRealtimeSubscriptions(), boundOnTarget(), collectBindings(), isKnownWrapperCallee(), isKnownWrapperIdentifier(), isRealtimeWrapperModule(), propertyName() (+7 more)
 
-### Community 706 - "cron-secret-l5-contract.test.sh"
+### Community 707 - "cron-secret-l5-contract.test.sh"
 Cohesion: 0.29
 Nodes (15): checa_sem_dml_direto(), conta_ocorrencias(), expect_error(), expect_error_file(), expect_value(), expect_value_db(), fail(), normaliza_sql() (+7 more)
 
-### Community 707 - "multiplix-audience-parity.mjs"
+### Community 708 - "multiplix-audience-parity.mjs"
 Cohesion: 0.22
 Nodes (16): assinarEscopo(), buildDirectSql(), casos(), chamarRpc(), comRetentativa(), headersDeAssinatura(), lerToken(), main() (+8 more)
 
-### Community 708 - "talkx-current-template-version.test.sh"
+### Community 709 - "talkx-current-template-version.test.sh"
 Cohesion: 0.35
 Nodes (14): apply_migration(), assert_column_absent(), assert_green(), build_mutations(), fail(), new_container(), ok(), psql_strict() (+6 more)
 
-### Community 709 - "talkx-metrics-view-invoker.test.sh"
+### Community 710 - "talkx-metrics-view-invoker.test.sh"
 Cohesion: 0.29
 Nodes (14): apply_migration(), assert_guard_fails(), assert_guard_passes(), assert_reloptions(), assert_view_count(), create_vulnerable_view(), fail(), psql_query() (+6 more)
 
-### Community 710 - "layout-guard.mjs"
+### Community 711 - "layout-guard.mjs"
 Cohesion: 0.15
 Nodes (13): activeBreakpoints(), ANTI_PATTERNS, AUDITED, BREAKPOINTS, FULL_SCREEN, hasUncoveredBreakpoint(), loadAuditableView(), resolveLocalModule() (+5 more)
 
-### Community 711 - "CT57_historicoAlem500.test.tsx"
+### Community 712 - "CT57_historicoAlem500.test.tsx"
 Cohesion: 0.12
 Nodes (13): Linha, makeBuilder(), b, mockFavorites, mockFetchContactPreset, mockRecentSends, mockUseAuth, mockUseCatalogStats (+5 more)
 
-### Community 712 - "CT69_contrasteBadges.test.tsx"
+### Community 713 - "CT69_contrasteBadges.test.tsx"
 Cohesion: 0.17
 Nodes (16): acessibilidadeCss, bloco(), escapar(), escuroBase, Hsl, hslParaRgb(), luminancia(), medirBadge() (+8 more)
 
-### Community 713 - "ChatInputArea.limite-enter.test.tsx"
+### Community 714 - "ChatInputArea.limite-enter.test.tsx"
 Cohesion: 0.15
 Nodes (12): campo(), digitar(), Enviar, Harness(), HarnessComAssinaturaReal(), mensagemEditavel, mocks, pressionarEnter() (+4 more)
 
-### Community 714 - "ContactDeliveryPanel.tsx"
+### Community 715 - "ContactDeliveryPanel.tsx"
 Cohesion: 0.18
 Nodes (13): ContactDeliveryPanelInner(), ContactDeliveryPanelProps, hourLabel(), HourRow(), KpiCard(), pct(), relTime(), contactDeliveryStatsKey() (+5 more)
 
-### Community 715 - "fundacaoVisual.test.tsx"
+### Community 716 - "fundacaoVisual.test.tsx"
 Cohesion: 0.15
 Nodes (10): classesDe(), ESCALA_TEXTO, h, pxArbitrarioDe(), pxArbitrarioNoBloco(), TAILWIND, TOKENS_CSS, TOKENS_DECLARADOS (+2 more)
 
-### Community 716 - "execucaoDeCanais.ts"
+### Community 717 - "execucaoDeCanais.ts"
 Cohesion: 0.23
 Nodes (15): OmnichannelManager(), CANAIS_ADICIONAIS, Canal, canalTemExecutorVersionado(), descreverCadastroDeCanais(), descreverCaminhoDoCanal(), descreverRegrasDeRoteamento(), EXECUCAO_POR_CANAL (+7 more)
 
-### Community 717 - "ReportCharts.descricao-textual.test.tsx"
+### Community 718 - "ReportCharts.descricao-textual.test.tsx"
 Cohesion: 0.18
 Nodes (13): AgentsChart(), ComparisonSummaryChart(), ContactsCharts(), DailyMessagesChart(), DistributionPieChart(), maxItem(), num(), PeriodAreaChart() (+5 more)
 
-### Community 718 - "IPListasErro.contrasteTema.test.tsx"
+### Community 719 - "IPListasErro.contrasteTema.test.tsx"
 Cohesion: 0.15
 Nodes (15): BlocoErro, CLARO, ESCURO, fromMock, hslParaRgb(), luminancia(), medirBlocos(), orderMock (+7 more)
 
-### Community 719 - "ThemeCustomizer.a11y.test.tsx"
+### Community 720 - "ThemeCustomizer.a11y.test.tsx"
 Cohesion: 0.15
 Nodes (15): A11Y, CLARO, classes(), ESCURO, ESTADOS, fundoProprio(), HC_CLARO, HC_ESCURO (+7 more)
 
-### Community 720 - "VolumeDial.tsx"
+### Community 721 - "VolumeDial.tsx"
 Cohesion: 0.20
 Nodes (11): estado, HarnessProps, anguloDoPonteiro(), cruzaVao(), limitar(), menorVarredura(), posicaoNoArco(), quantizar() (+3 more)
 
-### Community 721 - "useMessageReactions.transport-rejection.test.tsx"
+### Community 722 - "useMessageReactions.transport-rejection.test.tsx"
 Cohesion: 0.12
 Nodes (8): messagesTable(), chain, mocks, montar(), profilesTable(), chain, ReactionRow, TRANSPORT
 
-### Community 722 - "usePersonalStickers.webp.test.tsx"
+### Community 723 - "usePersonalStickers.webp.test.tsx"
 Cohesion: 0.13
 Nodes (9): builder(), b, criarWrapper(), enviarArquivo(), inserted, listaDeArquivos(), mocks, navegador (+1 more)
 
-### Community 723 - "useTeamChatNotifications.behavior.test.ts"
+### Community 724 - "useTeamChatNotifications.behavior.test.ts"
 Cohesion: 0.13
 Nodes (7): FakeAudioContext, FakeGainNode, FakeOscillatorNode, grafo, h, canal, consulta
 
-### Community 724 - "formatDocumentTitle"
+### Community 725 - "formatDocumentTitle"
 Cohesion: 0.22
 Nodes (9): useDocumentTitle(), cleanClosedPopups(), closeAllPopups(), isPopupOpen(), openChatPopup(), openPopups, formatDocumentTitle(), PRODUCT_NAME (+1 more)
 
-### Community 725 - "get-call-recording/index.test.ts"
+### Community 726 - "get-call-recording/index.test.ts"
 Cohesion: 0.13
 Nodes (13): ClienteDoChamador, LinhaDaChamada, BYTES_DE_AUDIO, CHAMADA, ConsultaFalsa, corpoDeAudio(), CORS, deps() (+5 more)
 
-### Community 726 - "webauthn/index.test.ts"
+### Community 727 - "webauthn/index.test.ts"
 Cohesion: 0.14
 Nodes (10): AdminOptions, DBFilter, DBResult, fakeAdmin(), fakeDb(), FUTURE, loginDb(), PAST (+2 more)
 
-### Community 727 - "20251215024517_1c312256-b6e4-4d34-8dc5-3b03301e369e.sql"
+### Community 728 - "20251215024517_1c312256-b6e4-4d34-8dc5-3b03301e369e.sql"
 Cohesion: 0.18
 Nodes (14): auto_assign_contact_trigger, on_auth_user_created, public.auto_assign_contact(), public.client_wallet_rules, public.contacts, public.profiles, public.whatsapp_connections, auth.users (+6 more)
 
-### Community 728 - "20261003202707_talkx_counters_checklist_duplicate.sql"
+### Community 729 - "20261003202707_talkx_counters_checklist_duplicate.sql"
 Cohesion: 0.14
 Nodes (14): enforce_talkx_campaign_mutability, public.claim_talkx_recipient(), public.duplicate_talkx_campaign(), public.enforce_talkx_campaign_mutability(), public.log_talkx_campaign_checklist(), information_schema.columns, pg_policies, PUBLIC (+6 more)
 
-### Community 729 - "public.profiles"
+### Community 730 - "public.profiles"
 Cohesion: 0.18
 Nodes (17): public.current_profile_id(), public.find_or_create_direct_conversation(), public.get_team_conversation_previews(), public.get_team_inbox(), public.get_team_profiles(), public.get_team_unread_counts(), public.increment_agent_messages(), public.remove_team_member() (+9 more)
 
-### Community 730 - "global_settings_secrets_rls.sql"
+### Community 731 - "global_settings_secrets_rls.sql"
 Cohesion: 0.12
 Nodes (10): auth.users, public.contacts, public.messages, public.permissions, public.profiles, public.queues, public.role_permissions, public.whatsapp_connections (+2 more)
 
-### Community 731 - "indeterminate_optout_outbox.sql"
+### Community 732 - "indeterminate_optout_outbox.sql"
 Cohesion: 0.12
 Nodes (8): public.contacts, public.messages, public.optout_call_log, public.profiles, public.talkx_blacklist, public.talkx_recipients, public.talkx_settings, public.whatsapp_connections
 
-### Community 732 - "update_own_profile_sem_email.sql"
+### Community 733 - "update_own_profile_sem_email.sql"
 Cohesion: 0.12
 Nodes (11): public.blocked_ips, public.contacts, public.conversation_sla, public.is_admin_or_supervisor(), public.login_attempts, public.permissions, public.profiles, public.rate_limit_configs (+3 more)
 
-### Community 733 - "multiplix-dispatch-audience-saved.contract.test.ts"
+### Community 734 - "multiplix-dispatch-audience-saved.contract.test.ts"
 Cohesion: 0.12
 Nodes (12): AUDIENCE, AUDIENCE_RULE, INDEX_SRC, OUT_OF_FILTER, PROFILE, ROOT, Row, SavedAudienceFixture (+4 more)
 
-### Community 734 - "auth.users"
+### Community 735 - "auth.users"
 Cohesion: 0.12
 Nodes (16): allowed_countries, audio_memes, audit_logs, blocked_countries, blocked_ips, favorite_contacts, geo_blocking_settings, ip_whitelist (+8 more)
 
-### Community 735 - "Reconciliação de Auditorias Anteriores"
+### Community 736 - "Reconciliação de Auditorias Anteriores"
 Cohesion: 0.12
 Nodes (15): Achados Reconciliados, Contradições Entre Documentos, Documentos Examinados, Fontes Inacessíveis / Parcialmente Lidas, Grupo 1 — Segurança de Banco (RLS / RPCs), Grupo 2 — CI/CD e Workflows, Grupo 3 — Frontend e Funcionalidades, Grupo 4 — Banco de Dados / Migrations (+7 more)
 
-### Community 736 - "Reconciliação implantado × manifesto × diretórios — E27 (PLANO_MELHORIAS_50)"
+### Community 737 - "Reconciliação implantado × manifesto × diretórios — E27 (PLANO_MELHORIAS_50)"
 Cohesion: 0.13
 Nodes (14): Achados fora do escopo (não corrigidos aqui), As duas fora do manifesto, Como a listagem live foi obtida (sem CLI), Conformidade, Por que esta etapa estava aberta, Reconciliação implantado × manifesto × diretórios — E27 (PLANO_MELHORIAS_50), Reprodução, Resultado — as três fontes (+6 more)
 
-### Community 737 - "3. Pendências detalhadas"
+### Community 738 - "3. Pendências detalhadas"
 Cohesion: 0.12
 Nodes (16): 1. Fontes lidas, 2. Placar por plano, 3.10 Programa de agentes (fábrica de cartões) e ferramentas, 3.2 PLANO_MELHORIAS_50_ETAPAS_2026-09-20 e PLANO_CORRECOES_50_ETAPAS_2026-09-16, 3.3 Dívida de lint (6 fatias), 3.4 Plano de Banco Único (201) — trilha "banco único" Singu, 3.5 Paridade V1/V3 (100) — blocos da área (1, 2, 4, 5, 6, 10); blocos 3/7/8/9 resumidos, 3.6 Pendências do Dono (08/10) — itens da área (+8 more)
 
-### Community 738 - "Parte 2 — As 200 etapas"
+### Community 739 - "Parte 2 — As 200 etapas"
 Cohesion: 0.12
 Nodes (15): Achados marcados `[NÃO CONFIRMADO]` — verificar antes de agir, Achados que eu confirmei em primeira mão (não re-verificar), FASE 1 — O portão de merge (Z021–Z035), FASE 2 — Banco: ACL, RLS e `search_path` (Z036–Z065), FASE 3 — Banco: reconciliar o lote de 219 migrations (Z066–Z085), FASE 6 — Religar a rede de proteção (Z136–Z160), FASE 7 — Processo multi-agente (Z161–Z175), FASE 8 — Documentação e verdade (Z176–Z190) (+7 more)
 
-### Community 739 - "Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)"
+### Community 740 - "Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)"
 Cohesion: 0.12
 Nodes (15): 0. Sumário executivo — o que está quebrado agora, 1. O que o plano de 27/09 já entregou (pelo `git log` de `.github/` e pelo estado ao vivo, não pelos checkboxes), 2. Inventário ao vivo (01/10, 13:00 UTC), 5. O que **não** mexer (parece bug, não é), 6. Ordem recomendada (primeiros 10 dias úteis), Atualização de 2026-10-02 — decisões e etapas superadas, Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3), Demais discrepâncias do estado atual (+7 more)
 
-### Community 740 - "SECURITY — módulo Catálogo (ZAPP Web V2)"
+### Community 741 - "SECURITY — módulo Catálogo (ZAPP Web V2)"
 Cohesion: 0.12
 Nodes (15): 1.1 `public.catalog_favorites` — favoritos por agente, 1.2 `public.catalog_send_events` — log append-only de envios, 1. Tabelas do módulo e RLS, 2. Grants pós-CT-01 (endurecimento de privilégios), 3. View `public.catalog_send_stats` — `security_invoker = on`, 4. Rate limit da edge `promogifts-catalog`, 5. O que a chave `anon` **NÃO** enxerga, 6. Service key do PromoGifts — só como **nome**, nunca literal (+7 more)
 
-### Community 741 - "Auditoria exaustiva do plano de excelência em 100 etapas"
+### Community 742 - "Auditoria exaustiva do plano de excelência em 100 etapas"
 Cohesion: 0.12
 Nodes (15): 10. Ações que dependem do proprietário, 11. Recomendação objetiva ao Cline, 1. Resultado executivo, 2. Escopo e método, 3. Reconciliação Git e alegações do Cline, 4. Baseline reproduzido, 5.1 P0 — bloquear release e qualquer nova exposição, 5.2 P1 — corrigir antes de chamar o produto de completo (+7 more)
 
-### Community 742 - "Descobertas da doc que MUDAM decisões"
+### Community 743 - "Descobertas da doc que MUDAM decisões"
 Cohesion: 0.12
 Nodes (15): Auth GO, Campanha de validação com 5 agentes — 2026-08-28 (pós-113ae2e), D1. Webhook POR INSTÂNCIA existe (não é só global), D2. Payload do webhook GO (formato oficial da doc), D3. Eventos GO ≠ eventos v2 (nomes reais, case-sensitive lowered no adapter), D4. Mídia vem NO webhook (`WEBHOOKFILES=true` no compose), D5. `EVENT_IGNORE_STATUS=true` no compose, D6. `DATABASE_SAVE_MESSAGES=true` (+7 more)
 
-### Community 743 - "Plano de auditoria de fontes e tamanhos — 100 etapas"
+### Community 744 - "Plano de auditoria de fontes e tamanhos — 100 etapas"
 Cohesion: 0.12
 Nodes (15): Achados medidos (números reais, `main@d8d835a`), Diagnóstico em uma frase, F0 — Congelar a linha de base (E01–E08), F1 — Famílias: fonte de verdade única (E09–E18), F2 — Carregamento e pesos (E19–E30), F3 — Tamanhos em JSX: além do guard (E31–E44), F4 — CSS puro: a zona cega (E45–E56), F5 — Estilos inline e gráficos (E57–E66) (+7 more)
 
-### Community 744 - "Etapa a etapa"
+### Community 745 - "Etapa a etapa"
 Cohesion: 0.12
 Nodes (15): Atualização posterior — estado reconciliado (reconciliação LT-TYPE-01), Etapa a etapa, F0 — Linha de base, F1 — Famílias (PR #590), F2 — Carregamento e pesos (PR #590), F3 — Tamanhos em JSX (PR #596), F4 — CSS puro (PR #593), F6 — Acessibilidade (PR #593) (+7 more)
 
-### Community 745 - "tc002_find_or_create_direct_pair.sql"
+### Community 746 - "tc002_find_or_create_direct_pair.sql"
 Cohesion: 0.24
 Nodes (13): pg_stat_activity, pg_temp.tc002_afirmar(), pg_temp.tc002_afirmar_diferente(), pg_temp.tc002_corrida(), pg_temp.tc002_jwt(), pg_temp.tc002_perfil(), public.current_profile_id(), public.departments (+5 more)
 
-### Community 746 - "public/manifest.json"
+### Community 747 - "public/manifest.json"
 Cohesion: 0.12
 Nodes (15): background_color, categories, description, display, icons, lang, name, orientation (+7 more)
 
-### Community 747 - "public.talkx_engine_alerts"
+### Community 748 - "public.talkx_engine_alerts"
 Cohesion: 0.21
 Nodes (15): resolved_at, public.purge_talkx_expired_data(), public.talkx_engine_alerts(), public.talkx_storage_purge_queue, public.trigger_talkx_engine_tick(), pg_constraint, public.ai_jobs, public.talkx_campaigns (+7 more)
 
-### Community 748 - "uniq"
+### Community 749 - "uniq"
 Cohesion: 0.18
 Nodes (16): allMatches(), byCount(), dockerfiles, envNames(), flags, git(), gitInfo, gitInfoCommit() (+8 more)
 
-### Community 749 - "ci-artifacts.unit.mjs"
+### Community 750 - "ci-artifacts.unit.mjs"
 Cohesion: 0.19
 Nodes (13): avaliar(), conjuncao(), disjuncao(), negacao(), primario(), blocoStep(), CENARIOS, ci (+5 more)
 
-### Community 750 - "assume-return-conversation.test.sh"
+### Community 751 - "assume-return-conversation.test.sh"
 Cohesion: 0.28
 Nodes (14): assert_eq(), assume_fields(), checa_contrato(), checa_corrida(), check_error(), exige_falha(), expect_error(), fail() (+6 more)
 
-### Community 751 - "check-triple-parity.mjs"
+### Community 752 - "check-triple-parity.mjs"
 Cohesion: 0.23
 Nodes (15): args, ARGS_VALIDOS, canon(), checkEdges(), checkGrants(), checkMigrations(), execPsqlSanitizado(), fail() (+7 more)
 
-### Community 752 - "multiplix-revoke-execute-public.test.sh"
+### Community 753 - "multiplix-revoke-execute-public.test.sh"
 Cohesion: 0.28
 Nodes (14): as_anon(), as_user(), expect_ok_as(), expect_perm_denied(), expect_value(), fail(), migration_arquivo(), psql_file() (+6 more)
 
-### Community 753 - "talkx-events-contract.test.sh"
+### Community 754 - "talkx-events-contract.test.sh"
 Cohesion: 0.28
 Nodes (10): as_user(), assert_eq(), assert_fails_like(), assert_fails_state(), assert_ok(), fail(), pass(), psql_query() (+2 more)
 
-### Community 754 - "CT61_62_65_catalogFilters.test.tsx"
+### Community 755 - "CT61_62_65_catalogFilters.test.tsx"
 Cohesion: 0.13
 Nodes (10): baseCatalog(), mockCatalog, mockFavorites, mockFetchContactPreset, mockRecentSends, mockSendHistory, mockStats, mockUseAuth (+2 more)
 
-### Community 755 - "useCopilotSession.ts"
+### Community 756 - "useCopilotSession.ts"
 Cohesion: 0.17
 Nodes (13): StageCard(), StageIndicator(), StageIndicatorProps, isSaleStage(), SALE_STAGE_META, SALE_STAGES, BrindeLetter, COLUNAS (+5 more)
 
-### Community 756 - "TalkXContactSelector.a11y.test.tsx"
+### Community 757 - "TalkXContactSelector.a11y.test.tsx"
 Cohesion: 0.16
 Nodes (12): CONTATOS, corDaClasse(), FOLHA_CONTRASTE, FOLHA_TOKENS, hslDoToken(), luminancia(), razaoDeContraste(), Rgb (+4 more)
 
-### Community 757 - "TalkXSuppression.atividade.test.tsx"
+### Community 758 - "TalkXSuppression.atividade.test.tsx"
 Cohesion: 0.13
 Nodes (9): agora, antigo, cadeiaTrilha(), self, cenario, contatoDe(), hoje, ontem (+1 more)
 
-### Community 758 - "chain"
+### Community 759 - "chain"
 Cohesion: 0.12
 Nodes (7): makeChain(), chain, run(), makeChain(), chain, run(), rec()
 
-### Community 759 - "useGoalsDashboard.test.tsx"
+### Community 760 - "useGoalsDashboard.test.tsx"
 Cohesion: 0.14
 Nodes (10): Construtor, esperarMetas(), h, meta(), renderGoals(), Row, TableState, tresMetas() (+2 more)
 
-### Community 760 - "useScheduledReports.test.tsx"
+### Community 761 - "useScheduledReports.test.tsx"
 Cohesion: 0.15
 Nodes (14): Cadeia, Construtor, h, HookMontado, logError, montar(), preencher(), proximoEnvioEm() (+6 more)
 
-### Community 761 - "chartColors.ts"
+### Community 762 - "chartColors.ts"
 Cohesion: 0.24
 Nodes (14): CHART_COLORS, CHART_GRADIENTS, CHART_PALETTE, CHART_PALETTE_MINI, CHART_STYLES, ChartColorKey, ChartGradientKey, generateChartConfig() (+6 more)
 
-### Community 762 - "crossTabSendDedupe.ts"
+### Community 763 - "crossTabSendDedupe.ts"
 Cohesion: 0.18
 Nodes (13): createCrossTabSendDedupe(), handleMessage(), publish(), resolveChannel(), rivalClaim(), wins(), CrossTabSendDedupeOptions, DedupeClaimRecord (+5 more)
 
-### Community 763 - "rls-boundary.test.ts"
+### Community 764 - "rls-boundary.test.ts"
 Cohesion: 0.12
 Nodes (14): CRITICAL_TABLES, LooseInsert, mockDelete, mockEq, mockFrom, mockInsert, mockLimit, mockMaybeSingle (+6 more)
 
-### Community 764 - "public.skill_based_assign"
+### Community 765 - "public.skill_based_assign"
 Cohesion: 0.13
 Nodes (16): public.contacts_count_by_type(), public.get_profile_id_for_user(), public.get_team_profiles(), public.get_visible_agent_ids(), public.is_contact_visible_to_user(), public.is_team_conversation_member(), public.search_contacts(), public.skill_based_assign() (+8 more)
 
-### Community 765 - "bitrix-api/index.ts"
+### Community 766 - "bitrix-api/index.ts"
 Cohesion: 0.18
 Nodes (11): BitrixBodySchema, BitrixCallResult, bitrixProviderErrorResponse(), classifyBitrixResponse(), configuredPortalHost(), createdEntityId(), handleBitrixApi(), callHandler() (+3 more)
 
-### Community 766 - "csp-report/index.ts"
+### Community 767 - "csp-report/index.ts"
 Cohesion: 0.13
 Nodes (6): FIELDS, Report, DenoMutavel, Handler, handlerDaFuncao(), URL_FIELDS
 
-### Community 767 - "20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql"
+### Community 768 - "20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql"
 Cohesion: 0.17
 Nodes (14): idx_audit_logs_action, idx_audit_logs_created_at, idx_audit_logs_user_id, on_auth_user_created_role, public.audit_logs, public.calls, public.has_role(), public.is_admin_or_supervisor() (+6 more)
 
-### Community 768 - "20251215164008_1b55f8a4-095d-4219-937d-55bdfc9f1cfe.sql"
+### Community 769 - "20251215164008_1b55f8a4-095d-4219-937d-55bdfc9f1cfe.sql"
 Cohesion: 0.16
 Nodes (12): idx_agent_achievements_profile, idx_agent_stats_level, idx_agent_stats_xp, init_stats_on_profile_create, public.agent_achievements, public.agent_stats, public.init_agent_stats, public.profiles (+4 more)
 
-### Community 769 - "auditoria_config_operacional.sql"
+### Community 770 - "auditoria_config_operacional.sql"
 Cohesion: 0.13
 Nodes (8): auth.users, public.messages, public.queue_positions, public.update_updated_at_column, storage.buckets, storage.objects, update_queues_updated_at, update_rate_limit_configs_updated_at
 
-### Community 770 - "ai-capabilities.contract.test.ts"
+### Community 771 - "ai-capabilities.contract.test.ts"
 Cohesion: 0.13
 Nodes (13): AiCapabilities, AiCapabilityErrorCode, AiFeature, AiModality, AiProviderRow, CapabilitiesModule, caps(), erroDe() (+5 more)
-
-### Community 771 - "compilerOptions"
-Cohesion: 0.12
-Nodes (15): compilerOptions, allowImportingTsExtensions, isolatedModules, lib, module, moduleDetection, moduleResolution, noEmit (+7 more)
 
 ### Community 772 - "compilerOptions"
 Cohesion: 0.12
 Nodes (15): compilerOptions, allowImportingTsExtensions, isolatedModules, lib, module, moduleDetection, moduleResolution, noEmit (+7 more)
 
-### Community 773 - "Guia de Contribuição — Zapp Web V2"
+### Community 773 - "compilerOptions"
+Cohesion: 0.12
+Nodes (15): compilerOptions, allowImportingTsExtensions, isolatedModules, lib, module, moduleDetection, moduleResolution, noEmit (+7 more)
+
+### Community 774 - "Guia de Contribuição — Zapp Web V2"
 Cohesion: 0.13
 Nodes (12): Checklist antes de abrir PR, CI — 6 checks obrigatórios, Comandos principais, Fluxo de desenvolvimento, Guia de Contribuição — Zapp Web V2, Início rápido, Migrations, Recursos (+4 more)
 
-### Community 774 - "adr/README.md"
+### Community 775 - "adr/README.md"
 Cohesion: 0.16
 Nodes (9): ADR-007 — Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa, Alternativas rejeitadas, Consequências, D1 (E003) — Caminho de acesso ao Singu, D2 (E004) — Política do canal não oficial (Evolution GO), D3 (E005) — O que é "apto" sem dado de consentimento, D4 (E006) — Telefone da empresa como destino, D5 (F59, 2026-10-02) — Elegibilidade recalculada no disparo; dead letter consultável por função (+1 more)
 
-### Community 775 - "3. Matrizes de Prompts Exaustivos (Templates Prontos para Produção)"
+### Community 776 - "3. Matrizes de Prompts Exaustivos (Templates Prontos para Produção)"
 Cohesion: 0.13
 Nodes (14): 1. Arquitetura do Repositório de Prompts (Prompt-Driven Development), 2.1 Role-Play Baseado em Especialidades (Persona Prompting), 2.2 Cadeia de Pensamento (Chain-of-Thought - CoT), 2.3 Prompting de Poucos Disparos (Few-Shot Prompting), 2.4 Árvore de Pensamentos (Tree-of-Thoughts - ToT), 2. Técnicas Avançadas de Engenharia de Prompts para Código, 3.1 Pasta `01-contexto-negocio/` -> Engenharia de Requisitos Detalhada, 3.2 Pasta `02-arquitetura-engenharia/` -> Modelagem de Dados Relacional e Não-Relacional (+6 more)
 
-### Community 776 - "MAPA — trabalho local do Zapp Web V2 que não está no GitHub"
+### Community 777 - "MAPA — trabalho local do Zapp Web V2 que não está no GitHub"
 Cohesion: 0.13
 Nodes (14): 1. Contagem por classe (git puro), 2. Git (patch-id) × conteúdo (agente 2) — onde divergem e por quê, 30 maiores por commits únicos (com veredito preliminar de LLM), 3. Linhas `dia/*` e `integra/*` com trabalho só local, 4. Clusters (PARCIAL + SO_LOCAL, branches de tarefa), 5. Trabalho NÃO COMMITADO (subido como tag), 6. NÃO VERIFICADO, 7. Não subido e por quê (+6 more)
 
-### Community 777 - "input"
+### Community 778 - "input"
 Cohesion: 0.14
 Nodes (14): 10. Painel "Detalhes da tarefa" (etapa 131), A11Y-CATALOGO_FILAS_SLA-09 — Campos do diálogo "Metas e Alertas" sem rótulo programático · **P2**, 5. Verificado **sem** problema, 7. Contagem bruta do axe (por regra × tela × combo), Atribuição dos 141 nós de `button-name` (por achado), (h) Cobertura de testes de ui/ (17 arquivos em `ui/__tests__` para 80 entradas), Como executar (quem tiver os aparelhos), E46 — Checklist manual de navegador: volume das mídias de conversa (+6 more)
 
-### Community 778 - "Reauditoria mensal do GitHub Actions — Zapp Web V2 (2026-11-07)"
+### Community 779 - "Reauditoria mensal do GitHub Actions — Zapp Web V2 (2026-11-07)"
 Cohesion: 0.13
 Nodes (14): 1.1 Estáticos — existentes desde o baseline de Out/01, 1.2 Estáticos — novos desde Out/01, 1.3 Dinâmicos, 1. Inventário de workflows, 2. Branch protection — REGRESSÃO CRÍTICA, 3. Estado da CI em 07/11/2026 (runs recentes na `main`), 4. Environments, 5. Secrets (+6 more)
 
-### Community 779 - "Achados"
+### Community 780 - "Achados"
 Cohesion: 0.13
 Nodes (14): Achados, Auditoria de segurança (LEITURA) — RLS e GRANTs de tarefas, notas, propostas, e-mail, ligações e analytics, Limites desta revisão, Metodologia (como isto foi verificado), Resumo dos achados, SEC-RLS_TAREFAS_EMAIL_LIGACOES-01 — P0 — INSERT grava histórico apontando para recurso de outro escopo, SEC-RLS_TAREFAS_EMAIL_LIGACOES-02 — P2 — tokens Gmail (`*_encrypted`) chegam ao cliente, SEC-RLS_TAREFAS_EMAIL_LIGACOES-03 — P3 — grants residuais de `anon`/`authenticated` (+6 more)
 
-### Community 780 - "ADR-006: Cache de whatsapp_connections nas Edge Functions"
+### Community 781 - "ADR-006: Cache de whatsapp_connections nas Edge Functions"
 Cohesion: 0.13
 Nodes (14): 1. Adicionar mais índices em whatsapp_connections (descartado), 2. Materializar em variável de ambiente (descartado), 3. Cache no Supabase KV / Redis (não disponível), ADR-006: Cache de whatsapp_connections nas Edge Functions, Alternativas consideradas, Causa raiz identificada, Consequências, Contexto (+6 more)
 
-### Community 781 - "E-mail não lido — onde aparece o alerta, como é contado e os limites"
+### Community 782 - "E-mail não lido — onde aparece o alerta, como é contado e os limites"
 Cohesion: 0.13
 Nodes (14): 1. Onde o alerta aparece, 2.1 Selo no item "Email" da sidebar (U01 — D01), 2.2 Chip "E-mail" na barra de abas do chat (U03 — D03a/D04), 2.3 Selo no ícone de e-mail do contato (U04 — D03b/D04), 2. Os três pontos, um por um, 3.1 Sidebar — conversas não lidas (todas as contas), 3.2 Chip e ícone do contato — e-mails recebidos não lidos (um contato), 3.3 Troca de contato não troca número (+6 more)
 
-### Community 782 - "Email NAVY — evidências de implementação e auditoria"
+### Community 783 - "Email NAVY — evidências de implementação e auditoria"
 Cohesion: 0.13
 Nodes (12): Auditoria do backend canônico, Bloqueio externo remanescente, Capturas reproduzíveis, Corrigido, Email NAVY — evidências de implementação e auditoria, Escopo implementado, Matriz dos 80 critérios de aceite, Novo (+4 more)
 
-### Community 783 - "🔄 HANDOFF — ZAPP-WEB × Evolution API Security Improvements"
+### Community 784 - "🔄 HANDOFF — ZAPP-WEB × Evolution API Security Improvements"
 Cohesion: 0.13
 Nodes (13): 📊 COBERTURA ATUAL, ✅ COMMITS JÁ REALIZADOS, 🔐 CONFIGURAÇÃO DE SEGURANÇA, Código de Segurança a Inserir, 🔄 HANDOFF — ZAPP-WEB × Evolution API Security Improvements, 🔧 MELHORIA 1/10 — SEGURANÇA WEBHOOK (95% COMPLETA), 📋 MELHORIAS 2-10 (PENDENTES), 🎯 MISSÃO (+5 more)
 
-### Community 784 - "useSearchInsights.ts"
+### Community 785 - "useSearchInsights.ts"
 Cohesion: 0.19
 Nodes (12): 040 — `app_error_logs`, `analytics_events` e insights de busca, DEFAULT_SEARCH_INSIGHTS_PERIOD, fetchSearchInsights(), parseSearchInsights(), SEARCH_INSIGHTS_PERIODS, SearchInsights, SearchInsightsError, SearchInsightsPeriod (+4 more)
 
-### Community 785 - "multiplix.spec.ts"
+### Community 786 - "multiplix.spec.ts"
 Cohesion: 0.14
 Nodes (7): BackendFake, Chamada, Destinatario, Disparo, Empresa, mockMultiplix(), pagina()
 
-### Community 786 - "bump-toolchain.mjs"
+### Community 787 - "bump-toolchain.mjs"
 Cohesion: 0.17
 Nodes (11): FERRAMENTAS, headers, latestRelease(), main(), maisNova(), semver(), toolchain, TOOLCHAIN_PATH (+3 more)
 
-### Community 787 - "20261108100000_talkx_suppression_reasons.sql"
+### Community 788 - "20261108100000_talkx_suppression_reasons.sql"
 Cohesion: 0.16
 Nodes (13): public.talkx_blacklist_reason_active_guard, public.talkx_suppression_reasons_guard, public.talkx_blacklist_audit_trigger(), public.talkx_blacklist_reason_active_guard(), public.talkx_campaign_optouts, public.talkx_suppress_contact(), public.talkx_suppression_reasons, auth.users (+5 more)
 
-### Community 788 - "public.talkx_monitor_panel"
+### Community 789 - "public.talkx_monitor_panel"
 Cohesion: 0.16
 Nodes (13): public.trg_talkx_recipients_failed_at, idx_talkx_recipients_campaign_delivered_at, idx_talkx_recipients_campaign_replied_at, idx_talkx_recipients_campaign_sent_at, public.talkx_monitor_panel(), ev, pg_timezone_names, public.profiles (+5 more)
 
-### Community 789 - "a11y-button-name-ratchet.mjs"
+### Community 790 - "a11y-button-name-ratchet.mjs"
 Cohesion: 0.27
 Nodes (14): DEFAULT_BASELINE, DEFAULT_ROOT, detectButtonIconViolations(), detectSelectTriggerViolations(), detectTabsTriggerViolations(), __dirname, listSourceFiles(), main() (+6 more)
 
-### Community 790 - "message-delivery-phase1-rollout.unit.mjs"
+### Community 791 - "message-delivery-phase1-rollout.unit.mjs"
 Cohesion: 0.14
 Nodes (12): closeBody, dbGuard, enqueueBody, executableMigration, migration, phoneNormalizationMigration, richMigration, withoutFunctionAcl (+4 more)
 
-### Community 791 - "auto-reconnect-logs.test.sh"
+### Community 792 - "auto-reconnect-logs.test.sh"
 Cohesion: 0.35
 Nodes (13): as_role(), as_user(), expect_column_count(), expect_error(), expect_error_as(), expect_error_role(), expect_ok_as(), expect_value() (+5 more)
 
-### Community 792 - "conversation-closures-reopen-same-day.test.sh"
+### Community 793 - "conversation-closures-reopen-same-day.test.sh"
 Cohesion: 0.35
 Nodes (13): as_role(), close_call(), expect_error_as(), expect_ok_as(), expect_value(), expect_value_as(), fail(), kpi_definition_md5() (+5 more)
 
-### Community 793 - "multiplix-completion-item-queue.test.sh"
+### Community 794 - "multiplix-completion-item-queue.test.sh"
 Cohesion: 0.31
 Nodes (13): camada_correta(), chama_rpc(), confere(), confere_priv(), erro_rpc(), fail(), fixture(), migration() (+5 more)
 
-### Community 794 - "talkx-purge-nao-falsa-falha.test.sh"
+### Community 795 - "talkx-purge-nao-falsa-falha.test.sh"
 Cohesion: 0.30
 Nodes (12): alerts_open(), assert_eq(), assert_has(), fail(), pass(), psql_exec(), psql_val(), reset_purge_gate() (+4 more)
 
-### Community 795 - "talkx-template-columns.test.sh"
+### Community 796 - "talkx-template-columns.test.sh"
 Cohesion: 0.33
 Nodes (13): capture_columns(), capture_constraints(), capture_policies(), capture_rls_flags(), col_signature(), expect_col(), fail(), migration() (+5 more)
 
-### Community 796 - "wa-tag-and-status-authorization.test.sh"
+### Community 797 - "wa-tag-and-status-authorization.test.sh"
 Cohesion: 0.31
 Nodes (11): expect_error(), expect_error_sem_eco(), expect_ok(), expect_resposta_diferente(), expect_resposta_identica(), expect_value(), fail(), psql_err() (+3 more)
 
-### Community 797 - "whatsapp-default-connection-atomicity.test.sh"
+### Community 798 - "whatsapp-default-connection-atomicity.test.sh"
 Cohesion: 0.35
 Nodes (13): as_anon(), as_user(), err_text_as(), expect_error_anon(), expect_error_as(), expect_ok_as(), expect_result_as(), expect_value() (+5 more)
 
-### Community 798 - "lado-a-lado.mjs"
+### Community 799 - "lado-a-lado.mjs"
 Cohesion: 0.23
 Nodes (12): CAP_DIR, classificarTela(), ESTADOS, FIX_DIR, gerarRegua(), lerFixture(), listarTelas(), main() (+4 more)
 
-### Community 799 - "LeadRiskScorePanel.tsx"
+### Community 800 - "LeadRiskScorePanel.tsx"
 Cohesion: 0.22
 Nodes (13): CONSENT_OPTIONS, LEAD_ORIGINS, LeadRiskDraft, LeadRiskForm(), LeadRiskRow, LeadRiskScorePanelProps, leadScoreClass(), riskScoreClass() (+5 more)
 
-### Community 800 - "LocationMessage.test.tsx"
+### Community 801 - "LocationMessage.test.tsx"
 Cohesion: 0.14
 Nodes (8): FakeMap, fakeMapbox, FakeMarker, h, Handler, location, serverError, tokenOk
 
-### Community 801 - "VoiceChangerPicker.falhas.test.tsx"
+### Community 802 - "VoiceChangerPicker.falhas.test.tsx"
 Cohesion: 0.15
 Nodes (9): audioState, botaoPorIcone(), getUserMedia, makeStream(), MockAudio, MockMediaRecorder, popoverState, prepararGravacao() (+1 more)
 
-### Community 802 - "VoiceChangerPicker.reduced-motion.test.tsx"
+### Community 803 - "VoiceChangerPicker.reduced-motion.test.tsx"
 Cohesion: 0.16
 Nodes (11): abrirAvisoInline(), botaoPorIcone(), botaoPorTexto(), getUserMedia, MockAudio, MockMediaRecorder, motionProps, motionState (+3 more)
 
-### Community 803 - "TalkXOverview.table.test.tsx"
+### Community 804 - "TalkXOverview.table.test.tsx"
 Cohesion: 0.19
 Nodes (10): CAMPANHAS, celula(), dataDe(), f, linhaDe(), nomesNaTabela(), progressoDe(), resultadosDe() (+2 more)
 
-### Community 804 - "TalkXSegments.sideList.test.tsx"
+### Community 805 - "TalkXSegments.sideList.test.tsx"
 Cohesion: 0.15
 Nodes (4): abrirConstrutor(), renderView(), SEGMENTS, chain
 
-### Community 805 - "TalkXSuppression.actions.test.tsx"
+### Community 806 - "TalkXSuppression.actions.test.tsx"
 Cohesion: 0.13
 Nodes (9): ATIVO, AVULSO, COM_CAMPANHA, EXPIRADO, h, openContactChat, OPTOUT, toastError (+1 more)
 
-### Community 806 - "TalkXSuppression.kpis.test.tsx"
+### Community 807 - "TalkXSuppression.kpis.test.tsx"
 Cohesion: 0.13
 Nodes (3): blacklistRow, h, chain
 
-### Community 807 - "useRealtimeDashboard.reconciliacao.test.tsx"
+### Community 808 - "useRealtimeDashboard.reconciliacao.test.tsx"
 Cohesion: 0.15
 Nodes (10): Chamada, consultasFeitas, handlersRealtime, makeBuilder(), builder, mockChannel, mockRemoveChannel, portaoAtual() (+2 more)
 
-### Community 808 - "useAgentGamification.test.tsx"
+### Community 809 - "useAgentGamification.test.tsx"
 Cohesion: 0.13
 Nodes (8): ACHIEVEMENTS_PAGE_SIZE, achievementsBuilder(), builder, CONQUISTAS, mockFrom, mockUseAuth, ordensLidas, rangesLidos
 
-### Community 809 - "useTeamConversations.test.tsx"
+### Community 810 - "useTeamConversations.test.tsx"
 Cohesion: 0.13
 Nodes (9): { auth, handlers, cliente }, builder(), b, filas, perfilOutro, registro, render(), Resultado (+1 more)
 
-### Community 810 - "auto-close-conversations/index.test.ts"
+### Community 811 - "auto-close-conversations/index.test.ts"
 Cohesion: 0.16
 Nodes (11): assert(), assertNoEffects(), AuthClientOpts, CLOSABLE_CONFIG, makeCloseRun(), makeServiceClient(), from(), ONE_STALE (+3 more)
 
-### Community 811 - "external-db-proxy/index.ts"
+### Community 812 - "external-db-proxy/index.ts"
 Cohesion: 0.19
 Nodes (12): FILTER_OPERATORS, handleExternalDbProxy(), isInfraError(), json(), QUARANTINE_DECISIONS, READ_TABLES, callHandler(), installFetch() (+4 more)
 
-### Community 812 - "20260409100431_b1be1682-6494-4659-a9f4-6290237840fc.sql"
+### Community 813 - "20260409100431_b1be1682-6494-4659-a9f4-6290237840fc.sql"
 Cohesion: 0.17
 Nodes (13): idx_conversation_events_contact, idx_conversation_events_type, public.conversation_events, public.reassign_absent_agents(), public.reassign_overloaded_agents(), contacts, profiles, public.contacts (+5 more)
 
-### Community 813 - "20260511233446_8d6e4a17-a6df-4ae5-acaa-5d51c316f894.sql"
+### Community 814 - "20260511233446_8d6e4a17-a6df-4ae5-acaa-5d51c316f894.sql"
 Cohesion: 0.25
 Nodes (14): idx_contacts_assigned_to, idx_contacts_company_trgm, idx_contacts_contact_type, idx_contacts_created_at, idx_contacts_email_trgm, idx_contacts_job_title_trgm, idx_contacts_name_asc, idx_contacts_name_trgm (+6 more)
 
-### Community 814 - "20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql"
+### Community 815 - "20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql"
 Cohesion: 0.15
 Nodes (8): public.ai_jobs, public.claim_ai_jobs(), public.trigger_ai_jobs_tick(), cron.job, pg_namespace, pg_proc, vault.decrypted_secrets, vault.secrets
 
-### Community 815 - "20261007004545_secd_caller_check_13.sql"
+### Community 816 - "20261007004545_secd_caller_check_13.sql"
 Cohesion: 0.15
 Nodes (12): public.count_searchbox_sessions_this_month(), public.is_team_conversation_member(), public.search_knowledge_base(), public.secd_caller_ok(), public.user_has_permission(), public.audit_logs, public.knowledge_base_articles, public.permissions (+4 more)
 
-### Community 816 - "Divergencias que provam a supersessao"
+### Community 817 - "Divergencias que provam a supersessao"
 Cohesion: 0.13
 Nodes (14): `20241231000000_saved_filters.sql`, `20241231000001_entity_versions.sql`, `20260403024714_gmail_integration.sql`, `20260412230000_fix_rls_policies_security.sql`, `20260930120000_harden_default_privileges_revoke_anon_execute.sql`, `20260930660000_talkx_v15_replied_count_guard_and_drop_increment.sql`, `20261020120000_e2e_fixture_message_rpc.sql`, `20261023100000_talkx_campaign_recipients_page_add_segment.sql` (+6 more)
 
-### Community 817 - "ai-resilience-prazos-retry.contract.test.ts"
+### Community 818 - "ai-resilience-prazos-retry.contract.test.ts"
 Cohesion: 0.15
 Nodes (11): AiFailureClass, AiProvidersModule, ARQ_GENERATE, ARQ_PROVIDERS, classificar(), DespachoCapturado, PROVEDOR_TEXTO, providers() (+3 more)
 
-### Community 818 - "Reconciliação de Auditorias Anteriores"
+### Community 819 - "Reconciliação de Auditorias Anteriores"
 Cohesion: 0.14
 Nodes (13): Achados Reconciliados, Contradições Entre Documentos, Documentos Examinados, Fontes Inacessíveis / Parcialmente Lidas, Grupo 2 — CI/CD e Workflows, Grupo 3 — Frontend e Funcionalidades, Grupo 5 — Processo e Qualidade de Agentes, Grupo 6 — Repositório / Branches / Infraestrutura (+5 more)
 
-### Community 819 - "Relatório de Inventário — Branches Zapp_Web_V2"
+### Community 820 - "Relatório de Inventário — Branches Zapp_Web_V2"
 Cohesion: 0.14
 Nodes (13): 1. Totais por Categoria, 2. Distribuição por Prefixo, 3.1 Cluster Copiloto (21 branches), 3.2 Cluster CI/Workflows (35 branches), 3. Clusters de Sobreposição (por área dominante), 4. TOP 30 — Tabela Completa, 5.1 Grupo A — Alta Prioridade (Categorias C e E, 0 conflitos), 5.2 Grupo B — Prioridade Média (Categorias D, 0–2 conflitos) (+5 more)
 
-### Community 820 - "bucket"
+### Community 821 - "bucket"
 Cohesion: 0.14
 Nodes (5): DECISÃO 3 — Shadow migrations: **nada a fazer, já foi feito**, mocks, bucket(), mocks, navegador
 
-### Community 821 - "Demais achados"
+### Community 822 - "Demais achados"
 Cohesion: 0.14
 Nodes (13): Auditoria de segurança — front-end (somente leitura) — 2026-10-07, Demais achados, Método, Observações fora do escopo de segurança (registro, sem correção), SEC-FRONTEND-01 — P1 (URGENTE) — Chamada de Edge Function montada com `VITE_SUPABASE_URL` (host não validado) e com o `access_token` do usuário, SEC-FRONTEND-02 — P2 — `href` sem validação de protocolo em dado de sistema externo (XSS no clique), SEC-FRONTEND-03 — P2 — Rascunho de conversa em `localStorage` sem escopo por usuário e sem limpeza no logout, SEC-FRONTEND-04 — P3 — Janela aberta sem `noopener` (reverse tabnabbing) (+5 more)
 
-### Community 822 - "Arquitetura sem desperdício — CI/CD do ZAPP WEB V2"
+### Community 823 - "Arquitetura sem desperdício — CI/CD do ZAPP WEB V2"
 Cohesion: 0.14
 Nodes (13): Arquitetura sem desperdício — CI/CD do ZAPP WEB V2, Como saber se está funcionando, Limites conhecidos, O que ficou de fora, e por quê, O que foi medido (14/10 00:00 → 15/10 16:00), Princípio, R1 — Fila serial: uma PR em voo por vez, ordem de chegada, R2 — Reuso de árvore: o push na `main` não refaz o que a PR provou (+5 more)
 
-### Community 823 - "Decisões pendentes do plano de Actions (15/10/2026)"
+### Community 824 - "Decisões pendentes do plano de Actions (15/10/2026)"
 Cohesion: 0.14
 Nodes (13): 1. W90: quais bots ficam (maior ganho, menos esforço), 2. W89: app Supabase e SonarCloud, 3. W67: projeto Vercel oficial, 4. W84: tornar o CodeQL obrigatório, 5. W20: revisão obrigatória, `prevent_self_review` e conversas resolvidas, 6. W74: tirar a chave `service_role` do CI, 7. W64: credencial somente-leitura para os guardas, 8. W79: Supabase local na suíte logada (recomendação: não agora) (+5 more)
 
-### Community 824 - "EVOLUTION_WEBHOOKS_DOCUMENTATION.md"
+### Community 825 - "EVOLUTION_WEBHOOKS_DOCUMENTATION.md"
 Cohesion: 0.14
 Nodes (13): 2.1 URL e Autenticação, 2.2 Configuração Atual, 2. CONFIGURAÇÃO DO WEBHOOK, 4. TYPESCRIPT TYPES COMPLETOS, 7.1 CONTACTS_UPSERT, 7.2 CONTACTS_UPDATE, 7. EVENTOS DE CONTATOS, Credenciais (+5 more)
 
-### Community 825 - "102. FORMATO DE ENTREGA DEPOIS DE CADA IMPLEMENTAÇÃO"
+### Community 826 - "102. FORMATO DE ENTREGA DEPOIS DE CADA IMPLEMENTAÇÃO"
 Cohesion: 0.14
 Nodes (14): 102. FORMATO DE ENTREGA DEPOIS DE CADA IMPLEMENTAÇÃO, Alterações UX, Alterações visuais, Arquivos alterados, Checklist 1920×1080, Componentes criados/reutilizados, Funcionalidades preservadas, Pendências (+6 more)
 
-### Community 826 - "73. IMPLEMENTAÇÃO POR FASES"
+### Community 827 - "73. IMPLEMENTAÇÃO POR FASES"
 Cohesion: 0.14
 Nodes (14): 73. IMPLEMENTAÇÃO POR FASES, Fase 10 — Empty/loading/error, Fase 11 — Responsive, Fase 12 — Accessibility, Fase 13 — QA, Fase 1 — Auditoria, Fase 2 — Header e KPIs, Fase 3 — Tabs de tipo (+6 more)
 
-### Community 827 - "DESTINO\_URL (string de conexão PostgreSQL do CI)"
+### Community 828 - "DESTINO\_URL (string de conexão PostgreSQL do CI)"
 Cohesion: 0.14
 Nodes (13): Checklist de auditoria semestral, DESTINO\_URL (string de conexão PostgreSQL do CI), O que é, ⚠️ PREVIEW\_EGRESS\_SHARED\_SECRET — procedimento coordenado (VPS + Edge), Procedimento, Procedimento geral, Procedimento (zero downtime), Quando rotar (+5 more)
 
-### Community 828 - "SLA Escalation Cron — Documentação Técnica"
+### Community 829 - "SLA Escalation Cron — Documentação Técnica"
 Cohesion: 0.14
 Nodes (13): 1. Visão Geral, 2. Definições de SLA, 3.1 Habilitar pg_cron, 3.2 Tabela de Log de Violações, 3.3 Função de Verificação de SLA, 3.4 Agendamento do Cron, 3. Implementação SQL, 4. Monitoramento (+5 more)
 
-### Community 829 - "public.talkx_campaign_reply_stats"
+### Community 830 - "public.talkx_campaign_reply_stats"
 Cohesion: 0.16
 Nodes (12): pg_publication, pg_publication_tables, public.attribute_talkx_reply(), public.enforce_talkx_campaign_mutability(), public.record_talkx_recipient_receipt(), public.talkx_campaign_reply_stats(), PUBLIC, public.contacts (+4 more)
 
-### Community 830 - "convencoes"
+### Community 831 - "convencoes"
 Cohesion: 0.16
 Nodes (14): aliasesFor(), baseOf(), componentFile(), convencoes, dirOf(), edges, exists(), i18n (+6 more)
 
-### Community 831 - "reuso-arvore.unit.mjs"
+### Community 832 - "reuso-arvore.unit.mjs"
 Cohesion: 0.25
 Nodes (11): criarApi(), decidirReuso(), JOB_REUSO, limparParaLog(), main(), base, HEAD, SHA (+3 more)
 
-### Community 832 - "departments-admin-management.test.sh"
+### Community 833 - "departments-admin-management.test.sh"
 Cohesion: 0.32
 Nodes (12): assert_eq(), checa_contrato(), check_error(), exige_falha_do_contrato(), extract_sqlstate(), fail(), ok(), psql_file() (+4 more)
 
-### Community 833 - "network-policy-rpc.test.sh"
+### Community 834 - "network-policy-rpc.test.sh"
 Cohesion: 0.40
 Nodes (13): boot_container(), cleanup(), expect_allow(), expect_deny(), expect_error(), expect_ok(), expect_value(), fail() (+5 more)
 
-### Community 834 - "sla-first-response-delivery-contract.test.mjs"
+### Community 835 - "sla-first-response-delivery-contract.test.mjs"
 Cohesion: 0.23
 Nodes (12): docker(), findCreateFunctionBlock(), lastDefiningFile(), lastFileMatching(), lastFunctionDefs(), migrationFiles(), MIGRATIONS_DIR, psql() (+4 more)
 
-### Community 835 - "sla-granular-contract.test.mjs"
+### Community 836 - "sla-granular-contract.test.mjs"
 Cohesion: 0.20
 Nodes (9): docker(), findCreateFunctionBlock(), lastFunctionDefs(), MIGRATIONS_DIR, psql(), REPO_ROOT, runScenario(), sleepMs() (+1 more)
 
-### Community 836 - "publicationChanges"
+### Community 837 - "publicationChanges"
 Cohesion: 0.41
 Nodes (13): sqlTokens(), identifier(), isLiteral(), literalEvidence(), mentionsPublication(), publicationChanges(), alter(), block() (+5 more)
 
-### Community 837 - "talkx-audience-rpc.test.sh"
+### Community 838 - "talkx-audience-rpc.test.sh"
 Cohesion: 0.38
 Nodes (12): bridge_companies(), bridge_contacts(), bridge_page(), check_rule_case(), expect_error(), fail(), page_ids(), pass() (+4 more)
 
-### Community 838 - "🔒 Política de Segurança — ZAPP-WEB"
+### Community 839 - "🔒 Política de Segurança — ZAPP-WEB"
 Cohesion: 0.14
 Nodes (13): Autenticação & Autorização, Boas Práticas de Segurança, Como Reportar, Contato, Dependências, Histórico de Segurança, Infraestrutura, Para Desenvolvedores (+5 more)
 
-### Community 839 - "featuresSectionsData.ts"
+### Community 840 - "featuresSectionsData.ts"
 Cohesion: 0.19
 Nodes (11): DeferredHooks, catalogSummary, FEATURE_GATES, FeatureSection, featureState, sections, totalFeatures, SystemFeaturesView() (+3 more)
 
-### Community 840 - "contactsMotion.ts"
+### Community 841 - "contactsMotion.ts"
 Cohesion: 0.19
 Nodes (12): CONTACTS_FICHA_DISTANCE, contactsCarouselMotion(), contactsDurations, contactsDurationsFor(), contactsDurationsMs, contactsEase, contactsEaseCss, contactsFichaMotion() (+4 more)
 
-### Community 841 - "QuoteDraftCard.copia.test.tsx"
+### Community 842 - "QuoteDraftCard.copia.test.tsx"
 Cohesion: 0.16
 Nodes (8): QuoteDraftCardProps, draft, toastMock, BASE_ITEMS, QuoteDraft, QuoteLineItem, useQuoteDraft(), UseQuoteDraftOptions
 
-### Community 842 - "GroupsView.broadcast.test.tsx"
+### Community 843 - "GroupsView.broadcast.test.tsx"
 Cohesion: 0.14
 Nodes (8): ArgsEnfileiramento, conexao, grupo, grupoBase, grupoDois, mockInvoke, mockOrder, mockRpc
 
-### Community 843 - "ChatMessagesArea.agrupar-envio.test.tsx"
+### Community 844 - "ChatMessagesArea.agrupar-envio.test.tsx"
 Cohesion: 0.14
 Nodes (4): AreaProps, areaRef, ResizeObserverMock, scrollToSpy
 
-### Community 844 - "useAddressAutocomplete.test.tsx"
+### Community 845 - "useAddressAutocomplete.test.tsx"
 Cohesion: 0.14
 Nodes (11): forwardA, forwardB, forwardC, forwardPaulista, h, KeyDownEvent, suggestionA, suggestionB (+3 more)
 
-### Community 845 - "NotesTab.error-save.test.tsx"
+### Community 846 - "NotesTab.error-save.test.tsx"
 Cohesion: 0.14
 Nodes (9): mockAddNote, mockDeleteNote, mockRefetch, mockSaveSummary, { mockToast }, mockToggleNoteDone, mockUseContactNotes, mockUseContactSummaryNote (+1 more)
 
-### Community 846 - "AiTab.erroAnalise.test.tsx"
+### Community 847 - "AiTab.erroAnalise.test.tsx"
 Cohesion: 0.15
 Nodes (8): chain(), q, conversation, mockFrom, mockUseContactLeadScore, mockUseLatestAnalysis, mockUseNextBestAction, renderTab()
 
-### Community 847 - "AiTab.test.tsx"
+### Community 848 - "AiTab.test.tsx"
 Cohesion: 0.15
 Nodes (8): chain(), q, conversation, mockFrom, mockUseContactLeadScore, mockUseLatestAnalysis, mockUseNextBestAction, renderTab()
 
-### Community 848 - "useRealtimeDashboard.escopo.test.tsx"
+### Community 849 - "useRealtimeDashboard.escopo.test.tsx"
 Cohesion: 0.15
 Nodes (10): Chamada, contatosAtivos, handlersRealtime, makeBuilder(), builder, mockChannel, mockRemoveChannel, RealtimePayload (+2 more)
 
-### Community 849 - "useRealtimeDashboard.visibilidade.test.tsx"
+### Community 850 - "useRealtimeDashboard.visibilidade.test.tsx"
 Cohesion: 0.15
 Nodes (9): Chamada, consultasFeitas, handlersRealtime, makeBuilder(), builder, mockChannel, mockRemoveChannel, RealtimePayload (+1 more)
 
-### Community 850 - "usePerformanceOptimizations.ts"
+### Community 851 - "usePerformanceOptimizations.ts"
 Cohesion: 0.21
 Nodes (8): AnyFunction, log, PerformanceMetrics, useIdleCallback(), useMemoryPressure(), useNetworkStatus(), useThrottledCallback(), useDebounce()
 
-### Community 851 - "useCallRecording.test.tsx"
+### Community 852 - "useCallRecording.test.tsx"
 Cohesion: 0.18
 Nodes (8): BYTES_DE_AUDIO, fetchDaEdge, getSession, authorizationDoUsuario(), GravacaoDaChamada, SERVICO_DE_GRAVACAO_ATIVO, urlDaFuncao(), useCallRecording()
 
-### Community 852 - "useTeamChatNotifications.nome-e-clique.test.tsx"
+### Community 853 - "useTeamChatNotifications.nome-e-clique.test.tsx"
 Cohesion: 0.14
 Nodes (5): FakeNotification, h, NotificacaoFalsa, canal, consulta
 
-### Community 853 - "rotas-chamadas-existem.test.ts"
+### Community 854 - "rotas-chamadas-existem.test.ts"
 Cohesion: 0.16
 Nodes (12): acoesChamadas(), acoesDoRoteador(), Chamada, FORMAS, arquivos, DINAMICOS_PERMITIDOS, fontes(), ORFAS_COM_CORRECAO_PENDENTE (+4 more)
 
-### Community 854 - "usePersonalStickers.uso.test.tsx"
+### Community 855 - "usePersonalStickers.uso.test.tsx"
 Cohesion: 0.18
 Nodes (13): Builder, Consumidor, createWrapper(), figurinhas(), makeBuilder(), mocks, PROFILE_ROWS, renderComFigurinha() (+5 more)
 
-### Community 855 - "useTalkXInsights.defeito-223.test.tsx"
+### Community 856 - "useTalkXInsights.defeito-223.test.tsx"
 Cohesion: 0.16
 Nodes (11): ago(), h, Op, Row, runHook(), seed(), h, runHook() (+3 more)
 
-### Community 856 - "useSecurityPushNotifications.test.ts"
+### Community 857 - "useSecurityPushNotifications.test.ts"
 Cohesion: 0.14
 Nodes (9): ALERTA_CRITICO, AlertaFixture, Consulta, Cursor, fakeServiceWorker, Filtro, mocks, swHandlers (+1 more)
-
-### Community 857 - "useUndoableAction.ts"
-Cohesion: 0.18
-Nodes (11): PendingOperation, UndoableActionOptions, UndoableActionState, useUndoableAction(), avisoDe(), desfazerDe(), h, ToastActionBinding (+3 more)
 
 ### Community 858 - "workItemBoardGroups.ts"
 Cohesion: 0.21
@@ -7618,673 +7619,673 @@ Nodes (9): chamadasRpc, MESES, respostaStats, SERIE_ATIVOS, SERIE_CRM360, SERIE_
 Cohesion: 0.21
 Nodes (7): contato(), emular(), h, makeBuilder(), builder, minutesAgo(), ultimo()
 
-### Community 1037 - "ContactsView.v2Flags.test.tsx"
+### Community 1037 - "useConversationActions.snooze.test.ts"
+Cohesion: 0.18
+Nodes (10): chain(), obj, snoozeDeleteCalls, snoozeDeleteQueue, snoozeDeleteResult, snoozeInsertCalls, snoozeInsertResult, snoozeSelectResult (+2 more)
+
+### Community 1038 - "ContactsView.v2Flags.test.tsx"
 Cohesion: 0.20
 Nodes (8): AREAS, areasLigadasPublicadas(), h, linha(), LinhaFlag, linhas(), montarModulo(), TELA_ATUAL
 
-### Community 1038 - "useLeaderboard.test.tsx"
+### Community 1039 - "useLeaderboard.test.tsx"
 Cohesion: 0.17
 Nodes (8): Canal, Construtor, h, logError, logWarn, montar(), Row, TEAM_FETCH_LIMIT
 
-### Community 1039 - "usePersonalStickers.identidade.test.tsx"
+### Community 1040 - "usePersonalStickers.identidade.test.tsx"
 Cohesion: 0.18
 Nodes (9): inserted, makeBuilder(), builder, mocks, PGRST116, PROFILE_ROWS, Row, STICKER_ROWS (+1 more)
 
-### Community 1040 - "useReactionMutations.transport-rejection.test.tsx"
+### Community 1041 - "useReactionMutations.transport-rejection.test.tsx"
 Cohesion: 0.17
 Nodes (6): messagesTable(), chain, mocks, montar(), ReactionRow, TRANSPORT
 
-### Community 1041 - "slaDenominadores.test.tsx"
+### Community 1042 - "slaDenominadores.test.tsx"
 Cohesion: 0.29
 Nodes (9): linha(), R2SLA001, slaFixtureComRespostaNoPrazo(), slaFixtureDenominadores(), SlaFixtureRow, slaFixtureSoPendentes(), createWrapper(), h (+1 more)
 
-### Community 1043 - "useQueueAnalytics.test.tsx"
+### Community 1044 - "useQueueAnalytics.test.tsx"
 Cohesion: 0.18
 Nodes (7): dateRange, mockFrom, mockQueueData(), paginatedBuilder(), chain, PaginatedBuilderOptions, PontoDiario
 
-### Community 1044 - "security-and-performance.test.ts"
+### Community 1045 - "security-and-performance.test.ts"
 Cohesion: 0.17
 Nodes (11): getWebVitalsReport(), mockDelete, mockEq, mockFrom, mockInsert, mockLimit, mockMaybeSingle, mockOrder (+3 more)
 
-### Community 1045 - "contact-bulk.service.test.ts"
+### Community 1046 - "contact-bulk.service.test.ts"
 Cohesion: 0.17
 Nodes (9): DbResult, mocks, SelectCall, selectCalls, selectQueue, tables, UpdateCall, updateCalls (+1 more)
 
-### Community 1046 - "contact360.ts"
+### Community 1047 - "contact360.ts"
 Cohesion: 0.17
 Nodes (11): Contact360Address, Contact360Behavior, Contact360Company, Contact360Contact, Contact360Customer, Contact360Email, Contact360Interaction, Contact360Phone (+3 more)
 
-### Community 1048 - "20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql"
+### Community 1049 - "20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql"
 Cohesion: 0.32
 Nodes (11): idx_team_members_conversation, idx_team_members_profile, idx_team_messages_conversation, public.is_team_conversation_member(), public.team_conversation_members, public.team_conversations, public.team_messages, public.profiles (+3 more)
 
-### Community 1049 - "20260903230000_add_fk_indexes.sql"
+### Community 1050 - "20260903230000_add_fk_indexes.sql"
 Cohesion: 0.18
 Nodes (11): idx_dept_invitations_dept_id, idx_messages_audio_meme_id, idx_messages_channel_connection_id, idx_profiles_dept_id, idx_team_conversations_dept_id, idx_team_message_reactions_profile_id, public.department_invitations, public.messages (+3 more)
 
-### Community 1051 - "auth.users"
+### Community 1052 - "auth.users"
 Cohesion: 0.17
 Nodes (12): auth.users, public.ai_usage_logs, public.gmail_accounts, public.message_templates, public.notifications, public.query_telemetry, public.saved_filters, public.user_devices (+4 more)
 
-### Community 1052 - "public.multiplix_connection_daily_usage"
+### Community 1053 - "public.multiplix_connection_daily_usage"
 Cohesion: 0.18
 Nodes (10): public.multiplix_connection_daily_usage(), public.multiplix_dispatch_window_is_open(), pg_timezone_names, PUBLIC, public.multiplix_dispatches, public.multiplix_recipients, public.talkx_campaigns, public.talkx_recipients (+2 more)
 
-### Community 1053 - "public.enqueue_group_outbound_message"
+### Community 1054 - "public.enqueue_group_outbound_message"
 Cohesion: 0.18
 Nodes (10): public.enqueue_group_outbound_message(), public.enqueue_outbound_message(), public.resolve_outbound_whatsapp_connection(), public.contacts, public.messages, public.profiles, public.queue_members, public.whatsapp_connection_queues (+2 more)
 
-### Community 1054 - "public.multiplix_validate_scope_signature"
+### Community 1055 - "public.multiplix_validate_scope_signature"
 Cohesion: 0.17
 Nodes (8): public.multiplix_validate_scope_signature(), com_endereco, contato_principal, filtrado, public.company_addresses, public.company_phones, public.contact_phones, public.contacts
 
-### Community 1055 - "talkx_cancel_em_voo_mantem_confirmacao.sql"
+### Community 1056 - "talkx_cancel_em_voo_mantem_confirmacao.sql"
 Cohesion: 0.20
 Nodes (7): public.contacts, public.profiles, public.talkx_blacklist, public.talkx_campaign_events, public.talkx_campaigns, public.talkx_recipients, vault.decrypted_secrets
 
-### Community 1056 - "ai-vocabulary-parity.contract.test.ts"
+### Community 1057 - "ai-vocabulary-parity.contract.test.ts"
 Cohesion: 0.17
 Nodes (6): ARRAYS, canonicalSource, EXPORTED_VALUE_NAMES, MAPPINGS, SPEC_ARRAYS, SPEC_MAPPINGS
 
-### Community 1057 - "sl218-bloco18-estado.contract.test.ts"
+### Community 1058 - "sl218-bloco18-estado.contract.test.ts"
 Cohesion: 0.17
 Nodes (8): DOC, Estado, ESTADO_ESPERADO, ESTADOS, ETAPAS, LINHAS, RAZOES_DE_AUSENCIA, TEXTO
 
-### Community 1058 - "telefonia-encerramento.contract.test.ts"
+### Community 1059 - "telefonia-encerramento.contract.test.ts"
 Cohesion: 0.21
 Nodes (6): alvoSuperado(), blocoFinal(), inicioEncerramento(), secaoEncerramento(), status(), sucessaoDeclarada()
 
-### Community 1059 - "Relatório /merge-prs — Zapp Web V2 (sessão de 11–12/11/2026)"
+### Community 1060 - "Relatório /merge-prs — Zapp Web V2 (sessão de 11–12/11/2026)"
 Cohesion: 0.18
 Nodes (10): Arquivos, Bugs fora de escopo encontrados, Contagem — estado das 30 PRs iniciais (lido ao vivo em 12/11 ~08:15 UTC), Desvios desta sessão, NÃO VERIFICADO, Relatório /merge-prs — Zapp Web V2 (sessão de 11–12/11/2026), Resultado, Tabela PR × veredito × estado (+2 more)
 
-### Community 1060 - "public.snapshot_talkx_campaign_audience"
+### Community 1061 - "public.snapshot_talkx_campaign_audience"
 Cohesion: 0.22
 Nodes (9): base, seg, public.save_talkx_campaign_draft(), public.snapshot_talkx_campaign_audience(), public.profiles, public.talkx_campaign_segments, public.talkx_campaigns, public.talkx_segments (+1 more)
 
-### Community 1061 - "[Unreleased]"
+### Community 1062 - "[Unreleased]"
 Cohesion: 0.18
 Nodes (10): [1.0.0] - 2024-XX-XX, Added, Added, Changed, Changelog, Documentation, Removed, Security (+2 more)
 
-### Community 1062 - "/merge-prs — Zapp Web V2: analisar, corrigir e mergear todas as PRs abertas"
+### Community 1063 - "/merge-prs — Zapp Web V2: analisar, corrigir e mergear todas as PRs abertas"
 Cohesion: 0.18
 Nodes (10): 0. Parâmetros, 1. Meta, 2. Regras invioláveis, 3. Fase 0 — Inventário (só leitura), 4. Fase A — Análise por PR (só leitura), 5. Fase B — Execução, uma PR por vez, 6. Entregáveis em `analise-prs/`, 7. META CUMPRIDA — só quando mostrar no chat (+2 more)
 
-### Community 1063 - "/resgate-validacao — Validação exaustiva do resgate Zapp Web V2"
+### Community 1064 - "/resgate-validacao — Validação exaustiva do resgate Zapp Web V2"
 Cohesion: 0.18
 Nodes (10): 0. Leitura obrigatória antes de qualquer coisa, 1. Regras (valem para o coordenador e para os 5 agentes), 2. Fase 0 — Escopo real do que foi implementado (coordenador, 1 processo), 4. Fila de processos pesados (coordenador), 5. Fase 2 — Consolidação e contraprova (coordenador), 6. Fase 3 — Correções (somente regressões introduzidas pelo resgate), 7. Critério de merge das PRs de correção, 8. Entregáveis em `resgate-online/validacao/` (commitar via PR `claude/chore-validacao-resgate-<AAMMDD-HHMM>`, não mergear — é documentação para decisão) (+2 more)
 
-### Community 1064 - "public.talk_me_claim"
+### Community 1065 - "public.talk_me_claim"
 Cohesion: 0.35
 Nodes (10): conversation_status, idx_contacts_talk_me_waiting, public.talk_me_claim(), public.talk_me_list_queues(), public.talk_me_list_waiting(), public.contacts, public.messages, public.queue_members (+2 more)
 
-### Community 1065 - "ADR-011 — Paridade V3 → V2 dos documentos de features (batch 1 e batch 2)"
+### Community 1066 - "ADR-011 — Paridade V3 → V2 dos documentos de features (batch 1 e batch 2)"
 Cohesion: 0.18
 Nodes (10): ADR-011 — Paridade V3 → V2 dos documentos de features (batch 1 e batch 2), Conexões, Consequências, Decisões, Estado atual dos módulos (conferido no código desta base em 16/10/2026), Negócios / CRM360, O que ficou fora (decisão do dono — não reabrir), Referências (+2 more)
 
-### Community 1066 - "Etapa 100 — Grafo de conhecimento e docs canônicos"
+### Community 1067 - "Etapa 100 — Grafo de conhecimento e docs canônicos"
 Cohesion: 0.18
 Nodes (11): Convenção dos docs canônicos de arquitetura, Etapa 099 — MCP server real (JSON-RPC, read-only, RLS), Etapa 100 — Grafo de conhecimento e docs canônicos, `graphify-out/` ausente é desenho, não lacuna, Lacunas que continuam abertas (não fechadas aqui), MCP read-only e grafo de conhecimento — estado das etapas 099 e 100, O artefato versionado do grafo existe e foi conferido, O que existe (verificado em 2026-10-08) (+3 more)
 
-### Community 1067 - "Decisões pendentes — branches remotas sem PR (2026-10-31)"
+### Community 1068 - "Decisões pendentes — branches remotas sem PR (2026-10-31)"
 Cohesion: 0.18
 Nodes (10): 1. SUPERADA — conteúdo já na `main`; apagar, 2. WORKFLOW-OBSOLETO — experimentos do editor web do GitHub, 3. MIGRATION sem PR — sessões S3/S4/S5 abrem PR, 4. INTEGRAR-LIMPO sem PR — S4 precisa abrir PR, 5. S1/S2 — branches de workflow/CI sem PR, 6. S3 — branches de testes e tipos sem PR, 7. fix/f1a-lote-b-* com 0 diffs — provável COBERTA, S3 verifica, 8. Branches do inventário com PRs abertas (já têm decisão) (+2 more)
 
-### Community 1068 - "🔒 Instruções para Aplicar Migration RLS"
+### Community 1069 - "🔒 Instruções para Aplicar Migration RLS"
 Cohesion: 0.18
 Nodes (10): Como Aplicar, Contato, 🔒 Instruções para Aplicar Migration RLS, Opção 1: Via Supabase Dashboard (RECOMENDADO), Opção 2: Via Supabase CLI, Opção 3: Via Supabase Migration (local → remoto), Resultado Esperado, Rollback (se necessário) (+2 more)
 
-### Community 1069 - "Relatório de verificação — Etapas 099 e 100 do Quadro (cartão t_54a4bcc7)"
+### Community 1070 - "Relatório de verificação — Etapas 099 e 100 do Quadro (cartão t_54a4bcc7)"
 Cohesion: 0.18
 Nodes (10): Arquivos que o diff muda (e de quem são), Divergências restantes (lista explícita), O que NÃO fiz e por quê, O que é este cartão, Passo 1 — responsivo em 360/768/1280, CONFIRMADO, Passo 2 — faixa compacta e abas contra o plano, CONFIRMADO com uma limitação declarada, Passo 3 — regras, Passo 4 — suíte de testes (+2 more)
 
-### Community 1070 - "🔒 Instruções para Aplicar Migration RLS"
+### Community 1071 - "🔒 Instruções para Aplicar Migration RLS"
 Cohesion: 0.18
 Nodes (10): Como Aplicar, Contato, 🔒 Instruções para Aplicar Migration RLS, Opção 1: Via Supabase Dashboard (RECOMENDADO), Opção 2: Via Supabase CLI, Opção 3: Via Supabase Migration (local → remoto), Resultado Esperado, Rollback (se necessário) (+2 more)
 
-### Community 1071 - "13. Revisão de 04/10 (tarde): velocidade, 10 agentes, operação 24 h e herança do isolamento V1"
+### Community 1072 - "13. Revisão de 04/10 (tarde): velocidade, 10 agentes, operação 24 h e herança do isolamento V1"
 Cohesion: 0.18
 Nodes (11): 12-quater. Skills do Claude Code no WSL — limpeza em 04/10 (~11:30), 12-quinquies. Plugins de edição de código instalados em 04/10 (~11:50, sessão do WSL), 13.1 Ordem do Joaquim, 13.2 Medido nesta máquina, 13.3 Pesquisa (fontes nos relatórios dos subagentes de 04/10), 13.4 Decisões revistas, 13.5 Operação 24 h (desenho), 13.7 Ordem do Joaquim (04/10, tarde): push só quando ele pedir (+3 more)
 
-### Community 1072 - "Paridade V3 -> V2: doc 07 (inbox: services, data-access, voz, SIP, reações, team-chat), recorte INVENTÁRIO ESTRUTURAL (2ª passada, 13/10/2026)"
+### Community 1073 - "Paridade V3 -> V2: doc 07 (inbox: services, data-access, voz, SIP, reações, team-chat), recorte INVENTÁRIO ESTRUTURAL (2ª passada, 13/10/2026)"
 Cohesion: 0.18
 Nodes (9): 0. Achado de método: o doc 07 está defasado na parte de dados, 1. §3.1 Tabelas via `.from()` / `dbFrom()` (V3 real) x V2, 4. §5 Dependências externas (o que a V3 importa) x V2, 6.1 Arquivos citados no §7, 6.2 Arquivos da V3 em `src/features/inbox/` que NÃO estão no §7 (de 565 arquivos; doc cobre 54), 6. §7 Implementação por arquivo (TODOS os arquivos citados) e arquivos fora do doc, 7. Resumo de contagem (linhas das tabelas §1-§4), 9. O que NÃO consegui verificar (+1 more)
 
-### Community 1073 - "2. Lacunas REAIS sem cartão"
+### Community 1074 - "2. Lacunas REAIS sem cartão"
 Cohesion: 0.18
 Nodes (10): 2. Lacunas REAIS sem cartão, 3. O que NÃO consegui verificar, 4. Contagens, Achados 4: Dashboard (SLA, Sentimento, IA, War Room, Relatórios), doc 16, 2ª passada (13/10/2026), P1-A. War Room: a tabela `warroom_alerts` saiu da publicação realtime e nunca voltou (som e push mortos), P1-B. Alertas só tocam com a War Room aberta; monitor de SLA só roda com a tela aberta, P2-B. War Room: acessibilidade e movimento, P2-C. CSATDashboard: erro vira "0 avaliações" e leitura sem paginar (+2 more)
 
-### Community 1074 - "Entrega 10/10 — os 4 itens, com prova"
+### Community 1075 - "Entrega 10/10 — os 4 itens, com prova"
 Cohesion: 0.18
 Nodes (10): 1. E42 — DDL novo em `evo` ✅ RESOLVIDO, 2. E39 / Edge Drift ✅ CORRIGIDO (o gate agora mede de verdade), 3. DB Guard / Catalog fresh ⚠️ INSTRUMENTO CORRIGIDO, ALARME MANTIDO, 4. Drift repo ↔ banco ✅ CORRIGIDO E VERIFICADO, Entrega 10/10 — os 4 itens, com prova, Estado das três camadas, Os 4 itens, Pendências (todas dos donos, com comando pronto) (+2 more)
 
-### Community 1075 - "Execução das Melhorias — ZAPP WEB V2"
+### Community 1076 - "Execução das Melhorias — ZAPP WEB V2"
 Cohesion: 0.18
 Nodes (10): 1. Vault SICOOB (C-02 parcial), 2. M-01 — `search_contacts` bypassa RLS, 3. 4 migrations órfãs (drift repo vs banco), 4. 7 migrations de outro banco no repo, Bugs Fechados nesta Sessão, Descoberta durante simulação, Execução das Melhorias — ZAPP WEB V2, Pendências Abertas (+2 more)
 
-### Community 1076 - "1) INVENTÁRIO de consumidores (git grep em origin/main)"
+### Community 1077 - "1) INVENTÁRIO de consumidores (git grep em origin/main)"
 Cohesion: 0.18
 Nodes (11): 1) INVENTÁRIO de consumidores (git grep em origin/main), enforce_multiplix_dispatch_mutability / enforce_multiplix_recipient_mutability, get_team_messages_page, is_team_conversation_member, multiplix_dispatches, multiplix_recipients, team_conversation_members, team_message_reactions (+3 more)
 
-### Community 1077 - "Bloco 01 — Escopo, evidências e regras de execução (001–010)"
+### Community 1078 - "Bloco 01 — Escopo, evidências e regras de execução (001–010)"
 Cohesion: 0.18
 Nodes (11): Bloco 01 — Escopo, evidências e regras de execução (001–010), IA-001 — [V] Fixar a referência técnica, IA-002 — [V] Mapear o fluxo completo, IA-003 — [V] Abrir registro rastreável de achados, IA-004 — [M] Definir matriz de autorização, IA-005 — [M] Estabelecer metas de qualidade, IA-006 — [M] Classificar a natureza da inteligência, IA-007 — [V] Reaproveitar infraestrutura existente (+3 more)
 
-### Community 1078 - "Bloco 02 — Autenticação, autorização e privacidade (011–020)"
+### Community 1079 - "Bloco 02 — Autenticação, autorização e privacidade (011–020)"
 Cohesion: 0.18
 Nodes (11): Bloco 02 — Autenticação, autorização e privacidade (011–020), IA-011 — [C] Autenticar todas as entradas de IA, IA-012 — [M] Separar identidades de serviço, IA-013 — [C] Tornar assinatura ElevenLabs obrigatória, IA-014 — [C] Autorizar cada objeto de áudio, IA-015 — [M] Distinguir leitura de alteração, IA-016 — [M] Restringir destinos de rede, IA-017 — [M] Restringir seleção de segredos (+3 more)
 
-### Community 1079 - "Bloco 03 — Contratos, integridade e persistência (021–030)"
+### Community 1080 - "Bloco 03 — Contratos, integridade e persistência (021–030)"
 Cohesion: 0.18
 Nodes (11): Bloco 03 — Contratos, integridade e persistência (021–030), IA-021 — [C] Unificar sentimento, IA-022 — [C] Unificar prioridade e urgência, IA-023 — [C] Preservar zero e ausência, IA-024 — [C] Corrigir o contrato das mensagens, IA-025 — [M] Validar toda saída do modelo, IA-026 — [C] Persistir a análise completa, IA-027 — [M] Tornar gravações consistentes (+3 more)
 
-### Community 1080 - "Bloco 04 — Camada única de provedores e modelos (031–040)"
+### Community 1081 - "Bloco 04 — Camada única de provedores e modelos (031–040)"
 Cohesion: 0.18
 Nodes (11): Bloco 04 — Camada única de provedores e modelos (031–040), IA-031 — [M] Criar roteamento central por capacidade, IA-032 — [C] Eliminar dependência fixa nas funções textuais, IA-033 — [M] Integrar caminhos secundários, IA-034 — [M] Resolver o padrão por finalidade, IA-035 — [C] Controlar o modelo no servidor, IA-036 — [M] Criar adaptadores com capacidades declaradas, IA-037 — [C] Corrigir composição dos prompts (+3 more)
 
-### Community 1081 - "Bloco 05 — Execução resiliente, filas e controle de consumo (041–050)"
+### Community 1082 - "Bloco 05 — Execução resiliente, filas e controle de consumo (041–050)"
 Cohesion: 0.18
 Nodes (11): Bloco 05 — Execução resiliente, filas e controle de consumo (041–050), IA-041 — [M] Aplicar prazos ponta a ponta, IA-042 — [M] Limitar retentativas, IA-043 — [C] Distribuir o limite de requisições, IA-044 — [M] Reservar orçamento antes da chamada, IA-045 — [M] Usar jobs para operações longas, IA-046 — [M] Padronizar estados da execução, IA-047 — [M] Tornar efeitos idempotentes (+3 more)
 
-### Community 1082 - "Bloco 06 — Observabilidade, custos e resultados de negócio (051–060)"
+### Community 1083 - "Bloco 06 — Observabilidade, custos e resultados de negócio (051–060)"
 Cohesion: 0.18
 Nodes (11): Bloco 06 — Observabilidade, custos e resultados de negócio (051–060), IA-051 — [M] Correlacionar toda execução, IA-052 — [M] Registrar o que foi realmente usado, IA-053 — [C] Contabilizar streaming e interrupções, IA-054 — [C] Separar ação, tentativa e cobrança, IA-055 — [M] Versionar a tabela de custos, IA-056 — [C] Agregar o período completo no servidor, IA-057 — [C] Corrigir indicadores de saúde (+3 more)
 
-### Community 1083 - "Bloco 07 — Visão, resumo e contexto verificável (061–070)"
+### Community 1084 - "Bloco 07 — Visão, resumo e contexto verificável (061–070)"
 Cohesion: 0.18
 Nodes (11): Bloco 07 — Visão, resumo e contexto verificável (061–070), IA-061 — [C] Unificar resumo e análise aprofundada, IA-062 — [C] Buscar o histórico do período selecionado, IA-063 — [C] Tratar conversas acima de 200 mensagens, IA-064 — [M] Padronizar datas e sessões, IA-065 — [M] Delimitar o contexto profissional, IA-066 — [C] Calcular métricas temporais fora do modelo, IA-067 — [N] Vincular conclusões a mensagens (+3 more)
 
-### Community 1084 - "Bloco 08 — Copilotos de escrita, objeções e seleção de mensagens (071–080)"
+### Community 1085 - "Bloco 08 — Copilotos de escrita, objeções e seleção de mensagens (071–080)"
 Cohesion: 0.18
 Nodes (11): Bloco 08 — Copilotos de escrita, objeções e seleção de mensagens (071–080), IA-071 — [M] Harmonizar modos de tom e edição, IA-072 — [N] Comparar original e reescrita, IA-073 — [N] Proteger números e condições, IA-074 — [N] Conferir promessas antes de sugerir, IA-075 — [C] Recuperar conhecimento relevante nas sugestões, IA-076 — [C] Tornar seleção de contexto transparente, IA-077 — [M] Analisar objeções no diálogo completo (+3 more)
 
-### Community 1085 - "Bloco 09 — Conhecimento corporativo e recuperação com evidências (081–090)"
+### Community 1086 - "Bloco 09 — Conhecimento corporativo e recuperação com evidências (081–090)"
 Cohesion: 0.18
 Nodes (11): Bloco 09 — Conhecimento corporativo e recuperação com evidências (081–090), IA-081 — [M] Compartilhar a recuperação de conhecimento, IA-082 — [N] Versionar documentos e validade, IA-083 — [N] Preparar ingestão rastreável, IA-084 — [M] Melhorar a busca textual existente, IA-085 — [N] Avaliar busca vetorial antes de adotá-la, IA-086 — [N] Combinar recuperação e reordenação, IA-087 — [N] Validar citações da resposta (+3 more)
 
-### Community 1086 - "Bloco 10 — Memória verificável, compromissos e continuidade (091–100)"
+### Community 1087 - "Bloco 10 — Memória verificável, compromissos e continuidade (091–100)"
 Cohesion: 0.18
 Nodes (11): Bloco 10 — Memória verificável, compromissos e continuidade (091–100), IA-091 — [M] Preservar memória humana e sua origem, IA-092 — [N] Extrair fatos como propostas, IA-093 — [N] Criar registro de compromissos, IA-094 — [N] Transformar compromissos aprovados em tarefas, IA-095 — [N] Detectar contradições ao longo do atendimento, IA-096 — [N] Organizar memória por atendimento e assunto, IA-097 — [N] Dar validade temporal à memória (+3 more)
 
-### Community 1087 - "Bloco 11 — Classificação automática, filas e chatbot L1 (101–110)"
+### Community 1088 - "Bloco 11 — Classificação automática, filas e chatbot L1 (101–110)"
 Cohesion: 0.18
 Nodes (11): Bloco 11 — Classificação automática, filas e chatbot L1 (101–110), IA-101 — [M] Governar etiquetas e categorias, IA-102 — [M] Aplicar política determinística de roteamento, IA-103 — [N] Controlar escalonamento e retorno, IA-104 — [C] Isolar o chatbot por conexão, IA-105 — [V] Alinhar autenticação do chatbot ao gateway, IA-106 — [M] Preparar contexto correto para o bot, IA-107 — [C] Completar a transferência para humano (+3 more)
 
-### Community 1088 - "Bloco 12 — Churn, classificação, supervisor e inteligência externa (111–120)"
+### Community 1089 - "Bloco 12 — Churn, classificação, supervisor e inteligência externa (111–120)"
 Cohesion: 0.18
 Nodes (11): Bloco 12 — Churn, classificação, supervisor e inteligência externa (111–120), IA-111 — [C] Corrigir o conceito de inatividade, IA-112 — [C] Aplicar o resultado da análise de churn, IA-113 — [M] Separar score de probabilidade de perda, IA-114 — [C] Unificar a classificação de tickets, IA-115 — [C] Atualizar estados usados nas recomendações, IA-116 — [C] Diferenciar ausência de pendência e erro, IA-117 — [C] Alimentar o supervisor com métricas reais (+3 more)
 
-### Community 1089 - "Bloco 13 — Voz, transcrição, TTS e comandos (121–130)"
+### Community 1090 - "Bloco 13 — Voz, transcrição, TTS e comandos (121–130)"
 Cohesion: 0.18
 Nodes (11): Bloco 13 — Voz, transcrição, TTS e comandos (121–130), IA-121 — [M] Unificar o contrato de transcrição, IA-122 — [M] Limitar arquivos de áudio e roteiros, IA-123 — [N] Tornar transcrição revisável, IA-124 — [M] Controlar transcrição automática, IA-125 — [M] Melhorar reprodução e streaming, IA-126 — [C] Corrigir confirmação de áudio enviado, IA-127 — [N] Governar uso e criação de vozes (+3 more)
 
-### Community 1090 - "Bloco 14 — Mídias, documentos e compreensão multimodal (131–140)"
+### Community 1091 - "Bloco 14 — Mídias, documentos e compreensão multimodal (131–140)"
 Cohesion: 0.18
 Nodes (11): Bloco 14 — Mídias, documentos e compreensão multimodal (131–140), IA-131 — [C] Classificar áudio pelo conteúdo quando necessário, IA-132 — [M] Separar categoria e falha técnica, IA-133 — [N] Preparar ingestão segura de anexos, IA-134 — [N] Extrair dados de documentos comerciais, IA-135 — [N] Usar OCR somente quando necessário, IA-136 — [N] Sugerir produtos a partir de imagem, IA-137 — [N] Conferir arte contra briefing aprovado (+3 more)
 
-### Community 1091 - "Bloco 15 — Experiência de uso e acessibilidade (141–150)"
+### Community 1092 - "Bloco 15 — Experiência de uso e acessibilidade (141–150)"
 Cohesion: 0.18
 Nodes (11): Bloco 15 — Experiência de uso e acessibilidade (141–150), IA-141 — [M] Unificar a experiência de assistência, IA-142 — [M] Identificar a origem de cada informação, IA-143 — [N] Abrir evidências sem perder a conversa, IA-144 — [M] Escolher painel ou modal conscientemente, IA-145 — [C] Corrigir interação por teclado, IA-146 — [M] Padronizar estados visuais, IA-147 — [M] Corrigir legibilidade e responsividade (+3 more)
 
-### Community 1092 - "Bloco 17 — Campanhas, TalkX e integração com Multiplix (161–170)"
+### Community 1093 - "Bloco 17 — Campanhas, TalkX e integração com Multiplix (161–170)"
 Cohesion: 0.18
 Nodes (11): Bloco 17 — Campanhas, TalkX e integração com Multiplix (161–170), IA-161 — [N] Produzir rascunhos de campanhas, IA-162 — [N] Traduzir público desejado em filtros seguros, IA-163 — [N] Verificar personalização por destinatário, IA-164 — [N] Gerar variações controladas de mensagem, IA-165 — [M] Aplicar elegibilidade de envio, IA-166 — [N] Estimar o lote antes de gerar, IA-167 — [M] Sustentar recomendação de horário (+3 more)
 
-### Community 1093 - "Bloco 18 — Agentes especializados e ações supervisionadas (171–180)"
+### Community 1094 - "Bloco 18 — Agentes especializados e ações supervisionadas (171–180)"
 Cohesion: 0.18
 Nodes (11): Bloco 18 — Agentes especializados e ações supervisionadas (171–180), IA-171 — [N] Catalogar ferramentas executáveis, IA-172 — [N] Separar planejamento de execução, IA-173 — [N] Vincular aprovação ao efeito exato, IA-174 — [N] Definir especialistas por departamento, IA-175 — [N] Verificar respostas antes de agir, IA-176 — [N] Sinalizar riscos operacionais proativamente, IA-177 — [N] Simular atendimentos para treinamento (+3 more)
 
-### Community 1094 - "Bloco 19 — Testes integrados, avaliações e critérios de qualidade (181–190)"
+### Community 1095 - "Bloco 19 — Testes integrados, avaliações e critérios de qualidade (181–190)"
 Cohesion: 0.18
 Nodes (11): Bloco 19 — Testes integrados, avaliações e critérios de qualidade (181–190), IA-181 — [C] Testar a implementação real, IA-182 — [M] Testar contratos de provedores, IA-183 — [M] Testar isolamento de dados e efeitos, IA-184 — [N] Testar injeção e conteúdo adversarial, IA-185 — [M] Testar concorrência e recuperação, IA-186 — [M] Testar o percurso completo na interface, IA-187 — [M] Avaliar voz e multimodalidade (+3 more)
 
-### Community 1095 - "Bloco 20 — Homologação, implantação controlada e entrega (191–200)"
+### Community 1096 - "Bloco 20 — Homologação, implantação controlada e entrega (191–200)"
 Cohesion: 0.18
 Nodes (11): Bloco 20 — Homologação, implantação controlada e entrega (191–200), IA-191 — [V] Confirmar topologia e disponibilidade reais, IA-192 — [M] Homologar migrations e compatibilidade, IA-193 — [M] Testar integrações reais com escopo mínimo, IA-194 — [M] Observar antes de automatizar, IA-195 — [M] Conduzir piloto por capacidade, IA-196 — [M] Expandir por coortes e flags, IA-197 — [M] Ensaiar rollback operacional (+3 more)
 
-### Community 1096 - "ZAPP WEB V2 — Auditoria e relação de melhorias do módulo de Telefonia"
+### Community 1097 - "ZAPP WEB V2 — Auditoria e relação de melhorias do módulo de Telefonia"
 Cohesion: 0.18
 Nodes (10): Bases que devem ser preservadas, Como interpretar a relação, Critérios de liberação, Estrutura de interface proposta, Limites e pendências de verificação, Mapa de fontes do repositório, Objetivo de produto, Ordem de execução sugerida (+2 more)
 
-### Community 1097 - "CI local — os mesmos testes do GitHub, na sua máquina"
+### Community 1098 - "CI local — os mesmos testes do GitHub, na sua máquina"
 Cohesion: 0.18
 Nodes (10): CI local — os mesmos testes do GitHub, na sua máquina, Comandos, Como cada coisa do GitHub vira local, E2E logado (`e2e-logado.yml`), Encerramento e limpeza, Limites conhecidos, O que ele testa: o HEAD commitado, num clone descartável, Pré-requisitos (+2 more)
 
-### Community 1098 - "Regras de negócio — preencha o que o código não diz"
+### Community 1099 - "Regras de negócio — preencha o que o código não diz"
 Cohesion: 0.18
 Nodes (10): 1. O que o sistema faz e para quem (1 parágrafo), 2. Atores / perfis e o que cada um pode fazer, 3. Entidades principais e o que significam (glossário do negócio), 4. Ciclo de vida / estados e transições permitidas, 5. Regras de cálculo (fórmulas, arredondamento, moeda, impostos, comissões, descontos máximos), 6. Prazos, limites e quotas (ex.: expira em 7 dias, máximo 3 tentativas, limite por plano), 7. Integrações: o que entra, o que sai, o que acontece se falhar, 8. Exceções comerciais e decisões já tomadas (o que NÃO mudar e por quê) (+2 more)
 
-### Community 1099 - "Controles rápidos da sidebar — os 6 botões, o volume e os atalhos"
+### Community 1100 - "Controles rápidos da sidebar — os 6 botões, o volume e os atalhos"
 Cohesion: 0.18
 Nodes (10): 10. Fora de escopo, 2. O que cada um dos 6 botões faz, 5. Onde o volume é guardado, 6. O ponto azul, 7. Rótulos — fonte única, 8. Arquivos, 9. Testes que provam, Alertas — no banco (`user_settings`) (+2 more)
 
-### Community 1100 - "Fase 2 — Correções de conteúdo e envio"
+### Community 1101 - "Fase 2 — Correções de conteúdo e envio"
 Cohesion: 0.18
 Nodes (11): EN-011 — Separar os identificadores e tipar os payloads, EN-012 — Reforçar escopo de todas as operações tocadas, EN-013 — Implementar parser e validação de cabeçalhos, EN-014 — Corrigir Reply-To e os papéis To Cc Bcc, EN-015 — Preservar alvo histórico de resposta, EN-016 — Preservar alvo histórico de encaminhamento, EN-017 — Incluir anexos reais nos dois caminhos de envio, EN-018 — Impedir submissão duplicada e payload mutável (+3 more)
 
-### Community 1101 - "Fase 5 — Lista e cabeçalho de conversa"
+### Community 1102 - "Fase 5 — Lista e cabeçalho de conversa"
 Cohesion: 0.18
 Nodes (11): EN-041 — Construir tabs Todas Não lidas Favoritos, EN-042 — Separar pasta e marcadores, EN-043 — Integrar refinamentos combináveis, EN-044 — Resolver identidade e conteúdo da linha, EN-045 — Tornar linhas e ações semanticamente corretas, EN-046 — Mostrar paginação e conta no rodapé, EN-047 — Conectar busca Ajuda e Nova mensagem, EN-048 — Redesenhar o cabeçalho da conversa (+3 more)
 
-### Community 1102 - "Fase 6 — Timeline e anexos"
+### Community 1103 - "Fase 6 — Timeline e anexos"
 Cohesion: 0.18
 Nodes (11): EN-051 — Organizar timeline determinística, EN-052 — Corrigir linguagem de estado de mensagem, EN-053 — Renderizar texto com boa leitura, EN-054 — Evoluir leitor HTML mantendo isolamento, EN-055 — Aplicar política de imagens e CID, EN-056 — Consultar metadados de arquivos em lote, EN-057 — Implementar download binário autenticado, EN-058 — Criar preview seguro e controlar recursos (+3 more)
 
-### Community 1103 - "Fase 7 — Compositor unificado e rascunhos"
+### Community 1104 - "Fase 7 — Compositor unificado e rascunhos"
 Cohesion: 0.18
 Nodes (11): EN-061 — Extrair núcleo de composição compatível, EN-062 — Editar destinatários com validação visível, EN-063 — Implementar editor rico de verdade, EN-064 — Integrar modos e alvo com apresentação clara, EN-065 — Unificar experiência e limites de anexos, EN-066 — Expor a máquina de envio no compositor, EN-067 — Preservar composição ao expandir e fechar, EN-068 — Implementar ciclo remoto de rascunho (+3 more)
 
-### Community 1104 - "Fase 8 — Contexto e ações de caixa"
+### Community 1105 - "Fase 8 — Contexto e ações de caixa"
 Cohesion: 0.18
 Nodes (11): EN-071 — Compor rail com identidade honesta, EN-072 — Integrar dados profissionais e links reais, EN-073 — Mostrar participantes sem alterar o histórico, EN-074 — Consultar conversas relacionadas com escopo, EN-075 — Reaproveitar notas internas do contato, EN-076 — Reutilizar anexos no contexto lateral, EN-077 — Separar labels Gmail de tags internas, EN-078 — Arquivar a conversa inteira com reconciliação (+3 more)
 
-### Community 1105 - "Fase 10 — Validação documentação e entrega revisável"
+### Community 1106 - "Fase 10 — Validação documentação e entrega revisável"
 Cohesion: 0.18
 Nodes (11): EN-091 — Revalidar o ambiente e os comandos de QA, EN-092 — Executar unitários componentes e regressões, EN-093 — Executar contratos de Edge e MIME, EN-094 — Validar coleta Playwright dedicada, EN-095 — Capturar a matriz visual da rota real, EN-096 — Revisar fidelidade NAVY sem mascarar diferenças, EN-097 — Fechar a matriz dos 80 critérios com evidência, EN-098 — Atualizar contratos e matriz de capacidades (+3 more)
 
-### Community 1106 - "Bloco A — Escopo, simulações e geometria"
+### Community 1107 - "Bloco A — Escopo, simulações e geometria"
 Cohesion: 0.18
 Nodes (11): 001 — Revalidar a versão de partida, 002 — Consolidar as decisões visuais pendentes, 003 — Registrar a aparência de referência, 004 — Preparar a matriz de cenários, 005 — Simular os fluxos antes de construir, 006 — Definir o orçamento de altura, 007 — Especificar o painel opaco, 008 — Acomodar cabeçalho e indicadores (+3 more)
 
-### Community 1107 - "Bloco D — Fila completa, atualização e aceite"
+### Community 1108 - "Bloco D — Fila completa, atualização e aceite"
 Cohesion: 0.18
 Nodes (11): 029 — Integrar a navegação à paginação existente, 030 — Tratar avanço enquanto a próxima página carrega, 031 — Harmonizar totais, posições e itens carregados, 032 — Sincronizar busca e cancelamento, 033 — Sincronizar mudança de departamento, 034 — Preservar seleção em páginas posteriores durante atualizações, 035 — Reconciliar entrada, saída e mudança de ordem, 036 — Proteger ordenação, cursor e fim da fila (+3 more)
 
-### Community 1108 - "4. Envio de Mensagens"
+### Community 1109 - "4. Envio de Mensagens"
 Cohesion: 0.18
 Nodes (11): 4.10 Send WhatsApp Audio (Nota de Voz), 4.1 Mapa Completo de Endpoints, 4.2 Send Text, 4.3 Send Media, 4.4 Send Buttons, 4.5 Send List, 4.6 Send Poll, 4.7 Send Location (+3 more)
 
-### Community 1109 - "Onda 6 — APIs, autenticação e segurança de aplicação (051–060)"
+### Community 1110 - "Onda 6 — APIs, autenticação e segurança de aplicação (051–060)"
 Cohesion: 0.18
 Nodes (11): 052 — Auditar toda exceção `verify_jwt = false`, 053 — Endurecer o webhook Evolution contra spoofing e replay, 054 — Endurecer Gmail, ElevenLabs, cron e public API, 055 — Implementar rate limiting distribuído, 056 — Validar payloads e normalizar erros em todas as fronteiras, 057 — Restringir CORS e métodos por endpoint, 058 — Fechar SSRF, redirects e processamento de URLs, 059 — Reduzir privilégios e sanitizar logs (+3 more)
 
-### Community 1110 - "Bloco 1 — Governança de repositório e CI base (001–010)"
+### Community 1111 - "Bloco 1 — Governança de repositório e CI base (001–010)"
 Cohesion: 0.18
 Nodes (11): 001 — Hooks de commit: husky + lint-staged + commitlint, 002 — Prettier com plugin Tailwind e ESLint Tailwind, 003 — Issue templates YAML, PR template por área e actionlint, 004 — CODEOWNERS por área e `ownership-gate`, 005 — `security.yml`: audit de dependências, gitleaks e relatório RLS semanal, 006 — CodeQL semanal, 007 — Branch Protection Sentinel (novos `console.log` e `any`), 008 — PR Size Gate + Notify CI Failure (+3 more)
 
-### Community 1111 - "MediaMigrationTool"
+### Community 1112 - "MediaMigrationTool"
 Cohesion: 0.24
 Nodes (10): 086 — Limpeza de órfãos no Storage e mídia de status, formatDateTime(), HistoryState, MediaMigrationTool(), asCount(), CDN_TEMP_PREFIXES, countPendingMedia(), fetchMigrationHistory() (+2 more)
 
-### Community 1112 - "3. Estratégia: medir por máquina o que hoje é escrito à mão"
+### Community 1113 - "3. Estratégia: medir por máquina o que hoje é escrito à mão"
 Cohesion: 0.18
 Nodes (10): 1. Onde estamos (medido em 08/10 ~22h; CORRIGIDO: a 1ª versão deste plano dizia 28% e estava errada), 2. Por que recusa (44 recusas lidas uma a uma, não por palavra-chave), 3.1 `hermes-tarefa-fechar` (todos os agentes, sem mudar o fluxo), 3.2 Skills por agente (data-driven, das recusas reais), 3.3 Revisor, 3.4 Jev: treinar de novo e configurar, 3.5 Cartões e processo, 3. Estratégia: medir por máquina o que hoje é escrito à mão (+2 more)
 
-### Community 1113 - "Plano — Copiloto de Vendas ao Vivo (codinome **RADAR**) — 150 etapas"
+### Community 1114 - "Plano — Copiloto de Vendas ao Vivo (codinome **RADAR**) — 150 etapas"
 Cohesion: 0.18
 Nodes (10): 10. Fontes consultadas, 1. O que é, em uma frase, 2. Por que vale a pena (evidência externa, com as ressalvas honestas), 3.1 Escopo: o RADAR é **só para vendas**, 3. O que já existe e será reaproveitado (medido no código em 2026-10-16), 4. A metodologia de venda do RADAR: **B·R·I·N·D·E**, 5. Arquitetura-alvo (resumo), 6. Decisões de negócio que dependem do Joaquim (registradas em CV-009, dentro da Fase 1) (+2 more)
 
-### Community 1114 - "Segunda leva de melhorias e correções — RASCUNHO para decisão (08/10/2026)"
+### Community 1115 - "Segunda leva de melhorias e correções — RASCUNHO para decisão (08/10/2026)"
 Cohesion: 0.18
 Nodes (10): Checklist do Joaquim (ações fora do alcance dos agentes), Como dividir (resumo), Decisões que dependem de você, Leva 2A — Segurança do banco, Leva 2B — Edge Functions e IA, Leva 2C — Provas que faltam, Leva 2D — Funcional importante, Leva 2E — Polimento P2/P3 (por módulo) (+2 more)
 
-### Community 1115 - "Runbook — Incidentes do Multiplix (fila, worker, voz, conexão, consumo e Singu)"
+### Community 1116 - "Runbook — Incidentes do Multiplix (fila, worker, voz, conexão, consumo e Singu)"
 Cohesion: 0.18
 Nodes (10): 1. Fila travada (itens prontos que ninguém puxa), 2. Worker morto (o cron do envio parou de rodar), 3. TTS fora (bloco de voz não renderiza / não sai), 4. Conexão caída (o canal WhatsApp caiu), 5. Consumo estourado (saiu mais do que o previsto), 6. Singu indisponível (a ponte não responde), Panorama em uma consulta, Rastreio de 1 envio (`correlation_id`) (+2 more)
 
-### Community 1116 - "Fase A — Contratos e validação antes de implementar"
+### Community 1117 - "Fase A — Contratos e validação antes de implementar"
 Cohesion: 0.18
 Nodes (11): 001 — Congelar a base de trabalho e reconciliar trabalho concorrente, 002 — Preservar e catalogar as 17 referências, 003 — Criar rastreabilidade entre promessa, código, dados e aceite, 004 — Resolver contradições visuais e comportamentais, 005 — Inventariar capacidades reais e contratos externos, 006 — Definir contratos de domínio, estados e indicadores, 007 — Preparar ambientes e limites de segurança, 008 — Construir fixtures e simulador de provedor (+3 more)
 
-### Community 1117 - "Fase B — Corrigir integridade antes de ampliar a interface"
+### Community 1118 - "Fase B — Corrigir integridade antes de ampliar a interface"
 Cohesion: 0.18
 Nodes (11): 011 — Remover métricas fabricadas e sucessos enganosos, 012 — Corrigir URL, restauração e navegação do wizard, 013 — Dar identidade estável e revisão ao rascunho, 014 — Serializar autosave e tratar recuperação, 015 — Persistir seleção e separar draft de audiência de envio, 016 — Corrigir duplicação e identidade de autoria, 017 — Corrigir persistência e round-trip de fuso, 018 — Validar formulário e autorização por camada (+3 more)
 
-### Community 1118 - "Fase C — Audiência, elegibilidade e supressão verificáveis"
+### Community 1119 - "Fase C — Audiência, elegibilidade e supressão verificáveis"
 Cohesion: 0.18
 Nodes (11): 021 — Normalizar identidade de contato e telefone, 022 — Fechar schema mínimo e autorização de audiência, 023 — Unificar linguagem de filtros e compilação segura, 024 — Resolver audiência e contagens sem truncamento, 025 — Consolidar o predicado de supressão, 026 — Implementar preflight de elegibilidade com revisão, 027 — Materializar audiência e job de lançamento de forma segura, 028 — Implementar adaptador canônico de empresas e contatos CRM (+3 more)
 
-### Community 1119 - "Fase D — Fechar Nova campanha e revisão em carvão"
+### Community 1120 - "Fase D — Fechar Nova campanha e revisão em carvão"
 Cohesion: 0.18
 Nodes (11): 031 — Consolidar shell, tokens e orçamento de espaço, 032 — Aprovar a composição estrutural da tela 08 antes dos detalhes, 033 — Conectar informações e origem do público, 034 — Conectar filtros visuais e seleção paginada, 035 — Unificar editor de mensagem e personalização, 036 — Implementar uploader e ciclo de vida seguro de mídia, 037 — Entregar rail, preview e ações persistentes, 038 — Fechar revisão final e confirmação sem efeitos colaterais (+3 more)
 
-### Community 1120 - "Fase E — Execução durável e controle operacional"
+### Community 1121 - "Fase E — Execução durável e controle operacional"
 Cohesion: 0.18
 Nodes (11): 041 — Fazer o banco impor a máquina de estados, 042 — Formalizar a fronteira com o provedor de mensagens, 043 — Implementar claim atômico e lease de trabalho, 044 — Resolver retries e resultado desconhecido sem reenvio cego, 045 — Limitar dispatcher, concorrência e pressão de envio, 046 — Revalidar elegibilidade imediatamente antes de enviar, 047 — Tornar pausa, cancelamento e retomada operações confiáveis, 048 — Implementar agendamento e recorrência com fuso explícito (+3 more)
 
-### Community 1121 - "Fase F — Eventos, métricas e evidência comercial"
+### Community 1122 - "Fase F — Eventos, métricas e evidência comercial"
 Cohesion: 0.18
 Nodes (11): 051 — Correlacionar eventos ao destinatário e à tentativa corretos, 052 — Processar webhooks com autenticação, deduplicação e ordenação, 053 — Medir respostas com atribuição explícita, 054 — Rastrear cliques sem criar redirecionador inseguro, 055 — Conectar conversões e receita a uma fonte verificável, 056 — Criar agregações consistentes para gráficos e indicadores, 057 — Validar e completar exportação e envio de relatórios, 058 — Tornar monitoramento realtime completo e limitado (+3 more)
 
-### Community 1122 - "Fase G — Campanhas, estados operacionais e analytics"
+### Community 1123 - "Fase G — Campanhas, estados operacionais e analytics"
 Cohesion: 0.18
 Nodes (11): 061 — Reconstruir a visão geral com densidade e dados corretos, 062 — Conectar rail lateral, atalhos e ações da listagem, 063 — Entregar a tela de campanha agendada, 064 — Entregar o monitor ao vivo com informações acionáveis, 065 — Completar campanha em andamento e todas as suas abas, 066 — Criar experiência própria de campanha pausada, 067 — Entregar relatório de campanha concluída, 068 — Completar analytics agregado e comparativos (+3 more)
 
-### Community 1123 - "Fase H — Segmentação e templates completos"
+### Community 1124 - "Fase H — Segmentação e templates completos"
 Cohesion: 0.18
 Nodes (11): 071 — Entregar biblioteca de segmentos e painel de detalhes, 072 — Entregar construtor visual de regras versionadas, 073 — Completar filtros comerciais e RFM com dados reais, 074 — Implementar prévia, sobreposição e resumo de segmento, 075 — Entregar biblioteca visual de templates, 076 — Entregar editor completo e histórico de versões, 077 — Implementar variações A/B com atribuição estável, 078 — Completar importação, duplicação e teste de templates (+3 more)
 
-### Community 1124 - "Fase I — CRM, importação, supressão e robustez transversal"
+### Community 1125 - "Fase I — CRM, importação, supressão e robustez transversal"
 Cohesion: 0.18
 Nodes (11): 081 — Implementar upload e análise segura da importação, 082 — Implementar correspondência com o CRM canônico, 083 — Implementar resolução manual de conflitos e vínculos, 084 — Tornar importações retomáveis e auditáveis, 085 — Completar a lista de supressão e suas ações, 086 — Completar importação, exportação e histórico de supressão, 087 — Executar revisão transversal de autorização e segurança, 088 — Reconciliar CRM, audiência e resultado ponta a ponta (+3 more)
 
-### Community 1125 - "Fase J — Ajuda, aceite integral e publicação controlada"
+### Community 1126 - "Fase J — Ajuda, aceite integral e publicação controlada"
 Cohesion: 0.18
 Nodes (11): 091 — Produzir ajuda correspondente ao produto entregue, 092 — Implementar busca, guias e canais de suporte da ajuda, 093 — Fechar inventário de rotas, abas e ações dos 17 modelos, 094 — Executar aceite visual integral autenticado, 095 — Executar bateria final funcional e de regressão, 096 — Preparar release imutável, migrations e rollback, 097 — Executar deploy canário e smoke positivo/negativo, 098 — Ampliar rollout com critérios objetivos de interrupção (+3 more)
 
-### Community 1126 - "Tipografia do Zapp Web V2 igual à do Promo_Gifts_V4 — plano em 50 etapas"
+### Community 1127 - "Tipografia do Zapp Web V2 igual à do Promo_Gifts_V4 — plano em 50 etapas"
 Cohesion: 0.18
 Nodes (10): Diagnóstico em uma frase, F0 — Isolamento do trabalho concorrente, F1 — Referência: Promo_Gifts_V4, F2 — Estado atual do Zapp, F3 — Decisões, F4 — Implementação, F5 — Mapeamento de faces, F6 — Validação (+2 more)
 
-### Community 1127 - "public.merge_contacts_atomic"
+### Community 1128 - "public.merge_contacts_atomic"
 Cohesion: 0.18
 Nodes (9): public.guard_contact_note_identity, guard_contact_note_identity, public.merge_contacts_atomic(), pg_attribute, pg_class, pg_constraint, pg_namespace, public.contacts (+1 more)
 
-### Community 1128 - "20260903225000_sla_first_response_v2.sql"
+### Community 1129 - "20260903225000_sla_first_response_v2.sql"
 Cohesion: 0.18
 Nodes (9): public.messages_sla_first_response_trigger, public.mark_first_response(), public.register_first_response_internal(), public.contacts, public.conversation_sla, public.messages, public.queue_members, trg_messages_sla_first_response (+1 more)
 
-### Community 1129 - "20261004181921_revoke_auth_sessions.sql"
+### Community 1130 - "20261004181921_revoke_auth_sessions.sql"
 Cohesion: 0.20
 Nodes (7): public.trg_revoke_sessions_on_profile_deactivate, public.trg_user_sessions_auth_session_guard, idx_user_sessions_auth_session_id, idx_user_sessions_user_auth_session, public.user_sessions, trg_revoke_sessions_on_profile_deactivate, trg_user_sessions_auth_session_guard
 
-### Community 1130 - "RELATÓRIO DE VALIDAÇÃO EXAUSTIVA DO RESGATE — Zapp Web V2"
+### Community 1131 - "RELATÓRIO DE VALIDAÇÃO EXAUSTIVA DO RESGATE — Zapp Web V2"
 Cohesion: 0.18
 Nodes (10): Achados HIGH (lista completa com evidência), Contagem final por severidade, Limitações honestas (NÃO VERIFICADO), Matriz RLS (antes × depois), Prova de que nenhuma branch/tag foi apagada, PRs de correção, Próximos passos, RELATÓRIO DE VALIDAÇÃO EXAUSTIVA DO RESGATE — Zapp Web V2 (+2 more)
 
-### Community 1131 - "catalog-ct73-docs.unit.mjs"
+### Community 1132 - "catalog-ct73-docs.unit.mjs"
 Cohesion: 0.22
 Nodes (8): acharNovaMedicao(), BASELINE_MS, estaFechado(), FIXTURE_FECHADO_COM_MEDICAO, FIXTURE_FECHADO_SEM_MEDICAO, PERF, PLANO, violacoesDeFechamento()
 
-### Community 1132 - "mudou-conteudo.mjs"
+### Community 1133 - "mudou-conteudo.mjs"
 Cohesion: 0.27
 Nodes (8): CARIMBOS, IGNORADOS, limparHistoricoCron(), mudou(), normalizarAlerta(), PADRAO, semCarimbos(), TELEMETRIA
 
-### Community 1133 - "playwright-config-e81.unit.mjs"
+### Community 1134 - "playwright-config-e81.unit.mjs"
 Cohesion: 0.24
 Nodes (8): blocosDeProjeto(), config, deslogados, ehLogado(), logados, projetos, projetosDoConfig(), RAIZ
 
-### Community 1134 - "ai-read-policies-queue-scope.test.sh"
+### Community 1135 - "ai-read-policies-queue-scope.test.sh"
 Cohesion: 0.36
 Nodes (7): expect_error(), expect_ok(), expect_value(), fail(), psql_file(), psql_sql(), ai-read-policies-queue-scope.test.sh script
 
-### Community 1135 - "check-reconcile-ledger-drift.test.sh"
+### Community 1136 - "check-reconcile-ledger-drift.test.sh"
 Cohesion: 0.40
 Nodes (9): apply_migration(), assert_name(), fail(), insert_fixture(), ledger_name(), psql_sql(), reset_ledger(), check-reconcile-ledger-drift.test.sh script (+1 more)
 
-### Community 1136 - "check-webhook-failures-acl.test.sh"
+### Community 1137 - "check-webhook-failures-acl.test.sh"
 Cohesion: 0.49
 Nodes (9): assert_fails(), assert_passes(), fail(), psql_file(), psql_sql(), reset_fixture(), run_guard(), check-webhook-failures-acl.test.sh script (+1 more)
 
-### Community 1137 - "contacts-stats-series-rpc.test.sh"
+### Community 1138 - "contacts-stats-series-rpc.test.sh"
 Cohesion: 0.35
 Nodes (6): assert_eq(), assert_has(), fail(), pass(), psql_exec(), contacts-stats-series-rpc.test.sh script
 
-### Community 1138 - "conversation-analyses-authorization.test.sh"
+### Community 1139 - "conversation-analyses-authorization.test.sh"
 Cohesion: 0.38
 Nodes (7): expect_error(), expect_ok(), expect_value(), fail(), psql_file(), psql_sql(), conversation-analyses-authorization.test.sh script
 
-### Community 1139 - "conversation-tasks-events-insert-authorization.test.sh"
+### Community 1140 - "conversation-tasks-events-insert-authorization.test.sh"
 Cohesion: 0.36
 Nodes (7): expect_error(), expect_value(), fail(), psql_file(), psql_sql(), run_ok(), conversation-tasks-events-insert-authorization.test.sh script
 
-### Community 1140 - "crisis-room-snapshot.test.sh"
+### Community 1141 - "crisis-room-snapshot.test.sh"
 Cohesion: 0.38
 Nodes (9): apply_migration(), assert_denied(), assert_eq(), call_as(), call_as_role(), fail(), psql_query(), psql_script() (+1 more)
 
-### Community 1141 - "department-invite-contract-audit-vocabulary.test.sh"
+### Community 1142 - "department-invite-contract-audit-vocabulary.test.sh"
 Cohesion: 0.47
 Nodes (9): as_user(), expect_error(), expect_ok(), expect_value(), expect_value_as(), fail(), psql_file(), psql_sql() (+1 more)
 
-### Community 1142 - "dispatch-scheduled-messages.test.sh"
+### Community 1143 - "dispatch-scheduled-messages.test.sh"
 Cohesion: 0.38
 Nodes (8): expect_error(), expect_value(), extrair_funcao(), fail(), limpar(), psql_file(), psql_sql(), dispatch-scheduled-messages.test.sh script
 
-### Community 1143 - "drop-redundant-messages-external-id-index.test.sh"
+### Community 1144 - "drop-redundant-messages-external-id-index.test.sh"
 Cohesion: 0.44
 Nodes (9): expect_error(), expect_index_exists(), expect_plan_uses(), expect_value(), fail(), index_count(), psql_file(), psql_sql() (+1 more)
 
-### Community 1144 - "enqueue-connection-scope.test.sh"
+### Community 1145 - "enqueue-connection-scope.test.sh"
 Cohesion: 0.33
 Nodes (6): expect_error(), expect_value(), fail(), psql_file(), psql_sql(), enqueue-connection-scope.test.sh script
 
-### Community 1145 - "gamification-marco-nao-bloqueia-envio.test.sh"
+### Community 1146 - "gamification-marco-nao-bloqueia-envio.test.sh"
 Cohesion: 0.38
 Nodes (8): expect_error(), expect_output_contains(), expect_value(), extrair_funcao(), fail(), psql_file(), psql_sql(), gamification-marco-nao-bloqueia-envio.test.sh script
 
-### Community 1146 - "ia-usage-outbox-duravel.test.sh"
+### Community 1147 - "ia-usage-outbox-duravel.test.sh"
 Cohesion: 0.45
 Nodes (9): as_role(), expect_error_as(), expect_ok_as(), expect_value(), expect_value_as(), fail(), psql_file(), psql_sql() (+1 more)
 
-### Community 1147 - "l11-departments-acl-escrita.test.sh"
+### Community 1148 - "l11-departments-acl-escrita.test.sh"
 Cohesion: 0.38
 Nodes (9): assert_col_priv(), checa_contrato(), exige_falha_do_contrato(), fail(), nova_base(), ok(), psql_db(), psql_file_db() (+1 more)
 
-### Community 1148 - "login_gate_rpc.test.sh"
+### Community 1149 - "login_gate_rpc.test.sh"
 Cohesion: 0.44
 Nodes (9): as_role(), expect_error(), expect_error_role(), expect_value(), fail(), percentil(), psql_file(), psql_sql() (+1 more)
 
-### Community 1149 - "queues-distribution-overflow.test.sh"
+### Community 1150 - "queues-distribution-overflow.test.sh"
 Cohesion: 0.44
 Nodes (9): expect_error(), expect_file_error(), expect_file_value(), expect_value(), fail(), psql_file(), psql_sql(), run_file() (+1 more)
 
-### Community 1150 - "reset-gatilho-coluna-removida.test.sh"
+### Community 1151 - "reset-gatilho-coluna-removida.test.sh"
 Cohesion: 0.44
 Nodes (9): as_role(), expect_error_as(), expect_ok_as(), expect_value(), expect_value_as(), fail(), psql_file(), psql_sql() (+1 more)
 
-### Community 1151 - "send-messages-permission-authorization.test.sh"
+### Community 1152 - "send-messages-permission-authorization.test.sh"
 Cohesion: 0.33
 Nodes (6): expect_error(), expect_value(), fail(), psql_file(), psql_sql(), send-messages-permission-authorization.test.sh script
 
-### Community 1152 - "storage-limits-whatsapp-audio-multiplix.test.sh"
+### Community 1153 - "storage-limits-whatsapp-audio-multiplix.test.sh"
 Cohesion: 0.40
 Nodes (9): as_auth(), expect_gate_ok(), expect_gate_refused(), expect_value(), extract_bucket_insert(), fail(), psql_sql(), psql_test() (+1 more)
 
-### Community 1153 - "talk-me-client-privileges.test.sh"
+### Community 1154 - "talk-me-client-privileges.test.sh"
 Cohesion: 0.40
 Nodes (7): expect_error(), expect_ok(), expect_value(), fail(), psql_file(), psql_sql(), talk-me-client-privileges.test.sh script
 
-### Community 1154 - "talkx-blacklist-realtime.test.sh"
+### Community 1155 - "talkx-blacklist-realtime.test.sh"
 Cohesion: 0.31
 Nodes (9): case_done(), CASES_EXPECTED, CASES_SEEN, fail(), pass(), psql_q(), psql_test(), talkx-blacklist-realtime.test.sh script (+1 more)
 
-### Community 1155 - "talkx-campaign-recurrence.test.sh"
+### Community 1156 - "talkx-campaign-recurrence.test.sh"
 Cohesion: 0.31
 Nodes (9): case_done(), CASES_EXPECTED, CASES_SEEN, fail(), pass(), psql_q(), psql_test(), talkx-campaign-recurrence.test.sh script (+1 more)
 
-### Community 1156 - "talkx-engine-health.test.sh"
+### Community 1157 - "talkx-engine-health.test.sh"
 Cohesion: 0.40
 Nodes (9): assert_eq(), assert_has(), fail(), find_migration(), pass(), psql_exec(), psql_raw(), psql_val() (+1 more)
 
-### Community 1157 - "talkx-lgpd.test.sh"
+### Community 1158 - "talkx-lgpd.test.sh"
 Cohesion: 0.40
 Nodes (9): assert_eq(), assert_has(), fail(), pass(), psql_exec(), psql_raw(), psql_script(), psql_val() (+1 more)
 
-### Community 1158 - "talkx-save-template-variants.test.sh"
+### Community 1159 - "talkx-save-template-variants.test.sh"
 Cohesion: 0.38
 Nodes (9): assert_err(), assert_ok(), call_rpc(), expected_arg(), expected_ts(), fail(), psql_test(), talkx-save-template-variants.test.sh script (+1 more)
 
-### Community 1159 - "talkx-segment-fields.test.sh"
+### Community 1160 - "talkx-segment-fields.test.sh"
 Cohesion: 0.40
 Nodes (9): apply_migration(), compile_auth(), expect_error(), fail(), pass(), psql_test(), query_auth(), talkx-segment-fields.test.sh script (+1 more)
 
-### Community 1160 - "tasks-rearm-on-remind-change.test.sh"
+### Community 1161 - "tasks-rearm-on-remind-change.test.sh"
 Cohesion: 0.42
 Nodes (9): as_user(), expect_error(), expect_ok_as(), expect_value(), expect_value_as(), fail(), psql_file(), psql_sql() (+1 more)
 
-### Community 1161 - "team-chat-rpc-ambiguity.test.sh"
+### Community 1162 - "team-chat-rpc-ambiguity.test.sh"
 Cohesion: 0.45
 Nodes (9): as_user(), expect_error_as(), expect_ok_as(), expect_value(), expect_value_as(), fail(), psql_file(), psql_sql() (+1 more)
 
-### Community 1162 - "team-membership-bootstrap-owner.test.sh"
+### Community 1163 - "team-membership-bootstrap-owner.test.sh"
 Cohesion: 0.45
 Nodes (9): as_user(), expect_error_as(), expect_ok_as(), expect_value(), expect_value_as(), fail(), psql_file(), psql_sql() (+1 more)
 
-### Community 1163 - "user-settings-sound-integrity-contract.test.sh"
+### Community 1164 - "user-settings-sound-integrity-contract.test.sh"
 Cohesion: 0.44
 Nodes (10): cleanup(), expect_error(), expect_ok(), expect_value(), fail(), psql_file(), psql_sql(), remove_container() (+2 more)
 
-### Community 1164 - "deployment-record.unit.mjs"
+### Community 1165 - "deployment-record.unit.mjs"
 Cohesion: 0.33
 Nodes (6): AMBIENTE_PADRAO, construirDeployment(), construirStatus(), resumirDeployment(), post(), resolverDestino()
 
-### Community 1166 - "AdminCRMDashboard.explorer-crm360.test.tsx"
+### Community 1167 - "AdminCRMDashboard.explorer-crm360.test.tsx"
 Cohesion: 0.20
 Nodes (9): Cenario, CLIENTES, ConsultaRegistrada, consultas, EMPRESAS, meta(), OpcoesConsulta, responderConsulta() (+1 more)
 
-### Community 1167 - "GmailWebhookMonitor.falha-consulta.test.tsx"
+### Community 1168 - "GmailWebhookMonitor.falha-consulta.test.tsx"
 Cohesion: 0.18
 Nodes (5): account, makeChain(), chain, QueryResult, state
 
-### Community 1168 - "PasswordStrengthMeter.corrida.test.tsx"
+### Community 1169 - "PasswordStrengthMeter.corrida.test.tsx"
 Cohesion: 0.20
 Nodes (6): ControleFetch, corpoVazada(), rejeitar(), resolver(), RespostaFalsa, sha1Upper()
 
-### Community 1169 - "NewCallPanel.test.tsx"
+### Community 1170 - "NewCallPanel.test.tsx"
 Cohesion: 0.18
 Nodes (9): buscarContatos, Cap, contatoJoao, dispatchStartCall, hangup, reconectarLinha, sessao, voip (+1 more)
 
-### Community 1170 - "TelefoniaView.a11y.test.tsx"
+### Community 1171 - "TelefoniaView.a11y.test.tsx"
 Cohesion: 0.20
 Nodes (8): auditar(), historico, ids(), NAO_SERIAS, SERIOUS, sessao, SESSAO_ATIVA, SESSAO_OCIOSA
 
-### Community 1171 - "SendProductDialog.test.tsx"
+### Community 1172 - "SendProductDialog.test.tsx"
 Cohesion: 0.22
 Nodes (9): mockFetchContacts, mockProduct(), mockReadiness, mockSendOutboundMessage, mockToast, mockUseAuth, renderDialog(), resetToastMocks() (+1 more)
 
-### Community 1172 - "useCopilotFeedback.ts"
+### Community 1173 - "useCopilotFeedback.ts"
 Cohesion: 0.24
 Nodes (10): CopilotFeedbackProps, classifyEdit(), CopilotFeedbackActions, EditLevel, FeedbackRating, FeedbackReason, levenshtein(), log (+2 more)
 
-### Community 1173 - "useChatPanelHandlers.sem-falso-sucesso.test.tsx"
+### Community 1174 - "useChatPanelHandlers.sem-falso-sucesso.test.tsx"
 Cohesion: 0.24
 Nodes (7): comoEditMessageApi(), db, EditMessageApi, montar(), toasts(), toastsDestrutivos(), toastsDeSucesso()
 
-### Community 1174 - "NotesTab.test.tsx"
+### Community 1175 - "NotesTab.test.tsx"
 Cohesion: 0.18
 Nodes (9): mockAddNote, mockCreateTask, mockDeleteNote, mockOnTabChange, mockToggleNoteDone, mockUseContactNotes, mockUseContactSummaryNote, mockUseMyWorkItems (+1 more)
 
-### Community 1175 - "ObjectionDetector.severidade.test.tsx"
+### Community 1176 - "ObjectionDetector.severidade.test.tsx"
 Cohesion: 0.20
 Nodes (8): allMessages, analisar(), AnyProps, invokeMock, lastMessages, Objecao, objecoes, renderDetector()
 
-### Community 1176 - "MultiplixView.selecao-composicao.test.tsx"
+### Community 1177 - "MultiplixView.selecao-composicao.test.tsx"
 Cohesion: 0.20
 Nodes (7): authGetSession, functionsInvoke, InvokeArgs, InvokeMock, renderView(), ROWS, searchAudience()
 
-### Community 1177 - "SoundCustomizationPanel.test.tsx"
+### Community 1178 - "SoundCustomizationPanel.test.tsx"
 Cohesion: 0.20
 Nodes (7): CAMPO_NO_BANCO, CANONICOS, CATEGORIAS, h, LINHA_SINTETICA, selectDa(), selects()
 
-### Community 1178 - "TalkXCampaignRunning.limits.test.tsx"
+### Community 1179 - "TalkXCampaignRunning.limits.test.tsx"
 Cohesion: 0.18
 Nodes (3): { mutateAsync, mockCampaign }, queryChain(), chain
 
-### Community 1179 - "errorReporter.ts"
+### Community 1180 - "errorReporter.ts"
 Cohesion: 0.29
 Nodes (8): fingerprint(), reportClientError(), ReportOptions, resetErrorReporterForTests(), seen, shouldReport(), getSessionId(), mockedLogAudit
 
-### Community 1180 - "useFilesInfiniteScroll.test.tsx"
+### Community 1181 - "useFilesInfiniteScroll.test.tsx"
 Cohesion: 0.22
 Nodes (5): IntersectionObserverStub, ObserverCallback, ObserverInstance, observers, useFilesInfiniteScroll()
 
-### Community 1181 - "useAudioMemes.mediaVolumeBindings.test.tsx"
+### Community 1182 - "useAudioMemes.mediaVolumeBindings.test.tsx"
 Cohesion: 0.24
 Nodes (5): FakeAudio, memesDoBackend, montar(), previews(), supabaseMock
 
-### Community 1182 - "useSLARulesCounts.ts"
+### Community 1183 - "useSLARulesCounts.ts"
 Cohesion: 0.31
 Nodes (7): h, countSLARulesByScope(), emptySLARuleCounts(), SLA_SCOPE_ROWS_SELECT, SLARuleCountRow, SLARuleCounts, useSLARulesCounts()
 
-### Community 1183 - "useDiagnosticsData.test.ts"
+### Community 1184 - "useDiagnosticsData.test.ts"
 Cohesion: 0.22
 Nodes (6): Consulta, ehProbeDb(), Filtro, mocks, rodar(), builder
 
-### Community 1184 - "useTextToSpeech.lifecycle.test.ts"
+### Community 1185 - "useTextToSpeech.lifecycle.test.ts"
 Cohesion: 0.20
 Nodes (7): audios, FakeAudioInstance, flush(), mocks, PendingFetch, pendingFetches, startSpeak()
 
-### Community 1185 - "gravacaoFormato.ts"
+### Community 1186 - "gravacaoFormato.ts"
 Cohesion: 0.31
 Nodes (8): escolherMimeGravacao(), formatoDeUpload(), FORMATOS_UPLOAD, FormatoUpload, isTypeSupportedDoNavegador(), mensagemErroGravacao(), mimeBase(), PREFERENCIA_GRAVACAO
 
-### Community 1186 - "outbound-message.service.test.ts"
+### Community 1187 - "outbound-message.service.test.ts"
 Cohesion: 0.18
 Nodes (3): crossTabSendDedupe, sendThrottle, { rpc, invoke }
 
-### Community 1187 - "runGuard-simulation.test.ts"
+### Community 1188 - "runGuard-simulation.test.ts"
 Cohesion: 0.24
 Nodes (5): createRunGuard(), RunGuard, Deferred, simulate(), simulateStaleMutationReload()
 
-### Community 1188 - "send-message-pending-status.test.ts"
+### Community 1189 - "send-message-pending-status.test.ts"
 Cohesion: 0.20
 Nodes (7): agora, base, cenario(), iso(), KEY, Row, VARIANTES
 
-### Community 1189 - "talkx-report/index.test.ts"
+### Community 1190 - "talkx-report/index.test.ts"
 Cohesion: 0.20
 Nodes (5): CAMPANHA_BASE, escRe(), FakeOpts, kpi(), PERFIL_CRIADOR
 
-### Community 1190 - "public.skill_based_assign"
+### Community 1191 - "public.skill_based_assign"
 Cohesion: 0.27
 Nodes (10): public.agent_skills, public.csat_auto_config, public.queue_skill_requirements, public.skill_based_assign(), public.warroom_alerts, public.contacts, public.profiles, public.queue_members (+2 more)
 
-### Community 1191 - "20260317214556_3c66fa42-1d33-4478-a502-b7cf8cf6580f.sql"
+### Community 1192 - "20260317214556_3c66fa42-1d33-4478-a502-b7cf8cf6580f.sql"
 Cohesion: 0.29
 Nodes (10): public.ai_conversation_tags, public.followup_executions, public.followup_sequences, public.followup_steps, public.queue_positions, public.whisper_messages, public.contacts, public.profiles (+2 more)
 
-### Community 1192 - "20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
+### Community 1193 - "20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
 Cohesion: 0.22
 Nodes (10): public.campaign_ab_variants, public.contact_purchases, public.crisis_room_alerts, public.training_sessions, public.campaigns, public.contacts, public.profiles, public.sales_deals (+2 more)
 
-### Community 1193 - "20260911140000_harden_talkx_campaign_state_transitions.sql"
+### Community 1194 - "20260911140000_harden_talkx_campaign_state_transitions.sql"
 Cohesion: 0.18
 Nodes (8): enforce_talkx_campaign_mutability, enforce_talkx_recipient_snapshot_mutability, public.replace_talkx_draft_recipients(), public.contacts, public.enforce_talkx_campaign_mutability, public.enforce_talkx_recipient_snapshot_mutability, public.profiles, public.talkx_campaigns
 
-### Community 1194 - "20260916200000_talkx_e90_links.sql"
+### Community 1195 - "20260916200000_talkx_e90_links.sql"
 Cohesion: 0.35
 Nodes (10): idx_talkx_conversions_camp, idx_talkx_link_clicks_link, idx_talkx_links_campaign, idx_talkx_links_slug, public.record_talkx_link_click(), public.talkx_conversions, public.talkx_link_clicks, public.talkx_links (+2 more)
 
-### Community 1195 - "20260926250000_e17_fk_indexes.sql"
+### Community 1196 - "20260926250000_e17_fk_indexes.sql"
 Cohesion: 0.18
 Nodes (10): idx_gmail_accounts_user_id, idx_message_templates_user_id, idx_query_telemetry_user_id, idx_webauthn_challenges_user_id, idx_whatsapp_connections_instance_token_secret_id, public.gmail_accounts, public.message_templates, public.query_telemetry (+2 more)
 
-### Community 1196 - "20260926410000_add_fk_support_indexes.sql"
+### Community 1197 - "20260926410000_add_fk_support_indexes.sql"
 Cohesion: 0.18
 Nodes (10): idx_gmail_accounts_user_id, idx_message_templates_user_id, idx_query_telemetry_user_id, idx_webauthn_challenges_user_id, idx_whatsapp_connections_instance_token_secret_id, public.gmail_accounts, public.message_templates, public.query_telemetry (+2 more)
 
-### Community 1197 - "20260926800000_calls_telefonia_v2.sql"
+### Community 1198 - "20260926800000_calls_telefonia_v2.sql"
 Cohesion: 0.31
 Nodes (9): calls_agent_started_idx, calls_channel_provider_call_unique, public.my_calls_kpi(), public.search_my_calls(), public.set_call_agent_notes(), public.upsert_my_call(), public.calls, public.contacts (+1 more)
 
-### Community 1198 - "public.multiplix_delivery_items"
+### Community 1199 - "public.multiplix_delivery_items"
 Cohesion: 0.24
 Nodes (10): idx_multiplix_delivery_items_dispatch_status, idx_multiplix_delivery_items_queue, idx_multiplix_dispatches_created_by_created_at, public.multiplix_delivery_items, public, public.multiplix_blocks, public.multiplix_dispatches, public.multiplix_recipients (+2 more)
 
-### Community 1199 - "20261002381230_talkx_role_gates.sql"
+### Community 1200 - "20261002381230_talkx_role_gates.sql"
 Cohesion: 0.24
 Nodes (10): enforce_talkx_campaign_mutability, public.enforce_talkx_campaign_mutability(), public.replace_talkx_draft_recipients(), public.save_talkx_campaign_draft(), public.update_talkx_campaign_limits(), public.enforce_talkx_campaign_mutability, public.profiles, public.talkx_campaigns (+2 more)
 
-### Community 1200 - "public.talkx_multiplix_connection_sent_count"
+### Community 1201 - "public.talkx_multiplix_connection_sent_count"
 Cohesion: 0.18
 Nodes (9): public.multiplix_connection_daily_usage(), public.talkx_multiplix_connection_sent_count(), PUBLIC, public.multiplix_delivery_items, public.multiplix_dispatches, public.multiplix_recipients, public.talkx_campaigns, public.talkx_recipients (+1 more)
 
-### Community 1201 - "20261011180337_sla_alert_events_and_preferences.sql"
+### Community 1202 - "20261011180337_sla_alert_events_and_preferences.sql"
 Cohesion: 0.22
 Nodes (8): public.sla_alert_events, public.sla_alert_preferences, sla_alert_events_ativos_unicos, sla_alert_events_contact_id_idx, auth.users, public.contacts, public.profiles, public.queues
 
-### Community 1202 - "20261031170000_high3-fk-indexes.sql"
+### Community 1203 - "20261031170000_high3-fk-indexes.sql"
 Cohesion: 0.33
 Nodes (10): idx_talkx_campaigns_cancelled_by, idx_talkx_campaigns_consent_confirmed_by, idx_talkx_campaigns_launch_confirmed_by, idx_talkx_campaigns_launched_by, idx_talkx_campaigns_owner, idx_talkx_campaigns_paused_by, idx_talkx_campaigns_recurrence_next, idx_talkx_campaigns_responsible_id (+2 more)
 
-### Community 1203 - "ai-fallback-and-test.contract.test.ts"
+### Community 1204 - "ai-fallback-and-test.contract.test.ts"
 Cohesion: 0.22
 Nodes (5): blocoBalanceado(), blocoCallSiteModoTeste(), corpoDeFuncao(), providers, proxy
 
-### Community 1204 - "ia047-idempotencia-de-efeitos.contract.test.ts"
+### Community 1205 - "ia047-idempotencia-de-efeitos.contract.test.ts"
 Cohesion: 0.24
 Nodes (9): ARQ_CRM, ARQ_EDGE, ARQ_HOOK, ARQ_MIGRATION, ler(), migration(), migrationRaw(), ROOT (+1 more)
 
-### Community 1205 - "multiplix-dispatch-write-path.contract.test.ts"
+### Community 1206 - "multiplix-dispatch-write-path.contract.test.ts"
 Cohesion: 0.25
 Nodes (9): ACTION_FILES, CaseFn, directWriteHits(), directWriteHitsIn(), read(), ROOT, stripComments(), TARGET_TABLES (+1 more)
 
-### Community 1206 - "public.admin_inbox_silence"
+### Community 1207 - "public.admin_inbox_silence"
 Cohesion: 0.22
 Nodes (9): ativas, entradas, saidas, idx_messages_sender_created_at, public.admin_inbox_silence(), public.contacts, public.messages, public.whatsapp_connections (+1 more)
-
-### Community 1207 - "2. As 4 perguntas com evidência"
-Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
 ### Community 1208 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
@@ -8304,11 +8305,11 @@ Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já impl
 
 ### Community 1212 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
-Nodes (9): 1. O que faz, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio, Dossie PR #2022 — feat: RADAR copilot Phase 9 — Catalog, Budget, Timeline (CV-081–090) (+1 more)
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
 ### Community 1213 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
+Nodes (9): 1. O que faz, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio, Dossie PR #2022 — feat: RADAR copilot Phase 9 — Catalog, Budget, Timeline (CV-081–090) (+1 more)
 
 ### Community 1214 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
@@ -8358,17 +8359,17 @@ Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já impl
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1226 - "2. As 4 perguntas com evidência (diff lido)"
+### Community 1226 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
 ### Community 1227 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1228 - "2. As 4 perguntas com evidência"
+### Community 1228 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
 ### Community 1229 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
@@ -8414,13 +8415,13 @@ Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já impl
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1240 - "2. As 4 perguntas com evidência (diff lido + descrição da PR)"
-Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido + descrição da PR), 3. Bloqueio atual, 4. Ação necessária (+1 more)
-
-### Community 1241 - "2. As 4 perguntas com evidência"
+### Community 1240 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
+
+### Community 1241 - "2. As 4 perguntas com evidência (diff lido + descrição da PR)"
+Cohesion: 0.20
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido + descrição da PR), 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
 ### Community 1242 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
@@ -8430,17 +8431,17 @@ Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já impl
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1244 - "2. As 4 perguntas com evidência (diff lido)"
+### Community 1244 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
 ### Community 1245 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1246 - "2. As 4 perguntas com evidência"
+### Community 1246 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
 ### Community 1247 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
@@ -8496,11 +8497,11 @@ Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já impl
 
 ### Community 1260 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
-Nodes (9): 1. Diff lido (evidência direta via `github_get_pr_diff`), 2.1 Ainda válida? (intenção da PR), 2.2 Traz regressão? (quebraria o build), 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. O que precisa ser feito para tornar esta PR válida, 4. Bloqueio atual (+1 more)
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1261 - "2. As 4 perguntas com evidência (diff lido)"
+### Community 1261 - "2. As 4 perguntas com evidência"
 Cohesion: 0.20
-Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
+Nodes (9): 1. Diff lido (evidência direta via `github_get_pr_diff`), 2.1 Ainda válida? (intenção da PR), 2.2 Traz regressão? (quebraria o build), 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. O que precisa ser feito para tornar esta PR válida, 4. Bloqueio atual (+1 more)
 
 ### Community 1262 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.20
@@ -8526,13 +8527,13 @@ Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já impl
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1268 - "2. As 4 perguntas com evidência"
-Cohesion: 0.20
-Nodes (9): 1. O que faz, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Ação requerida (DECISAO_HUMANA), Dossie PR #2248 — fix(test): destrava o CI Gate da main (136 → 1 arquivo vermelho) (+1 more)
-
-### Community 1269 - "2. As 4 perguntas com evidência (diff lido)"
+### Community 1268 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
+
+### Community 1269 - "2. As 4 perguntas com evidência"
+Cohesion: 0.20
+Nodes (9): 1. O que faz, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Ação requerida (DECISAO_HUMANA), Dossie PR #2248 — fix(test): destrava o CI Gate da main (136 → 1 arquivo vermelho) (+1 more)
 
 ### Community 1270 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.20
@@ -8542,13 +8543,13 @@ Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já impl
 Cohesion: 0.20
 Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
 
-### Community 1272 - "3. Motivo de escalonamento humano"
+### Community 1272 - "2. As 4 perguntas com evidência (diff lido)"
+Cohesion: 0.20
+Nodes (9): 1. Intenção, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária (+1 more)
+
+### Community 1273 - "3. Motivo de escalonamento humano"
 Cohesion: 0.20
 Nodes (9): 1. Diff (evidência direta), 2. Estado de merge, 3.1 Conflito (dirty), 3.2 Migrations com DDL aplicado, 3.3 Manifesto de schema, 3.4 Escopo amplo (8 arquivos, 25 commits), 3. Motivo de escalonamento humano, 4. Veredito final (+1 more)
-
-### Community 1273 - "3. As 4 perguntas"
-Cohesion: 0.20
-Nodes (9): 1. Diff (evidência direta), 2. Estado de merge, 3.1 Ainda válida?, 3.2 Traz regressão?, 3.3 Regra de negócio válida?, 3.4 Completa?, 3. As 4 perguntas, 4. Bloqueio (+1 more)
 
 ### Community 1274 - "3. As 4 perguntas"
 Cohesion: 0.20
@@ -8558,731 +8559,735 @@ Nodes (9): 1. Diff (evidência direta), 2. Estado de merge, 3.1 Ainda válida?, 
 Cohesion: 0.20
 Nodes (9): 1. Diff (evidência direta), 2. Estado de merge, 3.1 Ainda válida?, 3.2 Traz regressão?, 3.3 Regra de negócio válida?, 3.4 Completa?, 3. As 4 perguntas, 4. Bloqueio (+1 more)
 
-### Community 1276 - "2. As 4 perguntas"
+### Community 1276 - "3. As 4 perguntas"
+Cohesion: 0.20
+Nodes (9): 1. Diff (evidência direta), 2. Estado de merge, 3.1 Ainda válida?, 3.2 Traz regressão?, 3.3 Regra de negócio válida?, 3.4 Completa?, 3. As 4 perguntas, 4. Bloqueio (+1 more)
+
+### Community 1277 - "2. As 4 perguntas"
 Cohesion: 0.20
 Nodes (9): 1. Diff (evidência direta), 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Regra de negócio válida?, 2.4 Completa?, 2. As 4 perguntas, 3. Veredito final, Dossie PR #2340 — docs(consolidacao): registra types-sync integrado (+1 more)
 
-### Community 1277 - "Auditoria adversarial F1–F3 · Onda 2 (5 frentes independentes)"
+### Community 1278 - "Auditoria adversarial F1–F3 · Onda 2 (5 frentes independentes)"
 Cohesion: 0.20
 Nodes (9): 1. Veredicto por achado (o que caiu, o que ficou), 2. Rodapé de integridade (o que a auditoria corrigiu em afirmações **nossas**), 3. O que é mais grave e **não** é das fases 1–3, 4. Replay da cadeia (658 migrations, 1 transação por arquivo), 5. Performance — o limiar numérico (p95 de 6 execuções por célula, página de 50), 6. Limites desta auditoria (o que não foi possível medir), 7. Provas neste diretório, Auditoria adversarial F1–F3 · Onda 2 (5 frentes independentes) (+1 more)
 
-### Community 1278 - "2. Fatos verificados por ferramenta"
+### Community 1279 - "2. Fatos verificados por ferramenta"
 Cohesion: 0.20
 Nodes (10): 2. Fatos verificados por ferramenta, Codex CLI / GPT-5.6 Sol, Composio Agent Orchestrator (plano B), DeepSeek V4 Flash, Devin CLI, Hermes Kanban (docs: hermes-agent.nousresearch.com/docs/user-guide/features/kanban), Hermes orquestrando agentes externos, Outros (+2 more)
 
-### Community 1279 - "Paridade doc 11 (2ª passada) — IA e voz: NextBestAction, Objeções, TTS/STT, Voice Changer — 13/10/2026"
+### Community 1280 - "Paridade doc 11 (2ª passada) — IA e voz: NextBestAction, Objeções, TTS/STT, Voice Changer — 13/10/2026"
 Cohesion: 0.20
 Nodes (7): 0. ATENÇÃO sobre a Edge `voice-changer`, 1. Achados do doc 11 pedidos (A1, A2, A3, A7), 3. Lacunas reais sem cartão (priorizadas), 5. O que NÃO consegui verificar (o Claude confere), P2, Paridade doc 11 (2ª passada) — IA e voz: NextBestAction, Objeções, TTS/STT, Voice Changer — 13/10/2026, FakeRecusando
 
-### Community 1280 - "Paridade V3 -> V2: hooks S-Z, fatia 02 (prefixo HZ3)"
+### Community 1281 - "Paridade V3 -> V2: hooks S-Z, fatia 02 (prefixo HZ3)"
 Cohesion: 0.20
 Nodes (9): HZ3-001 useTeamChatNotifications, HZ3-003 useTeamPermissions, HZ3-005 useTheme (barril de `useUIManagement.useThemeManagement`), HZ3-006 useThemeAudit, HZ3-007 useTranscriptionNotifications, HZ3-010 useUndoableAction, HZ3-011 useUniversityHelp, Paridade V3 -> V2: hooks S-Z, fatia 02 (prefixo HZ3) (+1 more)
 
-### Community 1281 - "Auditoria de paridade V3 → V2, Parte 7: `components/ui` (primitivos de interface)"
+### Community 1282 - "Auditoria de paridade V3 → V2, Parte 7: `components/ui` (primitivos de interface)"
 Cohesion: 0.20
 Nodes (9): 1. Resumo, 2. Método e limites, 3.1 Só na V3 (33 arquivos), 3.2 Só na V2 (18 arquivos): melhorias, não lacunas, 3.3 Em comum (83 arquivos), 3. Inventário de arquivos, 5. O que a V3 tem, mas não vale portar, 7. Decisões e observações para o Joaquim (+1 more)
 
-### Community 1282 - "Auditoria de Referências de Banco de Dados — 2026-08-28"
+### Community 1283 - "Auditoria de Referências de Banco de Dados — 2026-08-28"
 Cohesion: 0.20
 Nodes (9): Auditoria de Referências de Banco de Dados — 2026-08-28, Banco oficial vivo — verificado em 2026-08-28 (somente leitura), Correções aplicadas nesta auditoria, Menções a bancos antigos MANTIDAS de propósito (histórico/alerta), Método, Projetos identificados, Recomendações (fora do escopo deste PR), Runtime verificado — já apontava 100% para o oficial (nenhuma alteração necessária) (+1 more)
 
-### Community 1283 - "E32 — Contrato de Segurança do `evolution-webhook`"
+### Community 1284 - "E32 — Contrato de Segurança do `evolution-webhook`"
 Cohesion: 0.20
 Nodes (9): 1. HMAC (modo shadow por padrão), 2. Gate por instanceToken (corpo do evento), 3. Rate limiting, Camadas de proteção compensatórias, E32 — Contrato de Segurança do `evolution-webhook`, Estado atual, Para habilitar enforcement total (quando possível), Por que `verify_jwt=false` (+1 more)
 
-### Community 1284 - "PLANO — Team Chat V2: finalização da implantação (100 etapas) — 2026-09-29"
+### Community 1285 - "PLANO — Team Chat V2: finalização da implantação (100 etapas) — 2026-09-29"
 Cohesion: 0.20
 Nodes (9): 0. Verdades que todas as etapas respeitam (medidas ao vivo em 29/09; herdam as 11 do plano anterior), 10. Decisões registradas (F24), 11. Mapa de PRs e applies (F14, F20, F26, F36, F48, F63, F82), FASE 0 — Reconciliação de emergência (F01–F14), FASE 1 — Bloco A″: completar a segurança e a governança (F15–F26), FASE 2 — Bloco B″: integridade do modelo (F27–F36), FASE 3 — Bloco C″: RPCs e performance (F37–F48), PLANO — Team Chat V2: finalização da implantação (100 etapas) — 2026-09-29 (+1 more)
 
-### Community 1285 - "IA-058 — Projeto: alertas de consumo anômalo"
+### Community 1286 - "IA-058 — Projeto: alertas de consumo anômalo"
 Cohesion: 0.20
 Nodes (9): 1. O que já existe (medido, para não projetar no vazio), 2. Os três escopos, 3. Os três sinais, 4. Deduplicação: a identidade do incidente, 5. Bloquear apenas a capacidade afetada, 6. Limiares, 7. Como o aceite se prova (planejado para a etapa de implementação), 8. Fora do escopo desta etapa (+1 more)
 
-### Community 1286 - "Composição do `vendor-ui` e o orçamento de bundle inicial — E34 (PLANO_MELHORIAS_50)"
+### Community 1287 - "Composição do `vendor-ui` e o orçamento de bundle inicial — E34 (PLANO_MELHORIAS_50)"
 Cohesion: 0.20
 Nodes (9): 1. Separar `framer-motion` em chunk próprio — **descartado**, 2. Remover o agrupamento manual `vendor-ui` (deixar o rolldown decidir) — **descartado, e com folga**, Achados fora do escopo (não corrigidos), Composição do `vendor-ui`, Composição do `vendor-ui` e o orçamento de bundle inicial — E34 (PLANO_MELHORIAS_50), Conclusão — por que a meta de ≤300 KB não é atingível agora, Estado medido (main de 03/10), Os dois experimentos (medidos, não estimados) (+1 more)
 
-### Community 1287 - "HANDOFF v1 — módulo Catálogo (ZAPP Web V2)"
+### Community 1288 - "HANDOFF v1 — módulo Catálogo (ZAPP Web V2)"
 Cohesion: 0.20
 Nodes (9): 1.1 Código e banco, 1.2 PRs mergeadas do escopo Catálogo, 1. O que está ENTREGUE, 2. O que está BLOQUEADO (e por quem), 3. Decisões pendentes, 4. Release — o que **NÃO** foi feito (por instrução), 5. Comandos úteis, 6. Documentos do módulo (+1 more)
 
-### Community 1288 - "CV-008 — Metas provisórias do RADAR (piloto 90 dias)"
+### Community 1289 - "CV-008 — Metas provisórias do RADAR (piloto 90 dias)"
 Cohesion: 0.20
 Nodes (9): 1. KPI-1 — Custo por chamada de IA (D1), 2. KPI-2 — Velocidade de primeira resposta (D2), 3. KPI-3 — Adoção pelos vendedores (D3), 4. KPI-4 — Impacto na conversão (D4), 5. KPI-5 — Completude do B·R·I·N·D·E (D5), 6. Condições de desligamento automático, 7. O que isto muda no plano, CV-008 — Metas provisórias do RADAR (piloto 90 dias) (+1 more)
 
-### Community 1289 - "Glows Tokenizados (`shadow-glow-*`)"
+### Community 1290 - "Glows Tokenizados (`shadow-glow-*`)"
 Cohesion: 0.20
 Nodes (9): Catálogo, Compostos multi-layer, Cores semânticas, Exemplos, Gamificação, Glows Tokenizados (`shadow-glow-*`), Mapeamento de intensidades, Princípios (+1 more)
 
-### Community 1290 - "T78 — Auditoria de contraste WCAG da Telefonia nos 3 temas"
+### Community 1291 - "T78 — Auditoria de contraste WCAG da Telefonia nos 3 temas"
 Cohesion: 0.20
 Nodes (9): 2. Fontes dos tokens (`arquivo:linha`, conferidas no working tree em 2026-10-08), 3.1 Texto sobre o card (`--card` — tabela do histórico, KPIs, painéis), 3.2 Texto sobre preenchimento sólido (selos e botões), 3.3 Texto sobre tinta translúcida (composta sobre o card), 3. Tabela por par, 4. Resíduos registrados, 5. Conclusão, Achado adjacente (fora do escopo deste cartão — vai em `kanban_comment`) (+1 more)
 
-### Community 1291 - "11. Gates de saída por fase"
+### Community 1292 - "11. Gates de saída por fase"
 Cohesion: 0.20
 Nodes (10): 11.1 Gate G0 — custódia e identidade, 11.2 Gate G1 — hotfix P0 de segurança, 11.3 Gate G2 — supply chain e CI, 11.4 Gate G3 — banco e autorização, 11.5 Gate G4 — confiança de mudança, 11.6 Gate G5 — verdade funcional, 11.7 Gate G6 — performance e acessibilidade, 11.8 Gate G7 — operação e governança (+2 more)
 
-### Community 1292 - "IA-006 — Verificação dos 10 achados do Plano IA 200 Etapas e classificação da natureza da inteligência"
+### Community 1293 - "IA-006 — Verificação dos 10 achados do Plano IA 200 Etapas e classificação da natureza da inteligência"
 Cohesion: 0.20
 Nodes (9): Equivalências indevidas a eliminar (síntese para IA-006), IA-006 — Verificação dos 10 achados do Plano IA 200 Etapas e classificação da natureza da inteligência, Onde a UI apresenta estimativa/índice como se fosse medida, Parte 1 — Contagem dos 10 achados, Parte 3 — Natureza da inteligência por indicador/recurso (IA-006), Parte 4 — Itens verificados de passagem (fora dos 10) e limitações, Proveniência do código verificado, G() (+1 more)
 
-### Community 1293 - "Pendências que não são de agente (arquivadas em 08/10/2026)"
+### Community 1294 - "Pendências que não são de agente (arquivadas em 08/10/2026)"
 Cohesion: 0.20
 Nodes (9): Acréscimo 23h20 (SL-118 / E80), Acréscimo do ciclo das 20h, Acréscimo do plano 95% (08/10, 21h40): itens de CI/baseline/config que o portão proíbe ao agente (ficam com o Claude), Desbloqueados e reatribuídos (migration/Edge só no repositório), GitHub / CI (ação administrativa), Obsoletos (já resolvidos ou pré-requisito inexistente), Pendências que não são de agente (arquivadas em 08/10/2026), Produção / infra / terceiros (+1 more)
 
-### Community 1294 - "Bloco 3 — Resiliência de envio (021–030)"
+### Community 1295 - "Bloco 3 — Resiliência de envio (021–030)"
 Cohesion: 0.20
 Nodes (10): 021 — DLQ operável: `reprocess-failed-messages` + RPCs `rpc_dlq_*`, 022 — Página admin de mensagens falhas (DLQ), 023 — Backoff determinístico compartilhado (`dlq-backoff.ts`), 024 — Idempotência de envio server-side, 025 — Fila offline (IndexedDB) + reconciliação ao reconectar, 026 — Throttle de envio e dedupe entre abas, 027 — Circuit breaker por instância Evolution, 028 — Pausa de processamento por instância (+2 more)
 
-### Community 1295 - "5. Plano de 100 etapas"
+### Community 1296 - "5. Plano de 100 etapas"
 Cohesion: 0.20
 Nodes (10): 081 — Outlook / Microsoft Graph, 082 — Tracking de e-mail (pixel + link), 083 — Envio e recebimento de e-mail via Resend + IMAP bridge, 084 — Dispatcher de notificações com canais configuráveis, 085 — Auto-export para bucket privado com signed URL, 090 — Estatísticas do consumidor com HMAC e outbox de eventos, 5. Plano de 100 etapas, Bloco 9 — E-mail, notificações, dados e mídia (081–090) (+2 more)
 
-### Community 1296 - "SLOs e monitoramento de disponibilidade — ZAPP WEB V2"
+### Community 1297 - "SLOs e monitoramento de disponibilidade — ZAPP WEB V2"
 Cohesion: 0.20
 Nodes (9): Atualização 2026-10-08 (item S2-4 da auditoria de 2026-09-05), Atualização 2026-11-06, Componentes e sinais que já existem, Multiplix — fila, voz, consumo e conexão (F91), Métricas do Multiplix, Próximos passos concretos (em ordem), Runbook curto quando algo cai, SLOs e monitoramento de disponibilidade — ZAPP WEB V2 (+1 more)
 
-### Community 1297 - "20261015210626_csat_pipeline.sql"
+### Community 1298 - "20261015210626_csat_pipeline.sql"
 Cohesion: 0.27
 Nodes (8): pg_extension, idx_csat_surveys_contact_invites, idx_csat_surveys_dispatch, public.claim_due_csat_surveys(), public.contacts, public.csat_surveys, public.messages, uq_csat_surveys_conversation
 
-### Community 1298 - "20260612150000_audit_index_cleanup.sql"
+### Community 1299 - "20260612150000_audit_index_cleanup.sql"
 Cohesion: 0.22
 Nodes (9): public.app_notifications, public.conversations, public.evolution_conversations, idx_app_notifications_created_at, idx_conversations_contact_id, idx_evolution_conversations_contact_id, idx_evolution_conversations_status_assigned, idx_outbound_queue_status_created (+1 more)
 
-### Community 1299 - "20261001251230_f34_multiplix_events_append_only.sql"
+### Community 1300 - "20261001251230_f34_multiplix_events_append_only.sql"
 Cohesion: 0.27
 Nodes (8): public.guard_multiplix_event_immutable, idx_multiplix_events_correlation, idx_multiplix_events_dispatch_created, idx_multiplix_events_recipient, public.multiplix_events, public.multiplix_dispatches, public.multiplix_recipients, trg_guard_multiplix_event_immutable
 
-### Community 1300 - "validate-plan.unit.mjs"
+### Community 1301 - "validate-plan.unit.mjs"
 Cohesion: 0.27
 Nodes (8): etapa(), executar(), executarPlano(), planoCom(), planoComChecklistMisto(), planosPorQuebraDeLinha, ROOT, SCRIPT
 
-### Community 1301 - "matriz-oth013-validar.py"
+### Community 1302 - "matriz-oth013-validar.py"
 Cohesion: 0.40
 Nodes (9): fail(), main(), matrix_row(), no_duplicate_keys(), pending_entry(), Any, Valida a matriz documental canônica do achado OTH-013., walk() (+1 more)
 
-### Community 1302 - "tipografia-excecoes-doc.unit.mjs"
+### Community 1303 - "tipografia-excecoes-doc.unit.mjs"
 Cohesion: 0.22
 Nodes (9): CAMINHOS_REAIS, EXCECOES_OBRIGATORIAS, FONTES_OK, LEITOR_REAL, linhasRegistradas(), RAIZ, REGISTRO, REGISTRO_OK (+1 more)
 
-### Community 1303 - "dashboard-daily-series.test.sh"
+### Community 1304 - "dashboard-daily-series.test.sh"
 Cohesion: 0.44
 Nodes (8): assert_eq(), assert_has(), fail(), pass(), psql_exec(), psql_val(), series_line_sql(), dashboard-daily-series.test.sh script
 
-### Community 1304 - "edit-message-authorization.test.sh"
+### Community 1305 - "edit-message-authorization.test.sh"
 Cohesion: 0.38
 Nodes (6): expect_error(), expect_value(), fail(), psql_file(), psql_sql(), edit-message-authorization.test.sh script
 
-### Community 1305 - "email-rls-sem-ramo-admin.test.sh"
+### Community 1306 - "email-rls-sem-ramo-admin.test.sh"
 Cohesion: 0.42
 Nodes (8): as_user(), check_access(), expect_value(), expect_value_as(), fail(), psql_file(), psql_sql(), email-rls-sem-ramo-admin.test.sh script
 
-### Community 1306 - "grants-baseline-module-rpcs.test.mjs"
+### Community 1307 - "grants-baseline-module-rpcs.test.mjs"
 Cohesion: 0.22
 Nodes (8): BASELINE, entradaEhDaRpc(), GERADOR, grantAnonDe(), MIGRATIONS, RAIZ, RPCS_EXISTENTES, RPCS_MODULO
 
-### Community 1307 - "ia131-audio-stt-openrouter.test.sh"
+### Community 1308 - "ia131-audio-stt-openrouter.test.sh"
 Cohesion: 0.42
 Nodes (8): apply_migration(), apply_rollback(), expect_value(), fail(), psql_file(), psql_sql(), rollback_sql(), ia131-audio-stt-openrouter.test.sh script
 
-### Community 1308 - "messages-group-sender.test.sh"
+### Community 1309 - "messages-group-sender.test.sh"
 Cohesion: 0.47
 Nodes (8): col_prop(), expect_failure(), expect_value(), fail(), policy_count(), psql_file(), psql_sql(), messages-group-sender.test.sh script
 
-### Community 1309 - "profiles-role-escalation-guard.test.sh"
+### Community 1310 - "profiles-role-escalation-guard.test.sh"
 Cohesion: 0.49
 Nodes (8): expect_error(), fail(), pass(), psql_q(), psql_test(), run_ok(), profiles-role-escalation-guard.test.sh script, start_postgres()
 
-### Community 1310 - "scope-snoozes-pins-favorites-authenticated.test.sh"
+### Community 1311 - "scope-snoozes-pins-favorites-authenticated.test.sh"
 Cohesion: 0.49
 Nodes (8): expect_lista(), expect_ok(), expect_value(), fail(), lista_policies(), psql_file(), psql_sql(), scope-snoozes-pins-favorites-authenticated.test.sh script
 
-### Community 1311 - "talkx-campaign-logs-cursor.test.sh"
+### Community 1312 - "talkx-campaign-logs-cursor.test.sh"
 Cohesion: 0.44
 Nodes (8): assert_eq(), assert_has(), fail(), pass(), psql_exec(), psql_raw(), psql_val(), talkx-campaign-logs-cursor.test.sh script
 
-### Community 1312 - "talkx-conversion-defaults.test.sh"
+### Community 1313 - "talkx-conversion-defaults.test.sh"
 Cohesion: 0.47
 Nodes (8): as_service_role(), assert_eq(), assert_fails_like(), fail(), pass(), psql_query(), psql_script(), talkx-conversion-defaults.test.sh script
 
-### Community 1313 - "talkx-engine-cron-runs-role-gate.test.sh"
+### Community 1314 - "talkx-engine-cron-runs-role-gate.test.sh"
 Cohesion: 0.44
 Nodes (8): assert_eq(), assert_has(), fail(), find_migration(), pass(), psql_exec(), psql_val(), talkx-engine-cron-runs-role-gate.test.sh script
 
-### Community 1314 - "talkx-optout.test.sh"
+### Community 1315 - "talkx-optout.test.sh"
 Cohesion: 0.49
 Nodes (8): assert_match(), expect_error(), fail(), pass(), psql_q(), psql_test(), talkx-optout.test.sh script, start_postgres()
 
-### Community 1315 - "talkx-v19-retry-recipient.test.sh"
+### Community 1316 - "talkx-v19-retry-recipient.test.sh"
 Cohesion: 0.44
 Nodes (8): as_service(), eligible_sql(), expect_error(), fail(), pass(), psql_test(), psql_val(), talkx-v19-retry-recipient.test.sh script
 
-### Community 1316 - "talkx-v21-launch-flags.test.sh"
+### Community 1317 - "talkx-v21-launch-flags.test.sh"
 Cohesion: 0.38
 Nodes (8): call_as(), confirm_sql(), fail(), psql_strict(), psql_test(), rollback_of(), talkx-v21-launch-flags.test.sh script, state()
 
-### Community 1317 - "team-chat-department-transfer-guards.test.sh"
+### Community 1318 - "team-chat-department-transfer-guards.test.sh"
 Cohesion: 0.49
 Nodes (8): as_user(), expect_error_as(), expect_ok_as(), expect_value(), fail(), psql_file(), psql_sql(), team-chat-department-transfer-guards.test.sh script
 
-### Community 1318 - "team-messages-page-cursor-tiebreak.test.sh"
+### Community 1319 - "team-messages-page-cursor-tiebreak.test.sh"
 Cohesion: 0.47
 Nodes (8): as_user(), expect_error_as(), expect_value_as(), fail(), psql_file(), psql_sql(), team-messages-page-cursor-tiebreak.test.sh script, walk_pages()
 
-### Community 1319 - "wa-label-connection-scope.test.sh"
+### Community 1320 - "wa-label-connection-scope.test.sh"
 Cohesion: 0.44
 Nodes (7): expect_error(), expect_ok(), expect_value(), fail(), psql_file(), psql_sql(), wa-label-connection-scope.test.sh script
 
-### Community 1320 - "whatsapp-media-select-scope.test.sh"
+### Community 1321 - "whatsapp-media-select-scope.test.sh"
 Cohesion: 0.38
 Nodes (6): expect_error(), expect_value(), fail(), psql_file(), psql_sql(), whatsapp-media-select-scope.test.sh script
 
-### Community 1321 - "MediaMigrationTool.test.tsx"
+### Community 1322 - "MediaMigrationTool.test.tsx"
 Cohesion: 0.22
 Nodes (8): auditQueries, { invokeEdgeMock, fromMock }, LOGS, makeQuery(), messagesQueries, mockBackend(), PROFILES, QueryLike
 
-### Community 1322 - "InviteAgentDialog.test.tsx"
+### Community 1323 - "InviteAgentDialog.test.tsx"
 Cohesion: 0.27
 Nodes (4): InviteAgentDialog(), describeInviteError(), readInviteFailure(), roleState
 
-### Community 1323 - "useChatPanelHandlers.edicao-rejeitada.test.tsx"
+### Community 1324 - "useChatPanelHandlers.edicao-rejeitada.test.tsx"
 Cohesion: 0.29
 Nodes (9): comoEditMessageApi(), editarEEnviar(), EditMessageApi, mensagemEmEdicao(), mocks, montar(), toasts(), toastsDestrutivos() (+1 more)
 
-### Community 1324 - "useRadarPanel.ts"
+### Community 1325 - "useRadarPanel.ts"
 Cohesion: 0.27
 Nodes (8): baseProps, DEFAULT_STATE, loadState(), RADAR_CARD_IDS, RadarPanelState, saveState(), useRadarPanel(), UseRadarPanelResult
 
-### Community 1325 - "VoiceChangerPicker.voz-temporaria.test.tsx"
+### Community 1326 - "VoiceChangerPicker.voz-temporaria.test.tsx"
 Cohesion: 0.20
 Nodes (6): authState, getUserMedia, MockMediaRecorder, popoverState, storageState, toastMock
 
-### Community 1326 - "useMonitoringData.buckets.test.ts"
+### Community 1327 - "useMonitoringData.buckets.test.ts"
 Cohesion: 0.22
 Nodes (7): fetchMonitoring(), fetchStats(), messageGteCalls, messagesData, { mockFrom }, MsgRow, NOW
 
-### Community 1327 - "useMonitoringData.errors.test.ts"
+### Community 1328 - "useMonitoringData.errors.test.ts"
 Cohesion: 0.20
 Nodes (8): agora, CONEXAO, leituraOk(), LOG, { mockFrom }, MSG, Resposta, respostas
 
-### Community 1328 - "ChannelRoutingRules.a11y.test.tsx"
+### Community 1329 - "ChannelRoutingRules.a11y.test.tsx"
 Cohesion: 0.20
 Nodes (5): ChannelRoutingRules(), cadeia(), alvo, MockState, ok()
 
-### Community 1329 - "QueuesView.editar.test.tsx"
+### Community 1330 - "QueuesView.editar.test.tsx"
 Cohesion: 0.20
 Nodes (5): contactsCountBuilder(), { mockUpdate }, mockWaitingCounts, QueueRow, queuesState
 
-### Community 1330 - "SegmentSideList.test.tsx"
+### Community 1331 - "SegmentSideList.test.tsx"
 Cohesion: 0.20
 Nodes (3): SegmentLike, SegmentSideList(), SEGMENTS
 
-### Community 1331 - "TalkXCampaignRunning.segmentoPico.test.tsx"
+### Community 1332 - "TalkXCampaignRunning.segmentoPico.test.tsx"
 Cohesion: 0.20
 Nodes (7): chain(), LOG_ANA, LOG_BRUNO, RECIP_ANA, RECIP_BRUNO, SEGMENTOS, { state, mockCampaign }
 
-### Community 1332 - "TalkXSuppression.editReasonVazio.test.tsx"
+### Community 1333 - "TalkXSuppression.editReasonVazio.test.tsx"
 Cohesion: 0.24
 Nodes (5): abrirDropdown(), abrirMenu(), abrirModalEMotivo(), h, ROTULOS_ESPERADOS
 
-### Community 1333 - "useBusinessHoursCheck.test.tsx"
+### Community 1334 - "useBusinessHoursCheck.test.tsx"
 Cohesion: 0.27
 Nodes (5): Builder, h, getSaoPauloDayOfWeek(), SAO_PAULO_WEEKDAYS, useBusinessHoursCheck()
 
-### Community 1334 - "useMessages.overlay.test.tsx"
+### Community 1335 - "useMessages.overlay.test.tsx"
 Cohesion: 0.24
 Nodes (7): config(), Deferred, h, onDelete(), onUpdate(), renderCom(), T0
 
-### Community 1335 - "useAudioMemes.mutacoes.test.tsx"
+### Community 1336 - "useAudioMemes.mutacoes.test.tsx"
 Cohesion: 0.22
 Nodes (6): cadeia(), h, memesDoBackend, montar(), Resposta, simularEscritas()
 
-### Community 1336 - "useCatalogRecentSends.test.tsx"
+### Community 1337 - "useCatalogRecentSends.test.tsx"
 Cohesion: 0.20
 Nodes (7): makeBuilder(), b, QueryResult, rangeCalls, recentResult, selectArgs, topResult
 
-### Community 1337 - "useCatalogSendHistory.historicoCompleto.test.tsx"
+### Community 1338 - "useCatalogSendHistory.historicoCompleto.test.tsx"
 Cohesion: 0.22
 Nodes (7): Linha, linhaDoEvento(), makeBuilder(), b, rangeCalls, Resultado, tabela
 
-### Community 1338 - "useSavedFilters.test.tsx"
+### Community 1339 - "useSavedFilters.test.tsx"
 Cohesion: 0.20
 Nodes (5): authCbs, mockFilters, mockFrom, mockGetUser, selectChains
 
-### Community 1339 - "status.test.ts"
+### Community 1340 - "status.test.ts"
 Cohesion: 0.36
 Nodes (8): AI_JOB_STATUS_LABELS, AI_JOB_STATUSES, AI_JOB_TERMINAL_STATUSES, AI_JOB_TRANSITIONS, AiJobStatus, canTransitionAiJob(), isTerminalAiJobStatus(), STATUS_ESPERADOS
 
-### Community 1340 - "recover-corrupted-audios/index.test.ts"
+### Community 1341 - "recover-corrupted-audios/index.test.ts"
 Cohesion: 0.22
 Nodes (8): ADMIN, AGENT, CONN, depsFor(), Effects, makeSupabase(), MockOpts, SAMPLE_MESSAGES
 
-### Community 1341 - "consumo-pago-no-ledger.test.ts"
+### Community 1342 - "consumo-pago-no-ledger.test.ts"
 Cohesion: 0.20
 Nodes (6): ELEVENLABS_SEM_CHAMADA_PAGA, HOSTS_PAGOS, PENDENTES_DECLARADAS, RAIZ, REGISTRO_DIRETO, REGISTRO_PELO_DESPACHO
 
-### Community 1342 - "webhook-edit-reaction-connection-scope.test.ts"
+### Community 1343 - "webhook-edit-reaction-connection-scope.test.ts"
 Cohesion: 0.22
 Nodes (6): cenario(), edited, fakeDb(), Filtro, reaction, Row
 
-### Community 1343 - "public.messages"
+### Community 1344 - "public.messages"
 Cohesion: 0.27
 Nodes (9): idx_messages_contact_id, idx_messages_content_search, idx_messages_created_at, public.messages, public.contacts, public.profiles, public.update_updated_at_column, public.whatsapp_connections (+1 more)
 
-### Community 1344 - "20251231123128_44dfe57a-e66d-4ffe-ad25-544966e4b9a3.sql"
+### Community 1345 - "20251231123128_44dfe57a-e66d-4ffe-ad25-544966e4b9a3.sql"
 Cohesion: 0.31
 Nodes (8): idx_user_devices_fingerprint, idx_user_devices_user_id, idx_user_sessions_active, idx_user_sessions_user_id, public.user_devices, public.user_sessions, public.update_device_last_seen, update_user_devices_last_seen
 
-### Community 1345 - "20260912110000_harden_talkx_delivery_receipts.sql"
+### Community 1346 - "20260912110000_harden_talkx_delivery_receipts.sql"
 Cohesion: 0.22
 Nodes (5): idx_talkx_recipients_external_id, public.record_talkx_recipient_sent(), public.talkx_recipient_is_suppressed(), public.talkx_blacklist, public.talkx_recipients
 
-### Community 1346 - "20260916160000_fk_indexes_and_search_path_hardening.sql"
+### Community 1347 - "20260916160000_fk_indexes_and_search_path_hardening.sql"
 Cohesion: 0.22
 Nodes (9): idx_catalog_send_events_agent_id, idx_talkx_blacklist_removed_by, idx_talkx_blacklist_source_message_id, idx_talkx_recipients_variant_id, idx_talkx_template_versions_saved_by, public.catalog_send_events, public.talkx_blacklist, public.talkx_recipients (+1 more)
 
-### Community 1347 - "20260926161000_multiplix_dispatches_schema.sql"
+### Community 1348 - "20260926161000_multiplix_dispatches_schema.sql"
 Cohesion: 0.33
 Nodes (9): idx_multiplix_dispatches_created_by, idx_multiplix_dispatches_status, idx_multiplix_recipients_dispatch_id, idx_multiplix_recipients_pending, public.multiplix_dispatches, public.multiplix_recipients, public.update_updated_at_column, update_multiplix_dispatches_updated_at (+1 more)
 
-### Community 1349 - "public.snapshot_talkx_campaign_audience"
+### Community 1350 - "public.snapshot_talkx_campaign_audience"
 Cohesion: 0.22
 Nodes (8): public.save_talkx_campaign_draft(), public.snapshot_talkx_campaign_audience(), PUBLIC, public.profiles, public.talkx_campaigns, public.talkx_recipients, public.talkx_segments, public.whatsapp_connections
 
-### Community 1350 - "20261002691230_talkx_v4_x021_links_conversoes_investimento.sql"
+### Community 1351 - "20261002691230_talkx_v4_x021_links_conversoes_investimento.sql"
 Cohesion: 0.27
 Nodes (8): public.record_talkx_conversion(), public.talkx_delete_link(), public.talkx_upsert_link(), public.profiles, public.talkx_conversions, public.talkx_links, talkx_conversions_dedupe_key, talkx_links_campaign_label_lower_key
 
-### Community 1351 - "20261004185228_team_membership_bootstrap_owner_grants.sql"
+### Community 1352 - "20261004185228_team_membership_bootstrap_owner_grants.sql"
 Cohesion: 0.27
 Nodes (7): public.create_team_group_conversation(), public.is_last_team_conversation_owner(), public.is_team_conversation_creator(), PUBLIC, public.profiles, public.team_conversation_members, public.team_conversations
 
-### Community 1352 - "public.enforce_talkx_campaign_mutability"
+### Community 1353 - "public.enforce_talkx_campaign_mutability"
 Cohesion: 0.29
 Nodes (9): enforce_talkx_campaign_mutability, public.enforce_talkx_campaign_mutability(), public.resolve_talkx_outcome_unknown(), public.retry_talkx_recipients(), information_schema.columns, public.contacts, public.enforce_talkx_campaign_mutability, public.profiles (+1 more)
 
-### Community 1353 - "public.multiplix_connection_daily_usage"
+### Community 1354 - "public.multiplix_connection_daily_usage"
 Cohesion: 0.36
 Nodes (9): public.multiplix_connection_daily_usage(), public.talkx_connection_send_budget(), public.multiplix_delivery_items, public.multiplix_dispatches, public.multiplix_recipients, public.talkx_campaigns, public.talkx_recipients, public.talkx_settings (+1 more)
 
-### Community 1354 - "public.talkx_monitor_panel"
+### Community 1355 - "public.talkx_monitor_panel"
 Cohesion: 0.20
 Nodes (9): public.talkx_monitor_panel(), ev, pg_timezone_names, public.profiles, public.talkx_campaigns, public.talkx_engine_health, public.talkx_recipients, public.whatsapp_connections (+1 more)
 
-### Community 1355 - "public.talkx_refresh_local_attributes"
+### Community 1356 - "public.talkx_refresh_local_attributes"
 Cohesion: 0.27
 Nodes (8): public.talkx_contact_attributes, public.talkx_ddd_regions, public.talkx_refresh_local_attributes(), public.contacts, public.messages, public.profiles, public.sales_deals, public.sales_pipeline_stages
 
-### Community 1356 - "public.talkx_monitor_panel"
+### Community 1357 - "public.talkx_monitor_panel"
 Cohesion: 0.20
 Nodes (9): public.talkx_monitor_panel(), ev, pg_timezone_names, public.profiles, public.talkx_campaigns, public.talkx_engine_health, public.talkx_recipients, public.whatsapp_connections (+1 more)
 
-### Community 1357 - "conversas-p0-p1-20261113.test.sh"
+### Community 1358 - "conversas-p0-p1-20261113.test.sh"
 Cohesion: 0.51
 Nodes (9): apply(), as_user(), enq(), expect_err(), fail(), ok(), psql_q(), conversas-p0-p1-20261113.test.sh script (+1 more)
 
-### Community 1358 - "remove-enum-special-agent.test.sh"
+### Community 1359 - "remove-enum-special-agent.test.sh"
 Cohesion: 0.42
 Nodes (8): apply(), assert_b(), expect_error(), fail(), ok(), run(), s1(), remove-enum-special-agent.test.sh script
 
-### Community 1359 - "multiplix-dispatch-domain-api.contract.test.ts"
+### Community 1360 - "multiplix-dispatch-domain-api.contract.test.ts"
 Cohesion: 0.22
 Nodes (6): ALLOWED_LOG_KEYS, assert(), CaseFn, EXPECTED_ACTIONS, handlersKeys(), ROOT
 
-### Community 1360 - "telefonia-contrato-docs.contract.test.ts"
+### Community 1361 - "telefonia-contrato-docs.contract.test.ts"
 Cohesion: 0.29
 Nodes (8): arquivosDoRepo(), DOCUMENTOS, EXCECOES, ler(), linhaDe(), linhas(), Referencia, resolver()
 
-### Community 1361 - "AGENTS.md — Zapp Web V2"
+### Community 1362 - "AGENTS.md — Zapp Web V2"
 Cohesion: 0.22
 Nodes (8): AGENTS.md — Zapp Web V2, Banco — ler `docs/agentes/banco.md` antes de SQL, migration ou deploy, Bugs e funcionalidades, Comunicação, Grafo de código (graphify), Postura, Serviços, Stack e comandos — detalhe em `docs/agentes/mapa-repo.md`
 
-### Community 1362 - "Dossiê — `hermes/sonar-s7773-number-parseint-2610022025ac4f`"
+### Community 1363 - "Dossiê — `hermes/sonar-s7773-number-parseint-2610022025ac4f`"
 Cohesion: 0.22
 Nodes (8): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Observação, 5. Veredito + Confiança, 6. Metadados, Dossiê — `hermes/sonar-s7773-number-parseint-2610022025ac4f`, ⚠ Riscos de Regressão
 
-### Community 1363 - "queues"
+### Community 1364 - "queues"
 Cohesion: 0.22
 Nodes (9): conversation_events, goals_configurations, queue_goals, queue_positions, queue_skill_requirements, sla_rules, queues, queue_members (+1 more)
 
-### Community 1364 - "Dossiê: claude/fix-ci-workitem-tz-261025-1350"
+### Community 1365 - "Dossiê: claude/fix-ci-workitem-tz-261025-1350"
 Cohesion: 0.22
 Nodes (8): Decisão, Delta (1 arquivo), Dossiê: claude/fix-ci-workitem-tz-261025-1350, Estado em main, Evidência, Identificação, merge-tree, Veredito: INTEGRAR-LIMPO (confiança 0.95)
 
-### Community 1365 - "Dossiê: claude/fix-plano-190-etapas-261019-1200"
+### Community 1366 - "Dossiê: claude/fix-plano-190-etapas-261019-1200"
 Cohesion: 0.22
 Nodes (8): Commit único, Decisão, Delta, Dossiê: claude/fix-plano-190-etapas-261019-1200, Evidência, Identificação, merge-tree, Veredito: INTEGRAR-LIMPO (confiança 0.90)
 
-### Community 1366 - "Dossiê: claude/fix-types-sync-is-pinned-261029"
+### Community 1367 - "Dossiê: claude/fix-types-sync-is-pinned-261029"
 Cohesion: 0.22
 Nodes (8): Decisão, Delta (1 arquivo), Dossiê: claude/fix-types-sync-is-pinned-261029, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.93)
 
-### Community 1367 - "Dossiê: claude/fix-unit-tests-inbox-261023-1108"
+### Community 1368 - "Dossiê: claude/fix-unit-tests-inbox-261023-1108"
 Cohesion: 0.22
 Nodes (8): Decisão, Delta (2 arquivos), Dossiê: claude/fix-unit-tests-inbox-261023-1108, Estado em main, Evidência, Identificação, merge-tree, Veredito: INTEGRAR-LIMPO (confiança 0.95)
 
-### Community 1368 - "Dossiê: claude/pensive-cori-i93zgf"
+### Community 1369 - "Dossiê: claude/pensive-cori-i93zgf"
 Cohesion: 0.22
 Nodes (8): Decisão, Delta (2 arquivos), Dossiê: claude/pensive-cori-i93zgf, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.85)
 
-### Community 1369 - "Dossiê: claude/feat-copiloto-cv011-020-migrations-261016-1930"
+### Community 1370 - "Dossiê: claude/feat-copiloto-cv011-020-migrations-261016-1930"
 Cohesion: 0.22
 Nodes (8): Arquivos novos, Contexto, Decisão, Dossiê: claude/feat-copiloto-cv011-020-migrations-261016-1930, Evidência, Identificação, merge-tree, Veredito: INTEGRAR-LIMPO (confiança 0.90)
 
-### Community 1370 - "Dossiê: claude/feat-copiloto-cv021-030-worker-261016-2100"
+### Community 1371 - "Dossiê: claude/feat-copiloto-cv021-030-worker-261016-2100"
 Cohesion: 0.22
 Nodes (8): Arquivos novos (vs main), Decisão, Dossiê: claude/feat-copiloto-cv021-030-worker-261016-2100, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.80)
 
-### Community 1371 - "Dossiê: claude/feat-copiloto-cv031-040-brinde-intelligence-261016-2025"
+### Community 1372 - "Dossiê: claude/feat-copiloto-cv031-040-brinde-intelligence-261016-2025"
 Cohesion: 0.22
 Nodes (8): Arquitetura supersedida, Colisão de migration, Decisão, Dossiê: claude/feat-copiloto-cv031-040-brinde-intelligence-261016-2025, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.88)
 
-### Community 1372 - "Dossiê: claude/feat-copiloto-cv041-050-suggest-reply-261016-2145"
+### Community 1373 - "Dossiê: claude/feat-copiloto-cv041-050-suggest-reply-261016-2145"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv041-050-suggest-reply-261016-2145, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1373 - "Dossiê: claude/feat-copiloto-cv051-060-radar-popup-261016-2130"
+### Community 1374 - "Dossiê: claude/feat-copiloto-cv051-060-radar-popup-261016-2130"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv051-060-radar-popup-261016-2130, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1374 - "Dossiê: claude/feat-copiloto-cv071-080-objection-battlecard-261016-2230"
+### Community 1375 - "Dossiê: claude/feat-copiloto-cv071-080-objection-battlecard-261016-2230"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv071-080-objection-battlecard-261016-2230, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1375 - "Dossiê: claude/feat-copiloto-cv071-150-fases-8-15-261024-1400"
+### Community 1376 - "Dossiê: claude/feat-copiloto-cv071-150-fases-8-15-261024-1400"
 Cohesion: 0.22
 Nodes (8): 14 novos arquivos não incluídos no PR #2361, Commits não mergeados (8 commits), Decisão, Dossiê: claude/feat-copiloto-cv071-150-fases-8-15-261024-1400, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.92)
 
-### Community 1376 - "Dossiê: claude/feat-copiloto-cv081-090-catalog-budget-261016-2235"
+### Community 1377 - "Dossiê: claude/feat-copiloto-cv081-090-catalog-budget-261016-2235"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv081-090-catalog-budget-261016-2235, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1377 - "Dossiê: claude/feat-copiloto-cv091-100-lead-signals-261016-2240"
+### Community 1378 - "Dossiê: claude/feat-copiloto-cv091-100-lead-signals-261016-2240"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv091-100-lead-signals-261016-2240, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1378 - "Dossiê: claude/feat-copiloto-cv091-100-signals-261016-2305"
+### Community 1379 - "Dossiê: claude/feat-copiloto-cv091-100-signals-261016-2305"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv091-100-signals-261016-2305, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1379 - "Dossiê: claude/feat-copiloto-cv101-110-multimodal-261016-0730"
+### Community 1380 - "Dossiê: claude/feat-copiloto-cv101-110-multimodal-261016-0730"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv101-110-multimodal-261016-0730, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1380 - "Dossiê: claude/feat-copiloto-cv101-110-multimodal-261016-2310"
+### Community 1381 - "Dossiê: claude/feat-copiloto-cv101-110-multimodal-261016-2310"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv101-110-multimodal-261016-2310, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1381 - "Dossiê: claude/feat-copiloto-cv111-120-guardrails-261016-0810"
+### Community 1382 - "Dossiê: claude/feat-copiloto-cv111-120-guardrails-261016-0810"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv111-120-guardrails-261016-0810, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1382 - "Dossiê: claude/feat-copiloto-cv111-120-guardrails-261016-2315"
+### Community 1383 - "Dossiê: claude/feat-copiloto-cv111-120-guardrails-261016-2315"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv111-120-guardrails-261016-2315, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1383 - "Dossiê: claude/feat-copiloto-cv121-130-supervisor-261016-2304"
+### Community 1384 - "Dossiê: claude/feat-copiloto-cv121-130-supervisor-261016-2304"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv121-130-supervisor-261016-2304, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1384 - "Dossiê: claude/feat-copiloto-cv121-130-supervisor-261016-2320"
+### Community 1385 - "Dossiê: claude/feat-copiloto-cv121-130-supervisor-261016-2320"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv121-130-supervisor-261016-2320, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1385 - "Dossiê: claude/feat-copiloto-cv131-140-analytics-261016-2325"
+### Community 1386 - "Dossiê: claude/feat-copiloto-cv131-140-analytics-261016-2325"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv131-140-analytics-261016-2325, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1386 - "Dossiê: claude/feat-copiloto-cv131-140-aprendizado-261016-2310"
+### Community 1387 - "Dossiê: claude/feat-copiloto-cv131-140-aprendizado-261016-2310"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv131-140-aprendizado-261016-2310, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1387 - "Dossiê: claude/feat-copiloto-cv141-150-integration-261016-2330"
+### Community 1388 - "Dossiê: claude/feat-copiloto-cv141-150-integration-261016-2330"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv141-150-integration-261016-2330, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1388 - "Dossiê: claude/feat-copiloto-cv141-150-piloto-261016-2317"
+### Community 1389 - "Dossiê: claude/feat-copiloto-cv141-150-piloto-261016-2317"
 Cohesion: 0.22
 Nodes (8): Arquivos novos não em main, Decisão, Dossiê: claude/feat-copiloto-cv141-150-piloto-261016-2317, Evidência, Identificação, merge-tree, PR #2361 (mergeado 2026-10-30), Veredito: COBERTA (confiança 0.82)
 
-### Community 1389 - "Dossiê: claude/feat-e83-entrar-por-codigo-261020-1935"
+### Community 1390 - "Dossiê: claude/feat-e83-entrar-por-codigo-261020-1935"
 Cohesion: 0.22
 Nodes (8): Decisão, Delta, Dossiê: claude/feat-e83-entrar-por-codigo-261020-1935, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.85)
 
-### Community 1390 - "Dossiê: fix/f1a-lote-b-batch14"
+### Community 1391 - "Dossiê: fix/f1a-lote-b-batch14"
 Cohesion: 0.22
 Nodes (8): Decisão, Delta, Dossiê: fix/f1a-lote-b-batch14, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.88)
 
-### Community 1391 - "Dossiê — `hermes/sonar-s7773-number-parseint-2610022025ac4f`"
+### Community 1392 - "Dossiê — `hermes/sonar-s7773-number-parseint-2610022025ac4f`"
 Cohesion: 0.22
 Nodes (8): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Observação, 5. Veredito + Confiança, 6. Metadados, Dossiê — `hermes/sonar-s7773-number-parseint-2610022025ac4f`, ⚠ Riscos de Regressão
 
-### Community 1392 - "Inventário de PRs abertas — adm01-debug/Zapp_Web_V2"
+### Community 1393 - "Inventário de PRs abertas — adm01-debug/Zapp_Web_V2"
 Cohesion: 0.22
 Nodes (8): (a) Duplicatas e sobreposições (mesmo objetivo e/ou mesmos arquivos), Achado estrutural: required checks reais ≠ CLAUDE.md, Agregados, (b) Colisões de migration, (c) Obsoletas (conteúdo próprio 100% presente em main), Inventário de PRs abertas — adm01-debug/Zapp_Web_V2, Observações gerais, Tabela completa
 
-### Community 1393 - "2. As 4 perguntas com evidência"
+### Community 1394 - "2. As 4 perguntas com evidência"
 Cohesion: 0.22
 Nodes (8): 1. O que faz, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio, Dossie PR #1975 — ci: reativa 8 suites de teste removidas do CI mínimo
 
-### Community 1394 - "2. As 4 perguntas com evidência"
+### Community 1395 - "2. As 4 perguntas com evidência"
 Cohesion: 0.22
 Nodes (8): 1. O que faz, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio, Dossie PR #1979 — docs: plano de correções dos workflows em FAILURE — 200 etapas (2026-10-16)
 
-### Community 1395 - "2. As 4 perguntas com evidência"
+### Community 1396 - "2. As 4 perguntas com evidência"
 Cohesion: 0.22
 Nodes (8): 1. O que faz, 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementado em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio, Dossie PR #1991 — fix: corrige nomes de workflows no notificador e cancelamento de scroll programático
 
-### Community 1396 - "2. As 4 perguntas com evidência"
+### Community 1397 - "2. As 4 perguntas com evidência"
 Cohesion: 0.22
 Nodes (8): 1. Intenção, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária, Dossiê PR #2003 — feat: CV-051–060 RADAR painel flutuante
 
-### Community 1397 - "2. As 4 perguntas com evidência"
+### Community 1398 - "2. As 4 perguntas com evidência"
 Cohesion: 0.22
 Nodes (8): 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência, 3. Bloqueio atual, 4. Ação necessária, Dossiê PR #2029 — feat: RADAR Phase 13 — Supervisor, coaching e treinamento CV-121–130
 
-### Community 1398 - "2. As 4 perguntas com evidência (diff lido)"
+### Community 1399 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.22
 Nodes (8): 2.1 Ainda válida?, 2.2 Traz regressão?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária, Dossiê PR #2065 — fix(test): AgentsView.capacidade + pendencias — mock channel/removeChannel
 
-### Community 1399 - "2. As 4 perguntas com evidência (diff lido)"
+### Community 1400 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.22
 Nodes (8): 1. Intenção, 2.1 Ainda válida?, 2.3 Já implementada em main?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária, Dossiê PR #2089 — fix(audio): chat.service — resolveAudioFormat substitui webm hardcoded
 
-### Community 1400 - "Inventário — Grants e Permissões"
+### Community 1401 - "Inventário — Grants e Permissões"
 Cohesion: 0.22
 Nodes (8): Achados desta seção, Correção proposta, Grants de escrita para `anon` (CRITICAL-1), Grants esperados (padrão Supabase), Inventário — Grants e Permissões, Resumo, Tabelas com anon INSERT + 0 policies RLS (máximo risco), Tabelas de maior criticidade com anon INSERT (amostra)
 
-### Community 1401 - "Inventário — Storage Buckets"
+### Community 1402 - "Inventário — Storage Buckets"
 Cohesion: 0.22
 Nodes (8): Achados desta seção, Análise de segurança, Buckets públicos (3), Inventário detalhado, Inventário — Storage Buckets, `multiplix-voice` sem MIME filter, Políticas RLS de storage, Resumo
 
-### Community 1402 - "Levantamento D/E — Hermes / Zapp"
+### Community 1403 - "Levantamento D/E — Hermes / Zapp"
 Cohesion: 0.22
 Nodes (8): Arquivos soltos, Critério de segurança e escopo, Critério para os arquivos soltos, Funcionalidades e decisões relevantes, Levantamento D/E — Hermes / Zapp, Prioridade de triagem, Worktrees, Índices produzidos
 
-### Community 1403 - "10. Devin — testado e documentado em 04/10/2026"
+### Community 1404 - "10. Devin — testado e documentado em 04/10/2026"
 Cohesion: 0.22
 Nodes (9): 10.1 O que a conta já tem (medido pela API, não estimado), 10.2 Modelos disponíveis na conta (`devin models list`), 10.3 Fatos da documentação que importam para a V2, 10.4 Testes feitos (04/10), 10.5-bis Decisões do Joaquim em 04/10 (depois do teste), 10.5 O que muda na Arquitetura V2 por causa do Devin, 10.6 Feito pelo Claude em 04/10 (depois das decisões), 10.7 Pendências do Joaquim vindas do Devin (ver lista no fim da seção 10) (+1 more)
 
-### Community 1404 - "F2"
+### Community 1405 - "F2"
 Cohesion: 0.22
 Nodes (9): E14 🔧 3 FKs sem índice (migration `20260920120000`, PR `chore/e50-f2-db-indices-autovacuum`), E15 📋/🔧 244 índices `idx_scan=0` — classificação mudou a meta, E16 ✅ Zero índices duplicados exatos, E17 📋 42 colunas `*_id` sem FK — inventário classificado, E18 🔧 Autovacuum das tabelas quentes (migration `20260920120100`), E19 ✅ Snapshot de queries lentas (pg_stat_statements em `extensions`, 20/09), E20 ✅ Conexões e timeouts, E21 👤 Backup/PITR (+1 more)
 
-### Community 1405 - "E97 — `-euo pipefail` em todos os workflows com passo shell"
+### Community 1406 - "E97 — `-euo pipefail` em todos os workflows com passo shell"
 Cohesion: 0.22
 Nodes (8): Arquivos, E97 — `-euo pipefail` em todos os workflows com passo shell, O que a etapa pedia, O que foi feito, Risco conhecido e como será medido, Teste que trava o invariante, Verificação, Verificação da etapa — cumprida
 
-### Community 1406 - "Área 03 — Telefonia/Ligações (VoIP, ligações WhatsApp, MeowCaller, ElevenLabs/voz) + Team Chat"
+### Community 1407 - "Área 03 — Telefonia/Ligações (VoIP, ligações WhatsApp, MeowCaller, ElevenLabs/voz) + Team Chat"
 Cohesion: 0.22
 Nodes (8): 1. Fontes lidas, 2. Placar por plano, 3.1 Telefonia — plano vivo T01–T100 (+ itens operacionais), 3.3 Voz / ElevenLabs (fronteira com a área IA — dono principal: IA), 3. Pendências detalhadas, 5. Achados fora dos planos, 6. Top 10 da área, Área 03 — Telefonia/Ligações (VoIP, ligações WhatsApp, MeowCaller, ElevenLabs/voz) + Team Chat
 
-### Community 1407 - "E44 — Status dos MCPs Quebrados"
+### Community 1408 - "E44 — Status dos MCPs Quebrados"
 Cohesion: 0.22
 Nodes (8): CLOUDFLARE-MCP (antigo CLOUDFLARE-WORKERS), E44 — Status dos MCPs Quebrados, Estado-base (2026-09-20): 5 MCPs com falha, Estado em 2026-09-29, Estado em 2026-10-08 (reconferido — item E44 / cartão SL-213), MCPs que foram desligados com sucesso, PORTAINER-MCP, Recomendação
 
-### Community 1408 - "F2 — Banco: índices e integridade (E14–E21)"
+### Community 1409 - "F2 — Banco: índices e integridade (E14–E21)"
 Cohesion: 0.22
 Nodes (9): E14 🔴 3 FKs sem índice no lado filho (herda E22/16-09), E15 🔴 244/503 índices nunca usados (herda E23/16-09), E16 🔴 Índices duplicados exatos, E17 🔴 Integridade referencial não declarada (herda E34/16-09), E18 🟡 Autovacuum por tabela quente (herda E30/16-09), E19 🟡 Baseline de queries lentas (herda E29/16-09), E20 🟢 Conexões e pooling (herda E32/16-09), E21 🟢 Backup e PITR verificados (herda E33/16-09) (+1 more)
 
-### Community 1409 - "PENDENCIAS.md — Bloqueios que requerem acao humana ou dependem de merge"
+### Community 1410 - "PENDENCIAS.md — Bloqueios que requerem acao humana ou dependem de merge"
 Cohesion: 0.22
 Nodes (8): 1. `copilot-pull-request-reviewer` — falha permanente por bloqueio de firewall, 2. `db-live-guard.yml` — 3 causas raiz documentadas; correcao requer Joaquim, 3. `deploy-functions.yml` — run de confirmacao pos-merge aguardando conclusao, Causa A — Comparar migrations com schema_migrations (step 9), Causa B — Verificar ACL e contrato de mcp_exec (step 10), Causa C — Auditar configuracao runtime sem dados de clientes (step 22), Inventario (03:00Z) — estado atual dos workflows, PENDENCIAS.md — Bloqueios que requerem acao humana ou dependem de merge
 
-### Community 1410 - "ANÁLISE — FAZER E RECEBER LIGAÇÕES PELO WHATSAPP NO ZAPP (07/10/2026)"
+### Community 1411 - "ANÁLISE — FAZER E RECEBER LIGAÇÕES PELO WHATSAPP NO ZAPP (07/10/2026)"
 Cohesion: 0.22
 Nodes (8): 1. Estado verificado no projeto, 2. Caminho A — API oficial: WhatsApp Business Calling API (Meta Cloud API), 3. Caminho B — não oficial: Evolution GO PR #141 + `meowcaller`, 3b. Caminho B': Wavoip (serviço pronto, mesma classe de risco do B), 4. Caminho C — manter como está, 5. Recomendação, ANÁLISE — FAZER E RECEBER LIGAÇÕES PELO WHATSAPP NO ZAPP (07/10/2026), Fontes
 
-### Community 1411 - "4.4 Semantic usage"
+### Community 1412 - "4.4 Semantic usage"
 Cohesion: 0.22
 Nodes (9): 4.1 Core palette, 4.2 Primary usage, 4.3 Alpha recomendada, 4.4 Semantic usage, 4. PALETA CANÔNICA DARKBLUE PREMIUM, Amarelo, Roxo, Verde (+1 more)
 
-### Community 1412 - "E18 — Laudo de contraste do controle de volume de MÍDIA"
+### Community 1413 - "E18 — Laudo de contraste do controle de volume de MÍDIA"
 Cohesion: 0.22
 Nodes (8): Candidatos de correção (medidos, `e18_fix.py`) — **não aplicados**, Conclusão, E18 — Laudo de contraste do controle de volume de MÍDIA, Fontes de cada token (arquivo:linha — conferidas no working tree às 10:26), Método, O que NÃO deu para medir (e por quê), Saída crua de `e18_ratio.py`, Scripts (fora do repo fonte; em `.tmp/` do workspace, que o guard designa)
 
-### Community 1413 - "6. EVENTOS DE CONEXÃO"
+### Community 1414 - "6. EVENTOS DE CONEXÃO"
 Cohesion: 0.22
 Nodes (9): 6.1 CONNECTION_UPDATE, 6.2 QRCODE_UPDATED, 6.3 APPLICATION_STARTUP, 6.4 STATUS_INSTANCE, 6.5 LOGOUT_INSTANCE, 6. EVENTOS DE CONEXÃO, Conexão Estabelecida, Conexão Perdida (+1 more)
 
-### Community 1414 - "Encerramento da Fase 8 (E83–E100) — 2026-10-02"
+### Community 1415 - "Encerramento da Fase 8 (E83–E100) — 2026-10-02"
 Cohesion: 0.22
 Nodes (8): 1. O que a Fase 8 entregou, 3. E91 em produção (verificado no banco, não no relatório), 4. E97 (resíduos de teste E2E), 5. O que ficou de fora — com dono e motivo, 6. Integridade do processo, 7. Erros meus, registrados, 8. Conclusão, Encerramento da Fase 8 (E83–E100) — 2026-10-02
 
-### Community 1415 - "public.email_threads"
+### Community 1416 - "public.email_threads"
 Cohesion: 0.31
 Nodes (8): idx_email_threads_account, idx_email_threads_contact, idx_email_threads_last_message, public.email_threads, public.contacts, public.gmail_accounts, public.update_updated_at_column, update_email_threads_updated_at
 
-### Community 1416 - "Bloco 10 — Deploy, PWA, arquitetura e MCP (091–100)"
+### Community 1417 - "Bloco 10 — Deploy, PWA, arquitetura e MCP (091–100)"
 Cohesion: 0.22
 Nodes (9): 091 — Headers de segurança e túnel na Vercel (paridade com o nginx do V3), 092 — `bundle-secret-guard` pós-deploy, 094 — Budget de performance executável, visualizer e compressão, 095 — Ratchets de TypeScript, `@ts-nocheck` e código morto, 096 — Fronteiras de domínio, barrels e auditoria de design system, 098 — Feature-first + `src/domain` + schemas compartilhados, 099 — MCP server real (JSON-RPC, read-only, RLS), 100 — Grafo de conhecimento, docs canônicos e fechamento (+1 more)
 
-### Community 1417 - "PLANO — CONTROLES DE VOLUME (ALTO-FALANTE E FONE) NA SIDEBAR: ACHAR E CORRIGIR OS BUGS — 50 ETAPAS"
+### Community 1418 - "PLANO — CONTROLES DE VOLUME (ALTO-FALANTE E FONE) NA SIDEBAR: ACHAR E CORRIGIR OS BUGS — 50 ETAPAS"
 Cohesion: 0.22
 Nodes (8): 1. O que foi TESTADO (pré-visualização `8e356134f`, Chromium via Playwright, usuário local; 07/10/2026), 2. Decisões (o dono pode reverter), 3. As 50 etapas, 4. Cartões e ordem, 5. Fora de escopo, 6. Estado de execução, Automação das ondas seguintes (programada em 07/10/2026), PLANO — CONTROLES DE VOLUME (ALTO-FALANTE E FONE) NA SIDEBAR: ACHAR E CORRIGIR OS BUGS — 50 ETAPAS
 
-### Community 1418 - "Paridade V3 → V2: hooks do inbox, SEGUNDA PASSADA do doc 06 (13/10/2026)"
+### Community 1419 - "Paridade V3 → V2: hooks do inbox, SEGUNDA PASSADA do doc 06 (13/10/2026)"
 Cohesion: 0.22
 Nodes (8): Cartões, Correções em cartões JÁ existentes (comentários, sem cartão novo), Decisões adotadas (padrão do Claude; o Joaquim pode vetar), O que a segunda passada achou de mais grave, O que NÃO foi verificado (e por quê), Onde a V2 já é melhor (não portar), Paridade V3 → V2: hooks do inbox, SEGUNDA PASSADA do doc 06 (13/10/2026), Riscos
 
-### Community 1419 - "Sai (a função de tags)"
+### Community 1420 - "Sai (a função de tags)"
 Cohesion: 0.22
 Nodes (8): 1. Escopo: o que sai e o que fica, 2. Decisões adotadas (valem se você não vetar), 3. Ordem (cada cartão compila e passa sozinho), 4. Cartões, 5. Como validar no fim, Fica (outros conceitos com o mesmo nome; confirme se algum deve sair também), Plano: remover a função de Tags (etiquetas) do Zapp Web V2, Sai (a função de tags)
 
-### Community 1420 - "Execução — Plano Vercel 190 Etapas (2026-10-18)"
+### Community 1421 - "Execução — Plano Vercel 190 Etapas (2026-10-18)"
 Cohesion: 0.22
 Nodes (8): Apêndice A — Ações exclusivas do Joaquim (consolidado), Estado final do projeto Vercel, Execução — Plano Vercel 190 Etapas (2026-10-18), Gargalos reais (só o Joaquim desbloqueia), Legenda de estados, O que foi entregue neste ciclo (automático), Resumo Executivo (V190), Tabela de execução
 
-### Community 1421 - "Inventário dos canais Realtime — Zapp Web V2"
+### Community 1422 - "Inventário dos canais Realtime — Zapp Web V2"
 Cohesion: 0.22
 Nodes (8): 1. Núcleo, 2. Assinaturas `postgres_changes` (canal → tabela), 3. Presença e broadcast (sem tabela — nome fixo obrigatório), 4. Sondagem de saúde, 5. Publicação `supabase_realtime`, 6. Reconexão que revalida dados, ⚠️ Fora da publicação, Inventário dos canais Realtime — Zapp Web V2
 
-### Community 1422 - "Runbook · Revisão de 7 dias pós-go-live (logs, cron, webhooks, custo)"
+### Community 1423 - "Runbook · Revisão de 7 dias pós-go-live (logs, cron, webhooks, custo)"
 Cohesion: 0.22
 Nodes (8): 1. Logs — o que quebrou e ninguém viu, 2. Cron — o que não rodou, 3. Webhooks — o que chegou e não entrou, 4. Custo — o que fugiu do orçamento, 5. Reviews que já rodam sozinhos (não precisa refazer à mão), 6. Fechamento da revisão (checklist), 7. O que este runbook não faz, Runbook · Revisão de 7 dias pós-go-live (logs, cron, webhooks, custo)
 
-### Community 1423 - "Decisões de negócio"
+### Community 1424 - "Decisões de negócio"
 Cohesion: 0.22
 Nodes (9): Custo e fluxo de trabalho, Dado que não volta, Dados e CRM, Decisões de arquitetura, Decisões de negócio, Decisões do plano V4 — Talk X, LGPD, Regras de operação (+1 more)
 
-### Community 1424 - "PULL_REQUEST_TEMPLATE.md"
+### Community 1425 - "PULL_REQUEST_TEMPLATE.md"
 Cohesion: 0.22
 Nodes (8): 🗄️ Banco e Edge (se aplicável), ✅ Checklist, 📝 Descrição, 🔗 Issues Relacionadas, ⚠️ Notas para Reviewer, 📷 Screenshots (se aplicável), 🧪 Testes Realizados, 🎯 Tipo de Mudança
 
-### Community 1425 - "20260930170000_contacts_deleted_at_audit.sql"
+### Community 1426 - "20260930170000_contacts_deleted_at_audit.sql"
 Cohesion: 0.31
 Nodes (8): public.audit_contact_deletion_change, idx_contact_deletion_audit_contact, idx_contact_deletion_audit_recent, public.audit_contact_deletion_change(), public.contact_deletion_audit, public.profiles, trg_audit_contact_deletion_change, trg_audit_contact_purge
 
-### Community 1426 - "public.complete_talkx_campaign_if_drained"
+### Community 1427 - "public.complete_talkx_campaign_if_drained"
 Cohesion: 0.28
 Nodes (7): public.record_talkx_campaign_lifecycle_event, public.complete_talkx_campaign_if_drained(), public.transition_talkx_campaign(), record_talkx_campaign_lifecycle_event, PUBLIC, public.talkx_campaigns, public.talkx_recipients
 
-### Community 1427 - "security_acl_alerts_monitor.sql"
+### Community 1428 - "security_acl_alerts_monitor.sql"
 Cohesion: 0.22
 Nodes (5): public.security_acl_alerts, pg_temp.espera(), public.zz_prova_policy, public.zz_prova_sem_rls, _snap
 
-### Community 1428 - "20261009054459_talkx_segments_lifecycle.sql"
+### Community 1429 - "20261009054459_talkx_segments_lifecycle.sql"
 Cohesion: 0.28
 Nodes (7): public.talkx_segment_versions_trim, idx_talkx_segments_tags, public.talkx_segment_versions, public.talkx_segment_versions_trim(), public.profiles, public.talkx_segments, talkx_segment_versions_trim
 
-### Community 1429 - "ia-metas-qualidade-docs.unit.mjs"
+### Community 1430 - "ia-metas-qualidade-docs.unit.mjs"
 Cohesion: 0.25
 Nodes (6): cumpridasSemMedicao(), DOC, DOC_TXT, IDS, linhasDeMeta(), RAIZ
 
-### Community 1430 - "reconciliation-source-adjudication.unit.mjs"
+### Community 1431 - "reconciliation-source-adjudication.unit.mjs"
 Cohesion: 0.28
 Nodes (7): catalogo, contarCabecalhos(), fontesComTarefasExplicitas(), PAPEIS_QUE_ADJUDICAM, raiz, registro, texto()
 
-### Community 1431 - "contacts-soft-delete-and-status.test.sh"
+### Community 1432 - "contacts-soft-delete-and-status.test.sh"
 Cohesion: 0.47
 Nodes (6): expect_failure(), expect_value(), fail(), psql_file(), psql_sql(), contacts-soft-delete-and-status.test.sh script
 
-### Community 1432 - "conversation-tasks-completed-indexes.test.sh"
+### Community 1433 - "conversation-tasks-completed-indexes.test.sh"
 Cohesion: 0.53
 Nodes (7): expect_index_exists(), expect_plan_uses(), expect_value(), fail(), psql_file(), psql_sql(), conversation-tasks-completed-indexes.test.sh script
 
-### Community 1433 - "gmail-write-blocks-restrictive.test.sh"
+### Community 1434 - "gmail-write-blocks-restrictive.test.sh"
 Cohesion: 0.47
 Nodes (7): expect_value(), expect_write(), fail(), psql_file(), psql_sql(), gmail-write-blocks-restrictive.test.sh script, writes_as_authenticated()
 
-### Community 1434 - "inbox-contact-authorization.test.sh"
+### Community 1435 - "inbox-contact-authorization.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_failure(), expect_ok(), fail(), psql_file(), psql_sql(), psql_stdin(), inbox-contact-authorization.test.sh script
 
-### Community 1435 - "message-reactions-autoria.test.sh"
+### Community 1436 - "message-reactions-autoria.test.sh"
 Cohesion: 0.42
 Nodes (7): conta(), fail(), pre_estado(), psql_test(), message-reactions-autoria.test.sh script, tenta(), tenta_afeta()
 
-### Community 1436 - "message-reactions-visibilidade-fila.test.sh"
+### Community 1437 - "message-reactions-visibilidade-fila.test.sh"
 Cohesion: 0.39
 Nodes (7): conta(), fail(), pre_estado(), psql_test(), message-reactions-visibilidade-fila.test.sh script, tenta(), tenta_afeta()
 
-### Community 1437 - "multiplix-resolve-escopo.test.sh"
+### Community 1438 - "multiplix-resolve-escopo.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_value(), extract_resolve(), fail(), pass(), psql_file(), psql_sql(), multiplix-resolve-escopo.test.sh script
 
-### Community 1438 - "reminders-migracao-identidade.test.sh"
+### Community 1439 - "reminders-migracao-identidade.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_error(), expect_same(), expect_value(), fail(), psql_file(), psql_sql(), reminders-migracao-identidade.test.sh script
 
-### Community 1439 - "scheduled-whisper-visibility-rls.test.sh"
+### Community 1440 - "scheduled-whisper-visibility-rls.test.sh"
 Cohesion: 0.47
 Nodes (7): expect_refused(), expect_value(), extract_rollback_sql(), fail(), psql_file(), psql_script(), scheduled-whisper-visibility-rls.test.sh script
 
-### Community 1440 - "search_path_pg_temp_is_admin_get_own_gmail.test.sh"
+### Community 1441 - "search_path_pg_temp_is_admin_get_own_gmail.test.sh"
 Cohesion: 0.39
 Nodes (5): expect_value(), fail(), psql_file(), psql_sql(), search_path_pg_temp_is_admin_get_own_gmail.test.sh script
 
-### Community 1441 - "talk-me-queue-contract.test.sh"
+### Community 1442 - "talk-me-queue-contract.test.sh"
 Cohesion: 0.47
 Nodes (7): as_user(), expect_error(), expect_value(), fail(), psql_file(), psql_sql(), talk-me-queue-contract.test.sh script
 
-### Community 1442 - "talkx-ab-weights.test.sh"
+### Community 1443 - "talkx-ab-weights.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_error(), fail(), pass(), psql_q(), psql_test(), talkx-ab-weights.test.sh script, start_postgres()
 
-### Community 1443 - "talkx-audience-snapshot.test.sh"
+### Community 1444 - "talkx-audience-snapshot.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_error(), fail(), pass(), psql_q(), psql_test(), talkx-audience-snapshot.test.sh script, start_postgres()
 
-### Community 1444 - "talkx-campaign-worker-lease.test.sh"
+### Community 1445 - "talkx-campaign-worker-lease.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_error(), fail(), pass(), psql_q(), psql_test(), talkx-campaign-worker-lease.test.sh script, start_postgres()
 
-### Community 1445 - "talkx-engine-tick.test.sh"
+### Community 1446 - "talkx-engine-tick.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_error(), fail(), pass(), psql_q(), psql_test(), talkx-engine-tick.test.sh script, start_postgres()
 
-### Community 1446 - "talkx-regressoes-chain.test.sh"
+### Community 1447 - "talkx-regressoes-chain.test.sh"
 Cohesion: 0.42
 Nodes (7): draft_payload(), fail(), pass(), psql_q(), psql_test(), talkx-regressoes-chain.test.sh script, start_postgres()
 
-### Community 1447 - "talkx-role-gates.test.sh"
+### Community 1448 - "talkx-role-gates.test.sh"
 Cohesion: 0.50
 Nodes (7): expect_error(), fail(), pass(), psql_q(), psql_test(), talkx-role-gates.test.sh script, start_postgres()
 
-### Community 1448 - "talkx-segment-progress.test.sh"
+### Community 1449 - "talkx-segment-progress.test.sh"
 Cohesion: 0.50
 Nodes (7): assert_eq(), assert_has(), fail(), pass(), psql_exec(), psql_val(), talkx-segment-progress.test.sh script
 
-### Community 1449 - "team-chat-media-acl-r2-db-020.test.sh"
+### Community 1450 - "team-chat-media-acl-r2-db-020.test.sh"
 Cohesion: 0.44
 Nodes (6): expect_error(), expect_value(), fail(), psql_file(), psql_sql(), team-chat-media-acl-r2-db-020.test.sh script
 
-### Community 1450 - "IsolatedQrFixtureAccess"
+### Community 1451 - "IsolatedQrFixtureAccess"
 Cohesion: 0.22
 Nodes (3): IsolatedQrFixtureAccess, QrCompletion, QrProviderEvidence
 
-### Community 1451 - "ProtectedRoute.acesso-negado.test.tsx"
+### Community 1452 - "ProtectedRoute.acesso-negado.test.tsx"
 Cohesion: 0.22
 Nodes (6): falhaPapeis, PalcoProps, papeis, Papel, permissao, USUARIO
 
-### Community 1452 - "ActiveCallPanel.test.tsx"
+### Community 1453 - "ActiveCallPanel.test.tsx"
 Cohesion: 0.22
 Nodes (8): accept, acceptIncomingCall, hangUp, reject, rejectIncomingCall, sendDTMF, Sessao, toggleMute
 
-### Community 1453 - "ContactNotes.semColuna.test.tsx"
+### Community 1454 - "ContactNotes.semColuna.test.tsx"
 Cohesion: 0.31
 Nodes (6): abrir(), base(), COM_COLUNA(), h, SEM_COLUNA(), wrapper()
 
-### Community 1454 - "HandoffDialog.test.tsx"
+### Community 1455 - "HandoffDialog.test.tsx"
 Cohesion: 0.22
 Nodes (6): agentsState, MockAgent, OFFLINE_OTHER, ONLINE_OTHER, ONLINE_SELF, toastMock
 
-### Community 1455 - "ViewersIndicator.presenca.test.tsx"
+### Community 1456 - "ViewersIndicator.presenca.test.tsx"
 Cohesion: 0.25
 Nodes (6): FakeChannel, h, MaybeSingle, sb, useConversationViewers(), ViewersIndicator()
 
-### Community 1456 - "useEvolutionContactProfile.ts"
+### Community 1457 - "useEvolutionContactProfile.ts"
 Cohesion: 0.31
 Nodes (6): h, buildJidVariants(), EvolutionContactProfile, EvolutionContactProfileResult, normalizeDigits(), useEvolutionContactProfile()
 
-### Community 1457 - "AdvancedMessageMenu.menu-avancado.test.tsx"
+### Community 1458 - "AdvancedMessageMenu.menu-avancado.test.tsx"
 Cohesion: 0.31
 Nodes (6): abrirContato(), abrirEnquete(), abrirFigurinha(), abrirMenu(), axeOpcoes, h
 
-### Community 1458 - "GlobalSearch.r2-inb-020.test.tsx"
+### Community 1459 - "GlobalSearch.r2-inb-020.test.tsx"
 Cohesion: 0.25
 Nodes (5): Query, Row, {
   supabaseMock,
@@ -9292,437 +9297,433 @@ Nodes (5): Query, Row, {
   callCRMIntegrationMock,
 }, valueAtPath(), loggerMock()
 
-### Community 1459 - "RealtimeInboxView.atalhos-teclado.test.tsx"
+### Community 1460 - "RealtimeInboxView.atalhos-teclado.test.tsx"
 Cohesion: 0.22
 Nodes (3): conversation, mocks, queryClient
 
-### Community 1460 - "RealtimeInboxView.pagination.test.tsx"
+### Community 1461 - "RealtimeInboxView.pagination.test.tsx"
 Cohesion: 0.28
 Nodes (8): baseInbox(), buildMessages(), buildUi(), conversation, ESPERA_LAZY, mocks, queryClient, renderInbox()
 
-### Community 1461 - "VoiceChanger.falhas.test.tsx"
+### Community 1462 - "VoiceChanger.falhas.test.tsx"
 Cohesion: 0.25
 Nodes (6): audioState, botaoPorTexto(), MockAudio, popoverState, prepararComPrevia(), toastMock
 
-### Community 1462 - "VoiceChanger.reduced-motion.test.tsx"
+### Community 1463 - "VoiceChanger.reduced-motion.test.tsx"
 Cohesion: 0.25
 Nodes (6): abrirAvisoInline(), botaoPorTexto(), MockAudio, motionState, popoverState, toastMock
 
-### Community 1463 - "shellLayout.contrato.test.tsx"
+### Community 1464 - "shellLayout.contrato.test.tsx"
 Cohesion: 0.36
 Nodes (6): SondaDoScroller(), sondaRecebeu, ViewContainerProps, LayoutScrollContext, LayoutScrollProvider, useLayoutScroll()
 
-### Community 1464 - "Sidebar.test.tsx"
+### Community 1465 - "Sidebar.test.tsx"
 Cohesion: 0.22
 Nodes (6): fontes, mockFavorites, mockPermissions, mockRoles, mockToggleFavorite, SidebarProps
 
-### Community 1465 - "MultiplixView.lista-virtualizada.test.tsx"
+### Community 1466 - "MultiplixView.lista-virtualizada.test.tsx"
 Cohesion: 0.22
 Nodes (3): Row, searchMock, state
 
-### Community 1467 - "AvatarUpload.invalidacao.test.tsx"
+### Community 1468 - "AvatarUpload.invalidacao.test.tsx"
 Cohesion: 0.22
 Nodes (6): mockFrom, mockList, mockRemove, mockStorageFrom, mockUpload, mockUseAuth
 
-### Community 1468 - "useAIUsageDashboard.janela.test.tsx"
+### Community 1469 - "useAIUsageDashboard.janela.test.tsx"
 Cohesion: 0.22
 Nodes (6): cortesDaLista, CUSTOS, PAGINA, RESUMO, rpcCalls, T0
 
-### Community 1469 - "useTelefoniaFilters.test.tsx"
+### Community 1470 - "useTelefoniaFilters.test.tsx"
 Cohesion: 0.25
 Nodes (5): montar(), ultimasUrls, FiltroChave, FILTROS_PADRAO, TelefoniaFiltros
 
-### Community 1470 - "useDataMasking.ts"
+### Community 1471 - "useDataMasking.ts"
 Cohesion: 0.28
 Nodes (5): DataMaskingResult, FieldType, MaskedField, PATTERNS, useDataMasking()
 
-### Community 1471 - "useContactSummaryNote.concurrency.test.tsx"
+### Community 1472 - "useContactSummaryNote.concurrency.test.tsx"
 Cohesion: 0.33
 Nodes (6): banco, montarComResumoInicial(), renderResumo(), useResumoComRascunho(), contactSummaryNoteKey(), useContactSummaryNote()
 
-### Community 1472 - "useObjectionDetector.n169.test.tsx"
+### Community 1473 - "useObjectionDetector.n169.test.tsx"
 Cohesion: 0.25
 Nodes (7): allMessages, analisarComSucesso(), invokeMock, lastMessages, objectionsPayload(), renderDetector(), toastMock
 
-### Community 1473 - "useTalkXSegments.viewMode.test.tsx"
+### Community 1474 - "useTalkXSegments.viewMode.test.tsx"
 Cohesion: 0.22
 Nodes (4): fromTable, rpc, segmentListBuilder(), builder
 
-### Community 1474 - "useTalkXSuppression.hook-morto.test.ts"
+### Community 1475 - "useTalkXSuppression.hook-morto.test.ts"
 Cohesion: 0.25
 Nodes (8): arquivos, conteudo, exportsDoModulo, { mockFrom }, RAIZ, RAIZES, REINTRODUCAO, varrer()
 
-### Community 1475 - "useIncomingCallListener.test.tsx"
+### Community 1476 - "useIncomingCallListener.test.tsx"
 Cohesion: 0.22
 Nodes (4): mockChannel, mockFrom, mockLogInfo, mockRemoveChannel
 
-### Community 1476 - "useLoadingState.ts"
+### Community 1477 - "useLoadingState.ts"
 Cohesion: 0.25
 Nodes (6): log, LoadingState, LoadingType, SkeletonContext, useLoadingState(), UseLoadingStateOptions
 
-### Community 1477 - "useUniversityHelp.test.tsx"
+### Community 1478 - "useUniversityHelp.test.tsx"
 Cohesion: 0.22
 Nodes (8): agora, Deferred, messages, mockFunctionsInvoke, setup(), toastError, toastSuccess, toastWarning
 
-### Community 1478 - "RateLimitDashboard.logs.test.tsx"
+### Community 1479 - "RateLimitDashboard.logs.test.tsx"
 Cohesion: 0.22
 Nodes (4): Consulta, Deferred, mocks, Resposta
 
-### Community 1479 - "imageCompression.ts"
+### Community 1480 - "imageCompression.ts"
 Cohesion: 0.31
 Nodes (7): calculateDimensions(), canvasToBlob(), compressImage(), CompressionOptions, DEFAULT_OPTIONS, formatCompressionInfo(), loadImageFallback()
 
-### Community 1480 - "elevenlabs-voice-design/index.test.ts"
+### Community 1481 - "elevenlabs-voice-design/index.test.ts"
 Cohesion: 0.22
 Nodes (4): LISTAGEM_DE_VOZES, PAYLOAD_CRIAR_VOZ, PAYLOAD_GERAR_VOZ, Route
 
-### Community 1482 - "send-rate-limit-alert/index.test.ts"
+### Community 1483 - "send-rate-limit-alert/index.test.ts"
 Cohesion: 0.28
 Nodes (4): BlockedIpRow, blockedPost(), makePost(), reqBlocked()
 
-### Community 1483 - "20260828000000_guard_secdef_batch.sql"
+### Community 1484 - "20260828000000_guard_secdef_batch.sql"
 Cohesion: 0.22
 Nodes (4): public.cleanup_link_preview_cache(), contacts, profiles, public.link_preview_cache
 
-### Community 1485 - "public.record_incoming_call_event"
+### Community 1486 - "public.record_incoming_call_event"
 Cohesion: 0.28
 Nodes (8): calls_connection_provider_event_unique, public.persist_sentiment_alert(), public.record_incoming_call_event(), public.audit_logs, public.calls, public.contacts, public.notifications, public.profiles
 
-### Community 1486 - "20260927400000_accept_department_invite_rpc.sql"
+### Community 1487 - "20260927400000_accept_department_invite_rpc.sql"
 Cohesion: 0.36
 Nodes (7): idx_dept_audit_logs_dept_id, idx_dept_invites_code, idx_dept_invites_dept_id, public.department_audit_logs, public.department_invites, public.departments, public.profiles
 
-### Community 1487 - "20260927450000_fix_indexes_checks_cleanup.sql"
+### Community 1488 - "20260927450000_fix_indexes_checks_cleanup.sql"
 Cohesion: 0.22
 Nodes (8): idx_dept_audit_logs_profile_id, idx_dept_invites_created_by, idx_team_conv_direct_member_b, idx_team_msg_receipts_profile_id, public.department_audit_logs, public.department_invites, public.team_conversations, public.team_message_receipts
 
-### Community 1488 - "20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql"
+### Community 1489 - "20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql"
 Cohesion: 0.22
 Nodes (8): idx_dept_audit_logs_profile_id, idx_dept_invites_created_by, idx_team_conv_direct_member_b, idx_team_msg_receipts_profile_id, public.department_audit_logs, public.department_invites, public.team_conversations, public.team_message_receipts
 
-### Community 1489 - "20261001391230_talkx_engine_tick.sql"
+### Community 1490 - "20261001391230_talkx_engine_tick.sql"
 Cohesion: 0.25
 Nodes (7): public.kick_talkx_campaign(), public.sweep_talkx_stuck_recipients(), public.trigger_talkx_engine_tick(), cron.job, public.talkx_campaigns, public.talkx_recipients, vault.decrypted_secrets
 
-### Community 1490 - "20261002581230_talkx_v4_x029_optout.sql"
+### Community 1491 - "20261002581230_talkx_v4_x029_optout.sql"
 Cohesion: 0.22
 Nodes (6): public.talkx_campaign_optouts, public.talkx_match_optout(), public.talkx_optout_keywords, public.profiles, public.talkx_blacklist, public.talkx_recipients
 
-### Community 1491 - "20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql"
+### Community 1492 - "20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql"
 Cohesion: 0.22
 Nodes (7): contact_purchases_source_external_id_key, public.record_talkx_conversion(), public.talkx_campaign_revenue(), public.contact_purchases, public.talkx_campaigns, public.talkx_conversions, public.talkx_settings
 
-### Community 1492 - "20261011000003_20261010_talkx_campaigns_dnd_weekdays.sql"
+### Community 1493 - "20261011000003_20261010_talkx_campaigns_dnd_weekdays.sql"
 Cohesion: 0.31
 Nodes (7): public.save_talkx_campaign_draft(), public.talkx_campaign_window_open(), public.update_talkx_campaign_limits(), public.profiles, public.talkx_campaigns, public.talkx_settings, public.whatsapp_connections
 
-### Community 1493 - "20261011183812_instance_pauses.sql"
+### Community 1494 - "20261011183812_instance_pauses.sql"
 Cohesion: 0.31
 Nodes (5): instance_pauses_abertas_unicas, instance_pauses_instance_idx, public.instance_pauses, public.pause_instance(), public.profiles
 
-### Community 1494 - "public.claim_outbound_message"
+### Community 1495 - "public.claim_outbound_message"
 Cohesion: 0.25
 Nodes (6): public.claim_outbound_message(), public.mark_outbound_post_started(), public.contacts, public.messages, public.whatsapp_connections, public.whatsapp_groups
 
-### Community 1495 - "public.multiplix_search_audience"
+### Community 1496 - "public.multiplix_search_audience"
 Cohesion: 0.22
 Nodes (8): public.multiplix_search_audience(), com_endereco, contato_principal, filtrado, public.company_addresses, public.company_phones, public.contact_phones, public.contacts
 
-### Community 1496 - "goal_notifications_own_insert_policy.sql"
+### Community 1497 - "goal_notifications_own_insert_policy.sql"
 Cohesion: 0.22
 Nodes (4): public.goals_configurations, public.notifications, public.profiles, public.queue_members
 
-### Community 1497 - "r2_auth_006_pedido_reset_anonimo.sql"
+### Community 1498 - "r2_auth_006_pedido_reset_anonimo.sql"
 Cohesion: 0.28
 Nodes (3): auth.users, public.password_reset_requests, public.profiles
 
-### Community 1499 - "TESTING_CONVENTION.md — onde cada teste mora e como ele roda"
+### Community 1500 - "TESTING_CONVENTION.md — onde cada teste mora e como ele roda"
 Cohesion: 0.22
 Nodes (8): 1. Testes de unidade/componente do app — `src/`, 2. Contratos das Edge Functions — `tests/contracts/`, 3. Testes Deno das próprias edges — `supabase/functions/**/*.test.ts`, 4. Guardas de CI e de deploy — `scripts/**/*.unit.mjs`, 5. E2E no navegador — `e2e/`, Portão local (fora do repositório), Regras de nome e de escolha, TESTING_CONVENTION.md — onde cada teste mora e como ele roda
 
-### Community 1500 - "vercel.json"
+### Community 1501 - "vercel.json"
 Cohesion: 0.22
 Nodes (8): buildCommand, framework, headers, ignoreCommand, installCommand, outputDirectory, rewrites, $schema
 
-### Community 1501 - "Dossiê — `codex/docs-email-navy-plan-100-20261002`"
+### Community 1502 - "Dossiê — `codex/docs-email-navy-plan-100-20261002`"
 Cohesion: 0.25
 Nodes (7): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Veredito + Confiança, 5. Metadados, Dossiê — `codex/docs-email-navy-plan-100-20261002`, ⚠ Riscos de Regressão
 
-### Community 1502 - "Dossiê — `dia/2026-10-07`"
+### Community 1503 - "Dossiê — `dia/2026-10-07`"
 Cohesion: 0.25
 Nodes (7): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Veredito + Confiança, 5. Metadados, Dossiê — `dia/2026-10-07`, ⚠ Riscos de Regressão
 
-### Community 1503 - "Dossiê — `hermes/a11y-aria-hidden-focus-2610021746e07a`"
+### Community 1504 - "Dossiê — `hermes/a11y-aria-hidden-focus-2610021746e07a`"
 Cohesion: 0.25
 Nodes (7): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Veredito + Confiança, 5. Metadados, Dossiê — `hermes/a11y-aria-hidden-focus-2610021746e07a`, ⚠ Riscos de Regressão
 
-### Community 1504 - "PR #2835 — chore(scripts): READMEs, renomear .test→.unit, testes ausentes"
+### Community 1505 - "PR #2835 — chore(scripts): READMEs, renomear .test→.unit, testes ausentes"
 Cohesion: 0.25
 Nodes (7): Correção necessária, Evidências (resumo), Motivo, Negócio, Objeções do verificador, PR #2835 — chore(scripts): READMEs, renomear .test→.unit, testes ausentes, Regra 4
 
-### Community 1505 - "PR #2972 — fix(message-delivery): pd-79 compatível antes da migration e resolve só mensagens em envio"
+### Community 1506 - "PR #2972 — fix(message-delivery): pd-79 compatível antes da migration e resolve só mensagens em envio"
 Cohesion: 0.25
 Nodes (7): Correção necessária, Evidências (resumo), Motivo, Negócio, Objeções do verificador, PR #2972 — fix(message-delivery): pd-79 compatível antes da migration e resolve só mensagens em envio, Regra 4
 
-### Community 1506 - "ADR-005: Máquina de estados explícita para conversas"
+### Community 1507 - "ADR-005: Máquina de estados explícita para conversas"
 Cohesion: 0.25
 Nodes (7): ADR-005: Máquina de estados explícita para conversas, Consequências, Contexto, Decisão (proposta), Referências, Rollout, BulkAction
 
-### Community 1507 - "ADR-007 — Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa"
+### Community 1508 - "ADR-007 — Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa"
 Cohesion: 0.25
 Nodes (7): ADR-007 — Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa, Alternativas rejeitadas, Consequências, D1 (E003) — Caminho de acesso ao Singu, D2 (E004) — Política do canal não oficial (Evolution GO), D3 (E005) — O que é "apto" sem dado de consentimento, D4 (E006) — Telefone da empresa como destino
 
-### Community 1508 - "CV-009 — Decisões arquiteturais D1–D5 do Copiloto de Vendas"
+### Community 1509 - "CV-009 — Decisões arquiteturais D1–D5 do Copiloto de Vendas"
 Cohesion: 0.25
 Nodes (7): CV-009 — Decisões arquiteturais D1–D5 do Copiloto de Vendas, D1 — Teto de custo por chamada de IA, D2 — Meta de tempo de primeira resposta, D3 — Limiar mínimo de adoção para continuar o piloto, D4 — Visibilidade das sugestões: todos os vendedores ou selecionados?, D5 — Pré-condições obrigatórias para o go-live, Histórico de alterações
 
-### Community 1509 - "Dossiê: claude/chore-regen-edge-manifest-261030-0830"
+### Community 1510 - "Dossiê: claude/chore-regen-edge-manifest-261030-0830"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/chore-regen-edge-manifest-261030-0830, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1510 - "Dossiê: codex/consolida-contatos-fab"
+### Community 1511 - "Dossiê: codex/consolida-contatos-fab"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: codex/consolida-contatos-fab, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1511 - "Dossiê — `codex/docs-email-navy-plan-100-20261002`"
+### Community 1512 - "Dossiê — `codex/docs-email-navy-plan-100-20261002`"
 Cohesion: 0.25
 Nodes (7): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Veredito + Confiança, 5. Metadados, Dossiê — `codex/docs-email-navy-plan-100-20261002`, ⚠ Riscos de Regressão
 
-### Community 1512 - "Dossiê: codex/sincronizacao-canonica-20261016"
+### Community 1513 - "Dossiê: codex/sincronizacao-canonica-20261016"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: codex/sincronizacao-canonica-20261016, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1513 - "Dossiê — `dia/2026-10-07`"
+### Community 1514 - "Dossiê — `dia/2026-10-07`"
 Cohesion: 0.25
 Nodes (7): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Veredito + Confiança, 5. Metadados, Dossiê — `dia/2026-10-07`, ⚠ Riscos de Regressão
 
-### Community 1514 - "Dossiê: dia/2026-10-23"
+### Community 1515 - "Dossiê: dia/2026-10-23"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: dia/2026-10-23, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1515 - "Dossiê: claude/feat-copiloto-cv061-070-ghost-text-261016-2200"
+### Community 1516 - "Dossiê: claude/feat-copiloto-cv061-070-ghost-text-261016-2200"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/feat-copiloto-cv061-070-ghost-text-261016-2200, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.92)
 
-### Community 1516 - "Dossiê: feat/media-migration-tool-261024-2336"
+### Community 1517 - "Dossiê: feat/media-migration-tool-261024-2336"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: feat/media-migration-tool-261024-2336, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1517 - "Dossiê: claude/fix-ci-mocks-framer-261025-1700"
+### Community 1518 - "Dossiê: claude/fix-ci-mocks-framer-261025-1700"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-mocks-framer-261025-1700, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1518 - "Dossiê: claude/fix-ci-talkx-segments-261025-1330"
+### Community 1519 - "Dossiê: claude/fix-ci-talkx-segments-261025-1330"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-talkx-segments-261025-1330, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1519 - "Dossiê: claude/fix-ci-teamchat-mount-261025-1340"
+### Community 1520 - "Dossiê: claude/fix-ci-teamchat-mount-261025-1340"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-teamchat-mount-261025-1340, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1520 - "Dossiê: claude/fix-ci-testes-admin-261025-1709"
+### Community 1521 - "Dossiê: claude/fix-ci-testes-admin-261025-1709"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-testes-admin-261025-1709, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1521 - "Dossiê: claude/fix-ci-testes-geral-261025-1709"
+### Community 1522 - "Dossiê: claude/fix-ci-testes-geral-261025-1709"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-testes-geral-261025-1709, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1522 - "Dossiê: claude/fix-ci-testes-inbox-261025-1710"
+### Community 1523 - "Dossiê: claude/fix-ci-testes-inbox-261025-1710"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-testes-inbox-261025-1710, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1523 - "Dossiê: claude/fix-ci-testes-talkx-251025-1200"
+### Community 1524 - "Dossiê: claude/fix-ci-testes-talkx-251025-1200"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-testes-talkx-251025-1200, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1524 - "Dossiê: claude/fix-ci-testes-ui-261025-1709"
+### Community 1525 - "Dossiê: claude/fix-ci-testes-ui-261025-1709"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-testes-ui-261025-1709, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1525 - "Dossiê: claude/fix-ci-unit-tests-261025-1230"
+### Community 1526 - "Dossiê: claude/fix-ci-unit-tests-261025-1230"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-ci-unit-tests-261025-1230, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1526 - "Dossiê: claude/fix-contatos-cabecalho-fab-261020-1933"
+### Community 1527 - "Dossiê: claude/fix-contatos-cabecalho-fab-261020-1933"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-contatos-cabecalho-fab-261020-1933, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1527 - "Dossiê: claude/fix-deno-lock-tslib-261030-1100"
+### Community 1528 - "Dossiê: claude/fix-deno-lock-tslib-261030-1100"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-deno-lock-tslib-261030-1100, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1528 - "Dossiê: fix/deploy-functions-deno-auto-2026-10-30"
+### Community 1529 - "Dossiê: fix/deploy-functions-deno-auto-2026-10-30"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: fix/deploy-functions-deno-auto-2026-10-30, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1529 - "Dossiê: claude/fix-deploy-functions-deno-none"
+### Community 1530 - "Dossiê: claude/fix-deploy-functions-deno-none"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-deploy-functions-deno-none, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1530 - "Dossiê: fix/f1a-lote-b-batch8"
+### Community 1531 - "Dossiê: fix/f1a-lote-b-batch8"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: fix/f1a-lote-b-batch8, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1531 - "Dossiê: fix/f1a-lote-b-useknowledgebase"
+### Community 1532 - "Dossiê: fix/f1a-lote-b-useknowledgebase"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: fix/f1a-lote-b-useknowledgebase, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1532 - "Dossiê: claude/fix-main-tests-231023-1530"
+### Community 1533 - "Dossiê: claude/fix-main-tests-231023-1530"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-main-tests-231023-1530, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1533 - "Dossiê: claude/fix-talkx-hook-morto-261025-1915"
+### Community 1534 - "Dossiê: claude/fix-talkx-hook-morto-261025-1915"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: claude/fix-talkx-hook-morto-261025-1915, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1534 - "Dossiê — `hermes/a11y-aria-hidden-focus-2610021746e07a`"
+### Community 1535 - "Dossiê — `hermes/a11y-aria-hidden-focus-2610021746e07a`"
 Cohesion: 0.25
 Nodes (7): 1. Intenção, 2. Resumo do Diff, 3. Checklist com Evidências, 4. Veredito + Confiança, 5. Metadados, Dossiê — `hermes/a11y-aria-hidden-focus-2610021746e07a`, ⚠ Riscos de Regressão
 
-### Community 1535 - "Dossiê: optimistic-hypatia-5ormu1"
+### Community 1536 - "Dossiê: optimistic-hypatia-5ormu1"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: optimistic-hypatia-5ormu1, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1536 - "Dossiê: wizardly-meitner-aejx3i"
+### Community 1537 - "Dossiê: wizardly-meitner-aejx3i"
 Cohesion: 0.25
 Nodes (7): Decisão, Dossiê: wizardly-meitner-aejx3i, Estado em main, Evidência, Identificação, merge-tree, Veredito: COBERTA (confiança 0.90)
 
-### Community 1537 - "Dossiers das 6 PRs com Conflito"
+### Community 1538 - "Dossiers das 6 PRs com Conflito"
 Cohesion: 0.25
 Nodes (7): Dossiers das 6 PRs com Conflito, PR #2526 — dirty após main avançar, PR #2533 — chore: migration reconciliation 20261030145126, PR #2536 — supersedido por #2560, PR #2542 — fix: N-008 DB Guard, PR #2563 — dirty após #2567 mergear o mesmo fix, PR #2571 — dirty + auto_merge ativo com conflito pendente
 
-### Community 1538 - "Inventário — Schemas e Tabelas"
+### Community 1539 - "Inventário — Schemas e Tabelas"
 Cohesion: 0.25
 Nodes (7): Buckets de Storage, Crons ativos (24), Edge Functions (83 funções no repo), Extensões instaladas, Inventário — Schemas e Tabelas, Migrações, Schemas encontrados
 
-### Community 1539 - "Inventário — Políticas RLS"
+### Community 1540 - "Inventário — Políticas RLS"
 Cohesion: 0.25
 Nodes (7): Achados desta seção, Inventário — Políticas RLS, Matrix A×B — resultados (PostgreSQL 16 nativo, migrations do repo, 2026-10-25T10:14Z), Policies UPDATE sem WITH CHECK (39), Resumo, Tabelas com RLS habilitado mas sem policies (9), Tabelas sem RLS (schemas de backup)
 
-### Community 1540 - "Inventário — Auth, Usuários e Storage Realtime"
+### Community 1541 - "Inventário — Auth, Usuários e Storage Realtime"
 Cohesion: 0.25
 Nodes (7): Achados desta seção, Inventário — Auth, Usuários e Storage Realtime, MFA (0 factors) — HIGH-7, Política de sessions e tokens, Resumo, Tabelas ausentes do schema para Realtime — MEDIUM-9, Usuários (10)
 
-### Community 1541 - "Levantamento B — arquivos locais a processar"
+### Community 1542 - "Levantamento B — arquivos locais a processar"
 Cohesion: 0.25
 Nodes (7): Cópias em `zapp-worktrees/`, Levantamento B — arquivos locais a processar, Limites da decisão, Método e cobertura, Peças fora das cópias do repositório, Repositórios e worktrees encontrados, Índices produzidos
 
-### Community 1542 - "Levantamento do GitHub — Zapp Web V2"
+### Community 1543 - "Levantamento do GitHub — Zapp Web V2"
 Cohesion: 0.25
 Nodes (7): Branches remotas, Escopo e leitura dos resultados, Issues abertas, Levantamento do GitHub — Zapp Web V2, Pendências antes de qualquer limpeza, Prioridade sugerida, PRs abertos
 
-### Community 1543 - "Auditoria de paridade V3 → V2, parte 2: comportamento (documento 08-chat-1)"
+### Community 1544 - "Auditoria de paridade V3 → V2, parte 2: comportamento (documento 08-chat-1)"
 Cohesion: 0.25
 Nodes (7): 1. O que a primeira passada não via, 3. Lacunas de funcionalidade, com destino, 4. Decisões pendentes (perguntadas ao Joaquim), 5. Onde a V2 é melhor que a V3 (não portar), 6. Descartado de propósito, 7. Limites desta auditoria, Auditoria de paridade V3 → V2, parte 2: comportamento (documento 08-chat-1)
 
-### Community 1544 - "Paridade V3 → V2: segunda passada do documento 08-chat-2 (11/10/2026, tarde)"
+### Community 1545 - "Paridade V3 → V2: segunda passada do documento 08-chat-2 (11/10/2026, tarde)"
 Cohesion: 0.25
 Nodes (7): Achados novos, com cartão criado, Conferido e já coberto, Descartes com motivo, Já equivalente ou melhor na V2, Método, Paridade V3 → V2: segunda passada do documento 08-chat-2 (11/10/2026, tarde), Totais da frente após esta passada
 
-### Community 1545 - "Paridade V3 → V2: segunda passada do documento 09 (contato, lista, IA e figurinhas), 13/10/2026"
+### Community 1546 - "Paridade V3 → V2: segunda passada do documento 09 (contato, lista, IA e figurinhas), 13/10/2026"
 Cohesion: 0.25
 Nodes (7): Achados mais graves, Acompanhamento, Cartões, Decisão pendente do Joaquim, Descartes, Paridade V3 → V2: segunda passada do documento 09 (contato, lista, IA e figurinhas), 13/10/2026, Resultado: 66 achados, 33 cartões (faixa Q)
 
-### Community 1546 - "Paridade V3 → V2: segunda passada do 01-frontend (12/10/2026)"
+### Community 1547 - "Paridade V3 → V2: segunda passada do 01-frontend (12/10/2026)"
 Cohesion: 0.25
 Nodes (7): Achados críticos (cartões urgentes, prioridade 10), Conferido e equivalente (resumo), Demais lacunas (faixa O, 46 cartões), Descartes com motivo, Método, Paridade V3 → V2: segunda passada do 01-frontend (12/10/2026), Totais da frente
 
-### Community 1547 - "Impacto da nova regra de visibilidade de contatos (CT-022) — 08/10/2026"
+### Community 1548 - "Impacto da nova regra de visibilidade de contatos (CT-022) — 08/10/2026"
 Cohesion: 0.25
 Nodes (7): Atenção, Como repetir, Fotografia da produção (08/10/2026), Impacto da nova regra de visibilidade de contatos (CT-022) — 08/10/2026, Impacto por vendedor (perfis que não são admin/supervisor), Regra de hoje (policy `contacts_select_policy` → `can_edit_contact`), Regra nova (decidida pelo Joaquim, Q21)
 
-### Community 1548 - "DOSSIÊ DE EXECUÇÃO — Plano de 50 Etapas (rodada de 2026-09-20)"
+### Community 1549 - "DOSSIÊ DE EXECUÇÃO — Plano de 50 Etapas (rodada de 2026-09-20)"
 Cohesion: 0.25
 Nodes (7): DOSSIÊ DE EXECUÇÃO — Plano de 50 Etapas (rodada de 2026-09-20), E48 ✅ (parcial por definição) Re-auditoria da rodada, E49 🔧 CLAUDE.md e plano 16/09 (PR #444 + este PR), E50 📋 Sign-off, F8, Legenda de status, Resumo executivo da rodada
 
-### Community 1549 - "E84 — `e2e-talkx-pr.yml` → `e2e-talkx.yml`, `paths` que casem com o diff da PR"
+### Community 1550 - "E84 — `e2e-talkx-pr.yml` → `e2e-talkx.yml`, `paths` que casem com o diff da PR"
 Cohesion: 0.25
 Nodes (7): Achados fora do escopo (não corrigidos), E84 — `e2e-talkx-pr.yml` → `e2e-talkx.yml`, `paths` que casem com o diff da PR, Limite desta verificação (honestidade), Medição do alvo (antes de editar), O que a etapa pede, O que mudou, Verificação (executada)
 
-### Community 1550 - "E92 — templates de issue e de PR alinhados ao projeto real"
+### Community 1551 - "E92 — templates de issue e de PR alinhados ao projeto real"
 Cohesion: 0.25
 Nodes (7): As duas perguntas que faltavam, E92 — templates de issue e de PR alinhados ao projeto real, Limites, O link errado não dava 404 — era pior, O que a etapa pedia, "Testei no ambiente de staging" — não existe staging aqui, Verificação
 
-### Community 1551 - "E96 — `docs/ci/README.md` gerado do próprio workflow (`--check` no CI)"
+### Community 1552 - "E96 — `docs/ci/README.md` gerado do próprio workflow (`--check` no CI)"
 Cohesion: 0.25
 Nodes (7): Achados fora do escopo (NÃO corrigidos), Arquivos, E96 — `docs/ci/README.md` gerado do próprio workflow (`--check` no CI), O que a etapa pedia, O que foi entregue, Verificação, Verificação da etapa — cumprida
 
-### Community 1552 - "E29 — Inventário de secrets"
+### Community 1553 - "E29 — Inventário de secrets"
 Cohesion: 0.25
 Nodes (7): 0 secrets órfãos detectados, Achado — gap real, sem workaround seguro, Auditoria de edges `verify_jwt=false` e secrets — E28/E29 (PLANO_MELHORIAS_50), E28 — 10 edges com `verify_jwt=false`, E29 — Inventário de secrets, Inventário — secret → functions que usam, Recomendação (decisão sua — não é algo que eu aplico sozinho)
 
-### Community 1553 - "supabase-usage-guard — estado do baseline (investigação medida, 02/10/2026)"
+### Community 1554 - "supabase-usage-guard — estado do baseline (investigação medida, 02/10/2026)"
 Cohesion: 0.25
 Nodes (7): Conclusão operacional, Estado do baseline, Não há violação latente esperando a regeneração do catálogo, O "vermelho" que existe: PR #1584, obsoleto e de outro dono, Pendência real (fora deste escopo), Prova — dois ambientes independentes, supabase-usage-guard — estado do baseline (investigação medida, 02/10/2026)
 
-### Community 1554 - "E45 / E06 — Graph Sync Dispatcher N8N: Decisão de Aposentadoria"
+### Community 1555 - "E45 / E06 — Graph Sync Dispatcher N8N: Decisão de Aposentadoria"
 Cohesion: 0.25
 Nodes (7): Atualização do CLAUDE.md, Contexto, Decisão: **Aposentar o dispatcher**, E45 / E06 — Graph Sync Dispatcher N8N: Decisão de Aposentadoria, Estado pós-aposentadoria, Execução da aposentadoria, Motivo
 
-### Community 1555 - "F1 — Governança de CI/CD e merge (E07–E13)"
+### Community 1556 - "F1 — Governança de CI/CD e merge (E07–E13)"
 Cohesion: 0.25
 Nodes (8): E07 🟡 Política de merge exequível (sem bypass perpétuo), E08 🟡 Ligar `enforce_admins` após E07, E09 🔴 Auto-delete de branch no merge, E10 🟡 Gate automático de paridade tripla (herda E44/16-09), E11 🟡 Auditoria periódica de branches (herda E45/16-09), E12 🟢 Job "🛡️ Generate Audit Report" skipped em todo run, E13 ✅ Custo de Actions: crons e concurrency, F1 — Governança de CI/CD e merge (E07–E13)
 
-### Community 1556 - "RETROSPECTIVA — plano Multiplix × executado · 2026-10-08"
+### Community 1557 - "RETROSPECTIVA — plano Multiplix × executado · 2026-10-08"
 Cohesion: 0.25
 Nodes (7): 1. Fontes e método, 2. Contagens oficiais (espelho do ledger), 3. Plano contra executado, bloco a bloco, 4. Checkboxes do plano contra o ledger, 5. O que a leva de 08/10 cobriu, 6. Conclusão, RETROSPECTIVA — plano Multiplix × executado · 2026-10-08
 
-### Community 1557 - "GRANTs Externos — CRM pgxfvjmuubtbowutlide"
+### Community 1558 - "GRANTs Externos — CRM pgxfvjmuubtbowutlide"
 Cohesion: 0.25
 Nodes (7): Aviso de segurança (GATE C — pendente), Caminho de fechamento do GATE C (F97), GRANTs aplicados em 27/08/2026, GRANTs Externos — CRM pgxfvjmuubtbowutlide, Histórico, Por que `anon` e não `authenticated`?, RPCs `multiplix_*` (ponte nova do Multiplix — sem exposição a `anon`)
 
-### Community 1558 - "ADR-001: Uso de React Query para Server State"
+### Community 1559 - "ADR-001: Uso de React Query para Server State"
 Cohesion: 0.25
 Nodes (7): ADR-001: Uso de React Query para Server State, Alternativas Consideradas, Consequências, Contexto, Data: 2025-01-15, Decisão, Status: Aceito
 
-### Community 1559 - "ADR-003: Lazy Loading Universal para Rotas e Módulos"
+### Community 1560 - "ADR-003: Lazy Loading Universal para Rotas e Módulos"
 Cohesion: 0.25
 Nodes (7): ADR-003: Lazy Loading Universal para Rotas e Módulos, Consequências, Contexto, Data: 2025-03-01, Decisão, Status: Aceito, RouteLoadingFallback()
 
-### Community 1560 - "56. PROTOCOLO DE IMPLEMENTAÇÃO DO CLAUDE"
+### Community 1561 - "56. PROTOCOLO DE IMPLEMENTAÇÃO DO CLAUDE"
 Cohesion: 0.25
 Nodes (8): 56. PROTOCOLO DE IMPLEMENTAÇÃO DO CLAUDE, Fase A — Recon, Fase B — Plano, Fase C — Estrutura, Fase D — Componentes, Fase E — Responsive, Fase F — Polimento, Fase G — QA
 
-### Community 1561 - "TALK ME — Runbook de homologação, piloto e expansão"
+### Community 1562 - "TALK ME — Runbook de homologação, piloto e expansão"
 Cohesion: 0.25
 Nodes (7): 1. Homologação nominal (etapa 057), 2. Piloto controlado (etapas 059 e 062), 3. Como medir (etapa 097 — telemetria já instrumentada), 4. Ensaio de reversão (etapa 063), 5. Expansão (etapas 065 e 066), 6. Correções que estão em PR aguardando aprovação, TALK ME — Runbook de homologação, piloto e expansão
 
-### Community 1562 - "42. RESPONSIVIDADE"
+### Community 1563 - "42. RESPONSIVIDADE"
 Cohesion: 0.25
 Nodes (8): 1024–1279, 1280–1365, 1366–1439, 1440–1679, ≥1680, 42. RESPONSIVIDADE, 768–1023, Mobile
 
-### Community 1563 - "3. DNA VISUAL — DARKBLUE PREMIUM"
+### Community 1564 - "3. DNA VISUAL — DARKBLUE PREMIUM"
 Cohesion: 0.25
 Nodes (8): 3.1 DarkBlue profundo, não preto absoluto, 3.2 Azul vivo representa intenção, 3.3 Conteúdo domina o chrome, 3.4 Densidade operacional, 3.5 Progressive disclosure, 3.6 Frame estável, 3.7 Movimento funcional, 3. DNA VISUAL — DARKBLUE PREMIUM
 
-### Community 1564 - "56. PROTOCOLO DE IMPLEMENTAÇÃO PARA CLAUDE"
+### Community 1565 - "56. PROTOCOLO DE IMPLEMENTAÇÃO PARA CLAUDE"
 Cohesion: 0.25
 Nodes (8): 56. PROTOCOLO DE IMPLEMENTAÇÃO PARA CLAUDE, Fase A — Recon, Fase B — Plano, Fase C — Estrutura, Fase D — Components, Fase E — Responsive, Fase F — Polish, Fase G — QA
 
-### Community 1565 - "63. REFERÊNCIAS VISUAIS APROVADAS — ZAPP"
+### Community 1566 - "63. REFERÊNCIAS VISUAIS APROVADAS — ZAPP"
 Cohesion: 0.25
 Nodes (8): 63. REFERÊNCIAS VISUAIS APROVADAS — ZAPP, Arquivos, Chat Principal, CRM 360°, Histórico, IA, Notas, Tarefas
 
-### Community 1566 - "13. INTEGRAÇÃO COM SUPABASE REALTIME"
+### Community 1567 - "13. INTEGRAÇÃO COM SUPABASE REALTIME"
 Cohesion: 0.25
 Nodes (8): 13.1 Configuração Inicial, 13.2 Escutar Todos os Eventos, 13.3 Escutar Apenas Mensagens, 13.4 Escutar Alertas Críticos, 13.5 Escutar Mudanças no Pipeline, 13.6 Escutar por Chat Específico, 13.7 Cleanup, 13. INTEGRAÇÃO COM SUPABASE REALTIME
 
-### Community 1567 - "9.3 GROUP_PARTICIPANTS_UPDATE"
+### Community 1568 - "9.3 GROUP_PARTICIPANTS_UPDATE"
 Cohesion: 0.25
 Nodes (8): 9.1 GROUPS_UPSERT, 9.2 GROUP_UPDATE, 9.3 GROUP_PARTICIPANTS_UPDATE, 9. EVENTOS DE GRUPOS, Adição de Participante, Promoção a Admin, Rebaixamento de Admin, Remoção de Participante
 
-### Community 1568 - "IA-001 — Referência técnica da execução"
+### Community 1569 - "IA-001 — Referência técnica da execução"
 Cohesion: 0.25
 Nodes (7): 1. Referência analisada pelo plano (auditoria), 2. Referência congelada desta execução, 3.1 Mudanças que importam para este plano (incorporadas ao escopo), 3. Diferenças entre a auditoria do plano e a referência de execução, 4. Regra de revalidação por bloco (derivada da IA-001), 5. Aceite da etapa, IA-001 — Referência técnica da execução
 
-### Community 1569 - "E62 — Contraste do combobox de endereços (SuggestionList)"
+### Community 1570 - "E62 — Contraste do combobox de endereços (SuggestionList)"
 Cohesion: 0.25
 Nodes (7): Antes, Comando que gerou os números, Correção aplicada (só token, sem tocar no componente), Depois, E62 — Contraste do combobox de endereços (SuggestionList), O que foi medido, Trava no CI
-
-### Community 1570 - "Plano de paridade V3 → V2 — doc 11 (inbox/components raiz M–Z), segunda passada"
-Cohesion: 0.25
-Nodes (7): 1. Como foi feito, 2. Cartões (série DK; ids), 3. Ajustes em cartões existentes (comentários postados), 4. Fora de escopo / não portar, 5. Validação no fim, 6. Não consegui verificar, Plano de paridade V3 → V2 — doc 11 (inbox/components raiz M–Z), segunda passada
 
 ### Community 1571 - "Plano de paridade V3 → V2 — doc 16 (components/connections e components/dashboard), segunda passada"
 Cohesion: 0.25
@@ -10672,2305 +10673,2305 @@ Nodes (4): h, loaded(), names(), Row
 Cohesion: 0.33
 Nodes (4): ContextAction, ContextConfig, contextConfigs, ContextualEmptyStateProps
 
-### Community 1823 - "useMessages.reconexao.test.tsx"
+### Community 1823 - "useConversationActions.reopen.test.ts"
+Cohesion: 0.29
+Nodes (5): LINHA_REABERTA, reopenResult, resultChain(), obj, rpcCalls
+
+### Community 1824 - "useMessages.reconexao.test.tsx"
 Cohesion: 0.29
 Nodes (3): h, MessageLike, T0
 
-### Community 1824 - "useBrandColors.ts"
+### Community 1825 - "useBrandColors.ts"
 Cohesion: 0.38
 Nodes (6): BrandColor, BrandColorsResult, NAMED_COLORS, parseHex(), resolveColor(), useBrandColors()
 
-### Community 1825 - "useEmailContactContext.test.tsx"
+### Community 1826 - "useEmailContactContext.test.tsx"
 Cohesion: 0.29
 Nodes (5): callCRMIntegration, context, crmEnabled, input, useAuth
 
-### Community 1827 - "useGmail.syncParcial.test.tsx"
+### Community 1828 - "useGmail.syncParcial.test.tsx"
 Cohesion: 0.33
 Nodes (4): actionOf(), { invokeMock, getSessionMock }, MOCK_ACCOUNT, respondWithSyncPayload()
 
-### Community 1828 - "useTeamMessageReactions.canal-e-reconexao.test.tsx"
+### Community 1829 - "useTeamMessageReactions.canal-e-reconexao.test.tsx"
 Cohesion: 0.29
 Nodes (3): h, render(), builder
 
-### Community 1829 - "useTeamMessageReactions.test.tsx"
+### Community 1830 - "useTeamMessageReactions.test.tsx"
 Cohesion: 0.29
 Nodes (3): estado, render(), RowReaction
 
-### Community 1830 - "useGlobalSettings.zero-linhas.test.tsx"
+### Community 1831 - "useGlobalSettings.zero-linhas.test.tsx"
 Cohesion: 0.29
 Nodes (6): linhas, mockEq, mockOrder, mockSelectAposUpdate, mockUpdate, renderGlobalSettings()
 
-### Community 1831 - "useMessages.test.tsx"
+### Community 1832 - "useMessages.test.tsx"
 Cohesion: 0.29
 Nodes (3): mockChannel, mockFrom, mockRemoveChannel
 
-### Community 1835 - "public.sla_rules"
+### Community 1836 - "public.sla_rules"
 Cohesion: 0.29
 Nodes (7): idx_sla_rules_active, idx_sla_rules_active_priority, idx_sla_rules_agent_id, idx_sla_rules_company, idx_sla_rules_contact_id, idx_sla_rules_queue_id, public.sla_rules
 
-### Community 1836 - "public.reassign_overloaded_agents"
+### Community 1837 - "public.reassign_overloaded_agents"
 Cohesion: 0.33
 Nodes (7): public.get_profile_role_for_check(), public.reassign_absent_agents(), public.reassign_overloaded_agents(), public.update_own_profile(), contacts, profiles, queue_members
 
-### Community 1837 - "public.ai_usage_logs"
+### Community 1838 - "public.ai_usage_logs"
 Cohesion: 0.29
 Nodes (7): ai_usage_logs_pkey, idx_ai_usage_logs_created_at, idx_ai_usage_logs_function_name, idx_ai_usage_logs_profile_id, idx_ai_usage_logs_status, idx_ai_usage_logs_user_id, public.ai_usage_logs
 
-### Community 1838 - "public.messages"
+### Community 1839 - "public.messages"
 Cohesion: 0.29
 Nodes (7): idx_messages_contact_created, idx_messages_contact_id, idx_messages_content_search, idx_messages_created_at, idx_messages_external_id, messages_pkey, public.messages
 
-### Community 1839 - "functions/deno.json"
+### Community 1840 - "functions/deno.json"
 Cohesion: 0.29
 Nodes (6): compilerOptions, skipLibCheck, imports, @types/node, lock, nodeModulesDir
 
-### Community 1840 - "20251215173646_87479af1-3381-4264-af26-592da3439efd.sql"
+### Community 1841 - "20251215173646_87479af1-3381-4264-af26-592da3439efd.sql"
 Cohesion: 0.38
 Nodes (6): public.conversation_sla, public.sla_configurations, public.contacts, public.update_updated_at_column, update_conversation_sla_updated_at, update_sla_configurations_updated_at
 
-### Community 1841 - "20251220144517_7c4129f8-c8ba-4dff-bc87-c4c8164a29a8.sql"
+### Community 1842 - "20251220144517_7c4129f8-c8ba-4dff-bc87-c4c8164a29a8.sql"
 Cohesion: 0.38
 Nodes (6): idx_products_active, idx_products_category, public.products, public.update_updated_at_column, public.whatsapp_connections, update_products_updated_at
 
-### Community 1842 - "20251220182214_521955ac-e1ac-4e48-91e2-26a5494fa75f.sql"
+### Community 1843 - "20251220182214_521955ac-e1ac-4e48-91e2-26a5494fa75f.sql"
 Cohesion: 0.33
 Nodes (6): public.contact_tags, public.tags, public.contacts, public.profiles, public.update_updated_at_column, update_tags_updated_at
 
-### Community 1843 - "20251231131019_8cdee99f-d19b-4efc-bdd1-7bb592007792.sql"
+### Community 1844 - "20251231131019_8cdee99f-d19b-4efc-bdd1-7bb592007792.sql"
 Cohesion: 0.48
 Nodes (6): idx_allowed_countries_code, public.allowed_countries, public.geo_blocking_settings, public.is_country_allowed(), auth.users, public.blocked_countries
 
-### Community 1844 - "20251231132448_8f744f22-eacc-43e9-be5b-8b194737c75d.sql"
+### Community 1845 - "20251231132448_8f744f22-eacc-43e9-be5b-8b194737c75d.sql"
 Cohesion: 0.48
 Nodes (5): idx_login_attempts_email, idx_login_attempts_locked, public.is_account_locked(), public.login_attempts, public.record_failed_login()
 
-### Community 1845 - "20260315192101_31ac3dae-2e65-4368-9e79-6d9e0663872d.sql"
+### Community 1846 - "20260315192101_31ac3dae-2e65-4368-9e79-6d9e0663872d.sql"
 Cohesion: 0.38
 Nodes (6): idx_contact_custom_fields_contact, idx_contact_custom_fields_unique, public.contact_custom_fields, public.contacts, update_updated_at_column, update_contact_custom_fields_updated_at
 
-### Community 1846 - "20260319134046_ca0c2740-67fa-495d-be04-62114b42b479.sql"
+### Community 1847 - "20260319134046_ca0c2740-67fa-495d-be04-62114b42b479.sql"
 Cohesion: 0.43
 Nodes (6): idx_health_logs_checked_at, idx_health_logs_connection_checked, idx_rate_limits_instance_window, public.connection_health_logs, public.webhook_rate_limits, public.whatsapp_connections
 
-### Community 1847 - "public.get_identity_matrix"
+### Community 1848 - "public.get_identity_matrix"
 Cohesion: 0.29
 Nodes (6): public.get_identity_matrix(), auth.users, public.permissions, public.profiles, public.role_permissions, public.user_roles
 
-### Community 1849 - "20260911160000_harden_talkx_campaign_insert_and_draft_delete.sql"
+### Community 1850 - "20260911160000_harden_talkx_campaign_insert_and_draft_delete.sql"
 Cohesion: 0.29
 Nodes (4): enforce_talkx_campaign_mutability, enforce_talkx_recipient_snapshot_mutability, public.enforce_talkx_campaign_mutability, public.enforce_talkx_recipient_snapshot_mutability
 
-### Community 1850 - "public.catalog_send_events"
+### Community 1851 - "public.catalog_send_events"
 Cohesion: 0.43
 Nodes (6): idx_catalog_send_events_contact, idx_catalog_send_events_created, idx_catalog_send_events_product, public.catalog_send_events, public.contacts, public.profiles
 
-### Community 1851 - "20260925150000_dashboard_fase1_rls_indices.sql"
+### Community 1852 - "20260925150000_dashboard_fase1_rls_indices.sql"
 Cohesion: 0.29
 Nodes (6): idx_closures_created_at, idx_events_created_at, idx_sla_first_message_at, public.conversation_closures, public.conversation_events, public.conversation_sla
 
-### Community 1852 - "20260927130000_dashboard_rpc_composite_indices.sql"
+### Community 1853 - "20260927130000_dashboard_rpc_composite_indices.sql"
 Cohesion: 0.29
 Nodes (6): idx_closures_created_contact, idx_contacts_assigned_queue, idx_sla_first_msg_contact, public.contacts, public.conversation_closures, public.conversation_sla
 
-### Community 1853 - "public.team_message_receipts"
+### Community 1854 - "public.team_message_receipts"
 Cohesion: 0.38
 Nodes (6): idx_team_message_receipts_message_id, idx_team_message_receipts_unread, public.team_message_receipts, public, public.profiles, public.team_messages
 
-### Community 1854 - "public.multiplix_blocks"
+### Community 1855 - "public.multiplix_blocks"
 Cohesion: 0.33
 Nodes (6): idx_multiplix_blocks_dispatch_id, public.multiplix_blocks, public, public.multiplix_dispatches, public.update_updated_at_column, update_multiplix_blocks_updated_at
 
-### Community 1855 - "20260927620000_gamification_leaderboard_indexes_streak_fix.sql"
+### Community 1856 - "20260927620000_gamification_leaderboard_indexes_streak_fix.sql"
 Cohesion: 0.29
 Nodes (6): idx_agent_achievements_earned_at, idx_contacts_assigned_to_gamif, idx_csat_surveys_created_at_agent, public.agent_achievements, public.contacts, public.csat_surveys
 
-### Community 1856 - "20260929600000_multiplix_send_engine_fixes.sql"
+### Community 1857 - "20260929600000_multiplix_send_engine_fixes.sql"
 Cohesion: 0.29
 Nodes (3): public.claim_multiplix_recipient(), public.multiplix_dispatches, public.multiplix_recipients
-
-### Community 1857 - "public.save_talkx_campaign_draft"
-Cohesion: 0.29
-Nodes (6): public.save_talkx_campaign_draft(), public.transition_talkx_campaign(), public.profiles, public.talkx_campaigns, public.talkx_recipients, public.whatsapp_connections
 
 ### Community 1858 - "public.save_talkx_campaign_draft"
 Cohesion: 0.29
 Nodes (6): public.save_talkx_campaign_draft(), public.transition_talkx_campaign(), public.profiles, public.talkx_campaigns, public.talkx_recipients, public.whatsapp_connections
 
-### Community 1859 - "public.talkx_campaign_segments"
+### Community 1859 - "public.save_talkx_campaign_draft"
+Cohesion: 0.29
+Nodes (6): public.save_talkx_campaign_draft(), public.transition_talkx_campaign(), public.profiles, public.talkx_campaigns, public.talkx_recipients, public.whatsapp_connections
+
+### Community 1860 - "public.talkx_campaign_segments"
 Cohesion: 0.29
 Nodes (6): idx_talkx_recipients_campaign_segment_status, public.talkx_campaign_segments, public, public.talkx_campaigns, public.talkx_recipients, public.talkx_segments
 
-### Community 1860 - "public.talkx_campaign_launch_checks"
+### Community 1861 - "public.talkx_campaign_launch_checks"
 Cohesion: 0.29
 Nodes (6): public.talkx_campaign_launch_checks(), public.profiles, public.talkx_campaigns, public.talkx_recipients, public.talkx_templates, public.whatsapp_connections
 
-### Community 1861 - "public.update_talkx_campaign_limits"
+### Community 1862 - "public.update_talkx_campaign_limits"
 Cohesion: 0.33
 Nodes (6): public.save_talkx_campaign_draft(), public.update_talkx_campaign_limits(), public.profiles, public.talkx_campaigns, public.talkx_settings, public.whatsapp_connections
 
-### Community 1862 - "20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
+### Community 1863 - "20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
 Cohesion: 0.29
 Nodes (4): public.talkx_blacklist_audit_trigger, public.talkx_blacklist_no_delete, trg_talkx_blacklist_audit, trg_talkx_blacklist_no_delete
 
-### Community 1863 - "public.talkx_segment_health"
+### Community 1864 - "public.talkx_segment_health"
 Cohesion: 0.29
 Nodes (6): public.talkx_segment_health(), public.contacts, public.messages, public.talkx_blacklist, public.talkx_recipients, public.talkx_segments
 
-### Community 1864 - "public.talkx_insights"
+### Community 1865 - "public.talkx_insights"
 Cohesion: 0.29
 Nodes (6): public.talkx_insights(), public.profiles, public.talkx_campaigns, public.talkx_link_clicks, public.talkx_links, public.talkx_recipients
 
-### Community 1865 - "public.talk_me_list_pending_messages"
+### Community 1866 - "public.talk_me_list_pending_messages"
 Cohesion: 0.29
 Nodes (6): public.talk_me_list_pending_messages(), public.feature_flags, public.messages, public.profiles, public.queue_members, public.queues
 
-### Community 1866 - "public.search_email_threads"
+### Community 1867 - "public.search_email_threads"
 Cohesion: 0.38
 Nodes (6): email_attachments_filename_trgm_idx, email_messages_body_text_trgm_idx, public.search_email_threads(), public.email_attachments, public.email_messages, public.email_threads
 
-### Community 1867 - "public.get_visible_agent_ids"
+### Community 1868 - "public.get_visible_agent_ids"
 Cohesion: 0.38
 Nodes (6): public.effective_role(), public.get_visible_agent_ids(), public.sync_profile_role_from_user_roles(), public.agent_visibility_grants, public.profiles, public.user_roles
-
-### Community 1868 - "public.talkx_campaign_recipients_page"
-Cohesion: 0.29
-Nodes (6): public.talkx_campaign_recipients_page(), numbered, public.contacts, public.profiles, public.talkx_campaigns, public.talkx_recipients
 
 ### Community 1869 - "public.talkx_campaign_recipients_page"
 Cohesion: 0.29
 Nodes (6): public.talkx_campaign_recipients_page(), numbered, public.contacts, public.profiles, public.talkx_campaigns, public.talkx_recipients
 
-### Community 1870 - "20261113172000_remove_enum_special_agent.sql"
+### Community 1870 - "public.talkx_campaign_recipients_page"
+Cohesion: 0.29
+Nodes (6): public.talkx_campaign_recipients_page(), numbered, public.contacts, public.profiles, public.talkx_campaigns, public.talkx_recipients
+
+### Community 1871 - "20261113172000_remove_enum_special_agent.sql"
 Cohesion: 0.38
 Nodes (6): public.admin_set_role(), public.effective_role(), public.has_role(), public.whatsapp_connections_safe, public.user_roles, public.whatsapp_connections
 
-### Community 1871 - "`_foreign/` — migrations que NAO pertencem a este banco"
+### Community 1872 - "`_foreign/` — migrations que NAO pertencem a este banco"
 Cohesion: 0.29
 Nodes (6): Arquivos, `_foreign/` — migrations que NAO pertencem a este banco, O que e isto, O que fazer com eles, Por que isto era urgente, Prova de que sao estrangeiras
 
-### Community 1872 - "talkx-blacklist-reconcilia.test.sh"
+### Community 1873 - "talkx-blacklist-reconcilia.test.sh"
 Cohesion: 0.62
 Nodes (6): apply(), expect_error(), fail(), ok(), run(), talkx-blacklist-reconcilia.test.sh script
 
-### Community 1873 - "gamification_streak_dias_seguidos.sql"
+### Community 1874 - "gamification_streak_dias_seguidos.sql"
 Cohesion: 0.29
 Nodes (3): t_contact, t_ids, t_tu
 
-### Community 1875 - "multiplix-handoff-f100.contract.test.ts"
+### Community 1876 - "multiplix-handoff-f100.contract.test.ts"
 Cohesion: 0.33
 Nodes (4): arquivosDeCodigo(), ResumoBloco, resumoBlocoDaTabela(), somaNumeros()
 
-### Community 1876 - "Dossiê — `claude/fix-ci-reativar-suites-261016-1530`"
+### Community 1877 - "Dossiê — `claude/fix-ci-reativar-suites-261016-1530`"
 Cohesion: 0.33
 Nodes (5): check-test-inventory.mjs — não absorvido, ci.yml — não absorvido, Conclusão, Dossiê — `claude/fix-ci-reativar-suites-261016-1530`, Evidências
 
-### Community 1877 - "Dossiê — `claude/feat-copiloto-cv011-020-migrations-261016-1930`"
+### Community 1878 - "Dossiê — `claude/feat-copiloto-cv011-020-migrations-261016-1930`"
 Cohesion: 0.33
 Nodes (5): Conclusão, Dossiê — `claude/feat-copiloto-cv011-020-migrations-261016-1930`, Evidências, Migrations ausentes da main (6 arquivos), Risco
 
-### Community 1878 - "PR #2555 — feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051)"
+### Community 1879 - "PR #2555 — feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051)"
 Cohesion: 0.33
 Nodes (5): Correção necessária, Evidências (resumo), Motivo, Negócio, PR #2555 — feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051)
 
-### Community 1879 - "PR #2846 — chore(ci): guard GA02 passa a checar referência órfã e skills idênticos"
+### Community 1880 - "PR #2846 — chore(ci): guard GA02 passa a checar referência órfã e skills idênticos"
 Cohesion: 0.33
 Nodes (5): Evidências (resumo), Motivo, Negócio, PR #2846 — chore(ci): guard GA02 passa a checar referência órfã e skills idênticos, Regra 4
 
-### Community 1880 - "PR #2881 — fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit"
+### Community 1881 - "PR #2881 — fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit"
 Cohesion: 0.33
 Nodes (5): Correção necessária, Evidências (resumo), Motivo, Negócio, PR #2881 — fix(e2e): aguarda requestAnimationFrame antes de medir contraste no webkit
 
-### Community 1881 - "PR #2919 — ci(talkx): ativa validação do corpo das PRs Talk X"
+### Community 1882 - "PR #2919 — ci(talkx): ativa validação do corpo das PRs Talk X"
 Cohesion: 0.33
 Nodes (5): Evidências (resumo), Motivo, Negócio, PR #2919 — ci(talkx): ativa validação do corpo das PRs Talk X, Regra 4
 
-### Community 1882 - "PR #2932 — fix(eslint): no-secret-compare ignora modificadores de teclado (key/ctrlKey/...)"
+### Community 1883 - "PR #2932 — fix(eslint): no-secret-compare ignora modificadores de teclado (key/ctrlKey/...)"
 Cohesion: 0.33
 Nodes (5): Evidências (resumo), Motivo, Negócio, PR #2932 — fix(eslint): no-secret-compare ignora modificadores de teclado (key/ctrlKey/...), Regra 4
 
-### Community 1883 - "PR #2943 — fix(inventario): edge chamada só por cron+Vault não é mais sem_chamador"
+### Community 1884 - "PR #2943 — fix(inventario): edge chamada só por cron+Vault não é mais sem_chamador"
 Cohesion: 0.33
 Nodes (5): Evidências (resumo), Motivo, Negócio, PR #2943 — fix(inventario): edge chamada só por cron+Vault não é mais sem_chamador, Regra 4
 
-### Community 1884 - "PR #2969 — fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor"
+### Community 1885 - "PR #2969 — fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor"
 Cohesion: 0.33
 Nodes (5): Evidências (resumo), Motivo, Negócio, PR #2969 — fix(talkx): bloquear destinatário passa a funcionar e fica restrito ao gestor, Regra 4
 
-### Community 1885 - "PR #2971 — chore(db): sincronizar artefatos derivados do banco"
+### Community 1886 - "PR #2971 — chore(db): sincronizar artefatos derivados do banco"
 Cohesion: 0.33
 Nodes (5): Evidências (resumo), Motivo, Negócio, PR #2971 — chore(db): sincronizar artefatos derivados do banco, Regra 4
 
-### Community 1886 - "Regras de negócio para merge de PRs"
+### Community 1887 - "Regras de negócio para merge de PRs"
 Cohesion: 0.33
 Nodes (5): Critérios de aprovação para merge automático, Método de merge, O que NÃO fazer, Regra 8 — deixar aberta e notificar humano, Regras de negócio para merge de PRs
 
-### Community 1887 - "ECC for Codex CLI"
+### Community 1888 - "ECC for Codex CLI"
 Cohesion: 0.33
 Nodes (5): ECC for Codex CLI, MCP Baseline, Multi-Agent Support, Repo Skill, Workflow Files
 
-### Community 1888 - "public.dashboard_kpi"
+### Community 1889 - "public.dashboard_kpi"
 Cohesion: 0.33
 Nodes (6): csat_period, messages_period, response_period, public.dashboard_kpi(), public.agent_stats, xp_period
 
-### Community 1889 - "ADR-004: Proteção da `main` com mantenedor único (approvals = 0)"
+### Community 1890 - "ADR-004: Proteção da `main` com mantenedor único (approvals = 0)"
 Cohesion: 0.33
 Nodes (5): ADR-004: Proteção da `main` com mantenedor único (approvals = 0), Consequências, Contexto, Decisão, Referências
 
-### Community 1890 - "Architecture Decision Records (ADR)"
+### Community 1891 - "Architecture Decision Records (ADR)"
 Cohesion: 0.33
 Nodes (6): Architecture Decision Records (ADR), Guidelines, Index, Naming Convention, Status Lifecycle, What is an ADR?
 
-### Community 1891 - "Regras de domínio que o código não deixa óbvio — referência para agentes"
+### Community 1892 - "Regras de domínio que o código não deixa óbvio — referência para agentes"
 Cohesion: 0.33
 Nodes (5): Contatos — critério de contato visível (decisão D4), Convites de departamento (Team Chat), Regras de domínio que o código não deixa óbvio — referência para agentes, Talk X / Campanhas, UI
 
-### Community 1892 - "Deploy, env vars e pendências"
+### Community 1893 - "Deploy, env vars e pendências"
 Cohesion: 0.33
 Nodes (5): Deploy e edge functions, Deploy, env vars e pendências, Pendências de Vercel (dependem de ação no dashboard), Regras de env vars no Vercel, Vercel e deploy — referência para agentes
 
-### Community 1893 - "Dossiê: claude/fix-deploy-functions-2408"
+### Community 1894 - "Dossiê: claude/fix-deploy-functions-2408"
 Cohesion: 0.33
 Nodes (5): Ação, Delta vs main (2 arquivos, 1 commit), Dossiê: claude/fix-deploy-functions-2408, Evidência, Por que foi descartada (não aberta como PR)
 
-### Community 1894 - "Dossiê — `claude/fix-ci-reativar-suites-261016-1530`"
+### Community 1895 - "Dossiê — `claude/fix-ci-reativar-suites-261016-1530`"
 Cohesion: 0.33
 Nodes (5): check-test-inventory.mjs — não absorvido, ci.yml — não absorvido, Conclusão, Dossiê — `claude/fix-ci-reativar-suites-261016-1530`, Evidências
 
-### Community 1895 - "Dossiê — `claude/feat-copiloto-cv011-020-migrations-261016-1930`"
+### Community 1896 - "Dossiê — `claude/feat-copiloto-cv011-020-migrations-261016-1930`"
 Cohesion: 0.33
 Nodes (5): Conclusão, Dossiê — `claude/feat-copiloto-cv011-020-migrations-261016-1930`, Evidências, Migrations ausentes da main (6 arquivos), Risco
 
-### Community 1896 - "Dossiê PR #2494 — chore(db): sincronizar artefatos derivados do banco"
+### Community 1897 - "Dossiê PR #2494 — chore(db): sincronizar artefatos derivados do banco"
 Cohesion: 0.33
 Nodes (5): 1. Ainda é válida?, 2. Traz regressão?, 3. Já está implementada no main?, 4. Regra de negócio está correta?, Dossiê PR #2494 — chore(db): sincronizar artefatos derivados do banco
 
-### Community 1897 - "Dossiê PR #2533 — chore: migration reconciliation 20261030145126"
+### Community 1898 - "Dossiê PR #2533 — chore: migration reconciliation 20261030145126"
 Cohesion: 0.33
 Nodes (5): 1. Ainda é válida?, 2. Traz regressão?, 3. Já está implementada no main?, 4. Regra de negócio está correta?, Dossiê PR #2533 — chore: migration reconciliation 20261030145126
 
-### Community 1898 - "Dossiê PR #2542 — fix: N-008 DB Guard"
+### Community 1899 - "Dossiê PR #2542 — fix: N-008 DB Guard"
 Cohesion: 0.33
 Nodes (5): 1. Ainda é válida?, 2. Traz regressão?, 3. Já está implementada no main?, 4. Regra de negócio está correta?, Dossiê PR #2542 — fix: N-008 DB Guard
 
-### Community 1899 - "Dossiê PR #2576 — fix(contacts): useEffect → useLayoutEffect (race condition)"
+### Community 1900 - "Dossiê PR #2576 — fix(contacts): useEffect → useLayoutEffect (race condition)"
 Cohesion: 0.33
 Nodes (5): 1. Ainda é válida?, 2. Traz regressão?, 3. Já está implementada no main?, 4. Regra de negócio está correta?, Dossiê PR #2576 — fix(contacts): useEffect → useLayoutEffect (race condition)
 
-### Community 1900 - "Dossiê PR #2603 — fix(db): migration 20261102012200 ausente da main (drift)"
+### Community 1901 - "Dossiê PR #2603 — fix(db): migration 20261102012200 ausente da main (drift)"
 Cohesion: 0.33
 Nodes (5): 1. Ainda é válida?, 2. Traz regressão?, 3. Já está implementada no main?, 4. Regra de negócio está correta?, Dossiê PR #2603 — fix(db): migration 20261102012200 ausente da main (drift)
 
-### Community 1901 - "Dossiê PR #2606 — chore(db): move 2 migrations não-aplicadas para _superseded/"
+### Community 1902 - "Dossiê PR #2606 — chore(db): move 2 migrations não-aplicadas para _superseded/"
 Cohesion: 0.33
 Nodes (5): 1. Ainda é válida?, 2. Traz regressão?, 3. Já está implementada no main?, 4. Regra de negócio está correta?, Dossiê PR #2606 — chore(db): move 2 migrations não-aplicadas para _superseded/
 
-### Community 1902 - "11. Reauditoria R3 do GPT (Talk X, Zapp Web V2) — verificada em 04/10/2026"
+### Community 1903 - "11. Reauditoria R3 do GPT (Talk X, Zapp Web V2) — verificada em 04/10/2026"
 Cohesion: 0.33
 Nodes (6): 11.1 Veredito por achado (código no commit + banco canônico via `zapp_db.py`), 11.2 Incidente achado durante a verificação (o relatório não viu porque não consultou o banco), 11.3-bis Plano de ferramentas do GPT (`docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md`, só no branch do PR #1869), 11.3 Sobre o relatório em si, 11.4 Lição para a V2, 11. Reauditoria R3 do GPT (Talk X, Zapp Web V2) — verificada em 04/10/2026
 
-### Community 1903 - "Conferido: equivalente ou decidido"
+### Community 1904 - "Conferido: equivalente ou decidido"
 Cohesion: 0.33
 Nodes (5): Conferido: equivalente ou decidido, Lacunas, com cartão criado e delegado (faixa N), Método, Paridade V3 → V2: documento 02-features-batch1 (12/10/2026), Totais da frente
 
-### Community 1904 - "Paridade V3 → V2: segunda passada do documento 25 (hooks da raiz, parte 3), 13/10/2026"
+### Community 1905 - "Paridade V3 → V2: segunda passada do documento 25 (hooks da raiz, parte 3), 13/10/2026"
 Cohesion: 0.33
 Nodes (5): Achados mais relevantes, Cartões, Descartes e decisões, Paridade V3 → V2: segunda passada do documento 25 (hooks da raiz, parte 3), 13/10/2026, Resultado: 36 achados, 23 cartões (faixa R)
 
-### Community 1905 - "Dívida de lint — mapa e plano de fatias"
+### Community 1906 - "Dívida de lint — mapa e plano de fatias"
 Cohesion: 0.33
 Nodes (5): Como medir cada fatia, Duas decisões que são do Joaquim (não mexi), Dívida de lint — mapa e plano de fatias, Fatias propostas (uma PR cada, ordem por risco crescente), Onde está a dívida (por regra, medido)
 
-### Community 1906 - "F1"
+### Community 1907 - "F1"
 Cohesion: 0.33
 Nodes (6): E07/E08/E09 👤 Governança de merge (classificador nega TODAS as chamadas de settings), E10 🔧 Gate de paridade tripla (PR `chore/e50-f1-ci-gates`), E11 ✅ Já existia, E12 ✅ Comportamento por design, E13 ✅ Inventário de crons (todos verificados em 20/09), F1
 
-### Community 1907 - "F3"
+### Community 1908 - "F3"
 Cohesion: 0.33
 Nodes (6): E22 📋 38 trigger functions fora do catálogo, E23 ✅ Anti-prosa no ledger — 0 resumos reais, E24 📋 Replay integral, E25 ✅ Inventário pinned-replay (migration-evidence.json), E26 ✅ "Projeção forward-only" entendida — não é pendência, F3
 
-### Community 1908 - "F6"
+### Community 1909 - "F6"
 Cohesion: 0.33
 Nodes (6): E39 🔧/📋 Dívida de lint — fatos mudaram a meta, E40 ✅ implicit-any já era 0, E41 ✅/📋 Testes, E42 ✅ TODO/FIXME: 0 reais, E43 ✅ console.log: 0 reais, F6
 
-### Community 1909 - "E20 — Conexões e Pooling das Edge Functions"
+### Community 1910 - "E20 — Conexões e Pooling das Edge Functions"
 Cohesion: 0.33
 Nodes (5): Caminho de conexão, Como as edges conectam ao banco, E20 — Conexões e Pooling das Edge Functions, Estado atual, Timeouts configurados
 
-### Community 1910 - "HANDOFF — ZAPP WEB V2: correcoes pos-auditoria (27/08/2026) — **CONCLUIDO**"
+### Community 1911 - "HANDOFF — ZAPP WEB V2: correcoes pos-auditoria (27/08/2026) — **CONCLUIDO**"
 Cohesion: 0.33
 Nodes (5): Aberto (nao bloqueante), HANDOFF — ZAPP WEB V2: correcoes pos-auditoria (27/08/2026) — **CONCLUIDO**, Invariantes verificados (ultima medicao 27/08 ~20:40 UTC), Placar final: 15/15, Protocolos que continuam valendo
 
-### Community 1911 - "PLANO DE MELHORIAS E CORREÇÕES — 50 ETAPAS (2026-09-20)"
+### Community 1912 - "PLANO DE MELHORIAS E CORREÇÕES — 50 ETAPAS (2026-09-20)"
 Cohesion: 0.33
 Nodes (5): Estado-base verificado (2026-09-20), Ordem de ataque sugerida, PLANO DE MELHORIAS E CORREÇÕES — 50 ETAPAS (2026-09-20), Regras de execução (herdadas e obrigatórias), Status da execução — rodada 2026-09-20 (mesma data do plano)
 
-### Community 1912 - "F3 — Banco: guard e catálogo (E22–E26)"
+### Community 1913 - "F3 — Banco: guard e catálogo (E22–E26)"
 Cohesion: 0.33
 Nodes (6): E22 🟡 38 trigger functions fora do catálogo (herda E27/16-09), E23 🟢 Varredura anti-prosa no ledger (herda E18/16-09), E24 🟢 Replay integral das 443 migrations em PG 17.6 efêmero (herda E20/16-09), E25 🟢 Inventário das exceções pinned-replay (herda E15/16-09), E26 ✅ Projeção forward-only: 2 relações pendentes (herda E17/16-09), F3 — Banco: guard e catálogo (E22–E26)
 
-### Community 1913 - "Baseline de queries lentas — E19 (PLANO_MELHORIAS_50)"
+### Community 1914 - "Baseline de queries lentas — E19 (PLANO_MELHORIAS_50)"
 Cohesion: 0.33
 Nodes (5): #3 — paginação sem filtro seletivo, Achado real — causa raiz da #2 (não é falta de índice), Baseline de queries lentas — E19 (PLANO_MELHORIAS_50), Decisão: NÃO mudar `REPLICA IDENTITY` — confirmado com evidência de código (26/09), Top consumidoras (22h de janela)
 
-### Community 1914 - "10. Sequência corretiva recomendada — não executada nesta revisão"
+### Community 1915 - "10. Sequência corretiva recomendada — não executada nesta revisão"
 Cohesion: 0.33
 Nodes (6): 10. Sequência corretiva recomendada — não executada nesta revisão, Lote 1 — Reconciliar a base sem perder trabalho, Lote 2 — Bloqueadores do banco e entrega, Lote 3 — Integridade do editor e audiência, Lote 4 — Fechar as funções prometidas, Lote 5 — Aceite e publicação
 
-### Community 1915 - "Capacidades de chamada por canal"
+### Community 1916 - "Capacidades de chamada por canal"
 Cohesion: 0.33
 Nodes (5): Capacidades de chamada por canal, Permissão (D8) — WhatsApp restrito a supervisor, Qual linha decide (T30), VoIP, WhatsApp
 
-### Community 1916 - "CV-002 — Linha de base comercial (setembro 2026)"
+### Community 1917 - "CV-002 — Linha de base comercial (setembro 2026)"
 Cohesion: 0.33
 Nodes (5): 1. Velocidade de primeira resposta, 2. Dados de conversão (CRM/Bitrix), 3. O que isto muda no plano, CV-002 — Linha de base comercial (setembro 2026), Resultado em uma frase
 
-### Community 1917 - "11. SPACING SYSTEM"
+### Community 1918 - "11. SPACING SYSTEM"
 Cohesion: 0.27
 Nodes (6): 11. SPACING SYSTEM, 41. SCROLL, Princípio, Regra, Scrollbar, Uso recomendado
 
-### Community 1918 - "13. SIDEBAR"
+### Community 1919 - "13. SIDEBAR"
 Cohesion: 0.33
 Nodes (6): 13. SIDEBAR, Active, Hover, Item default, Não fazer, Section label
 
-### Community 1919 - "17. BUTTON SYSTEM"
+### Community 1920 - "17. BUTTON SYSTEM"
 Cohesion: 0.33
 Nodes (6): 17.1 Primary, 17.2 Outline, 17.3 Ghost, 17.4 Danger, 17.5 Icon button, 17. BUTTON SYSTEM
 
-### Community 1920 - "20. MAGAZINE CARD — PADRÃO APROVADO"
+### Community 1921 - "20. MAGAZINE CARD — PADRÃO APROVADO"
 Cohesion: 0.33
 Nodes (6): 20. MAGAZINE CARD — PADRÃO APROVADO, Ações, Desktop Full HD, Metadata, Preview, Status
 
-### Community 1921 - "25. STEPPER"
+### Community 1922 - "25. STEPPER"
 Cohesion: 0.33
 Nodes (6): 25. STEPPER, Active, Complete, Desktop, Future, Interação
 
-### Community 1922 - "33. BADGES / STATUS"
+### Community 1923 - "33. BADGES / STATUS"
 Cohesion: 0.33
 Nodes (6): 33. BADGES / STATUS, Archived, Danger, Draft, Published, Warning
 
-### Community 1923 - "3. DNA VISUAL"
+### Community 1924 - "3. DNA VISUAL"
 Cohesion: 0.33
 Nodes (6): 3.1 Profundidade por superfícies, não por sombras exageradas, 3.2 Azul reservado para intenção e estado, 3.3 Conteúdo domina a interface, 3.4 Densidade operacional, 3.5 Progressive disclosure, 3. DNA VISUAL
 
-### Community 1924 - "49. REGRAS DE CÓDIGO PARA CLAUDE"
+### Community 1925 - "49. REGRAS DE CÓDIGO PARA CLAUDE"
 Cohesion: 0.33
 Nodes (6): 49.1 Reutilizar antes de criar, 49.2 Não duplicar design system, 49.3 Sem magic numbers espalhados, 49.4 Sem `!important`, 49.5 Sem CSS screenshot-hack, 49. REGRAS DE CÓDIGO PARA CLAUDE
 
-### Community 1925 - "51. SEMÂNTICA DE AÇÕES"
+### Community 1926 - "51. SEMÂNTICA DE AÇÕES"
 Cohesion: 0.33
 Nodes (6): 51. SEMÂNTICA DE AÇÕES, Danger, Ghost, Link, Primary, Secondary
 
-### Community 1926 - "5. HIERARQUIA DE SUPERFÍCIES"
+### Community 1927 - "5. HIERARQUIA DE SUPERFÍCIES"
 Cohesion: 0.33
 Nodes (6): 5. HIERARQUIA DE SUPERFÍCIES, Nível 0 — App background, Nível 1 — Card / panel, Nível 2 — Nested surface, Nível 3 — Elevated, Regra
 
-### Community 1927 - "61. EXEMPLOS TAILWIND DE REFERÊNCIA"
+### Community 1928 - "61. EXEMPLOS TAILWIND DE REFERÊNCIA"
 Cohesion: 0.33
 Nodes (6): 61. EXEMPLOS TAILWIND DE REFERÊNCIA, Input, Interactive card, Panel, Primary CTA, Selected panel
 
-### Community 1928 - "63. REFERÊNCIAS VISUAIS APROVADAS — O QUE COPIAR DE CADA UMA"
+### Community 1929 - "63. REFERÊNCIAS VISUAIS APROVADAS — O QUE COPIAR DE CADA UMA"
 Cohesion: 0.33
 Nodes (6): 63. REFERÊNCIAS VISUAIS APROVADAS — O QUE COPIAR DE CADA UMA, A. Magazine Library, B. Templates Gallery, C. Template Inspector, D. Editor Identity, E. Editor Products
 
-### Community 1929 - "6. BORDAS"
+### Community 1930 - "6. BORDAS"
 Cohesion: 0.33
 Nodes (6): 6. BORDAS, Danger, Default, Evitar, Hover, Selected
 
-### Community 1930 - "TALK ME — guia rápido de atendimento"
+### Community 1931 - "TALK ME — guia rápido de atendimento"
 Cohesion: 0.33
 Nodes (5): Como reportar um erro, Situações importantes, TALK ME — guia rápido de atendimento, Teclado, Usar a fila
 
-### Community 1931 - "TALK ME — Rastreabilidade das 100 etapas originais (auditoria de 20/10/2026)"
+### Community 1932 - "TALK ME — Rastreabilidade das 100 etapas originais (auditoria de 20/10/2026)"
 Cohesion: 0.33
 Nodes (5): Etapas que mudaram de destino (as que a auditoria moveu), O que só o Joaquim pode fechar, Prova de que a branch original não era necessária, Resultado por faixa, TALK ME — Rastreabilidade das 100 etapas originais (auditoria de 20/10/2026)
 
-### Community 1932 - "ZAPP_DARKBLUE_PREMIUM_MOTION.ts"
+### Community 1933 - "ZAPP_DARKBLUE_PREMIUM_MOTION.ts"
 Cohesion: 0.33
 Nodes (5): zappDarkblueMotion, zappPanelVariants, zappPopoverVariants, zappSubviewVariants, zappTransition
 
-### Community 1933 - "12. LAYOUT GLOBAL — FULL HD FIRST"
+### Community 1934 - "12. LAYOUT GLOBAL — FULL HD FIRST"
 Cohesion: 0.33
 Nodes (6): 12.1 Shell operacional, 12.2 Sidebar, 12.3 Topbar, 12.4 Page gutter, 12.5 Regra, 12. LAYOUT GLOBAL — FULL HD FIRST
 
-### Community 1934 - "31. MESSAGE MEDIA"
+### Community 1935 - "31. MESSAGE MEDIA"
 Cohesion: 0.33
 Nodes (6): 31. MESSAGE MEDIA, Audio, Document, Image, Product, Video
 
-### Community 1935 - "49. REGRAS DE CÓDIGO PARA CLAUDE"
+### Community 1936 - "49. REGRAS DE CÓDIGO PARA CLAUDE"
 Cohesion: 0.33
 Nodes (6): 49. REGRAS DE CÓDIGO PARA CLAUDE, Não duplicar, Reutilizar antes de criar, Sem `!important`, Sem magic numbers, Sem screenshot hack
 
-### Community 1936 - "11.1 PRESENCE_UPDATE"
+### Community 1937 - "11.1 PRESENCE_UPDATE"
 Cohesion: 0.33
 Nodes (6): 11.1 PRESENCE_UPDATE, 11. EVENTOS DE PRESENÇA, Digitando, Em Grupo, Gravando Áudio, Parou de Digitar
 
-### Community 1937 - "Bloco 01 do Plano IA 200 Etapas — Escopo, evidências e regras de execução"
+### Community 1938 - "Bloco 01 do Plano IA 200 Etapas — Escopo, evidências e regras de execução"
 Cohesion: 0.33
 Nodes (6): Bloco 01 do Plano IA 200 Etapas — Escopo, evidências e regras de execução, Bloco 06 — estado de IA-058: DESIGN_ONLY, Limites deste bloco (declarados, não mascarados), Os três achados que este bloco já deixa provados (base do Bloco 02, P0), Próximos blocos, Índice por etapa
 
-### Community 1938 - "PLANO — ÁREA DE TOQUE DOS BOTÕES DE AÇÃO DO CARTÃO DE ARQUIVO NO CELULAR (A07) — 2 ETAPAS"
+### Community 1939 - "PLANO — ÁREA DE TOQUE DOS BOTÕES DE AÇÃO DO CARTÃO DE ARQUIVO NO CELULAR (A07) — 2 ETAPAS"
 Cohesion: 0.33
 Nodes (5): Arquivos permitidos (A07a), Decisão de desenho (reversível), Etapas, Onde (5 usos do mesmo botão de 28 px), PLANO — ÁREA DE TOQUE DOS BOTÕES DE AÇÃO DO CARTÃO DE ARQUIVO NO CELULAR (A07) — 2 ETAPAS
 
-### Community 1939 - "Plano: painel de volume em dial circular, 30% menor"
+### Community 1940 - "Plano: painel de volume em dial circular, 30% menor"
 Cohesion: 0.33
 Nodes (5): Cartões, Fatos verificados, Interpretação adotada, Plano: painel de volume em dial circular, 30% menor, Validação (11/10)
 
-### Community 1940 - "7. Estado de execução (fechamento — 2026-10-01)"
+### Community 1941 - "7. Estado de execução (fechamento — 2026-10-01)"
 Cohesion: 0.33
 Nodes (6): 7.2 E18 — contraste medido (e reprovado), 7.3 E46 — checklist de navegadores, 7.4 E31/E47/E49 — branch, PR e produção, 7.5 E50 — persistência do volume dos ALERTAS, 7.6 Contagem 50/50, 7. Estado de execução (fechamento — 2026-10-01)
 
-### Community 1941 - "REFERÊNCIA TÉCNICA DOS ARQUIVOS EXISTENTES"
+### Community 1942 - "REFERÊNCIA TÉCNICA DOS ARQUIVOS EXISTENTES"
 Cohesion: 0.33
 Nodes (6): Gateway externo (src/lib/crmIntegration.ts), Hook 360° (src/hooks/useExternalContact360.ts), Hook Busca Avançada (src/hooks/useAdvancedContactSearch.ts), REFERÊNCIA TÉCNICA DOS ARQUIVOS EXISTENTES, Tipos busca (src/types/contactSearch.ts), Tipos principais (src/types/contact360.ts)
 
-### Community 1942 - "Runbook — Contatos: restaurar exclusão e reclassificar legado"
+### Community 1943 - "Runbook — Contatos: restaurar exclusão e reclassificar legado"
 Cohesion: 0.33
 Nodes (5): Contexto, Receita 1 — restaurar um contato excluído, Receita 2 — reclassificar `is_lid_legacy`, Runbook — Contatos: restaurar exclusão e reclassificar legado, Verificação em 2026-10-01 (read-only)
 
-### Community 1943 - "Recriar o banco local do zero"
+### Community 1944 - "Recriar o banco local do zero"
 Cohesion: 0.33
 Nodes (5): 1. Rodar o replay, 2. Ler o resultado, 3. Referências, Pré-requisitos, Recriar o banco local do zero
 
-### Community 1944 - "como-criar-sua-primeira-campanha.md"
+### Community 1945 - "como-criar-sua-primeira-campanha.md"
 Cohesion: 0.33
 Nodes (5): 1. Abra o assistente, 2. Escolha o público, 3. Escreva a mensagem, 4. Defina a entrega, 5. Revise e lance
 
-### Community 1947 - "public.prevent_contact_assignee_hijack"
+### Community 1948 - "public.prevent_contact_assignee_hijack"
 Cohesion: 0.33
 Nodes (5): public.prevent_contact_assignee_hijack, public.prevent_contact_assignee_hijack(), profiles, user_roles, trg_prevent_contact_assignee_hijack
 
-### Community 1948 - "20261007013217_conversation_closures_reopen_same_day.sql"
+### Community 1949 - "20261007013217_conversation_closures_reopen_same_day.sql"
 Cohesion: 0.33
 Nodes (4): public.reject_repeated_conversation_closure_without_reopen, public.reject_repeated_conversation_closure_without_reopen(), public.contacts, trg_reject_repeated_conversation_closure_without_reopen
 
-### Community 1949 - "20261006235031_searchbox_budget_alert_email_ledger.sql"
+### Community 1950 - "20261006235031_searchbox_budget_alert_email_ledger.sql"
 Cohesion: 0.33
 Nodes (5): public.searchbox_usage_daily, public.searchbox_budget_alert_cron, public.searchbox_budget_alert_emails, public.searchbox_budget_alert_tick(), vault.decrypted_secrets
 
-### Community 1950 - "20260830070000_fn_effective_role_and_sync_trigger.sql"
+### Community 1951 - "20260830070000_fn_effective_role_and_sync_trigger.sql"
 Cohesion: 0.40
 Nodes (5): public.sync_profile_role_from_user_roles, public.effective_role(), public.sync_profile_role_from_user_roles(), public.user_roles, sync_profile_role
 
-### Community 1951 - "20261011000021_talkx_ab_weights_constraint.sql"
+### Community 1952 - "20261011000021_talkx_ab_weights_constraint.sql"
 Cohesion: 0.33
 Nodes (4): public.talkx_validate_template_variant_weights, public.talkx_validate_template_variant_weights(), public.talkx_template_variants, talkx_template_variants_weight_sum
 
-### Community 1952 - "20260916140000_talkx_e88_replies.sql"
+### Community 1953 - "20260916140000_talkx_e88_replies.sql"
 Cohesion: 0.33
 Nodes (4): public.trg_talkx_increment_replied_count, idx_talkx_recipients_reply_lookup, public.talkx_recipients, trg_talkx_replied_count
 
-### Community 1953 - "tsconfig.strict.json"
+### Community 1954 - "tsconfig.strict.json"
 Cohesion: 0.33
 Nodes (5): ./tsconfig.app.json, compilerOptions, noImplicitAny, strict, extends
 
-### Community 1954 - "e2e-isolated-force-online.unit.mjs"
+### Community 1955 - "e2e-isolated-force-online.unit.mjs"
 Cohesion: 0.53
 Nodes (3): FORCE_ONLINE_SCRIPT, installIsolatedOnlineState(), isolatedOnlinePlugin()
 
-### Community 1955 - "e2e-isolated-runtime-probe.unit.mjs"
+### Community 1956 - "e2e-isolated-runtime-probe.unit.mjs"
 Cohesion: 0.40
 Nodes (5): body, identity, probe(), SHA, source
 
-### Community 1956 - "buckets-stickers-team-chat-files.test.sh"
+### Community 1957 - "buckets-stickers-team-chat-files.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), buckets-stickers-team-chat-files.test.sh script, start_postgres()
 
-### Community 1957 - "f64-voz-assets-e-grants.test.sh"
+### Community 1958 - "f64-voz-assets-e-grants.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), f64-voz-assets-e-grants.test.sh script, start_postgres()
 
-### Community 1958 - "interactive-buttons-list-behavior.test.sh"
+### Community 1959 - "interactive-buttons-list-behavior.test.sh"
 Cohesion: 0.67
 Nodes (4): expect_failure(), fail(), psql_test(), interactive-buttons-list-behavior.test.sh script
 
-### Community 1959 - "mapa-f1-address-contract.test.sh"
+### Community 1960 - "mapa-f1-address-contract.test.sh"
 Cohesion: 0.53
 Nodes (4): apply(), db(), fail(), mapa-f1-address-contract.test.sh script
 
-### Community 1960 - "public-api-disable.test.sh"
+### Community 1961 - "public-api-disable.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_file(), psql_sql(), public-api-disable.test.sh script
 
-### Community 1961 - "Nota: reconciliação de `schema_migrations` para 20260924203300"
+### Community 1962 - "Nota: reconciliação de `schema_migrations` para 20260924203300"
 Cohesion: 0.33
 Nodes (5): Conclusão, Nota: reconciliação de `schema_migrations` para 20260924203300, O que foi investigado, Por que este script ainda existe, Revalidação (somente leitura, banco Supabase Cloud "ZAPP WEB V2")
 
-### Community 1962 - "replay-local-harness.test.sh"
+### Community 1963 - "replay-local-harness.test.sh"
 Cohesion: 0.60
 Nodes (5): caso(), checa(), contem(), nao_contem(), replay-local-harness.test.sh script
 
-### Community 1963 - "talkx-blacklist-audit-trigger.test.sh"
+### Community 1964 - "talkx-blacklist-audit-trigger.test.sh"
 Cohesion: 0.67
 Nodes (5): apply(), fail(), ok(), run(), talkx-blacklist-audit-trigger.test.sh script
 
-### Community 1964 - "talkx-campaign-state-transitions.test.sh"
+### Community 1965 - "talkx-campaign-state-transitions.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), talkx-campaign-state-transitions.test.sh script, start_postgres()
 
-### Community 1965 - "talkx-campaign-transitions.test.sh"
+### Community 1966 - "talkx-campaign-transitions.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), talkx-campaign-transitions.test.sh script, start_postgres()
 
-### Community 1966 - "talkx-delivery-leases.test.sh"
+### Community 1967 - "talkx-delivery-leases.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), talkx-delivery-leases.test.sh script, start_postgres()
 
-### Community 1967 - "talkx-draft-recipients.test.sh"
+### Community 1968 - "talkx-draft-recipients.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), talkx-draft-recipients.test.sh script, start_postgres()
 
-### Community 1968 - "talkx-draft-save.test.sh"
+### Community 1969 - "talkx-draft-save.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), talkx-draft-save.test.sh script, start_postgres()
 
-### Community 1969 - "talkx-message-snapshot.test.sh"
+### Community 1970 - "talkx-message-snapshot.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), talkx-message-snapshot.test.sh script, start_postgres()
 
-### Community 1970 - "talkx-n102c-window.test.sh"
+### Community 1971 - "talkx-n102c-window.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), talkx-n102c-window.test.sh script, window()
 
-### Community 1971 - "talkx-settings-replay-idempotent.test.sh"
+### Community 1972 - "talkx-settings-replay-idempotent.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_atomic_file(), psql_test(), talkx-settings-replay-idempotent.test.sh script
 
-### Community 1972 - "talkx-update-limits-22009.test.sh"
+### Community 1973 - "talkx-update-limits-22009.test.sh"
 Cohesion: 0.60
 Nodes (4): fail(), psql_test(), rpc(), talkx-update-limits-22009.test.sh script
 
-### Community 1973 - "talkx-update-limits-casts.test.sh"
+### Community 1974 - "talkx-update-limits-casts.test.sh"
 Cohesion: 0.60
 Nodes (4): fail(), psql_test(), rpc(), talkx-update-limits-casts.test.sh script
 
-### Community 1974 - "talkx-v12-lifecycle-events.test.sh"
+### Community 1975 - "talkx-v12-lifecycle-events.test.sh"
 Cohesion: 0.60
 Nodes (4): fail(), psql_test(), run_seq(), talkx-v12-lifecycle-events.test.sh script
 
-### Community 1975 - "whatsapp-media-policies-sem-curinga.test.sh"
+### Community 1976 - "whatsapp-media-policies-sem-curinga.test.sh"
 Cohesion: 0.53
 Nodes (4): fail(), psql_test(), read_obj(), whatsapp-media-policies-sem-curinga.test.sh script
 
-### Community 1976 - "Contatos de teste do redesign (RD-009)"
+### Community 1977 - "Contatos de teste do redesign (RD-009)"
 Cohesion: 0.33
 Nodes (5): Como usar, Contatos de teste do redesign (RD-009), O que ele cria, Rollback, Travas (por que nao vaza para producao)
 
-### Community 1977 - "seed-contatos-redesign-local.sh script"
+### Community 1978 - "seed-contatos-redesign-local.sh script"
 Cohesion: 0.60
 Nodes (5): aplicar(), contagem(), decode_b64(), seed-contatos-redesign-local.sh script, uso()
 
-### Community 1978 - "prova-orcamento-rate-limit.sh"
+### Community 1979 - "prova-orcamento-rate-limit.sh"
 Cohesion: 0.53
 Nodes (4): falha(), inconclusivo(), prova-orcamento-rate-limit.sh script, veredito()
 
-### Community 1979 - "team-chat-db-validate.mjs"
+### Community 1980 - "team-chat-db-validate.mjs"
 Cohesion: 0.47
 Nodes (4): checkRpc(), checkTable(), headers, semQuebra()
 
-### Community 1980 - "AIUsageDashboard.estado-a11y.test.tsx"
+### Community 1981 - "AIUsageDashboard.estado-a11y.test.tsx"
 Cohesion: 0.33
 Nodes (3): PAGINA, renderizar(), RESUMO
 
-### Community 1982 - "ConnectionsView.telefone-validacao.test.tsx"
+### Community 1983 - "ConnectionsView.telefone-validacao.test.tsx"
 Cohesion: 0.40
 Nodes (3): botaoAdicionar(), clicarAdicionar(), h
 
-### Community 1984 - "GoalsConfigDialog.test.tsx"
+### Community 1985 - "GoalsConfigDialog.test.tsx"
 Cohesion: 0.40
 Nodes (5): Builder, createWrapper(), mocks, QueryResult, renderDialog()
 
-### Community 1987 - "RealtimeInboxView.emailChip.test.tsx"
+### Community 1988 - "RealtimeInboxView.emailChip.test.tsx"
 Cohesion: 0.33
 Nodes (3): CONTATO, mocks, queryClient
 
-### Community 1989 - "WhisperMode.leitura.test.tsx"
+### Community 1990 - "WhisperMode.leitura.test.tsx"
 Cohesion: 0.33
 Nodes (3): h, Linha, ResultadoFake
 
-### Community 1990 - "VoiceDictationButton.session.test.tsx"
+### Community 1991 - "VoiceDictationButton.session.test.tsx"
 Cohesion: 0.40
 Nodes (4): instances, MockRecognition, MockSpeechRecognition, { toastError }
 
-### Community 1997 - "SkillBasedRoutingSettings.test.tsx"
+### Community 1998 - "SkillBasedRoutingSettings.test.tsx"
 Cohesion: 0.47
 Nodes (4): comboComOpcao(), h, prepararFormularioDeSkill(), wrapper()
 
-### Community 1998 - "SLAHistoryDashboard.sem-dados-erro.test.tsx"
+### Community 1999 - "SLAHistoryDashboard.sem-dados-erro.test.tsx"
 Cohesion: 0.33
 Nodes (4): dados, hist, semAmostra, trend
 
-### Community 1999 - "TalkXSegments.feedbackMassaMotivos.test.tsx"
+### Community 2000 - "TalkXSegments.feedbackMassaMotivos.test.tsx"
 Cohesion: 0.40
 Nodes (3): abrirBiblioteca(), f, wrap()
 
-### Community 2000 - "rodape.ts"
+### Community 2001 - "rodape.ts"
 Cohesion: 0.47
 Nodes (5): PainelRodape(), copiarLink(), linkInternoDaTarefa(), LocalizadorURL, podeReabrir()
 
-### Community 2001 - "motionEffects.movimento.test.tsx"
+### Community 2002 - "motionEffects.movimento.test.tsx"
 Cohesion: 0.33
 Nodes (4): fila, get(), Quadro, reduzido
 
-### Community 2002 - "useAuth.rascunho-teamchat-logout.test.tsx"
+### Community 2003 - "useAuth.rascunho-teamchat-logout.test.tsx"
 Cohesion: 0.40
 Nodes (4): harness, clearTeamChatDraftSessions(), TEAM_CHAT_DRAFT_KEY_PREFIX, teamDraftStorageKey()
 
-### Community 2003 - "useMinQuantityAlert.ts"
+### Community 2004 - "useMinQuantityAlert.ts"
 Cohesion: 0.40
 Nodes (5): extractQty(), LOW_QTY_TRIGGERS, MinQuantityAlert, useMinQuantityAlert(), UseMinQuantityAlertOptions
 
-### Community 2004 - "useStallDetector.ts"
+### Community 2005 - "useStallDetector.ts"
 Cohesion: 0.33
 Nodes (5): RECOVERIES, STALL_TRIGGERS, StallAlert, StallType, UseStallDetectorOptions
 
-### Community 2005 - "useContactIntelligence.test.tsx"
+### Community 2006 - "useContactIntelligence.test.tsx"
 Cohesion: 0.40
 Nodes (5): callCRMIntegration, crmEnabled, logError, makeWrapper(), render()
 
-### Community 2006 - "configuracoes.leituraErro.test.tsx"
+### Community 2007 - "configuracoes.leituraErro.test.tsx"
 Cohesion: 0.33
 Nodes (4): ERRO, mockFrom, mockToast, mockUseAuth
 
-### Community 2007 - "useCatalogFavorites.test.ts"
+### Community 2008 - "useCatalogFavorites.test.ts"
 Cohesion: 0.40
 Nodes (4): createWrapper(), fakeTable, mockUser, renderFavoritesHook()
 
-### Community 2010 - "useUserSettings.test.tsx"
+### Community 2011 - "useUserSettings.test.tsx"
 Cohesion: 0.33
 Nodes (5): mockFrom, mockSettings, mockUpsert, mockUseAuth, operationalKeys
 
-### Community 2011 - "emailComposeFormat.ts"
+### Community 2012 - "emailComposeFormat.ts"
 Cohesion: 0.60
 Nodes (4): escapeHtml(), formatEmailComposerHtml(), formatEmailComposerText(), renderInlineFormatting()
 
-### Community 2012 - "mentionText.ts"
+### Community 2013 - "mentionText.ts"
 Cohesion: 0.60
 Nodes (4): ehCaractereDePalavra(), MentionTextSegment, normalizeMentionNames(), splitMentionText()
 
-### Community 2014 - "ResetPassword.redirect-cancelavel.test.tsx"
+### Community 2015 - "ResetPassword.redirect-cancelavel.test.tsx"
 Cohesion: 0.40
 Nodes (3): flush(), h, preencherESubmeter()
 
-### Community 2015 - "public.messages"
+### Community 2016 - "public.messages"
 Cohesion: 0.33
 Nodes (6): idx_messages_contact_created, idx_messages_contact_id, idx_messages_content_search, idx_messages_created_at, idx_messages_external_id, public.messages
 
-### Community 2016 - "public.user_has_permission"
+### Community 2017 - "public.user_has_permission"
 Cohesion: 0.33
 Nodes (6): public.has_role(), public.is_admin_or_supervisor(), public.user_has_permission(), public.permissions, public.role_permissions, public.user_roles
 
-### Community 2017 - "public.audit_logs"
+### Community 2018 - "public.audit_logs"
 Cohesion: 0.33
 Nodes (6): audit_logs_pkey, idx_audit_logs_action, idx_audit_logs_created_at, idx_audit_logs_user_created, idx_audit_logs_user_id, public.audit_logs
 
-### Community 2018 - "public.conversation_analyses"
+### Community 2019 - "public.conversation_analyses"
 Cohesion: 0.33
 Nodes (6): conversation_analyses_pkey, idx_conversation_analyses_contact_department, idx_conversation_analyses_contact_id, idx_conversation_analyses_created_at, idx_conversation_analyses_department, public.conversation_analyses
 
-### Community 2019 - "public.email_messages"
+### Community 2020 - "public.email_messages"
 Cohesion: 0.33
 Nodes (6): email_messages_gmail_account_id_gmail_message_id_key, email_messages_pkey, idx_email_messages_account, idx_email_messages_date, idx_email_messages_thread, public.email_messages
 
-### Community 2020 - "public.email_threads"
+### Community 2021 - "public.email_threads"
 Cohesion: 0.33
 Nodes (6): email_threads_gmail_account_id_gmail_thread_id_key, email_threads_pkey, idx_email_threads_account, idx_email_threads_contact, idx_email_threads_last_message, public.email_threads
 
-### Community 2024 - "public.conversation_analyses"
+### Community 2025 - "public.conversation_analyses"
 Cohesion: 0.47
 Nodes (5): idx_conversation_analyses_contact_id, idx_conversation_analyses_created_at, public.conversation_analyses, public.contacts, public.profiles
 
-### Community 2025 - "public.goals_configurations"
+### Community 2026 - "public.goals_configurations"
 Cohesion: 0.33
 Nodes (5): public.goals_configurations, public.profiles, public.queues, public.update_updated_at_column, update_goals_configurations_updated_at
 
-### Community 2026 - "public.nps_surveys"
+### Community 2027 - "public.nps_surveys"
 Cohesion: 0.47
 Nodes (5): idx_nps_surveys_contact, idx_nps_surveys_created, public.nps_surveys, public.contacts, public.profiles
 
-### Community 2027 - "20260404173531_a535b696-2e46-42d5-84bb-9ee0ed43fa83.sql"
+### Community 2028 - "20260404173531_a535b696-2e46-42d5-84bb-9ee0ed43fa83.sql"
 Cohesion: 0.40
 Nodes (5): public.channel_connections_safe, public.get_channel_credentials_safe(), public.whatsapp_connections_agent, public.channel_connections, public.whatsapp_connections
 
-### Community 2028 - "20260405230135_2bb8cb81-ac0c-44ad-b81e-d1bd2d4001a0.sql"
+### Community 2029 - "20260405230135_2bb8cb81-ac0c-44ad-b81e-d1bd2d4001a0.sql"
 Cohesion: 0.33
 Nodes (4): public.gmail_accounts_safe, public.password_reset_requests_safe, public.gmail_accounts, public.password_reset_requests
 
-### Community 2029 - "20260408190209_ec746445-1e50-466f-96b8-74c16fdbb7e2.sql"
+### Community 2030 - "20260408190209_ec746445-1e50-466f-96b8-74c16fdbb7e2.sql"
 Cohesion: 0.53
 Nodes (5): idx_sla_rules_active_priority, idx_sla_rules_agent_id, idx_sla_rules_contact_id, idx_sla_rules_queue_id, public.sla_rules
 
-### Community 2030 - "public.ai_usage_logs"
+### Community 2031 - "public.ai_usage_logs"
 Cohesion: 0.33
 Nodes (6): idx_ai_usage_logs_created_at, idx_ai_usage_logs_function_name, idx_ai_usage_logs_profile_id, idx_ai_usage_logs_status, idx_ai_usage_logs_user_id, public.ai_usage_logs
 
-### Community 2031 - "public.messages"
+### Community 2032 - "public.messages"
 Cohesion: 0.33
 Nodes (6): idx_messages_contact_created, idx_messages_contact_id, idx_messages_content_search, idx_messages_created_at, idx_messages_external_id, public.messages
 
-### Community 2033 - "20260911130000_add_talkx_recipient_delivery_leases.sql"
+### Community 2034 - "20260911130000_add_talkx_recipient_delivery_leases.sql"
 Cohesion: 0.40
 Nodes (4): idx_talkx_recipients_claimable, public.claim_talkx_recipient(), public.talkx_campaigns, public.talkx_recipients
 
-### Community 2034 - "public.save_talkx_campaign_draft"
+### Community 2035 - "public.save_talkx_campaign_draft"
 Cohesion: 0.33
 Nodes (5): public.save_talkx_campaign_draft(), public.profiles, public.talkx_campaigns, public.whatsapp_connections, talkx_campaigns_creator_draft_creation_key_uidx
 
-### Community 2035 - "20260916180000_talkx_rpc_null_guards_and_reply_index.sql"
+### Community 2036 - "20260916180000_talkx_rpc_null_guards_and_reply_index.sql"
 Cohesion: 0.40
 Nodes (4): idx_talkx_recipients_reply_message_id, public.talkx_overview_stats(), public.talkx_campaigns, public.talkx_recipients
 
-### Community 2036 - "20260916210000_talkx_e91_resilience.sql"
+### Community 2037 - "20260916210000_talkx_e91_resilience.sql"
 Cohesion: 0.40
 Nodes (4): idx_talkx_recipients_retry, public.transition_talkx_campaign(), public.talkx_campaigns, public.talkx_recipients
 
-### Community 2037 - "20260920120000_talkx_e90_fk_indexes.sql"
+### Community 2038 - "20260920120000_talkx_e90_fk_indexes.sql"
 Cohesion: 0.40
 Nodes (5): idx_talkx_conversions_link_id, idx_talkx_conversions_recipient_id, idx_talkx_link_clicks_recipient_id, public.talkx_conversions, public.talkx_link_clicks
 
-### Community 2038 - "public.get_conversation_tab_counts"
+### Community 2039 - "public.get_conversation_tab_counts"
 Cohesion: 0.33
 Nodes (5): public.get_conversation_tab_counts(), public.contact_notes, public.conversation_tasks, public.messages, public.reminders
 
-### Community 2040 - "20260925190000_whatsapp_connections_instance_token_vault.sql"
+### Community 2041 - "20260925190000_whatsapp_connections_instance_token_vault.sql"
 Cohesion: 0.40
 Nodes (3): public.whatsapp_connections, whatsapp_connections_instance_id_key, whatsapp_connections_one_default
 
-### Community 2042 - "public.get_team_conversation_previews"
+### Community 2043 - "public.get_team_conversation_previews"
 Cohesion: 0.33
 Nodes (5): public.get_team_conversation_previews(), public.profiles, public.team_conversation_members, public.team_conversations, public.team_messages
 
-### Community 2045 - "public.multiplix_create_draft"
+### Community 2046 - "public.multiplix_create_draft"
 Cohesion: 0.33
 Nodes (5): idx_multiplix_dispatches_client_request_id, public.multiplix_create_draft(), public.multiplix_dispatches, public.multiplix_recipients, public.profiles
 
-### Community 2046 - "public.prevent_contact_assignee_hijack"
+### Community 2047 - "public.prevent_contact_assignee_hijack"
 Cohesion: 0.33
 Nodes (5): public.prevent_contact_assignee_hijack(), public.prevent_contact_queue_hijack(), profiles, queue_members, user_roles
 
-### Community 2048 - "20261001261230_f35_multiplix_audiences.sql"
+### Community 2049 - "20261001261230_f35_multiplix_audiences.sql"
 Cohesion: 0.53
 Nodes (4): idx_multiplix_audience_members_audience_id, idx_multiplix_audiences_owner_id, public.multiplix_audience_members, public.multiplix_audiences
 
-### Community 2049 - "20261002391230_talkx_audience_rpc.sql"
+### Community 2050 - "20261002391230_talkx_audience_rpc.sql"
 Cohesion: 0.33
 Nodes (4): idx_contacts_talkx_audience_eligible, public.talkx_audience_query(), public.contacts, RAISE
 
-### Community 2050 - "public.record_incoming_call_event"
+### Community 2051 - "public.record_incoming_call_event"
 Cohesion: 0.33
 Nodes (5): public.record_incoming_call_event(), public.calls, public.contacts, public.notifications, public.profiles
 
-### Community 2051 - "public.talkx_analytics_scope"
+### Community 2052 - "public.talkx_analytics_scope"
 Cohesion: 0.40
 Nodes (5): public.talkx_analytics_scope(), public.talkx_overview_stats(), public.profiles, public.talkx_campaigns, public.talkx_recipients
 
-### Community 2052 - "20261003132707_f64_voz_assets_e_grants.sql"
+### Community 2053 - "20261003132707_f64_voz_assets_e_grants.sql"
 Cohesion: 0.53
 Nodes (5): idx_multiplix_voice_assets_validos, idx_multiplix_voice_assets_voice_id, idx_multiplix_voice_grants_voice_id, public.multiplix_voice_assets, public.multiplix_voice_grants
 
-### Community 2053 - "public.set_team_member_role"
+### Community 2054 - "public.set_team_member_role"
 Cohesion: 0.33
 Nodes (6): public.handle_message_gamification(), public.set_team_member_role(), public.agent_skills, public.contacts, public.queue_members, public.queue_skill_requirements
 
-### Community 2054 - "public.trigger_talkx_engine_tick"
+### Community 2055 - "public.trigger_talkx_engine_tick"
 Cohesion: 0.33
 Nodes (5): public.trigger_talkx_engine_tick(), public.talkx_campaigns, public.talkx_recipients, public.talkx_settings, vault.decrypted_secrets
 
-### Community 2055 - "public.resolve_applicable_first_response_minutes"
+### Community 2056 - "public.resolve_applicable_first_response_minutes"
 Cohesion: 0.33
 Nodes (5): public.register_first_response_internal(), public.resolve_applicable_first_response_minutes(), public.contacts, public.messages, public.sla_rules
 
-### Community 2057 - "public.trigger_talkx_engine_tick"
+### Community 2058 - "public.trigger_talkx_engine_tick"
 Cohesion: 0.33
 Nodes (5): public.trigger_talkx_engine_tick(), public.talkx_campaigns, public.talkx_recipients, public.talkx_settings, vault.decrypted_secrets
 
-### Community 2058 - "20261012115237_email_signatures.sql"
+### Community 2059 - "20261012115237_email_signatures.sql"
 Cohesion: 0.47
 Nodes (5): email_signatures_one_default_per_user, email_signatures_user_id_idx, public.email_signatures, set_email_signatures_updated_at, public.update_updated_at_column
 
-### Community 2059 - "20261012134000_auto_reconnect_logs.sql"
+### Community 2060 - "20261012134000_auto_reconnect_logs.sql"
 Cohesion: 0.53
 Nodes (5): public.reconnection_logs, public.whatsapp_connections_safe, reconnection_logs_connection_created_idx, reconnection_logs_created_at_idx, public.whatsapp_connections
 
-### Community 2060 - "20261012213900_contacts_blocked_at.sql"
+### Community 2061 - "20261012213900_contacts_blocked_at.sql"
 Cohesion: 0.33
 Nodes (3): idx_contacts_blocked_at, public.contact_block_audit, public.contacts
 
-### Community 2061 - "public.connection_alert_preferences"
+### Community 2062 - "public.connection_alert_preferences"
 Cohesion: 0.33
 Nodes (5): public.connection_alert_preferences, set_connection_alert_preferences_updated_at, auth, auth.users, public.update_updated_at_column
 
-### Community 2063 - "20261015215658_qr_attempts_history.sql"
+### Community 2064 - "20261015215658_qr_attempts_history.sql"
 Cohesion: 0.47
 Nodes (4): public.qr_attempts, qr_attempts_connection_id_created_at_idx, qr_attempts_created_at_idx, public.whatsapp_connections
 
-### Community 2064 - "20261016011302_crm_sync_outbox_cron.sql"
+### Community 2065 - "20261016011302_crm_sync_outbox_cron.sql"
 Cohesion: 0.33
 Nodes (3): public.crm_sync_outbox_cron_enabled(), public.feature_flags, vault.decrypted_secrets
 
-### Community 2065 - "20261016013134_search_events.sql"
+### Community 2066 - "20261016013134_search_events.sql"
 Cohesion: 0.40
 Nodes (3): public.search_events, search_events_created_at_idx, auth.users
 
-### Community 2066 - "public.copilot_insights"
+### Community 2067 - "public.copilot_insights"
 Cohesion: 0.47
 Nodes (5): idx_copilot_insights_profile, idx_copilot_insights_session_time, public.copilot_insights, auth.users, public.copilot_sessions
 
-### Community 2067 - "public.talkx_campaign_queue_by_segment"
+### Community 2068 - "public.talkx_campaign_queue_by_segment"
 Cohesion: 0.33
 Nodes (5): public.talkx_campaign_queue_by_segment(), public.profiles, public.talkx_campaigns, public.talkx_recipients, public.talkx_segments
 
-### Community 2068 - "20261112172000_talkx_suppression_reasons_hardening.sql"
+### Community 2069 - "20261112172000_talkx_suppression_reasons_hardening.sql"
 Cohesion: 0.33
 Nodes (4): idx_talkx_blacklist_reason_code, public.talkx_blacklist, public.talkx_suppression_reasons, talkx_suppression_reasons_label_lower_key
 
-### Community 2069 - "public.sweep_stuck_outbound_messages"
+### Community 2070 - "public.sweep_stuck_outbound_messages"
 Cohesion: 0.33
 Nodes (5): public.sweep_stuck_outbound_messages(), public.global_settings, public.messages, public.scheduled_messages, public.whatsapp_connections
 
-### Community 2070 - "public.entity_versions"
+### Community 2071 - "public.entity_versions"
 Cohesion: 0.47
 Nodes (5): idx_versions_date, idx_versions_entity, public.entity_versions, auth, auth.users
 
-### Community 2071 - "ai_replace_tags_preserva_humana.sql"
+### Community 2072 - "ai_replace_tags_preserva_humana.sql"
 Cohesion: 0.47
 Nodes (4): idx_ai_conversation_tags_contact_id, prova_anterior, public.ai_conversation_tags, public.contacts
 
-### Community 2072 - "mini_game_xp_daily_limit_race.sh"
+### Community 2073 - "mini_game_xp_daily_limit_race.sh"
 Cohesion: 0.60
 Nodes (5): cleanup(), falhou(), scalar(), mini_game_xp_daily_limit_race.sh script, sql()
 
-### Community 2073 - "Dossiê — `claude/w21-classificar-migration-drift`"
+### Community 2074 - "Dossiê — `claude/w21-classificar-migration-drift`"
 Cohesion: 0.40
 Nodes (4): Conclusão, Conteúdo exclusivo da branch, Dossiê — `claude/w21-classificar-migration-drift`, Evidências
 
-### Community 2074 - "PR #2553 — feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050)"
+### Community 2075 - "PR #2553 — feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050)"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2553 — feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050)
 
-### Community 2075 - "PR #2556 — feat: E2E reload test para preservação de rota URL (X052)"
+### Community 2076 - "PR #2556 — feat: E2E reload test para preservação de rota URL (X052)"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2556 — feat: E2E reload test para preservação de rota URL (X052)
 
-### Community 2076 - "PR #2813 — fix(inbox): toast neutro em RLS e undo dois passos no bulk archive"
+### Community 2077 - "PR #2813 — fix(inbox): toast neutro em RLS e undo dois passos no bulk archive"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2813 — fix(inbox): toast neutro em RLS e undo dois passos no bulk archive
 
-### Community 2077 - "PR #2818 — fix(team-chat): deep-link ?cid= abre conversa correta ao clicar na notificação"
+### Community 2078 - "PR #2818 — fix(team-chat): deep-link ?cid= abre conversa correta ao clicar na notificação"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2818 — fix(team-chat): deep-link ?cid= abre conversa correta ao clicar na notificação
 
-### Community 2078 - "PR #2856 — feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057)"
+### Community 2079 - "PR #2856 — feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057)"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2856 — feat(talkx): prancha TalkXKit — filtros dinâmicos e KPIs reais (X056/X057)
 
-### Community 2079 - "PR #2869 — fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning"
+### Community 2080 - "PR #2869 — fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2869 — fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning
 
-### Community 2080 - "PR #2883 — fix: habilitar geolocation no projeto chromium-mapa do Playwright"
+### Community 2081 - "PR #2883 — fix: habilitar geolocation no projeto chromium-mapa do Playwright"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2883 — fix: habilitar geolocation no projeto chromium-mapa do Playwright
 
-### Community 2081 - "PR #2944 — fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo"
+### Community 2082 - "PR #2944 — fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2944 — fix(regras_negocio): bloco de código sem fechar em manual/ engolia o doc todo
 
-### Community 2082 - "PR #2946 — fix(edge-deploy): contagem de valor literal redigido mentia no log do CI"
+### Community 2083 - "PR #2946 — fix(edge-deploy): contagem de valor literal redigido mentia no log do CI"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2946 — fix(edge-deploy): contagem de valor literal redigido mentia no log do CI
 
-### Community 2083 - "PR #2968 — fix(auth): esqueci minha senha volta a entregar o pedido ao gestor"
+### Community 2084 - "PR #2968 — fix(auth): esqueci minha senha volta a entregar o pedido ao gestor"
 Cohesion: 0.40
 Nodes (4): Evidências (resumo), Motivo, Negócio, PR #2968 — fix(auth): esqueci minha senha volta a entregar o pedido ao gestor
 
-### Community 2084 - "public.my_active_sessions"
+### Community 2085 - "public.my_active_sessions"
 Cohesion: 0.50
 Nodes (4): auth.sessions, public.expire_orphan_user_sessions(), public.my_active_sessions(), public.user_sessions
 
-### Community 2085 - "ADR-007 — Multiplix: ponte de acesso ao Singu e decisões de Fase 0"
+### Community 2086 - "ADR-007 — Multiplix: ponte de acesso ao Singu e decisões de Fase 0"
 Cohesion: 0.40
 Nodes (5): ADR-007 — Multiplix: ponte de acesso ao Singu e decisões de Fase 0, E003 — Caminho de acesso ao banco Singu, E004 — Ritmo de envio (Evolution GO), E005 — Regra de "apto" sem dado de consentimento, E006 — Telefone da empresa como destino
 
-### Community 2086 - "Dossiê: automation/types-sync"
+### Community 2087 - "Dossiê: automation/types-sync"
 Cohesion: 0.40
 Nodes (4): Ação, Conteúdo da branch, Dossiê: automation/types-sync, Evidência
 
-### Community 2087 - "Dossiê: claude/fervent-noether-vvq63j"
+### Community 2088 - "Dossiê: claude/fervent-noether-vvq63j"
 Cohesion: 0.40
 Nodes (4): Ação, Conteúdo da branch, Dossiê: claude/fervent-noether-vvq63j, Evidência
 
-### Community 2088 - "Dossiê — `claude/w21-classificar-migration-drift`"
+### Community 2089 - "Dossiê — `claude/w21-classificar-migration-drift`"
 Cohesion: 0.40
 Nodes (4): Conclusão, Conteúdo exclusivo da branch, Dossiê — `claude/w21-classificar-migration-drift`, Evidências
 
-### Community 2089 - "Triagem mecânica de branches remotas — 2026-10-31"
+### Community 2090 - "Triagem mecânica de branches remotas — 2026-10-31"
 Cohesion: 0.40
 Nodes (4): Contagens, Do inventário já apagadas do remoto, Tabela, Triagem mecânica de branches remotas — 2026-10-31
 
-### Community 2090 - "Dossiê PR #2032 — feat: RADAR Copiloto — Fase 15: Custos, Piloto e Rollout (CV-141–150)"
+### Community 2091 - "Dossiê PR #2032 — feat: RADAR Copiloto — Fase 15: Custos, Piloto e Rollout (CV-141–150)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2032 — feat: RADAR Copiloto — Fase 15: Custos, Piloto e Rollout (CV-141–150)
 
-### Community 2091 - "Dossiê PR #2036 — fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05"
+### Community 2092 - "Dossiê PR #2036 — fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2036 — fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05
 
-### Community 2092 - "Dossiê PR #2037 — fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL sai do GITHUB_ENV"
+### Community 2093 - "Dossiê PR #2037 — fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL sai do GITHUB_ENV"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2037 — fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL sai do GITHUB_ENV
 
-### Community 2093 - "Dossiê PR #2054 — fix(ci+security): Z011–Z032 — requireAuth, timingSafeEqual, node-scripts split, test.skip removidos, pg_isready flags"
+### Community 2094 - "Dossiê PR #2054 — fix(ci+security): Z011–Z032 — requireAuth, timingSafeEqual, node-scripts split, test.skip removidos, pg_isready flags"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2054 — fix(ci+security): Z011–Z032 — requireAuth, timingSafeEqual, node-scripts split, test.skip removidos, pg_isready flags
 
-### Community 2094 - "Dossiê PR #2092 — fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p)"
+### Community 2095 - "Dossiê PR #2092 — fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2092 — fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p)
 
-### Community 2095 - "Dossiê PR #2093 — fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+Z023+Z024)"
+### Community 2096 - "Dossiê PR #2093 — fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+Z023+Z024)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2093 — fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+Z023+Z024)
 
-### Community 2096 - "Dossiê PR #2094 — fix(db): FASE 2 — REVOKE anon write grants todas as tabelas (Z054-Z055)"
+### Community 2097 - "Dossiê PR #2094 — fix(db): FASE 2 — REVOKE anon write grants todas as tabelas (Z054-Z055)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2094 — fix(db): FASE 2 — REVOKE anon write grants todas as tabelas (Z054-Z055)
 
-### Community 2097 - "Dossiê PR #2100 — fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs"
+### Community 2098 - "Dossiê PR #2100 — fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2100 — fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs
 
-### Community 2098 - "Dossiê PR #2103 — fix(ci): GA02/GA04/GA08/GA10/GA62/GA75/GA76/GA77 — guard GraphQL merge.*, CLAUDE.md, P0 stderr, fork-safe e2e, CodeQL diário, endpoint, remove restaurar morta"
+### Community 2099 - "Dossiê PR #2103 — fix(ci): GA02/GA04/GA08/GA10/GA62/GA75/GA76/GA77 — guard GraphQL merge.*, CLAUDE.md, P0 stderr, fork-safe e2e, CodeQL diário, endpoint, remove restaurar morta"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2103 — fix(ci): GA02/GA04/GA08/GA10/GA62/GA75/GA76/GA77 — guard GraphQL merge.*, CLAUDE.md, P0 stderr, fork-safe e2e, CodeQL diário, endpoint, remove restaurar morta
 
-### Community 2099 - "Dossiê PR #2108 — fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions"
+### Community 2100 - "Dossiê PR #2108 — fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2108 — fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions
 
-### Community 2100 - "Dossiê PR #2113 — fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)"
+### Community 2101 - "Dossiê PR #2113 — fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2113 — fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)
 
-### Community 2101 - "Dossiê PR #2116 — feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to (plano Vercel V130-V150)"
+### Community 2102 - "Dossiê PR #2116 — feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to (plano Vercel V130-V150)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2116 — feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to (plano Vercel V130-V150)
 
-### Community 2102 - "Dossiê PR #2138 — fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline"
+### Community 2103 - "Dossiê PR #2138 — fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2138 — fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline
 
-### Community 2103 - "Dossiê PR #2199 — fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles"
+### Community 2104 - "Dossiê PR #2199 — fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2199 — fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles
 
-### Community 2104 - "Dossiê PR #2200 — analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51"
+### Community 2105 - "Dossiê PR #2200 — analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2200 — analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51
 
-### Community 2105 - "Dossiê PR #2206 — fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline"
+### Community 2106 - "Dossiê PR #2206 — fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2206 — fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline
 
-### Community 2106 - "Dossiê PR #2263 — fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)"
+### Community 2107 - "Dossiê PR #2263 — fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2263 — fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)
 
-### Community 2107 - "Dossiê PR #2274 — fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502"
+### Community 2108 - "Dossiê PR #2274 — fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2274 — fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502
 
-### Community 2108 - "Dossiê PR #2275 — fix: corrige 5 falhas de testes unitários (CI verde)"
+### Community 2109 - "Dossiê PR #2275 — fix: corrige 5 falhas de testes unitários (CI verde)"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2275 — fix: corrige 5 falhas de testes unitários (CI verde)
 
-### Community 2109 - "Dossiê PR #2276 — chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado"
+### Community 2110 - "Dossiê PR #2276 — chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado"
 Cohesion: 0.40
 Nodes (4): 1. Intenção, 2. Situação, 3. Ação necessária, Dossiê PR #2276 — chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado
 
-### Community 2110 - "Dossie PR #2284 — analise-prs: entregáveis de sessão anterior"
+### Community 2111 - "Dossie PR #2284 — analise-prs: entregáveis de sessão anterior"
 Cohesion: 0.40
 Nodes (4): 1. Estado, 2. Por que superseded, 3. Veredito final, Dossie PR #2284 — analise-prs: entregáveis de sessão anterior
 
-### Community 2111 - "4. Gestão de Contatos"
+### Community 2112 - "4. Gestão de Contatos"
 Cohesion: 0.40
 Nodes (5): 4. Gestão de Contatos, Descrição, Hook de Notas, Hook de Tags, Tabelas do Banco
 
-### Community 2112 - "F5"
+### Community 2113 - "F5"
 Cohesion: 0.40
 Nodes (5): E33 🔧 Budgets apertados (PR `chore/e50-f5-quality`), E34 📋 vendor-ui eager (137,5KB gzip), E35/E36/E37 📋 Prefetch, web-vitals, srcSet, E38 ✅/📋 React 19.3, F5
 
-### Community 2113 - "F7"
+### Community 2114 - "F7"
 Cohesion: 0.40
 Nodes (5): E44 👤 MCPs quebrados (config do claude.ai, fora do repo), E45 👤 Dispatcher N8N, E46 🔧 Blindagem de banco no register-migration (PR `chore/e50-f1-ci-gates`), E47 🔧 Nome do repo (este PR), F7
 
-### Community 2114 - "F7 — Infra, MCPs e automação (E44–E47)"
+### Community 2115 - "F7 — Infra, MCPs e automação (E44–E47)"
 Cohesion: 0.40
 Nodes (5): E44 🟡 Sanear MCPs quebrados (herda E40/16-09), E45 🟡 Destino do Graph Sync Dispatcher N8N (executa a decisão da E06), E46 🟢 Blindagem contra banco errado (herda E41/16-09), E47 🟢 Padronizar nome do repo nas referências, F7 — Infra, MCPs e automação (E44–E47)
 
-### Community 2115 - "Integridade referencial — E17 (PLANO_MELHORIAS_50)"
+### Community 2116 - "Integridade referencial — E17 (PLANO_MELHORIAS_50)"
 Cohesion: 0.40
 Nodes (4): Fechamento, FK criada (13 colunas — 0 órfãos verificados ao vivo), Integridade referencial — E17 (PLANO_MELHORIAS_50), Justificado, sem FK (38 colunas — referência externa ou polimórfica)
 
-### Community 2116 - "Catálogo F3 — QA E40"
+### Community 2117 - "Catálogo F3 — QA E40"
 Cohesion: 0.40
 Nodes (4): Catálogo F3 — QA E40, Checklist de integração, Métricas (main @ dd210916), Notas
 
-### Community 2117 - "O que muda ao ligar a chave `crm.integration`"
+### Community 2118 - "O que muda ao ligar a chave `crm.integration`"
 Cohesion: 0.40
 Nodes (4): Componentes (telas), Hooks (camada de dados), O que muda ao ligar a chave `crm.integration`, Uso do hook central
 
-### Community 2118 - "Inventário — violetas soltos fora do Talk X"
+### Community 2119 - "Inventário — violetas soltos fora do Talk X"
 Cohesion: 0.40
 Nodes (4): 1. Token oficial do t_f3f17002 — INTEGRADO, 2. As 3 variáveis antigas (definições), 3. Lista completa (80 ocorrências), Inventário — violetas soltos fora do Talk X
 
-### Community 2119 - "19. CARDS"
+### Community 2120 - "19. CARDS"
 Cohesion: 0.40
 Nodes (5): 19. CARDS, Card de entidade com imagem, Card operacional, Hover, Selected
 
-### Community 2120 - "1. REGRA DE FONTE DA VERDADE"
+### Community 2121 - "1. REGRA DE FONTE DA VERDADE"
 Cohesion: 0.40
 Nodes (5): 1. REGRA DE FONTE DA VERDADE, Fonte funcional, Fonte sistêmica, Fonte visual, Ordem de prioridade
 
-### Community 2121 - "21. PRODUCT CARD"
+### Community 2122 - "21. PRODUCT CARD"
 Cohesion: 0.40
 Nodes (5): 21. PRODUCT CARD, Favorito, Imagem, Preço, Seleção
 
-### Community 2122 - "26. EDITOR — ETAPA IDENTIDADE"
+### Community 2123 - "26. EDITOR — ETAPA IDENTIDADE"
 Cohesion: 0.40
 Nodes (5): 26. EDITOR — ETAPA IDENTIDADE, Configuração, Desktop largo, Pages rail, Preview
 
-### Community 2123 - "27. EDITOR — ETAPA PRODUTOS"
+### Community 2124 - "27. EDITOR — ETAPA PRODUTOS"
 Cohesion: 0.40
 Nodes (5): 27. EDITOR — ETAPA PRODUTOS, Catálogo, Desktop, “Na revista”, Preview
 
-### Community 2124 - "31. PAGE RAIL"
+### Community 2125 - "31. PAGE RAIL"
 Cohesion: 0.40
 Nodes (5): 31. PAGE RAIL, Active, Item, Scroll, Width
 
-### Community 2125 - "37. FEEDBACK"
+### Community 2126 - "37. FEEDBACK"
 Cohesion: 0.40
 Nodes (5): 37. FEEDBACK, Error, Saved, Saving, Toast
 
-### Community 2126 - "9. BACKDROP / BLUR"
+### Community 2127 - "9. BACKDROP / BLUR"
 Cohesion: 0.40
 Nodes (5): 9. BACKDROP / BLUR, Dialog overlay, Drawers, Header sticky, Regra
 
-### Community 2127 - "10. TIPOGRAFIA"
+### Community 2128 - "10. TIPOGRAFIA"
 Cohesion: 0.40
 Nodes (5): 10.1 Fonte principal, 10.2 Display, 10.3 Escala desktop, 10. TIPOGRAFIA, Regras
 
-### Community 2128 - "13. SIDEBAR GLOBAL"
+### Community 2129 - "13. SIDEBAR GLOBAL"
 Cohesion: 0.40
 Nodes (5): 13. SIDEBAR GLOBAL, Active, Hover, Item, Section label
 
-### Community 2129 - "61. TAILWIND — REFERÊNCIA"
+### Community 2130 - "61. TAILWIND — REFERÊNCIA"
 Cohesion: 0.40
 Nodes (5): 61. TAILWIND — REFERÊNCIA, Input, Panel, Primary, Selected
 
-### Community 2130 - "Fontes recuperados de edge functions que rodam (ou rodaram) sem fonte na árvore de deploy"
+### Community 2131 - "Fontes recuperados de edge functions que rodam (ou rodaram) sem fonte na árvore de deploy"
 Cohesion: 0.40
 Nodes (4): Como reverificar a fidelidade do que está aqui, Fontes recuperados de edge functions que rodam (ou rodaram) sem fonte na árvore de deploy, Por que não ficam em `supabase/functions/`, root()
 
-### Community 2131 - "12.1 CALL"
+### Community 2132 - "12.1 CALL"
 Cohesion: 0.40
 Nodes (5): 12.1 CALL, 12. EVENTOS DE CHAMADAS, Chamada de Voz Recebida, Chamada de Vídeo Recebida, Chamada Rejeitada (automática)
 
-### Community 2132 - "14. EXEMPLOS DE CÓDIGO FRONTEND"
+### Community 2133 - "14. EXEMPLOS DE CÓDIGO FRONTEND"
 Cohesion: 0.40
 Nodes (5): 14.1 React Hook para Eventos em Tempo Real, 14.2 Componente de Chat com Tempo Real, 14.3 Hook para Pipeline de Vendas, 14.4 Componente de Alertas, 14. EXEMPLOS DE CÓDIGO FRONTEND
 
-### Community 2133 - "15. TABELA DE REFERÊNCIA RÁPIDA"
+### Community 2134 - "15. TABELA DE REFERÊNCIA RÁPIDA"
 Cohesion: 0.40
 Nodes (5): 15.1 Eventos por Categoria, 15.2 Mapa de Tipos de Mensagem, 15.3 Códigos de Cor das Labels, 15.4 Labels do Pipeline (Promo Brindes), 15. TABELA DE REFERÊNCIA RÁPIDA
 
-### Community 2134 - "Prints da FASE 6 (Acessibilidade e mobile) — E65"
+### Community 2135 - "Prints da FASE 6 (Acessibilidade e mobile) — E65"
 Cohesion: 0.40
 Nodes (4): Limitação declarada (importante), Observação sobre outros arquivos desta pasta, Pendente, Prints da FASE 6 (Acessibilidade e mobile) — E65
 
-### Community 2136 - "AUTOMAÇÃO DAS ONDAS DOS PLANOS DE 07/10/2026 — VISÃO GERAL"
+### Community 2137 - "AUTOMAÇÃO DAS ONDAS DOS PLANOS DE 07/10/2026 — VISÃO GERAL"
 Cohesion: 0.40
 Nodes (4): AUTOMAÇÃO DAS ONDAS DOS PLANOS DE 07/10/2026 — VISÃO GERAL, Como funciona, Os 55 cartões, Regras permanentes que todo cartão carrega
 
-### Community 2137 - "Plano: badge de conversas arquivadas na lista de conversas"
+### Community 2138 - "Plano: badge de conversas arquivadas na lista de conversas"
 Cohesion: 0.40
 Nodes (4): Cartões, Escopo, Fatos verificados, Plano: badge de conversas arquivadas na lista de conversas
 
-### Community 2138 - "Plano: paridade V3 → V2 dos documentos 10 a 12 e 17 a 40"
+### Community 2139 - "Plano: paridade V3 → V2 dos documentos 10 a 12 e 17 a 40"
 Cohesion: 0.40
 Nodes (4): 1. Veredito, 2. Decisões adotadas (valem se o Joaquim não vetar), 3. Validação final (Claude), Plano: paridade V3 → V2 dos documentos 10 a 12 e 17 a 40
 
-### Community 2139 - "Plano da 2ª leva de melhorias — um cartão por item seguro do inventário (08/10/2026)"
+### Community 2140 - "Plano da 2ª leva de melhorias — um cartão por item seguro do inventário (08/10/2026)"
 Cohesion: 0.40
 Nodes (4): Decisões assumidas (recomendações do Claude; o Joaquim pediu proatividade), Plano da 2ª leva de melhorias — um cartão por item seguro do inventário (08/10/2026), Regras de todo cartão, Resumo
 
-### Community 2140 - "Plano da 3ª leva de melhorias — um cartão por item seguro do inventário (08/10/2026)"
+### Community 2141 - "Plano da 3ª leva de melhorias — um cartão por item seguro do inventário (08/10/2026)"
 Cohesion: 0.40
 Nodes (4): Decisões assumidas (recomendações do Claude; o Joaquim pediu proatividade), Plano da 3ª leva de melhorias — um cartão por item seguro do inventário (08/10/2026), Regras de todo cartão, Resumo
 
-### Community 2141 - "15. GRID PRINCIPAL — CARDS DE CONTATO"
+### Community 2142 - "15. GRID PRINCIPAL — CARDS DE CONTATO"
 Cohesion: 0.40
 Nodes (5): 15. GRID PRINCIPAL — CARDS DE CONTATO, Desktop grande, Desktop médio, Mobile, Tablet
 
-### Community 2142 - "public.fn_purge_processed_webhook_events"
+### Community 2143 - "public.fn_purge_processed_webhook_events"
 Cohesion: 0.40
 Nodes (4): pg_tables, public.fn_purge_processed_webhook_events(), pg_class, pg_namespace
 
-### Community 2143 - "20260830030000_audit_role_permissions_trigger.sql"
+### Community 2144 - "20260830030000_audit_role_permissions_trigger.sql"
 Cohesion: 0.40
 Nodes (4): public.audit_role_permissions_changes, audit_role_permissions_changes, public.audit_role_permissions_changes(), public.permissions
 
-### Community 2144 - "20260612140000_add_missing_performance_indexes.sql"
+### Community 2145 - "20260612140000_add_missing_performance_indexes.sql"
 Cohesion: 0.40
 Nodes (4): public.empresas, public.evolution_messages_wpp2, idx_empresas_created_at, idx_evo_msgs_wpp2_updated_at
 
-### Community 2145 - "20260612110000_index_cleanup_and_autovacuum.sql"
+### Community 2146 - "20260612110000_index_cleanup_and_autovacuum.sql"
 Cohesion: 0.40
 Nodes (4): public.evolution_contacts, public.instance_processing_pauses, idx_evo_contacts_instance_active, idx_inst_pause_active
 
-### Community 2146 - "20261015190000_contact_purchases_rls_author.sql"
+### Community 2147 - "20261015190000_contact_purchases_rls_author.sql"
 Cohesion: 0.50
 Nodes (3): public.guard_contact_purchase_identity, guard_contact_purchase_identity_insert, guard_contact_purchase_identity_update
 
-### Community 2148 - "20261007001008_message_reactions_agente_sem_chave_de_contato.sql"
+### Community 2149 - "20261007001008_message_reactions_agente_sem_chave_de_contato.sql"
 Cohesion: 0.40
 Nodes (3): public.message_reactions_normalize_author, message_reactions_normalize_author, public._rb_message_reactions_contato_20261007001008
 
-### Community 2149 - "20260924133700_prevent_contact_queue_hijack.sql"
+### Community 2150 - "20260924133700_prevent_contact_queue_hijack.sql"
 Cohesion: 0.40
 Nodes (4): public.prevent_contact_queue_hijack, public.prevent_contact_queue_hijack(), queue_members, trg_prevent_contact_queue_hijack
 
-### Community 2150 - "20260929220000_team_chat_e32_reactions_hardening.sql"
+### Community 2151 - "20260929220000_team_chat_e32_reactions_hardening.sql"
 Cohesion: 0.40
 Nodes (4): public.team_reactions_dedup_guard, public.team_reactions_dedup_guard(), public.team_message_reactions, team_reactions_dedup_trig
 
-### Community 2151 - "20260929230000_team_chat_e33_receipts_consistency_check.sql"
+### Community 2152 - "20260929230000_team_chat_e33_receipts_consistency_check.sql"
 Cohesion: 0.40
 Nodes (4): public.team_receipts_no_own_sender, public.team_receipts_no_own_sender(), public.team_messages, team_receipts_no_own_sender_trig
 
-### Community 2152 - "docker-shim"
+### Community 2153 - "docker-shim"
 Cohesion: 0.70
 Nodes (4): docker-shim script, _has_state(), _sanitize(), _svc()
 
-### Community 2153 - "notification-delivery-atomicity.test.sh"
+### Community 2154 - "notification-delivery-atomicity.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), notification-delivery-atomicity.test.sh script
 
-### Community 2154 - "recriar-banco-local.test.sh"
+### Community 2155 - "recriar-banco-local.test.sh"
 Cohesion: 0.70
 Nodes (4): checa(), contem(), nao_contem(), recriar-banco-local.test.sh script
 
-### Community 2155 - "retry-disposable-postgres-test.sh"
+### Community 2156 - "retry-disposable-postgres-test.sh"
 Cohesion: 0.70
 Nodes (4): ecr_fallback_do_ghcr(), espelho_do_ecr(), pre_pull_images(), retry-disposable-postgres-test.sh script
 
-### Community 2156 - "talkx-blacklist-policy-forward-only.test.sh"
+### Community 2157 - "talkx-blacklist-policy-forward-only.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-blacklist-policy-forward-only.test.sh script
 
-### Community 2157 - "talkx-escape-hatch-auth.test.sh"
+### Community 2158 - "talkx-escape-hatch-auth.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-escape-hatch-auth.test.sh script
 
-### Community 2158 - "talkx-guards-fail-closed.test.sh"
+### Community 2159 - "talkx-guards-fail-closed.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-guards-fail-closed.test.sh script
 
-### Community 2159 - "talkx-history-saved-by-fk.test.sh"
+### Community 2160 - "talkx-history-saved-by-fk.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-history-saved-by-fk.test.sh script
 
-### Community 2160 - "talkx-send-interval-teto-24h.test.sh"
+### Community 2161 - "talkx-send-interval-teto-24h.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-send-interval-teto-24h.test.sh script
 
-### Community 2161 - "talkx-suppress-phone-axis.test.sh"
+### Community 2162 - "talkx-suppress-phone-axis.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-suppress-phone-axis.test.sh script
 
-### Community 2162 - "talkx-update-limits-rpc.test.sh"
+### Community 2163 - "talkx-update-limits-rpc.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-update-limits-rpc.test.sh script
 
-### Community 2163 - "talkx-update-limits-send-window.test.sh"
+### Community 2164 - "talkx-update-limits-send-window.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-update-limits-send-window.test.sh script
 
-### Community 2164 - "talkx-v15-replied-count-guard.test.sh"
+### Community 2165 - "talkx-v15-replied-count-guard.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-v15-replied-count-guard.test.sh script
 
-### Community 2165 - "talkx-v16-time-series.test.sh"
+### Community 2166 - "talkx-v16-time-series.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-v16-time-series.test.sh script
 
-### Community 2166 - "talkx-v17-read-at.test.sh"
+### Community 2167 - "talkx-v17-read-at.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-v17-read-at.test.sh script
 
-### Community 2167 - "talkx-v23-draft-step.test.sh"
+### Community 2168 - "talkx-v23-draft-step.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-v23-draft-step.test.sh script
 
-### Community 2168 - "talkx-v25-owner.test.sh"
+### Community 2169 - "talkx-v25-owner.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-v25-owner.test.sh script
 
-### Community 2169 - "talkx-v26-template-version.test.sh"
+### Community 2170 - "talkx-v26-template-version.test.sh"
 Cohesion: 0.60
 Nodes (3): fail(), psql_test(), talkx-v26-template-version.test.sh script
 
-### Community 2170 - "tls-edge-probe.ts"
+### Community 2171 - "tls-edge-probe.ts"
 Cohesion: 0.40
 Nodes (3): identity, runId, sourceSha
 
-### Community 2172 - "BusinessHoursIndicator.test.tsx"
+### Community 2173 - "BusinessHoursIndicator.test.tsx"
 Cohesion: 0.50
 Nodes (3): agoraBrasil(), h, hojeDeslocado()
 
-### Community 2173 - "ContactDetailPanel.activity.test.tsx"
+### Community 2174 - "ContactDetailPanel.activity.test.tsx"
 Cohesion: 0.40
 Nodes (3): CONTACT, { fetchStatsMock, lastDatesMock }, STATS
 
-### Community 2174 - "ContactNotes.ordemFoco.test.tsx"
+### Community 2175 - "ContactNotes.ordemFoco.test.tsx"
 Cohesion: 0.50
 Nodes (3): botaoEditarDoCartao(), cartao(), h
 
-### Community 2176 - "SLAMetricsDashboard.sem-dados-erro.test.tsx"
+### Community 2177 - "SLAMetricsDashboard.sem-dados-erro.test.tsx"
 Cohesion: 0.40
 Nodes (3): comAmostra, metrics, semAmostra
 
-### Community 2178 - "EmailChatInbox.contato.test.tsx"
+### Community 2179 - "EmailChatInbox.contato.test.tsx"
 Cohesion: 0.40
 Nodes (3): lookup, state, THREAD
 
-### Community 2181 - "ContactDeliveryPanel.test.tsx"
+### Community 2182 - "ContactDeliveryPanel.test.tsx"
 Cohesion: 0.40
 Nodes (3): ContactDeliveryPanel, h, Stats
 
-### Community 2182 - "ContactDetails.entrega.test.tsx"
+### Community 2183 - "ContactDetails.entrega.test.tsx"
 Cohesion: 0.40
 Nodes (3): conversation, fixture, h
 
-### Community 2183 - "emojiConstants.ts"
+### Community 2184 - "emojiConstants.ts"
 Cohesion: 0.70
 Nodes (3): ALL_CATEGORIES, CATEGORY_LABELS, NATIVE_EMOJI_CATEGORIES
 
-### Community 2185 - "Leaderboard.test.tsx"
+### Community 2186 - "Leaderboard.test.tsx"
 Cohesion: 0.40
 Nodes (3): handleRefresh, setTimeRange, state
 
-### Community 2188 - "OnboardingChecklist.test.tsx"
+### Community 2189 - "OnboardingChecklist.test.tsx"
 Cohesion: 0.50
 Nodes (4): chain(), mockFrom, mockSupabaseComUserSettings(), mockUseAuth
 
-### Community 2189 - "AclAlertsPanel.test.tsx"
+### Community 2190 - "AclAlertsPanel.test.tsx"
 Cohesion: 0.40
 Nodes (4): ACL_ALERTS_LIMIT, ABERTA, mocks, RESOLVIDA
 
-### Community 2190 - "MessagesSettings.test.tsx"
+### Community 2191 - "MessagesSettings.test.tsx"
 Cohesion: 0.50
 Nodes (3): abrirComAusenciaCarregada(), h, renderMessages()
 
-### Community 2192 - "talkxHelpMarkdown.tsx"
+### Community 2193 - "talkxHelpMarkdown.tsx"
 Cohesion: 0.60
 Nodes (4): HelpMarkdown(), parseHelpMarkdown(), renderHelpInline(), TalkXHelpBlock
 
-### Community 2194 - "TalkXLiveMonitor.lifecycle.test.tsx"
+### Community 2195 - "TalkXLiveMonitor.lifecycle.test.tsx"
 Cohesion: 0.50
 Nodes (3): abrirMonitor(), h, renderMonitor()
 
-### Community 2195 - "TalkXSegments.feedbackMassa.test.tsx"
+### Community 2196 - "TalkXSegments.feedbackMassa.test.tsx"
 Cohesion: 0.50
 Nodes (3): abrirBiblioteca(), f, wrap()
 
-### Community 2196 - "TalkXSuppression.contactSearch.test.tsx"
+### Community 2197 - "TalkXSuppression.contactSearch.test.tsx"
 Cohesion: 0.50
 Nodes (3): h, openAddDialog(), renderView()
 
-### Community 2198 - "VolumeTriggerButton.test.tsx"
+### Community 2199 - "VolumeTriggerButton.test.tsx"
 Cohesion: 0.50
 Nodes (4): montar(), rocker(), VolumeTriggerButtonProps, VolumeRocker
 
-### Community 2201 - "useChatKeyboardNavigation.ts"
+### Community 2202 - "useChatKeyboardNavigation.ts"
 Cohesion: 0.60
 Nodes (3): chatKeyboardShortcuts, useChatKeyboardNavigation(), UseChatKeyboardNavigationProps
 
-### Community 2202 - "useBattleCard.ts"
+### Community 2203 - "useBattleCard.ts"
 Cohesion: 0.40
 Nodes (4): BattleCardPoint, BattleCardResult, COMPETITOR_PATTERNS, STANDARD_BATTLE_POINTS
 
-### Community 2203 - "useFirstResponseScript.ts"
+### Community 2204 - "useFirstResponseScript.ts"
 Cohesion: 0.50
 Nodes (4): FirstResponseScript, isBusinessHours(), SCRIPTS, useFirstResponseScript()
 
-### Community 2204 - "useSpeedToLead.ts"
+### Community 2205 - "useSpeedToLead.ts"
 Cohesion: 0.40
 Nodes (4): ResponseUrgency, SpeedToLeadResult, THRESHOLDS, UseSpeedToLeadOptions
 
-### Community 2206 - "system/__tests__/usePermissions.test.tsx"
+### Community 2207 - "system/__tests__/usePermissions.test.tsx"
 Cohesion: 0.40
 Nodes (3): chain(), node, h
 
-### Community 2207 - "useTeamChatMembers.ja-membros.test.tsx"
+### Community 2208 - "useTeamChatMembers.ja-membros.test.tsx"
 Cohesion: 0.50
 Nodes (4): existing, h, setup(), useAddConversationMembers()
 
-### Community 2209 - "useQuickReplies.test.tsx"
+### Community 2210 - "useQuickReplies.test.tsx"
 Cohesion: 0.40
 Nodes (3): mockFrom, mockTemplates, mockUseAuth
 
-### Community 2210 - "public.conversation_analyses"
+### Community 2211 - "public.conversation_analyses"
 Cohesion: 0.40
 Nodes (5): idx_conversation_analyses_contact_department, idx_conversation_analyses_contact_id, idx_conversation_analyses_created_at, idx_conversation_analyses_department, public.conversation_analyses
 
-### Community 2211 - "public.login_attempts"
+### Community 2212 - "public.login_attempts"
 Cohesion: 0.40
 Nodes (5): idx_login_attempts_email, idx_login_attempts_locked, public.is_account_locked(), public.record_failed_login(), public.login_attempts
 
-### Community 2212 - "public.is_country_allowed"
+### Community 2213 - "public.is_country_allowed"
 Cohesion: 0.40
 Nodes (5): public.is_country_allowed(), public.is_country_blocked(), public.allowed_countries, public.blocked_countries, public.geo_blocking_settings
 
-### Community 2213 - "public.password_reset_requests"
+### Community 2214 - "public.password_reset_requests"
 Cohesion: 0.40
 Nodes (5): public.get_own_reset_requests(), public.get_reset_requests_safe(), public.rate_limit_reset_requests(), public.validate_reset_token(), public.password_reset_requests
 
-### Community 2214 - "public.is_country_allowed"
+### Community 2215 - "public.is_country_allowed"
 Cohesion: 0.40
 Nodes (5): public.is_country_allowed(), public.is_country_blocked(), public.allowed_countries, public.blocked_countries, public.geo_blocking_settings
 
-### Community 2215 - "public.agent_stats"
+### Community 2216 - "public.agent_stats"
 Cohesion: 0.40
 Nodes (5): agent_stats_pkey, agent_stats_profile_id_key, idx_agent_stats_level, idx_agent_stats_xp, public.agent_stats
 
-### Community 2216 - "public.blocked_ips"
+### Community 2217 - "public.blocked_ips"
 Cohesion: 0.40
 Nodes (5): blocked_ips_ip_address_key, blocked_ips_pkey, idx_blocked_ips_expires, idx_blocked_ips_ip, public.blocked_ips
 
-### Community 2217 - "public.campaign_contacts"
+### Community 2218 - "public.campaign_contacts"
 Cohesion: 0.40
 Nodes (5): campaign_contacts_pkey, idx_campaign_contacts_campaign, idx_campaign_contacts_campaign_id, idx_campaign_contacts_status, public.campaign_contacts
 
-### Community 2218 - "public.chatbot_executions"
+### Community 2219 - "public.chatbot_executions"
 Cohesion: 0.40
 Nodes (5): chatbot_executions_pkey, idx_chatbot_executions_contact_id, idx_chatbot_executions_flow_id, idx_chatbot_executions_status, public.chatbot_executions
 
-### Community 2219 - "public.conversation_tasks"
+### Community 2220 - "public.conversation_tasks"
 Cohesion: 0.40
 Nodes (5): conversation_tasks_pkey, idx_tasks_assigned, idx_tasks_contact, idx_tasks_status, public.conversation_tasks
 
-### Community 2220 - "public.entity_versions"
+### Community 2221 - "public.entity_versions"
 Cohesion: 0.40
 Nodes (5): entity_versions_entity_type_entity_id_version_number_key, entity_versions_pkey, idx_versions_date, idx_versions_entity, public.entity_versions
 
-### Community 2221 - "public.login_attempts"
+### Community 2222 - "public.login_attempts"
 Cohesion: 0.40
 Nodes (5): idx_login_attempts_email, idx_login_attempts_locked, login_attempts_email_key, login_attempts_pkey, public.login_attempts
 
-### Community 2222 - "public.message_reactions"
+### Community 2223 - "public.message_reactions"
 Cohesion: 0.40
 Nodes (5): idx_message_reactions_message, message_reactions_message_id_contact_id_emoji_key, message_reactions_message_id_user_id_emoji_key, message_reactions_pkey, public.message_reactions
 
-### Community 2223 - "public.notifications"
+### Community 2224 - "public.notifications"
 Cohesion: 0.40
 Nodes (5): idx_notifications_created_at, idx_notifications_is_read, idx_notifications_user_id, notifications_pkey, public.notifications
 
-### Community 2224 - "public.passkey_credentials"
+### Community 2225 - "public.passkey_credentials"
 Cohesion: 0.40
 Nodes (5): idx_passkey_credentials_credential_id, idx_passkey_credentials_user_id, passkey_credentials_credential_id_key, passkey_credentials_pkey, public.passkey_credentials
 
-### Community 2225 - "public.products"
+### Community 2226 - "public.products"
 Cohesion: 0.40
 Nodes (5): idx_products_active, idx_products_category, products_pkey, products_sku_key, public.products
 
-### Community 2226 - "public.rate_limit_logs"
+### Community 2227 - "public.rate_limit_logs"
 Cohesion: 0.40
 Nodes (5): idx_rate_limit_logs_created, idx_rate_limit_logs_ip, idx_rate_limit_logs_user, rate_limit_logs_pkey, public.rate_limit_logs
 
-### Community 2227 - "public.team_conversation_members"
+### Community 2228 - "public.team_conversation_members"
 Cohesion: 0.40
 Nodes (5): idx_team_members_conversation, idx_team_members_profile, public.team_conversation_members, team_conversation_members_conversation_id_profile_id_key, team_conversation_members_pkey
 
-### Community 2228 - "public.user_devices"
+### Community 2229 - "public.user_devices"
 Cohesion: 0.40
 Nodes (5): idx_user_devices_fingerprint, idx_user_devices_user_id, public.user_devices, user_devices_pkey, user_devices_user_id_device_fingerprint_key
 
-### Community 2230 - "20251215025658_88fbe1c6-7b7d-408e-a96c-398d0b66c996.sql"
+### Community 2231 - "20251215025658_88fbe1c6-7b7d-408e-a96c-398d0b66c996.sql"
 Cohesion: 0.40
 Nodes (4): public.whatsapp_groups, public.update_updated_at_column, public.whatsapp_connections, update_whatsapp_groups_updated_at
 
-### Community 2231 - "20251220130243_14f0f8fe-6186-499e-8eee-e7d0f8e9cfd8.sql"
+### Community 2232 - "20251220130243_14f0f8fe-6186-499e-8eee-e7d0f8e9cfd8.sql"
 Cohesion: 0.50
 Nodes (3): public.queue_members, public.queues, public.profiles
 
-### Community 2232 - "20251220131939_c2c82afa-4522-45e0-9f6c-3cefb9d67025.sql"
+### Community 2233 - "20251220131939_c2c82afa-4522-45e0-9f6c-3cefb9d67025.sql"
 Cohesion: 0.40
 Nodes (4): public.queue_goals, public.queues, public.update_updated_at_column, update_queue_goals_updated_at
 
-### Community 2233 - "20251220180609_e4bf347a-2e55-4fb6-895b-2164062cccfb.sql"
+### Community 2234 - "20251220180609_e4bf347a-2e55-4fb6-895b-2164062cccfb.sql"
 Cohesion: 0.40
 Nodes (4): public.user_settings, auth.users, public.update_updated_at_column, update_user_settings_updated_at
 
-### Community 2234 - "20251228173815_bb7c29fb-508e-4da9-ba9c-4113d60706b5.sql"
+### Community 2235 - "20251228173815_bb7c29fb-508e-4da9-ba9c-4113d60706b5.sql"
 Cohesion: 0.70
 Nodes (4): idx_notifications_created_at, idx_notifications_is_read, idx_notifications_user_id, public.notifications
 
-### Community 2235 - "public.blocked_countries"
+### Community 2236 - "public.blocked_countries"
 Cohesion: 0.60
 Nodes (4): idx_blocked_countries_code, public.blocked_countries, public.is_country_blocked(), auth.users
 
-### Community 2236 - "public.password_reset_requests"
+### Community 2237 - "public.password_reset_requests"
 Cohesion: 0.60
 Nodes (4): idx_password_reset_requests_status, idx_password_reset_requests_user, public.password_reset_requests, auth.users
 
-### Community 2237 - "public.csat_surveys"
+### Community 2238 - "public.csat_surveys"
 Cohesion: 0.50
 Nodes (4): public.auto_close_config, public.csat_surveys, public.contacts, public.profiles
 
-### Community 2238 - "public.get_visible_agent_ids"
+### Community 2239 - "public.get_visible_agent_ids"
 Cohesion: 0.60
 Nodes (4): public.agent_visibility_grants, public.get_visible_agent_ids(), public.profiles, public.user_roles
 
-### Community 2239 - "20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql"
+### Community 2240 - "20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql"
 Cohesion: 0.40
 Nodes (4): public.get_profile_id_for_user(), public.whatsapp_connections_public, public.profiles, public.whatsapp_connections
 
-### Community 2240 - "20260401002430_4c828f05-f7b6-4c2f-afd1-a341ea825f4b.sql"
+### Community 2241 - "20260401002430_4c828f05-f7b6-4c2f-afd1-a341ea825f4b.sql"
 Cohesion: 0.40
 Nodes (4): public.profiles_public, public.whatsapp_connections_public, public.profiles, public.whatsapp_connections
 
-### Community 2241 - "public.sla_rules"
+### Community 2242 - "public.sla_rules"
 Cohesion: 0.40
 Nodes (4): public.sla_rules, public.contacts, public.profiles, public.queues
 
-### Community 2242 - "public.ai_providers"
+### Community 2243 - "public.ai_providers"
 Cohesion: 0.40
 Nodes (3): public.ai_providers, public, public.profiles
 
-### Community 2243 - "public.talkx_blacklist"
+### Community 2244 - "public.talkx_blacklist"
 Cohesion: 0.50
 Nodes (4): idx_talkx_blacklist_contact, public.talkx_blacklist, public.contacts, public.profiles
 
-### Community 2244 - "public.audit_logs"
+### Community 2245 - "public.audit_logs"
 Cohesion: 0.40
 Nodes (5): idx_audit_logs_action, idx_audit_logs_created_at, idx_audit_logs_user_created, idx_audit_logs_user_id, public.audit_logs
 
-### Community 2245 - "public.conversation_analyses"
+### Community 2246 - "public.conversation_analyses"
 Cohesion: 0.40
 Nodes (5): idx_conversation_analyses_contact_department, idx_conversation_analyses_contact_id, idx_conversation_analyses_created_at, idx_conversation_analyses_department, public.conversation_analyses
 
-### Community 2246 - "20260619193444_c559e17f-eaa3-4649-acef-12f9bc473cf5.sql"
+### Community 2247 - "20260619193444_c559e17f-eaa3-4649-acef-12f9bc473cf5.sql"
 Cohesion: 0.50
 Nodes (4): idx_link_preview_cache_expires_at, public.link_preview_cache, public.update_updated_at_column, update_link_preview_cache_updated_at
 
-### Community 2247 - "20260619194729_ecd46f46-c852-405a-9f18-cd9c95a65025.sql"
+### Community 2248 - "20260619194729_ecd46f46-c852-405a-9f18-cd9c95a65025.sql"
 Cohesion: 0.50
 Nodes (4): idx_lpc_metrics_ran_at, public.cleanup_link_preview_cache(), public.link_preview_cache_metrics, public.link_preview_cache
 
-### Community 2248 - "public.reassign_absent_agents"
+### Community 2249 - "public.reassign_absent_agents"
 Cohesion: 0.40
 Nodes (4): public.reassign_absent_agents(), contacts, profiles, user_sessions
 
-### Community 2249 - "20260901100001_add_last_sender_to_email_threads.sql"
+### Community 2250 - "20260901100001_add_last_sender_to_email_threads.sql"
 Cohesion: 0.40
 Nodes (4): public.sync_thread_last_sender(), public.email_messages, trg_sync_thread_last_sender, sync_thread_last_sender
 
-### Community 2250 - "20260902100004_e54_drop_dead_indexes_fix_search_contacts.sql"
+### Community 2251 - "20260902100004_e54_drop_dead_indexes_fix_search_contacts.sql"
 Cohesion: 0.40
 Nodes (4): idx_contacts_channel_connection_id, public.search_contacts(), public.contacts, public.queue_members
 
-### Community 2251 - "20260902150000_audit_fix_secdef_search_path_realtime_indexes.sql"
+### Community 2252 - "20260902150000_audit_fix_secdef_search_path_realtime_indexes.sql"
 Cohesion: 0.40
 Nodes (4): idx_contacts_updated_at, idx_messages_unread_contact, public.contacts, public.messages
 
-### Community 2252 - "20260903135434_create_ops_hermes_change_log.sql"
+### Community 2253 - "20260903135434_create_ops_hermes_change_log.sql"
 Cohesion: 0.70
 Nodes (4): idx_hermes_change_log_created, idx_hermes_change_log_run, idx_hermes_change_log_status, ops.hermes_change_log
 
-### Community 2253 - "20260905090000_contacts_fsm_trigger.sql"
+### Community 2254 - "20260905090000_contacts_fsm_trigger.sql"
 Cohesion: 0.50
 Nodes (4): enforce_conversation_status_transition(), idx_contacts_conv_status_active, contacts, trg_contacts_fsm_transition
 
-### Community 2254 - "public.get_conversation_tab_counts"
+### Community 2255 - "public.get_conversation_tab_counts"
 Cohesion: 0.40
 Nodes (4): public.get_conversation_tab_counts(), public.contact_notes, public.conversation_tasks, public.messages
 
-### Community 2255 - "public.talkx_template_versions"
+### Community 2256 - "public.talkx_template_versions"
 Cohesion: 0.50
 Nodes (4): idx_talkx_template_versions_template_version, public.talkx_template_versions, public.profiles, public.talkx_templates
 
-### Community 2256 - "public.claim_outbound_message"
+### Community 2257 - "public.claim_outbound_message"
 Cohesion: 0.40
 Nodes (4): public.claim_outbound_message(), public.contacts, public.messages, public.whatsapp_connections
 
-### Community 2257 - "public.talkx_campaign_report"
+### Community 2258 - "public.talkx_campaign_report"
 Cohesion: 0.40
 Nodes (4): public.talkx_campaign_report(), public.talkx_campaigns, public.talkx_recipients, public.talkx_template_variants
 
-### Community 2258 - "public.record_talkx_link_click"
+### Community 2259 - "public.record_talkx_link_click"
 Cohesion: 0.50
 Nodes (4): public.record_talkx_link_click(), public.talkx_links, public.talkx_recipients, talkx_links_slug_lower_key
 
-### Community 2259 - "public.dashboard_kpi"
+### Community 2260 - "public.dashboard_kpi"
 Cohesion: 0.40
 Nodes (4): public.dashboard_kpi(), public.contacts, public.conversation_closures, public.conversation_sla
 
-### Community 2260 - "20260927270007_team_chat_e16_find_or_create_direct_conversation.sql"
+### Community 2261 - "20260927270007_team_chat_e16_find_or_create_direct_conversation.sql"
 Cohesion: 0.40
 Nodes (4): idx_team_conversations_direct_pair, public.find_or_create_direct_conversation(), public.profiles, public.team_conversations
 
-### Community 2261 - "public.get_team_unread_counts"
+### Community 2262 - "public.get_team_unread_counts"
 Cohesion: 0.40
 Nodes (4): public.get_team_unread_counts(), public.profiles, public.team_conversation_members, public.team_messages
 
-### Community 2262 - "public.trigger_pending_multiplix_dispatches"
+### Community 2263 - "public.trigger_pending_multiplix_dispatches"
 Cohesion: 0.50
 Nodes (4): public.get_multiplix_cron_secret(), public.trigger_pending_multiplix_dispatches(), public.multiplix_dispatches, vault.decrypted_secrets
 
-### Community 2265 - "20260929440000_team_chat_e51_receipts_conversation_id_not_null_trigger.sql"
+### Community 2266 - "20260929440000_team_chat_e51_receipts_conversation_id_not_null_trigger.sql"
 Cohesion: 0.40
 Nodes (4): public.team_receipts_fill_conversation_id(), public.team_messages, public.team_receipts_fill_conversation_id, team_receipts_fill_conversation_id_trig
 
-### Community 2266 - "20260929770000_contacts_can_edit_contact_helper.sql"
+### Community 2267 - "20260929770000_contacts_can_edit_contact_helper.sql"
 Cohesion: 0.40
 Nodes (4): public.can_delete_contacts(), public.can_edit_contact(), public.contacts, public.queue_members
 
-### Community 2267 - "public.toggle_team_reaction"
+### Community 2268 - "public.toggle_team_reaction"
 Cohesion: 0.40
 Nodes (4): public.toggle_team_reaction(), public.team_conversation_members, public.team_message_reactions, public.team_messages
 
-### Community 2268 - "public.get_team_messages_page"
+### Community 2269 - "public.get_team_messages_page"
 Cohesion: 0.40
 Nodes (4): public.get_team_messages_page(), public.profiles, public.team_conversation_members, public.team_messages
 
-### Community 2269 - "20260930420000_talkx_guards_fail_closed.sql"
+### Community 2270 - "20260930420000_talkx_guards_fail_closed.sql"
 Cohesion: 0.40
 Nodes (4): public.enforce_talkx_campaign_mutability(), public.enforce_talkx_recipient_snapshot_mutability(), public.profiles, public.talkx_campaigns
 
-### Community 2270 - "public.transition_talkx_campaign"
+### Community 2271 - "public.transition_talkx_campaign"
 Cohesion: 0.40
 Nodes (3): public.transition_talkx_campaign(), public.talkx_campaigns, public.talkx_recipients
 
-### Community 2271 - "public.talkx_campaign_report"
+### Community 2272 - "public.talkx_campaign_report"
 Cohesion: 0.40
 Nodes (3): public.talkx_campaign_report(), public.talkx_campaigns, public.talkx_recipients
 
-### Community 2273 - "public.save_talkx_campaign_draft"
+### Community 2274 - "public.save_talkx_campaign_draft"
 Cohesion: 0.40
 Nodes (3): public.save_talkx_campaign_draft(), public.profiles, public.whatsapp_connections
 
-### Community 2274 - "public.backfill_talkx_template_current_version"
+### Community 2275 - "public.backfill_talkx_template_current_version"
 Cohesion: 0.50
 Nodes (4): public.backfill_talkx_template_current_version(), public.update_talkx_template_with_snapshot(), public.talkx_template_versions, public.talkx_templates
 
-### Community 2275 - "public.list_multiplix_claimable_items"
+### Community 2276 - "public.list_multiplix_claimable_items"
 Cohesion: 0.40
 Nodes (3): public.list_multiplix_claimable_items(), public.multiplix_blocks, public.multiplix_delivery_items
 
-### Community 2276 - "public.ai_model_prices"
+### Community 2277 - "public.ai_model_prices"
 Cohesion: 0.60
 Nodes (4): idx_ai_model_prices_vigencia, public.ai_model_prices, public.ai_providers, uq_ai_model_prices_vigencia
 
-### Community 2277 - "20261004195051_gmail_oauth_state_attempts.sql"
+### Community 2278 - "20261004195051_gmail_oauth_state_attempts.sql"
 Cohesion: 0.50
 Nodes (3): gmail_oauth_states_open_user_state_idx, public.gmail_oauth_states, auth.users
 
-### Community 2278 - "public.leave_team_group"
+### Community 2279 - "public.leave_team_group"
 Cohesion: 0.40
 Nodes (3): public.leave_team_group(), public.team_conversation_members, public.team_conversations
 
-### Community 2279 - "public.backfill_reminders_to_conversation_tasks"
+### Community 2280 - "public.backfill_reminders_to_conversation_tasks"
 Cohesion: 0.50
 Nodes (4): public.backfill_reminders_to_conversation_tasks(), public.conversation_tasks, public.reminders, uq_conversation_tasks_migrated_from_reminder
 
-### Community 2280 - "public.retry_talkx_recipients"
+### Community 2281 - "public.retry_talkx_recipients"
 Cohesion: 0.40
 Nodes (4): public.retry_talkx_recipients(), public.contacts, public.profiles, public.talkx_blacklist
 
-### Community 2281 - "20261006221628_gamification_marco_nao_bloqueia_envio.sql"
+### Community 2282 - "20261006221628_gamification_marco_nao_bloqueia_envio.sql"
 Cohesion: 0.40
 Nodes (4): public.grant_agent_achievement_internal(), public.handle_message_gamification(), agent_stats, public.contacts
 
-### Community 2282 - "public.talkx_engine_window_open"
+### Community 2283 - "public.talkx_engine_window_open"
 Cohesion: 0.40
 Nodes (4): public.talkx_engine_window_open(), pg_timezone_names, public.talkx_campaigns, public.talkx_settings
 
-### Community 2283 - "public.agent_mini_game_xp_daily"
+### Community 2284 - "public.agent_mini_game_xp_daily"
 Cohesion: 0.40
 Nodes (3): public.agent_mini_game_xp_daily, public, public.profiles
 
-### Community 2285 - "public.message_sender_atual"
+### Community 2286 - "public.message_sender_atual"
 Cohesion: 0.40
 Nodes (4): public.message_sender_atual(), contacts, public.messages, queue_members
 
-### Community 2286 - "public.talkx_test_sends"
+### Community 2287 - "public.talkx_test_sends"
 Cohesion: 0.40
 Nodes (4): public.talkx_test_sends, public.talkx_campaigns, public.talkx_templates, public.whatsapp_connections
 
-### Community 2287 - "public.team_message_read_state"
+### Community 2288 - "public.team_message_read_state"
 Cohesion: 0.40
 Nodes (4): public.team_message_read_state, public.team_conversation_members, public.team_message_receipts, public.team_messages
 
-### Community 2288 - "public.get_team_messages_page"
+### Community 2289 - "public.get_team_messages_page"
 Cohesion: 0.40
 Nodes (4): public.get_team_messages_page(), public.profiles, public.team_conversation_members, public.team_messages
 
-### Community 2289 - "public.talkx_benchmarks"
+### Community 2290 - "public.talkx_benchmarks"
 Cohesion: 0.40
 Nodes (4): public.talkx_benchmarks(), public.talkx_campaign_metrics, public.talkx_segments, v_by_tpl
 
-### Community 2290 - "public.talkx_overview_stats"
+### Community 2291 - "public.talkx_overview_stats"
 Cohesion: 0.40
 Nodes (4): public.talkx_overview_stats(), public.talkx_campaigns, public.talkx_conversions, public.talkx_recipients
 
-### Community 2292 - "public.dispatch_scheduled_messages"
+### Community 2293 - "public.dispatch_scheduled_messages"
 Cohesion: 0.40
 Nodes (4): public.dispatch_scheduled_messages(), public.contacts, public.scheduled_messages, public.whatsapp_connections
 
-### Community 2293 - "public.delete_department"
+### Community 2294 - "public.delete_department"
 Cohesion: 0.50
 Nodes (4): public.delete_department(), public.departments_overview(), public.departments, public.team_conversations
 
-### Community 2294 - "public.apply_client_wallet"
+### Community 2295 - "public.apply_client_wallet"
 Cohesion: 0.40
 Nodes (4): public.apply_client_wallet(), public.client_wallet_rules, public.contacts, public.profiles
 
-### Community 2295 - "20261026210300_reconcile_team_reactions_force_conversation_id_trig.sql"
+### Community 2296 - "20261026210300_reconcile_team_reactions_force_conversation_id_trig.sql"
 Cohesion: 0.40
 Nodes (4): public.team_reactions_force_conversation_id(), public.team_messages, team_reactions_force_conversation_id_trig, team_reactions_force_conversation_id
 
-### Community 2296 - "public.talkx_campaign_resume_precheck"
+### Community 2297 - "public.talkx_campaign_resume_precheck"
 Cohesion: 0.40
 Nodes (4): public.talkx_campaign_resume_precheck(), public.talkx_campaigns, public.talkx_settings, public.whatsapp_connections
 
-### Community 2298 - "public.dispatch_scheduled_messages"
+### Community 2299 - "public.dispatch_scheduled_messages"
 Cohesion: 0.40
 Nodes (4): public.dispatch_scheduled_messages(), public.contacts, public.scheduled_messages, public.whatsapp_connections
 
-### Community 2299 - "20260612160000_fk_indexes_and_cleanup.sql"
+### Community 2300 - "20260612160000_fk_indexes_and_cleanup.sql"
 Cohesion: 0.40
 Nodes (4): idx_ai_providers_created_by, idx_outbound_queue_audio_meme_id, public.ai_providers, public.outbound_message_queue
 
-### Community 2300 - "messages_transcribed_at.sql"
+### Community 2301 - "messages_transcribed_at.sql"
 Cohesion: 0.40
 Nodes (3): public.messages, public.update_updated_at_column, update_messages_updated_at
 
-### Community 2302 - "Zapp Web V2 — convenções"
+### Community 2303 - "Zapp Web V2 — convenções"
 Cohesion: 0.50
 Nodes (3): Commits, Código, Zapp Web V2 — convenções
 
-### Community 2303 - "Dossiê — `dia/2026-10-08`"
+### Community 2304 - "Dossiê — `dia/2026-10-08`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `dia/2026-10-08`, Evidências
 
-### Community 2304 - "Dossiê — `backup/dia-2026-10-13`"
+### Community 2305 - "Dossiê — `backup/dia-2026-10-13`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `backup/dia-2026-10-13`, Evidências
 
-### Community 2305 - "Dossiê — `backup/dia-2026-10-14`"
+### Community 2306 - "Dossiê — `backup/dia-2026-10-14`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `backup/dia-2026-10-14`, Evidências
 
-### Community 2306 - "Dossiê — `claude/w10-mutacao-mapa-so-pr`"
+### Community 2307 - "Dossiê — `claude/w10-mutacao-mapa-so-pr`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `claude/w10-mutacao-mapa-so-pr`, Evidências
 
-### Community 2307 - "Dossiê — `ci/cors-zappweb-app-br`"
+### Community 2308 - "Dossiê — `ci/cors-zappweb-app-br`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `ci/cors-zappweb-app-br`, Evidências
 
-### Community 2308 - "Dossiê — `lote/2026-10-16-880-cards`"
+### Community 2309 - "Dossiê — `lote/2026-10-16-880-cards`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `lote/2026-10-16-880-cards`, Evidências
 
-### Community 2309 - "Dossiê — `codex/sincronizacao-ledger-20261016`"
+### Community 2310 - "Dossiê — `codex/sincronizacao-ledger-20261016`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `codex/sincronizacao-ledger-20261016`, Evidências
 
-### Community 2310 - "messages"
+### Community 2311 - "messages"
 Cohesion: 0.50
 Nodes (4): channel_routing_rules, message_reactions, messages, channel_connections
 
-### Community 2311 - "Zapp Web V2 — convenções"
+### Community 2312 - "Zapp Web V2 — convenções"
 Cohesion: 0.50
 Nodes (3): Commits, Código, Zapp Web V2 — convenções
 
-### Community 2312 - "Dossiê — `dia/2026-10-08`"
+### Community 2313 - "Dossiê — `dia/2026-10-08`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `dia/2026-10-08`, Evidências
 
-### Community 2313 - "Dossiê — `backup/dia-2026-10-13`"
+### Community 2314 - "Dossiê — `backup/dia-2026-10-13`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `backup/dia-2026-10-13`, Evidências
 
-### Community 2314 - "Dossiê — `backup/dia-2026-10-14`"
+### Community 2315 - "Dossiê — `backup/dia-2026-10-14`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `backup/dia-2026-10-14`, Evidências
 
-### Community 2315 - "Dossiê — `claude/w10-mutacao-mapa-so-pr`"
+### Community 2316 - "Dossiê — `claude/w10-mutacao-mapa-so-pr`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `claude/w10-mutacao-mapa-so-pr`, Evidências
 
-### Community 2316 - "Dossiê — `ci/cors-zappweb-app-br`"
+### Community 2317 - "Dossiê — `ci/cors-zappweb-app-br`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `ci/cors-zappweb-app-br`, Evidências
 
-### Community 2317 - "Dossiê — `lote/2026-10-16-880-cards`"
+### Community 2318 - "Dossiê — `lote/2026-10-16-880-cards`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `lote/2026-10-16-880-cards`, Evidências
 
-### Community 2318 - "Dossiê — `codex/sincronizacao-ledger-20261016`"
+### Community 2319 - "Dossiê — `codex/sincronizacao-ledger-20261016`"
 Cohesion: 0.50
 Nodes (3): Conclusão, Dossiê — `codex/sincronizacao-ledger-20261016`, Evidências
 
-### Community 2319 - "Dossiers das 66 PRs Fechadas sem Merge"
+### Community 2320 - "Dossiers das 66 PRs Fechadas sem Merge"
 Cohesion: 0.50
 Nodes (3): Critérios comuns de fechamento, Dossiers das 66 PRs Fechadas sem Merge, Lista completa (66 PRs)
 
-### Community 2320 - "Dossiê PR #2096 — feat(vercel): plano de correções Vercel 190 etapas — execução V001-V180"
+### Community 2321 - "Dossiê PR #2096 — feat(vercel): plano de correções Vercel 190 etapas — execução V001-V180"
 Cohesion: 0.50
 Nodes (3): 1. Intenção, 2. Situação, Dossiê PR #2096 — feat(vercel): plano de correções Vercel 190 etapas — execução V001-V180
 
-### Community 2321 - "Dossiê PR #2099 — chore(deps): Bump github/codeql-action from 4.38.3 to 4.39.0"
+### Community 2322 - "Dossiê PR #2099 — chore(deps): Bump github/codeql-action from 4.38.3 to 4.39.0"
 Cohesion: 0.50
 Nodes (3): 1. Intenção, 2. Situação, Dossiê PR #2099 — chore(deps): Bump github/codeql-action from 4.38.3 to 4.39.0
 
-### Community 2322 - "Dossiê PR #2101 — chore(deps): Bump actions-misc group (setup-node, upload-artifact, github-script)"
+### Community 2323 - "Dossiê PR #2101 — chore(deps): Bump actions-misc group (setup-node, upload-artifact, github-script)"
 Cohesion: 0.50
 Nodes (3): 1. Intenção, 2. Situação, Dossiê PR #2101 — chore(deps): Bump actions-misc group (setup-node, upload-artifact, github-script)
 
-### Community 2323 - "Dossiê PR #2102 — deps: Bump the deps-semanal group with 11 updates"
+### Community 2324 - "Dossiê PR #2102 — deps: Bump the deps-semanal group with 11 updates"
 Cohesion: 0.50
 Nodes (3): 1. Intenção, 2. Situação, Dossiê PR #2102 — deps: Bump the deps-semanal group with 11 updates
 
-### Community 2324 - "Dossiê PR #2211"
+### Community 2325 - "Dossiê PR #2211"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2211
 
-### Community 2325 - "Dossiê PR #2213"
+### Community 2326 - "Dossiê PR #2213"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2213
 
-### Community 2326 - "Dossiê PR #2214"
+### Community 2327 - "Dossiê PR #2214"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2214
 
-### Community 2327 - "Dossiê PR #2215"
+### Community 2328 - "Dossiê PR #2215"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2215
 
-### Community 2328 - "Dossiê PR #2216"
+### Community 2329 - "Dossiê PR #2216"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2216
 
-### Community 2329 - "Dossiê PR #2217"
+### Community 2330 - "Dossiê PR #2217"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2217
 
-### Community 2330 - "Dossiê PR #2219"
+### Community 2331 - "Dossiê PR #2219"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2219
 
-### Community 2331 - "Dossiê PR #2221"
+### Community 2332 - "Dossiê PR #2221"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2221
 
-### Community 2332 - "Dossiê PR #2222"
+### Community 2333 - "Dossiê PR #2222"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2222
 
-### Community 2333 - "Dossiê PR #2241"
+### Community 2334 - "Dossiê PR #2241"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2241
 
-### Community 2334 - "Dossiê PR #2242"
+### Community 2335 - "Dossiê PR #2242"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2242
 
-### Community 2335 - "Dossiê PR #2245"
+### Community 2336 - "Dossiê PR #2245"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2245
 
-### Community 2336 - "Dossiê PR #2249"
+### Community 2337 - "Dossiê PR #2249"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2249
 
-### Community 2337 - "Dossiê PR #2250"
+### Community 2338 - "Dossiê PR #2250"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2250
 
-### Community 2338 - "Dossiê PR #2255"
+### Community 2339 - "Dossiê PR #2255"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2255
 
-### Community 2339 - "Dossiê PR #2261"
+### Community 2340 - "Dossiê PR #2261"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2261
 
-### Community 2340 - "Dossiê PR #2265"
+### Community 2341 - "Dossiê PR #2265"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2265
 
-### Community 2341 - "Dossiê PR #2279"
+### Community 2342 - "Dossiê PR #2279"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2279
 
-### Community 2342 - "Dossie PR #2295 — feat(ci): skip heavy jobs em draft PRs (E71)"
+### Community 2343 - "Dossie PR #2295 — feat(ci): skip heavy jobs em draft PRs (E71)"
 Cohesion: 0.50
 Nodes (3): 1. Regra violada, 2. Veredito final, Dossie PR #2295 — feat(ci): skip heavy jobs em draft PRs (E71)
 
-### Community 2343 - "Dossiê PR #2297"
+### Community 2344 - "Dossiê PR #2297"
 Cohesion: 0.50
 Nodes (3): Análise, Ação, Dossiê PR #2297
 
-### Community 2344 - "Dossie PR #2298 — feat(e75): centraliza versões de toolchain em toolchain.json"
+### Community 2345 - "Dossie PR #2298 — feat(e75): centraliza versões de toolchain em toolchain.json"
 Cohesion: 0.50
 Nodes (3): 1. Regra violada, 2. Veredito final, Dossie PR #2298 — feat(e75): centraliza versões de toolchain em toolchain.json
 
-### Community 2345 - "F8 — Fechamento (E48–E50)"
+### Community 2346 - "F8 — Fechamento (E48–E50)"
 Cohesion: 0.50
 Nodes (4): E48 🟡 Re-auditoria tripla completa (herda E47+E48/16-09), E49 🟢 Atualizar CLAUDE.md e arquivar o plano de 16/09, E50 🟢 Relatório final e sign-off, F8 — Fechamento (E48–E50)
 
-### Community 2346 - "12. LAYOUT GLOBAL DESKTOP"
+### Community 2347 - "12. LAYOUT GLOBAL DESKTOP"
 Cohesion: 0.50
 Nodes (4): 12. LAYOUT GLOBAL DESKTOP, Header global, Page content, Sidebar
 
-### Community 2347 - "14. PAGE HEADER"
+### Community 2348 - "14. PAGE HEADER"
 Cohesion: 0.50
 Nodes (4): 14. PAGE HEADER, Ações, Não fazer, Ícone contextual
 
-### Community 2348 - "16. TOOLBAR DE FILTROS"
+### Community 2349 - "16. TOOLBAR DE FILTROS"
 Cohesion: 0.50
 Nodes (4): 16. TOOLBAR DE FILTROS, Density, Search, Segmented filters
 
-### Community 2349 - "24. EDITOR / STUDIO SHELL"
+### Community 2350 - "24. EDITOR / STUDIO SHELL"
 Cohesion: 0.50
 Nodes (4): 24. EDITOR / STUDIO SHELL, Header do editor, Stepper, Workspace
 
-### Community 2350 - "36. SKELETON / LOADING"
+### Community 2351 - "36. SKELETON / LOADING"
 Cohesion: 0.50
 Nodes (4): 36. SKELETON / LOADING, Cards, Editor, Grid
 
-### Community 2351 - "38. MICROINTERAÇÕES"
+### Community 2352 - "38. MICROINTERAÇÕES"
 Cohesion: 0.50
 Nodes (4): 38. MICROINTERAÇÕES, Durações, Easing, Regras
 
-### Community 2352 - "39. ICONOGRAFIA"
+### Community 2353 - "39. ICONOGRAFIA"
 Cohesion: 0.50
 Nodes (4): 39. ICONOGRAFIA, Icon-only, Stroke, Tamanhos
 
-### Community 2353 - "40. IMAGENS"
+### Community 2354 - "40. IMAGENS"
 Cohesion: 0.50
 Nodes (4): 40. IMAGENS, Card images, Magazine cover / hero, Product imagery
 
-### Community 2354 - "4. PALETA CANÔNICA BLUE PREMIUM"
+### Community 2355 - "4. PALETA CANÔNICA BLUE PREMIUM"
 Cohesion: 0.50
 Nodes (4): 4.1 Core, 4.2 Regra de tradução para o repositório, 4.3 Alpha recomendada para azul, 4. PALETA CANÔNICA BLUE PREMIUM
 
-### Community 2355 - "2. CONTEXTO TÉCNICO DO ZAPP WEB V2"
+### Community 2356 - "2. CONTEXTO TÉCNICO DO ZAPP WEB V2"
 Cohesion: 0.50
 Nodes (4): 2.1 Fontes existentes, 2.2 Motion existente, 2.3 Tokens existentes, 2. CONTEXTO TÉCNICO DO ZAPP WEB V2
 
-### Community 2356 - "38. MICROINTERAÇÕES / MOTION"
+### Community 2357 - "38. MICROINTERAÇÕES / MOTION"
 Cohesion: 0.50
 Nodes (4): 38. MICROINTERAÇÕES / MOTION, Durações, Easing, Regras
 
-### Community 2357 - "9. BACKDROP E BLUR"
+### Community 2358 - "9. BACKDROP E BLUR"
 Cohesion: 0.50
 Nodes (4): 9. BACKDROP E BLUR, Dialog overlay, Drawer, Header sticky
 
-### Community 2358 - "Manual de Design, UX/UI, Interação e Implementação para Claude"
+### Community 2359 - "Manual de Design, UX/UI, Interação e Implementação para Claude"
 Cohesion: 0.50
 Nodes (4): Linguagem oficial: **ZAPP DARKBLUE PREMIUM / CONVERSATION OPS**, Manual de Design, UX/UI, Interação e Implementação para Claude, Versão 1.0 — 07/09/2026, ZAPP WEB V2 — DARKBLUE PREMIUM DESIGN SYSTEM
 
-### Community 2359 - "8. EVENTOS DE CHATS"
+### Community 2360 - "8. EVENTOS DE CHATS"
 Cohesion: 0.50
 Nodes (4): 8.1 CHATS_UPSERT, 8.2 CHATS_UPDATE, 8.3 CHATS_DELETE, 8. EVENTOS DE CHATS
 
-### Community 2360 - "Matriz edge function x tabela"
+### Community 2361 - "Matriz edge function x tabela"
 Cohesion: 0.50
 Nodes (3): Matriz edge function x tabela, Por função, Por tabela
 
-### Community 2361 - "public.email_labels"
+### Community 2362 - "public.email_labels"
 Cohesion: 0.67
 Nodes (3): idx_email_labels_account, public.email_labels, public.gmail_accounts
 
-### Community 2362 - "table_entity_versions.sql"
+### Community 2363 - "table_entity_versions.sql"
 Cohesion: 0.83
 Nodes (3): idx_versions_date, idx_versions_entity, public.entity_versions
 
-### Community 2363 - "table_gmail_accounts.sql"
+### Community 2364 - "table_gmail_accounts.sql"
 Cohesion: 0.50
 Nodes (3): public.gmail_accounts, public.update_updated_at_column, update_gmail_accounts_updated_at
 
-### Community 2364 - "PLANO — NOME ACESSÍVEL DO BOTÃO DE PLAY NA ABA ARQUIVOS (A06b) — 1 ETAPA"
+### Community 2365 - "PLANO — NOME ACESSÍVEL DO BOTÃO DE PLAY NA ABA ARQUIVOS (A06b) — 1 ETAPA"
 Cohesion: 0.50
 Nodes (3): Decisão, Etapa única, PLANO — NOME ACESSÍVEL DO BOTÃO DE PLAY NA ABA ARQUIVOS (A06b) — 1 ETAPA
 
-### Community 2365 - "PLANO — RESTAURAR AS OPÇÕES DE 6 E 8 COLUNAS DO GRID DE ARQUIVOS (reverte a D01 do plano de 07/10)"
+### Community 2366 - "PLANO — RESTAURAR AS OPÇÕES DE 6 E 8 COLUNAS DO GRID DE ARQUIVOS (reverte a D01 do plano de 07/10)"
 Cohesion: 0.50
 Nodes (3): O que foi feito, PLANO — RESTAURAR AS OPÇÕES DE 6 E 8 COLUNAS DO GRID DE ARQUIVOS (reverte a D01 do plano de 07/10), Prova
 
-### Community 2366 - "Prova — régua axe de Tarefas / Quadro / Dashboard (N-079)"
+### Community 2367 - "Prova — régua axe de Tarefas / Quadro / Dashboard (N-079)"
 Cohesion: 0.50
 Nodes (3): Prova — régua axe de Tarefas / Quadro / Dashboard (N-079), Verde depois (com as correções), Vermelho antes (sem os `aria-label` de ModeSwitcher e OnboardingChecklist; resto igual)
 
-### Community 2367 - "email_threads"
+### Community 2368 - "email_threads"
 Cohesion: 0.67
 Nodes (4): email_labels, email_messages, email_threads, gmail_accounts
 
-### Community 2369 - "overrides"
+### Community 2370 - "overrides"
 Cohesion: 0.50
 Nodes (4): overrides, postcss, postcss-selector-parser, ws
 
-### Community 2392 - "public.talkx_test_sends"
+### Community 2393 - "public.talkx_test_sends"
 Cohesion: 0.50
 Nodes (4): public.talkx_test_sends, idx_talkx_test_sends_campaign_id, idx_talkx_test_sends_connection_id, idx_talkx_test_sends_template_id
 
-### Community 2398 - "multiplix-scope.test.sh"
+### Community 2399 - "multiplix-scope.test.sh"
 Cohesion: 0.83
 Nodes (3): fail(), pass(), multiplix-scope.test.sh script
 
-### Community 2401 - "dialogKeys.ts"
+### Community 2402 - "dialogKeys.ts"
 Cohesion: 0.50
 Nodes (3): ActiveTool, DialogKey, DialogState
 
-### Community 2406 - "useAgents.leitura.test.tsx"
+### Community 2407 - "useAgents.leitura.test.tsx"
 Cohesion: 0.67
 Nodes (3): createWrapper(), h, montar()
 
-### Community 2408 - "public.email_messages"
+### Community 2409 - "public.email_messages"
 Cohesion: 0.50
 Nodes (4): idx_email_messages_account, idx_email_messages_date, idx_email_messages_thread, public.email_messages
 
-### Community 2409 - "public.email_threads"
+### Community 2410 - "public.email_threads"
 Cohesion: 0.50
 Nodes (4): idx_email_threads_account, idx_email_threads_contact, idx_email_threads_last_message, public.email_threads
 
-### Community 2410 - "public.notifications"
+### Community 2411 - "public.notifications"
 Cohesion: 0.50
 Nodes (4): idx_notifications_created_at, idx_notifications_is_read, idx_notifications_user_id, public.notifications
 
-### Community 2411 - "public.rate_limit_logs"
+### Community 2412 - "public.rate_limit_logs"
 Cohesion: 0.50
 Nodes (4): idx_rate_limit_logs_created, idx_rate_limit_logs_ip, idx_rate_limit_logs_user, public.rate_limit_logs
 
-### Community 2412 - "public.conversation_tasks"
+### Community 2413 - "public.conversation_tasks"
 Cohesion: 0.50
 Nodes (4): idx_tasks_assigned, idx_tasks_contact, idx_tasks_status, public.conversation_tasks
 
-### Community 2413 - "whatsapp_connections"
+### Community 2414 - "whatsapp_connections"
 Cohesion: 0.50
 Nodes (4): public.whatsapp_connections_agent, public.whatsapp_connections_public, public.whatsapp_connections_safe, whatsapp_connections
 
-### Community 2414 - "public.allowed_countries"
+### Community 2415 - "public.allowed_countries"
 Cohesion: 0.50
 Nodes (4): allowed_countries_country_code_key, allowed_countries_pkey, idx_allowed_countries_code, public.allowed_countries
 
-### Community 2415 - "public.blocked_countries"
+### Community 2416 - "public.blocked_countries"
 Cohesion: 0.50
 Nodes (4): blocked_countries_country_code_key, blocked_countries_pkey, idx_blocked_countries_code, public.blocked_countries
 
-### Community 2416 - "public.business_hours"
+### Community 2417 - "public.business_hours"
 Cohesion: 0.50
 Nodes (4): business_hours_pkey, business_hours_whatsapp_connection_id_day_of_week_key, idx_business_hours_connection, public.business_hours
 
-### Community 2417 - "public.campaigns"
+### Community 2418 - "public.campaigns"
 Cohesion: 0.50
 Nodes (4): campaigns_pkey, idx_campaigns_created_by, idx_campaigns_status, public.campaigns
 
-### Community 2418 - "public.contact_custom_fields"
+### Community 2419 - "public.contact_custom_fields"
 Cohesion: 0.50
 Nodes (4): contact_custom_fields_pkey, idx_contact_custom_fields_contact, idx_contact_custom_fields_unique, public.contact_custom_fields
 
-### Community 2419 - "public.contact_notes"
+### Community 2420 - "public.contact_notes"
 Cohesion: 0.50
 Nodes (4): contact_notes_pkey, idx_contact_notes_author_id, idx_contact_notes_contact_id, public.contact_notes
 
-### Community 2420 - "public.conversation_closures"
+### Community 2421 - "public.conversation_closures"
 Cohesion: 0.50
 Nodes (4): conversation_closures_pkey, idx_closures_contact, idx_closures_reason, public.conversation_closures
 
-### Community 2421 - "public.conversation_events"
+### Community 2422 - "public.conversation_events"
 Cohesion: 0.50
 Nodes (4): conversation_events_pkey, idx_conversation_events_contact, idx_conversation_events_type, public.conversation_events
 
-### Community 2422 - "public.conversation_snoozes"
+### Community 2423 - "public.conversation_snoozes"
 Cohesion: 0.50
 Nodes (4): conversation_snoozes_pkey, idx_snoozes_contact, idx_snoozes_until, public.conversation_snoozes
 
-### Community 2423 - "public.email_labels"
+### Community 2424 - "public.email_labels"
 Cohesion: 0.50
 Nodes (4): email_labels_gmail_account_id_gmail_label_id_key, email_labels_pkey, idx_email_labels_account, public.email_labels
 
-### Community 2424 - "public.goals_configurations"
+### Community 2425 - "public.goals_configurations"
 Cohesion: 0.50
 Nodes (4): goals_configurations_pkey, goals_configurations_profile_id_goal_type_key, goals_configurations_queue_id_goal_type_key, public.goals_configurations
 
-### Community 2425 - "public.nps_surveys"
+### Community 2426 - "public.nps_surveys"
 Cohesion: 0.50
 Nodes (4): idx_nps_surveys_contact, idx_nps_surveys_created, nps_surveys_pkey, public.nps_surveys
 
-### Community 2426 - "public.password_reset_requests"
+### Community 2427 - "public.password_reset_requests"
 Cohesion: 0.50
 Nodes (4): idx_password_reset_requests_status, idx_password_reset_requests_user, password_reset_requests_pkey, public.password_reset_requests
 
-### Community 2427 - "public.performance_snapshots"
+### Community 2428 - "public.performance_snapshots"
 Cohesion: 0.50
 Nodes (4): idx_performance_snapshots_created_at, idx_performance_snapshots_profile, performance_snapshots_pkey, public.performance_snapshots
 
-### Community 2428 - "public.query_telemetry"
+### Community 2429 - "public.query_telemetry"
 Cohesion: 0.50
 Nodes (4): idx_query_telemetry_created_at, idx_query_telemetry_severity, query_telemetry_pkey, public.query_telemetry
 
-### Community 2429 - "public.reminders"
+### Community 2430 - "public.reminders"
 Cohesion: 0.50
 Nodes (4): idx_reminders_profile, idx_reminders_remind_at, reminders_pkey, public.reminders
 
-### Community 2430 - "public.number_reputation"
+### Community 2431 - "public.number_reputation"
 Cohesion: 0.50
 Nodes (4): idx_reputation_connection, number_reputation_pkey, number_reputation_whatsapp_connection_id_key, public.number_reputation
 
-### Community 2431 - "public.security_alerts"
+### Community 2432 - "public.security_alerts"
 Cohesion: 0.50
 Nodes (4): idx_security_alerts_created, idx_security_alerts_type, security_alerts_pkey, public.security_alerts
 
-### Community 2432 - "public.talkx_blacklist"
+### Community 2433 - "public.talkx_blacklist"
 Cohesion: 0.50
 Nodes (4): idx_talkx_blacklist_contact, public.talkx_blacklist, talkx_blacklist_contact_id_key, talkx_blacklist_pkey
 
-### Community 2433 - "public.talkx_campaigns"
+### Community 2434 - "public.talkx_campaigns"
 Cohesion: 0.50
 Nodes (4): idx_talkx_campaigns_created_by, idx_talkx_campaigns_status, public.talkx_campaigns, talkx_campaigns_pkey
 
-### Community 2434 - "public.user_sessions"
+### Community 2435 - "public.user_sessions"
 Cohesion: 0.50
 Nodes (4): idx_user_sessions_active, idx_user_sessions_user_id, public.user_sessions, user_sessions_pkey
 
-### Community 2435 - "public.voice_command_logs"
+### Community 2436 - "public.voice_command_logs"
 Cohesion: 0.50
 Nodes (4): idx_voice_command_logs_created_at, idx_voice_command_logs_user_id, public.voice_command_logs, voice_command_logs_pkey
 
-### Community 2436 - "20251215160224_cda6461f-44b1-40b5-8fa2-302ba8d7e28d.sql"
+### Community 2437 - "20251215160224_cda6461f-44b1-40b5-8fa2-302ba8d7e28d.sql"
 Cohesion: 0.50
 Nodes (3): public.message_templates, public.update_updated_at_column, update_message_templates_updated_at
 
-### Community 2438 - "20260318134952_fa1e464a-2f91-42df-a9cd-3a5ead79c2ba.sql"
+### Community 2439 - "20260318134952_fa1e464a-2f91-42df-a9cd-3a5ead79c2ba.sql"
 Cohesion: 0.67
 Nodes (3): idx_kb_articles_search, public.search_knowledge_base(), public.knowledge_base_articles
 
-### Community 2439 - "public.sicoob_contact_mapping"
+### Community 2440 - "public.sicoob_contact_mapping"
 Cohesion: 0.50
 Nodes (3): public.sicoob_contact_mapping, public.contacts, public.profiles
 
-### Community 2440 - "20260323120607_76fb16b0-c83c-4e29-9152-fdf9568e159b.sql"
+### Community 2441 - "20260323120607_76fb16b0-c83c-4e29-9152-fdf9568e159b.sql"
 Cohesion: 0.83
 Nodes (3): idx_query_telemetry_created_at, idx_query_telemetry_severity, public.query_telemetry
 
-### Community 2441 - "20260401000928_28b1bb54-455f-4df9-849c-18808d0c6069.sql"
+### Community 2442 - "20260401000928_28b1bb54-455f-4df9-849c-18808d0c6069.sql"
 Cohesion: 0.67
 Nodes (3): public.get_connection_instance(), public.get_connection_qr_code(), public.whatsapp_connections
 
-### Community 2442 - "20260403143300_701ef65b-b23c-4a62-9d26-ab2ce3c41081.sql"
+### Community 2443 - "20260403143300_701ef65b-b23c-4a62-9d26-ab2ce3c41081.sql"
 Cohesion: 0.83
 Nodes (3): idx_performance_snapshots_created_at, idx_performance_snapshots_profile, public.performance_snapshots
 
-### Community 2443 - "20260404122616_0a241f28-00e1-4aa8-a6a5-f6b94b842c7d.sql"
+### Community 2444 - "20260404122616_0a241f28-00e1-4aa8-a6a5-f6b94b842c7d.sql"
 Cohesion: 0.50
 Nodes (3): public.user_service_accounts, public.update_updated_at_column, update_user_service_accounts_updated_at
 
-### Community 2445 - "20260407153654_eb8255fa-eae3-48e4-a9ff-1927a09e7305.sql"
+### Community 2446 - "20260407153654_eb8255fa-eae3-48e4-a9ff-1927a09e7305.sql"
 Cohesion: 0.83
 Nodes (3): idx_voice_command_logs_created_at, idx_voice_command_logs_user_id, public.voice_command_logs
 
-### Community 2446 - "public.is_contact_visible_to_user"
+### Community 2447 - "public.is_contact_visible_to_user"
 Cohesion: 0.50
 Nodes (3): public.is_contact_visible_to_user(), public.contacts, public.profiles
 
-### Community 2447 - "20260410103425_460031ce-8b18-4663-9243-a592dccbb788.sql"
+### Community 2448 - "20260410103425_460031ce-8b18-4663-9243-a592dccbb788.sql"
 Cohesion: 0.67
 Nodes (3): public.get_own_gmail_accounts(), public.gmail_accounts_safe, public.gmail_accounts
 
-### Community 2448 - "20260410172709_22aace64-58a3-48e1-9d57-0a80bba34a13.sql"
+### Community 2449 - "20260410172709_22aace64-58a3-48e1-9d57-0a80bba34a13.sql"
 Cohesion: 0.67
 Nodes (3): idx_conversation_analyses_contact_department, idx_conversation_analyses_department, public.conversation_analyses
 
-### Community 2450 - "public.campaign_contacts"
+### Community 2451 - "public.campaign_contacts"
 Cohesion: 0.50
 Nodes (4): idx_campaign_contacts_campaign, idx_campaign_contacts_campaign_id, idx_campaign_contacts_status, public.campaign_contacts
 
-### Community 2451 - "public.chatbot_executions"
+### Community 2452 - "public.chatbot_executions"
 Cohesion: 0.50
 Nodes (4): idx_chatbot_executions_contact_id, idx_chatbot_executions_flow_id, idx_chatbot_executions_status, public.chatbot_executions
 
-### Community 2452 - "public.email_messages"
+### Community 2453 - "public.email_messages"
 Cohesion: 0.50
 Nodes (4): idx_email_messages_account, idx_email_messages_date, idx_email_messages_thread, public.email_messages
 
-### Community 2453 - "public.email_threads"
+### Community 2454 - "public.email_threads"
 Cohesion: 0.50
 Nodes (4): idx_email_threads_account, idx_email_threads_contact, idx_email_threads_last_message, public.email_threads
 
-### Community 2454 - "public.notifications"
+### Community 2455 - "public.notifications"
 Cohesion: 0.50
 Nodes (4): idx_notifications_created_at, idx_notifications_is_read, idx_notifications_user_id, public.notifications
 
-### Community 2455 - "public.rate_limit_logs"
+### Community 2456 - "public.rate_limit_logs"
 Cohesion: 0.50
 Nodes (4): idx_rate_limit_logs_created, idx_rate_limit_logs_ip, idx_rate_limit_logs_user, public.rate_limit_logs
 
-### Community 2456 - "public.conversation_tasks"
+### Community 2457 - "public.conversation_tasks"
 Cohesion: 0.50
 Nodes (4): idx_tasks_assigned, idx_tasks_contact, idx_tasks_status, public.conversation_tasks
 
-### Community 2457 - "public.calls"
+### Community 2458 - "public.calls"
 Cohesion: 0.50
 Nodes (4): idx_calls_agent_id, idx_calls_contact_id, idx_calls_whatsapp_connection_id, public.calls
 
-### Community 2458 - "public.contact_purchases"
+### Community 2459 - "public.contact_purchases"
 Cohesion: 0.50
 Nodes (4): idx_contact_purchases_contact_id, idx_contact_purchases_created_by, idx_contact_purchases_deal_id, public.contact_purchases
 
-### Community 2459 - "public.messages"
+### Community 2460 - "public.messages"
 Cohesion: 0.50
 Nodes (4): idx_messages_agent_id, idx_messages_channel_connection_id, idx_messages_whatsapp_connection_id, public.messages
 
-### Community 2460 - "public.payment_links"
+### Community 2461 - "public.payment_links"
 Cohesion: 0.50
 Nodes (4): idx_payment_links_contact_id, idx_payment_links_created_by, idx_payment_links_deal_id, public.payment_links
 
-### Community 2461 - "public.sales_deals"
+### Community 2462 - "public.sales_deals"
 Cohesion: 0.50
 Nodes (4): idx_sales_deals_assigned_to, idx_sales_deals_contact_id, idx_sales_deals_stage_id, public.sales_deals
 
-### Community 2462 - "public.scheduled_messages"
+### Community 2463 - "public.scheduled_messages"
 Cohesion: 0.50
 Nodes (4): idx_scheduled_messages_contact_id, idx_scheduled_messages_created_by, idx_scheduled_messages_whatsapp_connection_id, public.scheduled_messages
 
-### Community 2463 - "public.whisper_messages"
+### Community 2464 - "public.whisper_messages"
 Cohesion: 0.50
 Nodes (4): idx_whisper_messages_contact_id, idx_whisper_messages_sender_id, idx_whisper_messages_target_agent_id, public.whisper_messages
 
-### Community 2466 - "20260830153000_webhook_failures_dead_letter.sql"
+### Community 2467 - "20260830153000_webhook_failures_dead_letter.sql"
 Cohesion: 0.83
 Nodes (3): public.webhook_failures, webhook_failures_endpoint_idx, webhook_failures_resolved_idx
 
-### Community 2468 - "20260901210000_fix_connection_idor_and_drop_dead_secdef.sql"
+### Community 2469 - "20260901210000_fix_connection_idor_and_drop_dead_secdef.sql"
 Cohesion: 0.67
 Nodes (3): public.get_connection_instance(), public.get_connection_qr_code(), public.whatsapp_connections
 
-### Community 2469 - "20260902000500_fix_idor_get_connection_functions.sql"
+### Community 2470 - "20260902000500_fix_idor_get_connection_functions.sql"
 Cohesion: 0.67
 Nodes (3): public.get_connection_instance(), public.get_connection_qr_code(), public.whatsapp_connections
 
-### Community 2470 - "20260902100003_lid_audit_snapshot.sql"
+### Community 2471 - "20260902100003_lid_audit_snapshot.sql"
 Cohesion: 0.83
 Nodes (3): idx_lid_snapshot_contact, idx_lid_snapshot_phone, public.lid_audit_snapshot_20260902
 
-### Community 2474 - "public.talkx_template_variants"
+### Community 2475 - "public.talkx_template_variants"
 Cohesion: 0.67
 Nodes (3): idx_talkx_template_variants_template, public.talkx_template_variants, public.talkx_templates
 
-### Community 2475 - "20260910090000_talkx_blacklist_v2.sql"
+### Community 2476 - "20260910090000_talkx_blacklist_v2.sql"
 Cohesion: 0.67
 Nodes (3): idx_talkx_blacklist_expires_at, idx_talkx_blacklist_phone, public.talkx_blacklist
 
-### Community 2478 - "public.catalog_favorites"
+### Community 2479 - "public.catalog_favorites"
 Cohesion: 0.67
 Nodes (3): idx_catalog_favorites_user_created, public.catalog_favorites, auth.users
 
-### Community 2479 - "public.talkx_campaign_metrics"
+### Community 2480 - "public.talkx_campaign_metrics"
 Cohesion: 0.67
 Nodes (3): public.talkx_benchmarks(), public.talkx_campaign_metrics, public.talkx_campaigns
-
-### Community 2480 - "public.record_talkx_link_click"
-Cohesion: 0.50
-Nodes (3): public.record_talkx_link_click(), public.talkx_links, public.talkx_recipients
 
 ### Community 2481 - "public.record_talkx_link_click"
 Cohesion: 0.50
 Nodes (3): public.record_talkx_link_click(), public.talkx_links, public.talkx_recipients
 
-### Community 2483 - "20260924225551_add_messages_perf_indexes.sql"
+### Community 2482 - "public.record_talkx_link_click"
+Cohesion: 0.50
+Nodes (3): public.record_talkx_link_click(), public.talkx_links, public.talkx_recipients
+
+### Community 2484 - "20260924225551_add_messages_perf_indexes.sql"
 Cohesion: 0.67
 Nodes (3): idx_messages_contact_read_sender, idx_messages_read_sender, public.messages
 
-### Community 2484 - "public.dashboard_contact_counts"
+### Community 2485 - "public.dashboard_contact_counts"
 Cohesion: 0.50
 Nodes (3): public.dashboard_contact_counts(), contacts, conversation_sla
 
-### Community 2485 - "public.notify_due_reminders"
+### Community 2486 - "public.notify_due_reminders"
 Cohesion: 0.50
 Nodes (3): public.notify_due_reminders(), public.profiles, public.reminders
 
-### Community 2487 - "auth.users"
+### Community 2488 - "auth.users"
 Cohesion: 0.50
 Nodes (4): auth.users, public.ai_usage_logs, public.profiles, public.query_telemetry
 
-### Community 2488 - "public.find_or_create_direct_conversation"
+### Community 2489 - "public.find_or_create_direct_conversation"
 Cohesion: 0.50
 Nodes (3): public.find_or_create_direct_conversation(), public.profiles, public.team_conversations
 
-### Community 2498 - "supabase_migrations.reserve_migration_version"
+### Community 2499 - "supabase_migrations.reserve_migration_version"
 Cohesion: 0.67
 Nodes (3): supabase_migrations.reserve_migration_version(), supabase_migrations.version_reservations, supabase_migrations.schema_migrations
 
-### Community 2500 - "public.notify_due_tasks"
+### Community 2501 - "public.notify_due_tasks"
 Cohesion: 0.50
 Nodes (3): public.notify_due_tasks(), public.conversation_tasks, public.profiles
 
-### Community 2501 - "20260928550000_team_chat_e19_department_whatsapp_cred_rpc.sql"
+### Community 2502 - "20260928550000_team_chat_e19_department_whatsapp_cred_rpc.sql"
 Cohesion: 0.67
 Nodes (3): public.get_department_whatsapp_api_key(), public.get_department_whatsapp_credentials(), public.departments
 
-### Community 2502 - "20260928600000_team_chat_e25_team_messages_integrity.sql"
+### Community 2503 - "20260928600000_team_chat_e25_team_messages_integrity.sql"
 Cohesion: 0.67
 Nodes (3): idx_team_messages_conv_created, idx_team_messages_reply_to, public.team_messages
 
-### Community 2503 - "public.find_or_create_direct_conversation"
+### Community 2504 - "public.find_or_create_direct_conversation"
 Cohesion: 0.50
 Nodes (3): public.find_or_create_direct_conversation(), public.team_conversation_members, public.team_conversations
 
-### Community 2504 - "idx_team_conversations_dept_unique"
+### Community 2505 - "idx_team_conversations_dept_unique"
 Cohesion: 0.50
 Nodes (3): idx_team_conversations_dept_unique, public.departments, public.team_conversations
 
-### Community 2505 - "20260929210000_team_chat_e31_conversation_members_constraints.sql"
+### Community 2506 - "20260929210000_team_chat_e31_conversation_members_constraints.sql"
 Cohesion: 0.67
 Nodes (3): idx_team_conv_members_conv_muted, idx_team_conv_members_profile_id, public.team_conversation_members
 
-### Community 2509 - "20260930240000_cron_secret_dedicado_l5.sql"
+### Community 2510 - "20260930240000_cron_secret_dedicado_l5.sql"
 Cohesion: 0.67
 Nodes (3): public.get_avatars_refresh_cron_secret(), public.get_connection_health_check_cron_secret(), vault.decrypted_secrets
 
-### Community 2510 - "public.apply_zapp_cron_secrets_l5"
+### Community 2511 - "public.apply_zapp_cron_secrets_l5"
 Cohesion: 0.50
 Nodes (3): public.apply_zapp_cron_secrets_l5(), cron.job, vault.decrypted_secrets
 
-### Community 2511 - "public.dashboard_contact_counts"
+### Community 2512 - "public.dashboard_contact_counts"
 Cohesion: 0.50
 Nodes (3): public.dashboard_contact_counts(), contacts, conversation_sla
 
-### Community 2512 - "public.apply_zapp_cron_secrets_l5"
+### Community 2513 - "public.apply_zapp_cron_secrets_l5"
 Cohesion: 0.50
 Nodes (3): public.apply_zapp_cron_secrets_l5(), cron.job, vault.decrypted_secrets
 
-### Community 2514 - "public.mark_team_conversation_read"
+### Community 2515 - "public.mark_team_conversation_read"
 Cohesion: 0.50
 Nodes (3): public.mark_team_conversation_read(), public.team_message_receipts, public.team_messages
 
-### Community 2515 - "public.save_talkx_campaign_draft"
+### Community 2516 - "public.save_talkx_campaign_draft"
 Cohesion: 0.50
 Nodes (3): public.save_talkx_campaign_draft(), public.profiles, public.whatsapp_connections
 
-### Community 2516 - "public.multiplix_create_draft"
+### Community 2517 - "public.multiplix_create_draft"
 Cohesion: 0.50
 Nodes (3): public.multiplix_create_draft(), public.multiplix_recipients, public.profiles
-
-### Community 2517 - "public.save_talkx_campaign_draft"
-Cohesion: 0.50
-Nodes (3): public.save_talkx_campaign_draft(), public.profiles, public.whatsapp_connections
 
 ### Community 2518 - "public.save_talkx_campaign_draft"
 Cohesion: 0.50
@@ -12980,523 +12981,527 @@ Nodes (3): public.save_talkx_campaign_draft(), public.profiles, public.whatsapp_
 Cohesion: 0.50
 Nodes (3): public.save_talkx_campaign_draft(), public.profiles, public.whatsapp_connections
 
-### Community 2520 - "20261002611230_ia051_correlacao_de_execucao.sql"
+### Community 2520 - "public.save_talkx_campaign_draft"
+Cohesion: 0.50
+Nodes (3): public.save_talkx_campaign_draft(), public.profiles, public.whatsapp_connections
+
+### Community 2521 - "20261002611230_ia051_correlacao_de_execucao.sql"
 Cohesion: 0.67
 Nodes (3): idx_ai_usage_logs_job_id, idx_ai_usage_logs_request_id, public.ai_usage_logs
 
-### Community 2522 - "public.ai_usage_cost_summary"
+### Community 2523 - "public.ai_usage_cost_summary"
 Cohesion: 0.50
 Nodes (3): public.ai_usage_cost_summary(), public.ai_model_prices, public.ai_usage_logs
 
-### Community 2524 - "public.whatsapp_connections"
+### Community 2525 - "public.whatsapp_connections"
 Cohesion: 0.50
 Nodes (4): idx_wc_is_default, public.get_connection_instance(), public.get_connection_qr_code(), public.whatsapp_connections
 
-### Community 2525 - "public.reassign_overloaded_agents"
+### Community 2526 - "public.reassign_overloaded_agents"
 Cohesion: 0.50
 Nodes (4): public.reassign_overloaded_agents(), contacts, profiles, queue_members
 
-### Community 2526 - "public.multiplix_materialize_legacy_queue"
+### Community 2527 - "public.multiplix_materialize_legacy_queue"
 Cohesion: 0.50
 Nodes (3): public.multiplix_materialize_legacy_queue(), public.multiplix_dispatches, public.multiplix_recipients
 
-### Community 2527 - "public.dashboard_contact_counts"
+### Community 2528 - "public.dashboard_contact_counts"
 Cohesion: 0.50
 Nodes (3): public.dashboard_contact_counts(), contacts, conversation_sla
 
-### Community 2529 - "public.find_or_create_direct_conversation"
+### Community 2530 - "public.find_or_create_direct_conversation"
 Cohesion: 0.50
 Nodes (3): public.find_or_create_direct_conversation(), public.team_conversation_members, public.team_conversations
 
-### Community 2530 - "public.ai_usage_cost_summary"
+### Community 2531 - "public.ai_usage_cost_summary"
 Cohesion: 0.50
 Nodes (3): public.ai_usage_cost_summary(), public.ai_model_prices, public.ai_usage_logs
 
-### Community 2531 - "public.find_or_create_direct_conversation"
+### Community 2532 - "public.find_or_create_direct_conversation"
 Cohesion: 0.50
 Nodes (3): public.find_or_create_direct_conversation(), public.team_conversation_members, public.team_conversations
 
-### Community 2532 - "public.transition_talkx_campaign"
+### Community 2533 - "public.transition_talkx_campaign"
 Cohesion: 0.50
 Nodes (3): public.transition_talkx_campaign(), public.talkx_campaigns, public.talkx_recipients
 
-### Community 2535 - "public.talkx_resolve_audience"
+### Community 2536 - "public.talkx_resolve_audience"
 Cohesion: 0.50
 Nodes (3): public.talkx_resolve_audience(), public.contacts, public.talkx_segments
 
-### Community 2536 - "public.report_message"
+### Community 2537 - "public.report_message"
 Cohesion: 0.50
 Nodes (3): public.report_message(), public.message_reports, public.messages
 
-### Community 2538 - "20261013230004_inbox_unread_total.sql"
+### Community 2539 - "20261013230004_inbox_unread_total.sql"
 Cohesion: 0.67
 Nodes (3): idx_messages_unread_conversas, public.inbox_unread_total(), public.messages
 
-### Community 2539 - "public.agent_workload"
+### Community 2540 - "public.agent_workload"
 Cohesion: 0.50
 Nodes (3): public.agent_workload(), public.contacts, public.messages
 
-### Community 2541 - "public.inbox_wait_summary"
+### Community 2542 - "public.inbox_wait_summary"
 Cohesion: 0.50
 Nodes (3): public.inbox_wait_summary(), public.contacts, public.messages
 
-### Community 2542 - "20261016050617_messages_trgm_busca.sql"
+### Community 2543 - "20261016050617_messages_trgm_busca.sql"
 Cohesion: 0.67
 Nodes (3): idx_messages_content_trgm, idx_messages_transcription_trgm, public.messages
 
-### Community 2544 - "public.can_insert_team_conversation_member"
+### Community 2545 - "public.can_insert_team_conversation_member"
 Cohesion: 0.50
 Nodes (3): public.can_insert_team_conversation_member(), public.profiles, public.team_conversation_members
 
-### Community 2546 - "public.multiplix_delivery_items"
+### Community 2547 - "public.multiplix_delivery_items"
 Cohesion: 0.50
 Nodes (4): idx_multiplix_delivery_items_block_id, idx_multiplix_delivery_items_recipient_id, idx_multiplix_delivery_items_voice_asset_id, public.multiplix_delivery_items
 
-### Community 2547 - "public.sla_rules"
+### Community 2548 - "public.sla_rules"
 Cohesion: 0.50
 Nodes (4): idx_sla_rules_agent_id, idx_sla_rules_contact_id, idx_sla_rules_queue_id, public.sla_rules
 
-### Community 2548 - "public.talkx_campaign_window_open"
+### Community 2549 - "public.talkx_campaign_window_open"
 Cohesion: 0.50
 Nodes (3): public.talkx_campaign_window_open(), public.talkx_campaigns, public.talkx_settings
 
-### Community 2549 - "public.multiplix_list_ufs"
+### Community 2550 - "public.multiplix_list_ufs"
 Cohesion: 0.50
 Nodes (3): public.multiplix_list_ufs(), public.companies, public.company_addresses
 
-### Community 2561 - "10. TIPOGRAFIA"
+### Community 2562 - "10. TIPOGRAFIA"
 Cohesion: 0.67
 Nodes (3): 10.1 Escala desktop, 10.2 Regras, 10. TIPOGRAFIA
 
-### Community 2562 - "2. CONTEXTO TÉCNICO REAL DO REPOSITÓRIO"
+### Community 2563 - "2. CONTEXTO TÉCNICO REAL DO REPOSITÓRIO"
 Cohesion: 0.67
 Nodes (3): 2. CONTEXTO TÉCNICO REAL DO REPOSITÓRIO, Observação importante sobre tokens existentes, REGRA PARA NOVO REDESIGN
 
-### Community 2563 - "44. TABELAS"
+### Community 2564 - "44. TABELAS"
 Cohesion: 0.67
 Nodes (3): 44. TABELAS, Actions, Padrão
 
-### Community 2564 - "50. POLÍTICA DE CORES LITERAIS"
+### Community 2565 - "50. POLÍTICA DE CORES LITERAIS"
 Cohesion: 0.67
 Nodes (3): 50. POLÍTICA DE CORES LITERAIS, Em JSX/TSX, Exceções
 
-### Community 2565 - "Manual de Design, UX/UI e Implementação para Claude"
+### Community 2566 - "Manual de Design, UX/UI e Implementação para Claude"
 Cohesion: 0.67
 Nodes (3): Manual de Design, UX/UI e Implementação para Claude, PROMO GIFTS V4 — BLUE PREMIUM DESIGN SYSTEM, Versão 1.0 — 07/09/2026
 
-### Community 2567 - "1. VISÃO GERAL"
+### Community 2568 - "1. VISÃO GERAL"
 Cohesion: 0.67
 Nodes (3): 1.1 Fluxo de Dados, 1.2 Eventos Ativos (26), 1. VISÃO GERAL
 
-### Community 2568 - "3. ESTRUTURA BASE DOS EVENTOS"
+### Community 2569 - "3. ESTRUTURA BASE DOS EVENTOS"
 Cohesion: 0.67
 Nodes (3): 3.1 Payload Genérico, 3.2 Exemplo Real, 3. ESTRUTURA BASE DOS EVENTOS
 
-### Community 2569 - "followup_sequences"
+### Community 2570 - "followup_sequences"
 Cohesion: 0.67
 Nodes (3): followup_executions, followup_sequences, followup_steps
 
-### Community 2585 - "idx_conversation_events_contact"
+### Community 2586 - "idx_conversation_events_contact"
 Cohesion: 0.67
 Nodes (3): idx_conversation_events_contact, idx_conversation_events_type, public.conversation_events
 
-### Community 2586 - "idx_health_logs_checked_at"
+### Community 2587 - "idx_health_logs_checked_at"
 Cohesion: 0.67
 Nodes (3): idx_health_logs_checked_at, idx_health_logs_connection_checked, public.connection_health_logs
 
-### Community 2587 - "idx_kb_articles_search"
+### Community 2588 - "idx_kb_articles_search"
 Cohesion: 0.67
 Nodes (3): idx_kb_articles_search, public.search_knowledge_base(), public.knowledge_base_articles
 
-### Community 2588 - "idx_nps_surveys_contact"
+### Community 2589 - "idx_nps_surveys_contact"
 Cohesion: 0.67
 Nodes (3): idx_nps_surveys_contact, idx_nps_surveys_created, public.nps_surveys
 
-### Community 2589 - "idx_passkey_credentials_credential_id"
+### Community 2590 - "idx_passkey_credentials_credential_id"
 Cohesion: 0.67
 Nodes (3): idx_passkey_credentials_credential_id, idx_passkey_credentials_user_id, public.passkey_credentials
 
-### Community 2590 - "idx_performance_snapshots_created_at"
+### Community 2591 - "idx_performance_snapshots_created_at"
 Cohesion: 0.67
 Nodes (3): idx_performance_snapshots_created_at, idx_performance_snapshots_profile, public.performance_snapshots
 
-### Community 2591 - "idx_products_active"
+### Community 2592 - "idx_products_active"
 Cohesion: 0.67
 Nodes (3): idx_products_active, idx_products_category, public.products
 
-### Community 2592 - "idx_query_telemetry_created_at"
+### Community 2593 - "idx_query_telemetry_created_at"
 Cohesion: 0.67
 Nodes (3): idx_query_telemetry_created_at, idx_query_telemetry_severity, public.query_telemetry
 
-### Community 2593 - "idx_reminders_profile"
+### Community 2594 - "idx_reminders_profile"
 Cohesion: 0.67
 Nodes (3): idx_reminders_profile, idx_reminders_remind_at, public.reminders
 
-### Community 2594 - "idx_security_alerts_created"
+### Community 2595 - "idx_security_alerts_created"
 Cohesion: 0.67
 Nodes (3): idx_security_alerts_created, idx_security_alerts_type, public.security_alerts
 
-### Community 2595 - "idx_snoozes_contact"
+### Community 2596 - "idx_snoozes_contact"
 Cohesion: 0.67
 Nodes (3): idx_snoozes_contact, idx_snoozes_until, public.conversation_snoozes
 
-### Community 2596 - "idx_talkx_recipients_campaign"
+### Community 2597 - "idx_talkx_recipients_campaign"
 Cohesion: 0.67
 Nodes (3): idx_talkx_recipients_campaign, idx_talkx_recipients_status, public.talkx_recipients
 
-### Community 2597 - "idx_user_devices_fingerprint"
+### Community 2598 - "idx_user_devices_fingerprint"
 Cohesion: 0.67
 Nodes (3): idx_user_devices_fingerprint, idx_user_devices_user_id, public.user_devices
 
-### Community 2598 - "idx_user_sessions_active"
+### Community 2599 - "idx_user_sessions_active"
 Cohesion: 0.67
 Nodes (3): idx_user_sessions_active, idx_user_sessions_user_id, public.user_sessions
 
-### Community 2599 - "idx_versions_date"
+### Community 2600 - "idx_versions_date"
 Cohesion: 0.67
 Nodes (3): idx_versions_date, idx_versions_entity, public.entity_versions
 
-### Community 2600 - "idx_voice_command_logs_created_at"
+### Community 2601 - "idx_voice_command_logs_created_at"
 Cohesion: 0.67
 Nodes (3): idx_voice_command_logs_created_at, idx_voice_command_logs_user_id, public.voice_command_logs
-
-### Community 2601 - "public.get_connection_instance"
-Cohesion: 0.67
-Nodes (3): public.get_connection_instance(), public.get_connection_qr_code(), public.whatsapp_connections
 
 ### Community 2602 - "public.get_connection_instance"
 Cohesion: 0.67
 Nodes (3): public.get_connection_instance(), public.get_connection_qr_code(), public.whatsapp_connections
 
-### Community 2603 - "public.is_account_locked"
+### Community 2603 - "public.get_connection_instance"
+Cohesion: 0.67
+Nodes (3): public.get_connection_instance(), public.get_connection_qr_code(), public.whatsapp_connections
+
+### Community 2604 - "public.is_account_locked"
 Cohesion: 0.67
 Nodes (3): public.is_account_locked(), public.record_failed_login(), public.login_attempts
 
-### Community 2604 - "on_agent_stats_update_level"
+### Community 2605 - "on_agent_stats_update_level"
 Cohesion: 0.67
 Nodes (3): on_agent_stats_update_level, update_agent_level, update_level_on_xp_change
 
-### Community 2605 - "on_device_update_last_seen"
+### Community 2606 - "on_device_update_last_seen"
 Cohesion: 0.67
 Nodes (3): on_device_update_last_seen, update_user_devices_last_seen, update_device_last_seen
 
-### Community 2606 - "agent_skills_pkey"
+### Community 2607 - "agent_skills_pkey"
 Cohesion: 0.67
 Nodes (3): agent_skills_pkey, agent_skills_profile_id_skill_name_key, public.agent_skills
 
-### Community 2607 - "agent_visibility_grants_agent_id_can_see_agent_id_key"
+### Community 2608 - "agent_visibility_grants_agent_id_can_see_agent_id_key"
 Cohesion: 0.67
 Nodes (3): agent_visibility_grants_agent_id_can_see_agent_id_key, agent_visibility_grants_pkey, public.agent_visibility_grants
 
-### Community 2608 - "away_messages_pkey"
+### Community 2609 - "away_messages_pkey"
 Cohesion: 0.67
 Nodes (3): away_messages_pkey, away_messages_whatsapp_connection_id_key, public.away_messages
 
-### Community 2609 - "chatbot_flows_pkey"
+### Community 2610 - "chatbot_flows_pkey"
 Cohesion: 0.67
 Nodes (3): chatbot_flows_pkey, idx_chatbot_flows_active, public.chatbot_flows
 
-### Community 2610 - "contact_tags_contact_id_tag_id_key"
+### Community 2611 - "contact_tags_contact_id_tag_id_key"
 Cohesion: 0.67
 Nodes (3): contact_tags_contact_id_tag_id_key, contact_tags_pkey, public.contact_tags
 
-### Community 2611 - "conversation_memory_contact_id_key"
+### Community 2612 - "conversation_memory_contact_id_key"
 Cohesion: 0.67
 Nodes (3): conversation_memory_contact_id_key, conversation_memory_pkey, public.conversation_memory
 
-### Community 2612 - "favorite_contacts_contact_id_user_id_key"
+### Community 2613 - "favorite_contacts_contact_id_user_id_key"
 Cohesion: 0.67
 Nodes (3): favorite_contacts_contact_id_user_id_key, favorite_contacts_pkey, public.favorite_contacts
 
-### Community 2613 - "global_settings_key_key"
+### Community 2614 - "global_settings_key_key"
 Cohesion: 0.67
 Nodes (3): global_settings_key_key, global_settings_pkey, public.global_settings
 
-### Community 2614 - "gmail_accounts_email_address_key"
+### Community 2615 - "gmail_accounts_email_address_key"
 Cohesion: 0.67
 Nodes (3): gmail_accounts_email_address_key, gmail_accounts_pkey, public.gmail_accounts
 
-### Community 2615 - "idx_kb_articles_search"
+### Community 2616 - "idx_kb_articles_search"
 Cohesion: 0.67
 Nodes (3): idx_kb_articles_search, knowledge_base_articles_pkey, public.knowledge_base_articles
 
-### Community 2616 - "idx_mfa_sessions_user"
+### Community 2617 - "idx_mfa_sessions_user"
 Cohesion: 0.67
 Nodes (3): idx_mfa_sessions_user, mfa_sessions_pkey, public.mfa_sessions
 
-### Community 2617 - "idx_rate_limits_instance_window"
+### Community 2618 - "idx_rate_limits_instance_window"
 Cohesion: 0.67
 Nodes (3): idx_rate_limits_instance_window, public.webhook_rate_limits, webhook_rate_limits_pkey
 
-### Community 2618 - "idx_saved_filters_user_entity"
+### Community 2619 - "idx_saved_filters_user_entity"
 Cohesion: 0.67
 Nodes (3): idx_saved_filters_user_entity, saved_filters_pkey, public.saved_filters
 
-### Community 2619 - "idx_scheduled_messages_pending"
+### Community 2620 - "idx_scheduled_messages_pending"
 Cohesion: 0.67
 Nodes (3): idx_scheduled_messages_pending, scheduled_messages_pkey, public.scheduled_messages
 
-### Community 2620 - "idx_stickers_owner_id"
+### Community 2621 - "idx_stickers_owner_id"
 Cohesion: 0.67
 Nodes (3): idx_stickers_owner_id, public.stickers, stickers_pkey
 
-### Community 2621 - "idx_team_messages_conversation"
+### Community 2622 - "idx_team_messages_conversation"
 Cohesion: 0.67
 Nodes (3): idx_team_messages_conversation, public.team_messages, team_messages_pkey
 
-### Community 2622 - "idx_webauthn_challenges_expires"
+### Community 2623 - "idx_webauthn_challenges_expires"
 Cohesion: 0.67
 Nodes (3): idx_webauthn_challenges_expires, public.webauthn_challenges, webauthn_challenges_pkey
 
-### Community 2623 - "ip_whitelist_ip_address_key"
+### Community 2624 - "ip_whitelist_ip_address_key"
 Cohesion: 0.67
 Nodes (3): ip_whitelist_ip_address_key, ip_whitelist_pkey, public.ip_whitelist
 
-### Community 2624 - "permissions_name_key"
+### Community 2625 - "permissions_name_key"
 Cohesion: 0.67
 Nodes (3): permissions_name_key, permissions_pkey, public.permissions
 
-### Community 2625 - "pinned_conversations_contact_id_pinned_by_key"
+### Community 2626 - "pinned_conversations_contact_id_pinned_by_key"
 Cohesion: 0.67
 Nodes (3): pinned_conversations_contact_id_pinned_by_key, pinned_conversations_pkey, public.pinned_conversations
 
-### Community 2626 - "queue_goals_pkey"
+### Community 2627 - "queue_goals_pkey"
 Cohesion: 0.67
 Nodes (3): queue_goals_pkey, queue_goals_queue_id_key, public.queue_goals
 
-### Community 2627 - "queue_members_pkey"
+### Community 2628 - "queue_members_pkey"
 Cohesion: 0.67
 Nodes (3): queue_members_pkey, queue_members_queue_id_profile_id_key, public.queue_members
 
-### Community 2628 - "queue_skill_requirements_pkey"
+### Community 2629 - "queue_skill_requirements_pkey"
 Cohesion: 0.67
 Nodes (3): queue_skill_requirements_pkey, queue_skill_requirements_queue_id_skill_name_key, public.queue_skill_requirements
 
-### Community 2629 - "role_permissions_pkey"
+### Community 2630 - "role_permissions_pkey"
 Cohesion: 0.67
 Nodes (3): role_permissions_pkey, role_permissions_role_permission_id_key, public.role_permissions
 
-### Community 2630 - "sicoob_contact_mapping_pkey"
+### Community 2631 - "sicoob_contact_mapping_pkey"
 Cohesion: 0.67
 Nodes (3): sicoob_contact_mapping_pkey, sicoob_contact_mapping_sicoob_user_id_sicoob_singular_id_key, public.sicoob_contact_mapping
 
-### Community 2631 - "public.tags"
+### Community 2632 - "public.tags"
 Cohesion: 0.67
 Nodes (3): public.tags, tags_name_key, tags_pkey
 
-### Community 2632 - "public.user_roles"
+### Community 2633 - "public.user_roles"
 Cohesion: 0.67
 Nodes (3): public.user_roles, user_roles_pkey, user_roles_user_id_role_key
 
-### Community 2633 - "public.user_service_accounts"
+### Community 2634 - "public.user_service_accounts"
 Cohesion: 0.67
 Nodes (3): public.user_service_accounts, user_service_accounts_pkey, user_service_accounts_user_id_service_type_key
 
-### Community 2634 - "public.user_settings"
+### Community 2635 - "public.user_settings"
 Cohesion: 0.67
 Nodes (3): public.user_settings, user_settings_pkey, user_settings_user_id_key
 
-### Community 2635 - "public.whatsapp_connection_queues"
+### Community 2636 - "public.whatsapp_connection_queues"
 Cohesion: 0.67
 Nodes (3): public.whatsapp_connection_queues, whatsapp_connection_queues_pkey, whatsapp_connection_queues_whatsapp_connection_id_queue_id_key
 
-### Community 2672 - "idx_agent_stats_level"
+### Community 2673 - "idx_agent_stats_level"
 Cohesion: 0.67
 Nodes (3): idx_agent_stats_level, idx_agent_stats_xp, public.agent_stats
 
-### Community 2673 - "idx_blocked_ips_expires"
+### Community 2674 - "idx_blocked_ips_expires"
 Cohesion: 0.67
 Nodes (3): idx_blocked_ips_expires, idx_blocked_ips_ip, public.blocked_ips
 
-### Community 2674 - "idx_campaigns_created_by"
+### Community 2675 - "idx_campaigns_created_by"
 Cohesion: 0.67
 Nodes (3): idx_campaigns_created_by, idx_campaigns_status, public.campaigns
 
-### Community 2675 - "idx_closures_contact"
+### Community 2676 - "idx_closures_contact"
 Cohesion: 0.67
 Nodes (3): idx_closures_contact, idx_closures_reason, public.conversation_closures
 
-### Community 2676 - "idx_contact_custom_fields_contact"
+### Community 2677 - "idx_contact_custom_fields_contact"
 Cohesion: 0.67
 Nodes (3): idx_contact_custom_fields_contact, idx_contact_custom_fields_unique, public.contact_custom_fields
 
-### Community 2677 - "idx_contact_notes_author_id"
+### Community 2678 - "idx_contact_notes_author_id"
 Cohesion: 0.67
 Nodes (3): idx_contact_notes_author_id, idx_contact_notes_contact_id, public.contact_notes
 
-### Community 2678 - "idx_conversation_events_contact"
+### Community 2679 - "idx_conversation_events_contact"
 Cohesion: 0.67
 Nodes (3): idx_conversation_events_contact, idx_conversation_events_type, public.conversation_events
 
-### Community 2679 - "idx_health_logs_checked_at"
+### Community 2680 - "idx_health_logs_checked_at"
 Cohesion: 0.67
 Nodes (3): idx_health_logs_checked_at, idx_health_logs_connection_checked, public.connection_health_logs
 
-### Community 2680 - "idx_login_attempts_email"
+### Community 2681 - "idx_login_attempts_email"
 Cohesion: 0.67
 Nodes (3): idx_login_attempts_email, idx_login_attempts_locked, public.login_attempts
 
-### Community 2681 - "idx_nps_surveys_contact"
+### Community 2682 - "idx_nps_surveys_contact"
 Cohesion: 0.67
 Nodes (3): idx_nps_surveys_contact, idx_nps_surveys_created, public.nps_surveys
 
-### Community 2682 - "idx_passkey_credentials_credential_id"
+### Community 2683 - "idx_passkey_credentials_credential_id"
 Cohesion: 0.67
 Nodes (3): idx_passkey_credentials_credential_id, idx_passkey_credentials_user_id, public.passkey_credentials
 
-### Community 2683 - "idx_password_reset_requests_status"
+### Community 2684 - "idx_password_reset_requests_status"
 Cohesion: 0.67
 Nodes (3): idx_password_reset_requests_status, idx_password_reset_requests_user, public.password_reset_requests
 
-### Community 2684 - "idx_performance_snapshots_created_at"
+### Community 2685 - "idx_performance_snapshots_created_at"
 Cohesion: 0.67
 Nodes (3): idx_performance_snapshots_created_at, idx_performance_snapshots_profile, public.performance_snapshots
 
-### Community 2685 - "idx_products_active"
+### Community 2686 - "idx_products_active"
 Cohesion: 0.67
 Nodes (3): idx_products_active, idx_products_category, public.products
 
-### Community 2686 - "idx_query_telemetry_created_at"
+### Community 2687 - "idx_query_telemetry_created_at"
 Cohesion: 0.67
 Nodes (3): idx_query_telemetry_created_at, idx_query_telemetry_severity, public.query_telemetry
 
-### Community 2687 - "idx_reminders_profile"
+### Community 2688 - "idx_reminders_profile"
 Cohesion: 0.67
 Nodes (3): idx_reminders_profile, idx_reminders_remind_at, public.reminders
 
-### Community 2688 - "idx_security_alerts_created"
+### Community 2689 - "idx_security_alerts_created"
 Cohesion: 0.67
 Nodes (3): idx_security_alerts_created, idx_security_alerts_type, public.security_alerts
 
-### Community 2689 - "idx_snoozes_contact"
+### Community 2690 - "idx_snoozes_contact"
 Cohesion: 0.67
 Nodes (3): idx_snoozes_contact, idx_snoozes_until, public.conversation_snoozes
 
-### Community 2690 - "idx_talkx_campaigns_created_by"
+### Community 2691 - "idx_talkx_campaigns_created_by"
 Cohesion: 0.67
 Nodes (3): idx_talkx_campaigns_created_by, idx_talkx_campaigns_status, public.talkx_campaigns
 
-### Community 2691 - "idx_talkx_recipients_campaign"
+### Community 2692 - "idx_talkx_recipients_campaign"
 Cohesion: 0.67
 Nodes (3): idx_talkx_recipients_campaign, idx_talkx_recipients_status, public.talkx_recipients
 
-### Community 2692 - "idx_team_members_conversation"
+### Community 2693 - "idx_team_members_conversation"
 Cohesion: 0.67
 Nodes (3): idx_team_members_conversation, idx_team_members_profile, public.team_conversation_members
 
-### Community 2693 - "idx_user_devices_fingerprint"
+### Community 2694 - "idx_user_devices_fingerprint"
 Cohesion: 0.67
 Nodes (3): idx_user_devices_fingerprint, idx_user_devices_user_id, public.user_devices
 
-### Community 2694 - "idx_user_sessions_active"
+### Community 2695 - "idx_user_sessions_active"
 Cohesion: 0.67
 Nodes (3): idx_user_sessions_active, idx_user_sessions_user_id, public.user_sessions
 
-### Community 2695 - "idx_versions_date"
+### Community 2696 - "idx_versions_date"
 Cohesion: 0.67
 Nodes (3): idx_versions_date, idx_versions_entity, public.entity_versions
 
-### Community 2696 - "idx_voice_command_logs_created_at"
+### Community 2697 - "idx_voice_command_logs_created_at"
 Cohesion: 0.67
 Nodes (3): idx_voice_command_logs_created_at, idx_voice_command_logs_user_id, public.voice_command_logs
 
-### Community 2697 - "idx_agent_visibility_grants_can_see_agent_id"
+### Community 2698 - "idx_agent_visibility_grants_can_see_agent_id"
 Cohesion: 0.67
 Nodes (3): idx_agent_visibility_grants_can_see_agent_id, idx_agent_visibility_grants_granted_by, public.agent_visibility_grants
 
-### Community 2698 - "idx_channel_connections_created_by"
+### Community 2699 - "idx_channel_connections_created_by"
 Cohesion: 0.67
 Nodes (3): idx_channel_connections_created_by, idx_channel_connections_whatsapp_connection_id, public.channel_connections
 
-### Community 2699 - "idx_channel_routing_rules_channel_connection_id"
+### Community 2700 - "idx_channel_routing_rules_channel_connection_id"
 Cohesion: 0.67
 Nodes (3): idx_channel_routing_rules_channel_connection_id, idx_channel_routing_rules_queue_id, public.channel_routing_rules
 
-### Community 2700 - "idx_chatbot_flows_created_by"
+### Community 2701 - "idx_chatbot_flows_created_by"
 Cohesion: 0.67
 Nodes (3): idx_chatbot_flows_created_by, idx_chatbot_flows_whatsapp_connection_id, public.chatbot_flows
 
-### Community 2701 - "idx_client_wallet_rules_agent_id"
+### Community 2702 - "idx_client_wallet_rules_agent_id"
 Cohesion: 0.67
 Nodes (3): idx_client_wallet_rules_agent_id, idx_client_wallet_rules_whatsapp_connection_id, public.client_wallet_rules
 
-### Community 2702 - "idx_contacts_channel_connection_id"
+### Community 2703 - "idx_contacts_channel_connection_id"
 Cohesion: 0.67
 Nodes (3): idx_contacts_channel_connection_id, idx_contacts_whatsapp_connection_id, public.contacts
 
-### Community 2703 - "idx_conversation_sla_contact_id"
+### Community 2704 - "idx_conversation_sla_contact_id"
 Cohesion: 0.67
 Nodes (3): idx_conversation_sla_contact_id, idx_conversation_sla_sla_configuration_id, public.conversation_sla
 
-### Community 2704 - "idx_csat_auto_config_updated_by"
+### Community 2705 - "idx_csat_auto_config_updated_by"
 Cohesion: 0.67
 Nodes (3): idx_csat_auto_config_updated_by, idx_csat_auto_config_whatsapp_connection_id, public.csat_auto_config
 
-### Community 2705 - "idx_csat_surveys_agent_id"
+### Community 2706 - "idx_csat_surveys_agent_id"
 Cohesion: 0.67
 Nodes (3): idx_csat_surveys_agent_id, idx_csat_surveys_contact_id, public.csat_surveys
 
-### Community 2706 - "idx_deal_activities_deal_id"
+### Community 2707 - "idx_deal_activities_deal_id"
 Cohesion: 0.67
 Nodes (3): idx_deal_activities_deal_id, idx_deal_activities_performed_by, public.deal_activities
 
-### Community 2707 - "idx_followup_executions_contact_id"
+### Community 2708 - "idx_followup_executions_contact_id"
 Cohesion: 0.67
 Nodes (3): idx_followup_executions_contact_id, idx_followup_executions_sequence_id, public.followup_executions
 
-### Community 2708 - "idx_followup_sequences_created_by"
+### Community 2709 - "idx_followup_sequences_created_by"
 Cohesion: 0.67
 Nodes (3): idx_followup_sequences_created_by, idx_followup_sequences_whatsapp_connection_id, public.followup_sequences
 
-### Community 2709 - "idx_message_reactions_contact_id"
+### Community 2710 - "idx_message_reactions_contact_id"
 Cohesion: 0.67
 Nodes (3): idx_message_reactions_contact_id, idx_message_reactions_user_id, public.message_reactions
 
-### Community 2710 - "idx_queue_positions_contact_id"
+### Community 2711 - "idx_queue_positions_contact_id"
 Cohesion: 0.67
 Nodes (3): idx_queue_positions_contact_id, idx_queue_positions_queue_id, public.queue_positions
 
-### Community 2711 - "idx_sicoob_contact_mapping_contact_id"
+### Community 2712 - "idx_sicoob_contact_mapping_contact_id"
 Cohesion: 0.67
 Nodes (3): idx_sicoob_contact_mapping_contact_id, idx_sicoob_contact_mapping_zappweb_agent_id, public.sicoob_contact_mapping
 
-### Community 2712 - "idx_team_messages_reply_to_id"
+### Community 2713 - "idx_team_messages_reply_to_id"
 Cohesion: 0.67
 Nodes (3): idx_team_messages_reply_to_id, idx_team_messages_sender_id, public.team_messages
 
-### Community 2713 - "idx_whatsapp_flows_created_by"
+### Community 2714 - "idx_whatsapp_flows_created_by"
 Cohesion: 0.67
 Nodes (3): idx_whatsapp_flows_created_by, idx_whatsapp_flows_whatsapp_connection_id, public.whatsapp_flows
 
-### Community 2736 - "idx_goals_configurations_profile_id"
+### Community 2737 - "idx_goals_configurations_profile_id"
 Cohesion: 0.67
 Nodes (3): idx_goals_configurations_profile_id, idx_goals_configurations_queue_id, public.goals_configurations
 
-### Community 2737 - "idx_messages_contact_id"
+### Community 2738 - "idx_messages_contact_id"
 Cohesion: 0.67
 Nodes (3): idx_messages_contact_id, idx_messages_whatsapp_connection_id, public.messages
 
-### Community 2786 - "public.get_department_whatsapp_api_key"
+### Community 2787 - "public.get_department_whatsapp_api_key"
 Cohesion: 0.67
 Nodes (3): public.get_department_whatsapp_api_key(), public.get_department_whatsapp_credentials(), public.departments
 
-### Community 2822 - "idx_conversation_events_from_queue_id"
+### Community 2823 - "idx_conversation_events_from_queue_id"
 Cohesion: 0.67
 Nodes (3): idx_conversation_events_from_queue_id, idx_conversation_events_to_queue_id, public.conversation_events
 
-### Community 2823 - "idx_instance_pauses_paused_by"
+### Community 2824 - "idx_instance_pauses_paused_by"
 Cohesion: 0.67
 Nodes (3): idx_instance_pauses_paused_by, idx_instance_pauses_resumed_by, public.instance_pauses
 
-### Community 2824 - "idx_messages_audio_meme_id"
+### Community 2825 - "idx_messages_audio_meme_id"
 Cohesion: 0.67
 Nodes (3): idx_messages_audio_meme_id, idx_messages_channel_connection_id, public.messages
 
-### Community 2825 - "idx_sla_alert_events_queue_id"
+### Community 2826 - "idx_sla_alert_events_queue_id"
 Cohesion: 0.67
 Nodes (3): idx_sla_alert_events_queue_id, idx_sla_alert_events_resolved_by, public.sla_alert_events
 
-### Community 2826 - "idx_team_conversations_direct_member_a"
+### Community 2827 - "idx_team_conversations_direct_member_a"
 Cohesion: 0.67
 Nodes (3): idx_team_conversations_direct_member_a, idx_team_conversations_direct_member_b, public.team_conversations
 
@@ -13508,11 +13513,11 @@ Nodes (3): idx_team_conversations_direct_member_a, idx_team_conversations_direct
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `vitest` connect `vitest` to `react`, `lucide-react`, `button.tsx`, `ExternalProductManagement.tsx`, `utils.ts`, `avatar.tsx`, `ref_node_assert`, `validation.ts`, `framer-motion`, `cn`, `@tanstack/react-query`, `TalkXView.tsx`, `useTalkXSegments.ts`, `ref_node_fs`, `DashboardView.tsx`, `chat.ts`, `schemas.ts`, `react-router-dom`, `SendProductDialog.tsx`, `ai-generate.ts`, `ai-usage.ts`, `TalkXTemplates.tsx`, `SettingsView.tsx`, `TalkXCampaignWizard.tsx`, `workItem.types.ts`, `EmailComposer.tsx`, `hooks/copilot/index.ts`, `RealtimeInboxView.tsx`, `evolution-api/index.ts`, `TalkXCampaignRunning.tsx`, `FASE 1 — Motor: ligar o contrato ao que existe (T09–T22)`, `useContactMedia.ts`, `mediaVolumeStore.ts`, `AIConversationAssistant.tsx`, `TalkXSuppression.tsx`, `fmtInt`, `useMultiplixDispatches.ts`, `WorkItemSheet.tsx`, `useCampaignRowActions.tsx`, `useTalkX.ts`, `FileThumb.tsx`, `useSipClient.test.ts`, `useMyWorkItems.ts`, `ChatPopup.rolagem-mensagem-nova.test.tsx`, `TalkXView`, `queryClient.tsx`, `mapboxToken.ts`, `TalkXAnalytics.tsx`, `ConversationTabContent.tsx`, `check-test-inventory.mjs`, `useNotifications.ts`, `useInboxFilters`, `useReducedMotion`, `TasksModule.tsx`, `CallSessionProvider.tsx`, `useFilesViewState.ts`, `.failed`, `useCustomShortcuts.ts`, `useResolvedStorageUrl`, `ref_node_crypto`, `theme/presets.ts`, `fetchAllRows`, `personalizePreview`, `App.tsx`, `ConversationWithMessages`, `CallEngine.test.ts`, `useContactMedia.stickers.test.tsx`, `mappers.ts`, `primitivosCompartilhados.test.tsx`, `useWarRoomData.ts`, `TalkXLinksManager.tsx`, `telefoniaContraste.test.tsx`, `useAdminData.ts`, `useMonitoringData.ts`, `localDay.ts`, `periodRange.ts`, `TalkXHelp`, `useRealtimeMessages.ts`, `stats.ts`, `alertBehaviorTestKit.ts`, `useTeamChatPanel.ts`, `useCallChannels.ts`, `useSupabaseRealtime.ts`, `useAudioPlayer.ts`, `ia131-audio-meme-conteudo.contract.test.ts`, `TasksUiProvider`, `TelefoniaView.selecao-pagina.test.tsx`, `BusinessHoursIndicator.test.tsx`, `ContactDetailPanel.activity.test.tsx`, `ContactNotes.ordemFoco.test.tsx`, `useConversationHistoryTimeline.ts`, `ExternalDataIntegration.test.tsx`, `AIQuickAccess.tsx`, `SLAMetricsDashboard.sem-dados-erro.test.tsx`, `package.json`, `SystemFeaturesView.test.tsx`, `useAddressAutocomplete.ts`, `EmailChatInbox.contato.test.tsx`, `useForwardMedia.ts`, `ContactDeliveryPanel.test.tsx`, `ContactDetails.entrega.test.tsx`, `FilesTab.tsx`, `emojiConstants.ts`, `RealtimeInboxView.talk-me-entry.test.tsx`, `Leaderboard.test.tsx`, `useRealtimeInbox.ts`, `ViewRouter`, `talkxHelpIndex.ts`, `model.ts`, `MetaCAPIView.test.tsx`, `MultiplixView.contagem.test.tsx`, `OnboardingChecklist.test.tsx`, `FilesTab`, `AclAlertsPanel.test.tsx`, `MessagesSettings.test.tsx`, `BorderRadiusControl.test.tsx`, `useChatPanelHandlers.ts`, `useConnectionIncidents.ts`, `TalkXLiveMonitor.lifecycle.test.tsx`, `TalkXSegments.feedbackMassa.test.tsx`, `TalkXSuppression.contactSearch.test.tsx`, `QuickAddCompacto.test.tsx`, `useGoalNotifications.ts`, `communication/useVoiceAgent.ts`, `useNewConversation.connection.test.tsx`, `useContactNotes.semColuna.test.tsx`, `SipCallAdapter`, `system/__tests__/usePermissions.test.tsx`, `useTeamChatMembers.ja-membros.test.tsx`, `useQuickReplies.test.tsx`, `Crm360Tab.tsx`, `e2e-contact.ts`, `useConnectionsManager`, `teamChatTypes.ts`, `useCatalogContactSearch.ts`, `ChatPanel`, `LocationPicker.integration.test.tsx`, `ViewRouter.tsx`, `mapboxGeocode.ts`, `CT70_reducedMotion.test.tsx`, `useGmail.ts`, `StickerManager.tsx`, `useAudioRecorder.ts`, `KpiStrip`, `useInboxBulkActions.test.ts`, `journey/motion/index.ts`, `useNavigationHistory.ts`, `Fase 3 — Perímetro de segurança (E35–E50)`, `useContactNotes`, `AppShell.tsx`, `redigir-relatorio.unit.mjs`, `useTalkXCampaignList.ts`, `ContactDetails`, `Index.tsx`, `emailContactContext.ts`, `TalkXCampaignScheduled`, `ensaio-provisionamento.mjs`, `IncomingCallAlert.tsx`, `useWhatsAppStatus.ts`, `MultiplixView`, `pdfThumbnail.ts`, `useTalkMeQueue.ts`, `useMessages`, `ErrorBoundary`, `ChatbotFlowEditor.tsx`, `safeStorage.ts`, `slaTimeline.ts`, `emailThreadQuery.ts`, `SinguProfileSection.tsx`, `useNextBestAction`, `useGmail`, `useTalkXResumeChecklist.ts`, `offlineQueue.ts`, `TemplatesWithVariables.tsx`, `useChatMediaSending.audio-meme-falha.test.ts`, `RouteTransition.tsx`, `AUDITORIA A5 — Paridade CI × Produção × Ledger`, `events.ts`, `evolution-presence-status.contract.test.ts`, `PROMPT DE EXECUÇÃO — REDESIGN "NAVY OPERATIONAL" DO MÓDULO DASHBOARD | ZAPP WEB V2`, `useTheme.ts`, `useContactUnreadEmails.realtime.test.tsx`, `contactDisplay.ts`, `useTeamFiles.ts`, `useGlobalIncomingMessageAlerts.behavior.test.tsx`, `rlsSchema.ts`, `useDepartmentManagement.ts`, `useInboxFilterPresets.ts`, `EmailVolumeMedicao.test.tsx`, `LinkPreview.tsx`, `EmailChatInbox`, `QuarantineMonitorProvider.r2-api-066.test.tsx`, `useJourneyEmails.ts`, `secureRandomFloat`, `empty-states.tsx`, `SuggestionList`, `useContactsSearch`, `AchievementToast.tsx`, `AutomationEditorDialog.tsx`, `useCustomEmojis.ts`, `useTeamMessages.ts`, `useAppBootstrap.test.tsx`, `DailyMetricsKpis.tsx`, `SystemHealthCard.tsx`, `TalkXInteractiveEditor.tsx`, `useWarRoomAlerts.ts`, `evolutionAdapter.ts`, `JourneyStatsHero.tsx`, `actions.ts`, `IncomingCallAlert.volume.test.tsx`, `CT55_57_management.test.tsx`, `useConversationActions.test.ts`, `TeamChatPanel.settings-wiring.test.tsx`, `useGlobalSearchData`, `TeamChatPanel.wiring.test.tsx`, `accessible-toast.tsx`, `useAgents.leitura.test.tsx`, `timers-unmount.test.tsx`, `ScheduleCalendarView.agenda.test.tsx`, `useContactSearchV2.ts`, `RadarPhase9Panel.tsx`, `KnowledgeBaseView.fileActions.test.tsx`, `useSupabaseConnectivity.ts`, `isValidCnpj`, `e2e-isolated-seed.unit.mjs`, `useMultiplixReplies.ts`, `VoiceSearchOverlay.tsx`, `useGmail.test.ts`, `evolution.service.ts`, `useAuth.aviso-dispositivo.test.tsx`, `useAuthForm`, `contactSidebar.ts`, `CommandPaletteHost.tsx`, `cp1FidelidadeCarvao.test.ts`, `useAgentPresence.ts`, `invoke`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `scenario-simulation.test.ts`, `notification-events.ts`, `JourneyHealthChip.tsx`, `SLAIndicator.contrasteSelos.test.tsx`, `VoiceActionBridge.test.tsx`, `quadroLarguraFocoContraste.test.tsx`, `coresCruasInboxCrm.test.tsx`, `y17Selos.contraste.test.tsx`, `TrainingMiniGames.creditoXp.test.tsx`, `useContactsKpi.ts`, `ChatbotHonestNotice.test.tsx`, `useSupervisorQueue.ts`, `useGeoBlocking.ts`, `useTranscriptionNotifications.ts`, `dashboard/ConversationHeatmap.tsx`, `talkxKeyMetrics.ts`, `useAutomationSuggestions.ts`, `useContainerColumns.test.ts`, `useTalkXTemplates.test.ts`, `ai-jobs-estados-e-durabilidade.contract.test.ts`, `MobileDrawerMenu.tsx`, `EmailThreadView.test.tsx`, `useChatInputLogic.ts`, `config/supabase.ts`, `useRateLimitLogs.ts`, `useConnectionsHealth.ts`, `ContactService`, `GmailInboxView.test.tsx`, `SentimentTrendChart`, `ai-generate.contract.test.ts`, `zod-jitless.test.ts`, `emailHtml.ts`, `evolution-call-handler.contract.test.ts`, `evolution-labels-edit.contract.test.ts`, `useDashboardData.ts`, `useDashboardKpi.ts`, `contrastePlayerSlider.test.tsx`, `AuditLogDashboard.test.tsx`, `AuthProvider`, `lib/ai-vocabulary.ts`, `web-vitals.ts`, `scan-icon-buttons.ts`, `chat-motion.test.tsx`, `PLANO EM 50 ETAPAS`, `mobileAreaSeguraRolagem.test.ts`, `ContactDetails.mobile-iniciais-sentimento.test.tsx`, `usePerformance.ts`, `uploadTeamMedia.test.tsx`, `system/index.ts`, `mapboxCostGuard.ts`, `inbox.service.ts`, `segmentRules.ts`, `ContactIntelligencePanel.tsx`, `MissingQuestions.tsx`, `AudioPlayButton.test.tsx`, `crossTabDrainLock.test.ts`, `useTypingPresence.ts`, `useWorkItemDraft.ts`, `useTeamUnreadTotal`, `CrisisRoom.metricas.test.tsx`, `StickerManager.envio.test.tsx`, `Crm360Tab.test.tsx`, `useContactsV2Flags.test.tsx`, `useTeamChatRealtimeChannelErrors.test.tsx`, `useSpeechToText.ts`, `TalkXTemplateEditor.race.test.tsx`, `width-regression.mjs`, `FilesTab.fase6.test.tsx`, `MobileDrawerMenu.a11y.test.tsx`, `HighContrastProvider`, `useConversationActions`, `serverLogin.ts`, `ai-central-routing-ratchet.contract.test.ts`, `useSLANotifications.ts`, `ai-rate-limit-e-orcamento.contract.test.ts`, `contraste-aa-componentes.contract.test.ts`, `readAuthenticatedUserId`, `useTalkXInsights.ts`, `useVolumeRocker.ts`, `Auth`, `TrainingMode.avaliacao.test.tsx`, `SL038_badgesTokensTema.test.tsx`, `useChatSearch.ts`, `MessageBubble.contrasteStatus.test.tsx`, `LiveSuggestions.tsx`, `LocationPicker.gpsAtrasado.test.tsx`, `KpiStrip.contraste.test.tsx`, `StatusChips.contrasteChipAtendendo.test.tsx`, `TalkXSegments.detailFresh.test.tsx`, `movimentoEContraste.test.tsx`, `chart.tsx`, `useMentionableProfiles.ts`, `useDiagnosticsData.ts`, `sendThrottle.ts`, `gerar-banco.mjs`, `contraste-balao-midia.contract.test.ts`, `useLiveSuggestions.ts`, `AiTab`, `web-vitals-fcp-tti.test.ts`, `useEvolutionApi.ts`, `CT57_historicoAlem500.test.tsx`, `CT69_contrasteBadges.test.tsx`, `ChatInputArea.limite-enter.test.tsx`, `fundacaoVisual.test.tsx`, `execucaoDeCanais.ts`, `ReportCharts.descricao-textual.test.tsx`, `IPListasErro.contrasteTema.test.tsx`, `ThemeCustomizer.a11y.test.tsx`, `VolumeDial.tsx`, `useMessageReactions.transport-rejection.test.tsx`, `usePersonalStickers.webp.test.tsx`, `useTeamChatNotifications.behavior.test.ts`, `formatDocumentTitle`, `e2e-isolated-seed-diagnostic.unit.mjs`, `multiplix-dispatch-audience-saved.contract.test.ts`, `CallSessionProvider.test.tsx`, `PLANO EM 100 ETAPAS`, `CT61_62_65_catalogFilters.test.tsx`, `TalkXContactSelector.a11y.test.tsx`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `useScheduledReports.test.tsx`, `chartColors.ts`, `@playwright/test`, `rls-boundary.test.ts`, `ai-capabilities.contract.test.ts`, `useSearchInsights.ts`, `message-delivery-phase1-rollout.unit.mjs`, `TalkX.test.tsx`, `invokeEdge.ts`, `LocationMessage.test.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `TalkXOverview.table.test.tsx`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.actions.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useRealtimeDashboard.reconciliacao.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `ai-resilience-prazos-retry.contract.test.ts`, `VolumeTriggerButton.test.tsx`, `bucket`, `useContactMediaCounts.test.tsx`, `useChatKeyboardNavigation.ts`, `QuoteDraftCard.copia.test.tsx`, `GroupsView.broadcast.test.tsx`, `ChatMessagesArea.agrupar-envio.test.tsx`, `useAddressAutocomplete.test.tsx`, `NotesTab.error-save.test.tsx`, `AiTab.erroAnalise.test.tsx`, `AiTab.test.tsx`, `useRealtimeDashboard.escopo.test.tsx`, `useRealtimeDashboard.visibilidade.test.tsx`, `usePerformanceOptimizations.ts`, `useCallRecording.test.tsx`, `useTeamChatNotifications.nome-e-clique.test.tsx`, `rotas-chamadas-existem.test.ts`, `usePersonalStickers.uso.test.tsx`, `useTalkXInsights.defeito-223.test.tsx`, `useSecurityPushNotifications.test.ts`, `useUndoableAction.ts`, `workItemBoardGroups.ts`, `useDeviceDetection.test.tsx`, `useRealtimeMessages.test.tsx`, `formatters.ts`, `multiplix-docs.contract.test.ts`, `pdfjs-sob-demanda.contract.test.ts`, `SinguProfileSection.test.tsx`, `ai-routing.contract.test.ts`, `ExternalProductCatalog.virtualizacao.test.tsx`, `useContactFormValidation.ts`, `ChatMessagesArea.pagination.test.tsx`, `FileThumb.test.tsx`, `ChatPanel.typing-presence.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `Y29_gateDownloadOutros.test.tsx`, `MediaLibraryAdmin.test.tsx`, `quadroArrastarTecladoRolagem.test.tsx`, `quadroResponsivoAbas.test.tsx`, `useSearchHistory.ts`, `realtimeSharedTopic.test.tsx`, `useQueuesComparison.race.test.tsx`, `useTeamChatNotifications.aviso-navegador.test.tsx`, `contactHealth.ts`, `_adv_edge_legacy_producers.test.ts`, `contraste-cores-categoria.contract.test.ts`, `PerformanceMonitor`, `isSafeHttpUrl`, `CrossTabDedupePanel.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `StickerManager.recentes.r2-inb-062.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `GmailIntegrationCard.apagar-dados.test.tsx`, `MediaLibraryAdmin.a11y.test.tsx`, `TalkXSegments.builder.test.tsx`, `TalkXSegments.library.test.tsx`, `useSupervisorQueue.test.tsx`, `ContactsView.v2Flags.test.tsx`, `useLeaderboard.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `slaDenominadores.test.tsx`, `useQueueAnalytics.test.tsx`, `security-and-performance.test.ts`, `contact-bulk.service.test.ts`, `ai-vocabulary-parity.contract.test.ts`, `sl218-bloco18-estado.contract.test.ts`, `telefonia-encerramento.contract.test.ts`, `AdminCRMDashboard.explorer-crm360.test.tsx`, `GmailWebhookMonitor.falha-consulta.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `NewCallPanel.test.tsx`, `TelefoniaView.a11y.test.tsx`, `SendProductDialog.test.tsx`, `useChatPanelHandlers.sem-falso-sucesso.test.tsx`, `NotesTab.test.tsx`, `ObjectionDetector.severidade.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `SoundCustomizationPanel.test.tsx`, `TalkXCampaignRunning.limits.test.tsx`, `errorReporter.ts`, `useFilesInfiniteScroll.test.tsx`, `useAudioMemes.mediaVolumeBindings.test.tsx`, `useSLARulesCounts.ts`, `useDiagnosticsData.test.ts`, `useTextToSpeech.lifecycle.test.ts`, `gravacaoFormato.ts`, `outbound-message.service.test.ts`, `runGuard-simulation.test.ts`, `ai-fallback-and-test.contract.test.ts`, `ia047-idempotencia-de-efeitos.contract.test.ts`, `MediaMigrationTool.test.tsx`, `InviteAgentDialog.test.tsx`, `useChatPanelHandlers.edicao-rejeitada.test.tsx`, `useRadarPanel.ts`, `VoiceChangerPicker.voz-temporaria.test.tsx`, `useMonitoringData.buckets.test.ts`, `useMonitoringData.errors.test.ts`, `ChannelRoutingRules.a11y.test.tsx`, `QueuesView.editar.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `TalkXSuppression.editReasonVazio.test.tsx`, `useBusinessHoursCheck.test.tsx`, `useMessages.overlay.test.tsx`, `useAudioMemes.mutacoes.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useSavedFilters.test.tsx`, `status.test.ts`, `telefonia-contrato-docs.contract.test.ts`, `ProtectedRoute.acesso-negado.test.tsx`, `ActiveCallPanel.test.tsx`, `ContactNotes.semColuna.test.tsx`, `HandoffDialog.test.tsx`, `ViewersIndicator.presenca.test.tsx`, `useEvolutionContactProfile.ts`, `AdvancedMessageMenu.menu-avancado.test.tsx`, `GlobalSearch.r2-inb-020.test.tsx`, `RealtimeInboxView.atalhos-teclado.test.tsx`, `RealtimeInboxView.pagination.test.tsx`, `VoiceChanger.falhas.test.tsx`, `VoiceChanger.reduced-motion.test.tsx`, `shellLayout.contrato.test.tsx`, `Sidebar.test.tsx`, `MultiplixView.lista-virtualizada.test.tsx`, `MultiplixView.painel01.test.tsx`, `AvatarUpload.invalidacao.test.tsx`, `useAIUsageDashboard.janela.test.tsx`, `useTelefoniaFilters.test.tsx`, `useContactSummaryNote.concurrency.test.tsx`, `useObjectionDetector.n169.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useTalkXSuppression.hook-morto.test.ts`, `useIncomingCallListener.test.tsx`, `useLoadingState.ts`, `useUniversityHelp.test.tsx`, `RateLimitDashboard.logs.test.tsx`, `AgentsView.pendencias.test.tsx`, `HeroBenefits.test.tsx`, `AutomationsManager.persistencia.test.tsx`, `CallHistoryStates.test.tsx`, `InstanceSettingsDialog.config-perfil.test.tsx`, `NumberReputationMonitor.test.tsx`, `GamificationSection.customizacao.test.tsx`, `GoalsConfigDialog.metas.test.tsx`, `EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `ChatMessagesArea.loop.test.tsx`, `ChatPanel.entrega-conversa.test.tsx`, `ContactActionButtons.test.tsx`, `AISuggestions.tom.test.tsx`, `RealtimeInboxView.aria-novas-mensagens.test.tsx`, `useFileUploadLogic.test.tsx`, `OmnichannelInbox.test.tsx`, `QueuesView.test.tsx`, `SecurityOverview.medicao.test.tsx`, `AIGenerateDialog.test.tsx`, `tokens-sync.test.ts`, `ActiveCampaignIndicator.test.tsx`, `TalkXCampaignRunning.states.test.tsx`, `sentiment-vocabulario.test.tsx`, `useAIUsageDashboard.agregacao.test.tsx`, `useContactMedia.sticker.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useInboxUnreadTotal.test.tsx`, `useExternalDB.test.ts`, `useGmail.syncStatus.test.tsx`, `useSLAScopeNames.test.tsx`, `useApplicableSLA.test.ts`, `audioMemeCategories.ts`, `resolverDestinoPosLogin`, `ResetPassword.segundo-fator-sessoes.test.tsx`, `useContactsCRUD.test.tsx`, `EmailChatInbox.buscaEstados.test.tsx`, `groupWindow.ts`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `RealtimeCollaboration.handoff.test.tsx`, `ContactDetails.quickActions.test.tsx`, `FileUploader.retry-envio.test.tsx`, `GlobalSearch.navigation.test.tsx`, `MessageReactions.autoria-unica.test.tsx`, `VoiceChangerPicker.test.tsx`, `useMonitoringNotifications.behavior.test.ts`, `QueueGoalsDialog.salvarMetas.test.tsx`, `AutomationSettings.test.tsx`, `GlobalSettingsSection.sem-consumidor.test.tsx`, `ThemeCustomizer.test.tsx`, `TalkXSuppression.add.test.tsx`, `TalkXSuppression.search.test.tsx`, `useMessages.reconexao.test.tsx`, `useEmailContactContext.test.tsx`, `useGmail.syncParcial.test.tsx`, `useTeamMessageReactions.canal-e-reconexao.test.tsx`, `useTeamMessageReactions.test.tsx`, `useGlobalSettings.zero-linhas.test.tsx`, `useMessages.test.tsx`, `playTtsAudio.interrupcao.test.ts`, `multiplix-handoff-f100.contract.test.ts`, `AIUsageDashboard.estado-a11y.test.tsx`, `ConnectionCard.desconectar-erro.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `InstanceSettingsDialog.privacidade.test.tsx`, `GoalsConfigDialog.test.tsx`, `SystemFeaturesView.a11y.test.tsx`, `ConversationSummary.ia048.test.tsx`, `RealtimeInboxView.emailChip.test.tsx`, `WhisperMode.contador.test.tsx`, `WhisperMode.leitura.test.tsx`, `VoiceDictationButton.session.test.tsx`, `useInboxSilence.behavior.test.ts`, `useMonitoringNotifications.audiocontext.test.ts`, `ConnectionAlertPreferencesCard.test.tsx`, `PeriodSelector.test.tsx`, `AIGenerateDialog.pasta-usuario.test.tsx`, `ScheduleSettings.test.tsx`, `SkillBasedRoutingSettings.test.tsx`, `SLAHistoryDashboard.sem-dados-erro.test.tsx`, `TalkXSegments.feedbackMassaMotivos.test.tsx`, `motionEffects.movimento.test.tsx`, `useAuth.rascunho-teamchat-logout.test.tsx`, `useContactIntelligence.test.tsx`, `configuracoes.leituraErro.test.tsx`, `useCatalogFavorites.test.ts`, `useReauthentication.test.tsx`, `useSLAHistory.test.tsx`, `useUserSettings.test.tsx`, `emailComposeFormat.ts`, `mentionText.ts`, `SLADashboard.sidebar-navegacao.test.tsx`, `ResetPassword.redirect-cancelavel.test.tsx`?**
+- **Why does `vitest` connect `vitest` to `react`, `lucide-react`, `button.tsx`, `ExternalProductManagement.tsx`, `utils.ts`, `avatar.tsx`, `ref_node_assert`, `validation.ts`, `framer-motion`, `cn`, `@tanstack/react-query`, `TalkXView.tsx`, `useTalkXSegments.ts`, `ref_node_fs`, `DashboardView.tsx`, `chat.ts`, `schemas.ts`, `react-router-dom`, `SendProductDialog.tsx`, `ai-generate.ts`, `ai-usage.ts`, `TalkXTemplates.tsx`, `SettingsView.tsx`, `TalkXCampaignWizard.tsx`, `workItem.types.ts`, `EmailComposer.tsx`, `hooks/copilot/index.ts`, `RealtimeInboxView.tsx`, `evolution-api/index.ts`, `TalkXCampaignRunning.tsx`, `FASE 1 — Motor: ligar o contrato ao que existe (T09–T22)`, `useContactMedia.ts`, `mediaVolumeStore.ts`, `AIConversationAssistant.tsx`, `TalkXSuppression.tsx`, `fmtInt`, `useMultiplixDispatches.ts`, `WorkItemSheet.tsx`, `useCampaignRowActions.tsx`, `useTalkX.ts`, `FileThumb.tsx`, `useSipClient.test.ts`, `useMyWorkItems.ts`, `ChatPopup.rolagem-mensagem-nova.test.tsx`, `TalkXView`, `queryClient.tsx`, `mapboxToken.ts`, `TalkXAnalytics.tsx`, `ConversationTabContent.tsx`, `check-test-inventory.mjs`, `useNotifications.ts`, `useInboxFilters`, `useReducedMotion`, `TasksModule.tsx`, `CallSessionProvider.tsx`, `useFilesViewState.ts`, `.failed`, `useCustomShortcuts.ts`, `useResolvedStorageUrl`, `ref_node_crypto`, `theme/presets.ts`, `fetchAllRows`, `personalizePreview`, `App.tsx`, `ConversationWithMessages`, `CallEngine.test.ts`, `useContactMedia.stickers.test.tsx`, `mappers.ts`, `primitivosCompartilhados.test.tsx`, `useWarRoomData.ts`, `TalkXLinksManager.tsx`, `telefoniaContraste.test.tsx`, `useAdminData.ts`, `useMonitoringData.ts`, `localDay.ts`, `periodRange.ts`, `TalkXHelp`, `useRealtimeMessages.ts`, `stats.ts`, `alertBehaviorTestKit.ts`, `useTeamChatPanel.ts`, `useCallChannels.ts`, `useSupabaseRealtime.ts`, `useAudioPlayer.ts`, `ia131-audio-meme-conteudo.contract.test.ts`, `TasksUiProvider`, `AIQuickAccess.tsx`, `TelefoniaView.selecao-pagina.test.tsx`, `BusinessHoursIndicator.test.tsx`, `useConversationHistoryTimeline.ts`, `ContactDetailPanel.activity.test.tsx`, `ContactNotes.ordemFoco.test.tsx`, `ExternalDataIntegration.test.tsx`, `package.json`, `SLAMetricsDashboard.sem-dados-erro.test.tsx`, `useAddressAutocomplete.ts`, `SystemFeaturesView.test.tsx`, `EmailChatInbox.contato.test.tsx`, `useForwardMedia.ts`, `ContactDeliveryPanel.test.tsx`, `ContactDetails.entrega.test.tsx`, `FilesTab.tsx`, `emojiConstants.ts`, `RealtimeInboxView.talk-me-entry.test.tsx`, `useRealtimeInbox.ts`, `ViewRouter`, `model.ts`, `talkxHelpIndex.ts`, `Leaderboard.test.tsx`, `MetaCAPIView.test.tsx`, `MultiplixView.contagem.test.tsx`, `FilesTab`, `OnboardingChecklist.test.tsx`, `AclAlertsPanel.test.tsx`, `TalkX.test.tsx`, `useChatPanelHandlers.ts`, `useConnectionIncidents.ts`, `TalkXLiveMonitor.lifecycle.test.tsx`, `TalkXSegments.feedbackMassa.test.tsx`, `TalkXSuppression.contactSearch.test.tsx`, `QuickAddCompacto.test.tsx`, `useGoalNotifications.ts`, `communication/useVoiceAgent.ts`, `VolumeTriggerButton.test.tsx`, `useContactMediaCounts.test.tsx`, `SipCallAdapter`, `useContactNotes.semColuna.test.tsx`, `system/__tests__/usePermissions.test.tsx`, `useTeamChatMembers.ja-membros.test.tsx`, `Crm360Tab.tsx`, `useQuickReplies.test.tsx`, `useConnectionsManager`, `teamChatTypes.ts`, `useCatalogContactSearch.ts`, `ChatPanel`, `LocationPicker.integration.test.tsx`, `ViewRouter.tsx`, `mapboxGeocode.ts`, `CT70_reducedMotion.test.tsx`, `useGmail.ts`, `useConversationActions`, `StickerManager.tsx`, `useAudioRecorder.ts`, `KpiStrip`, `journey/motion/index.ts`, `useNavigationHistory.ts`, `Fase 3 — Perímetro de segurança (E35–E50)`, `useContactNotes`, `AppShell.tsx`, `redigir-relatorio.unit.mjs`, `useTalkXCampaignList.ts`, `ContactDetails`, `Index.tsx`, `emailContactContext.ts`, `TalkXCampaignScheduled`, `ensaio-provisionamento.mjs`, `IncomingCallAlert.tsx`, `useWhatsAppStatus.ts`, `MultiplixView`, `pdfThumbnail.ts`, `useTalkMeQueue.ts`, `useMessages`, `ErrorBoundary`, `ChatbotFlowEditor.tsx`, `safeStorage.ts`, `slaTimeline.ts`, `useInboxBulkActions.test.ts`, `emailThreadQuery.ts`, `SinguProfileSection.tsx`, `useNextBestAction`, `useGmail`, `useTalkXResumeChecklist.ts`, `offlineQueue.ts`, `TemplatesWithVariables.tsx`, `useChatMediaSending.audio-meme-falha.test.ts`, `RouteTransition.tsx`, `AUDITORIA A5 — Paridade CI × Produção × Ledger`, `events.ts`, `evolution-presence-status.contract.test.ts`, `PROMPT DE EXECUÇÃO — REDESIGN "NAVY OPERATIONAL" DO MÓDULO DASHBOARD | ZAPP WEB V2`, `useTheme.ts`, `useContactUnreadEmails.realtime.test.tsx`, `contactDisplay.ts`, `useTeamFiles.ts`, `useGlobalIncomingMessageAlerts.behavior.test.tsx`, `rlsSchema.ts`, `useDepartmentManagement.ts`, `useInboxFilterPresets.ts`, `EmailVolumeMedicao.test.tsx`, `LinkPreview.tsx`, `EmailChatInbox`, `QuarantineMonitorProvider.r2-api-066.test.tsx`, `useJourneyEmails.ts`, `secureRandomFloat`, `empty-states.tsx`, `SuggestionList`, `useContactsSearch`, `AchievementToast.tsx`, `AutomationEditorDialog.tsx`, `useCustomEmojis.ts`, `useTeamMessages.ts`, `useAppBootstrap.test.tsx`, `DailyMetricsKpis.tsx`, `SystemHealthCard.tsx`, `TalkXInteractiveEditor.tsx`, `useWarRoomAlerts.ts`, `useConversationActions.ts`, `evolutionAdapter.ts`, `JourneyStatsHero.tsx`, `actions.ts`, `IncomingCallAlert.volume.test.tsx`, `CT55_57_management.test.tsx`, `useConversationActions.test.ts`, `TeamChatPanel.settings-wiring.test.tsx`, `useGlobalSearchData`, `TeamChatPanel.wiring.test.tsx`, `accessible-toast.tsx`, `useAgents.leitura.test.tsx`, `timers-unmount.test.tsx`, `ScheduleCalendarView.agenda.test.tsx`, `useContactSearchV2.ts`, `RadarPhase9Panel.tsx`, `KnowledgeBaseView.fileActions.test.tsx`, `useSupabaseConnectivity.ts`, `isValidCnpj`, `e2e-isolated-seed.unit.mjs`, `useMultiplixReplies.ts`, `VoiceSearchOverlay.tsx`, `useGmail.test.ts`, `evolution.service.ts`, `useAuth.aviso-dispositivo.test.tsx`, `useAuthForm`, `contactSidebar.ts`, `CommandPaletteHost.tsx`, `cp1FidelidadeCarvao.test.ts`, `useAgentPresence.ts`, `invoke`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `scenario-simulation.test.ts`, `notification-events.ts`, `JourneyHealthChip.tsx`, `SLAIndicator.contrasteSelos.test.tsx`, `VoiceActionBridge.test.tsx`, `quadroLarguraFocoContraste.test.tsx`, `coresCruasInboxCrm.test.tsx`, `y17Selos.contraste.test.tsx`, `TrainingMiniGames.creditoXp.test.tsx`, `useContactsKpi.ts`, `ChatbotHonestNotice.test.tsx`, `useSupervisorQueue.ts`, `useGeoBlocking.ts`, `useTranscriptionNotifications.ts`, `dashboard/ConversationHeatmap.tsx`, `talkxKeyMetrics.ts`, `useAutomationSuggestions.ts`, `useContainerColumns.test.ts`, `useTalkXTemplates.test.ts`, `ai-jobs-estados-e-durabilidade.contract.test.ts`, `MobileDrawerMenu.tsx`, `EmailThreadView.test.tsx`, `useChatInputLogic.ts`, `config/supabase.ts`, `useRateLimitLogs.ts`, `useConnectionsHealth.ts`, `ContactService`, `GmailInboxView.test.tsx`, `SentimentTrendChart`, `ai-generate.contract.test.ts`, `zod-jitless.test.ts`, `emailHtml.ts`, `evolution-call-handler.contract.test.ts`, `evolution-labels-edit.contract.test.ts`, `useDashboardData.ts`, `useDashboardKpi.ts`, `contrastePlayerSlider.test.tsx`, `AuditLogDashboard.test.tsx`, `AuthProvider`, `lib/ai-vocabulary.ts`, `web-vitals.ts`, `scan-icon-buttons.ts`, `chat-motion.test.tsx`, `PLANO EM 50 ETAPAS`, `mobileAreaSeguraRolagem.test.ts`, `ContactDetails.mobile-iniciais-sentimento.test.tsx`, `usePerformance.ts`, `uploadTeamMedia.test.tsx`, `system/index.ts`, `mapboxCostGuard.ts`, `inbox.service.ts`, `segmentRules.ts`, `ContactIntelligencePanel.tsx`, `MissingQuestions.tsx`, `AudioPlayButton.test.tsx`, `crossTabDrainLock.test.ts`, `useTypingPresence.ts`, `useWorkItemDraft.ts`, `useTeamUnreadTotal`, `CrisisRoom.metricas.test.tsx`, `StickerManager.envio.test.tsx`, `Crm360Tab.test.tsx`, `useContactsV2Flags.test.tsx`, `useTeamChatRealtimeChannelErrors.test.tsx`, `useSpeechToText.ts`, `TalkXTemplateEditor.race.test.tsx`, `width-regression.mjs`, `FilesTab.fase6.test.tsx`, `MobileDrawerMenu.a11y.test.tsx`, `HighContrastProvider`, `serverLogin.ts`, `useSLANotifications.ts`, `ai-central-routing-ratchet.contract.test.ts`, `ai-rate-limit-e-orcamento.contract.test.ts`, `contraste-aa-componentes.contract.test.ts`, `readAuthenticatedUserId`, `useTalkXInsights.ts`, `useVolumeRocker.ts`, `Auth`, `TrainingMode.avaliacao.test.tsx`, `SL038_badgesTokensTema.test.tsx`, `useChatSearch.ts`, `MessageBubble.contrasteStatus.test.tsx`, `LiveSuggestions.tsx`, `LocationPicker.gpsAtrasado.test.tsx`, `KpiStrip.contraste.test.tsx`, `StatusChips.contrasteChipAtendendo.test.tsx`, `TalkXSegments.detailFresh.test.tsx`, `movimentoEContraste.test.tsx`, `chart.tsx`, `useMentionableProfiles.ts`, `useDiagnosticsData.ts`, `sendThrottle.ts`, `gerar-banco.mjs`, `contraste-balao-midia.contract.test.ts`, `useLiveSuggestions.ts`, `AiTab`, `useEvolutionApi.ts`, `web-vitals-fcp-tti.test.ts`, `CT57_historicoAlem500.test.tsx`, `CT69_contrasteBadges.test.tsx`, `ChatInputArea.limite-enter.test.tsx`, `fundacaoVisual.test.tsx`, `execucaoDeCanais.ts`, `ReportCharts.descricao-textual.test.tsx`, `IPListasErro.contrasteTema.test.tsx`, `ThemeCustomizer.a11y.test.tsx`, `VolumeDial.tsx`, `useMessageReactions.transport-rejection.test.tsx`, `usePersonalStickers.webp.test.tsx`, `useTeamChatNotifications.behavior.test.ts`, `e2e-isolated-seed-diagnostic.unit.mjs`, `formatDocumentTitle`, `CallSessionProvider.test.tsx`, `multiplix-dispatch-audience-saved.contract.test.ts`, `PLANO EM 100 ETAPAS`, `CT61_62_65_catalogFilters.test.tsx`, `@playwright/test`, `TalkXContactSelector.a11y.test.tsx`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `useScheduledReports.test.tsx`, `chartColors.ts`, `rls-boundary.test.ts`, `ai-capabilities.contract.test.ts`, `MessagesSettings.test.tsx`, `useSearchInsights.ts`, `BorderRadiusControl.test.tsx`, `invokeEdge.ts`, `message-delivery-phase1-rollout.unit.mjs`, `LocationMessage.test.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `TalkXOverview.table.test.tsx`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.actions.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useRealtimeDashboard.reconciliacao.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `e2e-contact.ts`, `ai-resilience-prazos-retry.contract.test.ts`, `bucket`, `useNewConversation.connection.test.tsx`, `useChatKeyboardNavigation.ts`, `QuoteDraftCard.copia.test.tsx`, `GroupsView.broadcast.test.tsx`, `ChatMessagesArea.agrupar-envio.test.tsx`, `useAddressAutocomplete.test.tsx`, `NotesTab.error-save.test.tsx`, `AiTab.erroAnalise.test.tsx`, `AiTab.test.tsx`, `useRealtimeDashboard.escopo.test.tsx`, `useRealtimeDashboard.visibilidade.test.tsx`, `usePerformanceOptimizations.ts`, `useCallRecording.test.tsx`, `useTeamChatNotifications.nome-e-clique.test.tsx`, `rotas-chamadas-existem.test.ts`, `usePersonalStickers.uso.test.tsx`, `useTalkXInsights.defeito-223.test.tsx`, `useSecurityPushNotifications.test.ts`, `workItemBoardGroups.ts`, `useDeviceDetection.test.tsx`, `useRealtimeMessages.test.tsx`, `formatters.ts`, `multiplix-docs.contract.test.ts`, `pdfjs-sob-demanda.contract.test.ts`, `SinguProfileSection.test.tsx`, `ai-routing.contract.test.ts`, `ExternalProductCatalog.virtualizacao.test.tsx`, `useContactFormValidation.ts`, `ChatMessagesArea.pagination.test.tsx`, `FileThumb.test.tsx`, `ChatPanel.typing-presence.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `Y29_gateDownloadOutros.test.tsx`, `MediaLibraryAdmin.test.tsx`, `quadroArrastarTecladoRolagem.test.tsx`, `quadroResponsivoAbas.test.tsx`, `useSearchHistory.ts`, `realtimeSharedTopic.test.tsx`, `useQueuesComparison.race.test.tsx`, `useTeamChatNotifications.aviso-navegador.test.tsx`, `contactHealth.ts`, `_adv_edge_legacy_producers.test.ts`, `contraste-cores-categoria.contract.test.ts`, `PerformanceMonitor`, `isSafeHttpUrl`, `CrossTabDedupePanel.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `StickerManager.recentes.r2-inb-062.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `GmailIntegrationCard.apagar-dados.test.tsx`, `MediaLibraryAdmin.a11y.test.tsx`, `TalkXSegments.builder.test.tsx`, `TalkXSegments.library.test.tsx`, `useSupervisorQueue.test.tsx`, `useConversationActions.snooze.test.ts`, `ContactsView.v2Flags.test.tsx`, `useLeaderboard.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `slaDenominadores.test.tsx`, `useQueueAnalytics.test.tsx`, `security-and-performance.test.ts`, `contact-bulk.service.test.ts`, `ai-vocabulary-parity.contract.test.ts`, `sl218-bloco18-estado.contract.test.ts`, `telefonia-encerramento.contract.test.ts`, `AdminCRMDashboard.explorer-crm360.test.tsx`, `GmailWebhookMonitor.falha-consulta.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `NewCallPanel.test.tsx`, `TelefoniaView.a11y.test.tsx`, `SendProductDialog.test.tsx`, `useChatPanelHandlers.sem-falso-sucesso.test.tsx`, `NotesTab.test.tsx`, `ObjectionDetector.severidade.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `SoundCustomizationPanel.test.tsx`, `TalkXCampaignRunning.limits.test.tsx`, `errorReporter.ts`, `useFilesInfiniteScroll.test.tsx`, `useAudioMemes.mediaVolumeBindings.test.tsx`, `useSLARulesCounts.ts`, `useDiagnosticsData.test.ts`, `useTextToSpeech.lifecycle.test.ts`, `gravacaoFormato.ts`, `outbound-message.service.test.ts`, `runGuard-simulation.test.ts`, `ai-fallback-and-test.contract.test.ts`, `ia047-idempotencia-de-efeitos.contract.test.ts`, `MediaMigrationTool.test.tsx`, `InviteAgentDialog.test.tsx`, `useChatPanelHandlers.edicao-rejeitada.test.tsx`, `useRadarPanel.ts`, `VoiceChangerPicker.voz-temporaria.test.tsx`, `useMonitoringData.buckets.test.ts`, `useMonitoringData.errors.test.ts`, `ChannelRoutingRules.a11y.test.tsx`, `QueuesView.editar.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `TalkXSuppression.editReasonVazio.test.tsx`, `useBusinessHoursCheck.test.tsx`, `useMessages.overlay.test.tsx`, `useAudioMemes.mutacoes.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useSavedFilters.test.tsx`, `status.test.ts`, `telefonia-contrato-docs.contract.test.ts`, `ProtectedRoute.acesso-negado.test.tsx`, `ActiveCallPanel.test.tsx`, `ContactNotes.semColuna.test.tsx`, `HandoffDialog.test.tsx`, `ViewersIndicator.presenca.test.tsx`, `useEvolutionContactProfile.ts`, `AdvancedMessageMenu.menu-avancado.test.tsx`, `GlobalSearch.r2-inb-020.test.tsx`, `RealtimeInboxView.atalhos-teclado.test.tsx`, `RealtimeInboxView.pagination.test.tsx`, `VoiceChanger.falhas.test.tsx`, `VoiceChanger.reduced-motion.test.tsx`, `shellLayout.contrato.test.tsx`, `Sidebar.test.tsx`, `MultiplixView.lista-virtualizada.test.tsx`, `MultiplixView.painel01.test.tsx`, `AvatarUpload.invalidacao.test.tsx`, `useAIUsageDashboard.janela.test.tsx`, `useTelefoniaFilters.test.tsx`, `useContactSummaryNote.concurrency.test.tsx`, `useObjectionDetector.n169.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useTalkXSuppression.hook-morto.test.ts`, `useIncomingCallListener.test.tsx`, `useLoadingState.ts`, `useUniversityHelp.test.tsx`, `RateLimitDashboard.logs.test.tsx`, `AgentsView.pendencias.test.tsx`, `HeroBenefits.test.tsx`, `AutomationsManager.persistencia.test.tsx`, `CallHistoryStates.test.tsx`, `InstanceSettingsDialog.config-perfil.test.tsx`, `NumberReputationMonitor.test.tsx`, `GamificationSection.customizacao.test.tsx`, `GoalsConfigDialog.metas.test.tsx`, `EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `ChatMessagesArea.loop.test.tsx`, `ChatPanel.entrega-conversa.test.tsx`, `ContactActionButtons.test.tsx`, `AISuggestions.tom.test.tsx`, `RealtimeInboxView.aria-novas-mensagens.test.tsx`, `useFileUploadLogic.test.tsx`, `OmnichannelInbox.test.tsx`, `QueuesView.test.tsx`, `SecurityOverview.medicao.test.tsx`, `AIGenerateDialog.test.tsx`, `tokens-sync.test.ts`, `ActiveCampaignIndicator.test.tsx`, `TalkXCampaignRunning.states.test.tsx`, `sentiment-vocabulario.test.tsx`, `useAIUsageDashboard.agregacao.test.tsx`, `useContactMedia.sticker.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useInboxUnreadTotal.test.tsx`, `useExternalDB.test.ts`, `useGmail.syncStatus.test.tsx`, `useSLAScopeNames.test.tsx`, `useApplicableSLA.test.ts`, `audioMemeCategories.ts`, `resolverDestinoPosLogin`, `ResetPassword.segundo-fator-sessoes.test.tsx`, `useContactsCRUD.test.tsx`, `EmailChatInbox.buscaEstados.test.tsx`, `groupWindow.ts`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `RealtimeCollaboration.handoff.test.tsx`, `ContactDetails.quickActions.test.tsx`, `FileUploader.retry-envio.test.tsx`, `GlobalSearch.navigation.test.tsx`, `MessageReactions.autoria-unica.test.tsx`, `VoiceChangerPicker.test.tsx`, `useMonitoringNotifications.behavior.test.ts`, `QueueGoalsDialog.salvarMetas.test.tsx`, `AutomationSettings.test.tsx`, `GlobalSettingsSection.sem-consumidor.test.tsx`, `ThemeCustomizer.test.tsx`, `TalkXSuppression.add.test.tsx`, `TalkXSuppression.search.test.tsx`, `useConversationActions.reopen.test.ts`, `useMessages.reconexao.test.tsx`, `useEmailContactContext.test.tsx`, `useGmail.syncParcial.test.tsx`, `useTeamMessageReactions.canal-e-reconexao.test.tsx`, `useTeamMessageReactions.test.tsx`, `useGlobalSettings.zero-linhas.test.tsx`, `useMessages.test.tsx`, `playTtsAudio.interrupcao.test.ts`, `multiplix-handoff-f100.contract.test.ts`, `AIUsageDashboard.estado-a11y.test.tsx`, `ConnectionCard.desconectar-erro.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `InstanceSettingsDialog.privacidade.test.tsx`, `GoalsConfigDialog.test.tsx`, `SystemFeaturesView.a11y.test.tsx`, `ConversationSummary.ia048.test.tsx`, `RealtimeInboxView.emailChip.test.tsx`, `WhisperMode.contador.test.tsx`, `WhisperMode.leitura.test.tsx`, `VoiceDictationButton.session.test.tsx`, `useInboxSilence.behavior.test.ts`, `useMonitoringNotifications.audiocontext.test.ts`, `ConnectionAlertPreferencesCard.test.tsx`, `PeriodSelector.test.tsx`, `AIGenerateDialog.pasta-usuario.test.tsx`, `ScheduleSettings.test.tsx`, `SkillBasedRoutingSettings.test.tsx`, `SLAHistoryDashboard.sem-dados-erro.test.tsx`, `TalkXSegments.feedbackMassaMotivos.test.tsx`, `motionEffects.movimento.test.tsx`, `useAuth.rascunho-teamchat-logout.test.tsx`, `useContactIntelligence.test.tsx`, `configuracoes.leituraErro.test.tsx`, `useCatalogFavorites.test.ts`, `useReauthentication.test.tsx`, `useSLAHistory.test.tsx`, `useUserSettings.test.tsx`, `emailComposeFormat.ts`, `mentionText.ts`, `SLADashboard.sidebar-navegacao.test.tsx`, `ResetPassword.redirect-cancelavel.test.tsx`?**
   _High betweenness centrality (0.199) - this node is a cross-community bridge._
-- **Why does `react` connect `react` to `lucide-react`, `button.tsx`, `vitest`, `ExternalProductManagement.tsx`, `utils.ts`, `avatar.tsx`, `framer-motion`, `cn`, `@tanstack/react-query`, `TalkXView.tsx`, `useTalkXSegments.ts`, `ref_node_fs`, `DashboardView.tsx`, `chat.ts`, `react-router-dom`, `SendProductDialog.tsx`, `TalkXTemplates.tsx`, `SettingsView.tsx`, `TalkXCampaignWizard.tsx`, `workItem.types.ts`, `EmailComposer.tsx`, `hooks/copilot/index.ts`, `RealtimeInboxView.tsx`, `TalkXCampaignRunning.tsx`, `useContactMedia.ts`, `mediaVolumeStore.ts`, `AIConversationAssistant.tsx`, `TalkXSuppression.tsx`, `fmtInt`, `useMultiplixDispatches.ts`, `WorkItemSheet.tsx`, `useCampaignRowActions.tsx`, `useTalkX.ts`, `FileThumb.tsx`, `useSipClient.test.ts`, `useMyWorkItems.ts`, `ChatPopup.rolagem-mensagem-nova.test.tsx`, `TalkXView`, `queryClient.tsx`, `mapboxToken.ts`, `TalkXAnalytics.tsx`, `ConversationTabContent.tsx`, `useNotifications.ts`, `useInboxFilters`, `TasksModule.tsx`, `CallSessionProvider.tsx`, `useFilesViewState.ts`, `useCustomShortcuts.ts`, `useResolvedStorageUrl`, `theme/presets.ts`, `fetchAllRows`, `personalizePreview`, `App.tsx`, `ConversationWithMessages`, `useContactMedia.stickers.test.tsx`, `primitivosCompartilhados.test.tsx`, `useWarRoomData.ts`, `TalkXLinksManager.tsx`, `telefoniaContraste.test.tsx`, `useAdminData.ts`, `useMonitoringData.ts`, `localDay.ts`, `periodRange.ts`, `TalkXHelp`, `useRealtimeMessages.ts`, `useTeamChatPanel.ts`, `useCallChannels.ts`, `useSupabaseRealtime.ts`, `useAudioPlayer.ts`, `TasksUiProvider`, `useConversationActions`, `AIQuickAccess.tsx`, `BusinessHoursIndicator.test.tsx`, `ContactNotes.ordemFoco.test.tsx`, `ExternalDataIntegration.test.tsx`, `useConversationHistoryTimeline.ts`, `useSLANotifications.ts`, `package.json`, `useAddressAutocomplete.ts`, `useForwardMedia.ts`, `RealtimeInboxView.talk-me-entry.test.tsx`, `FilesTab.tsx`, `talkxHelpIndex.ts`, `OnboardingChecklist.test.tsx`, `useEvolutionApi.ts`, `MessagesSettings.test.tsx`, `model.ts`, `talkxHelpMarkdown.tsx`, `TalkX.test.tsx`, `TalkXLiveMonitor.lifecycle.test.tsx`, `TalkXSegments.feedbackMassa.test.tsx`, `CallSessionProvider.test.tsx`, `TalkXSuppression.contactSearch.test.tsx`, `useRealtimeInbox.ts`, `useContactMediaCounts.test.tsx`, `useChatPanelHandlers.ts`, `useConnectionIncidents.ts`, `useChatKeyboardNavigation.ts`, `useSpeedToLead.ts`, `useContactNotes.semColuna.test.tsx`, `invokeEdge.ts`, `useGoalNotifications.ts`, `communication/useVoiceAgent.ts`, `useBattleCard.ts`, `useFirstResponseScript.ts`, `SipCallAdapter`, `useTeamChatMembers.ja-membros.test.tsx`, `useQuickReplies.test.tsx`, `Crm360Tab.tsx`, `teamChatTypes.ts`, `useCatalogContactSearch.ts`, `ChatPanel`, `LocationPicker.integration.test.tsx`, `ViewRouter.tsx`, `tabLeaderStore.ts`, `CT70_reducedMotion.test.tsx`, `useGmail.ts`, `StickerManager.tsx`, `useAudioRecorder.ts`, `useInboxBulkActions.test.ts`, `journey/motion/index.ts`, `useNavigationHistory.ts`, `Fase 3 — Perímetro de segurança (E35–E50)`, `useContactNotes`, `AppShell.tsx`, `useTalkXCampaignList.ts`, `ContactDetails`, `Index.tsx`, `TalkXCampaignScheduled`, `IncomingCallAlert.tsx`, `useWhatsAppStatus.ts`, `MultiplixView`, `MultiplixView.tsx`, `useTalkMeQueue.ts`, `useMessages`, `motion.tsx`, `ErrorBoundary`, `ChatbotFlowEditor.tsx`, `safeStorage.ts`, `slaTimeline.ts`, `pending`, `emailThreadQuery.ts`, `SinguProfileSection.tsx`, `useNextBestAction`, `useGmail`, `useTalkXResumeChecklist.ts`, `offlineQueue.ts`, `TemplatesWithVariables.tsx`, `useChatMediaSending.audio-meme-falha.test.ts`, `RouteTransition.tsx`, `useTheme.ts`, `useContactUnreadEmails.realtime.test.tsx`, `useTeamFiles.ts`, `useGlobalIncomingMessageAlerts.behavior.test.tsx`, `useInboxFilterPresets.ts`, `EmailVolumeMedicao.test.tsx`, `LinkPreview.tsx`, `buttons.tsx`, `EmailChatInbox`, `outbound-message.service.ts`, `useJourneyEmails.ts`, `secureRandomFloat`, `empty-states.tsx`, `useContactsSearch`, `AchievementToast.tsx`, `AutomationEditorDialog.tsx`, `useCustomEmojis.ts`, `useTeamMessages.ts`, `useAppBootstrap.test.tsx`, `DailyMetricsKpis.tsx`, `TalkXInteractiveEditor.tsx`, `useWarRoomAlerts.ts`, `evolutionAdapter.ts`, `JourneyStatsHero.tsx`, `useTalkXMediaUpload.ts`, `actions.ts`, `useGlobalSearchData`, `ConversationDeliverySummary.tsx`, `accessible-toast.tsx`, `useAgents.leitura.test.tsx`, `timers-unmount.test.tsx`, `ScheduleCalendarView.agenda.test.tsx`, `useContactSearchV2.ts`, `RadarPhase9Panel.tsx`, `useSupabaseConnectivity.ts`, `useMultiplixReplies.ts`, `VoiceSearchOverlay.tsx`, `useGmail.test.ts`, `useAuth.aviso-dispositivo.test.tsx`, `CommandPaletteHost.tsx`, `useAgentPresence.ts`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `chat/motion/index.ts`, `JourneyHealthChip.tsx`, `SLAIndicator.contrasteSelos.test.tsx`, `VoiceActionBridge.test.tsx`, `quadroLarguraFocoContraste.test.tsx`, `GoalsDashboard.tsx`, `ChatbotHonestNotice.test.tsx`, `useSupervisorQueue.ts`, `useGeoBlocking.ts`, `useTranscriptionNotifications.ts`, `dashboard/ConversationHeatmap.tsx`, `talkxKeyMetrics.ts`, `useAutomationSuggestions.ts`, `useContainerColumns.test.ts`, `useTalkXTemplates.test.ts`, `MobileDrawerMenu.tsx`, `EmailThreadView.test.tsx`, `useChatInputLogic.ts`, `useRateLimitLogs.ts`, `useConnectionsHealth.ts`, `GmailInboxView.test.tsx`, `SentimentTrendChart`, `useDashboardData.ts`, `useDashboardKpi.ts`, `RadarCards.tsx`, `AuditLogDashboard.test.tsx`, `lib/ai-vocabulary.ts`, `chat-motion.test.tsx`, `PLANO EM 50 ETAPAS`, `a11yComponents.tsx`, `usePerformance.ts`, `uploadTeamMedia.test.tsx`, `system/index.ts`, `ContactIntelligencePanel.tsx`, `MissingQuestions.tsx`, `useTypingPresence.ts`, `useWorkItemDraft.ts`, `useTeamUnreadTotal`, `Por etapa`, `StickerManager.envio.test.tsx`, `useContactsV2Flags.test.tsx`, `useTeamChatRealtimeChannelErrors.test.tsx`, `useSpeechToText.ts`, `TalkXTemplateEditor.race.test.tsx`, `HighContrastProvider`, `useMediaPrivacy.ts`, `useVolumeRocker.ts`, `dashboard/metrics/index.ts`, `useChatSearch.ts`, `LiveSuggestions.tsx`, `TalkXSegments.detailFresh.test.tsx`, `chart.tsx`, `useMentionableProfiles.ts`, `useDiagnosticsData.ts`, `useLiveSuggestions.ts`, `AiTab`, `ChatInputArea.limite-enter.test.tsx`, `ContactDeliveryPanel.tsx`, `fundacaoVisual.test.tsx`, `ViewRouter`, `VolumeDial.tsx`, `useMessageReactions.transport-rejection.test.tsx`, `usePersonalStickers.webp.test.tsx`, `formatDocumentTitle`, `useCopilotSession.ts`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `LeadRiskScorePanel.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `bucket`, `featuresSectionsData.ts`, `contactsMotion.ts`, `QuoteDraftCard.copia.test.tsx`, `GroupsView.broadcast.test.tsx`, `ChatMessagesArea.agrupar-envio.test.tsx`, `usePerformanceOptimizations.ts`, `useCallRecording.test.tsx`, `usePersonalStickers.uso.test.tsx`, `useTalkXInsights.defeito-223.test.tsx`, `useUndoableAction.ts`, `useDeviceDetection.test.tsx`, `useContactFormValidation.ts`, `ChatMessagesArea.pagination.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `Y29_gateDownloadOutros.test.tsx`, `quadroArrastarTecladoRolagem.test.tsx`, `quadroResponsivoAbas.test.tsx`, `useSearchHistory.ts`, `realtimeSharedTopic.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `motion.ts`, `StickerManager.recentes.r2-inb-062.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `GmailIntegrationCard.apagar-dados.test.tsx`, `TalkXSegments.builder.test.tsx`, `TalkXSegments.library.test.tsx`, `ContactsView.v2Flags.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `slaDenominadores.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `SendProductDialog.test.tsx`, `useCopilotFeedback.ts`, `ObjectionDetector.severidade.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `SoundCustomizationPanel.test.tsx`, `TalkXCampaignRunning.limits.test.tsx`, `useFilesInfiniteScroll.test.tsx`, `useSLARulesCounts.ts`, `InviteAgentDialog.test.tsx`, `useRadarPanel.ts`, `VoiceChangerPicker.voz-temporaria.test.tsx`, `ChannelRoutingRules.a11y.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `useBusinessHoursCheck.test.tsx`, `useMessages.overlay.test.tsx`, `useAudioMemes.mutacoes.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useSavedFilters.test.tsx`, `ProtectedRoute.acesso-negado.test.tsx`, `ContactNotes.semColuna.test.tsx`, `AdvancedMessageMenu.menu-avancado.test.tsx`, `VoiceChanger.falhas.test.tsx`, `VoiceChanger.reduced-motion.test.tsx`, `shellLayout.contrato.test.tsx`, `Sidebar.test.tsx`, `AvatarUpload.invalidacao.test.tsx`, `useAIUsageDashboard.janela.test.tsx`, `useTelefoniaFilters.test.tsx`, `useDataMasking.ts`, `useContactSummaryNote.concurrency.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useLoadingState.ts`, `AgentsView.pendencias.test.tsx`, `AutomationsManager.persistencia.test.tsx`, `InstanceSettingsDialog.config-perfil.test.tsx`, `NumberReputationMonitor.test.tsx`, `EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `ChatPanel.entrega-conversa.test.tsx`, `ContactActionButtons.test.tsx`, `AISuggestions.tom.test.tsx`, `useFileUploadLogic.test.tsx`, `AIGenerateDialog.test.tsx`, `TalkXCampaignRunning.states.test.tsx`, `sentiment-vocabulario.test.tsx`, `useAIUsageDashboard.agregacao.test.tsx`, `useContactMedia.sticker.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useInboxUnreadTotal.test.tsx`, `useExternalDB.test.ts`, `useGmail.syncStatus.test.tsx`, `useSLAScopeNames.test.tsx`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `VoiceChangerPicker.test.tsx`, `GlobalSettingsSection.sem-consumidor.test.tsx`, `TalkXSuppression.add.test.tsx`, `TalkXSuppression.search.test.tsx`, `ContextualEmptyState.tsx`, `useMessages.reconexao.test.tsx`, `useBrandColors.ts`, `useEmailContactContext.test.tsx`, `useGmail.syncParcial.test.tsx`, `useTeamMessageReactions.canal-e-reconexao.test.tsx`, `useTeamMessageReactions.test.tsx`, `useGlobalSettings.zero-linhas.test.tsx`, `useMessages.test.tsx`, `AIUsageDashboard.estado-a11y.test.tsx`, `ConnectionCard.desconectar-erro.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `ConversationSummary.ia048.test.tsx`, `WhisperMode.contador.test.tsx`, `WhisperMode.leitura.test.tsx`, `VoiceDictationButton.session.test.tsx`, `AIGenerateDialog.pasta-usuario.test.tsx`, `ScheduleSettings.test.tsx`, `SkillBasedRoutingSettings.test.tsx`, `TalkXSegments.feedbackMassaMotivos.test.tsx`, `motionEffects.movimento.test.tsx`, `useAuth.rascunho-teamchat-logout.test.tsx`, `useMinQuantityAlert.ts`, `useContactIntelligence.test.tsx`, `configuracoes.leituraErro.test.tsx`, `useCatalogFavorites.test.ts`, `useSLAHistory.test.tsx`, `useUserSettings.test.tsx`?**
+- **Why does `react` connect `react` to `lucide-react`, `button.tsx`, `vitest`, `ExternalProductManagement.tsx`, `utils.ts`, `avatar.tsx`, `framer-motion`, `cn`, `@tanstack/react-query`, `TalkXView.tsx`, `useTalkXSegments.ts`, `ref_node_fs`, `DashboardView.tsx`, `chat.ts`, `react-router-dom`, `SendProductDialog.tsx`, `TalkXTemplates.tsx`, `SettingsView.tsx`, `TalkXCampaignWizard.tsx`, `workItem.types.ts`, `EmailComposer.tsx`, `hooks/copilot/index.ts`, `RealtimeInboxView.tsx`, `TalkXCampaignRunning.tsx`, `useContactMedia.ts`, `mediaVolumeStore.ts`, `AIConversationAssistant.tsx`, `TalkXSuppression.tsx`, `fmtInt`, `useMultiplixDispatches.ts`, `WorkItemSheet.tsx`, `useCampaignRowActions.tsx`, `useTalkX.ts`, `FileThumb.tsx`, `useSipClient.test.ts`, `useMyWorkItems.ts`, `ChatPopup.rolagem-mensagem-nova.test.tsx`, `TalkXView`, `queryClient.tsx`, `mapboxToken.ts`, `TalkXAnalytics.tsx`, `ConversationTabContent.tsx`, `useNotifications.ts`, `useInboxFilters`, `TasksModule.tsx`, `CallSessionProvider.tsx`, `useFilesViewState.ts`, `useCustomShortcuts.ts`, `useResolvedStorageUrl`, `theme/presets.ts`, `fetchAllRows`, `personalizePreview`, `App.tsx`, `ConversationWithMessages`, `useContactMedia.stickers.test.tsx`, `primitivosCompartilhados.test.tsx`, `useWarRoomData.ts`, `TalkXLinksManager.tsx`, `telefoniaContraste.test.tsx`, `useAdminData.ts`, `useMonitoringData.ts`, `localDay.ts`, `periodRange.ts`, `TalkXHelp`, `useRealtimeMessages.ts`, `useTeamChatPanel.ts`, `useCallChannels.ts`, `useSupabaseRealtime.ts`, `useAudioPlayer.ts`, `TasksUiProvider`, `AIQuickAccess.tsx`, `useSLANotifications.ts`, `BusinessHoursIndicator.test.tsx`, `useConversationHistoryTimeline.ts`, `ContactNotes.ordemFoco.test.tsx`, `ExternalDataIntegration.test.tsx`, `package.json`, `useAddressAutocomplete.ts`, `useForwardMedia.ts`, `FilesTab.tsx`, `RealtimeInboxView.talk-me-entry.test.tsx`, `talkxHelpIndex.ts`, `useEvolutionApi.ts`, `useRealtimeInbox.ts`, `OnboardingChecklist.test.tsx`, `model.ts`, `MessagesSettings.test.tsx`, `ViewRouter`, `talkxHelpMarkdown.tsx`, `TalkX.test.tsx`, `TalkXLiveMonitor.lifecycle.test.tsx`, `TalkXSegments.feedbackMassa.test.tsx`, `CallSessionProvider.test.tsx`, `TalkXSuppression.contactSearch.test.tsx`, `useChatPanelHandlers.ts`, `useConnectionIncidents.ts`, `useContactMediaCounts.test.tsx`, `useChatKeyboardNavigation.ts`, `useBattleCard.ts`, `invokeEdge.ts`, `useGoalNotifications.ts`, `communication/useVoiceAgent.ts`, `useContactNotes.semColuna.test.tsx`, `useFirstResponseScript.ts`, `SipCallAdapter`, `useSpeedToLead.ts`, `useTeamChatMembers.ja-membros.test.tsx`, `useQuickReplies.test.tsx`, `Crm360Tab.tsx`, `teamChatTypes.ts`, `useCatalogContactSearch.ts`, `ChatPanel`, `LocationPicker.integration.test.tsx`, `ViewRouter.tsx`, `tabLeaderStore.ts`, `CT70_reducedMotion.test.tsx`, `useGmail.ts`, `useConversationActions`, `StickerManager.tsx`, `useAudioRecorder.ts`, `journey/motion/index.ts`, `useNavigationHistory.ts`, `Fase 3 — Perímetro de segurança (E35–E50)`, `useContactNotes`, `AppShell.tsx`, `useTalkXCampaignList.ts`, `ContactDetails`, `Index.tsx`, `TalkXCampaignScheduled`, `IncomingCallAlert.tsx`, `useWhatsAppStatus.ts`, `MultiplixView`, `MultiplixView.tsx`, `useTalkMeQueue.ts`, `useMessages`, `motion.tsx`, `ErrorBoundary`, `ChatbotFlowEditor.tsx`, `safeStorage.ts`, `slaTimeline.ts`, `useInboxBulkActions.test.ts`, `pending`, `emailThreadQuery.ts`, `SinguProfileSection.tsx`, `useNextBestAction`, `useGmail`, `useTalkXResumeChecklist.ts`, `offlineQueue.ts`, `TemplatesWithVariables.tsx`, `useChatMediaSending.audio-meme-falha.test.ts`, `RouteTransition.tsx`, `useTheme.ts`, `useContactUnreadEmails.realtime.test.tsx`, `useTeamFiles.ts`, `useGlobalIncomingMessageAlerts.behavior.test.tsx`, `useInboxFilterPresets.ts`, `EmailVolumeMedicao.test.tsx`, `LinkPreview.tsx`, `buttons.tsx`, `EmailChatInbox`, `outbound-message.service.ts`, `useJourneyEmails.ts`, `secureRandomFloat`, `empty-states.tsx`, `useContactsSearch`, `AchievementToast.tsx`, `AutomationEditorDialog.tsx`, `useCustomEmojis.ts`, `useTeamMessages.ts`, `useAppBootstrap.test.tsx`, `DailyMetricsKpis.tsx`, `TalkXInteractiveEditor.tsx`, `useWarRoomAlerts.ts`, `useConversationActions.ts`, `evolutionAdapter.ts`, `JourneyStatsHero.tsx`, `useTalkXMediaUpload.ts`, `actions.ts`, `useGlobalSearchData`, `ConversationDeliverySummary.tsx`, `accessible-toast.tsx`, `useAgents.leitura.test.tsx`, `timers-unmount.test.tsx`, `ScheduleCalendarView.agenda.test.tsx`, `useContactSearchV2.ts`, `RadarPhase9Panel.tsx`, `useSupabaseConnectivity.ts`, `useMultiplixReplies.ts`, `VoiceSearchOverlay.tsx`, `useGmail.test.ts`, `useAuth.aviso-dispositivo.test.tsx`, `CommandPaletteHost.tsx`, `useAgentPresence.ts`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `chat/motion/index.ts`, `JourneyHealthChip.tsx`, `SLAIndicator.contrasteSelos.test.tsx`, `VoiceActionBridge.test.tsx`, `quadroLarguraFocoContraste.test.tsx`, `GoalsDashboard.tsx`, `ChatbotHonestNotice.test.tsx`, `useSupervisorQueue.ts`, `useGeoBlocking.ts`, `useTranscriptionNotifications.ts`, `dashboard/ConversationHeatmap.tsx`, `talkxKeyMetrics.ts`, `useAutomationSuggestions.ts`, `useContainerColumns.test.ts`, `useTalkXTemplates.test.ts`, `MobileDrawerMenu.tsx`, `EmailThreadView.test.tsx`, `useChatInputLogic.ts`, `useRateLimitLogs.ts`, `useConnectionsHealth.ts`, `GmailInboxView.test.tsx`, `SentimentTrendChart`, `useDashboardData.ts`, `useDashboardKpi.ts`, `RadarCards.tsx`, `AuditLogDashboard.test.tsx`, `lib/ai-vocabulary.ts`, `chat-motion.test.tsx`, `PLANO EM 50 ETAPAS`, `a11yComponents.tsx`, `usePerformance.ts`, `uploadTeamMedia.test.tsx`, `system/index.ts`, `ContactIntelligencePanel.tsx`, `MissingQuestions.tsx`, `useTypingPresence.ts`, `useWorkItemDraft.ts`, `useTeamUnreadTotal`, `Por etapa`, `StickerManager.envio.test.tsx`, `useContactsV2Flags.test.tsx`, `useTeamChatRealtimeChannelErrors.test.tsx`, `useSpeechToText.ts`, `TalkXTemplateEditor.race.test.tsx`, `HighContrastProvider`, `useMediaPrivacy.ts`, `useVolumeRocker.ts`, `dashboard/metrics/index.ts`, `useChatSearch.ts`, `LiveSuggestions.tsx`, `TalkXSegments.detailFresh.test.tsx`, `chart.tsx`, `useMentionableProfiles.ts`, `useDiagnosticsData.ts`, `useLiveSuggestions.ts`, `AiTab`, `ChatInputArea.limite-enter.test.tsx`, `ContactDeliveryPanel.tsx`, `fundacaoVisual.test.tsx`, `VolumeDial.tsx`, `useMessageReactions.transport-rejection.test.tsx`, `usePersonalStickers.webp.test.tsx`, `formatDocumentTitle`, `useCopilotSession.ts`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `LeadRiskScorePanel.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `bucket`, `featuresSectionsData.ts`, `contactsMotion.ts`, `QuoteDraftCard.copia.test.tsx`, `GroupsView.broadcast.test.tsx`, `ChatMessagesArea.agrupar-envio.test.tsx`, `usePerformanceOptimizations.ts`, `useCallRecording.test.tsx`, `usePersonalStickers.uso.test.tsx`, `useTalkXInsights.defeito-223.test.tsx`, `useDeviceDetection.test.tsx`, `useContactFormValidation.ts`, `ChatMessagesArea.pagination.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `Y29_gateDownloadOutros.test.tsx`, `quadroArrastarTecladoRolagem.test.tsx`, `quadroResponsivoAbas.test.tsx`, `useSearchHistory.ts`, `realtimeSharedTopic.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `motion.ts`, `StickerManager.recentes.r2-inb-062.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `GmailIntegrationCard.apagar-dados.test.tsx`, `TalkXSegments.builder.test.tsx`, `TalkXSegments.library.test.tsx`, `ContactsView.v2Flags.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `slaDenominadores.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `SendProductDialog.test.tsx`, `useCopilotFeedback.ts`, `ObjectionDetector.severidade.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `SoundCustomizationPanel.test.tsx`, `TalkXCampaignRunning.limits.test.tsx`, `useFilesInfiniteScroll.test.tsx`, `useSLARulesCounts.ts`, `InviteAgentDialog.test.tsx`, `useRadarPanel.ts`, `VoiceChangerPicker.voz-temporaria.test.tsx`, `ChannelRoutingRules.a11y.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `useBusinessHoursCheck.test.tsx`, `useMessages.overlay.test.tsx`, `useAudioMemes.mutacoes.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useSavedFilters.test.tsx`, `ProtectedRoute.acesso-negado.test.tsx`, `ContactNotes.semColuna.test.tsx`, `AdvancedMessageMenu.menu-avancado.test.tsx`, `VoiceChanger.falhas.test.tsx`, `VoiceChanger.reduced-motion.test.tsx`, `shellLayout.contrato.test.tsx`, `Sidebar.test.tsx`, `AvatarUpload.invalidacao.test.tsx`, `useAIUsageDashboard.janela.test.tsx`, `useTelefoniaFilters.test.tsx`, `useDataMasking.ts`, `useContactSummaryNote.concurrency.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useLoadingState.ts`, `AgentsView.pendencias.test.tsx`, `AutomationsManager.persistencia.test.tsx`, `InstanceSettingsDialog.config-perfil.test.tsx`, `NumberReputationMonitor.test.tsx`, `EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `ChatPanel.entrega-conversa.test.tsx`, `ContactActionButtons.test.tsx`, `AISuggestions.tom.test.tsx`, `useFileUploadLogic.test.tsx`, `AIGenerateDialog.test.tsx`, `TalkXCampaignRunning.states.test.tsx`, `sentiment-vocabulario.test.tsx`, `useAIUsageDashboard.agregacao.test.tsx`, `useContactMedia.sticker.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useInboxUnreadTotal.test.tsx`, `useExternalDB.test.ts`, `useGmail.syncStatus.test.tsx`, `useSLAScopeNames.test.tsx`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `VoiceChangerPicker.test.tsx`, `GlobalSettingsSection.sem-consumidor.test.tsx`, `TalkXSuppression.add.test.tsx`, `TalkXSuppression.search.test.tsx`, `ContextualEmptyState.tsx`, `useMessages.reconexao.test.tsx`, `useBrandColors.ts`, `useEmailContactContext.test.tsx`, `useGmail.syncParcial.test.tsx`, `useTeamMessageReactions.canal-e-reconexao.test.tsx`, `useTeamMessageReactions.test.tsx`, `useGlobalSettings.zero-linhas.test.tsx`, `useMessages.test.tsx`, `AIUsageDashboard.estado-a11y.test.tsx`, `ConnectionCard.desconectar-erro.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `ConversationSummary.ia048.test.tsx`, `WhisperMode.contador.test.tsx`, `WhisperMode.leitura.test.tsx`, `VoiceDictationButton.session.test.tsx`, `AIGenerateDialog.pasta-usuario.test.tsx`, `ScheduleSettings.test.tsx`, `SkillBasedRoutingSettings.test.tsx`, `TalkXSegments.feedbackMassaMotivos.test.tsx`, `motionEffects.movimento.test.tsx`, `useAuth.rascunho-teamchat-logout.test.tsx`, `useMinQuantityAlert.ts`, `useContactIntelligence.test.tsx`, `configuracoes.leituraErro.test.tsx`, `useCatalogFavorites.test.ts`, `useSLAHistory.test.tsx`, `useUserSettings.test.tsx`?**
   _High betweenness centrality (0.094) - this node is a cross-community bridge._
-- **Why does `@testing-library/react` connect `vitest` to `react`, `lucide-react`, `button.tsx`, `ExternalProductManagement.tsx`, `utils.ts`, `avatar.tsx`, `framer-motion`, `cn`, `@tanstack/react-query`, `TalkXView.tsx`, `useTalkXSegments.ts`, `ref_node_fs`, `DashboardView.tsx`, `chat.ts`, `react-router-dom`, `SendProductDialog.tsx`, `TalkXTemplates.tsx`, `SettingsView.tsx`, `TalkXCampaignWizard.tsx`, `workItem.types.ts`, `EmailComposer.tsx`, `hooks/copilot/index.ts`, `RealtimeInboxView.tsx`, `TalkXCampaignRunning.tsx`, `FASE 1 — Motor: ligar o contrato ao que existe (T09–T22)`, `useContactMedia.ts`, `mediaVolumeStore.ts`, `AIConversationAssistant.tsx`, `TalkXSuppression.tsx`, `fmtInt`, `useMultiplixDispatches.ts`, `WorkItemSheet.tsx`, `useCampaignRowActions.tsx`, `useTalkX.ts`, `FileThumb.tsx`, `useSipClient.test.ts`, `useMyWorkItems.ts`, `ChatPopup.rolagem-mensagem-nova.test.tsx`, `TalkXView`, `queryClient.tsx`, `mapboxToken.ts`, `TalkXAnalytics.tsx`, `ConversationTabContent.tsx`, `useNotifications.ts`, `useInboxFilters`, `useReducedMotion`, `TasksModule.tsx`, `CallSessionProvider.tsx`, `useFilesViewState.ts`, `.failed`, `useCustomShortcuts.ts`, `useResolvedStorageUrl`, `theme/presets.ts`, `fetchAllRows`, `personalizePreview`, `App.tsx`, `ConversationWithMessages`, `useContactMedia.stickers.test.tsx`, `primitivosCompartilhados.test.tsx`, `useWarRoomData.ts`, `TalkXLinksManager.tsx`, `telefoniaContraste.test.tsx`, `useAdminData.ts`, `useMonitoringData.ts`, `localDay.ts`, `periodRange.ts`, `TalkXHelp`, `useRealtimeMessages.ts`, `alertBehaviorTestKit.ts`, `useTeamChatPanel.ts`, `useCallChannels.ts`, `useSupabaseRealtime.ts`, `useAudioPlayer.ts`, `TasksUiProvider`, `TelefoniaView.selecao-pagina.test.tsx`, `AIQuickAccess.tsx`, `BusinessHoursIndicator.test.tsx`, `ContactDetailPanel.activity.test.tsx`, `useConversationHistoryTimeline.ts`, `ContactNotes.ordemFoco.test.tsx`, `ExternalDataIntegration.test.tsx`, `SLAMetricsDashboard.sem-dados-erro.test.tsx`, `package.json`, `SystemFeaturesView.test.tsx`, `useAddressAutocomplete.ts`, `EmailChatInbox.contato.test.tsx`, `useForwardMedia.ts`, `ContactDeliveryPanel.test.tsx`, `ContactDetails.entrega.test.tsx`, `FilesTab.tsx`, `RealtimeInboxView.talk-me-entry.test.tsx`, `Leaderboard.test.tsx`, `MetaCAPIView.test.tsx`, `MultiplixView.contagem.test.tsx`, `ViewRouter`, `talkxHelpIndex.ts`, `model.ts`, `OnboardingChecklist.test.tsx`, `AclAlertsPanel.test.tsx`, `MessagesSettings.test.tsx`, `FilesTab`, `TalkXLiveMonitor.lifecycle.test.tsx`, `BorderRadiusControl.test.tsx`, `TalkX.test.tsx`, `useChatPanelHandlers.ts`, `useConnectionIncidents.ts`, `TalkXSegments.feedbackMassa.test.tsx`, `TalkXSuppression.contactSearch.test.tsx`, `QuickAddCompacto.test.tsx`, `VolumeTriggerButton.test.tsx`, `useGoalNotifications.ts`, `communication/useVoiceAgent.ts`, `useNewConversation.connection.test.tsx`, `useContactNotes.semColuna.test.tsx`, `SipCallAdapter`, `system/__tests__/usePermissions.test.tsx`, `useTeamChatMembers.ja-membros.test.tsx`, `useQuickReplies.test.tsx`, `Crm360Tab.tsx`, `useConnectionsManager`, `teamChatTypes.ts`, `useCatalogContactSearch.ts`, `ChatPanel`, `LocationPicker.integration.test.tsx`, `ViewRouter.tsx`, `CT70_reducedMotion.test.tsx`, `useGmail.ts`, `StickerManager.tsx`, `useAudioRecorder.ts`, `KpiStrip`, `useInboxBulkActions.test.ts`, `journey/motion/index.ts`, `useNavigationHistory.ts`, `Fase 3 — Perímetro de segurança (E35–E50)`, `useContactNotes`, `AppShell.tsx`, `useTalkXCampaignList.ts`, `ContactDetails`, `Index.tsx`, `TalkXCampaignScheduled`, `IncomingCallAlert.tsx`, `useWhatsAppStatus.ts`, `MultiplixView`, `useTalkMeQueue.ts`, `useMessages`, `ErrorBoundary`, `ChatbotFlowEditor.tsx`, `safeStorage.ts`, `slaTimeline.ts`, `emailThreadQuery.ts`, `useNextBestAction`, `useGmail`, `useTalkXResumeChecklist.ts`, `offlineQueue.ts`, `TemplatesWithVariables.tsx`, `useChatMediaSending.audio-meme-falha.test.ts`, `RouteTransition.tsx`, `events.ts`, `useTheme.ts`, `useContactUnreadEmails.realtime.test.tsx`, `useTeamFiles.ts`, `useGlobalIncomingMessageAlerts.behavior.test.tsx`, `useDepartmentManagement.ts`, `useInboxFilterPresets.ts`, `EmailVolumeMedicao.test.tsx`, `LinkPreview.tsx`, `EmailChatInbox`, `QuarantineMonitorProvider.r2-api-066.test.tsx`, `useJourneyEmails.ts`, `secureRandomFloat`, `empty-states.tsx`, `SuggestionList`, `useContactsSearch`, `AchievementToast.tsx`, `AutomationEditorDialog.tsx`, `useCustomEmojis.ts`, `useTeamMessages.ts`, `useAppBootstrap.test.tsx`, `DailyMetricsKpis.tsx`, `SystemHealthCard.tsx`, `TalkXInteractiveEditor.tsx`, `useWarRoomAlerts.ts`, `JourneyStatsHero.tsx`, `actions.ts`, `IncomingCallAlert.volume.test.tsx`, `CT55_57_management.test.tsx`, `useConversationActions.test.ts`, `TeamChatPanel.settings-wiring.test.tsx`, `useGlobalSearchData`, `TeamChatPanel.wiring.test.tsx`, `accessible-toast.tsx`, `useAgents.leitura.test.tsx`, `timers-unmount.test.tsx`, `ScheduleCalendarView.agenda.test.tsx`, `useContactSearchV2.ts`, `RadarPhase9Panel.tsx`, `KnowledgeBaseView.fileActions.test.tsx`, `useSupabaseConnectivity.ts`, `e2e-isolated-seed.unit.mjs`, `useMultiplixReplies.ts`, `VoiceSearchOverlay.tsx`, `useGmail.test.ts`, `useAuth.aviso-dispositivo.test.tsx`, `useAuthForm`, `contactSidebar.ts`, `CommandPaletteHost.tsx`, `useAgentPresence.ts`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `JourneyHealthChip.tsx`, `SLAIndicator.contrasteSelos.test.tsx`, `VoiceActionBridge.test.tsx`, `quadroLarguraFocoContraste.test.tsx`, `coresCruasInboxCrm.test.tsx`, `y17Selos.contraste.test.tsx`, `TrainingMiniGames.creditoXp.test.tsx`, `ChatbotHonestNotice.test.tsx`, `useGeoBlocking.ts`, `useTranscriptionNotifications.ts`, `dashboard/ConversationHeatmap.tsx`, `talkxKeyMetrics.ts`, `useAutomationSuggestions.ts`, `useContainerColumns.test.ts`, `useTalkXTemplates.test.ts`, `MobileDrawerMenu.tsx`, `EmailThreadView.test.tsx`, `useChatInputLogic.ts`, `config/supabase.ts`, `useRateLimitLogs.ts`, `useConnectionsHealth.ts`, `ContactService`, `GmailInboxView.test.tsx`, `SentimentTrendChart`, `emailHtml.ts`, `useDashboardData.ts`, `useDashboardKpi.ts`, `contrastePlayerSlider.test.tsx`, `AuditLogDashboard.test.tsx`, `lib/ai-vocabulary.ts`, `chat-motion.test.tsx`, `PLANO EM 50 ETAPAS`, `ContactDetails.mobile-iniciais-sentimento.test.tsx`, `usePerformance.ts`, `uploadTeamMedia.test.tsx`, `system/index.ts`, `ContactIntelligencePanel.tsx`, `MissingQuestions.tsx`, `AudioPlayButton.test.tsx`, `useTypingPresence.ts`, `useWorkItemDraft.ts`, `useTeamUnreadTotal`, `CrisisRoom.metricas.test.tsx`, `StickerManager.envio.test.tsx`, `Crm360Tab.test.tsx`, `useContactsV2Flags.test.tsx`, `useTeamChatRealtimeChannelErrors.test.tsx`, `useSpeechToText.ts`, `TalkXTemplateEditor.race.test.tsx`, `FilesTab.fase6.test.tsx`, `MobileDrawerMenu.a11y.test.tsx`, `HighContrastProvider`, `useConversationActions`, `useSLANotifications.ts`, `useVolumeRocker.ts`, `Auth`, `TrainingMode.avaliacao.test.tsx`, `SL038_badgesTokensTema.test.tsx`, `useChatSearch.ts`, `MessageBubble.contrasteStatus.test.tsx`, `LiveSuggestions.tsx`, `LocationPicker.gpsAtrasado.test.tsx`, `KpiStrip.contraste.test.tsx`, `StatusChips.contrasteChipAtendendo.test.tsx`, `TalkXSegments.detailFresh.test.tsx`, `movimentoEContraste.test.tsx`, `chart.tsx`, `useMentionableProfiles.ts`, `useDiagnosticsData.ts`, `useLiveSuggestions.ts`, `AiTab`, `useEvolutionApi.ts`, `useRealtimeInbox.ts`, `CT57_historicoAlem500.test.tsx`, `CT69_contrasteBadges.test.tsx`, `ChatInputArea.limite-enter.test.tsx`, `fundacaoVisual.test.tsx`, `ReportCharts.descricao-textual.test.tsx`, `IPListasErro.contrasteTema.test.tsx`, `ThemeCustomizer.a11y.test.tsx`, `VolumeDial.tsx`, `useMessageReactions.transport-rejection.test.tsx`, `usePersonalStickers.webp.test.tsx`, `useTeamChatNotifications.behavior.test.ts`, `formatDocumentTitle`, `CallSessionProvider.test.tsx`, `CT61_62_65_catalogFilters.test.tsx`, `TalkXContactSelector.a11y.test.tsx`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `useScheduledReports.test.tsx`, `LocationMessage.test.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `TalkXOverview.table.test.tsx`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.actions.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useRealtimeDashboard.reconciliacao.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `bucket`, `useContactMediaCounts.test.tsx`, `useChatKeyboardNavigation.ts`, `QuoteDraftCard.copia.test.tsx`, `GroupsView.broadcast.test.tsx`, `ChatMessagesArea.agrupar-envio.test.tsx`, `useAddressAutocomplete.test.tsx`, `NotesTab.error-save.test.tsx`, `AiTab.erroAnalise.test.tsx`, `AiTab.test.tsx`, `useRealtimeDashboard.escopo.test.tsx`, `useRealtimeDashboard.visibilidade.test.tsx`, `usePerformanceOptimizations.ts`, `useCallRecording.test.tsx`, `useTeamChatNotifications.nome-e-clique.test.tsx`, `usePersonalStickers.uso.test.tsx`, `useTalkXInsights.defeito-223.test.tsx`, `useSecurityPushNotifications.test.ts`, `useUndoableAction.ts`, `useDeviceDetection.test.tsx`, `useRealtimeMessages.test.tsx`, `SinguProfileSection.test.tsx`, `ExternalProductCatalog.virtualizacao.test.tsx`, `useContactFormValidation.ts`, `ChatMessagesArea.pagination.test.tsx`, `FileThumb.test.tsx`, `ChatPanel.typing-presence.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `Y29_gateDownloadOutros.test.tsx`, `MediaLibraryAdmin.test.tsx`, `quadroArrastarTecladoRolagem.test.tsx`, `quadroResponsivoAbas.test.tsx`, `useSearchHistory.ts`, `realtimeSharedTopic.test.tsx`, `useQueuesComparison.race.test.tsx`, `useTeamChatNotifications.aviso-navegador.test.tsx`, `PerformanceMonitor`, `CrossTabDedupePanel.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `StickerManager.recentes.r2-inb-062.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `GmailIntegrationCard.apagar-dados.test.tsx`, `MediaLibraryAdmin.a11y.test.tsx`, `TalkXSegments.builder.test.tsx`, `TalkXSegments.library.test.tsx`, `useSupervisorQueue.test.tsx`, `ContactsView.v2Flags.test.tsx`, `useLeaderboard.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `slaDenominadores.test.tsx`, `useQueueAnalytics.test.tsx`, `AdminCRMDashboard.explorer-crm360.test.tsx`, `GmailWebhookMonitor.falha-consulta.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `NewCallPanel.test.tsx`, `TelefoniaView.a11y.test.tsx`, `SendProductDialog.test.tsx`, `useChatPanelHandlers.sem-falso-sucesso.test.tsx`, `NotesTab.test.tsx`, `ObjectionDetector.severidade.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `SoundCustomizationPanel.test.tsx`, `TalkXCampaignRunning.limits.test.tsx`, `useFilesInfiniteScroll.test.tsx`, `useAudioMemes.mediaVolumeBindings.test.tsx`, `useSLARulesCounts.ts`, `useDiagnosticsData.test.ts`, `useTextToSpeech.lifecycle.test.ts`, `MediaMigrationTool.test.tsx`, `InviteAgentDialog.test.tsx`, `useChatPanelHandlers.edicao-rejeitada.test.tsx`, `useRadarPanel.ts`, `VoiceChangerPicker.voz-temporaria.test.tsx`, `useMonitoringData.buckets.test.ts`, `useMonitoringData.errors.test.ts`, `ChannelRoutingRules.a11y.test.tsx`, `QueuesView.editar.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `TalkXSuppression.editReasonVazio.test.tsx`, `useBusinessHoursCheck.test.tsx`, `useMessages.overlay.test.tsx`, `useAudioMemes.mutacoes.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useSavedFilters.test.tsx`, `ProtectedRoute.acesso-negado.test.tsx`, `ActiveCallPanel.test.tsx`, `ContactNotes.semColuna.test.tsx`, `HandoffDialog.test.tsx`, `ViewersIndicator.presenca.test.tsx`, `useEvolutionContactProfile.ts`, `AdvancedMessageMenu.menu-avancado.test.tsx`, `GlobalSearch.r2-inb-020.test.tsx`, `RealtimeInboxView.atalhos-teclado.test.tsx`, `RealtimeInboxView.pagination.test.tsx`, `VoiceChanger.falhas.test.tsx`, `VoiceChanger.reduced-motion.test.tsx`, `shellLayout.contrato.test.tsx`, `Sidebar.test.tsx`, `MultiplixView.lista-virtualizada.test.tsx`, `MultiplixView.painel01.test.tsx`, `AvatarUpload.invalidacao.test.tsx`, `useAIUsageDashboard.janela.test.tsx`, `useTelefoniaFilters.test.tsx`, `useDataMasking.ts`, `useContactSummaryNote.concurrency.test.tsx`, `useObjectionDetector.n169.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useIncomingCallListener.test.tsx`, `useLoadingState.ts`, `useUniversityHelp.test.tsx`, `RateLimitDashboard.logs.test.tsx`, `AgentsView.pendencias.test.tsx`, `HeroBenefits.test.tsx`, `AutomationsManager.persistencia.test.tsx`, `CallHistoryStates.test.tsx`, `InstanceSettingsDialog.config-perfil.test.tsx`, `NumberReputationMonitor.test.tsx`, `GamificationSection.customizacao.test.tsx`, `GoalsConfigDialog.metas.test.tsx`, `EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `ChatMessagesArea.loop.test.tsx`, `ChatPanel.entrega-conversa.test.tsx`, `ContactActionButtons.test.tsx`, `AISuggestions.tom.test.tsx`, `RealtimeInboxView.aria-novas-mensagens.test.tsx`, `useFileUploadLogic.test.tsx`, `OmnichannelInbox.test.tsx`, `QueuesView.test.tsx`, `SecurityOverview.medicao.test.tsx`, `AIGenerateDialog.test.tsx`, `ActiveCampaignIndicator.test.tsx`, `TalkXCampaignRunning.states.test.tsx`, `sentiment-vocabulario.test.tsx`, `useAIUsageDashboard.agregacao.test.tsx`, `useContactMedia.sticker.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useInboxUnreadTotal.test.tsx`, `useExternalDB.test.ts`, `useGmail.syncStatus.test.tsx`, `useSLAScopeNames.test.tsx`, `ResetPassword.segundo-fator-sessoes.test.tsx`, `useContactsCRUD.test.tsx`, `EmailChatInbox.buscaEstados.test.tsx`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `RealtimeCollaboration.handoff.test.tsx`, `ContactDetails.quickActions.test.tsx`, `FileUploader.retry-envio.test.tsx`, `GlobalSearch.navigation.test.tsx`, `MessageReactions.autoria-unica.test.tsx`, `VoiceChangerPicker.test.tsx`, `useMonitoringNotifications.behavior.test.ts`, `QueueGoalsDialog.salvarMetas.test.tsx`, `AutomationSettings.test.tsx`, `GlobalSettingsSection.sem-consumidor.test.tsx`, `ThemeCustomizer.test.tsx`, `TalkXSuppression.add.test.tsx`, `TalkXSuppression.search.test.tsx`, `useMessages.reconexao.test.tsx`, `useEmailContactContext.test.tsx`, `useGmail.syncParcial.test.tsx`, `useTeamMessageReactions.canal-e-reconexao.test.tsx`, `useTeamMessageReactions.test.tsx`, `useGlobalSettings.zero-linhas.test.tsx`, `useMessages.test.tsx`, `AIUsageDashboard.estado-a11y.test.tsx`, `ConnectionCard.desconectar-erro.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `InstanceSettingsDialog.privacidade.test.tsx`, `GoalsConfigDialog.test.tsx`, `SystemFeaturesView.a11y.test.tsx`, `ConversationSummary.ia048.test.tsx`, `RealtimeInboxView.emailChip.test.tsx`, `WhisperMode.contador.test.tsx`, `WhisperMode.leitura.test.tsx`, `VoiceDictationButton.session.test.tsx`, `useInboxSilence.behavior.test.ts`, `useMonitoringNotifications.audiocontext.test.ts`, `ConnectionAlertPreferencesCard.test.tsx`, `PeriodSelector.test.tsx`, `AIGenerateDialog.pasta-usuario.test.tsx`, `ScheduleSettings.test.tsx`, `SkillBasedRoutingSettings.test.tsx`, `SLAHistoryDashboard.sem-dados-erro.test.tsx`, `TalkXSegments.feedbackMassaMotivos.test.tsx`, `motionEffects.movimento.test.tsx`, `useAuth.rascunho-teamchat-logout.test.tsx`, `useContactIntelligence.test.tsx`, `configuracoes.leituraErro.test.tsx`, `useCatalogFavorites.test.ts`, `useReauthentication.test.tsx`, `useSLAHistory.test.tsx`, `useUserSettings.test.tsx`, `SLADashboard.sidebar-navegacao.test.tsx`, `ResetPassword.redirect-cancelavel.test.tsx`?**
+- **Why does `@testing-library/react` connect `vitest` to `react`, `lucide-react`, `button.tsx`, `ExternalProductManagement.tsx`, `utils.ts`, `avatar.tsx`, `framer-motion`, `cn`, `@tanstack/react-query`, `TalkXView.tsx`, `useTalkXSegments.ts`, `ref_node_fs`, `DashboardView.tsx`, `chat.ts`, `react-router-dom`, `SendProductDialog.tsx`, `TalkXTemplates.tsx`, `SettingsView.tsx`, `TalkXCampaignWizard.tsx`, `workItem.types.ts`, `EmailComposer.tsx`, `hooks/copilot/index.ts`, `RealtimeInboxView.tsx`, `TalkXCampaignRunning.tsx`, `FASE 1 — Motor: ligar o contrato ao que existe (T09–T22)`, `useContactMedia.ts`, `mediaVolumeStore.ts`, `AIConversationAssistant.tsx`, `TalkXSuppression.tsx`, `fmtInt`, `useMultiplixDispatches.ts`, `WorkItemSheet.tsx`, `useCampaignRowActions.tsx`, `useTalkX.ts`, `FileThumb.tsx`, `useSipClient.test.ts`, `useMyWorkItems.ts`, `ChatPopup.rolagem-mensagem-nova.test.tsx`, `TalkXView`, `queryClient.tsx`, `mapboxToken.ts`, `TalkXAnalytics.tsx`, `ConversationTabContent.tsx`, `useNotifications.ts`, `useInboxFilters`, `useReducedMotion`, `TasksModule.tsx`, `CallSessionProvider.tsx`, `useFilesViewState.ts`, `.failed`, `useCustomShortcuts.ts`, `useResolvedStorageUrl`, `theme/presets.ts`, `fetchAllRows`, `personalizePreview`, `App.tsx`, `ConversationWithMessages`, `useContactMedia.stickers.test.tsx`, `primitivosCompartilhados.test.tsx`, `useWarRoomData.ts`, `TalkXLinksManager.tsx`, `telefoniaContraste.test.tsx`, `useAdminData.ts`, `useMonitoringData.ts`, `localDay.ts`, `periodRange.ts`, `TalkXHelp`, `useRealtimeMessages.ts`, `alertBehaviorTestKit.ts`, `useTeamChatPanel.ts`, `useCallChannels.ts`, `useSupabaseRealtime.ts`, `useAudioPlayer.ts`, `TasksUiProvider`, `AIQuickAccess.tsx`, `TelefoniaView.selecao-pagina.test.tsx`, `BusinessHoursIndicator.test.tsx`, `useConversationHistoryTimeline.ts`, `ContactDetailPanel.activity.test.tsx`, `ContactNotes.ordemFoco.test.tsx`, `ExternalDataIntegration.test.tsx`, `package.json`, `SLAMetricsDashboard.sem-dados-erro.test.tsx`, `useAddressAutocomplete.ts`, `SystemFeaturesView.test.tsx`, `EmailChatInbox.contato.test.tsx`, `useForwardMedia.ts`, `ContactDeliveryPanel.test.tsx`, `ContactDetails.entrega.test.tsx`, `FilesTab.tsx`, `RealtimeInboxView.talk-me-entry.test.tsx`, `Leaderboard.test.tsx`, `MetaCAPIView.test.tsx`, `ViewRouter`, `model.ts`, `talkxHelpIndex.ts`, `MultiplixView.contagem.test.tsx`, `OnboardingChecklist.test.tsx`, `AclAlertsPanel.test.tsx`, `FilesTab`, `TalkX.test.tsx`, `TalkXLiveMonitor.lifecycle.test.tsx`, `MessagesSettings.test.tsx`, `useChatPanelHandlers.ts`, `useConnectionIncidents.ts`, `TalkXSegments.feedbackMassa.test.tsx`, `TalkXSuppression.contactSearch.test.tsx`, `QuickAddCompacto.test.tsx`, `VolumeTriggerButton.test.tsx`, `useGoalNotifications.ts`, `communication/useVoiceAgent.ts`, `useContactMediaCounts.test.tsx`, `useNewConversation.connection.test.tsx`, `SipCallAdapter`, `useContactNotes.semColuna.test.tsx`, `system/__tests__/usePermissions.test.tsx`, `useTeamChatMembers.ja-membros.test.tsx`, `Crm360Tab.tsx`, `useQuickReplies.test.tsx`, `useConnectionsManager`, `teamChatTypes.ts`, `useCatalogContactSearch.ts`, `ChatPanel`, `LocationPicker.integration.test.tsx`, `ViewRouter.tsx`, `CT70_reducedMotion.test.tsx`, `useGmail.ts`, `useConversationActions`, `StickerManager.tsx`, `useAudioRecorder.ts`, `KpiStrip`, `journey/motion/index.ts`, `useNavigationHistory.ts`, `Fase 3 — Perímetro de segurança (E35–E50)`, `useContactNotes`, `AppShell.tsx`, `useTalkXCampaignList.ts`, `ContactDetails`, `Index.tsx`, `TalkXCampaignScheduled`, `IncomingCallAlert.tsx`, `useWhatsAppStatus.ts`, `MultiplixView`, `useTalkMeQueue.ts`, `useMessages`, `ErrorBoundary`, `ChatbotFlowEditor.tsx`, `safeStorage.ts`, `slaTimeline.ts`, `useInboxBulkActions.test.ts`, `emailThreadQuery.ts`, `useNextBestAction`, `useGmail`, `useTalkXResumeChecklist.ts`, `offlineQueue.ts`, `TemplatesWithVariables.tsx`, `useChatMediaSending.audio-meme-falha.test.ts`, `RouteTransition.tsx`, `events.ts`, `useTheme.ts`, `useContactUnreadEmails.realtime.test.tsx`, `useTeamFiles.ts`, `useGlobalIncomingMessageAlerts.behavior.test.tsx`, `useDepartmentManagement.ts`, `useInboxFilterPresets.ts`, `EmailVolumeMedicao.test.tsx`, `LinkPreview.tsx`, `EmailChatInbox`, `QuarantineMonitorProvider.r2-api-066.test.tsx`, `useJourneyEmails.ts`, `secureRandomFloat`, `empty-states.tsx`, `SuggestionList`, `useContactsSearch`, `AchievementToast.tsx`, `AutomationEditorDialog.tsx`, `useCustomEmojis.ts`, `useTeamMessages.ts`, `useAppBootstrap.test.tsx`, `DailyMetricsKpis.tsx`, `SystemHealthCard.tsx`, `TalkXInteractiveEditor.tsx`, `useWarRoomAlerts.ts`, `JourneyStatsHero.tsx`, `actions.ts`, `IncomingCallAlert.volume.test.tsx`, `CT55_57_management.test.tsx`, `useConversationActions.test.ts`, `TeamChatPanel.settings-wiring.test.tsx`, `useGlobalSearchData`, `TeamChatPanel.wiring.test.tsx`, `accessible-toast.tsx`, `useAgents.leitura.test.tsx`, `timers-unmount.test.tsx`, `ScheduleCalendarView.agenda.test.tsx`, `useContactSearchV2.ts`, `RadarPhase9Panel.tsx`, `KnowledgeBaseView.fileActions.test.tsx`, `useSupabaseConnectivity.ts`, `e2e-isolated-seed.unit.mjs`, `useMultiplixReplies.ts`, `VoiceSearchOverlay.tsx`, `useGmail.test.ts`, `useAuth.aviso-dispositivo.test.tsx`, `useAuthForm`, `contactSidebar.ts`, `CommandPaletteHost.tsx`, `useAgentPresence.ts`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `JourneyHealthChip.tsx`, `SLAIndicator.contrasteSelos.test.tsx`, `VoiceActionBridge.test.tsx`, `quadroLarguraFocoContraste.test.tsx`, `coresCruasInboxCrm.test.tsx`, `y17Selos.contraste.test.tsx`, `TrainingMiniGames.creditoXp.test.tsx`, `ChatbotHonestNotice.test.tsx`, `useGeoBlocking.ts`, `useTranscriptionNotifications.ts`, `dashboard/ConversationHeatmap.tsx`, `talkxKeyMetrics.ts`, `useAutomationSuggestions.ts`, `useContainerColumns.test.ts`, `useTalkXTemplates.test.ts`, `MobileDrawerMenu.tsx`, `EmailThreadView.test.tsx`, `useChatInputLogic.ts`, `config/supabase.ts`, `useRateLimitLogs.ts`, `useConnectionsHealth.ts`, `ContactService`, `GmailInboxView.test.tsx`, `SentimentTrendChart`, `emailHtml.ts`, `useDashboardData.ts`, `useDashboardKpi.ts`, `contrastePlayerSlider.test.tsx`, `AuditLogDashboard.test.tsx`, `lib/ai-vocabulary.ts`, `chat-motion.test.tsx`, `PLANO EM 50 ETAPAS`, `ContactDetails.mobile-iniciais-sentimento.test.tsx`, `usePerformance.ts`, `uploadTeamMedia.test.tsx`, `system/index.ts`, `ContactIntelligencePanel.tsx`, `MissingQuestions.tsx`, `AudioPlayButton.test.tsx`, `useTypingPresence.ts`, `useWorkItemDraft.ts`, `useTeamUnreadTotal`, `CrisisRoom.metricas.test.tsx`, `StickerManager.envio.test.tsx`, `Crm360Tab.test.tsx`, `useContactsV2Flags.test.tsx`, `useTeamChatRealtimeChannelErrors.test.tsx`, `useSpeechToText.ts`, `TalkXTemplateEditor.race.test.tsx`, `FilesTab.fase6.test.tsx`, `MobileDrawerMenu.a11y.test.tsx`, `HighContrastProvider`, `useSLANotifications.ts`, `useVolumeRocker.ts`, `Auth`, `TrainingMode.avaliacao.test.tsx`, `SL038_badgesTokensTema.test.tsx`, `useChatSearch.ts`, `MessageBubble.contrasteStatus.test.tsx`, `LiveSuggestions.tsx`, `LocationPicker.gpsAtrasado.test.tsx`, `KpiStrip.contraste.test.tsx`, `StatusChips.contrasteChipAtendendo.test.tsx`, `TalkXSegments.detailFresh.test.tsx`, `movimentoEContraste.test.tsx`, `chart.tsx`, `useMentionableProfiles.ts`, `useDiagnosticsData.ts`, `useLiveSuggestions.ts`, `AiTab`, `useEvolutionApi.ts`, `useRealtimeInbox.ts`, `CT57_historicoAlem500.test.tsx`, `CT69_contrasteBadges.test.tsx`, `ChatInputArea.limite-enter.test.tsx`, `fundacaoVisual.test.tsx`, `ReportCharts.descricao-textual.test.tsx`, `IPListasErro.contrasteTema.test.tsx`, `ThemeCustomizer.a11y.test.tsx`, `VolumeDial.tsx`, `useMessageReactions.transport-rejection.test.tsx`, `usePersonalStickers.webp.test.tsx`, `useTeamChatNotifications.behavior.test.ts`, `formatDocumentTitle`, `CallSessionProvider.test.tsx`, `CT61_62_65_catalogFilters.test.tsx`, `TalkXContactSelector.a11y.test.tsx`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `useScheduledReports.test.tsx`, `BorderRadiusControl.test.tsx`, `LocationMessage.test.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `TalkXOverview.table.test.tsx`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.actions.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useRealtimeDashboard.reconciliacao.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `bucket`, `useChatKeyboardNavigation.ts`, `QuoteDraftCard.copia.test.tsx`, `GroupsView.broadcast.test.tsx`, `ChatMessagesArea.agrupar-envio.test.tsx`, `useAddressAutocomplete.test.tsx`, `NotesTab.error-save.test.tsx`, `AiTab.erroAnalise.test.tsx`, `AiTab.test.tsx`, `useRealtimeDashboard.escopo.test.tsx`, `useRealtimeDashboard.visibilidade.test.tsx`, `usePerformanceOptimizations.ts`, `useCallRecording.test.tsx`, `useTeamChatNotifications.nome-e-clique.test.tsx`, `usePersonalStickers.uso.test.tsx`, `useTalkXInsights.defeito-223.test.tsx`, `useSecurityPushNotifications.test.ts`, `useDeviceDetection.test.tsx`, `useRealtimeMessages.test.tsx`, `SinguProfileSection.test.tsx`, `ExternalProductCatalog.virtualizacao.test.tsx`, `useContactFormValidation.ts`, `ChatMessagesArea.pagination.test.tsx`, `FileThumb.test.tsx`, `ChatPanel.typing-presence.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `Y29_gateDownloadOutros.test.tsx`, `MediaLibraryAdmin.test.tsx`, `quadroArrastarTecladoRolagem.test.tsx`, `quadroResponsivoAbas.test.tsx`, `useSearchHistory.ts`, `realtimeSharedTopic.test.tsx`, `useQueuesComparison.race.test.tsx`, `useTeamChatNotifications.aviso-navegador.test.tsx`, `PerformanceMonitor`, `CrossTabDedupePanel.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `StickerManager.recentes.r2-inb-062.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `GmailIntegrationCard.apagar-dados.test.tsx`, `MediaLibraryAdmin.a11y.test.tsx`, `TalkXSegments.builder.test.tsx`, `TalkXSegments.library.test.tsx`, `useSupervisorQueue.test.tsx`, `useConversationActions.snooze.test.ts`, `ContactsView.v2Flags.test.tsx`, `useLeaderboard.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `slaDenominadores.test.tsx`, `useQueueAnalytics.test.tsx`, `AdminCRMDashboard.explorer-crm360.test.tsx`, `GmailWebhookMonitor.falha-consulta.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `NewCallPanel.test.tsx`, `TelefoniaView.a11y.test.tsx`, `SendProductDialog.test.tsx`, `useChatPanelHandlers.sem-falso-sucesso.test.tsx`, `NotesTab.test.tsx`, `ObjectionDetector.severidade.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `SoundCustomizationPanel.test.tsx`, `TalkXCampaignRunning.limits.test.tsx`, `useFilesInfiniteScroll.test.tsx`, `useAudioMemes.mediaVolumeBindings.test.tsx`, `useSLARulesCounts.ts`, `useDiagnosticsData.test.ts`, `useTextToSpeech.lifecycle.test.ts`, `MediaMigrationTool.test.tsx`, `InviteAgentDialog.test.tsx`, `useChatPanelHandlers.edicao-rejeitada.test.tsx`, `useRadarPanel.ts`, `VoiceChangerPicker.voz-temporaria.test.tsx`, `useMonitoringData.buckets.test.ts`, `useMonitoringData.errors.test.ts`, `ChannelRoutingRules.a11y.test.tsx`, `QueuesView.editar.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `TalkXSuppression.editReasonVazio.test.tsx`, `useBusinessHoursCheck.test.tsx`, `useMessages.overlay.test.tsx`, `useAudioMemes.mutacoes.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useSavedFilters.test.tsx`, `ProtectedRoute.acesso-negado.test.tsx`, `ActiveCallPanel.test.tsx`, `ContactNotes.semColuna.test.tsx`, `HandoffDialog.test.tsx`, `ViewersIndicator.presenca.test.tsx`, `useEvolutionContactProfile.ts`, `AdvancedMessageMenu.menu-avancado.test.tsx`, `GlobalSearch.r2-inb-020.test.tsx`, `RealtimeInboxView.atalhos-teclado.test.tsx`, `RealtimeInboxView.pagination.test.tsx`, `VoiceChanger.falhas.test.tsx`, `VoiceChanger.reduced-motion.test.tsx`, `shellLayout.contrato.test.tsx`, `Sidebar.test.tsx`, `MultiplixView.lista-virtualizada.test.tsx`, `MultiplixView.painel01.test.tsx`, `AvatarUpload.invalidacao.test.tsx`, `useAIUsageDashboard.janela.test.tsx`, `useTelefoniaFilters.test.tsx`, `useDataMasking.ts`, `useContactSummaryNote.concurrency.test.tsx`, `useObjectionDetector.n169.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useIncomingCallListener.test.tsx`, `useLoadingState.ts`, `useUniversityHelp.test.tsx`, `RateLimitDashboard.logs.test.tsx`, `AgentsView.pendencias.test.tsx`, `HeroBenefits.test.tsx`, `AutomationsManager.persistencia.test.tsx`, `CallHistoryStates.test.tsx`, `InstanceSettingsDialog.config-perfil.test.tsx`, `NumberReputationMonitor.test.tsx`, `GamificationSection.customizacao.test.tsx`, `GoalsConfigDialog.metas.test.tsx`, `EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `ChatMessagesArea.loop.test.tsx`, `ChatPanel.entrega-conversa.test.tsx`, `ContactActionButtons.test.tsx`, `AISuggestions.tom.test.tsx`, `RealtimeInboxView.aria-novas-mensagens.test.tsx`, `useFileUploadLogic.test.tsx`, `OmnichannelInbox.test.tsx`, `QueuesView.test.tsx`, `SecurityOverview.medicao.test.tsx`, `AIGenerateDialog.test.tsx`, `ActiveCampaignIndicator.test.tsx`, `TalkXCampaignRunning.states.test.tsx`, `sentiment-vocabulario.test.tsx`, `useAIUsageDashboard.agregacao.test.tsx`, `useContactMedia.sticker.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useInboxUnreadTotal.test.tsx`, `useExternalDB.test.ts`, `useGmail.syncStatus.test.tsx`, `useSLAScopeNames.test.tsx`, `ResetPassword.segundo-fator-sessoes.test.tsx`, `useContactsCRUD.test.tsx`, `EmailChatInbox.buscaEstados.test.tsx`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `RealtimeCollaboration.handoff.test.tsx`, `ContactDetails.quickActions.test.tsx`, `FileUploader.retry-envio.test.tsx`, `GlobalSearch.navigation.test.tsx`, `MessageReactions.autoria-unica.test.tsx`, `VoiceChangerPicker.test.tsx`, `useMonitoringNotifications.behavior.test.ts`, `QueueGoalsDialog.salvarMetas.test.tsx`, `AutomationSettings.test.tsx`, `GlobalSettingsSection.sem-consumidor.test.tsx`, `ThemeCustomizer.test.tsx`, `TalkXSuppression.add.test.tsx`, `TalkXSuppression.search.test.tsx`, `useConversationActions.reopen.test.ts`, `useMessages.reconexao.test.tsx`, `useEmailContactContext.test.tsx`, `useGmail.syncParcial.test.tsx`, `useTeamMessageReactions.canal-e-reconexao.test.tsx`, `useTeamMessageReactions.test.tsx`, `useGlobalSettings.zero-linhas.test.tsx`, `useMessages.test.tsx`, `AIUsageDashboard.estado-a11y.test.tsx`, `ConnectionCard.desconectar-erro.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `InstanceSettingsDialog.privacidade.test.tsx`, `GoalsConfigDialog.test.tsx`, `SystemFeaturesView.a11y.test.tsx`, `ConversationSummary.ia048.test.tsx`, `RealtimeInboxView.emailChip.test.tsx`, `WhisperMode.contador.test.tsx`, `WhisperMode.leitura.test.tsx`, `VoiceDictationButton.session.test.tsx`, `useInboxSilence.behavior.test.ts`, `useMonitoringNotifications.audiocontext.test.ts`, `ConnectionAlertPreferencesCard.test.tsx`, `PeriodSelector.test.tsx`, `AIGenerateDialog.pasta-usuario.test.tsx`, `ScheduleSettings.test.tsx`, `SkillBasedRoutingSettings.test.tsx`, `SLAHistoryDashboard.sem-dados-erro.test.tsx`, `TalkXSegments.feedbackMassaMotivos.test.tsx`, `motionEffects.movimento.test.tsx`, `useAuth.rascunho-teamchat-logout.test.tsx`, `useContactIntelligence.test.tsx`, `configuracoes.leituraErro.test.tsx`, `useCatalogFavorites.test.ts`, `useReauthentication.test.tsx`, `useSLAHistory.test.tsx`, `useUserSettings.test.tsx`, `SLADashboard.sidebar-navegacao.test.tsx`, `ResetPassword.redirect-cancelavel.test.tsx`?**
   _High betweenness centrality (0.057) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `cn()` (e.g. with `2.2 Traz regressão?` and `F2 — Arbitrários com equivalente exato (254 usos)`) actually correct?**
   _`cn()` has 3 INFERRED edges - model-reasoned connections that need verification._
