@@ -13,7 +13,8 @@ export function TeamPerformancePanel({ conversationId }: Props) {
     return [
       { name: 'Mensagens', value: data.messageCount },
       { name: 'Ativos', value: data.activeParticipants },
-      { name: 'Resp (s)', value: data.avgResponseTimeMs !== null ? Math.round(data.avgResponseTimeMs / 1000) : 0 },
+      // Sem resposta medida não há ponto: zero sugeriria resposta instantânea.
+      ...(data.avgResponseTimeMs !== null ? [{ name: 'Resp (s)', value: Math.round(data.avgResponseTimeMs / 1000) }] : []),
     ];
   }, [data]);
 
