@@ -1,27 +1,43 @@
 -- set_conversations_status_encerramento_repetido
--- Rollback (SQL executável): reexecutar o bloco "CREATE FUNCTION public.set_conversations_status"
---   (trocando CREATE por CREATE OR REPLACE), o REVOKE/GRANT e o COMMENT de
---   20261113171300_conversation_status_regras_e_so_por_rpc.sql. Nenhum dado muda.
+-- Rollback (SQL executável, na ordem; nenhum dado muda):
+--   1. reexecutar o bloco "CREATE OR REPLACE FUNCTION public.set_conversation_status" e o
+--      REVOKE/GRANT logo abaixo dele de 20261113171300_conversation_status_regras_e_so_por_rpc.sql
+--      (volta o UPDATE antes do INSERT — e o 23505 para contato reaberto);
+--   2. reexecutar o bloco "CREATE FUNCTION public.set_conversations_status" (trocando CREATE
+--      por CREATE OR REPLACE), o REVOKE/GRANT e o COMMENT do mesmo arquivo.
 --
--- O QUE ESTAVA ERRADO
---   set_conversations_status(p_next='resolved', sem p_restore) chama
---   set_conversation_status, que faz INSERT em conversation_closures. Se o contato já
---   tem encerramento sem reabertura depois dele, o gatilho BEFORE INSERT
---   reject_repeated_conversation_closure_without_reopen (20261007013217) levanta
---   'conversation_closure_requires_reopen' com ERRCODE 23505 (unique_violation). O
---   EXCEPTION do lote só capturava insufficient_privilege, check_violation e
---   raise_exception: o 23505 escapava e abortava o LOTE INTEIRO (nenhum outro id mudava
---   e o front recebia erro), em vez de uma linha por id.
+-- O QUE ESTAVA ERRADO (causa raiz)
+--   set_conversation_status (20261113171300) fazia UPDATE contacts SET
+--   conversation_status='resolved' ANTES do INSERT em conversation_closures. O gatilho
+--   BEFORE INSERT reject_repeated_conversation_closure_without_reopen (20261007013217) lê o
+--   contato no INSERT: como ele já estava 'resolved' (NOT IN open/waiting), levantava
+--   'conversation_closure_requires_reopen' (ERRCODE 23505) para QUALQUER contato que já foi
+--   encerrado alguma vez, mesmo reaberto depois. Efeito: encerrar uma conversa reaberta pela
+--   RPC unitária falhava; no lote (set_conversations_status) o 23505 não era capturado e
+--   abortava o LOTE INTEIRO (nenhum id mudava). close_conversation_atomic faz INSERT e depois
+--   UPDATE e não tinha o problema.
 --
 -- O QUE MUDA
---   Só o tratamento: WHEN unique_violation -> outcome 'already_closed' para aquele id.
---   O subbloco desfaz a mudança daquele contato (fica no estado em que estava, sem
---   encerramento novo) e os demais ids do lote seguem normalmente. Assinatura, SECURITY
---   DEFINER, search_path, GRANTs e o resto do corpo são os de 20261113171300 (idênticos
---   ao vivo em produção em 2026-11-14). O front (moveConversationsStatus) só conta
---   'changed' como mudado; outcome novo é tratado como "não mudou".
+--   1. set_conversation_status: o bloco "IF p_next = 'resolved' THEN INSERT ... END IF" vai
+--      para ANTES do UPDATE (mesma ordem de close_conversation_atomic). Nada mais muda
+--      (assinatura, SECURITY DEFINER, search_path, GRANTs, FSM, autorização). Com a ordem
+--      nova: o gatilho de repetição lê open/waiting + a hora da reabertura (aceita reaberta,
+--      recusa só encerramento sem reabertura); o AFTER INSERT sync_contact_status_on_closure
+--      leva o contato a 'resolved' (FSM aceita open/waiting -> resolved; a guarda
+--      guard_conversation_status_direct_update não barra: roda como o dono da função e com
+--      pg_trigger_depth() > 1); o UPDATE seguinte é resolved -> resolved (gatilhos de FSM e de
+--      guarda têm WHEN OLD IS DISTINCT FROM NEW e não disparam) e só grava
+--      conversation_status_changed_at = NOW(), o mesmo valor do caminho antigo.
+--   2. set_conversations_status: WHEN unique_violation -> outcome 'already_closed' para
+--      aquele id, só para o caso legítimo que sobra (encerramento gravado depois da última
+--      mudança de estado, sem reabertura); o subbloco desfaz aquele contato e o lote segue.
+--      Resto do corpo, assinatura, SECURITY DEFINER, search_path e GRANTs = 20261113171300
+--      (idênticos ao vivo em produção em 2026-11-14). O front (moveConversationsStatus) só
+--      conta 'changed' como mudado; outcome novo é tratado como "não mudou".
 --
--- PÓS-CONDIÇÕES: set_conversations_status captura unique_violation; anon sem EXECUTE.
+-- PÓS-CONDIÇÕES: set_conversation_status grava o encerramento antes do UPDATE e mantém a
+--   recusa waiting -> archived sem oráculo de UUID; set_conversations_status captura
+--   unique_violation; anon sem EXECUTE.
 
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -35,6 +51,84 @@ BEGIN
   END IF;
 END
 $pre$;
+
+-- set_conversation_status: corpo de 20261113171300 (vigente em produção) com o encerramento
+-- antes do UPDATE.
+CREATE OR REPLACE FUNCTION public.set_conversation_status(
+  p_contact_id uuid,
+  p_next       text,
+  p_reason     text DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $$
+DECLARE
+  v_current    TEXT;
+  v_encontrado boolean;
+  v_allowed    BOOLEAN := FALSE;
+BEGIN
+  SELECT conversation_status INTO v_current
+  FROM public.contacts
+  WHERE id = p_contact_id
+  FOR UPDATE;
+  v_encontrado := FOUND;
+
+  -- Autorização (e, para o chamador comum, também a EXISTÊNCIA) em UM único ponto (SEC-RLS-02).
+  PERFORM public.require_contact_edit_permission(p_contact_id);
+
+  -- Chamador privilegiado: require_contact_edit_permission não checa existência; a inexistência
+  -- é recusada com a MESMA exceção de autorização.
+  IF NOT v_encontrado THEN
+    RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
+  END IF;
+
+  IF v_current = p_next THEN
+    RETURN;
+  END IF;
+
+  -- Decisão do dono (2026-11-13): aguardando não é arquivada.
+  IF v_current = 'waiting' AND p_next = 'archived' THEN
+    RAISE EXCEPTION 'conversation_waiting_cannot_be_archived'
+      USING ERRCODE = 'check_violation',
+            DETAIL = 'Conversa aguardando atendimento não pode ser arquivada. Atenda ou encerre antes.';
+  END IF;
+
+  -- Origem legada (pending/closed/NULL) de propósito sem caminho aqui (revisão #3064): em
+  -- produção há 0 linhas nesses estados (SELECT de 2026-11-14: 4328 open, 17 resolved), a
+  -- coluna é NOT NULL DEFAULT 'open' e nenhuma função/tela grava pending/closed; com 0 linhas
+  -- o bloco $check$ acima troca o CHECK pelos 4 estados canônicos, então elas deixam de existir.
+  IF v_current = 'open'     AND p_next IN ('waiting', 'resolved', 'archived') THEN v_allowed := TRUE; END IF;
+  IF v_current = 'waiting'  AND p_next IN ('open', 'resolved')                THEN v_allowed := TRUE; END IF;
+  IF v_current = 'resolved' AND p_next IN ('open', 'archived')                THEN v_allowed := TRUE; END IF;
+  IF v_current = 'archived' AND p_next = 'open'                               THEN v_allowed := TRUE; END IF;
+
+  IF NOT v_allowed THEN
+    RAISE EXCEPTION 'invalid transition % -> %', v_current, p_next;
+  END IF;
+
+  -- Encerramento ANTES do UPDATE (mesma ordem de close_conversation_atomic): o gatilho
+  -- BEFORE INSERT reject_repeated_conversation_closure_without_reopen precisa ler o estado
+  -- de ANTES (open/waiting + conversation_status_changed_at da reabertura). Com o UPDATE
+  -- primeiro ele lia 'resolved' e recusava (23505) todo contato que já foi encerrado uma vez.
+  IF p_next = 'resolved' THEN
+    INSERT INTO public.conversation_closures (contact_id, close_reason)
+    VALUES (p_contact_id, COALESCE(p_reason, 'resolved'))
+    ON CONFLICT DO NOTHING;
+  END IF;
+
+  UPDATE public.contacts
+  SET conversation_status            = p_next,
+      conversation_status_changed_at = NOW()
+  WHERE id = p_contact_id;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) TO service_role;
+GRANT  EXECUTE ON FUNCTION public.set_conversation_status(uuid, text, text) TO postgres;
 
 CREATE OR REPLACE FUNCTION public.set_conversations_status(
   p_contact_ids      uuid[],
@@ -131,8 +225,10 @@ BEGIN
           outcome := CASE WHEN SQLERRM LIKE '%conversation_waiting_cannot_be_archived%'
                           THEN 'waiting_cannot_be_archived' ELSE 'invalid_transition' END;
         WHEN raise_exception THEN outcome := 'invalid_transition';
-        -- 23505 do gatilho reject_repeated_conversation_closure_without_reopen: o contato já
-        -- tem encerramento sem reabertura. Desfaz só este id; o lote segue.
+        -- 23505 do gatilho reject_repeated_conversation_closure_without_reopen: só o caso
+        -- legítimo — encerramento gravado DEPOIS da última mudança de estado (não houve
+        -- reabertura desde ele). Reaberta de verdade encerra normalmente (set_conversation_status
+        -- grava o encerramento antes do UPDATE). Desfaz só este id; o lote segue.
         WHEN unique_violation THEN outcome := 'already_closed';
       END;
     END IF;
@@ -145,15 +241,28 @@ REVOKE ALL ON FUNCTION public.set_conversations_status(uuid[], text, text, text,
 GRANT EXECUTE ON FUNCTION public.set_conversations_status(uuid[], text, text, text, boolean) TO authenticated;
 
 COMMENT ON FUNCTION public.set_conversations_status(uuid[], text, text, text, boolean) IS
-  'P1-2 (2026-11-13): set_conversation_status em lote (até 500, em ordem de id). p_expected_current = só muda quem ainda está nesse estado. Devolve UMA linha por id: outcome changed | already_in_state | state_changed | waiting_cannot_be_archived | invalid_transition | already_closed | not_authorized (inexistente e sem permissão têm a mesma resposta; previous_status só é devolvido depois da autorização). already_closed (2026-11-14) = encerrar contato que já tem encerramento sem reabertura (23505 do gatilho de conversation_closures); o contato não muda e o lote segue. p_restore=true: desfazer de arquivamento archived -> resolved sem novo encerramento (só com encerramento prévio).';
+  'P1-2 (2026-11-13): set_conversation_status em lote (até 500, em ordem de id). p_expected_current = só muda quem ainda está nesse estado. Devolve UMA linha por id: outcome changed | already_in_state | state_changed | waiting_cannot_be_archived | invalid_transition | already_closed | not_authorized (inexistente e sem permissão têm a mesma resposta; previous_status só é devolvido depois da autorização). already_closed (2026-11-14) = o contato tem encerramento gravado depois da última mudança de estado, sem reabertura desde então (23505 do gatilho de conversation_closures); o contato não muda e o lote segue. Conversa reaberta encerra normalmente (changed). p_restore=true: desfazer de arquivamento archived -> resolved sem novo encerramento (só com encerramento prévio).';
 
 DO $post$
+DECLARE
+  v_def text := pg_get_functiondef('public.set_conversation_status(uuid, text, text)'::regprocedure);
 BEGIN
+  IF position('INSERT INTO public.conversation_closures' IN v_def) = 0
+     OR position('INSERT INTO public.conversation_closures' IN v_def) > position('UPDATE public.contacts' IN v_def) THEN
+    RAISE EXCEPTION 'pos-condicao: set_conversation_status ainda faz o UPDATE antes do encerramento';
+  END IF;
+  IF position('conversation_waiting_cannot_be_archived' IN v_def) = 0 THEN
+    RAISE EXCEPTION 'pos-condicao: waiting -> archived ainda aceito';
+  END IF;
+  IF position('contact not found' IN v_def) > 0 THEN
+    RAISE EXCEPTION 'pos-condicao: set_conversation_status reabriu o oraculo de UUID (SEC-RLS-02)';
+  END IF;
   IF position('unique_violation' IN pg_get_functiondef('public.set_conversations_status(uuid[], text, text, text, boolean)'::regprocedure)) = 0 THEN
     RAISE EXCEPTION 'pos-condicao: set_conversations_status ainda deixa 23505 abortar o lote';
   END IF;
-  IF has_function_privilege('anon', 'public.set_conversations_status(uuid[], text, text, text, boolean)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'pos-condicao: anon nao pode executar set_conversations_status';
+  IF has_function_privilege('anon', 'public.set_conversation_status(uuid, text, text)', 'EXECUTE')
+     OR has_function_privilege('anon', 'public.set_conversations_status(uuid[], text, text, text, boolean)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'pos-condicao: anon nao pode executar set_conversation_status/set_conversations_status';
   END IF;
 END
 $post$;
