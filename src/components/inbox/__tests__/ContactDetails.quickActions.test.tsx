@@ -28,7 +28,14 @@ const h = vi.hoisted(() => {
       },
     }),
   });
-  const select = vi.fn(() => ({ eq: vi.fn(() => terminal()) }));
+  // `.in()`: archiveContact lê o status anterior (o Desfazer devolve esse valor).
+  const select = vi.fn(() => ({
+    eq: vi.fn(() => terminal()),
+    in: vi.fn(async (_col: string, ids: string[]) => ({
+      data: ids.map((id) => ({ id, conversation_status: 'open' })),
+      error: null,
+    })),
+  }));
   const from = vi.fn((table: string) => {
     currentTable = table;
     return { update, select };
@@ -43,7 +50,17 @@ const h = vi.hoisted(() => {
     info: vi.fn(),
     warning: vi.fn(),
   });
-  const rpc = vi.fn(async (_fn: string, _args?: unknown) => ({ data: null, error: null }));
+  const rpc = vi.fn(async (fn: string, args?: unknown) =>
+    fn === 'set_conversations_status'
+      ? {
+          data: (args as { p_contact_ids: string[] }).p_contact_ids.map((id) => ({
+            contact_id: id,
+            previous_status: 'open',
+            outcome: 'changed',
+          })),
+          error: null,
+        }
+      : { data: null, error: null });
   return { state, eq, update, select, from, invoke, toast, rpc };
 });
 
@@ -54,7 +71,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) },
     // A seção "Entrega de mensagens" (16/10/2026) consulta a RPC no mount;
     // aqui ela responde vazio — este teste não mede entrega.
-    // Também atende `set_conversation_status` (Arquivar/Desfazer), medido abaixo.
+    // Também atende `set_conversations_status` (Arquivar/Desfazer), medido abaixo.
     rpc: h.rpc,
   },
 }));
@@ -146,21 +163,25 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     };
   });
 
-  it('"Arquivar" usa a semântica do archiveContact (RPC set_conversation_status); Desfazer reabre pela mesma RPC', async () => {
+  it('"Arquivar" usa a semântica do archiveContact (RPC set_conversations_status); Desfazer devolve o status anterior pela mesma RPC', async () => {
     renderPainel();
     openMais();
     fireEvent.click(screen.getByText('Arquivar'));
     await waitFor(() =>
-      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', { p_contact_id: 'c1', p_next: 'archived' }),
+      expect(h.rpc).toHaveBeenCalledWith('set_conversations_status', { p_contact_ids: ['c1'], p_next: 'archived' }),
     );
     // A segunda implementação paralela está proibida: o painel nunca escreve em
     // `contacts` (nem status, nem assigned_to) — só a RPC canônica grava o estado.
     expect(h.update).not.toHaveBeenCalled();
 
     await clickUndo();
-    // Desfazer reabre pela mesma RPC; nada é escrito direto na tabela.
+    // Desfazer devolve o status anterior ('open') pela mesma RPC; nada é escrito direto na tabela.
     await waitFor(() =>
-      expect(h.rpc).toHaveBeenLastCalledWith('set_conversation_status', { p_contact_id: 'c1', p_next: 'open' }),
+      expect(h.rpc).toHaveBeenLastCalledWith('set_conversations_status', {
+        p_contact_ids: ['c1'],
+        p_next: 'open',
+        p_expected_current: 'archived',
+      }),
     );
     expect(h.update).not.toHaveBeenCalled();
   });
