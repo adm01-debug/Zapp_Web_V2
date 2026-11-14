@@ -182,6 +182,19 @@ describe('useGmail — 409 do gmail-sync (sincronização já em andamento)', ()
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['gmail-accounts'] });
   });
 
+  it('sincronizar marcadores com 409 reauth_required NÃO repete a chamada (console: dois 409)', async () => {
+    respondSyncWithStatus(409, { code: 'reauth_required', error: 'Sessão do Gmail expirada — reconecte a conta' });
+    const { wrapper } = makeHarness();
+    const { result } = renderHook(() => useGmail(), { wrapper });
+    await waitFor(() => expect(result.current.activeAccount).toBeDefined());
+
+    await act(async () => {
+      await result.current.syncLabels.mutateAsync().catch(() => undefined);
+    });
+
+    expect(syncCalls()).toBe(1);
+  }, 10_000);
+
   it('falha de servidor (500) ainda ganha UMA nova tentativa e toast de erro', async () => {
     respondSyncWithStatus(500);
     const { wrapper } = makeHarness();

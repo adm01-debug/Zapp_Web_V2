@@ -216,13 +216,13 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 69798,
-      "sha256": "f4adcebddf4d5243ad03bc35ecfca45bf5a0042a7d5bbad69d326a050f251345"
+      "bytes": 70011,
+      "sha256": "d281779695e1e7db0d6807ce551fc1661c9971c3e20691988f9841e94a17889e"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 26272,
-      "sha256": "787214dd32ff1edc8df8e89c0322bc66f5e1bb62a78967266bdee3667279ab67"
+      "bytes": 26543,
+      "sha256": "0e71e3514762bb330cb1bf6ac4d0666389139e566a036bf97591e501b144efa4"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -711,8 +711,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 36607,
-      "sha256": "5ea7d2b1028d244604ffcbe296e6ae6403233b6396d6cc8fee4175ac0f89b2ca"
+      "bytes": 37628,
+      "sha256": "0e46b3aec8febf4108a7b4c8358256e39b15c09c57ad5b64416f838f15d6966c"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -896,8 +896,8 @@
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "bytes": 11544,
-      "sha256": "8c99cdd6d761f150532816ffb7b7991b1a3e510864453630c2d200cc6d548de5"
+      "bytes": 11677,
+      "sha256": "4862f858bfd09d68de29d895d852b81aa0ca50340070806732114627c12233f1"
     }
   ],
   "functions": [
@@ -1973,7 +1973,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "2d816ea4dad2d3114425360bb54d6639fac94b600a40560db8876bdb589d0c44",
+      "source_sha256": "f8f78cbedb2a05c27cc2a4038e4649ebc5146d058ae0f9b80d87cd4ac689bc9d",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-jobs.ts",
@@ -2207,7 +2207,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "558cf0ce86bfde742d85bd3b3f4a2216dc96c0a9446196d69fd490194c3bfa30",
+      "source_sha256": "9dec28e56212b36cfa25739eed06b72ebbfd6860912a236964d3a5a908d702d2",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2778,7 +2778,7 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "7b583858a077a14cba17fc4a8cf77717545ba170120f4fb62e29e1fc52cb1ea2",
+      "source_sha256": "f5df7da58a33a292debbaa110d1fa199947e3259b7ad6cd5ea59ee82d0d510d6",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -2796,5 +2796,5 @@
       ]
     }
   ],
-  "manifest_sha256": "9009b84e8c0dc45a23865922a1fe091ba78f51457e62a8d9d89190239b1998be"
+  "manifest_sha256": "876aac0f85175ca06d4d9519030bf70cd56c29b9d27b81d4a7b58e5e7a8bd460"
 }
