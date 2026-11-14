@@ -4,11 +4,12 @@ import {
 
 // Exact definitions exported in contexto@51d4d9fb7d6109ead9357025da3ae83389c24d4e, except
 // claim_outbound_message: redefined by migration 20261111160000_outbound_post_started.sql (9727aaedd).
+// enqueue_outbound_message: redefined by migration 20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql (#3064).
 // mark_outbound_post_started: created by that same migration; SECURITY DEFINER that updates
 // messages, so it must run as postgres (guard_message_delivery_internal_fields rejects supabase_admin).
 // These are full SHA256 hashes of pg_get_functiondef, not the snapshot's JSON hash.
 export const OWNERSHIP_ROUTINES = Object.freeze([
-  ['public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '7d23e3848086b03e90cb2413f53c4a98cc4e4f0eb72ff57ea910b7e30605d37b'],
+  ['public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '701f6b3f3085cc86c4aa73ece2ae0e3e03ff54c9abe1eadd6524eda9e7f221b1'],
   ['public.claim_outbound_message(uuid,uuid,text,integer)', 'df82a503c1c4700d4feef6f7f4c8b4a0c5814339cf9669db05bc1b1142d2bf1b'],
   ['public.complete_outbound_message(uuid,uuid,text,text)', '31225dd6be1b4c2ec2b5e081626a45f369b9318554250a5f05738ac760675b68'],
   ['public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'],
@@ -180,7 +181,7 @@ $scope$;
 CREATE TEMP TABLE e2e_owner_before ON COMMIT DROP AS
 WITH expected(ordinal, signature, expected_sha256) AS (
   VALUES
-    (1, 'public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '7d23e3848086b03e90cb2413f53c4a98cc4e4f0eb72ff57ea910b7e30605d37b'),
+    (1, 'public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)', '701f6b3f3085cc86c4aa73ece2ae0e3e03ff54c9abe1eadd6524eda9e7f221b1'),
     (2, 'public.claim_outbound_message(uuid,uuid,text,integer)', 'df82a503c1c4700d4feef6f7f4c8b4a0c5814339cf9669db05bc1b1142d2bf1b'),
     (3, 'public.complete_outbound_message(uuid,uuid,text,text)', '31225dd6be1b4c2ec2b5e081626a45f369b9318554250a5f05738ac760675b68'),
     (4, 'public.fail_outbound_message(uuid,uuid,boolean)', '227ba0479f57f65cc7128ffab8b78fdb059f8867ae381d1ab100da7760d98a1b'),
