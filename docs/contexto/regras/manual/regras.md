@@ -7,7 +7,7 @@
 
 ## 2. Atores / perfis e o que cada um pode fazer
 
-Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent` · `special_agent`**.
+Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent`**. O rótulo `special_agent` ainda existe no enum do banco até a migration `20261113140000_remove_enum_special_agent` ser aplicada (PR aguardando o dono); nenhuma função, policy ou tela o usa.
 `leader`, `owner` e `customer` **não são papéis**: `owner`/`admin`/`member` são papéis *dentro de um grupo do Team Chat*
 (`team_conversation_members.member_role`, migration `20260927270019`); "líder" = supervisor. Medido em 2026-11-03:
 4 admins, 3 supervisores, 4 agentes, 0 `special_agent`.
@@ -17,7 +17,7 @@ Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` �
 | **admin** | **Só ele** cria e remove a infraestrutura do atendimento: conexões WhatsApp, filas e membros, usuários e seus papéis (`user_roles`), horário comercial, SLA (`sla_configurations`), limites de campanha (`talkx_settings`), automações, chatbot, templates, blacklist, `app_settings`, provedores de IA, bloqueio de IP/país, logs de auditoria. **Único** que apaga dados em massa (contatos, campanhas, playbooks, logs). | — |
 | **supervisor** | Tudo do agente **mais**: enxerga e intervém em **qualquer** conversa e contato (reatribui, muda status, encerra — `is_admin_or_supervisor` em ~120 funções); configura regras de SLA, automações e relatórios agendados; amplia a visibilidade de um agente (`agent_visibility_grants`); vê tentativas de login; **dispara campanhas** (`confirm_talkx_campaign_launch` → `talkx_confirm_launch_unauthorized` para quem não é admin/supervisor). | Criar ou apagar conexão, fila ou usuário; mexer em configuração global. |
 | **agent** | Só o que é dele ou da sua fila (`can_edit_contact` = atendente dono **ou** membro da fila): cria contato, envia mensagem, cria/edita suas tarefas, agendamentos e **rascunhos** de campanha. | Ver ou mexer em conversa que não é sua nem da sua fila; mudar o próprio papel/permissões (`prevent_profile_privilege_escalation`); apagar contato ou mensagem; alterar qualquer configuração; **disparar** campanha. |
-| **special_agent** | **Papel excluído por decisão do dono (2026-11-03).** Era agent + flag `profiles.can_download`; a flag continua existindo no agente comum (protegida por `20261012032331`). Nenhum agente de IA deve atribuir, tratar ou exibir esse papel; a tarefa pendente é removê-lo (enum `app_role`, CHECK de `profiles.role`, `effective_role`, 16 arquivos em `src/`, 4 edge functions — DDL em produção, PR aguardando o dono). | **pendente de remoção** — 0 usuários hoje |
+| **special_agent** | **Papel excluído por decisão do dono (2026-11-03).** Era agent + flag `profiles.can_download`; a flag continua existindo no agente comum (protegida por `20261012032331`). Nenhum agente de IA deve atribuir, tratar ou exibir esse papel. Já removido de funções, policies, CHECK de `profiles.role`, `effective_role`, `src/` e edges (`20261103201500`, #2692); o último resíduo — o rótulo no enum `app_role` — sai com `20261113140000_remove_enum_special_agent` (DDL em produção, PR aguardando o dono). | **removido** — 0 usuários |
 
 Evidência: 18 policies RLS citam só `admin`, 10 tabelas só admin lê; funções `effective_role`, `is_admin`,
 `is_admin_or_supervisor`, `can_edit_contact`, `require_contact_edit_permission` (banco ao vivo, 2026-11-03).
