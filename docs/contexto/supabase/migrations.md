@@ -1116,3 +1116,15 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261113130000 | [envio_sem_conexao_de_teste_nem_fallback_silencioso](migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql) | 1 |
 | 20261113130100 | [transfer_conversation_unica_e_fila_aguardando](migrations/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql) | 1 |
 | 20261113130300 | [conversation_closures_closed_by_do_autor](migrations/20261113130300_conversation_closures_closed_by_do_autor.sql) | 1 |
+| 20261113150000 | [audit_logs_trilha_conexao_rapida](migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql) | 4 |
+| 20261113170000 | [fix_search_path_funcoes_ai_copilot](migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql) | 1 |
+| 20261113170100 | [revoke_maintain_anon_authenticated](migrations/20261113170100_revoke_maintain_anon_authenticated.sql) | 3 |
+| 20261113170300 | [reaplica_business_hours_overnight](migrations/20261113170300_reaplica_business_hours_overnight.sql) | 3 |
+| 20261113170400 | [reaplica_whatsapp_media_select_scope](migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql) | 3 |
+| 20261113170500 | [reaplica_talk_me_pending_history](migrations/20261113170500_reaplica_talk_me_pending_history.sql) | 5 |
+| 20261113170600 | [reaplica_gamification_revoke_rpcs](migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql) | 9 |
+| 20261113170700 | [reaplica_sla_single_default](migrations/20261113170700_reaplica_sla_single_default.sql) | 6 |
+| 20261113170800 | [reaplica_talkx_n102_window](migrations/20261113170800_reaplica_talkx_n102_window.sql) | 2 |
+| 20261113170900 | [reaplica_update_own_profile_sem_email](migrations/20261113170900_reaplica_update_own_profile_sem_email.sql) | 4 |
+| 20261113171100 | [reaplica_chatbot_flows_ai_l1](migrations/20261113171100_reaplica_chatbot_flows_ai_l1.sql) | 5 |
+| 20261113171200 | [reaplica_parciais_comments_team_chat_delete](migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql) | 4 |

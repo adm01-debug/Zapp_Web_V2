@@ -47,6 +47,7 @@
 | audit_logs_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX audit_logs_pkey ON public.audit_logs USING btree (id)` |
 | idx_audit_logs_action_created_at | btree | action, created_at | não | sim |  | `CREATE INDEX idx_audit_logs_action_created_at ON public.audit_logs USING btree (action, created_at DESC)` |
 | idx_audit_logs_created_at | btree | created_at | não | sim |  | `CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created_at DESC)` |
+| idx_audit_logs_details_path_ops | gin | details | não | sim |  | `CREATE INDEX idx_audit_logs_details_path_ops ON public.audit_logs USING gin (details jsonb_path_ops)` |
 | idx_audit_logs_user_id | btree | user_id | não | sim |  | `CREATE INDEX idx_audit_logs_user_id ON public.audit_logs USING btree (user_id)` |
 | ux_audit_logs_dedupe_key | btree | dedupe_key | sim | sim | `(dedupe_key IS NOT NULL)` | `CREATE UNIQUE INDEX ux_audit_logs_dedupe_key ON public.audit_logs USING btree (dedupe_key) WHERE (dedupe_key IS NOT NULL)` |
 
@@ -90,7 +91,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `( SELECT has_role(( SELECT auth.uid() AS uid), 'admin'::app_role) AS has_role)` |
 | WITH CHECK |  |
 
 

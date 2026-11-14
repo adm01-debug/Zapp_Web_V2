@@ -35044,7 +35044,7 @@
           "trigger_type"
         ],
         "deferrable": false,
-        "definition": "CHECK (trigger_type = ANY (ARRAY['keyword'::text, 'first_message'::text, 'menu'::text, 'webhook'::text, 'schedule'::text]))",
+        "definition": "CHECK (trigger_type = ANY (ARRAY['keyword'::text, 'first_message'::text, 'menu'::text, 'webhook'::text, 'schedule'::text, 'ai_l1'::text]))",
         "name": "chatbot_flows_trigger_type_check",
         "on_delete": null,
         "on_update": null,
@@ -47710,7 +47710,7 @@
         ],
         "definition": null,
         "definition_sha": "8d5dc018019b3e36",
-        "execute_api_roles": "authenticated, service_role",
+        "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
         "kind": "function",
@@ -48220,18 +48220,24 @@
             {
               "file": "supabase/migrations/20261001191230_revoke_execute_internal_trigger_functions.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
           "views": []
         },
         "comment": null,
-        "config": null,
+        "config": [
+          "search_path=\"\""
+        ],
         "definition": null,
-        "definition_sha": "85688b2c0dcb9515",
+        "definition_sha": "09a635750ef75ec1",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -48261,9 +48267,13 @@
             {
               "file": "supabase/migrations/20261006160117_ai_context_version_atomic_persist.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [
             "public.persist_conversation_analysis"
@@ -48272,9 +48282,11 @@
           "views": []
         },
         "comment": null,
-        "config": null,
+        "config": [
+          "search_path=\"\""
+        ],
         "definition": null,
-        "definition_sha": "0932d5ac65239d4b",
+        "definition_sha": "950d6d8b35261926",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -48304,9 +48316,13 @@
             {
               "file": "supabase/migrations/20261006160117_ai_context_version_atomic_persist.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [
             "public.persist_conversation_analysis"
@@ -48315,9 +48331,11 @@
           "views": []
         },
         "comment": null,
-        "config": null,
+        "config": [
+          "search_path=\"\""
+        ],
         "definition": null,
-        "definition_sha": "0d4a27f5d35d705f",
+        "definition_sha": "d339252b4bdbce71",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -48347,18 +48365,24 @@
             {
               "file": "supabase/migrations/20261001191230_revoke_execute_internal_trigger_functions.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
           "views": []
         },
         "comment": null,
-        "config": null,
+        "config": [
+          "search_path=\"\""
+        ],
         "definition": null,
-        "definition_sha": "6d9d942e3a02b182",
+        "definition_sha": "9e61ff98efee3ca7",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -48483,9 +48507,13 @@
             {
               "file": "supabase/migrations/20261006160117_ai_context_version_atomic_persist.sql",
               "hits": 6
+            },
+            {
+              "file": "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [
             "public.persist_conversation_analysis"
@@ -48494,9 +48522,11 @@
           "views": []
         },
         "comment": null,
-        "config": null,
+        "config": [
+          "search_path=\"\""
+        ],
         "definition": null,
-        "definition_sha": "a80223967f48f70c",
+        "definition_sha": "e0bc4d0943381c9b",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -51158,9 +51188,13 @@
             {
               "file": "supabase/migrations/20261030100000_copilot_sessions.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [
@@ -51169,9 +51203,11 @@
           "views": []
         },
         "comment": null,
-        "config": null,
+        "config": [
+          "search_path=\"\""
+        ],
         "definition": null,
-        "definition_sha": "f80ea6c1980d41c9",
+        "definition_sha": "ea27f03efb94ed34",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": true,
@@ -51560,7 +51596,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 57,
+          "code_total_files": 58,
           "cron": [],
           "db": [
             "public.accept_department_invite",
@@ -53041,9 +53077,13 @@
             {
               "file": "supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 8,
+          "code_total_files": 9,
           "cron": [],
           "db": [
             "public.dispatch_scheduled_messages",
@@ -55419,7 +55459,7 @@
         ],
         "definition": null,
         "definition_sha": "dd08cf5f10998ade",
-        "execute_api_roles": "authenticated, service_role",
+        "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
         "kind": "function",
@@ -55887,9 +55927,13 @@
             {
               "file": "supabase/migrations/20261013044500_gamification_streak_dias_seguidos.sql",
               "hits": 3
+            },
+            {
+              "file": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 5,
+          "code_total_files": 6,
           "cron": [],
           "db": [],
           "triggers": [
@@ -56437,7 +56481,7 @@
         ],
         "definition": null,
         "definition_sha": "704a51c01e936e04",
-        "execute_api_roles": "authenticated, service_role",
+        "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
         "kind": "function",
@@ -56971,7 +57015,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 398,
+          "code_total_files": 401,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -57246,7 +57290,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 52,
+          "code_total_files": 53,
           "cron": [],
           "db": [
             "public.can_access_realtime_topic",
@@ -57783,9 +57827,13 @@
             {
               "file": "supabase/migrations/20261015175433_business_hours_overnight.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -57796,7 +57844,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "efb644079745ae2a",
+        "definition_sha": "71010608902e8e27",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -63228,9 +63276,13 @@
             {
               "file": "supabase/migrations/20261015175433_business_hours_overnight.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [
             "public.count_searchbox_sessions_this_month",
@@ -63462,15 +63514,19 @@
             {
               "file": "src/hooks/inbox/useConnectionsManager.ts",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
           "views": []
         },
-        "comment": null,
+        "comment": "TRA-004 (item 174): troca atomica da conexao padrao do WhatsApp. Uma transacao (desmarca a anterior e marca o alvo), serializada por advisory lock, autorizada por is_admin_or_supervisor(auth.uid()) (mesma policy de UPDATE da tabela) e com resultado validado (exatamente uma padrao ao final). Retorna o uuid do alvo. Erro identico para id inexistente e chamador sem permissao.",
         "config": [
           "search_path=public, pg_temp"
         ],
@@ -64265,9 +64321,13 @@
             {
               "file": "supabase/migrations/20261020190001_talk_me_search_hardening.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 4,
+          "code_total_files": 5,
           "cron": [],
           "db": [
             "public.talk_me_claim",
@@ -64305,20 +64365,24 @@
             {
               "file": "src/features/talk-me/useTalkMeQueue.ts",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
           "views": []
         },
-        "comment": null,
+        "comment": "Historico do bloco pendente TALK ME: saida anterior, mensagens do cliente e notas internas, sem aceite nem marcacao de lida, com autorizacao revalidada.",
         "config": [
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "50f7d44fba7ad47d",
+        "definition_sha": "b147de5c3f1afa6f",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -65189,9 +65253,13 @@
             {
               "file": "supabase/migrations/20261013085500_talkx_n102_window_fixes.sql",
               "hits": 4
+            },
+            {
+              "file": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -65202,8 +65270,8 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "97fc50d62403aff1",
-        "execute_api_roles": "authenticated, service_role",
+        "definition_sha": "542eba8f962f739c",
+        "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
         "kind": "function",
@@ -67724,9 +67792,13 @@
             {
               "file": "supabase/migrations/20261013044500_gamification_streak_dias_seguidos.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 4,
+          "code_total_files": 5,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -67738,7 +67810,7 @@
         ],
         "definition": null,
         "definition_sha": "6d6a7794606dccdd",
-        "execute_api_roles": "authenticated, service_role",
+        "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
         "kind": "function",
@@ -67839,7 +67911,7 @@
         "volatility": "volatile"
       },
       {
-        "args": "p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text",
+        "args": "p_display_name text, p_avatar_url text, p_phone text, p_signature text, p_birthday text",
         "callers": {
           "code": [
             {
@@ -67862,7 +67934,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "23f76a055424bdae",
+        "definition_sha": "5dbd15cc9c0b9ab7",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -68761,7 +68833,7 @@
         {
           "acl": [
             "postgres=arwdDxtm/postgres",
-            "authenticated=arwdm/postgres",
+            "authenticated=arwd/postgres",
             "service_role=arwdDxtm/postgres",
             "zapp_agente_leitura=r/postgres"
           ],
@@ -69844,6 +69916,20 @@
       },
       {
         "columns": [
+          "details"
+        ],
+        "definition": "CREATE INDEX idx_audit_logs_details_path_ops ON public.audit_logs USING gin (details jsonb_path_ops)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "gin",
+        "name": "idx_audit_logs_details_path_ops",
+        "predicate": null,
+        "schema": "public",
+        "table": "audit_logs"
+      },
+      {
+        "columns": [
           "user_id"
         ],
         "definition": "CREATE INDEX idx_audit_logs_user_id ON public.audit_logs USING btree (user_id)",
@@ -70664,6 +70750,20 @@
         "predicate": null,
         "schema": "public",
         "table": "chatbot_executions"
+      },
+      {
+        "columns": [
+          "whatsapp_connection_id"
+        ],
+        "definition": "CREATE UNIQUE INDEX chatbot_flows_ai_l1_one_active_idx ON public.chatbot_flows USING btree (whatsapp_connection_id) WHERE ((trigger_type = 'ai_l1'::text) AND (is_active IS TRUE) AND (whatsapp_connection_id IS NOT NULL))",
+        "is_primary": false,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "chatbot_flows_ai_l1_one_active_idx",
+        "predicate": "((trigger_type = 'ai_l1'::text) AND (is_active IS TRUE) AND (whatsapp_connection_id IS NOT NULL))",
+        "schema": "public",
+        "table": "chatbot_flows"
       },
       {
         "columns": [
@@ -76888,6 +76988,20 @@
       },
       {
         "columns": [
+          "is_default"
+        ],
+        "definition": "CREATE UNIQUE INDEX sla_configurations_single_active_default_idx ON public.sla_configurations USING btree (is_default) WHERE ((is_default IS TRUE) AND (is_active IS TRUE))",
+        "is_primary": false,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "sla_configurations_single_active_default_idx",
+        "predicate": "((is_default IS TRUE) AND (is_active IS TRUE))",
+        "schema": "public",
+        "table": "sla_configurations"
+      },
+      {
+        "columns": [
           "is_active"
         ],
         "definition": "CREATE INDEX idx_sla_rules_active ON public.sla_rules USING btree (is_active) WHERE (is_active = true)",
@@ -80233,12 +80347,6 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.audit_logs.Only admins can view audit logs",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.auto_close_config.Admins can manage auto-close config",
         "severity": "BAIXA"
       },
@@ -82681,12 +82789,6 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "storage.objects.Users can delete own team chat files",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "storage.objects.Users can delete own voice changer tmp",
         "severity": "BAIXA"
       },
@@ -82778,6 +82880,12 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "storage.objects.avatars owner update",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "storage.objects.whatsapp media readable via visible message",
         "severity": "BAIXA"
       },
       {
@@ -89376,6 +89484,78 @@
         "statements": 1,
         "statements_sha": "2627016ff0da58ca",
         "version": "20261113130300"
+      },
+      {
+        "name": "audit_logs_trilha_conexao_rapida",
+        "statements": 4,
+        "statements_sha": "9c726110f5573e74",
+        "version": "20261113150000"
+      },
+      {
+        "name": "fix_search_path_funcoes_ai_copilot",
+        "statements": 1,
+        "statements_sha": "3bc217d9d819387a",
+        "version": "20261113170000"
+      },
+      {
+        "name": "revoke_maintain_anon_authenticated",
+        "statements": 3,
+        "statements_sha": "990e37fe441b0bb3",
+        "version": "20261113170100"
+      },
+      {
+        "name": "reaplica_business_hours_overnight",
+        "statements": 3,
+        "statements_sha": "871f992d3836c7e3",
+        "version": "20261113170300"
+      },
+      {
+        "name": "reaplica_whatsapp_media_select_scope",
+        "statements": 3,
+        "statements_sha": "945c0361e793784e",
+        "version": "20261113170400"
+      },
+      {
+        "name": "reaplica_talk_me_pending_history",
+        "statements": 5,
+        "statements_sha": "2419696a2eb37330",
+        "version": "20261113170500"
+      },
+      {
+        "name": "reaplica_gamification_revoke_rpcs",
+        "statements": 9,
+        "statements_sha": "ef532d0898085e1a",
+        "version": "20261113170600"
+      },
+      {
+        "name": "reaplica_sla_single_default",
+        "statements": 6,
+        "statements_sha": "655eab7f284ebce1",
+        "version": "20261113170700"
+      },
+      {
+        "name": "reaplica_talkx_n102_window",
+        "statements": 2,
+        "statements_sha": "546bf70fa4f82074",
+        "version": "20261113170800"
+      },
+      {
+        "name": "reaplica_update_own_profile_sem_email",
+        "statements": 4,
+        "statements_sha": "0bb9553d63c0a44b",
+        "version": "20261113170900"
+      },
+      {
+        "name": "reaplica_chatbot_flows_ai_l1",
+        "statements": 5,
+        "statements_sha": "ac2967db07aecd08",
+        "version": "20261113171100"
+      },
+      {
+        "name": "reaplica_parciais_comments_team_chat_delete",
+        "statements": 4,
+        "statements_sha": "5cbb8e805435a890",
+        "version": "20261113171200"
       }
     ],
     "policies": [
@@ -89869,7 +90049,7 @@
         ],
         "schema": "public",
         "table": "audit_logs",
-        "using": "has_role(auth.uid(), 'admin'::app_role)",
+        "using": "( SELECT has_role(( SELECT auth.uid() AS uid), 'admin'::app_role) AS has_role)",
         "with_check": null
       },
       {
@@ -95785,7 +95965,7 @@
         ],
         "schema": "storage",
         "table": "objects",
-        "using": "((bucket_id = 'team-chat-files'::text) AND ((storage.foldername(name))[1] = ANY (ARRAY[(current_profile_id())::text, (auth.uid())::text])))",
+        "using": "((bucket_id = 'team-chat-files'::text) AND ((storage.foldername(name))[1] = (current_profile_id())::text))",
         "with_check": null
       },
       {
@@ -96013,7 +96193,7 @@
         ],
         "schema": "storage",
         "table": "objects",
-        "using": "((bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text])) AND (EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.media_url IS NOT NULL) AND ((\"right\"(m.media_url, length(((('/'::text || objects.bucket_id) || '/'::text) || objects.name))) = ((('/'::text || objects.bucket_id) || '/'::text) || objects.name)) OR (POSITION(((((('/'::text || objects.bucket_id) || '/'::text) || objects.name) || '?'::text)) IN (m.media_url)) > 0) OR (\"right\"(m.media_url, length(((('/'::text || objects.bucket_id) || '/'::text) || replace(objects.name, ' '::text, '%20'::text)))) = ((('/'::text || objects.bucket_id) || '/'::text) || replace(objects.name, ' '::text, '%20'::text))) OR (POSITION(((((('/'::text || objects.bucket_id) || '/'::text) || replace(objects.name, ' '::text, '%20'::text)) || '?'::text)) IN (m.media_url)) > 0))))))",
+        "using": "((bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text])) AND (EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.media_url IS NOT NULL) AND (is_contact_visible_to_user(m.contact_id, auth.uid()) IS TRUE) AND (((m.contact_id)::text = (storage.foldername(objects.name))[1]) OR ((m.sender = 'contact'::text) AND ((storage.foldername(objects.name))[1] = m.message_type))) AND ((\"right\"(m.media_url, length(((('/'::text || objects.bucket_id) || '/'::text) || objects.name))) = ((('/'::text || objects.bucket_id) || '/'::text) || objects.name)) OR (POSITION(((((('/'::text || objects.bucket_id) || '/'::text) || objects.name) || '?'::text)) IN (m.media_url)) > 0) OR (\"right\"(m.media_url, length(((('/'::text || objects.bucket_id) || '/'::text) || replace(objects.name, ' '::text, '%20'::text)))) = ((('/'::text || objects.bucket_id) || '/'::text) || replace(objects.name, ' '::text, '%20'::text))) OR (POSITION(((((('/'::text || objects.bucket_id) || '/'::text) || replace(objects.name, ' '::text, '%20'::text)) || '?'::text)) IN (m.media_url)) > 0))))))",
         "with_check": null
       }
     ],

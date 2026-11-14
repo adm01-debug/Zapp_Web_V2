@@ -14,13 +14,16 @@ DECLARE
   v_start_minutes integer;
   v_end_minutes integer;
 BEGIN
-  -- X014: ler a janela de uma campanha é ato de admin/supervisor, como nas
-  -- RPCs irmãs (save/update). Sem papel = 42501.
-  IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
-  END IF;
-  IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN
-    RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501';
+  -- N-102: o talkx-scheduler (service_role) é o chamador legítimo e consulta a
+  -- janela antes de iniciar/retomar cada campanha. X014: chamada de usuário
+  -- logado continua exigindo admin/supervisor. Sem papel = 42501.
+  IF COALESCE(auth.role(), '') <> 'service_role' THEN
+    IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
+      RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
+    END IF;
+    IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN
+      RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501';
+    END IF;
   END IF;
 
   SELECT * INTO v_campaign

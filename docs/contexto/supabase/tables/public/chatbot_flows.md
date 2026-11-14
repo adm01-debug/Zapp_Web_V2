@@ -39,7 +39,7 @@
 |---|---|---|---|---|---|
 | chatbot_flows_created_by_fkey | FOREIGN KEY | `FOREIGN KEY (created_by) REFERENCES profiles(id)` | NO ACTION | NO ACTION | sim |
 | chatbot_flows_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
-| chatbot_flows_trigger_type_check | CHECK | `CHECK (trigger_type = ANY (ARRAY['keyword'::text, 'first_message'::text, 'menu'::text, 'webhook'::text, 'schedule'::text]))` |  |  | sim |
+| chatbot_flows_trigger_type_check | CHECK | `CHECK (trigger_type = ANY (ARRAY['keyword'::text, 'first_message'::text, 'menu'::text, 'webhook'::text, 'schedule'::text, 'ai_l1'::text]))` |  |  | sim |
 | chatbot_flows_whatsapp_connection_id_fkey | FOREIGN KEY | `FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id)` | NO ACTION | NO ACTION | sim |
 
 
@@ -54,6 +54,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| chatbot_flows_ai_l1_one_active_idx | btree | whatsapp_connection_id | sim | sim | `((trigger_type = 'ai_l1'::text) AND (is_active IS TRUE) AND (whatsapp_connection_id IS NOT NULL))` | `CREATE UNIQUE INDEX chatbot_flows_ai_l1_one_active_idx ON public.chatbot_flows USING btree (whatsapp_connection_id) WHERE ((trigger_type = 'ai_l1'::text) AND (is_active IS TRUE) AND (whatsapp_connection_id IS NOT NULL))` |
 | chatbot_flows_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX chatbot_flows_pkey ON public.chatbot_flows USING btree (id)` |
 | idx_chatbot_flows_active | btree | is_active | não | sim |  | `CREATE INDEX idx_chatbot_flows_active ON public.chatbot_flows USING btree (is_active)` |
 | idx_chatbot_flows_created_by | btree | created_by | não | sim |  | `CREATE INDEX idx_chatbot_flows_created_by ON public.chatbot_flows USING btree (created_by)` |

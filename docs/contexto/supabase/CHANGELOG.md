@@ -2,6 +2,18 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-14 03:15 UTC
+
+- **constraints** alterado (1): `public.chatbot_flows.chatbot_flows_trigger_type_check`
+- **functions** adicionado (1): `public.update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_signature text, p_birthday text)`
+- **functions** removido (1): `public.update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)`
+- **functions** alterado (21): `public.add_agent_xp(p_profile_id uuid, p_xp integer)`, `public.ai_is_canonical_churn_risk(p_value text)`, `public.ai_is_canonical_priority(p_value text)`, `public.ai_is_canonical_sentiment(p_value text)`, `public.ai_is_canonical_urgency(p_value text)`, `public.ai_text_array(p_value jsonb)`, `public.copilot_sessions_updated_at()`, `public.current_profile_id()`, `public.enqueue_outbound_message(p_contact_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid, p_caption text)`, `public.grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)`, `public.handle_conversation_closure_gamification()`, `public.increment_agent_messages(p_profile_id uuid, p_type text)`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.is_contact_visible_to_user(_contact_id uuid, _user_id uuid)`, `public.is_within_business_hours(connection_id uuid)`, `public.secd_caller_ok(p_subject_user_id uuid, p_admin_only boolean)`, `public.set_default_whatsapp_connection(p_connection_id uuid)`, `public.talk_me_eligible_waiting_contacts(p_queue_id uuid, p_contact_id uuid)`, `public.talk_me_list_pending_messages(p_contact_id uuid, p_limit integer)`, `public.talkx_campaign_window_open(p_campaign_id uuid, p_at timestamp with time zone)`, `public.update_agent_streak(p_profile_id uuid, p_increment boolean)`
+- **indexes** adicionado (3): `public.chatbot_flows_ai_l1_one_active_idx`, `public.idx_audit_logs_details_path_ops`, `public.sla_configurations_single_active_default_idx`
+- **lints** adicionado (1): `policy_auth_fn_not_wrapped:storage.objects.whatsapp media readable via visible message`
+- **lints** removido (2): `policy_auth_fn_not_wrapped:public.audit_logs.Only admins can view audit logs`, `policy_auth_fn_not_wrapped:storage.objects.Users can delete own team chat files`
+- **migrations** adicionado (12): `20261113150000_audit_logs_trilha_conexao_rapida`, `20261113170000_fix_search_path_funcoes_ai_copilot`, `20261113170100_revoke_maintain_anon_authenticated`, `20261113170300_reaplica_business_hours_overnight`, `20261113170400_reaplica_whatsapp_media_select_scope`, `20261113170500_reaplica_talk_me_pending_history`, `20261113170600_reaplica_gamification_revoke_rpcs`, `20261113170700_reaplica_sla_single_default`, `20261113170800_reaplica_talkx_n102_window`, `20261113170900_reaplica_update_own_profile_sem_email`, `20261113171100_reaplica_chatbot_flows_ai_l1`, `20261113171200_reaplica_parciais_comments_team_chat_delete`
+- **policies (RLS)** alterado (3): `public.audit_logs.Only admins can view audit logs`, `storage.objects.Users can delete own team chat files`, `storage.objects.whatsapp media readable via visible message`
+
 ## 2026-11-14 01:21 UTC
 
 - **functions** alterado (5): `public.fail_outbound_message(p_message_id uuid, p_claim_token uuid, p_retryable boolean)`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.resolve_unconfirmed_message(p_message_id uuid, p_outcome text)`, `public.talkx_campaign_recipients_page(p_campaign_id uuid, p_page_size integer, p_cursor text, p_status text, p_search text, p_segment_id uuid)`, `public.talkx_suppression_reasons_guard()`

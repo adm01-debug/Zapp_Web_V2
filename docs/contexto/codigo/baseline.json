@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "a97aeacf5a7a3f9323464b19827b884401faf794",
+  "commit": "ee9218b888eb715f1bc6f8fe7273127bf0bbcd01",
   "branch": "main",
-  "data_commit": "2026-11-13T22:21:34-03:00",
+  "data_commit": "2026-11-13T23:45:11-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ee9218b",
+    "data": "2026-11-13",
+    "assunto": "chore(db): pacote de 11 migrations aprovadas — segurança, horário noturno, scheduler do Talk X e reaplicações do ledger "
+   },
    {
     "sha": "a97aeac",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "58a7208",
     "data": "2026-11-12",
     "assunto": "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)"
-   },
-   {
-    "sha": "2ae0de7",
-    "data": "2026-11-12",
-    "assunto": "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)"
    }
   ],
-  "arquivos_mudados_7d": 829,
+  "arquivos_mudados_7d": 840,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 285
+    "commits": 286
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 9
+    "commits": 8
    },
    {
     "autor": "dependabot[bot]",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8512,
+  "arquivos_total": 8523,
   "arquivos_codigo": 4902,
   "linhas_codigo": 909348,
   "rotas": 18,
@@ -326,7 +326,7 @@
   "hooks": 501,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1110,
+  "migrations": 1121,
   "cron_jobs": 26,
   "testes": 2673,
   "workflows": 22,

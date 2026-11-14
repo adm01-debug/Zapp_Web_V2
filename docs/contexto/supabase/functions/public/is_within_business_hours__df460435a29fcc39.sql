@@ -23,7 +23,7 @@ BEGIN
   -- Check business hours for this day
   SELECT bh.is_open, bh.open_time, bh.close_time
   INTO v_is_open, v_open_at, v_close_at
-  FROM business_hours bh
+  FROM public.business_hours bh
   WHERE bh.whatsapp_connection_id = connection_id
   AND bh.day_of_week = v_current_day;
 
@@ -37,7 +37,19 @@ BEGIN
     RETURN false;
   END IF;
 
-  -- Check if current time is within open hours
-  RETURN v_current_time >= v_open_at AND v_current_time <= v_close_at;
+  -- Sem janela configurada: comparacao com NULL (comportamento anterior preservado)
+  IF v_open_at IS NULL OR v_close_at IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- Janela que vira a noite (ex.: 18:00 -> 02:00): aberta de open_time ate a
+  -- meia-noite OU da meia-noite ate close_time (close_time exclusivo).
+  IF v_open_at > v_close_at THEN
+    RETURN v_current_time >= v_open_at OR v_current_time < v_close_at;
+  END IF;
+
+  -- Check if current time is within open hours (close_time exclusivo: no minuto
+  -- do fechamento a casa ja esta fechada)
+  RETURN v_current_time >= v_open_at AND v_current_time < v_close_at;
 END;
 $function$

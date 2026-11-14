@@ -48,6 +48,7 @@
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
 | sla_configurations_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX sla_configurations_pkey ON public.sla_configurations USING btree (id)` |
+| sla_configurations_single_active_default_idx | btree | is_default | sim | sim | `((is_default IS TRUE) AND (is_active IS TRUE))` | `CREATE UNIQUE INDEX sla_configurations_single_active_default_idx ON public.sla_configurations USING btree (is_default) WHERE ((is_default IS TRUE) AND (is_active IS TRUE))` |
 
 
 ## Policies (RLS)

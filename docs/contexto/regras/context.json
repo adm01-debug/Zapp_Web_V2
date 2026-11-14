@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "a97aeacf5a7a3f9323464b19827b884401faf794",
+  "sha": "ee9218b888eb715f1bc6f8fe7273127bf0bbcd01",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 01:49 UTC",
-  "files_total": 8355,
-  "code_files": 6184,
-  "code_lines": 1078372
+  "generated_at": "2026-11-14 03:18 UTC",
+  "files_total": 8366,
+  "code_files": 6195,
+  "code_lines": 1079518
  },
  "version": "1.3.2",
- "facts_hash": "5345e04212bb216c",
+ "facts_hash": "2ba0dfb547a40cb8",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -328,7 +328,7 @@
   "languages": {
    ".tsx": 2385,
    ".ts": 1930,
-   ".sql": 1310,
+   ".sql": 1321,
    ".mjs": 440,
    ".py": 119,
    ".cjs": 19,
@@ -23119,26 +23119,6 @@
     "src": "supabase/migrations/20261011003024_whatsapp_media_policies_sem_curinga_like.sql"
    },
    {
-    "name": "whatsapp media readable via visible message",
-    "table": "storage.objects",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "objects.bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text]) AND EXISTS ( SELECT 1 FROM public.messages m WHERE m.media_url IS NOT NULL AND public.is_contact_visible_to_user(m.contact_id, auth.uid()) IS TRUE AND ( m.contact_id::text = (storage.foldername(objects.name))[1] OR (m.se …",
-    "check": "",
-    "src": "supabase/migrations/20261011010000_fix_whatsapp_media_select_contact_scope.sql"
-   },
-   {
-    "name": "Users can delete own team chat files",
-    "table": "storage.objects",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text",
-    "check": "",
-    "src": "supabase/migrations/20261011010002_bucket_limits_e_team_chat_files_identidade.sql"
-   },
-   {
     "name": "message_attempts_select_admin",
     "table": "message_attempts",
     "cmd": "SELECT",
@@ -24057,6 +24037,26 @@
     "using": "(SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role))",
     "check": "",
     "src": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql"
+   },
+   {
+    "name": "whatsapp media readable via visible message",
+    "table": "storage.objects",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "objects.bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text]) AND EXISTS ( SELECT 1 FROM public.messages m WHERE m.media_url IS NOT NULL AND public.is_contact_visible_to_user(m.contact_id, auth.uid()) IS TRUE AND ( m.contact_id::text = (storage.foldername(objects.name))[1] OR (m.se …",
+    "check": "",
+    "src": "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql"
+   },
+   {
+    "name": "Users can delete own team chat files",
+    "table": "storage.objects",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text",
+    "check": "",
+    "src": "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -25664,7 +25664,7 @@
     "args": "connection_id uuid",
     "returns": "boolean",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261015175433_business_hours_overnight.sql",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
     "security_definer": true,
     "search_path": true,
     "body": "DECLARE v_current_day INTEGER; v_current_time TIME; v_is_open BOOLEAN; v_open_at TIME; v_close_at TIME; BEGIN IF NOT public.secd_caller_ok(NULL, false) THEN RAISE EXCEPTION 'is_within_business_hours: chamador sem sessao de usuario' USING ERRCODE = '42501'; END IF; v_current_day := EXTRACT(DOW FROM now() AT TIME ZONE 'America/Sao_Paulo'); v_current_time := (now() AT TIME ZONE 'America/Sao_Paulo')::TIME; SELECT bh.is_open, bh.open_time, bh.close_time INTO v_is_open, v_open_at, v_close_at FROM public.business_hours bh WHERE bh.whatsapp_connection_id = connection_id AND bh.day_of_week = v_current_day; IF NOT FOUND THEN RETURN true; END IF; IF NOT v_is_open THEN RETURN false; END IF; IF v_open_at …",
@@ -32039,22 +32039,30 @@
     "tables": []
    },
    "talkx_campaign_window_open": {
-    "args": "p_campaign_id uuid, p_at timestamptz",
-    "returns": "boolean",
+    "args": "p_campaign_id uuid, p_at timestamptz DEFAULT now(",
+    "returns": "TABLE (allowed boolean, reason text, next_window timestamptz)",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011003008_talkx_n102c_window_open.sql",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_campaign public.talkx_campaigns%ROWTYPE; v_dnd_hours jsonb; v_timezone text; v_local_at timestamp; v_local_date date; v_weekday integer; v_start_minutes integer; v_end_minutes integer; v_minutes_of_day integer; BEGIN SELECT * INTO v_campaign FROM public.talkx_campaigns WHERE id = p_campaign_id; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002'; END IF; v_timezone := COALESCE(NULLIF(btrim(COALESCE(v_campaign.schedule_timezone, '')), ''), 'America/Sao_Paulo'); v_local_at := p_at AT TIME ZONE v_timezone; v_local_date := v_local_at::date; IF v_campaign.send_weekdays IS NOT NULL THEN v_weekday := EXTRACT(DOW FROM v_local_at)::integer; IF NOT (v_weekday …",
+    "body": "DECLARE v_campaign public.talkx_campaigns%ROWTYPE; v_tz text; v_local_ts timestamp; v_dnd_hours jsonb; v_weekday smallint; v_now_minutes integer; v_start_minutes integer; v_end_minutes integer; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501'; END IF; END IF; SELECT * INTO v_campaign FROM public.talkx_campaigns WHERE id = p_campaign_id; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_no …",
     "raises": [
+     "authentication_required",
+     "talkx_campaign_role_required",
      "talkx_campaign_not_found"
     ],
     "tables": [
+     "jsonb_array_elements",
+     "p_at",
      "talkx_campaigns",
      "talkx_settings",
+     "v_bh",
+     "v_bh_clock",
      "v_campaign",
+     "v_dnd_end",
      "v_dnd_hours",
-     "v_local_at"
+     "v_dnd_start",
+     "v_local_ts"
     ]
    },
    "save_talkx_template": {
@@ -32343,7 +32351,7 @@
     "args": "p_contact_id uuid, p_limit integer DEFAULT 50",
     "returns": "TABLE (\n  message_id uuid,\n  sender text,\n  content text,\n  message_type text,\n  media_url text,\n  caption text,\n  created_at timestamptz\n)",
     "lang": "sql",
-    "src": "supabase/migrations/20261011010100_talk_me_pending_history_origins.sql",
+    "src": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql",
     "security_definer": true,
     "search_path": true,
     "body": "WITH caller AS ( SELECT auth.uid() AS user_id, ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() AND p.is_active IS TRUE LIMIT 1 ) AS profile_id, public.is_admin_or_supervisor(auth.uid()) AS is_admin, EXISTS ( SELECT 1 FROM public.feature_flags f WHERE f.key = 'inbox.talk-me' AND f.enabled IS TRUE ) AS feature_enabled ), authorized_contact AS ( SELECT e.contact_id FROM public.talk_me_eligible_waiting_contacts(NULL, p_contact_id) e CROSS JOIN caller x WHERE x.user_id IS NOT NULL AND x.profile_id IS NOT NULL AND x.feature_enabled AND EXISTS ( SELECT 1 FROM public.queues q WHERE q.id = e.queue_id AND q.is_active = true ) AND ( x.is_admin OR EXISTS ( SELECT 1 FROM public.queue_me …",
@@ -33375,20 +33383,6 @@
      "calls"
     ]
    },
-   "update_own_profile": {
-    "args": "p_display_name TEXT DEFAULT NULL, p_avatar_url TEXT DEFAULT NULL, p_phone TEXT DEFAULT NULL, p_signature TEXT DEFAULT NULL, p_birthday TEXT DEFAULT NULL",
-    "returns": "BOOLEAN",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261014023945_update_own_profile_sem_email.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_profile_id UUID; BEGIN SELECT id INTO v_profile_id FROM profiles WHERE user_id = auth.uid(); IF v_profile_id IS NULL THEN RETURN FALSE; END IF; UPDATE profiles SET name = COALESCE(p_display_name, name), avatar_url = COALESCE(p_avatar_url, avatar_url), phone = COALESCE(p_phone, phone), signature = COALESCE(p_signature, signature), birthday = COALESCE(NULLIF(p_birthday, '')::date, birthday), updated_at = now() WHERE id = v_profile_id; RETURN TRUE; END;",
-    "raises": [],
-    "tables": [
-     "profiles",
-     "v_profile_id"
-    ]
-   },
    "agent_workload": {
     "args": "",
     "returns": "table (\n  profile_id uuid,\n  open_chats integer,\n  waiting_chats integer,\n  last_send_at timestamptz\n)",
@@ -34206,6 +34200,20 @@
      "audit_logs",
      "instance_pauses",
      "v_row"
+    ]
+   },
+   "update_own_profile": {
+    "args": "p_display_name TEXT DEFAULT NULL, p_avatar_url TEXT DEFAULT NULL, p_phone TEXT DEFAULT NULL, p_signature TEXT DEFAULT NULL, p_birthday TEXT DEFAULT NULL",
+    "returns": "BOOLEAN",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id UUID; BEGIN SELECT id INTO v_profile_id FROM profiles WHERE user_id = auth.uid(); IF v_profile_id IS NULL THEN RETURN FALSE; END IF; UPDATE profiles SET name = COALESCE(p_display_name, name), avatar_url = COALESCE(p_avatar_url, avatar_url), phone = COALESCE(p_phone, phone), signature = COALESCE(p_signature, signature), birthday = COALESCE(NULLIF(p_birthday, '')::date, birthday), updated_at = now() WHERE id = v_profile_id; RETURN TRUE; END;",
+    "raises": [],
+    "tables": [
+     "profiles",
+     "v_profile_id"
     ]
    },
    "uid": {
@@ -41962,6 +41970,22 @@
     "src": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql"
    },
    {
+    "name": "sla_configurations_single_active_default_idx",
+    "table": "sla_configurations",
+    "columns": "is_default",
+    "unique": true,
+    "where": "WHERE is_default IS TRUE AND is_active IS TRUE",
+    "src": "supabase/migrations/20261113170700_reaplica_sla_single_default.sql"
+   },
+   {
+    "name": "chatbot_flows_ai_l1_one_active_idx",
+    "table": "chatbot_flows",
+    "columns": "whatsapp_connection_id",
+    "unique": true,
+    "where": "WHERE trigger_type = 'ai_l1' AND is_active IS TRUE AND whatsapp_connection_id IS NOT NULL",
+    "src": "supabase/migrations/20261113171100_reaplica_chatbot_flows_ai_l1.sql"
+   },
+   {
     "name": "idx_ai_conversation_tags_contact_id",
     "table": "ai_conversation_tags",
     "columns": "contact_id",
@@ -43327,6 +43351,17 @@
    "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
    "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql",
    "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql",
+   "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+   "supabase/migrations/20261113170100_revoke_maintain_anon_authenticated.sql",
+   "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
+   "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql",
+   "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql",
+   "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql",
+   "supabase/migrations/20261113170700_reaplica_sla_single_default.sql",
+   "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql",
+   "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql",
+   "supabase/migrations/20261113171100_reaplica_chatbot_flows_ai_l1.sql",
+   "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -56466,6 +56501,126 @@
     "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "maintain",
+    "object": "public",
+    "objkind": "tables",
+    "roles": "anon, authenticated",
+    "src": "supabase/migrations/20261113170100_revoke_maintain_anon_authenticated.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "is_within_business_hours",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "is_within_business_hours",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talk_me_list_pending_messages",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talk_me_list_pending_messages",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "add_agent_xp",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "grant_agent_achievement",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "increment_agent_messages",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "update_agent_streak",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "add_agent_xp",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "grant_agent_achievement",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "increment_agent_messages",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "update_agent_streak",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "update_own_profile",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "update_own_profile",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -60319,11 +60474,6 @@
     "src": "supabase/migrations/20261011003006_talkx_n102b_cast.sql"
    },
    {
-    "function": "talkx_campaign_window_open",
-    "msg": "talkx_campaign_not_found",
-    "src": "supabase/migrations/20261011003008_talkx_n102c_window_open.sql"
-   },
-   {
     "function": "talkx_segment_health",
     "msg": "talkx_segment_health_role_required",
     "src": "supabase/migrations/20261011003010_talkx_segment_health.sql"
@@ -61039,11 +61189,6 @@
     "src": "supabase/migrations/20261014160000_ingest_inbound_message_reabre_conversa.sql"
    },
    {
-    "function": "is_within_business_hours",
-    "msg": "is_within_business_hours: chamador sem sessao de usuario",
-    "src": "supabase/migrations/20261015175433_business_hours_overnight.sql"
-   },
-   {
     "function": "transfer_conversation",
     "msg": "Sem sessao autenticada.",
     "src": "supabase/migrations/20261015182236_transfer_conversation_limpa_agente_e_cas.sql"
@@ -61672,6 +61817,26 @@
     "function": "talkx_suppression_reasons_guard",
     "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
     "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "is_within_business_hours",
+    "msg": "is_within_business_hours: chamador sem sessao de usuario",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql"
+   },
+   {
+    "function": "talkx_campaign_window_open",
+    "msg": "authentication_required",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql"
+   },
+   {
+    "function": "talkx_campaign_window_open",
+    "msg": "talkx_campaign_role_required",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql"
+   },
+   {
+    "function": "talkx_campaign_window_open",
+    "msg": "talkx_campaign_not_found",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql"
    },
    {
     "function": "espera_contem",
@@ -70294,8 +70459,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1110,
-   "lines": 107628,
+   "files": 1121,
+   "lines": 108774,
    "tables": [
     "audit_logs",
     "departments",
@@ -221127,26 +221292,6 @@
     "src": "supabase/migrations/20261011003024_whatsapp_media_policies_sem_curinga_like.sql"
    },
    {
-    "name": "whatsapp media readable via visible message",
-    "table": "storage.objects",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "objects.bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text]) AND EXISTS ( SELECT 1 FROM public.messages m WHERE m.media_url IS NOT NULL AND public.is_contact_visible_to_user(m.contact_id, auth.uid()) IS TRUE AND ( m.contact_id::text = (storage.foldername(objects.name))[1] OR (m.se …",
-    "check": "",
-    "src": "supabase/migrations/20261011010000_fix_whatsapp_media_select_contact_scope.sql"
-   },
-   {
-    "name": "Users can delete own team chat files",
-    "table": "storage.objects",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text",
-    "check": "",
-    "src": "supabase/migrations/20261011010002_bucket_limits_e_team_chat_files_identidade.sql"
-   },
-   {
     "name": "message_attempts_select_admin",
     "table": "message_attempts",
     "cmd": "SELECT",
@@ -222065,6 +222210,26 @@
     "using": "(SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role))",
     "check": "",
     "src": "supabase/migrations/20261113150000_audit_logs_trilha_conexao_rapida.sql"
+   },
+   {
+    "name": "whatsapp media readable via visible message",
+    "table": "storage.objects",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "objects.bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text]) AND EXISTS ( SELECT 1 FROM public.messages m WHERE m.media_url IS NOT NULL AND public.is_contact_visible_to_user(m.contact_id, auth.uid()) IS TRUE AND ( m.contact_id::text = (storage.foldername(objects.name))[1] OR (m.se …",
+    "check": "",
+    "src": "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql"
+   },
+   {
+    "name": "Users can delete own team chat files",
+    "table": "storage.objects",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text",
+    "check": "",
+    "src": "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -223672,7 +223837,7 @@
     "args": "connection_id uuid",
     "returns": "boolean",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261015175433_business_hours_overnight.sql",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
     "security_definer": true,
     "search_path": true,
     "body": "DECLARE v_current_day INTEGER; v_current_time TIME; v_is_open BOOLEAN; v_open_at TIME; v_close_at TIME; BEGIN IF NOT public.secd_caller_ok(NULL, false) THEN RAISE EXCEPTION 'is_within_business_hours: chamador sem sessao de usuario' USING ERRCODE = '42501'; END IF; v_current_day := EXTRACT(DOW FROM now() AT TIME ZONE 'America/Sao_Paulo'); v_current_time := (now() AT TIME ZONE 'America/Sao_Paulo')::TIME; SELECT bh.is_open, bh.open_time, bh.close_time INTO v_is_open, v_open_at, v_close_at FROM public.business_hours bh WHERE bh.whatsapp_connection_id = connection_id AND bh.day_of_week = v_current_day; IF NOT FOUND THEN RETURN true; END IF; IF NOT v_is_open THEN RETURN false; END IF; IF v_open_at …",
@@ -230047,22 +230212,30 @@
     "tables": []
    },
    "talkx_campaign_window_open": {
-    "args": "p_campaign_id uuid, p_at timestamptz",
-    "returns": "boolean",
+    "args": "p_campaign_id uuid, p_at timestamptz DEFAULT now(",
+    "returns": "TABLE (allowed boolean, reason text, next_window timestamptz)",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261011003008_talkx_n102c_window_open.sql",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_campaign public.talkx_campaigns%ROWTYPE; v_dnd_hours jsonb; v_timezone text; v_local_at timestamp; v_local_date date; v_weekday integer; v_start_minutes integer; v_end_minutes integer; v_minutes_of_day integer; BEGIN SELECT * INTO v_campaign FROM public.talkx_campaigns WHERE id = p_campaign_id; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002'; END IF; v_timezone := COALESCE(NULLIF(btrim(COALESCE(v_campaign.schedule_timezone, '')), ''), 'America/Sao_Paulo'); v_local_at := p_at AT TIME ZONE v_timezone; v_local_date := v_local_at::date; IF v_campaign.send_weekdays IS NOT NULL THEN v_weekday := EXTRACT(DOW FROM v_local_at)::integer; IF NOT (v_weekday …",
+    "body": "DECLARE v_campaign public.talkx_campaigns%ROWTYPE; v_tz text; v_local_ts timestamp; v_dnd_hours jsonb; v_weekday smallint; v_now_minutes integer; v_start_minutes integer; v_end_minutes integer; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501'; END IF; END IF; SELECT * INTO v_campaign FROM public.talkx_campaigns WHERE id = p_campaign_id; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_no …",
     "raises": [
+     "authentication_required",
+     "talkx_campaign_role_required",
      "talkx_campaign_not_found"
     ],
     "tables": [
+     "jsonb_array_elements",
+     "p_at",
      "talkx_campaigns",
      "talkx_settings",
+     "v_bh",
+     "v_bh_clock",
      "v_campaign",
+     "v_dnd_end",
      "v_dnd_hours",
-     "v_local_at"
+     "v_dnd_start",
+     "v_local_ts"
     ]
    },
    "save_talkx_template": {
@@ -230351,7 +230524,7 @@
     "args": "p_contact_id uuid, p_limit integer DEFAULT 50",
     "returns": "TABLE (\n  message_id uuid,\n  sender text,\n  content text,\n  message_type text,\n  media_url text,\n  caption text,\n  created_at timestamptz\n)",
     "lang": "sql",
-    "src": "supabase/migrations/20261011010100_talk_me_pending_history_origins.sql",
+    "src": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql",
     "security_definer": true,
     "search_path": true,
     "body": "WITH caller AS ( SELECT auth.uid() AS user_id, ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() AND p.is_active IS TRUE LIMIT 1 ) AS profile_id, public.is_admin_or_supervisor(auth.uid()) AS is_admin, EXISTS ( SELECT 1 FROM public.feature_flags f WHERE f.key = 'inbox.talk-me' AND f.enabled IS TRUE ) AS feature_enabled ), authorized_contact AS ( SELECT e.contact_id FROM public.talk_me_eligible_waiting_contacts(NULL, p_contact_id) e CROSS JOIN caller x WHERE x.user_id IS NOT NULL AND x.profile_id IS NOT NULL AND x.feature_enabled AND EXISTS ( SELECT 1 FROM public.queues q WHERE q.id = e.queue_id AND q.is_active = true ) AND ( x.is_admin OR EXISTS ( SELECT 1 FROM public.queue_me …",
@@ -231383,20 +231556,6 @@
      "calls"
     ]
    },
-   "update_own_profile": {
-    "args": "p_display_name TEXT DEFAULT NULL, p_avatar_url TEXT DEFAULT NULL, p_phone TEXT DEFAULT NULL, p_signature TEXT DEFAULT NULL, p_birthday TEXT DEFAULT NULL",
-    "returns": "BOOLEAN",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261014023945_update_own_profile_sem_email.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_profile_id UUID; BEGIN SELECT id INTO v_profile_id FROM profiles WHERE user_id = auth.uid(); IF v_profile_id IS NULL THEN RETURN FALSE; END IF; UPDATE profiles SET name = COALESCE(p_display_name, name), avatar_url = COALESCE(p_avatar_url, avatar_url), phone = COALESCE(p_phone, phone), signature = COALESCE(p_signature, signature), birthday = COALESCE(NULLIF(p_birthday, '')::date, birthday), updated_at = now() WHERE id = v_profile_id; RETURN TRUE; END;",
-    "raises": [],
-    "tables": [
-     "profiles",
-     "v_profile_id"
-    ]
-   },
    "agent_workload": {
     "args": "",
     "returns": "table (\n  profile_id uuid,\n  open_chats integer,\n  waiting_chats integer,\n  last_send_at timestamptz\n)",
@@ -232214,6 +232373,20 @@
      "audit_logs",
      "instance_pauses",
      "v_row"
+    ]
+   },
+   "update_own_profile": {
+    "args": "p_display_name TEXT DEFAULT NULL, p_avatar_url TEXT DEFAULT NULL, p_phone TEXT DEFAULT NULL, p_signature TEXT DEFAULT NULL, p_birthday TEXT DEFAULT NULL",
+    "returns": "BOOLEAN",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_profile_id UUID; BEGIN SELECT id INTO v_profile_id FROM profiles WHERE user_id = auth.uid(); IF v_profile_id IS NULL THEN RETURN FALSE; END IF; UPDATE profiles SET name = COALESCE(p_display_name, name), avatar_url = COALESCE(p_avatar_url, avatar_url), phone = COALESCE(p_phone, phone), signature = COALESCE(p_signature, signature), birthday = COALESCE(NULLIF(p_birthday, '')::date, birthday), updated_at = now() WHERE id = v_profile_id; RETURN TRUE; END;",
+    "raises": [],
+    "tables": [
+     "profiles",
+     "v_profile_id"
     ]
    },
    "uid": {
@@ -236397,11 +236570,6 @@
     "src": "supabase/migrations/20261011003006_talkx_n102b_cast.sql"
    },
    {
-    "function": "talkx_campaign_window_open",
-    "msg": "talkx_campaign_not_found",
-    "src": "supabase/migrations/20261011003008_talkx_n102c_window_open.sql"
-   },
-   {
     "function": "talkx_segment_health",
     "msg": "talkx_segment_health_role_required",
     "src": "supabase/migrations/20261011003010_talkx_segment_health.sql"
@@ -237117,11 +237285,6 @@
     "src": "supabase/migrations/20261014160000_ingest_inbound_message_reabre_conversa.sql"
    },
    {
-    "function": "is_within_business_hours",
-    "msg": "is_within_business_hours: chamador sem sessao de usuario",
-    "src": "supabase/migrations/20261015175433_business_hours_overnight.sql"
-   },
-   {
     "function": "transfer_conversation",
     "msg": "Sem sessao autenticada.",
     "src": "supabase/migrations/20261015182236_transfer_conversation_limpa_agente_e_cas.sql"
@@ -237750,6 +237913,26 @@
     "function": "talkx_suppression_reasons_guard",
     "msg": "talkx_suppression_reasons: motivo do sistema não pode ser desativado",
     "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "function": "is_within_business_hours",
+    "msg": "is_within_business_hours: chamador sem sessao de usuario",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql"
+   },
+   {
+    "function": "talkx_campaign_window_open",
+    "msg": "authentication_required",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql"
+   },
+   {
+    "function": "talkx_campaign_window_open",
+    "msg": "talkx_campaign_role_required",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql"
+   },
+   {
+    "function": "talkx_campaign_window_open",
+    "msg": "talkx_campaign_not_found",
+    "src": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql"
    },
    {
     "function": "espera_contem",
@@ -244303,10 +244486,10 @@
      "authenticated: bucket_id = 'avatars'",
      "authenticated: bucket_id = 'whatsapp-media' AND ( is_admin_or_supervisor(auth.uid()) OR (storage.foldername(name))[1] IN ( SELECT c.id::text",
      "authenticated: bucket_id = 'audio-messages' AND ( is_admin_or_supervisor(auth.uid()) OR (storage.foldername(name))[1] IN ( SELECT c.id::text",
-     "authenticated: objects.bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text]) AND EXISTS ( SELECT 1 FROM public.messages m ",
      "authenticated: objects.bucket_id = 'team-chat-files' AND ( public.is_admin_or_supervisor(auth.uid()) OR (storage.foldername(objects.name))[1",
      "authenticated: bucket_id = 'voice-changer-tmp' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid(",
-     "authenticated: bucket_id = 'audio-messages' and exists ( select 1 from public.whisper_messages as w where w.audio_path = storage.objects.nam"
+     "authenticated: bucket_id = 'audio-messages' and exists ( select 1 from public.whisper_messages as w where w.audio_path = storage.objects.nam",
+     "authenticated: objects.bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text]) AND EXISTS ( SELECT 1 FROM public.messages m "
     ],
     "INSERT": [
      "authenticated: ((bucket_id = 'custom-emojis'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] = (auth.uid())",
@@ -244333,10 +244516,10 @@
      "authenticated: ((bucket_id = 'stickers'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))",
      "authenticated: ((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))",
      "authenticated: ((bucket_id = 'whatsapp-media'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (",
-     "authenticated: bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text",
      "authenticated: bucket_id = 'audio-memes' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid())::te",
      "authenticated: bucket_id = 'voice-changer-tmp' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid(",
-     "authenticated: bucket_id = 'audio-memes' AND public.is_admin_or_supervisor((SELECT auth.uid()))"
+     "authenticated: bucket_id = 'audio-memes' AND public.is_admin_or_supervisor((SELECT auth.uid()))",
+     "authenticated: bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text"
     ]
    },
    "supabase_migrations.version_reservations": {
@@ -245754,6 +245937,11 @@
    "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
    "supabase/migrations/20261112171000_talkx_recipients_page_aceita_cancelled.sql",
    "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql",
+   "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
+   "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql",
+   "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql",
+   "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql",
+   "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -259094,6 +259282,126 @@
     "objkind": "function",
     "roles": "PUBLIC, anon, authenticated",
     "src": "supabase/migrations/20261112172000_talkx_suppression_reasons_hardening.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "maintain",
+    "object": "public",
+    "objkind": "tables",
+    "roles": "anon, authenticated",
+    "src": "supabase/migrations/20261113170100_revoke_maintain_anon_authenticated.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "is_within_business_hours",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "is_within_business_hours",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talk_me_list_pending_messages",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talk_me_list_pending_messages",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "add_agent_xp",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "grant_agent_achievement",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "increment_agent_messages",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "update_agent_streak",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "add_agent_xp",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "grant_agent_achievement",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "increment_agent_messages",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "update_agent_streak",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "update_own_profile",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "update_own_profile",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql"
    },
    {
     "kind": "grant",
@@ -389019,6 +389327,55 @@
     "-- * o papel `authenticated` tem statement_timeout=8s: a frio, com as duas"
    ]
   },
+  "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql": {
+   "path": "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+   "lines": 59
+  },
+  "supabase/migrations/20261113170100_revoke_maintain_anon_authenticated.sql": {
+   "path": "supabase/migrations/20261113170100_revoke_maintain_anon_authenticated.sql",
+   "lines": 45
+  },
+  "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql": {
+   "path": "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
+   "lines": 75,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql": {
+   "path": "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql",
+   "lines": 72
+  },
+  "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql": {
+   "path": "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql",
+   "lines": 193,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql": {
+   "path": "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql",
+   "lines": 61,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261113170700_reaplica_sla_single_default.sql": {
+   "path": "supabase/migrations/20261113170700_reaplica_sla_single_default.sql",
+   "lines": 69
+  },
+  "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql": {
+   "path": "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql",
+   "lines": 369,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql": {
+   "path": "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql",
+   "lines": 75,
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261113171100_reaplica_chatbot_flows_ai_l1.sql": {
+   "path": "supabase/migrations/20261113171100_reaplica_chatbot_flows_ai_l1.sql",
+   "lines": 60
+  },
+  "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql": {
+   "path": "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql",
+   "lines": 68
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -392871,10 +393228,29 @@
   }
  },
  "git": {
-  "sha": "a97aeacf5a7a3f9323464b19827b884401faf794",
+  "sha": "ee9218b888eb715f1bc6f8fe7273127bf0bbcd01",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ee9218b",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "chore(db): pacote de 11 migrations aprovadas — segurança, horário noturno, scheduler do Talk X e reaplicações do ledger (#3062)",
+    "files": [
+     "supabase/migrations/20261113170000_fix_search_path_funcoes_ai_copilot.sql",
+     "supabase/migrations/20261113170100_revoke_maintain_anon_authenticated.sql",
+     "supabase/migrations/20261113170300_reaplica_business_hours_overnight.sql",
+     "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql",
+     "supabase/migrations/20261113170500_reaplica_talk_me_pending_history.sql",
+     "supabase/migrations/20261113170600_reaplica_gamification_revoke_rpcs.sql",
+     "supabase/migrations/20261113170700_reaplica_sla_single_default.sql",
+     "supabase/migrations/20261113170800_reaplica_talkx_n102_window.sql",
+     "supabase/migrations/20261113170900_reaplica_update_own_profile_sem_email.sql",
+     "supabase/migrations/20261113171100_reaplica_chatbot_flows_ai_l1.sql",
+     "supabase/migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql"
+    ]
+   },
    {
     "sha": "a97aeac",
     "date": "2026-11-13",
@@ -393415,15 +393791,6 @@
     "subject": "fix(e2e): navegação sem retry para o erro real aparecer no CI (#2991)",
     "files": [
      "e2e/navegacao-modulos.spec.ts"
-    ]
-   },
-   {
-    "sha": "81f67b0",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)",
-    "files": [
-     "playwright.config.ts"
     ]
    }
   ],

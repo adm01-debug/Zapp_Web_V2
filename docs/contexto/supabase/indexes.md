@@ -68,6 +68,7 @@ Uso e tamanho em `stats.md`.
 | public.audit_logs | audit_logs_pkey | btree | id | sim | sim |  |
 | public.audit_logs | idx_audit_logs_action_created_at | btree | action, created_at | não | sim |  |
 | public.audit_logs | idx_audit_logs_created_at | btree | created_at | não | sim |  |
+| public.audit_logs | idx_audit_logs_details_path_ops | gin | details | não | sim |  |
 | public.audit_logs | idx_audit_logs_user_id | btree | user_id | não | sim |  |
 | public.audit_logs | ux_audit_logs_dedupe_key | btree | dedupe_key | sim | sim | `(dedupe_key IS NOT NULL)` |
 | public.auto_close_config | auto_close_config_pkey | btree | id | sim | sim |  |
@@ -126,6 +127,7 @@ Uso e tamanho em `stats.md`.
 | public.chatbot_executions | idx_chatbot_executions_contact_id | btree | contact_id | não | sim |  |
 | public.chatbot_executions | idx_chatbot_executions_flow_id | btree | flow_id | não | sim |  |
 | public.chatbot_executions | idx_chatbot_executions_status | btree | status | não | sim |  |
+| public.chatbot_flows | chatbot_flows_ai_l1_one_active_idx | btree | whatsapp_connection_id | sim | sim | `((trigger_type = 'ai_l1'::text) AND (is_active IS TRUE) AND (whatsapp_connection_id IS NOT NULL))` |
 | public.chatbot_flows | chatbot_flows_pkey | btree | id | sim | sim |  |
 | public.chatbot_flows | idx_chatbot_flows_active | btree | is_active | não | sim |  |
 | public.chatbot_flows | idx_chatbot_flows_created_by | btree | created_by | não | sim |  |
@@ -564,6 +566,7 @@ Uso e tamanho em `stats.md`.
 | public.sla_alert_events | sla_alert_events_pkey | btree | id | sim | sim |  |
 | public.sla_alert_preferences | sla_alert_preferences_pkey | btree | user_id | sim | sim |  |
 | public.sla_configurations | sla_configurations_pkey | btree | id | sim | sim |  |
+| public.sla_configurations | sla_configurations_single_active_default_idx | btree | is_default | sim | sim | `((is_default IS TRUE) AND (is_active IS TRUE))` |
 | public.sla_rules | idx_sla_rules_active | btree | is_active | não | sim | `(is_active = true)` |
 | public.sla_rules | idx_sla_rules_active_priority | btree | is_active, priority | não | sim |  |
 | public.sla_rules | idx_sla_rules_agent_id | btree | agent_id | não | sim | `(agent_id IS NOT NULL)` |
