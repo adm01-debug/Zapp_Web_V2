@@ -14,7 +14,7 @@
 # servico local, sem subir container novo), que:
 #   ANTES (policy original): um authenticated QUALQUER (nao-admin, nao-criador) LE o convite de
 #     outro departamento — o furo.
-#   DEPOIS (SQL real da migration 20261114120000_department_invites_restringe_select.sql):
+#   DEPOIS (SQL real da migration 20261114121000_department_invites_restringe_select.sql):
 #     o mesmo authenticated NAO VE NADA, e um authenticated admin continua vendo.
 #
 # Uso: bash scripts/db-audit/department-invites-select-admin-only.test.sh
@@ -23,7 +23,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261114120000_department_invites_restringe_select.sql"
+migration="$repo_root/supabase/migrations/20261114121000_department_invites_restringe_select.sql"
 postgres_image="${DEPARTMENT_INVITES_SELECT_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-dept-invites-select-test-$$"
 passed=0

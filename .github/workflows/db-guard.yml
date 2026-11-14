@@ -1603,11 +1603,14 @@ jobs:
             scripts/db-audit/conversation-closures-reopen-same-day.test.sh
             scripts/db-audit/crisis-room-snapshot.test.sh
             scripts/db-audit/cron-remocao-vacuum-messages.test.sh
+            scripts/db-audit/department-invites-select-admin-only.test.sh
             scripts/db-audit/docker-shim.test.sh
             scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh
             scripts/db-audit/ia131-audio-stt-cadeia.test.sh
             scripts/db-audit/ia131-audio-stt-openrouter.test.sh
             scripts/db-audit/login_gate_rpc.test.sh
+            scripts/db-audit/merge-brinde-state-execute-grant.test.sh
+            scripts/db-audit/merge-contacts-phone-secundario.test.sh
             scripts/db-audit/message-attempts-log.test.sh
             scripts/db-audit/message-reactions-author-model.test.sh
             scripts/db-audit/message-reactions-autoria.test.sh

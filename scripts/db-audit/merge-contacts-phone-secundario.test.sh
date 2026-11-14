@@ -3,7 +3,7 @@
 # public.merge_contacts_atomic trava com 23505 (unique_violation) quando o
 # telefone escolhido em p_merged_fields e o telefone do contato SECUNDARIO --
 # na versao viva criada por 20261006205100_contact_notes_identity_merge_bypass.sql
-# -- e que a migration 20261114120000_merge_contacts_phone_secundario_unique.sql
+# -- e que a migration 20261114120500_merge_contacts_phone_secundario_unique.sql
 # corrige isso sem mudar nenhum outro comportamento (campos, privilegio, guard
 # de notas, contagem de relacoes movidas).
 
@@ -11,7 +11,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_bug="$repo_root/supabase/migrations/20261006205100_contact_notes_identity_merge_bypass.sql"
-migration_fix="$repo_root/supabase/migrations/20261114120000_merge_contacts_phone_secundario_unique.sql"
+migration_fix="$repo_root/supabase/migrations/20261114120500_merge_contacts_phone_secundario_unique.sql"
 container_name="zapp-v2-merge-phone-test-$$"
 postgres_image="${MERGE_PHONE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 passed=0
