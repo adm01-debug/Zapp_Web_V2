@@ -496,6 +496,10 @@ export default function TalkXView() {
             campaign={wizardCampaign}
             onClose={backToList}
             onLaunched={(id, status) => {
+              // Lançada, deixa de ser rascunho local: voltar no navegador para ?wizard=<id>
+              // não pode reabrir o wizard (a guarda avisa e devolve à lista).
+              setLocalDraftRouteId(null);
+              setEditingCampaign(null);
               writeWizardRoute(null, true);
               if (status === 'scheduled') {
                 setScheduledCampaignId(id);

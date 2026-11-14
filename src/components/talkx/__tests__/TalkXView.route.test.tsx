@@ -30,19 +30,23 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
 vi.mock('@/components/talkx/TalkXCampaignWizard', async () => {
-  const { useEffect } = await import('react');
+  const { useEffect, useRef } = await import('react');
   return {
-    TalkXCampaignWizard: ({ campaign, initial, onClose, onDraftIdentity }: {
+    TalkXCampaignWizard: ({ campaign, initial, onClose, onDraftIdentity, onLaunched }: {
       campaign: { id?: string } | null; initial?: { step?: number }; onClose: () => void;
       onDraftIdentity?: (id: string) => void;
+      onLaunched?: (id: string, status: string) => void;
     }) => {
+      // Id que o wizard lançaria: o da campanha aberta ou o do rascunho criado pelo autosave.
+      const savedId = useRef<string | null>(campaign?.id ?? null);
       useEffect(() => { f.wizardMounts += 1; }, []);
       // Como o wizard real (useCampaignEditor): no mount, informa o id da campanha aberta.
       useEffect(() => { if (campaign?.id) onDraftIdentity?.(campaign.id); }, [campaign?.id, onDraftIdentity]);
       return (
         <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} data-step={initial?.step}>
           <button type="button" onClick={onClose}>Fechar wizard</button>
-          <button type="button" onClick={() => onDraftIdentity?.('draft_auto')}>Autosave cria rascunho</button>
+          <button type="button" onClick={() => { savedId.current = 'draft_auto'; onDraftIdentity?.('draft_auto'); }}>Autosave cria rascunho</button>
+          <button type="button" onClick={() => onLaunched?.(savedId.current ?? 'new', 'sending')}>Lançar campanha</button>
         </section>
       );
     },
@@ -76,6 +80,7 @@ vi.mock('@/components/talkx/report/TalkXCampaignReport', () => ({
   ),
 }));
 
+import { toast } from 'sonner';
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
 import { replaceTalkXWizardRoute } from '@/components/talkx/talkxWizardRoute';
@@ -180,6 +185,48 @@ describe('TalkXView wizard route integration', () => {
 
     expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1');
     expect(f.wizardMounts).toBe(1);
+  });
+
+  // Lançar e voltar no navegador: o monitor substitui a entrada atual, a anterior ainda aponta
+  // para ?wizard=<id>&step=3, mas a campanha já está enviando. Como na main, o wizard não reabre:
+  // aparece o aviso de que só rascunhos/agendadas são editáveis e o usuário volta à lista.
+  async function lancarEVoltar(id: string) {
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar campanha' }));
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(new URLSearchParams(window.location.search).get('screen')).toBe('monitor');
+    await act(async () => {
+      window.history.replaceState(null, '', `/?view=talkx&wizard=${id}&step=3`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  }
+
+  it('lançar campanha existente e voltar no navegador não reabre o wizard da campanha enviando', async () => {
+    const toastError = vi.spyOn(toast, 'error');
+    const { rerender } = render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1'));
+
+    f.campaigns = [{ ...draft, status: 'sending' }];
+    rerender(<TalkXView />);
+    await lancarEVoltar('draft_1');
+
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('Somente rascunhos'));
+    expect(new URLSearchParams(window.location.search).has('wizard')).toBe(false);
+    toastError.mockRestore();
+  });
+
+  it('lançar o rascunho novo e voltar no navegador não abre um wizard em branco', async () => {
+    const toastError = vi.spyOn(toast, 'error');
+    const { rerender } = await voltarParaPassoDoRascunhoAutosalvo();
+
+    f.campaigns = [draft, { ...draft, id: 'draft_auto', name: 'Rascunho do autosave', status: 'sending' }];
+    rerender(<TalkXView />);
+    await lancarEVoltar('draft_auto');
+
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('Somente rascunhos'));
+    expect(new URLSearchParams(window.location.search).has('wizard')).toBe(false);
+    toastError.mockRestore();
   });
 
   it('handles browser history changes without retaining the previous campaign', async () => {
