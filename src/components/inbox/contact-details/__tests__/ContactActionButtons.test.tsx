@@ -255,3 +255,23 @@ describe('ContactActionButtons', () => {
     expect(emailTile()).toHaveAttribute('aria-label', 'E-mail');
   });
 });
+
+describe('ContactActionButtons — "Arquivar" só para conversa arquivável', () => {
+  function abrirMais(status: string) {
+    const conversation = { id: 'conv-1', status: 'open', contact: { id: 'c1', name: 'Maria Silva', conversation_status: status } } as never;
+    render(<ContactActionButtons contact={baseContact} conversation={conversation} onStartCall={onStartCall} />);
+    const maisTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-ellipsis'))!;
+    openViaPointer(maisTile);
+  }
+
+  it.each(['open', 'resolved'])('%s mostra "Arquivar" no menu Mais', (status) => {
+    abrirMais(status);
+    expect(screen.getByRole('menuitem', { name: 'Arquivar' })).toBeInTheDocument();
+  });
+
+  it.each(['archived', 'waiting'])('%s não mostra "Arquivar" no menu Mais', (status) => {
+    abrirMais(status);
+    expect(screen.getByRole('menuitem', { name: 'Editar Contato' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Arquivar' })).not.toBeInTheDocument();
+  });
+});
