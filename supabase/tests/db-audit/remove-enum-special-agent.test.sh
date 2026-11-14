@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 20261113140000_remove_enum_special_agent: recria public.app_role sem 'special_agent'.
+# 20261113172000_remove_enum_special_agent: recria public.app_role sem 'special_agent'.
 #
 # Prova comportamental (PostgreSQL 17 descartavel, papeis reais via SET ROLE +
 # request.jwt.claim.sub, default ACL de producao do Supabase reproduzido):
@@ -40,13 +40,14 @@ F_AUDIENCES="$MIG_DIR/20261001261230_f35_multiplix_audiences.sql"
 F_VOICE="$MIG_DIR/20261003132707_f64_voz_assets_e_grants.sql"
 F_PROTECTION="$MIG_DIR/20261015225226_ct091_contact_protection_policy.sql"
 F_REMOVE_SA="$MIG_DIR/20261103201500_remove_pagamentos_e_special_agent.sql"
-F_NEW="$MIG_DIR/20261113140000_remove_enum_special_agent.sql"
+F_AUDIT_TRAIL="$MIG_DIR/20261113150000_audit_logs_trilha_conexao_rapida.sql"
+F_NEW="$MIG_DIR/20261113172000_remove_enum_special_agent.sql"
 
 fail() { echo "[FAIL] $*" >&2; exit 1; }
 ok()   { echo "[OK] $*"; }
 
 for f in "$F_AUDIT_RP" "$F_ADMIN_SET_ROLE" "$F_AUDIENCES" "$F_VOICE" "$F_PROTECTION" \
-         "$F_REMOVE_SA" "$F_NEW"; do
+         "$F_REMOVE_SA" "$F_AUDIT_TRAIL" "$F_NEW"; do
   [[ -f "$f" ]] || fail "migration real ausente: $f"
 done
 ROLLBACK_SQL=$(sed -n '/^-- Rollback (SQL/,/^-- Fim do rollback/p' "$F_NEW" | sed -n 's/^--   //p')
@@ -232,6 +233,12 @@ INSERT INTO public.role_permissions (role, permission_id)
   SELECT 'admin', p.id FROM public.permissions p;
 SQL
 ok "harness com o estado de producao montado"
+# 20261113150000 (na main, versao menor que esta) troca o predicado de "Only admins can view
+# audit logs" pelo initplan; ela roda antes desta, entao o estado de partida ja a inclui e o
+# snapshot A->B prova que esta migration nao desfaz aquela correcao.
+apply "$F_AUDIT_TRAIL"
+[[ "$(run "SELECT pg_get_expr(polqual, polrelid) FROM pg_policy WHERE polrelid = 'public.audit_logs'::regclass AND polname = 'Only admins can view audit logs';")" == *"SELECT has_role"* ]] \
+  || fail "A: policy de audit_logs sem o initplan da 20261113150000"
 
 # --- massa ---------------------------------------------------------------------
 ADMIN_SUB="11111111-1111-4111-8111-111111111111"
