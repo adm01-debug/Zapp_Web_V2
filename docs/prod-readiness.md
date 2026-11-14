@@ -36,18 +36,25 @@ Auditoria independente: 24 provas reexecutadas por amostragem, 21 reproduziram e
 | [#2987](https://github.com/adm01-debug/Zapp_Web_V2/pull/2987) | harness E2E isolado: 8ª rotina (`mark_outbound_post_started`) com dono `postgres` — suíte logada voltou a rodar (grupos 1 e 3 verdes no run 43210181927) | mergeada (87c5e97) |
 | [#2988](https://github.com/adm01-debug/Zapp_Web_V2/pull/2988) | front compatível com o types-sync da migration 20261111160000 (types-sync verde: run 43204745973) | mergeada (0a1e73f), no ar |
 | [#2991](https://github.com/adm01-debug/Zapp_Web_V2/pull/2991) | teste de navegação sem retry: 3×22 min estouravam os 55 min do controller e o erro real sumia | mergeada (cfa8959) |
-| [#3000](https://github.com/adm01-debug/Zapp_Web_V2/pull/3000) | contrato cobre os 7 schemas RADAR AI | fila de merge |
-| [#3001](https://github.com/adm01-debug/Zapp_Web_V2/pull/3001) | 7 edges RADAR sem o regex de backtracking (parseJsonObject) | fila de merge |
-| [#3002](https://github.com/adm01-debug/Zapp_Web_V2/pull/3002) | badge do RADAR com contraste AA | fila de merge |
-| [#3003](https://github.com/adm01-debug/Zapp_Web_V2/pull/3003) | chat de equipe: não-membro não vê botões inertes | fila de merge |
-| [#3004](https://github.com/adm01-debug/Zapp_Web_V2/pull/3004) | "Encaminhar" arquivo funcionando nas 3 vistas | fila de merge |
-| [#3005](https://github.com/adm01-debug/Zapp_Web_V2/pull/3005) | "Copiado" só no sucesso | fila de merge |
-| [#3006](https://github.com/adm01-debug/Zapp_Web_V2/pull/3006) | "Copiar e-mail" com retorno | fila de merge |
-| [#3007](https://github.com/adm01-debug/Zapp_Web_V2/pull/3007) | testes de NotFound, VerifyEmail e MetaCAPI | fila de merge |
-| [#3009](https://github.com/adm01-debug/Zapp_Web_V2/pull/3009) | relatório da campanha Talk X ligado (campanha concluída) | fila de merge |
-| [#3010](https://github.com/adm01-debug/Zapp_Web_V2/pull/3010) | contexto: `/auth` e `/2fa` deixam de sair como protegidas | fila de merge |
-| [#3012](https://github.com/adm01-debug/Zapp_Web_V2/pull/3012) | testes das 12 edges sem cobertura | fila de merge |
-| [#3015](https://github.com/adm01-debug/Zapp_Web_V2/pull/3015) | "Reenviar e-mail" da verificação sem e-mail vazio | fila de merge |
+| [#3000](https://github.com/adm01-debug/Zapp_Web_V2/pull/3000) | contrato cobre os 7 schemas RADAR AI | mergeada (8e6f413) |
+| [#3001](https://github.com/adm01-debug/Zapp_Web_V2/pull/3001) | 7 edges RADAR sem o regex de backtracking (parseJsonObject) | mergeada (eb93d55) |
+| [#3002](https://github.com/adm01-debug/Zapp_Web_V2/pull/3002) | badge do RADAR com contraste AA | mergeada (fb5d023) |
+| [#3003](https://github.com/adm01-debug/Zapp_Web_V2/pull/3003) | chat de equipe: não-membro não vê botões inertes | mergeada (2bfcdbd) |
+| [#3004](https://github.com/adm01-debug/Zapp_Web_V2/pull/3004) | "Encaminhar" arquivo funcionando nas 3 vistas | mergeada (51bd8cb) |
+| [#3005](https://github.com/adm01-debug/Zapp_Web_V2/pull/3005) | "Copiado" só no sucesso | mergeada (546c6f5) |
+| [#3006](https://github.com/adm01-debug/Zapp_Web_V2/pull/3006) | "Copiar e-mail" com retorno | mergeada (fe4959b) |
+| [#3007](https://github.com/adm01-debug/Zapp_Web_V2/pull/3007) | testes de NotFound, VerifyEmail e MetaCAPI | mergeada (7c3ef80) |
+| [#3009](https://github.com/adm01-debug/Zapp_Web_V2/pull/3009) | relatório da campanha Talk X ligado (campanha concluída) | entregue no pacote [#3035](https://github.com/adm01-debug/Zapp_Web_V2/pull/3035) (cb6576b) |
+| [#3010](https://github.com/adm01-debug/Zapp_Web_V2/pull/3010) | contexto: `/auth` e `/2fa` deixam de sair como protegidas | mergeada (7bdbe2e) |
+| [#3012](https://github.com/adm01-debug/Zapp_Web_V2/pull/3012) | testes das 12 edges sem cobertura | entregue no pacote [#3035](https://github.com/adm01-debug/Zapp_Web_V2/pull/3035) (cb6576b) |
+| [#3015](https://github.com/adm01-debug/Zapp_Web_V2/pull/3015) | "Reenviar e-mail" da verificação sem e-mail vazio | mergeada (af1bc25) |
+| [#3035](https://github.com/adm01-debug/Zapp_Web_V2/pull/3035) | pacote de 20 PRs aprovadas num único merge (inclui #3009, #3012, #3025, #3026, #2932, #3031) | mergeada (cb6576b), front e edges no ar em 13/11 16:27 |
+| [#3046](https://github.com/adm01-debug/Zapp_Web_V2/pull/3046) | pacote 2: #3038, #3039, #2996, #3013, #3014, #3042, #3044 num único ciclo de CI. Antes do merge: vitest 16176 passed (main 16149, nenhum removido), contratos 1461/1461, deno 2448 passed, ci-unit 7190 pass, tsc/build/lint-ratchet 0. CI Gate, Build e TypeCheck verdes no head `69eb669` | mergeada (f32855d) em 14/11 00:12; Vercel Production `success` (deploy 7779585529); Deploy Edge Functions run 43532560007 `success` (00:28, inclui message-delivery e evolution-webhook). Workflows do commit f32855d: CI/CD Pipeline 43532560008 `success`, types-sync 43532560028 `success`, DB Guard, Front release targets e Talk X placar `success` |
+| [#3042](https://github.com/adm01-debug/Zapp_Web_V2/pull/3042) (no #3046) | tela de login sem 401: `whatsapp_connections` e `get-sip-password` não são chamados sem usuário; linha SIP derrubada no logout/troca de usuário/unmount | no ar: Playwright em `zapp-web-v2.vercel.app/auth`, 2 execuções de 20 s, bundle `index-BFcZjmP_.js` → 0 requisições ao Supabase, 0 erros de console (antes: 2×401) |
+| [#3044](https://github.com/adm01-debug/Zapp_Web_V2/pull/3044) (no #3046) | Gmail com conta a reconectar não dispara sync de marcadores nem repete 409 | no ar (f32855d); efeito em tela depende de login (conta em `reauth_required`) |
+| [#3038](https://github.com/adm01-debug/Zapp_Web_V2/pull/3038) / [#3039](https://github.com/adm01-debug/Zapp_Web_V2/pull/3039) (no #3046) | link `?cid=` do Team Chat espera o perfil; `ci-local` lê workflows do HEAD e espelha o db-guard | no ar (f32855d) |
+| [#3041](https://github.com/adm01-debug/Zapp_Web_V2/pull/3041) | "Conectar" do WhatsApp sem 500 | fechada: substituída por [#3045](https://github.com/adm01-debug/Zapp_Web_V2/pull/3045) (098a648, outro agente, escopo maior) |
+| Migrations do pacote 2 aplicadas em produção (aprovadas pelo dono) | `20261112170000` (resolução manual só em `sending`, recusa desfecho NULL), `20261112171000` (filtro "Cancelado" do Talk X), `20261112172000` (autor real do motivo, rótulo único, índice da FK). Cada uma: DDL + INSERT no ledger num único `db_query`, depois do deploy das edges. Prova: ledger 1109 → 1112; md5 dos `statements` = md5 do dry-run do `register-migration.mjs` (`252645…`, `2eb42c…`, `535134…`); corpo da 171 sem `'cancelled'` = md5 de produção anterior `98e2fafa…`; ACL e `SECURITY DEFINER` iguais; no ar `p_status='cancelled'` → OK (`total=0`), `'bogus'` → 22023 | aplicadas em 14/11 ~00:36 UTC; depois do deploy (00:12→00:40): `cron` 199 execuções / 0 falhas, `pg_net` 102 respostas / 0 ≥400, `webhook_failures` 0 |
 | Migrations aplicadas em produção (aprovadas pelo dono) | 20261107180000, 20261108100000, 20261108204000, 20261111160000, 20261111170000 — ledger e objetos idênticos aos arquivos (validação rodada 1) | aplicadas |
 
 Cada PR acima tem teste que falha antes e passa depois, e revisão independente APROVA (registrada no corpo da PR).
@@ -56,9 +63,10 @@ Cada PR acima tem teste que falha antes e passa depois, e revisão independente 
 
 | PR | por quê |
 |---|---|
-| [#2996](https://github.com/adm01-debug/Zapp_Web_V2/pull/2996) | migration 20261112170000 (resolução manual só para `sending`) + edges — aprovada pelo dono; na fila, apply após merge e deploy |
-| [#3013](https://github.com/adm01-debug/Zapp_Web_V2/pull/3013) | migration 20261112171000: filtro "Cancelado" dos destinatários Talk X — aprovada pelo dono; na fila |
-| [#3014](https://github.com/adm01-debug/Zapp_Web_V2/pull/3014) | migration 20261112172000: endurecimento de `talkx_suppression_reasons` e índice — aprovada pelo dono; na fila |
+| [#3037](https://github.com/adm01-debug/Zapp_Web_V2/pull/3037) (outro agente, aberta) | as migrations `20261113130000`, `20261113130100` e `20261113130300` já estão no ledger de produção sem estarem na `main` (DDL aplicado antes do merge). Pedido de merge ou revert comentado na PR. Fora isso, as 1106 versões da `main` (antes do pacote 2) batem com o ledger: md5 `fe48c414a16cf44745ec812848c941cd` dos dois lados |
+| [#3045](https://github.com/adm01-debug/Zapp_Web_V2/pull/3045) (outro agente, mergeada) | a migration `20261113150000_audit_logs_trilha_conexao_rapida` está na `main` e **não** está no ledger (consulta de 13/11 22:44). Apply é do dono/agente autor |
+| [#3057](https://github.com/adm01-debug/Zapp_Web_V2/pull/3057) (outro agente, aberta) | DDL: revoga MAINTAIN de anon/authenticated nas relações de `public` (item "anon com MAINTAIN" da seção 5) |
+| Proposta — tela de Telefonia para o admin | hoje `get-sip-password` lê só `SIP_*` globais das edges e ignora as credenciais por usuário de `voip_profile_credentials` (gravadas pelo admin em `VoipRamalField`). Mudança de arquitetura: aguarda o dono |
 
 ## 5. BLOQUEADO — depende do dono
 
@@ -76,6 +84,9 @@ Cada PR acima tem teste que falha antes e passa depois, e revisão independente 
 | Auth | `site_url` em host protegido pela Vercel (convite quebra); SMTP padrão (2 e-mails/h); cadastro aberto, senha mín. 6 | configuração |
 | Produto | follow-up sem motor; Meta CAPI em demonstração; placeholders "em breve"; tela "API Pública" inalcançável; seletor de idioma sem tradução; 247 arquivos sem uso | decisão de produto |
 | Abas "Audiências"/"Modelos" do Talk X | botões sem ação (`TalkXSegments.tsx:390-391`) | arquivo em PR aberta de outro agente (#2932); correção desenhada |
+| Telefonia SIP — porta WSS do FaleFácil | o navegador precisa de `wss://{servidor}:{porta}/ws`; a conta informada usa `transport=tcp` | o dono confirma com o FaleFácil a porta WSS e grava `SIP_*` como secret das edges; a senha exposta no chat deve ser trocada |
+| Aviso de entrega ambígua em conversas de grupo | `ChatPanel.tsx:500` monta `UnconfirmedMessagesPanel` só com `contactId`; as 3 montagens do `ChatPanel` são por contato (achado do Devin na #3046, verificado) | o inbox ainda não abre conversa de grupo; ligar o `groupId` faz parte dessa entrega |
+| E2E isolado — escopo `network-proof-contexts` | run 42827413676: `contexts-proof-failed` (Chromium e WebKit com `native.online=false` em topologia `loopback-only`) | é uma medição, não a suíte; "corrigir" o critério afrouxaria a prova. A suíte completa (`scope=full-suite`) é o teste que vale para login e telas |
 | Banco (dono) | 157 mensagens legadas presas em `sending`; anon com MAINTAIN em 104 relações; resolução manual sem autor registrado | saneamento/DDL |
 
 
