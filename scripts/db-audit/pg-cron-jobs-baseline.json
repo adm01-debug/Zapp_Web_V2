@@ -11,6 +11,10 @@
       "schedule": "* * * * *"
     },
     {
+      "jobname": "dispatch-scheduled-messages",
+      "schedule": "* * * * *"
+    },
+    {
       "jobname": "ai-jobs-tick-1min",
       "schedule": "1-59 * * * *"
     },
@@ -19,8 +23,16 @@
       "schedule": "1-59/2 * * * *"
     },
     {
+      "jobname": "crm-sync-outbox",
+      "schedule": "1-59/2 * * * *"
+    },
+    {
       "jobname": "multiplix-send-trigger",
       "schedule": "0-58/2 * * * *"
+    },
+    {
+      "jobname": "csat-reply-capture-tick",
+      "schedule": "*/2 * * * *"
     },
     {
       "jobname": "gmail-incremental-sync",
@@ -31,6 +43,14 @@
       "schedule": "2-57/5 * * * *"
     },
     {
+      "jobname": "close-stale-calls",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "jobname": "ai-usage-outbox-drain",
+      "schedule": "3-53/10 * * * *"
+    },
+    {
       "jobname": "cleanup-edge-rate-limits",
       "schedule": "7-52/15 * * * *"
     },
@@ -39,24 +59,56 @@
       "schedule": "7 * * * *"
     },
     {
+      "jobname": "voice-changer-tmp-purge",
+      "schedule": "17 * * * *"
+    },
+    {
+      "jobname": "security-acl-score",
+      "schedule": "23 * * * *"
+    },
+    {
       "jobname": "cleanup-link-preview-cache",
       "schedule": "12 3 * * *"
+    },
+    {
+      "jobname": "cron-historico-retencao-7d",
+      "schedule": "17 3 * * *"
+    },
+    {
+      "jobname": "user-sessions-expire-diario",
+      "schedule": "17 3 * * *"
     },
     {
       "jobname": "expire-orphan-user-sessions",
       "schedule": "23 3 * * *"
     },
     {
+      "jobname": "purge-qr-attempts",
+      "schedule": "25 3 * * *"
+    },
+    {
       "jobname": "vacuum-contacts-daily",
       "schedule": "42 3 * * *"
     },
     {
-      "jobname": "vacuum-messages-post-expurgo",
-      "schedule": "20 3 2 9 *"
+      "jobname": "search-events-retention",
+      "schedule": "10 4 * * *"
     },
     {
-      "jobname": "security-acl-score",
-      "schedule": "23 * * * *"
+      "jobname": "crm-sync-outbox-cleanup",
+      "schedule": "17 4 * * *"
+    },
+    {
+      "jobname": "reconnection-logs-retention-30d",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "jobname": "login-attempts-retention-90d",
+      "schedule": "41 4 * * *"
+    },
+    {
+      "jobname": "searchbox-budget-alert",
+      "schedule": "0 12 * * *"
     }
   ]
 }
