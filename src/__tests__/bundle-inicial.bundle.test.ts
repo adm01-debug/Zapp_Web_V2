@@ -50,6 +50,16 @@ interface BuildChunk {
 
 const MARCA_SONNER = /node_modules[\\/]sonner[\\/]|src[\\/]components[\\/]ui[\\/]sonner\.tsx/;
 
+/**
+ * Radix usado só por telas lazy (13/11/2026, PR #3034): com o Radix inteiro no
+ * grupo `vendor-ui` (alcançado pelo entry) Dialog, Select, Slider e Menu iam para
+ * o first paint (bundle inicial 323,8 KB de 325). Eles ficam no `vendor-radix`,
+ * que só é baixado quando uma tela que os usa abre. Se o shell importar um deles
+ * estaticamente (ou o `AppProviders` voltar a importar o painel de
+ * acessibilidade), o `vendor-radix` inteiro volta ao inicial e este caso acusa.
+ */
+const MARCA_RADIX_LAZY = /node_modules[\\/]@radix-ui[\\/]react-(dialog|select|slider|dropdown-menu)[\\/]/;
+
 function modulosDoChunk(chunk: BuildChunk): string[] {
   return chunk.moduleIds ?? Object.keys(chunk.modules ?? {});
 }
@@ -128,6 +138,34 @@ describe('bundle inicial', () => {
     expect(presentes.length, 'sonner sumiu do pacote inteiro').toBeGreaterThan(0);
     for (const chunk of presentes) {
       expect(chunk.isEntry, `${chunk.fileName} com sonner não pode ser entry`).not.toBe(true);
+    }
+  }, 120_000);
+
+  it('Radix das telas lazy (Dialog, Select, Slider, Menu) não entra no grafo estático do entry', async () => {
+    const chunks = await empacotarApp();
+    const estaticos = grafoEstatico(chunks);
+
+    const vazou = chunks.filter(
+      (chunk) =>
+        estaticos.has(chunk.fileName) &&
+        modulosDoChunk(chunk).some((id) => MARCA_RADIX_LAZY.test(id)),
+    );
+
+    expect(
+      vazou.map((chunk) => chunk.fileName),
+      'Radix lazy voltou ao bundle inicial — confira o grupo vendor-ui do vite.config.ts e os imports do shell',
+    ).toEqual([]);
+  }, 120_000);
+
+  it('controle: Radix das telas lazy continua empacotado, fora do entry', async () => {
+    const chunks = await empacotarApp();
+
+    const presentes = chunks.filter((chunk) =>
+      modulosDoChunk(chunk).some((id) => MARCA_RADIX_LAZY.test(id)),
+    );
+    expect(presentes.length, 'Radix lazy sumiu do pacote inteiro').toBeGreaterThan(0);
+    for (const chunk of presentes) {
+      expect(chunk.isEntry, `${chunk.fileName} com Radix lazy não pode ser entry`).not.toBe(true);
     }
   }, 120_000);
 });

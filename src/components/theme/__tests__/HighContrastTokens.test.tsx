@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import { HighContrastProvider, useHighContrast } from '@/components/theme/HighContrastToggle';
+import { HighContrastProvider } from '@/components/theme/HighContrastProvider';
+import { useHighContrast } from '@/components/theme/highContrastContext';
 import { applyThemePreset } from '@/components/settings/theme/presets';
 
 /**
