@@ -63574,10 +63574,6 @@
               "hits": 1
             },
             {
-              "file": "src/hooks/chat/useConversationActions.ts",
-              "hits": 1
-            },
-            {
               "file": "supabase/migrations/20260916240000_revoke_anon_conversation_status_and_message_dates.sql",
               "hits": 1
             },
@@ -63590,7 +63586,7 @@
               "hits": 4
             }
           ],
-          "code_total_files": 6,
+          "code_total_files": 5,
           "cron": [],
           "db": [
             "public.set_conversations_status"

@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-14 14:29 UTC
+
+- **functions** alterado (1): `public.set_conversation_status(p_contact_id uuid, p_next text, p_reason text)`
+
 ## 2026-11-14 05:09 UTC
 
 - **constraints** removido (1): `public.user_roles.user_roles_no_special_agent`
