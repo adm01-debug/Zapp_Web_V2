@@ -24,6 +24,7 @@ import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { zappMotion } from '@/lib/motion';
+import { toast } from '@/hooks/ui/use-toast';
 import type { Message } from '@/types/chat';
 
 export interface SendErrorBannerProps {
@@ -35,19 +36,19 @@ export interface SendErrorBannerProps {
 type EstadoReenvio = 'parado' | 'enviando' | 'concluido';
 
 /**
- * Só falha de TEXTO sem POST iniciado tem reenvio: `onSendMessage(content)` cria uma
- * mensagem nova de texto (assinatura em `ChatPanel`: `(content: string) => ...`). Os
- * outros tipos reais de `Message['type']` (`image`, `video`, `audio`, `file`, `document`,
- * `location`, `interactive`, `sticker`) não têm como reenviar o binário por aqui.
+ * Só falha de TEXTO tem reenvio: `onSendMessage(content)` cria uma mensagem nova de
+ * texto (assinatura em `ChatPanel`: `(content: string) => ...`). Os outros tipos reais
+ * de `Message['type']` (`image`, `video`, `audio`, `file`, `document`, `location`,
+ * `interactive`, `sticker`) não têm como reenviar o binário por aqui.
  *
- * PD-79: se `delivery_post_started_at` estiver preenchido, o POST ao provedor foi
- * iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve
- * resolver via painel C110 (resolve_unconfirmed_message).
+ * PD-79: o banner só recebe `status === 'failed'`, que é resultado DEFINITIVO (recusa
+ * 4xx do provedor, ERROR do webhook ou "não entregue" confirmado no painel C110), mesmo
+ * com `delivery_post_started_at` preenchido. O caso ambíguo (POST iniciado sem resposta)
+ * fica em 'sending' e é tratado no painel C110 — nunca chega aqui. Por isso o carimbo
+ * não bloqueia o reenvio.
  */
 function podeReenviarComoTexto(mensagem: Message | null | undefined): boolean {
-  if (!mensagem || mensagem.type !== 'text') return false;
-  // Coluna da migration 20261111160000: o tipo opcional vale antes e depois do types-sync.
-  return !(mensagem as Message & { delivery_post_started_at?: string | null }).delivery_post_started_at;
+  return !!mensagem && mensagem.type === 'text';
 }
 
 const porHorario = (a: Message, b: Message) => (a.created_at ?? '').localeCompare(b.created_at ?? '');
@@ -121,6 +122,13 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
         if (montado.current) setReenvio('parado');
       }, 1200);
     } catch {
+      // O caller relança a falha para o painel dar o retorno visual: sem isto, o
+      // botão só voltava a "Enviar de novo" e o agente achava que tinha ido.
+      toast({
+        title: 'Mensagem não enviada',
+        description: 'Não foi possível enviar de novo. Tente outra vez.',
+        variant: 'destructive',
+      });
       if (montado.current) setReenvio('parado');
     } finally {
       ocupado.current = false;

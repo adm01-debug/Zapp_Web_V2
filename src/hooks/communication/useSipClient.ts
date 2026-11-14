@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useSipConnection } from '../sip/useSipConnection';
@@ -82,9 +83,21 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
 
   // Explícito (botão "reconectar") ignora a trava "SIP não configurado"; a aba
   // líder, ao assumir, respeita a trava (sem 503 a cada carregamento).
+  // Sem sessão (tela de login) `get-sip-password` responde 401 e virava toast falso.
+  // A ref é atualizada no efeito de login ABAIXO, que roda DEPOIS do de transição:
+  // login e promoção no mesmo render provisionam uma vez só (pelo efeito de login).
+  const userId = useAuth().user?.id ?? null;
+  const userIdRef = useRef(userId);
+
+  // A busca da senha pertence ao usuário que a pediu: se ele saiu (ou trocou)
+  // enquanto `get-sip-password` respondia, a credencial chega tarde e é descartada
+  // — senão a linha voltava a registrar na tela de login, sem usuário.
   const connectWithStoredCredentials = useCallback(async ({ ignorarTrava = true }: { ignorarTrava?: boolean } = {}) => {
+    const dono = userIdRef.current;
+    if (!dono) return;
     const config = await provisionarSip({ ignorarTrava });
-    if (config) await connect(config);
+    if (!config || userIdRef.current !== dono) return;
+    await connect(config);
   }, [connect]);
 
   // Clique do usuário ("Reconectar linha"). Aba já líder: provisiona na hora,
@@ -98,17 +111,48 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
     claimLeadership();
   }, [connectWithStoredCredentials]);
 
+  // Fila das desconexões (papel e usuário): quem conecta espera a anterior —
+  // enquanto o `disconnect()` aguarda unregister/stop, `uaRef` segue preenchido e
+  // o `connect()` seria descartado pela guarda de UA único.
+  const desconexaoPendenteRef = useRef<Promise<void>>(Promise.resolve());
+
   // T20: só a TRANSIÇÃO de papel age (o papel de nascença não conecta). Os
   // callbacks vão numa ref dentro do hook — a identidade deles não agenda o
   // efeito, então não há loop de disconnect a cada render.
-  useTabLeaderRole({
+  const tabRole = useTabLeaderRole({
     onBecameLeader: () => {
+      // `userId` é o deste render (o callback é renovado a cada commit). Troca de
+      // usuário ainda não processada pelo efeito de usuário (logout ou login no
+      // mesmo render da promoção): quem decide é aquele efeito.
+      if (!userId || userIdRef.current !== userId) return;
       const explicito = Date.now() <= pedidoExplicitoAteRef.current;
       pedidoExplicitoAteRef.current = 0;
-      void connectWithStoredCredentials({ ignorarTrava: explicito });
+      void desconexaoPendenteRef.current.then(() => {
+        if (isLeader() && userIdRef.current) void connectWithStoredCredentials({ ignorarTrava: explicito });
+      });
     },
-    onBecameFollower: () => { void disconnect().then(() => setSipReason('line_in_use_other_tab')); },
+    onBecameFollower: () => {
+      desconexaoPendenteRef.current = desconexaoPendenteRef.current.then(() => disconnect());
+      void desconexaoPendenteRef.current.then(() => { if (!isLeader()) setSipReason('line_in_use_other_tab'); });
+    },
   });
+
+  // Login com a aba JÁ líder (eleita na tela de login): não há nova transição de
+  // papel, então provisiona aqui — uma vez por login, respeitando a trava.
+  // Logout (ou troca de usuário na mesma aba): a linha registrada é do usuário
+  // anterior — derruba antes; o próximo usuário provisiona a própria credencial.
+  // A conexão do próximo usuário espera a desconexão pendente (fila acima).
+  useEffect(() => {
+    const anterior = userIdRef.current;
+    userIdRef.current = userId;
+    if (anterior === userId) return;
+    if (anterior) desconexaoPendenteRef.current = desconexaoPendenteRef.current.then(() => disconnect());
+    if (!userId || (!anterior && tabRole !== 'leader')) return;
+    const alvo = userId;
+    void desconexaoPendenteRef.current.then(() => {
+      if (userIdRef.current === alvo && isLeader()) void connectWithStoredCredentials({ ignorarTrava: false });
+    });
+  }, [userId, tabRole, connectWithStoredCredentials, disconnect]);
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
 
