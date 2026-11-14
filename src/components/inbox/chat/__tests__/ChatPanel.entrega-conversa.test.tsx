@@ -77,7 +77,10 @@ vi.mock('@/components/inbox/chat/ChatSearchBar', () => ({
   },
 }));
 vi.mock('@/components/inbox/chat/ChatDialogs', () => ({ ChatDialogs: () => null }));
-vi.mock('@/components/inbox/chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));
+const painelC110 = vi.hoisted(() => ({ props: [] as Array<Record<string, unknown>> }));
+vi.mock('@/components/inbox/chat/UnconfirmedMessagesPanel', () => ({
+  UnconfirmedMessagesPanel: (props: Record<string, unknown>) => { painelC110.props.push(props); return null; },
+}));
 vi.mock('@/components/inbox/chat/useChatPanelHandlers', () => ({
   useChatPanelHandlers: () => ({
     inputValue: '', inputRef: { current: null }, isSending: false, isRecordingAudio: false,
@@ -307,5 +310,11 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
     fireEvent.click(screen.getByRole('button', { name: 'Dispensar' }));
     await waitFor(() => expect(screen.queryByTestId('send-error-banner')).toBeNull());
     expect(screen.getByTestId('conversation-delivery-summary')).toBeInTheDocument();
+  });
+
+  it('C110: painel de entrega ambígua recebe o contato da conversa', () => {
+    painelC110.props = [];
+    renderPanel([]);
+    expect(painelC110.props[painelC110.props.length - 1]).toMatchObject({ contactId: 'contato-1' });
   });
 });

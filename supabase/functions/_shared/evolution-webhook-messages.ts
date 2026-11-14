@@ -965,10 +965,12 @@ export async function handleOutgoingWhatsAppMessage(
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
   const recentCutoff = new Date(Date.now() - 60_000).toISOString();
+  // Só 'sending' é pendente: linha 'failed' ou resolvida à mão também fica com
+  // external_id NULL e, sem o filtro, roubaria o external_id da mensagem nova.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: pendingMessageInitial, error: pendingMsgError } = await (supabase.from('messages') as any).select('id, manually_resolved_at')
     .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
-    .is('external_id', null).gte('created_at', recentCutoff)
+    .eq('status', 'sending').is('external_id', null).gte('created_at', recentCutoff)
     .order('created_at', { ascending: true }).limit(1).maybeSingle();
   let pendingMessage = pendingMessageInitial;
   // 42703 = coluna ainda não existe (pre-DDL): re-query sem manually_resolved_at.
@@ -977,7 +979,7 @@ export async function handleOutgoingWhatsAppMessage(
     pendingColumnExists = false;
     const { data: fbPending } = await supabase.from('messages').select('id')
       .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
-      .is('external_id', null).gte('created_at', recentCutoff)
+      .eq('status', 'sending').is('external_id', null).gte('created_at', recentCutoff)
       .order('created_at', { ascending: true }).limit(1).maybeSingle();
     pendingMessage = fbPending as typeof pendingMessage;
   } else if (pendingMsgError) {
