@@ -488,7 +488,7 @@ def get_views(conn):
                c.reloptions AS options, pg_get_userbyid(c.relowner) AS owner,
                obj_description(c.oid, 'pg_class') AS comment,
                CASE WHEN c.relkind = 'm' THEN c.relispopulated END AS populated,
-               (c.relkind = 'v' AND coalesce(array_to_string(c.reloptions, ','), '') ILIKE '%security_invoker=true%') AS security_invoker,
+               (c.relkind = 'v' AND coalesce(array_to_string(c.reloptions, ','), '') ~* 'security_invoker=(true|on)') AS security_invoker,
                ARRAY(SELECT DISTINCT dn.nspname || '.' || dc.relname
                      FROM pg_depend d JOIN pg_rewrite r ON r.oid = d.objid
                      JOIN pg_class dc ON dc.oid = d.refobjid JOIN pg_namespace dn ON dn.oid = dc.relnamespace
@@ -768,7 +768,7 @@ def get_lints(conn):
     for r in q(conn, """
         SELECT n.nspname AS schema, c.relname AS name FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relkind = 'v' AND n.nspname = 'public'
-          AND coalesce(array_to_string(c.reloptions, ','), '') NOT ILIKE '%security_invoker=true%'"""):
+          AND coalesce(array_to_string(c.reloptions, ','), '') !~* 'security_invoker=(true|on)'"""):
         out.append({"severity": "ALTA", "code": "view_security_definer", "object": f"{r['schema']}.{r['name']}",
                     "detail": "View em public sem security_invoker: executa como owner e ignora RLS das tabelas base."})
     for r in q(conn, f"""
@@ -843,6 +843,14 @@ def get_db_stats(conn):
     # Role sem SELECT em auth.* (ex.: role de leitura do workflow) nao pode derrubar a secao inteira:
     # em producao isso apagava tamanho do banco, conexoes, storage e filas de stats.md.
     try:
+        # Consultar auth.* sem grant gera "permission denied for schema auth" no log do Postgres a cada
+        # rodada. Checar o privilégio antes (sem regclass: resolver 'auth.users' já exige USAGE no schema).
+        if not q(conn, """
+            SELECT has_schema_privilege('auth', 'USAGE')
+               AND coalesce((SELECT has_table_privilege(c.oid, 'SELECT') FROM pg_class c
+                             JOIN pg_namespace n ON n.oid = c.relnamespace
+                             WHERE n.nspname = 'auth' AND c.relname = 'users'), false) AS ok""")[0]["ok"]:
+            raise PermissionError("role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta")
         out["auth"] = {
             "users_total": q(conn, "SELECT count(*) AS c FROM auth.users")[0]["c"],
             "users_confirmed": q(conn, "SELECT count(*) AS c FROM auth.users WHERE email_confirmed_at IS NOT NULL OR phone_confirmed_at IS NOT NULL")[0]["c"],
