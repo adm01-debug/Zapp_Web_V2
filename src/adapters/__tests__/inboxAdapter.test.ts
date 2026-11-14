@@ -31,4 +31,18 @@ describe('mapMessageRowToMessage', () => {
     expect(message.type).toBe('audio');
     expect(message.mediaUrl).toBe('https://storage.test/voz.ogg');
   });
+
+  it('expõe transcription_status como transcriptionStatus para o player de áudio (P1-9)', () => {
+    const message = mapMessageRowToMessage({
+      id: 'message-audio', content: '', message_type: 'audio', sender: 'contact',
+      created_at: '2026-11-13T10:02:00.000Z', media_url: 'https://storage.test/voz.ogg',
+      external_id: null, is_deleted: false, transcription: null, transcription_status: 'failed',
+    } as never);
+
+    expect(message.transcriptionStatus).toBe('failed');
+    expect(mapMessageRowToMessage({
+      id: 'message-audio-2', content: '', message_type: 'audio', sender: 'contact',
+      created_at: '2026-11-13T10:02:00.000Z', media_url: null, external_id: null, is_deleted: false,
+    } as never).transcriptionStatus).toBeNull();
+  });
 });

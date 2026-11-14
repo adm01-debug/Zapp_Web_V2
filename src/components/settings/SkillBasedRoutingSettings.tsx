@@ -3,6 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -229,9 +233,23 @@ export function SkillBasedRoutingSettings() {
                         <Star key={i} className="w-3 h-3 fill-primary text-primary" />
                       ))}
                     </span>
-                    <button onClick={() => removeSkill.mutate(skill.id)} className="ml-1 hover:text-destructive">
-                      <X className="w-3 h-3" />
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button className="ml-1 hover:text-destructive" aria-label={`Remover skill ${skill.skill_name}`}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remover skill do agente</AlertDialogTitle>
+                          <AlertDialogDescription>Tem certeza que deseja remover a skill <strong>"{skill.skill_name}"</strong> deste agente? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => removeSkill.mutate(skill.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </Badge>
                 ))}
               </div>
@@ -305,9 +323,23 @@ export function SkillBasedRoutingSettings() {
                 {queueSkills.map(req => (
                   <Badge key={req.id} variant="outline" className="gap-1 py-1.5 px-3">
                     {req.skill_name} (min: {req.min_level})
-                    <button onClick={() => removeQueueRequirement.mutate(req.id)} className="ml-1 hover:text-destructive">
-                      <X className="w-3 h-3" />
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button className="ml-1 hover:text-destructive" aria-label={`Remover requisito ${req.skill_name}`}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remover requisito da fila</AlertDialogTitle>
+                          <AlertDialogDescription>Tem certeza que deseja remover o requisito <strong>"{req.skill_name}"</strong> desta fila? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => removeQueueRequirement.mutate(req.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </Badge>
                 ))}
               </div>

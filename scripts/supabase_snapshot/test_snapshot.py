@@ -720,6 +720,8 @@ class SnapshotDBStatsTests(SnapshotFixture):
                 return [{"schema": "public", "bytes": 45678}]
             if "FROM storage.objects" in compact:
                 return [{"bucket_id": "fixture", "objects": 2, "bytes": 42}]
+            if "has_schema_privilege('auth'" in compact:
+                return [{"ok": not auth_error}]
             if "FROM auth." in compact:
                 if auth_error:
                     raise PermissionError("permission denied for schema auth")
@@ -816,6 +818,16 @@ class SnapshotDBStatsTests(SnapshotFixture):
         md_text = (self.out / "stats.md").read_text()
         self.assertIn("Coleta de `auth` falhou", md_text,
                       "auth zerado por timeout/erro precisa de aviso inline em stats.md, não parecer 0 usuários reais")
+
+    def test_auth_without_privilege_is_marked_unavailable_without_querying(self):
+        # Em produção o role do workflow não tem USAGE em auth: consultar gerava erro no log do Postgres.
+        stats, calls, errors = self.stats(auth_error=True)
+        self.assert_core_metrics(stats, True)
+        self.assertEqual(stats["auth"], {})
+        self.assertEqual(errors, {"db_stats.auth"})
+        self.assertEqual([sql for sql, _ in calls if "FROM auth." in " ".join(sql.split())], [],
+                         "sem privilégio, nenhuma consulta a auth.* pode chegar ao banco")
+        self.assertTrue(any("sem USAGE em auth" in e["error"] for e in self.snapshot.ERRORS))
 
     def test_successful_auth_collection_has_no_partial_warning(self):
         stats, _, errors = self.stats(auth_error=False)

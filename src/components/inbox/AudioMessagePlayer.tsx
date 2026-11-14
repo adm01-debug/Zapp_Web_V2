@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Loader2, FileText, Volume2, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { log } from '@/lib/logger';
@@ -40,19 +39,25 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     togglePlay, handleSeek, cycleSpeed, formatTime, resolveAudioUrl,
   } = useAudioPlayer({ audioUrl, messageId });
 
-  // Realtime subscription for transcription updates
-  useEffect(() => {
-    const channel = supabase
-      .channel(uniqueRealtimeTopic(`transcription-${messageId}`))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `id=eq.${messageId}` },
-        (payload) => {
-          const newData = payload.new as { transcription_status?: string; transcription?: string };
-          if (newData.transcription_status) setTranscriptionStatus(newData.transcription_status);
-          if (newData.transcription) { setTranscription(newData.transcription); setShowTranscription(true); }
-        }
-      ).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [messageId]);
+  // P1-9: a transcrição chega pela MESMA linha da mensagem que `useMessages` já
+  // recebe no canal da conversa (UPDATE → mapMessageRowToMessage → props). Antes
+  // cada bolha de áudio abria o seu próprio canal realtime — numa lista
+  // virtualizada isso criava e derrubava canais a cada rolagem.
+  // Ajuste de estado durante o render quando a prop muda (padrão do React para
+  // "estado derivado de props"): o valor do servidor prevalece sobre o local.
+  const [prevStatusProp, setPrevStatusProp] = useState(initialStatus);
+  if (initialStatus !== prevStatusProp) {
+    setPrevStatusProp(initialStatus);
+    if (initialStatus) setTranscriptionStatus(initialStatus);
+  }
+  const [prevTranscriptionProp, setPrevTranscriptionProp] = useState(existingTranscription);
+  if (existingTranscription !== prevTranscriptionProp) {
+    setPrevTranscriptionProp(existingTranscription);
+    if (existingTranscription) {
+      setTranscription(existingTranscription);
+      setShowTranscription(true);
+    }
+  }
 
   const handleTranscribe = async () => {
     if (isTranscribing || transcriptionStatus === 'processing') return;
@@ -62,7 +67,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       // PE-55/PD-64: o servidor é a ÚNICA fonte. A Edge `ai-transcribe-audio` grava
       // `transcription`/`transcription_status` com service_role (processing →
       // completed/failed) e reusa o texto em re-execução; o cliente só INVOCA e LÊ
-      // (a linha da mensagem chega pelo realtime acima) — daqui não sai escrita.
+      // (a linha da mensagem chega pelo realtime da conversa, via props) — daqui não sai escrita.
       const { data, error } = await supabase.functions.invoke('ai-transcribe-audio', { body: { audioUrl: freshUrl, messageId } });
       if (error) throw error;
       if (!isMountedRef.current) return;

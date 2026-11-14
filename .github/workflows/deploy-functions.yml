@@ -532,6 +532,22 @@ jobs:
           # que o runner imprime, como se fosse funcao sem mudanca.
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$EVIDENCE_DIR/deploy-output.log" "$EVIDENCE_DIR/unchanged-functions.json"
 
+      - name: Publicar ZAPP_BUILD_ID nas edges
+        # 3h (inventario de producao, 13/11/2026): status/index.ts:26 devolve
+        # `Deno.env.get('ZAPP_BUILD_ID') ?? 'unknown'` e o secret nunca era
+        # definido no deploy -- GET /status nao dizia qual build estava no ar.
+        # So em deploy completo da main: secret e' do projeto todo (reescrever
+        # recarrega todas as funcoes) e, em deploy parcial ou rollback
+        # (function_name/source_ref/rollback_to_last_success), o SHA publicado nao vale para as demais
+        # funcoes -- mesma regra de scripts/edge-deploy/secrets-scope.mjs.
+        if: inputs.dry_run != true && inputs.function_name == '' && inputs.source_ref == '' && inputs.rollback_to_last_success != true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: tnnnlkbymytvtqngbbqh
+        run: |
+          set -euo pipefail
+          supabase secrets set ZAPP_BUILD_ID="$DEPLOYED_GIT_SHA" --project-ref "$PROJECT_REF"
+
       - name: Capturar e validar manifesto remoto pos-deploy
         if: inputs.dry_run != true
         # E55 (auditoria de 01/10/2026): teto proprio do passo. O job inteiro tem
