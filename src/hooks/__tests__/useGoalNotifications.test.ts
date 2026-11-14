@@ -87,7 +87,7 @@ describe('useGoalNotifications', () => {
   it('sets up interval for periodic checking', () => {
     const setIntervalSpy = vi.spyOn(global, 'setInterval');
     renderHook(() => useGoalNotifications());
-    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 300000);
+    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 600000);
     setIntervalSpy.mockRestore();
   });
 

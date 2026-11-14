@@ -41,6 +41,12 @@ const toUserJid = (n?: unknown): string | undefined => {
   return /^\d{14,}$/.test(n) ? `${n}@lid` : `${n}@s.whatsapp.net`;
 };
 
+// Campos de texto que o GO valida como obrigatórios mas o v2/Zapp tratam como
+// opcionais (footer/title de botões e listas): espaço passa na validação e não
+// aparece para o cliente.
+const goRequiredText = (v: unknown): string =>
+  typeof v === 'string' && v.trim() ? v : ' ';
+
 // presence v2 ('composing'|'recording'|'paused') → GO {state, isAudio}
 const presenceToGo = (presence: unknown, delay?: unknown) => ({
   state: presence === 'recording' ? 'composing' : (presence ?? 'composing'),
@@ -108,8 +114,30 @@ export function translateV2ToGo(fullPath: string, method: string, body: unknown)
     }};
   if (m(/^\/message\/sendSticker\/[^/]+$/))
     return { path: '/send/sticker', method: 'POST', auth: 'instance', body: { number: b.number, sticker: b.sticker, ...quotedToGo(b.quoted) } };
-  if (m(/^\/message\/sendLocation\/[^/]+$/))
-    return { path: '/send/location', method: 'POST', auth: 'instance', body: { number: b.number, name: b.name, address: b.address, latitude: b.latitude, longitude: b.longitude } };
+  if (m(/^\/message\/sendLocation\/[^/]+$/)) {
+    // O GO exige name e address (400 "name is required"); no v2 eram opcionais e
+    // o Zapp envia o pino sem eles quando o atendente só escolhe o ponto no mapa.
+    // A GO faz bind em float64: latitude/longitude em string ("-23.5") davam 400.
+    const toCoord = (v: unknown): unknown => {
+      if (typeof v === 'string' && v.trim() !== '') {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : v;
+      }
+      return v;
+    };
+    const latitude = toCoord(b.latitude);
+    const longitude = toCoord(b.longitude);
+    const name = typeof b.name === 'string' && b.name.trim() ? b.name : 'Localização';
+    const address = typeof b.address === 'string' && b.address.trim()
+      ? b.address
+      : (typeof latitude === 'number' && typeof longitude === 'number'
+        ? `${latitude}, ${longitude}` : name);
+    return { path: '/send/location', method: 'POST', auth: 'instance', body: {
+      number: b.number, name, address, latitude, longitude,
+      ...(b.delay ? { delay: b.delay } : {}),
+      ...quotedToGo(b.quoted),
+    }};
+  }
   if (m(/^\/message\/sendContact\/[^/]+$/)) {
     // v2 {contact:[{fullName, organization, phoneNumber|wuid}]} → GO {vcard:{fullName, organization, phone}}
     const c = Array.isArray(b.contact) ? b.contact[0] : b.contact;
@@ -129,15 +157,18 @@ export function translateV2ToGo(fullPath: string, method: string, body: unknown)
   if (m(/^\/message\/sendList\/[^/]+$/))
     // v2 footer → GO footerText; rows {title, description, rowId} batem.
     // O GO rejeita footer vazio ("footer is required") — v2 tratava como opcional.
+    // Idem para title ("title is required"): lista sem cabeçalho é válida no
+    // Zapp — mesmo contorno do footer, sem duplicar o corpo no cabeçalho.
     return { path: '/send/list', method: 'POST', auth: 'instance', body: {
-      number: b.number, title: b.title, description: b.description,
+      number: b.number, title: goRequiredText(b.title), description: b.description,
       buttonText: b.buttonText, sections: b.sections,
       footerText: b.footer || ' ',
       ...(b.delay ? { delay: b.delay } : {}),
     }};
   if (m(/^\/message\/sendButtons\/[^/]+$/))
     return { path: '/send/button', method: 'POST', auth: 'instance', body: {
-      ...b, footer: b.footer || ' ',
+      // description também é obrigatório no send_handler da GO.
+      ...b, title: goRequiredText(b.title), description: goRequiredText(b.description), footer: b.footer || ' ',
     }};
   if (m(/^\/message\/sendStatus\/[^/]+$/)) {
     const type = b.type ?? (b.content && !/^https?:\/\//.test(String(b.content)) ? 'text' : 'media');
@@ -148,7 +179,11 @@ export function translateV2ToGo(fullPath: string, method: string, body: unknown)
   if (m(/^\/message\/sendReaction\/[^/]+$/)) {
     if (!b.key?.remoteJid || !b.key?.id) return { path: '/message/react', method: 'POST', auth: 'instance', invalid: 'sendReaction requer key.remoteJid e key.id' };
     return { path: '/message/react', method: 'POST', auth: 'instance', body: {
-      number: jidWithoutDevice(b.key.remoteJid), reaction: b.reaction, id: b.key.id,
+      // v2 remove a reação com reaction '' — o GO recusa string vazia (400) e
+      // usa a palavra "remove" para tirar a reação.
+      number: jidWithoutDevice(b.key.remoteJid),
+      reaction: typeof b.reaction === 'string' && b.reaction.length > 0 ? b.reaction : 'remove',
+      id: b.key.id,
       fromMe: b.key?.fromMe === true,
       ...(b.key?.participant ? { participant: b.key.participant } : {}),
     }};
@@ -157,10 +192,17 @@ export function translateV2ToGo(fullPath: string, method: string, body: unknown)
     return { path: '/message/delete', method: 'POST', auth: 'instance', body: {
       chat: b.remoteJid, messageId: b.id,
     }};
-  if (m(/^\/message\/update\/[^/]+$/) || m(/^\/chat\/updateMessage\/[^/]+$/))
+  if (m(/^\/message\/update\/[^/]+$/) || m(/^\/chat\/updateMessage\/[^/]+$/)) {
+    // Aceita o formato v2 ({key:{remoteJid,id}}) e o que a tela manda
+    // ({number, messageId}) — antes só key.id era lido e a GO devolvia
+    // 400 "messageId is required" em toda edição.
+    const messageId = b.key?.id ?? (typeof b.messageId === 'string' ? b.messageId : undefined);
+    const chat = jidWithoutDevice(b.key?.remoteJid ?? (typeof b.number === 'string' ? b.number : undefined));
+    if (!messageId || !chat) return { path: '/message/edit', method: 'POST', auth: 'instance', invalid: 'updateMessage requer key.id/messageId e key.remoteJid/number' };
     return { path: '/message/edit', method: 'POST', auth: 'instance', body: {
-      chat: b.key?.remoteJid ?? b.number, message: b.text, messageId: b.key?.id,
+      chat, message: b.text, messageId,
     }};
+  }
   if (m(/^\/chat\/deleteMessageForEveryone\/[^/]+$/))
     return { path: '/message/delete', method: 'POST', auth: 'instance', body: {
       chat: b.remoteJid, messageId: b.id,
