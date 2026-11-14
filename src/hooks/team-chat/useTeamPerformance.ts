@@ -26,9 +26,12 @@ export function useTeamPerformance(conversationId: string) {
         const sorted = [...msgs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         const gaps: number[] = [];
         for (let i = 1; i < sorted.length; i++) {
+          // Só é resposta quando outra pessoa fala depois; mensagens seguidas
+          // do mesmo remetente não contam como tempo de resposta.
+          if (sorted[i].sender_id === sorted[i - 1].sender_id) continue;
           gaps.push(new Date(sorted[i].created_at).getTime() - new Date(sorted[i - 1].created_at).getTime());
         }
-        avgResponseTimeMs = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+        if (gaps.length > 0) avgResponseTimeMs = gaps.reduce((a, b) => a + b, 0) / gaps.length;
       }
       return { messageCount: msgs.length, activeParticipants, avgResponseTimeMs };
     },
