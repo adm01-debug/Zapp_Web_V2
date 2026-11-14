@@ -18,6 +18,8 @@ const state = vi.hoisted(() => ({
   threads: [] as EmailThread[],
   threadsLoading: false,
   threadsPageCount: 1,
+  needsReconnect: false,
+  syncLabelsMutate: vi.fn(),
   /** O 3º argumento de cada chamada do hook — a consulta enviada ao servidor. */
   listQueryCalls: [] as Array<{ page?: number; search?: string } | undefined>,
 }));
@@ -40,7 +42,7 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
       ...state,
       refetchAccounts: vi.fn(), connectGmail: { mutate: vi.fn(), isPending: false }, labels: [],
       threadsError: null, syncInbox: { mutate: vi.fn(), isPending: false },
-      syncLabels: { mutate: vi.fn(), isPending: false }, unreadCount: state.threads.filter(thread => thread.is_unread).length, threadsTotalCount: state.threads.length,
+      syncLabels: { mutate: state.syncLabelsMutate, isPending: false }, unreadCount: state.threads.filter(thread => thread.is_unread).length, threadsTotalCount: state.threads.length,
       downloadAttachment: { mutate: vi.fn(), isPending: false },
       subscribeToThreads: () => vi.fn(),
     };
@@ -69,6 +71,19 @@ describe('EmailChatInbox', () => {
     state.threadsLoading = false;
     state.threadsPageCount = 1;
     state.listQueryCalls.length = 0;
+    state.needsReconnect = false;
+    state.syncLabelsMutate.mockClear();
+  });
+
+  it('conta sem marcadores sincroniza os marcadores ao abrir', () => {
+    render(<EmailChatInbox />);
+    expect(state.syncLabelsMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('conta que precisa reconectar NÃO dispara a sincronização automática de marcadores (gmail-sync 409)', () => {
+    state.needsReconnect = true;
+    render(<EmailChatInbox />);
+    expect(state.syncLabelsMutate).not.toHaveBeenCalled();
   });
 
   afterEach(() => {
