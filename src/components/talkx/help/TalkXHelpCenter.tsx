@@ -175,7 +175,8 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
       : articles.filter((doc) => doc.topicSlug === topicList);
 
   return (
-    <div className="min-h-full w-full min-w-0 space-y-5 bg-background">
+    // data-ctrl-k-local (src/hooks/ui/ctrlKLocal.ts): o Ctrl/Cmd+K e desta tela, nao da paleta global.
+    <div className="min-h-full w-full min-w-0 space-y-5 bg-background" data-ctrl-k-local="">
       <div className="flex items-center gap-3">
         <button
           type="button"

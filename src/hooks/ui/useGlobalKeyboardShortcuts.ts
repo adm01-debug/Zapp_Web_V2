@@ -5,6 +5,7 @@ import { toggleMuteActive } from '@/hooks/communication/audioPlaybackBus';
 import { useCustomShortcuts } from './useCustomShortcuts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { VOLUME_CONTROL_ATTRIBUTE } from '@/hooks/ui/useVolumeRocker';
+import { CTRL_K_LOCAL_ATTRIBUTE } from '@/hooks/ui/ctrlKLocal';
 
 // Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: o `import('sonner')`
 // do módulo mantém a lib (~9 KB gzip) fora do modulepreload do index.html
@@ -159,6 +160,10 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     for (const shortcut of shortcuts) {
       if (shortcut.scope && !shortcut.scope.includes(view)) continue;
       if (cedeAoControleDeVolume && shortcut.id === 'audio-toggle-mute') continue;
+      // A tela dona do K (CTRL_K_LOCAL_ATTRIBUTE) trata o atalho sozinha. Este
+      // handler registra na janela, em captura, antes dela: o `stopPropagation`
+      // da tela nao alcanca um listener do mesmo alvo, e a paleta abria por cima.
+      if (shortcut.id === 'global-search' && document.querySelector(`[${CTRL_K_LOCAL_ATTRIBUTE}]`)) continue;
 
       const binding = getActiveBinding(shortcut);
       
