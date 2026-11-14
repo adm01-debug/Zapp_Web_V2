@@ -4,13 +4,12 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**22 workflows.**
+**20 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
-| Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch | fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI | a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento | Job Summary com a fila (em voo, proxima, esperando, bloqueadas) | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | branches podaveis, PRs paradas ha mais de 7 dias e SLA dos alertas de code scanning | SLA vencido deixa o job vermelho e publica o diagnostico se o relatorio foi gerado | issue `[branch-hygiene]` no repositorio | — | — |
-| Talk X PR body check | [`check-talkx-pr-body.yml`](../../.github/workflows/check-talkx-pr-body.yml) | pull_request em main (opened, synchronize, reopened e edited) | valida a definição de pronto das etapas Talk X pelo título e corpo da PR | check fica vermelho com a seção ausente ou incompatível com a etapa | autor e revisores pelo check do GitHub | — | — |
+| Talk X PR body check | [`check-talkx-pr-body.yml`](../../.github/workflows/check-talkx-pr-body.yml) | pull_request em main (opened, synchronize, reopened e edited); o job só roda quando o título traz `(X<NNN>)` | valida a definição de pronto das etapas Talk X pelo título e corpo da PR | check fica vermelho com a seção ausente ou incompatível com a etapa | autor e revisores pelo check do GitHub | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (diário) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security | — | — |
 | Contexto para agentes de IA (10 min) | [`contexto.yml`](../../.github/workflows/contexto.yml) | push em main que toque código, banco, scripts das automações ou docs/contexto/regras/manual/; a cada 10 min (minuto 3); dispatch | branch contexto com docs/contexto/{codigo,supabase,regras}/ regerados das três fontes de verdade (código em main, banco oficial, código+migrations+manual/) e docs/contexto/00-INDEX.md montado a partir dos manifests | falha fatal de produtor reprova o workflow; fontes com artefato publicam e as demais mantêm a última versão; erro de download impede a publicação | ninguém (a branch contexto é a prova; errors.md em supabase/ e erros_do_gerador em codigo/ listam seções com falha) | — | — |
@@ -29,16 +28,8 @@
 | Talk X V4 placar regen (push + semanal) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push na main; schedule semanal (seg 07:45 UTC); dispatch | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
 | types-sync | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | push na main, agendado e dispatch | os tipos gerados batem com o banco oficial (Gates 1 e 2) | PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente | PR de types e issue de gate | — | — |
-| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | dispatch manual com dry-run por padrão | remove variáveis Vercel perigosas ou mortas conforme o inventário | o script aborta antes de alterar variáveis e informa a causa | operador que disparou o workflow | — | — |
 
 ## Detalhe
-
-### Auto Update PR Branches (`auto-update-pr-branch.yml`)
-
-- **Gatilho:** push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch
-- **O que prova:** fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI
-- **Quando falha:** a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento
-- **Quem é avisado:** Job Summary com a fila (em voo, proxima, esperando, bloqueadas)
 
 ### Branch Hygiene Audit (`branch-hygiene-audit.yml`)
 
@@ -49,7 +40,7 @@
 
 ### Talk X PR body check (`check-talkx-pr-body.yml`)
 
-- **Gatilho:** pull_request em main (opened, synchronize, reopened e edited)
+- **Gatilho:** pull_request em main (opened, synchronize, reopened e edited); o job só roda quando o título traz `(X<NNN>)`
 - **O que prova:** valida a definição de pronto das etapas Talk X pelo título e corpo da PR
 - **Quando falha:** check fica vermelho com a seção ausente ou incompatível com a etapa
 - **Quem é avisado:** autor e revisores pelo check do GitHub
@@ -179,13 +170,6 @@
 - **O que prova:** os tipos gerados batem com o banco oficial (Gates 1 e 2)
 - **Quando falha:** PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente
 - **Quem é avisado:** PR de types e issue de gate
-
-### V043-V065 Vercel Env Cleanup (`vercel-env-cleanup.yml`)
-
-- **Gatilho:** dispatch manual com dry-run por padrão
-- **O que prova:** remove variáveis Vercel perigosas ou mortas conforme o inventário
-- **Quando falha:** o script aborta antes de alterar variáveis e informa a causa
-- **Quem é avisado:** operador que disparou o workflow
 
 ## O que NÃO é bug
 

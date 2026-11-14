@@ -16,9 +16,11 @@ interface ChatSearchBarProps {
   onNavigateToMessage: (messageId: string) => void;
   onHighlightChange: (messageIds: Set<string>, activeId: string | null) => void;
   onSearchQueryChange?: (query: string) => void;
+  /** Há histórico mais antigo não carregado — repassado ao aviso de busca vazia. */
+  hasOlderMessages?: boolean;
 }
 
-export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, onHighlightChange, onSearchQueryChange }: ChatSearchBarProps) {
+export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, onHighlightChange, onSearchQueryChange, hasOlderMessages }: ChatSearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const previewListRef = useRef<HTMLDivElement>(null);
 
@@ -89,7 +91,7 @@ export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, 
 
             {(debouncedQuery.trim() || hasDateFilter) && (
               <ChatSearchResultsList ref={previewListRef} results={results} activeIndex={activeIndex} debouncedQuery={debouncedQuery}
-                onSelect={(idx, id) => { setActiveIndex(idx); onNavigateToMessage(id); }} onClearFilters={clearFilters} />
+                onSelect={(idx, id) => { setActiveIndex(idx); onNavigateToMessage(id); }} onClearFilters={clearFilters} hasOlderMessages={hasOlderMessages} />
             )}
           </div>
         </motion.div>

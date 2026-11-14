@@ -76,7 +76,7 @@ const ROLE_CHANGE_ERROR_MESSAGES: Record<string, string> = {
   jwt_session_required: 'Sessão expirada. Faça login novamente.',
 };
 
-function roleChangeErrorMessage(error: { code?: string; message?: string }): string {
+export function roleChangeErrorMessage(error: { code?: string; message?: string }): string {
   // A negação de RLS (42501/403) chega crua do PostgREST; a UI mostra a
   // mensagem fixa do helper, sem nome de tabela nem de policy.
   if (isAccessDeniedError(error)) return describeAccessError(error);
@@ -329,9 +329,20 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm' | 'cron', audi
     // grava o campo; a revogação real é do backend. Reativar só volta `is_active`
     // para true e NÃO cria sessão (o trigger só dispara na transição para false).
     if (togglingRef.current.has(user.id)) return;
+    const deactivating = user.is_active !== false;
+    // Piso de admin: diferente da troca de role (RPC `admin_set_role`, que
+    // recusa `cannot_demote_last_admin`), desativar perfil não tem RPC própria
+    // — grava `profiles` direto. Sem este guard dava pra desativar pela UI o
+    // último administrador ativo do sistema.
+    if (deactivating && user.role === 'admin') {
+      const outroAdminAtivo = users.some((u) => u.role === 'admin' && u.id !== user.id && u.is_active !== false);
+      if (!outroAdminAtivo) {
+        toast.error('A instalação precisa de pelo menos um administrador ativo.');
+        return;
+      }
+    }
     togglingRef.current.add(user.id);
     try {
-      const deactivating = user.is_active !== false;
       const { error } = await supabase
         .from('profiles')
         .update({ is_active: !deactivating })
@@ -351,7 +362,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm' | 'cron', audi
     } finally {
       togglingRef.current.delete(user.id);
     }
-  }, [fetchData]);
+  }, [fetchData, users]);
 
   const handleSaveUser = useCallback(async (
     editingUser: UserWithRole,

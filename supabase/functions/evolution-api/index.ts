@@ -678,11 +678,12 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         const qr = qrFromV2Connect(data);
         if (qr) {
           await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-          return new Response(JSON.stringify({ ...data, status: 'qr_pending', qrcode: qr }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          // stripInstanceToken: o v2 pode ecoar hash/token da instância no corpo do connect.
+          return new Response(JSON.stringify({ ...(stripInstanceToken(data) as Record<string, unknown>), status: 'qr_pending', qrcode: qr }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         if (sessionStateFromV2(data) === 'open') {
           await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
-          return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ ...(stripInstanceToken(data) as Record<string, unknown>), status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         // Mesma convenção dos outros ramos: 200 com error:true (o front lê
         // error/message; um 409 cru cairia no ramo de erro de rede).
@@ -705,6 +706,20 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const fail = (status: number, code: string, message: string, extra: Record<string, unknown> = {}) =>
         new Response(JSON.stringify({ error: true, status, code, message, ...extra }), { status: 200, headers: jsonHeaders });
       const failDeadline = () => fail(504, 'go_unreachable', deadlineMessage);
+      // Recriação da sessão órfã é DESTRUTIVA (DELETE + create). Só apaga se o
+      // create couber inteiro: antes do DELETE precisa sobrar o teto do delete
+      // (8 s) + o create completo (10 s) + folga; antes de listar /instance/all,
+      // mais o teto dele (8 s). Sem esse orçamento responde go_unreachable SEM
+      // apagar — instância removida e não recriada é pior que "tente de novo".
+      const ORPHAN_DELETE_TIMEOUT_MS = 8_000;
+      const ORPHAN_CREATE_TIMEOUT_MS = 10_000;
+      const ORPHAN_ALL_TIMEOUT_MS = 8_000;
+      const ORPHAN_MIN_BEFORE_DELETE_MS = ORPHAN_DELETE_TIMEOUT_MS + ORPHAN_CREATE_TIMEOUT_MS + 2_000;
+      const ORPHAN_MIN_BEFORE_ALL_MS = ORPHAN_ALL_TIMEOUT_MS + ORPHAN_MIN_BEFORE_DELETE_MS;
+      const QR_RETRY_SLEEP_MS = 1_500;
+      // Só dorme entre leituras do QR se, ao acordar, ainda houver prazo para a
+      // próxima leitura — nunca dorme além do qrDeadline (≤ hardDeadline).
+      const canSleepForQr = () => qrDeadline - Date.now() > QR_RETRY_SLEEP_MS;
 
       // TRA-002 / #18: o token DA instância vem do Vault (get_instance_token);
       // a GO seleciona a instância pela CREDENCIAL — autenticar o connect de
@@ -823,8 +838,8 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         return { base64, code: rawQrCode || qrData?.data?.code };
       };
       let qr = await fetchQr();
-      for (let i = 0; i < 3 && !qr.base64 && !qrAuthRejected && Date.now() < qrDeadline; i++) {
-        await new Promise((r) => setTimeout(r, 1500));
+      for (let i = 0; i < 3 && !qr.base64 && !qrAuthRejected && canSleepForQr(); i++) {
+        await new Promise((r) => setTimeout(r, QR_RETRY_SLEEP_MS));
         qr = await fetchQr();
       }
       if (qr.base64) {
@@ -905,10 +920,11 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         return new Response(JSON.stringify({ error: false, status: 'connecting', message: 'A instância está reconectando. Aguarde alguns segundos e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       let goOrphan: { id: string; jid: string } | null = null;
-      // Recriar a instância (delete + create + connect + poll) precisa de folga:
-      // com menos de 20 s até o teto, não começa — apagar e não conseguir
-      // recriar a tempo é pior que pedir para tentar de novo.
-      if (isGoFlavor && sessionIsDead && remaining() < 20_000) return failDeadline();
+      // Recriar a instância (all + delete + create + connect + poll) precisa de
+      // folga: sem o orçamento de all + delete + create inteiro até o teto, não
+      // começa — apagar e não conseguir recriar a tempo é pior que pedir para
+      // tentar de novo.
+      if (isGoFlavor && sessionIsDead && remaining() < ORPHAN_MIN_BEFORE_ALL_MS) return failDeadline();
       if (isGoFlavor && sessionIsDead && !qrUnreachable) {
         // Security: verificar admin ANTES de chamar /instance/all para evitar
         // exposição de metadados de instâncias a usuários não-admin.
@@ -918,7 +934,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           return new Response(JSON.stringify({ error: true, status: 409, message: 'A sessão do WhatsApp está com credenciais inconsistentes na Evolution GO e precisa ser recriada. Peça a um administrador para reconectar.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         try {
-          const allFetch = await safeFetch(`${evolutionApiUrl}/instance/all`, { method: 'GET', headers: { 'apikey': evolutionApiKey } }, within(8_000));
+          const allFetch = await safeFetch(`${evolutionApiUrl}/instance/all`, { method: 'GET', headers: { 'apikey': evolutionApiKey } }, within(ORPHAN_ALL_TIMEOUT_MS));
           if (allFetch.ok && allFetch.response.ok) {
             const allJson = await readJsonSafe(allFetch.response);
             const records: Record<string, unknown>[] = Array.isArray(allJson?.data) ? allJson.data : [];
@@ -935,7 +951,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-        const delFetch = await safeFetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } }, within(8_000));
+        // Rechecagem logo antes do DELETE: o /instance/all pode ter comido o
+        // prazo. Sem orçamento para delete + create inteiro, NÃO apaga.
+        if (remaining() < ORPHAN_MIN_BEFORE_DELETE_MS) {
+          new Logger('evolution-api').warn('connect: sessão órfã sem prazo para recriar com segurança — não apaga', { instance, goId: goOrphan.id, remainingMs: remaining() });
+          return failDeadline();
+        }
+        // remaining() ≥ delete + create + folga: mesmo que o DELETE use o teto
+        // inteiro, o create ainda recebe os 10 s completos.
+        const delFetch = await safeFetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } }, Math.min(ORPHAN_DELETE_TIMEOUT_MS, remaining() - ORPHAN_CREATE_TIMEOUT_MS));
         const delOk = delFetch.ok && delFetch.response.ok;
         if (!delOk) {
           new Logger('evolution-api').error('connect: falha ao deletar instância órfã na GO', { instance, goId: goOrphan.id, httpStatus: delFetch.ok ? delFetch.response.status : delFetch.kind });
@@ -945,7 +969,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
             method: 'POST',
             headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: instance, token: instToken }),
-          }, within(10_000));
+          }, within(ORPHAN_CREATE_TIMEOUT_MS));
           let createFetch = await createInstance();
           if (!(createFetch.ok && createFetch.response.ok) && remaining() > 2_000) {
             // GO pode levar um momento para liberar o nome após o DELETE — retry único após 2s
@@ -965,13 +989,13 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           // Novo orçamento de poll para o QR da instância recriada.
           qrDeadline = Math.min(Date.now() + 15_000, hardDeadline);
           let healed = await fetchQr();
-          for (let i = 0; i < 4 && !healed.base64; i++) {
-            await new Promise((r) => setTimeout(r, 1500));
+          for (let i = 0; i < 4 && !healed.base64 && canSleepForQr(); i++) {
+            await new Promise((r) => setTimeout(r, QR_RETRY_SLEEP_MS));
             healed = await fetchQr();
           }
           if (healed.base64) {
             await supabase.from('whatsapp_connections').update({ qr_code: healed.base64, status: 'qr_pending' }).eq('instance_id', instance);
-            return new Response(JSON.stringify({ status: 'qr_pending', qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            return new Response(JSON.stringify(stripInstanceToken({ status: 'qr_pending', qrcode: { base64: healed.base64, code: healed.code }, recovered: true })), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
         }
         new Logger('evolution-api').error('connect: recriação da instância na GO não gerou QR', { instance, goId: goOrphan.id });
@@ -1047,7 +1071,8 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       const status = data.state === 'open' ? 'connected' : 'disconnected';
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao verificar status da instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      return new Response(JSON.stringify({ ...data, status }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      // stripInstanceToken: a GO/v2 podem ecoar token/hash da instância no status.
+      return new Response(JSON.stringify({ ...(stripInstanceToken(data) as Record<string, unknown>), status }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'instance-info') {

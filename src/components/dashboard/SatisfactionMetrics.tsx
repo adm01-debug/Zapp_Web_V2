@@ -3,7 +3,7 @@ import { MessageCircle, Users, Crown, TrendingUp, BarChart3, Star, Layers, X, Li
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { cn } from '@/lib/utils';
 import { useSatisfactionBreakdown } from '@/hooks/business/useCSAT';
-import { useNPSSurveys } from '@/hooks/business/useNPSSurveys';
+import { NPS_SURVEY_LIMIT, useNPSSurveys } from '@/hooks/business/useNPSSurveys';
 import { DashboardCard, SectionHeader, CardSelect, PrimaryButton, InitialsAvatar } from './overview/DashboardCard';
 import { DashboardKpiCard } from './overview/DashboardKpiCard';
 import { CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
@@ -45,7 +45,7 @@ export function SatisfactionMetrics() {
   const [queueMode, setQueueMode] = useState('csat');
   const [topN, setTopN] = useState('5');
   const { data: breakdown, isLoading, isError, refetch } = useSatisfactionBreakdown(periodDays as 7 | 30 | 90);
-  const { surveys: npsSurveys } = useNPSSurveys();
+  const { surveys: npsSurveys, isTruncated: npsTruncated } = useNPSSurveys();
 
   // react-hooks/purity acusa `Date.now()` (mesmo fora do useMemo) mas não `new Date()`
   // (mesmo padrão já usado em GreetingBanner.tsx) — daí getTime() em vez de Date.now().
@@ -107,7 +107,9 @@ export function SatisfactionMetrics() {
         />
         <DashboardKpiCard index={1} size="hero" label="NPS" value={npsScore != null ? String(npsScore) : '—'}
           valueClassName={npsScore != null ? getNPSColor(npsScore) : 'text-muted-foreground'}
-          delta={npsScore != null ? null : { text: hasNpsSurveys ? 'sem respostas no período' : 'nenhuma pesquisa enviada ainda', tone: 'muted' }}
+          delta={npsScore != null
+            ? (npsTruncated ? { text: `baseado nas últimas ${NPS_SURVEY_LIMIT} respostas`, tone: 'muted' } : null)
+            : { text: hasNpsSurveys ? 'sem respostas no período' : 'nenhuma pesquisa enviada ainda', tone: 'muted' }}
           tile="blue" icon={Users} bars={null} barsColor="blue" chart="bars"
           aside={npsScore == null ? <KpiEmptyAside icon={BarChart3} label={hasNpsSurveys ? 'Sem respostas no período' : 'Sem pesquisas enviadas'} /> : undefined}
         />

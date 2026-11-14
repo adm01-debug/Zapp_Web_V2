@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Calendar, AlertTriangle, Clock } from 'lucide-react';
@@ -20,14 +21,15 @@ export function DemandForecast() {
     setLoading(true);
     const since = subDays(new Date(), 28);
 
-    const { data: messages } = await supabase
-      .from('messages')
-      .select('created_at')
-      .gte('created_at', since.toISOString())
-      .eq('sender', 'contact')
-      .limit(1000);
-
-    if (!messages) { setLoading(false); return; }
+    const result = await fetchAllRows<{ created_at: string }>((from, to) =>
+      supabase
+        .from('messages')
+        .select('created_at')
+        .gte('created_at', since.toISOString())
+        .eq('sender', 'contact')
+        .order('id')
+        .range(from, to),
+    );
 
     // Group by day of week
     const dayBuckets: Record<number, number[]> = {};
@@ -35,7 +37,7 @@ export function DemandForecast() {
     for (let i = 0; i < 7; i++) dayBuckets[i] = [];
     for (let i = 0; i < 24; i++) hourBuckets[i] = [];
 
-    messages.forEach(m => {
+    result.rows.forEach(m => {
       const d = new Date(m.created_at);
       const dayOfWeek = getDay(d);
       const hour = getHours(d);

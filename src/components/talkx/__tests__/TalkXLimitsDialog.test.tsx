@@ -131,6 +131,18 @@ describe('TalkXLimitsDialog · Editar limites (X006 mantido)', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
+  it('mínimo maior que o máximo é recusado: avisa a mensagem certa e não salva nem diverge do digitado', () => {
+    const { onSave } = renderDialog();
+
+    const spinbuttons = screen.getAllByRole('spinbutton');
+    fireEvent.change(spinbuttons[0], { target: { value: '50' } });
+    fireEvent.change(spinbuttons[1], { target: { value: '10' } });
+    fireEvent.click(screen.getByRole('button', { name: /Salvar Limites/i }));
+
+    expect(toastError).toHaveBeenCalledWith('Intervalo mínimo não pode ser maior que o máximo.');
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('o payload leva só as chaves da lista branca da RPC (chave extra é recusada pelo servidor)', () => {
     const { onSave } = renderDialog();
 
@@ -141,6 +153,18 @@ describe('TalkXLimitsDialog · Editar limites (X006 mantido)', () => {
       'business_hours_only', 'send_interval_max', 'send_interval_min',
       'send_window_end', 'send_window_start', 'speed_profile',
     ]);
+  });
+
+  it('limitsPayload nunca diverge do digitado: min > max não é mais ajustado em silêncio', () => {
+    const payload = limitsPayload({
+      speedProfile: 'moderate', intervalMin: 50, intervalMax: 10,
+      windowStart: '', windowEnd: '', businessHoursOnly: false,
+    });
+    // Antes do fix: Math.max(50, 10) virava send_interval_max=50000, igual ao
+    // mínimo — o 10 digitado nunca chegava ao banco. Agora grava exatamente o
+    // que foi digitado; a UI (TalkXLimitsDialog) é quem bloqueia o salvamento.
+    expect(payload.send_interval_min).toBe(50000);
+    expect(payload.send_interval_max).toBe(10000);
   });
 
   it('janela em branco vira null (o par precisa ser válido no servidor)', () => {

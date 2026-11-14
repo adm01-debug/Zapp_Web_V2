@@ -58,9 +58,16 @@ export function MessageHoverToolbar({
 
   const handleDelete = useCallback(async () => {
     try {
+      // QA-SWEEP: o toast dizia "deletada para todos" só por `externalId` ser
+      // truthy, mesmo quando a chamada à Evolution API abaixo falhava (ou nem
+      // era tentada) — o contato continuava vendo a mensagem no WhatsApp dele
+      // enquanto o Zapp confirmava sucesso completo. `evolutionDeletedOk` guarda
+      // o resultado real da tentativa para o toast refletir o que de fato aconteceu.
+      let evolutionDeletedOk = false;
       if (externalId && instanceName && contactJid) {
         try {
           await deleteMessage(instanceName, externalId, contactJid, isSent);
+          evolutionDeletedOk = true;
         } catch {
           log.warn('WhatsApp API delete failed, marking locally only');
         }
@@ -79,7 +86,13 @@ export function MessageHoverToolbar({
         return;
       }
 
-      toast.success(externalId ? 'Mensagem deletada para todos' : 'Mensagem removida');
+      if (!externalId) {
+        toast.success('Mensagem removida');
+      } else if (evolutionDeletedOk) {
+        toast.success('Mensagem deletada para todos');
+      } else {
+        toast.warning('Mensagem removida apenas no Zapp — o contato pode continuar vendo ela no WhatsApp dele');
+      }
       onMessageDeleted(message.id);
     } catch {
       toast.error('Erro ao deletar mensagem');

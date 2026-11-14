@@ -130,6 +130,27 @@ export async function handleApprovePasswordResetRequest(
       return errorResponse("Only admins can approve password resets", 403, req);
     }
 
+    const supabaseAdmin: ApproveResetAdminClient =
+      deps.admin ?? createClient(supabaseUrl, env("SUPABASE_SERVICE_ROLE_KEY"));
+
+    // is_admin (acima) só confere o ROLE — um admin DESATIVADO (profiles.is_active
+    // = false) mantém role e JWT válidos até o token expirar e continuaria
+    // aprovando reset de terceiros. Reconsulta o estado ATUAL do perfil aqui,
+    // antes de qualquer efeito.
+    const { data: profileRow, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("is_active")
+      .eq("user_id", caller.id)
+      .maybeSingle();
+    if (profileError) {
+      log.error("Profile active check failed", { error: String(profileError) });
+      return internalErrorResponse(profileError, req);
+    }
+    if (!profileRow || (profileRow as { is_active: boolean | null }).is_active !== true) {
+      log.warn("Inactive admin attempted password-reset decision", { callerId: caller.id });
+      return errorResponse("Access denied", 403, req);
+    }
+
     const parsed = parseBody(ApprovePasswordResetSchema, await req.json());
     if (!parsed.success) {
       log.warn("Invalid body", { error: parsed.error });
@@ -137,8 +158,6 @@ export async function handleApprovePasswordResetRequest(
     }
 
     const { requestId, action, rejectionReason } = parsed.data;
-    const supabaseAdmin: ApproveResetAdminClient =
-      deps.admin ?? createClient(supabaseUrl, env("SUPABASE_SERVICE_ROLE_KEY"));
 
     log.info(`Processing ${action} for request ${requestId}`);
 

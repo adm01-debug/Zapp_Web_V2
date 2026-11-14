@@ -27,10 +27,17 @@ interface ChatSearchResultsListProps {
   onSelect: (idx: number, messageId: string) => void;
   /** Zera texto, filtro de tipo e data — usado pelo botão «Limpar filtros» do estado vazio. */
   onClearFilters?: () => void;
+  /**
+   * Há mensagens mais antigas ainda não carregadas (paginação de `useMessages`). A busca
+   * roda só sobre `results`/`messages` em memória — nunca varre o histórico inteiro — então
+   * um resultado vazio aqui NÃO significa "não existe em toda a conversa". Com isso true o
+   * aviso deixa isso explícito em vez de implicar busca completa.
+   */
+  hasOlderMessages?: boolean;
 }
 
 export const ChatSearchResultsList = forwardRef<HTMLDivElement, ChatSearchResultsListProps>(
-  ({ results, activeIndex, debouncedQuery, onSelect, onClearFilters }, ref) => {
+  ({ results, activeIndex, debouncedQuery, onSelect, onClearFilters, hasOlderMessages }, ref) => {
     const [expanded, setExpanded] = useState(false);
     // Movimento reduzido: nada se desloca, só muda opacidade.
     const reduz = useReducedMotion() ?? false;
@@ -38,6 +45,10 @@ export const ChatSearchResultsList = forwardRef<HTMLDivElement, ChatSearchResult
     if (results.length === 0) {
       if (!debouncedQuery.trim()) return null;
       const term = debouncedQuery.trim().slice(0, 30);
+      const titulo = hasOlderMessages ? 'Sem resultado nas mensagens carregadas.' : 'Nenhum resultado para esta busca.';
+      const descricao = hasOlderMessages
+        ? `Nada encontrado para “${term}” no que já foi carregado. Role até o topo da conversa para carregar mensagens mais antigas e busque de novo.`
+        : `Nada encontrado para “${term}”. Tente outra palavra ou limpe os filtros.`;
       return (
         <div
           role="status"
@@ -55,9 +66,9 @@ export const ChatSearchResultsList = forwardRef<HTMLDivElement, ChatSearchResult
           >
             <Search className="w-4 h-4" />
           </motion.span>
-          <span className="text-xs text-foreground">Nenhum resultado para esta busca.</span>
+          <span className="text-xs text-foreground">{titulo}</span>
           <span className="text-2xs text-muted-foreground max-w-[260px]">
-            Nada encontrado para “{term}”. Tente outra palavra ou limpe os filtros.
+            {descricao}
           </span>
           <Button
             type="button"
