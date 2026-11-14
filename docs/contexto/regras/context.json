@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "ab657aa34e9642d2992cb8fc813548edeb69b1bf",
+  "sha": "88f50d0d3845034cfd3e07dac23c54416db67adf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 05:05 UTC",
+  "generated_at": "2026-11-14 05:40 UTC",
   "files_total": 8424,
   "code_files": 6216,
   "code_lines": 1085171
@@ -395197,10 +395197,19 @@
   }
  },
  "git": {
-  "sha": "ab657aa34e9642d2992cb8fc813548edeb69b1bf",
+  "sha": "88f50d0d3845034cfd3e07dac23c54416db67adf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "88f50d0",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "docs(prod-readiness): fechamento — repo = ledger (exceto 5 do #3064), contexto verde e produção sem erro (#3066)",
+    "files": [
+     "docs/prod-readiness.md"
+    ]
+   },
    {
     "sha": "ab657aa",
     "date": "2026-11-14",
@@ -395940,15 +395949,6 @@
      "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
      "supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh"
     ]
-   },
-   {
-    "sha": "8a14183",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)",
-    "files": [
-     "scripts/db-audit/talkx-e27-replay-divergence.test.sh"
-    ]
    }
   ],
   "hot_files": [
@@ -395963,6 +395963,10 @@
    [
     "supabase/functions/evolution-api/index.ts",
     4
+   ],
+   [
+    "docs/prod-readiness.md",
+    3
    ],
    [
     "docs/audits/edge-functions-authz-coverage.md",
@@ -396026,10 +396030,6 @@
    ],
    [
     "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
-    2
-   ],
-   [
-    "src/hooks/inbox/useInboxBulkActions.ts",
     2
    ]
   ]

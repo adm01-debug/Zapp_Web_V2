@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ab657aa34e9642d2992cb8fc813548edeb69b1bf",
+  "commit": "88f50d0d3845034cfd3e07dac23c54416db67adf",
   "branch": "main",
-  "data_commit": "2026-11-14T01:44:54-03:00",
+  "data_commit": "2026-11-14T02:36:55-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "88f50d0",
+    "data": "2026-11-14",
+    "assunto": "docs(prod-readiness): fechamento — repo = ledger (exceto 5 do #3064), contexto verde e produção sem erro (#3066)"
+   },
    {
     "sha": "ab657aa",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "943a646",
     "data": "2026-11-13",
     "assunto": "Verificador de release V2 deixa de acusar divergência falsa quando o run atrasa na fila (#3029)"
-   },
-   {
-    "sha": "382307a",
-    "data": "2026-11-13",
-    "assunto": "Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)"
    }
   ],
   "arquivos_mudados_7d": 973,
@@ -218,10 +218,6 @@
     "mudancas": 12
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 11
    },
@@ -231,6 +227,10 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "CLAUDE.md",
     "mudancas": 10
    },
    {
@@ -294,7 +294,7 @@
     "mudancas": 7
    },
    {
-    "arquivo": "AGENTS.md",
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     "mudancas": 7
    }
   ],
