@@ -116,7 +116,14 @@ seed_contacts() {
 psql_file "$migration_bug" >/dev/null
 seed_contacts
 
-bug_output="$(docker exec "$container_name" psql -X -At -v ON_ERROR_STOP=1 -U postgres -d postgres -c \
+# VERBOSITY=verbose e OBRIGATORIO aqui: a assercao abaixo cobra o SQLSTATE 23505, e o
+# psql NAO imprime o codigo na verbosidade padrao -- so "ERROR:  duplicate key value
+# violates unique constraint \"contacts_phone_key\"". Sem isto o teste reprovava dizendo
+# "bug nao reproduziu com o erro esperado (23505)" justamente quando o bug REPRODUZIA
+# (run 43637xxxxx do job "Contrato DB offline", 1a vez que este teste rodou no CI).
+# Medido nesta sessao: sem verbose a saida nao tem "23505"; com verbose sai
+# "ERROR:  23505: duplicate key value violates unique constraint ...".
+bug_output="$(docker exec "$container_name" psql -X -At -v ON_ERROR_STOP=1 -v VERBOSITY=verbose -U postgres -d postgres -c \
   "SELECT public.merge_contacts_atomic('11111111-1111-1111-1111-111111111111', ARRAY['22222222-2222-2222-2222-222222222222']::uuid[], '{\"phone\":\"+5500000000002\"}'::jsonb)" 2>&1)" \
   && bug_status=0 || bug_status=$?
 
