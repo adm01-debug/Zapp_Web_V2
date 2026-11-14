@@ -49,6 +49,33 @@ export const CLOCK_SKEW_TOLERANCE_MS = 60_000;
 let recargaAutomaticaBloqueadaPorStorage = false;
 
 /**
+ * Janela em que a pagina esta saindo. Ao iniciar uma navegacao (F5, link,
+ * page.reload), Firefox e WebKit cancelam os imports dinamicos ainda em voo no
+ * documento que esta saindo, e eles rejeitam com as mesmas mensagens de chunk.
+ * Nao e deploy novo: recarregar ali atropela a navegacao pedida (Firefox aborta
+ * com NS_ERROR_FAILURE; WebKit, "interrupted by another navigation") e gasta o
+ * orcamento da sessao. O beforeunload chega antes desse cancelamento. Se a saida
+ * for cancelada ("Ficar na pagina"), o documento segue vivo e a guarda volta
+ * depois de SAIDA_CANCELADA_MS; o pageshow (volta do bfcache) a zera na hora.
+ */
+export const SAIDA_CANCELADA_MS = 5_000;
+let paginaSaindo = false;
+let limparSaida: ReturnType<typeof setTimeout> | undefined;
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    paginaSaindo = true;
+    clearTimeout(limparSaida);
+    limparSaida = setTimeout(() => {
+      paginaSaindo = false;
+    }, SAIDA_CANCELADA_MS);
+  });
+  window.addEventListener('pageshow', () => {
+    clearTimeout(limparSaida);
+    paginaSaindo = false;
+  });
+}
+
+/**
  * Mensagens que o navegador usa quando o chunk nao veio (deploy novo ou rede).
  * Comparadas em minusculas: as 5 da V3 mais 'loading css chunk', que a V2 ja
  * reconhecia — removê-la seria regressao.
@@ -132,6 +159,10 @@ export function resetChunkReloadGuard(): void {
  *          silencio e o que produzia o laco invisivel antes desta guarda.
  */
 export function triggerChunkReload(): boolean {
+  if (paginaSaindo) {
+    log.info('falha de chunk durante a saida da pagina -- a navegacao em curso ja carrega o documento novo');
+    return false;
+  }
   try {
     const contador = lerContador();
     if (contador >= MAX_CHUNK_RELOADS) return false;
