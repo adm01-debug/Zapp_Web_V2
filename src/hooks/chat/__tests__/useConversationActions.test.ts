@@ -32,10 +32,14 @@ let eventsInsertResult: Record<string, unknown> = { error: null };
 const eventsInsertCalls: Record<string, unknown>[] = [];
 let transferRpcResult: Record<string, unknown> = { data: 'event-rpc-id', error: null };
 const transferRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
-// Arquivar/reabrir passam pela RPC de estado (a MESMA do CloseConversationDialog),
+// Arquivar/desfazer passam pela RPC de estado em lote (a MESMA do /archive),
 // não por UPDATE em contacts: o responsável (assigned_to) fica intacto.
 let archiveRpcResult: Record<string, unknown> = { data: null, error: null };
 const archiveRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
+// Status atual da conversa lido antes de arquivar (o Desfazer devolve esse valor).
+let contactConversationStatus = 'open';
+// Status anterior que a RPC devolve (null = o mesmo da leitura prévia).
+let rpcPreviousStatus: string | null = null;
 
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
 // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
@@ -48,9 +52,14 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
     rpc: vi.fn((name: string, args: Record<string, unknown>) => {
-      if (name === 'set_conversation_status') {
+      if (name === 'set_conversations_status') {
         archiveRpcCalls.push({ name, args });
-        return Promise.resolve(archiveRpcResult);
+        if (archiveRpcResult.error) return Promise.resolve(archiveRpcResult);
+        const ids = args.p_contact_ids as string[];
+        return Promise.resolve({
+          data: ids.map((id) => ({ contact_id: id, previous_status: rpcPreviousStatus ?? contactConversationStatus, outcome: 'changed' })),
+          error: null,
+        });
       }
       transferRpcCalls.push({ name, args });
       if (name === 'transfer_conversation') return Promise.resolve(transferRpcResult);
@@ -123,7 +132,11 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'contacts') {
         return {
-          select: vi.fn(() => resultChain(contactsSelectResult)),
+          select: vi.fn((columns?: string) => resultChain(
+            columns?.includes('conversation_status')
+              ? { data: [{ id: 'contact-1', conversation_status: contactConversationStatus }], error: null }
+              : contactsSelectResult,
+          )),
           update: vi.fn((payload: unknown) => {
             contactsUpdateCalls.push(payload);
             return resultChain(contactsUpdateResult);
@@ -141,6 +154,7 @@ vi.mock('@/lib/undoToast', () => ({ undoToast: vi.fn() }));
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
+import { WAITING_CANNOT_ARCHIVE_MESSAGE } from '@/hooks/inbox/conversationArchive';
 
 let activeUnmount: (() => void) | null = null;
 function renderActionsHook() {
@@ -162,7 +176,9 @@ describe('useConversationActions', () => {
     contactsUpdateResult = { error: null };
     contactsUpdateCalls.length = 0;
     archiveRpcResult = { data: null, error: null };
+    rpcPreviousStatus = null;
     archiveRpcCalls.length = 0;
+    contactConversationStatus = 'open';
     pinnedInsertResult = { error: null };
     pinnedDeleteResult = { error: null };
     pinnedDeleteCalls.length = 0;
@@ -184,7 +200,7 @@ describe('useConversationActions', () => {
   });
 
   describe('archiveContact', () => {
-    it('arquiva pela RPC set_conversation_status (a mesma do diálogo de encerrar) e NÃO mexe no responsável', async () => {
+    it('arquiva pela RPC set_conversations_status (a mesma do /archive e do lote) e NÃO mexe no responsável', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
@@ -192,7 +208,7 @@ describe('useConversationActions', () => {
       });
 
       expect(archiveRpcCalls).toEqual([
-        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'archived' } },
+        { name: 'set_conversations_status', args: { p_contact_ids: ['contact-1'], p_next: 'archived' } },
       ]);
       // Arquivar é mudar o ESTADO: assigned_to (o responsável) fica intacto.
       expect(contactsUpdateCalls).toEqual([]);
@@ -205,8 +221,11 @@ describe('useConversationActions', () => {
       });
 
       expect(archiveRpcCalls).toEqual([
-        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'archived' } },
-        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'open' } },
+        { name: 'set_conversations_status', args: { p_contact_ids: ['contact-1'], p_next: 'archived' } },
+        {
+          name: 'set_conversations_status',
+          args: { p_contact_ids: ['contact-1'], p_next: 'open', p_expected_current: 'archived' },
+        },
       ]);
       expect(contactsUpdateCalls).toEqual([]);
     });
@@ -245,6 +264,72 @@ describe('useConversationActions', () => {
       });
 
       expect(toast.error).toHaveBeenCalledWith('Erro ao arquivar conversa');
+      expect(undoToast).not.toHaveBeenCalled();
+    });
+
+    it('desfazer o arquivamento de conversa ENCERRADA devolve "resolved" (restore), não reabre como "open"', async () => {
+      contactConversationStatus = 'resolved';
+      const seen: unknown[] = [];
+      const handler = (e: Event) => seen.push((e as CustomEvent).detail);
+      window.addEventListener('zapp:contact-status-changed', handler);
+      try {
+        const { result } = await withProfileReady();
+
+        await act(async () => {
+          await result.current.archiveContact('contact-1');
+        });
+        const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+        archiveRpcCalls.length = 0;
+        seen.length = 0;
+        await act(async () => {
+          await undoArgs.onUndo();
+        });
+
+        // Volta a 'resolved' pelo modo restore da RPC (sem gravar outro encerramento).
+        expect(archiveRpcCalls).toEqual([
+          {
+            name: 'set_conversations_status',
+            args: { p_contact_ids: ['contact-1'], p_next: 'resolved', p_expected_current: 'archived', p_restore: true },
+          },
+        ]);
+        expect(seen).toEqual([{ contactId: 'contact-1', status: 'resolved' }]);
+      } finally {
+        window.removeEventListener('zapp:contact-status-changed', handler);
+      }
+    });
+
+    it('desfazer usa o status anterior CONFIRMADO pela RPC: reaberta por mensagem nova entre a leitura e o arquivamento volta a "open"', async () => {
+      contactConversationStatus = 'resolved';
+      rpcPreviousStatus = 'open';
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.archiveContact('contact-1');
+      });
+      const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      archiveRpcCalls.length = 0;
+      await act(async () => {
+        await undoArgs.onUndo();
+      });
+
+      expect(archiveRpcCalls).toEqual([
+        {
+          name: 'set_conversations_status',
+          args: { p_contact_ids: ['contact-1'], p_next: 'open', p_expected_current: 'archived' },
+        },
+      ]);
+    });
+
+    it('conversa aguardando continua não arquivável: avisa e não oferece desfazer', async () => {
+      contactConversationStatus = 'waiting';
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.archiveContact('contact-1');
+      });
+
+      expect(archiveRpcCalls).toEqual([]);
+      expect(toast.error).toHaveBeenCalledWith(WAITING_CANNOT_ARCHIVE_MESSAGE);
       expect(undoToast).not.toHaveBeenCalled();
     });
   });
