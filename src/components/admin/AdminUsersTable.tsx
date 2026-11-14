@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Crown, UserCog, User, Briefcase, Building, Lock,
   UserCheck, UserX, Edit,
@@ -29,7 +31,12 @@ interface AdminUsersTableProps {
 }
 
 export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser, emptyMessage = 'Nenhum usuário cadastrado.' }: AdminUsersTableProps) {
+  // Desativar é destrutivo (revoga sessões ativas na hora) e precisa de
+  // confirmação explícita, igual ao fluxo de remover role em RolesPage —
+  // reativar não é destrutivo e segue direto.
+  const [pendingDeactivation, setPendingDeactivation] = useState<UserWithRole | null>(null);
   return (
+    <>
     <Card className="border border-secondary/20 bg-card">
       <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Usuários</h2></CardHeader>
       <CardContent>
@@ -117,7 +124,10 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                         <ForceLogoutButton userId={user.user_id} userName={user.name} />
                         <Switch
                           checked={user.is_active !== false}
-                          onCheckedChange={() => onToggleActive(user)}
+                          onCheckedChange={(checked) => {
+                            if (checked) onToggleActive(user);
+                            else setPendingDeactivation(user);
+                          }}
                           aria-label={`Ativar/desativar ${nome}`}
                         />
                       </div>
@@ -130,5 +140,29 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
         </Table>
       </CardContent>
     </Card>
+    <AlertDialog open={!!pendingDeactivation} onOpenChange={(open) => { if (!open) setPendingDeactivation(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Desativar usuário?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja desativar <strong>{pendingDeactivation?.name || pendingDeactivation?.email || 'este usuário'}</strong>?
+            As sessões ativas dele serão revogadas agora.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/90"
+            onClick={() => {
+              if (pendingDeactivation) onToggleActive(pendingDeactivation);
+              setPendingDeactivation(null);
+            }}
+          >
+            Desativar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
