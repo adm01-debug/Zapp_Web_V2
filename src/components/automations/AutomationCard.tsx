@@ -44,8 +44,20 @@ export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDupli
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h4 className="font-medium text-sm truncate">{automation.name}</h4>
-            <Badge variant={automation.is_active ? 'default' : 'secondary'} className="text-xs">
-              {automation.is_active ? 'Ativo' : 'Inativo'}
+            {/* Não existe motor de execução automática ligado a esta tabela (nenhuma
+                edge function, cron ou trigger de banco dispara `actions`): o rótulo
+                não pode dizer "Ativo"/"Inativo", que sugere que a automação já roda
+                de verdade. É só uma configuração salva. */}
+            <Badge
+              variant={automation.is_active ? 'default' : 'secondary'}
+              className="text-xs"
+              title={
+                automation.is_active
+                  ? 'Configuração salva. Execução automática ainda não está disponível.'
+                  : 'Configuração pausada. Execução automática ainda não está disponível.'
+              }
+            >
+              {automation.is_active ? 'Configurada' : 'Pausada'}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{automation.description}</p>
