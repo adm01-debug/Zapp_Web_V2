@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "58f1713bae92d439f42ede735c1bdb3cbef2bebc",
+  "commit": "4432834d6968179eca283e479e8d5b70dc02cea8",
   "branch": "main",
-  "data_commit": "2026-11-14T04:33:02-03:00",
+  "data_commit": "2026-11-14T05:07:11-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "4432834",
+    "data": "2026-11-14",
+    "assunto": "fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)"
+   },
    {
     "sha": "58f1713",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "eb93d55",
     "data": "2026-11-13",
     "assunto": "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)"
-   },
-   {
-    "sha": "546c6f5",
-    "data": "2026-11-13",
-    "assunto": "Rascunho de proposta do copilot só mostra \"copiado\" quando a cópia funciona (#3005)"
    }
   ],
   "arquivos_mudados_7d": 973,
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 295
+    "mudancas": 297
    },
    {
     "pasta": "supabase/functions/_shared",
@@ -242,19 +242,15 @@
     "mudancas": 10
    },
    {
+    "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 10
+   },
+   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
     "mudancas": 10
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 9
-   },
-   {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "docs/talkx/ESTADOS.md",
     "mudancas": 9
    },
    {
@@ -268,6 +264,10 @@
    {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
+   },
+   {
+    "arquivo": "CLAUDE.md",
+    "mudancas": 8
    },
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8581,
   "arquivos_codigo": 4915,
-  "linhas_codigo": 912424,
+  "linhas_codigo": 912462,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2225,
-   "linhas": 378085
+   "linhas": 378123
   },
   "src/config": {
    "arquivos": 3,

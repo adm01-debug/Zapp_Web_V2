@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `58f1713bae` · branch `main` · 2026-11-14 07:55 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4432834d69` · branch `main` · 2026-11-14 08:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4644,7 +4644,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21926 testes em 2314 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21927 testes em 2314 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4687,8 +4687,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/integrations/__tests__/useTalkXSegments.test.ts` | 42 | rulesToPostgrest · fails closed instead of dropping an unknown rule · keeps a valid rule as a PostgREST filter · escapes a trailing backslash before quoting, so the filter string cannot stay open … |
 | `src/providers/__tests__/CallSessionProvider.test.tsx` | 42 | CallSessionProvider (T10) · aceite:  · openDialer emite zapp:navigate e sincroniza useNavigationHistory para voip · mantém os campos que a UI antiga consome (TelefoniaView/DialPad/ActiveCallBar) … |
 | `supabase/functions/crm-integration/index.test.ts` | 42 | sidebar lookup resolves the expected RPC and logs only bounded telemetry · sidebar lookup returns 409 when the stable identity differs · intelligence lookup returns 409 when the stable identity differs · intelligence lookup resolves when the external identity matches the stable link … |
+| `src/components/talkx/__tests__/TalkXView.route.test.tsx` | 41 | TalkXView wizard route integration · restores the routed draft and its requested step on first render · autosave do rascunho novo não remonta o wizard quando a lista de campanhas recarrega · handles browser history changes without retaining the previous campaign … |
 | `tests/contracts/ai-vision-classifiers-mock.contract.test.ts` | 41 | (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor · classify-emoji baixa no servidor e envia  · classify-sticker segue a MESMA rota: data URL embutida e endpoint de visão · o endpoint do provedor de TEXTO padrão NUNCA é chamado quando a modalidade é visão … |
-| `src/components/talkx/__tests__/TalkXView.route.test.tsx` | 40 | TalkXView wizard route integration · restores the routed draft and its requested step on first render · handles browser history changes without retaining the previous campaign · clears an inaccessible campaign route instead of opening an arbitrary editor … |
 | `src/hooks/chat/__tests__/useForwardMessage.test.ts` | 40 | useForwardMessage — carga dos destinos ao abrir · só consulta o banco quando  · com allowGroups=false não busca a tabela de grupos · erro de rede/RLS ao buscar contatos: lista vazia, erro registrado e isLoading de volta a false … |
 | `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts` | 40 | useTalkXTemplates — listagem · carrega a lista com o select do criador e a ordem por uso/atualizacao · expoe lista vazia quando o banco responde null · propaga o erro de RLS/rede da listagem (nao engole) … |
 | `src/lib/calls/adapters/__tests__/SipCallAdapter.test.ts` | 40 | SipCallAdapter — host, destino e validação do número (T09) · o host da URI vem do UA, não da sessão · é discável quando a URI resolve, e a URI leva o número com o host do UA · número malformado (a URI não resolve) não é discável … |

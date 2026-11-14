@@ -1,17 +1,17 @@
 # Graph Report - Zapp_Web_V2  (2026-11-14)
 
 ## Corpus Check
-- 7490 files · ~9,252,902 words
+- 7490 files · ~9,253,106 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 95 file(s) not represented in the graph (top: .tsv 32, (none) 13, .csv 13)
 
 ## Summary
-- 58016 nodes · 120120 edges · 4219 communities (2419 shown, 1800 thin omitted)
+- 58016 nodes · 120121 edges · 4219 communities (2419 shown, 1800 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 8107 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `58f1713b`
+- Built from commit: `4432834d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -3333,7 +3333,7 @@
 
 ## God Nodes (most connected - your core abstractions)
 1. `vitest` - 2006 edges
-2. `react` - 1668 edges
+2. `react` - 1669 edges
 3. `@testing-library/react` - 1588 edges
 4. `cn()` - 1189 edges
 5. `lucide-react` - 797 edges

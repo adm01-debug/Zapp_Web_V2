@@ -12708,14 +12708,14 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
    "tipo": "unit",
-   "linhas": 626,
+   "linhas": 659,
    "testa": [
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/TalkXView.tsx",
     "src/components/talkx/TalkXWizardDelivery.tsx",
     "src/components/talkx/talkxWizardRoute.ts"
    ],
-   "casos": 35
+   "casos": 36
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXView.routing.test.tsx",

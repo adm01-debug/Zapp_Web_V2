@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `58f1713bae92d439f42ede735c1bdb3cbef2bebc` (2026-11-14T04:33:02-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `4432834d6968179eca283e479e8d5b70dc02cea8` (2026-11-14T05:07:11-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8581 |
 | arquivos_codigo | 4915 |
-| linhas_codigo | 912424 |
+| linhas_codigo | 912462 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -393,7 +393,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 58016 nós · 120120 arestas · 4219 comunidades · grafo do commit `58f1713b`
+- 58016 nós · 120121 arestas · 4219 comunidades · grafo do commit `4432834d`
 - comunidades maiores: react (704), client.ts (685), vitest (649), badge.tsx (552), utils.ts (534), TalkXSuppression.tsx (531), ExternalProductManagement.tsx (531), ref_node_fs (493), framer-motion (425), @tanstack/react-query (421), cn (419), chat.ts (409)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -410,10 +410,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - src/integrations/supabase/types.ts (11)
 - supabase/schema-manifest.json (11)
 - .github/workflows/db-guard.yml (10)
+- docs/talkx/ESTADOS.md (10)
 - scripts/e2e-isolated/run.mjs (10)
-- CLAUDE.md (9)
 - PENDENCIAS.md (9)
-- docs/talkx/ESTADOS.md (9)
+- scripts/ci/e2e-isolated-runtime.unit.mjs (9)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
@@ -518,6 +518,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-14 `4432834` fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)
 - 2026-11-14 `58f1713` fix(e2e): prontidão de Contatos imune ao aria-hidden do modal de boas-vindas (#3071)
 - 2026-11-14 `ff0a5db` chore(db): sincronizar artefatos do banco e contagens do inventário (#3070)
 - 2026-11-14 `1706a81` fix(e2e): atualizar hash de enqueue_outbound_message no harness isolado (#3069)
@@ -532,7 +533,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-13 `a49ef4a` feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051) (#2555)
 - 2026-11-13 `19104e8` feat(multiplix): retomar disparo pausado em um clique (#3043)
 - 2026-11-13 `48f9754` test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)
-- 2026-11-13 `cb6576b` Pacote: 20 PRs aprovadas integradas num único merge (#3035)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

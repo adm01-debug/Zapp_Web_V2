@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "58f1713bae92d439f42ede735c1bdb3cbef2bebc",
+  "sha": "4432834d6968179eca283e479e8d5b70dc02cea8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 07:55 UTC",
+  "generated_at": "2026-11-14 08:12 UTC",
   "files_total": 8424,
   "code_files": 6216,
-  "code_lines": 1085192
+  "code_lines": 1085230
  },
  "version": "1.3.2",
- "facts_hash": "54dfd411be58f85f",
+ "facts_hash": "402db93ff2e1421c",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -69282,7 +69282,7 @@
   {
    "module": "src/components",
    "files": 2225,
-   "lines": 378085,
+   "lines": 378123,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -165995,6 +165995,10 @@
    {
     "file": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
     "name": "restores the routed draft and its requested step on first render"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+    "name": "autosave do rascunho novo não remonta o wizard quando a lista de campanhas recarrega"
    },
    {
     "file": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
@@ -313088,7 +313092,7 @@
   },
   "src/components/talkx/TalkXView.tsx": {
    "path": "src/components/talkx/TalkXView.tsx",
-   "lines": 671,
+   "lines": 676,
    "exports": [
     "type TalkXTopView",
     "function TalkXView"
@@ -315879,7 +315883,7 @@
   },
   "src/components/talkx/__tests__/TalkXView.route.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
-   "lines": 626,
+   "lines": 659,
    "is_test": true,
    "rule_comments": [
     "* `ed` mínimo só para renderizar a revisão (V22). */"
@@ -315887,6 +315891,7 @@
    "tests": [
     "TalkXView wizard route integration",
     "restores the routed draft and its requested step on first render",
+    "autosave do rascunho novo não remonta o wizard quando a lista de campanhas recarrega",
     "handles browser history changes without retaining the previous campaign",
     "clears an inaccessible campaign route instead of opening an arbitrary editor",
     "cleans wizard parameters on explicit exit",
@@ -395197,10 +395202,21 @@
   }
  },
  "git": {
-  "sha": "58f1713bae92d439f42ede735c1bdb3cbef2bebc",
+  "sha": "4432834d6968179eca283e479e8d5b70dc02cea8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "4432834",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXView.tsx",
+     "src/components/talkx/__tests__/TalkXView.route.test.tsx"
+    ]
+   },
    {
     "sha": "58f1713",
     "date": "2026-11-14",
@@ -395932,17 +395948,6 @@
     "files": [
      "scripts/db-audit/login_gate_rpc.test.sh"
     ]
-   },
-   {
-    "sha": "e903a7e",
-    "date": "2026-11-13",
-    "author": "adm01-debug",
-    "subject": "fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)",
-    "files": [
-     "src/components/keyboard/__tests__/paleta-unica.test.tsx",
-     "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
-     "src/hooks/integrations/useTalkXCommandItems.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -395957,6 +395962,10 @@
    [
     "supabase/functions/evolution-api/index.ts",
     4
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    3
    ],
    [
     "docs/prod-readiness.md",
@@ -395995,6 +396004,14 @@
     3
    ],
    [
+    "src/components/talkx/TalkXView.tsx",
+    2
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+    2
+   ],
+   [
     "docs/DB-INVENTORY.md",
     2
    ],
@@ -396012,18 +396029,6 @@
    ],
    [
     "supabase/schema-catalog.json",
-    2
-   ],
-   [
-    "supabase/schema-manifest.json",
-    2
-   ],
-   [
-    ".github/workflows/ci.yml",
-    2
-   ],
-   [
-    "TESTING_CONVENTION.md",
     2
    ]
   ]

@@ -11770,7 +11770,7 @@
     "TalkXView"
    ],
    "export_default": "TalkXView",
-   "linhas": 671,
+   "linhas": 676,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useGlobalKeyboard",
