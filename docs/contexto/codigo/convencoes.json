@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "test(e2e): discador espera o aviso SIP sair sozinho em vez de clicar no fechar (corrida no WebKit) (#3080)",
    "fix(e2e): discador da Telefonia espera e fecha o aviso de SIP antes de digitar (#3079)",
    "fix(talkx): Ctrl+K na Ajuda não abre mais a paleta de comandos por cima (#3078)",
    "fix(chunk-reload): F5/navegação não dispara mais uma segunda recarga automática (#3075)",
-   "fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)",
-   "fix(e2e): prontidão de Contatos imune ao aria-hidden do modal de boas-vindas (#3071)"
+   "fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -593,7 +593,7 @@
   {
    "arquivo": "e2e/telefonia.spec.ts",
    "tipo": "e2e",
-   "linhas": 451,
+   "linhas": 453,
    "testa": [],
    "casos": 9
   },
