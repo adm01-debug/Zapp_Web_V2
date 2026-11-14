@@ -38,6 +38,8 @@ let archiveRpcResult: Record<string, unknown> = { data: null, error: null };
 const archiveRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
 // Status atual da conversa lido antes de arquivar (o Desfazer devolve esse valor).
 let contactConversationStatus = 'open';
+// Status anterior que a RPC devolve (null = o mesmo da leitura prévia).
+let rpcPreviousStatus: string | null = null;
 
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
 // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
@@ -55,7 +57,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         if (archiveRpcResult.error) return Promise.resolve(archiveRpcResult);
         const ids = args.p_contact_ids as string[];
         return Promise.resolve({
-          data: ids.map((id) => ({ contact_id: id, previous_status: contactConversationStatus, outcome: 'changed' })),
+          data: ids.map((id) => ({ contact_id: id, previous_status: rpcPreviousStatus ?? contactConversationStatus, outcome: 'changed' })),
           error: null,
         });
       }
@@ -174,6 +176,7 @@ describe('useConversationActions', () => {
     contactsUpdateResult = { error: null };
     contactsUpdateCalls.length = 0;
     archiveRpcResult = { data: null, error: null };
+    rpcPreviousStatus = null;
     archiveRpcCalls.length = 0;
     contactConversationStatus = 'open';
     pinnedInsertResult = { error: null };
@@ -293,6 +296,28 @@ describe('useConversationActions', () => {
       } finally {
         window.removeEventListener('zapp:contact-status-changed', handler);
       }
+    });
+
+    it('desfazer usa o status anterior CONFIRMADO pela RPC: reaberta por mensagem nova entre a leitura e o arquivamento volta a "open"', async () => {
+      contactConversationStatus = 'resolved';
+      rpcPreviousStatus = 'open';
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.archiveContact('contact-1');
+      });
+      const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      archiveRpcCalls.length = 0;
+      await act(async () => {
+        await undoArgs.onUndo();
+      });
+
+      expect(archiveRpcCalls).toEqual([
+        {
+          name: 'set_conversations_status',
+          args: { p_contact_ids: ['contact-1'], p_next: 'open', p_expected_current: 'archived' },
+        },
+      ]);
     });
 
     it('conversa aguardando continua não arquivável: avisa e não oferece desfazer', async () => {
