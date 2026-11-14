@@ -118,3 +118,53 @@ test('detecção com rg real: prefixo não casa, template string conta e segredo
   assert.deepEqual(edges.foo.segredos_lidos, ['SEGREDO_HELPER', 'SEGREDO_INDEX'], 'helper conta, teste não');
   assert.equal(edges.exemplo.sem_chamador, true);
 });
+
+test('migrations: edge chamada só por cron+Vault conta; citada só em comentário SQL não conta', { skip: !temRg && 'ripgrep ausente' }, () => {
+  const root = fixture();
+  for (const f of ['vault-edge', 'comment-edge']) {
+    mkdirSync(join(root, 'supabase/functions', f), { recursive: true });
+    writeFileSync(join(root, 'supabase/functions', f, 'index.ts'), 'Deno.serve(() => new Response("ok"));\n');
+  }
+  // URL só no Vault: o nome da edge aparece em SQL executável (nome do job), nunca como functions/v1/vault-edge.
+  writeFileSync(join(root, 'supabase/migrations/0001_vault_cron.sql'), [
+    '-- pg_cron chama a edge vault-edge a cada minuto, URL vinda do Vault.',
+    "SELECT cron.schedule('vault-edge-1min', '* * * * *', 'SELECT public.trigger_tick()');",
+  ].join('\n'));
+  // comment-edge só em comentário (linha inteira e fim de linha).
+  writeFileSync(join(root, 'supabase/migrations/0002_comentario.sql'), [
+    '-- antes isto era feito pela edge comment-edge',
+    'UPDATE public.t SET x = 1; -- mesmo efeito do comment-edge',
+  ].join('\n'));
+
+  const result = spawnSync(process.execPath, [join(root, 'scripts/inventario/gerar-repo.mjs')], {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const inventario = JSON.parse(readFileSync(join(root, 'inventario/estado/edges.json'), 'utf8'));
+
+  assert.equal(inventario.edge_functions['vault-edge'].chamada_em.migrations, 1);
+  assert.equal(inventario.edge_functions['vault-edge'].sem_chamador, false);
+  assert.equal(inventario.edge_functions['comment-edge'].chamada_em.migrations, 0);
+  assert.equal(inventario.edge_functions['comment-edge'].sem_chamador, true);
+  assert.ok(inventario.sem_chamador_no_repo.includes('comment-edge'));
+  assert.ok(!inventario.sem_chamador_no_repo.includes('vault-edge'));
+});
+
+test('stdin grande por pipe (spawnSync com input) é lido inteiro, sem EAGAIN', { skip: !temRg && 'ripgrep ausente' }, () => {
+  const root = fixture();
+  mkdirSync(join(root, 'src/integrations/supabase'), { recursive: true });
+  writeFileSync(join(root, 'src/integrations/supabase/types.ts'), '');
+  // ~320 KB, bem acima do buffer de pipe (64 KB): o pai ainda escreve enquanto o filho lê.
+  const nomes = Array.from({ length: 40 }, (_, i) => `tabela_${i}_${'x'.repeat(8000)}`);
+  const result = spawnSync(process.execPath, [join(root, 'scripts/inventario/gerar-repo.mjs')], {
+    cwd: root,
+    encoding: 'utf8',
+    input: nomes.join('\n'),
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const uso = JSON.parse(readFileSync(join(root, 'inventario/estado/tabelas-uso.json'), 'utf8'));
+  assert.equal(uso.total, nomes.length);
+  assert.deepEqual(Object.keys(uso.tabelas), nomes);
+});

@@ -37,6 +37,19 @@ const db = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    // P1-2: o arquivamento vai pela RPC de lote `set_conversations_status`; o dublê a
+    // registra como escrita em `contacts` (payload + ids), o mesmo formato do UPDATE antigo.
+    rpc: async (name: string, args: Record<string, unknown>) => {
+      if (name !== 'set_conversations_status') return { data: null, error: null };
+      db.updates.push({
+        table: 'contacts',
+        payload: { conversation_status: args.p_next },
+        filter: { column: 'id', value: args.p_contact_ids },
+      });
+      const result = db.contactsResult as { error: unknown; data: Array<{ id: string }> | null };
+      if (result.error) return { data: null, error: result.error };
+      return { data: (result.data ?? []).map((row) => ({ contact_id: row.id, previous_status: 'open' })), error: null };
+    },
     from: (table: string) => {
       const depoisDoFiltro = (result: unknown) => ({
         // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável".

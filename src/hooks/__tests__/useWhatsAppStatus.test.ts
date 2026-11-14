@@ -23,7 +23,17 @@ vi.mock('@/integrations/supabase/client', () => ({
         select: () => ({
           eq: (_: string, val: string) => {
             if (val === 'connected') {
-              return { limit: () => ({ maybeSingle: () => mockMaybeSingle() }) };
+              // Fallback (P0-1): lista ordenada de conexões vivas, filtrada no hook
+              // para nunca cair na conexão de teste do E2E. O mock de linha única
+              // vira lista de 0/1 item.
+              return {
+                order: () => ({
+                  limit: async () => {
+                    const r = await mockMaybeSingle();
+                    return { data: r?.data ? [r.data] : [], error: r?.error ?? null };
+                  },
+                }),
+              };
             }
             return { maybeSingle: () => mockMaybeSingle() };
           },
@@ -211,6 +221,22 @@ describe('useWhatsAppStatus', () => {
     });
     // Should not set error since allSettled handles individual failures
     expect(result.current.statusMessages).toEqual([]);
+  });
+
+  // ========== P0-1: conexão de teste do E2E nunca é fallback ==========
+  it('ignora a conexão de teste do E2E no fallback (sem conexão real → erro)', async () => {
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null })
+      .mockResolvedValueOnce({ data: null })
+      .mockResolvedValueOnce({ data: { id: 'e2e', instance_id: 'E2E_FIXTURE', name: '[E2E] Conexão WhatsApp Teste' } });
+
+    const { result } = renderHook(() => useWhatsAppStatus('+5511999999999'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+    expect(result.current.error).toBe('Sem conexão WhatsApp disponível');
+    expect(mockInvoke).not.toHaveBeenCalled();
   });
 
   // ========== STATUS OPCIONAL: 404/403/notSupported (console de produção 12/11) ==========

@@ -6,7 +6,7 @@
  * Usage:
  *   SUPABASE_URL=https://tnnnlkbymytvtqngbbqh.supabase.co \
  *   SUPABASE_SERVICE_ROLE_KEY=<key> \
- *   node scripts/team-chat-db-validate.mjs
+ *   node scripts/team-chat/team-chat-db-validate.mjs
  *
  * Exit: 0 = all checks passed, 1 = one or more failures.
  */

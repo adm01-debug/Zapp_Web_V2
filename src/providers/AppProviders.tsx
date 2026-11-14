@@ -2,7 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/auth/useAuth";
 import { ThemeSync } from "@/hooks/ui/useTheme";
-import { HighContrastProvider } from "@/components/theme/HighContrastToggle";
+import { HighContrastProvider } from "@/components/theme/HighContrastProvider";
 import { AccessibleToastProvider } from "@/components/ui/accessible-toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeInitializer } from "@/components/ThemeInitializer";

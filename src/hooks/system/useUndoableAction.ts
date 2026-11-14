@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 interface UndoableActionOptions<T> {
   /** Duration in ms before action is committed (default: 5000) */
   undoDuration?: number;
-  /** Success message to show */
-  successMessage: string;
+  /** Success message to show (or built from the action's result, e.g. a count the server returned) */
+  successMessage: string | ((result: T) => string);
   /** Message to show after undo */
   undoMessage?: string;
   /** Function to execute the action */
@@ -112,7 +112,8 @@ export function useUndoableAction<T>() {
       const operationId = ++nextOperationIdRef.current;
 
       // Show toast with undo button
-      const toastId = toast.success(successMessage, {
+      const message = typeof successMessage === 'function' ? successMessage(result) : successMessage;
+      const toastId = toast.success(message, {
         duration: undoDuration,
         action: {
           label: 'Desfazer',
