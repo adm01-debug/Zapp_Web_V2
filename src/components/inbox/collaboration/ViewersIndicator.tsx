@@ -31,24 +31,50 @@ export function useConversationViewers(contactId: string) {
       config: { presence: { key: user.id } },
     });
 
-    channel
+    // Quem está digitando AGORA: o `track` abaixo (status "estou vendo a tela")
+    // manda `is_typing: false` uma vez e nunca é atualizado — por isso o aviso
+    // nunca acendia. A fonte real é o canal de presença que o campo de mensagem
+    // já publica (`useTypingPresence`, canal `typing:${contactId}`, mesmo id
+    // desta conversa); aqui só lemos (sem `track`) para repassar o estado real.
+    const typingByUserId: Record<string, boolean> = {};
+    const typingChannel = supabase.channel(`typing:${contactId}`);
+
+    const buildViewers = () => {
+      const state = channel.presenceState();
+      const presentViewers: Viewer[] = [];
+      Object.entries(state).forEach(([userId, presences]) => {
+        if (userId !== user.id && Array.isArray(presences) && presences.length > 0) {
+          const presence = presences[0] as Record<string, unknown>;
+          presentViewers.push({
+            id: userId,
+            name: (presence.name as string) || 'Agente',
+            avatar_url: (presence.avatar_url as string) || null,
+            is_typing: typingByUserId[userId] ?? ((presence.is_typing as boolean) || false),
+            last_seen: new Date(),
+          });
+        }
+      });
+      setViewers(presentViewers);
+    };
+
+    typingChannel
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const presentViewers: Viewer[] = [];
-        Object.entries(state).forEach(([userId, presences]) => {
-          if (userId !== user.id && Array.isArray(presences) && presences.length > 0) {
-            const presence = presences[0] as Record<string, unknown>;
-            presentViewers.push({
-              id: userId,
-              name: (presence.name as string) || 'Agente',
-              avatar_url: (presence.avatar_url as string) || null,
-              is_typing: (presence.is_typing as boolean) || false,
-              last_seen: new Date(),
-            });
-          }
+        const typingState = typingChannel.presenceState();
+        Object.keys(typingByUserId).forEach((key) => delete typingByUserId[key]);
+        Object.values(typingState).forEach((presences) => {
+          if (!Array.isArray(presences)) return;
+          presences.forEach((p) => {
+            const presence = p as Record<string, unknown>;
+            const identity = presence.oderId as string | undefined;
+            if (identity) typingByUserId[identity] = Boolean(presence.isTyping);
+          });
         });
-        setViewers(presentViewers);
+        buildViewers();
       })
+      .subscribe();
+
+    channel
+      .on('presence', { event: 'sync' }, buildViewers)
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           // Sem handler, uma falha de rede no select (ou no track) vira
@@ -78,6 +104,8 @@ export function useConversationViewers(contactId: string) {
       // socket pode continuar recebendo eventos do canal já removido.
       void channel.unsubscribe();
       void supabase.removeChannel(channel).catch(() => {});
+      void typingChannel.unsubscribe();
+      void supabase.removeChannel(typingChannel).catch(() => {});
     };
   }, [contactId, user?.id]);
 
