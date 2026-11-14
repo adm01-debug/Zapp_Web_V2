@@ -57,8 +57,9 @@ Fatos do perímetro que já custaram retrabalho:
   `github_update_required_status_checks`).
 - **Fila de merge nativa é impossível aqui** — `adm01-debug` é conta `User`; `merge_queue` responde
   `422 Invalid rule`. O gatilho `merge_group` só resta em `db-guard.yml`, inerte (`ci.yml` e `codeql.yml`
-  já não o declaram). O substituto é o `auto-update-pr-branch.yml` (fila serial: atualiza uma PR com
-  auto-merge por vez, via `scripts/ci/fila-merge.mjs`).
+  já não o declaram). O substituto era o `auto-update-pr-branch.yml` (fila serial via `fila-merge.mjs`):
+  desativado à mão pelo dono em 11/11/2026 depois de 8.312 runs e removido em 14/11/2026. PR `BEHIND` é
+  atualizada pelo próprio agente (`github_update_pr_branch`) antes do merge.
 - **NÃO desligue `can_approve_pull_request_reviews`.** O toggle é "Allow GitHub Actions to create
   **and** approve pull requests": desligado, o `types-sync` não consegue abrir PR.
 - **`TYPES_SYNC_PR_TOKEN` não é necessário — não crie.** O PR do `types-sync` nasce com `GITHUB_TOKEN`
@@ -71,11 +72,11 @@ Fatos do perímetro que já custaram retrabalho:
 ## Workflows
 
 A fonte canônica do inventário é o **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs
---check` roda no CI; não editar à mão). Hoje são **22** arquivos em `.github/workflows/`:
-`auto-update-pr-branch`, `branch-hygiene-audit`, `check-talkx-pr-body`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`,
+--check` roda no CI; não editar à mão). Hoje são **20** arquivos em `.github/workflows/`:
+`branch-hygiene-audit`, `check-talkx-pr-body`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`,
 `db-live-guard`, `db-migrate`, `contexto`, `deploy-functions`, `e2e-logado`, `e2e-logado-isolado`,
 `e2e-talkx`, `front-release-targets`, `inventario-estado-semanal`, `notifica-falha-main`,
-`settings-guard`, `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` —
+`settings-guard`, `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync` —
 mais os dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot).
 
 - **Lint dos próprios workflows mora no `ci.yml`** (job `workflow-lint`, no gate): actionlint 1.7.7 +
@@ -84,8 +85,7 @@ mais os dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot).
   legítimo leva `# zizmor: ignore[dangerous-triggers]` na linha do gatilho.
 - **Agendamentos (UTC):** types-sync `49 5 * * 1` · db-live-guard `13 6 * * 1` · settings-guard
   `15 7 * * *` · talkx-status-regen `45 7 * * 1` · branch-hygiene `56 7 * * 1` · codeql `30 9 * * *` ·
-  inventario-estado-semanal `23 10 * * 1` · auto-update-pr-branch `7,37 * * * *` ·
-  front-release-targets `17 * * * *`.
+  inventario-estado-semanal `23 10 * * 1` · front-release-targets `17 * * * *`.
 - **`db-live-guard` não roda em PR, por design** (não expõe `DESTINO_URL` a código de PR): roda no
   push da `main`, agendado e por dispatch, e abre/comenta uma issue única com label `db-live-guard`.
   Por isso o "Contrato DB vivo" nunca é required check. O retry de conexão mora **só** no transporte

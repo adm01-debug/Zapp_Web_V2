@@ -125,3 +125,17 @@ Consulta: última execução de cada workflow na `main` em 2026-11-12T11:12Z.
 ---
 
 _Gerado em 2026-11-12T12:25Z por loop de fix CI — sessão `session_01ERPZLui4ik38jdekvdzwft`_
+
+---
+
+# PENDÊNCIAS — Auditoria dos workflows do GitHub Actions (2026-11-14)
+
+Origem: PR da branch `claude/wizardly-ride-dimxnt` (remove `auto-update-pr-branch.yml` e `vercel-env-cleanup.yml`, filtra o
+check Talk X por título, limpa 6 workflows fantasmas da aba Actions). Itens que só o dono resolve:
+
+| # | O que | Por que trava | Passo a passo |
+|---|---|---|---|
+| 1 | Mergear a PR da auditoria dos workflows | Regra do `AGENTS.md`: mudança em CI/workflows fica aberta para o dono | Abrir a PR, conferir que os checks estão verdes e clicar em **Squash and merge** |
+| 2 | Apagar os secrets de Actions que nenhum workflow usa: `VERCEL_READONLY_TOKEN` (só o workflow removido usava), `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`, `E2E_PADRAO_EMAIL`, `E2E_PADRAO_PASSWORD`, `RESEND_API_KEY` | Agente não apaga nem lê secrets | Settings → Secrets and variables → Actions; confirmar que nada fora do GitHub depende do valor; **Remove** em cada um |
+| 3 | Decidir a cadência do `front-release-targets.yml` (hoje: a cada push na main **e** de hora em hora, ~9 min por run) | Cadência de monitoramento é decisão de operação; o cron está fixado em `scripts/ci/front-release-targets.unit.mjs` | Responder "reduzir para a cada 6 h" (ou outra) e o agente ajusta cron, teste e `docs/agentes/github-ci.md` |
+| 4 | Decidir se `inventario-estado-semanal.yml` continua ao lado do `contexto.yml` | Os dois regeneram inventário do banco e do código (`inventario/estado/` semanal via PR × `docs/contexto/` na branch `contexto`); o `AGENTS.md` cita os dois como fonte | Escolher a fonte única; o agente remove a outra e atualiza o `AGENTS.md` |
