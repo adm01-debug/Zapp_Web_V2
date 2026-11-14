@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "3f5e642e6b27b443541c2b6879230a7fef606d0c",
+  "commit": "732936826f00a436d5ffcf461fc1f2aad50e185f",
   "branch": "main",
-  "data_commit": "2026-11-14T07:53:02-03:00",
+  "data_commit": "2026-11-14T09:00:53-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7329368",
+    "data": "2026-11-14",
+    "assunto": "fix(db-audit): baseline do pg_cron inclui o job outbound-sending-sweeper (#3081)"
+   },
    {
     "sha": "3f5e642",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "af1bc25",
     "data": "2026-11-13",
     "assunto": "Verificação de email: \"Reenviar Email\" na tela de erro pede o email em vez de enviar vazio (#3015)"
-   },
-   {
-    "sha": "7bdbe2e",
-    "data": "2026-11-13",
-    "assunto": "Contexto de agentes deixa de marcar /auth e /2fa como rotas protegidas (#3010)"
    }
   ],
   "arquivos_mudados_7d": 979,

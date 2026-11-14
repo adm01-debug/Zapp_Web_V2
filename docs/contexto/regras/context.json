@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "3f5e642e6b27b443541c2b6879230a7fef606d0c",
+  "sha": "732936826f00a436d5ffcf461fc1f2aad50e185f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 11:04 UTC",
+  "generated_at": "2026-11-14 12:30 UTC",
   "files_total": 8426,
   "code_files": 6218,
   "code_lines": 1085437
@@ -395284,10 +395284,19 @@
   }
  },
  "git": {
-  "sha": "3f5e642e6b27b443541c2b6879230a7fef606d0c",
+  "sha": "732936826f00a436d5ffcf461fc1f2aad50e185f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7329368",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): baseline do pg_cron inclui o job outbound-sending-sweeper (#3081)",
+    "files": [
+     "scripts/db-audit/pg-cron-jobs-baseline.json"
+    ]
+   },
    {
     "sha": "3f5e642",
     "date": "2026-11-14",
@@ -396023,16 +396032,6 @@
      "supabase/functions/ai-price-anchor/index.ts",
      "supabase/functions/ai-product-recommendation/index.ts"
     ]
-   },
-   {
-    "sha": "546c6f5",
-    "date": "2026-11-13",
-    "author": "adm01-debug",
-    "subject": "Rascunho de proposta do copilot só mostra \"copiado\" quando a cópia funciona (#3005)",
-    "files": [
-     "src/components/copilot/QuoteDraftCard.tsx",
-     "src/components/copilot/__tests__/QuoteDraftCard.copia.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -396089,6 +396088,10 @@
     3
    ],
    [
+    "scripts/db-audit/pg-cron-jobs-baseline.json",
+    2
+   ],
+   [
     "e2e/telefonia.spec.ts",
     2
    ],
@@ -396110,10 +396113,6 @@
    ],
    [
     "scripts/db-audit/known-violations.json",
-    2
-   ],
-   [
-    "src/integrations/supabase/types.ts",
     2
    ]
   ]
