@@ -23,8 +23,20 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
       update: () => ({
-        eq: (...args: unknown[]) => mocks.updateEq(...args),
+        eq: (...args: unknown[]) => {
+          const resultado = Promise.resolve(mocks.updateEq(...args));
+          // "Marcar como não lida" confirma as linhas gravadas com `.select('id')`.
+          return Object.assign(resultado, {
+            select: () => resultado.then((r: { error?: unknown } | undefined) =>
+              ({ data: r?.error ? null : [{ id: args[1] }], error: r?.error ?? null })),
+          });
+        },
       }),
+      // Última mensagem do cliente (alvo do "não lida" quando a bolha é nossa).
+      select: () => {
+        const b = { eq: () => b, order: () => b, limit: () => b, maybeSingle: async () => ({ data: { id: 'm-in-1' }, error: null }) };
+        return b;
+      },
     }),
   },
 }));
@@ -98,6 +110,7 @@ const makeMessage = (over: Partial<Message> = {}): Message => ({
   timestamp: new Date(),
   type: 'text',
   external_id: 'ext-1',
+  contact_id: 'c-1',
   ...over,
 } as Message);
 

@@ -208,4 +208,41 @@ describe('useGoalNotifications — metas configuráveis da UI (contacts_handled 
     expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('campaigns_created'));
     expect(h.state.inserts.length).toBe(0);
   });
+
+  it('P1-7: contatos atendidos e taxa de resolução no mesmo período dividem a contagem do total', async () => {
+    h.state.goals = [
+      goal({ id: 'g-contacts', goal_type: 'contacts_handled', daily_target: 100 }),
+      goal({ id: 'g-resolution', goal_type: 'resolution_rate', daily_target: 100 }),
+      // meta global do mesmo tipo: também reaproveita
+      goal({ id: 'g-contacts-global', goal_type: 'contacts_handled', daily_target: 200, profile_id: null }),
+    ];
+    h.state.contactsCount = 10;
+    h.state.contactsResolved = 5;
+
+    const { unmount } = renderHook(() => useGoalNotifications());
+
+    await waitFor(() => expect(h.state.progressQueries).toBeGreaterThanOrEqual(2));
+    await new Promise((r) => setTimeout(r, 20));
+    unmount();
+    // 1 contagem do total (compartilhada por 3 metas) + 1 dos resolvidos.
+    expect(h.state.progressQueries).toBe(2);
+  });
+
+  it('P1-7: aba em segundo plano não consulta metas', async () => {
+    h.state.goals = [goal({ id: 'g-contacts', goal_type: 'contacts_handled', daily_target: 10 })];
+    h.state.contactsCount = 12;
+    const spy = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+
+    const { unmount } = renderHook(() => useGoalNotifications());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(h.state.progressQueries).toBe(0);
+
+    // Voltou a ficar visível: confere na hora.
+    spy.mockReturnValue('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    await waitFor(() => expect(h.state.inserts.length).toBe(1));
+    unmount();
+    spy.mockRestore();
+  });
 });
+

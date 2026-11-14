@@ -35,6 +35,8 @@ const log = getLogger('GlobalIncomingMessageAlerts');
  * chega uma vez para os dois consumidores — abrir um segundo canal para a mesma
  * tabela dobraria o tráfego do Realtime sem necessidade.
  */
+// Literal (o react-refresh só aceita export de constante literal ao lado do hook);
+// é o MESMO nome de `GLOBAL_MESSAGES_CHANNEL` — o canal é compartilhado.
 export const GLOBAL_MESSAGE_ALERTS_CHANNEL = 'global-messages-realtime';
 
 export interface GlobalIncomingMessageAlertsOptions {

@@ -31,8 +31,8 @@ interface ClientOpts {
   connections?: Array<{ id: string; status: string | null }>;
   /** #121A: linha(s) de `talkx_settings` — `business_hours` chega como JSONB (objeto). */
   settings?: Array<{ key: string; value: unknown }>;
-  /** Resultado da RPC talkx_campaign_window_open por campaign id. */
-  windowOpen?: Record<string, boolean>;
+  /** Resultado da RPC talkx_campaign_window_open por campaign id (boolean ou linhas de TABLE). */
+  windowOpen?: Record<string, unknown>;
 }
 
 interface ClientCtx {
@@ -453,6 +453,26 @@ Deno.test("N-102: campanha com respect_dnd=false é despachada mesmo dentro de D
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
   assert(fake.posts.length === 1, `esperado 1 POST start, recebido ${fake.posts.length}`);
   assert(ctx.rpcCalls.some((c) => c.name === "talkx_campaign_window_open" && c.args?.p_campaign_id === "c-nodnd"), "a janela deve ser consultada mesmo quando abre");
+});
+
+// A RPC é RETURNS TABLE(allowed, reason, next_window): o PostgREST devolve um array
+// de linhas, não um boolean. Comparar o array com true fechava a janela sempre.
+Deno.test("N-102: resposta tabular da RPC com allowed=true despacha a campanha", async () => {
+  const campaign = { id: "c-tab-open", name: "c-tab-open", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled" };
+  const fake = makeFetch();
+  const { client } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-tab-open": [{ allowed: true, reason: null, next_window: null }] } });
+  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET }));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(fake.posts.length === 1, `janela aberta (linha allowed=true) deve despachar 1 POST, recebido ${fake.posts.length}`);
+});
+
+Deno.test("N-102: resposta tabular da RPC com allowed=false não despacha", async () => {
+  const campaign = { id: "c-tab-closed", name: "c-tab-closed", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled" };
+  const fake = makeFetch();
+  const { client } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-tab-closed": [{ allowed: false, reason: "outside_weekdays", next_window: null }] } });
+  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET }));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(fake.posts.length === 0, `janela fechada (linha allowed=false) não pode despachar (${fake.posts.length} POST)`);
 });
 
 Deno.test("N-102: p_at enviado à RPC é o relógio injetado, não o relógio real", async () => {

@@ -67,6 +67,9 @@ vi.mock('../TeamChatHeader', () => ({ TeamChatHeader: () => <div data-testid="he
 vi.mock('../TeamChatInputArea', () => ({ TeamChatInputArea: () => <div data-testid="input-area" /> }));
 vi.mock('../TeamMessageItem', () => ({ TeamMessageItem: ({ msg }: { msg: { content?: string } }) => <div>{msg.content}</div> }));
 vi.mock('../AddMembersDialog', () => ({ AddMembersDialog: () => null }));
+vi.mock('../TeamPerformancePanel', () => ({
+  TeamPerformancePanel: ({ conversationId }: { conversationId: string }) => <div data-testid="performance-panel">{conversationId}</div>,
+}));
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
   useResolvedStorageUrl: () => ({ url: '', isLoading: false, refresh: vi.fn() }),
 }));
@@ -148,5 +151,23 @@ describe('TeamChatPanel — estados visuais da busca (SL-082)', () => {
     expect(screen.queryByText('Nenhuma mensagem encontrada')).not.toBeInTheDocument();
     expect(screen.queryByText(/Buscando mensagens/)).not.toBeInTheDocument();
     expect(screen.queryByText(/0 resultado/)).not.toBeInTheDocument();
+  });
+});
+
+describe('TeamChatPanel — painel de performance', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.panel.showStats = false;
+  });
+
+  it('fechado por padrão: o painel não é montado', () => {
+    renderPanel();
+    expect(screen.queryByTestId('performance-panel')).toBeNull();
+  });
+
+  it('aberto: monta TeamPerformancePanel com o id da conversa', () => {
+    h.panel.showStats = true;
+    renderPanel();
+    expect(screen.getByTestId('performance-panel')).toHaveTextContent('conv-a');
   });
 });
