@@ -196,11 +196,13 @@ async function abrirDiscador(page: Page) {
   // terminou. Ela termina com o aviso 'Senha SIP não configurada' (503 da fixture,
   // src/lib/calls/sipProvisioning.ts:114) no canto inferior direito, por cima das teclas
   // 4-9/0; se ele entra durante um clique, o mouseup cai no aviso e o dígito some (Firefox,
-  // telefonia.spec.ts:283). Espera o aviso e fecha antes de digitar.
+  // telefonia.spec.ts:283). Espera o aviso e espera ele SAIR sozinho (duration 4 s +
+  // saída, sonner.tsx) antes de digitar. Fechar pelo botão disputava com o próprio
+  // auto-fechamento: no WebKit o botão saiu do DOM no meio do clique ("element was
+  // detached") e o teste esperou o alvo sumido até estourar 240 s (run 43582923922).
   const aviso = page.locator('[data-sonner-toast]').filter({ hasText: 'Senha SIP não configurada' });
   await expect(aviso).toBeVisible({ timeout: BOOT_DEADLINE_MS });
-  await aviso.locator('[data-close-button]').click();
-  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0);
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
   return page.getByTestId('tel-new-call-panel');
 }
 
