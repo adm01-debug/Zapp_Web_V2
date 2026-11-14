@@ -76,6 +76,11 @@ type SetConversationsStatusRpc = {
  * `restore` = Desfazer de arquivamento de conversa encerrada: archived → resolved
  * sem gravar outro encerramento (o banco só aceita com encerramento prévio).
  */
+/** Conversas que um lote em pedaços já tinha mudado quando um pedaço seguinte falhou. */
+export function movedBeforeError(err: unknown): Map<string, ConversationStatus> | undefined {
+  return (err as { partial?: Map<string, ConversationStatus> } | null)?.partial;
+}
+
 export async function moveConversationsStatus(
   contactIds: string[],
   next: ConversationStatus,
@@ -109,7 +114,11 @@ export async function moveConversationsStatus(
       for (const [id, anterior] of legado) moved.set(id, anterior);
       continue;
     }
-    if (error) throw error;
+    if (error) {
+      // Pedaços anteriores já mudaram no banco: quem chamou recebe quais (para oferecer o desfazer).
+      if (moved.size > 0) throw Object.assign(error, { partial: moved });
+      throw error;
+    }
     for (const row of data ?? []) {
       // A RPC devolve UMA linha por id com o resultado; só 'changed' mudou de verdade.
       // (Sem `outcome` = versão antiga da RPC, que só devolvia as que mudaram.)
