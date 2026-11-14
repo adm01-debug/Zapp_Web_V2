@@ -246,7 +246,12 @@ export default function TalkXView() {
     ? campaigns.find((candidate) => candidate.id === wizardRoute.campaignId) ?? null
     : null;
   const routedCampaignIsEditable = routedCampaign?.status === 'draft' || routedCampaign?.status === 'scheduled';
-  const wizardCampaign = editingCampaign?.id ? editingCampaign : routedCampaignIsEditable ? routedCampaign : editingCampaign;
+  // O rascunho que o autosave desta sessão acabou de criar (onDraftIdentity) não substitui a
+  // campanha do wizard: trocar a key de 'new' para o id remontaria o wizard e voltaria o
+  // formulário ao snapshot salvo, perdendo o que o usuário marcou depois do autosave.
+  const wizardCampaign = editingCampaign?.id
+    ? editingCampaign
+    : routedCampaignIsEditable && routedCampaign?.id !== localDraftRouteId ? routedCampaign : editingCampaign;
 
   useEffect(() => {
     if (!wizardRoute || wizardRoute.campaignId === 'new' || isLoading) return;
