@@ -32,11 +32,11 @@ F_CLOSURE_SYNC="$MIG/20260927510001_add_sync_contact_status_on_closure_trigger.s
 F_ATTEMPTS="$MIG/20261011124430_message_attempts.sql"
 F1="$MIG/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql"
 F2="$MIG/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql"
-F3="$MIG/20261113130200_conversation_status_regras_e_so_por_rpc.sql"
+F3="$MIG/20261113171300_conversation_status_regras_e_so_por_rpc.sql"
 F4="$MIG/20261113130300_conversation_closures_closed_by_do_autor.sql"
-F5="$MIG/20261113130400_varredura_mensagens_presas_em_enviando.sql"
-F6="$MIG/20261113130500_transfer_conversation_cas_sem_dono.sql"
-F7="$MIG/20261113130600_agendadas_conexao_do_contato_caida.sql"
+F5="$MIG/20261113171400_varredura_mensagens_presas_em_enviando.sql"
+F6="$MIG/20261113171500_transfer_conversation_cas_sem_dono.sql"
+F7="$MIG/20261113171600_agendadas_conexao_do_contato_caida.sql"
 
 fail() { echo "[FAIL] $*" >&2; exit 1; }
 ok()   { echo "[OK] $*"; }
@@ -348,6 +348,44 @@ ok "P1-5: UPDATE direto não troca o autor"
 as_user authenticated "$UA" "SELECT public.set_conversation_status('d0000000-0000-4000-8000-000000000020','resolved','ok');" >/dev/null
 [[ "$(val "SELECT closed_by FROM public.conversation_closures WHERE contact_id='d0000000-0000-4000-8000-000000000020'")" == "$PA" ]] || fail "set_conversation_status sem autor"
 ok "P1-5: encerramento pela RPC passa a gravar o autor (antes NULL)"
+
+# ── Revisão Codex #3037 (P2): desfazer o arquivamento de conversa ENCERRADA ──
+# HARNESS: guarda real de encerramento repetido (20261007013217, vigente em produção).
+psql_q >/dev/null <<'SQL'
+CREATE OR REPLACE FUNCTION public.reject_repeated_conversation_closure_without_reopen()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO '' AS $function$
+DECLARE v_status text; v_status_changed_at timestamptz; v_last_closure_at timestamptz;
+BEGIN
+  SELECT contact.conversation_status, contact.conversation_status_changed_at INTO v_status, v_status_changed_at
+    FROM public.contacts AS contact WHERE contact.id = NEW.contact_id FOR UPDATE;
+  IF NOT FOUND THEN RETURN NEW; END IF;
+  SELECT max(closure.created_at) INTO v_last_closure_at FROM public.conversation_closures AS closure WHERE closure.contact_id = NEW.contact_id;
+  IF v_last_closure_at IS NULL THEN RETURN NEW; END IF;
+  IF v_status NOT IN ('open', 'waiting') OR v_status_changed_at IS NULL OR v_last_closure_at >= v_status_changed_at THEN
+    RAISE EXCEPTION 'conversation_closure_requires_reopen' USING ERRCODE = '23505';
+  END IF;
+  RETURN NEW;
+END; $function$;
+CREATE TRIGGER trg_reject_repeated_conversation_closure_without_reopen BEFORE INSERT ON public.conversation_closures
+  FOR EACH ROW EXECUTE FUNCTION public.reject_repeated_conversation_closure_without_reopen();
+SQL
+C21=d0000000-0000-4000-8000-000000000021
+N0=$(val "SELECT count(*) FROM public.conversation_closures WHERE contact_id='$C21'")
+as_user authenticated "$UA" "SELECT count(*) FROM public.set_conversations_status(ARRAY['$C21']::uuid[], 'archived');" >/dev/null
+[[ "$(val "SELECT conversation_status FROM public.contacts WHERE id='$C21'")" == archived ]] || fail "arquivar conversa encerrada"
+as_user authenticated "$UA" "SELECT count(*) FROM public.set_conversations_status(ARRAY['$C21']::uuid[], 'open', 'archived');" >/dev/null
+out=$(as_user authenticated "$UA" "SELECT count(*) FROM public.set_conversations_status(ARRAY['$C21']::uuid[], 'resolved', 'open');" || true)
+expect_err "Codex P2: desfazer em dois passos pela RPC comum grava OUTRO encerramento e a guarda recusa (23505)" "23505" "$out"
+as_user authenticated "$UA" "SELECT count(*) FROM public.set_conversations_status(ARRAY['$C21']::uuid[], 'archived', 'open');" >/dev/null
+out=$(as_user authenticated "$UA" "SELECT string_agg(outcome, ',') FROM public.set_conversations_status(ARRAY['$C21']::uuid[], 'resolved', 'archived', NULL, true);")
+expect_err "Codex P2: restore archived -> resolved numa chamada" "changed" "$out"
+[[ "$(val "SELECT conversation_status FROM public.contacts WHERE id='$C21'")" == resolved ]] || fail "restore não voltou a resolved"
+[[ "$(val "SELECT count(*) FROM public.conversation_closures WHERE contact_id='$C21'")" == "$N0" ]] || fail "restore gravou outro encerramento"
+ok "Codex P2: desfazer volta a 'resolved' SEM novo encerramento (histórico intacto)"
+out=$(as_user authenticated "$UA" "SELECT string_agg(outcome, ',') FROM public.set_conversations_status(ARRAY['d0000000-0000-4000-8000-000000000031']::uuid[], 'resolved', 'archived', NULL, true);")
+expect_err "Codex P2: restore sem encerramento prévio é recusado" "invalid_transition" "$out"
+[[ "$(val "SELECT conversation_status FROM public.contacts WHERE id='d0000000-0000-4000-8000-000000000031'")" == archived ]] || fail "restore sem encerramento mexeu no estado"
+ok "Codex P2: restore não encerra conversa que nunca foi encerrada (fica arquivada)"
 
 # ── P1-1 varredura ─────────────────────────────────────────────────────────
 MARK=$(val "SELECT value FROM public.global_settings WHERE key='outbound_sweeper_marker_epoch'")
