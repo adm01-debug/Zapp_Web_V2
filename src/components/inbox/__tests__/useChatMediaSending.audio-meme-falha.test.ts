@@ -96,10 +96,11 @@ vi.mock('@/integrations/supabase/client', () => {
               : null,
             error: null,
           }
-        : { data: estado.instanceId ? { instance_id: estado.instanceId } : null, error: null };
+        : { data: estado.instanceId ? { instance_id: estado.instanceId, status: 'connected' } : null, error: null };
     const corrente: Record<string, unknown> = {};
     corrente.select = () => corrente;
     corrente.eq = () => corrente;
+    corrente.order = () => corrente;
     corrente.limit = () => corrente;
     corrente.maybeSingle = async () => resultado;
     return corrente;

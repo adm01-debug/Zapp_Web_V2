@@ -36,6 +36,8 @@ type Claim = {
   whatsapp_instance_name: string;
   contact_phone: string;
   claim_token: string;
+  /** Número desta tentativa (claim_outbound_message soma 1 a cada claim). */
+  delivery_attempt_count?: number | null;
 };
 
 interface ServiceClient {
@@ -467,6 +469,39 @@ export async function deliverOutbound(
   );
 }
 
+export type DeliveryAttemptOutcome = 'claimed' | 'sent' | 'failed_retryable' | 'failed_final';
+
+/**
+ * P1-1 (auditoria Conversas 2026-11-13): histórico por tentativa em
+ * `message_attempts` (tabela e RPC `log_message_attempt` existiam desde
+ * 20261011124430, mas nenhuma Edge gravava). Best-effort: nunca derruba o envio,
+ * e só grava código estável + mensagem FIXA — nunca corpo do provedor, telefone
+ * ou texto da mensagem.
+ */
+export async function recordDeliveryAttempt(
+  service: ServiceClient,
+  claim: Pick<Claim, 'message_id' | 'delivery_attempt_count'>,
+  outcome: DeliveryAttemptOutcome,
+  info: { code?: DeliveryErrorCode; providerStatus?: number; startedAt?: number } = {},
+): Promise<void> {
+  const attemptNo = Math.max(1, Math.trunc(Number(claim.delivery_attempt_count) || 1));
+  try {
+    const { error } = await service.rpc('log_message_attempt', {
+      p_message_id: claim.message_id,
+      p_attempt_no: attemptNo,
+      p_outcome: outcome,
+      p_error_code: info.code ?? null,
+      p_error_message: info.code ? DELIVERY_ERROR_MESSAGES[info.code] : null,
+      p_provider_status: info.providerStatus ?? null,
+      p_provider_response: null,
+      p_duration_ms: info.startedAt === undefined ? null : Math.max(0, Math.round(Date.now() - info.startedAt)),
+    });
+    if (error) console.error(JSON.stringify({ event: 'message_delivery_attempt_log_error', code: error.code }));
+  } catch {
+    console.error(JSON.stringify({ event: 'message_delivery_attempt_log_error', code: 'exception' }));
+  }
+}
+
 async function failClaim(
   service: ServiceClient,
   claim: Claim,
@@ -681,6 +716,9 @@ export async function handleMessageDeliveryRequest(
     return deliveryFailureResponse(await classifyUnclaimedCause(service, existing), req);
   }
 
+  const attemptStartedAt = Date.now();
+  await recordDeliveryAttempt(service, claim, 'claimed');
+
   // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
   // ambíguo, enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio).
   let providerPostAttempted = false;
@@ -762,6 +800,9 @@ export async function handleMessageDeliveryRequest(
         // Rejeição definitiva (4xx): o provedor não processou o envio — marcar failed.
         await failClaim(service, claim);
       }
+      await recordDeliveryAttempt(service, claim, failure.ambiguous ? 'failed_retryable' : 'failed_final', {
+        code: failure.code, providerStatus: providerResponse.status, startedAt: attemptStartedAt,
+      });
       console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status, code: failure.code }));
       return deliveryFailureResponse(failure, req);
     }
@@ -771,6 +812,9 @@ export async function handleMessageDeliveryRequest(
       // C110: sem chamar failClaim — POST saiu, resultado ambíguo.
       // 200 sem id: ambíguo (pode ter enviado). Efeito INCERTO.
       await enqueueDeliveryReconciliation(service, claim, null);
+      await recordDeliveryAttempt(service, claim, 'failed_retryable', {
+        code: 'receipt_unconfirmed', providerStatus: providerResponse.status, startedAt: attemptStartedAt,
+      });
       console.error(JSON.stringify({ event: 'message_delivery_missing_provider_id' }));
       return deliveryFailureResponse(unconfirmedReceiptFailure(), req);
     }
@@ -785,6 +829,9 @@ export async function handleMessageDeliveryRequest(
       // C110: não chamar failClaim — POST iniciado, externalId existe.
       // IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA.
       await enqueueDeliveryReconciliation(service, claim, externalId);
+      await recordDeliveryAttempt(service, claim, 'failed_retryable', {
+        code: 'receipt_unconfirmed', providerStatus: providerResponse.status, startedAt: attemptStartedAt,
+      });
       console.error(JSON.stringify({ event: 'message_delivery_complete_error', code: completeError?.code }));
       return deliveryFailureResponse(unconfirmedReceiptFailure(), req);
     }
@@ -794,6 +841,9 @@ export async function handleMessageDeliveryRequest(
     // (20260903225000 + 20261006211248). A RPC mark_first_response aqui era
     // redundante e falhava sempre com 42501: ela exige auth.uid() e este caminho roda
     // com service_role. Nada a fazer depois do recibo.
+    await recordDeliveryAttempt(service, claim, 'sent', {
+      providerStatus: providerResponse.status, startedAt: attemptStartedAt,
+    });
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
     // C110: só chama failClaim antes do POST — se o POST foi iniciado, a mensagem
@@ -810,6 +860,9 @@ export async function handleMessageDeliveryRequest(
     if (providerPostAttempted) {
       await enqueueDeliveryReconciliation(service, claim, externalId);
     }
+    await recordDeliveryAttempt(service, claim, providerPostAttempted ? 'failed_retryable' : 'failed_final', {
+      code: failure.code, startedAt: attemptStartedAt,
+    });
     console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
     return deliveryFailureResponse(failure, req);
   }

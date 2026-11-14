@@ -18,7 +18,7 @@
 
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 
-import { normalizePhone, shouldUpdateStatus } from "../evolution-helpers.ts";
+import { maskJidForLog, normalizePhone, shouldUpdateStatus } from "../evolution-helpers.ts";
 import { checkRateLimit } from "../validation.ts";
 
 // ─── normalizePhone: LIDs e o que NÃO é telefone ────────────────────────────
@@ -117,4 +117,16 @@ Deno.test("checkRateLimit respeita o teto passado (não o default de 30)", () =>
     assert(checkRateLimit(key, 200, 60_000).allowed, `evento ${i + 1}/30`);
   }
   assertEquals(checkRateLimit(key, 200, 60_000).allowed, true); // 31º ainda ok com teto 200
+});
+
+// ─── P1-6 (auditoria Conversas 2026-11-13): JID mascarado nos logs ───────────
+Deno.test("maskJidForLog nunca devolve o número completo e preserva só o domínio", () => {
+  assertEquals(maskJidForLog("5511999999999@s.whatsapp.net"), "551199***@s.whatsapp.net");
+  assertEquals(maskJidForLog("5511999999999:12@s.whatsapp.net"), "551199***@s.whatsapp.net");
+  assertEquals(maskJidForLog("123456789012345@lid"), "123456***@lid");
+  assertEquals(maskJidForLog("5511999999999"), "551199***");
+  assertEquals(maskJidForLog(null), null);
+  assertEquals(maskJidForLog(""), null);
+  const masked = maskJidForLog("5511988887777@s.whatsapp.net") ?? "";
+  assert(!masked.includes("88887777"), "sufixo do número não pode aparecer");
 });

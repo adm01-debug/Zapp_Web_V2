@@ -221,9 +221,12 @@ export function ContactActionButtons({
             <DropdownMenuItem onClick={() => onQuickAction?.('edit')} className="gap-2 text-xs">
               <Briefcase className="w-3.5 h-3.5 text-primary" />Editar Contato
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onQuickAction?.('archive')} className="gap-2 text-xs">
-              <Archive className="w-3.5 h-3.5 text-muted-foreground" />Arquivar
-            </DropdownMenuItem>
+            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}
+            {conversation?.contact?.conversation_status !== 'waiting' && (
+              <DropdownMenuItem onClick={() => onQuickAction?.('archive')} className="gap-2 text-xs">
+                <Archive className="w-3.5 h-3.5 text-muted-foreground" />Arquivar
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => onQuickAction?.('block')} className="gap-2 text-xs text-destructive">
               <Ban className="w-3.5 h-3.5" />Bloquear
             </DropdownMenuItem>

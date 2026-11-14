@@ -17,7 +17,15 @@ const h = vi.hoisted(() => {
   const terminal = (): Record<string, unknown> => ({
     maybeSingle: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
     single: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
-    limit: () => terminal(),
+    order: () => terminal(),
+    // Fallback de conexão (P0-1): `.order().limit()` é aguardado como LISTA.
+    limit: () => ({
+      ...terminal(),
+      then: (resolve: (v: unknown) => unknown) => {
+        const row = state.rows[currentTable];
+        return Promise.resolve({ data: row ? [row] : [], error: null }).then(resolve);
+      },
+    }),
   });
   const select = vi.fn(() => ({ eq: vi.fn(() => terminal()) }));
   const from = vi.fn((table: string) => {
@@ -73,7 +81,7 @@ describe('useContactQuickActions (ordem de 12/10: tags de contato não existem)'
     h.state.invokeError = null;
     h.state.rows = {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
-      whatsapp_connections: { instance_id: 'inst-1' },
+      whatsapp_connections: { instance_id: 'inst-1', status: 'connected' },
     };
   });
 

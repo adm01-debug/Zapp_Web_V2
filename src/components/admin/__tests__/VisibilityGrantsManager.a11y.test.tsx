@@ -13,7 +13,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: (tabela: string) => {
       const mockData = {
         user_roles: [{ id: 'ur1', user_id: 'u1', role: 'agent' }],
-        profiles: [{ id: 'p1', user_id: 'u1', name: 'Ana Especial', email: 'ana@test.local' }],
+        profiles: [{ id: 'p1', user_id: 'u1', name: 'Ana Agente', email: 'ana@test.local' }],
         agent_visibility_grants: [],
       };
       return {
@@ -55,10 +55,10 @@ describe('a11y: seletores de visibilidade têm nome acessível (N-065)', () => {
     expect(screen.getByRole('combobox', { name: 'Pode ver contatos de' })).toBeInTheDocument();
 
     // associação programática rótulo <-> controle (N-065)
-    const specialTrigger = screen.getByRole('combobox', { name: 'Agente' });
+    const agentTrigger = screen.getByRole('combobox', { name: 'Agente' });
     const targetTrigger = screen.getByRole('combobox', { name: 'Pode ver contatos de' });
     for (const [trigger, labelId, forId] of [
-      [specialTrigger, 'special-agent-select-label', 'special-agent-select'],
+      [agentTrigger, 'grant-agent-select-label', 'grant-agent-select'],
       [targetTrigger, 'target-agent-select-label', 'target-agent-select'],
     ] as const) {
       expect(trigger.getAttribute('id')).toBe(forId);

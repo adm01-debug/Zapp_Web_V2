@@ -4,6 +4,7 @@ import { log } from '@/lib/logger';
 import { toast } from 'sonner';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import type { WhatsAppGroup, WhatsAppConnection } from './types';
+import { surfaceWhatsAppDisconnected } from '@/lib/whatsapp/sendConnection';
 
 interface UseGroupActionsParams {
   connections: WhatsAppConnection[];
@@ -188,6 +189,8 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
         return { groupId: group.id, name: group.name, status: 'queued', messageId: data.id };
       } catch (err) {
         log.error(`Falha ao enfileirar o envio ao grupo ${group.name}:`, err);
+        // Conexão do grupo fora do ar: um aviso "WhatsApp desconectado" (id fixo).
+        surfaceWhatsAppDisconnected(err);
         return { groupId: group.id, name: group.name, status: 'failed' };
       }
     }));

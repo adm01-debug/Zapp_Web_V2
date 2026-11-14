@@ -3,7 +3,10 @@ import {
   classifyEvolutionAction,
   decideControlAuthz,
   decideSendAuthz,
+  decideMessageAuthorAuthz,
+  extractTargetMessageExternalId,
   CONTROL_ACTIONS,
+  MESSAGE_AUTHOR_ACTIONS,
   SEND_ACTIONS,
   READ_ACTIONS,
 } from "../evolution-control-authz.ts";
@@ -28,13 +31,61 @@ Deno.test("classifyEvolutionAction - ações de controle exigem papel (RED→GRE
   }
 });
 
-Deno.test("classifyEvolutionAction - pareamento, logout e edição/exclusão de mensagem são control", () => {
+Deno.test("classifyEvolutionAction - pareamento e logout são control", () => {
   // 'connect' emite o QR (permite parear outro aparelho na instância) e, no
   // caminho de sessão órfã, recria a instância na GO — nunca livre para agente.
-  // 'disconnect' é o logout da sessão. Editar/apagar mensagem destrói a trilha.
-  for (const action of ["connect", "disconnect", "delete-message", "update-message", "edit-message", "delete-for-everyone"]) {
+  // 'disconnect' é o logout da sessão.
+  for (const action of ["connect", "disconnect"]) {
     assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
     assert(CONTROL_ACTIONS.has(action), `${action} deve estar em CONTROL_ACTIONS`);
+  }
+});
+
+Deno.test("P1-GO-5: editar/apagar mensagem é 'message' (autor ou admin/supervisor), não control", () => {
+  for (const action of ["delete-message", "update-message", "edit-message", "delete-for-everyone"]) {
+    assertEquals(classifyEvolutionAction(action), "message", `${action} deve ser message`);
+    assert(MESSAGE_AUTHOR_ACTIONS.has(action));
+    assert(!CONTROL_ACTIONS.has(action), `${action} saiu de CONTROL_ACTIONS`);
+  }
+});
+
+Deno.test("P1-GO-5: extractTargetMessageExternalId lê messageId, id e key.id; rejeita lixo", () => {
+  assertEquals(extractTargetMessageExternalId({ messageId: "ABC" }), "ABC");
+  assertEquals(extractTargetMessageExternalId({ id: "XYZ" }), "XYZ");
+  assertEquals(extractTargetMessageExternalId({ key: { id: "K1", remoteJid: "x@s.whatsapp.net" } }), "K1");
+  assertEquals(extractTargetMessageExternalId({ messageId: "A", id: "A", key: { id: "A" } }), "A");
+  assertEquals(extractTargetMessageExternalId({ messageId: "", id: 123, key: { id: null } }), null);
+  assertEquals(extractTargetMessageExternalId({ id: " XYZ " }), null, "espaço vira id diferente no provedor: nega");
+  assertEquals(extractTargetMessageExternalId({ id: "x".repeat(513) }), null);
+  assertEquals(extractTargetMessageExternalId({}), null);
+});
+
+Deno.test("P1-GO-5 (revisão): ids divergentes entre campos são negados — o id checado é o que sai", () => {
+  // PoC do revisor: autoria checada em `messageId` e provedor recebendo `id`/`key.id`.
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", id: "VICTIM" }), null);
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", key: { id: "VICTIM" } }), null);
+  assertEquals(extractTargetMessageExternalId({ id: "OWN", key: { id: "VICTIM" } }), null);
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", key: { id: "VICTIM" }, id: "VICTIM" }), null);
+  assertEquals(extractTargetMessageExternalId({ messageId: "OWN", id: { $ne: null } }), null);
+});
+
+Deno.test("P1-GO-5: decideMessageAuthorAuthz — autor edita/apaga a própria; o resto é 403", () => {
+  const own = { sender: "agent", agent_id: "p1", connection_instance: "main" };
+  assert(decideMessageAuthorAuthz({ isAdminOrSupervisor: false, callerProfileId: "p1", instance: "main", message: own }).allowed);
+  // admin/supervisor mantém acesso total, mesmo sem linha
+  assert(decideMessageAuthorAuthz({ isAdminOrSupervisor: true, callerProfileId: null, instance: "main", message: null }).allowed);
+  const negados = [
+    { callerProfileId: "p2", instance: "main", message: own },                                   // outro autor
+    { callerProfileId: "p1", instance: "main", message: { ...own, sender: "contact" } },         // mensagem do cliente
+    { callerProfileId: "p1", instance: "outra", message: own },                                  // outra instância
+    { callerProfileId: "p1", instance: "main", message: { ...own, connection_instance: null } },  // sem conexão
+    { callerProfileId: "p1", instance: "main", message: null },                                  // id inexistente
+    { callerProfileId: null, instance: "main", message: own },                                   // sem perfil
+  ];
+  for (const caso of negados) {
+    const d = decideMessageAuthorAuthz({ isAdminOrSupervisor: false, ...caso });
+    assert(!d.allowed, JSON.stringify(caso));
+    assertEquals(d.status, 403);
   }
 });
 
@@ -135,7 +186,7 @@ Deno.test("matriz é exaustiva: toda ação do handler está em exatamente um co
   );
   assert(handlerActions.size > 50, `sanidade: handler deve ter >50 ações (achou ${handlerActions.size})`);
 
-  const sets = { CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS };
+  const sets = { CONTROL_ACTIONS, MESSAGE_AUTHOR_ACTIONS, SEND_ACTIONS, READ_ACTIONS };
   for (const [name, set] of Object.entries(sets)) {
     for (const action of set) {
       assert(handlerActions.has(action), `${name} contém '${action}' que não existe no handler`);
@@ -143,6 +194,6 @@ Deno.test("matriz é exaustiva: toda ação do handler está em exatamente um co
   }
   for (const action of handlerActions) {
     const membership = Object.values(sets).filter((s) => s.has(action)).length;
-    assertEquals(membership, 1, `'${action}' deve estar em exatamente um dos três conjuntos`);
+    assertEquals(membership, 1, `'${action}' deve estar em exatamente um dos quatro conjuntos`);
   }
 });

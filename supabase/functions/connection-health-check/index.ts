@@ -678,7 +678,7 @@ export async function handleConnectionHealthCheck(
 
     let connQuery = supabase
       .from('whatsapp_connections').select('id, instance_id, status, phone_number, retry_count, auto_reconnect_enabled, reconnect_max_attempts, reconnect_interval_seconds, health_reason')
-      .neq('instance_id', 'E2E_FIXTURE'); // Pular fixture E2E — status seeded nao deve ser sobrescrito pelo health check
+      .neq('instance_id', 'E2E_FIXTURE'); // Fixture E2E nao e sondada (nao existe no provedor; alertaria admin a toa). Ela fica 'disconnected' em producao e NENHUM caminho de envio a escolhe (resolve_outbound_whatsapp_connection, 20261113130000).
     if (requested) connQuery = connQuery.eq('instance_id', requested);
 
     const { data: connections, error: connError } = await connQuery;
