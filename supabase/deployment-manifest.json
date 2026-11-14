@@ -761,8 +761,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 65812,
-      "sha256": "a9d8144f8c2f1b168d421dba1b0214a756210aa092b546993de56aacdbfa0fb4"
+      "bytes": 66698,
+      "sha256": "5e71ccc78bb828cf5f6cc523c0feaeb3eafad5e9e7eb00e3ae1d1ca13a42a09a"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -2321,7 +2321,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8c904c26ab71cf876069e3e114d81154bb74bbf1e91ab6c2dbd4e4577a5b9ec2",
+      "source_sha256": "11e576b6e85144eb9acd1165534ace6d849ed79543d977a7ffd415a16eb04dfc",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -2796,5 +2796,5 @@
       ]
     }
   ],
-  "manifest_sha256": "42c8282d0b2ec4636bb2e27026387f43301a0189a1bbd8fc95996b359d2ef612"
+  "manifest_sha256": "33bb9d3ac3fd66afc6a21bde1d5fbdf3c003385828ca4e90949b21121225c6d3"
 }

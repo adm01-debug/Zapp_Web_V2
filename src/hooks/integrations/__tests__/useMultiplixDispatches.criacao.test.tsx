@@ -20,7 +20,7 @@
  * (3) o mesmo pedido reenviado apos uma falha de resposta reusa o MESMO
  * `client_request_id`.
  */
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -74,6 +74,13 @@ function sentKeys(): string[] {
 }
 
 const CREATED = { data: { data: { dispatch_id: 'd1', recipient_count: 3, created: true } }, error: null };
+const CONFIRMED = {
+  data: { data: {
+    dispatch_id: 'd1', dispatch_version: 2, status: 'sending', scheduled_at: null, recipient_count: 3,
+    block_count: 1, items_created: 3, items_total: 3, message_count: 3, created: true,
+  } },
+  error: null,
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -164,10 +171,17 @@ describe('useCreateMultiplixDispatch — criacao pela edge de dominio (F44)', ()
     expect(keys[1]).not.toBe(keys[0]);
   });
 
-  it('mantem a chave quando muda so o que fazer DEPOIS de criar (startNow), e o start segue o disparo criado', async () => {
+  it('mantem a chave quando muda so o que fazer DEPOIS de criar (startNow), e o inicio confirma o disparo criado', async () => {
+    functionsInvoke.mockReset();
     functionsInvoke
       .mockRejectedValueOnce(new Error('Failed to fetch'))
-      .mockResolvedValueOnce(CREATED);
+      .mockImplementation((_fn: string, options: InvokeOptions) => {
+        const action = options.body.action;
+        if (action === 'draft.create') return Promise.resolve(CREATED);
+        if (action === 'draft.get') return Promise.resolve({ data: { data: { id: 'd1', dispatch_version: 1 } }, error: null });
+        if (action === 'confirm') return Promise.resolve(CONFIRMED);
+        return Promise.reject(new Error(`acao inesperada: ${action}`));
+      });
 
     const { result } = renderHook(() => useCreateMultiplixDispatch(), { wrapper: createWrapper() });
 
@@ -176,18 +190,67 @@ describe('useCreateMultiplixDispatch — criacao pela edge de dominio (F44)', ()
       id: 'd1',
       recipientCount: 3,
       created: true,
+      start: { confirmed: true, status: 'sending' },
     });
 
     const keys = sentKeys();
     // Mesmo disparo (nome/mensagem/publico), so o pos-criacao mudou: chave nova
     // aqui criaria um SEGUNDO disparo identico.
     expect(keys[1]).toBe(keys[0]);
+  });
 
-    // O id devolvido pela edge e o que o `multiplix-send` recebe no start.
-    await waitFor(() => expect(functionsInvoke).toHaveBeenCalledWith('multiplix-send', {
-      body: { dispatchId: 'd1', action: 'start' },
+  it('Iniciar agora passa pelo CONFIRM (versao lida do servidor) e NUNCA pelo worker (regras.md §8)', async () => {
+    functionsInvoke.mockImplementation((_fn: string, options: InvokeOptions) => {
+      const action = options.body.action;
+      if (action === 'draft.create') return Promise.resolve(CREATED);
+      if (action === 'draft.get') return Promise.resolve({ data: { data: { id: 'd1', dispatch_version: 4 } }, error: null });
+      if (action === 'confirm') return Promise.resolve(CONFIRMED);
+      return Promise.reject(new Error(`acao inesperada: ${action}`));
+    });
+    const { result } = renderHook(() => useCreateMultiplixDispatch(), { wrapper: createWrapper() });
+
+    const out = await result.current.mutateAsync({ ...INPUT, startNow: true });
+
+    expect(out.start).toEqual({ confirmed: true, status: 'sending' });
+    expect(functionsInvoke).toHaveBeenCalledWith('multiplix-dispatch', {
+      body: { action: 'confirm', payload: { dispatch_id: 'd1', dispatch_version: 4 } },
       headers: { Authorization: 'Bearer tok-123' },
-    }));
+    });
+    // O atalho antigo (multiplix-send/start no rascunho) materializava a fila sem
+    // revalidar nem congelar — o banco agora o recusa.
+    expect(functionsInvoke).not.toHaveBeenCalledWith('multiplix-send', expect.anything());
+  });
+
+  it('confirm recusado deixa o rascunho salvo e devolve o motivo em PT-BR (sem codigo cru)', async () => {
+    functionsInvoke.mockImplementation((_fn: string, options: InvokeOptions) => {
+      const action = options.body.action;
+      if (action === 'draft.create') return Promise.resolve(CREATED);
+      if (action === 'draft.get') return Promise.resolve({ data: { data: { id: 'd1', dispatch_version: 1 } }, error: null });
+      if (action === 'confirm') {
+        return Promise.resolve({
+          data: null,
+          error: {
+            message: 'Edge Function returned a non-2xx status code',
+            context: new Response(JSON.stringify({ error: 'multiplix_confirm_connection_required' }), {
+              status: 422, headers: { 'Content-Type': 'application/json' },
+            }),
+          },
+        });
+      }
+      return Promise.reject(new Error(`acao inesperada: ${action}`));
+    });
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { result } = renderHook(() => useCreateMultiplixDispatch(), { wrapper: createWrapper() });
+
+    const out = await result.current.mutateAsync({ ...INPUT, startNow: true });
+
+    expect(out.id).toBe('d1');
+    expect(out.start).toEqual({
+      confirmed: false,
+      message: 'Não foi possível iniciar: o disparo não tem conexão de envio definida.',
+    });
+    expect(JSON.stringify(out.start)).not.toContain('multiplix_');
+    spy.mockRestore();
   });
 
   it('teto de destinatarios (F17) continua virando o erro nomeado que o composer confirma', async () => {

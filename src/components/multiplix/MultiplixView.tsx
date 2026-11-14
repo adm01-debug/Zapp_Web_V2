@@ -444,11 +444,19 @@ export default function MultiplixView() {
         startNow,
         confirmOverLimit,
       });
-      toast.success(
-        startNow
-          ? `Disparo criado para ${result.recipientCount} contato(s). Envio iniciando…`
-          : `Disparo salvo como rascunho (${result.recipientCount} contato(s)).`,
-      );
+      // Um toast so: o inicio passa pelo confirm (regras.md §8) e, se ele
+      // recusar, o rascunho fica salvo e o motivo vem em PT-BR (nunca o codigo).
+      if (!startNow) {
+        toast.success(`Disparo salvo como rascunho (${result.recipientCount} contato(s)).`);
+      } else if (result.start?.confirmed) {
+        toast.success(
+          result.start.status === 'scheduled'
+            ? `Disparo confirmado e agendado para ${result.recipientCount} contato(s).`
+            : `Disparo confirmado para ${result.recipientCount} contato(s). O envio começa em instantes.`,
+        );
+      } else {
+        toast.error(`Disparo salvo como rascunho, mas não foi iniciado: ${result.start?.message ?? 'tente de novo pelo monitor.'}`);
+      }
       setName('');
       setMessageTemplate('');
       setSelected(new Set());
