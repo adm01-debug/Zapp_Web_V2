@@ -11,6 +11,7 @@ import { AddMembersDialog } from './AddMembersDialog';
 import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { TeamMessageItem } from './TeamMessageItem';
+import { TeamPerformancePanel } from './TeamPerformancePanel';
 import { useTeamChatPanel } from './useTeamChatPanel';
 
 /* eslint-disable react-hooks/refs, react-hooks/immutability */
@@ -98,9 +99,10 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
   return (
     <div className="flex flex-col h-full w-full relative">
       <TeamChatHeader conversation={conversation} showDetails={showDetails} voiceId={s.tts.voiceId} speed={s.tts.speed}
-        showSearch={s.showSearch} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
+        showSearch={s.showSearch} showPerformance={s.showStats} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
         canTransferDepartment={s.canTransferDepartment}
         onToggleSearch={() => { s.setShowSearch(!s.showSearch); if (s.showSearch) s.setSearchQuery(''); }}
+        onTogglePerformance={() => s.setShowStats(!s.showStats)}
         onAddMembers={() => s.setShowAddMembers(true)} onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed}
         onToggleMute={() => s.muteMutation.mutate({ conversationId: conversation.id, muted: !s.isMuted })} />
 
@@ -119,6 +121,8 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           </motion.div>
         )}
       </AnimatePresence>
+
+      {s.showStats && <TeamPerformancePanel conversationId={conversation.id} />}
 
       <div ref={s.scrollRef} className="flex-1 overflow-auto p-4 space-y-1 bg-muted/5" onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite">
         {s.isLoading ? (

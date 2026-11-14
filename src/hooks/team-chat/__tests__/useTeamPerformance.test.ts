@@ -47,6 +47,37 @@ describe('useTeamPerformance', () => {
     expect(result.current.data?.activeParticipants).toBe(2);
   });
 
+  it('tempo médio de resposta só conta trocas entre remetentes diferentes', async () => {
+    const base = Date.now();
+    mockGte.mockResolvedValueOnce({
+      data: [
+        { id: '1', sender_id: 'user-a', created_at: new Date(base - 60_000).toISOString() },
+        { id: '2', sender_id: 'user-a', created_at: new Date(base - 50_000).toISOString() },
+        { id: '3', sender_id: 'user-b', created_at: new Date(base - 30_000).toISOString() },
+      ],
+      error: null,
+    });
+    const { useTeamPerformance } = await import('../useTeamPerformance');
+    const { result } = renderHook(() => useTeamPerformance('conv-resp'), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.avgResponseTimeMs).toBe(20_000);
+  });
+
+  it('sem troca entre pessoas o tempo médio de resposta fica nulo', async () => {
+    const base = Date.now();
+    mockGte.mockResolvedValueOnce({
+      data: [
+        { id: '1', sender_id: 'user-a', created_at: new Date(base - 300_000).toISOString() },
+        { id: '2', sender_id: 'user-a', created_at: new Date(base - 10_000).toISOString() },
+      ],
+      error: null,
+    });
+    const { useTeamPerformance } = await import('../useTeamPerformance');
+    const { result } = renderHook(() => useTeamPerformance('conv-solo'), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.avgResponseTimeMs).toBeNull();
+  });
+
   it('E92: returns isLoading=true initially', async () => {
     const { useTeamPerformance } = await import('../useTeamPerformance');
     const { result } = renderHook(() => useTeamPerformance('conv-1'), { wrapper });
