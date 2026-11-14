@@ -297,6 +297,16 @@ BEGIN
       RETURN NEXT;
       CONTINUE;
     END IF;
+    -- Revalida DEPOIS da trava (revisão #3064): a checagem acima pode ter lido o dono de
+    -- antes de uma transferência concorrente que segurava a linha; o ramo p_restore não
+    -- passa pela RPC unitária (que revalida sozinha).
+    BEGIN
+      PERFORM public.require_contact_edit_permission(v_id);
+    EXCEPTION WHEN insufficient_privilege THEN
+      outcome := 'not_authorized';
+      RETURN NEXT;
+      CONTINUE;
+    END;
     previous_status := v_current;
 
     IF v_current IS NOT DISTINCT FROM p_next THEN

@@ -387,6 +387,25 @@ expect_err "Codex P2: restore sem encerramento prévio é recusado" "invalid_tra
 [[ "$(val "SELECT conversation_status FROM public.contacts WHERE id='d0000000-0000-4000-8000-000000000031'")" == archived ]] || fail "restore sem encerramento mexeu no estado"
 ok "Codex P2: restore não encerra conversa que nunca foi encerrada (fica arquivada)"
 
+# ── Revisão Devin #3064 (B): restore com transferência concorrente ─────────────
+# Sessão 1 (UA, dono) transfere para PB e SEGURA a trava da linha; sessão 2 (UA) pede o
+# restore no meio. A autorização da sessão 2 não pode valer pelo dono de ANTES da trava:
+# depois do COMMIT da 1, UA já não é dono -> not_authorized e a conversa fica arquivada.
+C40=d0000000-0000-4000-8000-000000000040
+psql_q >/dev/null <<SQL
+INSERT INTO public.contacts (id, phone, assigned_to, conversation_status) VALUES ('$C40','5511900000040','$PA','resolved');
+INSERT INTO public.conversation_closures (contact_id, close_reason, closed_by) VALUES ('$C40','resolved','$PA');
+UPDATE public.contacts SET conversation_status='archived' WHERE id='$C40';
+SQL
+as_user authenticated "$UA" "SELECT public.transfer_conversation(p_contact_id => '$C40', p_to_agent_id => '$PB'); SELECT pg_sleep(3);" >/dev/null &
+S1=$!
+sleep 1
+[[ "$(val "SELECT count(*) FROM pg_locks l JOIN pg_stat_activity a ON a.pid=l.pid WHERE a.query LIKE '%pg_sleep(3)%' AND l.locktype='transactionid' AND l.mode='ExclusiveLock'")" -ge 1 ]] || fail "sessão 1 não segurou a transação"
+out=$(as_user authenticated "$UA" "SELECT string_agg(coalesce(previous_status,'-')||':'||outcome, ',') FROM public.set_conversations_status(ARRAY['$C40']::uuid[], 'resolved', 'archived', NULL, true);" || true)
+wait "$S1" || fail "sessão 1 (transferência) falhou"
+[[ "$(val "SELECT assigned_to||'/'||conversation_status FROM public.contacts WHERE id='$C40'")" == "$PB/archived" ]] || fail "Devin B: restore passou com dono velho depois da transferência (lote: $out)"
+expect_err "Devin B: restore esperando a trava da transferência é recusado depois do COMMIT (not_authorized, sem estado)" "-:not_authorized" "$out"
+
 # ── P1-1 varredura ─────────────────────────────────────────────────────────
 MARK=$(val "SELECT value FROM public.global_settings WHERE key='outbound_sweeper_marker_epoch'")
 [[ -n "$MARK" ]] || fail "marcador ausente"
