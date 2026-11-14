@@ -1,7 +1,7 @@
 # Inventário de objetos do banco — `public`
 
 **Fonte de verdade:** `supabase/schema-catalog.json` — snapshot versionado de `postgres`.`public`
-(campo `generated_at`: 2026-10-16, regenerado por
+(campo `generated_at`: 2026-11-14, regenerado por
 `scripts/db-audit/catalog.sql` e conferido contra o banco oficial pelo workflow `db-live-guard.yml`
 (ver `scripts/db-audit/README.md`).
 Este documento não substitui o catálogo: ele dá o que o catálogo não tem — **propósito, status de
@@ -40,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 210 |
+| Tabelas (`tables`) | 211 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2338 |
-| Funções (`functions`) | 387 |
-| Assinaturas de função (`function_signatures`) | 390 |
-| Funções de gatilho (`trigger_functions`) | 96 |
-| Restrições de verificação (`check_constraints`) | 244 |
+| Colunas (`columns`) | 2360 |
+| Funções (`functions`) | 392 |
+| Assinaturas de função (`function_signatures`) | 394 |
+| Funções de gatilho (`trigger_functions`) | 101 |
+| Restrições de verificação (`check_constraints`) | 250 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -236,6 +236,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `talkx_segments` | Segmentos de audiência reutilizáveis do TalkX | ativo | `src/components/talkx/TalkXCampaignRunning.tsx`, `src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx`, `src/components/talkx/__tests__/TalkXSegments.builder.test.tsx` … |
 | `talkx_settings` | Configurações chave-valor do TalkX | ativo | `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx`, `src/hooks/integrations/__tests__/useTalkXResumeChecklist.test.tsx` … |
 | `talkx_storage_purge_queue` | Fila de limpeza de objetos de storage do Talk X. | ativo | `supabase/functions/talkx-storage-purge/index.test.ts`, `supabase/functions/talkx-storage-purge/index.ts`, `scripts/db-audit/talkx-tick-expurgo.test.sh` |
+| `talkx_suppression_reasons` | Catálogo de motivos de supressão do TalkX (código, rótulo, tom e motivos do sistema) | ativo | `src/components/talkx/__tests__/TalkXSuppressionReasons.test.tsx`, `scripts/db-audit/talkx-suppression-reasons.smoke.sh` |
 | `talkx_template_variants` | Variantes de template do TalkX (rótulo, conteúdo e mídia) | ativo | `src/components/talkx/__tests__/TalkXWizardReview.lifecycle.test.tsx`, `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts`, `src/hooks/integrations/useTalkXTemplates.ts` … |
 | `talkx_template_versions` | Histórico de versões dos templates do TalkX | ativo | `src/components/talkx/useCampaignEditor.ts`, `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts`, `src/hooks/integrations/useTalkX.ts` … |
 | `talkx_templates` | Templates de mensagem do TalkX (categoria, conteúdo e mídia) | ativo | `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx`, `src/components/talkx/__tests__/useCampaignEditor.test.tsx` … |
