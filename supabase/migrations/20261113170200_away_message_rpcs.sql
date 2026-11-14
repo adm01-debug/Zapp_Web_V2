@@ -111,7 +111,17 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  -- 2) só fora do horário de atendimento (mesma regra de is_within_business_hours)
+  -- 1b) contato já com atendente (inclusive atribuído pela carteira depois da
+  -- ingestão): nunca responder automaticamente.
+  IF EXISTS (
+    SELECT 1 FROM public.contacts AS c
+    WHERE c.id = p_contact_id AND c.assigned_to IS NOT NULL
+  ) THEN
+    RETURN NULL;
+  END IF;
+
+  -- 2) só fora do horário de atendimento (regra de 20261015175433_business_hours_overnight:
+  -- janela que vira a noite e fechamento exclusivo)
   v_day  := EXTRACT(DOW FROM (now() AT TIME ZONE 'America/Sao_Paulo'));
   v_time := (now() AT TIME ZONE 'America/Sao_Paulo')::time;
   SELECT bh.is_open, bh.open_time, bh.close_time
@@ -122,9 +132,18 @@ BEGIN
   IF NOT FOUND THEN
     RETURN NULL;
   END IF;
-  IF COALESCE(v_is_open, true)
-     AND v_time >= v_open_time AND v_time <= v_close_time THEN
-    RETURN NULL;
+  IF COALESCE(v_is_open, true) THEN
+    -- Janela sem horário definido: não dá para afirmar que está fechado; não envia.
+    IF v_open_time IS NULL OR v_close_time IS NULL THEN
+      RETURN NULL;
+    END IF;
+    IF v_open_time > v_close_time THEN
+      IF v_time >= v_open_time OR v_time < v_close_time THEN
+        RETURN NULL;
+      END IF;
+    ELSIF v_time >= v_open_time AND v_time < v_close_time THEN
+      RETURN NULL;
+    END IF;
   END IF;
 
   -- 3) no máximo 1 por contato+conexão a cada 24 h
