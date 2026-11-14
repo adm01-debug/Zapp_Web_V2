@@ -24,7 +24,7 @@ export type ConversationStatus = 'open' | 'waiting' | 'resolved' | 'archived';
  * Decisão do dono (2026-11-13): conversa em 'waiting' (Aguardando, sem atendente)
  * NÃO pode ser arquivada — ela some da fila sem ninguém atender. Precisa ser
  * atendida (vira 'open') ou encerrada antes. O banco recusa a transição
- * (`conversation_waiting_cannot_be_archived`, migration 20261113130200); a tela
+ * (`conversation_waiting_cannot_be_archived`, migration 20261113171300); a tela
  * esconde o "Arquivar" e o lote pula essas conversas.
  */
 export const WAITING_CANNOT_ARCHIVE_CODE = 'conversation_waiting_cannot_be_archived';
@@ -59,22 +59,25 @@ export const SET_CONVERSATIONS_STATUS_CHUNK = 500;
 type SetConversationsStatusRpc = {
   rpc: (
     fn: 'set_conversations_status',
-    args: { p_contact_ids: string[]; p_next: ConversationStatus; p_expected_current?: string },
+    args: { p_contact_ids: string[]; p_next: ConversationStatus; p_expected_current?: string; p_restore?: boolean },
   ) => PromiseLike<{ data: StatusChangeRow[] | null; error: Error | null }>;
 };
 
 /**
  * Muda o status de um lote pela RPC `set_conversations_status` (migration
- * 20261113130200). UPDATE direto em `contacts.conversation_status` passou a ser
+ * 20261113171300). UPDATE direto em `contacts.conversation_status` passou a ser
  * recusado no banco (P1-2): toda mudança passa pela mesma autorização e pela
  * mesma máquina de estados de `set_conversation_status`. `expectedCurrent` só
  * mexe em quem AINDA está nesse estado. Devolve (id → status anterior) do que
  * mudou; contato sem permissão/transição inválida é pulado (como o RLS fazia).
+ * `restore` = Desfazer de arquivamento de conversa encerrada: archived → resolved
+ * sem gravar outro encerramento (o banco só aceita com encerramento prévio).
  */
 export async function moveConversationsStatus(
   contactIds: string[],
   next: ConversationStatus,
   expectedCurrent?: ConversationStatus,
+  restore = false,
 ): Promise<Map<string, ConversationStatus>> {
   const moved = new Map<string, ConversationStatus>();
   if (contactIds.length === 0) return moved;
@@ -85,6 +88,7 @@ export async function moveConversationsStatus(
       p_contact_ids: contactIds.slice(i, i + SET_CONVERSATIONS_STATUS_CHUNK),
       p_next: next,
       ...(expectedCurrent ? { p_expected_current: expectedCurrent } : {}),
+      ...(restore ? { p_restore: true } : {}),
     });
     if (error) throw error;
     for (const row of data ?? []) {
@@ -166,8 +170,10 @@ export async function archiveConversations(
 /**
  * Restaura o status anterior de cada conversa: agrupa os ids pelo valor
  * anterior e faz UMA escrita por valor distinto. A máquina de estados só deixa
- * sair de 'archived' para 'open'; para voltar a waiting/resolved são dois passos
- * (archived → open → anterior), sempre só em quem AINDA está no estado esperado —
+ * sair de 'archived' para 'open'; 'resolved' volta pela RPC em modo restore (os
+ * dois passos no banco, sem novo encerramento — pela RPC comum o 2º passo
+ * gravaria outro encerramento e o banco recusaria com 23505); waiting (legado) vai
+ * em dois passos (archived → open → anterior), sempre só em quem AINDA está no estado esperado —
  * conversa reaberta por mensagem nova durante a janela do desfazer não é forçada.
  */
 export async function restoreConversationStatuses(
@@ -184,6 +190,10 @@ export async function restoreConversationStatuses(
 
   for (const [status, ids] of porStatus) {
     if (status === 'archived') continue;
+    if (status === 'resolved') {
+      for (const id of (await moveConversationsStatus(ids, 'resolved', 'archived', true)).keys()) announce(id, 'resolved');
+      continue;
+    }
     const abertas = [...(await moveConversationsStatus(ids, 'open', 'archived')).keys()];
     if (status === 'open') {
       for (const id of abertas) announce(id, 'open');

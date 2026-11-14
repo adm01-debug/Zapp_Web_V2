@@ -4,9 +4,9 @@
  * Compare-and-set do dono que a tela mostrou:
  *   - `expectedAgentId` string  → `p_expected_agent_id` (40001 se mudou de mão);
  *   - `expectedAgentId` null    → a tela viu a conversa SEM dono: `p_expect_unassigned`
- *     (migration 20261113130500; 40001 se alguém assumiu no meio-tempo);
+ *     (migration 20261113171500; 40001 se alguém assumiu no meio-tempo);
  *   - `expectedAgentId` undefined → a tela não sabe o dono: sem compare-and-set.
- * Enquanto a 20261113130500 não estiver aplicada, a RPC não conhece
+ * Enquanto a 20261113171500 não estiver aplicada, a RPC não conhece
  * `p_expect_unassigned` (PostgREST PGRST202): repete UMA vez sem ele, para a
  * transferência nunca quebrar por ordem de deploy.
  */

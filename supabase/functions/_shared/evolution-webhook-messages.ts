@@ -366,7 +366,7 @@ export function awayClientMessageId(contactId: string, dayKey: string): string {
 /**
  * PD-79 também nos envios automáticos do webhook (ausência e chatbot L1): carimbo
  * durável `mark_outbound_post_started` ANTES do POST ao provedor, igual à edge
- * `message-delivery`. Sem ele, a varredura de `sending` (20261113130400) não teria
+ * `message-delivery`. Sem ele, a varredura de `sending` (20261113171400) não teria
  * como saber se o POST saiu. Devolve `true` quando pode seguir para o provedor:
  * carimbo gravado, ou RPC ainda inexistente (pré-DDL: PGRST202/42883, mesmo
  * comportamento da edge). Qualquer outro erro = nada saiu, não envia.

@@ -227,15 +227,17 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         },
         undoAction: async () => {
           // Trigger enforce_conversation_status_transition: de 'archived' só é
-          // válido 'open' em um único passo. Para restaurar waiting/resolved,
-          // fazemos dois passos: archived→open→original.
+          // válido 'open' em um único passo. 'resolved' volta pela RPC em modo
+          // restore (archived→open→resolved no banco, SEM novo encerramento — pela
+          // RPC comum o 2º passo gravaria outro encerramento e o banco recusaria com
+          // 23505). Para restaurar waiting (legado), dois passos: archived→open→original.
           //
           // Cada UPDATE só atinge quem AINDA está no estado esperado
           // (`conversation_status='archived'` no 1º passo, `'open'` no 2º) e devolve os
           // ids atingidos: uma conversa reaberta por mensagem nova durante a janela do
           // desfazer não é forçada de volta a resolved/waiting. Um grupo que falha não
           // impede os outros; o resultado é contado por conversa.
-          const validFromArchived = new Set(['open']);
+          const validFromArchived = new Set(['open', 'resolved']);
           const directGroups = new Map<string, string[]>();
           const twoStepGroups = new Map<string, string[]>();
 
@@ -255,7 +257,8 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
 
           const moveTo = async (status: string, ids: string[], from: string): Promise<string[]> => {
             try {
-              const moved = await moveConversationsStatus(ids, status as ConversationStatus, from as ConversationStatus);
+              const restore = status === 'resolved' && from === 'archived';
+              const moved = await moveConversationsStatus(ids, status as ConversationStatus, from as ConversationStatus, restore);
               return [...moved.keys()];
             } catch {
               failed = true;

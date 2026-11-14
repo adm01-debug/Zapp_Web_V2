@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
-import { surfaceWhatsAppDisconnected } from '@/lib/whatsapp/sendConnection';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import {
   drainOfflineQueueOnOpen,
@@ -464,7 +463,7 @@ export async function sendOutboundMessage(
     return result;
   } catch (erro) {
     // "WhatsApp desconectado" é traduzido AQUI, uma vez para todos os envios.
-    throw surfaceWhatsAppDisconnected(erro);
+    throw await surfaceDisconnected(erro);
   } finally {
     // A reivindicação sai até quando o envio falha: sem isso a aba fica "dona"
     // da ação e uma tentativa deliberada igual em outra aba nunca mandaria.
@@ -498,6 +497,20 @@ async function dispatchQueuedMessage(
   };
 }
 
+/**
+ * Tradução "WhatsApp desconectado" (sendConnection) por import dinâmico: este serviço
+ * está no grafo inicial (fila offline) e o tradutor só é preciso quando um envio
+ * falha — import estático estourava o orçamento de JS inicial (325 KB gzip).
+ */
+async function surfaceDisconnected(erro: unknown): Promise<unknown> {
+  try {
+    const { surfaceWhatsAppDisconnected } = await import('@/lib/whatsapp/sendConnection');
+    return surfaceWhatsAppDisconnected(erro);
+  } catch {
+    return erro;
+  }
+}
+
 /** Queue an outbound poll, contact card or interactive message (buttons/list) with an immutable transport payload. */
 export async function sendRichOutboundMessage(
   input: RichOutboundMessageInput,
@@ -505,7 +518,7 @@ export async function sendRichOutboundMessage(
   try {
     return await sendRichOutboundMessageInner(input);
   } catch (erro) {
-    throw surfaceWhatsAppDisconnected(erro);
+    throw await surfaceDisconnected(erro);
   }
 }
 

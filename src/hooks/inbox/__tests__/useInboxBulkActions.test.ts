@@ -31,6 +31,8 @@ interface RecordedCall {
   payload?: unknown;
   columns?: string;
   filters: Record<string, unknown>;
+  /** p_restore da RPC de lote (desfazer de arquivamento de conversa encerrada). */
+  restore?: boolean;
 }
 interface UndoOptions {
   successMessage: string | ((result: unknown) => string);
@@ -187,6 +189,7 @@ beforeEach(() => {
           id: args.p_contact_ids,
           ...(args.p_expected_current ? { conversation_status: args.p_expected_current } : {}),
         },
+        ...(args.p_restore ? { restore: true } : {}),
       };
       recorded.push(call);
       if (updateGate) await updateGate;
@@ -613,9 +616,9 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  // 'waiting' não é arquivada (decisão do dono, 2026-11-13): o caminho de dois passos
-  // do desfazer vale para 'resolved'.
-  it('desfazer: original fora de open (resolved) é restaurado em dois passos — archived→open→original', async () => {
+  // 'waiting' não é arquivada (decisão do dono, 2026-11-13); 'resolved' volta pelo modo
+  // restore da RPC de lote (sem gravar outro encerramento).
+  it('desfazer: original resolved volta em UMA chamada em modo restore — sem novo encerramento', async () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'resolved' },
@@ -634,14 +637,13 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    // Passo 1: todos de archived para open (única transição válida a partir de archived).
-    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
-    // Passo 2: o grupo volta ao status original.
-    expect(restores).toHaveLength(2);
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c1, c2], conversation_status: 'open' } });
+    // Uma chamada só, em modo restore: archived -> resolved no banco SEM novo encerramento
+    // (pela RPC comum o 2º passo gravaria outro encerramento e o banco recusaria com 23505).
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c1, c2], conversation_status: 'archived' }, restore: true });
   });
 
-  it('desfazer com mistura de status e falha no passo 2: segue os outros grupos, recarrega a lista e avisa "X de Y"', async () => {
+  it('desfazer com mistura de status e falha no grupo resolved: segue os outros grupos, recarrega a lista e avisa "X de Y"', async () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'open' },
@@ -657,10 +659,9 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
     refetch.mockClear();
 
-    // undo: [open c1] ok · [passo 1 c2,c3 → open] ok · [resolved c2,c3] FALHA
+    // undo: [open c1] ok · [restore c2,c3 → resolved] FALHA
     updateQueue.push(
       { data: [{ id: c1 }], error: null },
-      { data: [{ id: c2 }, { id: c3 }], error: null },
       { data: null, error: { message: 'Invalid conversation_status transition' } },
     );
     let thrown: unknown = null;
@@ -669,8 +670,8 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    // Sem o "fallback" para open: c2/c3 já estão em open depois do passo 1.
-    expect(restores).toHaveLength(3);
+    // O grupo que falha não impede o outro; nenhum "fallback" extra.
+    expect(restores).toHaveLength(2);
     expect(thrown).toBeInstanceOf(Error);
     expect(refetch).toHaveBeenCalledTimes(1);
     expect(mocks.toast.warning).toHaveBeenCalledWith('1 de 3 restaurados');
@@ -685,18 +686,16 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
     refetch.mockClear();
 
-    // c1 foi reaberto por mensagem nova: o passo 1 (filtrado por archived) só devolve c2.
+    // c1 foi reaberto por mensagem nova: o restore (filtrado por archived) só devolve c2.
     updateQueue.push({ data: [{ id: c2 }], error: null });
     await act(async () => {
       await lastUndo?.undoAction();
     });
 
     const restores = contactUpdates().slice(1);
-    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
-    expect(restores).toHaveLength(2);
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c2], conversation_status: 'open' } });
-    // Nenhum UPDATE leva c1 para resolved.
-    expect(restores.some((r) => (r.filters.id as string[]).includes(c1) && (r.payload as { conversation_status: string }).conversation_status === 'resolved')).toBe(false);
+    // Uma chamada, só para quem AINDA está arquivado (o banco filtra por p_expected_current).
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c1, c2], conversation_status: 'archived' }, restore: true });
     expect(refetch).toHaveBeenCalledTimes(1);
     expect(mocks.toast.info).toHaveBeenCalledWith('1 de 2 restaurados — as demais já tinham sido reabertas');
     expect(mocks.toast.warning).not.toHaveBeenCalled();

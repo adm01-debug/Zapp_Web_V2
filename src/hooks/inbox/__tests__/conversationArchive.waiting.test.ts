@@ -80,3 +80,21 @@ describe('moveConversationsStatus (revisão #3037)', () => {
     expect(moved.has('id-0')).toBe(false);
   });
 });
+
+describe('restoreConversationStatuses (desfazer de arquivamento)', () => {
+  it('resolved volta em UMA chamada com p_restore (sem novo encerramento); open vai direto', async () => {
+    const { restoreConversationStatuses } = await import('../conversationArchive');
+    mocks.rpc.mockImplementation(async (_fn: string, args: { p_contact_ids: string[] }) => ({
+      data: args.p_contact_ids.map((id) => ({ contact_id: id, previous_status: 'archived', outcome: 'changed' })),
+      error: null,
+    }));
+    await restoreConversationStatuses(new Map([['c1', 'resolved'], ['c2', 'open']]));
+    expect(mocks.rpc).toHaveBeenCalledTimes(2);
+    expect(mocks.rpc).toHaveBeenCalledWith('set_conversations_status', {
+      p_contact_ids: ['c1'], p_next: 'resolved', p_expected_current: 'archived', p_restore: true,
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith('set_conversations_status', {
+      p_contact_ids: ['c2'], p_next: 'open', p_expected_current: 'archived',
+    });
+  });
+});
