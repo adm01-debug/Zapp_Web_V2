@@ -20,6 +20,7 @@ import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
 import { canChangeSelectedContactsType, canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
+import { useResolvedMergeContacts } from './resolveMergeContacts';
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
@@ -116,6 +117,14 @@ export function ContactsView() {
   const adminAccess = useCRMAdminAccess();
   const canMerge = canMergeContacts(adminAccess);
 
+  /**
+   * "Mesclar" resolve os 2 selecionados PELO ID, não pela página atual:
+   * `filteredContacts.filter(...)` perdia quem veio de outra página/filtro
+   * (seleção some da lista renderizada) e o diálogo, que exige 2+ contatos,
+   * não abria nada. Ver `resolveMergeContacts.ts`.
+   */
+  const mergeContacts = useResolvedMergeContacts(isMergeOpen, selectedIds, filteredContacts);
+
   return (
     <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
       <ScrollToTopButton
@@ -146,7 +155,7 @@ export function ContactsView() {
       {canMerge && (
         <ContactMergeDialog
           open={isMergeOpen} onOpenChange={setIsMergeOpen}
-          contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
+          contacts={mergeContacts}
           onMergeComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
         />
       )}
