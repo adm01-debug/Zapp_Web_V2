@@ -27,6 +27,23 @@ Deno.serve(async (req) => {
     });
     const { data: { user } } = await callerClient.auth.getUser();
     if (!user) return errorResponse("Não autorizado", 401, req);
+
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // R2-AUTH-004 — JWT ainda válido não basta: usuário DESATIVADO
+    // (profiles.is_active=false) continuava rodando esta capacidade de IA até o
+    // token expirar, porque nada aqui reconsultava o estado atual do perfil.
+    const { data: profileRow, error: profileError } = await adminClient
+      .from("profiles")
+      .select("is_active")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (profileError) return internalErrorResponse(profileError, req);
+    if (!profileRow || profileRow.is_active !== true) {
+      log.warn("Inactive profile attempted AI action", { userId: user.id });
+      return errorResponse("Access denied", 403, req);
+    }
+
     const __guard = await enforceAiGuards({ functionName: "ai-churn-analysis", userId: user.id, req });
     if (__guard) return __guard;
 
@@ -44,7 +61,6 @@ Deno.serve(async (req) => {
         if (!parsed.success) return validationErrorResponse(parsed, req);
 
         const { contactIds } = parsed.data;
-        const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
         const { data: visibleContacts } = await callerClient
           .from("contacts")
