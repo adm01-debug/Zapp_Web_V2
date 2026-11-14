@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1706a81d5ff4fc07c534729bfeaa1642c50050a0",
+  "commit": "ff0a5dbca72a7ccd2904c854660ef5921accf8e2",
   "branch": "main",
-  "data_commit": "2026-11-14T03:06:53-03:00",
+  "data_commit": "2026-11-14T03:27:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ff0a5db",
+    "data": "2026-11-14",
+    "assunto": "chore(db): sincronizar artefatos do banco e contagens do inventário (#3070)"
+   },
    {
     "sha": "1706a81",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "8e6f413",
     "data": "2026-11-13",
     "assunto": "test(contracts): cobre os 7 schemas RADAR AI na tabela de contrato (#3000)"
-   },
-   {
-    "sha": "fb5d023",
-    "data": "2026-11-13",
-    "assunto": "fix(copilot): badge de alertas do RADAR com contraste AA (#3002)"
    }
   ],
   "arquivos_mudados_7d": 973,
@@ -210,19 +210,31 @@
     "mudancas": 13
    },
    {
-    "arquivo": "RELATORIO_CI.md",
+    "arquivo": "docs/ci/README.md",
     "mudancas": 12
    },
    {
-    "arquivo": "docs/ci/README.md",
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
+   },
+   {
+    "arquivo": "RELATORIO_CI.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
    },
    {
     "arquivo": "e2e/navegacao-modulos.spec.ts",
     "mudancas": 11
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
    },
    {
@@ -230,28 +242,16 @@
     "mudancas": 10
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 10
-   },
-   {
     "arquivo": "scripts/e2e-isolated/run.mjs",
     "mudancas": 10
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 10
+    "arquivo": "CLAUDE.md",
+    "mudancas": 9
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 10
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 9
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -263,6 +263,10 @@
    },
    {
     "arquivo": "scripts/e2e-isolated/README.md",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
    },
    {
@@ -283,10 +287,6 @@
    },
    {
     "arquivo": "scripts/supabase_snapshot/snapshot.py",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 8
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8581,
   "arquivos_codigo": 4915,
-  "linhas_codigo": 912404,
+  "linhas_codigo": 912422,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15727
+   "linhas": 15745
   },
   "src/lib": {
    "arquivos": 293,
@@ -802,7 +802,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15654
+   "linhas": 15672
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1706a81d5ff4fc07c534729bfeaa1642c50050a0",
+  "sha": "ff0a5dbca72a7ccd2904c854660ef5921accf8e2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 06:23 UTC",
+  "generated_at": "2026-11-14 06:28 UTC",
   "files_total": 8424,
   "code_files": 6216,
-  "code_lines": 1085172
+  "code_lines": 1085190
  },
  "version": "1.3.2",
- "facts_hash": "ecc1998c14a347c9",
+ "facts_hash": "7638442cd62e275b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -69921,7 +69921,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15727,
+   "lines": 15745,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -352644,7 +352644,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15654,
+   "lines": 15672,
    "exports": [
     "type Json",
     "type Database",
@@ -395197,10 +395197,24 @@
   }
  },
  "git": {
-  "sha": "1706a81d5ff4fc07c534729bfeaa1642c50050a0",
+  "sha": "ff0a5dbca72a7ccd2904c854660ef5921accf8e2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ff0a5db",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "chore(db): sincronizar artefatos do banco e contagens do inventário (#3070)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "scripts/db-audit/known-violations.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "1706a81",
     "date": "2026-11-14",
@@ -395931,31 +395945,15 @@
      "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
      "src/hooks/inbox/useInboxBulkActions.ts"
     ]
-   },
-   {
-    "sha": "58a7208",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "fix(security): sanitiza error.message vazado em gmail-webhook, multiplix-send e talkx-send (#2880)",
-    "files": [
-     "scripts/ci/check-edge-error-exposure.mjs",
-     "scripts/ci/check-edge-error-exposure.unit.mjs",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/gmail-webhook/index.ts",
-     "supabase/functions/multiplix-send/index.ts",
-     "supabase/functions/multiplix-send/safe-db-error-code.test.ts",
-     "supabase/functions/talkx-send/index.ts",
-     "supabase/functions/talkx-send/safe-db-error-code.test.ts"
-    ]
    }
   ],
   "hot_files": [
    [
-    "supabase/deployment-manifest.json",
-    7
+    "ESTADO.md",
+    6
    ],
    [
-    "ESTADO.md",
+    "supabase/deployment-manifest.json",
     6
    ],
    [
@@ -395999,35 +395997,35 @@
     3
    ],
    [
+    "docs/DB-INVENTORY.md",
+    2
+   ],
+   [
+    "scripts/db-audit/grants-baseline.json",
+    2
+   ],
+   [
+    "scripts/db-audit/known-violations.json",
+    2
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    2
+   ],
+   [
+    "supabase/schema-catalog.json",
+    2
+   ],
+   [
+    "supabase/schema-manifest.json",
+    2
+   ],
+   [
     ".github/workflows/ci.yml",
     2
    ],
    [
     "TESTING_CONVENTION.md",
-    2
-   ],
-   [
-    "bun.lock",
-    2
-   ],
-   [
-    "package.json",
-    2
-   ],
-   [
-    "src/components/inbox/ChatPanel.tsx",
-    2
-   ],
-   [
-    "src/components/keyboard/__tests__/paleta-unica.test.tsx",
-    2
-   ],
-   [
-    "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
-    2
-   ],
-   [
-    "src/hooks/inbox/useInboxBulkActions.ts",
     2
    ]
   ]
