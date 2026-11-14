@@ -15,6 +15,10 @@
       "schedule": "* * * * *"
     },
     {
+      "jobname": "outbound-sending-sweeper",
+      "schedule": "* * * * *"
+    },
+    {
       "jobname": "ai-jobs-tick-1min",
       "schedule": "1-59 * * * *"
     },
