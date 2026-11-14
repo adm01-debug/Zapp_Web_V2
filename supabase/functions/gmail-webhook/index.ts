@@ -135,33 +135,66 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
       return jsonResponse({ acknowledged: true, reauth_required: true }, 200, req);
     }
 
-    // Fetch history changes
-    const historyResponse = await fetch(
-      `${GMAIL_API}/history?startHistoryId=${account.history_id}&historyTypes=messageAdded&labelFilterBehavior=include&labelIds=INBOX`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+    // Fetch history changes, seguindo nextPageToken até esgotar: history.list
+    // é paginado pela API do Gmail — com página única, mensagens das páginas
+    // seguintes eram perdidas silenciosamente (sem log, sem retry).
+    const historyRecords: { messagesAdded?: { message: { id: string; labelIds?: string[] } }[] }[] = [];
+    let latestHistoryId: string | undefined;
+    let pageToken: string | undefined;
+    let historyExpired = false;
+    const seenHistoryPageTokens = new Set<string>();
+    const HISTORY_MAX_PAGES = 100;
+    let historyPages = 0;
 
-    if (!historyResponse.ok) {
-      if (historyResponse.status === 404) {
-        log.warn("History ID expired, marking for full resync");
-        // R2-API-011A: CAS sobre o history_id LIDO — se outro fluxo já moveu o
-        // cursor, o 404 atrasado não pode limpar/retroceder o cursor novo.
-        const reset = await resetGmailHistoryCursor(supabase, account.id, account.history_id);
-        if (reset === "conflict") {
-          log.info("History cursor moved by another flow; keeping newer cursor");
-          return jsonResponse({ acknowledged: true, resync_needed: false, conflict: true }, 200, req);
+    do {
+      const params = new URLSearchParams({
+        startHistoryId: account.history_id,
+        historyTypes: "messageAdded",
+        labelFilterBehavior: "include",
+        labelIds: "INBOX",
+      });
+      if (pageToken) params.set("pageToken", pageToken);
+
+      const historyResponse = await fetch(`${GMAIL_API}/history?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!historyResponse.ok) {
+        if (historyResponse.status === 404) {
+          historyExpired = true;
+          break;
         }
-
-        return jsonResponse({ acknowledged: true, resync_needed: true }, 200, req);
+        throw new Error(`History fetch failed: ${historyResponse.status}`);
       }
-      throw new Error(`History fetch failed: ${historyResponse.status}`);
-    }
 
-    const historyData = await historyResponse.json();
+      const page = await historyResponse.json();
+      historyRecords.push(...(page.history || []));
+      latestHistoryId = page.historyId || latestHistoryId;
+      historyPages += 1;
+      if (page.nextPageToken) {
+        if (seenHistoryPageTokens.has(page.nextPageToken)) throw new Error("Gmail history sync received a repeated page token");
+        seenHistoryPageTokens.add(page.nextPageToken);
+      }
+      pageToken = page.nextPageToken;
+      if (pageToken && historyPages >= HISTORY_MAX_PAGES) throw new Error("Gmail history sync exceeded the safe pagination limit");
+    } while (pageToken);
+
+    if (historyExpired) {
+      log.warn("History ID expired, marking for full resync");
+      // R2-API-011A: CAS sobre o history_id LIDO — se outro fluxo já moveu o
+      // cursor, o 404 atrasado não pode limpar/retroceder o cursor novo.
+      const reset = await resetGmailHistoryCursor(supabase, account.id, account.history_id);
+      if (reset === "conflict") {
+        log.info("History cursor moved by another flow; keeping newer cursor");
+        return jsonResponse({ acknowledged: true, resync_needed: false, conflict: true }, 200, req);
+      }
+
+      return jsonResponse({ acknowledged: true, resync_needed: true }, 200, req);
+    }
 
     // Collect new message IDs
     const newMessageIds = new Set<string>();
-    for (const record of historyData.history || []) {
+    for (const record of historyRecords) {
       for (const added of record.messagesAdded || []) {
         if (added.message.labelIds?.includes("INBOX")) {
           newMessageIds.add(added.message.id);
@@ -284,11 +317,19 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
       }
     }
 
-    // Update history_id
-    await supabase.from("gmail_accounts").update({
-      history_id: historyData.historyId || newHistoryId.toString(),
+    // Update history_id — CAS pelo valor LIDO no início (igual a
+    // resetGmailHistoryCursor): se o sync por cron rodou concorrente e já
+    // moveu o cursor, esta escrita não pode retroceder o cursor novo e
+    // causar reprocessamento ou perda de eventos.
+    const { data: historyUpdateRows, error: historyUpdateError } = await supabase.from("gmail_accounts").update({
+      history_id: latestHistoryId || newHistoryId.toString(),
       last_sync_at: new Date().toISOString(),
-    }).eq("id", account.id);
+    }).eq("id", account.id).eq("history_id", account.history_id).select("id");
+    if (historyUpdateError) {
+      log.error("Failed to persist Gmail history cursor", { error: historyUpdateError.message });
+    } else if (!historyUpdateRows?.length) {
+      log.info("History cursor moved by another flow; keeping newer cursor");
+    }
 
     log.done(200, { processed: newMessageIds.size });
     return jsonResponse({ acknowledged: true, processed: newMessageIds.size }, 200, req);
