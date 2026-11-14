@@ -1979,6 +1979,19 @@ async function verifyConcurrentDeviceSession(page: Page, request: APIRequestCont
  */
 test('o motor SIP conclui o provisionamento autenticado ao abrir Telefonia no ambiente isolado', async ({ page }) => {
   await isolatedHttpEnvironment();
+  // O storageState do setup pode trazer a trava "SIP não configurado"
+  // (`SIP_NOT_CONFIGURED_STORAGE_KEY`, src/lib/calls/sipProvisioning.ts): o login
+  // do setup já provisiona na aba líder e, quando o 503 chega antes de o estado
+  // ser salvo, toda sessão herdada nasce travada por 30 min — a aba não chama a
+  // função e esta prova expirava sem POST. A prova é o provisionamento real,
+  // então a página entra sem a trava herdada.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.removeItem('zapp:sip-nao-configurado-ate');
+    } catch {
+      /* sem localStorage: não há trava herdada para remover */
+    }
+  });
   const observation = observeIsolatedFunctionPosts(page, 'get-sip-password');
   try {
     await abrirApp(page);

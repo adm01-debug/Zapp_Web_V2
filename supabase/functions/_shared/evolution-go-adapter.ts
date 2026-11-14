@@ -56,6 +56,63 @@ const GO_STATE_MAP: Record<string, string> = {
   temporaryban: 'close',
 };
 
+/**
+ * Reduz um JID ao "usuário" sem sufixo de aparelho e sem servidor:
+ * `5511999:12@s.whatsapp.net` → `5511999`; `5511999@c.us` → `5511999`.
+ * Devolve também o servidor (`s.whatsapp.net`, `lid`, `g.us`…) para quem
+ * precisar distinguir @lid de número de telefone.
+ */
+export function splitGoJid(jid: string | undefined): { user: string; server: string } | undefined {
+  if (!jid) return undefined;
+  const at = jid.indexOf('@');
+  const userPart = at >= 0 ? jid.slice(0, at) : jid;
+  const server = at >= 0 ? jid.slice(at + 1).toLowerCase() : '';
+  // whatsmeow: "user.agent:device@server" — o aparelho vem depois do ':'
+  // e o agente (raro) depois do '.'; nenhum dos dois identifica a pessoa.
+  const user = userPart.split(':')[0].split('.')[0];
+  if (!user) return undefined;
+  return { user, server: server === 'c.us' ? 's.whatsapp.net' : server };
+}
+
+function sameGoParty(a: string | undefined, b: string | undefined): boolean {
+  const ja = splitGoJid(a);
+  const jb = splitGoJid(b);
+  if (!ja || !jb) return false;
+  if (ja.user !== jb.user) return false;
+  // @lid e @s.whatsapp.net usam numerações diferentes: só compara o usuário
+  // quando os dois estão no mesmo espaço (ou um deles veio sem servidor).
+  return ja.server === jb.server || !ja.server || !jb.server;
+}
+
+/**
+ * Decide se o recibo GO (events.Receipt do whatsmeow) é de uma mensagem NOSSA.
+ *
+ * Regra (P1-GO-1): recibo de entrega/leitura vindo de OUTRA pessoa é sempre
+ * sobre mensagem que nós enviamos; recibo gerado por um aparelho nosso
+ * (`IsFromMe` / tipo `read-self`) é sobre mensagem do contato. A comparação
+ * antiga `Chat === Sender` à risca falhava quando o recibo vinha do WhatsApp
+ * Web/Desktop do contato (`5511…:12@s.whatsapp.net`) ou em `@lid`.
+ */
+export function inferGoReceiptFromMe(data: Record<string, unknown>, rawState: string): boolean {
+  const type = (str(data.Type) ?? '').toLowerCase().replace(/[-_]/g, '');
+  const state = rawState.toLowerCase().replace(/[-_]/g, '');
+  if (type === 'readself' || state === 'readself') return false;
+  if (typeof data.IsFromMe === 'boolean') return !data.IsFromMe;
+
+  const chat = str(data.Chat);
+  const sender = str(data.Sender);
+  if (!chat || !sender) return false;
+  // Em grupo, só participantes mandam recibo de mensagem nossa.
+  if (splitGoJid(chat)?.server === 'g.us') return true;
+  // Conversa 1:1: o recibo é nosso quando quem o mandou é o próprio contato
+  // (mesmo usuário, qualquer aparelho). SenderAlt/RecipientAlt trazem a outra
+  // grafia (@lid ↔ telefone) quando o whatsmeow conhece as duas.
+  const senderAlt = str(data.SenderAlt);
+  const chatAlt = str(data.RecipientAlt) ?? str(data.ChatAlt);
+  return sameGoParty(chat, sender) || sameGoParty(chat, senderAlt) ||
+    sameGoParty(chatAlt, sender) || sameGoParty(chatAlt, senderAlt);
+}
+
 export function isGoPayload(payload: unknown): payload is Record<string, unknown> {
   return isRecord(payload) &&
     typeof payload.instanceName === 'string' &&
@@ -177,9 +234,9 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
     const ids = Array.isArray((data as Record<string, unknown>).MessageIDs)
       ? (data as Record<string, unknown>).MessageIDs as string[] : [];
     const chat = str((data as Record<string, unknown>).Chat as unknown);
-    const sender = str((data as Record<string, unknown>).Sender as unknown);
+    const fromMe = inferGoReceiptFromMe(data as Record<string, unknown>, rawState);
     out.data = { updates: ids.map((id: string) => ({
-      key: { id, remoteJid: chat, fromMe: chat !== undefined && chat === sender }, status: v2Status,
+      key: { id, remoteJid: chat, fromMe }, status: v2Status,
     })) };
   }
 

@@ -387,8 +387,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         <nav aria-label="Abas superiores de segmentos" className="flex gap-1 border-b border-border/50 pb-2">
           <button type="button" aria-current="page" className="h-8 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary">Segmentos</button>
           <button type="button" disabled className="h-8 px-3 rounded-lg text-xs text-muted-foreground opacity-50 cursor-not-allowed">Regras Avançadas</button>
-          <button type="button" className="h-8 px-3 rounded-lg text-xs text-foreground-secondary hover:bg-muted/50">Audiências</button>
-          <button type="button" className="h-8 px-3 rounded-lg text-xs text-foreground-secondary hover:bg-muted/50">Modelos</button>
+          <button type="button" disabled className="h-8 px-3 rounded-lg text-xs text-muted-foreground opacity-50 cursor-not-allowed">Audiências</button>
+          <button type="button" disabled className="h-8 px-3 rounded-lg text-xs text-muted-foreground opacity-50 cursor-not-allowed">Modelos</button>
           <button type="button" disabled className="h-8 px-3 rounded-lg text-xs text-muted-foreground opacity-50 cursor-not-allowed">Insights com IA</button>
         </nav>
         {/* TL-134 (X099): SEM `key` de propósito — a troca de segmento repõe o

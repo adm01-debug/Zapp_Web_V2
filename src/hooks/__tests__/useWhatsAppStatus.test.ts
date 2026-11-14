@@ -84,21 +84,25 @@ describe('useWhatsAppStatus', () => {
   });
 
   // ========== WITH CONNECTION ==========
-  it('fetches status and presence when connection exists', async () => {
+  it('busca os status quando há conexão e NÃO manda presença ao contato', async () => {
     mockMaybeSingle
       .mockResolvedValueOnce({ data: { whatsapp_connection_id: 'conn1' } }) // contact
       .mockResolvedValueOnce({ data: { instance_id: 'inst1' } }); // connection details
 
     mockInvoke
-      .mockResolvedValueOnce({ data: [{ key: { id: 's1' }, message: { conversation: 'Hey' } }] })
-      .mockResolvedValueOnce({ data: {} });
+      .mockResolvedValueOnce({ data: [{ key: { id: 's1' }, message: { conversation: 'Hey' } }] });
 
     const { result } = renderHook(() => useWhatsAppStatus('+5511999999999'));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
-    expect(mockInvoke).toHaveBeenCalledTimes(2);
+    // Abrir a aba Status não pode sinalizar presença ('paused') ao cliente:
+    // presença só sai do compositor, quando o atendente digita.
+    expect(mockInvoke).toHaveBeenCalledTimes(1);
+    expect(mockInvoke.mock.calls.map((c) => c[0])).toEqual(['evolution-api/find-status-messages']);
+    expect(mockInvoke.mock.calls.some((c) => String(c[0]).includes('presence'))).toBe(false);
+    expect(result.current.presence.loading).toBe(false);
   });
 
   // ========== FALLBACK CONNECTION ==========
@@ -109,8 +113,7 @@ describe('useWhatsAppStatus', () => {
       .mockResolvedValueOnce({ data: { instance_id: 'inst-fallback' } }); // connection details
 
     mockInvoke
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: {} });
+      .mockResolvedValueOnce({ data: [] });
 
     const { result } = renderHook(() => useWhatsAppStatus('+5511888888888'));
 
@@ -155,8 +158,7 @@ describe('useWhatsAppStatus', () => {
       .mockResolvedValueOnce({ data: { instance_id: 'inst1' } });
 
     mockInvoke
-      .mockResolvedValueOnce({ data: { error: 'not found' } })
-      .mockResolvedValueOnce({ data: {} });
+      .mockResolvedValueOnce({ data: { error: 'not found' } });
 
     const { result } = renderHook(() => useWhatsAppStatus('+5511999999999'));
 
@@ -179,8 +181,7 @@ describe('useWhatsAppStatus', () => {
     ];
 
     mockInvoke
-      .mockResolvedValueOnce({ data: statuses })
-      .mockResolvedValueOnce({ data: {} });
+      .mockResolvedValueOnce({ data: statuses });
 
     const { result } = renderHook(() => useWhatsAppStatus('+5511999999999'));
 
@@ -192,12 +193,12 @@ describe('useWhatsAppStatus', () => {
   });
 
   // ========== PROMISE.ALLSETTLED ==========
-  it('handles one API call failing while other succeeds', async () => {
+  it('falha na leitura dos status não vira erro da aba', async () => {
     mockMaybeSingle
       .mockResolvedValueOnce({ data: { whatsapp_connection_id: 'conn1' } })
       .mockResolvedValueOnce({ data: { instance_id: 'inst1' } });
 
-    // Status fails, presence succeeds
+    // Leitura dos status falha (a aba não manda mais presença ao contato)
     mockInvoke.mockImplementation((path: string) => {
       if (path.includes('find-status')) return Promise.reject(new Error('Status API down'));
       return Promise.resolve({ data: {} });

@@ -1297,7 +1297,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
     if (action === 'get-media-base64') return await proxy(`/chat/getBase64FromMediaMessage/${instance}`, 'POST', { message: body.message, convertToMp4: body.convertToMp4 ?? false });
     if (action === 'delete-for-everyone') return await proxy(`/chat/deleteMessageForEveryone/${instance}`, 'DELETE', body);
-    if (action === 'edit-message') return await proxy(`/chat/updateMessage/${instance}`, 'PUT', body);
+    if (action === 'edit-message') {
+      // A tela manda { number, messageId, text }; a v2 espera { number, key, text }.
+      // Monta a `key` quando ela não vem — o tradutor GO aceita os dois formatos.
+      // remoteJid da v2 precisa ser JID: número puro vira '<dígitos>@s.whatsapp.net'.
+      const editNumber = typeof body.number === 'string' ? body.number : undefined;
+      const editJid = editNumber && !editNumber.includes('@') ? `${editNumber.replace(/\D/g, '')}@s.whatsapp.net` : editNumber;
+      const editKey = body.key ?? (body.messageId ? { remoteJid: editJid, fromMe: true, id: body.messageId } : undefined);
+      return await proxy(`/chat/updateMessage/${instance}`, 'PUT', { ...body, ...(editKey ? { key: editKey } : {}) });
+    }
 
     // ─── 6. Groups ───
     if (action === 'create-group') return await proxy(`/group/create/${instance}`, 'POST', { subject: body.subject, description: body.description, participants: body.participants });
