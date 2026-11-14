@@ -200,6 +200,42 @@ arquivar formalmente. Enquanto não responder, nada se perde: as três branches 
 usuário e cota diária) entraram no pacote 6 pela PR #3093. Era o item 4 da issue #2967, que a auditoria
 da #2804 dava como perdido na #2831.
 
+## 3-A. SEGREDO DE SERVIDOR na Vercel (achado em 14/11, o mais urgente desta lista)
+
+Medido direto na API da Vercel (`GET /v9/projects/<id>/env`) em 14/11/2026: o projeto tem **20**
+variáveis e **7 delas são segredo de servidor**, todas no target `preview`:
+
+| Variável | O que ela permite a quem tiver acesso |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | ler e escrever **tudo** no banco, ignorando toda a RLS |
+| `SUPABASE_JWT_SECRET` | forjar token de qualquer usuário, inclusive admin |
+| `SUPABASE_SECRET_KEY` | chave secreta do projeto Supabase |
+| `POSTGRES_PASSWORD` | senha do banco |
+| `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING` | conexão direta ao banco |
+
+Mais 5 da mesma lista sem ser segredo: `POSTGRES_DATABASE`, `POSTGRES_HOST`, `POSTGRES_USER`,
+`SUPABASE_ANON_KEY` e `SUPABASE_URL`.
+
+O `AGENTS.md` é explícito: "Nunca segredo de servidor no Vercel". E o item 4 abaixo agrava: o app do
+Supabase cria um deploy de **preview por PR**, e é justamente em `preview` que esses segredos estão.
+
+**Por que não apaguei:** sua própria regra diz que apagar secret exige sua autorização. Também não
+consigo: o secret do repositório é `VERCEL_READONLY_TOKEN`, que lê mas não escreve.
+
+**O que fazer**, do mais rápido ao mais completo:
+
+1. Painel da Vercel → Settings → Environment Variables → remover as 12 listadas acima (todas são
+   `preview`; nenhuma é usada em `production`).
+2. **Rotacionar** as chaves depois de remover: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` e a
+   senha do Postgres. Enquanto não rotacionar, quem já tiver copiado continua com acesso.
+3. Se preferir que eu faça: crie um token Vercel com escrita e me diga; o workflow
+   `vercel-env-cleanup.yml` lista com `DRY_RUN=1` e aplica com `DRY_RUN=0`.
+
+**Erro meu, registrado:** removi esse workflow mais cedo nesta sessão dizendo que as variáveis já não
+existiam. Eu me apoiei no `docs/prod-readiness.md` (item X24, que dizia 8 variáveis e nenhuma da lista)
+em vez de medir na fonte. Quando ganhei a credencial da Vercel, medi e estava errado. O workflow, o
+script e o teste foram restaurados, e o X24 foi retificado.
+
 ## 4. App "Supabase for GitHub" ligado, criando preview em projeto errado
 
 O `AGENTS.md` registra esse app como **desligado**, mas ele está rodando: o check `Supabase Preview` falhou em
