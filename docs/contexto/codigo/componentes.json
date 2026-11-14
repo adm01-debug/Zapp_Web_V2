@@ -11001,7 +11001,7 @@
     "TalkXHelpCenterProps"
    ],
    "export_default": null,
-   "linhas": 413,
+   "linhas": 415,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useTalkXHelpSearch"

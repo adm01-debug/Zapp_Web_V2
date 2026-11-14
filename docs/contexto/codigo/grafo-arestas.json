@@ -9904,6 +9904,7 @@
   "src/hooks/ui/useGlobalKeyboardShortcuts.ts": [
    "src/hooks/communication/audioPlaybackBus.ts",
    "src/hooks/system/useNavigationHistory.ts",
+   "src/hooks/ui/ctrlKLocal.ts",
    "src/hooks/ui/useCustomShortcuts.ts",
    "src/hooks/ui/useVolumeRocker.ts",
    "src/lib/lazyToast.ts"

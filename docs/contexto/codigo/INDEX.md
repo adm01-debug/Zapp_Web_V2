@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6081024b16468954e0d9186197934f1a6026b0cf` (2026-11-14T05:49:49-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `91c63ff8cff64f9edf87658b134497c05a378c73` (2026-11-14T06:48:07-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4332), SQL (1329), Markdown (1120), JSON (605), JavaScript (466), Shell (237), Python (119), YAML (30)
+- linguagens: TypeScript (4334), SQL (1329), Markdown (1120), JSON (605), JavaScript (466), Shell (237), Python (119), YAML (30)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8581 |
-| arquivos_codigo | 4915 |
-| linhas_codigo | 912541 |
+| arquivos_total | 8583 |
+| arquivos_codigo | 4917 |
+| linhas_codigo | 912661 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -48,7 +48,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 218 |
 | migrations | 1129 |
 | cron_jobs | 27 |
-| testes | 2680 |
+| testes | 2681 |
 | workflows | 22 |
 | scripts | 429 |
 | docs_md | 1120 |
@@ -58,7 +58,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (882), src/pages (26), src/features (2)
 - hooks: src/hooks (419), src/components (73), src/contexts (2)
 - servicos_logica: src/lib (152), src/services (20), src/utils (8)
-- testes: co-localizado (__tests__) (2001), outro (234), co-localizado (*.test) (183)
+- testes: co-localizado (__tests__) (2002), outro (234), co-localizado (*.test) (183)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (287), scripts/ci (42), scripts/e2e-isolated (41)
@@ -138,7 +138,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks/system | 0 | 0 | 42 | 460 | 49 | 124 |
 | hooks/tasks | 0 | 0 | 13 | 22 | 2 | 7 |
 | hooks/team-chat | 0 | 0 | 22 | 48 | 2 | 12 |
-| hooks/ui | 0 | 0 | 33 | 50 | 4 | 7 |
+| hooks/ui | 0 | 0 | 34 | 50 | 4 | 7 |
 | hooks/voice | 0 | 0 | 9 | 1 | 2 | 0 |
 | lib | 0 | 0 | 115 | 19 | 6 | 17 |
 | lib/calls | 0 | 0 | 22 | 2 | 1 | 0 |
@@ -393,8 +393,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 58017 nós · 120122 arestas · 4323 comunidades · grafo do commit `6081024b`
-- comunidades maiores: TalkXSuppression.tsx (1320), lucide-react (923), ref_node_fs (567), vitest (561), utils.ts (499), DashboardView.tsx (434), react-router-dom (423), schemas.ts (406), cn (397), e2e-isolated-runtime.unit.mjs (391), useAuth (377), react (368)
+- 58024 nós · 120144 arestas · 4180 comunidades · grafo do commit `91c63ff8`
+- comunidades maiores: react (805), lucide-react (755), vitest (637), utils.ts (605), ExternalProductManagement.tsx (582), cn (504), ref_node_fs (370), react-router-dom (359), tooltip.tsx (355), validation.ts (326), sonner (311), chat.ts (305)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -402,10 +402,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (21)
 - .github/workflows/ci.yml (13)
 - ESTADO.md (13)
-- docs/ci/README.md (12)
 - scripts/db-audit/grants-baseline.json (12)
 - RELATORIO_CI.md (11)
 - docs/DB-INVENTORY.md (11)
+- docs/ci/README.md (11)
 - e2e/navegacao-modulos.spec.ts (11)
 - src/integrations/supabase/types.ts (11)
 - supabase/schema-manifest.json (11)
@@ -518,6 +518,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-14 `91c63ff` fix(talkx): Ctrl+K na Ajuda não abre mais a paleta de comandos por cima (#3078)
 - 2026-11-14 `6081024` fix(chunk-reload): F5/navegação não dispara mais uma segunda recarga automática (#3075)
 - 2026-11-14 `4432834` fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)
 - 2026-11-14 `58f1713` fix(e2e): prontidão de Contatos imune ao aria-hidden do modal de boas-vindas (#3071)
@@ -532,7 +533,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-13 `f32855d` chore: pacote 2 — login sem 401, linha SIP, Gmail sem 409, Team Chat ?cid=, Talk X e PD79 (#3046)
 - 2026-11-13 `098a648` fix(evolution-api): connect da go nunca mais devolve 500 e busca a credencial da instância sozinho (#3045)
 - 2026-11-13 `a49ef4a` feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051) (#2555)
-- 2026-11-13 `19104e8` feat(multiplix): retomar disparo pausado em um clique (#3043)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

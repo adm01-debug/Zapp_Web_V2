@@ -12049,7 +12049,7 @@
    "hooks_exportados": [
     "useGlobalKeyboardShortcuts"
    ],
-   "linhas": 199,
+   "linhas": 210,
    "dominio": "hooks/ui",
    "tabelas": [],
    "rpcs": [],
@@ -12067,7 +12067,7 @@
     "src/components/keyboard/GlobalKeyboardProvider.tsx",
     "src/hooks/ui/index.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 7
   },
   {
    "arquivo": "src/hooks/ui/useGlobalSearchShortcut.ts",

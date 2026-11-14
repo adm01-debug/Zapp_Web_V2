@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "6081024b16468954e0d9186197934f1a6026b0cf",
+  "commit": "91c63ff8cff64f9edf87658b134497c05a378c73",
   "branch": "main",
-  "data_commit": "2026-11-14T05:49:49-03:00",
+  "data_commit": "2026-11-14T06:48:07-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "91c63ff",
+    "data": "2026-11-14",
+    "assunto": "fix(talkx): Ctrl+K na Ajuda não abre mais a paleta de comandos por cima (#3078)"
+   },
    {
     "sha": "6081024",
     "data": "2026-11-14",
@@ -126,14 +131,9 @@
     "sha": "2bfcdbd",
     "data": "2026-11-13",
     "assunto": "Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam"
-   },
-   {
-    "sha": "fe4959b",
-    "data": "2026-11-13",
-    "assunto": "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)"
    }
   ],
-  "arquivos_mudados_7d": 975,
+  "arquivos_mudados_7d": 979,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 297
+    "mudancas": 299
    },
    {
     "pasta": "supabase/functions/_shared",
@@ -210,10 +210,6 @@
     "mudancas": 13
    },
    {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 12
-   },
-   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
    },
@@ -223,6 +219,10 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "docs/ci/README.md",
     "mudancas": 11
    },
    {
@@ -266,19 +266,11 @@
     "mudancas": 9
    },
    {
-    "arquivo": "CLAUDE.md",
-    "mudancas": 8
-   },
-   {
     "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 8
    },
    {
     "arquivo": "package.json",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 8
    },
    {
@@ -294,7 +286,15 @@
     "mudancas": 7
    },
    {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "arquivo": "CLAUDE.md",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/edge-deploy/health-check.mjs",
     "mudancas": 7
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8581,
-  "arquivos_codigo": 4915,
-  "linhas_codigo": 912541,
+  "arquivos_total": 8583,
+  "arquivos_codigo": 4917,
+  "linhas_codigo": 912661,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 218,
   "migrations": 1129,
   "cron_jobs": 27,
-  "testes": 2680,
+  "testes": 2681,
   "workflows": 22,
   "scripts": 429,
   "docs_md": 1120
@@ -699,8 +699,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2225,
-   "linhas": 378123
+   "arquivos": 2226,
+   "linhas": 378225
   },
   "src/config": {
    "arquivos": 3,
@@ -719,8 +719,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1002,
-   "linhas": 163725
+   "arquivos": 1003,
+   "linhas": 163743
   },
   "src/i18n": {
    "arquivos": 2,
