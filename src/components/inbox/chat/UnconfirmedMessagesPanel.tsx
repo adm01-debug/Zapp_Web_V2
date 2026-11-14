@@ -17,6 +17,8 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 
 export interface UnconfirmedMessagesPanelProps {
   contactId: string | null | undefined;
+  /** Grupo de WhatsApp (mensagens com contact_id NULL); ausente = conversa 1:1. */
+  groupId?: string | null;
   className?: string;
 }
 
@@ -33,9 +35,9 @@ function truncate(text: string | null | undefined, max = 60): string {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
-export function UnconfirmedMessagesPanel({ contactId, className }: UnconfirmedMessagesPanelProps) {
+export function UnconfirmedMessagesPanel({ contactId, groupId, className }: UnconfirmedMessagesPanelProps) {
   const reduzido = useReducedMotion();
-  const { messages, isLoading, isError, resolve, isResolving, resolvingId } = useUnconfirmedMessages(contactId);
+  const { messages, isLoading, isError, resolve, isResolving, resolvingId } = useUnconfirmedMessages(contactId, groupId);
   const { isAdmin, isSupervisor } = useUserRole();
   const canResolve = isAdmin || isSupervisor;
 
