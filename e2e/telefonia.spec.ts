@@ -188,22 +188,21 @@ async function abrirDiscador(page: Page) {
   await expect(page.getByRole('heading', { name: 'Telefonia' })).toBeVisible();
   // GR-012: aguarda teclado totalmente renderizado antes de retornar (Firefox)
   await expect(teclado(page)).toBeVisible();
-  // O motivo já vale no 1º render (status SIP 'idle' → voip_not_configured,
-  // useCallChannels.ts) — não marca o fim da sondagem SIP.
   await expect(page.getByTestId('tel-dial-reason')).toHaveText(
     'Telefone não configurado nesta conta',
     { timeout: BOOT_DEADLINE_MS },
   );
-  // O fim real da sondagem é o aviso dela (src/lib/calls/sipProvisioning.ts:114),
-  // que sobe no canto inferior direito ~150-330 ms depois do painel, por cima da
-  // 2ª linha do teclado. Um clique em '5' durante a entrada perdia o pointerup para
-  // o aviso (o Playwright só confere o alvo no pointerdown) e o dígito sumia sem
-  // erro. O painel não remonta. Espera o aviso sair (duration 4 s + saída, sonner.tsx)
-  // antes de discar. Fechar pelo botão disputava com o próprio auto-fechamento: no
-  // WebKit o botão saía do DOM no meio do clique e o teste esperava um alvo que sumiu.
-  const avisoSip = page.locator('[data-sonner-toast]').filter({ hasText: 'Senha SIP não configurada' });
-  await expect(avisoSip).toBeVisible({ timeout: BOOT_DEADLINE_MS });
-  await expect(avisoSip).toHaveCount(0, { timeout: 15_000 });
+  // O motivo acima já existe no 1º render (sipStatus 'idle'): não prova que a sondagem SIP
+  // terminou. Ela termina com o aviso 'Senha SIP não configurada' (503 da fixture,
+  // src/lib/calls/sipProvisioning.ts:114) no canto inferior direito, por cima das teclas
+  // 4-9/0; se ele entra durante um clique, o mouseup cai no aviso e o dígito some (Firefox,
+  // telefonia.spec.ts:283). Espera o aviso e espera ele SAIR sozinho (duration 4 s +
+  // saída, sonner.tsx) antes de digitar. Fechar pelo botão disputava com o próprio
+  // auto-fechamento: no WebKit o botão saiu do DOM no meio do clique ("element was
+  // detached") e o teste esperou o alvo sumido até estourar 240 s (run 43582923922).
+  const aviso = page.locator('[data-sonner-toast]').filter({ hasText: 'Senha SIP não configurada' });
+  await expect(aviso).toBeVisible({ timeout: BOOT_DEADLINE_MS });
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
   return page.getByTestId('tel-new-call-panel');
 }
 
