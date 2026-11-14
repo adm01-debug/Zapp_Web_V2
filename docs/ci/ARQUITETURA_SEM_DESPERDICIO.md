@@ -25,6 +25,9 @@ job só espera outro se consome o que o outro produz; uma PR só gasta CI quando
 ## Regras
 
 ### R1 — Fila serial: uma PR em voo por vez, ordem de chegada
+> **Encerrada em 14/11/2026.** O `auto-update-pr-branch.yml` foi desativado à mão pelo dono em 11/11/2026 (8.312 runs;
+> rajada de 10 em 9 min naquele dia) e removido do repositório junto com `scripts/ci/fila-merge.mjs`. PR `BEHIND` passa
+> a ser atualizada pelo agente que vai mergeá-la. O texto abaixo é histórico.
 - **Antes:** a cada merge, todas as PRs com auto-merge que ficavam BEHIND eram atualizadas ao mesmo tempo. Com
   `strict=true` só a primeira a ficar verde entra; as outras voltam a BEHIND e recomeçam. Trabalho O(N²), runners
   disputados (até 3 min de espera por job) e nenhuma PR andando mais rápido.
