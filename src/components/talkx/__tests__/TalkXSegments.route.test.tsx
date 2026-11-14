@@ -224,6 +224,8 @@ describe('TalkXSegments · construtor pela URL (X111)', () => {
     expect(within(abas).getByRole('button', { name: 'Segmentos' })).toHaveAttribute('aria-current', 'page');
     expect(within(abas).getByRole('button', { name: 'Regras Avançadas' })).toBeDisabled();
     expect(within(abas).getByRole('button', { name: 'Insights com IA' })).toBeDisabled();
+    expect(within(abas).getByRole('button', { name: 'Audiências' })).toBeDisabled();
+    expect(within(abas).getByRole('button', { name: 'Modelos' })).toBeDisabled();
   });
 
   it('a biblioteca (tela 02) não mostra o cabeçalho nem as abas da tela 03', async () => {
