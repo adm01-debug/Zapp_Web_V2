@@ -37,6 +37,10 @@ export function TalkXLimitsDialog({ open, onOpenChange, draft, onChange, onSave,
   }, [draft.speedProfile, draft.intervalMin, draft.intervalMax]);
 
   const handleSave = () => {
+    if (draft.intervalMin > draft.intervalMax) {
+      toast.error('Intervalo mínimo não pode ser maior que o máximo.');
+      return;
+    }
     if (!isValidLimitsDraft(draft)) {
       toast.error(`Intervalos devem ser inteiros entre ${LIMITS_MIN_S}s e ${LIMITS_MAX_S}s.`);
       return;
