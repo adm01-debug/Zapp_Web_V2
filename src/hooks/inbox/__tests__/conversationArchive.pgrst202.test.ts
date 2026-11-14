@@ -69,7 +69,12 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-import { archiveConversations, moveConversationsStatus, restoreConversationStatuses } from '../conversationArchive';
+import {
+  archiveConversations,
+  moveConversationsStatus,
+  RESTORE_RESOLVED_UNAVAILABLE_MESSAGE,
+  restoreConversationStatuses,
+} from '../conversationArchive';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -98,33 +103,26 @@ describe('set_conversations_status ausente (PGRST202)', () => {
     expect(mocks.db.get('c2')).toBe('waiting');
   });
 
-  it('desfazer de encerrada (restore): archived -> open -> resolved em dois passos, sem 23514 da FSM antiga', async () => {
+  it('desfazer de encerrada (restore) é recusado sem mexer no status', async () => {
     mocks.db.set('c1', 'archived');
-    mocks.db.set('c2', 'archived');
-    mocks.db.set('c3', 'open'); // reaberta por mensagem nova na janela do desfazer: não é forçada
-    const moved = await moveConversationsStatus(['c1', 'c2', 'c3'], 'resolved', 'archived', true);
-    expect([...moved.entries()]).toEqual([
-      ['c1', 'archived'],
-      ['c2', 'archived'],
-    ]);
-    expect(mocks.updates.map((u) => [u.patch.conversation_status, u.eq?.[1], u.ids])).toEqual([
-      ['open', 'archived', ['c1', 'c2']],
-      ['resolved', 'open', ['c1', 'c2']],
-    ]);
-    expect(Object.fromEntries(mocks.db)).toEqual({ c1: 'resolved', c2: 'resolved', c3: 'open' });
-    expect(mocks.rpc).toHaveBeenCalledTimes(1); // nunca a RPC unitária no 2º passo
+    await expect(moveConversationsStatus(['c1'], 'resolved', 'archived', true)).rejects.toThrow(
+      RESTORE_RESOLVED_UNAVAILABLE_MESSAGE,
+    );
+    expect(mocks.updates).toHaveLength(0);
+    expect(mocks.db.get('c1')).toBe('archived');
   });
 
-  it('Desfazer em lote devolve encerrada a resolved e aberta a open', async () => {
+  it('Desfazer de aberta devolve a open pelo UPDATE direto', async () => {
     mocks.db.set('c1', 'archived');
-    mocks.db.set('c2', 'archived');
+    mocks.db.set('c2', 'open'); // reaberta por mensagem nova: não é tocada
     await restoreConversationStatuses(
       new Map([
-        ['c1', 'resolved'],
+        ['c1', 'open'],
         ['c2', 'open'],
       ]),
     );
-    expect(Object.fromEntries(mocks.db)).toEqual({ c1: 'resolved', c2: 'open' });
+    expect(Object.fromEntries(mocks.db)).toEqual({ c1: 'open', c2: 'open' });
+    expect(mocks.updates.map((u) => u.ids)).toEqual([['c1']]);
   });
 
   it('erro diferente de PGRST202 continua sendo erro (sem fallback)', async () => {
