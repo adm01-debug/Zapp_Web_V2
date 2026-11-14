@@ -90,6 +90,18 @@ export async function moveConversationsStatus(
       ...(expectedCurrent ? { p_expected_current: expectedCurrent } : {}),
       ...(restore ? { p_restore: true } : {}),
     });
+    if ((error as { code?: string } | null)?.code === 'PGRST202') {
+      // Banco ainda sem a RPC (front publicado antes do apply da 20261113171300):
+      // segue pelo UPDATE direto, que o banco antigo ainda aceita. Mesma postura de
+      // transferConversation — a ação nunca quebra por ordem de deploy.
+      const legado = await moveConversationsStatusLegacy(
+        contactIds.slice(i, i + SET_CONVERSATIONS_STATUS_CHUNK),
+        next,
+        expectedCurrent,
+      );
+      for (const [id, anterior] of legado) moved.set(id, anterior);
+      continue;
+    }
     if (error) throw error;
     for (const row of data ?? []) {
       // A RPC devolve UMA linha por id com o resultado; só 'changed' mudou de verdade.
@@ -97,6 +109,37 @@ export async function moveConversationsStatus(
       if (row.outcome && row.outcome !== 'changed') continue;
       moved.set(row.contact_id, (row.previous_status ?? 'open') as ConversationStatus);
     }
+  }
+  return moved;
+}
+
+/**
+ * Caminho do banco SEM `set_conversations_status` (antes do apply da
+ * 20261113171300): UPDATE direto, só nos ids ainda em `expectedCurrent` quando
+ * informado. Devolve (id → status anterior) do que o banco confirmou ter mudado
+ * (update sem linha afetada — RLS — não conta).
+ */
+async function moveConversationsStatusLegacy(
+  contactIds: string[],
+  next: ConversationStatus,
+  expectedCurrent?: ConversationStatus,
+): Promise<Map<string, ConversationStatus>> {
+  const moved = new Map<string, ConversationStatus>();
+  const anteriores = await readConversationStatuses(contactIds);
+  const alvo = contactIds.filter(
+    (id) => anteriores.has(id) && (!expectedCurrent || anteriores.get(id) === expectedCurrent),
+  );
+  if (alvo.length === 0) return moved;
+  let query = supabase
+    .from('contacts')
+    .update({ conversation_status: next, updated_at: new Date().toISOString() })
+    .in('id', alvo);
+  if (expectedCurrent) query = query.eq('conversation_status', expectedCurrent);
+  const { data, error } = await query.select('id');
+  if (error) throw error;
+  for (const row of (data ?? []) as { id: string }[]) {
+    const anterior = anteriores.get(row.id);
+    if (anterior) moved.set(row.id, anterior);
   }
   return moved;
 }
