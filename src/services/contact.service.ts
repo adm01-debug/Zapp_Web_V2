@@ -60,6 +60,16 @@ export class ContactService {
   }
 
   /**
+   * Linha completa de vários contatos por id, numa única consulta (sem N+1).
+   * Usada para resolver uma seleção (ex.: mesclagem) que sobreviveu à troca de
+   * página/filtro: o selecionado pode não estar mais na lista carregada.
+   */
+  static async getByIds(ids: string[]) {
+    if (!ids.length) return { data: [] as Contact[], error: null };
+    return supabase.from('contacts').select('*').in('id', ids);
+  }
+
+  /**
    * Retorna a data da última mensagem para cada contact_id da lista.
    * Usa a RPC get_last_message_dates (GROUP BY contact_id, MAX created_at)
    * para evitar truncação pelo limit padrão do PostgREST numa query plana.
