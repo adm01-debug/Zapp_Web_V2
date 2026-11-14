@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -164,6 +164,52 @@ function fmtIntervalRange(intervalMs: [number, number]): string {
   return `${Math.round(intervalMs[0] / 1000)}–${Math.round(intervalMs[1] / 1000)}s`;
 }
 
+interface TalkXScheduleSnapshot {
+  timezone: string;
+  date: string;
+  time: string;
+  repeat: 'none' | TalkXRecurrenceFrequency;
+  repeatWeekdays: number[];
+  repeatEndDate: string;
+  windowEnabled: boolean;
+  windowStart: string;
+  windowEnd: string;
+  bizHours: boolean;
+  speedProfile: 'slow' | 'moderate' | 'fast';
+  sendInterval: [number, number];
+  confirmConsent: boolean;
+}
+
+/**
+ * X140 (QA) — a mesma forma usada para inicializar os campos do editor,
+ * derivada da campanha REALMENTE salva. Serve de base para `isDirty`: compara
+ * o que a tela tem em mãos com o que está salvo, em vez de assumir que estão
+ * sincronizados.
+ */
+function deriveScheduleSnapshot(campaign: TalkXCampaign): TalkXScheduleSnapshot {
+  const timezone = campaign.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
+  const local = campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, timezone) : '';
+  const fallback = intervalForProfile(campaign.speed_profile ?? 'moderate');
+  const repeat = campaign.recurrence_frequency ?? 'none';
+  return {
+    timezone,
+    date: local ? local.split('T')[0] ?? '' : '',
+    time: local ? local.split('T')[1] ?? '09:00' : '09:00',
+    repeat,
+    repeatWeekdays: repeat === 'weekly' ? [...(campaign.recurrence_weekdays ?? [])].sort((a, b) => a - b) : [],
+    repeatEndDate: repeat !== 'none' && campaign.recurrence_end_at
+      ? utcToLocalInTimezone(campaign.recurrence_end_at, timezone).split('T')[0] ?? ''
+      : '',
+    windowEnabled: !!campaign.send_window_start,
+    windowStart: campaign.send_window_start ? campaign.send_window_start.slice(0, 5) : '08:00',
+    windowEnd: campaign.send_window_end ? campaign.send_window_end.slice(0, 5) : '18:00',
+    bizHours: campaign.business_hours_only ?? false,
+    speedProfile: campaign.speed_profile ?? 'moderate',
+    sendInterval: [campaign.send_interval_min ?? fallback[0], campaign.send_interval_max ?? fallback[1]],
+    confirmConsent: campaign.confirm_consent ?? false,
+  };
+}
+
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
   const { updateCampaign } = useTalkX();
   // X120/TL-151: o selo de "pronta" depende do estado real da linha WhatsApp.
@@ -215,6 +261,37 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   const [cancelOpen, setCancelOpen] = useState(false);
 
   const minimumDate = todayInTimezone(localTz);
+
+  // X140 (QA) — `updated_at` salvo quando o editor foi aberto; serve de base
+  // para a concorrência otimista do `handleSave` (bug 2: duas sessões editando
+  // o mesmo agendamento podiam se sobrescrever em silêncio, last-write-wins).
+  const baseUpdatedAtRef = useRef(campaign.updated_at);
+
+  // X140 (QA) — edição pendente: a tela diverge do que está de fato salvo.
+  // "Iniciar agora" descartava essa edição em silêncio (bug 1) porque disparava
+  // direto, sem passar pelo que o operador ainda não salvou.
+  const isDirty = useMemo(() => {
+    const saved = deriveScheduleSnapshot(campaign);
+    const current: TalkXScheduleSnapshot = {
+      timezone: localTz,
+      date: localDate,
+      time: localTime,
+      repeat,
+      repeatWeekdays: repeat === 'weekly' ? [...repeatWeekdays].sort((a, b) => a - b) : [],
+      repeatEndDate: repeat !== 'none' ? repeatEndDate : '',
+      windowEnabled,
+      windowStart: windowEnabled ? windowStart : '08:00',
+      windowEnd: windowEnabled ? windowEnd : '18:00',
+      bizHours,
+      speedProfile,
+      sendInterval,
+      confirmConsent,
+    };
+    return JSON.stringify(saved) !== JSON.stringify(current);
+  }, [
+    campaign, localTz, localDate, localTime, repeat, repeatWeekdays, repeatEndDate,
+    windowEnabled, windowStart, windowEnd, bizHours, speedProfile, sendInterval, confirmConsent,
+  ]);
 
   const messagesPerMinute = useMemo(() => {
     const avg = ((campaign.typing_delay_min + campaign.typing_delay_max) / 2 + (sendInterval[0] + sendInterval[1]) / 2) / 1000;
@@ -282,6 +359,13 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
       toast.error('A data de término da repetição deve ser igual ou posterior à data de início.');
       return;
     }
+    // X140 (QA, bug 2) — concorrência otimista simples: se `updated_at` mudou
+    // desde que este editor abriu, outra aba/sessão já salvou por cima; avisa
+    // em vez de sobrescrever (last-write-wins silencioso).
+    if (campaign.updated_at !== baseUpdatedAtRef.current) {
+      toast.error('Esta campanha foi alterada em outra aba ou por outra pessoa nesse meio tempo. Saia e abra de novo para salvar com os dados mais recentes.');
+      return;
+    }
     setSaving(true);
     try {
       const scheduledAt = localToUTCInTimezone(`${localDate}T${localTime}`, localTz);
@@ -299,7 +383,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             ? localToUTCInTimezone(`${repeatEndDate}T23:59`, localTz)
             : null,
         };
-      await updateCampaign.mutateAsync({
+      const saved = await updateCampaign.mutateAsync({
         id: campaign.id,
         ...recurrence,
         scheduled_at: scheduledAt,
@@ -313,6 +397,8 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         respect_suppression: respectSuppression,
         confirm_consent: confirmConsent,
       });
+      // Atualiza a base da concorrência otimista para o `updated_at` recém-gravado.
+      baseUpdatedAtRef.current = saved?.updated_at ?? baseUpdatedAtRef.current;
       toast.success('Agendamento atualizado.');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao salvar agendamento.');
@@ -320,6 +406,23 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
       setSaving(false);
     }
   }, [campaign, repeat, repeatWeekdays, repeatEndDate, localDate, localTime, localTz, windowEnabled, windowStart, windowEnd, bizHours, speedProfile, sendInterval, respectSuppression, confirmConsent, updateCampaign, saving]);
+
+  // X140 (QA, bugs 1 e 3) — guarda ÚNICA antes de abrir a confirmação do
+  // disparo: edição pendente descartava silenciosamente o que o operador
+  // mexeu na tela sem salvar (bug 1), e uma pendência real (linha, público ou
+  // mensagem) não travava o clique (bug 3). As duas precisam ser resolvidas
+  // ANTES — nenhuma abre o diálogo de "Confirmar disparo?".
+  const handleStartNow = useCallback(() => {
+    if (isDirty) {
+      toast.error('Salve o agendamento antes de iniciar: há alterações nesta tela que ainda não foram salvas.');
+      return;
+    }
+    if (blockers.length > 0) {
+      toast.error(blockers.length === 1 ? blockers[0] : `Resolva as pendências antes de iniciar: ${blockers.join(' ')}`);
+      return;
+    }
+    lifecycle.request({ kind: 'start', target: campaign });
+  }, [isDirty, blockers, lifecycle, campaign]);
 
   const handleCancelSchedule = useCallback(async () => {
     setCancelOpen(false);
@@ -704,7 +807,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <GhostButton icon={XCircle} onClick={() => setCancelOpen(true)} className="text-destructive hover:bg-destructive/10 border-destructive/30">
           Cancelar agendamento
         </GhostButton>
-        <PrimaryButton icon={Play} onClick={() => { lifecycle.request({ kind: 'start', target: campaign }); }} className="shadow-[var(--shadow-glow-primary)]">
+        <PrimaryButton icon={Play} onClick={handleStartNow} className="shadow-[var(--shadow-glow-primary)]">
           {lifecycle.isPending ? 'Iniciando…' : 'Iniciar agora'}
         </PrimaryButton>
       </div>
