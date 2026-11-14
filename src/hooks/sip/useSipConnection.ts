@@ -44,7 +44,8 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
 
   // T16: depois do unmount ninguem mais conecta. Sem isto o retry agendado
   // criava um UserAgent orfao — registrando a linha de um painel que nao existe
-  // mais, e o servidor so aceita um ramal por vez.
+  // mais, e o servidor so aceita um ramal por vez. O UA de pé também sai: sem
+  // isto a linha seguia registrada e a remontagem criava um segundo registro.
   const unmountedRef = useRef(false);
   useEffect(() => () => {
     unmountedRef.current = true;
@@ -53,6 +54,16 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+    const ua = uaRef.current;
+    const registerer = registererRef.current;
+    uaRef.current = null;
+    registererRef.current = null;
+    if (ua) ua.transport.onDisconnect = () => {};
+    // Sem bloquear o unmount: o teardown de rede termina sozinho.
+    void (async () => {
+      try { await registerer?.unregister(); } catch { /* REGISTER nunca saiu */ }
+      try { await ua?.stop(); } catch { /* transporte ja encerrado */ }
+    })();
   }, []);
 
   const clearReconnectTimer = useCallback(() => {

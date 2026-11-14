@@ -741,3 +741,109 @@ test('--rapido sem teste relacionado avisa "nenhum teste relacionado" em vez de 
   assert.match(r.out, /⚠️ {2}ci \/ unit-tests \(rápido\) \(passou sem verificar nada/);
   assert.doesNotMatch(r.out, /✅ ci \/ unit-tests/);
 });
+
+test('workflows vêm da mesma árvore do clone: HEAD por padrão, working tree só com --incluir-nao-commitado', (t) => {
+  const { src } = repo(t, {
+    wt: wf(`  a:
+    runs-on: x
+    steps:
+      - run: echo passo-commitado
+`),
+  });
+  // ci.yml editado e workflow novo, ambos fora do commit.
+  writeFileSync(
+    join(src, '.github', 'workflows', 'wt.yml'),
+    wf(`  a:\n    runs-on: x\n    steps:\n      - run: echo passo-nao-commitado; exit 1\n`)
+  );
+  writeFileSync(
+    join(src, '.github', 'workflows', 'novo.yml'),
+    wf(`  a:\n    runs-on: x\n    steps:\n      - run: 'true'\n`)
+  );
+  const head = rodar(src, ['--workflow', 'wt']);
+  assert.equal(head.code, 0, head.out);
+  assert.match(logsDoPasso(src), /passo-commitado/);
+  assert.equal(rodar(src, ['--workflow', 'novo']).code, 2, 'workflow fora do HEAD não existe');
+  const wt = rodar(src, ['--workflow', 'wt', '--incluir-nao-commitado']);
+  assert.equal(wt.code, 1, wt.out);
+  assert.match(logsDoPasso(src), /passo-nao-commitado/);
+  assert.equal(rodar(src, ['--workflow', 'novo', '--incluir-nao-commitado']).code, 0);
+});
+
+test('migration existente editada: mesmos critérios do db-guard (rename com edição, stub, evidence)', (t) => {
+  const M = 'supabase/migrations';
+  // >= 50% de similaridade: o git (e o GitHub) ainda veem rename, não remove+add.
+  const sql = Array.from({ length: 10 }, (_, i) => `create table t${i} (id int);\n`).join('');
+  const { src } = repo(
+    t,
+    {
+      guard: wf(`  g:
+    runs-on: x
+    steps:
+      - name: Rejeitar edicao de migration ja existente
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@0000000000000000000000000000000000000000
+        with:
+          script: core.setFailed('nao roda localmente')
+`),
+    },
+    {
+      [`${M}/20260101000000_real.sql`]: sql,
+      [`${M}/20260101000001_stub.sql`]: '-- aplicada via MCP\n\n-- sem SQL\n',
+      [`${M}/20260101000002_pinada.sql`]: sql,
+      'scripts/db-audit/migration-evidence.json': JSON.stringify({
+        exceptions: [
+          { filename: '20260101000002_pinada.sql', kind: 'ledger-only/name-and-file-pinned' },
+        ],
+      }),
+    }
+  );
+  const base = git(src, 'rev-parse', 'HEAD');
+  const caso = (descricao, mudar, esperado) => {
+    git(src, 'reset', '-q', '--hard', base);
+    mudar();
+    git(src, 'add', '-A');
+    git(src, 'commit', '-q', '-m', descricao);
+    const r = rodar(src, ['--workflow', 'guard', '--base', base]);
+    const logs = logsDoPasso(src);
+    assert.equal(r.code, esperado, `${descricao}: ${r.out}\n${logs}`);
+    if (esperado === 1) assert.match(logs, /::error::migration já existente editada/);
+  };
+  const p = (f) => join(src, M, f);
+  caso(
+    'rename + edição',
+    () => {
+      git(src, 'mv', p('20260101000000_real.sql'), p('20260202000000_real.sql'));
+      writeFileSync(p('20260202000000_real.sql'), `${sql}alter table t add column x int;\n`);
+    },
+    1
+  );
+  caso(
+    'rename puro',
+    () => {
+      git(src, 'mv', p('20260101000000_real.sql'), p('20260202000000_real.sql'));
+    },
+    0
+  );
+  caso(
+    'edição no mesmo nome',
+    () => {
+      writeFileSync(p('20260101000000_real.sql'), `${sql}-- mudou\n`);
+    },
+    1
+  );
+  caso(
+    'stub comment-only promovido',
+    () => {
+      writeFileSync(p('20260101000001_stub.sql'), sql);
+    },
+    0
+  );
+  caso(
+    'pinada no evidence',
+    () => {
+      writeFileSync(p('20260101000002_pinada.sql'), `${sql}-- doc corrigida\n`);
+    },
+    0
+  );
+  assert.match(logsDoPasso(src), /nenhuma migration existente editada/);
+});
