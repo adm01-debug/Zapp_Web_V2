@@ -135,7 +135,85 @@ check Talk X por título, limpa 6 workflows fantasmas da aba Actions). Itens que
 
 | # | O que | Por que trava | Passo a passo |
 |---|---|---|---|
-| 1 | Mergear a PR da auditoria dos workflows | Regra do `AGENTS.md`: mudança em CI/workflows fica aberta para o dono | Abrir a PR, conferir que os checks estão verdes e clicar em **Squash and merge** |
+| 1 | ~~Mergear a PR da auditoria dos workflows~~ **RESOLVIDO em 14/11** | — | Entrou no pacote 6 (PR #3113, commit `41853318cd`), autorizado pelo dono na sessão |
 | 2 | Apagar os secrets de Actions que nenhum workflow usa: `VERCEL_READONLY_TOKEN` (só o workflow removido usava), `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`, `E2E_PADRAO_EMAIL`, `E2E_PADRAO_PASSWORD`, `RESEND_API_KEY` | Agente não apaga nem lê secrets | Settings → Secrets and variables → Actions; confirmar que nada fora do GitHub depende do valor; **Remove** em cada um |
 | 3 | Decidir a cadência do `front-release-targets.yml` (hoje: a cada push na main **e** de hora em hora, ~9 min por run) | Cadência de monitoramento é decisão de operação; o cron está fixado em `scripts/ci/front-release-targets.unit.mjs` | Responder "reduzir para a cada 6 h" (ou outra) e o agente ajusta cron, teste e `docs/agentes/github-ci.md` |
 | 4 | Decidir se `inventario-estado-semanal.yml` continua ao lado do `contexto.yml` | Os dois regeneram inventário do banco e do código (`inventario/estado/` semanal via PR × `docs/contexto/` na branch `contexto`); o `AGENTS.md` cita os dois como fonte | Escolher a fonte única; o agente remove a outra e atualiza o `AGENTS.md` |
+
+---
+
+# PENDÊNCIAS — Pacote 6 e RADAR Copiloto (2026-11-14)
+
+As 26 PRs que estavam abertas foram integradas na `main` pelo pacote 6 (PR #3113, commit `41853318cd`),
+com CI verde e conferência byte a byte de cada arquivo. Nenhuma branch foi apagada. O que sobrou depende de você.
+
+## 1. Migrations novas esperando o apply no banco
+
+O merge põe o **arquivo** da migration na `main`; ele **não** altera o banco. Seis migrations do pacote 6
+estão nessa situação, e enquanto não forem aplicadas o `db-live-guard` vai acusar drift entre repo e produção:
+
+| Migration | O que faz |
+|---|---|
+| `20261113170200_away_message_rpcs.sql` | RPCs da mensagem de ausência (#3059) |
+| `20261114120000_set_conversations_status_encerramento_repetido.sql` | encerrar conversa reaberta grava o encerramento antes de mudar o status (#3085) |
+| `20261114120500_merge_contacts_phone_secundario_unique.sql` | mesclagem de contato quando o telefone final é o do secundário (#3107) |
+| `20261114121000_department_invites_restringe_select.sql` | restringe a leitura de convites de departamento a admin (#3108) |
+| `20261114130000_multiplix_start_exige_confirmacao.sql` | Multiplix: iniciar sem fila exige confirmação (#3089) |
+| `20261114173000_fix_merge_brinde_state_execute_grant.sql` | revoga EXECUTE de `authenticated` em `merge_brinde_state` (#3105) |
+
+**O que fazer:** responda "aplica as migrations do pacote 6" e eu aplico pelo fluxo do `docs/agentes/banco.md`,
+uma a uma, com registro no ledger. Duas são correção de segurança (`department_invites` e `merge_brinde_state`),
+então valem prioridade.
+
+## 2. RADAR Copiloto — escolha entre dois painéis (issue #2967)
+
+O código do RADAR está na `main` mas **não está ligado**: o painel existe e ninguém o importa. A auditoria
+encontrou **dois painéis concorrentes**, feitos por agentes diferentes, incompatíveis entre si:
+
+| Opção | Onde está | Situação |
+|---|---|---|
+| **A** — `RadarLive` + `RadarPanel` | já na `main`, órfãos | usa `useRadarPanel(userId, conversationId)`; basta montar o painel numa tela |
+| **B** — `RadarPhase6Panel` (321 linhas) | branch `claude/fix-radar-fase6-cv056-shortcuts-261108-2335` (PR #2872, fechada sem merge) | usa `useRadarPanel(conversationId)`, assinatura **diferente**; não compila contra a `main` sem trocar o hook, e trocar o hook quebra o painel da opção A |
+
+**O que fazer:** responda "RADAR opção A" ou "RADAR opção B". Com A, eu monto o que já está na `main` e
+adiciono o atalho de teclado. Com B, eu traço o painel da branch e adapto a API dele, preservando o atual.
+Não escolhi por você porque são duas telas diferentes para a mesma função: é decisão de produto.
+
+## 3. RADAR Copiloto — ligar o motor gera custo de IA em produção
+
+Falta o motor que alimenta o painel. Ligá-lo significa chamar IA **a cada mensagem recebida**, com custo por
+mensagem. É decisão de negócio. As peças estão preservadas em branches vivas:
+
+| Peça | Branch (PR fechada sem merge) | Commit |
+|---|---|---|
+| Gatilho, presença e retenção do tick (3 migrations) | `claude/feat-copilot-radar-20261108-1800` (#2831) | `be78e6cfa7` |
+| RPC de commit atômico de sessão e insights | `claude/fix-copilot-tick-atomicity-261101-1430` (#2500) | `3f68240b9a` |
+| Motor alternativo (outro desenho do mesmo gatilho) | `claude/feat-radar-migration-261101-1550` (#2487) | `0789ca7344` |
+
+Falta também registrar o handler `copilot.tick` em `supabase/functions/ai-jobs-worker/index.ts`, que hoje não
+o tem na lista — é a peça que faz o motor rodar de verdade.
+
+**O que fazer:** responda "liga o motor do RADAR" se aceita o custo por mensagem, ou "deixa desligado" para eu
+arquivar formalmente. Enquanto não responder, nada se perde: as três branches ficam de pé.
+
+**Já recuperado sem custo:** as guardas de IA da edge `copilot-live` (kill switch de capacidade, limite por
+usuário e cota diária) entraram no pacote 6 pela PR #3093. Era o item 4 da issue #2967, que a auditoria
+da #2804 dava como perdido na #2831.
+
+## 4. App "Supabase for GitHub" ligado, criando preview em projeto errado
+
+O `AGENTS.md` registra esse app como **desligado**, mas ele está rodando: o check `Supabase Preview` falhou em
+PRs apontando para os projetos `sxnyqzdhqizhpunbnzkq` e `egyafebcwprbcwfybheo` — **nenhum dos dois é o banco
+oficial** `tnnnlkbymytvtqngbbqh`. Ele pinta PRs de vermelho sem relação com o código e gera custo por PR.
+
+**O que fazer:** em github.com/settings/installations, na instalação do Supabase, remover este repositório; ou
+no painel da Supabase, desligar o GitHub integration do projeto. Só você tem acesso.
+
+## 5. Issues de alerta automático acumuladas
+
+Das 52 issues abertas, 24 são alertas de bot (`falha-main`, `kpi-actions`, `branch-hygiene`, `settings-guard`,
+`types-sync`) de falhas que este arquivo registra como corrigidas em 12/11. Elas escondem as issues reais.
+
+**O que fazer:** responda "limpa as issues de bot resolvidas" e eu fecho cada uma com comentário-resumo citando
+onde a falha foi corrigida, conforme a regra do `AGENTS.md`. Não fiz por iniciativa própria porque fechar issue
+é ação visível e não foi pedida.
