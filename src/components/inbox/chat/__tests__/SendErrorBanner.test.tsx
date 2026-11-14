@@ -11,6 +11,8 @@ import type { Message } from '@/types/chat';
 import { SendErrorBanner } from '../SendErrorBanner';
 
 const controle = vi.hoisted(() => ({ reduzido: false }));
+const toastMock = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
 
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
@@ -19,6 +21,7 @@ vi.mock('framer-motion', async (importOriginal) => {
 
 beforeEach(() => {
   controle.reduzido = false;
+  toastMock.mockClear();
 });
 
 function msg(over: Partial<Message> = {}): Message {
@@ -70,6 +73,20 @@ describe('SendErrorBanner', () => {
 
     await act(async () => { resolver(); });
     await waitFor(() => expect(screen.getByRole('button', { name: /Enviado/ })).toBeInTheDocument());
+  });
+
+  it('PD-79: falha DEFINITIVA com POST carimbado (recusa 4xx) ainda oferece reenvio', () => {
+    const onSendMessage = vi.fn();
+    const carimbada = { ...msg({ status: 'failed', content: 'oi de novo' }), delivery_post_started_at: '2026-10-11T10:00:01.000Z' } as Message;
+    render(<SendErrorBanner messages={[carimbada]} onSendMessage={onSendMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
+    expect(onSendMessage).toHaveBeenCalledWith('oi de novo');
+  });
+
+  it('PD-79: mensagem ambígua (sending carimbada) não aparece no banner', () => {
+    const ambigua = { ...msg({ status: 'sending', content: 'x' }), delivery_post_started_at: '2026-10-11T10:00:01.000Z' } as Message;
+    const { container } = render(<SendErrorBanner messages={[ambigua]} onSendMessage={vi.fn()} />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   it('falha de audio/interativa: so o aviso, sem botao de reenvio', () => {
@@ -209,5 +226,17 @@ describe('SendErrorBanner', () => {
     const banner = screen.getByRole('alert');
     expect(banner.style.opacity).not.toBe('0');
     expect(banner.style.transform).not.toContain('translate');
+  });
+
+  it('falha do "Enviar de novo" mostra toast de erro e devolve o botão', async () => {
+    const onSendMessage = vi.fn(() => Promise.reject(new Error('rede caiu')));
+    render(<SendErrorBanner messages={[msg({ status: 'failed', content: 'oi' })]} onSendMessage={onSendMessage} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Mensagem não enviada', variant: 'destructive',
+    })));
+    expect(screen.getByRole('button', { name: 'Enviar de novo' })).toBeEnabled();
   });
 });

@@ -223,10 +223,11 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   }, []);
 
   useEffect(() => {
-    if (activeAccount && labels.length === 0 && !syncLabels.isPending) syncLabels.mutate();
+    // Conta em reauth_required: o gmail-sync só devolveria 409 — a faixa "Reconectar" já orienta.
+    if (activeAccount && !needsReconnect && labels.length === 0 && !syncLabels.isPending) syncLabels.mutate();
     // Mutation object identity is not a data dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeAccount?.id, labels.length]);
+  }, [activeAccount?.id, labels.length, needsReconnect]);
 
   if (accountsLoading) {
     return <section aria-label="Carregando Email" className="flex h-full items-center justify-center bg-background text-muted-foreground"><Loader2 className="mr-3 h-6 w-6 animate-spin text-primary" />Carregando suas contas de email…</section>;
