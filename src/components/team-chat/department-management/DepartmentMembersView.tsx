@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, UserMinus, Search, User } from 'lucide-react';
@@ -67,16 +71,29 @@ export function DepartmentMembersView({ departmentId, currentUserName, isAdmin }
                   {p.email && <p className="text-xs text-muted-foreground truncate">{p.email}</p>}
                 </div>
                 {isAdmin && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    disabled={removeMutation.isPending}
-                    onClick={() => removeMutation.mutate({ profileId: p.id, profileName: p.name, actorName: currentUserName })}
-                    aria-label={`Remover ${p.name} do departamento`}
-                  >
-                    <UserMinus className="w-4 h-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={removeMutation.isPending}
+                        aria-label={`Remover ${p.name} do departamento`}
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remover membro do departamento</AlertDialogTitle>
+                        <AlertDialogDescription>Tem certeza que deseja remover <strong>"{p.name}"</strong> deste departamento? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => removeMutation.mutate({ profileId: p.id, profileName: p.name, actorName: currentUserName })} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </div>
             ))}

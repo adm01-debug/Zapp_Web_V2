@@ -12,6 +12,10 @@ import { FileText, Plus, Trash2, RefreshCw, Calendar, LayoutTemplate, Lightbulb,
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -160,9 +164,23 @@ export function ScheduledReportsManager() {
                       </div>
                     </div>
                     <Switch aria-label={`Ativar relatório ${cfg.name}`} checked={cfg.is_active} onCheckedChange={() => toggleActive.mutate({ id: cfg.id, isActive: cfg.is_active })} />
-                    <button onClick={() => deleteConfig.mutate(cfg.id)} title="Excluir" className="w-9 h-9 rounded-lg border border-border/60 hover:bg-destructive/10 hover:border-destructive/40 flex items-center justify-center shrink-0">
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button title="Excluir" aria-label={`Excluir relatório ${cfg.name}`} className="w-9 h-9 rounded-lg border border-border/60 hover:bg-destructive/10 hover:border-destructive/40 flex items-center justify-center shrink-0">
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir relatório agendado</AlertDialogTitle>
+                          <AlertDialogDescription>Tem certeza que deseja excluir <strong>"{cfg.name}"</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteConfig.mutate(cfg.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 );
               })}
