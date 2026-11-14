@@ -60,7 +60,18 @@ for (const f of edges) {
   const url = `functions/v1/${q}${fimNome}`;
   // Aspa de fechamento OU `/` logo após o nome: cobre invoke(`nome/${acao}`).
   const src = rgFiles(`(functions\\.invoke\\(\\s*['"\`]${q}(['"\`]|/)|${url}|['"\`]${q}['"\`]\\s*[,)])`, ['src']);
-  const migrations = rgFiles(url, ['supabase/migrations']);
+  // A URL literal `functions/v1/<nome>` só aparece em migrations quando o link é hardcodado.
+  // Convenção deste repo para cron/pg_net (talkx-scheduler, talkx-storage-purge): a URL fica só
+  // no Vault (`vault.decrypted_secrets`) e o nome da edge só aparece em texto solto (nome do
+  // cron job, `regexp_replace` da URL do Vault). Sem esse fallback,
+  // toda edge chamada só por cron+Vault entrava como "sem_chamador" — falso positivo real,
+  // confirmado em produção (talkx-scheduler, talkx-storage-purge).
+  // Comentário SQL (`-- ...`) não conta: o nome tem que aparecer antes de qualquer `--` na linha.
+  // Senão edge órfã citada só em comentário (auto-close-conversations, recover-corrupted-audios)
+  // sumia da lista de sem_chamador.
+  const migrationsUrl = rgFiles(url, ['supabase/migrations']);
+  const migrationsNomeSolto = rgFiles(`^([^-]|-[^-])*${q}`, ['supabase/migrations']);
+  const migrations = [...new Set([...migrationsUrl, ...migrationsNomeSolto])];
   const outrasEdges = rgFiles(`${url}|['"\`]${q}['"\`]`, ['supabase/functions']).filter((p) => !p.startsWith(`supabase/functions/${f}/`));
   const e2e = rgFiles(q, ['e2e']);
   const ci = rgFiles(q, ['.github/workflows', 'supabase/config.toml']);
