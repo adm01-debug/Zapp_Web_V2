@@ -888,3 +888,46 @@ Deno.test('PD-79: exceção LANÇADA no mark_outbound_post_started é infra (503
   assertFailClaim(client);
   resetInstanceTokenCache();
 });
+
+// P1-1 (auditoria Conversas 2026-11-13): message_attempts passa a ser gravada a cada tentativa.
+function attemptOutcomes(client: FakeClient): string[] {
+  return client.rpcCalls
+    .filter((call) => call.fn === 'log_message_attempt')
+    .map((call) => String(call.args?.p_outcome));
+}
+
+Deno.test('P1-1: caminho feliz grava claimed + sent em message_attempts, sem corpo do provedor', async () => {
+  const client = makeClient({ claim: { data: [{ ...CLAIM, delivery_attempt_count: 2 }], error: null } });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
+    jsonOf(200, { key: { id: 'wamid.provider-3' } })));
+  assertStatus(response.status, 200);
+  assertEqual(attemptOutcomes(client).join(','), 'claimed,sent', 'outcomes');
+  for (const call of client.rpcCalls.filter((c) => c.fn === 'log_message_attempt')) {
+    assertEqual(call.args?.p_attempt_no, 2, 'attempt_no vem do claim');
+    assertEqual(call.args?.p_provider_response, null, 'nunca grava o corpo do provedor');
+  }
+});
+
+Deno.test('P1-1: recusa definitiva grava failed_final com código estável e status do provedor', async () => {
+  const client = makeClient({ claim: { data: [CLAIM], error: null } });
+  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
+    jsonOf(400, { message: 'Number is not registered on WhatsApp' })));
+  assertEqual(attemptOutcomes(client).join(','), 'claimed,failed_final', 'outcomes');
+  const final = client.rpcCalls.find((c) => c.fn === 'log_message_attempt' && c.args?.p_outcome === 'failed_final');
+  assertEqual(final?.args?.p_error_code, 'invalid_number', 'error_code');
+  assertEqual(final?.args?.p_provider_status, 400, 'provider_status');
+  assertEqual(final?.args?.p_attempt_no, 1, 'attempt_no padrão 1');
+});
+
+Deno.test('P1-1: 5xx (ambíguo) grava failed_retryable, nunca failed_final', async () => {
+  const client = makeClient({ claim: { data: [CLAIM], error: null } });
+  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(502, { message: 'bad gateway' })));
+  assertEqual(attemptOutcomes(client).join(','), 'claimed,failed_retryable', 'outcomes');
+});
+
+Deno.test('P1-1: falha ao gravar a tentativa não derruba o envio', async () => {
+  const client = makeClient({ claim: { data: [CLAIM], error: null }, rpcThrows: ['log_message_attempt'] });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
+    jsonOf(200, { key: { id: 'wamid.provider-4' } })));
+  assertStatus(response.status, 200);
+});

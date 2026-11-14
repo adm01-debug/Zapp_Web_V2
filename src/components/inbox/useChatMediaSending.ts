@@ -4,6 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { normalizeMediaUrl } from '@/utils/normalizeMediaUrl';
 import { toast } from '@/hooks/ui/use-toast';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
+import {
+  isTestFixtureConnection,
+  withoutTestFixtureConnections,
+  WHATSAPP_DISCONNECTED_DESCRIPTION,
+  WHATSAPP_DISCONNECTED_TITLE,
+} from '@/lib/whatsapp/sendConnection';
 
 /** Motivo único da recusa quando a conexão WhatsApp não resolve: mesmo texto no toast e na rejeição. */
 const CONEXAO_WHATSAPP_INDISPONIVEL = 'Conexão WhatsApp não disponível.';
@@ -16,6 +22,8 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
   const [instanceName, setInstanceName] = useState('');
   const [whatsappConnectionId, setWhatsappConnectionId] = useState<string | null>(null);
   const resolvedRef = useRef(false);
+  // P0-1: a conexão do contato existe mas caiu — o envio NÃO troca de número.
+  const contactConnectionDownRef = useRef(false);
 
   const resolveInstance = useCallback(async (): Promise<string> => {
     if (instanceName) return instanceName;
@@ -27,26 +35,36 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         .eq('id', contactId)
         .maybeSingle();
 
+      contactConnectionDownRef.current = false;
       if (contact?.whatsapp_connection_id) {
         setWhatsappConnectionId(contact.whatsapp_connection_id);
         const { data: conn } = await supabase
           .from('whatsapp_connections')
-          .select('instance_id')
+          .select('instance_id, status, name')
           .eq('id', contact.whatsapp_connection_id)
           .maybeSingle();
-        if (conn?.instance_id) {
-          setInstanceName(conn.instance_id);
-          return conn.instance_id;
+        if (conn) {
+          // Conexão do contato fora do ar (ou a de teste do E2E): avisa "WhatsApp
+          // desconectado" em vez de mandar por outro número sem ninguém saber.
+          if (conn.status === 'connected' && conn.instance_id && !isTestFixtureConnection(conn)) {
+            setInstanceName(conn.instance_id);
+            return conn.instance_id;
+          }
+          contactConnectionDownRef.current = true;
+          return '';
         }
       }
 
-      const { data: fallbackConn } = await supabase
+      // Contato sem conexão própria (legado): a conexão viva mais recente, nunca a
+      // de teste do E2E — mesma regra do banco (resolve_outbound_whatsapp_connection).
+      const { data: fallbackConns } = await supabase
         .from('whatsapp_connections')
-        .select('instance_id')
+        .select('instance_id, name')
         .eq('status', 'connected')
-        .limit(1)
-        .maybeSingle();
+        .order('updated_at', { ascending: false })
+        .limit(10);
 
+      const fallbackConn = withoutTestFixtureConnections(fallbackConns).find((c) => c.instance_id);
       if (fallbackConn?.instance_id) {
         setInstanceName(fallbackConn.instance_id);
         return fallbackConn.instance_id;
@@ -81,6 +99,10 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         log.warn('Instancia do WhatsApp nao resolvida:', err);
         resolved = '';
       }
+    }
+    if (!resolved && contactConnectionDownRef.current) {
+      toast({ title: WHATSAPP_DISCONNECTED_TITLE, description: WHATSAPP_DISCONNECTED_DESCRIPTION, variant: 'destructive' });
+      return null;
     }
     if (!resolved || !contactPhone) {
       toast({ title: 'Erro', description: CONEXAO_WHATSAPP_INDISPONIVEL });

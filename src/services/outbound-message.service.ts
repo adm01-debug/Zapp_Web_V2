@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
+import { surfaceWhatsAppDisconnected } from '@/lib/whatsapp/sendConnection';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import {
   drainOfflineQueueOnOpen,
@@ -461,6 +462,9 @@ export async function sendOutboundMessage(
     const result = await enqueueAndDispatch(input, clientMessageId, key);
     clearPendingAction(key, clientMessageId);
     return result;
+  } catch (erro) {
+    // "WhatsApp desconectado" é traduzido AQUI, uma vez para todos os envios.
+    throw surfaceWhatsAppDisconnected(erro);
   } finally {
     // A reivindicação sai até quando o envio falha: sem isso a aba fica "dona"
     // da ação e uma tentativa deliberada igual em outra aba nunca mandaria.
@@ -496,6 +500,16 @@ async function dispatchQueuedMessage(
 
 /** Queue an outbound poll, contact card or interactive message (buttons/list) with an immutable transport payload. */
 export async function sendRichOutboundMessage(
+  input: RichOutboundMessageInput,
+): Promise<OutboundMessageDeliveryResult> {
+  try {
+    return await sendRichOutboundMessageInner(input);
+  } catch (erro) {
+    throw surfaceWhatsAppDisconnected(erro);
+  }
+}
+
+async function sendRichOutboundMessageInner(
   input: RichOutboundMessageInput,
 ): Promise<OutboundMessageDeliveryResult> {
   const { id: clientMessageId, key } = resolveClientMessageId(input);

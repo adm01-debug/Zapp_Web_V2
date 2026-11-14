@@ -431,3 +431,15 @@ describe('VirtualizedRealtimeList — data inválida na última mensagem (R2)', 
     expect(linha).not.toHaveTextContent('—');
   });
 });
+
+describe('VirtualizedRealtimeList — "Arquivar" some para conversa aguardando (decisão do dono 2026-11-13)', () => {
+  it('conversa em atendimento mostra o botão Arquivar', () => {
+    renderList([makeConversation({ id: 'c1', conversation_status: 'open' } as never)], { onArchive: vi.fn() });
+    expect(screen.getByRole('button', { name: 'Arquivar conversa' })).toBeInTheDocument();
+  });
+
+  it('conversa aguardando (waiting) não oferece Arquivar', () => {
+    renderList([makeConversation({ id: 'c1', conversation_status: 'waiting' } as never)], { onArchive: vi.fn() });
+    expect(screen.queryByRole('button', { name: 'Arquivar conversa' })).not.toBeInTheDocument();
+  });
+});

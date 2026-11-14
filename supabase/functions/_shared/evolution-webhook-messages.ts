@@ -8,7 +8,7 @@ import {
 } from "./effect-reconcile.ts";
 
 import {
-  isRecord, normalizePhone, resolveEventJid,
+  isRecord, maskJidForLog, normalizePhone, resolveEventJid,
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
@@ -363,6 +363,33 @@ export function awayClientMessageId(contactId: string, dayKey: string): string {
   return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-4${raw.slice(13, 16)}-a${raw.slice(17, 20)}-${raw.slice(20, 32)}`;
 }
 
+/**
+ * PD-79 também nos envios automáticos do webhook (ausência e chatbot L1): carimbo
+ * durável `mark_outbound_post_started` ANTES do POST ao provedor, igual à edge
+ * `message-delivery`. Sem ele, a varredura de `sending` (20261113130400) não teria
+ * como saber se o POST saiu. Devolve `true` quando pode seguir para o provedor:
+ * carimbo gravado, ou RPC ainda inexistente (pré-DDL: PGRST202/42883, mesmo
+ * comportamento da edge). Qualquer outro erro = nada saiu, não envia.
+ */
+export async function markWebhookPostStarted(
+  supabase: EvolutionDbClient,
+  messageId: string,
+  claimToken: string,
+  tag: string,
+): Promise<boolean> {
+  const { error } = await supabase.rpc("mark_outbound_post_started", {
+    p_message_id: messageId,
+    p_claim_token: claimToken,
+  });
+  if (!error) return true;
+  if (error.code === "PGRST202" || error.code === "42883") {
+    console.error(`[${tag}] mark_outbound_post_started indisponível (pré-DDL):`, error.code);
+    return true;
+  }
+  console.error(`[${tag}] mark_outbound_post_started falhou — envio cancelado antes do POST:`, error.code);
+  return false;
+}
+
 /** Terminal sem reenvio para a linha claimada (igual à edge oficial). */
 async function failAwayClaim(supabase: EvolutionDbClient, messageId: string, claimToken: string): Promise<void> {
   const { error } = await supabase.rpc("fail_outbound_message", {
@@ -502,6 +529,10 @@ export async function sendAwayMessageIfNeeded(
     let externalId: string | null = null;
     try {
       const instanceToken = await resolveInstanceToken(supabase, instancia);
+      if (!(await markWebhookPostStarted(supabase, messageId, claimToken, "AWAY"))) {
+        await failAwayClaim(supabase, messageId, claimToken);
+        return;
+      }
       providerPostAttempted = true;
       const resp = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${instancia}`, {
         number: telefone,
@@ -761,6 +792,10 @@ async function enviarRespostaDoBot(
     let externalId: string | null = null;
     try {
       const instanceToken = await resolveInstanceToken(supabase, instancia);
+      if (!(await markWebhookPostStarted(supabase, messageId, claimToken, "CHATBOT-L1"))) {
+        await failBotClaim(supabase, messageId, claimToken);
+        return;
+      }
       providerPostAttempted = true;
       const resp = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${instancia}`, {
         number: telefone,
@@ -942,7 +977,7 @@ export async function handleOutgoingWhatsAppMessage(
 
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
-    console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid });
+    console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid: maskJidForLog(bestJid) });
     return;
   }
 
@@ -1044,7 +1079,7 @@ export async function handleIncomingMessage(
 
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
-    console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid });
+    console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid: maskJidForLog(bestJid) });
     return;
   }
   const message = data.message as Record<string, unknown> | undefined;
@@ -1101,7 +1136,7 @@ export async function handleIncomingMessage(
     p_created_at: messageCreatedAt,
   });
   if (txError) {
-    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone: phone ? `${phone.substring(0, 6)}***` : null, messageType });
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid: maskJidForLog(bestJid), phone: phone ? `${phone.substring(0, 6)}***` : null, messageType });
     return;
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {

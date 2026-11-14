@@ -13,9 +13,10 @@
 --   e2e/fixtures/e2e-talkx.ts    -> E2E_TALKX_CONNECTION_ID (public.whatsapp_connections)
 --                                -> E2E_TALKX_SEGMENT_ID    (public.talkx_segments)
 --
--- A conexao tem duas exigencias que NAO sao cosmeticas: useCampaignEditor filtra por
--- status='connected' E por instance_id preenchido -- conexao disconnected nao aparece
--- no dropdown e o spec do wizard falharia mesmo com a linha existindo.
+-- A conexao de teste precisa existir com instance_id, mas NUNCA 'connected' em
+-- producao (auditoria Conversas 2026-11-13, P0-1): conectada, o fallback de envio
+-- gravava mensagens reais de atendentes nela. A suite logada roda em backend
+-- descartavel e semeia la a propria conexao conectada (scripts/e2e-isolated).
 --
 -- Roda pelo db-live-guard agendado, via psql-safe.mjs. NAO e' um .test.sh: esse
 -- caminho nao existe no workflow, e um teste que ninguem executa da' sensacao de
@@ -79,7 +80,7 @@ presente AS (
   SELECT 'conexao', count(*)
   FROM public.whatsapp_connections
   WHERE id = 'e2e0e2e0-0000-4000-a000-e2e000000001'::uuid
-    AND status = 'connected'
+    AND status IS DISTINCT FROM 'connected'
     AND instance_id IS NOT NULL
   UNION ALL
   SELECT 'segmento', count(*)
@@ -101,7 +102,7 @@ SELECT todos_presentes, resumo FROM resultado \gset
 \if :todos_presentes
   \echo 'OK: os tres fixtures de E2E existem no banco.'
 \else
-  \echo 'FALHA: fixture de E2E ausente (ou conexao sem status connected/instance_id).'
+  \echo 'FALHA: fixture de E2E ausente (ou conexao de teste sem instance_id ou CONECTADA em producao).'
   DO $e2e_fixtures_presenca$
   BEGIN
     RAISE EXCEPTION 'fixture de E2E ausente em producao -- os specs logados vao falhar de forma enganosa';

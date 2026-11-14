@@ -49,18 +49,18 @@ partir do código e falha quando:
 | `ai-product-recommendation` | E | — sem chamador no repositório — |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
-| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1422` |
+| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1457` |
 | `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:96` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
 | `auth-login` | A | `src/lib/serverLogin.ts:129` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
 | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
-| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:294` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
+| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:146` · `src/hooks/chat/useNewConversation.ts:154` · `src/hooks/inbox/useInboxBulkActions.ts:306` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
 | `bitrix-api` | A | `src/components/integrations/BitrixIntegrationView.tsx:29` · `src/hooks/integrations/useBitrixApi.ts:33` |
-| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:590` |
+| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:621` |
 | `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` · `src/hooks/communication/useAudioMemes.ts:250` |
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:142` |
-| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1399` |
+| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1434` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:135` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `copilot-live` | E | — sem chamador no repositório — |
@@ -77,9 +77,9 @@ partir do código e falha quando:
 | `elevenlabs-tts-stream` | A | `src/hooks/voice/playTtsAudio.ts:165` |
 | `elevenlabs-voice-design` | A | `src/components/voice/ElevenLabsVoiceDesign.tsx:32` |
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
-| `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks/groups/actions.ts:106` |
+| `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks/groups/actions.ts:107` |
 | `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:110` |
-| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:599` · `supabase/functions/evolution-api/index.ts:713` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
+| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:635` · `supabase/functions/evolution-api/index.ts:749` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
 | `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
@@ -93,7 +93,7 @@ partir do código e falha quando:
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
-| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:476` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:480` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:97` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |

@@ -33,7 +33,7 @@ interface RecordedCall {
   filters: Record<string, unknown>;
 }
 interface UndoOptions {
-  successMessage: string;
+  successMessage: string | ((result: unknown) => string);
   undoMessage?: string;
   action: () => Promise<unknown>;
   undoAction: () => Promise<void>;
@@ -68,6 +68,12 @@ let selectQueue: DbResult[] = [];
 let recorded: RecordedCall[] = [];
 let updateGate: Promise<void> | null = null;
 let lastUndo: UndoOptions | null = null;
+let lastResult: unknown = undefined;
+/** Texto do toast de sucesso como o useUndoableAction monta (string ou função do resultado). */
+function sucesso(): string | undefined {
+  const msg = lastUndo?.successMessage;
+  return typeof msg === 'function' ? msg(lastResult) : msg;
+}
 // Estado da RPC de transferência: cada `p_contact_id` pode falhar de forma
 // independente, então o mapa abaixo permite provar o caminho de sucesso PARCIAL.
 let rpcFailures: Record<string, unknown> = {};
@@ -163,10 +169,34 @@ beforeEach(() => {
 
   mocks.execute.mockImplementation(async (options: UndoOptions) => {
     lastUndo = options;
-    await options.action();
+    lastResult = await options.action();
   });
   mocks.invoke.mockResolvedValue({ data: { updated: 0, processed: 0 }, error: null });
   mocks.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
+    // P1-2: arquivar/desfazer passam pela RPC de lote `set_conversations_status`
+    // (UPDATE direto em conversation_status é recusado no banco). O dublê registra
+    // a chamada no MESMO formato de "update em contacts" (payload + filtros id e
+    // status esperado) e consome a mesma fila de resultados — os casos continuam
+    // provando o que vai para o banco.
+    if (name === 'set_conversations_status') {
+      const call: RecordedCall = {
+        table: 'contacts',
+        op: 'update',
+        payload: { conversation_status: args.p_next },
+        filters: {
+          id: args.p_contact_ids,
+          ...(args.p_expected_current ? { conversation_status: args.p_expected_current } : {}),
+        },
+      };
+      recorded.push(call);
+      if (updateGate) await updateGate;
+      const result = updateQueue.shift() ?? ECHO_ROWS;
+      if (result !== ECHO_ROWS && result.error) return { data: null, error: result.error };
+      const ids = result === ECHO_ROWS
+        ? (args.p_contact_ids as string[])
+        : ((result.data as Array<{ id: string }> | null) ?? []).map((row) => row.id);
+      return { data: ids.map((id) => ({ contact_id: id, previous_status: null })), error: null };
+    }
     rpcCalls.push({ name, args });
     const failure = rpcFailures[args.p_contact_id as string];
     if (failure) return { data: null, error: failure };
@@ -557,7 +587,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
       filters: { id: [c1, c2] },
     });
     expect(mocks.execute).toHaveBeenCalledTimes(1);
-    expect(lastUndo?.successMessage).toBe('2 contato(s) arquivado(s)');
+    expect(sucesso()).toBe('2 contato(s) arquivado(s)');
     expect(lastUndo?.undoMessage).toBe('Arquivamento desfeito');
     expect(contactUpdates()[0]).toMatchObject({
       payload: { conversation_status: 'archived' },
@@ -573,16 +603,22 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    expect(restores).toHaveLength(2);
-    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: [c2] } });
+    // 'pending' é legado (fora de regras.md §4.1): o desfazer devolve a 'open', e só
+    // quem AINDA está arquivado.
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({
+      payload: { conversation_status: 'open' },
+      filters: { id: [c1, c2], conversation_status: 'archived' },
+    });
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('desfazer: original fora de open/pending (waiting/resolved) é restaurado em dois passos — archived→open→original', async () => {
+  // 'waiting' não é arquivada (decisão do dono, 2026-11-13): o caminho de dois passos
+  // do desfazer vale para 'resolved'.
+  it('desfazer: original fora de open (resolved) é restaurado em dois passos — archived→open→original', async () => {
     selectQueue.push({
       data: [
-        { id: c1, conversation_status: 'waiting' },
+        { id: c1, conversation_status: 'resolved' },
         { id: c2, conversation_status: 'resolved' },
       ],
       error: null,
@@ -600,21 +636,16 @@ describe('useInboxBulkActions — bulkArchive', () => {
     const restores = contactUpdates().slice(1);
     // Passo 1: todos de archived para open (única transição válida a partir de archived).
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
-    // Passo 2: cada grupo volta ao status original.
-    expect(restores).toHaveLength(3);
-    expect(restores.slice(1)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ payload: { conversation_status: 'waiting' }, filters: { id: [c1], conversation_status: 'open' } }),
-        expect.objectContaining({ payload: { conversation_status: 'resolved' }, filters: { id: [c2], conversation_status: 'open' } }),
-      ]),
-    );
+    // Passo 2: o grupo volta ao status original.
+    expect(restores).toHaveLength(2);
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c1, c2], conversation_status: 'open' } });
   });
 
   it('desfazer com mistura de status e falha no passo 2: segue os outros grupos, recarrega a lista e avisa "X de Y"', async () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'open' },
-        { id: c2, conversation_status: 'waiting' },
+        { id: c2, conversation_status: 'resolved' },
         { id: c3, conversation_status: 'resolved' },
       ],
       error: null,
@@ -626,11 +657,10 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
     refetch.mockClear();
 
-    // undo: [open c1] ok · [passo 1 c2,c3 → open] ok · [waiting c2] ok · [resolved c3] FALHA
+    // undo: [open c1] ok · [passo 1 c2,c3 → open] ok · [resolved c2,c3] FALHA
     updateQueue.push(
       { data: [{ id: c1 }], error: null },
       { data: [{ id: c2 }, { id: c3 }], error: null },
-      { data: [{ id: c2 }], error: null },
       { data: null, error: { message: 'Invalid conversation_status transition' } },
     );
     let thrown: unknown = null;
@@ -639,15 +669,15 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    // Sem o "fallback" para open: c3 já está em open depois do passo 1.
-    expect(restores).toHaveLength(4);
+    // Sem o "fallback" para open: c2/c3 já estão em open depois do passo 1.
+    expect(restores).toHaveLength(3);
     expect(thrown).toBeInstanceOf(Error);
     expect(refetch).toHaveBeenCalledTimes(1);
-    expect(mocks.toast.warning).toHaveBeenCalledWith('2 de 3 restaurados');
+    expect(mocks.toast.warning).toHaveBeenCalledWith('1 de 3 restaurados');
   });
 
   it('desfazer não força de volta quem saiu do arquivo na janela: cada passo filtra o status esperado e só segue com os ids devolvidos', async () => {
-    selectQueue.push({ data: [{ id: c1, conversation_status: 'resolved' }, { id: c2, conversation_status: 'waiting' }], error: null });
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'resolved' }, { id: c2, conversation_status: 'resolved' }], error: null });
     const { result, refetch } = renderInbox();
     selectIds(result, [c1, c2]);
     await act(async () => {
@@ -664,7 +694,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     const restores = contactUpdates().slice(1);
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
     expect(restores).toHaveLength(2);
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: [c2], conversation_status: 'open' } });
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c2], conversation_status: 'open' } });
     // Nenhum UPDATE leva c1 para resolved.
     expect(restores.some((r) => (r.filters.id as string[]).includes(c1) && (r.payload as { conversation_status: string }).conversation_status === 'resolved')).toBe(false);
     expect(refetch).toHaveBeenCalledTimes(1);
@@ -692,7 +722,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
       payload: { conversation_status: 'archived' },
       filters: { id: [c1] },
     });
-    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+    expect(sucesso()).toBe('1 contato(s) arquivado(s)');
 
     await act(async () => {
       await lastUndo?.undoAction();
@@ -702,6 +732,54 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(restores).toHaveLength(1);
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
     expect(refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('decisão do dono (2026-11-13): conversa aguardando é pulada no lote e o operador é avisado', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'open' },
+        { id: c2, conversation_status: 'waiting' },
+      ],
+      error: null,
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(contactUpdates()[0]).toMatchObject({ payload: { conversation_status: 'archived' }, filters: { id: [c1] } });
+    expect(sucesso()).toBe('1 contato(s) arquivado(s)');
+    expect(mocks.toast.info).toHaveBeenCalledWith(
+      '1 conversa(s) aguardando atendimento não foram arquivadas — atenda ou encerre antes.',
+    );
+  });
+
+  it('revisão #3037: o toast de sucesso conta o que o BANCO arquivou, não o que foi pedido', async () => {
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'open' }, { id: c2, conversation_status: 'open' }], error: null });
+    // A RPC de lote só confirma c1 (c2 perdeu a permissão no meio-tempo).
+    updateQueue.push({ data: [{ id: c1 }], error: null });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2]);
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    expect(sucesso()).toBe('1 contato(s) arquivado(s)');
+  });
+
+  it('decisão do dono: só conversas aguardando selecionadas — nada é arquivado', async () => {
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'waiting' }], error: null });
+    const { result } = renderInbox();
+    selectIds(result, [c1]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(contactUpdates()).toHaveLength(0);
+    expect(mocks.execute).not.toHaveBeenCalled();
+    expect(mocks.toast.info).toHaveBeenCalledWith('Nenhum contato disponível para arquivar');
   });
 
   it('sem seleção não lê nem arquiva nada', async () => {
