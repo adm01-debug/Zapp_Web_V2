@@ -188,13 +188,21 @@ async function abrirDiscador(page: Page) {
   await expect(page.getByRole('heading', { name: 'Telefonia' })).toBeVisible();
   // GR-012: aguarda teclado totalmente renderizado antes de retornar (Firefox)
   await expect(teclado(page)).toBeVisible();
-  // A view pode aparecer antes de a sondagem SIP terminar. No Firefox, clicar nesse
-  // intervalo permite que a atualização tardia remonte o painel e apague o primeiro
-  // dígito. O motivo fechado prova que o estado assíncrono da fixture já estabilizou.
+  // O motivo já vale no 1º render (status SIP 'idle' → voip_not_configured,
+  // useCallChannels.ts) — não marca o fim da sondagem SIP.
   await expect(page.getByTestId('tel-dial-reason')).toHaveText(
     'Telefone não configurado nesta conta',
     { timeout: BOOT_DEADLINE_MS },
   );
+  // O fim real da sondagem é o aviso dela (src/lib/calls/sipProvisioning.ts:114),
+  // que sobe no canto inferior direito ~150-330 ms depois do painel, por cima da
+  // 2ª linha do teclado. Um clique em '5' durante a entrada perdia o pointerup para
+  // o aviso (o Playwright só confere o alvo no pointerdown) e o dígito sumia sem
+  // erro. O painel não remonta. O agente fecha o aviso antes de discar.
+  const avisoSip = page.locator('[data-sonner-toast]').filter({ hasText: 'Senha SIP não configurada' });
+  await expect(avisoSip).toBeVisible({ timeout: BOOT_DEADLINE_MS });
+  await avisoSip.getByRole('button', { name: 'Close toast' }).click();
+  await expect(avisoSip).toHaveCount(0);
   return page.getByTestId('tel-new-call-panel');
 }
 
