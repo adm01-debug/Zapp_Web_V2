@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { loadRolesWithProfiles } from './loadRolesWithProfiles';
+import { roleChangeErrorMessage } from '@/components/admin/useAdminData';
 
 type RoleType = 'admin' | 'supervisor' | 'agent';
 
@@ -73,11 +74,15 @@ export function useRolesPageState() {
   useEffect(() => { void fetchUsers(); }, []);
   useEffect(() => { if (showAddDialog) void fetchAvailableUsers(); }, [showAddDialog, users]);
 
+  // R2-AUTH-008: atribuir/remover role aqui tem que passar pela mesma RPC
+  // atômica `admin_set_role` que useAdminData.handleRoleChange já usa — a
+  // escrita direta em `user_roles` não tinha o piso de "não pode remover o
+  // último admin" nem o de "não pode se auto-rebaixar" que a RPC garante.
   const handleAddRole = async () => {
     if (!selectedUser || !selectedRole) return;
     setUpdating(true);
-    const { error } = await supabase.from('user_roles').insert({ user_id: selectedUser, role: selectedRole });
-    if (error) toast.error('Erro ao adicionar role');
+    const { error } = await supabase.rpc('admin_set_role', { _user_id: selectedUser, _role: selectedRole });
+    if (error) toast.error(roleChangeErrorMessage(error));
     else { toast.success('Role adicionada com sucesso'); setShowAddDialog(false); setSelectedUser(''); void fetchUsers(); }
     setUpdating(false);
   };
@@ -85,8 +90,10 @@ export function useRolesPageState() {
   const handleRemoveRole = async () => {
     if (!userToRemove) return;
     setUpdating(true);
-    const { error } = await supabase.from('user_roles').delete().eq('id', userToRemove.id);
-    if (error) toast.error('Erro ao remover role');
+    // `admin_set_role` não tem conceito de "sem role": remover = rebaixar para
+    // o piso mínimo ('agent'). A RPC recusa se isso zerar o último admin.
+    const { error } = await supabase.rpc('admin_set_role', { _user_id: userToRemove.user_id, _role: 'agent' });
+    if (error) toast.error(roleChangeErrorMessage(error));
     else { toast.success('Role removida com sucesso'); setUserToRemove(null); void fetchUsers(); }
     setUpdating(false);
   };
