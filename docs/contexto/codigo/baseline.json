@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f32855df69f21c7bb6b0dba89451fc886b059e58",
+  "commit": "a97aeacf5a7a3f9323464b19827b884401faf794",
   "branch": "main",
-  "data_commit": "2026-11-13T21:12:08-03:00",
+  "data_commit": "2026-11-13T22:21:34-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a97aeac",
+    "data": "2026-11-13",
+    "assunto": "chore(db-audit): regenera baselines de storage.buckets e cron.job (#3053)"
+   },
    {
     "sha": "f32855d",
     "data": "2026-11-13",
@@ -126,14 +131,9 @@
     "sha": "2ae0de7",
     "data": "2026-11-12",
     "assunto": "fix(db): reconcilia talkx_blacklist com a 20261011003007 e higieniza acls (#3027)"
-   },
-   {
-    "sha": "8a14183",
-    "data": "2026-11-12",
-    "assunto": "Contrato DB offline: teste do E27 deixa de falhar intermitente esperando o Postgres definitivo (#3023)"
    }
   ],
-  "arquivos_mudados_7d": 827,
+  "arquivos_mudados_7d": 829,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -238,14 +238,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 10
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 9
    },
@@ -263,6 +255,14 @@
    },
    {
     "arquivo": "scripts/e2e-isolated/README.md",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 9
    },
    {

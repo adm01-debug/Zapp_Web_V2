@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f32855df69f21c7bb6b0dba89451fc886b059e58",
+  "sha": "a97aeacf5a7a3f9323464b19827b884401faf794",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 01:17 UTC",
+  "generated_at": "2026-11-14 01:49 UTC",
   "files_total": 8355,
   "code_files": 6184,
   "code_lines": 1078372
@@ -392871,10 +392871,20 @@
   }
  },
  "git": {
-  "sha": "f32855df69f21c7bb6b0dba89451fc886b059e58",
+  "sha": "a97aeacf5a7a3f9323464b19827b884401faf794",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a97aeac",
+    "date": "2026-11-13",
+    "author": "adm01-debug",
+    "subject": "chore(db-audit): regenera baselines de storage.buckets e cron.job (#3053)",
+    "files": [
+     "scripts/db-audit/pg-cron-jobs-baseline.json",
+     "scripts/db-audit/storage-buckets-baseline.json"
+    ]
+   },
    {
     "sha": "f32855d",
     "date": "2026-11-13",
@@ -393414,16 +393424,6 @@
     "subject": "fix: habilitar geolocation no projeto chromium-mapa do Playwright (#2883)",
     "files": [
      "playwright.config.ts"
-    ]
-   },
-   {
-    "sha": "65cf385",
-    "date": "2026-11-12",
-    "author": "adm01-debug",
-    "subject": "chore(docs): PENDENCIAS e RELATORIO_CI finais — types-sync resolvido, E2E PR #2987 em andamento (#2989)",
-    "files": [
-     "PENDENCIAS.md",
-     "RELATORIO_CI.md"
     ]
    }
   ],
