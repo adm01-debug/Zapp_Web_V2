@@ -156,6 +156,11 @@ jobs:
       - name: Verificar inventário de testes
         run: node scripts/ci/check-test-inventory.mjs
 
+      # scripts/ci/inventario-repo.unit.mjs pula os casos com ripgrep real quando o rg falta
+      # (a imagem ubuntu-24.04 não traz); mesmo passo do inventario-estado-semanal.yml.
+      - name: Instalar ripgrep (usado pelo gerar-repo.mjs)
+        run: command -v rg || sudo apt-get install -y --no-install-recommends ripgrep
+
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
