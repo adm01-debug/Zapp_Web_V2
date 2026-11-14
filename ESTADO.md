@@ -97,7 +97,7 @@ partir do código e falha quando:
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:97` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
-| `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |
+| `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:134` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
 | `multiplix-voices` | E | — sem chamador no repositório — |
 | `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:182` · `supabase/config.toml:44` |

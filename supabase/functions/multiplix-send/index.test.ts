@@ -191,6 +191,8 @@ interface MockOpts {
   voiceAssets?: Record<string, { caminho: string | null; invalidated_at?: string | null }>;
   /** MX02/F70: a RPC que grava o snapshot falha (erro transitorio do banco) */
   snapshotRpcError?: boolean;
+  /** §8: a transicao 'start' recusada pelo banco (ex.: multiplix_dispatch_confirm_required). */
+  transitionStartError?: string;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -355,6 +357,9 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
           case "transition_multiplix_dispatch": {
             // Espelha o efeito no estado do mock para o motor enxergar a
             // transicao seguinte (ex.: pause -> 'paused').
+            if (opts.transitionStartError && args.p_action === "start") {
+              return Promise.resolve({ data: null, error: { message: opts.transitionStartError, code: "55000" } });
+            }
             if (ctx.dispatch && args.p_action === "pause") ctx.dispatch = { ...ctx.dispatch, status: "paused" };
             if (ctx.dispatch && args.p_action === "start") {
               ctx.dispatch = { ...ctx.dispatch, status: "sending" };
@@ -716,7 +721,8 @@ function batchSendingOpts(phonePrefix: string, length = 25): MockOpts {
   };
 }
 
-/** Opcoes base de um disparo em 'draft' visto por um JWT (fluxo de start). */
+/** Opcoes base de um disparo PAUSADO com fila visto por um JWT (fluxo de start = Retomar).
+ * Rascunho nao inicia mais pelo worker (regra §8, migration 20261114130000): vai pelo confirm. */
 function startRequestOpts(overrides: Partial<MockOpts> = {}): MockOpts {
   return {
     authUser: { id: "user-000" },
@@ -724,7 +730,7 @@ function startRequestOpts(overrides: Partial<MockOpts> = {}): MockOpts {
     manageAll: false,
     dispatchCreate: true,
     ownProfileId: "profile-me",
-    dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
+    dispatch: dispatchRow({ status: "paused", pause_reason: "connection_lost", created_by: "profile-me" }),
     connection: { id: "conn-001", status: "connected", instance_id: "PRINCIPAL" },
     ...overrides,
   };
@@ -848,7 +854,7 @@ Deno.test("F06: manage_all inicia disparo de outro dono → permitido", async ()
   const { ctx, status } = await runWithJwt(startRequestOpts({
     authUser: { id: "user-005" },
     manageAll: true,
-    dispatch: dispatchRow({ status: "draft", created_by: "profile-outro" }),
+    dispatch: dispatchRow({ status: "paused", created_by: "profile-outro" }),
   }));
   assert(status === 200, `esperado 200 (manage_all), recebido ${status}`);
   const start = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "start");
@@ -864,12 +870,60 @@ Deno.test("F06 (bug 01/10/2026): admin COM multiplix.dispatch.manage_all inicia 
     authUser: { id: "user-006" },
     isAdminOrSupervisor: true,
     manageAll: true,
-    dispatch: dispatchRow({ status: "draft", created_by: "profile-outro" }),
+    dispatch: dispatchRow({ status: "paused", created_by: "profile-outro" }),
   }));
   assert(status === 200, `esperado 200 (admin com manage_all), recebido ${status}`);
   assert(
     rpcs(ctx, "transition_multiplix_dispatch").some((call) => call.args.p_action === "start"),
     "esperava a transicao de start do disparo alheio com manage_all",
+  );
+});
+
+// ------------------------------------------------- §8: iniciar exige confirmacao
+// Regra do dono: RETOMAR pausado com fila e um clique; INICIAR rascunho / MATERIALIZAR a fila
+// legada exige o confirm (multiplix-dispatch). O worker recusa antes de qualquer escrita e o
+// banco (migration 20261114130000) recusa de novo na transicao.
+
+Deno.test("§8: start de RASCUNHO pelo worker → 409 multiplix_dispatch_confirm_required, sem transicao nem fila", async () => {
+  const opts = startRequestOpts({ dispatch: dispatchRow({ status: "draft", whatsapp_connection_id: null, created_by: "profile-me" }) });
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ bearer: TEST_JWT }), mockDeps(opts, ctx));
+  assert(res.status === 409, `esperado 409, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "multiplix_dispatch_confirm_required", `codigo inesperado: ${JSON.stringify(body)}`);
+  assert(rpcs(ctx, "transition_multiplix_dispatch").length === 0, "rascunho nao pode transicionar pelo worker");
+  assert(rpcs(ctx, "multiplix_materialize_legacy_queue").length === 0, "rascunho nao pode materializar fila pelo worker");
+});
+
+Deno.test("§8: Retomar de LEGADO pausado sem fila → 409 confirm_required (nao materializa num clique)", async () => {
+  const opts = startRequestOpts({
+    dispatch: dispatchRow({ status: "paused", pause_reason: "legacy_queue_unmaterialized", created_by: "profile-me" }),
+  });
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ bearer: TEST_JWT }), mockDeps(opts, ctx));
+  assert(res.status === 409, `esperado 409, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "multiplix_dispatch_confirm_required", `codigo inesperado: ${JSON.stringify(body)}`);
+  assert(rpcs(ctx, "transition_multiplix_dispatch").length === 0, "legado sem fila nao pode transicionar num clique");
+  assert(rpcs(ctx, "multiplix_materialize_legacy_queue").length === 0, "legado sem fila nao pode materializar num clique");
+});
+
+Deno.test("§8: banco recusa o start (pausado sem fila) → 409 com o codigo do banco e NENHUMA materializacao", async () => {
+  const opts = startRequestOpts({ transitionStartError: "multiplix_dispatch_confirm_required" });
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ bearer: TEST_JWT }), mockDeps(opts, ctx));
+  assert(res.status === 409, `esperado 409, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "multiplix_dispatch_confirm_required", `codigo inesperado: ${JSON.stringify(body)}`);
+  assert(rpcs(ctx, "multiplix_materialize_legacy_queue").length === 0, "recusa do banco nao pode seguir para a materializacao");
+});
+
+Deno.test("§8: Retomar de pausado COM fila segue um clique (transicao start + worker)", async () => {
+  const { ctx, status } = await runWithJwt(startRequestOpts());
+  assert(status === 200, `esperado 200, recebido ${status}`);
+  assert(
+    rpcs(ctx, "transition_multiplix_dispatch").some((call) => call.args.p_action === "start"),
+    "retomar pausado com fila devia transicionar start",
   );
 });
 
@@ -888,7 +942,7 @@ Deno.test("F25/MX09: JWT com multiplix.dispatch.create (sem admin/supervisor, se
     manageAll: false,
     dispatchCreate: true,
     ownProfileId: "profile-me",
-    dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
+    dispatch: dispatchRow({ status: "paused", created_by: "profile-me" }),
   }));
   assert(status === 200, `esperado 200 (dono com multiplix.dispatch.create), recebido ${status}`);
   assert(
