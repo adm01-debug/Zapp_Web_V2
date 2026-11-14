@@ -163,7 +163,13 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
       // A tela dona do K (CTRL_K_LOCAL_ATTRIBUTE) trata o atalho sozinha. Este
       // handler registra na janela, em captura, antes dela: o `stopPropagation`
       // da tela nao alcanca um listener do mesmo alvo, e a paleta abria por cima.
-      if (shortcut.id === 'global-search' && document.querySelector(`[${CTRL_K_LOCAL_ATTRIBUTE}]`)) continue;
+      // So o Ctrl/Cmd+K e cedido: uma busca global remapeada (ex.: Ctrl+P) segue valendo.
+      if (
+        shortcut.id === 'global-search'
+        && (event.ctrlKey || event.metaKey)
+        && event.key.toLowerCase() === 'k'
+        && document.querySelector(`[${CTRL_K_LOCAL_ATTRIBUTE}]`)
+      ) continue;
 
       const binding = getActiveBinding(shortcut);
       

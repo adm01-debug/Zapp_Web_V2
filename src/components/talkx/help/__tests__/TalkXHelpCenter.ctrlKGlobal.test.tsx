@@ -81,4 +81,19 @@ describe('Ctrl+K na Ajuda do Talk X x paleta global', () => {
     act(() => ctrlK());
     expect(aberturasDaPaleta).toBe(1);
   });
+
+  it('busca global remapeada (Ctrl+P) segue abrindo a paleta com a Ajuda aberta', async () => {
+    // A preferência gravada (Configurações > Atalhos) chega pelo evento `storage`.
+    localStorage.setItem('custom-keyboard-shortcuts', JSON.stringify({ 'global-search': { key: 'p', modifiers: { ctrlKey: true } } }));
+    const { rerender } = render(<Shell comAjuda={false} />);
+    act(() => { window.dispatchEvent(new StorageEvent('storage', { key: 'custom-keyboard-shortcuts' })); });
+    rerender(<Shell comAjuda />);
+    await screen.findByPlaceholderText('O que você precisa de ajuda hoje?');
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', ctrlKey: true, bubbles: true, cancelable: true }));
+    });
+    expect(aberturasDaPaleta).toBe(1);
+    localStorage.removeItem('custom-keyboard-shortcuts');
+    act(() => { window.dispatchEvent(new StorageEvent('storage', { key: 'custom-keyboard-shortcuts' })); });
+  });
 });

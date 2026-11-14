@@ -98,9 +98,10 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
   }, []);
 
   // T16-007: com a Ajuda aberta, ⌘K/Ctrl+K foca a busca da Ajuda em vez de
-  // abrir a paleta global. O listener é de captura e para a propagação, então o
-  // atalho global (que escuta na fase de borbulha) não chega a disparar; fora
-  // da Ajuda este efeito não existe e o atalho segue intacto.
+  // abrir a paleta global. O listener é de captura e para a propagação, o que
+  // barra os atalhos de borbulha; o registry global (`useGlobalKeyboardShortcuts`)
+  // também captura na janela e roda antes, por isso cede o K enquanto a raiz
+  // desta tela tiver `data-ctrl-k-local`. Fora da Ajuda o atalho segue intacto.
   // T16-ESC: a Ajuda agora é uma tela roteada, não um Dialog. Mesmo assim, Esc
   // mantém a mesma saída de teclado do modal antigo: fecha a Ajuda e deixa o pai
   // restaurar o foco no botão que abriu a tela.
