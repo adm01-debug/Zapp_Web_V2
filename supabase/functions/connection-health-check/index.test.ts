@@ -998,6 +998,27 @@ Deno.test('3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin
   assert(String((fake.pushNotifications.find((n) => String((n as Row).dedupe_key).startsWith('conn-l2:')) as Row).dedupe_key).startsWith('conn-l2:v1:disconnected:c1:'), 'chave horária do nível 2');
 });
 
+Deno.test('sessão sem mensagem recebida há 6 h+ com socket aberto e logado avisa, mas NÃO derruba a conexão', async () => {
+  const now = new Date();
+  const ev = evaluateOpenConnectionHealth({ owner: { known: true, ownerJid: '551100000000@s.whatsapp.net' }, lastActivityAt: new Date(now.getTime() - 8 * 24 * 3600_000), now });
+  assert(ev.reason === 'stale_session' && ev.healthStatus === 'degraded' && ev.dbStatus === 'connected', `esperado degraded/connected: ${JSON.stringify(ev)}`);
+
+  // Produção 14/11: linha reconectada após 8 dias fora; a sonda a marcava 'disconnected' e o envio dava 409.
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.lastInbound = [{ created_at: new Date(Date.now() - 8 * 24 * 3600_000).toISOString() }];
+  fake.fetchImpl = ({ path }) => path.includes('fetchInstances')
+    ? jsonResponse([{ ownerJid: '551100000000@s.whatsapp.net' }])
+    : jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert(!fake.connUpdates.some((u) => u.status === 'disconnected'), `socket aberto não pode virar disconnected: ${JSON.stringify(fake.connUpdates)}`);
+  assert(fake.statusById.c1 === 'connected', `status segue connected: ${fake.statusById.c1}`);
+  assert(fake.healthLogs[0]?.status === 'degraded', `sonda registra degraded: ${JSON.stringify(fake.healthLogs)}`);
+  assert(!fake.calls.some((c) => c.path.includes('/instance/restart') || c.path.includes('/instance/reconnect')), `sessão aberta não é reiniciada: ${JSON.stringify(fake.calls.map((c) => c.path))}`);
+});
+
 Deno.test('3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)', () => {
   const now = new Date();
   const ev = evaluateOpenConnectionHealth({ owner: { known: true, ownerJid: null }, lastActivityAt: null, now });
