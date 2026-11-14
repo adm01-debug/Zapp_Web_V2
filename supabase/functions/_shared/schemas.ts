@@ -700,7 +700,17 @@ export function validationErrorResponse(
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': allowedOriginFor(req),
       'x-contract-version': String(contractVersion),
+      // Mesmo conjunto de SECURITY_HEADERS em validation.ts (duplicado aqui,
+      // não importado, para manter este módulo importável em Node p/ testes).
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
       'Cache-Control': 'no-store',
+      'Content-Security-Policy-Report-Only':
+        "default-src 'none'; script-src 'none'; object-src 'none'; report-uri /csp-report",
       Vary: 'Origin',
     },
   });
