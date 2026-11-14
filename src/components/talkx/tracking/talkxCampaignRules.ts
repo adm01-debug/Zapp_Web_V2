@@ -97,16 +97,25 @@ export function limitsPayload(draft: TalkXLimitsDraft): TalkXLimitsPayload {
   return {
     speed_profile: draft.speedProfile,
     send_interval_min: secondsToMs(draft.intervalMin),
-    send_interval_max: secondsToMs(Math.max(draft.intervalMin, draft.intervalMax)),
+    send_interval_max: secondsToMs(draft.intervalMax),
     send_window_start: draft.windowStart ? `${draft.windowStart}:00` : null,
     send_window_end: draft.windowEnd ? `${draft.windowEnd}:00` : null,
     business_hours_only: draft.businessHoursOnly,
   };
 }
 
-/** X006: o intervalo digitado (segundos) respeita o piso e o teto do modal. */
+/**
+ * X006: o intervalo digitado (segundos) respeita o piso e o teto do modal, e o
+ * mínimo não pode passar do máximo — nunca salvar um valor diferente do digitado
+ * sem avisar (bug da varredura de QA: antes o máximo era ajustado em silêncio
+ * via `Math.max` dentro de `limitsPayload`).
+ */
 export function isValidLimitsDraft(draft: TalkXLimitsDraft): boolean {
-  return isValidIntervalSeconds(draft.intervalMin) && isValidIntervalSeconds(draft.intervalMax);
+  return (
+    isValidIntervalSeconds(draft.intervalMin) &&
+    isValidIntervalSeconds(draft.intervalMax) &&
+    draft.intervalMin <= draft.intervalMax
+  );
 }
 
 /** Intervalo do perfil de velocidade em segundos, para o select do modal. */
