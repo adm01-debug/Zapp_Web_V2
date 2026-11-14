@@ -401,13 +401,13 @@
     },
     {
       "path": "supabase/functions/ai-churn-analysis/index.ts",
-      "bytes": 4103,
-      "sha256": "fb11ad3bab51e6c39e37051445c5f90ac74b81f027388b3e8a5a653c21f97bbd"
+      "bytes": 4775,
+      "sha256": "47d27b6dbcbd4b7c772ef0adf6f1af1dea094183c93f82b486dc83dad3ee57fe"
     },
     {
       "path": "supabase/functions/ai-classify-tickets/index.ts",
-      "bytes": 5343,
-      "sha256": "aa413049175ae8ecb8ddeda225023c74a35253703636b4aab054fe97cb53c2d6"
+      "bytes": 6111,
+      "sha256": "1db110743142b575de665d1a68cb8fbf2e67c1be2d47794784379b2463b2a99c"
     },
     {
       "path": "supabase/functions/ai-conversation-analysis/index.ts",
@@ -496,8 +496,8 @@
     },
     {
       "path": "supabase/functions/approve-password-reset/index.ts",
-      "bytes": 10897,
-      "sha256": "e35df65a8627b3d86b67a5150921d56abfe11f3aeb1b52ab9dd284a8087f460f"
+      "bytes": 11767,
+      "sha256": "3b87d1de5f7c12912e48103059fbacdac2bc14a97fc99388e2b10f68cdccce33"
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
@@ -935,7 +935,7 @@
       "name": "ai-churn-analysis",
       "entrypoint": "supabase/functions/ai-churn-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "289d58901765f9f8f49ef69a0f565aedbb0f934dd1d66935ee0b9caff45c5c00",
+      "source_sha256": "95b699ce41e465e614fde571ed7f082ed5815b5450fa2d4ab526771272fe4916",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
@@ -957,7 +957,7 @@
       "name": "ai-classify-tickets",
       "entrypoint": "supabase/functions/ai-classify-tickets/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2c88dd9d47771b4853c8983f0a3acfefb1240fced08b9ab529806fcd8d399da7",
+      "source_sha256": "08cd5e38c0599c82c7a2e12a7aa1eddc9fbd78a02eafd27a58e071dfe3051114",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
@@ -1410,7 +1410,7 @@
       "name": "approve-password-reset",
       "entrypoint": "supabase/functions/approve-password-reset/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ca62d1388409326f64ff320187a9b69ca563754e8a6d1e7173ec64c742d77dfb",
+      "source_sha256": "f8b32df90ed06740fd251d6da397312788d3bdf506e2cd3fa365bf016ab062b9",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2796,5 +2796,5 @@
       ]
     }
   ],
-  "manifest_sha256": "3e3167e461347402efbf809326ca31884bdc9aadb0a112b0eb66c0e2c384e4ad"
+  "manifest_sha256": "46e5205ecd71f418cd24ff47392981cabd249920cc22da7a11fefc1cf6f9dd50"
 }
