@@ -186,7 +186,9 @@ export function evaluateOpenConnectionHealth(input: {
   if (lastActivityAt) {
     const idleMs = now.getTime() - lastActivityAt.getTime();
     if (idleMs >= STALE_SESSION_MS) {
-      return { healthStatus: 'disconnected', dbStatus: 'disconnected', reason: 'stale_session' };
+      // Socket aberto e logado: falta de mensagem RECEBIDA não prova queda (linha que
+      // voltou de uma queda longa, noite, fim de semana). Avisa, mas não bloqueia envio.
+      return { healthStatus: 'degraded', dbStatus: 'connected', reason: 'stale_session' };
     }
     if (idleMs >= WEBHOOK_SILENT_MS) {
       return { healthStatus: 'degraded', dbStatus: 'connected', reason: 'webhook_silent' };
@@ -1006,13 +1008,13 @@ export async function handleConnectionHealthCheck(
               // Degradação pelo socket (webhook parado): entra no funil de alerta
               // com o próprio tipo — o warroom registra 'warning' e o push/e-mail
               // respeitam o opt-in de 'degraded'.
-              if (healthStatus === 'degraded' && openReason === 'webhook_silent') {
+              if (healthStatus === 'degraded' && (openReason === 'webhook_silent' || openReason === 'stale_session')) {
                 alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });
               }
             }
             // Escalada: avaliada em TODA sonda enquanto a conexão segue caída ou
             // degradada (o nível depende do tempo do episódio, não da transição).
-            if (healthStatus === 'disconnected' || (healthStatus === 'degraded' && openReason === 'webhook_silent')) {
+            if (healthStatus === 'disconnected' || (healthStatus === 'degraded' && (openReason === 'webhook_silent' || openReason === 'stale_session'))) {
               escalations.push({
                 alert: { connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: healthStatus === 'disconnected' ? 'disconnected' : 'degraded', reason: openReason },
                 exhausted: reconnectExhausted,
