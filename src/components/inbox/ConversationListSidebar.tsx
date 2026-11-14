@@ -239,10 +239,16 @@ export function ConversationListSidebar({
       // Rejeita pra quem chamou não fechar o diálogo como se tivesse dado certo.
       throw new Error('Ações de conversa indisponíveis');
     }
-    await conversationActions.transferContact(transferTarget, type, targetId, note);
+    const alvo = (inboxFilters.filteredConversations ?? []).find(
+      (c: { contact: { id: string; assigned_to?: string | null } }) => c.contact.id === transferTarget,
+    );
+    await conversationActions.transferContact(
+      transferTarget, type, targetId, note,
+      alvo ? alvo.contact.assigned_to ?? null : undefined,
+    );
     inbox.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mesmo motivo acima.
-  }, [transferTarget, conversationActions, inbox.refetch]);
+  }, [transferTarget, conversationActions, inbox.refetch, inboxFilters.filteredConversations]);
 
   // Se a conversa sumir da lista em tempo real (ex: outro agente ja
   // resolveu/moveu) enquanto o dialogo de Resolver/Transferir esta aberto

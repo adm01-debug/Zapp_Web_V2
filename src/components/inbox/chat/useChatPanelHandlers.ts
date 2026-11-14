@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
 import {
   archiveConversations,
+  isWaitingArchiveError,
+  WAITING_CANNOT_ARCHIVE_MESSAGE,
   restoreConversationStatuses,
 } from '@/hooks/inbox/conversationArchive';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
@@ -27,6 +29,7 @@ import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { CHAR_LIMIT } from './useChatInputLogic';
 import { sendQueue } from '@/hooks/chat/sendQueue';
+import { describeWhatsAppDisconnected } from '@/lib/whatsapp/sendConnection';
 
 /** Tipos de mensagem do chat com representação textual direta no transporte. */
 const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
@@ -369,7 +372,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // texto novo — nada some e o toast "Tente novamente" tem o que reenviar.
       setInputValue((atual) => (atual === '' ? originalText : `${originalText}\n${atual}`));
       if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
-      toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+      // P0-1: conexão do contato fora do ar — o serviço de envio já mostrou o aviso
+      // "WhatsApp desconectado" (surfaceWhatsAppDisconnected); não repete com "tente novamente".
+      if (!describeWhatsAppDisconnected(err)) {
+        toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+      }
     }
   }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
 
@@ -560,7 +567,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
             });
           } catch (error) {
             log.error('Failed to archive contact:', error);
-            toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
+            toast({
+              title: 'Erro ao arquivar',
+              description: isWaitingArchiveError(error) ? WAITING_CANNOT_ARCHIVE_MESSAGE : 'Não foi possível arquivar a conversa.',
+              variant: 'destructive',
+            });
           }
         })();
         break;
